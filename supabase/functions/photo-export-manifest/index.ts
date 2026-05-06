@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { canMutatePhotos } from "../_shared/collaboratorPermissions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,10 +15,6 @@ const json = (data: unknown, status = 200) =>
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-
-function hasPermissionKey(permissions: unknown, key: string): boolean {
-  return Array.isArray(permissions) && permissions.includes(key);
-}
 
 function safeSpreadsheetCell(value: unknown): string {
   const text = String(value ?? "");
@@ -80,12 +77,12 @@ Deno.serve(async (req: Request) => {
     if (!allowed) {
       const { data: collaborator, error: collaboratorError } = await admin
         .from("wedding_site_collaborators")
-        .select("permissions")
+        .select("role,permissions")
         .eq("wedding_site_id", siteId)
         .eq("user_id", user.id)
         .maybeSingle();
       if (collaboratorError) return json({ error: "Could not export photo manifest. Please try again." }, 500);
-      allowed = hasPermissionKey(collaborator?.permissions, "photos");
+      allowed = canMutatePhotos(collaborator?.role, collaborator?.permissions);
     }
     if (!allowed) return json({ error: "Forbidden" }, 403);
 

@@ -6,9 +6,25 @@ function readFunction(name: string) {
   return readFileSync(join(process.cwd(), 'supabase', 'functions', name, 'index.ts'), 'utf8');
 }
 
+function readSharedFunction(name: string) {
+  return readFileSync(join(process.cwd(), 'supabase', 'functions', '_shared', name), 'utf8');
+}
+
 describe('launch edge function guards', () => {
+  it('centralizes collaborator mutation permission helpers', () => {
+    const source = readSharedFunction('collaboratorPermissions.ts');
+
+    expect(source).toContain('function hasMutatingCollaboratorRole(role: unknown): boolean');
+    expect(source).toContain('role === "planner" || role === "coordinator"');
+    expect(source).toContain('export function canMutateMessages(role: unknown, permissions: unknown): boolean');
+    expect(source).toContain('export function canMutateGuestsOrMessages(role: unknown, permissions: unknown): boolean');
+    expect(source).toContain('export function canMutatePhotos(role: unknown, permissions: unknown): boolean');
+    expect(source).toContain('if (!Array.isArray(permissions)) return true');
+    expect(source).not.toContain('role === "viewer"');
+  });
+
   it('keeps shared public submission rate limiting free of raw backend errors', () => {
-    const source = readFileSync(join(process.cwd(), 'supabase', 'functions', '_shared', 'rateLimit.ts'), 'utf8');
+    const source = readSharedFunction('rateLimit.ts');
 
     expect(source).toContain('PUBLIC_SUBMISSION_RATE_LIMIT_COUNT_FAILED');
     expect(source).toContain('PUBLIC_SUBMISSION_RATE_LIMIT_RECORD_FAILED');
@@ -52,7 +68,10 @@ describe('launch edge function guards', () => {
     expect(source).toContain('auth.getUser');
     expect(source).toContain('site.user_id === user.id');
     expect(source).toContain('wedding_site_collaborators');
-    expect(source).toContain('hasPermissionKey(collaborator?.permissions, "photos")');
+    expect(source).toContain('../_shared/collaboratorPermissions.ts');
+    expect(source).toContain('.select("role,permissions")');
+    expect(source).toContain('canMutatePhotos(collaborator?.role, collaborator?.permissions)');
+    expect(source).not.toContain('hasPermissionKey(collaborator?.permissions, "photos")');
     expect(source).toContain('includeHidden');
     expect(source).toContain('query.eq("is_hidden", false)');
     expect(source).toContain('function safeSpreadsheetCell');
@@ -216,6 +235,10 @@ describe('launch edge function guards', () => {
     expect(direct).toContain('subject: sanitizeEmailSubject(subject)');
     expect(direct).toContain('const AUTHENTICATED_EMAIL_TYPES = new Set(["wedding_invitation", "signup_welcome", "anniversary_reminder"])');
     expect(direct).toContain('const SERVICE_ROLE_ONLY_TYPES = new Set(["rsvp_notification", "rsvp_confirmation"])');
+    expect(direct).toContain('../_shared/collaboratorPermissions.ts');
+    expect(direct).toContain('canMutateGuestsOrMessages(collaborator?.role, collaborator?.permissions)');
+    expect(direct).toContain('return canMutateMessages(collaborator?.role, collaborator?.permissions)');
+    expect(direct).not.toContain('hasPermissionKey(collaborator?.permissions, "messages");');
     expect(direct).toContain('function canSendSiteScopedEmail');
     expect(direct).toContain('SERVICE_ROLE_ONLY_TYPES.has(type) && !isServiceRole');
     expect(direct).toContain('authedUserEmail.trim().toLowerCase() !== to.trim().toLowerCase()');
@@ -258,6 +281,11 @@ describe('launch edge function guards', () => {
     expect(bulk).toContain('subject: sanitizeEmailSubject(opts.subject)');
     expect(bulk).toContain('const MESSAGE_DELIVERY_SELECT = [');
     expect(bulk).toContain('.select(MESSAGE_DELIVERY_SELECT)');
+    expect(bulk).toContain('../_shared/collaboratorPermissions.ts');
+    expect(bulk).toContain('if (canMutateMessages(role, collaboratorRow?.permissions))');
+    expect(bulk).toContain('canMutateMessages(row.role, row.permissions)');
+    expect(bulk).not.toContain('role === "planner" || role === "coordinator" || role === "viewer"');
+    expect(bulk).not.toContain('.filter((row: { permissions?: unknown }) => hasPermissionKey(row.permissions, "messages"))');
     expect(bulk).not.toContain('.select("*, wedding_sites');
   });
 
@@ -319,7 +347,9 @@ describe('launch edge function guards', () => {
     expect(source).toContain('Authorization');
     expect(source).toContain('auth.getUser');
     expect(source).toContain('wedding_site_collaborators');
-    expect(source).toContain('hasPermissionKey(collaborator?.permissions, "photos")');
+    expect(source).toContain('../_shared/collaboratorPermissions.ts');
+    expect(source).toContain('canMutatePhotos(collaborator?.role, collaborator?.permissions)');
+    expect(source).not.toContain('hasPermissionKey(collaborator?.permissions, "photos")');
     expect(source).toContain('safePhotoAlbumManageError("LOOKUP_FAILED")');
     expect(source).toContain('safePhotoAlbumManageError("COLLABORATOR_FAILED")');
     expect(source).toContain('safePhotoAlbumManageError("PARENT_FAILED")');
@@ -348,6 +378,12 @@ describe('launch edge function guards', () => {
     expect(create).toContain('safePhotoAlbumCreateError("PARENT")');
     expect(create).toContain('safePhotoAlbumCreateError("SAVE")');
     expect(create).toContain('safePhotoAlbumCreateError("INTERNAL")');
+    expect(create).toContain('../_shared/collaboratorPermissions.ts');
+    expect(create).toContain('.select("role,permissions")');
+    expect(create).toContain('canMutatePhotos(collaborator?.role, collaborator?.permissions)');
+    expect(create).toContain('reason: "COLLABORATOR_LOAD_FAILED"');
+    expect(create).not.toContain('if (!site || site.user_id !== user.id) return fail("FORBIDDEN"');
+    expect(create).not.toContain('hasPermissionKey(collaborator?.permissions, "photos")');
     expect(create).toContain('driveBackupStatus');
     expect(create).toContain('reason: "ALBUM_CREATE_SAVE_FAILED"');
     expect(create).toContain('reason: "UNEXPECTED_PHOTO_ALBUM_CREATE_FAILURE"');
@@ -363,6 +399,10 @@ describe('launch edge function guards', () => {
     expect(moderate).toContain('safePhotoModerationError("SAVE")');
     expect(moderate).toContain('safePhotoModerationError("INTERNAL")');
     expect(moderate).toContain('wedding_site_collaborators');
+    expect(moderate).toContain('../_shared/collaboratorPermissions.ts');
+    expect(moderate).toContain('.select("wedding_site_id,role,permissions")');
+    expect(moderate).toContain('canMutatePhotos(row.role, row.permissions)');
+    expect(moderate).not.toContain('hasPermissionKey(row.permissions, "photos")');
     expect(moderate).toContain('reason: "PHOTO_MODERATION_SAVE_FAILED"');
     expect(moderate).toContain('reason: "UNEXPECTED_PHOTO_MODERATION_FAILURE"');
     expect(moderate).not.toContain('uploadsErr?.message');
@@ -378,6 +418,9 @@ describe('launch edge function guards', () => {
     expect(source).toContain('import { enforcePublicSubmissionRateLimit }');
     expect(source).toContain('scope: "photo_analyze_batch"');
     expect(source).toContain('subject: `${userData.user.id}:${siteId}:${requestedProvider}:${analysisMode}`');
+    expect(source).toContain('../_shared/collaboratorPermissions.ts');
+    expect(source).toContain('hasAccess = canMutatePhotos(collaborator?.role, collaborator?.permissions)');
+    expect(source).not.toContain('role === "owner" || role === "coordinator" || permissions.includes("photos") || permissions.includes("media")');
     expect(source).toContain('const PHOTO_UPLOAD_AI_ANALYSIS_SELECT = [');
     expect(source).toContain('.select(PHOTO_UPLOAD_AI_ANALYSIS_SELECT)');
     expect(source).toContain('reason: "USAGE_EVENT_INSERT_FAILED"');
@@ -479,6 +522,25 @@ describe('launch edge function guards', () => {
     const safeColumns = publicSiteAccess.match(/const SAFE_PUBLIC_SITE_COLUMNS = \[([\s\S]*?)\];/)?.[1] ?? '';
     expect(safeColumns).not.toContain('privacy_mode');
     expect(safeColumns).not.toContain('hide_from_search');
+  });
+
+  it('keeps RSVP lookup token-only and non-enumerating', () => {
+    const rsvp = readFunction('validate-rsvp-token');
+    const lookupBlock = rsvp.match(/if \(payload\.action === "lookup"\) \{[\s\S]*?\n {4}if \(payload\.action === "lookup_guest"\)/)?.[0] ?? '';
+
+    expect(lookupBlock).toContain('.eq("invite_token", trimmed)');
+    expect(lookupBlock).toContain('Please use the private RSVP link or code from your invitation.');
+    expect(lookupBlock).toContain('guests: null');
+    expect(lookupBlock).toContain('rsvpSession');
+    expect(lookupBlock).toContain('sanitizeGuest(guest)');
+    expect(lookupBlock).not.toContain('.ilike(');
+    expect(lookupBlock).not.toContain('name.ilike');
+    expect(lookupBlock).not.toContain('byName');
+    expect(lookupBlock).not.toContain('matches');
+    expect(lookupBlock).not.toContain('guests: by');
+    expect(lookupBlock).not.toContain('email');
+    expect(lookupBlock).not.toContain('invite_token:');
+    expect(lookupBlock).not.toContain('wedding_site_id: guest.wedding_site_id');
   });
 
   it('keeps public registry and itinerary subresources behind the public access gate', () => {
@@ -612,7 +674,9 @@ describe('launch edge function guards', () => {
     expect(queue).toContain('Unauthorized');
 
     const queueFollowups = readFunction('queue-guest-followups');
-    expect(queueFollowups).toContain('hasPermissionKey(collaborator?.permissions, "messages")');
+    expect(queueFollowups).toContain('../_shared/collaboratorPermissions.ts');
+    expect(queueFollowups).toContain('allowed = canMutateMessages(collaborator?.role, collaborator?.permissions)');
+    expect(queueFollowups).not.toContain('allowed = hasPermissionKey(collaborator?.permissions, "messages")');
     expect(queueFollowups).toContain('reason: "FOLLOWUP_QUEUE_INSERT_FAILED"');
     expect(queueFollowups).toContain('reason: "FOLLOWUP_OPTIN_MARK_FAILED"');
     expect(queueFollowups).toContain('reason: "UNEXPECTED_QUEUE_GUEST_FOLLOWUPS_FAILURE"');

@@ -13,24 +13,13 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-vi.mock('../lib/supabase', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-        })),
-      })),
-    })),
-  },
-}));
-
 vi.mock('../lib/activeSite', () => ({
   resolveActiveSiteForUser: vi.fn(),
 }));
 
 vi.mock('./services/builderProjectService', () => ({
   builderProjectService: {
+    loadEntrySite: vi.fn(),
     loadProject: vi.fn(),
     createProject: vi.fn(),
     saveProject: vi.fn(),

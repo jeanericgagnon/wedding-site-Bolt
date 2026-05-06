@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 import { SectionDefinition, SectionComponentProps } from '../../types';
-import { supabase } from '../../../lib/supabase';
+import {
+  fetchInteractiveSectionSync,
+  submitInteractiveSuggestion,
+  submitInteractiveVote,
+} from '../../interactiveSectionService';
 
 const PollOptionSchema = z.object({
   id: z.string(),
@@ -151,54 +155,18 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
     const sync = async () => {
       setIsSyncing(true);
       try {
-        const [pollRes, quizRes, suggestionsRes] = await Promise.all([
-          supabase
-            .from('interactive_votes')
-            .select('option_id')
-            .eq('site_slug', siteSlug)
-            .eq('widget_kind', 'poll')
-            .eq('widget_id', pollQuestion.id),
-          supabase
-            .from('interactive_votes')
-            .select('option_id')
-            .eq('site_slug', siteSlug)
-            .eq('widget_kind', 'quiz')
-            .eq('widget_id', quizQuestion.id),
-          supabase
-            .from('interactive_suggestions')
-            .select('suggestion_text')
-            .eq('site_slug', siteSlug)
-            .eq('prompt_key', data.suggestionPrompt)
-            .eq('is_hidden', false)
-            .order('created_at', { ascending: false })
-            .limit(20),
-        ]);
+        const syncResult = await fetchInteractiveSectionSync({
+          siteSlug,
+          pollWidgetId: pollQuestion.id,
+          quizWidgetId: quizQuestion.id,
+          suggestionPrompt: data.suggestionPrompt,
+        });
 
         if (!mounted) return;
 
-        if (!pollRes.error) {
-          const counts = (pollRes.data ?? []).reduce<Record<string, number>>((acc, row) => {
-            const id = String((row as { option_id?: string }).option_id || '');
-            if (!id) return acc;
-            acc[id] = (acc[id] || 0) + 1;
-            return acc;
-          }, {});
-          poll.setRemoteCounts(counts);
-        }
-
-        if (!quizRes.error) {
-          const counts = (quizRes.data ?? []).reduce<Record<string, number>>((acc, row) => {
-            const id = String((row as { option_id?: string }).option_id || '');
-            if (!id) return acc;
-            acc[id] = (acc[id] || 0) + 1;
-            return acc;
-          }, {});
-          quiz.setRemoteCounts(counts);
-        }
-
-        if (!suggestionsRes.error) {
-          setSuggestions((suggestionsRes.data ?? []).map((row) => String((row as { suggestion_text?: string }).suggestion_text || '')).filter(Boolean));
-        }
+        poll.setRemoteCounts(syncResult.pollCounts);
+        quiz.setRemoteCounts(syncResult.quizCounts);
+        setSuggestions(syncResult.suggestions);
       } finally {
         if (mounted) setIsSyncing(false);
       }
@@ -231,10 +199,10 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
     } catch { void 0; }
 
     if (siteSlug) {
-      await supabase.from('interactive_suggestions').insert({
-        site_slug: siteSlug,
-        prompt_key: data.suggestionPrompt,
-        suggestion_text: value,
+      await submitInteractiveSuggestion({
+        siteSlug,
+        promptKey: data.suggestionPrompt,
+        suggestionText: value,
       });
     }
   };
@@ -283,11 +251,11 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
                         poll.incrementLocal(opt.id);
                         try { window.localStorage.setItem(voteCooldownKey, String(now)); } catch { void 0; }
                         if (siteSlug) {
-                          await supabase.from('interactive_votes').insert({
-                            site_slug: siteSlug,
-                            widget_kind: 'poll',
-                            widget_id: pollQuestion.id,
-                            option_id: opt.id,
+                          await submitInteractiveVote({
+                            siteSlug,
+                            widgetKind: 'poll',
+                            widgetId: pollQuestion.id,
+                            optionId: opt.id,
                           });
                         }
                       })();
@@ -323,11 +291,11 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
                     for (const optionId of selectedPollMulti) {
                       poll.incrementLocal(optionId);
                       if (siteSlug) {
-                        await supabase.from('interactive_votes').insert({
-                          site_slug: siteSlug,
-                          widget_kind: 'poll',
-                          widget_id: pollQuestion.id,
-                          option_id: optionId,
+                        await submitInteractiveVote({
+                          siteSlug,
+                          widgetKind: 'poll',
+                          widgetId: pollQuestion.id,
+                          optionId,
                         });
                       }
                     }
@@ -360,11 +328,11 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
                     quiz.incrementLocal(opt.id);
                     try { window.localStorage.setItem(voteCooldownKey, String(now)); } catch { void 0; }
                     if (siteSlug) {
-                      await supabase.from('interactive_votes').insert({
-                          site_slug: siteSlug,
-                          widget_kind: 'quiz',
-                          widget_id: quizQuestion.id,
-                          option_id: opt.id,
+                      await submitInteractiveVote({
+                          siteSlug,
+                          widgetKind: 'quiz',
+                          widgetId: quizQuestion.id,
+                          optionId: opt.id,
                       });
                     }
                   }}

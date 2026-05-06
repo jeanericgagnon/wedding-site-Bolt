@@ -5,24 +5,14 @@ import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { useAuth, type AuthUser } from '../contexts/AuthContext';
 import { getCollaboratorRedirectPath, getInviteSiteLabel, isInviteEmailMatch, resolveInviteValidationState } from './acceptCollaboratorInviteUtils';
+import { fetchCollaboratorInviteInfo, type CollaboratorInviteInfo } from './acceptCollaboratorInviteService';
 import { logAppAction } from '../lib/actionAudit';
 import { safeAuthError, safeCollaboratorInviteError } from '../lib/authErrorCopy';
 
 type InviteState = 'loading' | 'valid' | 'invalid' | 'expired' | 'accepted' | 'revoked' | 'missing';
 type AuthMode = 'signin' | 'signup';
 
-type InviteInfo = {
-  id: string;
-  wedding_site_id: string;
-  invite_email: string;
-  invite_name: string | null;
-  role: string;
-  status: string;
-  expires_at?: string | null;
-  site_slug?: string | null;
-  couple_name_1?: string | null;
-  couple_name_2?: string | null;
-};
+type InviteInfo = CollaboratorInviteInfo;
 
 const initialSignInForm = {
   email: '',
@@ -83,51 +73,26 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       setClaimMessage(null);
       setInviteLookupDebug(null);
 
-      const { data: inviteRows, error } = await supabase
-        .from('wedding_site_collaborator_invites')
-        .select('id, wedding_site_id, invite_email, invite_name, role, status, expires_at')
-        .eq('invite_token', token);
-
-      if (cancelled) return;
-      if (error) {
-        setInviteInfo(null);
-        setInviteLookupDebug('Invite lookup needs retry');
-        setInviteState('invalid');
+      let nextInviteInfo: InviteInfo | null = null;
+      try {
+        nextInviteInfo = await fetchCollaboratorInviteInfo(token);
+      } catch {
+        if (!cancelled) {
+          setInviteInfo(null);
+          setInviteLookupDebug('Invite lookup needs retry');
+          setInviteState('invalid');
+        }
         return;
       }
 
-      const data = Array.isArray(inviteRows) ? inviteRows[0] : null;
-      if (!data) {
+      if (cancelled) return;
+
+      if (!nextInviteInfo) {
         setInviteInfo(null);
         setInviteLookupDebug('No invite row matched this token.');
         setInviteState('invalid');
         return;
       }
-
-      let siteDetails: Pick<InviteInfo, 'site_slug' | 'couple_name_1' | 'couple_name_2'> = {};
-
-      if (data.wedding_site_id) {
-        const { data: siteData } = await supabase
-          .from('wedding_sites')
-          .select('site_slug, couple_name_1, couple_name_2')
-          .eq('id', data.wedding_site_id)
-          .maybeSingle();
-
-        if (!cancelled && siteData) {
-          siteDetails = {
-            site_slug: siteData.site_slug,
-            couple_name_1: siteData.couple_name_1,
-            couple_name_2: siteData.couple_name_2,
-          };
-        }
-      }
-
-      if (cancelled) return;
-
-      const nextInviteInfo = {
-        ...(data as InviteInfo),
-        ...siteDetails,
-      };
 
       const resolvedState = resolveInviteValidationState(nextInviteInfo);
       setInviteInfo(nextInviteInfo);

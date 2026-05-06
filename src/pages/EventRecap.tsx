@@ -6,16 +6,17 @@ import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { copyTextOrDownload } from '../lib/copyText';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
+import {
+  buildPublicAccessArtifacts,
+  capturePublicInviteTokenFromSearch,
+} from '../lib/publicAccessArtifacts';
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
 
 export const buildEventRecapGuestHubAccessPayload = (slug: string) => {
   const searchParams = new URLSearchParams(window.location.search);
-  return {
-    inviteToken: searchParams.get('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`),
-    passwordSession: sessionStorage.getItem(`dayof_pw_session_${slug}`),
-  };
+  return buildPublicAccessArtifacts(slug, searchParams);
 };
 
 export const buildEventRecapAccessHeaders = (slug: string) => {
@@ -105,6 +106,7 @@ export const EventRecap: React.FC = () => {
   const [generatingStory, setGeneratingStory] = useState(false);
 
   useEffect(() => {
+    if (slug) capturePublicInviteTokenFromSearch(slug, searchParams);
     const languagePreference = resolveGuestLanguagePreference({
       search: searchParams,
       storedLanguage: readStoredGuestLanguage(),
@@ -115,7 +117,7 @@ export const EventRecap: React.FC = () => {
     if (languagePreference.source === 'guest-link') {
       writeStoredGuestLanguage(languagePreference.language);
     }
-  }, [i18n, searchParams]);
+  }, [i18n, searchParams, slug]);
 
   useEffect(() => {
     if (!slug || !supabaseUrl || !supabaseAnonKey) return;

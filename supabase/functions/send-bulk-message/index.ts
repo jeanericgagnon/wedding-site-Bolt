@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { escapeHtml, sanitizeEmailSubject } from "../_shared/emailSafety.ts";
+import { canMutateMessages } from "../_shared/collaboratorPermissions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,10 +51,6 @@ function safeDeliveryFailureMessage(channel: string): string {
   return channel === "sms"
     ? "Text delivery did not complete. Please review the recipient and try again."
     : "Email delivery did not complete. Please review the recipient and try again.";
-}
-
-function hasPermissionKey(permissions: unknown, key: string): boolean {
-  return Array.isArray(permissions) && permissions.includes(key);
 }
 
 function countSmsSegments(body: string): number {
@@ -204,7 +201,7 @@ async function resolveSiteMessagingRole(adminClient: ReturnType<typeof createCli
 
   if (collaboratorError) throw collaboratorError;
   const role = collaboratorRow?.role;
-  if ((role === "planner" || role === "coordinator" || role === "viewer") && hasPermissionKey(collaboratorRow?.permissions, "messages")) {
+  if (canMutateMessages(role, collaboratorRow?.permissions)) {
     return role;
   }
   return null;
@@ -228,7 +225,7 @@ async function listMessageManageableSiteIds(adminClient: ReturnType<typeof creat
   return Array.from(new Set([
     ...(ownedSites ?? []).map((row: { id: string }) => row.id),
     ...(collaboratorSites ?? [])
-      .filter((row: { permissions?: unknown }) => hasPermissionKey(row.permissions, "messages"))
+      .filter((row: { role?: unknown; permissions?: unknown }) => canMutateMessages(row.role, row.permissions))
       .map((row: { wedding_site_id: string }) => row.wedding_site_id),
   ].filter(Boolean)));
 }

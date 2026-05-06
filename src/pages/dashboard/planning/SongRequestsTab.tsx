@@ -3,9 +3,14 @@ import { Copy, Download, ExternalLink, Music2, Plus, Save, Sparkles } from 'luci
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { useToast } from '../../../components/ui/Toast';
-import { supabase } from '../../../lib/supabase';
 import { copyTextOrDownload } from '../../../lib/copyText';
 import { getSafePublicWebUrl } from '../../../sections/publicLinks';
+import {
+  ensurePlanningSongRequestQuestion,
+  loadSongRequestData,
+  savePlanningPlaylistUrl,
+  type PlanningSongRequest,
+} from './planningService';
 
 interface Props {
   siteId: string | null;
@@ -13,29 +18,12 @@ interface Props {
   canEdit?: boolean;
 }
 
-interface SongRequest {
-  guestName: string;
-  answer: string;
-  respondedAt: string | null;
-}
-
-interface ParsedSongRequest extends SongRequest {
+interface ParsedSongRequest extends PlanningSongRequest {
   title: string;
   artist: string;
 }
 
-const SONG_QUESTION_ID = 'song_request';
-
-function readSongAnswer(answers: Record<string, unknown> | null | undefined): string {
-  if (!answers || typeof answers !== 'object') return '';
-  const entries = Object.entries(answers);
-  const songEntry = entries.find(([key]) => key.toLowerCase().includes('song') || key === SONG_QUESTION_ID);
-  const value = songEntry?.[1];
-  if (Array.isArray(value)) return value.join(', ');
-  return typeof value === 'string' ? value : '';
-}
-
-function parseSongRequest(request: SongRequest): ParsedSongRequest {
+function parseSongRequest(request: PlanningSongRequest): ParsedSongRequest {
   const normalized = request.answer.replace(/\s+/g, ' ').trim();
   const separator = normalized.includes(' - ') ? ' - ' : normalized.includes(' by ') ? ' by ' : null;
   if (!separator) return { ...request, title: normalized, artist: '' };
@@ -47,7 +35,7 @@ export const SongRequestsTab: React.FC<Props> = ({ siteId, isDemoMode = false, c
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [playlistUrl, setPlaylistUrl] = useState('');
-  const [requests, setRequests] = useState<SongRequest[]>([]);
+  const [requests, setRequests] = useState<PlanningSongRequest[]>([]);
   const [hasQuestion, setHasQuestion] = useState(false);
   const playlistDirtyRef = useRef(false);
   const safePlaylistUrl = getSafePublicWebUrl(playlistUrl);
@@ -68,27 +56,11 @@ export const SongRequestsTab: React.FC<Props> = ({ siteId, isDemoMode = false, c
           return;
         }
 
-        const [{ data: site }, { data: rsvps }] = await Promise.all([
-          supabase.from('wedding_sites').select('music_playlist_url, rsvp_custom_questions').eq('id', siteId).maybeSingle(),
-          supabase
-            .from('rsvps')
-            .select('custom_answers, responded_at, guests!inner(name, wedding_site_id)')
-            .eq('guests.wedding_site_id', siteId)
-            .order('responded_at', { ascending: false }),
-        ]);
+        const data = await loadSongRequestData(siteId);
         if (cancelled) return;
-        if (!playlistDirtyRef.current) setPlaylistUrl((site?.music_playlist_url as string | null) ?? '');
-        const questions = Array.isArray((site as { rsvp_custom_questions?: unknown } | null)?.rsvp_custom_questions)
-          ? ((site as { rsvp_custom_questions?: Array<{ id?: string; label?: string }> }).rsvp_custom_questions ?? [])
-          : [];
-        setHasQuestion(questions.some((question) => question.id === SONG_QUESTION_ID || String(question.label ?? '').toLowerCase().includes('song')));
-        setRequests(((rsvps ?? []) as Array<{ custom_answers?: Record<string, unknown> | null; responded_at?: string | null; guests?: { name?: string } }>)
-          .map((row) => ({
-            guestName: row.guests?.name || 'Guest',
-            answer: readSongAnswer(row.custom_answers),
-            respondedAt: row.responded_at ?? null,
-          }))
-          .filter((row) => row.answer.trim().length > 0));
+        if (!playlistDirtyRef.current) setPlaylistUrl(data.playlistUrl);
+        setHasQuestion(data.hasQuestion);
+        setRequests(data.requests);
       } catch {
         toast('Couldn’t load song requests right now.', 'error');
       } finally {
@@ -118,11 +90,9 @@ export const SongRequestsTab: React.FC<Props> = ({ siteId, isDemoMode = false, c
       toast('Playlist link saved for demo mode.', 'success');
       return;
     }
-    const { error } = await supabase
-      .from('wedding_sites')
-      .update({ music_playlist_url: playlistUrl.trim() || null, updated_at: new Date().toISOString() })
-      .eq('id', siteId);
-    if (error) {
+    try {
+      await savePlanningPlaylistUrl(siteId, playlistUrl);
+    } catch {
       toast('Couldn’t save the playlist link right now.', 'error');
       return;
     }
@@ -137,31 +107,9 @@ export const SongRequestsTab: React.FC<Props> = ({ siteId, isDemoMode = false, c
       toast('Song request question enabled for demo mode.', 'success');
       return;
     }
-    const { data, error: loadError } = await supabase
-      .from('wedding_sites')
-      .select('rsvp_custom_questions')
-      .eq('id', siteId)
-      .maybeSingle();
-    if (loadError) {
-      toast('Couldn’t read RSVP questions right now.', 'error');
-      return;
-    }
-    const questions = Array.isArray((data as { rsvp_custom_questions?: unknown } | null)?.rsvp_custom_questions)
-      ? ([...((data as { rsvp_custom_questions?: unknown[] }).rsvp_custom_questions ?? [])] as Array<Record<string, unknown>>)
-      : [];
-    if (!questions.some((question) => question.id === SONG_QUESTION_ID)) {
-      questions.push({
-        id: SONG_QUESTION_ID,
-        label: 'What song will get you on the dance floor?',
-        type: 'short_text',
-        required: false,
-      });
-    }
-    const { error } = await supabase
-      .from('wedding_sites')
-      .update({ rsvp_custom_questions: questions, updated_at: new Date().toISOString() })
-      .eq('id', siteId);
-    if (error) {
+    try {
+      await ensurePlanningSongRequestQuestion(siteId);
+    } catch {
       toast('Couldn’t enable the song request question right now.', 'error');
       return;
     }

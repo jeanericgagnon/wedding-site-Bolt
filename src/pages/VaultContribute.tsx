@@ -6,6 +6,15 @@ import { DEMO_MODE } from '../config/env';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import { fetchPublicSiteAccess } from '../lib/publicSiteAccess';
+import {
+  buildPublicAccessArtifacts,
+  capturePublicInviteTokenFromSearch,
+} from '../lib/publicAccessArtifacts';
+import {
+  listEnabledVaultContributionConfigs,
+  loadEnabledVaultContributionConfig,
+  type VaultContributionConfigInfo,
+} from './vaultContributionService';
 
 interface SiteInfo {
   id: string;
@@ -16,12 +25,7 @@ interface SiteInfo {
   vault_google_drive_connected?: boolean;
 }
 
-interface VaultConfigInfo {
-  id: string;
-  label: string;
-  duration_years: number;
-  is_enabled: boolean;
-}
+type VaultConfigInfo = VaultContributionConfigInfo;
 
 type Step = 'loading' | 'hub' | 'form' | 'success' | 'error' | 'invalid';
 const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
@@ -31,10 +35,7 @@ const DEMO_WEDDING_DATE = '2026-02-23';
 
 export const buildVaultAccessPayload = (slug: string) => {
   const searchParams = new URLSearchParams(window.location.search);
-  return {
-    inviteToken: searchParams.get('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`),
-    passwordSession: sessionStorage.getItem(`dayof_pw_session_${slug}`),
-  };
+  return buildPublicAccessArtifacts(slug, searchParams);
 };
 
 export function safeVaultUploadError(err: unknown): string {
@@ -288,6 +289,7 @@ export const VaultContribute: React.FC = () => {
       setStep('invalid');
       return;
     }
+    capturePublicInviteTokenFromSearch(siteSlug, new URLSearchParams(window.location.search));
     loadSubmittedYears();
     loadData();
   }, [siteSlug, year]);
@@ -360,39 +362,25 @@ export const VaultContribute: React.FC = () => {
     setSite(siteData);
 
     if (hasYearParam && vaultYear) {
-      const { data: configData, error: configError } = await supabase
-        .from('vault_configs')
-        .select('id, label, duration_years, is_enabled')
-        .eq('wedding_site_id', siteData.id)
-        .eq('duration_years', vaultYear)
-        .eq('is_enabled', true)
-        .maybeSingle();
+      const cfg = await loadEnabledVaultContributionConfig(siteData.id, vaultYear).catch(() => null);
 
-      if (configError || !configData) {
+      if (!cfg) {
         setStep('invalid');
         return;
       }
 
-      const cfg = configData as VaultConfigInfo;
       setVaultOptions([cfg]);
       setVaultConfig(cfg);
       setStep('form');
       return;
     }
 
-    const { data: configList, error: listError } = await supabase
-      .from('vault_configs')
-      .select('id, label, duration_years, is_enabled')
-      .eq('wedding_site_id', siteData.id)
-      .eq('is_enabled', true)
-      .order('duration_years', { ascending: true });
+    const options = await listEnabledVaultContributionConfigs(siteData.id).catch(() => []);
 
-    if (listError || !configList || configList.length === 0) {
+    if (options.length === 0) {
       setStep('invalid');
       return;
     }
-
-    const options = (configList as VaultConfigInfo[]).sort((a, b) => a.duration_years - b.duration_years);
 
     setVaultOptions(options);
     setVaultConfig(options[0]);

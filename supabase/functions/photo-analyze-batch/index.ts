@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 import { corsHeaders, fail, json, sha256Hex, sleep } from "../_shared/photoUtils.ts";
+import { canMutatePhotos } from "../_shared/collaboratorPermissions.ts";
 
 const HOSTED_BUCKET = "photo-uploads";
 const DEFAULT_LIMIT = 40;
@@ -890,9 +891,7 @@ Deno.serve(async (req: Request) => {
         .eq("wedding_site_id", siteId)
         .eq("user_id", userData.user.id)
         .maybeSingle();
-      const role = String(collaborator?.role ?? "");
-      const permissions = Array.isArray(collaborator?.permissions) ? collaborator.permissions.map(String) : [];
-      hasAccess = role === "owner" || role === "coordinator" || permissions.includes("photos") || permissions.includes("media");
+      hasAccess = canMutatePhotos(collaborator?.role, collaborator?.permissions);
     }
     if (!hasAccess) return fail("FORBIDDEN", "You do not have photo analysis access for this site.", 403);
 

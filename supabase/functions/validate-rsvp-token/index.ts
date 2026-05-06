@@ -647,7 +647,7 @@ Deno.serve(async (req: Request) => {
 
       const guest = await validateRsvpSession(guestId, rsvpSession);
 
-      if (!guest) return json({ error: "We couldn't find your invitation. Please use the RSVP link from your invitation email, or search by your full name." }, 404);
+      if (!guest) return json({ error: "We couldn't find your invitation. Please use the private RSVP link or code from your invitation." }, 404);
       if (!guest.invite_token) {
         await logConflict(guest.wedding_site_id, guestId, "invite_token_mismatch", "RSVP session did not resolve to a valid guest token.", submitPayload);
         return json({ error: "This RSVP link isn't valid. Please use the original link from your invitation email, or ask the couple for a new one." }, 403);

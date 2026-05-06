@@ -4,6 +4,7 @@ import { CheckCircle, Loader2 } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
 import { supabase } from '../../../lib/supabase';
 import { getSafePublicImageUrl, getSafePublicWebUrl } from '../../publicLinks';
+import { buildPublicAccessArtifacts } from '../../../lib/publicAccessArtifacts';
 
 const RsvpEventSchema = z.object({
   id: z.string(),
@@ -81,8 +82,9 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
 
     try {
       const slug = siteSlug ?? '';
-      const inviteToken = slug ? sessionStorage.getItem(`dayof_invite_token_${slug}`) : null;
-      const passwordSession = slug ? sessionStorage.getItem(`dayof_pw_session_${slug}`) : null;
+      const { inviteToken, passwordSession } = slug
+        ? buildPublicAccessArtifacts(slug, new URLSearchParams(window.location.search))
+        : { inviteToken: null, passwordSession: null };
       const { error } = await supabase.functions.invoke('public-site-rsvp-submit', {
         body: {
           slug,

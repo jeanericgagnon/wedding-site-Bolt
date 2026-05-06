@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildPhotoUploadAccessPayload, mapUploadError, PhotoUpload, safePhotoUploadMessage } from './PhotoUpload';
 
 vi.mock('react-i18next', () => ({
@@ -38,6 +38,11 @@ vi.mock('react-i18next', () => ({
 vi.mock('../components/ui/LanguageSwitcher', () => ({
   LanguageSwitcher: () => React.createElement('div', { 'data-testid': 'language-switcher' }),
 }));
+
+afterEach(() => {
+  sessionStorage.clear();
+  window.history.replaceState({}, '', '/');
+});
 
 describe('photo upload guest error copy', () => {
   it('packages invite and password artifacts for gated site photo uploads', () => {

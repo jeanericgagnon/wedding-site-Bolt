@@ -65,15 +65,16 @@ describe('public site access client contract', () => {
 
   it('keeps public-site gate artifacts in session storage only', () => {
     const siteView = readFileSync('src/pages/SiteView.tsx', 'utf8');
+    const artifacts = readFileSync('src/lib/publicAccessArtifacts.ts', 'utf8');
 
-    expect(siteView).toContain('sessionStorage.getItem(INVITE_TOKEN_KEY)');
-    expect(siteView).toContain('sessionStorage.setItem(INVITE_TOKEN_KEY, urlToken)');
+    expect(artifacts).toContain('sessionStorage.getItem(getPublicInviteTokenStorageKey(slug))');
+    expect(artifacts).toContain('sessionStorage.setItem(getPublicInviteTokenStorageKey(slug), token)');
     expect(siteView).toContain('sessionStorage.removeItem(INVITE_TOKEN_KEY)');
-    expect(siteView).toContain('sessionStorage.getItem(PASSWORD_SESSION_KEY)');
+    expect(artifacts).toContain('sessionStorage.getItem(getPublicPasswordSessionStorageKey(slug))');
     expect(siteView).toContain('sessionStorage.setItem(PASSWORD_SESSION_KEY, result.passwordSession)');
-    expect(siteView).not.toContain('localStorage.getItem(INVITE_TOKEN_KEY)');
-    expect(siteView).not.toContain('localStorage.setItem(INVITE_TOKEN_KEY');
-    expect(siteView).not.toContain('localStorage.getItem(PASSWORD_SESSION_KEY)');
-    expect(siteView).not.toContain('localStorage.setItem(PASSWORD_SESSION_KEY');
+    expect(`${siteView}\n${artifacts}`).not.toContain('localStorage.getItem(INVITE_TOKEN_KEY)');
+    expect(`${siteView}\n${artifacts}`).not.toContain('localStorage.setItem(INVITE_TOKEN_KEY');
+    expect(`${siteView}\n${artifacts}`).not.toContain('localStorage.getItem(PASSWORD_SESSION_KEY)');
+    expect(`${siteView}\n${artifacts}`).not.toContain('localStorage.setItem(PASSWORD_SESSION_KEY');
   });
 });

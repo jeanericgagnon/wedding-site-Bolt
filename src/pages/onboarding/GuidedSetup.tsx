@@ -14,6 +14,11 @@ import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
 import { buildGuidedSetupHydrationErrorMessage, buildGuidedSetupSaveErrorMessage } from '../../lib/guidedSetupErrorCopy';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import {
+  fetchGuidedSetupSite,
+  updateGuidedSetupSite,
+  upsertGuidedSetupGuestFromCsv,
+} from './onboardingService';
 
 type Step =
   | 'welcome'
@@ -195,11 +200,7 @@ export const GuidedSetup: React.FC = () => {
         setSiteId(resolvedSiteId);
         if (!resolvedSiteId) return;
 
-        const { data } = await supabase
-        .from('wedding_sites')
-        .select('id, couple_name_1, couple_name_2, wedding_date, venue_date, venue_name, venue_address, wedding_location')
-        .eq('id', resolvedSiteId)
-        .maybeSingle();
+        const data = await fetchGuidedSetupSite(user.id);
 
         if (data) {
           setCoupleNames((prev) => ({
@@ -280,13 +281,7 @@ export const GuidedSetup: React.FC = () => {
     const resolvedSiteId = siteId || await resolvePrimaryWeddingSiteId(user.id);
     if (!resolvedSiteId) throw new Error('Couldn’t find your wedding site right now.');
 
-    const { error: updateError } = await supabase
-      .from('wedding_sites')
-      .update(updateData)
-      .eq('id', resolvedSiteId)
-      .eq('user_id', user.id);
-
-    if (updateError) throw updateError;
+    await updateGuidedSetupSite({ siteId: resolvedSiteId, userId: user.id, updateData });
   };
 
   const handleNext = async () => {
@@ -350,13 +345,7 @@ export const GuidedSetup: React.FC = () => {
       const resolvedSiteId = siteId || await resolvePrimaryWeddingSiteId(user.id);
       if (!resolvedSiteId) throw new Error('Couldn’t find your wedding site right now.');
 
-      const { error: updateError } = await supabase
-        .from('wedding_sites')
-        .update(updateData)
-        .eq('id', resolvedSiteId)
-        .eq('user_id', user.id);
-
-      if (updateError) throw updateError;
+      await updateGuidedSetupSite({ siteId: resolvedSiteId, userId: user.id, updateData });
 
       clearAllOnboardingContinuationState();
       navigate('/dashboard', {
@@ -469,48 +458,18 @@ export const GuidedSetup: React.FC = () => {
 
         if (!firstName && !lastName && !email) { invalid++; continue; }
 
-        const name = [firstName, lastName].filter(Boolean).join(' ') || email || 'Guest';
-
-        if (email) {
-          const { data: existing, error: existingError } = await supabase
-            .from('guests')
-            .select('id')
-            .eq('wedding_site_id', resolvedSiteId)
-            .eq('email', email)
-            .maybeSingle();
-          if (existingError) throw existingError;
-
-          if (existing) {
-            const { error: updateGuestError } = await supabase.from('guests').update({
-              first_name: firstName || null,
-              last_name: lastName || null,
-              phone: phone || null,
-              group_name: groupName,
-              plus_one_allowed: plusOne,
-              invited_to_ceremony: toCeremony,
-              invited_to_reception: toReception,
-            }).eq('id', existing.id);
-            if (updateGuestError) throw updateGuestError;
-            updated++;
-            continue;
-          }
-        }
-
-        const { error: insertGuestError } = await supabase.from('guests').insert({
-          wedding_site_id: resolvedSiteId,
-          name,
-          first_name: firstName || null,
-          last_name: lastName || null,
+        const result = await upsertGuidedSetupGuestFromCsv(resolvedSiteId, {
+          firstName,
+          lastName,
           email: email || null,
           phone: phone || null,
-          group_name: groupName,
-          plus_one_allowed: plusOne,
-          invited_to_ceremony: toCeremony,
-          invited_to_reception: toReception,
-          rsvp_status: 'pending',
+          groupName,
+          plusOne,
+          invitedToCeremony: toCeremony,
+          invitedToReception: toReception,
         });
-        if (insertGuestError) throw insertGuestError;
-        created++;
+        if (result === 'updated') updated++;
+        else created++;
       }
 
       setCsvImportResult({ created, updated, invalid });

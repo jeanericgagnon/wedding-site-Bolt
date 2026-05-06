@@ -269,10 +269,10 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
           </button>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {venmoUrl && <a href={venmoUrl} target="_blank" rel="noreferrer" className="text-xs px-2 py-1 border rounded-lg">Venmo</a>}
-          {paypalUrl && <a href={paypalUrl} target="_blank" rel="noreferrer" className="text-xs px-2 py-1 border rounded-lg">PayPal</a>}
+          {venmoUrl && <a href={venmoUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 border rounded-lg">Venmo</a>}
+          {paypalUrl && <a href={paypalUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 border rounded-lg">PayPal</a>}
           {item.fund_zelle_handle && <span className="text-xs px-2 py-1 border rounded-lg">Zelle: {item.fund_zelle_handle}</span>}
-          {customFundUrl && <a href={customFundUrl} target="_blank" rel="noreferrer" className="text-xs px-2 py-1 border rounded-lg">{item.fund_custom_label || 'Link'}</a>}
+          {customFundUrl && <a href={customFundUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 border rounded-lg">{item.fund_custom_label || 'Link'}</a>}
           {item.fund_zelle_handle && (
             <button onClick={() => copyText('Zelle', item.fund_zelle_handle || '')} className="text-xs px-2 py-1 border rounded-lg hover:border-primary hover:text-primary">Copy Zelle</button>
           )}

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { useToast } from '../../components/ui/Toast';
-import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { demoWeddingSite, demoGuests, demoPlanningTasks, demoBudgetItems, demoVendors, demoNameChangeCase, demoNameChangeDocuments, demoNameChangeExtractedFields } from '../../lib/demoData';
@@ -15,6 +14,10 @@ import {
   loadVendors, createVendor, updateVendor, deleteVendor,
   generateMilestoneTasks,
   buildStarterPlannerSuite,
+  loadPlanningGuestCount,
+  loadPlanningSeatingReadiness,
+  loadPlanningSiteMeta,
+  updatePlanningTotalBudget,
 } from './planning/planningService';
 import { buildNameChangePlan } from '../../lib/nameChange/engine';
 import { syncNameChangeRemindersWithStepExecution } from '../../lib/nameChange/reminders';
@@ -194,19 +197,16 @@ export const DashboardPlanning: React.FC = () => {
         loadTasks(id),
         loadBudgetItems(id),
         loadVendors(id),
-        supabase.from('wedding_sites').select('wedding_data, venue_name, is_destination_wedding').eq('id', id).maybeSingle(),
-        supabase.from('guests').select('id', { count: 'exact', head: true }).eq('wedding_site_id', id),
+        loadPlanningSiteMeta(id),
+        loadPlanningGuestCount(id),
       ]);
       setTasks(tasksData);
       setBudgetItems(budgetData);
       setVendors(vendorsData);
-      setGuestCount(guestCountResult.count ?? 0);
-      setVenueName((siteMeta.data?.venue_name as string | null) ?? null);
-      setDestinationWedding(Boolean(siteMeta.data?.is_destination_wedding));
-
-      const weddingData = (siteMeta.data?.wedding_data as Record<string, unknown> | null) ?? null;
-      const planningMeta = (weddingData?.planning as Record<string, unknown> | undefined) ?? {};
-      setTotalBudget(Number(planningMeta.totalBudget) || 0);
+      setGuestCount(guestCountResult);
+      setVenueName(siteMeta.venueName);
+      setDestinationWedding(siteMeta.destinationWedding);
+      setTotalBudget(siteMeta.totalBudget);
 
       await loadSeatingReadiness(id);
 
@@ -228,37 +228,7 @@ export const DashboardPlanning: React.FC = () => {
 
   async function loadSeatingReadiness(id: string) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { count: attendingCount } = await supabase
-        .from('guests')
-        .select('id', { count: 'exact', head: true })
-        .eq('wedding_site_id', id)
-        .in('rsvp_status', ['confirmed', 'attending']);
-
-      const { data: seatingEventsData } = await supabase
-        .from('seating_events')
-        .select('id')
-        .eq('wedding_site_id', id);
-
-      let seatedCount = 0;
-      if (seatingEventsData && seatingEventsData.length > 0) {
-        const eventIds = seatingEventsData.map(e => e.id);
-        const { count } = await supabase
-          .from('seating_assignments')
-          .select('id', { count: 'exact', head: true })
-          .in('seating_event_id', eventIds)
-          .eq('is_valid', true);
-        seatedCount = count ?? 0;
-      }
-
-      const attending = attendingCount ?? 0;
-      setSeatingReadiness({
-        attending,
-        seated: seatedCount,
-        unassigned: Math.max(0, attending - seatedCount),
-      });
+      setSeatingReadiness(await loadPlanningSeatingReadiness(id));
     } catch {
     }
   }
@@ -654,36 +624,7 @@ export const DashboardPlanning: React.FC = () => {
         return;
       }
 
-      const { data: siteData } = await supabase
-        .from('wedding_sites')
-        .select('wedding_data')
-        .eq('id', siteId)
-        .maybeSingle();
-
-      const weddingData = (siteData?.wedding_data as Record<string, unknown> | null) ?? {};
-      const planning = (weddingData.planning as Record<string, unknown> | undefined) ?? {};
-      const nextWeddingData = {
-        ...weddingData,
-        planning: {
-          ...planning,
-          totalBudget: value,
-        },
-      };
-
-      let { error } = await supabase
-        .from('wedding_sites')
-        .update({ wedding_data: nextWeddingData, updated_at: new Date().toISOString() })
-        .eq('id', siteId);
-
-      if (error?.message?.includes('wedding_data')) {
-        const fallback = await supabase
-          .from('wedding_sites')
-          .update({ updated_at: new Date().toISOString() })
-          .eq('id', siteId);
-        error = fallback.error;
-      }
-
-      if (error) throw error;
+      await updatePlanningTotalBudget(siteId, value);
       setTotalBudget(value);
       toast('Total budget updated', 'success');
     } catch {

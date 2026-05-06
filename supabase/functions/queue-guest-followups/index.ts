@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { canMutateMessages } from "../_shared/collaboratorPermissions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,10 +15,6 @@ const json = (body: Record<string, unknown>, status = 200) =>
   });
 
 type FollowupKind = "recap" | "future_event";
-
-function hasPermissionKey(permissions: unknown, key: string): boolean {
-  return Array.isArray(permissions) && permissions.includes(key);
-}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
@@ -59,12 +56,12 @@ Deno.serve(async (req: Request) => {
     if (!allowed) {
       const { data: collaborator, error: collaboratorError } = await admin
         .from("wedding_site_collaborators")
-        .select("permissions")
+        .select("role, permissions")
         .eq("wedding_site_id", siteId)
         .eq("user_id", user.id)
         .maybeSingle();
       if (collaboratorError) throw collaboratorError;
-      allowed = hasPermissionKey(collaborator?.permissions, "messages");
+      allowed = canMutateMessages(collaborator?.role, collaborator?.permissions);
     }
     if (!allowed) return json({ error: "Forbidden" }, 403);
 

@@ -66,6 +66,7 @@ export function hasPlannerPermission(
   permission: PlannerPermissionKey,
 ): boolean {
   if (role === 'owner') return true;
+  if (role === 'viewer') return false;
   if (Array.isArray(permissions)) return permissions.includes(permission);
   return getPlannerPermissionPreset(role as Exclude<PlannerAccessRole, 'owner'>).includes(permission);
 }

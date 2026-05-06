@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { z } from 'zod';
 import { ExternalLink, Music2, Send, Sparkles } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
-import { supabase } from '../../../lib/supabase';
+import { submitInteractiveSuggestion } from '../../interactiveSectionService';
 import { getSafePublicWebUrl } from '../../publicLinks';
 
 export const musicRequestFormSchema = z.object({
@@ -55,10 +55,10 @@ const MusicRequestForm: React.FC<SectionComponentProps<MusicRequestFormData>> = 
     setValue('');
     setSent(true);
     if (siteSlug) {
-      await supabase.from('interactive_suggestions').insert({
-        site_slug: siteSlug,
-        prompt_key: promptKey,
-        suggestion_text: song,
+      await submitInteractiveSuggestion({
+        siteSlug,
+        promptKey,
+        suggestionText: song,
       });
     }
   }

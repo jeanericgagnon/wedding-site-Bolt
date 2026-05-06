@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
-import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown, LogOut, Users, ClipboardList } from 'lucide-react';
+import { Save, ExternalLink, Layout, Sparkles, Loader2, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getSiteVisibilityState, getVisibilityModeOptions } from '../../lib/siteVisibilityState';
 import { getAllTemplates } from '../../templates/registry';
@@ -12,7 +12,7 @@ import { LayoutConfigV1 } from '../../types/layoutConfig';
 import { regenerateLayout } from '../../lib/generateInitialLayout';
 import { fromExistingLayoutToBuilderProject } from '../../builder/adapters/layoutAdapter';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
-import { fetchBillingInfo, createSubscriptionSession, daysUntilExpiry, type BillingInfo } from '../../lib/stripeService';
+import { fetchBillingInfo, createSubscriptionSession, type BillingInfo } from '../../lib/stripeService';
 import { useAuth } from '../../hooks/useAuth';
 import { PLANNER_ROLE_OPTIONS, PLANNER_PERMISSION_GROUPS, getPlannerPermissionPreset, readPlannerInvite, writePlannerInvite, type PlannerAccessRole, type PlannerInviteRecord, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
@@ -32,9 +32,16 @@ import {
 import {
   generateSettingsSecureToken,
   hashSettingsSitePassword,
+  createSettingsCollaboratorInvite,
+  findSettingsSiteBySlug,
+  loadSettingsCollaboratorInvites,
   loadSettingsSite,
+  loadSettingsTemplateChangeSite,
+  loadSettingsTranslationStatuses,
+  revokeSettingsCollaboratorInvite,
   translateSettingsSiteContent,
   updateSettingsSite,
+  type SettingsCollaboratorInviteRow,
   type SettingsSiteUpdates,
 } from './settings/settingsSiteData';
 import {
@@ -60,6 +67,10 @@ import {
   splitCoupleNames,
 } from './settings/settingsDashboardUtils';
 import { readDemoRsvpSettings, writeDemoRsvpSettings } from './settings/settingsDemoStorage';
+import { SettingsAccountPanel } from './settings/SettingsAccountPanel';
+import { SettingsBillingPanel } from './settings/SettingsBillingPanel';
+import { getSettingsTabs, SettingsNavigation, type SettingsTabId } from './settings/SettingsNavigation';
+import { SettingsNotificationsPanel } from './settings/SettingsNotificationsPanel';
 
 const useDraftHydrationGuard = (clearStatus: () => void) => {
   const dirtyRef = useRef(false);
@@ -82,7 +93,7 @@ export const DashboardSettings: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, isDemoMode, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'account' | 'team' | 'site' | 'rsvp' | 'notifications' | 'billing'>('account');
+  const [activeTab, setActiveTab] = useState<SettingsTabId>('account');
 
   const [coupleNames, setCoupleNames] = useState('');
   const [weddingDate, setWeddingDate] = useState<string | null>(null);
@@ -134,7 +145,7 @@ export const DashboardSettings: React.FC = () => {
   const [plannerInviteRole, setPlannerInviteRole] = useState<'planner' | 'coordinator' | 'viewer'>('planner');
   const [plannerInviteError, setPlannerInviteError] = useState<string | null>(null);
   const [plannerInviteSuccess, setPlannerInviteSuccess] = useState<string | null>(null);
-  const [collaboratorInvites, setCollaboratorInvites] = useState<Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; expires_at?: string | null; invite_token?: string; permissions?: PlannerPermissionKey[] }>>([]);
+  const [collaboratorInvites, setCollaboratorInvites] = useState<SettingsCollaboratorInviteRow[]>([]);
   const [creatingCollaboratorInvite, setCreatingCollaboratorInvite] = useState(false);
   const [plannerInvitePermissions, setPlannerInvitePermissions] = useState<PlannerPermissionKey[]>(getPlannerPermissionPreset('planner'));
   const [revokingCollaboratorInviteId, setRevokingCollaboratorInviteId] = useState<string | null>(null);
@@ -206,13 +217,7 @@ export const DashboardSettings: React.FC = () => {
   };
 
   const loadCollaboratorInvites = async (siteId: string) => {
-    const { data: inviteRows, error: inviteLoadError } = await supabase
-      .from('wedding_site_collaborator_invites')
-      .select('id, invite_email, invite_name, role, status, invited_at, expires_at, invite_token, permissions')
-      .eq('wedding_site_id', siteId)
-      .order('invited_at', { ascending: false });
-    if (inviteLoadError) throw inviteLoadError;
-    setCollaboratorInvites((inviteRows as Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; expires_at?: string | null; invite_token?: string; permissions?: PlannerPermissionKey[] }> | null) ?? []);
+    setCollaboratorInvites(await loadSettingsCollaboratorInvites(siteId));
   };
 
   const resolveSettingsSiteId = async () => {
@@ -246,19 +251,19 @@ export const DashboardSettings: React.FC = () => {
   };
 
   const loadTranslationStatuses = async (siteId: string) => {
-    const { data, error } = await supabase
-      .from('site_translations')
-      .select('language,status,translated_at')
-      .eq('wedding_site_id', siteId)
-      .in('language', TRANSLATION_LANGUAGE_OPTIONS.map((option) => option.value));
-
-    if (error) {
+    let data: Awaited<ReturnType<typeof loadSettingsTranslationStatuses>>;
+    try {
+      data = await loadSettingsTranslationStatuses(
+        siteId,
+        TRANSLATION_LANGUAGE_OPTIONS.map((option) => option.value),
+      );
+    } catch {
       setTranslationStatuses([]);
       return;
     }
 
     setTranslationStatuses(
-      ((data ?? []) as Array<{ language?: string | null; status?: string | null; translated_at?: string | null }>)
+      data
         .filter((row): row is TranslationStatusRow =>
           TRANSLATION_LANGUAGE_OPTIONS.some((option) => option.value === row.language) &&
           (row.status === 'ready' || row.status === 'failed')
@@ -411,11 +416,7 @@ export const DashboardSettings: React.FC = () => {
     setAccountSuccess(null);
     try {
       const { name1, name2 } = splitCoupleNames(coupleNames);
-      const { error } = await supabase
-        .from('wedding_sites')
-        .update({ couple_name_1: name1, couple_name_2: name2 })
-        .eq('id', weddingSiteId);
-      if (error) throw error;
+      await updateSettingsSite(weddingSiteId, { couple_name_1: name1, couple_name_2: name2 });
       setAccountSuccess('Account information saved.');
     } catch (err) {
       setAccountError(safeSettingsError(err, 'Couldn’t save changes.'));
@@ -528,22 +529,15 @@ export const DashboardSettings: React.FC = () => {
     setCreatingCollaboratorInvite(true);
     try {
       const inviteToken = crypto.randomUUID();
-      const { data, error } = await supabase
-        .from('wedding_site_collaborator_invites')
-        .insert({
-          wedding_site_id: targetSiteId,
-          invite_email: email,
-          invite_name: name,
-          role: plannerInviteRole,
-          status: 'pending',
-          invite_token: inviteToken,
-          invited_by: user.id,
-          permissions: plannerInvitePermissions,
-        })
-        .select('id, invite_email, invite_name, role, status, invited_at, expires_at, invite_token, permissions')
-        .single();
-
-      if (error) throw error;
+      const data = await createSettingsCollaboratorInvite({
+        weddingSiteId: targetSiteId,
+        inviteEmail: email,
+        inviteName: name,
+        role: plannerInviteRole,
+        inviteToken,
+        invitedBy: user.id,
+        permissions: plannerInvitePermissions,
+      });
 
       await loadCollaboratorInvites(targetSiteId);
       logSettingsAction('collaborator_invite_created', 'Collaborator invite was created.', {
@@ -565,12 +559,7 @@ export const DashboardSettings: React.FC = () => {
     setRevokingCollaboratorInviteId(inviteId);
     try {
       const invite = collaboratorInvites.find((row) => row.id === inviteId);
-      const { error } = await supabase
-        .from('wedding_site_collaborator_invites')
-        .update({ status: 'revoked', revoked_at: new Date().toISOString() })
-        .eq('id', inviteId);
-
-      if (error) throw error;
+      await revokeSettingsCollaboratorInvite(inviteId);
 
       if (weddingSiteId) {
         await loadCollaboratorInvites(weddingSiteId);
@@ -633,13 +622,7 @@ export const DashboardSettings: React.FC = () => {
 
       let targetSiteId = weddingSiteId;
       if (!targetSiteId && user?.id) {
-        const { data: fallbackSite, error: fallbackSiteError } = await supabase
-          .from('wedding_sites')
-          .select('id')
-          .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
-          .maybeSingle();
-        if (fallbackSiteError) throw fallbackSiteError;
-        targetSiteId = (fallbackSite?.id as string | null) ?? null;
+        targetSiteId = await resolveSettingsSiteId();
         if (targetSiteId) setWeddingSiteId(targetSiteId);
       }
       if (!targetSiteId) {
@@ -648,22 +631,13 @@ export const DashboardSettings: React.FC = () => {
         return;
       }
 
-      const { data: existing, error: existingError } = await supabase
-        .from('wedding_sites')
-        .select('id')
-        .eq('site_slug', cleaned)
-        .maybeSingle();
-      if (existingError) throw existingError;
+      const existing = await findSettingsSiteBySlug(cleaned);
       if (existing && existing.id !== targetSiteId) {
         setSlugError('That URL is already taken. Please choose another.');
         setSlugSaving(false);
         return;
       }
-      const { error } = await supabase
-        .from('wedding_sites')
-        .update({ site_slug: cleaned })
-        .eq('id', targetSiteId);
-      if (error) throw error;
+      await updateSettingsSite(targetSiteId, { site_slug: cleaned });
       setSiteSlug(cleaned);
       logSettingsAction('site_slug_updated', 'Public site URL slug was updated.', { slug: cleaned }, targetSiteId, cleaned, targetSiteId);
       setSlugSuccess(`Site URL updated to /${cleaned}`);
@@ -1000,13 +974,7 @@ export const DashboardSettings: React.FC = () => {
     setTemplateError(null);
     setTemplateSuccess(null);
     try {
-      const { data, error: fetchError } = await supabase
-        .from('wedding_sites')
-        .select('wedding_data, layout_config, site_json')
-        .eq('id', weddingSiteId)
-        .maybeSingle();
-
-      if (fetchError) throw fetchError;
+      const data = await loadSettingsTemplateChangeSite(weddingSiteId);
       if (!data) throw new Error(SETTINGS_SITE_MISSING_COPY);
 
       const weddingData = data.wedding_data as WeddingDataV1;
@@ -1020,12 +988,7 @@ export const DashboardSettings: React.FC = () => {
         ? mergeGeneratedDraftIntoBuilderProject(rebuiltProject as unknown as Record<string, unknown>, aiDraft, aiContent, photoBuckets)
         : rebuiltProject;
 
-      const { error: updateError } = await supabase
-        .from('wedding_sites')
-        .update({ active_template_id: newTemplateId, layout_config: newLayout, site_json: remappedSiteJson })
-        .eq('id', weddingSiteId);
-
-      if (updateError) throw updateError;
+      await updateSettingsSite(weddingSiteId, { active_template_id: newTemplateId, layout_config: newLayout, site_json: remappedSiteJson });
       setCurrentTemplate(newTemplateId);
       logSettingsAction('template_changed', 'Site template was changed.', {
         templateId: newTemplateId,
@@ -1039,14 +1002,7 @@ export const DashboardSettings: React.FC = () => {
     }
   };
 
-  const tabs = [
-    { id: 'account' as const, label: 'Account', icon: User },
-    { id: 'team' as const, label: 'Team Access', icon: Users },
-    { id: 'site' as const, label: 'Site Settings', icon: Globe },
-    { id: 'rsvp' as const, label: 'RSVP', icon: ClipboardList },
-    { id: 'notifications' as const, label: 'Notifications', icon: Bell },
-    { id: 'billing' as const, label: 'Billing', icon: CreditCard },
-  ].filter((tab) => settingsRole === 'owner' || (tab.id !== 'team' && tab.id !== 'billing'));
+  const tabs = getSettingsTabs(settingsRole);
   const translationStatusByLanguage = new Map(translationStatuses.map((row) => [row.language, row]));
 
   return (
@@ -1064,153 +1020,36 @@ export const DashboardSettings: React.FC = () => {
         />
 
         <div className="flex flex-col md:flex-row gap-8">
-          <nav className="md:w-56 flex-shrink-0" aria-label="Settings navigation">
-            <div className="rounded-lg border border-border-subtle bg-white/80 p-2">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`
-                      w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors
-                      ${activeTab === tab.id
-                        ? 'bg-primary/10 text-text-primary font-medium'
-                        : 'text-text-secondary hover:bg-surface-subtle hover:text-text-primary'
-                      }
-                    `}
-                  >
-                    <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </nav>
+          <SettingsNavigation activeTab={activeTab} tabs={tabs} onTabChange={setActiveTab} />
 
           <div className="flex-1 space-y-6">
             {activeTab === 'account' && (
-              <>
-                <Card variant="bordered" padding="lg">
-                  <CardHeader>
-                    <CardTitle>Account Information</CardTitle>
-                    <CardDescription>Update your account details</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={handleSaveAccount} className="space-y-4">
-                      {accountSuccess && (
-                        <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{accountSuccess}</div>
-                      )}
-                      {accountError && (
-                        <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">{accountError}</div>
-                      )}
-                      <Input
-                        label="Partner names"
-                        value={coupleNames}
-                        onChange={e => setCoupleNames(e.target.value)}
-                        placeholder="e.g. Alex & Jordan"
-                        helperText="Separate names with &"
-                      />
-                      <div>
-                        <label className="block text-sm font-medium text-text-primary mb-1">Email</label>
-                        <p className="text-sm text-text-secondary px-3 py-2 bg-surface-subtle border border-border rounded-lg">{accountEmail}</p>
-                        <p className="text-xs text-text-tertiary mt-1">Contact support to change your email address.</p>
-                      </div>
-                      <div className="flex justify-end pt-2">
-                        <Button variant="primary" size="md" type="submit" disabled={accountSaving}>
-                          {accountSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                          Save Changes
-                        </Button>
-                      </div>
-                    </form>
-                  </CardContent>
-                </Card>
-
-                <Card variant="bordered" padding="lg">
-                  <CardHeader>
-                    <CardTitle>Password</CardTitle>
-                    <CardDescription>Change your password</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={handleUpdatePassword} className="space-y-4">
-                      {passwordSuccess && (
-                        <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{passwordSuccess}</div>
-                      )}
-                      {passwordError && (
-                        <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">{passwordError}</div>
-                      )}
-                      <div className="relative">
-                        <Input
-                          label="Current password"
-                          type={showCurrentPw ? 'text' : 'password'}
-                          value={currentPassword}
-                          onChange={e => setCurrentPassword(e.target.value)}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowCurrentPw(v => !v)}
-                          className="absolute right-3 top-8 text-text-tertiary hover:text-text-primary"
-                          aria-label={showCurrentPw ? 'Hide password' : 'Show password'}
-                        >
-                          {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                      <div className="relative">
-                        <Input
-                          label="New password"
-                          type={showNewPw ? 'text' : 'password'}
-                          value={newPassword}
-                          onChange={e => setNewPassword(e.target.value)}
-                          helperText="Minimum 8 characters"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowNewPw(v => !v)}
-                          className="absolute right-3 top-8 text-text-tertiary hover:text-text-primary"
-                          aria-label={showNewPw ? 'Hide password' : 'Show password'}
-                        >
-                          {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                      <div className="relative">
-                        <Input
-                          label="Confirm new password"
-                          type={showConfirmPw ? 'text' : 'password'}
-                          value={confirmPassword}
-                          onChange={e => setConfirmPassword(e.target.value)}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPw(v => !v)}
-                          className="absolute right-3 top-8 text-text-tertiary hover:text-text-primary"
-                          aria-label={showConfirmPw ? 'Hide password' : 'Show password'}
-                        >
-                          {showConfirmPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                      <div className="flex justify-end pt-2">
-                        <Button variant="primary" size="md" type="submit" disabled={passwordSaving}>
-                          {passwordSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Lock className="w-4 h-4 mr-2" />}
-                          Update Password
-                        </Button>
-                      </div>
-                    </form>
-                  </CardContent>
-                </Card>
-
-                <Card variant="bordered" padding="lg">
-                  <CardHeader>
-                    <CardTitle>Session</CardTitle>
-                    <CardDescription>Log out of your account on this device</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex justify-end">
-                    <Button variant="outline" size="md" onClick={handleLogout}>
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Log out
-                    </Button>
-                  </CardContent>
-                </Card>
-              </>
+              <SettingsAccountPanel
+                coupleNames={coupleNames}
+                accountEmail={accountEmail}
+                accountSaving={accountSaving}
+                accountSuccess={accountSuccess}
+                accountError={accountError}
+                currentPassword={currentPassword}
+                newPassword={newPassword}
+                confirmPassword={confirmPassword}
+                showCurrentPw={showCurrentPw}
+                showNewPw={showNewPw}
+                showConfirmPw={showConfirmPw}
+                passwordSaving={passwordSaving}
+                passwordSuccess={passwordSuccess}
+                passwordError={passwordError}
+                onCoupleNamesChange={setCoupleNames}
+                onCurrentPasswordChange={setCurrentPassword}
+                onNewPasswordChange={setNewPassword}
+                onConfirmPasswordChange={setConfirmPassword}
+                onToggleCurrentPassword={() => setShowCurrentPw((value) => !value)}
+                onToggleNewPassword={() => setShowNewPw((value) => !value)}
+                onToggleConfirmPassword={() => setShowConfirmPw((value) => !value)}
+                onSaveAccount={handleSaveAccount}
+                onUpdatePassword={handleUpdatePassword}
+                onLogout={handleLogout}
+              />
             )}
 
             {activeTab === 'team' && (
@@ -2088,237 +1927,33 @@ export const DashboardSettings: React.FC = () => {
             )}
 
             {activeTab === 'notifications' && (
-              <Card variant="bordered" padding="lg">
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <CardTitle>Email Notifications</CardTitle>
-                      <CardDescription>Choose what updates you want to receive</CardDescription>
-                    </div>
-                    <Button type="button" variant="outline" size="sm" onClick={() => setShowNotificationSettings((v) => !v)}>
-                      {showNotificationSettings ? 'Hide' : 'Show'}
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {!showNotificationSettings ? (
-                    <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
-                      Hidden by default to keep this page easy to scan. Open it when you want to choose which updates you get.
-                    </div>
-                  ) : (
-                  <form onSubmit={handleSaveNotifications} className="space-y-4">
-                    {notifSuccess && (
-                      <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{notifSuccess}</div>
-                    )}
-                    {notifError && (
-                      <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">{notifError}</div>
-                    )}
-                    <label className="flex items-start gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notifRsvp}
-                        onChange={e => { notifDraftGuard.markDirty(); setNotifRsvp(e.target.checked); }}
-                        className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                      />
-                      <div className="flex-1">
-                        <p className="font-medium text-text-primary">New RSVPs</p>
-                        <p className="text-sm text-text-secondary">Get notified when guests respond</p>
-                      </div>
-                    </label>
-
-                    <label className="flex items-start gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notifPhotos}
-                        onChange={e => { notifDraftGuard.markDirty(); setNotifPhotos(e.target.checked); }}
-                        className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                      />
-                      <div className="flex-1">
-                        <p className="font-medium text-text-primary">Photo uploads</p>
-                        <p className="text-sm text-text-secondary">Get notified when guests upload photos</p>
-                      </div>
-                    </label>
-
-                    <label className="flex items-start gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notifDigest}
-                        onChange={e => { notifDraftGuard.markDirty(); setNotifDigest(e.target.checked); }}
-                        className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                      />
-                      <div className="flex-1">
-                        <p className="font-medium text-text-primary">Weekly digest</p>
-                        <p className="text-sm text-text-secondary">Summary of activity on your site</p>
-                      </div>
-                    </label>
-
-                    <label className="flex items-start gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notifUpdates}
-                        onChange={e => { notifDraftGuard.markDirty(); setNotifUpdates(e.target.checked); }}
-                        className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                      />
-                      <div className="flex-1">
-                        <p className="font-medium text-text-primary">Product updates</p>
-                        <p className="text-sm text-text-secondary">New features and improvements</p>
-                      </div>
-                    </label>
-
-                    <div className="flex justify-end pt-2">
-                      <Button variant="primary" size="md" type="submit" disabled={notifSaving}>
-                        {notifSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                        Save Preferences
-                      </Button>
-                    </div>
-                  </form>
-                  )}
-                </CardContent>
-              </Card>
+              <SettingsNotificationsPanel
+                showNotificationSettings={showNotificationSettings}
+                notifRsvp={notifRsvp}
+                notifPhotos={notifPhotos}
+                notifDigest={notifDigest}
+                notifUpdates={notifUpdates}
+                notifSaving={notifSaving}
+                notifSuccess={notifSuccess}
+                notifError={notifError}
+                onToggleVisibility={() => setShowNotificationSettings((value) => !value)}
+                onRsvpChange={(value) => { notifDraftGuard.markDirty(); setNotifRsvp(value); }}
+                onPhotosChange={(value) => { notifDraftGuard.markDirty(); setNotifPhotos(value); }}
+                onDigestChange={(value) => { notifDraftGuard.markDirty(); setNotifDigest(value); }}
+                onUpdatesChange={(value) => { notifDraftGuard.markDirty(); setNotifUpdates(value); }}
+                onSaveNotifications={handleSaveNotifications}
+              />
             )}
 
             {activeTab === 'billing' && (
-              <>
-                {billingLoading && (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 animate-spin text-text-secondary" />
-                  </div>
-                )}
-
-                {billingError && (
-                  <div className="flex items-start gap-2 p-4 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    <span>{billingError}</span>
-                  </div>
-                )}
-
-                {!billingLoading && billingInfo && (
-                  <>
-                    <Card variant="bordered" padding="lg">
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <CardTitle>Site Access</CardTitle>
-                            <CardDescription>Your current plan and access period</CardDescription>
-                          </div>
-                          <Badge variant={billingInfo.billing_type === 'recurring' ? 'success' : 'primary'}>
-                            {billingInfo.billing_type === 'recurring' ? 'Annual Plan' : '2-Year Access'}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-5">
-                        {billingInfo.billing_type === 'one_time' ? (
-                          <>
-                            <div className="flex items-start gap-4 p-4 bg-surface-subtle rounded-lg border border-border">
-                              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                <Calendar className="w-5 h-5 text-primary" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-text-primary">One-time purchase — 2 years access</p>
-                                {billingInfo.site_expires_at && (() => {
-                                  const days = daysUntilExpiry(billingInfo.site_expires_at);
-                                  const expDate = formatSettingsDate(billingInfo.site_expires_at, { year: 'numeric', month: 'long', day: 'numeric' });
-                                  const isExpiringSoon = days !== null && days <= 90;
-                                  return (
-                                    <p className={`text-sm mt-0.5 ${isExpiringSoon ? 'text-text-secondary font-medium' : 'text-text-secondary'}`}>
-                                      {isExpiringSoon && days !== null && days > 0
-                                        ? `Expires in ${days} days — ${expDate}`
-                                        : days !== null && days <= 0
-                                          ? 'Site access has expired'
-                                          : `Active until ${expDate}`}
-                                    </p>
-                                  );
-                                })()}
-                              </div>
-                            </div>
-
-                            <div className="border border-border rounded-lg overflow-hidden">
-                              <div className="px-5 py-4 bg-surface-subtle/45 border-b border-border">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <Repeat className="w-4 h-4 text-accent" />
-                                  <p className="font-semibold text-text-primary">Switch to Annual Billing</p>
-                                </div>
-                                <p className="text-sm text-text-secondary">Never worry about renewals — your site stays live as long as you're subscribed.</p>
-                              </div>
-                              <div className="px-5 py-4 space-y-3">
-                                <div className="space-y-2">
-                                  {['Automatic annual renewal', 'Site stays live indefinitely', 'Cancel anytime', 'Same price as a 1-year renewal'].map(f => (
-                                    <p key={f} className="flex items-center gap-2 text-sm text-text-secondary">
-                                      <Check className="w-4 h-4 text-success flex-shrink-0" />
-                                      {f}
-                                    </p>
-                                  ))}
-                                </div>
-
-                                {subscribeError && (
-                                  <div className="flex items-start gap-2 p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">
-                                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                                    <span>{subscribeError}</span>
-                                  </div>
-                                )}
-
-                                <Button
-                                  variant="accent"
-                                  size="md"
-                                  onClick={handleSubscribe}
-                                  disabled={subscribeLoading}
-                                >
-                                  {subscribeLoading ? (
-                                    <>
-                                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                      Redirecting...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Sparkles className="w-4 h-4 mr-2" />
-                                      Switch to Annual Billing
-                                    </>
-                                  )}
-                                </Button>
-                              </div>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="flex items-start gap-4 p-4 bg-surface-subtle rounded-lg border border-border">
-                            <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center flex-shrink-0">
-                              <Repeat className="w-5 h-5 text-success" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-text-primary">Annual subscription — site stays live</p>
-                              <p className="text-sm text-text-secondary mt-0.5">Your site renews automatically each year. Cancel anytime from your Stripe customer portal.</p>
-                            </div>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-
-                    {billingInfo.paid_at && (
-                      <Card variant="bordered" padding="lg">
-                        <CardHeader>
-                          <CardTitle>Billing History</CardTitle>
-                          <CardDescription>Your payment records</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex items-center justify-between py-3 border-b border-border-subtle">
-                            <div>
-                              <p className="font-medium text-text-primary">
-                                {billingInfo.billing_type === 'recurring' ? 'Annual Plan' : 'dayof.love, 2-Year Access'}
-                              </p>
-                              <p className="text-sm text-text-secondary">
-                                {formatSettingsDate(billingInfo.paid_at, { year: 'numeric', month: 'long', day: 'numeric' })}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <Badge variant="success">Paid</Badge>
-                              <span className="font-semibold text-text-primary">$49.00</span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </>
-                )}
-              </>
+              <SettingsBillingPanel
+                billingInfo={billingInfo}
+                billingLoading={billingLoading}
+                billingError={billingError}
+                subscribeError={subscribeError}
+                subscribeLoading={subscribeLoading}
+                onSubscribe={handleSubscribe}
+              />
             )}
           </div>
         </div>

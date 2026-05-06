@@ -385,7 +385,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                 <a
                   href={`/site/${siteSlug}`}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="hidden items-center gap-2 rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary hover:bg-surface-subtle sm:inline-flex"
                 >
                   <ExternalLink className="w-4 h-4" />

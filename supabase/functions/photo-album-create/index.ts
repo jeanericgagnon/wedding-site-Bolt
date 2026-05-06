@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders, fail, json, sha256Hex } from "../_shared/photoUtils.ts";
+import { canMutatePhotos } from "../_shared/collaboratorPermissions.ts";
 
 const slugify = (value: string) =>
   value
@@ -188,7 +189,22 @@ Deno.serve(async (req: Request) => {
       .eq("id", siteId)
       .maybeSingle();
 
-    if (!site || site.user_id !== user.id) return fail("FORBIDDEN", "Forbidden", 403);
+    if (!site) return fail("FORBIDDEN", "Forbidden", 403);
+    let allowed = site.user_id === user.id;
+    if (!allowed) {
+      const { data: collaborator, error: collaboratorError } = await admin
+        .from("wedding_site_collaborators")
+        .select("role,permissions")
+        .eq("wedding_site_id", siteId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (collaboratorError) {
+        console.error("PHOTO_ALBUM_CREATE_COLLABORATOR_FAILED", { reason: "COLLABORATOR_LOAD_FAILED" });
+        return fail("PERMISSION_ERROR", safePhotoAlbumCreateError("AUTH"), 400);
+      }
+      allowed = canMutatePhotos(collaborator?.role, collaborator?.permissions);
+    }
+    if (!allowed) return fail("FORBIDDEN", "Forbidden", 403);
 
     let parentAlbum: Record<string, unknown> | null = null;
     if (parentAlbumId) {

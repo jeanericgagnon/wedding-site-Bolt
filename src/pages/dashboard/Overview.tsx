@@ -13,8 +13,6 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
 import { Eye, Users, ExternalLink, Edit, EyeOff, Palette, Radio } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { buildDraftSitePatchFromProfile, getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
 import { generateDraftFromWeddingProfile, mergeGeneratedDraftIntoWeddingData } from '../../lib/aiDraftGenerator';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
@@ -43,6 +41,19 @@ import { buildInvisibleIntelligenceSuggestions, type IntelligenceSuggestion } fr
 import { buildCalmDigestDeliveryPreview, buildCalmOwnerDigest, type CalmDigestPriority } from '../../lib/calmOwnerDigest';
 import { buildWebsiteInviteAnalyticsFunnelReview, buildWebsiteInviteAnalyticsReadiness } from '../../lib/websiteInviteAnalyticsReadiness';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../lib/plannerAccess';
+import {
+  hideInteractiveSuggestion,
+  loadOverviewActiveSite,
+  loadOverviewCounts,
+  loadOverviewDraftSource,
+  loadOverviewGuests,
+  loadOverviewInteractiveActivity,
+  markOverviewBuilderFieldAsUserEdited,
+  persistOverviewIntelligenceDismissals,
+  updateOverviewDraftFromBrief,
+  type OverviewInteractiveSuggestionRow,
+  type OverviewInteractiveVoteRow,
+} from './overviewService';
 
 const INTELLIGENCE_DISMISSALS_STORAGE_KEY = 'dayof_intelligence_dismissed_v1';
 
@@ -103,19 +114,8 @@ interface RecentRsvp {
   receivedAt: string;
 }
 
-interface InteractiveSuggestion {
-  id: string;
-  suggestion_text: string;
-  created_at: string;
-}
-
-interface InteractiveVoteRow {
-  id: string;
-  widget_kind: 'poll' | 'quiz';
-  widget_id: string;
-  option_id: string;
-  created_at: string;
-}
+type InteractiveSuggestion = OverviewInteractiveSuggestionRow;
+type InteractiveVoteRow = OverviewInteractiveVoteRow;
 
 interface InteractiveVoteSummary {
   key: string;
@@ -185,41 +185,7 @@ export const DashboardOverview: React.FC = () => {
 
   async function markBuilderFieldAsUserEdited(fieldPath: string) {
     if (!stats?.siteId) return;
-
-    const { data, error } = await supabase
-      .from('wedding_sites')
-      .select('site_json')
-      .eq('id', stats.siteId)
-      .maybeSingle();
-
-    if (error) throw error;
-
-    const nextSiteJson = structuredClone((data?.site_json as Record<string, unknown> | null) ?? {});
-    const segments = fieldPath.split('.');
-    let cursor: Record<string, unknown> = nextSiteJson;
-
-    for (let i = 0; i < segments.length - 1; i += 1) {
-      const key = segments[i];
-      cursor[key] = ((cursor[key] as Record<string, unknown> | undefined) ?? {});
-      cursor = cursor[key] as Record<string, unknown>;
-    }
-
-    const leaf = segments[segments.length - 1];
-    const current = cursor[leaf];
-    if (current && typeof current === 'object' && 'value' in (current as Record<string, unknown>)) {
-      cursor[leaf] = {
-        ...(current as Record<string, unknown>),
-        source: 'user-edited',
-        updatedAt: new Date().toISOString(),
-      };
-    }
-
-    const { error: updateError } = await supabase
-      .from('wedding_sites')
-      .update({ site_json: nextSiteJson })
-      .eq('id', stats.siteId);
-
-    if (updateError) throw updateError;
+    await markOverviewBuilderFieldAsUserEdited(stats.siteId, fieldPath);
     await loadStats();
   }
 
@@ -227,13 +193,7 @@ export const DashboardOverview: React.FC = () => {
 
     setRefreshingBrief(true);
     try {
-      const { data, error } = await supabase
-        .from('wedding_sites')
-        .select('onboarding_answers, site_json, wedding_data')
-        .eq('id', stats.siteId)
-        .maybeSingle();
-
-      if (error) throw error;
+      const data = await loadOverviewDraftSource(stats.siteId);
       if (!isWeddingProfile(data?.onboarding_answers)) throw new Error('No saved brief found');
 
       const patch = buildDraftSitePatchFromProfile(data.onboarding_answers);
@@ -255,24 +215,19 @@ export const DashboardOverview: React.FC = () => {
         (existingAiContent as unknown as import('../../lib/aiCanonicalContent').AiCanonicalSectionContent | null) ?? canonicalAiContent
       );
 
-      const { error: updateError } = await supabase
-        .from('wedding_sites')
-        .update({
-          ...patch,
-          wedding_data: {
-            ...mergedWeddingData,
-            meta: {
-              ...((((mergedWeddingData.meta as Record<string, unknown> | undefined) ?? {}))),
-              aiDraft: generatedDraft,
-              aiContent: canonicalAiContent,
-              photoBuckets: ((((mergedWeddingData.meta as Record<string, unknown> | undefined) ?? {}).photoBuckets as Record<string, unknown> | undefined) ?? null),
-            },
+      await updateOverviewDraftFromBrief(stats.siteId, {
+        ...patch,
+        wedding_data: {
+          ...mergedWeddingData,
+          meta: {
+            ...((((mergedWeddingData.meta as Record<string, unknown> | undefined) ?? {}))),
+            aiDraft: generatedDraft,
+            aiContent: canonicalAiContent,
+            photoBuckets: ((((mergedWeddingData.meta as Record<string, unknown> | undefined) ?? {}).photoBuckets as Record<string, unknown> | undefined) ?? null),
           },
-          site_json: patchedBuilderProject,
-        })
-        .eq('id', stats.siteId);
-
-      if (updateError) throw updateError;
+        },
+        site_json: patchedBuilderProject,
+      });
       await loadStats();
     } catch (err) {
       const message = customerSafeErrorMessage(err, 'Failed to refresh draft from brief');
@@ -334,25 +289,11 @@ export const DashboardOverview: React.FC = () => {
     let mounted = true;
     const loadSuggestions = async () => {
       setInteractiveLoading(true);
-      const [suggestionsResult, votesResult] = await Promise.all([
-        supabase
-          .from('interactive_suggestions')
-          .select('id, suggestion_text, created_at')
-          .eq('site_slug', slug)
-          .eq('is_hidden', false)
-          .order('created_at', { ascending: false })
-          .limit(8),
-        supabase
-          .from('interactive_votes')
-          .select('id, widget_kind, widget_id, option_id, created_at')
-          .eq('site_slug', slug)
-          .order('created_at', { ascending: false })
-          .limit(500),
-      ]);
+      const activity = await loadOverviewInteractiveActivity(slug);
 
       if (!mounted) return;
-      if (!suggestionsResult.error) setInteractiveSuggestions((suggestionsResult.data ?? []) as InteractiveSuggestion[]);
-      if (!votesResult.error) setInteractiveVoteSummaries(summarizeInteractiveVotes((votesResult.data ?? []) as InteractiveVoteRow[]));
+      setInteractiveSuggestions(activity.suggestions);
+      setInteractiveVoteSummaries(summarizeInteractiveVotes(activity.votes));
       setInteractiveLoading(false);
     };
 
@@ -429,38 +370,7 @@ export const DashboardOverview: React.FC = () => {
         return;
       }
 
-      const activeSite = await resolveActiveSiteForUser(user.id);
-      const { data: ownedSite, error: siteErr } = await supabase
-        .from('wedding_sites')
-.select('id, site_slug, site_url, is_published, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
-        .eq('id', activeSite?.id ?? '')
-        .maybeSingle();
-
-      if (siteErr) throw siteErr;
-
-      let site = ownedSite;
-
-      if (!site) {
-        const { data: collaboratorLink, error: collaboratorErr } = await supabase
-          .from('wedding_site_collaborators')
-          .select('wedding_site_id')
-          .eq('user_id', user.id)
-          .limit(1)
-          .maybeSingle();
-
-        if (collaboratorErr) throw collaboratorErr;
-
-        if (collaboratorLink?.wedding_site_id) {
-          const { data: collaboratorSite, error: collaboratorSiteErr } = await supabase
-            .from('wedding_sites')
-            .select('id, site_slug, site_url, is_published, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
-            .eq('id', collaboratorLink.wedding_site_id)
-            .maybeSingle();
-
-          if (collaboratorSiteErr) throw collaboratorSiteErr;
-          site = collaboratorSite;
-        }
-      }
+      const { activeSite, site } = await loadOverviewActiveSite(user.id);
 
       let weddingDate: string | null = null;
       let templateName: string | null = null;
@@ -506,42 +416,10 @@ export const DashboardOverview: React.FC = () => {
         }
       }
 
-      const { data: guests, error: guestsErr } = await supabase
-        .from('guests')
-        .select('id, rsvp_status, rsvp_received_at, first_name, last_name, name, email, phone')
-        .eq('wedding_site_id', site?.id ?? '')
-        .order('rsvp_received_at', { ascending: false });
-
-      if (guestsErr) throw guestsErr;
-
-      const { count: registryItemCount } = await supabase
-        .from('registry_items')
-        .select('id', { count: 'exact', head: true })
-        .eq('wedding_site_id', site?.id ?? '');
-
-      const { count: photoAlbumCount } = await supabase
-        .from('photo_albums')
-        .select('id', { count: 'exact', head: true })
-        .eq('wedding_site_id', site?.id ?? '');
-
-      const { count: activePhotoAlbumCount } = await supabase
-        .from('photo_albums')
-        .select('id', { count: 'exact', head: true })
-        .eq('wedding_site_id', site?.id ?? '')
-        .eq('is_active', true);
-
-      const { count: vaultCount } = await supabase
-        .from('vault_configs')
-        .select('id', { count: 'exact', head: true })
-        .eq('wedding_site_id', site?.id ?? '');
-
-      const { count: enabledVaultCount } = await supabase
-        .from('vault_configs')
-        .select('id', { count: 'exact', head: true })
-        .eq('wedding_site_id', site?.id ?? '')
-        .eq('is_enabled', true);
-
-      const allGuests = guests ?? [];
+      const [allGuests, counts] = await Promise.all([
+        loadOverviewGuests(site?.id),
+        loadOverviewCounts(site?.id),
+      ]);
       const confirmed = allGuests.filter((g) => isAttendingRsvpStatus(g.rsvp_status));
       const declined = allGuests.filter((g) => isDeclinedRsvpStatus(g.rsvp_status));
       const pending = allGuests.filter((g) => isPendingRsvpStatus(g.rsvp_status));
@@ -610,11 +488,11 @@ export const DashboardOverview: React.FC = () => {
         coupleName2: site?.couple_name_2 ?? null,
         venueName: site?.venue_name ?? null,
         venueLocation: site?.wedding_location ?? null,
-        registryItemCount: registryItemCount ?? 0,
-        photoAlbumCount: photoAlbumCount ?? 0,
-        activePhotoAlbumCount: activePhotoAlbumCount ?? 0,
-        vaultCount: vaultCount ?? 0,
-        enabledVaultCount: enabledVaultCount ?? 0,
+        registryItemCount: counts.registryItemCount,
+        photoAlbumCount: counts.photoAlbumCount,
+        activePhotoAlbumCount: counts.activePhotoAlbumCount,
+        vaultCount: counts.vaultCount,
+        enabledVaultCount: counts.enabledVaultCount,
         contactableGuestCount,
         recentRsvps,
         activeSiteRole: activeSite?.role ?? 'owner',
@@ -684,34 +562,13 @@ export const DashboardOverview: React.FC = () => {
     } catch {}
     if (!stats?.siteId || isDemoMode) return;
 
-    void (async () => {
-      const { data, error } = await supabase
-        .from('wedding_sites')
-        .select('wedding_data')
-        .eq('id', stats.siteId)
-        .maybeSingle();
-      if (error) return;
-
-      const weddingData = (data?.wedding_data as Record<string, unknown> | null) ?? {};
-      const meta = (weddingData.meta as Record<string, unknown> | undefined) ?? {};
-      await supabase
-        .from('wedding_sites')
-        .update({
-          wedding_data: {
-            ...weddingData,
-            meta: {
-              ...meta,
-              intelligenceDismissals: next,
-            },
-          },
-        })
-        .eq('id', stats.siteId);
-    })();
+    void persistOverviewIntelligenceDismissals(stats.siteId, next).catch(() => {});
   };
 
   const hideSuggestion = async (id: string) => {
-    const { error } = await supabase.from('interactive_suggestions').update({ is_hidden: true }).eq('id', id);
-    if (error) {
+    try {
+      await hideInteractiveSuggestion(id);
+    } catch {
       toast('Couldn’t hide that suggestion right now.', 'error');
       return;
     }

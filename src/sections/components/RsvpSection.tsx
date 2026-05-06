@@ -5,6 +5,7 @@ import { Calendar } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { readBuilderValue } from '../../lib/weddingProfile';
 import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
+import { buildPublicAccessArtifacts } from '../../lib/publicAccessArtifacts';
 
 interface Props {
   data: WeddingDataV1;
@@ -26,8 +27,7 @@ function formatDeadline(iso: string | undefined): string | null {
 async function getSiteId(): Promise<string | null> {
   const slug = window.location.pathname.split('/site/')[1];
   if (!slug) return null;
-  const inviteToken = new URLSearchParams(window.location.search).get('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`);
-  const passwordSession = sessionStorage.getItem(`dayof_pw_session_${slug}`);
+  const { inviteToken, passwordSession } = buildPublicAccessArtifacts(slug, new URLSearchParams(window.location.search));
   const { data, error } = await supabase.functions.invoke('public-site-access', {
     body: {
       action: 'resolve',
@@ -76,8 +76,7 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
         return;
       }
       const slug = window.location.pathname.split('/site/')[1] ?? '';
-      const inviteToken = new URLSearchParams(window.location.search).get('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`);
-      const passwordSession = sessionStorage.getItem(`dayof_pw_session_${slug}`);
+      const { inviteToken, passwordSession } = buildPublicAccessArtifacts(slug, new URLSearchParams(window.location.search));
       const { error: submitError } = await supabase.functions.invoke('public-site-rsvp-submit', {
         body: {
           slug,

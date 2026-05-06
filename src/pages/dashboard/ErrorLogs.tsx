@@ -1,20 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { Card } from '../../components/ui/Card';
 import { Link } from 'react-router-dom';
 import { formatErrorLogDateTime, getErrorLogTimestamp } from './errorLogTime';
 import { copyTextOrDownload } from '../../lib/copyText';
-
-interface ErrorLogRow {
-  id: string;
-  created_at: string;
-  source: string;
-  severity: string;
-  route: string | null;
-  message: string;
-  fingerprint: string | null;
-}
+import { isErrorLogAdmin, loadDashboardErrorLogs, type ErrorLogRow } from './errorLogService';
 
 interface GroupedError {
   fingerprint: string;
@@ -57,20 +47,16 @@ export const DashboardErrorLogs: React.FC = () => {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('user_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!mounted) return;
-      if (error) {
+      try {
+        const admin = await isErrorLogAdmin(user.id);
+        if (!mounted) return;
+        setIsAdmin(admin);
+      } catch {
+        if (!mounted) return;
         setError('Couldn’t verify error-log access right now.');
         setLogsLoading(false);
         return;
       }
-
-      setIsAdmin(!!data);
     })();
 
     return () => {
@@ -87,13 +73,8 @@ export const DashboardErrorLogs: React.FC = () => {
     let mounted = true;
     (async () => {
       try {
-        const { data, error } = await supabase
-          .from('app_error_logs')
-          .select('id, created_at, source, severity, route, message, fingerprint')
-          .order('created_at', { ascending: false })
-          .limit(100);
-        if (error) throw error;
-        if (mounted) setRows((data ?? []) as ErrorLogRow[]);
+        const logs = await loadDashboardErrorLogs();
+        if (mounted) setRows(logs);
       } catch {
         if (mounted) setError('Couldn’t load error logs right now.');
       } finally {

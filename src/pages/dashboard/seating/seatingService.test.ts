@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deriveEventCountersFromGuests, deriveGuestEventAttendance, exportPlaceCardsCSV, exportSeatingCSV, type EligibleGuest, type SeatingAssignment, type SeatingTable } from './seatingService';
+import { deriveEventCountersFromGuests, deriveGuestEventAttendance, exportPlaceCardsCSV, exportSeatingCSV, mapSeatingLookupRows, type EligibleGuest, type SeatingAssignment, type SeatingTable } from './seatingService';
 
 describe('deriveGuestEventAttendance', () => {
   it('requires an explicit positive event RSVP when event invitations exist', () => {
@@ -264,5 +264,50 @@ describe('seating CSV exports', () => {
     expect(exportSeatingCSV(guests, tables, assignments, '-Ceremony')).toContain('"\'=HYPERLINK(""https://bad.example"")"');
     expect(exportSeatingCSV(guests, tables, assignments, '-Ceremony')).toContain('"\'@Head Table"');
     expect(exportPlaceCardsCSV(guests, tables, assignments)).toContain('"\'@Head Table"');
+  });
+});
+
+describe('mapSeatingLookupRows', () => {
+  it('builds quick lookup rows from assignments, tables, and guest names', () => {
+    expect(mapSeatingLookupRows(
+      [
+        { guest_id: 'guest-1', table_id: 'table-1', seat_index: 2, checked_in_at: null },
+        { guest_id: 'guest-2', table_id: null, seat_index: null, checked_in_at: '2026-01-01T00:00:00Z' },
+        { guest_id: 'guest-3', table_id: 'missing-table', seat_index: 1, checked_in_at: null },
+      ],
+      [{ id: 'table-1', table_name: 'Sweetheart Table' }],
+      [
+        { id: 'guest-1', first_name: 'Alex', last_name: 'Rivera', name: 'Alex R.', email: 'alex@example.com', rsvp_status: 'attending' },
+        { id: 'guest-2', first_name: null, last_name: null, name: 'Sam Lee', email: null, rsvp_status: 'confirmed' },
+      ],
+    )).toEqual([
+      {
+        guest_id: 'guest-1',
+        full_name: 'Alex Rivera',
+        email: 'alex@example.com',
+        table_name: 'Sweetheart Table',
+        seat_index: 2,
+        checked_in_at: null,
+        rsvp_status: 'attending',
+      },
+      {
+        guest_id: 'guest-2',
+        full_name: 'Sam Lee',
+        email: null,
+        table_name: 'Unassigned',
+        seat_index: null,
+        checked_in_at: '2026-01-01T00:00:00Z',
+        rsvp_status: 'confirmed',
+      },
+      {
+        guest_id: 'guest-3',
+        full_name: 'Guest',
+        email: null,
+        table_name: 'Unassigned',
+        seat_index: 1,
+        checked_in_at: null,
+        rsvp_status: null,
+      },
+    ]);
   });
 });

@@ -1,7 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { HeartHandshake, PenLine, Send } from 'lucide-react';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
+import {
+  buildPublicAccessArtifacts,
+  capturePublicInviteTokenFromSearch,
+} from '../lib/publicAccessArtifacts';
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
@@ -14,10 +18,7 @@ export const friendlyGuestbookError = (err: unknown) => {
 
 export const buildGuestbookAccessPayload = (slug: string) => {
   const searchParams = new URLSearchParams(window.location.search);
-  return {
-    inviteToken: searchParams.get('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`),
-    passwordSession: sessionStorage.getItem(`dayof_pw_session_${slug}`),
-  };
+  return buildPublicAccessArtifacts(slug, searchParams);
 };
 
 export const GuestbookSubmit: React.FC = () => {
@@ -32,6 +33,10 @@ export const GuestbookSubmit: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const inputClassName = 'w-full rounded-lg border border-stone-200 bg-white px-4 py-3 text-base text-stone-900 outline-none transition focus:border-stone-400 focus:ring-4 focus:ring-stone-200/70';
   const labelClassName = 'mb-2 block text-sm font-medium text-stone-800';
+
+  useEffect(() => {
+    if (siteSlug) capturePublicInviteTokenFromSearch(siteSlug, new URLSearchParams(window.location.search));
+  }, [siteSlug]);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();

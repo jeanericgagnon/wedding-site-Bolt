@@ -6,9 +6,9 @@ _Scope:_ 10/10 production-hardening execution. No deploy unless Eric explicitly 
 
 ## Current Verdict
 
-Final Production Readiness Score: 7/10
+Final Production Readiness Score: 8/10
 
-The app has substantial local hardening in place, but it is not production-ready until P0/P1 security boundaries are proven locally and, where production behavior is involved, after approved live deploy/proof. The active standard is real private wedding and guest data must be safe by design.
+The approved production deploy and current non-SMS postdeploy proof are green, and additional local hardening continues. The app is still not 10/10 production-ready until remaining P1/P2 security, service-role integrity, live model-backed AI, and live messaging authorization proof are complete. The active standard is real private wedding and guest data must be safe by design.
 
 ## No Feature Loss Checklist
 
@@ -1687,3 +1687,1929 @@ Live proof status:
 
 Status:
 - PARTIAL overall production hardening. The approved production deploy is live and postdeploy proof is green for the current non-SMS launch surface, but full 10/10 readiness still depends on finishing remaining P1/P2 hardening, service-role integrity proof, live model-key proof when secrets are configured, and pushing/committing the local branch.
+
+### 2026-05-05 2:28 PM PT - P1 Messaging Viewer Mutation Hardening
+
+What changed:
+- Hardened `send-bulk-message`, `send-wedding-email`, and `queue-guest-followups` so collaborators must be `planner` or `coordinator` with the relevant permission before mutating messaging or guest follow-up state.
+- Scheduled bulk-message processing now filters manageable site ids through the same role-aware mutation helper, so queued sends cannot be processed under a viewer-only collaborator grant.
+- Updated frontend planner permission helpers so `viewer` remains read-only even if a stale explicit permission array includes `messages` or `guests`.
+- Preserved owner, planner, and coordinator flows; this batch only closes the viewer mutation gap.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 2 files and 37 tests.
+- `npm run smoke:messages`: PASS.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run proof:v1:board:md`: PASS.
+- `git diff --check`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. Local email/messaging authorization risk is narrowed with focused proof. No deploy was run, so live messaging authorization proof remains open before marking this P1 item fully done.
+
+### 2026-05-05 2:35 PM PT - P1 Photo/Media Viewer Mutation Hardening
+
+What changed:
+- Hardened `photo-album-create`, `photo-export-manifest`, `photo-album-manage`, `photo-upload-moderate`, and `photo-analyze-batch` so photo/media mutations, album creation, exports, and AI analysis require owner access or a `planner`/`coordinator` collaborator role.
+- Preserved current planner/coordinator role-preset behavior when older collaborator rows do not include a permissions array, while still enforcing explicit `photos`/`media` permissions when that array is present.
+- Blocked viewer collaborators from creating albums, exporting photo manifests, changing album links/windows, moderating photos, or triggering photo analysis even if a stale explicit permission array contains `photos` or `media`.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 2 files and 37 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. Local photo/media service-role authorization risk is narrowed with static proof. No deploy was run, so live service-role/RLS proof remains open.
+
+### 2026-05-05 2:43 PM PT - Shared Collaborator Permission Helper
+
+What changed:
+- Added `supabase/functions/_shared/collaboratorPermissions.ts` for shared collaborator mutation authorization helpers.
+- Replaced local duplicate helper implementations in messaging and photo/media Edge Functions with imports from the shared helper.
+- Kept the already-proven behavior: owners retain access, planner/coordinator roles can mutate when the relevant permission rules allow it, and viewers remain read-only even with stale explicit permission arrays.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 2 files and 38 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This improves maintainability and lowers future permission-drift risk. No deploy was run, so live service-role/RLS and live messaging authorization proof remain open.
+
+### 2026-05-05 2:46 PM PT - Public Site Invite URL Cleanup
+
+What changed:
+- Added `getUrlWithoutPublicAccessToken` in `SiteView` and use it after a valid invite token is captured.
+- Public invite-only site URLs now remove `?token=` from the address bar after storing the access artifact in slug-scoped `sessionStorage`.
+- Preserved other query params and hash fragments, so language/deep-link state is not lost.
+
+Commands run:
+- `npm test -- --run src/pages/SiteView.test.ts src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 3 files and 44 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. Local browser-token exposure risk is reduced. No deploy was run, so production behavior is unchanged until an approved deploy.
+
+### 2026-05-05 2:53 PM PT - Guest Route Invite URL Cleanup
+
+What changed:
+- Added `src/lib/publicAccessArtifacts.ts` to centralize slug-scoped public invite token and password-session storage keys, access-artifact packaging, and visible `token` query cleanup.
+- Updated `SiteView`, Event Hub, Event Recap, and site-slug Photo Upload to use the shared helper.
+- Guest invite links still work, current URL tokens still take precedence, and stored access artifacts still support gated subresource calls after the visible token is removed.
+
+Commands run:
+- `npm test -- --run src/lib/publicAccessArtifacts.test.ts src/pages/SiteView.test.ts src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx src/pages/PhotoUpload.test.ts`: PASS, 5 files and 36 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. Local browser-token exposure risk is further reduced across guest routes. No deploy was run, so production behavior is unchanged until an approved deploy.
+
+### 2026-05-05 2:57 PM PT - Public Contribution Access Artifact Consolidation
+
+What changed:
+- Updated Vault Contribution, Guest Contact Update, Guestbook Submit, public RSVP section submit, and multi-event RSVP section submit to use `src/lib/publicAccessArtifacts.ts`.
+- Vault Contribution, Guest Contact Update, and Guestbook Submit now capture valid invite tokens into slug-scoped session storage and remove the visible `token` query parameter on first load.
+- Preserved valid gated contribution flows by keeping current-link tokens preferred and using stored invite/password artifacts for later subresource calls.
+
+Commands run:
+- `npm test -- --run src/lib/publicAccessArtifacts.test.ts src/pages/GuestContactUpdate.test.ts src/pages/GuestbookSubmit.test.ts src/pages/VaultContribute.test.ts src/sections/components/RsvpSection.test.tsx src/sections/variants/rsvp/multiEvent.test.tsx src/pages/SiteView.test.ts src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx src/pages/PhotoUpload.test.ts`: PASS, 10 files and 68 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. Local browser-token exposure and access-artifact drift risk are reduced across public contribution surfaces. No deploy was run, so production behavior is unchanged until an approved deploy.
+
+### 2026-05-05 3:08 PM PT - Planning Data-Boundary Service Extraction
+
+What changed:
+- Moved planning site metadata, guest-count lookup, seating-readiness lookup, and total-budget persistence out of `src/pages/dashboard/Planning.tsx` into `src/pages/dashboard/planning/planningService.ts`.
+- Added explicit planning service projections for the site metadata, total-budget, and seating-readiness reads.
+- Updated the dashboard data-boundary regression test so Planning cannot quietly reintroduce direct page-level site/guest reads for these flows.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/planning/planningServiceStarterSuite.test.ts`: PASS, 3 files and 16 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This reduces direct Supabase/page-coupling risk in the planning dashboard without changing planning behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 3:12 PM PT - Planning Sub-Tab Service Extraction
+
+What changed:
+- Moved address-collection site/guest reads, song-request site/RSVP reads, playlist save, and song-question enablement from planning sub-tabs into `src/pages/dashboard/planning/planningService.ts`.
+- Added explicit service projections for address collection and song request flows.
+- Extended static data-boundary proof so `AddressCollectionTab.tsx` and `SongRequestsTab.tsx` cannot quietly reintroduce direct Supabase page imports/calls for these paths.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/planning/planningServiceStarterSuite.test.ts`: PASS, 3 files and 18 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows planning direct-data-access drift while preserving address collection and song request behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 3:18 PM PT - Seating Lookup Service Extraction
+
+What changed:
+- Moved the seating lookup page's active-site resolution, latest seating event lookup, valid assignment reads, table reads, guest reads, and lookup-row mapping into `src/pages/dashboard/seating/seatingService.ts`.
+- Added explicit seating lookup projections for events, assignments, tables, and guests.
+- Extended static data-boundary proof so the seating lookup page cannot quietly reintroduce direct Supabase or active-site imports.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/seating/seatingService.test.ts src/pages/dashboard/seating/seatingDashboardUtils.test.ts src/pages/dashboard/seating/seatingDemoStorage.test.ts`: PASS, 4 files and 34 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows seating lookup direct-data-access drift while preserving the quick lookup feature. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 3:25 PM PT - Coordinator Mode Service Extraction
+
+What changed:
+- Moved Coordinator Mode bootstrap reads, event-invitation mapping, Q&A reads, guest check-in updates, day-of alert inserts, manual Q&A inserts, and Q&A answer updates into `src/pages/dashboard/coordinator/coordinatorService.ts`.
+- Removed direct Supabase and active-site imports from `CoordinatorMode.tsx`.
+- Added explicit Coordinator service projections for guests, itinerary events, event invitations, and Q&A rows.
+- Lowered the file-size guard baseline for `CoordinatorMode.tsx` from 2773 to 2736 lines.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts src/pages/dashboard/coordinator/coordinatorDashboardUtils.test.ts src/pages/dashboard/coordinator/coordinatorStorage.test.ts src/lib/coordinatorCheckInQueue.test.ts src/lib/coordinatorAlertLogView.test.ts src/lib/coordinatorQnaFlow.test.ts`: PASS, 7 files and 29 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows coordinator direct-data-access drift while preserving day-of coordinator behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 3:31 PM PT - Messages Scheduled Campaign Service Boundary
+
+What changed:
+- Moved the dashboard save-the-date scheduled campaign insert behind `src/pages/dashboard/messages/messageService.ts`.
+- Added an explicit `MessageInsertPayload` contract for that message insert.
+- Extended static data-boundary proof so the save-the-date path cannot quietly reintroduce direct page-owned `supabase.from('messages').insert(payload)`.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageDashboardUtils.test.ts src/pages/dashboard/messages/messageDemoStorage.test.ts src/pages/dashboard/messageTemplateVariables.test.ts src/lib/guestMessageLanguagePreview.test.ts`: PASS, 5 files and 33 tests.
+- `npm run typecheck -- --pretty false`: initially FAIL on broad inferred payload type, then PASS after annotating `payload: MessageInsertPayload`.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows messaging direct-data-access drift while preserving scheduled save-the-date behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 3:49 PM PT - Itinerary Template Insert Service Boundary
+
+What changed:
+- Moved the itinerary timeline-template event insert behind `src/pages/dashboard/itineraryService.ts`.
+- Added a pure insert-row builder for site-scoped template events.
+- Extended static data-boundary proof so the template path cannot quietly reintroduce direct page-owned `supabase.from('itinerary_events').insert(newEvents.map(...))`.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryDateTime.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts`: PASS, 5 files and 23 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows itinerary direct-data-access drift while preserving timeline-template behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 3:57 PM PT - Vault Dashboard Service Boundary
+
+What changed:
+- Moved Vault dashboard site/config/entry reads, hosted-storage provider persistence, config create/upsert/update/delete, entry create/delete, and anniversary recap draft update into `src/pages/dashboard/vaultService.ts`.
+- Added explicit Vault service projections for `wedding_sites`, `vault_configs`, and `vault_entries`.
+- Updated the static dashboard data-boundary guard so `Vault.tsx` cannot quietly reintroduce direct `wedding_sites`, `vault_configs`, or `vault_entries` table calls.
+
+Commands run:
+- `npm test -- src/pages/dashboard/vaultService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 2 files and 15 tests.
+- `npm run typecheck`: initial FAIL on two service typing errors, then PASS after narrowing service row types before using `site.id`.
+- `npm run lint`: PASS with existing warning backlog, 553 warnings and 0 errors.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows Vault direct-data-access drift while preserving vault loading, config management, entry management, rollback, and recap behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 4:00 PM PT - Overview Intelligence Service Boundary
+
+What changed:
+- Moved Overview intelligence-dismissal persistence and interactive-suggestion hide writes into `src/pages/dashboard/overviewService.ts`.
+- Added a pure merge helper so persisted intelligence dismissals preserve existing `wedding_data` and `meta` fields.
+- Updated the static dashboard data-boundary guard so these Overview paths cannot quietly reintroduce page-owned writes.
+
+Commands run:
+- `npm test -- src/pages/dashboard/overviewService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 2 files and 15 tests.
+- `npm run typecheck`: PASS.
+- `npm run lint`: PASS with existing warning backlog, 553 warnings and 0 errors.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows Overview direct-data-access drift while preserving dismissal, demo-mode, suggestion hide, and toast behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 5:52 PM PT - Guests And Guest Photo Sharing Service-Boundary Closure
+
+What changed:
+- Moved guest RSVP reads, guest add rollback, event invitation insert/replace/rollback, guest delete dependency cleanup, delete-all dependency cleanup, imported guest insert, household updates, and imported RSVP replacement into `src/pages/dashboard/guests/guestService.ts`.
+- Moved Guest Photo Sharing photo-bucket persistence into `src/pages/dashboard/guestPhotoSharingService.ts`.
+- Lowered file-size guard baselines for `Guests.tsx` from 4790 to 4693 lines and `GuestPhotoSharing.tsx` from 3188 to 3168 lines.
+- Verified `rg -n "supabase\\.from\\(" src/pages/dashboard -g "*.tsx"` returns no matches, so dashboard TSX pages no longer own direct table access through `supabase.from(...)`.
+
+Commands run:
+- `npm test -- src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts`: first sandbox run failed on Vite `.vite-temp` EPERM, then PASS after approved `npm test` rerun, 3 files and 18 tests.
+- `npm run typecheck`: initial FAIL on photo-bucket type shape, then PASS after typing the service with `CanonicalPhotoBuckets` and fixing the test fixture.
+- `npm run lint`: PASS with existing warning backlog, 553 warnings and 0 errors.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `rg -n "supabase\\.from\\(" src/pages/dashboard -g "*.tsx"`: PASS, no matches.
+
+Status:
+- PARTIAL. This narrows dashboard page data-boundary drift while preserving guest add/edit/delete/import, event RSVP cleanup/rollback, household updates, imported RSVP rows, and guest photo bucket persistence. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 6:02 PM PT - Public Interactive, Onboarding, And Signup Service Boundaries
+
+What changed:
+- Moved public interactive poll/quiz/suggestion reads and writes behind `src/sections/interactiveSectionService.ts`.
+- Moved music-request suggestion writes behind the same public interactive service.
+- Moved main onboarding existing-site reads, event-seed sync, existing-site update, create-site/fallback-create, guided CSV guest upsert, and signup minimal-site reservation behind `src/pages/onboarding/onboardingService.ts` and `src/pages/signupService.ts`.
+- Added source-boundary tests so the touched public section components, `Onboarding.tsx`, and `Signup.tsx` do not quietly reintroduce direct `supabase.from(...)` table access for these flows.
+
+Commands run:
+- `npm test -- src/sections/interactiveSectionService.test.ts`: PASS, 3/3.
+- `npm test -- src/sections/interactiveSectionService.test.ts src/pages/onboarding/onboardingService.test.ts`: PASS, 2 files and 6 tests.
+- `npm run typecheck -- --pretty false`: initial FAIL on `OnboardingEventSeed.event_name` optionality, then PASS after matching the event-seed contract.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `rg -n "supabase\\.from\\(" src/pages/Onboarding.tsx src/pages/Signup.tsx src/pages/onboarding/GuidedSetup.tsx src/sections/variants/contact/interactiveHub.tsx src/sections/variants/music/requestForm.tsx`: PASS, no matches.
+
+Status:
+- PARTIAL. This narrows public/onboarding page data-boundary drift while preserving interactive public sections, music requests, onboarding profile creation/update, event seed sync, guided CSV import, and signup minimal-site behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 6:06 PM PT - PaymentRequired Service Boundary And Stricter Direct-Access Finding
+
+What changed:
+- Moved the `PaymentRequired.tsx` fallback wedding-site creation path into `src/pages/paymentRequiredService.ts`.
+- Removed Supabase table access from the payment-required page; the service owns existing-site reuse, fallback slug normalization, collision retry, explicit `id` projection, and safe thrown setup error.
+- Added a source-boundary test so the payment-required page cannot quietly reintroduce direct `wedding_sites` writes.
+
+New finding:
+- The earlier single-line `supabase.from(...)` scan was too narrow. A stricter multiline scan shows the touched public/onboarding/payment files are clean, but there are still remaining direct page-owned Supabase calls in other routes, including collaborator invite acceptance, quick start, guided setup site reads/updates, itinerary, messages, settings, overview, RSVP board, audit/error logs, and some guest-photo/admin photo flows. This keeps the P1/P2 data-boundary cleanup lane active.
+
+Commands run:
+- `npm test -- src/pages/paymentRequiredService.test.ts src/sections/interactiveSectionService.test.ts src/pages/onboarding/onboardingService.test.ts`: PASS, 3 files and 8 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows payment/setup coupling risk and corrects the direct-access proof status. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 6:12 PM PT - Guided Setup, Quick Start, And Collaborator Invite Service Boundaries
+
+What changed:
+- Moved guided setup site hydration plus progress/complete wedding-site updates into `src/pages/onboarding/onboardingService.ts`.
+- Moved quick-start seed-site reads, final persist-site reads, and final wedding-site update into `src/pages/onboarding/onboardingService.ts`.
+- Moved collaborator invite token lookup and invite site-label lookup into `src/pages/acceptCollaboratorInviteService.ts`.
+- Added source-boundary tests so these pages cannot quietly reintroduce direct `wedding_sites` or invite lookup reads/writes for the extracted paths.
+
+Commands run:
+- `npm test -- src/pages/onboarding/onboardingService.test.ts src/pages/paymentRequiredService.test.ts src/sections/interactiveSectionService.test.ts`: PASS, 3 files and 8 tests.
+- `npm test -- src/pages/acceptCollaboratorInviteService.test.ts src/pages/onboarding/onboardingService.test.ts src/pages/paymentRequiredService.test.ts src/sections/interactiveSectionService.test.ts`: PASS, 4 files and 10 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows first-run and collaborator-invite data-boundary risk while preserving setup, quick-start finalization, and invite-claim behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 6:18 PM PT - Settings Owner Data-Boundary Service Extraction
+
+What changed:
+- Moved settings collaborator invite list/create/revoke, translation status reads, slug collision lookup, template-change site read, account couple-name update, slug update, and template-change update into `src/pages/dashboard/settings/settingsSiteData.ts`.
+- Reduced `Settings.tsx` to auth-only Supabase usage for password verification/update; the stricter multiline direct table-access scan now returns no matches for the settings page.
+- Lowered the file-size guard baseline for `Settings.tsx` from 2328 to 2287 lines.
+
+Commands run:
+- `npm test -- src/pages/dashboard/settings/settingsSiteData.test.ts src/pages/acceptCollaboratorInviteService.test.ts src/pages/onboarding/onboardingService.test.ts`: PASS, 3 files and 7 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS after lowering the `Settings.tsx` baseline to 2287.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `rg -n -U "supabase\\s*\\n\\s*\\.from|supabase\\.from" src/pages/dashboard/Settings.tsx`: PASS, no matches.
+
+Status:
+- PARTIAL. This narrows settings privacy/team/template data-boundary risk while preserving account, password, team invite, translation, slug, privacy, RSVP, notification, music, and template behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 6:26 PM PT - Messages Live Data Service Extraction
+
+What changed:
+- Moved Messages dashboard active-site/site load, message history reads, guest recipient reads, delivery telemetry reads, itinerary audience reads, text-credit preview reads, message create/update/reschedule/retry state writes, and analytics patch writes into `src/pages/dashboard/messages/messageService.ts`.
+- Reduced `Messages.tsx` to auth/session usage for bulk-message Edge Function calls; the stricter multiline direct table-access scan now returns no matches for the Messages page.
+- Added explicit projections for message site rows, guests, deliveries, itinerary events, event invitations, expiring SMS credits, and SMS credit transactions.
+- Lowered the file-size guard baseline for `Messages.tsx` from 3386 to 3263 lines.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS after lowering the `Messages.tsx` baseline to 3263.
+- `npm run smoke:messages`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows messaging data-boundary drift while preserving live/demo message loading, recipient lists, delivery fallback, itinerary audiences, SMS credit preview, compose/update/send/schedule/retry/reschedule/cancel flows, save-the-date quick create, and bulk-send invocation behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 6:30 PM PT - RSVP Board Service-Boundary Extraction
+
+What changed:
+- Moved RSVP Board active-site resolution, guest RSVP board reads, itinerary event lookup, and event-invitation mapping into `src/pages/dashboard/rsvpBoardService.ts`.
+- Removed Supabase and active-site imports from `RsvpBoard.tsx`; the page now calls service functions and keeps rendering, polling, filtering, and stats only.
+- Added explicit RSVP Board projections for guests, itinerary events, and event invitations.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/rsvpBoardFilter.test.ts`: PASS, 18/18.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `rg -n -U "supabase\\s*\\n\\s*\\.from|supabase\\.from" src/pages/dashboard/RsvpBoard.tsx`: PASS, no matches.
+
+Status:
+- PARTIAL. This narrows RSVP dashboard data-boundary drift while preserving demo rows, live board load, refresh polling, manual follow-up/unreachable stats, event-invite badges, invitation progress counts, filters, and dashboard links. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 6:38 PM PT - Onboarding Status, Audit Log, And Error Log Service Boundaries
+
+What changed:
+- Moved Wedding Status planning-state updates into `src/pages/onboarding/onboardingService.ts`.
+- Moved dashboard activity-history site resolution, guest audit log reads, guest-name lookup, and app action log loading into `src/pages/dashboard/auditLogService.ts`.
+- Moved admin-user verification and app error log reads into `src/pages/dashboard/errorLogService.ts`.
+- Removed direct `supabase.from(...)` table access from `WeddingStatus.tsx`, `AuditLogs.tsx`, and `ErrorLogs.tsx`.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/onboarding/onboardingService.test.ts src/pages/dashboard/rsvpBoardFilter.test.ts`: PASS, 22/22.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `rg -n -U "supabase\\s*\\n\\s*\\.from|supabase\\.from" src/pages/onboarding/WeddingStatus.tsx src/pages/dashboard/AuditLogs.tsx src/pages/dashboard/ErrorLogs.tsx`: PASS, no matches.
+
+Status:
+- PARTIAL. This narrows onboarding/admin log data-boundary drift while preserving wedding status validation/navigation, venue/date/guest-count persistence, activity-history filtering/search, app-action rows, admin-only error log checks, error-log grouping, filtering, paging, copy, and CSV export behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 6:41 PM PT - Vault Contribution Config Service Boundary
+
+What changed:
+- Moved public vault contribution enabled-config reads into `src/pages/vaultContributionService.ts`.
+- Removed direct `vault_configs` table reads from `VaultContribute.tsx`; the page still invokes Supabase Edge Functions for vault upload/submit behavior.
+- Added an explicit public vault contribution config projection.
+
+Commands run:
+- `npm test -- --run src/pages/VaultContribute.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/onboarding/onboardingService.test.ts`: PASS, 34/34.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `rg -n -U "supabase\\s*\\n\\s*\\.from|supabase\\.from" src/pages/VaultContribute.tsx`: PASS, no table-read matches.
+
+Status:
+- PARTIAL. This narrows guest-facing vault data-boundary drift while preserving gated public-site access checks, demo vault fallback, year-specific vault links, vault hub config listing, enabled-config filtering, upload/submit function invocation, and guest-facing invalid-state behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 6:49 PM PT - Overview Live Data Service Boundary
+
+What changed:
+- Moved Overview active-site/site load, guest RSVP summary reads, registry/photo/vault counts, interactive suggestion/vote reads, builder user-edited marker persistence, and draft-from-brief site update into `src/pages/dashboard/overviewService.ts`.
+- Removed Supabase and active-site imports from `Overview.tsx`; the page now owns rendering/orchestration while the service owns explicit table projections and writes.
+- Added explicit Overview projections for site rows, guest rows, draft source rows, builder site JSON, interactive suggestions, and interactive votes.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/overviewService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `git diff --check`: PASS.
+- `rg -n -U "supabase\\s*\\n\\s*\\.from|from '../../lib/supabase'|from '../../lib/activeSite'" src/pages/dashboard/Overview.tsx`: PASS, no matches.
+
+Status:
+- PARTIAL. This narrows dashboard Overview data-boundary drift while preserving demo overview state, live stats, persisted intelligence dismissals, interactive suggestion hiding/loading, draft brief refresh, builder user-edited markers, name-change overview, launch-readiness cards, and public-site preview links. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 6:53 PM PT - Registry Dashboard Site/Policy Service Boundary
+
+What changed:
+- Moved Registry dashboard active-site/site refresh-policy load, refresh budget persistence, refresh policy save, monthly counter reset, and auto-reset persistence into `src/pages/dashboard/registry/registryService.ts`.
+- Removed Supabase and active-site imports from `Registry.tsx`; the page now keeps registry UI/orchestration while the service owns explicit site projections and writes.
+- Added an explicit Registry dashboard site projection for refresh policy and wedding-date fields.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/registry/registryService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 37/37.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run smoke:registry`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `git diff --check`: PASS.
+- `rg -n -U "supabase\\s*\\n\\s*\\.from|supabase\\.from\\(|from '../../lib/supabase'|from '../../lib/activeSite'" src/pages/dashboard/Registry.tsx`: PASS, no matches.
+
+Status:
+- PARTIAL. This narrows registry dashboard data-boundary drift while preserving demo registry items, live registry item loading, gift add/edit/delete, URL preview import, auto refresh, monthly refresh budgeting, policy presets, manual counter reset, and owner action audit calls. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 7:01 PM PT - Itinerary Schedule And Event-Invite Service Boundary
+
+What changed:
+- Moved Itinerary active-site/site lookup, event loads, schedule mirror writes to `wedding_data` and `sections`, RSVP invitation/count reads, event create/update/delete, timeline shifts, smart-template inserts, guest picker reads, event-invite toggles, invite-all, and remove-all invitation writes into `src/pages/dashboard/itineraryService.ts`.
+- Removed active-site imports and direct `supabase.from(...)` table access from `Itinerary.tsx`; the page still passes the Supabase client to the existing `photo-album-create` Edge Function invoke.
+- Added explicit Itinerary projections for sites, events, wedding data, schedule sections, event invitations, event RSVPs, and guest picker rows.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 18/18.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `git diff --check`: PASS.
+- `rg -n -U "supabase\\s*\\n\\s*\\.from|supabase\\.from\\(|from '../../lib/activeSite'" src/pages/dashboard/Itinerary.tsx`: PASS, no matches.
+- `npm run smoke:site`: FAIL in sandbox only, `getaddrinfo ENOTFOUND atuzuobpprjstfmdnwso.supabase.co`.
+- `npm run smoke:site`: PASS after approved network access.
+
+Status:
+- PARTIAL. This narrows Itinerary data-boundary drift while preserving demo timeline, live event loading/counts, optional `event_rsvps` table fallback, schedule-section mirroring, event form drift fallback, best-effort photo album creation, timeline shift/undo, smart template creation, event guest picker, invitation removal RSVP rollback, invite-all/remove-all, and toasts. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 7:09 PM PT - Guest Photo Sharing Service Boundary
+
+What changed:
+- Moved Guest Photo Sharing active-site/site load, event/album/upload reads, guestbook/prospect reads, photo AI analysis/metadata/correction reads, guest hub settings reads, AI photo ops persistence, photo bucket moves, AI correction inserts, guest hub settings save, and guestbook moderation into `src/pages/dashboard/guestPhotoSharingService.ts`.
+- Removed direct `supabase.from(...)` table access from `GuestPhotoSharing.tsx`; the page still owns auth/session refresh and existing Edge Function invokes for album/upload/analysis/follow-up flows.
+- Added explicit Guest Photo Sharing projections for site rows, itinerary events, photo albums, uploads, guestbook entries, guest prospects, photo AI analysis, upload metadata, AI bucket corrections, and guest hub settings.
+- `GuestPhotoSharing.tsx` dropped from 3168 to 3049 lines while preserving the file-size guard baseline.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 18/18.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `git diff --check`: PASS.
+- `rg -n -U "supabase\\s*\\n\\s*\\.from|supabase\\.from\\(" src/pages/dashboard/GuestPhotoSharing.tsx`: PASS, no matches.
+
+Status:
+- PARTIAL. This narrows Guest Photo Sharing data-boundary drift while preserving demo photo space, live photo dashboard load, bucket links, upload windows, photo AI ops planning, high-confidence photo moves, vision suggestions/corrections, guest hub settings, guest follow-up queueing, guestbook moderation, exports, and existing Edge Function flows. Remaining direct page-owned table access under the stricter scan is concentrated in `src/pages/dashboard/Guests.tsx`. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 7:18 PM PT - Guests Dashboard Load/Config Service Boundary
+
+What changed:
+- Moved Guests dashboard active-site/site settings load, guest list + RSVP summary reads, RSVP conflict reads/history reads, itinerary filter event reads, event-invite filter mapping, RSVP audit feed reads, RSVP conflict resolve actions, RSVP config save, and fallback site-id resolution into `src/pages/dashboard/guests/guestService.ts`.
+- Added explicit Guests projections for site settings, guests, RSVP rows, RSVP conflicts, itinerary events, wedding-data seeds, event invitations, and RSVP audit rows.
+- Fixed a projection mismatch by selecting `reminder_cadence_days` and `auto_reminders_enabled` in the service before reading those values.
+- `Guests.tsx` dropped from 4693 to 4576 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run smoke:csvmapper`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `git diff --check`: PASS.
+- `rg -n -U "supabase\\s*\\n\\s*\\.from|supabase\\.from\\(" src/pages/dashboard/Guests.tsx | head -100`: PASS for visibility scan; remaining matches are intentionally logged below.
+
+Status:
+- PARTIAL. This narrows Guests dashboard data-boundary drift while preserving demo/live site settings load, RSVP custom questions, meal config, auto reminder flags, guest list loading with RSVP rows, conflict cards/history, itinerary filtering, RSVP audit feed, conflict resolve, CSV mapper site-id fallback, and RSVP config autosave. Remaining direct table access in `Guests.tsx` covers guest field updates, check-in/thank-you/manual follow-up updates, RSVP reminder settings, guest drawer event invite toggles/audit details, assisted RSVP, and SMS RSVP link slug lookup. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 7:22 PM PT - Guests Dashboard Guest-Write Service Boundary
+
+What changed:
+- Moved guest check-in undo/toggle, clear-all check-ins, thank-you toggle/bulk thank-you, invitation/reminder timestamp writes, household merge/split/reassign writes, and RSVP reminder settings save into `src/pages/dashboard/guests/guestService.ts`.
+- Reused loaded `weddingSiteInfo` for guest update and SMS RSVP share links instead of re-reading `wedding_sites` from `Guests.tsx`.
+- Added source-boundary guards for the extracted guest-update and wedding-site-link patterns.
+- `Guests.tsx` dropped from 4576 to 4506 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This narrows Guests dashboard write-boundary drift while preserving check-in undo/toggle/session-refresh retry, thank-you workflows, bulk due thank-yous, clear-all check-ins, invite/reminder timestamp persistence, household tools, reminder settings autosave, guest update link copy, and text RSVP link copy. Remaining direct table access in `Guests.tsx` covers guest drawer event/audit details, event invite toggle/delete/insert, and assisted RSVP save/rollback. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 7:31 PM PT - Guests Drawer/Event/Assisted-RSVP Service Boundary
+
+What changed:
+- Moved guest drawer itinerary/audit detail reads, event invitation toggle insert/delete, RSVP snapshot restore on invite-removal failure, and assisted RSVP save/rollback into `src/pages/dashboard/guests/guestService.ts`.
+- Removed the remaining direct `supabase.from(...)` table access from `Guests.tsx`; the page still owns auth/session and existing Edge Function invocation behavior.
+- Added explicit drawer/event/assisted RSVP projections for event invitations, guest audit rows, and assisted RSVP rows.
+- Lowered the `Guests.tsx` file-size guard baseline from 4693 to 4418 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `git diff --check`: PASS.
+- `rg -U -n "supabase\\s*\\n\\s*\\.from|supabase\\.from\\(" src/pages/dashboard/Guests.tsx`: PASS, no matches.
+- `npm run smoke:rsvp`: FAIL in sandbox only, `getaddrinfo ENOTFOUND atuzuobpprjstfmdnwso.supabase.co`.
+- `npm run smoke:rsvp`: PASS after approved network access.
+- `npm run proof:v1:guests-rsvp-ops`: FAIL in sandbox only because the strict RSVP smoke could not resolve `atuzuobpprjstfmdnwso.supabase.co`; CSV mapper and check-in guard passed.
+- `npm run proof:v1:guests-rsvp-ops`: PASS after approved network access with RSVP strict smoke, CSV mapper guard, and check-in guard green.
+
+Status:
+- PARTIAL. This closes the known Guests page-owned table-access lane locally while preserving demo/live itinerary drawer details, event invitation toggles, RSVP snapshot restore on failed invite removal, assisted RSVP recording, assisted RSVP rollback, CSV mapper, check-in guard, and strict RSVP smoke behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 7:36 PM PT - External Blank-Target Link Isolation
+
+What changed:
+- Updated the remaining external blank-target links that used only `rel="noreferrer"` to explicit `rel="noopener noreferrer"`.
+- Covered vendor profile creation links, vendor profile proof/resource links, dashboard registry contribution links, public registry contribution links, dashboard layout external links, and the builder variant preview `Link`.
+- Refreshed the launch safety guard to track the earlier Guests, Guest Photo Sharing, and Messages helper extractions while adding a regression for bare `rel="noreferrer"`.
+
+Commands run:
+- `npm test -- --run src/lib/superNiceLaunchBacklogSafety.test.ts`: FAIL twice while stale assertions still expected helpers to live inline in `Guests.tsx`, `GuestPhotoSharing.tsx`, and `Messages.tsx`.
+- `npm test -- --run src/lib/superNiceLaunchBacklogSafety.test.ts`: PASS, 13/13 after updating those assertions to the extracted helper locations.
+- `rg -n "rel=\"noreferrer\"|rel='noreferrer'" src -g '*.tsx'`: PASS, no matches.
+- Targeted TSX blank-target audit script: PASS, 0 bad `a`/`Link` tags.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This narrows external-link opener risk while preserving vendor, registry, and dashboard external-link behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 7:43 PM PT - Global Page/Section Table-Access Regression Guard
+
+What changed:
+- Added a broad runtime TSX guard to `src/lib/dashboardDataBoundary.test.ts`.
+- The guard recursively scans non-test `.tsx` files under `src/pages` and `src/sections` and fails if any page or section owns direct `supabase.from(...)` table access.
+- This turns the recent page/section service-boundary milestone into a regression gate instead of a one-time scan.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 18/18.
+- `rg -U -n "supabase\\s*(?:\\.\\s*from|\\n\\s*\\.\\s*from)\\s*\\(" src/pages src/sections -g '*.tsx' -g '!*.test.tsx' -g '!*.spec.tsx'`: PASS, no matches.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This lowers future public/page data-boundary regression risk with proof-only hardening. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 7:46 PM PT - File-Size Guard Baseline Tightening
+
+What changed:
+- Lowered the `RSVP.tsx` file-size guard baseline from 1962 to 1961 lines.
+- Lowered the `GuestPhotoSharing.tsx` file-size guard baseline from 3168 to 3049 lines.
+- Locked recent no-feature-loss reductions into `scripts/check-file-size-guard.mjs` while larger P2 file splitting continues.
+
+Commands run:
+- `npm run guard:file-size`: PASS.
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/lib/superNiceLaunchBacklogSafety.test.ts`: PASS, 31/31.
+- `git diff --check`: PASS.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This is guard-only maintainability hardening with no runtime behavior change. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 7:54 PM PT - Seating Component Split And Guard Tightening
+
+What changed:
+- Moved seating drag/drop guest chips, unassigned pool, table card, seat drop slot, and table form into `src/pages/dashboard/seating/SeatingDashboardComponents.tsx`.
+- Kept `Seating.tsx` focused on page orchestration, data flow, and actions.
+- Lowered the `Seating.tsx` file-size guard baseline from 2169 to 1610 lines.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/seating/seatingDashboardUtils.test.ts src/pages/dashboard/seating/seatingService.test.ts`: PASS, 35/35.
+- `npm run typecheck -- --pretty false`: PASS after restoring the page-level `TableShape` type import.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- Strict page/section direct-access scan: PASS, no direct `supabase.from(...)` table access in runtime page/section TSX.
+- `git diff --check`: PASS.
+- `npm run proof:v1:seating-continuity`: FAIL in sandbox only with Vite `.vite-temp` `EPERM` during nested test/build steps.
+- `npm run proof:v1:seating-continuity`: PASS after approved rerun.
+
+Status:
+- PARTIAL. This reduces the oversized seating page risk while preserving seating table creation/editing, visual/list drag/drop seating, check-in controls, exports, and seating continuity proof. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 7:57 PM PT - Page/Section Select-Star Regression Guard
+
+What changed:
+- Expanded `src/lib/dashboardDataBoundary.test.ts` with a recursive runtime source guard for non-test `.ts` and `.tsx` files under `src/pages` and `src/sections`.
+- The guard fails if those runtime page/section surfaces reintroduce `select('*')`.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+- Independent strict `rg` select-star scan across `src/pages` and `src/sections`: PASS, no matches.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This is proof-only data-boundary hardening with no runtime behavior change. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 8:03 PM PT - RSVP Lookup Scoping Proof And Stale-Copy Cleanup
+
+What changed:
+- Added a focused static regression proving `validate-rsvp-token` lookup is invite-token-only and non-enumerating.
+- The regression guards against name/`ilike` lookup, multi-match guest-list responses, raw invite-token payloads, and site-id leakage in the lookup response shape.
+- Removed stale guest-facing copy that told guests to "search by your full name" when an RSVP session cannot resolve.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 28/28.
+- Independent RSVP source scan for `ilike`, `byName`, `name.ilike`, `guests: by`, `invite_token:`, and `wedding_site_id: guest.wedding_site_id`: PASS, no matches.
+- `npm run smoke:rsvp`: FAIL in sandbox only with `getaddrinfo ENOTFOUND atuzuobpprjstfmdnwso.supabase.co`.
+- `npm run smoke:rsvp`: PASS after approved network access.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: FAIL once on `no-regex-spaces` in the new test regex.
+- `npm run lint -- --quiet`: PASS after replacing literal spaces with `{4}` in the regex.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `git diff --check`: PASS.
+
+Status:
+- DONE locally for RSVP lookup scoping. No deploy was run, so launch status is unchanged and the live proof board blockers remain live/deploy/external.
+
+### 2026-05-05 8:07 PM PT - Asset Budget Baseline Tightening
+
+What changed:
+- Tightened `scripts/check-asset-budget.mjs` total public asset budget from 215000 KiB to 210000 KiB.
+- Tightened the per-file public asset budget from 6000 KiB to 5000 KiB.
+- Kept existing product preview assets intact while making future asset-footprint growth fail sooner.
+
+Commands run:
+- `npm run guard:assets`: PASS, 209433 KiB total public assets, 334 files, largest file 4788 KiB.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This strengthens the production asset-footprint guard without feature loss. The existing template preview GIF footprint still needs a CDN/object-storage or optimized-thumbnail strategy before the asset item can be marked done. No deploy was run, so launch status is unchanged.
+
+### 2026-05-05 8:10 PM PT - Coordinator Panel Extraction And Guard Tightening
+
+What changed:
+- Added `src/pages/dashboard/coordinator/CoordinatorModePanels.tsx`.
+- Moved the coordinator role selector, helper access panel, handoff card, and top stat-card presentation out of `CoordinatorMode.tsx`.
+- Lowered the `CoordinatorMode.tsx` file-size guard baseline from 2736 to 2652 lines.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`: PASS, 20/20.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims one oversized coordinator page slice without changing coordinator role switching, dashboard stats, day-of check-in, timeline, Q&A, alert, or service behavior. No deploy was run, so launch status is unchanged.
+
+### 2026-05-05 8:21 PM PT - Settings Navigation Extraction And Guard Tightening
+
+What changed:
+- Added `src/pages/dashboard/settings/SettingsNavigation.tsx`.
+- Moved Settings tab IDs, tab construction, role-based tab filtering, and the settings navigation UI out of `Settings.tsx`.
+- Lowered the `Settings.tsx` file-size guard baseline from 2287 to 2259 lines.
+
+Commands run:
+- `npm test -- src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+- `npm run typecheck -- --pretty false`: FAIL once because the new tab array widened `id` to `string`.
+- `npm run typecheck -- --pretty false`: PASS after typing the tab list as `SettingsTab[]`.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Settings page without changing owner-only Team/Billing visibility, collaborator restrictions, settings forms, privacy controls, billing, or service boundaries. No deploy was run, so launch status is unchanged.
+
+### 2026-05-05 8:27 PM PT - Name Change Planner Card Extraction And Guard Tightening
+
+What changed:
+- Added `src/pages/dashboard/planning/NameChangePlannerCards.tsx`.
+- Moved `ExecutionSnapshotCard` and `ReminderPostureCard` out of `NameChangePlannerTab.tsx`.
+- Lowered the `NameChangePlannerTab.tsx` file-size guard baseline from 2414 to 2197 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/planning/nameChangePlannerUi.test.ts src/pages/dashboard/planning/nameChangeExecutionTime.test.ts src/pages/dashboard/planning/NameChangePlannerTab.test.tsx src/pages/dashboard/nameChangeOverviewCard.test.ts src/pages/dashboard/nameChangeOverviewInsights.test.ts`: FAIL once, 34 component tests failed because the tab still used `getExecutionStatusVaultNotes` and `getExecutionNextActionDetail` after extraction.
+- Same focused name-change test lane: PASS, 53/53 after restoring the missed imports.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims a large name-change planner slice without changing execution cards, status-vault details, guided next actions, reminder posture cards, document intake, or reminder behavior. No deploy was run, so launch status is unchanged.
+
+### 2026-05-05 8:32 PM PT - Messages Detail Modal Component Extraction And Guard Tightening
+
+What changed:
+- Added `src/pages/dashboard/messages/MessageDashboardComponents.tsx`.
+- Moved message toasts, status badge rendering, and the message detail modal out of `Messages.tsx`.
+- Lowered the `Messages.tsx` file-size guard baseline from 3263 to 2842 lines.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+- `npm run typecheck -- --pretty false`: PASS after fixing the mechanical extraction to export/import the moved components correctly and restoring remaining icon imports still used in `Messages.tsx`.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Messages page while preserving message history details, scheduled controls, retry/send-now/reschedule/cancel actions, delivery review sections, status badges, and toasts. No deploy was run, so launch status is unchanged.
+
+### 2026-05-05 8:36 PM PT - Guest Photo Sharing Slideshow Extraction And Guard Tightening
+
+What changed:
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoSlideshowCard.tsx`.
+- Moved slideshow draft controls, frame list rendering, and the slideshow preview modal out of `GuestPhotoSharing.tsx`.
+- Lowered the `GuestPhotoSharing.tsx` file-size guard baseline from 3049 to 2944 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized guest photo-sharing page while preserving slideshow-ready album filtering, order/theme selection, preview behavior, slideshow notes export, upload captions, and photo-sharing upload/moderation behavior. No deploy was run, so launch status is unchanged.
+
+### 2026-05-05 8:40 PM PT - Guest Photo Sharing Album-Link Panel Extraction And Guard Tightening
+
+What changed:
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoAlbumCreateCard.tsx`.
+- Moved album creation templates, parent/event selectors, newest-link actions, missing-event album action, copy fallback, and newest-album QR panel out of `GuestPhotoSharing.tsx`.
+- Lowered the `GuestPhotoSharing.tsx` file-size guard baseline from 2944 to 2811 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized guest photo-sharing page while preserving album creation, parent album selection, itinerary-event linking, newest upload link copy/open/QR actions, missing itinerary album creation, copy fallback behavior, and album list/moderation behavior. No deploy was run, so launch status is unchanged.
+
+### 2026-05-05 8:46 PM PT - Guest Photo Sharing Album Controls Extraction And Guard Tightening
+
+What changed:
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoAlbumControls.tsx`.
+- Moved the album sharing toolbar, owner controls, tag/status/search filters, bulk moderation controls, and visible album count display out of `GuestPhotoSharing.tsx`.
+- Lowered the `GuestPhotoSharing.tsx` file-size guard baseline from 2811 to 2766 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized guest photo-sharing page while preserving copy-all links/prompts, send active album requests, refresh all links, export link/share/handoff sheets, flagged/hidden/tag filters, bulk moderation controls, search, and active/paused filtering. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 7:19 AM PT - Guest Photo Sharing Recent-Upload Moderation Extraction And Guard Tightening
+
+What changed:
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoRecentUploadsList.tsx`.
+- Moved recent upload rows, tag chips, recap badges, and per-upload feature/story/hide/flag moderation controls out of `GuestPhotoSharing.tsx`.
+- Lowered the `GuestPhotoSharing.tsx` file-size guard baseline from 2766 to 2697 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized guest photo-sharing page while preserving recent upload display, guest/file/date labels, tag filtering, feature/story/recap-hide toggles, flag/unflag, restore/remove, and album moderation callbacks. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 7:46 AM PT - Guest Photo Sharing Bucket Window Editor Extraction And Guard Tightening
+
+What changed:
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoBucketWindowEditor.tsx`.
+- Moved parent-album reassignment controls, upload-window date inputs, suggested-window action, and save-window action out of `GuestPhotoSharing.tsx`.
+- Lowered the `GuestPhotoSharing.tsx` file-size guard baseline from 2697 to 2660 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+- `npm run typecheck -- --pretty false`: FAIL once because `Input` was still used elsewhere in `GuestPhotoSharing.tsx` after the extraction.
+- `npm run typecheck -- --pretty false`: PASS after restoring the still-used `Input` import.
+- `npm run guard:file-size`: FAIL once because the restored import made the exact count 2660 instead of 2659.
+- `npm run guard:file-size`: PASS after setting the exact 2660-line baseline.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized guest photo-sharing page while preserving parent album changes, descendant-cycle exclusion, upload opens/closes drafts, suggested window application, save window behavior, and existing album/recent-upload moderation flows. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 7:54 AM PT - Guest Photo Sharing Bucket-Card Extraction And Guard Tightening
+
+What changed:
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoBucketCard.tsx`.
+- Moved the per-album shell, parent label, status/count chips, backup/QR/link/messaging actions, sub-album shortcuts, and upload-link summary out of `GuestPhotoSharing.tsx`.
+- Lowered the `GuestPhotoSharing.tsx` file-size guard baseline from 2660 to 2556 lines.
+- Updated the dashboard link-safety regression to follow the extracted bucket-card component and keep proving safe backup-folder and QR URL opens.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/dashboardLinkSafety.test.ts`: PASS, 24/24.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized guest photo-sharing page while preserving per-album active/paused state, backup open, link refresh/copy, QR open, photo-list export, share-prompt copy, messaging prefill, sub-album filtering, upload-link display, upload-window editing, and recent-upload moderation. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 8:00 AM PT - Guest Photo Sharing Guest-Hub QR Extraction And Guard Tightening
+
+What changed:
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoHubQrCard.tsx`.
+- Moved the one-QR guest hub card, hub/recap link actions, QR open action, print-card action, guest action chips, and QR panels out of `GuestPhotoSharing.tsx`.
+- Lowered the `GuestPhotoSharing.tsx` file-size guard baseline from 2556 to 2506 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/dashboardLinkSafety.test.ts`: PASS, 24/24.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized guest photo-sharing page while preserving guest hub link copy/open, QR open, print-card save, recap copy/open, action summary chips, hub QR panel, recap QR panel, and existing album/moderation flows. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 8:06 AM PT - Guest Photo Sharing Hub Controls/Follow-Up/Guestbook Extraction And Guard Tightening
+
+What changed:
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoHubControlsCard.tsx`.
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoFollowupCard.tsx`.
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoGuestbookCard.tsx`.
+- Moved guest hub controls, guest follow-up export/queue preview, and guestbook export/moderation preview out of `GuestPhotoSharing.tsx`.
+- Lowered the `GuestPhotoSharing.tsx` file-size guard baseline from 2506 to 2418 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/dashboardLinkSafety.test.ts`: PASS, 24/24.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized guest photo-sharing page while preserving hub action toggles, custom hub message, default language, save controls, guest prospect counts/export/queue actions, guestbook export, guestbook flag/hide moderation, and existing photo album/moderation flows. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 8:13 AM PT - Guest Photo Sharing Photo-Review Extraction And Guard Tightening
+
+What changed:
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoReviewCard.tsx`.
+- Moved photo review summary stats, curation actions, highlights, timeline, similar sets, review queue, and memory chapter preview out of `GuestPhotoSharing.tsx`.
+- Lowered the `GuestPhotoSharing.tsx` file-size guard baseline from 2418 to 2317 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/dashboardLinkSafety.test.ts`: PASS, 24/24.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized guest photo-sharing page while preserving highlight slideshow ordering, saved-photo-time ordering, curation export, memory chapter/recap note copy, review-item hiding, similar-extra hiding, hidden upload restore, recap feature/story/hide toggles, and existing album/moderation flows. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 8:20 AM PT - Guest Photo Sharing Moments And Schedule Album Extraction
+
+What changed:
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoMomentsCard.tsx`.
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoMomentAlbumsCard.tsx`.
+- Moved the AI/photo moments panel and the schedule-derived moment album suggestion panel out of `GuestPhotoSharing.tsx`.
+- Lowered the `GuestPhotoSharing.tsx` file-size guard baseline from 2317 to 2207 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/dashboardLinkSafety.test.ts`: PASS, 24/24.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized guest photo-sharing page while preserving sort-new-photos, review-visible, high-confidence photo moves, per-analysis move/keep decisions, reviewed/photo metadata counts, schedule-derived album suggestions, and create-moment-album actions. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 8:35 AM PT - Guest Photo Sharing Below-Threshold Component Extraction
+
+What changed:
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoHeroCard.tsx`.
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoMemoryVaultsCard.tsx`.
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoMemoryFlowCard.tsx`.
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoRecapSharingCard.tsx`.
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoCoupleAlbumsCard.tsx`.
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoStatsCards.tsx`.
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoSlideshowDraftCard.tsx`.
+- Added `src/pages/dashboard/guestPhotos/GuestPhotoOrganizerCard.tsx`.
+- Moved the Memories hero, memory/vault guidance, no-app readiness checklist, recap sharing controls, couple photo albums card, album/upload stats, slideshow draft controls, and photo organizer plan out of `GuestPhotoSharing.tsx`.
+- Lowered the `GuestPhotoSharing.tsx` file-size guard baseline from 2207 to 1979 lines, bringing the page below the 2000-line oversized-file threshold.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/dashboardLinkSafety.test.ts`: PASS, 24/24.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This removes `GuestPhotoSharing.tsx` from the oversized-page class while preserving vault navigation, readiness blockers, recap preview/status save, couple-album uploads/removals, owner stats, slideshow draft organization, AI organizer note copy, and high-confidence organizer moves. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 8:50 AM PT - Settings Below-Threshold Panel Extraction
+
+What changed:
+- Added `src/pages/dashboard/settings/SettingsAccountPanel.tsx`.
+- Added `src/pages/dashboard/settings/SettingsNotificationsPanel.tsx`.
+- Added `src/pages/dashboard/settings/SettingsBillingPanel.tsx`.
+- Moved account, notification, and billing panels out of `Settings.tsx`.
+- Lowered the `Settings.tsx` file-size guard baseline from 2259 to 1963 lines, bringing the page below the 2000-line oversized-file threshold.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This removes `Settings.tsx` from the oversized-page class while preserving account settings, notifications, billing, settings service boundaries, owner/collaborator restrictions, and existing settings data contracts. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 8:55 AM PT - Coordinator Attention Panel Extraction And Guard Tightening
+
+What changed:
+- Extended `src/pages/dashboard/coordinator/CoordinatorModePanels.tsx` with `CoordinatorAttentionPanel`.
+- Moved the day-of attention/escalation card, correction cues, next-arrival shortcuts, and coordinator quick links out of `CoordinatorMode.tsx`.
+- Lowered the `CoordinatorMode.tsx` file-size guard baseline from 2652 to 2599 lines.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`: PASS, 20/20.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized coordinator page while preserving attention-now escalation behavior, correction cue routing, next-arrival focus, coordinator quick links, service extraction, and role-aware coordinator behavior. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 9:03 AM PT - Messages Presentational Panel Extraction And Guard Tightening
+
+What changed:
+- Extended `src/pages/dashboard/messages/MessageDashboardComponents.tsx` with `MessageGuestFlowCard`, `MessageSendingDetailsPanel`, `MessageReachSnapshotCard`, and `MessageStartingPointsCard`.
+- Moved the guest-flow explainer, optional sending-details panels, guest reach snapshot, helpful starts, and starting-point template cards out of `Messages.tsx`.
+- Lowered the `Messages.tsx` file-size guard baseline from 2842 to 2641 lines.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Messages page while preserving guest-flow guidance, text-credit purchase locks, text-credit activity display, reach snapshot, photo shortcut, quick template starts, reusable template behavior, and existing message send/schedule/retry paths. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 9:06 AM PT - Messages History Summary Extraction And Guard Tightening
+
+What changed:
+- Extended `src/pages/dashboard/messages/MessageDashboardComponents.tsx` with `MessageHistorySummaryPanels`.
+- Moved message-history status counts, provider telemetry cards, audience breakdown, channel breakdown, delivery-health cards, and campaign status chips out of `Messages.tsx`.
+- Lowered the `Messages.tsx` file-size guard baseline from 2641 to 2533 lines.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Messages page while preserving history filters, delivery-health summaries, audience/channel breakdowns, campaign chips, message history rendering, retry/send-now/reschedule/cancel controls, and existing messaging service behavior. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 9:12 AM PT - Name Change Planner Intro Extraction And Below-Threshold Guard Tightening
+
+What changed:
+- Extended `src/pages/dashboard/planning/NameChangePlannerCards.tsx` with `NameChangePlannerIntroCards`.
+- Moved the path/health/privacy cards, resume panel, lifecycle jump cards, roadmap cards, and milestone/proof progress cards out of `NameChangePlannerTab.tsx`.
+- Lowered the `NameChangePlannerTab.tsx` file-size guard baseline from 2197 to 1999 lines, bringing the page below the 2000-line oversized-file threshold.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/planning/nameChangePlannerUi.test.ts src/pages/dashboard/planning/nameChangeExecutionTime.test.ts src/pages/dashboard/planning/NameChangePlannerTab.test.tsx src/pages/dashboard/nameChangeOverviewCard.test.ts src/pages/dashboard/nameChangeOverviewInsights.test.ts`: PASS, 53/53.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This removes `NameChangePlannerTab.tsx` from the oversized-page class while preserving resume routing, lifecycle jumps, save-and-return action, roadmap/milestone display, dual-partner proof tracks, document/status vault, execution cards, reminders, admin review, and existing name-change planner behavior. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 9:17 AM PT - Coordinator Command Deck Extraction And Guard Tightening
+
+What changed:
+- Extended `src/pages/dashboard/coordinator/CoordinatorModePanels.tsx` with `CoordinatorCommandDeckPanel`.
+- Moved the command summary cards, command deck cards, and ops snapshot cards out of `CoordinatorMode.tsx`.
+- Lowered the `CoordinatorMode.tsx` file-size guard baseline from 2599 to 2537 lines.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`: PASS, 20/20.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Coordinator Mode page while preserving command summary jumps, priority labels, command deck actions, ops snapshot lane jumps, role restrictions, summary panels, check-in, timeline, alerting, and Q&A behavior. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 9:21 AM PT - Messages Saved-Template Card Extraction And Guard Tightening
+
+What changed:
+- Extended `src/pages/dashboard/messages/MessageDashboardComponents.tsx` with `MessageSavedTemplatesCard`.
+- Moved the reusable saved-template library card out of `Messages.tsx`.
+- Lowered the `Messages.tsx` file-size guard baseline from 2533 to 2490 lines.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Messages page while preserving saved template display, reusable audience labels, expired saved-schedule warning, template use, template removal, composer behavior, history summaries, and existing send/schedule/retry controls. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 9:26 AM PT - Messages Campaign-Thread Extraction And Guard Tightening
+
+What changed:
+- Extended `src/pages/dashboard/messages/MessageDashboardComponents.tsx` with `MessageCampaignThreadPanels`.
+- Moved campaign rollups and the active campaign thread panel out of `Messages.tsx`.
+- Lowered the `Messages.tsx` file-size guard baseline from 2490 to 2357 lines.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Messages page while preserving campaign thread filtering, active thread clearing, latest-message view/edit/duplicate actions, reminder/day-of/thank-you follow-up starts, scheduled follow-up starts, delivery/contact counters, and existing history controls. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 9:29 AM PT - Messages Review Queue Extraction And Guard Tightening
+
+What changed:
+- Extended `src/pages/dashboard/messages/MessageDashboardComponents.tsx` with `MessageReviewQueuePanels`.
+- Moved follow-up review and review queue panels out of `Messages.tsx`.
+- Lowered the `Messages.tsx` file-size guard baseline from 2357 to 2306 lines.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Messages page while preserving follow-up review counts, review queue empty state, recipient review labels, latest message context, approve/open/follow-up actions, and existing message send/retry/schedule flows. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 9:40 AM PT - Messages History Card Extraction And Guard Tightening
+
+What changed:
+- Extended `src/pages/dashboard/messages/MessageDashboardComponents.tsx` with `MessageHistoryCard`.
+- Moved the message history filter header, quick filters, campaign/review summary panels, empty state, filtered history rows, and scheduled/retry row controls out of `Messages.tsx`.
+- Lowered the `Messages.tsx` file-size guard baseline from 2306 to 2123 lines.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Messages page while preserving history search/filtering, campaign-thread selection/clearing, review queue actions, scheduled send-now/reschedule/draft controls, retry controls, recipient counters, due-now labels, and message detail opening. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 9:45 AM PT - Messages Composer Panel Extraction And Guard Tightening
+
+What changed:
+- Extended `src/pages/dashboard/messages/MessageDashboardComponents.tsx` with focused composer panels for language preview, scheduling, recipient preview, and preflight warnings.
+- Moved those composer sections out of `Messages.tsx`.
+- Lowered the `Messages.tsx` file-size guard baseline from 2123 to 1954 lines.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This brings `Messages.tsx` below the oversized threshold while preserving composer template selection, language preview, schedule date/time handling, recipient preview, SMS credit/capacity warnings, text setup lock, email cap warning, send-now, schedule, and save-draft behavior. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 9:52 AM PT - Coordinator Day-Of Summary Extraction And Guard Tightening
+
+What changed:
+- Extended `src/pages/dashboard/coordinator/CoordinatorModePanels.tsx` with `CoordinatorDayOfSummaryPanel`.
+- Moved the day-of summary board, current-signal cue, standing prompt, suggested action board, progress/navigation/next-step cards, and embedded command deck out of `CoordinatorMode.tsx`.
+- Lowered the `CoordinatorMode.tsx` file-size guard baseline from 2537 to 2391 lines.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`: PASS, 20/20.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Coordinator page while preserving summary cue display, alert/manual override labels, return-to-board target, standing prompt jump, primary action, return/revisit controls, command summary actions, ops snapshot jumps, and planner/viewer notices. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 9:57 AM PT - Coordinator Check-In Queue Extraction And Guard Tightening
+
+What changed:
+- Extended `src/pages/dashboard/coordinator/CoordinatorModePanels.tsx` with `CoordinatorCheckInQueuePanel`.
+- Moved the check-in queue shell, door board, filters, ready/review quick actions, active guest action, empty state, and guest rows out of `CoordinatorMode.tsx`.
+- Lowered the `CoordinatorMode.tsx` file-size guard baseline from 2391 to 2267 lines.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`: PASS, 20/20.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Coordinator page while preserving check-in search, Enter-to-check-in, arrivals/all/checked-in filter, ready-now/review-only toggles, active guest check-in, suggested/selected labels, door-review escalation, disabled viewer controls, and queue row check-in behavior. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 10:06 AM PT - Coordinator Timeline And Message Extraction
+
+What changed:
+- Extended `src/pages/dashboard/coordinator/CoordinatorModePanels.tsx` with `CoordinatorTimelinePanel` and `CoordinatorDayOfMessagePanel`.
+- Moved the run-of-show timeline board, focused-event controls, jump buttons, per-event timeline rows, day-of message alert board, alert activity board, suggestion chips, form controls, ready-to-send cue, and alert-history filters out of `CoordinatorMode.tsx`.
+- Lowered the `CoordinatorMode.tsx` file-size guard baseline from 2267 to 1867 lines, bringing it below the 2000-line oversized-file threshold.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`: PASS, 20/20.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This removes `CoordinatorMode.tsx` from the oversized-page class while preserving timeline focus, live/up-next/suggested jumps, primary/correction timeline transitions, alert draft sync, suggestion re-alignment, send-now/schedule controls, alert filters, role-gated controls, and alert history display. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 10:12 AM PT - Guests Snapshot Insights Extraction
+
+What changed:
+- Added `src/pages/dashboard/guests/GuestSnapshotInsightsPanel.tsx`.
+- Moved the guest snapshot stats, RSVP insight cards, event/meal/custom-answer/song-request summaries, and quick insight filter buttons out of `Guests.tsx`.
+- Lowered the `Guests.tsx` file-size guard baseline from 4418 to 4270 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving guest snapshot counts, event/meal/custom-answer/song-request insight display, missing-meal/plus-one/no-response/pending-no-email/ceremony-no/reception-no focus buttons, and the existing guest operations flow. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 10:20 AM PT - Guests Toolbar And Campaign Extraction
+
+What changed:
+- Added `src/pages/dashboard/guests/GuestOpsToolbar.tsx`.
+- Added `src/pages/dashboard/guests/GuestCampaignReminderPanel.tsx`.
+- Moved the guest search/import/add/actions toolbar and campaign insights card/modal out of `Guests.tsx`.
+- Lowered the `Guests.tsx` file-size guard baseline from 4270 to 4174 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving guest search, CSV/XLSX import entry, add guest, export actions, RSVP link copy, checklist actions, reminder sends, auto-reminder toggle, delete-all entry, campaign preset selection, recipient preview, skip-recent toggle, and focus shortcuts. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 10:24 AM PT - Guests Household Panel Extraction
+
+What changed:
+- Added `src/pages/dashboard/guests/GuestHouseholdPanel.tsx`.
+- Moved the household merge banner, no-households state, grouped household rows, and ungrouped selectable guest list out of `Guests.tsx`.
+- Lowered the `Guests.tsx` file-size guard baseline from 4174 to 4090 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving household mode display, merge disabled state, status badges, grouped member rows, ungrouped guest selection toggles, and household merge entry. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 10:29 AM PT - Guests List Panel Extraction
+
+What changed:
+- Added `src/pages/dashboard/guests/GuestListPanel.tsx`.
+- Moved the main guest table, row status stack, RSVP lifecycle chips, event RSVP chips, row actions, and no-results state out of `Guests.tsx`.
+- Lowered the `Guests.tsx` file-size guard baseline from 4090 to 3899 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving guest row opening, RSVP preview, invitation send, check-in toggle, thank-you toggle, assisted RSVP entry, edit/delete actions, status badges, custom-answer indicators, and no-results copy. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 10:34 AM PT - Guests Form, Assisted RSVP, And Delete-All Modal Extraction
+
+What changed:
+- Added `src/pages/dashboard/guests/GuestModals.tsx`.
+- Moved the add/edit guest form modal, assisted RSVP modal, and delete-all confirmation modal out of `Guests.tsx`.
+- Lowered the `Guests.tsx` file-size guard baseline from 3899 to 3745 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving add/edit guest fields, plus-one controls, itinerary invitation checkboxes, assisted RSVP status/source/notes, modal close behavior, delete-all typed confirmation, and save/submit handlers. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 10:41 AM PT - Guests Itinerary Drawer Extraction
+
+What changed:
+- Added `src/pages/dashboard/guests/GuestItineraryDrawer.tsx`.
+- Moved the guest itinerary drawer, visibility preview, RSVP detail cards, exception/household context, audit trail, and event invitation toggles out of `Guests.tsx`.
+- Lowered the `Guests.tsx` file-size guard baseline from 3745 to 3383 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving drawer close behavior, guest update/RSVP link copy, guest preview links, follow-up task save, focus guest search, audit display, loading/empty states, event invitation toggles, and instant-save footer. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 10:45 AM PT - Guests CSV Import Modal Extraction
+
+What changed:
+- Added `src/pages/dashboard/guests/GuestCsvImportModals.tsx`.
+- Moved the CSV column mapper and CSV review/import modal out of `Guests.tsx`.
+- Lowered the `Guests.tsx` file-size guard baseline from 3383 to 3203 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving column mapping, invited-event multiselect, mapping validation, import review warnings, preview rows, cancel/reset behavior, and confirm import action. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 10:52 AM PT - Guests RSVP Settings View Extraction
+
+What changed:
+- Added `src/pages/dashboard/guests/GuestRsvpSettingsView.tsx`.
+- Moved the RSVP settings view, access-mode plan, setup checklist, question templates, meal choices editor, question editor, and guest change history panel out of `Guests.tsx`.
+- Lowered the `Guests.tsx` file-size guard baseline from 3203 to 2959 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving RSVP settings tab navigation, RSVP view link, access mode status cards, template add/disable behavior, meal option editing, custom question editing/deletion confirmation, save/autosave status, and audit feed display. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 10:57 AM PT - Guests RSVP Conflict Panel Extraction
+
+What changed:
+- Added `src/pages/dashboard/guests/GuestRsvpConflictPanels.tsx`.
+- Moved local RSVP conflict readback, persisted RSVP conflict filtering/details, conflict stats, and resolve actions out of `Guests.tsx`.
+- Lowered the `Guests.tsx` file-size guard baseline from 2959 to 2843 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving duplicate-email/declined-plus-one review, pending-review focus, conflict severity filtering, resolve-all, per-conflict resolve, details toggle, stale-conflict age copy, stats, and top-reason display. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 11:03 AM PT - Guests List Status Controls Extraction
+
+What changed:
+- Added `src/pages/dashboard/guests/GuestListStatusControls.tsx`.
+- Moved recommended guest action, RSVP follow-up list, planner handoff, quick-start photos jump, active segment readback, exception/meal/no-contact helper panels, segment tabs, household/check-in toggles, check-in banners, and selection readback out of `Guests.tsx`.
+- Lowered the `Guests.tsx` file-size guard baseline from 2843 to 2690 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving recommended focus/save task, ops queue focus, quick-start skip-to-photos, clear filters, exception/meal/no-contact copy actions, campaign modal opening, segment selection, household toggle, check-in mode, undo last check-in, view checked-in, and visible-selection trimming. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 11:06 AM PT - Guests Dashboard Header Extraction
+
+What changed:
+- Added `src/pages/dashboard/guests/GuestDashboardHeader.tsx`.
+- Moved the Guests dashboard hero, RSVP settings tab switch, insights toggle, import summary readback, and planner-mode notice out of `Guests.tsx`.
+- Lowered the `Guests.tsx` file-size guard baseline from 2690 to 2644 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving hero stats/actions, add-guest disable state, RSVP view link, RSVP settings navigation, insights toggle, CSV import summary copy, and planner read-only context. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 11:09 AM PT - Guests List Display Switcher Extraction
+
+What changed:
+- Added `src/pages/dashboard/guests/GuestListDisplaySwitcher.tsx`.
+- Moved the no-results state, household/list branch, and guest list panel routing out of `Guests.tsx`.
+- Lowered the `Guests.tsx` file-size guard baseline from 2644 to 2635 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving clear-filter empty state, household merge/select view, list table view, check-in behavior, assisted RSVP entry, edit/delete, invitation send, and itinerary drawer opening. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 11:16 AM PT - Guests Derived Dashboard Utility Extraction
+
+What changed:
+- Moved Guests dashboard filtering, dashboard stats, and event report rollups into `src/pages/dashboard/guests/guestDashboardUtils.ts`.
+- Added focused utility proof for stats, dashboard filtering, and event report counts.
+- Lowered the `Guests.tsx` file-size guard baseline from 2635 to 2565 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 43/43.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving search, primary/extra filters, event invite/not-invite filters, due-reminder and thank-you-due filters, dashboard hero stats, snapshot event report counts, campaign/list behavior, and guest operations flow. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 11:21 AM PT - Guests Conflict/Reminder/Export Utility Extraction
+
+What changed:
+- Moved RSVP conflict stat derivation, due-reminder and thank-you-due segment derivation, and reusable guest CSV download wiring into `src/pages/dashboard/guests/guestDashboardUtils.ts`.
+- Added focused utility proof for conflict freshness/top-code stats and due reminder/thank-you segment selection.
+- Lowered the `Guests.tsx` file-size guard baseline from 2565 to 2492 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 45/45.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving RSVP conflict stats, stale-conflict counts, top conflict reasons, due reminder targeting, thank-you due targeting, all guest CSV export actions, and event attendance exports. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 11:25 AM PT - Guests CSV Import Preparation Utility Extraction
+
+What changed:
+- Moved demo imported-guest construction, imported guest row cleanup, and CSV import sidecar derivation for households, event invites, and RSVP rows into `src/pages/dashboard/guests/guestDashboardUtils.ts`.
+- Added focused utility proof for demo import rows, internal field stripping, household sidecars, event invite rows, and imported RSVP rows.
+- Lowered the `Guests.tsx` file-size guard baseline from 2492 to 2430 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 46/46.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving demo imports, secure-token imports, household grouping, guarded household separation, event invite import, RSVP row import, quick-start photo continuation, and import summary toasts. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 11:30 AM PT - Guests RSVP Config And Export Label Utility Extraction
+
+What changed:
+- Moved RSVP config cleanup/validation, guest display-name formatting, filtered-export suffix formatting, and SMS RSVP link row building into `src/pages/dashboard/guests/guestDashboardUtils.ts`.
+- Added focused utility proof for RSVP config cleanup, display names, export segment suffixes, and SMS RSVP link rows.
+- Lowered the `Guests.tsx` file-size guard baseline from 2430 to 2406 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 48/48 after refreshing the stale boundary assertion for the new RSVP config helper call shape.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving RSVP question cleanup, meal-option title-casing, validation toasts, demo/live RSVP settings saves, invitation names, campaign preview names, filtered CSV naming, and SMS RSVP link copy. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 11:33 AM PT - Guests Invitation Payload Utility Extraction
+
+What changed:
+- Moved wedding invitation email payload construction into `src/pages/dashboard/guests/guestDashboardUtils.ts`.
+- Reused the helper across single invitation, selected reminders, filtered reminder campaigns, and due-reminder send paths.
+- Lowered the `Guests.tsx` file-size guard baseline from 2406 to 2358 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 48/48.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving single invite sends, selected reminders, filtered reminder campaigns, due reminders, invitation timestamp writes, reminder timestamp writes, campaign logs, and owner-facing success/failure toasts. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 11:37 AM PT - Guests Reminder Campaign Summary Utility Extraction
+
+What changed:
+- Moved reminder send summary copy, campaign confirmation description construction, and campaign log entry construction into `src/pages/dashboard/guests/guestDashboardUtils.ts`.
+- Added focused utility proof for send summaries, campaign confirmation copy, and campaign log entries.
+- Lowered the `Guests.tsx` file-size guard baseline from 2358 to 2346 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 48/48.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving selected reminder result toasts, filtered campaign confirmation copy, no-contact warning copy, recipient previews, demo campaign logs, due-reminder logs, and send success/failure summaries. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 11:42 AM PT - Guests CSV Import Toast Utility Extraction
+
+What changed:
+- Moved CSV import preview and import success toast construction into `src/pages/dashboard/guests/guestDashboardUtils.ts`.
+- Added focused utility proof for skipped-row messaging, unknown-event warnings, duplicate-name warnings, household warnings, household group summaries, guarded-household summaries, and event invite summaries.
+- Lowered the `Guests.tsx` file-size guard baseline from 2346 to 2338 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 48/48.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving CSV mapper preview toasts, skipped-row messaging, unknown-event warnings, duplicate-name warnings, household-match warnings, demo import success, live import success, household grouping, guarded-household separation, event-invite summaries, and import readback summaries. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 11:46 AM PT - Guests Form Mapping Utility Extraction
+
+What changed:
+- Moved add/edit guest form mapping, demo guest construction, demo edit projection, event invite ID selection, edit-form hydration, and edit rollback value capture into `src/pages/dashboard/guests/guestDashboardUtils.ts`.
+- Added focused utility proof for demo guest creation, edit form mapping, event invite selection, edit-form hydration, and rollback values.
+- Lowered the `Guests.tsx` file-size guard baseline from 2338 to 2288 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 49/49.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving demo add/edit guests, live add/edit guests, ceremony/reception invite flags, custom itinerary event invites, edit modal hydration, failed edit rollback, add failure cleanup, and owner-facing add/edit toasts. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 11:48 AM PT - Guests Assisted RSVP Mapping Utility Extraction
+
+What changed:
+- Moved assisted RSVP manual-note construction and demo assisted-RSVP state projection into `src/pages/dashboard/guests/guestDashboardUtils.ts`.
+- Added focused utility proof for manual RSVP note tags plus demo confirmed and declined RSVP state updates.
+- Lowered the `Guests.tsx` file-size guard baseline from 2288 to 2264 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 50/50.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving assisted RSVP manual source tags, demo confirmed RSVP updates, demo declined RSVP cleanup, live assisted RSVP saves, drawer/form closure, and owner-facing assisted RSVP toasts. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 11:52 AM PT - Guests Selection And Campaign Clipboard Utility Extraction
+
+What changed:
+- Moved selected/unresolved guest ID derivation, selection toast copy, visible-selection trimming, checklist markdown copy, and campaign dry-run clipboard text into `src/pages/dashboard/guests/guestDashboardUtils.ts`.
+- Added focused utility proof for unresolved ID selection, selected-count copy, visible selection trimming, checklist markdown, and dry-run recipient preview text.
+- Lowered the `Guests.tsx` file-size guard baseline from 2264 to 2259 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 51/51.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving unresolved selection, filtered selection, visible-selection trimming, checklist copy/download fallback, campaign dry-run copy/download fallback, and owner-facing selection/dry-run toasts. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 11:56 AM PT - Guests Dashboard Overlay Component Extraction
+
+What changed:
+- Moved the Guests dashboard modal/drawer stack into `src/pages/dashboard/guests/GuestDashboardOverlays.tsx`.
+- Centralized rendering for assisted RSVP, add/edit guest, itinerary drawer, delete-all confirmation, CSV mapper, CSV review, and confirmation dialogs while keeping `Guests.tsx` as the workflow coordinator.
+- Lowered the `Guests.tsx` file-size guard baseline from 2259 to 2205 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 51/51.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving assisted RSVP modals, add/edit guest modals, itinerary drawer behavior, delete-all confirmation, CSV mapping/review modals, shared confirmation dialogs, and all close/save/confirm handlers. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 12:00 PM PT - Guests Reminder Send Batch Utility Extraction
+
+What changed:
+- Moved shared reminder batch send/timestamp counting into `src/pages/dashboard/guests/guestDashboardUtils.ts`.
+- Reused the helper across selected reminders, filtered reminder campaigns, and due reminders.
+- Added focused utility proof for invitation payload construction, per-guest timestamp updates, skipped no-email rows, and failed recipient counting.
+- Lowered the `Guests.tsx` file-size guard baseline from 2205 to 2187 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 52/52.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims the oversized Guests page while preserving selected reminder sends, filtered campaign sends, due-reminder sends, invitation/reminder timestamp writes, partial-failure counts, no-email skips, campaign logs, fetch refreshes, and owner-facing send result toasts. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 12:03 PM PT - Guests Dead State Cleanup
+
+What changed:
+- Removed stale `Guests.tsx` saved-segment persistence state, old RSVP ops-summary copy handler, unused export-menu state, and unused derived label/completeness values that no longer feed the rendered dashboard.
+- Lowered the `Guests.tsx` file-size guard baseline from 2187 to 2137 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 52/52.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This trims inert page state while preserving the rendered Guests dashboard, campaign presets, follow-up tasks, checklist copy, selection behavior, reminder sends, exports, and CSV workflows. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 12:11 PM PT - Guests Below-Threshold Owner Utility Extraction
+
+What changed:
+- Moved guest export actions, text RSVP link copy/download fallback, and guest update link copy/download fallback into `src/pages/dashboard/guests/useGuestDashboardExports.ts`.
+- Moved check-in undo/clear/toggle behavior plus single and bulk thank-you status writes into `src/pages/dashboard/guests/useGuestDashboardCheckIns.ts`.
+- Moved the shared RSVP status badge renderer into `src/pages/dashboard/guests/GuestStatusBadge.tsx`.
+- Lowered the `Guests.tsx` file-size guard baseline from 2137 to 1939 lines, bringing it below the 2000-line oversized-file threshold.
+- Refreshed the dashboard data-boundary assertion so it follows the check-in service calls in their new hook.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 52/52 after refreshing the stale boundary assertion.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This removes `Guests.tsx` from the oversized-page class while preserving guest exports, contact-link sharing, text RSVP link sharing, check-in state updates, thank-you state updates, status badges, refresh behavior, and customer-safe toasts. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 12:15 PM PT - Name-Change Template Card Headroom Extraction
+
+What changed:
+- Moved the prewritten account-update template card into `src/pages/dashboard/planning/NameChangeAccountUpdateTemplatesCard.tsx`.
+- Lowered the `NameChangePlannerTab.tsx` file-size guard baseline from 1999 to 1953 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/planning/NameChangePlannerTab.test.tsx src/pages/dashboard/planning/nameChangePlannerUi.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 62/62.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This adds guard headroom to the tightest remaining page baseline while preserving readiness-aware account update template subjects, context lines, body copy, status chips, copy button labels, copy/download behavior, and copied-state reset. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 12:24 PM PT - Builder Sidebar Preview Metadata Extraction
+
+What changed:
+- Moved builder sidebar live-preview fixture data into `src/builder/components/builderSidebarPreviewData.ts`.
+- Moved variant tone, art-direction, and curated preview wedding-data metadata into `src/builder/components/builderVariantPreviewMetadata.ts`.
+- Lowered `BuilderSidebarLibrary.tsx` from 3294 to 2869 lines.
+- Added `BuilderSidebarLibrary.tsx` to the file-size guard as an exact non-page tracked baseline at 2869 lines.
+
+Commands run:
+- `npm test -- --run src/builder/components/BuilderShell.test.tsx src/builder/components/BuilderInspectorPanel.gallery.test.ts src/builder/components/BuilderSectionRail.test.tsx src/builder/components/BuilderTopBar.test.tsx src/builder/components/SectionRenderer.public.test.tsx`: PASS, 16/16. `SectionRenderer.public.test.tsx` intentionally logs the simulated provider failure while proving the safe fallback.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This reduces the largest non-generated source module and adds guard coverage while preserving section picker photo-set controls, section previews, live variant previews, variant tone chips, art-direction descriptions, sequence/composition cues, and preview wedding-data fixtures. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 12:27 PM PT - Builder Sidebar Static Preview Extraction
+
+What changed:
+- Moved the static section-type preview renderer into `src/builder/components/SectionTypePreview.tsx`.
+- Lowered `BuilderSidebarLibrary.tsx` from 2869 to 2575 lines.
+- Lowered the non-page file-size guard baseline for `BuilderSidebarLibrary.tsx` from 2869 to 2575 lines.
+
+Commands run:
+- `npm test -- --run src/builder/components/BuilderShell.test.tsx src/builder/components/BuilderInspectorPanel.gallery.test.ts src/builder/components/BuilderSectionRail.test.tsx src/builder/components/BuilderTopBar.test.tsx src/builder/components/SectionRenderer.public.test.tsx`: PASS, 16/16. `SectionRenderer.public.test.tsx` intentionally logs the simulated provider failure while proving the safe fallback.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps reducing the largest non-generated source module while preserving section type preview thumbnails, compact preview wrapping, live variant fallback headers, and the surrounding variant preview cards. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 12:31 PM PT - Builder Sidebar Variant Swatch Extraction
+
+What changed:
+- Moved the large static fallback variant preview swatch renderer into `src/builder/components/VariantPreviewSwatch.tsx`.
+- Lowered `BuilderSidebarLibrary.tsx` from 2575 to 1003 lines.
+- Added exact non-page file-size guard baselines for `BuilderSidebarLibrary.tsx` at 1003 lines and `VariantPreviewSwatch.tsx` at 1574 lines.
+
+Commands run:
+- `npm test -- --run src/builder/components/BuilderShell.test.tsx src/builder/components/BuilderInspectorPanel.gallery.test.ts src/builder/components/BuilderSectionRail.test.tsx src/builder/components/BuilderTopBar.test.tsx src/builder/components/SectionRenderer.public.test.tsx`: PASS, 16/16. `SectionRenderer.public.test.tsx` intentionally logs the simulated provider failure while proving the safe fallback.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This finishes the biggest builder-sidebar split by isolating static fallback preview art while preserving fallback swatches, live-preview fallback rendering, hover styling, variant cards, compact section preview headers, and builder sidebar drag/layer behavior. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 12:36 PM PT - Builder Entry-Site Service-Boundary Extraction
+
+What changed:
+- Moved the builder editor entry-site `wedding_sites` read from `BuilderPage.tsx` into `builderProjectService.loadEntrySite`.
+- Added an explicit `BUILDER_ENTRY_SITE_SELECT` projection in the builder project service.
+- Updated the dashboard data-boundary guard to include builder runtime screens/code in the no-direct-Supabase/no-select-star checks and prove the builder page no longer imports Supabase or owns that direct table read.
+
+Commands run:
+- `npm test -- --run src/builder/services/builderProjectService.test.ts src/builder/BuilderPage.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 25/25.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This reduces builder page data ownership while preserving active-site resolution, no-site fallback, couple-name display, builder project load, wedding-data load, setup-draft hydration, template default application, and draft-save behavior. No deploy was run, so launch status is unchanged.
+
+### 2026-05-06 12:43 PM PT - Registry Preview Hostile URL Matrix And Proof-Lane Refresh
+
+What changed:
+- Added `src/lib/registryPreviewUrlNormalizer.test.ts` with a local hostile URL matrix for registry preview normalization.
+- Wired that matrix into `npm run test:security`.
+- Refreshed the public-site access artifact guard so it follows the current shared helper extraction.
+- Updated `scripts/v1-proof-ai-rollout.mjs` so AI/photo rollout proof resolves extracted select constants in `guestPhotoSharingService.ts`.
+
+Commands run:
+- `npm test -- --run src/lib/registryPreviewUrlNormalizer.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 53/53.
+- `npm run test:security`: PASS, 222/222.
+- `node scripts/v1-proof-ai-clearance.mjs`: expected nonzero local-only launch-clearance result with 2/2 local subchecks green and the live-gate blocker preserved.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This strengthens local P1 SSRF proof and security-lane freshness while preserving registry URL preview canonicalization, product dedupe, public-site invite/password session storage, and guest photo AI/photo safe-column proof. No deploy was run, so live hostile-target/runtime authorization proof remains gated.
+
+### 2026-05-06 12:46 PM PT - Test-Lane Security Matrix Drift Fix
+
+What changed:
+- Updated `scripts/v1-proof-test-lanes.mjs` so its hardcoded `test:security` contract includes `src/lib/registryPreviewUrlNormalizer.test.ts`.
+- `npm run proof:v1:test-lanes` now fails if the hostile registry-preview URL matrix is removed from the named security lane.
+
+Commands run:
+- `node --check scripts/v1-proof-test-lanes.mjs`: PASS.
+- `npm run proof:v1:test-lanes`: PASS, 9/9 script contracts plus CI hardpass checks.
+- `npm run test:security`: PASS, 222/222.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This is local proof-lane hardening only; runtime behavior and launch status are unchanged, and no deploy was run.
+
+### 2026-05-06 12:49 PM PT - Launch Performance-Budget Gate Wiring
+
+What changed:
+- Wired `npm run proof:v1:performance-budget` into `npm run test:launch` after production build.
+- Added the same named performance-budget step to `.github/workflows/ci-hardpass.yml`.
+- Updated `scripts/v1-proof-test-lanes.mjs` so it guards the launch-lane and CI performance-budget contract.
+
+Commands run:
+- `npm run proof:v1:performance-budget`: PASS, 0 failures and 3 review chunks: `registry-CCjYb-Xs.js` 325.27 KiB, `nameChangeService-Bf0FgOO0.js` 288.54 KiB, and `Planning-DBFVjkJn.js` 253.86 KiB.
+- `npm run proof:v1:test-lanes`: PASS, 9/9 script contracts plus CI hardpass checks.
+- `npm run test:launch`: PASS. This ran typecheck, quiet lint, `test:security`, file-size guard, asset guard, production build, performance-budget proof, and proof-board markdown generation.
+
+Status:
+- PARTIAL. This makes route-chunk budget proof part of the normal launch lane, but broader query/pagination and existing asset optimization work remain. No deploy was run.
+
+### 2026-05-06 12:56 PM PT - Messages Detail Modal Extraction
+
+What changed:
+- Moved the message detail modal into `src/pages/dashboard/messages/MessageDetailModal.tsx`.
+- Reduced `src/pages/dashboard/messages/MessageDashboardComponents.tsx` from 1799 to 1415 lines.
+- Added a non-page file-size guard baseline for `MessageDashboardComponents.tsx` at 1415 lines.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/messages/messageDashboardUtils.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 31/31.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This reduces a large dashboard support module while preserving message detail viewing, delivery attention summaries, skipped-contact summaries, scheduled send controls, retry, duplicate/edit composer actions, and status display. No deploy was run.
+
+### 2026-05-06 12:59 PM PT - Shared Email Safety Executable Proof
+
+What changed:
+- Added `src/lib/emailSafety.test.ts` to directly import the shared Edge Function email safety helpers.
+- Proved hostile HTML escaping, safe URL fallback, href escaping, subject control-character cleanup, empty-subject fallback, and the 180-character subject cap.
+- Wired the helper proof into `npm run test:security`.
+- Updated `scripts/v1-proof-test-lanes.mjs` so the security lane contract fails if `src/lib/emailSafety.test.ts` is removed.
+
+Commands run:
+- `npm test -- --run src/lib/emailSafety.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 32/32.
+- `npm run proof:v1:test-lanes`: PASS, 9/9 script contracts plus CI hardpass checks.
+- `npm run test:security`: PASS, 226/226.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This strengthens the local P1 email safety proof while preserving shared helper behavior for `send-wedding-email`, `process-email-queue`, `send-bulk-message`, and vendor inquiry email paths. Live messaging authorization proof remains required. No deploy was run.
+
+### 2026-05-06 1:05 PM PT - Name-Change Account-Update Helper Extraction
+
+What changed:
+- Moved pure account-update template proof/readiness/copy helpers into `src/lib/nameChange/accountUpdateTemplateCopy.ts`.
+- Kept `src/lib/nameChange/engine.ts` compatibility exports intact for existing planner and action-feed imports.
+- Reduced `src/lib/nameChange/engine.ts` from 1738 to 1528 lines.
+
+Commands run:
+- `npm test -- --run src/lib/nameChange/engine.test.ts src/lib/nameChange/actionFeed.test.ts src/pages/dashboard/planning/NameChangePlannerTab.test.tsx src/pages/dashboard/planning/nameChangePlannerUi.test.ts`: PASS, 153/153.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This reduces the name-change engine maintenance surface while preserving generated account-update template subjects, audience/status/action lines, readiness labels, copied-state labels, checklist/proof normalization, and planner card copy behavior. No deploy was run.

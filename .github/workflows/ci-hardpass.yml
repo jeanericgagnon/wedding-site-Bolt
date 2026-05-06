@@ -55,6 +55,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Performance budget proof
+        run: npm run proof:v1:performance-budget
+
       - name: Registry smoke
         run: npm run smoke:registry
 

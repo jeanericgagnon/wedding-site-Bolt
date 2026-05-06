@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink, AlertTriangle, Check, X, HelpCircle, Camera, Wand2, MoveRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
@@ -14,87 +13,34 @@ import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds, getEventRsvpSnapshotsByInvitationIds, restoreEventRsvpSnapshots } from '../../lib/eventRsvpCleanup';
-import type { WeddingDataV1 } from '../../types/weddingData';
-import { combineDateAndTimeISO } from './itineraryDateTime';
 import { formatItineraryEventDate, toValidItineraryEventDateOrNull } from './itineraryEventDate';
-import { deriveItineraryEventRsvpCounts, shouldLoadEventRsvps } from './itineraryEventRsvpCounts';
 import { analyzeTimeline } from '../../lib/invisibleIntelligence';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
-
-interface ItineraryEvent {
-  id: string;
-  event_name: string;
-  description: string;
-  event_date: string;
-  start_time: string;
-  end_time: string | null;
-  location_name: string;
-  location_address: string;
-  dress_code: string | null;
-  notes: string | null;
-  display_order: number;
-  is_visible: boolean;
-}
-
-const ITINERARY_EVENT_SELECT = 'id, event_name, title, description, event_date, start_time, end_time, location_name, location_address, dress_code, notes, display_order, sort_order, is_visible' as const;
-
-const EVENT_GUEST_PICKER_SELECT = 'id, name, first_name, last_name, email' as const;
+import {
+  createItineraryTemplateEvents,
+  deleteItineraryEvent,
+  findEventInvitationId,
+  listEventInvitationIds,
+  loadEventGuestPicker,
+  loadItineraryEventsForUser,
+  removeAllEventInvitations,
+  removeEventGuestInvitation,
+  resolveItinerarySiteId,
+  saveItineraryEvent,
+  syncWeddingDataSchedule,
+  updateItineraryEventTimes,
+  upsertEventGuestInvitations,
+  type EventGuestPickerGuest,
+  type EventWithInvites,
+  type ItineraryEvent,
+} from './itineraryService';
 
 const DEMO_ITINERARY_STORAGE_KEY = 'dayof.demo.itinerary.events';
 // Optional table: detect once at runtime so older environments degrade quietly.
 let hasEventRsvpsTable: boolean | null = null;
 
-interface EventWithInvites extends ItineraryEvent {
-  invitation_count: number;
-  rsvp_count: number;
-  attending_count: number;
-  declined_count: number;
-  pending_count: number;
-}
-
-function toScheduleSectionEvents(events: ItineraryEvent[]) {
-  return [...events]
-    .filter((event) => event.is_visible !== false)
-    .sort((a, b) => {
-      const left = `${a.event_date || ''}T${a.start_time || '00:00'}`;
-      const right = `${b.event_date || ''}T${b.start_time || '00:00'}`;
-      return left.localeCompare(right);
-    })
-    .map((event, index) => ({
-      id: event.id || `itinerary-${index + 1}`,
-      title: event.event_name || 'Event',
-      time: [event.start_time, event.end_time].filter(Boolean).join(' - ') || 'Time TBD',
-      description: event.description || event.notes || '',
-      location: [event.location_name, event.location_address].filter(Boolean).join(' · ') || undefined,
-    }));
-}
-
-function toWeddingSchedule(events: ItineraryEvent[]): WeddingDataV1['schedule'] {
-  return [...events]
-    .filter((event) => event.is_visible !== false)
-    .sort((a, b) => {
-      const left = `${a.event_date || ''}T${a.start_time || '00:00'}`;
-      const right = `${b.event_date || ''}T${b.start_time || '00:00'}`;
-      return left.localeCompare(right);
-    })
-    .map((event, index) => {
-      const locationBits = [event.location_name, event.location_address].filter(Boolean).join(' · ');
-      const descriptionBits = [event.description, event.notes].filter(Boolean).join(' · ');
-      const notes = [locationBits, descriptionBits].filter(Boolean).join(' — ');
-
-      return {
-        id: event.id || `itinerary-${index + 1}`,
-        label: event.event_name || 'Event',
-        startTimeISO: combineDateAndTimeISO(event.event_date, event.start_time) || '',
-        endTimeISO: combineDateAndTimeISO(event.event_date, event.end_time) || undefined,
-        notes: notes || undefined,
-      };
-    })
-    .filter((item) => !!item.startTimeISO && !!item.label);
-}
-
 export const DashboardItinerary: React.FC = () => {
-  const { isDemoMode } = useAuth();
+  const { isDemoMode, user } = useAuth();
   const { toast } = useToast();
   const [confirmDialog, setConfirmDialog] = useState<null | Omit<ConfirmDialogProps, 'open'>>(null);
   const requestConfirmation = (options: Pick<ConfirmDialogProps, 'title' | 'description' | 'confirmLabel' | 'tone'>) =>
@@ -151,63 +97,6 @@ export const DashboardItinerary: React.FC = () => {
     } catch {}
   }, [isDemoMode, events]);
 
-  async function syncWeddingDataSchedule(siteId: string, eventList: ItineraryEvent[]) {
-    try {
-      const { data: siteData, error: readError } = await supabase
-        .from('wedding_sites')
-        .select('wedding_data')
-        .eq('id', siteId)
-        .maybeSingle();
-
-      if (readError) throw readError;
-
-      const weddingData = (siteData?.wedding_data as Record<string, unknown> | null) ?? {};
-      const nextSchedule = toWeddingSchedule(eventList);
-      const currentSchedule = Array.isArray((weddingData as { schedule?: unknown }).schedule)
-        ? (weddingData as { schedule: unknown[] }).schedule
-        : [];
-
-      if (JSON.stringify(currentSchedule) === JSON.stringify(nextSchedule)) return;
-
-      const { error: updateError } = await supabase
-        .from('wedding_sites')
-        .update({
-          wedding_data: {
-            ...weddingData,
-            schedule: nextSchedule,
-          },
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', siteId);
-
-      if (updateError) throw updateError;
-
-      const sectionEvents = toScheduleSectionEvents(eventList);
-      const { data: scheduleSections, error: sectionsReadError } = await supabase
-        .from('sections')
-        .select('id,data')
-        .eq('site_id', siteId)
-        .eq('type', 'schedule');
-
-      if (sectionsReadError) throw sectionsReadError;
-
-      for (const section of scheduleSections ?? []) {
-        const currentData = (section.data as Record<string, unknown> | null) ?? {};
-        const nextData = { ...currentData, events: sectionEvents };
-        if (JSON.stringify(currentData) === JSON.stringify(nextData)) continue;
-
-        const { error: sectionUpdateError } = await supabase
-          .from('sections')
-          .update({ data: nextData, updated_at: new Date().toISOString() })
-          .eq('id', section.id);
-
-        if (sectionUpdateError) throw sectionUpdateError;
-      }
-    } catch {
-      // non-blocking mirror write; itinerary CRUD still succeeds
-    }
-  }
-
   async function loadEvents() {
     try {
       if (isDemoMode) {
@@ -251,95 +140,14 @@ export const DashboardItinerary: React.FC = () => {
         return;
       }
 
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
       if (!user) {
         setEvents([]);
         return;
       }
 
-      const activeSite = await resolveActiveSiteForUser(user.id);
-      const { data: sites, error: siteError } = await supabase
-        .from('wedding_sites')
-        .select('id')
-        .eq('id', activeSite?.id ?? '')
-        .maybeSingle();
-      if (siteError) throw siteError;
-
-      if (!sites) {
-        setEvents([]);
-        return;
-      }
-
-      const { data: eventsData, error } = await supabase
-        .from('itinerary_events')
-        .select(ITINERARY_EVENT_SELECT)
-        .eq('wedding_site_id', sites.id)
-        .order('event_date', { ascending: true })
-        .order('start_time', { ascending: true });
-
-      if (error) throw error;
-
-      const normalizedEvents: ItineraryEvent[] = (eventsData || []).map((event: Record<string, unknown>) => ({
-        id: String(event.id ?? ''),
-        event_name: (event.event_name as string) || (event.title as string) || 'Event',
-        description: (event.description as string) || '',
-        event_date: (event.event_date as string) || new Date().toISOString().slice(0, 10),
-        start_time: (event.start_time as string) || '',
-        end_time: (event.end_time as string | null) ?? null,
-        location_name: (event.location_name as string) || '',
-        location_address: (event.location_address as string) || '',
-        dress_code: (event.dress_code as string | null) ?? null,
-        notes: (event.notes as string | null) ?? null,
-        display_order: (event.display_order as number) ?? (event.sort_order as number) ?? 0,
-        is_visible: (event.is_visible as boolean) ?? true,
-      }));
-
-      await syncWeddingDataSchedule(sites.id, normalizedEvents);
-
-      const eventsWithCounts = await Promise.all(
-        normalizedEvents.map(async (event) => {
-          const { data: invites, error: invitesError } = await supabase
-            .from('event_invitations')
-            .select('id')
-            .eq('event_id', event.id);
-          if (invitesError) throw invitesError;
-
-          const invitationIds = (invites ?? []).map((i) => i.id as string);
-          const inviteCount = invitationIds.length;
-
-          let rsvps: Array<{ attending: boolean | null }> = [];
-          if (shouldLoadEventRsvps(invitationIds.length, hasEventRsvpsTable)) {
-            const { data, error } = await supabase
-              .from('event_rsvps')
-              .select('attending')
-              .in('event_invitation_id', invitationIds);
-
-            if (error) {
-              const msg = (error.message || '').toLowerCase();
-              if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404') || msg.includes('relation')) {
-                hasEventRsvpsTable = false;
-              }
-            } else {
-              hasEventRsvpsTable = true;
-              rsvps = (data ?? []) as Array<{ attending: boolean | null }>;
-            }
-          }
-
-          const { rsvpCount, attendingCount, declinedCount, pendingCount } = deriveItineraryEventRsvpCounts(rsvps, inviteCount);
-
-          return {
-            ...event,
-            invitation_count: inviteCount,
-            rsvp_count: rsvpCount,
-            attending_count: attendingCount,
-            declined_count: declinedCount,
-            pending_count: pendingCount,
-          };
-        })
-      );
-
-      setEvents(eventsWithCounts);
+      const result = await loadItineraryEventsForUser(user.id, hasEventRsvpsTable);
+      hasEventRsvpsTable = result.eventRsvpsTableAvailable;
+      setEvents(result.events);
     } catch {
       setEvents([]);
       toast('Couldn’t load itinerary events. Please try again.', 'error');
@@ -440,19 +248,13 @@ export const DashboardItinerary: React.FC = () => {
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setSaveError('Please log in again and retry.');
         return;
       }
 
-      const { data: site } = await supabase
-        .from('wedding_sites')
-        .select('id')
-        .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
-        .single();
-
-      if (!site) {
+      const siteId = await resolveItinerarySiteId(user.id);
+      if (!siteId) {
         setSaveError('Couldn’t find your website right now. Please refresh and try again.');
         return;
       }
@@ -469,60 +271,12 @@ export const DashboardItinerary: React.FC = () => {
         location_address: formData.location_address || null,
       };
 
-      const driftFields = ['event_name', 'is_visible', 'dress_code', 'notes', 'location_address', 'end_time'];
-      let createdEvent: { id: string; event_name?: string } | null = null;
-
-      if (editingEvent) {
-        const updatePayload: Record<string, unknown> = { ...payload };
-        let error: { message?: string } | null = null;
-
-        for (let i = 0; i <= driftFields.length; i += 1) {
-          const result = await supabase
-            .from('itinerary_events')
-            .update(updatePayload)
-            .eq('id', editingEvent.id);
-          error = result.error;
-          if (!error) break;
-
-          const field = driftFields.find((candidate) => error?.message?.includes(candidate));
-          if (!field || !(field in updatePayload)) break;
-          delete updatePayload[field];
-        }
-
-        if (error) throw error;
-      } else {
-        const insertPayload: Record<string, unknown> = { ...payload };
-        let error: { message?: string } | null = null;
-
-        for (let i = 0; i <= driftFields.length; i += 1) {
-          const result = await supabase
-            .from('itinerary_events')
-            .insert([
-              {
-                ...insertPayload,
-                wedding_site_id: site.id,
-              },
-            ])
-            .select('id,event_name')
-            .single();
-          error = result.error;
-          if (!error && result.data) {
-            createdEvent = result.data as { id: string; event_name?: string };
-          }
-          if (!error) break;
-
-          const field = driftFields.find((candidate) => error?.message?.includes(candidate));
-          if (!field || !(field in insertPayload)) break;
-          delete insertPayload[field];
-        }
-
-        if (error) throw error;
-      }
+      const createdEvent = await saveItineraryEvent(siteId, payload, editingEvent?.id ?? null);
 
       if (!editingEvent && autoCreateAlbum && createdEvent?.id) {
         try {
           await invokeFunctionOrThrow(supabase, 'photo-album-create', {
-            siteId: site.id,
+            siteId,
             name: createdEvent.event_name || formData.event_name,
             itineraryEventId: createdEvent.id,
           });
@@ -555,12 +309,7 @@ export const DashboardItinerary: React.FC = () => {
         setEvents(prev => prev.filter(e => e.id !== eventId));
         return;
       }
-      const { error } = await supabase
-        .from('itinerary_events')
-        .delete()
-        .eq('id', eventId);
-
-      if (error) throw error;
+      await deleteItineraryEvent(eventId);
 
       loadEvents();
     } catch {
@@ -641,24 +390,10 @@ export const DashboardItinerary: React.FC = () => {
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Please log in again and retry.');
-      const activeSite = await resolveActiveSiteForUser(user.id);
-      if (!activeSite?.id) throw new Error('Couldn’t find your website right now.');
-
-      const results = await Promise.all(nextEvents.map((event) => supabase
-        .from('itinerary_events')
-        .update({
-          event_date: event.event_date,
-          start_time: event.start_time || null,
-          end_time: event.end_time || null,
-          display_order: event.display_order,
-        })
-        .eq('id', event.id)
-      ));
-      const failed = results.find((result) => result.error);
-      if (failed?.error) throw failed.error;
-      await syncWeddingDataSchedule(activeSite.id, nextEvents);
+      const siteId = await resolveItinerarySiteId(user.id);
+      if (!siteId) throw new Error('Couldn’t find your website right now.');
+      await updateItineraryEventTimes(siteId, nextEvents);
       setEvents(nextEvents);
       setSaveNotice(notice);
     } catch (err: unknown) {
@@ -736,22 +471,10 @@ export const DashboardItinerary: React.FC = () => {
         setSaveNotice(`Added ${newEvents.length} template events.`);
         return;
       }
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Please log in again and retry.');
-      const activeSite = await resolveActiveSiteForUser(user.id);
-      if (!activeSite?.id) throw new Error('Couldn’t find your website right now.');
-      const { error } = await supabase.from('itinerary_events').insert(newEvents.map((event) => ({
-        wedding_site_id: activeSite.id,
-        event_name: event.event_name,
-        title: event.event_name,
-        description: event.description,
-        event_date: event.event_date,
-        start_time: event.start_time,
-        end_time: event.end_time,
-        display_order: event.display_order,
-        is_visible: true,
-      })));
-      if (error) throw error;
+      const siteId = await resolveItinerarySiteId(user.id);
+      if (!siteId) throw new Error('Couldn’t find your website right now.');
+      await createItineraryTemplateEvents(siteId, newEvents);
       await loadEvents();
       setSaveNotice(`Added ${newEvents.length} template events.`);
     } catch (err: unknown) {
@@ -1222,6 +945,7 @@ interface EventGuestManagerProps {
 
 function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [confirmDialog, setConfirmDialog] = useState<null | Omit<ConfirmDialogProps, 'open'>>(null);
   const requestConfirmation = (options: Pick<ConfirmDialogProps, 'title' | 'description' | 'confirmLabel' | 'tone'>) =>
     new Promise<boolean>((resolve) => {
@@ -1237,8 +961,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
         },
       });
     });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [allGuests, setAllGuests] = useState<any[]>([]);
+  const [allGuests, setAllGuests] = useState<EventGuestPickerGuest[]>([]);
   const [invitedGuestIds, setInvitedGuestIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [bulkLoading, setBulkLoading] = useState(false);
@@ -1251,43 +974,15 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
 
   async function loadGuests() {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
       if (!user) {
         setAllGuests([]);
         setInvitedGuestIds(new Set());
         return;
       }
 
-      const activeSite = await resolveActiveSiteForUser(user.id);
-      const { data: site, error: siteError } = await supabase
-        .from('wedding_sites')
-        .select('id')
-        .eq('id', activeSite?.id ?? '')
-        .single();
-      if (siteError) throw siteError;
-
-      if (!site) {
-        setAllGuests([]);
-        setInvitedGuestIds(new Set());
-        return;
-      }
-
-      const { data: guests, error: guestsError } = await supabase
-        .from('guests')
-        .select(EVENT_GUEST_PICKER_SELECT)
-        .eq('wedding_site_id', site.id)
-        .order('name');
-      if (guestsError) throw guestsError;
-
-      const { data: invitations, error: invitationsError } = await supabase
-        .from('event_invitations')
-        .select('guest_id')
-        .eq('event_id', eventId);
-      if (invitationsError) throw invitationsError;
-
-      setAllGuests(guests || []);
-      setInvitedGuestIds(new Set(invitations?.map((i) => i.guest_id) || []));
+      const result = await loadEventGuestPicker(user.id, eventId);
+      setAllGuests(result.guests);
+      setInvitedGuestIds(result.invitedGuestIds);
     } catch {
       setAllGuests([]);
       setInvitedGuestIds(new Set());
@@ -1300,30 +995,18 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
   async function toggleGuestInvitation(guestId: string) {
     try {
       if (invitedGuestIds.has(guestId)) {
-        const { data: invitationRow, error: invitationLookupError } = await supabase
-          .from('event_invitations')
-          .select('id')
-          .eq('event_id', eventId)
-          .eq('guest_id', guestId)
-          .maybeSingle();
-
-        if (invitationLookupError) throw invitationLookupError;
-
-        const eventRsvpSnapshots = invitationRow?.id
-          ? await getEventRsvpSnapshotsByInvitationIds([invitationRow.id])
+        const invitationId = await findEventInvitationId(eventId, guestId);
+        const eventRsvpSnapshots = invitationId
+          ? await getEventRsvpSnapshotsByInvitationIds([invitationId])
           : [];
 
-        if (invitationRow?.id) {
-          await deleteEventRsvpByInvitationId(invitationRow.id);
+        if (invitationId) {
+          await deleteEventRsvpByInvitationId(invitationId);
         }
 
-        const { error } = await supabase
-          .from('event_invitations')
-          .delete()
-          .eq('event_id', eventId)
-          .eq('guest_id', guestId);
-
-        if (error) {
+        try {
+          await removeEventGuestInvitation(eventId, guestId);
+        } catch (error) {
           await restoreEventRsvpSnapshots(eventRsvpSnapshots);
           throw error;
         }
@@ -1334,11 +1017,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
           return next;
         });
       } else {
-        const { error } = await supabase
-          .from('event_invitations')
-          .upsert([{ event_id: eventId, guest_id: guestId }], { onConflict: 'event_id,guest_id' });
-
-        if (error) throw error;
+        await upsertEventGuestInvitations(eventId, [guestId]);
 
         setInvitedGuestIds((prev) => new Set(prev).add(guestId));
       }
@@ -1355,11 +1034,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
       const uninvited = allGuests.filter(g => !invitedGuestIds.has(g.id));
       if (uninvited.length === 0) return;
 
-      const { error } = await supabase
-        .from('event_invitations')
-        .upsert(uninvited.map(g => ({ event_id: eventId, guest_id: g.id })), { onConflict: 'event_id,guest_id' });
-
-      if (error) throw error;
+      await upsertEventGuestInvitations(eventId, uninvited.map((g) => g.id));
 
       setInvitedGuestIds(new Set(allGuests.map(g => g.id)));
       onUpdate();
@@ -1380,25 +1055,15 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
     if (!confirmed) return;
     setBulkLoading(true);
     try {
-      const { data: invitationRows, error: invitationLookupError } = await supabase
-        .from('event_invitations')
-        .select('id')
-        .eq('event_id', eventId);
-
-      if (invitationLookupError) throw invitationLookupError;
-
-      const invitationIds = (invitationRows ?? []).map((row: { id: string }) => row.id);
+      const invitationIds = await listEventInvitationIds(eventId);
       const eventRsvpSnapshots = await getEventRsvpSnapshotsByInvitationIds(invitationIds);
       if (invitationIds.length > 0) {
         await deleteEventRsvpsByInvitationIds(invitationIds);
       }
 
-      const { error } = await supabase
-        .from('event_invitations')
-        .delete()
-        .eq('event_id', eventId);
-
-      if (error) {
+      try {
+        await removeAllEventInvitations(eventId);
+      } catch (error) {
         await restoreEventRsvpSnapshots(eventRsvpSnapshots);
         throw error;
       }

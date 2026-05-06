@@ -1,10 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders, fail, json } from "../_shared/photoUtils.ts";
-
-function hasPermissionKey(permissions: unknown, key: string): boolean {
-  return Array.isArray(permissions) && permissions.includes(key);
-}
+import { canMutatePhotos } from "../_shared/collaboratorPermissions.ts";
 
 function safePhotoModerationError(code: "LOAD" | "PERMISSION" | "SAVE" | "INTERNAL"): string {
   if (code === "LOAD") return "Could not load selected photos. Please try again.";
@@ -69,7 +66,7 @@ Deno.serve(async (req: Request) => {
     if (remainingSiteIds.length > 0) {
       const { data: collaborators, error: collaboratorError } = await admin
         .from("wedding_site_collaborators")
-        .select("wedding_site_id,permissions")
+        .select("wedding_site_id,role,permissions")
         .eq("user_id", user.id)
         .in("wedding_site_id", remainingSiteIds);
       if (collaboratorError) {
@@ -78,7 +75,7 @@ Deno.serve(async (req: Request) => {
       }
       const allowedSiteIds = new Set(
         (collaborators ?? [])
-          .filter((row) => hasPermissionKey(row.permissions, "photos"))
+          .filter((row) => canMutatePhotos(row.role, row.permissions))
           .map((row) => row.wedding_site_id),
       );
       const unauthorized = remainingSiteIds.some((siteId) => !allowedSiteIds.has(siteId));

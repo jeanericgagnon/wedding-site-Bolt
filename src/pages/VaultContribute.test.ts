@@ -1,4 +1,6 @@
 import React from 'react';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -105,6 +107,20 @@ describe('safeVaultUploadError', () => {
     expect(safeVaultUploadError(new Error('Please choose an audio file for Voice type.'))).toBe(
       'Please choose an audio file for Voice type.'
     );
+  });
+});
+
+describe('vault contribution data boundary', () => {
+  it('loads vault configs through the public contribution service', () => {
+    const page = readFileSync(join(process.cwd(), 'src/pages/VaultContribute.tsx'), 'utf8');
+    const service = readFileSync(join(process.cwd(), 'src/pages/vaultContributionService.ts'), 'utf8');
+
+    expect(page).toContain('loadEnabledVaultContributionConfig(siteData.id, vaultYear)');
+    expect(page).toContain('listEnabledVaultContributionConfigs(siteData.id)');
+    expect(page).not.toMatch(/supabase\s*\n\s*\.from\('vault_configs'\)/);
+    expect(service).toContain('export const VAULT_CONTRIBUTION_CONFIG_SELECT = ');
+    expect(service).toContain('.select(VAULT_CONTRIBUTION_CONFIG_SELECT)');
+    expect(service).not.toContain(".from('vault_configs')\n    .select('*')");
   });
 });
 

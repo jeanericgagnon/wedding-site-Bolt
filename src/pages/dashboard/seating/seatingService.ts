@@ -10,6 +10,10 @@ const SEATING_TABLE_SELECT = 'id, seating_event_id, table_name, capacity, sort_o
 const SEATING_ASSIGNMENT_SELECT = 'id, seating_event_id, table_id, guest_id, seat_index, is_valid, checked_in_at, checked_in_by' as const;
 const SEATING_ELIGIBLE_GUEST_SELECT = 'id, name, first_name, last_name, email, rsvp_status, household_id, group_name, meal_preference, notes' as const;
 const SEATING_LAYOUT_VERSION_SELECT = 'id, wedding_site_id, seating_event_id, itinerary_event_id, label, tables, assignments, created_by, restored_at, created_at' as const;
+const SEATING_LOOKUP_EVENT_SELECT = 'id' as const;
+const SEATING_LOOKUP_ASSIGNMENT_SELECT = 'guest_id, table_id, seat_index, checked_in_at, is_valid' as const;
+const SEATING_LOOKUP_TABLE_SELECT = 'id, table_name' as const;
+const SEATING_LOOKUP_GUEST_SELECT = 'id, first_name, last_name, name, email, rsvp_status' as const;
 
 export interface ItineraryEvent {
   id: string;
@@ -100,6 +104,32 @@ export interface SeatingLayoutVersion {
   created_at: string;
 }
 
+export interface SeatingLookupRow {
+  guest_id: string;
+  full_name: string;
+  email: string | null;
+  table_name: string;
+  seat_index: number | null;
+  checked_in_at: string | null;
+  rsvp_status?: string | null;
+}
+
+interface SeatingLookupGuest {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  name: string | null;
+  email: string | null;
+  rsvp_status: string | null;
+}
+
+interface SeatingLookupAssignment {
+  guest_id: string;
+  table_id: string | null;
+  seat_index: number | null;
+  checked_in_at: string | null;
+}
+
 export function deriveGuestEventAttendance(args: {
   hasEventInvitations: boolean;
   isInvitedToEvent: boolean;
@@ -158,6 +188,86 @@ export async function loadItineraryEvents(weddingSiteId: string): Promise<Itiner
     .order('start_time', { ascending: true });
   if (error) throw error;
   return (data ?? []) as ItineraryEvent[];
+}
+
+export function mapSeatingLookupRows(
+  assignments: SeatingLookupAssignment[],
+  tables: Array<{ id: string; table_name: string | null }>,
+  guests: SeatingLookupGuest[],
+): SeatingLookupRow[] {
+  const tableNameById = new Map(tables.map((table) => [table.id, table.table_name || 'Unassigned']));
+  const guestById = new Map(guests.map((guest) => [guest.id, guest]));
+
+  return assignments.map((assignment) => {
+    const guest = guestById.get(assignment.guest_id) ?? null;
+    const fullName = (guest?.first_name || guest?.last_name)
+      ? `${guest?.first_name ?? ''} ${guest?.last_name ?? ''}`.trim()
+      : (guest?.name || 'Guest');
+    return {
+      guest_id: assignment.guest_id,
+      full_name: fullName,
+      email: guest?.email || null,
+      table_name: assignment.table_id ? (tableNameById.get(assignment.table_id) || 'Unassigned') : 'Unassigned',
+      seat_index: assignment.seat_index ?? null,
+      checked_in_at: assignment.checked_in_at ?? null,
+      rsvp_status: guest?.rsvp_status ?? null,
+    };
+  });
+}
+
+export async function loadSeatingLookupRowsForUser(userId: string): Promise<SeatingLookupRow[]> {
+  const activeSite = await resolveActiveSiteForUser(userId);
+  const { data: site, error: siteError } = await supabase
+    .from('wedding_sites')
+    .select('id')
+    .eq('id', activeSite?.id ?? '')
+    .maybeSingle();
+  if (siteError) throw siteError;
+
+  const siteId = site?.id as string | undefined;
+  if (!siteId) return [];
+
+  const { data: event, error: eventError } = await supabase
+    .from('seating_events')
+    .select(SEATING_LOOKUP_EVENT_SELECT)
+    .eq('wedding_site_id', siteId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (eventError) throw eventError;
+
+  const eventId = event?.id as string | undefined;
+  if (!eventId) return [];
+
+  const { data: assignments, error: assignmentsError } = await supabase
+    .from('seating_assignments')
+    .select(SEATING_LOOKUP_ASSIGNMENT_SELECT)
+    .eq('seating_event_id', eventId)
+    .eq('is_valid', true)
+    .order('updated_at', { ascending: false });
+  if (assignmentsError) throw assignmentsError;
+
+  const assignmentRows = (assignments || []) as SeatingLookupAssignment[];
+  const tableIds = [...new Set(assignmentRows.map((row) => row.table_id).filter((id): id is string => Boolean(id)))];
+  const guestIds = [...new Set(assignmentRows.map((row) => row.guest_id).filter(Boolean))];
+
+  const [tablesResult, guestsResult] = await Promise.all([
+    tableIds.length > 0
+      ? supabase.from('seating_tables').select(SEATING_LOOKUP_TABLE_SELECT).in('id', tableIds)
+      : Promise.resolve({ data: [], error: null }),
+    guestIds.length > 0
+      ? supabase.from('guests').select(SEATING_LOOKUP_GUEST_SELECT).in('id', guestIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (tablesResult.error) throw tablesResult.error;
+  if (guestsResult.error) throw guestsResult.error;
+
+  return mapSeatingLookupRows(
+    assignmentRows,
+    (tablesResult.data || []) as Array<{ id: string; table_name: string | null }>,
+    (guestsResult.data || []) as SeatingLookupGuest[],
+  );
 }
 
 export async function getOrCreateSeatingEvent(weddingSiteId: string, itineraryEventId: string): Promise<SeatingEvent> {

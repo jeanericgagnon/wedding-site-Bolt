@@ -1,85 +1,28 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { supabase } from '../../lib/supabase';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useAuth } from '../../hooks/useAuth';
 import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
 import { getPerEventRsvpState } from '../../lib/perEventRsvpState';
 import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { filterRsvpBoardRows, type RsvpBoardFilter } from './rsvpBoardFilter';
-
-type GuestRow = {
-  id: string;
-  rsvp_status: 'pending' | 'confirmed' | 'declined' | string;
-  invited_to_ceremony?: boolean;
-  invited_to_reception?: boolean;
-  invited_event_ids?: string[] | null;
-  checked_in_at?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  notes?: string | null;
-  invitation_sent_at?: string | null;
-  reminder_last_sent_at?: string | null;
-};
+import { loadRsvpBoardRows, resolveRsvpBoardSiteId, type RsvpBoardGuestRow } from './rsvpBoardService';
 
 export const DashboardRsvpBoard: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const [loading, setLoading] = useState(true);
   const [siteId, setSiteId] = useState<string | null>(null);
-  const [rows, setRows] = useState<GuestRow[]>([]);
+  const [rows, setRows] = useState<RsvpBoardGuestRow[]>([]);
   const [filter, setFilter] = useState<RsvpBoardFilter>('all');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const fetchBoard = async (resolvedSiteId?: string | null) => {
-    const useSiteId = resolvedSiteId ?? siteId;
-    if (!useSiteId) return;
-
-    const { data, error } = await supabase
-      .from('guests')
-      .select('id, rsvp_status, invited_to_ceremony, invited_to_reception, checked_in_at, email, phone, notes, invitation_sent_at, reminder_last_sent_at')
-      .eq('wedding_site_id', useSiteId);
-
-    if (error) throw error;
-
-    let invitedEventIdsByGuest = new Map<string, string[]>();
-
-    const { data: events, error: eventsError } = await supabase
-      .from('itinerary_events')
-      .select('id')
-      .eq('wedding_site_id', useSiteId);
-
-    if (!eventsError) {
-      const eventIds = ((events ?? []) as Array<{ id: string }>).map((event) => event.id);
-      if (eventIds.length > 0) {
-        const { data: invites, error: invitesError } = await supabase
-          .from('event_invitations')
-          .select('event_id, guest_id')
-          .in('event_id', eventIds);
-
-        if (!invitesError) {
-          invitedEventIdsByGuest = ((invites ?? []) as Array<{ event_id: string; guest_id: string }>).reduce(
-            (acc, invite) => {
-              const current = acc.get(invite.guest_id) ?? [];
-              current.push(invite.event_id);
-              acc.set(invite.guest_id, current);
-              return acc;
-            },
-            new Map<string, string[]>(),
-          );
-        }
-      }
-    }
-
-    setRows(((data as GuestRow[]) || []).map((row) => ({
-      ...row,
-      invited_event_ids: invitedEventIdsByGuest.get(row.id) ?? [],
-    })));
+  const fetchBoard = useCallback(async (weddingSiteId: string) => {
+    setRows(await loadRsvpBoardRows(weddingSiteId));
     setLastUpdated(new Date());
     setLoadError(null);
-  };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -99,8 +42,7 @@ export const DashboardRsvpBoard: React.FC = () => {
           return;
         }
 
-        const activeSite = await resolveActiveSiteForUser(user.id);
-        const id = activeSite?.id ?? null;
+        const id = await resolveRsvpBoardSiteId(user.id);
         if (!mounted) return;
         setSiteId(id);
         if (id) await fetchBoard(id);
@@ -116,17 +58,18 @@ export const DashboardRsvpBoard: React.FC = () => {
 
     void init();
     return () => { mounted = false; };
-  }, [user, isDemoMode]);
+  }, [user, isDemoMode, fetchBoard]);
 
   useEffect(() => {
     if (loading) return;
     const timer = window.setInterval(() => {
-      void fetchBoard().catch(() => {
+      if (!siteId) return;
+      void fetchBoard(siteId).catch(() => {
         setLoadError('We could not refresh RSVP activity right now. The board will try again automatically.');
       });
     }, 15000);
     return () => window.clearInterval(timer);
-  }, [loading, siteId]);
+  }, [loading, siteId, fetchBoard]);
 
   const visibleRows = useMemo(() => filterRsvpBoardRows(rows, filter), [rows, filter]);
 

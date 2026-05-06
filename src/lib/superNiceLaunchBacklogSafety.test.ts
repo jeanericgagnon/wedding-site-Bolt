@@ -32,6 +32,23 @@ describe('super nice launch backlog safety guards', () => {
     expect(source.match(/window\.open\(`\/site\/\$\{stats\.siteSlug\}`, '_blank', 'noopener,noreferrer'\)/g)?.length).toBe(4);
   });
 
+  it('keeps external blank-target links explicit about opener isolation', () => {
+    const files = [
+      'src/pages/VendorProfileCreate.tsx',
+      'src/pages/dashboard/registry/RegistryItemCard.tsx',
+      'src/pages/VendorProfile.tsx',
+      'src/sections/components/RegistrySection.tsx',
+      'src/components/dashboard/DashboardLayout.tsx',
+      'src/pages/dashboard/BuilderVariantGallery.tsx',
+    ];
+
+    for (const file of files) {
+      const source = read(file);
+      expect(source, file).not.toContain('rel="noreferrer"');
+      expect(source, file).not.toContain("rel='noreferrer'");
+    }
+  });
+
   it('keeps audited recoverable fallback paths from dumping raw errors to the browser console', () => {
     const planning = read('src/pages/dashboard/Planning.tsx');
     const guests = read('src/pages/dashboard/Guests.tsx');
@@ -56,11 +73,12 @@ describe('super nice launch backlog safety guards', () => {
     const registryService = read('src/pages/dashboard/registry/registryService.ts');
     const stripeService = read('src/lib/stripeService.ts');
     const messages = read('src/pages/dashboard/Messages.tsx');
+    const messageUtils = read('src/pages/dashboard/messages/messageDashboardUtils.ts');
 
     expect(planning).not.toContain('console.error(err)');
     expect(guests).not.toContain('console.error(error)');
     expect(guests).not.toContain("const msg = err instanceof Error ? err.message : 'Couldn’t read that guest file.'");
-    expect(guests).toContain('function safeGuestImportReadError(err: unknown): string');
+    expect(guests).toContain('safeGuestImportReadError,');
     expect(guests).toContain("toast(safeGuestImportReadError(err), 'error');");
     expect(onboarding).not.toContain("console.error('ONBOARDING_NEXT_STEP_FAILED', error)");
     expect(songRequests).not.toContain('console.error(err)');
@@ -94,7 +112,7 @@ describe('super nice launch backlog safety guards', () => {
     expect(customerSafeError).toContain('duplicate\\s*key');
     expect(customerSafeError).toContain('constraint');
     expect(customerSafeError).toContain('customerSafeErrorMessage');
-    expect(guestPhotoSharing).toContain('customerSafeErrorMessage(err, fallback)');
+    expect(guestPhotoSharing).toContain('safePhotoOwnerError(err,');
     expect(guestPhotoSharing).not.toContain('return cleaned;');
     expect(vaultContribute).not.toContain('`${err.message} Uploading original video instead.`');
     expect(vaultContribute).toContain("setSubmitError('Couldn’t prepare a smaller version. Uploading the original video instead.');");
@@ -119,8 +137,9 @@ describe('super nice launch backlog safety guards', () => {
     expect(stripeService).toContain("throw new Error('Couldn’t load billing right now.')");
     expect(stripeService).toContain("throw new Error('Couldn’t check payment status right now.')");
     expect(stripeService).toContain("throw new Error('Couldn’t find your wedding site right now.')");
-    expect(messages).toContain('return customerSafeErrorMessage(cleaned, fallback, {');
-    expect(messages).toContain('\\b(delivery|message|email|phone|contact|recipient|address|number|missing|invalid|blocked|bounced|unsubscribed|review|retry|attention|details)\\b');
+    expect(messages).toContain('safeMessagesError,');
+    expect(messageUtils).toContain('return customerSafeErrorMessage(cleaned, fallback, {');
+    expect(messageUtils).toContain('\\b(delivery|message|email|phone|contact|recipient|address|number|missing|invalid|blocked|bounced|unsubscribed|review|retry|attention|details)\\b');
     expect(aiDraft).not.toContain("console.warn('[aiDraftGenerator] OpenAI draft generation failed, falling back to deterministic generator', error)");
     expect(aiOnboarding).not.toContain("console.warn('[aiOnboarding] OpenAI extraction failed, falling back to deterministic extractor', error)");
     expect(aiDraft).toContain("console.warn('[aiDraftGenerator] OpenAI draft generation failed; using deterministic fallback.')");

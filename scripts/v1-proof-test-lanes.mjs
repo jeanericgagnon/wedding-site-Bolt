@@ -6,11 +6,11 @@ const ciHardpass = readFileSync('.github/workflows/ci-hardpass.yml', 'utf8');
 
 const required = {
   'test:unit': 'vitest run src',
-  'test:security': 'vitest run src/lib/launchEdgeFunctions.test.ts src/lib/publicSiteAccess.test.ts src/lib/publicSiteProject.test.ts src/lib/serviceWorkerSafety.test.ts src/lib/aiProviderKeySecurity.test.ts src/lib/aiExposureProofScript.test.ts src/lib/settingsErrorSafety.test.ts src/lib/serviceRoleAuthorizationDisposition.test.ts src/pages/RSVP.test.tsx src/pages/EventRSVP.test.tsx',
+  'test:security': 'vitest run src/lib/launchEdgeFunctions.test.ts src/lib/publicSiteAccess.test.ts src/lib/publicSiteProject.test.ts src/lib/serviceWorkerSafety.test.ts src/lib/aiProviderKeySecurity.test.ts src/lib/aiExposureProofScript.test.ts src/lib/settingsErrorSafety.test.ts src/lib/serviceRoleAuthorizationDisposition.test.ts src/lib/registryPreviewUrlNormalizer.test.ts src/lib/emailSafety.test.ts src/pages/RSVP.test.tsx src/pages/EventRSVP.test.tsx',
   'test:smoke': 'npm run smoke:registry && npm run smoke:rsvp && npm run smoke:csvmapper && npm run smoke:checkin && npm run smoke:messages && npm run smoke:site',
   'test:integration': 'npm run proof:v1:canonical-smoke && npm run proof:v1:guests-rsvp-ops && npm run proof:v1:registry && npm run proof:v1:seating-continuity && npm run proof:v1:comms-center',
   'test:e2e': 'npx playwright test --workers=1 tests/e2e',
-  'test:launch': 'npm run typecheck -- --pretty false && npm run lint -- --quiet && npm run test:security && npm run guard:file-size && npm run guard:assets && npm run build && npm run proof:v1:board:md',
+  'test:launch': 'npm run typecheck -- --pretty false && npm run lint -- --quiet && npm run test:security && npm run guard:file-size && npm run guard:assets && npm run build && npm run proof:v1:performance-budget && npm run proof:v1:board:md',
   'proof:v1:test-lanes': 'node scripts/v1-proof-test-lanes.mjs',
   'guard:file-size': 'node scripts/check-file-size-guard.mjs',
   'guard:assets': 'node scripts/check-asset-budget.mjs',
@@ -43,6 +43,7 @@ const requiredCiSnippets = [
   'run: npm run test:security',
   'run: npm test',
   'run: npm run build',
+  'run: npm run proof:v1:performance-budget',
   'run: npm run smoke:registry',
   'run: npm run smoke:csvmapper',
   'run: npm run smoke:checkin',

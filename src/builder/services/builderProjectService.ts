@@ -11,6 +11,15 @@ import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
 
 const BUILDER_PROJECT_SITE_SELECT = 'id, active_template_id, template_id, site_json, layout_config' as const;
 const BUILDER_WEDDING_DATA_SITE_SELECT = 'id, wedding_data, couple_name_1, couple_name_2, couple_first_name, couple_second_name, wedding_date, venue_date, venue_name, wedding_location, venue_location' as const;
+const BUILDER_ENTRY_SITE_SELECT = 'id, couple_name_1, couple_name_2, couple_first_name, couple_second_name' as const;
+
+export interface BuilderEntrySiteRow {
+  id: string;
+  couple_name_1?: string | null;
+  couple_name_2?: string | null;
+  couple_first_name?: string | null;
+  couple_second_name?: string | null;
+}
 
 const toIsoDateOrUndefined = (value: unknown): string | undefined => {
   if (typeof value !== 'string' || !value.trim()) return undefined;
@@ -78,6 +87,17 @@ const hydrateWeddingDataFromSiteRow = (
 };
 
 export const builderProjectService = {
+  async loadEntrySite(weddingSiteId: string): Promise<BuilderEntrySiteRow | null> {
+    const { data, error } = await supabase
+      .from('wedding_sites')
+      .select(BUILDER_ENTRY_SITE_SELECT)
+      .eq('id', weddingSiteId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return (data as BuilderEntrySiteRow | null) ?? null;
+  },
+
   async loadProject(weddingSiteId: string): Promise<BuilderProject | null> {
     const { data, error } = await supabase
       .from('wedding_sites')

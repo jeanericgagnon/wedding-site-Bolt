@@ -26,6 +26,12 @@ import { getArchiveModeDescriptor } from '../lib/archiveMode';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicWeddingData } from '../lib/publicSiteProject';
 import { fetchPublicSiteAccess, requestPublicSitePasswordUnlock } from '../lib/publicSiteAccess';
+import {
+  buildPublicAccessArtifacts,
+  capturePublicInviteTokenFromSearch,
+  getPublicInviteTokenStorageKey,
+  getPublicPasswordSessionStorageKey,
+} from '../lib/publicAccessArtifacts';
 
 interface PublicItineraryRow {
   id?: string;
@@ -678,8 +684,8 @@ export const SiteView: React.FC = () => {
   const [passwordGateChecking, setPasswordGateChecking] = useState(false);
   const [privacyUnlockNonce, setPrivacyUnlockNonce] = useState(0);
 
-  const PASSWORD_SESSION_KEY = `dayof_pw_session_${resolvedSlug ?? 'unknown'}`;
-  const INVITE_TOKEN_KEY = `dayof_invite_token_${resolvedSlug ?? 'unknown'}`;
+  const PASSWORD_SESSION_KEY = getPublicPasswordSessionStorageKey(resolvedSlug ?? 'unknown');
+  const INVITE_TOKEN_KEY = getPublicInviteTokenStorageKey(resolvedSlug ?? 'unknown');
 
   const handleImageErrorCapture = useCallback((event: React.SyntheticEvent<HTMLElement>) => {
     const target = event.target;
@@ -749,8 +755,7 @@ export const SiteView: React.FC = () => {
 
       try {
         const urlToken = searchParams.get('token');
-        const inviteToken = urlToken ?? sessionStorage.getItem(INVITE_TOKEN_KEY);
-        const passwordSession = sessionStorage.getItem(PASSWORD_SESSION_KEY);
+        const { inviteToken, passwordSession } = buildPublicAccessArtifacts(resolvedSlug, searchParams);
         const subresourceAccess = { inviteToken, passwordSession };
         const access = await fetchPublicSiteAccess({
           slug: resolvedSlug,
@@ -784,9 +789,7 @@ export const SiteView: React.FC = () => {
           return;
         }
 
-        if (urlToken) {
-          sessionStorage.setItem(INVITE_TOKEN_KEY, urlToken);
-        }
+        if (urlToken) capturePublicInviteTokenFromSearch(resolvedSlug, searchParams);
         setPublicSubresourceAccess(subresourceAccess);
 
         const data = access.site as unknown as Record<string, unknown>;

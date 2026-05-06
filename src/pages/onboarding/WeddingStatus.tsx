@@ -5,7 +5,7 @@ import { Button, Card, Input, AddressInput } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 import { parseExpectedGuestCount } from '../../lib/weddingStatusGuestCount';
 import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
+import { updateWeddingPlanningStatus } from './onboardingService';
 
 type PlanningStatus = 'not_engaged' | 'just_engaged' | 'venue_booked' | 'invitations_sent';
 
@@ -81,8 +81,6 @@ export const WeddingStatus: React.FC = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
-      const activeSite = await resolveActiveSiteForUser(user.id);
-      if (!activeSite?.id) throw new Error('Couldn’t find your wedding site right now.');
 
       const updateData: Record<string, unknown> = {
         planning_status: selectedStatus,
@@ -113,13 +111,7 @@ export const WeddingStatus: React.FC = () => {
         }
       }
 
-      const { error: updateError } = await supabase
-        .from('wedding_sites')
-        .update(updateData)
-        .eq('id', activeSite.id)
-        .eq('user_id', user.id);
-
-      if (updateError) throw updateError;
+      await updateWeddingPlanningStatus({ userId: user.id, updateData });
 
       const weddingDate =
         selectedStatus === 'venue_booked' ? details.venue_booked?.venueDate :

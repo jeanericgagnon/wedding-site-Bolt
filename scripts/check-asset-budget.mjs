@@ -2,8 +2,8 @@ import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const PUBLIC_ROOT = 'public';
-const MAX_PUBLIC_KIB = 215_000;
-const MAX_PUBLIC_FILE_KIB = 6_000;
+const MAX_PUBLIC_KIB = 210_000;
+const MAX_PUBLIC_FILE_KIB = 5_000;
 
 const mediaExtensions = new Set([
   '.apng',

@@ -40,8 +40,12 @@ import { runOnboardingAiOrchestration } from '../../lib/onboardingAiOrchestrator
 import { generateDraftFromWeddingProfile, mergeGeneratedDraftIntoWeddingData } from '../../lib/aiDraftGenerator';
 import { createCanonicalContentFromDraft } from '../../lib/aiCanonicalContent';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import {
+  fetchQuickStartPersistSite,
+  fetchQuickStartSeedSite,
+  updateQuickStartPersistSite,
+} from './onboardingService';
 
 type QuestionDef = {
   key: ConciergeQuestion;
@@ -278,12 +282,7 @@ export const QuickStart: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       clearOnboardingEntryReturnPath();
-      const activeSite = await resolveActiveSiteForUser(user.id);
-      const { data } = await supabase
-        .from('wedding_sites')
-        .select('id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_location, onboarding_answers')
-        .eq('id', activeSite?.id ?? '')
-        .maybeSingle();
+      const data = await fetchQuickStartSeedSite(user.id);
       setSiteId(data?.id ?? null);
       if (data?.onboarding_answers && typeof data.onboarding_answers === 'object') {
         const restored = normalizeQuickStartDraftSnapshot({ initialSetupAnswers: data.onboarding_answers }).initialSetupAnswers;
@@ -422,13 +421,7 @@ export const QuickStart: React.FC = () => {
         mergedFollowUpState.initialSetupAnswers,
         mergedFollowUpState.initialSetupFollowUps,
       );
-      const activeSite = await resolveActiveSiteForUser(user.id);
-      const { data: site, error: siteError } = await supabase
-        .from('wedding_sites')
-        .select('id, wedding_data, site_json, active_template_id, template_id, wedding_date, venue_name, wedding_location, couple_name_1, couple_name_2')
-        .eq('id', activeSite?.id ?? '')
-        .maybeSingle();
-      if (siteError) throw siteError;
+      const site = await fetchQuickStartPersistSite(user.id);
       if (!site?.id) throw new Error('No wedding site found for this account');
       const clarifyingFieldPatches = clarifyingOverride ? buildClarifyingAnswerPatchSet(clarifyingOverride) : {};
       const existingWeddingData = site && 'wedding_data' in site ? ((site as { wedding_data?: Record<string, unknown> }).wedding_data || {}) : {};
@@ -465,9 +458,9 @@ export const QuickStart: React.FC = () => {
         generatedDraft,
         canonicalAiContent,
       );
-      const { error: updateError } = await supabase
-        .from('wedding_sites')
-        .update({
+      await updateQuickStartPersistSite({
+        siteId: site.id,
+        updateData: {
           onboarding_answers: derivedProfile,
           planning_status: 'quick_start_complete',
           wedding_data: {
@@ -500,9 +493,8 @@ export const QuickStart: React.FC = () => {
           wedding_date: onboardingUpdate.wedding_date,
           venue_name: onboardingUpdate.venue_name,
           wedding_location: onboardingUpdate.wedding_location,
-        })
-        .eq('id', site.id);
-      if (updateError) throw updateError;
+        },
+      });
       localStorage.removeItem(STORAGE_KEY);
       clearOnboardingEntryReturnPath();
       navigate(buildQuickStartGuestsPath(), {

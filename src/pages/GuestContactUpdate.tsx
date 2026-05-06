@@ -1,7 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { demoGuests, demoWeddingSite } from '../lib/demoData';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
+import {
+  buildPublicAccessArtifacts,
+  capturePublicInviteTokenFromSearch,
+} from '../lib/publicAccessArtifacts';
 
 type Match = {
   contact_session: string;
@@ -17,10 +21,7 @@ export const friendlyGuestContactError = (err: unknown, fallback: string) => {
 
 export const buildGuestContactAccessPayload = (siteRef: string) => {
   const searchParams = new URLSearchParams(window.location.search);
-  return {
-    inviteToken: searchParams.get('token') ?? sessionStorage.getItem(`dayof_invite_token_${siteRef}`),
-    passwordSession: sessionStorage.getItem(`dayof_pw_session_${siteRef}`),
-  };
+  return buildPublicAccessArtifacts(siteRef, searchParams);
 };
 
 async function callPublicFn(name: string, body: unknown) {
@@ -75,6 +76,10 @@ export const GuestContactUpdate: React.FC = () => {
     !!mailingPostalCode.trim() ||
     !!mailingCountry.trim()
   ), [selectedContactSession, email, phone, rsvpStatus, mailingAddressLine1, mailingCity, mailingPostalCode, mailingCountry]);
+
+  useEffect(() => {
+    if (siteRef) capturePublicInviteTokenFromSearch(siteRef, new URLSearchParams(window.location.search));
+  }, [siteRef]);
 
   async function handleSearch() {
     if (query.trim().length < 2) return;

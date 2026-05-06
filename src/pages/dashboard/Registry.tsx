@@ -4,8 +4,6 @@ import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero'
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, ActionsMenu } from '../../components/ui';
 import { Gift, Plus, CheckCircle2, DollarSign, Search, Package, AlertCircle, Sparkles } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useAuth } from '../../hooks/useAuth';
 import {
   fetchRegistryItems,
@@ -14,6 +12,9 @@ import {
   deleteRegistryItem,
   ownerMarkPurchased,
   fetchUrlPreview,
+  loadRegistryDashboardSite,
+  saveRegistryRefreshPolicy,
+  updateRegistryRefreshBudget,
 } from './registry/registryService';
 import { RegistryItemCard } from './registry/RegistryItemCard';
 import { RegistryItemForm } from './registry/RegistryItemForm';
@@ -232,29 +233,23 @@ export const DashboardRegistry: React.FC = () => {
           return;
         }
 
-        const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
-        const { data: site } = await supabase
-          .from('wedding_sites')
-          .select('id, wedding_date, registry_refresh_enabled_until, registry_monthly_refresh_cap, registry_monthly_refresh_count, registry_monthly_refresh_month, registry_auto_refresh_enabled, registry_refresh_include_purchased, registry_refresh_policy_updated_at, registry_refresh_policy_updated_by')
-          .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
-          .maybeSingle();
+        const site = await loadRegistryDashboardSite(user.id);
         if (site?.id) {
           setWeddingSiteId(site.id);
-          setWeddingDate((site as { wedding_date?: string | null }).wedding_date ?? null);
-          const typedSite = site as { registry_refresh_enabled_until?: string | null; registry_monthly_refresh_cap?: number | null; registry_monthly_refresh_count?: number | null; registry_monthly_refresh_month?: string | null; registry_auto_refresh_enabled?: boolean | null; registry_refresh_include_purchased?: boolean | null; registry_refresh_policy_updated_at?: string | null; registry_refresh_policy_updated_by?: string | null; wedding_date?: string | null };
           const budgetState = resolveRegistryRefreshBudgetState({
-            storedMonthKey: typedSite.registry_monthly_refresh_month ?? null,
-            storedCount: typedSite.registry_monthly_refresh_count ?? 0,
+            storedMonthKey: site.registry_monthly_refresh_month ?? null,
+            storedCount: site.registry_monthly_refresh_count ?? 0,
           });
           setMonthlyRefreshMonth(budgetState.monthKey);
-          setRefreshEnabledUntil(typedSite.registry_refresh_enabled_until ?? null);
-          setAutoRefreshEnabled(typedSite.registry_auto_refresh_enabled ?? true);
-          setRefreshIncludePurchased(typedSite.registry_refresh_include_purchased ?? false);
-          setPolicyUpdatedAt(typedSite.registry_refresh_policy_updated_at ?? null);
-          setPolicyUpdatedBy(typedSite.registry_refresh_policy_updated_by ?? null);
-          setRefreshWindowDraft(toDateInputValueOrEmpty(typedSite.registry_refresh_enabled_until));
-          const loadedCap = typedSite.registry_monthly_refresh_cap ?? 100;
+          setWeddingDate(site.wedding_date ?? null);
+          setRefreshEnabledUntil(site.registry_refresh_enabled_until ?? null);
+          setAutoRefreshEnabled(site.registry_auto_refresh_enabled ?? true);
+          setRefreshIncludePurchased(site.registry_refresh_include_purchased ?? false);
+          setPolicyUpdatedAt(site.registry_refresh_policy_updated_at ?? null);
+          setPolicyUpdatedBy(site.registry_refresh_policy_updated_by ?? null);
+          setRefreshWindowDraft(toDateInputValueOrEmpty(site.registry_refresh_enabled_until));
+          const loadedCap = site.registry_monthly_refresh_cap ?? 100;
           setMonthlyRefreshCap(loadedCap);
           setRefreshCapDraft(loadedCap);
           setRefreshPreset(loadedCap <= 60 ? 'lean' : loadedCap <= 160 ? 'balanced' : 'aggressive');
@@ -268,7 +263,7 @@ export const DashboardRegistry: React.FC = () => {
       }
     }
     init();
-  }, [isDemoMode, loadItems]);
+  }, [isDemoMode, loadItems, user]);
 
   async function handleSave(draft: RegistryItemDraft) {
     if (!weddingSiteId) throw new Error('No wedding site found');
@@ -670,10 +665,10 @@ export const DashboardRegistry: React.FC = () => {
       setMonthlyRefreshCount(nextCount);
       setMonthlyRefreshMonth(budgetState.monthKey);
       if (weddingSiteId && !isDemoMode) {
-        await supabase
-          .from('wedding_sites')
-          .update({ registry_monthly_refresh_count: nextCount, registry_monthly_refresh_month: budgetState.monthKey })
-          .eq('id', weddingSiteId);
+        await updateRegistryRefreshBudget(weddingSiteId, {
+          registry_monthly_refresh_count: nextCount,
+          registry_monthly_refresh_month: budgetState.monthKey,
+        });
       }
     }
     if (updatedCount > 0) {
@@ -778,22 +773,19 @@ export const DashboardRegistry: React.FC = () => {
 
     setSavingRefreshPolicy(true);
     try {
-      const { error } = await supabase
-        .from('wedding_sites')
-        .update({
-          registry_monthly_refresh_cap: cap,
-          registry_refresh_enabled_until: untilIso,
-          registry_auto_refresh_enabled: autoRefreshEnabled,
-          registry_refresh_include_purchased: refreshIncludePurchased,
-          registry_refresh_policy_updated_at: new Date().toISOString(),
-          registry_refresh_policy_updated_by: user?.id ?? null,
-        })
-        .eq('id', weddingSiteId);
-      if (error) throw error;
+      const updatedAt = new Date().toISOString();
+      await saveRegistryRefreshPolicy(weddingSiteId, {
+        registry_monthly_refresh_cap: cap,
+        registry_refresh_enabled_until: untilIso,
+        registry_auto_refresh_enabled: autoRefreshEnabled,
+        registry_refresh_include_purchased: refreshIncludePurchased,
+        registry_refresh_policy_updated_at: updatedAt,
+        registry_refresh_policy_updated_by: user?.id ?? null,
+      });
 
       setMonthlyRefreshCap(cap);
       setRefreshEnabledUntil(untilIso);
-      setPolicyUpdatedAt(new Date().toISOString());
+      setPolicyUpdatedAt(updatedAt);
       setPolicyUpdatedBy(user?.id ?? null);
       logRegistryAction('registry_refresh_policy_saved', 'Registry refresh policy was updated.', {
         monthlyRefreshCap: cap,
@@ -826,13 +818,16 @@ export const DashboardRegistry: React.FC = () => {
   async function handleResetMonthlyBudgetCounter() {
     if (!weddingSiteId || isDemoMode) return;
     const monthKey = new Date().toISOString().slice(0, 7);
-    await supabase
-      .from('wedding_sites')
-      .update({ registry_monthly_refresh_count: 0, registry_monthly_refresh_month: monthKey, registry_refresh_policy_updated_at: new Date().toISOString(), registry_refresh_policy_updated_by: user?.id ?? null })
-      .eq('id', weddingSiteId);
+    const updatedAt = new Date().toISOString();
+    await saveRegistryRefreshPolicy(weddingSiteId, {
+      registry_monthly_refresh_count: 0,
+      registry_monthly_refresh_month: monthKey,
+      registry_refresh_policy_updated_at: updatedAt,
+      registry_refresh_policy_updated_by: user?.id ?? null,
+    });
     setMonthlyRefreshCount(0);
     setMonthlyRefreshMonth(monthKey);
-    setPolicyUpdatedAt(new Date().toISOString());
+    setPolicyUpdatedAt(updatedAt);
     setPolicyUpdatedBy(user?.id ?? null);
     logRegistryAction('registry_refresh_counter_reset', 'Registry monthly refresh counter was reset.', { monthKey }, weddingSiteId, 'Registry refresh policy');
     toast('Monthly refresh counter reset.');
@@ -901,10 +896,10 @@ export const DashboardRegistry: React.FC = () => {
 
     setMonthlyRefreshCount(0);
     setMonthlyRefreshMonth(budgetState.monthKey);
-    await supabase
-      .from('wedding_sites')
-      .update({ registry_monthly_refresh_count: 0, registry_monthly_refresh_month: budgetState.monthKey })
-      .eq('id', weddingSiteId);
+    await updateRegistryRefreshBudget(weddingSiteId, {
+      registry_monthly_refresh_count: 0,
+      registry_monthly_refresh_month: budgetState.monthKey,
+    });
     return { monthKey: budgetState.monthKey, count: 0 };
   }
 

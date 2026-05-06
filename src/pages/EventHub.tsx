@@ -9,6 +9,10 @@ import { buildGuestHubActions, type GuestHubActionId } from '../lib/guestHubActi
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
 import { buildDayOfHubStatusBoard, buildDayOfWebModeReadiness, type DayOfWebActionId } from '../lib/dayOfWebModeReadiness';
 import { buildTravelGuestJourney } from '../lib/travelGuestPortal';
+import {
+  buildPublicAccessArtifacts,
+  capturePublicInviteTokenFromSearch,
+} from '../lib/publicAccessArtifacts';
 
 type HubAction = {
   id: GuestHubActionId;
@@ -43,10 +47,7 @@ const normalizeSiteRef = (value?: string) => (value ?? '').trim().toLowerCase();
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
 
-export const buildGuestHubAccessPayload = (slug: string, searchParams: URLSearchParams) => ({
-  inviteToken: searchParams.get('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`),
-  passwordSession: sessionStorage.getItem(`dayof_pw_session_${slug}`),
-});
+export const buildGuestHubAccessPayload = (slug: string, searchParams: URLSearchParams) => buildPublicAccessArtifacts(slug, searchParams);
 
 export const buildGuestHubAccessHeaders = (slug: string, searchParams: URLSearchParams) => {
   const access = buildGuestHubAccessPayload(slug, searchParams);
@@ -154,6 +155,7 @@ export const EventHub: React.FC = () => {
 
   useEffect(() => {
     if (!slug) return;
+    capturePublicInviteTokenFromSearch(slug, searchParams);
     if (searchParams.has('hubQaConfigFallback')) {
       setHubConfigStatus('fallback');
       return;

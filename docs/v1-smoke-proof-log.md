@@ -7,6 +7,55 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. Active strict P0 items are live deploy/function proof for the local access-control changes, live RLS/service-role proof after static disposition, and live messaging authorization proof after local queue lockdown. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-06 8:55 AM PT Local P2 Settings/Coordinator Oversized-Page Continuation
+
+- Continued the no-deploy production-hardening backlog with focused oversized-page extraction. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - Settings account, notification, and billing panels now live in focused settings components, and `Settings.tsx` is below the oversized threshold at 1963 lines.
+  - Coordinator attention/escalation UI now lives in `CoordinatorModePanels.tsx`, and `CoordinatorMode.tsx` is guarded at the lower 2599-line baseline.
+  - `BACKLOG.md` and `docs/PRODUCTION_HARDENING_REPORT.md` now reflect that `Settings.tsx` and `GuestPhotoSharing.tsx` are below threshold, while `Guests.tsx`, `Messages.tsx`, `CoordinatorMode.tsx`, and `NameChangePlannerTab.tsx` remain the active large-file cleanup lane at this timestamp.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS.
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known non-blocking Browserslist caniuse-lite and empty `vendor-react` chunk warnings.
+- Launch status did not change. This was local-only architecture hardening; live service-role/RLS proof, live messaging authorization proof, and external OpenAI key rotation remain open.
+
+## 2026-05-06 9:03 AM PT Local P2 Messages Presentational Extraction Continuation
+
+- Continued the no-deploy production-hardening backlog with another Messages oversized-page split. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - Message guest-flow guidance, optional sending-details panels, guest reach snapshot, helpful starts, and starting-point template cards now live in `src/pages/dashboard/messages/MessageDashboardComponents.tsx`.
+  - `Messages.tsx` dropped from 2842 to 2641 lines.
+  - The file-size guard baseline for `Messages.tsx` is now exact at 2641 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known non-blocking Browserslist caniuse-lite and empty `vendor-react` chunk warnings.
+- Launch status did not change. This was local-only architecture hardening; live service-role/RLS proof, live messaging authorization proof, and external OpenAI key rotation remain open.
+
+## 2026-05-06 9:06 AM PT Local P2 Messages History Summary Continuation
+
+- Continued the no-deploy production-hardening backlog with a second Messages split. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - Message-history status counts, provider telemetry cards, audience breakdown, channel breakdown, delivery-health cards, and campaign status chips now live in `src/pages/dashboard/messages/MessageDashboardComponents.tsx`.
+  - `Messages.tsx` dropped from 2641 to 2533 lines.
+  - The file-size guard baseline for `Messages.tsx` is now exact at 2533 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known non-blocking Browserslist caniuse-lite and empty `vendor-react` chunk warnings.
+- Launch status did not change. This was local-only architecture hardening; live service-role/RLS proof, live messaging authorization proof, and external OpenAI key rotation remain open.
+
 ## 2026-05-04 5:43 PM PT Local P0 Production-Hardening Access-Control Batch
 
 - Continued from the stricter production-hardening backlog standard. No deploy, migration, or Supabase function deploy was run.
@@ -6735,3 +6784,1734 @@ A slice does **not** count as passed because:
   - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`: PASS, 4/4.
   - `npm run proof:v1:postdeploy`: PASS, 8/8.
 - Launch status changed: the approved production deploy is live and the current non-SMS postdeploy proof is green. Remaining caveats are secure service-role integrity proof, live model-backed AI proof after server key configuration, deferred SMS/Telnyx, remaining P1/P2 hardening, and GitHub branch synchronization.
+
+## 2026-05-05 2:28 PM PT No-Deploy Messaging Viewer Mutation Hardening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `send-bulk-message`, `send-wedding-email`, and `queue-guest-followups` now require owner access or a `planner`/`coordinator` collaborator role with the relevant permission before sending/scheduling messages or queueing guest follow-ups.
+  - Viewer collaborators are denied mutation even if a stale/malformed explicit permission array contains `messages` or `guests`.
+  - Scheduled bulk-message processing now filters manageable site ids through the same role-aware mutation helper.
+  - Frontend planner access helpers now keep `viewer` read-only before checking explicit permission arrays, matching the Edge Function boundary.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 37/37.
+  - `npm run smoke:messages`: PASS.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This narrows local email/messaging authorization risk, but live messaging authorization proof remains required and no deploy was run.
+
+## 2026-05-05 2:35 PM PT No-Deploy Photo/Media Viewer Mutation Hardening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `photo-album-create`, `photo-export-manifest`, `photo-album-manage`, `photo-upload-moderate`, and `photo-analyze-batch` now require owner access or a `planner`/`coordinator` collaborator role before service-role photo/media album creation, mutation, export, or analysis work.
+  - Explicit `photos`/`media` permissions remain honored for planner/coordinator collaborators, and older missing-permission rows still follow the planner/coordinator role preset.
+  - Viewer collaborators are denied photo album creation, export, album management, moderation, and analysis even if a stale/malformed permission array includes `photos` or `media`.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 37/37.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This narrows local photo/media service-role authorization risk, but live service-role/RLS proof remains required and no deploy was run.
+
+## 2026-05-05 2:43 PM PT No-Deploy Shared Collaborator Permission Helper
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `supabase/functions/_shared/collaboratorPermissions.ts` to centralize collaborator mutation checks.
+  - Messaging and photo/media Edge Functions now import the shared helper instead of carrying duplicate local role/permission logic.
+  - The shared helper preserves the hardened behavior from the previous batches: viewer remains read-only; planner/coordinator mutation stays permission-scoped; owner checks remain at each owning site lookup.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 38/38.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This reduces local permission-drift risk, but no deploy was run and live service-role/RLS plus live messaging authorization proof remain required.
+
+## 2026-05-05 2:46 PM PT No-Deploy Public Site Invite URL Cleanup
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `SiteView` now strips the public invite `token` query parameter from the address bar after capturing it in the existing slug-scoped session storage key.
+  - Other query parameters and hash fragments are preserved, so language links and section anchors continue to work.
+  - This lowers accidental invite-token exposure in screenshots, copied URLs, browser history, and referrer-like contexts without removing invite-only access.
+- Proof passed:
+  - `npm test -- --run src/pages/SiteView.test.ts src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 44/44.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 2:53 PM PT No-Deploy Guest Route Invite URL Cleanup
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `src/lib/publicAccessArtifacts.ts` for shared public invite/password access artifact keys, packaging, capture, and visible token cleanup.
+  - `SiteView`, Event Hub, Event Recap, and site-slug Photo Upload now use the shared helper instead of duplicating token/session reads.
+  - Guest routes preserve valid invite-only access while removing raw `?token=` from the address bar after capture.
+  - Other query params and hash fragments are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/publicAccessArtifacts.test.ts src/pages/SiteView.test.ts src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx src/pages/PhotoUpload.test.ts`: PASS, 36/36.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 2:57 PM PT No-Deploy Public Contribution Access Artifact Consolidation
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Vault Contribution, Guest Contact Update, Guestbook Submit, public RSVP section submit, and multi-event RSVP section submit now use `src/lib/publicAccessArtifacts.ts`.
+  - Vault Contribution, Guest Contact Update, and Guestbook Submit now remove the raw `token` query parameter from the visible URL after capturing it into slug-scoped session storage.
+  - Public RSVP section submits and multi-event RSVP submits still send invite/password artifacts for gated public sites, but the token/session key logic no longer drifts per component.
+- Proof passed:
+  - `npm test -- --run src/lib/publicAccessArtifacts.test.ts src/pages/GuestContactUpdate.test.ts src/pages/GuestbookSubmit.test.ts src/pages/VaultContribute.test.ts src/sections/components/RsvpSection.test.tsx src/sections/variants/rsvp/multiEvent.test.tsx src/pages/SiteView.test.ts src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx src/pages/PhotoUpload.test.ts`: PASS, 68/68.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 3:08 PM PT No-Deploy Planning Data-Boundary Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Planning site metadata, guest count, seating readiness, and total-budget persistence now run through `src/pages/dashboard/planning/planningService.ts`.
+  - `src/pages/dashboard/Planning.tsx` no longer owns those direct Supabase reads/writes.
+  - Explicit service projections keep planning dashboard data access auditable and narrow.
+  - Planning overview, starter-suite readiness, seating readiness, venue/destination context, and total-budget save behavior are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/planning/planningServiceStarterSuite.test.ts`: PASS, 16/16.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 3:12 PM PT No-Deploy Planning Sub-Tab Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Address collection site/guest reads now run through `planningService` with explicit projections.
+  - Song request site/RSVP reads, playlist save, and song-question enablement now run through `planningService` with explicit projections.
+  - `AddressCollectionTab.tsx` and `SongRequestsTab.tsx` no longer import Supabase directly for these flows.
+  - Address collection links/exports, song request parsing, playlist saving, song-question enablement, demo mode, and dirty playlist state are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/planning/planningServiceStarterSuite.test.ts`: PASS, 18/18.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 3:18 PM PT No-Deploy Seating Lookup Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Seating lookup active-site resolution, latest event lookup, valid assignment reads, table reads, guest reads, and row mapping now run through `seatingService`.
+  - `DashboardSeatingLookup` no longer imports Supabase or active-site helpers directly.
+  - Explicit projections keep lookup access auditable for seating events, assignments, tables, and guests.
+  - Demo lookup rows, search filtering, table/seat answers, exception badges, and seating/coordinator links are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/seating/seatingService.test.ts src/pages/dashboard/seating/seatingDashboardUtils.test.ts src/pages/dashboard/seating/seatingDemoStorage.test.ts`: PASS, 34/34.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 3:25 PM PT No-Deploy Coordinator Mode Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Coordinator Mode bootstrap reads, event-invitation mapping, Q&A reads, guest check-in updates, day-of alert inserts, manual Q&A inserts, and Q&A answer updates now run through `coordinatorService`.
+  - `CoordinatorMode.tsx` no longer imports Supabase or active-site helpers directly.
+  - Explicit projections keep coordinator guest, itinerary event, event invitation, and Q&A access auditable.
+  - Demo coordinator state, live bootstrap, event audiences, check-in, immediate/scheduled alerts, manual Q&A, answer save/reopen, role gates, and cached Q&A fallback are preserved.
+  - `CoordinatorMode.tsx` file-size guard baseline dropped from 2773 to 2736 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts src/pages/dashboard/coordinator/coordinatorDashboardUtils.test.ts src/pages/dashboard/coordinator/coordinatorStorage.test.ts src/lib/coordinatorCheckInQueue.test.ts src/lib/coordinatorAlertLogView.test.ts src/lib/coordinatorQnaFlow.test.ts`: PASS, 29/29.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 3:31 PM PT No-Deploy Messages Scheduled Campaign Service Boundary
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - The dashboard save-the-date scheduled campaign insert now runs through `messageService`.
+  - The insert has an explicit `MessageInsertPayload` contract.
+  - `dashboardDataBoundary.test.ts` now guards against direct page-owned `supabase.from('messages').insert(payload)` returning for this path.
+  - Demo save-the-date campaign creation, live scheduled campaign insert, message refresh, recipient counts, reachable/skipped counts, and owner toast behavior are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageDashboardUtils.test.ts src/pages/dashboard/messages/messageDemoStorage.test.ts src/pages/dashboard/messageTemplateVariables.test.ts src/lib/guestMessageLanguagePreview.test.ts`: PASS, 33/33.
+  - `npm run typecheck -- --pretty false`: initially failed on broad inferred payload type, then PASS after annotating `MessageInsertPayload`.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 3:49 PM PT No-Deploy Itinerary Template Insert Service Boundary
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Itinerary timeline-template event inserts now run through `itineraryService`.
+  - Template insert rows are built by a pure helper that scopes every inserted event to one wedding site and keeps the existing event title/public visibility fields.
+  - `dashboardDataBoundary.test.ts` now guards against the direct page-owned template insert returning.
+  - Demo template insertion, duplicate-template prevention, owner active-site lookup, event reload, public visibility, event title mirroring, schedule timing, and owner notices/errors are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryDateTime.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts`: PASS, 23/23.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 3:57 PM PT No-Deploy Vault Dashboard Service Boundary
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Vault dashboard site/config/entry reads now run through `src/pages/dashboard/vaultService.ts`.
+  - Hosted-storage provider persistence, config create/upsert/update/delete, entry create/delete, rollback-on-config-delete-failure, and recap draft update now run through the same service boundary.
+  - The service keeps explicit projections for `wedding_sites`, `vault_configs`, and `vault_entries`.
+  - Demo vaults, live vault loading, starter vaults, config edit/toggle/delete, entry save/delete, rollback behavior, and recap regeneration are preserved.
+- Proof passed:
+  - `npm test -- src/pages/dashboard/vaultService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck`: initially failed on service row typing, then PASS after narrowing before reading `site.id`.
+  - `npm run lint`: PASS with existing warning backlog, 553 warnings and 0 errors.
+  - `npm run guard:file-size`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 4:00 PM PT No-Deploy Overview Intelligence Service Boundary
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Overview intelligence-dismissal persistence now runs through `src/pages/dashboard/overviewService.ts`.
+  - Interactive-suggestion hide writes now run through the same service boundary.
+  - The dismissal writer uses an explicit `wedding_data` projection and preserves existing wedding data/meta while replacing the dismissal list.
+  - Local dismissal state, demo behavior, persisted dismissals, suggestion hiding, and owner toasts are preserved.
+- Proof passed:
+  - `npm test -- src/pages/dashboard/overviewService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck`: PASS.
+  - `npm run lint`: PASS with existing warning backlog, 553 warnings and 0 errors.
+  - `npm run guard:file-size`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 5:52 PM PT No-Deploy Guests And Guest Photo Sharing Service-Boundary Closure
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Guest RSVP reads, guest add rollback, event invitation insert/replace/rollback, guest delete dependency cleanup, delete-all dependency cleanup, imported guest insert, household updates, and imported RSVP replacement now run through `src/pages/dashboard/guests/guestService.ts`.
+  - Guest Photo Sharing photo-bucket persistence now runs through `src/pages/dashboard/guestPhotoSharingService.ts`.
+  - Dashboard TSX pages no longer contain direct `supabase.from(...)` table calls.
+  - `Guests.tsx` file-size guard baseline dropped from 4790 to 4693 lines.
+  - `GuestPhotoSharing.tsx` file-size guard baseline dropped from 3188 to 3168 lines.
+  - Guest add/edit/delete/import, event RSVP cleanup/rollback, imported RSVP rows, household grouping, photo bucket persistence, and AI draft photo-bucket merge behavior are preserved.
+- Proof passed:
+  - `npm test -- src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS after approved rerun for Vite `.vite-temp` EPERM, 18/18.
+  - `npm run typecheck`: initially failed on photo-bucket type shape, then PASS after using `CanonicalPhotoBuckets`.
+  - `npm run lint`: PASS with existing warning backlog, 553 warnings and 0 errors.
+  - `npm run guard:file-size`: PASS.
+  - `npm run build`: PASS.
+  - `rg -n "supabase\\.from\\(" src/pages/dashboard -g "*.tsx"`: PASS, no matches.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 6:02 PM PT No-Deploy Public Interactive, Onboarding, And Signup Service Boundaries
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Public interactive poll/quiz/suggestion reads and writes now run through `src/sections/interactiveSectionService.ts`.
+  - Music request suggestion writes now run through the same public interactive service.
+  - Main onboarding existing-site reads, event-seed sync, existing-site update, create-site/fallback-create, guided CSV guest upsert, and signup minimal-site reservation now run through `src/pages/onboarding/onboardingService.ts` and `src/pages/signupService.ts`.
+  - The touched public section components, `Onboarding.tsx`, and `Signup.tsx` no longer own direct table access through `supabase.from(...)`; `GuidedSetup.tsx` no longer owns direct guest import upsert table access.
+  - Public interactive sync/submits, local cooldown behavior, song requests, onboarding profile persistence, event seed sync, guided CSV guest create/update, and signup minimal-site reservation are preserved.
+- Proof passed:
+  - `npm test -- src/sections/interactiveSectionService.test.ts`: PASS, 3/3.
+  - `npm test -- src/sections/interactiveSectionService.test.ts src/pages/onboarding/onboardingService.test.ts`: PASS, 6/6.
+  - `npm run typecheck -- --pretty false`: initially failed on `OnboardingEventSeed.event_name` optionality, then PASS after matching the event-seed contract.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+  - `rg -n "supabase\\.from\\(" src/pages/Onboarding.tsx src/pages/Signup.tsx src/pages/onboarding/GuidedSetup.tsx src/sections/variants/contact/interactiveHub.tsx src/sections/variants/music/requestForm.tsx`: PASS, no matches.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 6:06 PM PT No-Deploy PaymentRequired Service Boundary And Direct-Access Finding
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - The payment-required fallback wedding-site creation path now runs through `src/pages/paymentRequiredService.ts`.
+  - `PaymentRequired.tsx` no longer imports Supabase or inserts `wedding_sites` directly.
+  - Existing-site reuse, fallback slug normalization, six-attempt collision retry, checkout setup, and safe payment error behavior are preserved.
+  - Added `paymentRequiredService.test.ts` to guard the page/service boundary.
+- New active finding:
+  - The earlier single-line dashboard direct-access scan was incomplete. A stricter multiline scan shows touched files are clean, but remaining direct page-owned Supabase calls still exist in other routes and must remain active P1/P2 cleanup work until moved behind services or explicitly classified.
+- Proof passed:
+  - `npm test -- src/pages/paymentRequiredService.test.ts src/sections/interactiveSectionService.test.ts src/pages/onboarding/onboardingService.test.ts`: PASS, 8/8.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 6:12 PM PT No-Deploy Guided Setup, Quick Start, And Collaborator Invite Service Boundaries
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Guided setup site hydration and progress/complete wedding-site updates now run through `src/pages/onboarding/onboardingService.ts`.
+  - Quick-start seed-site load, final persist-site load, and final wedding-site update now run through `src/pages/onboarding/onboardingService.ts`.
+  - Collaborator invite token lookup and invite site-label lookup now run through `src/pages/acceptCollaboratorInviteService.ts`.
+  - `GuidedSetup.tsx`, `QuickStart.tsx`, and `AcceptCollaboratorInvite.tsx` no longer own direct table reads/writes for the extracted paths.
+  - Auth/session and invite-claim RPC orchestration remain in the pages where the UI flow needs them.
+  - Guided hydration/save/complete, quick-start AI draft finalization, builder-project patch persistence, invite state validation, invite email prefill, site labels, and invite claim behavior are preserved.
+- Proof passed:
+  - `npm test -- src/pages/onboarding/onboardingService.test.ts src/pages/paymentRequiredService.test.ts src/sections/interactiveSectionService.test.ts`: PASS, 8/8.
+  - `npm test -- src/pages/acceptCollaboratorInviteService.test.ts src/pages/onboarding/onboardingService.test.ts src/pages/paymentRequiredService.test.ts src/sections/interactiveSectionService.test.ts`: PASS, 10/10.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 6:18 PM PT No-Deploy Settings Owner Data-Boundary Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Settings collaborator invite list/create/revoke, translation status reads, slug collision lookup, template-change site read, account couple-name update, slug update, and template-change update now run through `src/pages/dashboard/settings/settingsSiteData.ts`.
+  - `Settings.tsx` has no remaining direct `supabase.from(...)` table access under the stricter multiline scan; auth calls remain for password verification/update.
+  - `Settings.tsx` file-size guard baseline dropped from 2328 to 2287 lines.
+  - Account save, password update, team invite creation/revocation/copy, translation status display, privacy/token/RSVP/notification/music saves, slug collision checks, and template change with generated content preservation are preserved.
+- Proof passed:
+  - `npm test -- src/pages/dashboard/settings/settingsSiteData.test.ts src/pages/acceptCollaboratorInviteService.test.ts src/pages/onboarding/onboardingService.test.ts`: PASS, 7/7.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+  - `rg -n -U "supabase\\s*\\n\\s*\\.from|supabase\\.from" src/pages/dashboard/Settings.tsx`: PASS, no matches.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 6:26 PM PT No-Deploy Messages Live Data Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Messages dashboard active-site/site load, message history reads, guest recipient reads, delivery telemetry reads, itinerary audience reads, text-credit preview reads, message create/update/reschedule/retry state writes, and analytics patch writes now run through `src/pages/dashboard/messages/messageService.ts`.
+  - `Messages.tsx` has no remaining direct `supabase.from(...)` table access under the stricter multiline scan; auth/session calls remain for invoking the bulk-message Edge Function.
+  - `Messages.tsx` file-size guard baseline dropped from 3386 to 3263 lines.
+  - Live/demo message loading, recipient lists, delivery table fallback, itinerary-segment audiences, SMS credit preview, draft/update/send-now/schedule/retry/reschedule/cancel flows, save-the-date quick create, and bulk-send invocation behavior are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run smoke:messages`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 6:30 PM PT No-Deploy RSVP Board Service-Boundary Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - RSVP Board active-site resolution, guest RSVP board reads, itinerary event lookup, and event-invitation mapping now run through `src/pages/dashboard/rsvpBoardService.ts`.
+  - `RsvpBoard.tsx` no longer imports Supabase or active-site helpers directly and has no direct `supabase.from(...)` table access under the stricter multiline scan.
+  - Demo rows, live board load, 15-second refresh, manual follow-up/unreachable stats, event-invite badges, invitation progress counts, filters, and dashboard links are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/rsvpBoardFilter.test.ts`: PASS, 18/18.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+  - `rg -n -U "supabase\\s*\\n\\s*\\.from|supabase\\.from" src/pages/dashboard/RsvpBoard.tsx`: PASS, no matches.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 6:38 PM PT No-Deploy Onboarding Status, Audit Log, And Error Log Service Boundaries
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Wedding Status planning-state updates now run through `src/pages/onboarding/onboardingService.ts`.
+  - Dashboard activity-history site resolution, guest audit log reads, guest-name lookup, and app action log loading now run through `src/pages/dashboard/auditLogService.ts`.
+  - Admin-user verification and app error log reads now run through `src/pages/dashboard/errorLogService.ts`.
+  - `WeddingStatus.tsx`, `AuditLogs.tsx`, and `ErrorLogs.tsx` have no remaining direct `supabase.from(...)` table access under the stricter multiline scan.
+  - Wedding status validation/navigation, venue/date/guest-count persistence, activity-history filtering/search, app-action rows, admin-only error log checks, error-log grouping, filtering, paging, copy, and CSV export behavior are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/onboarding/onboardingService.test.ts src/pages/dashboard/rsvpBoardFilter.test.ts`: PASS, 22/22.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+  - `rg -n -U "supabase\\s*\\n\\s*\\.from|supabase\\.from" src/pages/onboarding/WeddingStatus.tsx src/pages/dashboard/AuditLogs.tsx src/pages/dashboard/ErrorLogs.tsx`: PASS, no matches.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 6:41 PM PT No-Deploy Vault Contribution Config Service Boundary
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Public vault contribution enabled-config reads now run through `src/pages/vaultContributionService.ts`.
+  - `VaultContribute.tsx` no longer owns direct `vault_configs` table reads under the stricter multiline scan.
+  - Gated public-site access checks, demo vault fallback, year-specific vault links, vault hub config listing, enabled-config filtering, upload/submit function invocation, and guest-facing invalid-state behavior are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/VaultContribute.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/onboarding/onboardingService.test.ts`: PASS, 34/34.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+  - `rg -n -U "supabase\\s*\\n\\s*\\.from|supabase\\.from" src/pages/VaultContribute.tsx`: PASS, no table-read matches.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 6:49 PM PT No-Deploy Overview Live Data Service Boundary
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Overview active-site/site load, guest RSVP summary reads, registry/photo/vault counts, interactive suggestion/vote reads, builder user-edited marker persistence, and draft-from-brief site update now run through `src/pages/dashboard/overviewService.ts`.
+  - `Overview.tsx` no longer imports Supabase or active-site helpers directly and has no direct `supabase.from(...)` table access under the stricter multiline scan.
+  - Demo overview state, live stats, persisted intelligence dismissals, interactive suggestion hiding/loading, draft brief refresh, builder user-edited markers, name-change overview, launch-readiness cards, and public-site preview links are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/overviewService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+  - `rg -n -U "supabase\\s*\\n\\s*\\.from|from '../../lib/supabase'|from '../../lib/activeSite'" src/pages/dashboard/Overview.tsx`: PASS, no matches.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 6:53 PM PT No-Deploy Registry Dashboard Site/Policy Service Boundary
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Registry dashboard active-site/site refresh-policy load, refresh budget persistence, refresh policy save, monthly counter reset, and auto-reset persistence now run through `src/pages/dashboard/registry/registryService.ts`.
+  - `Registry.tsx` no longer imports Supabase or active-site helpers directly and has no direct `supabase.from(...)` table access under the stricter multiline scan.
+  - Demo registry items, live registry item loading, gift add/edit/delete, URL preview import, auto refresh, monthly refresh budgeting, policy presets, manual counter reset, and owner action audit calls are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/registry/registryService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 37/37.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run smoke:registry`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+  - `rg -n -U "supabase\\s*\\n\\s*\\.from|supabase\\.from\\(|from '../../lib/supabase'|from '../../lib/activeSite'" src/pages/dashboard/Registry.tsx`: PASS, no matches.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 7:01 PM PT No-Deploy Itinerary Schedule And Event-Invite Service Boundary
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Itinerary active-site/site lookup, event loads, schedule mirror writes to `wedding_data` and `sections`, RSVP invitation/count reads, event create/update/delete, timeline shifts, smart-template inserts, guest picker reads, event-invite toggles, invite-all, and remove-all invitation writes now run through `src/pages/dashboard/itineraryService.ts`.
+  - `Itinerary.tsx` no longer imports active-site helpers and has no direct `supabase.from(...)` table access under the stricter multiline scan.
+  - Demo timeline, live event loading/counts, optional `event_rsvps` table fallback, schedule-section mirroring, event form drift fallback, best-effort photo album creation, timeline shift/undo, smart template creation, event guest picker, invitation removal RSVP rollback, invite-all/remove-all, and toasts are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 18/18.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+  - `rg -n -U "supabase\\s*\\n\\s*\\.from|supabase\\.from\\(|from '../../lib/activeSite'" src/pages/dashboard/Itinerary.tsx`: PASS, no matches.
+  - `npm run smoke:site`: FAIL in sandbox only, `getaddrinfo ENOTFOUND atuzuobpprjstfmdnwso.supabase.co`.
+  - `npm run smoke:site`: PASS after approved network access.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 7:09 PM PT No-Deploy Guest Photo Sharing Service Boundary
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Guest Photo Sharing active-site/site load, event/album/upload reads, guestbook/prospect reads, photo AI analysis/metadata/correction reads, guest hub settings reads, AI photo ops persistence, photo bucket moves, AI correction inserts, guest hub settings save, and guestbook moderation now run through `src/pages/dashboard/guestPhotoSharingService.ts`.
+  - `GuestPhotoSharing.tsx` has no direct `supabase.from(...)` table access under the stricter multiline scan. Auth/session calls and Supabase Edge Function invokes remain in the page for existing photo upload, album, analysis, follow-up, and moderation flows.
+  - Demo photo space, live photo dashboard load, bucket links, upload windows, photo AI ops planning, high-confidence photo moves, vision suggestions/corrections, guest hub settings, guest follow-up queueing, guestbook moderation, exports, and existing Edge Function flows are preserved.
+  - `GuestPhotoSharing.tsx` dropped from 3168 to 3049 lines and remains within the file-size guard baseline.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 18/18.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+  - `rg -n -U "supabase\\s*\\n\\s*\\.from|supabase\\.from\\(" src/pages/dashboard/GuestPhotoSharing.tsx`: PASS, no matches.
+- Remaining direct page-owned table access under the stricter scan is concentrated in `src/pages/dashboard/Guests.tsx`.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 7:18 PM PT No-Deploy Guests Dashboard Load/Config Service Boundary
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Guests dashboard active-site/site settings load, guest list + RSVP summary reads, RSVP conflict reads/history reads, itinerary filter event reads, event-invite filter mapping, RSVP audit feed reads, RSVP conflict resolve actions, RSVP config save, and fallback site-id resolution now run through `src/pages/dashboard/guests/guestService.ts`.
+  - The service explicitly selects site settings, guests, RSVP rows, RSVP conflicts, itinerary events, wedding-data seeds, event invitations, and RSVP audit rows.
+  - `reminder_cadence_days` and `auto_reminders_enabled` are now selected before being read.
+  - Demo/live site settings load, RSVP custom questions, meal config, auto reminder flags, guest list loading with RSVP rows, conflict cards/history, itinerary filtering, RSVP audit feed, conflict resolve, CSV mapper site-id fallback, and RSVP config autosave are preserved.
+  - `Guests.tsx` dropped from 4693 to 4576 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run smoke:csvmapper`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Remaining direct table access in `Guests.tsx` covers guest field updates, check-in/thank-you/manual follow-up updates, RSVP reminder settings, guest drawer event invite toggles/audit details, assisted RSVP, and SMS RSVP link slug lookup.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 7:22 PM PT No-Deploy Guests Dashboard Guest-Write Service Boundary
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Guest check-in undo/toggle, clear-all check-ins, thank-you toggle/bulk thank-you, invitation/reminder timestamp writes, household merge/split/reassign writes, and RSVP reminder settings save now run through `src/pages/dashboard/guests/guestService.ts`.
+  - `Guests.tsx` uses the already-loaded `weddingSiteInfo` slug for guest update and SMS RSVP share links instead of re-reading `wedding_sites` from the page.
+  - Check-in undo/toggle/session-refresh retry, thank-you workflows, bulk due thank-yous, clear-all check-ins, invite/reminder timestamp persistence, household tools, reminder settings autosave, guest update link copy, and text RSVP link copy are preserved.
+  - `Guests.tsx` dropped from 4576 to 4506 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Remaining direct table access in `Guests.tsx` covers guest drawer event/audit details, event invite toggle/delete/insert, and assisted RSVP save/rollback.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 7:31 PM PT No-Deploy Guests Drawer/Event/Assisted-RSVP Service Boundary
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Guest drawer itinerary/audit detail reads, event invitation toggle insert/delete, RSVP snapshot restore on invite-removal failure, and assisted RSVP save/rollback now run through `src/pages/dashboard/guests/guestService.ts`.
+  - `Guests.tsx` has no direct `supabase.from(...)` table access under the stricter multiline scan. Remaining page Supabase usage is auth/session and existing Edge Function invocation behavior.
+  - Demo/live itinerary drawer details, event invitation toggles, RSVP snapshot restore on failed invite removal, assisted RSVP recording, assisted RSVP rollback, CSV mapper, check-in guard, and strict RSVP smoke behavior are preserved.
+  - `Guests.tsx` dropped from 4506 to 4418 lines, and its file-size guard baseline was lowered to 4418.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+  - `rg -U -n "supabase\\s*\\n\\s*\\.from|supabase\\.from\\(" src/pages/dashboard/Guests.tsx`: PASS, no matches.
+  - `npm run smoke:rsvp`: FAIL in sandbox only, `getaddrinfo ENOTFOUND atuzuobpprjstfmdnwso.supabase.co`.
+  - `npm run smoke:rsvp`: PASS after approved network access.
+  - `npm run proof:v1:guests-rsvp-ops`: FAIL in sandbox only because the strict RSVP smoke could not resolve `atuzuobpprjstfmdnwso.supabase.co`; CSV mapper and check-in guard passed.
+  - `npm run proof:v1:guests-rsvp-ops`: PASS after approved network access.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 7:36 PM PT No-Deploy External Blank-Target Link Isolation
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Remaining external blank-target links that used only `rel="noreferrer"` now use explicit `rel="noopener noreferrer"`.
+  - Covered vendor profile creation links, vendor profile proof/resource links, dashboard registry contribution links, public registry contribution links, dashboard layout external links, and the builder variant preview `Link`.
+  - Vendor, registry, and dashboard external links still open in a new tab; this only makes opener isolation explicit.
+  - `superNiceLaunchBacklogSafety.test.ts` now guards the affected files against reintroducing bare `rel="noreferrer"` and was refreshed for earlier helper extractions.
+- Proof passed:
+  - `npm test -- --run src/lib/superNiceLaunchBacklogSafety.test.ts`: FAIL twice on stale helper-location assertions from earlier extractions.
+  - `npm test -- --run src/lib/superNiceLaunchBacklogSafety.test.ts`: PASS, 13/13 after updating those assertions.
+  - `rg -n "rel=\"noreferrer\"|rel='noreferrer'" src -g '*.tsx'`: PASS, no matches.
+  - Targeted TSX blank-target audit script: PASS, 0 bad `a`/`Link` tags.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 7:43 PM PT No-Deploy Global Page/Section Table-Access Regression Guard
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/lib/dashboardDataBoundary.test.ts` now recursively scans non-test runtime `.tsx` files under `src/pages` and `src/sections`.
+  - The guard fails if a page or section owns direct `supabase.from(...)` table access.
+  - This protects the recent service-boundary cleanup across 190 runtime page/section TSX files.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 18/18.
+  - `rg -U -n "supabase\\s*(?:\\.\\s*from|\\n\\s*\\.\\s*from)\\s*\\(" src/pages src/sections -g '*.tsx' -g '!*.test.tsx' -g '!*.spec.tsx'`: PASS, no matches.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 7:46 PM PT No-Deploy File-Size Guard Baseline Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `RSVP.tsx` file-size guard baseline is now exact at 1961 lines.
+  - `GuestPhotoSharing.tsx` file-size guard baseline is now exact at 3049 lines.
+  - Recent reductions cannot quietly grow back while larger P2 splits continue.
+- Proof passed:
+  - `npm run guard:file-size`: PASS.
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/lib/superNiceLaunchBacklogSafety.test.ts`: PASS, 31/31.
+  - `git diff --check`: PASS.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only guard hardening and no deploy was run.
+
+## 2026-05-05 7:54 PM PT No-Deploy Seating Component Split And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Seating drag/drop guest chips, unassigned pool, table card, seat drop slot, and table form now live in `src/pages/dashboard/seating/SeatingDashboardComponents.tsx`.
+  - `Seating.tsx` now owns page orchestration and dropped from 2169 to 1610 lines.
+  - The file-size guard baseline for `Seating.tsx` is now exact at 1610 lines.
+  - Seating behavior remains covered by focused service/utils tests and seating continuity proof.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/seating/seatingDashboardUtils.test.ts src/pages/dashboard/seating/seatingService.test.ts`: PASS, 35/35.
+  - `npm run typecheck -- --pretty false`: PASS after restoring the page-level `TableShape` type import.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run build`: PASS.
+  - Strict page/section direct-access scan: PASS.
+  - `git diff --check`: PASS.
+  - `npm run proof:v1:seating-continuity`: FAIL in sandbox only with Vite `.vite-temp` `EPERM`.
+  - `npm run proof:v1:seating-continuity`: PASS after approved rerun.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 7:57 PM PT No-Deploy Page/Section Select-Star Regression Guard
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/lib/dashboardDataBoundary.test.ts` now recursively scans non-test runtime `.ts` and `.tsx` files under `src/pages` and `src/sections`.
+  - The guard fails if those runtime page/section surfaces reintroduce `select('*')`.
+  - This broadens the data-boundary proof from direct table access to explicit projection discipline.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+  - Independent strict `rg` select-star scan across `src/pages` and `src/sections`: PASS, no matches.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only guard hardening and no deploy was run.
+
+## 2026-05-05 8:03 PM PT No-Deploy RSVP Lookup Scoping Proof And Stale-Copy Cleanup
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `validate-rsvp-token` lookup is now explicitly guarded as invite-token-only and non-enumerating.
+  - `lookup_guest` remains tied to an existing short-lived RSVP session.
+  - The static proof now fails on name/`ilike` lookup, multi-match guest-list response patterns, raw invite-token response fields, and site-id response leakage in lookup.
+  - Stale source copy that told guests to "search by your full name" is removed.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 28/28.
+  - Independent RSVP source scan for name-enumeration remnants: PASS, no matches.
+  - `npm run smoke:rsvp`: FAIL in sandbox only with Supabase DNS `ENOTFOUND`.
+  - `npm run smoke:rsvp`: PASS after approved network access.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: FAIL once on `no-regex-spaces` in the new test regex.
+  - `npm run lint -- --quiet`: PASS after the regex was fixed.
+  - `npm run guard:file-size`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 8:07 PM PT No-Deploy Asset Budget Baseline Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `scripts/check-asset-budget.mjs` now budgets the production-copied `public/` footprint at 210000 KiB total instead of 215000 KiB.
+  - The per-file cap is now 5000 KiB instead of 6000 KiB.
+  - Current assets remain intact and under budget: 209433 KiB total, 334 files, 326 media files, largest file 4788 KiB.
+  - This prevents quiet growth while the larger optimized-thumbnail/CDN/object-storage strategy remains open.
+- Proof passed:
+  - `npm run guard:assets`: PASS.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only guard hardening and no deploy was run.
+
+## 2026-05-05 8:10 PM PT No-Deploy Coordinator Panel Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/coordinator/CoordinatorModePanels.tsx` now owns the coordinator role selector, helper access panel, handoff card, and top stat-card presentation.
+  - `CoordinatorMode.tsx` now keeps more of its weight on page orchestration and dropped from 2736 to 2652 lines.
+  - The file-size guard baseline for `CoordinatorMode.tsx` is now exact at 2652 lines.
+  - Role view switching, owner-only role selector behavior, top dashboard stats, handoff copy, and the existing coordinator check-in/timeline/Q&A/message flows are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 8:21 PM PT No-Deploy Settings Navigation Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/settings/SettingsNavigation.tsx` now owns Settings tab IDs, tab construction, role-based tab filtering, and navigation rendering.
+  - `Settings.tsx` dropped from 2287 to 2259 lines.
+  - The file-size guard baseline for `Settings.tsx` is now exact at 2259 lines.
+  - Owner-only Team/Billing visibility, collaborator restrictions, active-tab switching, settings hero stats, settings forms, and Settings service boundaries are preserved.
+- Proof passed:
+  - `npm test -- src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+  - `npm run typecheck -- --pretty false`: FAIL once because the new tab array widened `id` to `string`.
+  - `npm run typecheck -- --pretty false`: PASS after typing the tab list as `SettingsTab[]`.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 8:27 PM PT No-Deploy Name Change Planner Card Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/planning/NameChangePlannerCards.tsx` now owns `ExecutionSnapshotCard` and `ReminderPostureCard`.
+  - `NameChangePlannerTab.tsx` dropped from 2414 to 2197 lines.
+  - The file-size guard baseline for `NameChangePlannerTab.tsx` is now exact at 2197 lines.
+  - Execution snapshot cards, status-vault notes, guided next actions, form payload details, field-risk cards, reminder posture cards, planner routing, document intake, and reminder behavior are preserved.
+- Proof passed:
+  - Focused name-change test lane failed once because the extraction missed remaining tab-owned imports for `getExecutionStatusVaultNotes` and `getExecutionNextActionDetail`.
+  - `npm test -- --run src/pages/dashboard/planning/nameChangePlannerUi.test.ts src/pages/dashboard/planning/nameChangeExecutionTime.test.ts src/pages/dashboard/planning/NameChangePlannerTab.test.tsx src/pages/dashboard/nameChangeOverviewCard.test.ts src/pages/dashboard/nameChangeOverviewInsights.test.ts`: PASS, 53/53 after restoring the missed imports.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 8:32 PM PT No-Deploy Messages Detail Modal Component Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/messages/MessageDashboardComponents.tsx` now owns message toasts, status badges, and the message detail modal.
+  - `Messages.tsx` dropped from 3263 to 2842 lines.
+  - The file-size guard baseline for `Messages.tsx` is now exact at 2842 lines.
+  - Message history details, scheduled-message controls, retry/send-now/reschedule/cancel actions, delivery review sections, status badges, and toast behavior are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+  - `npm run typecheck -- --pretty false`: PASS after fixing the mechanical extraction to export/import the moved components correctly and restoring still-used icon imports in `Messages.tsx`.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 8:36 PM PT No-Deploy Guest Photo Sharing Slideshow Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guestPhotos/GuestPhotoSlideshowCard.tsx` now owns slideshow draft controls, frame-list rendering, and the slideshow preview modal.
+  - `GuestPhotoSharing.tsx` dropped from 3049 to 2944 lines.
+  - The file-size guard baseline for `GuestPhotoSharing.tsx` is now exact at 2944 lines.
+  - Slideshow-ready album filtering, order/theme selection, preview behavior, slideshow notes export, upload captions, and photo-sharing upload/moderation flows are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 8:40 PM PT No-Deploy Guest Photo Sharing Album-Link Panel Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guestPhotos/GuestPhotoAlbumCreateCard.tsx` now owns album creation templates, parent/event selectors, newest-link actions, missing-event album action, copy fallback, and newest-album QR panel.
+  - `GuestPhotoSharing.tsx` dropped from 2944 to 2811 lines.
+  - The file-size guard baseline for `GuestPhotoSharing.tsx` is now exact at 2811 lines.
+  - Album creation, parent album selection, itinerary-event linking, newest upload link copy/open/QR actions, missing itinerary album creation, copy fallback behavior, and album list/moderation flows are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 8:46 PM PT No-Deploy Guest Photo Sharing Album Controls Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guestPhotos/GuestPhotoAlbumControls.tsx` now owns the album sharing toolbar, owner controls, tag/status/search filters, bulk moderation controls, and visible album count display.
+  - `GuestPhotoSharing.tsx` dropped from 2811 to 2766 lines.
+  - The file-size guard baseline for `GuestPhotoSharing.tsx` is now exact at 2766 lines.
+  - Copy-all links, copy-all prompts, send active album requests, refresh all links, export link/share/handoff sheets, flagged/hidden/tag filters, bulk moderation controls, search, and active/paused filtering are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 7:19 AM PT No-Deploy Guest Photo Sharing Recent-Upload Moderation Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guestPhotos/GuestPhotoRecentUploadsList.tsx` now owns recent upload rows, tag chips, recap badges, and per-upload feature/story/hide/flag moderation controls.
+  - `GuestPhotoSharing.tsx` dropped from 2766 to 2697 lines.
+  - The file-size guard baseline for `GuestPhotoSharing.tsx` is now exact at 2697 lines.
+  - Recent upload display, guest/file/date labels, tag filtering, feature/story/recap-hide toggles, flag/unflag, restore/remove, and album moderation callbacks are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 7:46 AM PT No-Deploy Guest Photo Sharing Bucket Window Editor Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guestPhotos/GuestPhotoBucketWindowEditor.tsx` now owns parent-album reassignment controls, upload-window date inputs, suggested-window action, and save-window action.
+  - `GuestPhotoSharing.tsx` dropped from 2697 to 2660 lines.
+  - The file-size guard baseline for `GuestPhotoSharing.tsx` is now exact at 2660 lines.
+  - Parent album changes, descendant-cycle exclusion, upload opens/closes drafts, suggested window application, save window behavior, and existing album/recent-upload moderation flows are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: FAIL once because `Input` was still used elsewhere in `GuestPhotoSharing.tsx` after the extraction.
+  - `npm run typecheck -- --pretty false`: PASS after restoring the still-used `Input` import.
+  - `npm run guard:file-size`: FAIL once because the restored import made the exact count 2660 instead of 2659.
+  - `npm run guard:file-size`: PASS after setting the exact 2660-line baseline.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 7:54 AM PT No-Deploy Guest Photo Sharing Bucket-Card Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guestPhotos/GuestPhotoBucketCard.tsx` now owns the per-album shell, parent label, status/count chips, backup/QR/link/messaging actions, sub-album shortcuts, and upload-link summary.
+  - `GuestPhotoSharing.tsx` dropped from 2660 to 2556 lines.
+  - The file-size guard baseline for `GuestPhotoSharing.tsx` is now exact at 2556 lines.
+  - The dashboard link-safety regression now follows the extracted bucket-card component and still proves backup-folder and QR opens flow through safe URL handling.
+  - Per-album active/paused state, backup open, link refresh/copy, QR open, photo-list export, share-prompt copy, messaging prefill, sub-album filtering, upload-link display, upload-window editing, and recent-upload moderation are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/dashboardLinkSafety.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 8:00 AM PT No-Deploy Guest Photo Sharing Guest-Hub QR Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guestPhotos/GuestPhotoHubQrCard.tsx` now owns the one-QR guest hub card, hub/recap link actions, QR open action, print-card action, guest action chips, and QR panels.
+  - `GuestPhotoSharing.tsx` dropped from 2556 to 2506 lines.
+  - The file-size guard baseline for `GuestPhotoSharing.tsx` is now exact at 2506 lines.
+  - Guest hub link copy/open, QR open, print-card save, recap copy/open, action summary chips, hub QR panel, recap QR panel, and existing album/moderation flows are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/dashboardLinkSafety.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 8:06 AM PT No-Deploy Guest Photo Sharing Hub Controls/Follow-Up/Guestbook Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guestPhotos/GuestPhotoHubControlsCard.tsx` now owns guest hub action toggles, custom hub message, default language, and save controls.
+  - `src/pages/dashboard/guestPhotos/GuestPhotoFollowupCard.tsx` now owns guest prospect counts, export action, follow-up queue actions, and prospect preview cards.
+  - `src/pages/dashboard/guestPhotos/GuestPhotoGuestbookCard.tsx` now owns guestbook export, note preview cards, and flag/hide moderation controls.
+  - `GuestPhotoSharing.tsx` dropped from 2506 to 2418 lines.
+  - The file-size guard baseline for `GuestPhotoSharing.tsx` is now exact at 2418 lines.
+  - Hub controls, guest prospect export/queue actions, guestbook moderation, and existing photo album/moderation flows are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/dashboardLinkSafety.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 8:13 AM PT No-Deploy Guest Photo Sharing Photo-Review Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guestPhotos/GuestPhotoReviewCard.tsx` now owns photo review summary stats, curation actions, highlights, timeline, similar sets, review queue, and memory chapter preview.
+  - `GuestPhotoSharing.tsx` dropped from 2418 to 2317 lines.
+  - The file-size guard baseline for `GuestPhotoSharing.tsx` is now exact at 2317 lines.
+  - Highlight slideshow ordering, saved-photo-time ordering, curation export, memory chapter/recap note copy, review-item hiding, similar-extra hiding, hidden upload restore, recap feature/story/hide toggles, and existing album/moderation flows are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/dashboardLinkSafety.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 8:20 AM PT No-Deploy Guest Photo Sharing Moments And Schedule Album Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guestPhotos/GuestPhotoMomentsCard.tsx` now owns the AI/photo moments panel, reviewed/photo metadata counts, sorting actions, high-confidence move action, and per-analysis move/keep controls.
+  - `src/pages/dashboard/guestPhotos/GuestPhotoMomentAlbumsCard.tsx` now owns the schedule-derived moment album suggestion panel and create-album controls.
+  - `GuestPhotoSharing.tsx` dropped from 2317 to 2207 lines.
+  - The file-size guard baseline for `GuestPhotoSharing.tsx` is now exact at 2207 lines.
+  - Sort-new-photos, review-visible, high-confidence photo moves, per-analysis move/keep decisions, reviewed/photo metadata counts, schedule-derived album suggestions, and create-moment-album actions are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/dashboardLinkSafety.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 8:35 AM PT No-Deploy Guest Photo Sharing Below-Threshold Component Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guestPhotos/GuestPhotoHeroCard.tsx` now owns the Memories dashboard hero and summary counters.
+  - `src/pages/dashboard/guestPhotos/GuestPhotoMemoryVaultsCard.tsx` now owns the albums-to-vaults guidance and Vault navigation.
+  - `src/pages/dashboard/guestPhotos/GuestPhotoMemoryFlowCard.tsx` now owns the no-app memory readiness checklist and blockers.
+  - `src/pages/dashboard/guestPhotos/GuestPhotoRecapSharingCard.tsx` now owns recap status controls, preview action, publish warnings, and save action.
+  - `src/pages/dashboard/guestPhotos/GuestPhotoCoupleAlbumsCard.tsx` now owns couple photo bucket upload/removal controls and the hidden file input.
+  - `src/pages/dashboard/guestPhotos/GuestPhotoStatsCards.tsx` now owns album/upload stat cards.
+  - `src/pages/dashboard/guestPhotos/GuestPhotoSlideshowDraftCard.tsx` now owns slideshow draft readiness and organize-upload controls.
+  - `src/pages/dashboard/guestPhotos/GuestPhotoOrganizerCard.tsx` now owns the AI photo organizer plan preview, note copy, and high-confidence move action.
+  - `GuestPhotoSharing.tsx` dropped from 2207 to 1979 lines and is now below the 2000-line oversized-file threshold.
+  - The file-size guard baseline for `GuestPhotoSharing.tsx` is now exact at 1979 lines.
+  - Vault navigation, readiness blockers, recap preview/status save, couple-album uploads/removals, owner stats, slideshow draft organization, AI organizer note copy, and high-confidence organizer moves are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/dashboardLinkSafety.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 9:12 AM PT No-Deploy Name Change Planner Intro Extraction And Below-Threshold Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/planning/NameChangePlannerCards.tsx` now owns `NameChangePlannerIntroCards`.
+  - `NameChangePlannerIntroCards` owns the path/health/privacy cards, resume panel, lifecycle jump cards, roadmap cards, and milestone/proof progress cards.
+  - `NameChangePlannerTab.tsx` dropped from 2197 to 1999 lines and is now below the 2000-line oversized-file threshold.
+  - The file-size guard baseline for `NameChangePlannerTab.tsx` is now exact at 1999 lines.
+  - Resume routing, lifecycle jumps, save-and-return action, roadmap/milestone display, dual-partner proof tracks, document/status vault, execution cards, reminders, admin review, and existing name-change planner behavior are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/planning/nameChangePlannerUi.test.ts src/pages/dashboard/planning/nameChangeExecutionTime.test.ts src/pages/dashboard/planning/NameChangePlannerTab.test.tsx src/pages/dashboard/nameChangeOverviewCard.test.ts src/pages/dashboard/nameChangeOverviewInsights.test.ts`: PASS, 53/53.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 9:17 AM PT No-Deploy Coordinator Command Deck Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/coordinator/CoordinatorModePanels.tsx` now owns `CoordinatorCommandDeckPanel`.
+  - `CoordinatorCommandDeckPanel` owns the command summary cards, command deck cards, and ops snapshot cards.
+  - `CoordinatorMode.tsx` dropped from 2599 to 2537 lines.
+  - The file-size guard baseline for `CoordinatorMode.tsx` is now exact at 2537 lines.
+  - Command summary jumps, priority labels, command deck actions, ops snapshot lane jumps, role restrictions, summary panels, check-in, timeline, alerting, and Q&A behavior are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 9:21 AM PT No-Deploy Messages Saved-Template Card Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/messages/MessageDashboardComponents.tsx` now owns `MessageSavedTemplatesCard`.
+  - `MessageSavedTemplatesCard` owns the reusable saved-template library card, including audience labels, expired saved-schedule warnings, use-template action, and remove action.
+  - `Messages.tsx` dropped from 2533 to 2490 lines.
+  - The file-size guard baseline for `Messages.tsx` is now exact at 2490 lines.
+  - Saved template display, reusable audience labels, expired saved-schedule warning, template use, template removal, composer behavior, history summaries, and existing send/schedule/retry controls are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 9:26 AM PT No-Deploy Messages Campaign-Thread Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/messages/MessageDashboardComponents.tsx` now owns `MessageCampaignThreadPanels`.
+  - `MessageCampaignThreadPanels` owns campaign rollups and the active campaign thread panel.
+  - `Messages.tsx` dropped from 2490 to 2357 lines.
+  - The file-size guard baseline for `Messages.tsx` is now exact at 2357 lines.
+  - Campaign thread filtering, active thread clearing, latest-message view/edit/duplicate actions, reminder/day-of/thank-you follow-up starts, scheduled follow-up starts, delivery/contact counters, and existing history controls are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 9:29 AM PT No-Deploy Messages Review Queue Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/messages/MessageDashboardComponents.tsx` now owns `MessageReviewQueuePanels`.
+  - `MessageReviewQueuePanels` owns follow-up review and review queue panels.
+  - `Messages.tsx` dropped from 2357 to 2306 lines.
+  - The file-size guard baseline for `Messages.tsx` is now exact at 2306 lines.
+  - Follow-up review counts, review queue empty state, recipient review labels, latest message context, approve/open/follow-up actions, and existing message send/retry/schedule flows are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 9:40 AM PT No-Deploy Messages History Card Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/messages/MessageDashboardComponents.tsx` now owns `MessageHistoryCard`.
+  - `MessageHistoryCard` owns the message history filter header, quick filters, campaign/review summary panels, empty state, filtered history rows, and scheduled/retry row controls.
+  - `Messages.tsx` dropped from 2306 to 2123 lines.
+  - The file-size guard baseline for `Messages.tsx` is now exact at 2123 lines.
+  - History search/filtering, campaign-thread selection/clearing, review queue actions, scheduled send-now/reschedule/draft controls, retry controls, recipient counters, due-now labels, and message detail opening are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 9:45 AM PT No-Deploy Messages Composer Panel Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/messages/MessageDashboardComponents.tsx` now owns focused composer panels for language preview, scheduling, recipient preview, and preflight warnings.
+  - `Messages.tsx` dropped from 2123 to 1954 lines and is now below the oversized threshold.
+  - The file-size guard baseline for `Messages.tsx` is now exact at 1954 lines.
+  - Composer template selection, language preview, schedule date/time handling, recipient preview, SMS credit/capacity warnings, text setup lock, email cap warning, send-now, schedule, and save-draft behavior are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 9:52 AM PT No-Deploy Coordinator Day-Of Summary Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/coordinator/CoordinatorModePanels.tsx` now owns `CoordinatorDayOfSummaryPanel`.
+  - `CoordinatorDayOfSummaryPanel` owns the day-of summary board, current-signal cue, standing prompt, suggested action board, progress/navigation/next-step cards, and embedded command deck.
+  - `CoordinatorMode.tsx` dropped from 2537 to 2391 lines.
+  - The file-size guard baseline for `CoordinatorMode.tsx` is now exact at 2391 lines.
+  - Summary cue display, alert/manual override labels, return-to-board target, standing prompt jump, primary action, return/revisit controls, command summary actions, ops snapshot jumps, and planner/viewer notices are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 9:57 AM PT No-Deploy Coordinator Check-In Queue Extraction And Guard Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/coordinator/CoordinatorModePanels.tsx` now owns `CoordinatorCheckInQueuePanel`.
+  - `CoordinatorCheckInQueuePanel` owns the check-in queue shell, door board, filters, ready/review quick actions, active guest action, empty state, and guest rows.
+  - `CoordinatorMode.tsx` dropped from 2391 to 2267 lines.
+  - The file-size guard baseline for `CoordinatorMode.tsx` is now exact at 2267 lines.
+  - Check-in search, Enter-to-check-in, arrivals/all/checked-in filter, ready-now/review-only toggles, active guest check-in, suggested/selected labels, door-review escalation, disabled viewer controls, and queue row check-in behavior are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 10:06 AM PT No-Deploy Coordinator Timeline And Message Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/coordinator/CoordinatorModePanels.tsx` now owns `CoordinatorTimelinePanel` and `CoordinatorDayOfMessagePanel`.
+  - `CoordinatorTimelinePanel` owns the run-of-show timeline board, focused-event controls, jump buttons, and per-event timeline rows.
+  - `CoordinatorDayOfMessagePanel` owns the day-of message alert board, alert activity board, suggestion chips, form controls, ready-to-send cue, and alert-history filters.
+  - `CoordinatorMode.tsx` dropped from 2267 to 1867 lines and is now below the 2000-line oversized-file threshold.
+  - The file-size guard baseline for `CoordinatorMode.tsx` is now exact at 1867 lines.
+  - Timeline focus, live/up-next/suggested jumps, primary/correction timeline transitions, alert draft sync, suggestion re-alignment, send-now/schedule controls, alert filters, role-gated controls, and alert history display are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 10:12 AM PT No-Deploy Guests Snapshot Insights Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `src/pages/dashboard/guests/GuestSnapshotInsightsPanel.tsx`.
+  - `GuestSnapshotInsightsPanel` owns the guest snapshot stats, RSVP insight cards, event/meal/custom-answer/song-request summaries, and quick insight filter buttons.
+  - `Guests.tsx` dropped from 4418 to 4270 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 4270 lines.
+  - Guest snapshot counts, event/meal/custom-answer/song-request insight display, missing-meal/plus-one/no-response/pending-no-email/ceremony-no/reception-no focus buttons, and the existing guest operations flow are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 10:20 AM PT No-Deploy Guests Toolbar And Campaign Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `src/pages/dashboard/guests/GuestOpsToolbar.tsx`.
+  - Added `src/pages/dashboard/guests/GuestCampaignReminderPanel.tsx`.
+  - `Guests.tsx` dropped from 4270 to 4174 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 4174 lines.
+  - Guest search, CSV/XLSX import entry, add guest, export actions, RSVP link copy, checklist actions, reminder sends, auto-reminder toggle, delete-all entry, campaign preset selection, recipient preview, skip-recent toggle, and focus shortcuts are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 10:24 AM PT No-Deploy Guests Household Panel Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `src/pages/dashboard/guests/GuestHouseholdPanel.tsx`.
+  - `GuestHouseholdPanel` owns the household merge banner, no-households state, grouped household rows, and ungrouped selectable guest list.
+  - `Guests.tsx` dropped from 4174 to 4090 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 4090 lines.
+  - Household mode display, merge disabled state, status badges, grouped member rows, ungrouped guest selection toggles, and household merge entry are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 10:29 AM PT No-Deploy Guests List Panel Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `src/pages/dashboard/guests/GuestListPanel.tsx`.
+  - `GuestListPanel` owns the main guest table, row status stack, RSVP lifecycle chips, event RSVP chips, row actions, and no-results state.
+  - `Guests.tsx` dropped from 4090 to 3899 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 3899 lines.
+  - Guest row opening, RSVP preview, invitation send, check-in toggle, thank-you toggle, assisted RSVP entry, edit/delete actions, status badges, custom-answer indicators, and no-results copy are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 10:34 AM PT No-Deploy Guests Form, Assisted RSVP, And Delete-All Modal Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `src/pages/dashboard/guests/GuestModals.tsx`.
+  - `GuestModals` owns the add/edit guest form modal, assisted RSVP modal, and delete-all confirmation modal.
+  - `Guests.tsx` dropped from 3899 to 3745 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 3745 lines.
+  - Add/edit guest fields, plus-one controls, itinerary invitation checkboxes, assisted RSVP status/source/notes, modal close behavior, delete-all typed confirmation, and save/submit handlers are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 10:41 AM PT No-Deploy Guests Itinerary Drawer Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `src/pages/dashboard/guests/GuestItineraryDrawer.tsx`.
+  - `GuestItineraryDrawer` owns the guest itinerary drawer, visibility preview, RSVP detail cards, exception/household context, audit trail, and event invitation toggles.
+  - `Guests.tsx` dropped from 3745 to 3383 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 3383 lines.
+  - Drawer close behavior, guest update/RSVP link copy, guest preview links, follow-up task save, focus guest search, audit display, loading/empty states, event invitation toggles, and instant-save footer are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 10:45 AM PT No-Deploy Guests CSV Import Modal Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `src/pages/dashboard/guests/GuestCsvImportModals.tsx`.
+  - `GuestCsvImportModals` owns the CSV column mapper and CSV review/import modal.
+  - `Guests.tsx` dropped from 3383 to 3203 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 3203 lines.
+  - Column mapping, invited-event multiselect, mapping validation, import review warnings, preview rows, cancel/reset behavior, and confirm import action are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 10:52 AM PT No-Deploy Guests RSVP Settings View Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `src/pages/dashboard/guests/GuestRsvpSettingsView.tsx`.
+  - `GuestRsvpSettingsView` owns the RSVP settings view, access-mode plan, setup checklist, question templates, meal choices editor, question editor, and guest change history panel.
+  - `Guests.tsx` dropped from 3203 to 2959 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2959 lines.
+  - RSVP settings tab navigation, RSVP view link, access mode status cards, template add/disable behavior, meal option editing, custom question editing/deletion confirmation, save/autosave status, and audit feed display are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 10:57 AM PT No-Deploy Guests RSVP Conflict Panel Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `src/pages/dashboard/guests/GuestRsvpConflictPanels.tsx`.
+  - `GuestRsvpConflictPanels` owns local RSVP conflict readback, persisted RSVP conflict filtering/details, conflict stats, and resolve actions.
+  - `Guests.tsx` dropped from 2959 to 2843 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2843 lines.
+  - Duplicate-email/declined-plus-one review, pending-review focus, conflict severity filtering, resolve-all, per-conflict resolve, details toggle, stale-conflict age copy, stats, and top-reason display are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 11:03 AM PT No-Deploy Guests List Status Controls Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `src/pages/dashboard/guests/GuestListStatusControls.tsx`.
+  - `GuestListStatusControls` owns recommended guest action, RSVP follow-up list, planner handoff, quick-start photos jump, active segment readback, exception/meal/no-contact helper panels, segment tabs, household/check-in toggles, check-in banners, and selection readback.
+  - `Guests.tsx` dropped from 2843 to 2690 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2690 lines.
+  - Recommended focus/save task, ops queue focus, quick-start skip-to-photos, clear filters, exception/meal/no-contact copy actions, campaign modal opening, segment selection, household toggle, check-in mode, undo last check-in, view checked-in, and visible-selection trimming are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 11:06 AM PT No-Deploy Guests Dashboard Header Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `src/pages/dashboard/guests/GuestDashboardHeader.tsx`.
+  - `GuestDashboardHeader` owns the Guests dashboard hero, RSVP settings tab switch, insights toggle, import summary readback, and planner-mode notice.
+  - `Guests.tsx` dropped from 2690 to 2644 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2644 lines.
+  - Hero stats/actions, add-guest disable state, RSVP view link, RSVP settings navigation, insights toggle, CSV import summary copy, and planner read-only context are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 11:09 AM PT No-Deploy Guests List Display Switcher Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `src/pages/dashboard/guests/GuestListDisplaySwitcher.tsx`.
+  - `GuestListDisplaySwitcher` owns the no-results state, household/list branch, and guest list panel routing.
+  - `Guests.tsx` dropped from 2644 to 2635 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2635 lines.
+  - Clear-filter empty state, household merge/select view, list table view, check-in behavior, assisted RSVP entry, edit/delete, invitation send, and itinerary drawer opening are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 21/21.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 11:16 AM PT No-Deploy Guests Derived Dashboard Utility Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestDashboardUtils.ts` now owns Guests dashboard filtering, dashboard stats, and event report rollups.
+  - `src/pages/dashboard/guests/guestDashboardUtils.test.ts` covers stats, segment/event/search filtering, and legacy plus itinerary event report counts.
+  - `Guests.tsx` dropped from 2635 to 2565 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2565 lines.
+  - Search, primary/extra filters, event invite/not-invite filters, due-reminder and thank-you-due filters, dashboard hero stats, snapshot event report counts, campaign/list behavior, and guest operations flow are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 43/43.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 11:21 AM PT No-Deploy Guests Conflict/Reminder/Export Utility Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestDashboardUtils.ts` now owns RSVP conflict stat derivation, due-reminder and thank-you-due segment derivation, and reusable guest CSV download wiring.
+  - `src/pages/dashboard/guests/guestDashboardUtils.test.ts` covers conflict freshness/top-code stats and due reminder/thank-you segment selection.
+  - `Guests.tsx` dropped from 2565 to 2492 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2492 lines.
+  - RSVP conflict stats, stale-conflict counts, top conflict reasons, due reminder targeting, thank-you due targeting, all guest CSV export actions, and event attendance exports are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 11:25 AM PT No-Deploy Guests CSV Import Preparation Utility Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestDashboardUtils.ts` now owns demo imported-guest construction, imported guest row cleanup, and CSV import sidecar derivation for households, event invites, and RSVP rows.
+  - `src/pages/dashboard/guests/guestDashboardUtils.test.ts` covers demo import rows, internal field stripping, household sidecars, event invite rows, and imported RSVP rows.
+  - `Guests.tsx` dropped from 2492 to 2430 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2430 lines.
+  - Demo imports, secure-token imports, household grouping, guarded household separation, event invite import, RSVP row import, quick-start photo continuation, and import summary toasts are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 46/46.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 11:30 AM PT No-Deploy Guests RSVP Config And Export Label Utility Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestDashboardUtils.ts` now owns RSVP config cleanup/validation, guest display-name formatting, filtered-export suffix formatting, and SMS RSVP link row building.
+  - `src/pages/dashboard/guests/guestDashboardUtils.test.ts` covers RSVP config cleanup, display names, export segment suffixes, and SMS RSVP link rows.
+  - `src/lib/dashboardDataBoundary.test.ts` was refreshed to assert the new cleaned RSVP config service-call shape.
+  - `Guests.tsx` dropped from 2430 to 2406 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2406 lines.
+  - RSVP question cleanup, meal-option title-casing, validation toasts, demo/live RSVP settings saves, invitation names, campaign preview names, filtered CSV naming, and SMS RSVP link copy are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 48/48 after the stale boundary assertion refresh.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 11:33 AM PT No-Deploy Guests Invitation Payload Utility Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestDashboardUtils.ts` now owns wedding invitation email payload construction.
+  - Single invitation, selected reminders, filtered reminder campaigns, and due-reminder send paths reuse the shared helper.
+  - `src/pages/dashboard/guests/guestDashboardUtils.test.ts` covers the invitation payload shape.
+  - `Guests.tsx` dropped from 2406 to 2358 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2358 lines.
+  - Single invite sends, selected reminders, filtered reminder campaigns, due reminders, invitation timestamp writes, reminder timestamp writes, campaign logs, and owner-facing success/failure toasts are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 48/48.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 11:37 AM PT No-Deploy Guests Reminder Campaign Summary Utility Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestDashboardUtils.ts` now owns reminder send summary copy, campaign confirmation description construction, and campaign log entry construction.
+  - `src/pages/dashboard/guests/guestDashboardUtils.test.ts` covers send summaries, campaign confirmation copy, and campaign log entries.
+  - `Guests.tsx` dropped from 2358 to 2346 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2346 lines.
+  - Selected reminder result toasts, filtered campaign confirmation copy, no-contact warning copy, recipient previews, demo campaign logs, due-reminder logs, and send success/failure summaries are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 48/48.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 11:42 AM PT No-Deploy Guests CSV Import Toast Utility Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestDashboardUtils.ts` now owns CSV import preview and import success toast construction.
+  - `src/pages/dashboard/guests/guestDashboardUtils.test.ts` covers skipped-row messaging, unknown-event warnings, duplicate-name warnings, household warnings, household group summaries, guarded-household summaries, and event invite summaries.
+  - `Guests.tsx` dropped from 2346 to 2338 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2338 lines.
+  - CSV mapper preview toasts, skipped-row messaging, unknown-event warnings, duplicate-name warnings, household-match warnings, demo import success, live import success, household grouping, guarded-household separation, event-invite summaries, and import readback summaries are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 48/48.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 11:46 AM PT No-Deploy Guests Form Mapping Utility Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestDashboardUtils.ts` now owns add/edit guest form mapping, demo guest construction, demo edit projection, event invite ID selection, edit-form hydration, and edit rollback value capture.
+  - `src/pages/dashboard/guests/guestDashboardUtils.test.ts` covers demo guest creation, edit form mapping, event invite selection, edit-form hydration, and rollback values.
+  - `Guests.tsx` dropped from 2338 to 2288 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2288 lines.
+  - Demo add/edit guests, live add/edit guests, ceremony/reception invite flags, custom itinerary event invites, edit modal hydration, failed edit rollback, add failure cleanup, and owner-facing add/edit toasts are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 49/49.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 11:48 AM PT No-Deploy Guests Assisted RSVP Mapping Utility Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestDashboardUtils.ts` now owns assisted RSVP manual-note construction and demo assisted-RSVP state projection.
+  - `src/pages/dashboard/guests/guestDashboardUtils.test.ts` covers manual RSVP note tags plus demo confirmed and declined RSVP state updates.
+  - `Guests.tsx` dropped from 2288 to 2264 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2264 lines.
+  - Assisted RSVP manual source tags, demo confirmed RSVP updates, demo declined RSVP cleanup, live assisted RSVP saves, drawer/form closure, and owner-facing assisted RSVP toasts are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 50/50.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 11:52 AM PT No-Deploy Guests Selection And Campaign Clipboard Utility Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestDashboardUtils.ts` now owns selected/unresolved guest ID derivation, selection toast copy, visible-selection trimming, checklist markdown copy, and campaign dry-run clipboard text.
+  - `src/pages/dashboard/guests/guestDashboardUtils.test.ts` covers unresolved ID selection, selected-count copy, visible selection trimming, checklist markdown, and dry-run recipient preview text.
+  - `Guests.tsx` dropped from 2264 to 2259 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2259 lines.
+  - Unresolved selection, filtered selection, visible-selection trimming, checklist copy/download fallback, campaign dry-run copy/download fallback, and owner-facing selection/dry-run toasts are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 51/51.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 11:56 AM PT No-Deploy Guests Dashboard Overlay Component Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/GuestDashboardOverlays.tsx` now owns the Guests dashboard modal/drawer stack for assisted RSVP, add/edit guest, itinerary drawer, delete-all confirmation, CSV mapper, CSV review, and confirmation dialogs.
+  - `Guests.tsx` dropped from 2259 to 2205 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2205 lines.
+  - Assisted RSVP modals, add/edit guest modals, itinerary drawer behavior, delete-all confirmation, CSV mapping/review modals, shared confirmation dialogs, and all close/save/confirm handlers are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 51/51.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 12:00 PM PT No-Deploy Guests Reminder Send Batch Utility Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestDashboardUtils.ts` now owns shared reminder batch send/timestamp counting.
+  - Selected reminders, filtered reminder campaigns, and due reminders reuse the shared helper.
+  - `src/pages/dashboard/guests/guestDashboardUtils.test.ts` covers invitation payload construction, per-guest timestamp updates, skipped no-email rows, and failed recipient counting.
+  - `Guests.tsx` dropped from 2205 to 2187 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2187 lines.
+  - Selected reminder sends, filtered campaign sends, due-reminder sends, invitation/reminder timestamp writes, partial-failure counts, no-email skips, campaign logs, fetch refreshes, and owner-facing send result toasts are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 52/52.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 12:03 PM PT No-Deploy Guests Dead State Cleanup
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `Guests.tsx` no longer keeps stale saved-segment persistence state, the old RSVP ops-summary copy handler, unused export-menu state, or unused derived label/completeness values that no longer feed the rendered dashboard.
+  - `Guests.tsx` dropped from 2187 to 2137 lines.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 2137 lines.
+  - The rendered Guests dashboard, campaign presets, follow-up tasks, checklist copy, selection behavior, reminder sends, exports, and CSV workflows are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 52/52.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 12:11 PM PT No-Deploy Guests Below-Threshold Owner Utility Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Guest export/contact-link actions now live in `src/pages/dashboard/guests/useGuestDashboardExports.ts`.
+  - Check-in and thank-you state transitions now live in `src/pages/dashboard/guests/useGuestDashboardCheckIns.ts`.
+  - RSVP status badge rendering now lives in `src/pages/dashboard/guests/GuestStatusBadge.tsx`.
+  - `Guests.tsx` dropped from 2137 to 1939 lines, bringing it below the 2000-line oversized-file threshold.
+  - The file-size guard baseline for `Guests.tsx` is now exact at 1939 lines.
+  - Guest exports, text RSVP link copy/download fallback, guest update link copy/download fallback, check-in undo/clear/toggle, thank-you sent toggles/bulk mark, household/list status badges, and dashboard data-boundary checks are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 52/52 after refreshing the stale boundary assertion.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 12:15 PM PT No-Deploy Name-Change Template Card Headroom Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - The prewritten account-update template card now lives in `src/pages/dashboard/planning/NameChangeAccountUpdateTemplatesCard.tsx`.
+  - `NameChangePlannerTab.tsx` dropped from 1999 to 1953 lines.
+  - The file-size guard baseline for `NameChangePlannerTab.tsx` is now exact at 1953 lines.
+  - Readiness-aware account update template subjects, context lines, body copy, status chips, copy button labels, copy/download behavior, and copied-state reset are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/planning/NameChangePlannerTab.test.tsx src/pages/dashboard/planning/nameChangePlannerUi.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 62/62.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 12:24 PM PT No-Deploy Builder Sidebar Preview Metadata Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Builder sidebar live-preview fixture data now lives in `src/builder/components/builderSidebarPreviewData.ts`.
+  - Variant tone, art-direction, and curated preview wedding-data metadata now lives in `src/builder/components/builderVariantPreviewMetadata.ts`.
+  - `BuilderSidebarLibrary.tsx` dropped from 3294 to 2869 lines.
+  - The file-size guard now tracks `BuilderSidebarLibrary.tsx` as an exact non-page baseline at 2869 lines.
+  - Section picker photo-set controls, section previews, live variant previews, variant tone chips, art-direction descriptions, sequence/composition cues, and preview wedding-data fixtures are preserved.
+- Proof passed:
+  - `npm test -- --run src/builder/components/BuilderShell.test.tsx src/builder/components/BuilderInspectorPanel.gallery.test.ts src/builder/components/BuilderSectionRail.test.tsx src/builder/components/BuilderTopBar.test.tsx src/builder/components/SectionRenderer.public.test.tsx`: PASS, 16/16. `SectionRenderer.public.test.tsx` intentionally logs the simulated provider failure while proving the safe fallback.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 12:27 PM PT No-Deploy Builder Sidebar Static Preview Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - The static section-type preview renderer now lives in `src/builder/components/SectionTypePreview.tsx`.
+  - `BuilderSidebarLibrary.tsx` dropped from 2869 to 2575 lines.
+  - The non-page file-size guard baseline for `BuilderSidebarLibrary.tsx` is now exact at 2575 lines.
+  - Section type preview thumbnails, compact preview wrapping, live variant fallback headers, and surrounding variant preview cards are preserved.
+- Proof passed:
+  - `npm test -- --run src/builder/components/BuilderShell.test.tsx src/builder/components/BuilderInspectorPanel.gallery.test.ts src/builder/components/BuilderSectionRail.test.tsx src/builder/components/BuilderTopBar.test.tsx src/builder/components/SectionRenderer.public.test.tsx`: PASS, 16/16. `SectionRenderer.public.test.tsx` intentionally logs the simulated provider failure while proving the safe fallback.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 12:31 PM PT No-Deploy Builder Sidebar Variant Swatch Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - The large static fallback variant preview swatch renderer now lives in `src/builder/components/VariantPreviewSwatch.tsx`.
+  - `BuilderSidebarLibrary.tsx` dropped from 2575 to 1003 lines.
+  - The file-size guard now tracks exact non-page baselines for `BuilderSidebarLibrary.tsx` at 1003 lines and `VariantPreviewSwatch.tsx` at 1574 lines.
+  - Fallback preview swatches, live-preview fallback rendering, hover styling, variant cards, compact section preview headers, and builder sidebar drag/layer behavior are preserved.
+- Proof passed:
+  - `npm test -- --run src/builder/components/BuilderShell.test.tsx src/builder/components/BuilderInspectorPanel.gallery.test.ts src/builder/components/BuilderSectionRail.test.tsx src/builder/components/BuilderTopBar.test.tsx src/builder/components/SectionRenderer.public.test.tsx`: PASS, 16/16. `SectionRenderer.public.test.tsx` intentionally logs the simulated provider failure while proving the safe fallback.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 12:36 PM PT No-Deploy Builder Entry-Site Service-Boundary Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - The builder editor entry-site `wedding_sites` read now lives in `builderProjectService.loadEntrySite`.
+  - The builder project service owns the explicit `BUILDER_ENTRY_SITE_SELECT` projection.
+  - The dashboard data-boundary guard now includes builder runtime screens/code in the no-direct-Supabase/no-select-star checks and proves `BuilderPage.tsx` no longer imports Supabase or owns the entry-site table read.
+  - Active-site resolution, no-site fallback, couple-name display, builder project load, wedding-data load, setup-draft hydration, template default application, and draft-save behavior are preserved.
+- Proof passed:
+  - `npm test -- --run src/builder/services/builderProjectService.test.ts src/builder/BuilderPage.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 25/25.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 12:43 PM PT No-Deploy Registry Preview Hostile URL Matrix And Proof-Lane Refresh
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `src/lib/registryPreviewUrlNormalizer.test.ts` for localhost, `.local`, `.internal`, `.test`, metadata hosts, AWS metadata IP, loopback/private/reserved IPv4 ranges, decimal/hex/short loopback forms, IPv6 loopback, IPv4-mapped IPv6, credentialed URLs, JavaScript URLs, and file URLs.
+  - Wired the new hostile URL matrix into `npm run test:security`.
+  - Refreshed the public-site access artifact guard to follow the current shared helper instead of stale inline `SiteView` storage calls.
+  - Updated `scripts/v1-proof-ai-rollout.mjs` so local AI/photo rollout proof resolves extracted select constants in `guestPhotoSharingService.ts`.
+  - Registry URL preview canonicalization, product dedupe, public-site invite/password session storage, and guest photo AI/photo safe-column proof are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/registryPreviewUrlNormalizer.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 53/53.
+  - `npm run test:security`: PASS, 222/222.
+  - `node scripts/v1-proof-ai-clearance.mjs`: expected nonzero local-only launch-clearance result with 2/2 local subchecks green and the live-gate blocker preserved.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 12:46 PM PT No-Deploy Test-Lane Security Matrix Drift Fix
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Updated `scripts/v1-proof-test-lanes.mjs` so the guarded `test:security` script includes `src/lib/registryPreviewUrlNormalizer.test.ts`.
+  - `npm run proof:v1:test-lanes` now catches removal of the hostile registry-preview URL matrix from the named security lane.
+  - Runtime behavior is unchanged; this is proof-lane freshness hardening.
+- Proof passed:
+  - `node --check scripts/v1-proof-test-lanes.mjs`: PASS.
+  - `npm run proof:v1:test-lanes`: PASS, 9/9 script contracts plus CI hardpass checks.
+  - `npm run test:security`: PASS, 222/222.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 12:49 PM PT No-Deploy Launch Performance-Budget Gate Wiring
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `npm run test:launch` now runs `npm run proof:v1:performance-budget` after production build and before proof-board generation.
+  - `.github/workflows/ci-hardpass.yml` now has the same named performance-budget proof step after build.
+  - `scripts/v1-proof-test-lanes.mjs` now guards the launch-lane and CI performance-budget wiring.
+- Proof passed:
+  - `npm run proof:v1:performance-budget`: PASS, 0 failures and 3 review chunks: `registry-CCjYb-Xs.js` 325.27 KiB, `nameChangeService-Bf0FgOO0.js` 288.54 KiB, and `Planning-DBFVjkJn.js` 253.86 KiB.
+  - `npm run proof:v1:test-lanes`: PASS, 9/9 script contracts plus CI hardpass checks.
+  - `npm run test:launch`: PASS. This ran typecheck, quiet lint, `test:security`, file-size guard, asset guard, production build, performance-budget proof, and proof-board markdown generation.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 12:56 PM PT No-Deploy Messages Detail Modal Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - The message detail modal now lives in `src/pages/dashboard/messages/MessageDetailModal.tsx`.
+  - `MessageDashboardComponents.tsx` dropped from 1799 to 1415 lines.
+  - The file-size guard now tracks `MessageDashboardComponents.tsx` at an exact 1415-line non-page baseline.
+  - Message detail viewing, delivery attention summaries, skipped-contact summaries, scheduled reschedule/unschedule controls, retry, duplicate/edit composer actions, and modal status display are preserved.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/messages/messageDashboardUtils.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 31/31.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-06 12:59 PM PT No-Deploy Shared Email Safety Executable Proof
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `src/lib/emailSafety.test.ts` to directly import the shared Edge Function email safety helpers.
+  - The helper proof covers hostile HTML escaping, safe URL fallback, href escaping, subject control-character cleanup, fallback subject behavior, and the 180-character subject cap.
+  - `npm run test:security` now runs the email-safety proof.
+  - `scripts/v1-proof-test-lanes.mjs` now guards that `src/lib/emailSafety.test.ts` stays in the named security lane.
+  - Shared helper behavior remains preserved for `send-wedding-email`, `process-email-queue`, `send-bulk-message`, and vendor inquiry email paths.
+- Proof passed:
+  - `npm test -- --run src/lib/emailSafety.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 32/32.
+  - `npm run proof:v1:test-lanes`: PASS, 9/9 script contracts plus CI hardpass checks.
+  - `npm run test:security`: PASS, 226/226.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run; live messaging authorization proof remains required.
+
+## 2026-05-06 1:05 PM PT No-Deploy Name-Change Account-Update Helper Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Pure account-update template proof/readiness/copy helpers now live in `src/lib/nameChange/accountUpdateTemplateCopy.ts`.
+  - `src/lib/nameChange/engine.ts` still re-exports the helper API used by planner and action-feed callers.
+  - `engine.ts` dropped from 1738 to 1528 lines.
+  - Generated account-update template subjects, audience/status/action lines, readiness labels, copied-state labels, checklist/proof normalization, and planner card copy behavior are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/nameChange/engine.test.ts src/lib/nameChange/actionFeed.test.ts src/pages/dashboard/planning/NameChangePlannerTab.test.tsx src/pages/dashboard/planning/nameChangePlannerUi.test.ts`: PASS, 153/153.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 6:26 PM PT No-Deploy Messages Live Data Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Messages dashboard active-site/site load, message history reads, guest recipient reads, delivery telemetry reads, itinerary audience reads, text-credit preview reads, message create/update/reschedule/retry state writes, and analytics patch writes now run through `src/pages/dashboard/messages/messageService.ts`.
+  - `Messages.tsx` has no remaining direct `supabase.from(...)` table access under the stricter multiline scan; auth/session calls remain for invoking the bulk-message Edge Function.
+  - `Messages.tsx` file-size guard baseline dropped from 3386 to 3263 lines.
+  - Live/demo message loading, recipient lists, delivery table fallback, itinerary-segment audiences, SMS credit preview, draft/update/send-now/schedule/retry/reschedule/cancel flows, save-the-date quick create, and bulk-send invocation behavior are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run smoke:messages`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

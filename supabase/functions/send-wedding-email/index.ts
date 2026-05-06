@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { escapeHtml, safeEmailUrl, sanitizeEmailSubject } from "../_shared/emailSafety.ts";
+import { canMutateGuestsOrMessages, canMutateMessages } from "../_shared/collaboratorPermissions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -256,10 +257,6 @@ function weddingInvitationHtml(data: Record<string, unknown>): string {
 const AUTHENTICATED_EMAIL_TYPES = new Set(["wedding_invitation", "signup_welcome", "anniversary_reminder"]);
 const SERVICE_ROLE_ONLY_TYPES = new Set(["rsvp_notification", "rsvp_confirmation"]);
 
-function hasPermissionKey(permissions: unknown, key: string): boolean {
-  return Array.isArray(permissions) && permissions.includes(key);
-}
-
 async function canSendWeddingInvitation(opts: {
   adminClient: ReturnType<typeof createClient>;
   weddingSiteId: string;
@@ -281,13 +278,13 @@ async function canSendWeddingInvitation(opts: {
   if (!hasSiteAccess) {
     const { data: collaborator, error: collaboratorError } = await adminClient
       .from("wedding_site_collaborators")
-      .select("permissions")
+      .select("role, permissions")
       .eq("wedding_site_id", weddingSiteId)
       .eq("user_id", userId)
       .maybeSingle();
 
     if (collaboratorError) throw collaboratorError;
-    hasSiteAccess = hasPermissionKey(collaborator?.permissions, "guests") || hasPermissionKey(collaborator?.permissions, "messages");
+    hasSiteAccess = canMutateGuestsOrMessages(collaborator?.role, collaborator?.permissions);
   }
 
   if (!hasSiteAccess) return false;
@@ -323,13 +320,13 @@ async function canSendSiteScopedEmail(opts: {
 
   const { data: collaborator, error: collaboratorError } = await adminClient
     .from("wedding_site_collaborators")
-    .select("permissions")
+    .select("role, permissions")
     .eq("wedding_site_id", weddingSiteId)
     .eq("user_id", userId)
     .maybeSingle();
 
   if (collaboratorError) throw collaboratorError;
-  return hasPermissionKey(collaborator?.permissions, "messages");
+  return canMutateMessages(collaborator?.role, collaborator?.permissions);
 }
 
 Deno.serve(async (req: Request) => {

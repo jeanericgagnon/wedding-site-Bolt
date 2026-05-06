@@ -3,6 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { Camera, Check, ImagePlus, UploadCloud } from 'lucide-react';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
+import {
+  buildPublicAccessArtifacts,
+  capturePublicInviteTokenFromSearch,
+} from '../lib/publicAccessArtifacts';
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
@@ -48,15 +52,7 @@ export const safePhotoUploadMessage = (message?: string): string => {
   return message && safeMessages.includes(message) ? message : 'Couldn’t upload that file. Please try again.';
 };
 
-export const buildPhotoUploadAccessPayload = (slug: string) => ({
-  inviteToken: paramsValue('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`),
-  passwordSession: sessionStorage.getItem(`dayof_pw_session_${slug}`),
-});
-
-function paramsValue(key: string): string | null {
-  const value = new URLSearchParams(window.location.search).get(key);
-  return value?.trim() || null;
-}
+export const buildPhotoUploadAccessPayload = (slug: string) => buildPublicAccessArtifacts(slug, new URLSearchParams(window.location.search));
 
 export const PhotoUpload: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -83,6 +79,7 @@ export const PhotoUpload: React.FC = () => {
   const labelClassName = 'mb-2 block text-sm font-medium text-stone-800';
 
   useEffect(() => {
+    if (siteSlug) capturePublicInviteTokenFromSearch(siteSlug, params);
     const languagePreference = resolveGuestLanguagePreference({
       search: params,
       storedLanguage: readStoredGuestLanguage(),
@@ -93,7 +90,7 @@ export const PhotoUpload: React.FC = () => {
     if (languagePreference.source === 'guest-link') {
       writeStoredGuestLanguage(languagePreference.language);
     }
-  }, [i18n, params]);
+  }, [i18n, params, siteSlug]);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();

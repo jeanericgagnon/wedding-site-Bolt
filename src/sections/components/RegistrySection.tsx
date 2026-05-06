@@ -382,9 +382,9 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase, remembere
           </div>
         )}
         <div className="flex flex-wrap gap-2">
-          {venmoUrl && <a href={venmoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">Venmo</a>}
-          {paypalUrl && <a href={paypalUrl} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">PayPal</a>}
-          {customFundUrl && <a href={customFundUrl} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">{item.fund_custom_label || 'Contribute'}</a>}
+          {venmoUrl && <a href={venmoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">Venmo</a>}
+          {paypalUrl && <a href={paypalUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">PayPal</a>}
+          {customFundUrl && <a href={customFundUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">{item.fund_custom_label || 'Contribute'}</a>}
           {item.fund_zelle_handle && (
             <button
               onClick={async () => {

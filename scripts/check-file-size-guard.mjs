@@ -4,14 +4,17 @@ import { join } from 'node:path';
 const MAX_NEW_PAGE_LINES = 2000;
 
 const baselineLimits = new Map([
-  ['src/pages/RSVP.tsx', 1962],
-  ['src/pages/dashboard/CoordinatorMode.tsx', 2773],
-  ['src/pages/dashboard/GuestPhotoSharing.tsx', 3188],
-  ['src/pages/dashboard/Guests.tsx', 4790],
-  ['src/pages/dashboard/Messages.tsx', 3386],
-  ['src/pages/dashboard/Settings.tsx', 2328],
-  ['src/pages/dashboard/Seating.tsx', 2169],
-  ['src/pages/dashboard/planning/NameChangePlannerTab.tsx', 2414],
+  ['src/pages/RSVP.tsx', 1961],
+  ['src/pages/dashboard/CoordinatorMode.tsx', 1867],
+  ['src/pages/dashboard/GuestPhotoSharing.tsx', 1979],
+  ['src/pages/dashboard/Guests.tsx', 1939],
+  ['src/pages/dashboard/Messages.tsx', 1954],
+  ['src/pages/dashboard/Settings.tsx', 1963],
+  ['src/pages/dashboard/Seating.tsx', 1610],
+  ['src/pages/dashboard/planning/NameChangePlannerTab.tsx', 1953],
+  ['src/builder/components/BuilderSidebarLibrary.tsx', 1003],
+  ['src/builder/components/VariantPreviewSwatch.tsx', 1574],
+  ['src/pages/dashboard/messages/MessageDashboardComponents.tsx', 1415],
 ]);
 
 function walk(dir) {
@@ -35,7 +38,12 @@ function lineCount(path) {
   return (source.match(/\n/g) ?? []).length + (source.endsWith('\n') ? 0 : 1);
 }
 
-const files = walk('src/pages').sort();
+const trackedNonPageFiles = [
+  'src/builder/components/BuilderSidebarLibrary.tsx',
+  'src/builder/components/VariantPreviewSwatch.tsx',
+  'src/pages/dashboard/messages/MessageDashboardComponents.tsx',
+];
+const files = Array.from(new Set([...walk('src/pages'), ...trackedNonPageFiles])).sort();
 const failures = [];
 const oversized = [];
 

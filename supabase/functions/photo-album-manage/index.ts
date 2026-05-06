@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { canMutatePhotos } from "../_shared/collaboratorPermissions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,10 +32,6 @@ function randomToken(length = 48) {
   const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   const bytes = crypto.getRandomValues(new Uint8Array(length));
   return Array.from(bytes).map((b) => chars[b % chars.length]).join("");
-}
-
-function hasPermissionKey(permissions: unknown, key: string): boolean {
-  return Array.isArray(permissions) && permissions.includes(key);
 }
 
 Deno.serve(async (req: Request) => {
@@ -94,7 +91,7 @@ Deno.serve(async (req: Request) => {
     if (!allowed) {
       const { data: collaborator, error: collaboratorError } = await admin
         .from("wedding_site_collaborators")
-        .select("permissions")
+        .select("role,permissions")
         .eq("wedding_site_id", album.wedding_site_id as string)
         .eq("user_id", user.id)
         .maybeSingle();
@@ -102,7 +99,7 @@ Deno.serve(async (req: Request) => {
         console.error("PHOTO_ALBUM_MANAGE_COLLABORATOR_FAILED", { reason: "COLLABORATOR_LOAD_FAILED" });
         return json({ error: safePhotoAlbumManageError("COLLABORATOR_FAILED") }, 400);
       }
-      allowed = hasPermissionKey(collaborator?.permissions, "photos");
+      allowed = canMutatePhotos(collaborator?.role, collaborator?.permissions);
     }
     if (!allowed) return json({ error: "Forbidden" }, 403);
 
