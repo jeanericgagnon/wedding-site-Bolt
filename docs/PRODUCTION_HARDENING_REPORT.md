@@ -4039,9 +4039,10 @@ What changed:
 - Registry preview URL normalization now rejects reserved `.invalid` and `.example` hostnames.
 - Registry preview display-image normalization now also rejects those reserved hostnames, including nested `images.weserv.nl` proxy targets.
 - Vendor profile preview source and image URL normalization now rejects the same reserved hostnames.
+- Local vendor profile fallback sanitization now rejects the same reserved hostnames before saving fallback draft website/social values.
 
 Commands run:
-- `npm test -- --run src/lib/registryPreviewUrlNormalizer.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 66/66.
+- `npm test -- --run src/lib/vendorProfiles.test.ts src/sections/publicLinks.test.ts src/lib/registryPreviewUrlNormalizer.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 83/83.
 - `npm run typecheck -- --pretty false`: PASS.
 - `npm run lint -- --quiet`: PASS.
 - `npm run guard:file-size`: PASS.

@@ -563,7 +563,13 @@ function isBlockedPublicHostname(hostname: string): boolean {
   if (!normalized) return true;
   if (normalized === 'metadata' || normalized === 'metadata.google.internal' || normalized === '169.254.169.254') return true;
   if (normalized === 'localhost' || normalized.endsWith('.localhost')) return true;
-  if (normalized.endsWith('.local') || normalized.endsWith('.internal') || normalized.endsWith('.test')) return true;
+  if (
+    normalized.endsWith('.local') ||
+    normalized.endsWith('.internal') ||
+    normalized.endsWith('.invalid') ||
+    normalized.endsWith('.example') ||
+    normalized.endsWith('.test')
+  ) return true;
   if (normalized.includes(':')) return true;
   return isPrivateIpv4(normalized);
 }

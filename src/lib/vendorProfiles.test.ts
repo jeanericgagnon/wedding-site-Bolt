@@ -43,6 +43,8 @@ describe('vendor profile draft fallback safety', () => {
     ['credentialed website', 'https://user:pass@example.com/profile'],
     ['local website', 'http://localhost/profile'],
     ['metadata website', 'http://169.254.169.254/latest/meta-data'],
+    ['invalid reserved website', 'https://proof.invalid/profile'],
+    ['example reserved website', 'https://studio.example/profile'],
     ['javascript website', 'javascript:alert(1)'],
   ])('drops unsafe %s URLs from fallback drafts', async (_label, websiteUrl) => {
     invoke.mockRejectedValueOnce(new Error('preview unavailable'));

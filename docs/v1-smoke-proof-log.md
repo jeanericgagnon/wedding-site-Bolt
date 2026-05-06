@@ -8874,9 +8874,10 @@ A slice does **not** count as passed because:
   - Registry preview source URL normalization now rejects reserved `.invalid` and `.example` hosts.
   - Registry preview image-resource normalization rejects the same reserved hosts, including nested `images.weserv.nl` proxy targets.
   - Vendor profile preview source/image normalization now uses the same reserved-host block.
+  - Local vendor profile fallback sanitization now drops the same reserved hosts before saving fallback drafts.
   - Safe public product/vendor URLs and safe public image proxy URLs remain allowed.
 - Proof passed:
-  - `npm test -- --run src/lib/registryPreviewUrlNormalizer.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 66/66.
+  - `npm test -- --run src/lib/vendorProfiles.test.ts src/sections/publicLinks.test.ts src/lib/registryPreviewUrlNormalizer.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 83/83.
   - `npm run typecheck -- --pretty false`: PASS.
   - `npm run lint -- --quiet`: PASS.
   - `npm run guard:file-size`: PASS.
