@@ -4000,3 +4000,21 @@ Commands run:
 
 Status:
 - PARTIAL. This broadens local sensitive-field exposure regression proof. No deploy was run.
+
+### 2026-05-06 2:45 PM PT - Owner Preview Exit Token Cleanup
+
+What changed:
+- Owner preview mode now strips `token`, `invite_token`, `secureToken`, and `access_token` from the “Leave preview” href for guest-specific preview paths.
+- Guest preview still opens through the existing invite-link flow; the cleanup only affects the exit link so private access params do not remain in the address bar after leaving preview.
+
+Commands run:
+- `npm test -- --run src/lib/ownerPreviewMode.test.ts src/lib/guestVisibilityPreview.test.ts`: PASS, 8/8.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This narrows local owner-preview token retention risk. No deploy was run.

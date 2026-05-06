@@ -2218,6 +2218,12 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: this is proof-only hardening; runtime behavior is unchanged.
   - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts` (20/20), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
   - Launch status: unchanged. This is local proof-lane hardening and no deploy was run.
+- 2026-05-06 2:45 PM PT - No-deploy owner preview exit token cleanup:
+  - Resolved in this batch: owner preview mode now strips private access params (`token`, `invite_token`, `secureToken`, `access_token`) from the “Leave preview” href for guest-specific preview paths.
+  - Privacy hardening: preview loading behavior remains unchanged, but leaving owner preview no longer keeps durable private RSVP/access tokens in the browser address bar.
+  - No feature loss: role/public preview exit links still preserve unrelated query params, and guest preview still loads through the existing invitation link path.
+  - Validation passed: `npm test -- --run src/lib/ownerPreviewMode.test.ts src/lib/guestVisibilityPreview.test.ts` (8/8), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
+  - Launch status: unchanged. This is local frontend privacy hardening and no deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

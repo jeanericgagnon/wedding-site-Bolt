@@ -8839,6 +8839,23 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
 - Launch status did not change. This is local proof-lane hardening and no deploy was run.
 
+## 2026-05-06 2:45 PM PT No-Deploy Owner Preview Exit Token Cleanup
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Owner preview mode now strips private access params from the “Leave preview” href for guest-specific preview paths.
+  - The stripped params are `token`, `invite_token`, `secureToken`, and `access_token`.
+  - Guest preview still loads through the existing invitation-link flow; the change only prevents the exit link from keeping private access params in the address bar.
+- Proof passed:
+  - `npm test -- --run src/lib/ownerPreviewMode.test.ts src/lib/guestVisibilityPreview.test.ts`: PASS, 8/8.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local frontend privacy hardening and no deploy was run.
+
 ## 2026-05-05 6:26 PM PT No-Deploy Messages Live Data Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
