@@ -96,6 +96,7 @@ describe('launch edge function guards', () => {
     expect(source).toContain('req.method !== "POST"');
     expect(source).toContain('SUPABASE_SERVICE_ROLE_KEY');
     expect(source).toContain('typeof value !== "string" && typeof value !== "number"');
+    expect(source).toContain('/^[^\\s@<>"\'()]+@[^\\s@<>"\'()]+\\.[^\\s@<>"\'()]+$/');
     expect(source).toContain('vendor_profile_id');
     expect(source).toContain('Enter a valid email.');
     expect(source).toContain('message.length < 8');

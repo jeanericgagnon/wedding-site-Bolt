@@ -4053,3 +4053,21 @@ Commands run:
 
 Status:
 - PARTIAL. This narrows local SSRF/public-source preview risk. No deploy was run, so production still needs an approved function deploy before this Edge Function hardening is live.
+
+### 2026-05-06 2:59 PM PT - Vendor Inquiry Email Validation Hardening
+
+What changed:
+- `vendor-profile-inquiry-submit` now rejects `<`, `>`, quotes, and parentheses in submitted and destination email addresses.
+- This tightens the public vendor inquiry reply-to/destination boundary while preserving existing escaped HTML body rendering and sanitized subjects.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/emailSafety.test.ts src/lib/vendorProfiles.test.ts`: PASS, 40/40.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This narrows local public vendor-inquiry email safety risk. No deploy was run.

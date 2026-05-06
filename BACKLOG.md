@@ -2236,6 +2236,12 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: safe public product/vendor URLs, public image URLs, and existing public image proxy URLs remain allowed.
   - Validation passed: `npm test -- --run src/lib/vendorProfiles.test.ts src/sections/publicLinks.test.ts src/lib/registryPreviewUrlNormalizer.test.ts src/lib/launchEdgeFunctions.test.ts` (83/83), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, `npm run build`, and `npm run proof:v1:ai-product-readiness` (23/23).
   - Launch status: unchanged. This is local Edge Function hardening and no deploy was run; production needs an approved function deploy before these preview reserved-host blocks are live.
+- 2026-05-06 2:59 PM PT - No-deploy vendor inquiry email validation hardening:
+  - Resolved in this batch: `vendor-profile-inquiry-submit` now rejects angle brackets, quotes, and parentheses in submitted or destination email addresses instead of accepting any non-space/non-`@` characters around `@`.
+  - Email safety hardening: inquiry HTML already escaped names/messages/context and sanitized subjects; this narrows the reply-to/destination address boundary to match the stricter public email sanitizer style.
+  - No feature loss: ordinary public email addresses still pass, vendor inquiry persistence and optional notification email behavior remain unchanged.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/emailSafety.test.ts src/lib/vendorProfiles.test.ts` (40/40), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
+  - Launch status: unchanged. This is local Edge Function hardening and no deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

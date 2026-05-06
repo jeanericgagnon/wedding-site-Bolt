@@ -21,7 +21,7 @@ function cleanText(value: unknown, maxLength: number) {
 }
 
 function isSafeEmail(value: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  return /^[^\s@<>"'()]+@[^\s@<>"'()]+\.[^\s@<>"'()]+$/.test(value);
 }
 
 function buildVendorInquiryEmail(input: {
