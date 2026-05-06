@@ -2272,6 +2272,12 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: OpenAI/Gemini analysis, metadata organization fallback, internal usage logging, service-role authorization checks, and customer-safe photo review copy remain supported.
   - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/photoAnalysisCustomerCopy.test.ts` (32/32), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
   - Launch status: unchanged. This is local Edge Function hardening and no deploy was run.
+- 2026-05-06 3:18 PM PT - No-deploy photo upload fixed validation copy hardening:
+  - Resolved in this batch: public `photo-upload` file validation no longer echoes user-controlled MIME types or filenames in `UNSUPPORTED_FILE_TYPE` and per-file `FILE_TOO_LARGE` error responses.
+  - Guest privacy/trust hardening: unsupported file type and size-limit failures now return fixed customer-safe copy from the Edge Function itself, not only through the frontend sanitizer.
+  - No feature loss: supported photo/video uploads, album token/slug access, hosted storage upload, Drive backup fallback, metadata capture, and partial-failure reporting remain intact.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/PhotoUpload.test.ts` (34/34), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
+  - Launch status: unchanged. This is local Edge Function hardening and no deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

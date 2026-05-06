@@ -4170,3 +4170,22 @@ Commands run:
 
 Status:
 - PARTIAL. This narrows local photo AI diagnostic leakage risk. No deploy was run.
+
+### 2026-05-06 3:18 PM PT - Photo Upload Fixed Validation Copy Hardening
+
+What changed:
+- `photo-upload` now returns fixed customer-safe copy for unsupported file types instead of echoing the submitted MIME type.
+- Per-file size-limit failures now return fixed limit copy instead of echoing the uploaded filename.
+- `src/lib/launchEdgeFunctions.test.ts` now guards the fixed-copy responses and rejects the prior user-controlled interpolation patterns.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/PhotoUpload.test.ts`: PASS, 34/34.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This narrows local guest-facing upload validation echo risk. No deploy was run.

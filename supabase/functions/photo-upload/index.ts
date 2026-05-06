@@ -484,10 +484,10 @@ Deno.serve(async (req: Request) => {
       const mime = file.type || 'application/octet-stream';
       const allowedByPrefix = ALLOWED_MIME_PREFIXES.some((prefix) => mime.startsWith(prefix));
       if (!allowedByPrefix || DISALLOWED_MIME_TYPES.has(mime)) {
-        return fail("UNSUPPORTED_FILE_TYPE", `Unsupported file type: ${mime}`, 400);
+        return fail("UNSUPPORTED_FILE_TYPE", "Please upload photos or videos only.", 400);
       }
       if (file.size > MAX_FILE_BYTES) {
-        return fail("FILE_TOO_LARGE", `File too large: ${file.name} (max ${Math.floor(MAX_FILE_BYTES / (1024 * 1024))}MB each)`, 400);
+        return fail("FILE_TOO_LARGE", "Your upload exceeds the allowed limits.", 400);
       }
     }
 

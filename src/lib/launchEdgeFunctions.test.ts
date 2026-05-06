@@ -1073,6 +1073,8 @@ describe('launch edge function guards', () => {
     expect(source).toContain('METHOD_NOT_ALLOWED');
     expect(source).toContain('Hosted upload failed.');
     expect(source).toContain('PHOTO_UPLOAD_ROW_INSERT_FAILED');
+    expect(source).toContain('return fail("UNSUPPORTED_FILE_TYPE", "Please upload photos or videos only.", 400);');
+    expect(source).toContain('return fail("FILE_TOO_LARGE", "Your upload exceeds the allowed limits.", 400);');
     expect(source).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
     expect(source).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
     expect(source).toContain('const hasAccess = siteBySlug');
@@ -1092,6 +1094,8 @@ describe('launch edge function guards', () => {
     expect(source).not.toContain('return fail("INTERNAL_ERROR", err instanceof Error ? err.message');
     expect(source).not.toContain('error: error instanceof Error ? error.message');
     expect(source).not.toContain('if (error) throw new Error(error.message);');
+    expect(source).not.toContain('Unsupported file type: ${mime}');
+    expect(source).not.toContain('File too large: ${file.name}');
     expect(prereqs).toContain('requiredFunctionSourceChecks');
     expect(prereqs).toContain('photo-upload-guest-safe-readiness-and-errors');
     expect(prereqs).toContain('requiredFunctionSourceChecksFailing');
