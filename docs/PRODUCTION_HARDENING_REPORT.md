@@ -4018,3 +4018,17 @@ Commands run:
 
 Status:
 - PARTIAL. This narrows local owner-preview token retention risk. No deploy was run.
+
+### 2026-05-06 2:50 PM PT - P1 Live Authorization Proof Refresh
+
+What changed:
+- Backlog priority shifted per Eric: pause file-splitting work and test/lint/typecheck-fix-only cleanup; focus next on remaining P1/security/live-proof blockers.
+- No runtime code changed in this checkpoint.
+
+Commands run:
+- `npm run proof:v1:service-role-authorization`: first sandboxed run failed with network `fetch failed`; reran with approved network access and PASS. Live unauthenticated media service-role calls returned 401 for `photo-album-create`, `photo-album-manage`, `photo-upload-moderate`, `photo-export-manifest`, and `photo-analyze-batch`.
+- `npm run proof:v1:email-messaging-authorization`: PASS. Live unauthenticated email/messaging calls returned 401 for `process-email-queue`, `queue-guest-followups`, `send-bulk-message`, and `send-wedding-email`.
+- `npm run proof:v1:collaborator-runtime`: BLOCKED. Missing disposable proof credentials: `V1_OWNER_EMAIL`, `V1_OWNER_PASSWORD`, `V1_COLLABORATOR_EMAIL`, and `V1_COLLABORATOR_PASSWORD`.
+
+Status:
+- PARTIAL. Fresh live unauthenticated denial proof is green, but authenticated role-by-role mutation proof and secure service-role/RLS proof remain blocked on a credentialed secure proof environment. No deploy was run.

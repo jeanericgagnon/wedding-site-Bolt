@@ -2224,6 +2224,12 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: role/public preview exit links still preserve unrelated query params, and guest preview still loads through the existing invitation link path.
   - Validation passed: `npm test -- --run src/lib/ownerPreviewMode.test.ts src/lib/guestVisibilityPreview.test.ts` (8/8), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
   - Launch status: unchanged. This is local frontend privacy hardening and no deploy was run.
+- 2026-05-06 2:50 PM PT - No-deploy P1 live authorization proof refresh:
+  - Reprioritized backlog execution per Eric: pause file-splitting batches and test/lint/typecheck-fix-only work; prioritize remaining P1/security/live-proof blockers. Validation commands still run only as proof for concrete risk-reduction batches.
+  - Live service-role media denial proof passed: `npm run proof:v1:service-role-authorization` returned 401 for unauthenticated `photo-album-create`, `photo-album-manage`, `photo-upload-moderate`, `photo-export-manifest`, and `photo-analyze-batch`.
+  - Live email/messaging denial proof passed: `npm run proof:v1:email-messaging-authorization` returned 401 for unauthenticated `process-email-queue`, `queue-guest-followups`, `send-bulk-message`, and `send-wedding-email`.
+  - Runtime collaborator proof remains blocked, not failed: `npm run proof:v1:collaborator-runtime` reported missing `V1_OWNER_EMAIL`, `V1_OWNER_PASSWORD`, `V1_COLLABORATOR_EMAIL`, and `V1_COLLABORATOR_PASSWORD` disposable proof credentials.
+  - Launch status: unchanged. No deploy was run; authenticated owner/planner/coordinator/viewer mutation proof and secure service-role/RLS proof still require a credentialed secure proof environment.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.
