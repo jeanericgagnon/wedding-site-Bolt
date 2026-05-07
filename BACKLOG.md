@@ -46,7 +46,7 @@ Current readiness verdict for this intake:
 4. `PARTIAL` - Scope RSVP lookup.
    Problem: prevent cross-site lookup and global guest enumeration.
    Acceptance: guests cannot be discovered outside one site and guest lists cannot be enumerated through search.
-   Current evidence: invite lookup is now exact-token scoped, guest contact lookup is public-gate scoped and full-name exact-match only, and local broad/ambiguous lookup responses were reduced; additional live site-scoped abuse proof remains required.
+   Current evidence: invite lookup is now exact-token scoped, guest-facing RSVP copy now points guests to invitation-code lookup instead of name lookup, guest contact lookup is public-gate scoped and full-name exact-match only, and local broad/ambiguous lookup responses were reduced; additional live site-scoped abuse proof remains required.
 
 5. `DONE` - Rate limit lookup paths.
    Problem: name lookup, token lookup, and password attempts must be rate-limited.
@@ -205,6 +205,14 @@ Final acceptance criteria for this lane:
 - Tests: regression coverage exists for security-critical paths.
 - Validation: all required commands pass or are documented with exact failures.
 - Documentation: `BACKLOG.md` and `docs/PRODUCTION_HARDENING_REPORT.md` accurately reflect current state.
+
+### 2026-05-07 11:11 AM PT - No-Deploy RSVP Invitation-Code Contract Alignment
+
+- Resolved locally in this batch: `supabase/functions/validate-rsvp-token/index.ts` now uses invitation-code-only validation copy for both manual RSVP lookup and event RSVP lookup, removing the remaining raw `inviteToken is required` wording and aligning server guidance with the hardened exact-token contract.
+- Product hardening: the RSVP guest experience no longer tells guests to search by name when the production lookup flow only honors the private invitation link or invitation code. Updated RSVP copy now consistently points guests toward their invitation code or email link across English, Spanish, French, German, Italian, and Portuguese.
+- Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards exact `invite_token` lookup for both RSVP lookup branches and rejects future reintroduction of `name`/`first_name`/`last_name` lookup on the production RSVP Edge Function.
+- Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/RSVP.test.tsx src/pages/EventRSVP.test.tsx` (142/142), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
+- No deploy was run. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk during build.
 
 ### 2026-05-07 11:08 AM PT - No-Deploy Guest Lookup Exact-Match Tightening
 

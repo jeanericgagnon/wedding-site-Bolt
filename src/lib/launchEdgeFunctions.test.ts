@@ -494,11 +494,16 @@ describe('launch edge function guards', () => {
     expect(rsvp).toContain('const safeSubjectMarker = subject');
     expect(rsvp).toContain('sha256Hex(`${scope}:${subject}:${supabaseUrl}`)');
     expect(rsvp).not.toContain('guest_token: (subject ?? scope).slice(0, 16)');
+    expect(rsvp).toContain('.eq("invite_token", trimmed).maybeSingle()');
+    expect(rsvp).toContain('.eq("invite_token", inviteToken.trim())');
     expect(rsvp).toContain('Please use the private RSVP link or code from your invitation.');
     const sanitizeGuestBody = rsvp.match(/function sanitizeGuest[\s\S]*?function sanitizeHouseholdGuest/)?.[0] ?? '';
     expect(sanitizeGuestBody).not.toContain('wedding_site_id: guest.wedding_site_id');
     expect(rsvp).not.toContain('invite_token, wedding_site_id, household_id, children_allowed');
     expect(rsvp).not.toContain('name.ilike.%');
+    expect(rsvp).not.toContain('.ilike("name"');
+    expect(rsvp).not.toContain('.ilike("first_name"');
+    expect(rsvp).not.toContain('.ilike("last_name"');
     expect(rsvp).not.toContain('byName.map');
     expect(rsvp).not.toContain('const message = err instanceof Error ? err.message');
 
@@ -923,7 +928,7 @@ describe('launch edge function guards', () => {
     expect(readFunction('submit-rsvp')).not.toContain('id, invite_token, wedding_site_id');
     expect(readFunction('validate-rsvp-token')).toContain('reason: "UNEXPECTED_RSVP_TOKEN_VALIDATION_FAILURE"');
     expect(readFunction('validate-rsvp-token')).toContain('RSVP_REQUEST_INVALID_COPY = "Could not read this RSVP request. Please try again."');
-    expect(readFunction('validate-rsvp-token')).toContain('RSVP_SEARCH_REQUIRED_COPY = "Enter the guest name or code from your invitation."');
+    expect(readFunction('validate-rsvp-token')).toContain('RSVP_SEARCH_REQUIRED_COPY = "Enter the invitation code from your invitation."');
     expect(readFunction('validate-rsvp-token')).not.toContain('Invalid JSON body');
     expect(readFunction('validate-rsvp-token')).not.toContain('searchValue is required');
     expect(readFunction('guest-recap-config')).toContain('reason: "UNEXPECTED_GUEST_RECAP_CONFIG_FAILURE"');

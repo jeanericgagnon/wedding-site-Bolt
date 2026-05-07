@@ -66,7 +66,7 @@ const RATE_LIMIT_WINDOW_MINUTES = 15;
 const RATE_LIMIT_MAX_ATTEMPTS = 10;
 const LOOKUP_RATE_LIMIT_MAX_ATTEMPTS = 8;
 const RSVP_REQUEST_INVALID_COPY = "Could not read this RSVP request. Please try again.";
-const RSVP_SEARCH_REQUIRED_COPY = "Enter the guest name or code from your invitation.";
+const RSVP_SEARCH_REQUIRED_COPY = "Enter the invitation code from your invitation.";
 
 function isMissingEventRsvpTableError(error: unknown) {
   const typed = error as { code?: string; message?: string } | null;
@@ -475,7 +475,7 @@ Deno.serve(async (req: Request) => {
 
     if (payload.action === "event_lookup") {
       const { inviteToken } = payload;
-      if (!inviteToken?.trim()) return json({ error: "inviteToken is required" }, 400);
+      if (!inviteToken?.trim()) return json({ error: RSVP_SEARCH_REQUIRED_COPY }, 400);
       if (!(await enforceRateLimit("rsvp_event_lookup", inviteToken.trim(), LOOKUP_RATE_LIMIT_MAX_ATTEMPTS))) {
         return json({ error: "Too many lookup attempts. Please wait a few minutes and try again." }, 429);
       }

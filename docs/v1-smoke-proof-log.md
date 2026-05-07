@@ -7,6 +7,23 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. Active strict P0 items are live deploy/function proof for the local access-control changes, live RLS/service-role proof after static disposition, and live messaging authorization proof after local queue lockdown. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-07 11:11 AM PT Local RSVP Invitation-Code Contract Alignment Batch
+
+- Continued the no-deploy hardening lane locally. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - `supabase/functions/validate-rsvp-token/index.ts` now uses invitation-code-only validation copy for both manual RSVP lookup and event RSVP lookup, removing the remaining raw `inviteToken is required` wording and the stale guest-name wording on the production RSVP path.
+  - `src/lib/launchEdgeFunctions.test.ts` now guards exact `invite_token` lookup for both RSVP lookup branches and rejects future `name` / `first_name` / `last_name` production lookup drift.
+  - RSVP search copy in English, Spanish, French, German, Italian, and Portuguese now consistently asks for the invitation code from the email/link flow, matching the hardened production backend contract.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/RSVP.test.tsx src/pages/EventRSVP.test.tsx`: PASS, 142/142.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with the existing non-blocking Browserslist `caniuse-lite` warning and empty `vendor-react` chunk warning.
+- Launch status did not change. This makes the local RSVP contract more truthful and regression-proof, but no deploy was run.
+
 ## 2026-05-07 11:08 AM PT Local Guest Lookup Exact-Match Tightening Batch
 
 - Continued the no-deploy hardening lane locally. No deploy, migration, or Supabase function deploy was run.

@@ -19,6 +19,25 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 11:11 AM PT - No-Deploy RSVP Invitation-Code Contract Alignment
+
+What changed:
+- Updated `supabase/functions/validate-rsvp-token/index.ts` so the manual RSVP lookup and event RSVP lookup paths both use invitation-code-only validation copy instead of guest-name wording or raw `inviteToken is required` text.
+- Expanded `src/lib/launchEdgeFunctions.test.ts` to statically guard the exact `invite_token` lookup contract on both RSVP lookup branches and fail if production RSVP lookup drifts back toward name-based queries.
+- Updated `src/i18n/en.json`, `src/i18n/es.json`, `src/i18n/fr.json`, `src/i18n/de.json`, `src/i18n/it.json`, and `src/i18n/pt.json` so the RSVP search UI now consistently asks for an invitation code instead of a name-or-code mix that no longer matches the hardened production backend.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/RSVP.test.tsx src/pages/EventRSVP.test.tsx`: PASS, 3 files and 142 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This removes a guest-facing RSVP contract mismatch and makes the local strict lookup story more honest, but live abuse proof and the remaining deploy-gated RSVP/service-role blockers are still open.
+
 ### 2026-05-07 11:08 AM PT - No-Deploy Guest Lookup Exact-Match Tightening
 
 What changed:
