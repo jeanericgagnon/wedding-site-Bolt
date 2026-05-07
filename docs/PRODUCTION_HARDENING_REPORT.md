@@ -8,7 +8,7 @@ _Scope:_ 10/10 production-hardening execution. No deploy unless Eric explicitly 
 
 Final Production Readiness Score: 8/10
 
-The approved production deploy and current non-SMS postdeploy proof are green, and additional local hardening continues. The app is still not 10/10 production-ready until remaining P1/P2 security, authenticated role-based service-role proof, secure service-role queue/storage integrity proof, live model-backed AI, and authenticated live messaging authorization proof are complete. The active standard is real private wedding and guest data must be safe by design.
+The approved production deploy and current non-SMS postdeploy proof are green, and additional local hardening continues. The app is still not 10/10 production-ready until remaining P1/P2 security, planner/coordinator allowed-action live proof, secure service-role queue/storage integrity proof, and live model-backed AI proof are complete. The active standard is real private wedding and guest data must be safe by design.
 
 ## No Feature Loss Checklist
 
@@ -35,6 +35,21 @@ Commands run:
 
 Status:
 - PARTIAL. Live unauthenticated denial proof is now green for both service-role photo/media and messaging/queue lanes, but authenticated role-mutation proof and secure service-role queue/storage integrity proof still remain before these launch blockers are fully closed.
+
+### 2026-05-07 11:56 AM PT - No-Deploy Collaborator Runtime Proof Expansion
+
+What changed:
+- Updated `scripts/v1-proof-collaborator-runtime.mjs` so the live collaborator runtime proof reads owner credentials from standard env files, targets `https://dayof.love` by default, and generates disposable collaborator credentials automatically instead of blocking on pre-seeded collaborator env vars.
+- Updated `scripts/playwright-owner-create-invite-and-claim.mjs` so the live invite/claim proof no longer depends on a hardcoded proof-site slug, a missing `.env.local`, or an outdated invite button label.
+- Expanded `tests/e2e/collaborator-permission-rls.spec.ts` so the limited collaborator runtime proof now covers direct message-row denial, `queue-guest-followups` denial, `photo-album-create` denial, and `photo-export-manifest` denial while still proving an allowed guest write.
+- Proved the full live collaborator runtime bundle end to end: owner invite creation, collaborator accept flow, role-aware dashboard landing, allowed guest write, and forbidden messaging/photo helper actions.
+
+Commands run:
+- `npm run proof:v1:collaborator-runtime`: PASS. Live runtime collaborator proof bundle passed 2/2 against `https://dayof.love`.
+- `npm run proof:v1:collaborator-access`: PASS. Local collaborator-access bundle stayed green.
+
+Status:
+- PARTIAL. This closes the live limited-collaborator forbidden-action proof gap for messaging and photo helper lanes, but planner/coordinator allowed-action live proof and secure service-role queue/storage integrity proof still remain before those launch blockers are fully closed.
 
 ### 2026-05-07 11:27 AM PT - No-Deploy Photo Owner Helper Copy Tightening
 

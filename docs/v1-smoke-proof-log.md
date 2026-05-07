@@ -5,7 +5,7 @@ _Owner:_ Product finish lane
 _Production:_ `https://dayof.love`
 _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
-_Launch call right now:_ Not production-ready under the stricter P0/P1 standard. Active strict P0 items are live deploy/function proof for the local access-control changes, authenticated role-mutation proof for the service-role and messaging lanes after the new unauthenticated live denial passes, and secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
+_Launch call right now:_ Not production-ready under the stricter P0/P1 standard. Active strict P0 items are live deploy/function proof for the local access-control changes, planner/coordinator allowed-action live proof after the viewer-forbidden collaborator runtime pass, and secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
 ## 2026-05-07 11:46 AM PT No-Deploy Live Authorization Proof Narrowing
 - Continued from `BACKLOG.md` in a no-deploy batch.
@@ -20,6 +20,18 @@ _Launch call right now:_ Not production-ready under the stricter P0/P1 standard.
   - `npm test -- --run src/lib/proofBoardFreshness.test.ts`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This narrows the remaining strict blockers to authenticated role proof plus secure service-role queue/storage proof, and no deploy was run.
+
+## 2026-05-07 11:56 AM PT No-Deploy Collaborator Runtime Proof Expansion
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `scripts/v1-proof-collaborator-runtime.mjs` now reads owner credentials from standard env files, targets `https://dayof.love` by default, and generates disposable collaborator credentials automatically instead of blocking on collaborator env vars that were not actually needed.
+  - `scripts/playwright-owner-create-invite-and-claim.mjs` no longer depends on a missing `.env.local`, a hardcoded proof-site slug, or an outdated invite button label.
+  - `tests/e2e/collaborator-permission-rls.spec.ts` now proves a limited collaborator with only `guests` permission can write an allowed guest row while being denied on direct message writes, `queue-guest-followups`, `photo-album-create`, and `photo-export-manifest`.
+  - The full live collaborator runtime bundle now passes with real owner invite creation, collaborator accept flow, role-aware dashboard landing, allowed guest write, and forbidden messaging/photo helper actions.
+- Proof passed:
+  - `npm run proof:v1:collaborator-runtime`: PASS, 2/2.
+  - `npm run proof:v1:collaborator-access`: PASS.
+- Launch status did not change. This closes the live limited-collaborator forbidden-action proof gap and narrows the remaining strict blockers to planner/coordinator allowed-action live proof plus secure service-role queue/storage proof. No deploy was run.
 
 ## 2026-05-07 11:11 AM PT Local RSVP Invitation-Code Contract Alignment Batch
 

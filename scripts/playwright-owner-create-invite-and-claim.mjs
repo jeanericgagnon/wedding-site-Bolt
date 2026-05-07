@@ -9,8 +9,33 @@ const ownerPassword = process.argv[4] || '12345678';
 const collaboratorEmail = process.argv[5] || 'test1@gmail.com';
 const collaboratorPassword = process.argv[6] || '12345678';
 
-const env = fs.readFileSync(path.join(process.cwd(), '.env.local'), 'utf8');
-const getEnv = (k) => (env.match(new RegExp(`^${k}=(.*)$`, 'm')) || [])[1]?.replace(/^['\"]|['\"]$/g, '');
+const envFiles = ['.env', '.env.local', '.env.production', '.env.production.local', '.vercel/.env.production.local'];
+
+function parseEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return {};
+  const parsed = {};
+  for (const line of fs.readFileSync(filePath, 'utf8').split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) continue;
+    const index = trimmed.indexOf('=');
+    const key = trimmed.slice(0, index).trim();
+    let value = trimmed.slice(index + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    parsed[key] = value.replace(/\\n$/, '').trim();
+  }
+  return parsed;
+}
+
+const fileEnv = envFiles.reduce((merged, filePath) => ({ ...merged, ...parseEnvFile(path.join(process.cwd(), filePath)) }), {});
+const getEnv = (key, fallback = '') => {
+  const runtimeValue = process.env[key];
+  if (runtimeValue && runtimeValue.trim()) return runtimeValue.trim();
+  const fileValue = fileEnv[key];
+  if (typeof fileValue === 'string' && fileValue.trim()) return fileValue.trim();
+  return fallback;
+};
 const adminSupabase = createClient(getEnv('VITE_SUPABASE_URL'), getEnv('VITE_SUPABASE_ANON_KEY'));
 
 const browser = await chromium.launch({ headless: true });
@@ -54,7 +79,7 @@ try {
     }
     await nameInput.fill('Test One');
     await emailInput.fill(collaboratorEmail);
-    await ownerPage.getByRole('button', { name: /create db invite/i }).click();
+    await ownerPage.getByRole('button', { name: /create (db )?invite( link)?/i }).click();
     await ownerPage.waitForTimeout(1500);
     await ownerPage.locator(`text=${collaboratorEmail}`).first().waitFor({ state: 'visible', timeout: 15000 });
     const ownerSession = await ownerContext.storageState();
@@ -62,14 +87,12 @@ try {
     if (accessToken) {
       await adminSupabase.auth.setSession({ access_token: accessToken, refresh_token: accessToken });
     }
-    const siteRow = await adminSupabase.from('wedding_sites').select('id').eq('site_slug', 'testandkaras').maybeSingle();
-    if (siteRow.error) throw siteRow.error;
     const inviteRow = await adminSupabase
       .from('wedding_site_collaborator_invites')
       .select('invite_token')
-      .eq('wedding_site_id', siteRow.data.id)
       .eq('invite_email', collaboratorEmail)
       .eq('status', 'pending')
+      .order('updated_at', { ascending: false })
       .limit(1)
       .maybeSingle();
     if (inviteRow.error) throw inviteRow.error;

@@ -60,6 +60,7 @@ test('limited collaborator can write allowed guest records but cannot directly w
     const search = new URLSearchParams(params);
     return `${supabaseUrl}/rest/v1/${table}${search.toString() ? `?${search.toString()}` : ''}`;
   };
+  const functionUrl = (functionName: string) => `${supabaseUrl}/functions/v1/${functionName}`;
 
   const restFetch = async (token: string, url: string, init: RequestInit = {}) => fetch(url, {
     ...init,
@@ -70,6 +71,16 @@ test('limited collaborator can write allowed guest records but cannot directly w
       ...(init.headers || {}),
     },
     signal: AbortSignal.timeout(10_000),
+  });
+  const functionFetch = async (token: string, functionName: string, body: Record<string, unknown>) => fetch(functionUrl(functionName), {
+    method: 'POST',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(15_000),
   });
 
   const ownerContext = await browser.newContext();
@@ -192,6 +203,28 @@ test('limited collaborator can write allowed guest records but cannot directly w
     });
     expect(forbiddenMessageWrite.ok, await forbiddenMessageWrite.text()).toBeFalsy();
     expect([401, 403, 404]).toContain(forbiddenMessageWrite.status);
+
+    const forbiddenFollowupQueue = await functionFetch(collaboratorAccessToken, 'queue-guest-followups', {
+      siteId: weddingSiteId,
+      kind: 'recap',
+      limit: 1,
+    });
+    expect(forbiddenFollowupQueue.ok, await forbiddenFollowupQueue.text()).toBeFalsy();
+    expect([401, 403]).toContain(forbiddenFollowupQueue.status);
+
+    const forbiddenPhotoAlbumCreate = await functionFetch(collaboratorAccessToken, 'photo-album-create', {
+      siteId: weddingSiteId,
+      name: `Forbidden QA Album ${runId}`,
+    });
+    expect(forbiddenPhotoAlbumCreate.ok, await forbiddenPhotoAlbumCreate.text()).toBeFalsy();
+    expect([401, 403]).toContain(forbiddenPhotoAlbumCreate.status);
+
+    const forbiddenPhotoManifest = await functionFetch(collaboratorAccessToken, 'photo-export-manifest', {
+      siteId: weddingSiteId,
+      includeHidden: false,
+    });
+    expect(forbiddenPhotoManifest.ok, await forbiddenPhotoManifest.text()).toBeFalsy();
+    expect([401, 403]).toContain(forbiddenPhotoManifest.status);
   } finally {
     await cleanup();
     await ownerContext.close();

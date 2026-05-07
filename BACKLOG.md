@@ -68,7 +68,7 @@ Current readiness verdict for this intake:
 8. `PARTIAL` - Audit service-role usage.
    Problem: service-role functions must not trust client-supplied IDs and must validate access server-side.
    Acceptance: every service-role function has authorization disposition plus tests/proof.
-   Current evidence: service-role inventory/disposition doc and static guard exist. Messaging and photo/media mutation functions now use shared role-aware collaborator checks that block `viewer` mutations even with stale explicit permission rows. Live unauthenticated denial proof for the photo/media service-role lane is now green; remaining proof is authenticated role-mutation coverage plus secure service-role storage/cross-table and queue-processing proof.
+   Current evidence: service-role inventory/disposition doc and static guard exist. Messaging and photo/media mutation functions now use shared role-aware collaborator checks that block `viewer` mutations even with stale explicit permission rows. Live unauthenticated denial proof and live limited-collaborator forbidden photo/media mutation/export proof are now green; remaining proof is planner/coordinator allowed-mutation coverage plus secure service-role storage/cross-table and queue-processing proof.
 
 9. `PARTIAL` - Complete SSRF hardening.
    Problem: registry preview must block IPv6/private ranges, validate DNS strictly, and rate-limit strongly.
@@ -78,7 +78,7 @@ Current readiness verdict for this intake:
 10. `PARTIAL` - Email safety.
     Problem: email HTML must be escaped, URLs validated, and subjects sanitized.
     Acceptance: all email-producing paths use shared escaping/sanitization and tests cover hostile names/body/URLs/subjects.
-    Current evidence: `send-wedding-email`, `process-email-queue`, and `send-bulk-message` now import shared Edge Function email safety helpers for HTML escaping, safe URLs, href escaping, and subject sanitization. Direct wedding emails, bulk/scheduled messages, and queued guest follow-ups now reject `viewer` collaborators even when a malformed explicit `messages`/`guests` permission exists. Focused static proof, planner-access tests, typecheck, quiet lint, build, message smoke, and live unauthenticated denial proof are green; remaining proof is authenticated owner/planner/coordinator/viewer messaging mutation coverage plus secure queue-processing proof.
+    Current evidence: `send-wedding-email`, `process-email-queue`, and `send-bulk-message` now import shared Edge Function email safety helpers for HTML escaping, safe URLs, href escaping, and subject sanitization. Direct wedding emails, bulk/scheduled messages, and queued guest follow-ups now reject `viewer` collaborators even when a malformed explicit `messages`/`guests` permission exists. Focused static proof, planner-access tests, typecheck, quiet lint, build, message smoke, live unauthenticated denial proof, and live limited-collaborator forbidden message/follow-up proof are green; remaining proof is planner/coordinator allowed-action live coverage plus secure queue-processing proof.
 
 11. `PARTIAL` - Validation must pass and be recorded.
    Required commands: `npm run typecheck`, `npm run lint`, `npm run build`, `npm test`, `npm run test:smoke`, `npm run smoke:registry`, `npm run smoke:rsvp`, `npm run smoke:site`, `npm run guard:file-size`.
@@ -205,6 +205,14 @@ Current readiness verdict for this intake:
 - Resolved locally in this batch: backlog and proof wording now distinguish the green live unauthenticated denial proofs from the still-open authenticated role-mutation proof and secure service-role queue/storage proof.
 - Validation passed: `npm run proof:v1:service-role-authorization`, `npm run proof:v1:email-messaging-authorization`, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts`, and `git diff --check`.
 - Launch status did not change. The remaining strict blockers are now the authenticated role proof and secure service-role queue/storage proof, not the previously broader unauthenticated denial checks. No deploy was run.
+
+### 2026-05-07 11:56 AM PT - No-Deploy Collaborator Runtime Proof Expansion
+
+- Resolved locally in this batch: `scripts/v1-proof-collaborator-runtime.mjs` now reads owner credentials from standard env files, defaults its proof target to `https://dayof.love`, and generates disposable collaborator credentials automatically instead of incorrectly blocking on pre-seeded collaborator env vars.
+- Resolved locally in this batch: `scripts/playwright-owner-create-invite-and-claim.mjs` no longer hardcodes a single proof-site slug or a single invite-button label, so the live invite/claim proof now follows the actual owner account and current settings UI.
+- Resolved locally in this batch: `tests/e2e/collaborator-permission-rls.spec.ts` now proves a limited collaborator with only `guests` permission can still write an allowed guest row while being denied on direct message writes, `queue-guest-followups`, `photo-album-create`, and `photo-export-manifest`.
+- Validation passed: `npm run proof:v1:collaborator-runtime`, `npm run proof:v1:collaborator-access`, and the live collaborator runtime bundle now passes 2/2 with real invite creation, invite claim, role-aware landing, allowed guest write, and forbidden messaging/photo helper actions.
+- Launch status did not change. This closes the live limited-collaborator forbidden-action proof gap and narrows the remaining strict blockers to planner/coordinator allowed-action live proof plus secure service-role queue/storage proof. No deploy was run.
 
 ### 2026-05-05 2:43 PM PT - No-Deploy Shared Collaborator Permission Helper
 
