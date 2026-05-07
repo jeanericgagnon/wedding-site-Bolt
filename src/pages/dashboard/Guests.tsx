@@ -23,7 +23,6 @@ import {
 } from '../../lib/rsvpAccessPlanner';
 import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { extractDietaryNote } from '../../lib/dietaryNotes';
-import { deriveInviteEvents } from '../../lib/rsvpEventFallback';
 import { deleteEventRsvpByInvitationId, getEventRsvpSnapshotsByInvitationIds, restoreEventRsvpSnapshots } from '../../lib/eventRsvpCleanup';
 import { GUEST_IMPORT_MAX_FILE_BYTES, GUEST_IMPORT_MAX_ROWS, buildDefaultCsvFieldMap, buildGuestImportPreview, isCsvNameMappingValid, readGuestImportRows, type CsvFieldMap } from '../../lib/guestImportParser';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
@@ -122,6 +121,8 @@ import {
   generateSecureGuestInviteToken,
   insertEventInvitations,
   insertImportedGuests,
+  loadGuestDashboardItineraryFilters,
+  loadGuestDashboardRsvpAuditFeed,
   loadGuestDashboardSiteSettings,
   loadGuestDashboardSnapshot,
   MAX_GUEST_DASHBOARD_ROWS,
@@ -137,12 +138,9 @@ import {
   type GuestEventInvitationRollback,
 } from './guests/guestService';
 
-export const MAX_GUEST_ITINERARY_FILTER_EVENTS = 200;
-export const MAX_GUEST_ITINERARY_FILTER_INVITATIONS = 10000;
 export const MAX_GUEST_DRAWER_EVENTS = 200;
 export const MAX_GUEST_DRAWER_INVITATIONS = 10000;
 export const MAX_GUEST_DRAWER_AUDIT_ROWS = 12;
-export const MAX_GUEST_AUDIT_ROWS = 20;
 
 export const DashboardGuests: React.FC = () => {
   const navigate = useNavigate();
@@ -456,49 +454,12 @@ export const DashboardGuests: React.FC = () => {
       }
 
       try {
-        const [eventsRes, siteRes] = await Promise.all([
-          supabase
-            .from('itinerary_events')
-            .select('id, event_name, event_date, start_time, location_name')
-            .eq('wedding_site_id', weddingSiteId)
-            .order('event_date', { ascending: true })
-            .limit(MAX_GUEST_ITINERARY_FILTER_EVENTS),
-          supabase
-            .from('wedding_sites')
-            .select('wedding_data')
-            .eq('id', weddingSiteId)
-            .maybeSingle(),
-        ]);
-
-        if (eventsRes.error) throw eventsRes.error;
-        if (siteRes.error) throw siteRes.error;
+        const snapshot = await loadGuestDashboardItineraryFilters(weddingSiteId);
 
         if (cancelled) return;
-
-        const seededEvents = (((siteRes.data?.wedding_data as { meta?: { rsvpEventSeeds?: Array<{ id: string; label: string; dateLabel?: string; locationName?: string | null }> } } | null)?.meta?.rsvpEventSeeds) ?? []);
-        const siteEvents = (eventsRes.data ?? []) as ItineraryEvent[];
-        setItineraryEvents(siteEvents);
-        const eventIds = siteEvents.map((event) => event.id);
-
-        const invitesRes = eventIds.length > 0
-          ? await supabase
-              .from('event_invitations')
-              .select('event_id, guest_id')
-              .in('event_id', eventIds)
-              .limit(MAX_GUEST_ITINERARY_FILTER_INVITATIONS)
-          : { data: [], error: null };
-
-        if (invitesRes.error) throw invitesRes.error;
-
-        setItineraryFilterEvents(deriveInviteEvents(siteEvents, seededEvents) as ItineraryEvent[]);
-
-        const next = new Map<string, Set<string>>();
-        ((invitesRes.data ?? []) as Array<{ event_id: string; guest_id: string }>).forEach((row) => {
-          const set = next.get(row.event_id) ?? new Set<string>();
-          set.add(row.guest_id);
-          next.set(row.event_id, set);
-        });
-        setEventInviteGuestMap(next);
+        setItineraryEvents(snapshot.itineraryEvents);
+        setItineraryFilterEvents(snapshot.filterEvents);
+        setEventInviteGuestMap(snapshot.eventInviteGuestMap);
       } catch {
         if (!cancelled) {
           toast('Couldn’t load itinerary filters right now. Please try again.', 'error');
@@ -542,15 +503,8 @@ export const DashboardGuests: React.FC = () => {
           return;
         }
 
-        const { data, error } = await supabase
-          .from('guest_audit_logs')
-          .select('id, guest_id, action, changed_at, changed_by, old_data, new_data')
-          .eq('wedding_site_id', weddingSiteId)
-          .order('changed_at', { ascending: false })
-          .limit(MAX_GUEST_AUDIT_ROWS);
-
-        if (error) throw error;
-        if (!cancelled) setRsvpAuditFeed((data ?? []) as GuestAuditEntry[]);
+        const feed = await loadGuestDashboardRsvpAuditFeed(weddingSiteId);
+        if (!cancelled) setRsvpAuditFeed(feed);
       } catch {
         if (!cancelled) {
           setRsvpAuditFeed([]);

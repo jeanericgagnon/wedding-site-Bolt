@@ -7973,6 +7973,20 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 4:22 PM PT No-Deploy Guest Dashboard Itinerary And RSVP Audit Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestService.ts` now owns itinerary-filter/event-invite bootstrap via `loadGuestDashboardItineraryFilters(weddingSiteId)` and RSVP audit-feed hydration via `loadGuestDashboardRsvpAuditFeed(weddingSiteId)`.
+  - `src/pages/dashboard/Guests.tsx` now calls those service helpers instead of directly reading `itinerary_events`, `wedding_sites`, `event_invitations`, and `guest_audit_logs` inline.
+  - `src/pages/dashboard/guests/guestService.test.ts`, `src/lib/dashboardDataBoundary.test.ts`, and `src/pages/dashboard/guestQueryBounds.test.ts` now pin that guest dashboard itinerary/audit service boundary and the moved query caps.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`: PASS, 46/46.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 4:13 PM PT No-Deploy Guest Dashboard Snapshot Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

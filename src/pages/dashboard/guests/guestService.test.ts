@@ -2,15 +2,24 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  GUEST_AUDIT_SELECT,
   GUEST_CONFLICT_SELECT,
   GUEST_DASHBOARD_RSVP_SELECT,
+  GUEST_EVENT_INVITATION_SELECT,
+  GUEST_ITINERARY_EVENT_SELECT,
+  GUEST_ITINERARY_SITE_SELECT,
   GUEST_SITE_SETTINGS_SELECT,
   MAX_GUEST_BULK_INVITATION_ROWS,
   MAX_GUEST_BULK_OPERATION_IDS,
+  MAX_GUEST_AUDIT_ROWS,
   MAX_GUEST_DASHBOARD_ROWS,
+  MAX_GUEST_ITINERARY_FILTER_EVENTS,
+  MAX_GUEST_ITINERARY_FILTER_INVITATIONS,
   MAX_GUEST_RSVP_CONFLICT_HISTORY_ROWS,
   MAX_GUEST_RSVP_CONFLICT_ROWS,
   MAX_GUEST_RSVP_LOOKUP_IDS,
+  loadGuestDashboardItineraryFilters,
+  loadGuestDashboardRsvpAuditFeed,
   loadGuestDashboardSiteSettings,
   loadGuestDashboardSnapshot,
   refreshGuestDashboardSession,
@@ -55,6 +64,13 @@ describe('guestService', () => {
     expect(MAX_GUEST_BULK_INVITATION_ROWS).toBe(10000);
     expect(MAX_GUEST_RSVP_CONFLICT_ROWS).toBe(20);
     expect(MAX_GUEST_RSVP_CONFLICT_HISTORY_ROWS).toBe(500);
+    expect(GUEST_ITINERARY_EVENT_SELECT).toContain('event_name');
+    expect(GUEST_ITINERARY_SITE_SELECT).toBe('wedding_data');
+    expect(GUEST_EVENT_INVITATION_SELECT).toBe('event_id, guest_id');
+    expect(GUEST_AUDIT_SELECT).toContain('changed_at');
+    expect(MAX_GUEST_ITINERARY_FILTER_EVENTS).toBe(200);
+    expect(MAX_GUEST_ITINERARY_FILTER_INVITATIONS).toBe(10000);
+    expect(MAX_GUEST_AUDIT_ROWS).toBe(20);
   });
 
   it('builds scoped event invitation rows for one guest', () => {
@@ -72,15 +88,21 @@ describe('guestService', () => {
     expect(page).toContain('refreshGuestDashboardSession()');
     expect(page).toContain('loadGuestDashboardSiteSettings(user.id)');
     expect(page).toContain('loadGuestDashboardSnapshot(weddingSiteId)');
+    expect(page).toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
+    expect(page).toContain('loadGuestDashboardRsvpAuditFeed(weddingSiteId)');
     expect(page).not.toContain("supabase.rpc('generate_secure_token'");
     expect(page).not.toContain('supabase.auth.refreshSession()');
     expect(page).not.toContain(".from('wedding_sites')\n        .select('id, couple_name_1, couple_name_2");
     expect(page).not.toContain(".from('guests')\n        .select('id, first_name, last_name");
+    expect(page).not.toContain(".from('itinerary_events')\n            .select('id, event_name, event_date, start_time, location_name')");
+    expect(page).not.toContain(".from('guest_audit_logs')\n          .select('id, guest_id, action, changed_at, changed_by, old_data, new_data')");
     expect(service).toContain("supabase.rpc('generate_secure_token'");
     expect(service).toContain('export async function generateSecureGuestInviteToken()');
     expect(service).toContain('export async function refreshGuestDashboardSession(): Promise<void>');
     expect(service).toContain('export async function loadGuestDashboardSiteSettings(userId: string)');
     expect(service).toContain('export async function loadGuestDashboardSnapshot(weddingSiteId: string)');
+    expect(service).toContain('export async function loadGuestDashboardItineraryFilters(weddingSiteId: string)');
+    expect(service).toContain('export async function loadGuestDashboardRsvpAuditFeed(weddingSiteId: string)');
     expect(service).toContain('supabase.auth.refreshSession()');
   });
 
@@ -202,5 +224,84 @@ describe('guestService', () => {
       conflicts: [{ id: 'conflict-1', guest_id: 'guest-1', conflict_code: 'missing_meal', message: 'Meal missing', severity: 'warning', created_at: '2026-05-07T00:00:00Z', resolved: false }],
       conflictHistory: [{ id: 'conflict-2', guest_id: 'guest-1', conflict_code: 'late_rsvp', message: 'Late RSVP', severity: 'error', created_at: '2026-05-06T00:00:00Z', resolved: true, resolved_at: '2026-05-07T00:00:00Z' }],
     });
+  });
+
+  it('loads guest dashboard itinerary filters through the service', async () => {
+    const itineraryQuery = {
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          order: vi.fn(() => ({
+            limit: vi.fn().mockResolvedValue({
+              data: [{ id: 'event-1', event_name: 'Ceremony', event_date: '2026-06-01', start_time: '16:00', location_name: 'Garden' }],
+              error: null,
+            }),
+          })),
+        })),
+      })),
+    };
+    const siteQuery = {
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: { wedding_data: { meta: { rsvpEventSeeds: [{ id: 'seed-1', label: 'Ceremony' }] } } },
+            error: null,
+          }),
+        })),
+      })),
+    };
+    const invitesQuery = {
+      select: vi.fn(() => ({
+        in: vi.fn(() => ({
+          limit: vi.fn().mockResolvedValue({
+            data: [{ event_id: 'event-1', guest_id: 'guest-1' }],
+            error: null,
+          }),
+        })),
+      })),
+    };
+    fromMock
+      .mockReturnValueOnce(itineraryQuery)
+      .mockReturnValueOnce(siteQuery)
+      .mockReturnValueOnce(invitesQuery);
+
+    await expect(loadGuestDashboardItineraryFilters('site-1')).resolves.toEqual({
+      itineraryEvents: [{ id: 'event-1', event_name: 'Ceremony', event_date: '2026-06-01', start_time: '16:00', location_name: 'Garden' }],
+      filterEvents: [{ id: 'event-1', event_name: 'Ceremony', event_date: '2026-06-01', start_time: '16:00', location_name: 'Garden' }],
+      eventInviteGuestMap: new Map([['event-1', new Set(['guest-1'])]]),
+    });
+  });
+
+  it('loads guest dashboard RSVP audit feed through the service', async () => {
+    const auditQuery = {
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          order: vi.fn(() => ({
+            limit: vi.fn().mockResolvedValue({
+              data: [{
+                id: 'audit-1',
+                guest_id: 'guest-1',
+                action: 'update',
+                changed_at: '2026-05-07T00:00:00Z',
+                changed_by: 'owner-1',
+                old_data: { rsvp_status: 'pending' },
+                new_data: { rsvp_status: 'confirmed' },
+              }],
+              error: null,
+            }),
+          })),
+        })),
+      })),
+    };
+    fromMock.mockReturnValueOnce(auditQuery);
+
+    await expect(loadGuestDashboardRsvpAuditFeed('site-1')).resolves.toEqual([{
+      id: 'audit-1',
+      guest_id: 'guest-1',
+      action: 'update',
+      changed_at: '2026-05-07T00:00:00Z',
+      changed_by: 'owner-1',
+      old_data: { rsvp_status: 'pending' },
+      new_data: { rsvp_status: 'confirmed' },
+    }]);
   });
 });

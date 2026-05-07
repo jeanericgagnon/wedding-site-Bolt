@@ -3334,3 +3334,21 @@ Commands run:
 
 Status:
 - PARTIAL. This materially advances the guest dashboard page-to-service migration without changing guest list hydration, RSVP merge behavior, RSVP settings bootstrap, reminder settings, or conflict review behavior. No deploy was run.
+
+### 2026-05-07 4:22 PM PT - No-Deploy Guest Dashboard Itinerary And RSVP Audit Service Extraction
+
+What changed:
+- Moved guest dashboard itinerary-filter bootstrap and RSVP audit-feed hydration out of `src/pages/dashboard/Guests.tsx` and into `src/pages/dashboard/guests/guestService.ts`.
+- `Guests.tsx` now calls `loadGuestDashboardItineraryFilters(weddingSiteId)` and `loadGuestDashboardRsvpAuditFeed(weddingSiteId)` instead of owning direct `itinerary_events`, `wedding_sites`, `event_invitations`, and `guest_audit_logs` reads inline.
+- The guest service now owns explicit itinerary-event, site-seed, invite-map, and audit projections plus the bounded itinerary-filter event/invitation caps and RSVP audit row cap.
+- Expanded `src/pages/dashboard/guests/guestService.test.ts`, `src/lib/dashboardDataBoundary.test.ts`, and `src/pages/dashboard/guestQueryBounds.test.ts` so the moved itinerary-filter/audit boundary and query caps stay pinned.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `npm run build`
+- `git diff --check`
+
+Status:
+- PARTIAL. This materially advances the guest dashboard page-to-service migration without changing itinerary filter behavior, RSVP event fallback seeding, invite guest-map hydration, or owner RSVP audit review behavior. No deploy was run.

@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
+import { deriveInviteEvents, type RsvpSeedEvent } from '../../../lib/rsvpEventFallback';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../../lib/plannerAccess';
 import {
   deleteEventRsvpsByInvitationIds,
@@ -7,7 +8,7 @@ import {
   restoreEventRsvpSnapshots,
   type EventRsvpSnapshot,
 } from '../../../lib/eventRsvpCleanup';
-import type { GuestWithRSVP, RSVPQuestionSetting, RsvpConflict, WeddingSiteInfo } from './guestDashboardTypes';
+import type { GuestAuditEntry, GuestWithRSVP, ItineraryEvent, RSVPQuestionSetting, RsvpConflict, WeddingSiteInfo } from './guestDashboardTypes';
 
 export const GUEST_DASHBOARD_RSVP_SELECT = [
   'guest_id',
@@ -23,12 +24,19 @@ export const GUEST_DASHBOARD_RSVP_SELECT = [
 ].join(', ');
 export const GUEST_SITE_SETTINGS_SELECT = 'id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_address, site_url, site_slug, rsvp_custom_questions, rsvp_meal_config, reminder_cadence_days, auto_reminders_enabled';
 export const GUEST_CONFLICT_SELECT = 'id, guest_id, conflict_code, message, severity, created_at, resolved, resolved_at';
+export const GUEST_ITINERARY_EVENT_SELECT = 'id, event_name, event_date, start_time, location_name';
+export const GUEST_ITINERARY_SITE_SELECT = 'wedding_data';
+export const GUEST_EVENT_INVITATION_SELECT = 'event_id, guest_id';
+export const GUEST_AUDIT_SELECT = 'id, guest_id, action, changed_at, changed_by, old_data, new_data';
 export const MAX_GUEST_DASHBOARD_ROWS = 5000;
 export const MAX_GUEST_RSVP_LOOKUP_IDS = 5000;
 export const MAX_GUEST_BULK_OPERATION_IDS = 5000;
 export const MAX_GUEST_BULK_INVITATION_ROWS = 10000;
 export const MAX_GUEST_RSVP_CONFLICT_ROWS = 20;
 export const MAX_GUEST_RSVP_CONFLICT_HISTORY_ROWS = 500;
+export const MAX_GUEST_ITINERARY_FILTER_EVENTS = 200;
+export const MAX_GUEST_ITINERARY_FILTER_INVITATIONS = 10000;
+export const MAX_GUEST_AUDIT_ROWS = 20;
 
 const EVENT_INVITATION_ROLLBACK_SELECT = 'id, event_id';
 const GUEST_ID_SELECT = 'id';
@@ -55,6 +63,12 @@ export interface GuestDashboardRecordsSnapshot {
   guests: GuestWithRSVP[];
   conflicts: RsvpConflict[];
   conflictHistory: RsvpConflict[];
+}
+
+export interface GuestDashboardItineraryFiltersSnapshot {
+  itineraryEvents: ItineraryEvent[];
+  filterEvents: ItineraryEvent[];
+  eventInviteGuestMap: Map<string, Set<string>>;
 }
 
 export async function loadGuestDashboardSiteSettings(userId: string): Promise<GuestDashboardSiteSettingsSnapshot> {
@@ -186,6 +200,64 @@ export async function loadGuestDashboardSnapshot(weddingSiteId: string): Promise
     conflicts: (conflictsData ?? []) as RsvpConflict[],
     conflictHistory: (conflictHistoryData ?? []) as RsvpConflict[],
   };
+}
+
+export async function loadGuestDashboardItineraryFilters(weddingSiteId: string): Promise<GuestDashboardItineraryFiltersSnapshot> {
+  const [eventsRes, siteRes] = await Promise.all([
+    supabase
+      .from('itinerary_events')
+      .select(GUEST_ITINERARY_EVENT_SELECT)
+      .eq('wedding_site_id', weddingSiteId)
+      .order('event_date', { ascending: true })
+      .limit(MAX_GUEST_ITINERARY_FILTER_EVENTS),
+    supabase
+      .from('wedding_sites')
+      .select(GUEST_ITINERARY_SITE_SELECT)
+      .eq('id', weddingSiteId)
+      .maybeSingle(),
+  ]);
+
+  if (eventsRes.error) throw eventsRes.error;
+  if (siteRes.error) throw siteRes.error;
+
+  const seededEvents = (((siteRes.data?.wedding_data as { meta?: { rsvpEventSeeds?: RsvpSeedEvent[] } } | null)?.meta?.rsvpEventSeeds) ?? []);
+  const itineraryEvents = (eventsRes.data ?? []) as ItineraryEvent[];
+  const eventIds = itineraryEvents.map((event) => event.id);
+
+  const invitesRes = eventIds.length > 0
+    ? await supabase
+        .from('event_invitations')
+        .select(GUEST_EVENT_INVITATION_SELECT)
+        .in('event_id', eventIds)
+        .limit(MAX_GUEST_ITINERARY_FILTER_INVITATIONS)
+    : { data: [], error: null };
+
+  if (invitesRes.error) throw invitesRes.error;
+
+  const eventInviteGuestMap = new Map<string, Set<string>>();
+  ((invitesRes.data ?? []) as Array<{ event_id: string; guest_id: string }>).forEach((row) => {
+    const set = eventInviteGuestMap.get(row.event_id) ?? new Set<string>();
+    set.add(row.guest_id);
+    eventInviteGuestMap.set(row.event_id, set);
+  });
+
+  return {
+    itineraryEvents,
+    filterEvents: deriveInviteEvents(itineraryEvents, seededEvents) as ItineraryEvent[],
+    eventInviteGuestMap,
+  };
+}
+
+export async function loadGuestDashboardRsvpAuditFeed(weddingSiteId: string): Promise<GuestAuditEntry[]> {
+  const { data, error } = await supabase
+    .from('guest_audit_logs')
+    .select(GUEST_AUDIT_SELECT)
+    .eq('wedding_site_id', weddingSiteId)
+    .order('changed_at', { ascending: false })
+    .limit(MAX_GUEST_AUDIT_ROWS);
+
+  if (error) throw error;
+  return (data ?? []) as GuestAuditEntry[];
 }
 
 export interface CreateGuestInput {
