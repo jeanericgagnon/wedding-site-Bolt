@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     const weddingSiteId = typeof body.wedding_site_id === "string" ? body.wedding_site_id.trim() : "";
     const inviteToken = typeof body.inviteToken === "string" ? body.inviteToken.trim() : "";
     const passwordSession = typeof body.passwordSession === "string" ? body.passwordSession : null;
-    const limit = Number.isFinite(Number(body.limit)) ? Math.max(1, Math.min(100, Number(body.limit))) : 100;
+    const limit = Number.isFinite(Number(body.limit)) ? Math.max(1, Math.min(500, Number(body.limit))) : 500;
 
     if (!weddingSiteId) {
       return json({ items: [] }, 200);

@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { RegistryItem, RegistryPreview } from './registryTypes';
 import { derivePurchaseStatus, sanitizeRegistryQuantityState } from './registryTypes';
-import { fetchUrlPreview, findDuplicateItem, ownerMarkPurchased, publicIncrementPurchase } from './registryService';
+import { fetchUrlPreview, findDuplicateItem, ownerMarkPurchased, publicIncrementPurchase, MAX_REGISTRY_ITEMS } from './registryService';
 
 const mockRpcResult = {
   data: null as unknown,
@@ -133,6 +135,23 @@ describe('fetchUrlPreview', () => {
 
     expect(result.error).toBe('Could not fetch page');
     expect(result.title).toBeNull();
+  });
+});
+
+describe('registry query bounds', () => {
+  it('exports a stable public/dashboard registry item cap', () => {
+    expect(MAX_REGISTRY_ITEMS).toBe(500);
+  });
+
+  it('keeps public registry reads bounded across function and fallback paths', () => {
+    const serviceSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/registry/registryService.ts'), 'utf8');
+    const functionSource = readFileSync(join(process.cwd(), 'supabase/functions/public-registry-items/index.ts'), 'utf8');
+
+    expect(serviceSource).toContain('limit: MAX_REGISTRY_ITEMS,');
+    expect(serviceSource).toContain('.limit(MAX_REGISTRY_ITEMS);');
+    expect(functionSource).toContain('Math.min(500, Number(body.limit))');
+    expect(functionSource).toContain(') : 500;');
+    expect(functionSource).toContain('.limit(limit);');
   });
 });
 

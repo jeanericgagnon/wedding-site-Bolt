@@ -7363,3 +7363,19 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `npm run proof:v1:comms-center`: PASS, 3/3.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 1:31 PM PT No-Deploy Public Registry Query Cap Alignment
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/registry/registryService.ts` now exports a stable 500-item registry read cap.
+  - `publicFetchRegistryItems(...)` now sends that cap through the `public-registry-items` Edge Function path and applies the same cap to the direct anon fallback query.
+  - `supabase/functions/public-registry-items/index.ts` now clamps/defaults public registry reads to 500 items instead of an inconsistent 100-item default.
+  - `src/pages/dashboard/registry/registryService.test.ts` now pins the bounded read contract across the public browser service and the local Edge Function source.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/registry/registryService.test.ts src/sections/components/RegistrySection.test.tsx src/lib/launchEdgeFunctions.test.ts`: PASS, 57/57.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:registry`: PASS, 4/4 automated checks green; manual runtime proof still pending.
+- Launch status did not change. This is local-only hardening and no deploy was run.

@@ -2470,3 +2470,22 @@ Commands run:
 
 Status:
 - PARTIAL. This narrows one high-volume dashboard query surface without changing the current Messages workflow. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-07 1:31 PM PT - No-Deploy Public Registry Query Cap Alignment
+
+What changed:
+- Exported a stable `MAX_REGISTRY_ITEMS` cap from `src/pages/dashboard/registry/registryService.ts`.
+- `publicFetchRegistryItems(...)` now sends that cap through the `public-registry-items` Edge Function call and applies the same cap to the direct anon fallback query.
+- `supabase/functions/public-registry-items/index.ts` now aligns its request clamp/default to 500 items instead of the older 100-item default.
+- Extended `src/pages/dashboard/registry/registryService.test.ts` to pin the bounded public-read contract across the browser service and the Edge Function source.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/registry/registryService.test.ts src/sections/components/RegistrySection.test.tsx src/lib/launchEdgeFunctions.test.ts`: PASS, 57/57.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `npm run proof:v1:registry`: PASS, 4/4 automated checks green; manual runtime registry proof still pending.
+
+Status:
+- PARTIAL. This keeps public registry reads bounded and consistent across local service and function paths without changing the existing public registry layout behavior. No deploy was run, so production runtime registry truth is still deploy-gated/manual-proof-pending.

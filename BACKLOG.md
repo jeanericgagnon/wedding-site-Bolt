@@ -100,7 +100,7 @@ Current readiness verdict for this intake:
 14. `PARTIAL` - Performance and query safety.
     Problem: overfetching, unscoped queries, and large dataset handling need full audit.
     Acceptance: no unsafe overfetching, queries are scoped, large guest/message/media datasets are paginated or bounded.
-    Current evidence: explicit projection work reduced overfetching; dashboard message-delivery history reads now dedupe requested message ids, cap the per-query message-id set at 50, and cap returned delivery rows at 1000 in `messageService`; message itinerary-audience loading now also caps visible-event reads at 200 and invitation fan-out at 10000; broader pagination/query-efficiency audit remains.
+    Current evidence: explicit projection work reduced overfetching; dashboard message-delivery history reads now dedupe requested message ids, cap the per-query message-id set at 50, and cap returned delivery rows at 1000 in `messageService`; message itinerary-audience loading now also caps visible-event reads at 200 and invitation fan-out at 10000; public registry reads now use the same 500-item cap across the dashboard service, the public Edge Function path, and the direct anon fallback path; broader pagination/query-efficiency audit remains.
 
 15. `PARTIAL` - Asset footprint.
    Problem: production build must not include unnecessary large assets.
