@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  getMessageAccessToken,
   MAX_DASHBOARD_MESSAGES,
   MAX_MESSAGE_DELIVERY_MESSAGE_IDS,
   MAX_MESSAGE_DELIVERY_ROWS,
@@ -11,7 +12,24 @@ import {
   MAX_SMS_CREDIT_TRANSACTIONS,
 } from './messageService';
 
+const { getSessionMock } = vi.hoisted(() => ({
+  getSessionMock: vi.fn(),
+}));
+
+vi.mock('../../../lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getSession: getSessionMock,
+    },
+    from: vi.fn(),
+  },
+}));
+
 describe('message service query bounds', () => {
+  beforeEach(() => {
+    getSessionMock.mockReset();
+  });
+
   it('exports stable delivery query caps', () => {
     expect(MAX_MESSAGE_DELIVERY_MESSAGE_IDS).toBe(50);
     expect(MAX_MESSAGE_DELIVERY_ROWS).toBe(1000);
@@ -49,5 +67,11 @@ describe('message service query bounds', () => {
     expect(source).toContain('.limit(MAX_DASHBOARD_MESSAGES);');
     expect(source).toContain('.limit(MAX_MESSAGE_GUESTS);');
     expect(source).toContain('.limit(MAX_SMS_CREDIT_TRANSACTIONS);');
+  });
+
+  it('loads the bulk-send auth token through the message service', async () => {
+    getSessionMock.mockResolvedValue({ data: { session: { access_token: 'token-123' } } });
+
+    await expect(getMessageAccessToken()).resolves.toBe('token-123');
   });
 });

@@ -10,9 +10,14 @@ describe('dashboard data boundary guards', () => {
     expect(serviceSource).toContain('const MESSAGE_SELECT = [');
     expect(serviceSource).toContain('.select(MESSAGE_SELECT)');
     expect(serviceSource).toContain('createDashboardMessage');
+    expect(serviceSource).toContain('export async function getMessageAccessToken()');
+    expect(serviceSource).toContain('supabase.auth.getSession()');
     expect(source).toContain('createDashboardMessage(payload)');
+    expect(source).toContain('getMessageAccessToken()');
     expect(source).toContain('loadDashboardMessages(weddingSite.id)');
+    expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).not.toContain("supabase.from('messages').insert(payload)");
+    expect(source).not.toContain('supabase.auth.getSession()');
     expect(source).not.toContain(".from('messages')\n        .select('*')");
     expect(source).not.toContain('.from("messages")\n        .select("*")');
   });

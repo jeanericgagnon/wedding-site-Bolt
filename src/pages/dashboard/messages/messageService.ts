@@ -95,6 +95,11 @@ export const MAX_DASHBOARD_MESSAGES = 1000;
 export const MAX_MESSAGE_GUESTS = 5000;
 export const MAX_SMS_CREDIT_TRANSACTIONS = 20;
 
+export async function getMessageAccessToken(): Promise<string> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
+}
+
 export async function createDashboardMessage(payload: MessageInsertPayload): Promise<void> {
   const { error } = await supabase.from('messages').insert(payload);
   if (error) throw error;

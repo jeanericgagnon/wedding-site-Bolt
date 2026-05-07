@@ -3135,3 +3135,21 @@ Commands run:
 
 Status:
 - PARTIAL. This materially advances the itinerary page-to-service migration without changing itinerary projections, guest-invite counts, schedule mirror behavior, or template event creation behavior. No deploy was run.
+
+### 2026-05-07 3:28 PM PT - No-Deploy Message Session Token Service Extraction
+
+What changed:
+- Moved the bulk-send/session token lookup out of `src/pages/dashboard/Messages.tsx` and into `src/pages/dashboard/messages/messageService.ts` via `getMessageAccessToken()`.
+- `Messages.tsx` now calls that helper for both direct bulk send and scheduled dispatch instead of directly invoking `supabase.auth.getSession()`.
+- This removes the last direct Supabase dependency from the messages dashboard page without changing delivery error handling or request payloads.
+- Expanded `src/pages/dashboard/messages/messageService.boundary.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the messages boundary now pins that service-owned auth/session lookup.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts src/lib/dashboardDataBoundary.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `npm run build`
+- `git diff --check`
+
+Status:
+- PARTIAL. This materially advances the messages page-to-service migration without changing delivery request bodies, scheduling behavior, or message query bounds. No deploy was run.

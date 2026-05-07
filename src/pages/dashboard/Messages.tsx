@@ -5,7 +5,6 @@ import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero'
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Input, Textarea } from '../../components/ui';
 import { Send, Clock, Calendar, Save, Loader2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { demoEvents, demoGuests, demoWeddingSite } from '../../lib/demoData';
 import { createSmsCreditsSession } from '../../lib/stripeService';
@@ -79,6 +78,7 @@ import {
 } from './messages/messageDemoStorage';
 import {
   createDashboardMessage,
+  getMessageAccessToken,
   insertDashboardMessageMinimal,
   isMissingMessageDeliveriesTable,
   loadDashboardMessages,
@@ -96,8 +96,7 @@ const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bu
 let hasMessageDeliveriesTable: boolean | null = null;
 
 async function triggerBulkSend(messageId: string): Promise<{ delivered: number; failed: number; skipped?: number; total: number; status: string }> {
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const token = await getMessageAccessToken();
   const res = await fetch(BULK_SEND_URL, {
     method: 'POST',
     headers: {
@@ -114,8 +113,7 @@ async function triggerBulkSend(messageId: string): Promise<{ delivered: number; 
 }
 
 async function triggerScheduledDispatch(limit = 10): Promise<{ processed: number; sent: number; failed: number; partial: number; skippedMessages: number; skippedRecipients: number }> {
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const token = await getMessageAccessToken();
   const res = await fetch(BULK_SEND_URL, {
     method: 'POST',
     headers: {
