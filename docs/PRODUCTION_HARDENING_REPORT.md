@@ -3058,3 +3058,24 @@ Commands run:
 
 Status:
 - PARTIAL. This materially advances the auth-entry page-to-service migration without changing login copy, invite handoff behavior, quick-start handoff, or password reset routing. No deploy was run.
+
+### 2026-05-07 3:15 PM PT - No-Deploy Collaborator Invite Auth Service Extraction
+
+What changed:
+- Moved the invited-account auth flow out of `src/pages/AcceptCollaboratorInvite.tsx` and further into `src/pages/acceptCollaboratorInviteService.ts`.
+- `acceptCollaboratorInviteService.ts` now owns:
+  - invited account password sign-in via `signInCollaboratorInviteAccount(...)`
+  - invited account sign-up plus sign-in fallback via `createCollaboratorInviteAccount(...)`
+  - invite-specific fallback messaging for confirmation-required and incomplete account creation states
+- `AcceptCollaboratorInvite.tsx` still owns invite/session orchestration and the final claim flow, but no longer directly invokes `supabase.auth.signInWithPassword` or `supabase.auth.signUp`.
+- Expanded `src/pages/acceptCollaboratorInviteService.test.ts` to pin that auth-entry service contract.
+
+Commands run:
+- `npm test -- --run src/pages/acceptCollaboratorInviteService.test.ts src/lib/authErrorCopy.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `npm run build`
+- `git diff --check`
+
+Status:
+- PARTIAL. This materially advances the collaborator-invite page-to-service migration without changing invite validation, session-claim orchestration, or collaborator redirect behavior. No deploy was run.

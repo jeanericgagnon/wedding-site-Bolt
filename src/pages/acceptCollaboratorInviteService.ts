@@ -1,5 +1,13 @@
 import { supabase } from '../lib/supabase';
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+    return error.message;
+  }
+  return String(error);
+}
+
 export type CollaboratorInviteLookupRow = {
   id: string;
   wedding_site_id: string;
@@ -17,6 +25,17 @@ export type CollaboratorInviteSiteDetails = {
 };
 
 export type CollaboratorInviteInfo = CollaboratorInviteLookupRow & CollaboratorInviteSiteDetails;
+
+export type CollaboratorInviteAuthUser = {
+  id: string;
+  email?: string | null;
+  user_metadata?: Record<string, unknown> | null;
+};
+
+export type CollaboratorInviteAuthResult = {
+  user: CollaboratorInviteAuthUser;
+  sessionReady: boolean;
+};
 
 export const COLLABORATOR_INVITE_LOOKUP_SELECT = 'id, wedding_site_id, invite_email, invite_name, role, status, expires_at';
 export const COLLABORATOR_INVITE_SITE_SELECT = 'site_slug, couple_name_1, couple_name_2';
@@ -61,4 +80,64 @@ export async function claimCollaboratorInviteByToken(token: string): Promise<voi
   });
 
   if (error) throw error;
+}
+
+export async function signInCollaboratorInviteAccount(email: string, password: string): Promise<CollaboratorInviteAuthResult> {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) throw error;
+  if (!data.user) {
+    throw new Error('Signed in, but your user session was not ready. Please try again.');
+  }
+
+  return {
+    user: data.user as CollaboratorInviteAuthUser,
+    sessionReady: !!data.session,
+  };
+}
+
+export async function createCollaboratorInviteAccount(
+  email: string,
+  password: string,
+  fullName: string,
+): Promise<CollaboratorInviteAuthUser> {
+  const trimmedFullName = fullName.trim();
+  const { data: authData, error: signUpError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        name: trimmedFullName,
+        full_name: trimmedFullName,
+      },
+    },
+  });
+
+  if (signUpError) throw signUpError;
+
+  let signedInUser = authData.user as CollaboratorInviteAuthUser | null;
+  if (!authData.session) {
+    try {
+      const signInResult = await signInCollaboratorInviteAccount(email, password);
+      signedInUser = signInResult.user;
+    } catch (error) {
+      const message = getErrorMessage(error).toLowerCase();
+      if (message.includes('invalid login credentials')) {
+        throw new Error('Account creation did not complete cleanly. Please press Create account and join team once more, or use a fresh invited email.');
+      }
+      if (message.includes('email not confirmed') || message.includes('email_not_confirmed')) {
+        throw new Error(`Account created for ${email}. Check your email to confirm your address, then come back to this invite link to finish joining.`);
+      }
+      throw error;
+    }
+  }
+
+  if (!signedInUser) {
+    throw new Error('Account created. Please sign in from this page to finish accepting the invite.');
+  }
+
+  return signedInUser;
 }

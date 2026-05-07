@@ -7789,3 +7789,17 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 3:15 PM PT No-Deploy Collaborator Invite Auth Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/acceptCollaboratorInviteService.ts` now owns invited-account password sign-in and sign-up fallback instead of leaving those auth calls inline in `src/pages/AcceptCollaboratorInvite.tsx`.
+  - `src/pages/AcceptCollaboratorInvite.tsx` now calls `signInCollaboratorInviteAccount(...)` and `createCollaboratorInviteAccount(...)` instead of directly invoking `supabase.auth.signInWithPassword` and `supabase.auth.signUp`.
+  - `src/pages/acceptCollaboratorInviteService.test.ts` now pins the collaborator-invite auth/service boundary, including the confirmation-required fallback guidance.
+- Proof passed:
+  - `npm test -- --run src/pages/acceptCollaboratorInviteService.test.ts src/lib/authErrorCopy.test.ts`: PASS, 9/9.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

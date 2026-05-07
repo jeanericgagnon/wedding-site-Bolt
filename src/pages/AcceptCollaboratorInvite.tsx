@@ -7,7 +7,9 @@ import { useAuth, type AuthUser } from '../contexts/AuthContext';
 import { getCollaboratorRedirectPath, getInviteSiteLabel, isInviteEmailMatch, resolveInviteValidationState } from './acceptCollaboratorInviteUtils';
 import {
   claimCollaboratorInviteByToken,
+  createCollaboratorInviteAccount,
   fetchCollaboratorInviteInfo,
+  signInCollaboratorInviteAccount,
   type CollaboratorInviteInfo,
 } from './acceptCollaboratorInviteService';
 import { logAppAction } from '../lib/actionAudit';
@@ -214,19 +216,13 @@ export const AcceptCollaboratorInvite: React.FC = () => {
     setClaimMessage(null);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: signInForm.email,
-        password: signInForm.password,
-      });
-
-      if (error) throw error;
-      if (!data.user) throw new Error('Signed in, but your user session was not ready. Please try again.');
+      const authResult = await signInCollaboratorInviteAccount(signInForm.email, signInForm.password);
 
       if (!inviteInfo) throw new Error('Invite details are incomplete.');
       await finishClaim({
-        id: data.user.id,
-        email: data.user.email || signInForm.email,
-        name: data.user.user_metadata?.name || data.user.email || signInForm.email,
+        id: authResult.user.id,
+        email: authResult.user.email || signInForm.email,
+        name: authResult.user.user_metadata?.name as string | undefined || authResult.user.email || signInForm.email,
       }, inviteInfo);
     } catch (err) {
       setAuthError(safeAuthError(err, 'Couldn’t sign you in right now.'));
@@ -255,49 +251,17 @@ export const AcceptCollaboratorInvite: React.FC = () => {
     }
 
     try {
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: signUpForm.email,
-        password: signUpForm.password,
-        options: {
-          data: {
-            name: signUpForm.fullName.trim(),
-            full_name: signUpForm.fullName.trim(),
-          },
-        },
-      });
-
-      if (signUpError) throw signUpError;
-
-      let signedInUser = authData.user;
-      if (!authData.session) {
-        const signInRes = await supabase.auth.signInWithPassword({
-          email: signUpForm.email,
-          password: signUpForm.password,
-        });
-
-        if (signInRes.error) {
-          const msg = signInRes.error.message.toLowerCase();
-          if (msg.includes('invalid login credentials')) {
-            throw new Error('Account creation did not complete cleanly. Please press Create account and join team once more, or use a fresh invited email.');
-          }
-          if (msg.includes('email not confirmed') || msg.includes('email_not_confirmed')) {
-            throw new Error(`Account created for ${signUpForm.email}. Check your email to confirm your address, then come back to this invite link to finish joining.`);
-          }
-          throw signInRes.error;
-        }
-
-        signedInUser = signInRes.data.user;
-      }
-
-      if (!signedInUser) {
-        throw new Error('Account created. Please sign in from this page to finish accepting the invite.');
-      }
+      const signedInUser = await createCollaboratorInviteAccount(
+        signUpForm.email,
+        signUpForm.password,
+        signUpForm.fullName,
+      );
 
       if (!inviteInfo) throw new Error('Invite details are incomplete.');
       await finishClaim({
         id: signedInUser.id,
         email: signedInUser.email || signUpForm.email,
-        name: signedInUser.user_metadata?.name || signUpForm.fullName.trim() || signedInUser.email || signUpForm.email,
+        name: signedInUser.user_metadata?.name as string | undefined || signUpForm.fullName.trim() || signedInUser.email || signUpForm.email,
       }, inviteInfo);
     } catch (err) {
       setAuthError(safeCollaboratorInviteError(err, 'Couldn’t create your account right now.'));
