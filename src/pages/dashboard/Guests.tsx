@@ -24,7 +24,7 @@ import {
 import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { extractDietaryNote } from '../../lib/dietaryNotes';
 import { deriveInviteEvents } from '../../lib/rsvpEventFallback';
-import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds, getEventRsvpSnapshotsByInvitationIds, restoreEventRsvpSnapshots, type EventRsvpSnapshot } from '../../lib/eventRsvpCleanup';
+import { deleteEventRsvpByInvitationId, getEventRsvpSnapshotsByInvitationIds, restoreEventRsvpSnapshots } from '../../lib/eventRsvpCleanup';
 import { GUEST_IMPORT_MAX_FILE_BYTES, GUEST_IMPORT_MAX_ROWS, buildDefaultCsvFieldMap, buildGuestImportPreview, isCsvNameMappingValid, readGuestImportRows, type CsvFieldMap } from '../../lib/guestImportParser';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
@@ -113,6 +113,23 @@ import {
   type RsvpFollowUpTask,
   type RsvpSavedSegment,
 } from './guests/guestDashboardStorage';
+import {
+  createGuest,
+  deleteAllGuestsForSite,
+  deleteGuestById,
+  deleteGuestWithDependencies,
+  fetchGuestRsvps,
+  generateSecureGuestInviteToken,
+  insertEventInvitations,
+  insertImportedGuests,
+  replaceGuestEventInvitations,
+  replaceImportedGuestRsvps,
+  restoreGuestEventInvitations,
+  toEventInvitationRows,
+  updateGuest,
+  updateHouseholdGuestIds,
+  type GuestEventInvitationRollback,
+} from './guests/guestService';
 
 export const DashboardGuests: React.FC = () => {
   const navigate = useNavigate();
@@ -431,8 +448,8 @@ export const DashboardGuests: React.FC = () => {
       if (guestsData) {
         const guestIds = guestsData.map(g => g.id);
         const windowStartIso = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString();
-        const [{ data: rsvpsData, error: rsvpsError }, { data: conflictsData, error: conflictsError }, { data: conflictHistoryData, error: conflictHistoryError }] = await Promise.all([
-          supabase.from('rsvps').select('guest_id, attending, attending_ceremony, attending_reception, meal_choice, plus_one_name, plus_one_count, children_count, notes, custom_answers').in('guest_id', guestIds),
+        const [rsvpsData, { data: conflictsData, error: conflictsError }, { data: conflictHistoryData, error: conflictHistoryError }] = await Promise.all([
+          fetchGuestRsvps(guestIds),
           supabase
             .from('rsvp_conflicts')
             .select('id, guest_id, conflict_code, message, severity, created_at, resolved, resolved_at')
@@ -449,13 +466,12 @@ export const DashboardGuests: React.FC = () => {
             .limit(500),
         ]);
 
-        if (rsvpsError) throw rsvpsError;
         if (conflictsError) throw conflictsError;
         if (conflictHistoryError) throw conflictHistoryError;
 
         const guestsWithRsvps = guestsData.map(guest => ({
           ...guest,
-          rsvp: rsvpsData?.find(r => r.guest_id === guest.id),
+          rsvp: (rsvpsData as Array<{ guest_id: string }>).find(r => r.guest_id === guest.id),
         }));
 
         setGuests(guestsWithRsvps as unknown as GuestWithRSVP[]);
@@ -761,13 +777,7 @@ export const DashboardGuests: React.FC = () => {
   }, [guestsTab, rsvpConfigDirty, rsvpQuestions, rsvpMealEnabled, rsvpMealOptions]);
 
   const generateSecureToken = async (): Promise<string> => {
-    const { data, error } = await supabase.rpc('generate_secure_token', { byte_length: 32 });
-    if (!error && data) return data as string;
-
-    // Fallback for environments where the RPC is missing.
-    const bytes = new Uint8Array(32);
-    crypto.getRandomValues(bytes);
-    return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+    return generateSecureGuestInviteToken();
   };
 
   const generateLocalInviteToken = () => `demo_${Math.random().toString(36).slice(2, 14)}`;
@@ -814,32 +824,18 @@ export const DashboardGuests: React.FC = () => {
       const invitedToReception = selectedEventIds.includes('legacy-reception');
       const realEventIds = selectedEventIds.filter((id) => !id.startsWith('legacy-'));
 
-      const { data: createdGuest, error } = await supabase
-        .from('guests')
-        .insert([{
-          wedding_site_id: weddingSiteId,
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          name: `${formData.first_name} ${formData.last_name}`,
-          email: formData.email || null,
-          phone: formData.phone || null,
-          plus_one_allowed: formData.plus_one_allowed,
-          invited_to_ceremony: invitedToCeremony,
-          invited_to_reception: invitedToReception,
-          invite_token: inviteToken,
-          rsvp_status: 'pending',
-        }])
-        .select('id')
-        .single();
-
-      if (error) throw error;
-      createdGuestId = createdGuest.id;
-
-      if (createdGuest?.id && realEventIds.length > 0) {
-        const rows = realEventIds.map((eventId) => ({ event_id: eventId, guest_id: createdGuest.id }));
-        const { error: inviteError } = await supabase.from('event_invitations').insert(rows);
-        if (inviteError) throw inviteError;
-      }
+      createdGuestId = await createGuest({
+        weddingSiteId,
+        firstName: formData.first_name,
+        lastName: formData.last_name,
+        email: formData.email || null,
+        phone: formData.phone || null,
+        plusOneAllowed: formData.plus_one_allowed,
+        invitedToCeremony,
+        invitedToReception,
+        inviteToken,
+      });
+      await insertEventInvitations(toEventInvitationRows(createdGuestId, realEventIds));
 
       await fetchGuests();
       setShowAddModal(false);
@@ -847,7 +843,7 @@ export const DashboardGuests: React.FC = () => {
       toast(`${formData.first_name} ${formData.last_name} added`, 'success');
     } catch (err) {
       if (createdGuestId) {
-        await supabase.from('guests').delete().eq('id', createdGuestId);
+        await deleteGuestById(createdGuestId);
       }
       toast(safeGuestsDashboardError(err, 'Couldn’t add guest. Please try again.'), 'error');
     }
@@ -871,8 +867,7 @@ export const DashboardGuests: React.FC = () => {
       invited_to_ceremony: editingGuest.invited_to_ceremony,
       invited_to_reception: editingGuest.invited_to_reception,
     };
-    let previousInviteEventIds: string[] = [];
-    let previousEventRsvpSnapshots: EventRsvpSnapshot[] = [];
+    let eventInvitationRollback: GuestEventInvitationRollback | null = null;
     let guestUpdated = false;
     let invitesCleared = false;
 
@@ -904,48 +899,21 @@ export const DashboardGuests: React.FC = () => {
       const invitedToReception = selectedEventIds.includes('legacy-reception');
       const realEventIds = selectedEventIds.filter((id) => !id.startsWith('legacy-'));
 
-      const { error } = await supabase
-        .from('guests')
-        .update({
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          name: `${formData.first_name} ${formData.last_name}`,
-          email: formData.email || null,
-          phone: formData.phone || null,
-          plus_one_allowed: formData.plus_one_allowed,
-          invited_to_ceremony: invitedToCeremony,
-          invited_to_reception: invitedToReception,
-        })
-        .eq('id', editingGuest.id);
-
-      if (error) throw error;
+      await updateGuest({
+        guestId: editingGuest.id,
+        firstName: formData.first_name,
+        lastName: formData.last_name,
+        name: `${formData.first_name} ${formData.last_name}`,
+        email: formData.email || null,
+        phone: formData.phone || null,
+        plusOneAllowed: formData.plus_one_allowed,
+        invitedToCeremony,
+        invitedToReception,
+      });
       guestUpdated = true;
 
-      const { data: existingInvitationRows, error: existingInvitesError } = await supabase
-        .from('event_invitations')
-        .select('id, event_id')
-        .eq('guest_id', editingGuest.id);
-      if (existingInvitesError) throw existingInvitesError;
-
-      previousInviteEventIds = (existingInvitationRows ?? []).map((row) => row.event_id as string);
-      const existingInvitationIds = (existingInvitationRows ?? []).map((row) => row.id as string);
-      if (existingInvitationIds.length > 0) {
-        previousEventRsvpSnapshots = await getEventRsvpSnapshotsByInvitationIds(existingInvitationIds);
-        await deleteEventRsvpsByInvitationIds(existingInvitationIds);
-      }
-
-      const { error: clearInvitesError } = await supabase
-        .from('event_invitations')
-        .delete()
-        .eq('guest_id', editingGuest.id);
-      if (clearInvitesError) throw clearInvitesError;
+      eventInvitationRollback = await replaceGuestEventInvitations(editingGuest.id, realEventIds);
       invitesCleared = true;
-
-      if (realEventIds.length > 0) {
-        const rows = realEventIds.map((eventId) => ({ event_id: eventId, guest_id: editingGuest.id }));
-        const { error: inviteError } = await supabase.from('event_invitations').insert(rows);
-        if (inviteError) throw inviteError;
-      }
 
       await fetchGuests();
       setEditingGuest(null);
@@ -953,17 +921,21 @@ export const DashboardGuests: React.FC = () => {
       toast('Guest updated', 'success');
     } catch {
       if (!isDemoMode) {
-        if (invitesCleared) {
-          const rollbackEventIds = previousInviteEventIds.filter((eventId) => !eventId.startsWith('legacy-'));
-          if (rollbackEventIds.length > 0) {
-            await supabase.from('event_invitations').insert(
-              rollbackEventIds.map((eventId) => ({ event_id: eventId, guest_id: editingGuest.id })),
-            );
-            await restoreEventRsvpSnapshots(previousEventRsvpSnapshots);
-          }
+        if (invitesCleared && eventInvitationRollback) {
+          await restoreGuestEventInvitations(editingGuest.id, eventInvitationRollback);
         }
         if (guestUpdated) {
-          await supabase.from('guests').update(previousGuestValues).eq('id', editingGuest.id);
+          await updateGuest({
+            guestId: editingGuest.id,
+            firstName: previousGuestValues.first_name,
+            lastName: previousGuestValues.last_name,
+            name: previousGuestValues.name,
+            email: previousGuestValues.email,
+            phone: previousGuestValues.phone,
+            plusOneAllowed: previousGuestValues.plus_one_allowed,
+            invitedToCeremony: previousGuestValues.invited_to_ceremony,
+            invitedToReception: previousGuestValues.invited_to_reception,
+          });
         }
       }
       toast('Couldn’t update guest. Please try again.', 'error');
@@ -994,41 +966,14 @@ export const DashboardGuests: React.FC = () => {
         return;
       }
 
-      const { data: invitationRows, error: invitationLookupError } = await supabase
-        .from('event_invitations')
-        .select('id')
-        .eq('guest_id', guestId);
-      if (invitationLookupError) throw invitationLookupError;
-
-      const invitationIds = (invitationRows ?? []).map((row) => row.id as string);
-      if (invitationIds.length > 0) {
-        await deleteEventRsvpsByInvitationIds(invitationIds);
-        const { error: inviteDeleteError } = await supabase
-          .from('event_invitations')
-          .delete()
-          .eq('guest_id', guestId);
-        if (inviteDeleteError) throw inviteDeleteError;
-      }
-
-      const { error: rsvpDeleteError } = await supabase
-        .from('rsvps')
-        .delete()
-        .eq('guest_id', guestId);
-      if (rsvpDeleteError) throw rsvpDeleteError;
-
-      const { error } = await supabase
-        .from('guests')
-        .delete()
-        .eq('id', guestId);
-
-      if (error) throw error;
+      const { invitationCount } = await deleteGuestWithDependencies(guestId);
 
       await fetchGuests();
       logGuestAction('guest_deleted', 'Guest was deleted from the guest list.', {
         hadRsvp: Boolean(guest?.rsvp),
         hadEmail: Boolean(guest?.email),
         hadPhone: Boolean(guest?.phone),
-        invitationCount: invitationIds.length,
+        invitationCount,
       }, guestId, guest?.name || 'Guest');
       toast('Guest removed', 'success');
     } catch {
@@ -2058,37 +2003,7 @@ const handleSendBulkInvitations = async () => {
 
     setDeleteAllBusy(true);
     try {
-      const { data: guestRows, error: guestReadError } = await supabase
-        .from('guests')
-        .select('id')
-        .eq('wedding_site_id', weddingSiteId);
-      if (guestReadError) throw guestReadError;
-
-      const guestIds = (guestRows ?? []).map((g) => g.id as string);
-
-      // Best-effort dependency cleanup for environments without full FK cascades.
-      if (guestIds.length > 0) {
-        const { data: invitationRows } = await supabase
-          .from('event_invitations')
-          .select('id')
-          .in('guest_id', guestIds);
-
-        const invitationIds = (invitationRows ?? []).map((row) => row.id as string);
-
-        if (invitationIds.length > 0) {
-          await deleteEventRsvpsByInvitationIds(invitationIds);
-        }
-        const { error: eventInvitationDeleteError } = await supabase.from('event_invitations').delete().in('guest_id', guestIds);
-        if (eventInvitationDeleteError) throw eventInvitationDeleteError;
-        const { error: rsvpDeleteError } = await supabase.from('rsvps').delete().in('guest_id', guestIds);
-        if (rsvpDeleteError) throw rsvpDeleteError;
-      }
-
-      const { error } = await supabase
-        .from('guests')
-        .delete()
-        .eq('wedding_site_id', weddingSiteId);
-      if (error) throw error;
+      const { guestIds } = await deleteAllGuestsForSite(weddingSiteId);
 
       await fetchGuests();
       setSelectedGuestIds(new Set());
@@ -2269,13 +2184,7 @@ const handleSendBulkInvitations = async () => {
         return row;
       });
 
-      const { data: insertedGuests, error } = await supabase
-        .from('guests')
-        .insert(guestRows)
-        .select('id, first_name, last_name, name, email');
-      if (error) throw error;
-
-      const inserted = insertedGuests ?? [];
+      const inserted = await insertImportedGuests(guestRows);
       const keyToGuestIds = new Map<string, string[]>();
       const householdLastNames = new Map<string, Set<string>>();
       guestsWithTokens.forEach((row, idx) => {
@@ -2300,12 +2209,7 @@ const handleSendBulkInvitations = async () => {
           guardedHouseholds += 1;
           continue;
         }
-        const householdId = ids[0];
-        const { error: householdUpdateError } = await supabase
-          .from('guests')
-          .update({ household_id: householdId })
-          .in('id', ids);
-        if (householdUpdateError) throw householdUpdateError;
+        await updateHouseholdGuestIds(ids[0], ids);
       }
 
       const eventInviteRows: Array<{ event_id: string; guest_id: string }> = [];
@@ -2335,17 +2239,11 @@ const handleSendBulkInvitations = async () => {
       });
 
       if (eventInviteRows.length > 0) {
-        const { error: inviteError } = await supabase.from('event_invitations').insert(eventInviteRows);
-        if (inviteError) throw inviteError;
+        await insertEventInvitations(eventInviteRows);
       }
 
       if (rsvpRows.length > 0) {
-        const rsvpGuestIds = Array.from(new Set(rsvpRows.map((r) => r.guest_id)));
-        const { error: rsvpDeleteError } = await supabase.from('rsvps').delete().in('guest_id', rsvpGuestIds);
-        if (rsvpDeleteError) throw rsvpDeleteError;
-
-        const { error: rsvpInsertError } = await supabase.from('rsvps').insert(rsvpRows);
-        if (rsvpInsertError) throw rsvpInsertError;
+        await replaceImportedGuestRsvps(rsvpRows);
       }
 
       await fetchGuests();

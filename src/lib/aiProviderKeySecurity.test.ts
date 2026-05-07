@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const filesThatMustNotReadBrowserProviderKeys = [
@@ -13,6 +13,14 @@ const browserReadableAiSources = [
   'src/pages/dashboard/GuestPhotoSharing.tsx',
   'tests/e2e/photo-upload-write-read.spec.ts',
   'supabase/functions/guest-recap-config/index.ts',
+];
+
+const localEnvFilesThatMustNotExposeBrowserAiKeys = [
+  '.env',
+  '.env.local',
+  '.env.production',
+  '.env.production.local',
+  '.vercel/.env.production.local',
 ];
 
 const sensitiveAiPhotoColumns = [
@@ -40,6 +48,14 @@ const extractSelectListsForTable = (source: string, tableName: string) => {
 describe('AI provider key security', () => {
   it('keeps model provider API keys out of browser-visible env paths', () => {
     for (const filePath of filesThatMustNotReadBrowserProviderKeys) {
+      const source = readFileSync(filePath, 'utf8');
+      expect(source, filePath).not.toMatch(/VITE_OPENAI_API_KEY|VITE_OPENAI_MODEL/);
+    }
+  });
+
+  it('keeps local env files free of browser-readable AI provider keys', () => {
+    for (const filePath of localEnvFilesThatMustNotExposeBrowserAiKeys) {
+      if (!existsSync(filePath)) continue;
       const source = readFileSync(filePath, 'utf8');
       expect(source, filePath).not.toMatch(/VITE_OPENAI_API_KEY|VITE_OPENAI_MODEL/);
     }

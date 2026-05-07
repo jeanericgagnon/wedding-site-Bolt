@@ -31,11 +31,28 @@ const keyFiles = [
   '.env.example',
 ];
 
+const localEnvFiles = [
+  '.env',
+  '.env.local',
+  '.env.production',
+  '.env.production.local',
+  '.vercel/.env.production.local',
+];
+
 for (const filePath of keyFiles) {
   addCheck(
     `no-browser-provider-key-path:${filePath}`,
     exists(filePath) && notHas(filePath, /VITE_OPENAI_API_KEY|VITE_OPENAI_MODEL|sk-proj/),
     `${filePath} must not expose browser-readable model keys or model env names.`,
+  );
+}
+
+for (const filePath of localEnvFiles) {
+  if (!exists(filePath)) continue;
+  addCheck(
+    `no-browser-provider-key-in-local-env:${filePath}`,
+    notHas(filePath, /VITE_OPENAI_API_KEY|VITE_OPENAI_MODEL/),
+    `${filePath} must not contain browser-readable AI provider env keys.`,
   );
 }
 
@@ -134,8 +151,8 @@ addCheck(
   'customer-copy-guards-block-ai-provider-leakage',
   has('src/lib/launchWordingGuard.test.ts', /OPENAI_API_KEY/)
     && has('src/lib/launchWordingGuard.test.ts', /AI spend/)
-    && has('src/lib/photoAnalysisCustomerCopy.ts', /openai\|gpt/)
-    && has('src/lib/photoAnalysisCustomerCopy.ts', /service\\s\*role/),
+    && has('src/lib/photoAnalysisCustomerCopy.ts', /openai|gpt/)
+    && has('src/lib/photoAnalysisCustomerCopy.ts', /service\[-_\\s\]\*role/),
   'Customer-visible wording guards must block provider/key/spend/raw infrastructure language.',
 );
 

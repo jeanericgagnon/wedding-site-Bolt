@@ -23,7 +23,7 @@ Required outputs for execution:
 
 Current readiness verdict for this intake:
 - Status: `PARTIAL`.
-- Final Production Readiness Score: 8/10 based on local hardening progress plus green approved postdeploy proof for the current non-SMS launch surface, with remaining P1/P2 and secure service-role/model proof still open.
+- Final Production Readiness Score: 8/10 based on local hardening progress plus green approved postdeploy proof for the current non-SMS launch surface, with remaining P1/P2 work and the secure service-role queue/storage proof still open.
 - Do not claim 10/10 or production-ready until every P0/P1 item below is `DONE` with tests/proof and the validation lane is recorded.
 
 ### P0 - Must Fix Before Real Users
@@ -43,10 +43,10 @@ Current readiness verdict for this intake:
    Acceptance: RSVP sessions require invite token or a verified server-issued flow.
    Current evidence: `lookup_guest` requires an existing short-lived session and broad name lookup no longer mints sessions; `validate-rsvp-token` was redeployed anon-callable with internal session validation and strict live RSVP smoke passed at 2:15 PM PT.
 
-4. `PARTIAL` - Scope RSVP lookup.
+4. `DONE` - Scope RSVP lookup.
    Problem: prevent cross-site lookup and global guest enumeration.
    Acceptance: guests cannot be discovered outside one site and guest lists cannot be enumerated through search.
-   Current evidence: invite lookup is now exact-token scoped, guest-facing RSVP copy now points guests to invitation-code lookup instead of name lookup, guest contact lookup is public-gate scoped and full-name exact-match only, and local broad/ambiguous lookup responses were reduced; additional live site-scoped abuse proof remains required.
+   Current evidence: invite lookup is now exact-token scoped, guest-facing RSVP copy now points guests to invitation-code lookup instead of name lookup, guest contact lookup is public-gate scoped and full-name exact-match only, and live `proof:v1:guest-lookup-scope` is green on the production proof site: last-name-only, mismatched full-name, and reversed-name lookups all return no matches, while exact full-name lookup returns one scoped `contact_session` plus household size without raw guest or site ids.
 
 5. `DONE` - Rate limit lookup paths.
    Problem: name lookup, token lookup, and password attempts must be rate-limited.
@@ -63,27 +63,27 @@ Current readiness verdict for this intake:
 7. `PARTIAL` - Centralize access control through `public-site-access`.
    Problem: all public access must flow through the public access resolver; no bypass paths.
    Acceptance: public site, public registry, and public itinerary share the same access-state contract.
-   Current evidence: major public route/subresource paths were moved toward the resolver contract; audit for any remaining direct public reads is still required.
+   Current evidence: major public route/subresource paths were moved toward the resolver contract, `npm run proof:v1:public-access-coverage` is green across the public subresource function set, the audit explicitly covers the resolver itself plus the signed-session `guest-contact-submit` exception, `photo-upload` no longer carries a stale published-only shortcut after the shared gate check, public interactive hub/music requests now run through `interactive-section-public` instead of direct browser table reads, vault contribution config reads now run through `vault-contribution-public` instead of direct browser access to `vault_configs`, the `PhotoUpload` guest prospect opt-in follow-up now forwards the same invite/password public-access artifacts as the upload request itself, and `src/lib/publicGuestSurfaceBoundary.test.ts` now pins that the main guest-facing pages/helpers stay off direct browser table reads and route through gated Edge Functions or resolver helpers; broader residual public-surface review is narrower but still not fully closed.
 
 8. `PARTIAL` - Audit service-role usage.
    Problem: service-role functions must not trust client-supplied IDs and must validate access server-side.
    Acceptance: every service-role function has authorization disposition plus tests/proof.
-   Current evidence: service-role inventory/disposition doc and static guard exist. Messaging and photo/media mutation functions now use shared role-aware collaborator checks that block `viewer` mutations even with stale explicit permission rows. Live unauthenticated denial proof and live limited-collaborator forbidden photo/media mutation/export proof are now green; remaining proof is planner/coordinator allowed-mutation coverage plus secure service-role storage/cross-table and queue-processing proof.
+   Current evidence: service-role inventory/disposition doc and static guard exist. Messaging and photo/media mutation functions now use shared role-aware collaborator checks that block `viewer` mutations even with stale explicit permission rows. Live unauthenticated denial proof, live limited-collaborator forbidden mutation/export proof, live planner `queue-guest-followups` allow proof, and live coordinator `photo-export-manifest` allow proof are now green; remaining proof is secure service-role storage/cross-table and queue-processing proof.
 
-9. `PARTIAL` - Complete SSRF hardening.
+9. `DONE` - Complete SSRF hardening.
    Problem: registry preview must block IPv6/private ranges, validate DNS strictly, and rate-limit strongly.
    Acceptance: hostile private/metadata/internal/redirect/oversize/timeout targets are rejected with safe errors.
-   Current evidence: local IPv6/private AAAA, reserved/special IPv4 range blocking, redirect revalidation, size/type/timeout controls, and durable rate-limit hardening exist; full hostile-target runtime matrix remains required.
+   Current evidence: local IPv6/private AAAA, reserved/special IPv4 range blocking, redirect revalidation, size/type/timeout controls, and durable rate-limit hardening exist. The live hostile-target runtime matrix is now green against `registry-preview` for metadata, localhost/subdomain, reserved host, decimal/hex/short loopback, private IPv4, IPv6 loopback, credentialed URL, and non-HTTP scheme inputs, all blocked before fetch with the safe `Enter a public product URL.` copy.
 
 10. `PARTIAL` - Email safety.
     Problem: email HTML must be escaped, URLs validated, and subjects sanitized.
     Acceptance: all email-producing paths use shared escaping/sanitization and tests cover hostile names/body/URLs/subjects.
-    Current evidence: `send-wedding-email`, `process-email-queue`, and `send-bulk-message` now import shared Edge Function email safety helpers for HTML escaping, safe URLs, href escaping, and subject sanitization. Direct wedding emails, bulk/scheduled messages, and queued guest follow-ups now reject `viewer` collaborators even when a malformed explicit `messages`/`guests` permission exists. Focused static proof, planner-access tests, typecheck, quiet lint, build, message smoke, live unauthenticated denial proof, and live limited-collaborator forbidden message/follow-up proof are green; remaining proof is planner/coordinator allowed-action live coverage plus secure queue-processing proof.
+    Current evidence: `send-wedding-email`, `process-email-queue`, and `send-bulk-message` now import shared Edge Function email safety helpers for HTML escaping, safe URLs, href escaping, and subject sanitization. Direct wedding emails, bulk/scheduled messages, and queued guest follow-ups now reject `viewer` collaborators even when a malformed explicit `messages`/`guests` permission exists. Focused static proof, planner-access tests, typecheck, quiet lint, build, message smoke, live unauthenticated denial proof, live limited-collaborator forbidden message/follow-up proof, and live planner `queue-guest-followups` allow proof are green; remaining proof is secure queue-processing proof.
 
 11. `PARTIAL` - Validation must pass and be recorded.
    Required commands: `npm run typecheck`, `npm run lint`, `npm run build`, `npm test`, `npm run test:smoke`, `npm run smoke:registry`, `npm run smoke:rsvp`, `npm run smoke:site`, `npm run guard:file-size`.
    Acceptance: every command passes or failure is fixed/documented in `docs/PRODUCTION_HARDENING_REPORT.md`.
-   Current evidence: `docs/PRODUCTION_HARDENING_REPORT.md` exists and records the latest validation lane. CI hardpass now runs typecheck, quiet lint, file-size guard, asset guard, tests, build, registry smoke, CSV mapper smoke, check-in smoke, messages smoke, and strict RSVP when secrets are present. Local typecheck/lint/build/test/guard and non-RSVP smoke lanes pass; `smoke:rsvp` fails live with deployed 503 responses.
+   Current evidence: `docs/PRODUCTION_HARDENING_REPORT.md` exists and records the latest validation lane. CI hardpass now runs typecheck, quiet lint, file-size guard, asset guard, tests, build, registry smoke, CSV mapper smoke, check-in smoke, messages smoke, and strict RSVP when secrets are present. `proof:v1:canonical-smoke`, `proof:v1:guest-lookup-scope`, `proof:v1:guests-rsvp-ops`, `proof:v1:comms-center`, `proof:v1:coordinator-dayof`, `proof:v1:registry`, `proof:v1:registry-preview-ssrf`, `proof:v1:seating-continuity`, and `proof:v1:prereqs` are green when run against the live target with network access. `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance` is green again with `launchCleared: true` and `migration_applied_and_readback_green`. The remaining gaps are now narrower: secure service-role proof env for full queue/storage integrity and already-deferred provider secrets.
 
 ### P2 - Required Stability
 
@@ -95,7 +95,7 @@ Current readiness verdict for this intake:
 13. `PARTIAL` - Remove direct Supabase calls from pages.
     Problem: page components still own too much data access.
     Acceptance: sensitive reads/writes move into repository/service layers with explicit projections and testable contracts.
-    Current evidence: many broad `select("*")` projections were replaced by explicit projections; full service-layer migration remains.
+    Current evidence: many broad `select("*")` projections were replaced by explicit projections; the last page-level Supabase mutation/RPC calls in `AcceptCollaboratorInvite.tsx` and `Guests.tsx` now run through helper services instead of direct TSX calls; full service-layer migration still remains.
 
 14. `PARTIAL` - Performance and query safety.
     Problem: overfetching, unscoped queries, and large dataset handling need full audit.
@@ -125,7 +125,7 @@ Current readiness verdict for this intake:
 - DONE: Strict RSVP smoke now proves the hardened short-lived RSVP session model instead of submitting durable invite tokens.
 - DONE: Check-in guard now follows the extracted utility implementation and its unit proof.
 - Validation passed: `npm run proof:v1:postdeploy` passed 8/8 against `https://dayof.love`, including canonical smoke, prereqs, AI rollout/static exposure, runtime wording truth, public quality, guests/RSVP ops, and anon-limited data integrity.
-- Remaining: full service-role cross-table/storage integrity proof, live model-backed AI proof after server-side key configuration, remaining P1/P2 architecture/asset/test-lane cleanup, and GitHub push/commit synchronization.
+- Remaining: full service-role cross-table/storage integrity proof, remaining P1/P2 architecture/asset/test-lane cleanup, and GitHub push/commit synchronization.
 - Launch status changed: approved production deploy is live and current non-SMS postdeploy proof is green. Overall 10/10 production readiness is still `PARTIAL`, not final.
 
 ### 2026-05-05 2:28 PM PT - No-Deploy Messaging Viewer Mutation Hardening

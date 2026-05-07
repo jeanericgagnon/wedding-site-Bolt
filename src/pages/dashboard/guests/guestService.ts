@@ -284,6 +284,15 @@ export async function updateGuestForSite(
   if (error) throw error;
 }
 
+export async function generateSecureGuestInviteToken(): Promise<string> {
+  const { data, error } = await supabase.rpc('generate_secure_token', { byte_length: 32 });
+  if (!error && typeof data === 'string' && data.trim()) return data;
+
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 export async function updateGuestsForSite(
   weddingSiteId: string,
   guestIds: string[],

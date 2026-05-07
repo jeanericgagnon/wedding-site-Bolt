@@ -1,11 +1,13 @@
 const CACHE_NAME = 'dayof-static-v3';
-const ASSETS = ['/', '/manifest.webmanifest', '/image.png'];
+const ASSETS = ['/manifest.webmanifest', '/image.png'];
 const STATIC_ASSET_PATTERN = /\.(?:js|css|png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf)$/i;
 
 function isSafeStaticRequest(requestUrl, request) {
   if (request.method !== 'GET') return false;
   if (request.headers.has('Authorization')) return false;
   if (requestUrl.origin !== self.location.origin) return false;
+  if (request.mode === 'navigate') return false;
+  if (request.destination === 'document') return false;
   if (requestUrl.pathname.startsWith('/functions/v1/')) return false;
   if (requestUrl.pathname.startsWith('/auth/v1/')) return false;
   if (requestUrl.pathname.startsWith('/rest/v1/')) return false;
@@ -13,6 +15,16 @@ function isSafeStaticRequest(requestUrl, request) {
   if (requestUrl.search) return false;
   if (ASSETS.includes(requestUrl.pathname)) return true;
   return STATIC_ASSET_PATTERN.test(requestUrl.pathname);
+}
+
+function isCacheableStaticResponse(response) {
+  if (!response || !response.ok) return false;
+  const cacheControl = response.headers.get('Cache-Control') || '';
+  if (/(?:^|,)\s*(?:private|no-store|no-cache)\b/i.test(cacheControl)) return false;
+
+  const contentType = response.headers.get('Content-Type') || '';
+  if (/text\/html|application\/json/i.test(contentType)) return false;
+  return true;
 }
 
 self.addEventListener('install', (event) => {
@@ -36,7 +48,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cached) => (
       cached || fetch(event.request).then((response) => {
-        if (!response || !response.ok) return response;
+        if (!isCacheableStaticResponse(response)) return response;
         const copy = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => {});
         return response;

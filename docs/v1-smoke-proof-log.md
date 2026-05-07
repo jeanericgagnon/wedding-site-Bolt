@@ -5,7 +5,163 @@ _Owner:_ Product finish lane
 _Production:_ `https://dayof.love`
 _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
-_Launch call right now:_ Not production-ready under the stricter P0/P1 standard. Active strict P0 items are live deploy/function proof for the local access-control changes, planner/coordinator allowed-action live proof after the viewer-forbidden collaborator runtime pass, and secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
+_Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
+
+## 2026-05-07 12:52 PM PT No-Deploy Live AI Clearance Recheck
+- Continued from `BACKLOG.md` in a blocker-driven, no-deploy batch.
+- Fixed/proved:
+  - Reran `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance` with real network access after the sandbox-only attempt failed on Supabase DNS.
+  - Live AI clearance is green again: local rollout, static exposure, deployed frontend rollout, and live column exposure all passed with `launchCleared: true`, `migrationAlreadyApplied: true`, and `state: migration_applied_and_readback_green`.
+  - Rechecked `npm run proof:v1:data-integrity` immediately after; it is still honestly limited to `anon_limited` mode here because `SUPABASE_SERVICE_ROLE_KEY` is not available locally, so secure queue/storage integrity remains the remaining strict P0 blocker.
+- Proof passed:
+  - `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance`: PASS, 4/4 with `launchCleared: true`, `migrationAlreadyApplied: true`, and `state: migration_applied_and_readback_green`.
+  - `npm run proof:v1:data-integrity`: PASS in `anon_limited` mode with no hard failures; full cross-table/storage proof still requires `SUPABASE_SERVICE_ROLE_KEY`.
+- Launch status improved. The live AI clearance lane is green on the current production target, and the remaining strict P0 truth is now cleanly isolated to secure service-role queue/storage proof. No deploy was run.
+
+## 2026-05-07 12:56 PM PT No-Deploy Registry SSRF Runtime Closure
+- Continued from `BACKLOG.md` in a blocker-driven, no-deploy batch.
+- Fixed/proved:
+  - `scripts/v1-proof-registry-preview-ssrf.mjs` now falls back to standard owner proof sign-in when a dedicated `V1_REGISTRY_PREVIEW_AUTH_TOKEN` is not present, so the live hostile-target matrix can run from the normal proof environment instead of blocking on custom token plumbing.
+  - `src/lib/registryPreviewProofScript.test.ts` now pins that owner-sign-in fallback along with the expanded hostile-case matrix.
+  - Live registry preview SSRF proof is green on the current runtime: 26/26 hostile metadata, localhost, reserved-host, loopback, private-range, IPv6, credentialed, and non-HTTP cases are rejected before fetch with the safe `Enter a public product URL.` copy.
+- Proof passed:
+  - `npm test -- --run src/lib/registryPreviewProofScript.test.ts src/lib/registryPreviewUrlNormalizer.test.ts`: PASS, 39/39.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run proof:v1:registry-preview-ssrf`: PASS with `authMode: "owner_password_signin"` and 26/26 hostile cases blocked before fetch.
+- Launch status improved. The registry SSRF runtime lane is no longer blocked by auth-token setup and is green on the current production target. The remaining strict P0 blocker is still secure service-role queue/storage proof. No deploy was run.
+
+## 2026-05-07 1:00 PM PT No-Deploy Guest Lookup Scope Runtime Closure
+- Continued from `BACKLOG.md` in a blocker-driven, no-deploy batch.
+- Fixed/proved:
+  - Added `scripts/v1-proof-guest-lookup-scope.mjs` so the hardened guest-contact lookup contract is now proven on the live proof site instead of only by local code inspection.
+  - The runtime proof signs in with the standard owner proof account, inserts disposable QA guests on the proof site, then verifies that last-name-only, mismatched full-name, and reversed-name searches all return no matches while exact full-name lookup returns exactly one scoped `contact_session` plus household size and no raw guest/site ids.
+  - Added `src/lib/guestLookupScopeProofScript.test.ts` so the live proof keeps the partial-name, mismatched-name, reversed-name, and exact-match scoped-session assertions pinned locally.
+- Proof passed:
+  - `npm test -- --run src/lib/guestLookupScopeProofScript.test.ts src/pages/GuestContactUpdate.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 32/32.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run proof:v1:guest-lookup-scope`: PASS, 4/4 on `maya-and-leo`, with last-name-only, mismatched full-name, and reversed-name lookups empty and exact full-name lookup returning one scoped session.
+- Launch status improved. The guest lookup scoping claim is now backed by live abuse proof, so that RSVP/guest enumeration lane can be treated as closed. The remaining strict P0 blocker is still secure service-role queue/storage proof. No deploy was run.
+
+## 2026-05-07 12:47 PM PT No-Deploy AI Rollout Proof Truth Tightening
+- Continued from `BACKLOG.md` in a blocker-driven, no-deploy batch.
+- Fixed/proved:
+  - `scripts/v1-proof-ai-rollout.mjs` now audits the real guest-photo browser read path in `src/pages/dashboard/GuestPhotoSharing.tsx` instead of treating the older `guestPhotoSharingService.ts` helper as the required safe-column product-read owner.
+  - Local `proof:v1:ai-clearance` is back to the expected truthful state: local frontend rollout green, static exposure green, and live clearance still explicitly blocked on the deployed/live gates instead of a stale local proof target.
+- Proof passed:
+  - `npm run proof:v1:ai-clearance`: local checks green, intentional nonzero because `V1_AI_CLEARANCE_LIVE` was not enabled.
+  - `npm test -- --run src/lib/aiExposureProofScript.test.ts`: PASS, 4/4.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This removes a stale local AI rollout blocker and narrows the AI lane to the real live/env gates, but the active strict P0 blocker list is unchanged and no deploy was run.
+
+## 2026-05-07 12:44 PM PT No-Deploy Prereq Truth Narrowing
+- Continued from `BACKLOG.md` in a blocker-driven, no-deploy batch.
+- Fixed/proved:
+  - `proof:v1:prereqs` was rerun with live network access after the sandbox-only run falsely marked every live table and function as `fetch failed`.
+  - The prereq lane is actually green for current runtime readiness: required migrations, functions, proof scripts, and source guards are present; live REST tables are reachable or correctly protected; required Edge Functions are deployed/reachable.
+  - The remaining prereq gaps are now explicitly narrowed to missing server-side `OPENAI_API_KEY`, secure service-role proof env, and the already-deferred provider secrets.
+- Proof passed:
+  - `npm run proof:v1:prereqs`: PASS after network-enabled rerun.
+- Launch status did not change. This removes a false-red prereq result and sharpens the remaining env truth, but the active strict P0 blocker list is unchanged and no deploy was run.
+
+## 2026-05-07 12:40 PM PT No-Deploy Public Guest Surface Boundary Audit
+- Continued from `BACKLOG.md` in a blocker-driven, no-deploy batch.
+- Fixed/proved:
+  - Added `src/lib/publicGuestSurfaceBoundary.test.ts` to pin the browser-side boundary across the main guest-facing pages and helpers.
+  - The audit now proves those surfaces do not call `supabase.from(...)` directly and instead route through gated Edge Functions or the shared public resolver/access helpers.
+  - The guest/browser audit and the shared public-subresource audit now run together, so the remaining direct-public-read concern is narrower and explicit instead of mostly narrative.
+- Proof passed:
+  - `npm test -- --run src/lib/publicGuestSurfaceBoundary.test.ts src/lib/publicAccessCoverageProofScript.test.ts src/lib/publicSiteAccess.test.ts src/lib/publicSiteProject.test.ts src/sections/publicLinks.test.ts src/pages/SiteView.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 83/83.
+  - `npm run proof:v1:public-access-coverage`: PASS.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This makes the local public-access audit materially stronger across the guest/browser surface, but the active strict P0 blocker list is unchanged and no deploy was run.
+
+## 2026-05-07 12:44 PM PT No-Deploy Vault Contribution Public Access Hardening
+- Continued from `BACKLOG.md` in a blocker-driven, no-deploy batch.
+- Fixed/proved:
+  - Added `vault-contribution-public` as the guarded public lane for loading enabled vault configs by site slug and optional anniversary year.
+  - `src/pages/vaultContributionService.ts` now calls that function with the same invite/password public-access artifacts already used by the vault page instead of reading `vault_configs` directly from the browser.
+  - `vault-contribution-public` is now included in the shared public-access coverage proof set, so the vault config read path is pinned to the same gate contract as the other public subresource helpers.
+- Proof passed:
+  - `npm test -- --run src/pages/VaultContribute.test.ts src/lib/publicAccessCoverageProofScript.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 42/42.
+  - `npm run proof:v1:public-access-coverage`: PASS, with `vault-contribution-public` now included in the checked function set.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This removes another browser-side public read from the vault contribution lane and strengthens the local public-access claim, but the active strict P0 blocker list is unchanged and no deploy was run.
+
+## 2026-05-07 12:39 PM PT No-Deploy Photo Upload Prospect Access Alignment
+- Continued from `BACKLOG.md` in a blocker-driven, no-deploy batch.
+- Fixed/proved:
+  - `src/pages/PhotoUpload.tsx` now reuses the same `buildPhotoUploadAccessPayload(siteSlug)` access artifacts for the guest prospect opt-in follow-up that it already uses for the main `photo-upload` request.
+  - Gated photo uploads reached through invite/password access can no longer succeed on upload and then quietly drop their access context on the follow-up `guest-prospect-submit` call.
+  - `src/pages/PhotoUpload.test.ts` now pins that source contract so both requests keep sharing the same public-access payload shape.
+- Proof passed:
+  - `npm test -- --run src/pages/PhotoUpload.test.ts src/lib/publicAccessCoverageProofScript.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 34/34.
+  - `npm run proof:v1:public-access-coverage`: PASS.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This makes the gated photo-upload follow-up flow internally consistent and strengthens the public-access claim, but the active strict P0 blocker list is unchanged and no deploy was run.
+
+## 2026-05-07 12:31 PM PT No-Deploy Interactive Public Access Hardening
+- Continued from `BACKLOG.md` in a blocker-driven, no-deploy batch.
+- Fixed/proved:
+  - Added `interactive-section-public` as the guarded public lane for interactive hub sync, suggestion submit, and vote submit.
+  - Public interactive hub/music request flows now pass invite/password access artifacts through one Edge Function path instead of reading/writing `interactive_votes` and `interactive_suggestions` directly from the browser by `site_slug`.
+  - The new function is now covered by the public-access coverage proof lane and the Edge Function hardening assertions.
+- Proof passed:
+  - `npm run proof:v1:public-access-coverage`: PASS, with `interactive-section-public` now included in the shared public subresource gate set.
+  - `npm test -- --run src/sections/interactiveSectionService.test.ts src/lib/publicAccessCoverageProofScript.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 34/34.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+- Launch status did not change. This removes a real local public bypass candidate from the interactive sections lane, but the active strict P0 blocker list is unchanged and no deploy was run.
+
+## 2026-05-07 12:27 PM PT No-Deploy Public Access Audit Coverage Expansion
+- Continued from `BACKLOG.md` in a blocker-driven, no-deploy batch.
+- Fixed/proved:
+  - `scripts/v1-proof-public-access-coverage.mjs` now audits the `public-site-access` resolver and the signed-session `guest-contact-submit` exception explicitly, in addition to the shared public subresource gate cluster.
+  - `src/lib/publicAccessCoverageProofScript.test.ts` now pins those proof-script audit categories so the public-access audit cannot quietly shrink back to a narrower scan.
+  - The public-access audit lane now returns one green result covering shared public subresource gates, resolver behavior, and the intended signed-session exception together.
+- Proof passed:
+  - `npm run proof:v1:public-access-coverage`: PASS.
+  - `npm test -- --run src/lib/publicAccessCoverageProofScript.test.ts src/lib/publicSiteAccess.test.ts src/lib/publicSiteProject.test.ts src/sections/publicLinks.test.ts src/pages/SiteView.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 81/81.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+- Launch status did not change. This makes the local public-access audit claim stronger, but the active strict P0 blocker list is unchanged and no deploy was run.
+
+## 2026-05-07 12:20 PM PT No-Deploy Public Access Gate Coverage Tightening
+- Continued from `BACKLOG.md` in a blocker-driven, no-deploy batch.
+- Fixed/proved:
+  - `photo-upload` no longer carries a stale published-only shortcut after the shared `canReadPublicSubresource(...)` gate check.
+  - The slug-based public upload path now follows the same shared gate contract as the other public subresource functions instead of half-rechecking publish state afterward.
+  - `src/lib/publicSiteAccess.test.ts` now matches the current session-storage-only public access artifact helpers, so the proof lane is guarding the real implementation again.
+- Proof passed:
+  - `npm run proof:v1:public-access-coverage`: initially failed on `photo-upload`, then passed green after the fix.
+  - `npm test -- --run src/lib/publicSiteAccess.test.ts src/lib/publicSiteProject.test.ts src/sections/publicLinks.test.ts src/pages/SiteView.test.ts`: PASS, 53/53.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This narrows the remaining public-access audit surface, but the active strict P0 blocker list is unchanged and no deploy was run.
+
+## 2026-05-07 12:08 PM PT No-Deploy Planner And Coordinator Live Allow-Proof Closure
+- Continued from `BACKLOG.md` in a no-deploy blocker batch.
+- Fixed/proved:
+  - `tests/e2e/collaborator-permission-rls.spec.ts` now keeps the existing viewer deny proof and also proves two live allowed collaborator actions on the same invite/claim runtime path: planner `queue-guest-followups` access with `messages` permission and coordinator `photo-export-manifest` access with `photos` permission.
+  - The live collaborator runtime lane now proves the full role truth we need for launch: viewer guest-only writes stay constrained, planner messaging helper access works when granted, and coordinator photo/media helper access works when granted.
+  - The proof board and blocker docs now drop the planner/coordinator allowed-action blocker, leaving secure service-role queue/storage proof as the remaining active strict P0 launch blocker.
+- Proof passed:
+  - `npm run proof:v1:collaborator-runtime`: PASS, 2/2.
+  - `npm run proof:v1:collaborator-access`: PASS.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+- Launch status improved. Planner/coordinator allowed-action live proof is now green, and secure service-role queue/storage proof is the remaining active strict P0 blocker. No deploy was run.
 
 ## 2026-05-07 11:46 AM PT No-Deploy Live Authorization Proof Narrowing
 - Continued from `BACKLOG.md` in a no-deploy batch.
@@ -6469,9 +6625,34 @@ A slice does **not** count as passed because:
 
 ## 2026-05-03 8:14 AM PT No-Deploy AI Product Audit
 - Added a full AI product audit covering quick-start/onboarding AI, generated site copy, clarifying questions, photo organization and vision analysis, planner suggestions, vendor/profile generation, provider-key handling, raw provider details, fallback behavior, and proof gaps.
-- Current audit decision: AI is meaningfully hardened, but not launch-cleared yet. The critical blockers are the browser-facing `VITE_OPENAI_API_KEY` path, raw provider/error/internal field exposure risk, and incomplete live model-backed success/failure/fallback proof across every AI surface.
+- Current audit decision at that time: AI was meaningfully hardened, but not launch-cleared yet. The then-open blockers were the browser-facing `VITE_OPENAI_API_KEY` path, raw provider/error/internal field exposure risk, and incomplete live model-backed success/failure/fallback proof across every AI surface.
 - Promoted AI product audit and hardening proof into the active launch backlog and proof board as its own critical slice.
 - No deploy was run.
+
+## 2026-05-07 1:12 PM PT No-Deploy Local AI Env Exposure Cleanup
+- Removed the remaining browser-prefixed local AI env entries from `.vercel/.env.production.local`, so the ignored local Vercel env file no longer carries `VITE_OPENAI_*` configuration.
+- Expanded `src/lib/aiProviderKeySecurity.test.ts` to scan local env files (`.env*` and `.vercel/.env.production.local`) for browser-readable AI provider env names, not just source files.
+- Expanded `scripts/v1-proof-ai-product-readiness.mjs` with the same local-env check so the AI readiness lane now fails if a browser-readable AI env name creeps back into local config.
+- Re-ran `npm test -- --run src/lib/aiProviderKeySecurity.test.ts src/lib/aiExposureProofScript.test.ts` and `node scripts/v1-proof-ai-product-readiness.mjs`; both are green, with AI product-readiness back to `25/25`.
+- No deploy was run. This narrows the AI launch truth locally; the remaining AI gates are still secure-env server-side proof and the external provider-key rotation outside the repo.
+
+## 2026-05-07 1:18 PM PT No-Deploy Registry Public Contract Repair
+- Repaired `supabase/functions/public-registry-items/index.ts` so the local public registry function now returns the current `RegistryItem` field shape instead of the older `registry_url` / `price` contract.
+- Added regression guard coverage in `src/lib/launchEdgeFunctions.test.ts` so the public registry function keeps selecting `item_url`, `canonical_url`, `price_amount`, `notes`, `updated_at`, and the related live-item fields.
+- Focused registry proof stayed green locally: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/sections/components/RegistrySection.test.tsx src/pages/dashboard/registry/registryService.test.ts`, plus `typecheck`, `lint`, `build`, and `git diff --check`.
+- Live registry write/read proof is still red on `https://dayof.love`, but now for the honest reason: no deploy was run, so the live target cannot yet pick up the repaired local function contract.
+
+## 2026-05-07 1:23 PM PT No-Deploy Service Worker Cache Tightening
+- Tightened `public/sw.js` again so it no longer precaches `/`, no longer caches navigation/document requests, and refuses to cache `private`, `no-store`, `no-cache`, `text/html`, or `application/json` responses even if the request path looks static.
+- Expanded `src/lib/serviceWorkerSafety.test.ts` so the stricter request and response cache rules are now pinned in static proof.
+- `npm test -- --run src/lib/serviceWorkerSafety.test.ts src/lib/aiProviderKeySecurity.test.ts src/lib/launchEdgeFunctions.test.ts` passed `37/37`, and `typecheck`, `lint`, `build`, and `git diff --check` stayed green.
+- No deploy was run. This makes the local service-worker cache surface stricter and less likely to persist stale shell or sensitive response content, while live browser cache proof remains postdeploy/QA-gated.
+
+## 2026-05-07 1:29 PM PT No-Deploy Page-Level Supabase Boundary Cleanup
+- Moved collaborator invite claiming in `AcceptCollaboratorInvite.tsx` behind `claimCollaboratorInviteByToken(...)` in `src/pages/acceptCollaboratorInviteService.ts`.
+- Moved guest invite-token generation in `Guests.tsx` behind `generateSecureGuestInviteToken()` in `src/pages/dashboard/guests/guestService.ts`, keeping the existing crypto fallback in the service instead of in the page.
+- Added focused source-boundary proof in `src/pages/acceptCollaboratorInviteService.test.ts` and `src/pages/dashboard/guests/guestService.test.ts`; both passed along with `typecheck`, `lint`, and `git diff --check`.
+- No deploy was run. This trims the remaining TSX-owned Supabase mutation/RPC surface without changing behavior.
 
 ## 2026-05-03 10:23 AM PT No-Deploy AI Migration Prereq Hardening
 - Added local prereq coverage for the AI migration-ready proof contract: `scripts/v1-proof-prereqs.mjs` now verifies the AI migration-ready, AI exposure, and AI clearance scripts exist, are wired in `package.json`, and still contain the required safety/readiness markers before backend readiness can pass.
