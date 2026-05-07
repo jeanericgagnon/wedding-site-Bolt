@@ -3406,3 +3406,33 @@ Commands run:
 
 Status:
 - PARTIAL. This materially advances the guest dashboard page-to-service migration without changing RSVP text-link export behavior or the guest CSV preview/import active-site fallback. No deploy was run.
+
+### 2026-05-07 4:49 PM PT - Guest Status and Household Service Extraction
+
+- Moved routine guest status and household mutations out of `src/pages/dashboard/Guests.tsx` and into `src/pages/dashboard/guests/guestService.ts`.
+- `Guests.tsx` now calls service helpers for:
+  - check-in undo/toggle writes
+  - single and bulk thank-you sent writes
+  - clear-all check-ins
+  - household merge/split/reassign writes
+  - reminder setting persistence
+  - guest update-link public slug lookup
+- Added/expanded guest service helpers:
+  - `loadGuestDashboardPublicSlug(...)`
+  - `updateGuestCheckInForSite(...)`
+  - `updateGuestThankYouSentForSite(...)`
+  - `markGuestsThankYouSentForSite(...)`
+  - `assignGuestsToHouseholdForSite(...)`
+  - `updateGuestHouseholdForSite(...)`
+  - `persistGuestReminderSettings(...)`
+- Expanded `src/pages/dashboard/guests/guestService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the guest dashboard page no longer owns those direct `guests` and `wedding_sites` writes inline.
+
+Validation:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`: PASS, 60/60.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the guest dashboard page-to-service migration without changing guest check-in, thank-you tracking, household management, reminder settings, or guest update-link behavior. No deploy was run.

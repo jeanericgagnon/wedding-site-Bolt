@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
+import { resolvePublicSiteSlugFromRow } from '../../../lib/publicSiteSlug';
 import { deriveInviteEvents, type RsvpSeedEvent } from '../../../lib/rsvpEventFallback';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../../lib/plannerAccess';
 import {
@@ -300,6 +301,17 @@ export async function loadGuestDashboardSiteSlug(weddingSiteId: string): Promise
 
   if (error) throw error;
   return (data as { site_slug?: string | null } | null)?.site_slug ?? null;
+}
+
+export async function loadGuestDashboardPublicSlug(weddingSiteId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('wedding_sites')
+    .select('id, site_slug, site_url')
+    .eq('id', weddingSiteId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return resolvePublicSiteSlugFromRow((data as Record<string, unknown> | null) ?? null);
 }
 
 export async function loadGuestItineraryDrawerSnapshot(weddingSiteId: string, guestId: string): Promise<GuestItineraryDrawerSnapshot> {
@@ -698,6 +710,80 @@ export async function updateGuestForSite(
   if (error) throw error;
 }
 
+export async function updateGuestCheckInForSite(
+  weddingSiteId: string,
+  guestId: string,
+  checkedInAt: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from('guests')
+    .update({ checked_in_at: checkedInAt })
+    .eq('wedding_site_id', weddingSiteId)
+    .eq('id', guestId);
+
+  if (error) throw error;
+}
+
+export async function updateGuestThankYouSentForSite(
+  weddingSiteId: string,
+  guestId: string,
+  thankYouSentAt: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from('guests')
+    .update({ thank_you_sent_at: thankYouSentAt })
+    .eq('wedding_site_id', weddingSiteId)
+    .eq('id', guestId);
+
+  if (error) throw error;
+}
+
+export async function markGuestsThankYouSentForSite(
+  weddingSiteId: string,
+  guestIds: string[],
+  thankYouSentAt: string,
+): Promise<void> {
+  if (guestIds.length === 0) return;
+  const scopedGuestIds = guestIds.slice(0, MAX_GUEST_BULK_OPERATION_IDS);
+  const { error } = await supabase
+    .from('guests')
+    .update({ thank_you_sent_at: thankYouSentAt })
+    .eq('wedding_site_id', weddingSiteId)
+    .in('id', scopedGuestIds);
+
+  if (error) throw error;
+}
+
+export async function assignGuestsToHouseholdForSite(
+  weddingSiteId: string,
+  guestIds: string[],
+  householdId: string,
+): Promise<void> {
+  if (guestIds.length === 0) return;
+  const scopedGuestIds = guestIds.slice(0, MAX_GUEST_BULK_OPERATION_IDS);
+  const { error } = await supabase
+    .from('guests')
+    .update({ household_id: householdId })
+    .eq('wedding_site_id', weddingSiteId)
+    .in('id', scopedGuestIds);
+
+  if (error) throw error;
+}
+
+export async function updateGuestHouseholdForSite(
+  weddingSiteId: string,
+  guestId: string,
+  householdId: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from('guests')
+    .update({ household_id: householdId })
+    .eq('wedding_site_id', weddingSiteId)
+    .eq('id', guestId);
+
+  if (error) throw error;
+}
+
 export async function generateSecureGuestInviteToken(): Promise<string> {
   const { data, error } = await supabase.rpc('generate_secure_token', { byte_length: 32 });
   if (!error && typeof data === 'string' && data.trim()) return data;
@@ -719,6 +805,18 @@ export async function updateGuestsForSite(
     .update(patch)
     .eq('wedding_site_id', weddingSiteId)
     .in('id', scopedGuestIds);
+
+  if (error) throw error;
+}
+
+export async function persistGuestReminderSettings(
+  weddingSiteId: string,
+  patch: { reminder_cadence_days?: 1 | 3 | 7; auto_reminders_enabled?: boolean },
+): Promise<void> {
+  const { error } = await supabase
+    .from('wedding_sites')
+    .update(patch)
+    .eq('id', weddingSiteId);
 
   if (error) throw error;
 }

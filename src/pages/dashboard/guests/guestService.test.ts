@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   addGuestEventInvitation,
+  assignGuestsToHouseholdForSite,
   GUEST_AUDIT_SELECT,
   GUEST_CONFLICT_SELECT,
   GUEST_DASHBOARD_RSVP_SELECT,
@@ -25,15 +26,21 @@ import {
   MAX_GUEST_RSVP_CONFLICT_ROWS,
   MAX_GUEST_RSVP_LOOKUP_IDS,
   loadGuestDashboardItineraryFilters,
+  loadGuestDashboardPublicSlug,
   loadGuestDashboardRsvpAuditFeed,
   loadGuestDashboardSiteSlug,
   loadGuestDashboardSiteSettings,
   loadGuestDashboardSnapshot,
+  markGuestsThankYouSentForSite,
+  persistGuestReminderSettings,
   removeGuestEventInvitation,
   saveAssistedGuestRsvp,
   refreshGuestDashboardSession,
   resolveGuestDashboardSiteId,
   toEventInvitationRows,
+  updateGuestCheckInForSite,
+  updateGuestHouseholdForSite,
+  updateGuestThankYouSentForSite,
 } from './guestService';
 
 const {
@@ -129,7 +136,15 @@ describe('guestService', () => {
     expect(page).toContain('addGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(page).toContain('saveAssistedGuestRsvp({');
     expect(page).toContain('loadGuestDashboardSiteSlug(weddingSiteId)');
+    expect(page).toContain('loadGuestDashboardPublicSlug(weddingSiteId)');
     expect(page).toContain('resolveGuestDashboardSiteId(user.id)');
+    expect(page).toContain('updateGuestCheckInForSite(weddingSiteId, lastCheckIn.guestId, null)');
+    expect(page).toContain('updateGuestThankYouSentForSite(weddingSiteId, guest.id, nextValue)');
+    expect(page).toContain('markGuestsThankYouSentForSite(weddingSiteId, ids, new Date().toISOString())');
+    expect(page).toContain('clearGuestCheckInsForSite(weddingSiteId)');
+    expect(page).toContain('assignGuestsToHouseholdForSite(weddingSiteId, ids, householdId)');
+    expect(page).toContain('updateGuestHouseholdForSite(weddingSiteId, guestId, null)');
+    expect(page).toContain('persistGuestReminderSettings(weddingSiteId, patch)');
     expect(page).not.toContain("supabase.rpc('generate_secure_token'");
     expect(page).not.toContain('supabase.auth.refreshSession()');
     expect(page).not.toContain(".from('wedding_sites')\n        .select('id, couple_name_1, couple_name_2");
@@ -144,6 +159,12 @@ describe('guestService', () => {
     expect(page).not.toContain(".from('rsvps')\n          .update(assistedRsvpPayload)");
     expect(page).not.toContain(".from('rsvps')\n          .insert({");
     expect(page).not.toContain(".from('wedding_sites')\n      .select('site_slug')");
+    expect(page).not.toContain(".from('wedding_sites')\n      .select('id, site_slug, site_url')");
+    expect(page).not.toContain(".from('guests')\n        .update({ checked_in_at: null })");
+    expect(page).not.toContain(".from('guests')\n        .update({ thank_you_sent_at: nextValue })");
+    expect(page).not.toContain(".from('guests')\n        .update({ thank_you_sent_at: new Date().toISOString() })");
+    expect(page).not.toContain(".from('guests')\n        .update({ household_id: householdId })");
+    expect(page).not.toContain(".from('wedding_sites')\n      .update(patch)");
     expect(page).not.toContain('await resolveActiveSiteForUser(user.id)');
     expect(service).toContain("supabase.rpc('generate_secure_token'");
     expect(service).toContain('export async function generateSecureGuestInviteToken()');
@@ -158,6 +179,13 @@ describe('guestService', () => {
     expect(service).toContain('export async function saveAssistedGuestRsvp(input: SaveAssistedGuestRsvpInput): Promise<SaveAssistedGuestRsvpResult>');
     expect(service).toContain('export async function resolveGuestDashboardSiteId(userId: string): Promise<string | null>');
     expect(service).toContain('export async function loadGuestDashboardSiteSlug(weddingSiteId: string): Promise<string | null>');
+    expect(service).toContain('export async function loadGuestDashboardPublicSlug(weddingSiteId: string): Promise<string | null>');
+    expect(service).toContain('export async function updateGuestCheckInForSite(');
+    expect(service).toContain('export async function updateGuestThankYouSentForSite(');
+    expect(service).toContain('export async function markGuestsThankYouSentForSite(');
+    expect(service).toContain('export async function assignGuestsToHouseholdForSite(');
+    expect(service).toContain('export async function updateGuestHouseholdForSite(');
+    expect(service).toContain('export async function persistGuestReminderSettings(');
     expect(service).toContain('supabase.auth.refreshSession()');
   });
 
@@ -513,6 +541,79 @@ describe('guestService', () => {
     });
 
     await expect(loadGuestDashboardSiteSlug('site-1')).resolves.toBe('alex-jordan');
+  });
+
+  it('loads the guest dashboard public slug through the service', async () => {
+    const maybeSingleMock = vi.fn().mockResolvedValue({
+      data: { id: 'site-1', site_slug: 'alex-jordan', site_url: 'https://dayof.love/alex-jordan' },
+      error: null,
+    });
+    fromMock.mockReturnValueOnce({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({ maybeSingle: maybeSingleMock })),
+      })),
+    });
+
+    await expect(loadGuestDashboardPublicSlug('site-1')).resolves.toBe('alex-jordan');
+  });
+
+  it('updates guest check-in through the service', async () => {
+    const eqIdMock = vi.fn().mockResolvedValue({ error: null });
+    const eqSiteMock = vi.fn(() => ({ eq: eqIdMock }));
+    fromMock.mockReturnValueOnce({
+      update: vi.fn(() => ({ eq: eqSiteMock })),
+    });
+
+    await expect(updateGuestCheckInForSite('site-1', 'guest-1', '2026-05-07T00:00:00Z')).resolves.toBeUndefined();
+  });
+
+  it('updates thank-you state through the service', async () => {
+    const eqIdMock = vi.fn().mockResolvedValue({ error: null });
+    const eqSiteMock = vi.fn(() => ({ eq: eqIdMock }));
+    fromMock.mockReturnValueOnce({
+      update: vi.fn(() => ({ eq: eqSiteMock })),
+    });
+
+    await expect(updateGuestThankYouSentForSite('site-1', 'guest-1', null)).resolves.toBeUndefined();
+  });
+
+  it('updates bulk thank-you state through the service', async () => {
+    const inMock = vi.fn().mockResolvedValue({ error: null });
+    const eqSiteMock = vi.fn(() => ({ in: inMock }));
+    fromMock.mockReturnValueOnce({
+      update: vi.fn(() => ({ eq: eqSiteMock })),
+    });
+
+    await expect(markGuestsThankYouSentForSite('site-1', ['guest-1', 'guest-2'], '2026-05-07T00:00:00Z')).resolves.toBeUndefined();
+  });
+
+  it('updates household state through the service', async () => {
+    const eqIdMock = vi.fn().mockResolvedValue({ error: null });
+    const eqSiteMock = vi.fn(() => ({ eq: eqIdMock }));
+    fromMock.mockReturnValueOnce({
+      update: vi.fn(() => ({ eq: eqSiteMock })),
+    });
+
+    await expect(updateGuestHouseholdForSite('site-1', 'guest-1', null)).resolves.toBeUndefined();
+  });
+
+  it('assigns guests to a household through the service', async () => {
+    const inMock = vi.fn().mockResolvedValue({ error: null });
+    const eqSiteMock = vi.fn(() => ({ in: inMock }));
+    fromMock.mockReturnValueOnce({
+      update: vi.fn(() => ({ eq: eqSiteMock })),
+    });
+
+    await expect(assignGuestsToHouseholdForSite('site-1', ['guest-1', 'guest-2'], 'guest-1')).resolves.toBeUndefined();
+  });
+
+  it('persists reminder settings through the service', async () => {
+    const eqMock = vi.fn().mockResolvedValue({ error: null });
+    fromMock.mockReturnValueOnce({
+      update: vi.fn(() => ({ eq: eqMock })),
+    });
+
+    await expect(persistGuestReminderSettings('site-1', { auto_reminders_enabled: true })).resolves.toBeUndefined();
   });
 
   it('rolls back guest RSVP state when assisted RSVP persistence fails', async () => {

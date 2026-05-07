@@ -8043,6 +8043,20 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 4:49 PM PT No-Deploy Guest Status And Household Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestService.ts` now owns guest dashboard public slug lookup, check-in writes, thank-you writes, household assignment writes, and reminder-setting persistence.
+  - `src/pages/dashboard/Guests.tsx` now calls `loadGuestDashboardPublicSlug(...)`, `updateGuestCheckInForSite(...)`, `updateGuestThankYouSentForSite(...)`, `markGuestsThankYouSentForSite(...)`, `clearGuestCheckInsForSite(...)`, `assignGuestsToHouseholdForSite(...)`, `updateGuestHouseholdForSite(...)`, and `persistGuestReminderSettings(...)` instead of directly mutating `guests` or `wedding_sites` inline for those flows.
+  - `src/pages/dashboard/guests/guestService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` now pin that expanded guest dashboard mutation boundary.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`: PASS, 60/60.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 3:31 PM PT No-Deploy Seating Session Refresh Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

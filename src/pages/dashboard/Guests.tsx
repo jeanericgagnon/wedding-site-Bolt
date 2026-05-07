@@ -112,6 +112,8 @@ import {
 } from './guests/guestDashboardStorage';
 import {
   addGuestEventInvitation,
+  assignGuestsToHouseholdForSite,
+  clearGuestCheckInsForSite,
   createGuest,
   deleteAllGuestsForSite,
   deleteGuestById,
@@ -120,9 +122,12 @@ import {
   generateSecureGuestInviteToken,
   insertEventInvitations,
   insertImportedGuests,
+  loadGuestDashboardPublicSlug,
   loadGuestDashboardItineraryFilters,
   loadGuestDashboardRsvpAuditFeed,
   loadGuestDashboardSiteSlug,
+  markGuestsThankYouSentForSite,
+  persistGuestReminderSettings,
   loadGuestItineraryDrawerSnapshot,
   loadGuestDashboardSiteSettings,
   loadGuestDashboardSnapshot,
@@ -135,6 +140,9 @@ import {
   saveAssistedGuestRsvp,
   toEventInvitationRows,
   updateGuest,
+  updateGuestCheckInForSite,
+  updateGuestHouseholdForSite,
+  updateGuestThankYouSentForSite,
   updateHouseholdGuestIds,
   type AssistedRsvpSource,
   type AssistedRsvpStatus,
@@ -890,12 +898,7 @@ export const DashboardGuests: React.FC = () => {
     }
     if (!weddingSiteId || !lastCheckIn || isDemoMode) return;
     try {
-      const { error } = await supabase
-        .from('guests')
-        .update({ checked_in_at: null })
-        .eq('id', lastCheckIn.guestId)
-        .eq('wedding_site_id', weddingSiteId);
-      if (error) throw error;
+      await updateGuestCheckInForSite(weddingSiteId, lastCheckIn.guestId, null);
       await fetchGuests();
       toast(`Undid check-in for ${lastCheckIn.guestName}`, 'success');
       setLastCheckIn(null);
@@ -913,12 +916,7 @@ export const DashboardGuests: React.FC = () => {
     try {
       const current = (guest as GuestWithRSVP & { thank_you_sent_at?: string | null }).thank_you_sent_at;
       const nextValue = current ? null : new Date().toISOString();
-      const { error } = await supabase
-        .from('guests')
-        .update({ thank_you_sent_at: nextValue })
-        .eq('id', guest.id)
-        .eq('wedding_site_id', weddingSiteId);
-      if (error) throw error;
+      await updateGuestThankYouSentForSite(weddingSiteId, guest.id, nextValue);
       await fetchGuests();
       toast(nextValue ? 'Marked thank-you sent' : 'Cleared thank-you status', 'success');
     } catch {
@@ -944,12 +942,7 @@ export const DashboardGuests: React.FC = () => {
     });
     if (!confirmed) return;
     try {
-      const { error } = await supabase
-        .from('guests')
-        .update({ thank_you_sent_at: new Date().toISOString() })
-        .in('id', ids)
-        .eq('wedding_site_id', weddingSiteId);
-      if (error) throw error;
+      await markGuestsThankYouSentForSite(weddingSiteId, ids, new Date().toISOString());
       await fetchGuests();
       toast(`Marked ${ids.length} thank-you sent`, 'success');
     } catch {
@@ -976,12 +969,7 @@ export const DashboardGuests: React.FC = () => {
     });
     if (!confirmed) return;
     try {
-      const { error } = await supabase
-        .from('guests')
-        .update({ checked_in_at: null, checkin_notes: null })
-        .eq('wedding_site_id', weddingSiteId)
-        .not('checked_in_at', 'is', null);
-      if (error) throw error;
+      await clearGuestCheckInsForSite(weddingSiteId);
       await fetchGuests();
       setLastCheckIn(null);
       toast('Cleared all check-ins', 'success');
@@ -1003,14 +991,7 @@ export const DashboardGuests: React.FC = () => {
     }
 
     const nextValue = guest.checked_in_at ? null : new Date().toISOString();
-    const updateCheckin = async () => {
-      const { error } = await supabase
-        .from('guests')
-        .update({ checked_in_at: nextValue })
-        .eq('id', guest.id)
-        .eq('wedding_site_id', weddingSiteId);
-      if (error) throw error;
-    };
+    const updateCheckin = async () => updateGuestCheckInForSite(weddingSiteId, guest.id, nextValue);
 
     try {
       await updateCheckin();
@@ -1436,12 +1417,7 @@ const handleSendBulkInvitations = async () => {
     try {
       const ids = [...selectedGuestIds];
       const householdId = ids[0];
-      const { error } = await supabase
-        .from('guests')
-        .update({ household_id: householdId })
-        .in('id', ids)
-        .eq('wedding_site_id', weddingSiteId);
-      if (error) throw error;
+      await assignGuestsToHouseholdForSite(weddingSiteId, ids, householdId);
       await fetchGuests();
       setSelectedGuestIds(new Set());
       toast(`${ids.length} guests merged into one household`, 'success');
@@ -1456,12 +1432,7 @@ const handleSendBulkInvitations = async () => {
     if (!weddingSiteId || isDemoMode) return;
     setHouseholdBusy(true);
     try {
-      const { error } = await supabase
-        .from('guests')
-        .update({ household_id: null })
-        .eq('id', guestId)
-        .eq('wedding_site_id', weddingSiteId);
-      if (error) throw error;
+      await updateGuestHouseholdForSite(weddingSiteId, guestId, null);
       await fetchGuests();
       toast('Guest removed from household', 'success');
     } catch {
@@ -1474,12 +1445,7 @@ const handleSendBulkInvitations = async () => {
   async function handleReassignHousehold(guestId: string, newHouseholdId: string) {
     if (!weddingSiteId || isDemoMode) return;
     try {
-      const { error } = await supabase
-        .from('guests')
-        .update({ household_id: newHouseholdId || null })
-        .eq('id', guestId)
-        .eq('wedding_site_id', weddingSiteId);
-      if (error) throw error;
+      await updateGuestHouseholdForSite(weddingSiteId, guestId, newHouseholdId || null);
       await fetchGuests();
       toast('Guest reassigned', 'success');
     } catch {
@@ -1489,11 +1455,7 @@ const handleSendBulkInvitations = async () => {
 
   const persistReminderSettings = async (patch: { reminder_cadence_days?: 1 | 3 | 7; auto_reminders_enabled?: boolean }) => {
     if (!weddingSiteId || isDemoMode) return;
-    const { error } = await supabase
-      .from('wedding_sites')
-      .update(patch)
-      .eq('id', weddingSiteId);
-    if (error) throw error;
+    await persistGuestReminderSettings(weddingSiteId, patch);
   };
 
   async function copyContactRequestLink() {
@@ -1502,14 +1464,8 @@ const handleSendBulkInvitations = async () => {
       return;
     }
 
-    const { data: siteData, error: siteError } = await supabase
-      .from('wedding_sites')
-      .select('id, site_slug, site_url')
-      .eq('id', weddingSiteId)
-      .maybeSingle();
-
-    const publicSlug = resolvePublicSiteSlugFromRow((siteData as Record<string, unknown> | null) ?? null);
-    if (siteError || !publicSlug) {
+    const publicSlug = await loadGuestDashboardPublicSlug(weddingSiteId);
+    if (!publicSlug) {
       toast('Set a public site slug before sharing the guest update link', 'error');
       return;
     }
