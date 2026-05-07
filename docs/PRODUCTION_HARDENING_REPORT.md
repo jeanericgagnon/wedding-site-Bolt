@@ -2836,3 +2836,23 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps bulk guest helper fan-out bounded without changing current guest import, household, bulk update, or bulk delete behavior. No deploy was run.
+
+### 2026-05-07 2:41 PM PT - No-Deploy RSVP and Coordinator Query Bounds
+
+What changed:
+- Exported explicit RSVP board query caps in `src/pages/dashboard/rsvpBoardService.ts`: guest rows now cap at `2000`, itinerary event rows at `200`, and event invitation hydration at `10000`.
+- Added `src/pages/dashboard/rsvpBoardService.test.ts` to pin the RSVP board projections plus bounded guest/event/invitation query shape.
+- Added `MAX_COORDINATOR_QNA_ROWS = 30` in `src/pages/dashboard/coordinator/coordinatorService.ts` so coordinator bootstrap hydration uses a named bound for Q&A rows instead of a magic inline limit.
+- Extended `src/pages/dashboard/coordinator/coordinatorService.test.ts` to pin the Q&A row cap alongside the existing coordinator guest/event/invitation bounds.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/rsvpBoardService.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`
+- `npm run proof:v1:guests-rsvp-ops`
+- `npm run proof:v1:coordinator-dayof`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `git diff --check`
+- `npm run build`
+
+Status:
+- PARTIAL. This keeps live RSVP activity and coordinator/day-of dashboard hydration bounded without changing RSVP workflows, guest check-in, or coordinator messaging behavior. No deploy was run.

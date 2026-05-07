@@ -7647,3 +7647,20 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 2:41 PM PT No-Deploy RSVP and Coordinator Query Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/rsvpBoardService.ts` now exports stable RSVP board caps for guest rows (`2000`), itinerary event rows (`200`), and event-invitation hydration (`10000`).
+  - `src/pages/dashboard/rsvpBoardService.test.ts` now pins the RSVP board projection and bounded query shape.
+  - `src/pages/dashboard/coordinator/coordinatorService.ts` now uses `MAX_COORDINATOR_QNA_ROWS = 30` for day-of Q&A hydration instead of a magic inline limit.
+  - `src/pages/dashboard/coordinator/coordinatorService.test.ts` now pins the coordinator Q&A cap alongside the existing guest/event/invitation bounds.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/rsvpBoardService.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`
+  - `npm run proof:v1:guests-rsvp-ops`
+  - `npm run proof:v1:coordinator-dayof`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+  - `git diff --check`
+  - `npm run build`
+- Launch status did not change. This is local-only hardening and no deploy was run.

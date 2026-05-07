@@ -6,6 +6,7 @@ import {
   MAX_COORDINATOR_EVENT_INVITATIONS,
   MAX_COORDINATOR_EVENTS,
   MAX_COORDINATOR_GUESTS,
+  MAX_COORDINATOR_QNA_ROWS,
 } from './coordinatorService';
 import type { EventLite } from './coordinatorDashboardTypes';
 
@@ -31,6 +32,7 @@ describe('buildCoordinatorEventGuestMap', () => {
     expect(MAX_COORDINATOR_GUESTS).toBe(2000);
     expect(MAX_COORDINATOR_EVENTS).toBe(200);
     expect(MAX_COORDINATOR_EVENT_INVITATIONS).toBe(10000);
+    expect(MAX_COORDINATOR_QNA_ROWS).toBe(30);
   });
 
   it('keeps coordinator bootstrap reads bounded', () => {
@@ -39,5 +41,6 @@ describe('buildCoordinatorEventGuestMap', () => {
     expect(source).toContain('.limit(MAX_COORDINATOR_GUESTS),');
     expect(source).toContain('.limit(MAX_COORDINATOR_EVENTS),');
     expect(source).toContain('.limit(MAX_COORDINATOR_EVENT_INVITATIONS);');
+    expect(source).toContain(".limit(MAX_COORDINATOR_QNA_ROWS);");
   });
 });

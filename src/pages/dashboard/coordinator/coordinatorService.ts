@@ -12,6 +12,7 @@ const COORDINATOR_QNA_INSERT_SELECT = 'id, question, answer, status' as const;
 export const MAX_COORDINATOR_GUESTS = 2000;
 export const MAX_COORDINATOR_EVENTS = 200;
 export const MAX_COORDINATOR_EVENT_INVITATIONS = 10000;
+export const MAX_COORDINATOR_QNA_ROWS = 30;
 
 export interface CoordinatorBootstrapData {
   siteId: string | null;
@@ -96,7 +97,7 @@ export async function loadCoordinatorBootstrapData(userId: string): Promise<Coor
     .select(COORDINATOR_QNA_SELECT)
     .eq('wedding_site_id', siteId)
     .order('created_at', { ascending: false })
-    .limit(30);
+    .limit(MAX_COORDINATOR_QNA_ROWS);
   if (qnaError) throw qnaError;
 
   return {
