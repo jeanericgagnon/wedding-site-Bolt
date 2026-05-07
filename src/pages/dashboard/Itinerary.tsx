@@ -14,14 +14,12 @@ import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds, getEventRsvpSnapshotsByInvitationIds, restoreEventRsvpSnapshots } from '../../lib/eventRsvpCleanup';
-import type { WeddingDataV1 } from '../../types/weddingData';
-import { combineDateAndTimeISO } from './itineraryDateTime';
 import { formatItineraryEventDate, toValidItineraryEventDateOrNull } from './itineraryEventDate';
 import { deriveItineraryEventRsvpCounts, shouldLoadEventRsvps } from './itineraryEventRsvpCounts';
 import { readDemoItineraryEvents, writeDemoItineraryEvents } from './itineraryDemoStorage';
 import { analyzeTimeline } from '../../lib/invisibleIntelligence';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
-import { createItineraryTemplateEvents } from './itineraryService';
+import { createItineraryTemplateEvents, syncItineraryScheduleMirror } from './itineraryService';
 
 interface ItineraryEvent {
   id: string;
@@ -54,47 +52,6 @@ interface EventWithInvites extends ItineraryEvent {
   attending_count: number;
   declined_count: number;
   pending_count: number;
-}
-
-function toScheduleSectionEvents(events: ItineraryEvent[]) {
-  return [...events]
-    .filter((event) => event.is_visible !== false)
-    .sort((a, b) => {
-      const left = `${a.event_date || ''}T${a.start_time || '00:00'}`;
-      const right = `${b.event_date || ''}T${b.start_time || '00:00'}`;
-      return left.localeCompare(right);
-    })
-    .map((event, index) => ({
-      id: event.id || `itinerary-${index + 1}`,
-      title: event.event_name || 'Event',
-      time: [event.start_time, event.end_time].filter(Boolean).join(' - ') || 'Time TBD',
-      description: event.description || event.notes || '',
-      location: [event.location_name, event.location_address].filter(Boolean).join(' · ') || undefined,
-    }));
-}
-
-function toWeddingSchedule(events: ItineraryEvent[]): WeddingDataV1['schedule'] {
-  return [...events]
-    .filter((event) => event.is_visible !== false)
-    .sort((a, b) => {
-      const left = `${a.event_date || ''}T${a.start_time || '00:00'}`;
-      const right = `${b.event_date || ''}T${b.start_time || '00:00'}`;
-      return left.localeCompare(right);
-    })
-    .map((event, index) => {
-      const locationBits = [event.location_name, event.location_address].filter(Boolean).join(' · ');
-      const descriptionBits = [event.description, event.notes].filter(Boolean).join(' · ');
-      const notes = [locationBits, descriptionBits].filter(Boolean).join(' — ');
-
-      return {
-        id: event.id || `itinerary-${index + 1}`,
-        label: event.event_name || 'Event',
-        startTimeISO: combineDateAndTimeISO(event.event_date, event.start_time) || '',
-        endTimeISO: combineDateAndTimeISO(event.event_date, event.end_time) || undefined,
-        notes: notes || undefined,
-      };
-    })
-    .filter((item) => !!item.startTimeISO && !!item.label);
 }
 
 export const DashboardItinerary: React.FC = () => {
@@ -157,56 +114,7 @@ export const DashboardItinerary: React.FC = () => {
 
   async function syncWeddingDataSchedule(siteId: string, eventList: ItineraryEvent[]) {
     try {
-      const { data: siteData, error: readError } = await supabase
-        .from('wedding_sites')
-        .select('wedding_data')
-        .eq('id', siteId)
-        .maybeSingle();
-
-      if (readError) throw readError;
-
-      const weddingData = (siteData?.wedding_data as Record<string, unknown> | null) ?? {};
-      const nextSchedule = toWeddingSchedule(eventList);
-      const currentSchedule = Array.isArray((weddingData as { schedule?: unknown }).schedule)
-        ? (weddingData as { schedule: unknown[] }).schedule
-        : [];
-
-      if (JSON.stringify(currentSchedule) === JSON.stringify(nextSchedule)) return;
-
-      const { error: updateError } = await supabase
-        .from('wedding_sites')
-        .update({
-          wedding_data: {
-            ...weddingData,
-            schedule: nextSchedule,
-          },
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', siteId);
-
-      if (updateError) throw updateError;
-
-      const sectionEvents = toScheduleSectionEvents(eventList);
-      const { data: scheduleSections, error: sectionsReadError } = await supabase
-        .from('sections')
-        .select('id,data')
-        .eq('site_id', siteId)
-        .eq('type', 'schedule');
-
-      if (sectionsReadError) throw sectionsReadError;
-
-      for (const section of scheduleSections ?? []) {
-        const currentData = (section.data as Record<string, unknown> | null) ?? {};
-        const nextData = { ...currentData, events: sectionEvents };
-        if (JSON.stringify(currentData) === JSON.stringify(nextData)) continue;
-
-        const { error: sectionUpdateError } = await supabase
-          .from('sections')
-          .update({ data: nextData, updated_at: new Date().toISOString() })
-          .eq('id', section.id);
-
-        if (sectionUpdateError) throw sectionUpdateError;
-      }
+      await syncItineraryScheduleMirror(siteId, eventList);
     } catch {
       // non-blocking mirror write; itinerary CRUD still succeeds
     }

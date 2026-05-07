@@ -7760,3 +7760,18 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 3:05 PM PT No-Deploy Itinerary Mirror Sync Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/itineraryService.ts` now owns the itinerary schedule mirror for `wedding_sites.wedding_data` and `sections` instead of leaving those cross-table writes inline in the page.
+  - Added pure helper builders there for schedule-section events and wedding schedule rows.
+  - `src/pages/dashboard/Itinerary.tsx` now calls `syncItineraryScheduleMirror(siteId, eventList)` instead of directly updating `wedding_sites` and `sections`.
+  - `src/pages/dashboard/itineraryService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` now pin that service-layer boundary.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts`: PASS, 25/25.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

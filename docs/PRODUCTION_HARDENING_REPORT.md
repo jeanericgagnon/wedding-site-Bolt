@@ -2995,3 +2995,24 @@ Commands run:
 
 Status:
 - PARTIAL. This materially advances the page-to-service migration for the owner dashboard overview without changing overview metrics, draft refresh behavior, publish state, or guest-facing output. No deploy was run.
+
+### 2026-05-07 3:05 PM PT - No-Deploy Itinerary Mirror Sync Extraction
+
+What changed:
+- Moved the itinerary schedule mirror write path out of `src/pages/dashboard/Itinerary.tsx` and into `src/pages/dashboard/itineraryService.ts`.
+- `itineraryService.ts` now owns:
+  - the `wedding_sites.wedding_data` schedule mirror read/write
+  - the `sections` schedule mirror read/write
+  - pure helper builders for section-event mirror rows and wedding schedule rows
+- `Itinerary.tsx` now calls `syncItineraryScheduleMirror(siteId, eventList)` instead of directly updating `wedding_sites` and `sections` after itinerary event hydration or edits.
+- Updated `src/pages/dashboard/itineraryService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the cross-table mirror boundary stays pinned.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `npm run build`
+- `git diff --check`
+
+Status:
+- PARTIAL. This materially advances the page-to-service migration for itinerary sync behavior without changing itinerary event CRUD, RSVP counts, or guest-facing schedule output. No deploy was run.

@@ -68,8 +68,15 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('.select(ITINERARY_EVENT_SELECT)');
     expect(source).toContain('.select(EVENT_GUEST_PICKER_SELECT)');
     expect(source).toContain('createItineraryTemplateEvents(activeSite.id, newEvents)');
+    expect(source).toContain('syncItineraryScheduleMirror(siteId, eventList)');
     expect(source).not.toContain("supabase.from('itinerary_events').insert(newEvents.map");
+    expect(source).not.toContain(".from('wedding_sites')\n        .select('wedding_data')");
+    expect(source).not.toContain(".from('sections')\n        .select('id,data')");
     expect(service).toContain('buildItineraryTemplateInsertRows(weddingSiteId, events)');
+    expect(service).toContain("const ITINERARY_SCHEDULE_MIRROR_SITE_SELECT = 'wedding_data'");
+    expect(service).toContain("const ITINERARY_SCHEDULE_SECTION_SELECT = 'id,data'");
+    expect(service).toContain('buildScheduleSectionEvents(eventList)');
+    expect(service).toContain('buildWeddingSchedule(eventList)');
     expect(source).not.toContain(".from('itinerary_events')\n        .select('*')");
     expect(source).not.toContain(".from('guests')\n        .select('*')");
   });
