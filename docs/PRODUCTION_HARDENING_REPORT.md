@@ -3016,3 +3016,24 @@ Commands run:
 
 Status:
 - PARTIAL. This materially advances the page-to-service migration for itinerary sync behavior without changing itinerary event CRUD, RSVP counts, or guest-facing schedule output. No deploy was run.
+
+### 2026-05-07 3:09 PM PT - No-Deploy Signup Auth Service Extraction
+
+What changed:
+- Moved the signup auth flow out of `src/pages/Signup.tsx` and into `src/pages/signupService.ts`.
+- `signupService.ts` now owns:
+  - Google OAuth start via `startSignupWithGoogle(...)`
+  - email sign-up plus password-sign-in fallback via `createSignupAccount(...)`
+  - the existing minimal wedding-site bootstrap helper
+- `Signup.tsx` now orchestrates UI state and navigation while calling those service helpers instead of directly invoking `supabase.auth.signInWithOAuth`, `supabase.auth.signUp`, and `supabase.auth.signInWithPassword`.
+- Added `src/pages/signupService.test.ts` and updated `src/pages/onboarding/onboardingService.test.ts` so the auth/service boundary for signup stays pinned.
+
+Commands run:
+- `npm test -- --run src/pages/Signup.test.tsx src/pages/signupService.test.ts src/pages/onboarding/onboardingService.test.ts src/lib/authErrorCopy.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `npm run build`
+- `git diff --check`
+
+Status:
+- PARTIAL. This materially advances the auth-entry page-to-service migration without changing signup copy, invite handoff behavior, quick-start handoff, or owner checkout routing. No deploy was run.

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams, createSearchParams } from 'react-router-dom';
 import { Chrome, Heart } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
-import { supabase } from '../lib/supabase';
+import { createSignupAccount, ensureMinimalWeddingSite, startSignupWithGoogle } from './signupService';
 import { isPaymentGateEnabled } from '../lib/paymentGate';
 import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupContinuation';
 import { clearAuthEntryReturnPath } from '../lib/authEntryCleanup';
@@ -10,47 +10,6 @@ import { resolveSignupReturnPath } from '../lib/signupReturnResolver';
 import { buildQuickStartEntryPath } from '../lib/quickStartContinuation';
 import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
 import { safeAuthError } from '../lib/authErrorCopy';
-
-const makeBaseSlug = (email: string) => {
-  const local = (email.split('@')[0] || 'ourwedding').toLowerCase();
-  const cleaned = local.replace(/[^a-z0-9]/g, '').slice(0, 20);
-  return cleaned || 'ourwedding';
-};
-
-async function ensureMinimalWeddingSite(userId: string, email: string): Promise<void> {
-  const existing = await supabase
-    .from('wedding_sites')
-    .select('id')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (existing.data?.id) return;
-
-  const base = makeBaseSlug(email);
-
-  for (let i = 0; i < 6; i += 1) {
-    const suffix = i === 0 ? '' : `-${Math.floor(1000 + Math.random() * 9000)}`;
-    const siteSlug = `${base}${suffix}`;
-    const siteUrl = `${siteSlug}.dayof.love`;
-
-    const { error } = await supabase.from('wedding_sites').insert({
-      user_id: userId,
-      couple_name_1: 'You',
-      couple_name_2: 'Partner',
-      site_slug: siteSlug,
-      site_url: siteUrl,
-    });
-
-    if (!error) return;
-
-    const collision = /duplicate key|already exists|unique/i.test(error.message || '');
-    if (!collision) throw error;
-  }
-
-  throw new Error('Couldn’t reserve a website URL right now. Please try again.');
-}
 
 export const Signup: React.FC = () => {
   const navigate = useNavigate();
@@ -117,13 +76,7 @@ export const Signup: React.FC = () => {
         ? `/accept-collaborator-invite${inviteReturnSearch}&oauth=google`
         : resolveSignupReturnPath(explicitReturnPath, fallbackRedirectPath);
 
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}${redirectPath}`,
-        },
-      });
-      if (oauthError) throw oauthError;
+      await startSignupWithGoogle(`${window.location.origin}${redirectPath}`);
     } catch (err: unknown) {
       setError(safeAuthError(err, 'Couldn’t start Google sign-in right now. Please try again.'));
       setLoading(false);
@@ -148,35 +101,7 @@ export const Signup: React.FC = () => {
     }
 
     try {
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-      });
-
-      if (signUpError) throw signUpError;
-
-      let userId = authData.user?.id;
-
-      if (!userId) {
-        const signInRes = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
-        });
-
-        if (signInRes.error) {
-          const msg = signInRes.error.message.toLowerCase();
-          if (msg.includes('email not confirmed') || msg.includes('email_not_confirmed')) {
-            throw new Error('Account created! Check your email to confirm your address, then sign in.');
-          }
-          throw signInRes.error;
-        }
-
-        userId = signInRes.data.user?.id;
-      }
-
-      if (!userId) {
-        throw new Error('Account created! Please sign in to continue.');
-      }
+      const userId = await createSignupAccount(formData.email, formData.password);
 
       if (hasInviteContext) {
         navigate(`/accept-collaborator-invite${inviteReturnSearch}`, { replace: true });

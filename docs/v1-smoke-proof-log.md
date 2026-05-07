@@ -7775,3 +7775,17 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 3:09 PM PT No-Deploy Signup Auth Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/signupService.ts` now owns Google OAuth start and email sign-up/sign-in fallback for the signup flow instead of leaving those auth calls inline in `src/pages/Signup.tsx`.
+  - `src/pages/Signup.tsx` now calls `startSignupWithGoogle(...)`, `createSignupAccount(...)`, and the existing minimal wedding-site helper instead of directly invoking `supabase.auth`.
+  - Added `src/pages/signupService.test.ts` and updated `src/pages/onboarding/onboardingService.test.ts` so the signup auth/service boundary stays pinned.
+- Proof passed:
+  - `npm test -- --run src/pages/Signup.test.tsx src/pages/signupService.test.ts src/pages/onboarding/onboardingService.test.ts src/lib/authErrorCopy.test.ts`: PASS, 14/14.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
