@@ -2934,3 +2934,24 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps seating version history and guest drawer audit hydration bounded without changing seating workflows, guest visibility, or RSVP behavior. No deploy was run.
+
+### 2026-05-07 2:46 PM PT - No-Deploy Singleton Lookup Bounds
+
+What changed:
+- Added explicit singleton lookup caps across shared/dashboard helpers:
+  - `MAX_ACTIVE_SITE_OWNED_LOOKUP_ROWS = 1`
+  - `MAX_ACTIVE_SITE_COLLABORATOR_LOOKUP_ROWS = 1`
+  - `MAX_REGISTRY_SORT_LOOKUP_ROWS = 1`
+  - `MAX_SEATING_LOOKUP_EVENT_ROWS = 1`
+  - `MAX_NAME_CHANGE_SNAPSHOT_ROWS = 1`
+- `src/lib/activeSite.ts`, `src/pages/dashboard/registry/registryService.ts`, `src/pages/dashboard/seating/seatingService.ts`, and `src/pages/dashboard/planning/nameChangeService.ts` now use named caps instead of inline `.limit(1)` calls for those latest-row / first-row lookups.
+- Added `src/lib/activeSite.test.ts` and extended the existing registry, seating, and name-change service tests to pin those singleton query bounds.
+
+Commands run:
+- `npm test -- --run src/lib/activeSite.test.ts src/pages/dashboard/registry/registryService.test.ts src/pages/dashboard/seating/seatingService.test.ts src/pages/dashboard/planning/nameChangeService.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `git diff --check`
+
+Status:
+- PARTIAL. This keeps shared singleton lookups explicit and stable without changing active-site resolution, registry ordering, seating lookup behavior, or name-change planner workflows. No deploy was run.

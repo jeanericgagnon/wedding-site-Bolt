@@ -9,6 +9,9 @@ export type ActiveSiteSummary = {
   permissions: PlannerPermissionKey[] | null;
 };
 
+export const MAX_ACTIVE_SITE_OWNED_LOOKUP_ROWS = 1;
+export const MAX_ACTIVE_SITE_COLLABORATOR_LOOKUP_ROWS = 1;
+
 export async function resolveActiveSiteForUser(userId: string): Promise<ActiveSiteSummary | null> {
   if (DEMO_MODE && userId === 'demo-local-user') {
     return {
@@ -59,7 +62,7 @@ export async function resolveActiveSiteForUser(userId: string): Promise<ActiveSi
     .select('id')
     .eq('user_id', userId)
     .order('created_at', { ascending: true })
-    .limit(1)
+    .limit(MAX_ACTIVE_SITE_OWNED_LOOKUP_ROWS)
     .maybeSingle();
 
   if (ownedError) throw ownedError;
@@ -76,7 +79,7 @@ export async function resolveActiveSiteForUser(userId: string): Promise<ActiveSi
     .select('wedding_site_id, role, permissions')
     .eq('user_id', userId)
     .order('created_at', { ascending: true })
-    .limit(1)
+    .limit(MAX_ACTIVE_SITE_COLLABORATOR_LOOKUP_ROWS)
     .maybeSingle();
 
   if (collaboratorError) throw collaboratorError;

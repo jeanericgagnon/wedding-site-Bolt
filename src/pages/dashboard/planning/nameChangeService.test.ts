@@ -14,6 +14,7 @@ import {
   MAX_NAME_CHANGE_DOCUMENT_ROWS,
   MAX_NAME_CHANGE_EXTRACTED_FIELD_ROWS,
   MAX_NAME_CHANGE_REMINDER_ROWS,
+  MAX_NAME_CHANGE_SNAPSHOT_ROWS,
   mergeNameChangeReminders,
   mergeNameChangePlanExecutionState,
   normalizeNameChangeReminders,
@@ -319,6 +320,7 @@ describe('nameChangeService normalization', () => {
     expect(MAX_NAME_CHANGE_DOCUMENT_ROWS).toBe(100);
     expect(MAX_NAME_CHANGE_EXTRACTED_FIELD_ROWS).toBe(500);
     expect(MAX_NAME_CHANGE_REMINDER_ROWS).toBe(100);
+    expect(MAX_NAME_CHANGE_SNAPSHOT_ROWS).toBe(1);
   });
 
   it('keeps name-change workspace document, field, and reminder reads bounded', () => {
@@ -327,8 +329,10 @@ describe('nameChangeService normalization', () => {
     expect(source).toContain('MAX_NAME_CHANGE_DOCUMENT_ROWS = 100');
     expect(source).toContain('MAX_NAME_CHANGE_EXTRACTED_FIELD_ROWS = 500');
     expect(source).toContain('MAX_NAME_CHANGE_REMINDER_ROWS = 100');
+    expect(source).toContain('MAX_NAME_CHANGE_SNAPSHOT_ROWS = 1');
     expect(source).toContain(".from('name_change_documents').select(NAME_CHANGE_DOCUMENT_SELECT).eq('name_change_case_id', caseId).order('created_at', { ascending: true }).limit(MAX_NAME_CHANGE_DOCUMENT_ROWS)");
     expect(source).toContain(".from('name_change_extracted_fields').select(NAME_CHANGE_EXTRACTED_FIELD_SELECT).eq('name_change_case_id', caseId).order('created_at', { ascending: true }).limit(MAX_NAME_CHANGE_EXTRACTED_FIELD_ROWS)");
+    expect(source).toContain(".from('name_change_plan_snapshots').select(NAME_CHANGE_PLAN_SNAPSHOT_SELECT).eq('name_change_case_id', caseId).order('created_at', { ascending: false }).limit(MAX_NAME_CHANGE_SNAPSHOT_ROWS)");
     expect(source).toContain(".from('name_change_reminders').select(NAME_CHANGE_REMINDER_SELECT).eq('name_change_case_id', caseId).order('suggested_offset_days', { ascending: true }).limit(MAX_NAME_CHANGE_REMINDER_ROWS)");
   });
 

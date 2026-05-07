@@ -22,6 +22,7 @@ export const MAX_SEATING_EVENT_INVITATIONS = 10000;
 export const MAX_SEATING_TABLE_ROWS = 500;
 export const MAX_SEATING_ASSIGNMENT_ROWS = 10000;
 export const MAX_SEATING_VERSION_ROWS = 12;
+export const MAX_SEATING_LOOKUP_EVENT_ROWS = 1;
 
 export interface ItineraryEvent {
   id: string;
@@ -241,7 +242,7 @@ export async function loadSeatingLookupRowsForUser(userId: string): Promise<Seat
     .select(SEATING_LOOKUP_EVENT_SELECT)
     .eq('wedding_site_id', siteId)
     .order('created_at', { ascending: false })
-    .limit(1)
+    .limit(MAX_SEATING_LOOKUP_EVENT_ROWS)
     .maybeSingle();
   if (eventError) throw eventError;
 

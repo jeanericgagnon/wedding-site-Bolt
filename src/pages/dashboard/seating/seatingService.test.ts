@@ -12,6 +12,7 @@ import {
   MAX_SEATING_ITINERARY_EVENTS,
   MAX_SEATING_ASSIGNMENT_ROWS,
   MAX_SEATING_LOOKUP_GUEST_IDS,
+  MAX_SEATING_LOOKUP_EVENT_ROWS,
   MAX_SEATING_LOOKUP_TABLE_IDS,
   MAX_SEATING_TABLE_ROWS,
   MAX_SEATING_VERSION_ROWS,
@@ -334,6 +335,7 @@ describe('mapSeatingLookupRows', () => {
     expect(MAX_SEATING_ITINERARY_EVENTS).toBe(200);
     expect(MAX_SEATING_LOOKUP_TABLE_IDS).toBe(500);
     expect(MAX_SEATING_LOOKUP_GUEST_IDS).toBe(2000);
+    expect(MAX_SEATING_LOOKUP_EVENT_ROWS).toBe(1);
     expect(MAX_SEATING_ELIGIBLE_GUESTS).toBe(5000);
     expect(MAX_SEATING_EVENT_INVITATIONS).toBe(10000);
     expect(MAX_SEATING_TABLE_ROWS).toBe(500);
@@ -347,12 +349,14 @@ describe('mapSeatingLookupRows', () => {
     expect(source).toContain('MAX_SEATING_ITINERARY_EVENTS');
     expect(source).toContain('MAX_SEATING_LOOKUP_TABLE_IDS');
     expect(source).toContain('MAX_SEATING_LOOKUP_GUEST_IDS');
+    expect(source).toContain('MAX_SEATING_LOOKUP_EVENT_ROWS');
     expect(source).toContain('MAX_SEATING_ELIGIBLE_GUESTS');
     expect(source).toContain('MAX_SEATING_EVENT_INVITATIONS');
     expect(source).toContain('MAX_SEATING_TABLE_ROWS');
     expect(source).toContain('MAX_SEATING_ASSIGNMENT_ROWS');
     expect(source).toContain('MAX_SEATING_VERSION_ROWS');
     expect(source).toContain(".order('start_time', { ascending: true })\n    .limit(MAX_SEATING_ITINERARY_EVENTS);");
+    expect(source).toContain(".order('created_at', { ascending: false })\n    .limit(MAX_SEATING_LOOKUP_EVENT_ROWS)\n    .maybeSingle();");
     expect(source).toContain('].slice(0, MAX_SEATING_LOOKUP_TABLE_IDS);');
     expect(source).toContain('].slice(0, MAX_SEATING_LOOKUP_GUEST_IDS);');
     expect(source).toContain(".eq('wedding_site_id', weddingSiteId)\n    .limit(MAX_SEATING_ELIGIBLE_GUESTS);");

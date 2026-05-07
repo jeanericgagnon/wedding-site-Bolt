@@ -7718,3 +7718,18 @@ A slice does **not** count as passed because:
   - `npm run lint -- --quiet`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 2:46 PM PT No-Deploy Singleton Lookup Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/lib/activeSite.ts` now exports and uses named one-row owned/collaborator fallback lookup caps.
+  - `src/pages/dashboard/registry/registryService.ts` now exports and uses a named one-row sort-order lookup cap before creating a new registry item.
+  - `src/pages/dashboard/seating/seatingService.ts` now exports and uses a named one-row latest seating-event lookup cap.
+  - `src/pages/dashboard/planning/nameChangeService.ts` now exports and uses a named one-row latest snapshot lookup cap.
+  - `src/lib/activeSite.test.ts` plus the existing registry, seating, and name-change tests now pin those singleton query bounds.
+- Proof passed:
+  - `npm test -- --run src/lib/activeSite.test.ts src/pages/dashboard/registry/registryService.test.ts src/pages/dashboard/seating/seatingService.test.ts src/pages/dashboard/planning/nameChangeService.test.ts`: PASS, 75/75.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
