@@ -2955,3 +2955,19 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps shared singleton lookups explicit and stable without changing active-site resolution, registry ordering, seating lookup behavior, or name-change planner workflows. No deploy was run.
+
+### 2026-05-07 2:48 PM PT - No-Deploy Overview Collaborator Lookup Bound
+
+What changed:
+- Added `MAX_OVERVIEW_COLLABORATOR_LINK_ROWS = 1` in `src/pages/dashboard/Overview.tsx`.
+- The overview dashboard now uses a named one-row cap for the collaborator fallback site lookup instead of an inline `.limit(1)`.
+- Extended `src/pages/dashboard/overviewQueryBounds.test.ts` to pin that collaborator fallback lookup bound alongside the existing overview guest, suggestion, and vote query bounds.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/overviewQueryBounds.test.ts src/pages/dashboard/overviewService.test.ts src/pages/dashboard/overviewUtils.test.ts src/pages/dashboard/overviewDate.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `git diff --check`
+
+Status:
+- PARTIAL. This keeps the overview collaborator fallback path explicit without changing overview metrics or site resolution behavior. No deploy was run.

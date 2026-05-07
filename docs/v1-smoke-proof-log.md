@@ -7733,3 +7733,16 @@ A slice does **not** count as passed because:
   - `npm run lint -- --quiet`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 2:48 PM PT No-Deploy Overview Collaborator Lookup Bound
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Overview.tsx` now exports `MAX_OVERVIEW_COLLABORATOR_LINK_ROWS = 1`.
+  - The overview collaborator fallback site lookup now uses that named cap instead of a raw `.limit(1)`.
+  - `src/pages/dashboard/overviewQueryBounds.test.ts` now pins that overview collaborator lookup bound.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/overviewQueryBounds.test.ts src/pages/dashboard/overviewService.test.ts src/pages/dashboard/overviewUtils.test.ts src/pages/dashboard/overviewDate.test.ts`: PASS, 14/14.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

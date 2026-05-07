@@ -49,6 +49,7 @@ const INTELLIGENCE_DISMISSALS_STORAGE_KEY = 'dayof_intelligence_dismissed_v1';
 export const MAX_OVERVIEW_RECENT_RSVPS = 5;
 export const MAX_OVERVIEW_INTERACTIVE_SUGGESTIONS = 8;
 export const MAX_OVERVIEW_INTERACTIVE_VOTES = 500;
+export const MAX_OVERVIEW_COLLABORATOR_LINK_ROWS = 1;
 const OVERVIEW_GUEST_SELECT = 'id, rsvp_status, rsvp_received_at, first_name, last_name, name';
 
 const DEFAULT_NAME_CHANGE_INSIGHTS: NameChangeOverviewInsights = {
@@ -459,7 +460,7 @@ export const DashboardOverview: React.FC = () => {
           .from('wedding_site_collaborators')
           .select('wedding_site_id')
           .eq('user_id', user.id)
-          .limit(1)
+          .limit(MAX_OVERVIEW_COLLABORATOR_LINK_ROWS)
           .maybeSingle();
 
         if (collaboratorErr) throw collaboratorErr;
