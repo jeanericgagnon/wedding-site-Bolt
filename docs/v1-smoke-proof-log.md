@@ -7425,3 +7425,17 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `npm run proof:v1:seating-continuity`: PASS, 3/3 automated checks green.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 1:44 PM PT No-Deploy Vault Dashboard Query Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/vaultService.ts` now caps ordered vault-config reads at 25 rows before hydrating the dashboard view.
+  - The same service now caps ordered vault-entry reads at 1000 rows after the config-id filter.
+  - `src/pages/dashboard/vaultService.test.ts` now pins the stable cap exports and bounded query shape.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/vaultService.test.ts`: PASS, 4/4.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

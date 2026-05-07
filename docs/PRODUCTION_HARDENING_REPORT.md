@@ -2544,3 +2544,21 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps seating lookup fan-out bounded without changing the current quick lookup, seating assignment, or check-in workflow shape. No deploy was run.
+
+### 2026-05-07 1:44 PM PT - No-Deploy Vault Dashboard Query Bounds
+
+What changed:
+- Added explicit `MAX_VAULT_CONFIG_ROWS = 25` and `MAX_VAULT_ENTRY_ROWS = 1000` caps in `src/pages/dashboard/vaultService.ts`.
+- Vault dashboard config reads now cap ordered `vault_configs` rows before hydrating the owner view.
+- Vault entry reads now cap ordered `vault_entries` rows after the config-id filter.
+- Extended `src/pages/dashboard/vaultService.test.ts` to pin the stable cap exports and the bounded query shape.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/vaultService.test.ts`: PASS, 4/4.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps vault dashboard reads bounded without changing current vault creation, recap, reminder, or contribution behavior. No deploy was run.
