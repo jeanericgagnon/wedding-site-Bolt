@@ -131,6 +131,12 @@ import {
   type GuestEventInvitationRollback,
 } from './guests/guestService';
 
+export const MAX_GUEST_DASHBOARD_ROWS = 5000;
+export const MAX_GUEST_ITINERARY_FILTER_EVENTS = 200;
+export const MAX_GUEST_ITINERARY_FILTER_INVITATIONS = 10000;
+export const MAX_GUEST_DRAWER_EVENTS = 200;
+export const MAX_GUEST_DRAWER_INVITATIONS = 10000;
+
 export const DashboardGuests: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -441,7 +447,8 @@ export const DashboardGuests: React.FC = () => {
         .from('guests')
         .select('id, first_name, last_name, name, email, phone, plus_one_allowed, plus_one_name, children_allowed, max_children, max_additional_guests, invited_to_ceremony, invited_to_reception, invite_token, rsvp_status, rsvp_received_at, checked_in_at, checkin_notes, thank_you_sent_at, thank_you_notes, household_id, group_name, notes, mailing_address_line1, mailing_address_line2, mailing_city, mailing_state, mailing_postal_code, mailing_country')
         .eq('wedding_site_id', weddingSiteId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(MAX_GUEST_DASHBOARD_ROWS);
 
       if (guestsError) throw guestsError;
 
@@ -516,7 +523,8 @@ export const DashboardGuests: React.FC = () => {
             .from('itinerary_events')
             .select('id, event_name, event_date, start_time, location_name')
             .eq('wedding_site_id', weddingSiteId)
-            .order('event_date', { ascending: true }),
+            .order('event_date', { ascending: true })
+            .limit(MAX_GUEST_ITINERARY_FILTER_EVENTS),
           supabase
             .from('wedding_sites')
             .select('wedding_data')
@@ -539,6 +547,7 @@ export const DashboardGuests: React.FC = () => {
               .from('event_invitations')
               .select('event_id, guest_id')
               .in('event_id', eventIds)
+              .limit(MAX_GUEST_ITINERARY_FILTER_INVITATIONS)
           : { data: [], error: null };
 
         if (invitesRes.error) throw invitesRes.error;
@@ -1641,11 +1650,13 @@ const handleSendBulkInvitations = async () => {
           .from('itinerary_events')
           .select('id, event_name, event_date, start_time, location_name')
           .eq('wedding_site_id', weddingSiteId)
-          .order('event_date', { ascending: true }),
+          .order('event_date', { ascending: true })
+          .limit(MAX_GUEST_DRAWER_EVENTS),
         supabase
           .from('event_invitations')
           .select('event_id')
-          .eq('guest_id', guest.id),
+          .eq('guest_id', guest.id)
+          .limit(MAX_GUEST_DRAWER_INVITATIONS),
         isDemoMode
           ? Promise.resolve({ data: [], error: null } as any)
           : supabase

@@ -2779,3 +2779,22 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps itinerary dashboard hydration bounded without changing current event creation, edit, invitation, or RSVP-count behavior. No deploy was run.
+
+### 2026-05-07 2:22 PM PT - No-Deploy Guest Dashboard Bounds
+
+What changed:
+- Added `MAX_GUEST_DASHBOARD_ROWS = 5000`, `MAX_GUEST_ITINERARY_FILTER_EVENTS = 200`, `MAX_GUEST_ITINERARY_FILTER_INVITATIONS = 10000`, `MAX_GUEST_DRAWER_EVENTS = 200`, and `MAX_GUEST_DRAWER_INVITATIONS = 10000` in `src/pages/dashboard/Guests.tsx`.
+- Main guest list hydration now caps ordered guest rows before RSVP/conflict fan-out.
+- Guest itinerary filter hydration now caps visible itinerary events and invitation fan-out before deriving per-event guest maps.
+- Guest itinerary drawer hydration now caps itinerary event rows and invitation fan-out before building the event-invite picker.
+- Added `src/pages/dashboard/guestQueryBounds.test.ts` to pin the bounded guest dashboard, itinerary-filter, and drawer query shape.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`: PASS, 25/25.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps guest dashboard hydration bounded without changing current guest CRUD, RSVP conflict review, or itinerary invite management behavior. No deploy was run.
