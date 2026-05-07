@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { verifySessionToken } from "../_shared/signedSession.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,17 @@ const json = (data: unknown, status = 200) =>
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+
+type GoogleDriveOAuthState = {
+  scope: "google_drive_oauth";
+  siteId: string;
+  userId: string;
+  ts: number;
+};
+
+const STORAGE_CONNECTION_RETRY_COPY = "Could not finish this storage connection. Please try again.";
+const STORAGE_CONNECTION_LINK_EXPIRED_COPY = "This storage connection link has expired. Please try again from settings.";
+const STORAGE_CONNECTION_NOT_READY_COPY = "This storage connection is not ready yet.";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
@@ -32,7 +44,7 @@ Deno.serve(async (req: Request) => {
       const oauthErr = url.searchParams.get("error");
       if (oauthErr) {
         console.error("GOOGLE_DRIVE_AUTH_PROVIDER_DECLINED", { reason: "oauth_error" });
-        return json({ error: "Could not connect Google Drive. Please try again." }, 400);
+        return json({ error: STORAGE_CONNECTION_RETRY_COPY }, 400);
       }
     } else {
       const body = await req.json().catch(() => ({}));
@@ -40,23 +52,32 @@ Deno.serve(async (req: Request) => {
       stateRaw = typeof body.state === "string" ? body.state : null;
     }
 
-    if (!code || !stateRaw) return json({ error: "code and state are required" }, 400);
+    if (!code || !stateRaw) return json({ error: STORAGE_CONNECTION_LINK_EXPIRED_COPY }, 400);
 
-    const state = JSON.parse(atob(stateRaw)) as { siteId: string; userId: string; ts: number };
-    if (!state?.siteId || !state?.userId || typeof state.ts !== "number") {
-      return json({ error: "Invalid state" }, 400);
+    const state = await verifySessionToken<GoogleDriveOAuthState>(
+      stateRaw,
+      Deno.env.get("GOOGLE_DRIVE_STATE_SECRET") || serviceRole,
+    );
+    if (
+      !state ||
+      state.scope !== "google_drive_oauth" ||
+      !state.siteId ||
+      !state.userId ||
+      typeof state.ts !== "number"
+    ) {
+      return json({ error: STORAGE_CONNECTION_LINK_EXPIRED_COPY }, 400);
     }
 
     // 15 minute max state age
     if (Date.now() - state.ts > 15 * 60 * 1000) {
-      return json({ error: "OAuth session expired. Please reconnect Google Drive." }, 400);
+      return json({ error: STORAGE_CONNECTION_LINK_EXPIRED_COPY }, 400);
     }
 
     const googleClientId = Deno.env.get("GOOGLE_DRIVE_CLIENT_ID");
     const googleClientSecret = Deno.env.get("GOOGLE_DRIVE_CLIENT_SECRET");
     const redirectUri = Deno.env.get("GOOGLE_DRIVE_REDIRECT_URI");
     if (!googleClientId || !googleClientSecret || !redirectUri) {
-      return json({ error: "Google Drive connection is not ready yet." }, 500);
+      return json({ error: STORAGE_CONNECTION_NOT_READY_COPY }, 500);
     }
 
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -74,7 +95,7 @@ Deno.serve(async (req: Request) => {
     const tokenJson = await tokenRes.json();
     if (!tokenRes.ok || !tokenJson.access_token) {
       console.error("GOOGLE_DRIVE_AUTH_TOKEN_EXCHANGE_FAILED", { status: tokenRes.status });
-      return json({ error: "Could not connect Google Drive. Please try again." }, 400);
+      return json({ error: STORAGE_CONNECTION_RETRY_COPY }, 400);
     }
 
     const adminClient = createClient(supabaseUrl, serviceRole);
@@ -86,7 +107,7 @@ Deno.serve(async (req: Request) => {
       .eq("user_id", state.userId)
       .maybeSingle();
 
-    if (!site) return json({ error: "Site not found or unauthorized" }, 403);
+    if (!site) return json({ error: STORAGE_CONNECTION_NOT_READY_COPY }, 403);
 
     const expiresAt = tokenJson.expires_in
       ? new Date(Date.now() + Number(tokenJson.expires_in) * 1000).toISOString()
@@ -111,6 +132,6 @@ Deno.serve(async (req: Request) => {
     return json({ success: true, connected: true });
   } catch (err) {
     console.error("GOOGLE_DRIVE_AUTH_CALLBACK_UNEXPECTED_FAILED", { reason: "UNEXPECTED_GOOGLE_DRIVE_CALLBACK_FAILURE" });
-    return json({ error: "Could not connect Google Drive. Please try again." }, 500);
+    return json({ error: STORAGE_CONNECTION_RETRY_COPY }, 500);
   }
 });

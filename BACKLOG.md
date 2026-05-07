@@ -146,6 +146,26 @@ Current readiness verdict for this intake:
 - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts` (37/37), `npm run typecheck -- --pretty false`, `npm run guard:file-size`, `npm run lint -- --quiet`, `git diff --check`, and `npm run build`.
 - Launch status: unchanged. This narrows local photo/media service-role authorization risk; no deploy was run and live service-role/RLS proof remains open.
 
+### 2026-05-07 11:27 AM PT - No-Deploy Photo Owner Helper Copy Tightening
+
+- Resolved locally in this batch: `photo-album-create/index.ts` now uses customer-safe sign-in, site-selection, album-name, site-availability, and access-denied copy instead of raw `Unauthorized` and `siteId and name are required` wording on the owner photo-album creation path.
+- Resolved locally in this batch: `photo-album-manage/index.ts` now uses customer-safe copy for missing album selection, missing album availability, access denial, invalid activation state, invalid update action, and parent-album validation instead of raw `albumId is required`, `Album not found`, `Forbidden`, `isActive is required for set_active`, and similar helper-internal wording.
+- Resolved locally in this batch: `photo-upload-moderate/index.ts` now uses customer-safe sign-in, batch-selection, batch-size, unavailable-selection, access-denied, and patch-required copy instead of raw `uploadIds required`, `Too many uploadIds`, and mixed not-found moderation wording.
+- Resolved locally in this batch: `google-drive-auth-callback/index.ts` now treats owner/site mismatch as a storage-connection readiness problem instead of returning `Site not found or unauthorized`.
+- Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards the tightened photo owner-helper and storage-callback copy and rejects reintroduction of the older raw auth, field-name, and not-found wording for those routes.
+- Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (27/27), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `git diff --check`, and `npm run build`.
+- No deploy was run. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk during build.
+
+### 2026-05-07 11:30 AM PT - No-Deploy Public Submission Copy Tightening
+
+- Resolved locally in this batch: `vendor-profile-inquiry-submit/index.ts` now uses customer-safe vendor-selection and vendor-availability copy instead of `Missing vendor profile` and `Vendor page not found.`
+- Resolved locally in this batch: `log-client-error/index.ts` now asks for a short report summary instead of returning `message is required`.
+- Resolved locally in this batch: `photo-upload/index.ts` now uses customer-safe link-refresh and file-selection copy instead of raw `token or siteSlug is required` and `At least one file is required` wording.
+- Resolved locally in this batch: `guestbook-submit/index.ts`, `guest-contact-submit/index.ts`, and `vault-entry-submit/index.ts` now use customer-safe message/request-unavailable copy instead of `Message is required` and `Guest not found`.
+- Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards the tightened public submission/helper copy and rejects reintroduction of the older field-name and not-found wording for those routes.
+- Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (27/27), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `git diff --check`, and `npm run build`.
+- No deploy was run. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk during build.
+
 ### 2026-05-05 2:43 PM PT - No-Deploy Shared Collaborator Permission Helper
 
 - Resolved locally in this batch: added `supabase/functions/_shared/collaboratorPermissions.ts` as the single Edge Function helper for collaborator mutation checks.

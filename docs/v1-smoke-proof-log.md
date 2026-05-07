@@ -24,6 +24,42 @@ _Launch call right now:_ Not production-ready under the stricter P0/P1 standard.
   - `npm run build`: PASS with the existing non-blocking Browserslist `caniuse-lite` warning and empty `vendor-react` chunk warning.
 - Launch status did not change. This makes the local RSVP contract more truthful and regression-proof, but no deploy was run.
 
+## 2026-05-07 11:27 AM PT Local Photo Owner Helper Copy Tightening Batch
+
+- Continued the no-deploy hardening lane locally. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - `photo-album-create` now uses customer-safe sign-in, site-selection, album-name, site-availability, and access-denied copy instead of raw `Unauthorized` and `siteId and name are required` wording.
+  - `photo-album-manage` now uses customer-safe album-selection, album-availability, access-denied, action-validation, activation-state, and parent-album copy instead of raw `albumId is required`, `Album not found`, `Forbidden`, `isActive is required for set_active`, and similar helper-internal wording.
+  - `photo-upload-moderate` now uses customer-safe batch-selection, batch-size, unavailable-selection, access-denied, and patch-required copy instead of raw upload-ID validation wording.
+  - `google-drive-auth-callback` now treats owner/site mismatch as a storage-connection readiness problem instead of returning `Site not found or unauthorized`.
+  - `src/lib/launchEdgeFunctions.test.ts` now guards the tightened photo owner-helper and storage-callback copy and rejects reintroduction of the older raw auth, field-name, and not-found strings for those routes.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 27/27.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with the existing non-blocking Browserslist `caniuse-lite` warning and empty `vendor-react` chunk warning.
+- Launch status did not change. This narrows local owner-helper auth/access leakage in the photo-management lane, but no deploy was run and the same live-proof blockers remain.
+
+## 2026-05-07 11:30 AM PT Local Public Submission Copy Tightening Batch
+
+- Continued the no-deploy hardening lane locally. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - `vendor-profile-inquiry-submit` now uses customer-safe vendor-selection and vendor-availability copy instead of `Missing vendor profile` and `Vendor page not found.`
+  - `log-client-error` now asks for a short report summary instead of returning `message is required`.
+  - `photo-upload` now uses customer-safe link-refresh and file-selection copy instead of raw `token or siteSlug is required` and `At least one file is required`.
+  - `guestbook-submit`, `guest-contact-submit`, and `vault-entry-submit` now use customer-safe message/request-unavailable copy instead of `Message is required` and `Guest not found`.
+  - `src/lib/launchEdgeFunctions.test.ts` now guards the tightened public submission/helper copy and rejects reintroduction of the older field-name and not-found strings for those routes.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 27/27.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with the existing non-blocking Browserslist `caniuse-lite` warning and empty `vendor-react` chunk warning.
+- Launch status did not change. This narrows local guest/public helper leakage, but no deploy was run and the same live-proof blockers remain.
+
 ## 2026-05-07 11:17 AM PT Local Owner Helper Access-Copy Tightening Batch
 
 - Continued the no-deploy hardening lane locally. No deploy, migration, or Supabase function deploy was run.

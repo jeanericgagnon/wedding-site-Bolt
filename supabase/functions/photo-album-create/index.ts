@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders, fail, json, sha256Hex } from "../_shared/photoUtils.ts";
+import { canMutatePhotos } from "../_shared/collaboratorPermissions.ts";
 
 const slugify = (value: string) =>
   value
@@ -12,11 +13,16 @@ const slugify = (value: string) =>
 
 function safePhotoAlbumCreateError(code: "CONFIG" | "AUTH" | "PARENT" | "SAVE" | "INTERNAL"): string {
   if (code === "CONFIG") return "Photo albums are not ready yet. Please try again in a few minutes.";
-  if (code === "AUTH") return "Unauthorized";
+  if (code === "AUTH") return "Please sign in to manage photo albums for this site.";
   if (code === "PARENT") return "Could not load the parent album. Please try again.";
   if (code === "SAVE") return "Could not create this photo album. Please try again.";
   return "Could not create this photo album. Please try again.";
 }
+
+const PHOTO_ALBUM_CREATE_SITE_REQUIRED_COPY = "Choose a site before creating a photo album.";
+const PHOTO_ALBUM_CREATE_NAME_REQUIRED_COPY = "Add a photo album name before saving.";
+const PHOTO_ALBUM_CREATE_SITE_UNAVAILABLE_COPY = "This site is not available for photo albums.";
+const PHOTO_ALBUM_CREATE_ACCESS_UNAVAILABLE_COPY = "You do not have access to manage photo albums for this site.";
 
 function randomToken(length = 48) {
   const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -150,7 +156,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return fail("UNAUTHORIZED", "Unauthorized", 401);
+    if (!authHeader?.startsWith("Bearer ")) return fail("UNAUTHORIZED", safePhotoAlbumCreateError("AUTH"), 401);
 
     const body = await req.json().catch(() => ({}));
     const siteId = typeof body.siteId === "string" ? body.siteId : null;
@@ -160,7 +166,8 @@ Deno.serve(async (req: Request) => {
     const opensAt = typeof body.opensAt === "string" ? body.opensAt : null;
     const closesAt = typeof body.closesAt === "string" ? body.closesAt : null;
 
-    if (!siteId || !name) return fail("VALIDATION_ERROR", "siteId and name are required.", 400);
+    if (!siteId) return fail("VALIDATION_ERROR", PHOTO_ALBUM_CREATE_SITE_REQUIRED_COPY, 400);
+    if (!name) return fail("VALIDATION_ERROR", PHOTO_ALBUM_CREATE_NAME_REQUIRED_COPY, 400);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
@@ -188,7 +195,22 @@ Deno.serve(async (req: Request) => {
       .eq("id", siteId)
       .maybeSingle();
 
-    if (!site || site.user_id !== user.id) return fail("FORBIDDEN", "Forbidden", 403);
+    if (!site) return fail("FORBIDDEN", PHOTO_ALBUM_CREATE_SITE_UNAVAILABLE_COPY, 403);
+    let allowed = site.user_id === user.id;
+    if (!allowed) {
+      const { data: collaborator, error: collaboratorError } = await admin
+        .from("wedding_site_collaborators")
+        .select("role,permissions")
+        .eq("wedding_site_id", siteId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (collaboratorError) {
+        console.error("PHOTO_ALBUM_CREATE_COLLABORATOR_FAILED", { reason: "COLLABORATOR_LOAD_FAILED" });
+        return fail("PERMISSION_ERROR", safePhotoAlbumCreateError("AUTH"), 400);
+      }
+      allowed = canMutatePhotos(collaborator?.role, collaborator?.permissions);
+    }
+    if (!allowed) return fail("FORBIDDEN", PHOTO_ALBUM_CREATE_ACCESS_UNAVAILABLE_COPY, 403);
 
     let parentAlbum: Record<string, unknown> | null = null;
     if (parentAlbumId) {

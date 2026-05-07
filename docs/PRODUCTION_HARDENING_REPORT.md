@@ -19,6 +19,46 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 11:27 AM PT - No-Deploy Photo Owner Helper Copy Tightening
+
+What changed:
+- Updated `photo-album-create` so the owner photo-album creation path now returns customer-safe sign-in, site-selection, album-name, site-availability, and access-denied copy instead of raw `Unauthorized` and `siteId and name are required` wording.
+- Updated `photo-album-manage` so album selection, album availability, access denial, activation-state validation, action validation, and parent-album validation now use customer-safe copy instead of raw `albumId is required`, `Album not found`, `Forbidden`, `isActive is required for set_active`, and similar helper-internal wording.
+- Updated `photo-upload-moderate` so photo moderation now returns customer-safe batch-selection, batch-size, unavailable-selection, access-denied, and patch-required copy instead of raw upload-ID validation wording.
+- Updated `google-drive-auth-callback` so owner/site mismatch now returns storage-connection readiness copy instead of `Site not found or unauthorized`.
+- Expanded `src/lib/launchEdgeFunctions.test.ts` to statically guard the tightened photo owner-helper and storage-callback copy and reject reintroduction of the old raw auth, field-name, and not-found strings on those routes.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 1 file and 27 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows more owner/service-role helper contract leakage in the photo-management lane, but live service-role/RLS proof and live messaging authorization proof are still deploy-gated blockers.
+
+### 2026-05-07 11:30 AM PT - No-Deploy Public Submission Copy Tightening
+
+What changed:
+- Updated `vendor-profile-inquiry-submit` so it now uses customer-safe vendor-selection and vendor-availability copy instead of `Missing vendor profile` and `Vendor page not found.`
+- Updated `log-client-error` so it now asks for a short report summary instead of returning `message is required`.
+- Updated `photo-upload` so the guest upload entry path now uses customer-safe link-refresh and file-selection copy instead of raw `token or siteSlug is required` and `At least one file is required` wording.
+- Updated `guestbook-submit`, `guest-contact-submit`, and `vault-entry-submit` so they now use customer-safe message/request-unavailable copy instead of `Message is required` and `Guest not found`.
+- Expanded `src/lib/launchEdgeFunctions.test.ts` to statically guard the tightened public submission/helper copy and reject reintroduction of the old field-name and not-found strings on those routes.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 1 file and 27 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows more guest/public helper contract leakage, but live service-role/RLS proof and live messaging authorization proof are still deploy-gated blockers.
+
 ### 2026-05-07 11:19 AM PT - No-Deploy Preview Helper Copy Tightening
 
 What changed:

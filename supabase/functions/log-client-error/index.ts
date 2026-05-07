@@ -90,7 +90,7 @@ Deno.serve(async (req: Request) => {
     const message = redact(clamp(payload.message, 2000));
     const stack = redact(clamp(payload.stack, 4000));
 
-    if (!message) return json({ error: "message is required" }, 400);
+    if (!message) return json({ error: "Add a short error summary before sending this report." }, 400);
 
     const fp = await fingerprint(`${source}|${route ?? ""}|${message.slice(0, 500)}`);
 

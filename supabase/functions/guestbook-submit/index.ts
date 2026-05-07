@@ -48,7 +48,7 @@ Deno.serve(async (req: Request) => {
 
     if (honeypot) return json({ error: "Request rejected" }, 400);
     if (!/^[a-z0-9-]{2,80}$/.test(siteSlug)) return json({ error: "Invalid site" }, 400);
-    if (!message || message.length < 2) return json({ error: "Message is required" }, 400);
+    if (!message || message.length < 2) return json({ error: "Add a guestbook message before sending." }, 400);
     if (message.length > 2000) return json({ error: "Message is too long" }, 400);
     if (guestEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) return json({ error: "Invalid email" }, 400);
 

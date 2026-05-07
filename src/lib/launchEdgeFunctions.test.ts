@@ -123,7 +123,11 @@ describe('launch edge function guards', () => {
     expect(source).toContain('reply_to: input.email');
     expect(source).toContain('import { escapeHtml, sanitizeEmailSubject }');
     expect(source).toContain('New wedding inquiry from');
+    expect(source).toContain('Choose a vendor page before sending this inquiry.');
+    expect(source).toContain('This vendor page is not available.');
     expect(source).toContain('Could not send inquiry. Please try again.');
+    expect(source).not.toContain('Missing vendor profile');
+    expect(source).not.toContain('Vendor page not found.');
     expect(source).not.toContain('profileError) throw profileError');
     expect(source).not.toContain('if (error) throw error');
     expect(source).not.toContain('error instanceof Error ? error.message');
@@ -383,6 +387,14 @@ describe('launch edge function guards', () => {
     expect(source).toContain('safePhotoAlbumManageError("PARENT_FAILED")');
     expect(source).toContain('safePhotoAlbumManageError("UPDATE_FAILED")');
     expect(source).toContain('safePhotoAlbumManageError("INTERNAL_ERROR")');
+    expect(source).toContain('PHOTO_ALBUM_MANAGE_SIGNIN_REQUIRED_COPY = "Please sign in to manage photo albums for this site."');
+    expect(source).toContain('PHOTO_ALBUM_MANAGE_ALBUM_REQUIRED_COPY = "Choose a photo album before updating it."');
+    expect(source).toContain('PHOTO_ALBUM_MANAGE_ALBUM_UNAVAILABLE_COPY = "This photo album is not available."');
+    expect(source).toContain('PHOTO_ALBUM_MANAGE_ACCESS_UNAVAILABLE_COPY = "You do not have access to manage this photo album."');
+    expect(source).toContain('PHOTO_ALBUM_MANAGE_ACTIVE_REQUIRED_COPY = "Choose whether this photo album should stay active."');
+    expect(source).toContain('PHOTO_ALBUM_MANAGE_ACTION_INVALID_COPY = "Choose a valid photo album update."');
+    expect(source).toContain('PHOTO_ALBUM_MANAGE_PARENT_INVALID_COPY = "Choose a different parent album for this photo album."');
+    expect(source).toContain('PHOTO_ALBUM_MANAGE_PARENT_SITE_INVALID_COPY = "Choose a parent album from the same site."');
     expect(source).toContain('/photos/upload?t=');
     expect(source).toContain('reason: "ALBUM_ACTIVE_UPDATE_FAILED"');
     expect(source).toContain('reason: "ALBUM_LOOKUP_FAILED"');
@@ -390,6 +402,14 @@ describe('launch edge function guards', () => {
     expect(source).toContain('reason: "ALBUM_PARENT_UPDATE_FAILED"');
     expect(source).toContain('reason: "ALBUM_LINK_REGENERATION_FAILED"');
     expect(source).toContain('reason: "UNEXPECTED_PHOTO_ALBUM_MANAGE_FAILURE"');
+    expect(source).not.toContain('Unauthorized');
+    expect(source).not.toContain('albumId is required');
+    expect(source).not.toContain('Album not found');
+    expect(source).not.toContain('Forbidden');
+    expect(source).not.toContain('isActive is required for set_active');
+    expect(source).not.toContain('A bucket cannot be its own parent');
+    expect(source).not.toContain('Parent bucket must belong to this wedding site');
+    expect(source).not.toContain('Unsupported action');
     expect(source).not.toContain('collaboratorError.message');
     expect(source).not.toContain('parentError.message');
     expect(source).not.toContain('PHOTO_ALBUM_MANAGE_LOOKUP_FAILED", albumErr');
@@ -406,6 +426,11 @@ describe('launch edge function guards', () => {
     expect(create).toContain('safePhotoAlbumCreateError("PARENT")');
     expect(create).toContain('safePhotoAlbumCreateError("SAVE")');
     expect(create).toContain('safePhotoAlbumCreateError("INTERNAL")');
+    expect(create).toContain('if (code === "AUTH") return "Please sign in to manage photo albums for this site."');
+    expect(create).toContain('PHOTO_ALBUM_CREATE_SITE_REQUIRED_COPY = "Choose a site before creating a photo album."');
+    expect(create).toContain('PHOTO_ALBUM_CREATE_NAME_REQUIRED_COPY = "Add a photo album name before saving."');
+    expect(create).toContain('PHOTO_ALBUM_CREATE_SITE_UNAVAILABLE_COPY = "This site is not available for photo albums."');
+    expect(create).toContain('PHOTO_ALBUM_CREATE_ACCESS_UNAVAILABLE_COPY = "You do not have access to manage photo albums for this site."');
     expect(create).toContain('../_shared/collaboratorPermissions.ts');
     expect(create).toContain('.select("role,permissions")');
     expect(create).toContain('canMutatePhotos(collaborator?.role, collaborator?.permissions)');
@@ -415,6 +440,9 @@ describe('launch edge function guards', () => {
     expect(create).toContain('driveBackupStatus');
     expect(create).toContain('reason: "ALBUM_CREATE_SAVE_FAILED"');
     expect(create).toContain('reason: "UNEXPECTED_PHOTO_ALBUM_CREATE_FAILURE"');
+    expect(create).not.toContain('return fail("UNAUTHORIZED", "Unauthorized"');
+    expect(create).not.toContain('return fail("FORBIDDEN", "Forbidden"');
+    expect(create).not.toContain('siteId and name are required');
     expect(create).not.toContain('Missing SUPABASE_ANON_KEY in function env');
     expect(create).not.toContain('userErr?.message');
     expect(create).not.toContain('parentError.message');
@@ -426,6 +454,12 @@ describe('launch edge function guards', () => {
     expect(moderate).toContain('safePhotoModerationError("PERMISSION")');
     expect(moderate).toContain('safePhotoModerationError("SAVE")');
     expect(moderate).toContain('safePhotoModerationError("INTERNAL")');
+    expect(moderate).toContain('PHOTO_MODERATION_SIGNIN_REQUIRED_COPY = "Please sign in to update selected photos."');
+    expect(moderate).toContain('PHOTO_MODERATION_SELECTION_REQUIRED_COPY = "Choose at least one photo to update."');
+    expect(moderate).toContain('PHOTO_MODERATION_SELECTION_LIMIT_COPY = "Choose 500 photos or fewer at a time."');
+    expect(moderate).toContain('PHOTO_MODERATION_SELECTION_UNAVAILABLE_COPY = "One or more selected photos are not available."');
+    expect(moderate).toContain('PHOTO_MODERATION_ACCESS_UNAVAILABLE_COPY = "You do not have access to update one or more selected photos."');
+    expect(moderate).toContain('PHOTO_MODERATION_PATCH_REQUIRED_COPY = "Choose a valid photo update before saving."');
     expect(moderate).toContain('wedding_site_collaborators');
     expect(moderate).toContain('../_shared/collaboratorPermissions.ts');
     expect(moderate).toContain('.select("wedding_site_id,role,permissions")');
@@ -433,6 +467,13 @@ describe('launch edge function guards', () => {
     expect(moderate).not.toContain('hasPermissionKey(row.permissions, "photos")');
     expect(moderate).toContain('reason: "PHOTO_MODERATION_SAVE_FAILED"');
     expect(moderate).toContain('reason: "UNEXPECTED_PHOTO_MODERATION_FAILURE"');
+    expect(moderate).not.toContain('return fail("UNAUTHORIZED", "Unauthorized"');
+    expect(moderate).not.toContain('uploadIds required');
+    expect(moderate).not.toContain('Too many uploadIds (max 500)');
+    expect(moderate).not.toContain('return fail("FORBIDDEN", "Forbidden"');
+    expect(moderate).not.toContain('No uploads found');
+    expect(moderate).not.toContain('One or more selected photos could not be found.');
+    expect(moderate).not.toContain('No valid patch fields');
     expect(moderate).not.toContain('uploadsErr?.message');
     expect(moderate).not.toContain('collaboratorError.message');
     expect(moderate).not.toContain('updateErr.message');
@@ -555,6 +596,7 @@ describe('launch edge function guards', () => {
     expect(googleDrive).toContain('STORAGE_CONNECTION_RETRY_COPY = "Could not finish this storage connection. Please try again."');
     expect(googleDrive).toContain('STORAGE_CONNECTION_LINK_EXPIRED_COPY = "This storage connection link has expired. Please try again from settings."');
     expect(googleDrive).toContain('STORAGE_CONNECTION_NOT_READY_COPY = "This storage connection is not ready yet."');
+    expect(googleDrive).not.toContain('Site not found or unauthorized');
     expect(googleDrive).not.toContain('details: tokenJson');
     expect(googleDrive).not.toContain('GOOGLE_DRIVE_AUTH_TOKEN_EXCHANGE_FAILED", tokenJson');
     expect(googleDrive).not.toContain('Google OAuth error: ${oauthErr}');
@@ -710,6 +752,8 @@ describe('launch edge function guards', () => {
     expect(logClientError).not.toContain('let inferredSiteId: string | null = payload.weddingSiteId');
     expect(logClientError).toContain('reason: "CLIENT_ERROR_INSERT_FAILED"');
     expect(logClientError).toContain('reason: "UNEXPECTED_CLIENT_ERROR_LOG_FAILURE"');
+    expect(logClientError).toContain('Add a short error summary before sending this report.');
+    expect(logClientError).not.toContain('message is required');
     expect(logClientError).not.toContain('const msg = err instanceof Error ? err.message');
     expect(logClientError).not.toContain('return json({ error: msg }, 500)');
 
@@ -781,7 +825,7 @@ describe('launch edge function guards', () => {
     expect(readFunction('photo-upload-moderate')).not.toContain('PHOTO_UPLOAD_MODERATE_LOAD_FAILED", uploadsErr');
     expect(readFunction('photo-upload-moderate')).toContain('Array.from(new Set');
     expect(readFunction('photo-upload-moderate')).toContain('uploads.length !== uploadIds.length');
-    expect(readFunction('photo-upload-moderate')).toContain('One or more selected photos could not be found.');
+    expect(readFunction('photo-upload-moderate')).toContain('PHOTO_MODERATION_SELECTION_UNAVAILABLE_COPY = "One or more selected photos are not available."');
   });
 
   it('keeps public guest contact updates session-scoped instead of browser-id scoped', () => {
@@ -1068,6 +1112,10 @@ describe('launch edge function guards', () => {
     expect(source).not.toContain('token_hash: tokenHash ?? `site:${siteSlug}`');
     expect(source).toContain('We couldn\'t upload this file. Please try again.');
     expect(source).toContain('We couldn\'t finish this upload. Please try again.');
+    expect(source).toContain('Open this photo upload link again before sending photos.');
+    expect(source).toContain('Choose at least one photo or video to upload.');
+    expect(source).not.toContain('token or siteSlug is required');
+    expect(source).not.toContain('At least one file is required');
     expect(source).not.toContain('return fail("INTERNAL_ERROR", err instanceof Error ? err.message');
     expect(source).not.toContain('error: error instanceof Error ? error.message');
     expect(source).not.toContain('if (error) throw new Error(error.message);');
@@ -1101,10 +1149,14 @@ describe('launch edge function guards', () => {
     expect(vaultSubmit).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token,wedding_date")');
     expect(vaultSubmit).toContain('const hasAccess = await canReadPublicSubresource');
     expect(vaultSubmit).toContain('storedInviteToken: typeof site.guest_access_token === "string" ? site.guest_access_token : null');
+    expect(vaultSubmit).toContain('Add a memory message before saving.');
+    expect(vaultSubmit).not.toContain('Message is required');
     expect(vaultSubmit).not.toContain('.select("id, is_published, wedding_date")');
     expect(vaultSubmit).not.toContain('if (!site?.is_published)');
     const guestbook = readFunction('guestbook-submit');
     expect(guestbook).toContain('Guestbook is temporarily unavailable. Please try again.');
+    expect(guestbook).toContain('Add a guestbook message before sending.');
+    expect(guestbook).not.toContain('Message is required');
     expect(guestbook).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
     expect(guestbook).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
     expect(guestbook).toContain('canReadPublicSubresource');
@@ -1125,6 +1177,10 @@ describe('launch edge function guards', () => {
     expect(guestProspect).toContain('albumUploadWindowIsOpen(album)');
     expect(guestProspect).toContain('if (!hasPublicAccess && !hasUploadAccess) return json({ error: "Site not available" }, 404)');
     expect(guestProspect).not.toContain('if (!site || !site.is_published)');
+
+    const guestContactSubmit = readFunction('guest-contact-submit');
+    expect(guestContactSubmit).toContain('This contact request is no longer available.');
+    expect(guestContactSubmit).not.toContain('Guest not found');
     expect(guestProspect).toContain('function safeReferrer');
     expect(guestProspect).toContain('parsed.search = ""');
     expect(guestProspect).toContain('const referrer = safeReferrer(req.headers.get("referer"))');

@@ -141,7 +141,7 @@ Deno.serve(async (req: Request) => {
     const siteSlug = cleanText(body.site_slug, 120).replace(/[^a-z0-9-]/gi, "").toLowerCase();
     const inquiryContext = cleanText(body.inquiry_context, 1200);
 
-    if (!vendorProfileId) return json({ error: "Missing vendor profile" }, 400);
+    if (!vendorProfileId) return json({ error: "Choose a vendor page before sending this inquiry." }, 400);
     if (!name || !email || !message) return json({ error: "Add your name, email, and message." }, 400);
     if (!isSafeEmail(email)) return json({ error: "Enter a valid email." }, 400);
     if (message.length < 8) return json({ error: "Add a little more detail before sending." }, 400);
@@ -153,7 +153,7 @@ Deno.serve(async (req: Request) => {
       .eq("id", vendorProfileId)
       .maybeSingle();
     if (profileError) return json({ error: "Could not send inquiry. Please try again." }, 500);
-    if (!profile) return json({ error: "Vendor page not found." }, 404);
+    if (!profile) return json({ error: "This vendor page is not available." }, 404);
 
     const rateLimit = await enforcePublicSubmissionRateLimit({
       admin,

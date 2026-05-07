@@ -464,7 +464,7 @@ Deno.serve(async (req: Request) => {
     const honeypot = String(form.get(HONEYPOT_FIELD) ?? '').trim();
     const files = form.getAll("files").filter((v): v is File => v instanceof File);
 
-    if (!token && !siteSlug) return fail("TOKEN_REQUIRED", "token or siteSlug is required", 400);
+    if (!token && !siteSlug) return fail("TOKEN_REQUIRED", "Open this photo upload link again before sending photos.", 400);
     if (siteSlug && !/^[a-z0-9-]{2,80}$/.test(siteSlug)) {
       return fail("INVALID_SITE", "Invalid site link.", 400);
     }
@@ -472,7 +472,7 @@ Deno.serve(async (req: Request) => {
     if (guestEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) {
       return fail("INVALID_EMAIL", "Invalid email address.", 400);
     }
-    if (files.length === 0) return fail("FILES_REQUIRED", "At least one file is required", 400);
+    if (files.length === 0) return fail("FILES_REQUIRED", "Choose at least one photo or video to upload.", 400);
     if (files.length > MAX_FILES_PER_REQUEST) return fail("TOO_MANY_FILES", `Too many files (max ${MAX_FILES_PER_REQUEST})`, 400);
 
     const totalBytes = files.reduce((sum, file) => sum + file.size, 0);

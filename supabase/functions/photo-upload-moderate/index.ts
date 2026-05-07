@@ -1,10 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders, fail, json } from "../_shared/photoUtils.ts";
-
-function hasPermissionKey(permissions: unknown, key: string): boolean {
-  return Array.isArray(permissions) && permissions.includes(key);
-}
+import { canMutatePhotos } from "../_shared/collaboratorPermissions.ts";
 
 function safePhotoModerationError(code: "LOAD" | "PERMISSION" | "SAVE" | "INTERNAL"): string {
   if (code === "LOAD") return "Could not load selected photos. Please try again.";
@@ -13,13 +10,20 @@ function safePhotoModerationError(code: "LOAD" | "PERMISSION" | "SAVE" | "INTERN
   return "Could not update selected photos. Please try again.";
 }
 
+const PHOTO_MODERATION_SIGNIN_REQUIRED_COPY = "Please sign in to update selected photos.";
+const PHOTO_MODERATION_SELECTION_REQUIRED_COPY = "Choose at least one photo to update.";
+const PHOTO_MODERATION_SELECTION_LIMIT_COPY = "Choose 500 photos or fewer at a time.";
+const PHOTO_MODERATION_SELECTION_UNAVAILABLE_COPY = "One or more selected photos are not available.";
+const PHOTO_MODERATION_ACCESS_UNAVAILABLE_COPY = "You do not have access to update one or more selected photos.";
+const PHOTO_MODERATION_PATCH_REQUIRED_COPY = "Choose a valid photo update before saving.";
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
   if (req.method !== "POST") return fail("METHOD_NOT_ALLOWED", "Method not allowed.", 405);
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return fail("UNAUTHORIZED", "Unauthorized", 401);
+    if (!authHeader?.startsWith("Bearer ")) return fail("UNAUTHORIZED", PHOTO_MODERATION_SIGNIN_REQUIRED_COPY, 401);
 
     const body = await req.json().catch(() => ({}));
     const uploadIds = Array.isArray(body.uploadIds)
@@ -27,8 +31,8 @@ Deno.serve(async (req: Request) => {
       : [];
     const patch = (body.patch && typeof body.patch === "object") ? body.patch as Record<string, unknown> : {};
 
-    if (uploadIds.length === 0) return fail("VALIDATION_ERROR", "uploadIds required", 400);
-    if (uploadIds.length > 500) return fail("VALIDATION_ERROR", "Too many uploadIds (max 500)", 400);
+    if (uploadIds.length === 0) return fail("VALIDATION_ERROR", PHOTO_MODERATION_SELECTION_REQUIRED_COPY, 400);
+    if (uploadIds.length > 500) return fail("VALIDATION_ERROR", PHOTO_MODERATION_SELECTION_LIMIT_COPY, 400);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -41,7 +45,7 @@ Deno.serve(async (req: Request) => {
       data: { user },
     } = await userClient.auth.getUser();
 
-    if (!user) return fail("UNAUTHORIZED", "Unauthorized", 401);
+    if (!user) return fail("UNAUTHORIZED", PHOTO_MODERATION_SIGNIN_REQUIRED_COPY, 401);
 
     const admin = createClient(supabaseUrl, serviceRole);
 
@@ -52,10 +56,10 @@ Deno.serve(async (req: Request) => {
 
     if (uploadsErr || !uploads || uploads.length === 0) {
       if (uploadsErr) console.error("PHOTO_UPLOAD_MODERATE_LOAD_FAILED", { reason: "UPLOAD_LOAD_FAILED" });
-      return fail("DB_ERROR", uploadsErr ? safePhotoModerationError("LOAD") : "No uploads found", 400);
+      return fail("DB_ERROR", uploadsErr ? safePhotoModerationError("LOAD") : PHOTO_MODERATION_SELECTION_UNAVAILABLE_COPY, 400);
     }
     if (uploads.length !== uploadIds.length) {
-      return fail("VALIDATION_ERROR", "One or more selected photos could not be found.", 400);
+      return fail("VALIDATION_ERROR", PHOTO_MODERATION_SELECTION_UNAVAILABLE_COPY, 400);
     }
 
     const siteIds = [...new Set(uploads.map((u) => u.wedding_site_id))];
@@ -69,7 +73,7 @@ Deno.serve(async (req: Request) => {
     if (remainingSiteIds.length > 0) {
       const { data: collaborators, error: collaboratorError } = await admin
         .from("wedding_site_collaborators")
-        .select("wedding_site_id,permissions")
+        .select("wedding_site_id,role,permissions")
         .eq("user_id", user.id)
         .in("wedding_site_id", remainingSiteIds);
       if (collaboratorError) {
@@ -78,11 +82,11 @@ Deno.serve(async (req: Request) => {
       }
       const allowedSiteIds = new Set(
         (collaborators ?? [])
-          .filter((row) => hasPermissionKey(row.permissions, "photos"))
+          .filter((row) => canMutatePhotos(row.role, row.permissions))
           .map((row) => row.wedding_site_id),
       );
       const unauthorized = remainingSiteIds.some((siteId) => !allowedSiteIds.has(siteId));
-      if (unauthorized) return fail("FORBIDDEN", "Forbidden", 403);
+      if (unauthorized) return fail("FORBIDDEN", PHOTO_MODERATION_ACCESS_UNAVAILABLE_COPY, 403);
     }
 
     const allowedPatch: Record<string, unknown> = {};
@@ -91,7 +95,7 @@ Deno.serve(async (req: Request) => {
     if (typeof patch.recap_hidden === "boolean") allowedPatch.recap_hidden = patch.recap_hidden;
     if (typeof patch.recap_featured === "boolean") allowedPatch.recap_featured = patch.recap_featured;
     if (typeof patch.recap_story === "boolean") allowedPatch.recap_story = patch.recap_story;
-    if (Object.keys(allowedPatch).length === 0) return fail("VALIDATION_ERROR", "No valid patch fields", 400);
+    if (Object.keys(allowedPatch).length === 0) return fail("VALIDATION_ERROR", PHOTO_MODERATION_PATCH_REQUIRED_COPY, 400);
 
     const hasRecapPatch = ["recap_hidden", "recap_featured", "recap_story"].some((key) => key in allowedPatch);
     const { error: updateErr } = await admin

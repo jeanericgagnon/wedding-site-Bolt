@@ -264,7 +264,7 @@ Deno.serve(async (req: Request) => {
       };
     });
 
-    if (cleaned.some((row) => !row.content)) return json({ error: "Message is required" }, 400);
+    if (cleaned.some((row) => !row.content)) return json({ error: "Add a memory message before saving." }, 400);
 
     const { data: inserted, error: insertError } = await admin
       .from("vault_entries")

@@ -24,6 +24,10 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+const CONTACT_LINK_UNAVAILABLE_COPY = "This contact update link is missing or expired.";
+const CONTACT_LINK_SITE_MISMATCH_COPY = "This contact update link is not available for this site.";
+const CONTACT_UPDATE_REQUIRED_COPY = "Add at least one update before saving.";
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -60,7 +64,7 @@ Deno.serve(async (req: Request) => {
       !contactPayload.guestId ||
       contactPayload.exp <= Date.now()
     ) {
-      return json({ error: "This contact update link has expired. Please search your full name again." }, 403);
+      return json({ error: CONTACT_LINK_UNAVAILABLE_COPY }, 403);
     }
 
     const siteQuery = admin
@@ -71,11 +75,11 @@ Deno.serve(async (req: Request) => {
     const { data: site } = await siteQuery;
 
     if (!site?.id) {
-      return json({ error: "Invalid site" }, 404);
+      return json({ error: CONTACT_LINK_UNAVAILABLE_COPY }, 404);
     }
 
     if (site.id !== contactPayload.siteId) {
-      return json({ error: "This contact update link is not valid for this site." }, 403);
+      return json({ error: CONTACT_LINK_SITE_MISMATCH_COPY }, 403);
     }
 
     const { data: guest } = await admin
@@ -86,7 +90,7 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (!guest?.id) {
-      return json({ error: "Guest not found" }, 404);
+      return json({ error: "This contact request is no longer available." }, 404);
     }
 
     const rateLimit = await enforcePublicSubmissionRateLimit({
@@ -117,7 +121,7 @@ Deno.serve(async (req: Request) => {
     if (phone) patch.sms_consent = smsConsent;
 
     if (Object.keys(patch).length === 0) {
-      return json({ error: "No updates provided" }, 400);
+      return json({ error: CONTACT_UPDATE_REQUIRED_COPY }, 400);
     }
 
     let query = admin.from("guests").update(patch).eq("wedding_site_id", site.id);

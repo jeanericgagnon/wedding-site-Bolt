@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { canMutatePhotos } from "../_shared/collaboratorPermissions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,15 @@ const json = (data: unknown, status = 200) =>
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+
+const PHOTO_ALBUM_MANAGE_SIGNIN_REQUIRED_COPY = "Please sign in to manage photo albums for this site.";
+const PHOTO_ALBUM_MANAGE_ALBUM_REQUIRED_COPY = "Choose a photo album before updating it.";
+const PHOTO_ALBUM_MANAGE_ALBUM_UNAVAILABLE_COPY = "This photo album is not available.";
+const PHOTO_ALBUM_MANAGE_ACCESS_UNAVAILABLE_COPY = "You do not have access to manage this photo album.";
+const PHOTO_ALBUM_MANAGE_ACTIVE_REQUIRED_COPY = "Choose whether this photo album should stay active.";
+const PHOTO_ALBUM_MANAGE_ACTION_INVALID_COPY = "Choose a valid photo album update.";
+const PHOTO_ALBUM_MANAGE_PARENT_INVALID_COPY = "Choose a different parent album for this photo album.";
+const PHOTO_ALBUM_MANAGE_PARENT_SITE_INVALID_COPY = "Choose a parent album from the same site.";
 
 function safePhotoAlbumManageError(code: "LOOKUP_FAILED" | "COLLABORATOR_FAILED" | "UPDATE_FAILED" | "PARENT_FAILED" | "INTERNAL_ERROR"): string {
   if (code === "LOOKUP_FAILED") return "Could not load this photo album. Please try again.";
@@ -33,17 +43,13 @@ function randomToken(length = 48) {
   return Array.from(bytes).map((b) => chars[b % chars.length]).join("");
 }
 
-function hasPermissionKey(permissions: unknown, key: string): boolean {
-  return Array.isArray(permissions) && permissions.includes(key);
-}
-
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
+    if (!authHeader?.startsWith("Bearer ")) return json({ error: PHOTO_ALBUM_MANAGE_SIGNIN_REQUIRED_COPY }, 401);
 
     const body = await req.json().catch(() => ({}));
     const action = typeof body.action === "string" ? body.action : "";
@@ -53,7 +59,7 @@ Deno.serve(async (req: Request) => {
     const closesAt = typeof body.closesAt === "string" ? body.closesAt : null;
     const parentAlbumId = typeof body.parentAlbumId === "string" && body.parentAlbumId.trim() ? body.parentAlbumId.trim() : null;
 
-    if (!albumId) return json({ error: "albumId is required" }, 400);
+    if (!albumId) return json({ error: PHOTO_ALBUM_MANAGE_ALBUM_REQUIRED_COPY }, 400);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -68,7 +74,7 @@ Deno.serve(async (req: Request) => {
       data: { user },
     } = await userClient.auth.getUser();
 
-    if (!user) return json({ error: "Unauthorized" }, 401);
+    if (!user) return json({ error: PHOTO_ALBUM_MANAGE_SIGNIN_REQUIRED_COPY }, 401);
 
     const admin = createClient(supabaseUrl, serviceRole);
 
@@ -82,7 +88,7 @@ Deno.serve(async (req: Request) => {
       console.error("PHOTO_ALBUM_MANAGE_LOOKUP_FAILED", { reason: "ALBUM_LOOKUP_FAILED" });
       return json({ error: safePhotoAlbumManageError("LOOKUP_FAILED") }, 404);
     }
-    if (!album) return json({ error: "Album not found" }, 404);
+    if (!album) return json({ error: PHOTO_ALBUM_MANAGE_ALBUM_UNAVAILABLE_COPY }, 404);
 
     const { data: site } = await admin
       .from("wedding_sites")
@@ -94,7 +100,7 @@ Deno.serve(async (req: Request) => {
     if (!allowed) {
       const { data: collaborator, error: collaboratorError } = await admin
         .from("wedding_site_collaborators")
-        .select("permissions")
+        .select("role,permissions")
         .eq("wedding_site_id", album.wedding_site_id as string)
         .eq("user_id", user.id)
         .maybeSingle();
@@ -102,12 +108,12 @@ Deno.serve(async (req: Request) => {
         console.error("PHOTO_ALBUM_MANAGE_COLLABORATOR_FAILED", { reason: "COLLABORATOR_LOAD_FAILED" });
         return json({ error: safePhotoAlbumManageError("COLLABORATOR_FAILED") }, 400);
       }
-      allowed = hasPermissionKey(collaborator?.permissions, "photos");
+      allowed = canMutatePhotos(collaborator?.role, collaborator?.permissions);
     }
-    if (!allowed) return json({ error: "Forbidden" }, 403);
+    if (!allowed) return json({ error: PHOTO_ALBUM_MANAGE_ACCESS_UNAVAILABLE_COPY }, 403);
 
     if (action === "set_active") {
-      if (isActive === null) return json({ error: "isActive is required for set_active" }, 400);
+      if (isActive === null) return json({ error: PHOTO_ALBUM_MANAGE_ACTIVE_REQUIRED_COPY }, 400);
       const { error } = await admin
         .from("photo_albums")
         .update({ is_active: isActive })
@@ -132,7 +138,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action === "set_parent") {
-      if (parentAlbumId === albumId) return json({ error: "A bucket cannot be its own parent" }, 400);
+      if (parentAlbumId === albumId) return json({ error: PHOTO_ALBUM_MANAGE_PARENT_INVALID_COPY }, 400);
       let hierarchyLabel: string | null = null;
       if (parentAlbumId) {
         const { data: parent, error: parentError } = await admin
@@ -145,7 +151,7 @@ Deno.serve(async (req: Request) => {
           return json({ error: safePhotoAlbumManageError("PARENT_FAILED") }, 400);
         }
         if (!parent || parent.wedding_site_id !== album.wedding_site_id) {
-          return json({ error: "Parent bucket must belong to this wedding site" }, 400);
+          return json({ error: PHOTO_ALBUM_MANAGE_PARENT_SITE_INVALID_COPY }, 400);
         }
         const { data: current } = await admin
           .from("photo_albums")
@@ -182,7 +188,7 @@ Deno.serve(async (req: Request) => {
       return json({ success: true, albumId, uploadUrl, uploadToken: token });
     }
 
-    return json({ error: "Unsupported action" }, 400);
+    return json({ error: PHOTO_ALBUM_MANAGE_ACTION_INVALID_COPY }, 400);
   } catch (err) {
     console.error("PHOTO_ALBUM_MANAGE_UNEXPECTED_FAILED", { reason: "UNEXPECTED_PHOTO_ALBUM_MANAGE_FAILURE" });
     return json({ error: safePhotoAlbumManageError("INTERNAL_ERROR") }, 500);
