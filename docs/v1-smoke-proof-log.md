@@ -8029,6 +8029,20 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 4:37 PM PT No-Deploy Guest Site Slug And Active-Site Helper Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestService.ts` now owns guest RSVP text-link site slug lookup via `loadGuestDashboardSiteSlug(weddingSiteId)` and active-site fallback lookup via `resolveGuestDashboardSiteId(userId)`.
+  - `src/pages/dashboard/Guests.tsx` now calls those helpers instead of directly reading `wedding_sites.site_slug` or calling `resolveActiveSiteForUser(user.id)` inline in the guest export/import flow.
+  - `src/pages/dashboard/guests/guestService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` now pin that service boundary.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`: PASS, 53/53.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 3:31 PM PT No-Deploy Seating Session Refresh Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

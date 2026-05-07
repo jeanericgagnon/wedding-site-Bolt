@@ -3388,3 +3388,21 @@ Commands run:
 
 Status:
 - PARTIAL. This materially advances the guest dashboard page-to-service migration without changing assisted RSVP source tagging, guest RSVP state updates, RSVP upsert behavior, or rollback safety on live write failure. No deploy was run.
+
+### 2026-05-07 4:37 PM PT - No-Deploy Guest Site Slug And Active-Site Helper Extraction
+
+What changed:
+- Moved guest RSVP text-link site slug lookup and repeated active-site fallback lookup out of `src/pages/dashboard/Guests.tsx` and into `src/pages/dashboard/guests/guestService.ts`.
+- `Guests.tsx` now calls `loadGuestDashboardSiteSlug(weddingSiteId)` and `resolveGuestDashboardSiteId(userId)` instead of directly querying `wedding_sites` for `site_slug` or calling `resolveActiveSiteForUser(user.id)` inline.
+- The guest service now owns the `site_slug` read plus the simple active-site-id resolution helper used by guest CSV preview/import.
+- Expanded `src/pages/dashboard/guests/guestService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so that boundary stays pinned.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `npm run build`
+- `git diff --check`
+
+Status:
+- PARTIAL. This materially advances the guest dashboard page-to-service migration without changing RSVP text-link export behavior or the guest CSV preview/import active-site fallback. No deploy was run.

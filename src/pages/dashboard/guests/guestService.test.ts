@@ -9,6 +9,7 @@ import {
   GUEST_EVENT_INVITATION_SELECT,
   GUEST_ITINERARY_EVENT_SELECT,
   GUEST_ITINERARY_SITE_SELECT,
+  GUEST_SITE_SLUG_SELECT,
   GUEST_SITE_SETTINGS_SELECT,
   loadGuestItineraryDrawerSnapshot,
   MAX_GUEST_BULK_INVITATION_ROWS,
@@ -25,11 +26,13 @@ import {
   MAX_GUEST_RSVP_LOOKUP_IDS,
   loadGuestDashboardItineraryFilters,
   loadGuestDashboardRsvpAuditFeed,
+  loadGuestDashboardSiteSlug,
   loadGuestDashboardSiteSettings,
   loadGuestDashboardSnapshot,
   removeGuestEventInvitation,
   saveAssistedGuestRsvp,
   refreshGuestDashboardSession,
+  resolveGuestDashboardSiteId,
   toEventInvitationRows,
 } from './guestService';
 
@@ -95,6 +98,7 @@ describe('guestService', () => {
     expect(GUEST_ITINERARY_SITE_SELECT).toBe('wedding_data');
     expect(GUEST_EVENT_INVITATION_SELECT).toBe('event_id, guest_id');
     expect(GUEST_AUDIT_SELECT).toContain('changed_at');
+    expect(GUEST_SITE_SLUG_SELECT).toBe('site_slug');
     expect(MAX_GUEST_ITINERARY_FILTER_EVENTS).toBe(200);
     expect(MAX_GUEST_ITINERARY_FILTER_INVITATIONS).toBe(10000);
     expect(MAX_GUEST_AUDIT_ROWS).toBe(20);
@@ -124,6 +128,8 @@ describe('guestService', () => {
     expect(page).toContain('removeGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(page).toContain('addGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(page).toContain('saveAssistedGuestRsvp({');
+    expect(page).toContain('loadGuestDashboardSiteSlug(weddingSiteId)');
+    expect(page).toContain('resolveGuestDashboardSiteId(user.id)');
     expect(page).not.toContain("supabase.rpc('generate_secure_token'");
     expect(page).not.toContain('supabase.auth.refreshSession()');
     expect(page).not.toContain(".from('wedding_sites')\n        .select('id, couple_name_1, couple_name_2");
@@ -137,6 +143,8 @@ describe('guestService', () => {
     expect(page).not.toContain(".from('rsvps')\n        .select('id, notes')");
     expect(page).not.toContain(".from('rsvps')\n          .update(assistedRsvpPayload)");
     expect(page).not.toContain(".from('rsvps')\n          .insert({");
+    expect(page).not.toContain(".from('wedding_sites')\n      .select('site_slug')");
+    expect(page).not.toContain('await resolveActiveSiteForUser(user.id)');
     expect(service).toContain("supabase.rpc('generate_secure_token'");
     expect(service).toContain('export async function generateSecureGuestInviteToken()');
     expect(service).toContain('export async function refreshGuestDashboardSession(): Promise<void>');
@@ -148,6 +156,8 @@ describe('guestService', () => {
     expect(service).toContain('export async function addGuestEventInvitation(eventId: string, guestId: string): Promise<void>');
     expect(service).toContain('export async function removeGuestEventInvitation(eventId: string, guestId: string): Promise<void>');
     expect(service).toContain('export async function saveAssistedGuestRsvp(input: SaveAssistedGuestRsvpInput): Promise<SaveAssistedGuestRsvpResult>');
+    expect(service).toContain('export async function resolveGuestDashboardSiteId(userId: string): Promise<string | null>');
+    expect(service).toContain('export async function loadGuestDashboardSiteSlug(weddingSiteId: string): Promise<string | null>');
     expect(service).toContain('supabase.auth.refreshSession()');
   });
 
@@ -486,6 +496,23 @@ describe('guestService', () => {
       recordedAt: expect.any(String),
       nextNotes: expect.stringContaining('Called and confirmed'),
     }));
+  });
+
+  it('resolves the guest dashboard site id through the service', async () => {
+    resolveActiveSiteForUserMock.mockResolvedValueOnce({ id: 'site-1' });
+    await expect(resolveGuestDashboardSiteId('user-1')).resolves.toBe('site-1');
+    expect(resolveActiveSiteForUserMock).toHaveBeenCalledWith('user-1');
+  });
+
+  it('loads the guest dashboard site slug through the service', async () => {
+    const singleMock = vi.fn().mockResolvedValue({ data: { site_slug: 'alex-jordan' }, error: null });
+    fromMock.mockReturnValueOnce({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({ single: singleMock })),
+      })),
+    });
+
+    await expect(loadGuestDashboardSiteSlug('site-1')).resolves.toBe('alex-jordan');
   });
 
   it('rolls back guest RSVP state when assisted RSVP persistence fails', async () => {

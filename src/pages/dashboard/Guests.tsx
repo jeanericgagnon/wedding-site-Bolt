@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { PLANNER_ROLE_OPTIONS, canManageGuests, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { formatGuestOpsDate, formatGuestOpsDateTime, formatGuestOpsRelativeTime, getGuestOpsTimestamp } from './guestOpsTime';
 import { formatGuestEventDate } from './guestEventDate';
 import { getDaysUntilGuestWedding } from './guestWeddingDate';
@@ -123,11 +122,13 @@ import {
   insertImportedGuests,
   loadGuestDashboardItineraryFilters,
   loadGuestDashboardRsvpAuditFeed,
+  loadGuestDashboardSiteSlug,
   loadGuestItineraryDrawerSnapshot,
   loadGuestDashboardSiteSettings,
   loadGuestDashboardSnapshot,
   refreshGuestDashboardSession,
   removeGuestEventInvitation,
+  resolveGuestDashboardSiteId,
   replaceGuestEventInvitations,
   replaceImportedGuestRsvps,
   restoreGuestEventInvitations,
@@ -1740,12 +1741,8 @@ const handleSendBulkInvitations = async () => {
       return;
     }
 
-    const { data: siteData, error: siteError } = await supabase
-      .from('wedding_sites')
-      .select('site_slug')
-      .eq('id', weddingSiteId)
-      .single();
-    if (siteError || !siteData?.site_slug) {
+    const siteSlug = await loadGuestDashboardSiteSlug(weddingSiteId);
+    if (!siteSlug) {
       toast('Missing site slug', 'error');
       return;
     }
@@ -1754,7 +1751,7 @@ const handleSendBulkInvitations = async () => {
       .filter((g) => !!g.invite_token)
       .map((g) => {
         const name = (g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name;
-        const link = `https://${siteData.site_slug}.dayof.love/rsvp?token=${g.invite_token}`;
+        const link = `https://${siteSlug}.dayof.love/rsvp?token=${g.invite_token}`;
         return `${name}: ${link}`;
       });
 
@@ -1831,8 +1828,7 @@ const handleSendBulkInvitations = async () => {
 
     let resolvedSiteId = weddingSiteId;
     if (!resolvedSiteId && !isDemoMode) {
-      const activeSite = user?.id ? await resolveActiveSiteForUser(user.id) : null;
-      resolvedSiteId = activeSite?.id ?? null;
+      resolvedSiteId = user?.id ? await resolveGuestDashboardSiteId(user.id) : null;
       if (resolvedSiteId) setWeddingSiteId(resolvedSiteId);
     }
     if (!resolvedSiteId && !isDemoMode) {
@@ -1917,8 +1913,7 @@ const handleSendBulkInvitations = async () => {
     try {
       let resolvedSiteId = weddingSiteId;
       if (!resolvedSiteId && !isDemoMode) {
-        const activeSite = user?.id ? await resolveActiveSiteForUser(user.id) : null;
-        resolvedSiteId = activeSite?.id ?? null;
+        resolvedSiteId = user?.id ? await resolveGuestDashboardSiteId(user.id) : null;
         if (resolvedSiteId) setWeddingSiteId(resolvedSiteId);
       }
       if (!resolvedSiteId && !isDemoMode) {

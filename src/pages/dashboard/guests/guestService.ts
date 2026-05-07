@@ -29,6 +29,7 @@ export const GUEST_ITINERARY_EVENT_SELECT = 'id, event_name, event_date, start_t
 export const GUEST_ITINERARY_SITE_SELECT = 'wedding_data';
 export const GUEST_EVENT_INVITATION_SELECT = 'event_id, guest_id';
 export const GUEST_AUDIT_SELECT = 'id, guest_id, action, changed_at, changed_by, old_data, new_data';
+export const GUEST_SITE_SLUG_SELECT = 'site_slug';
 export const MAX_GUEST_DASHBOARD_ROWS = 5000;
 export const MAX_GUEST_RSVP_LOOKUP_IDS = 5000;
 export const MAX_GUEST_BULK_OPERATION_IDS = 5000;
@@ -49,6 +50,11 @@ const DEFAULT_RSVP_MEAL_OPTIONS = ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Veg
 
 export async function refreshGuestDashboardSession(): Promise<void> {
   await supabase.auth.refreshSession();
+}
+
+export async function resolveGuestDashboardSiteId(userId: string): Promise<string | null> {
+  const activeSite = await resolveActiveSiteForUser(userId);
+  return activeSite?.id ?? null;
 }
 
 export interface GuestDashboardSiteSettingsSnapshot {
@@ -283,6 +289,17 @@ export async function loadGuestDashboardRsvpAuditFeed(weddingSiteId: string): Pr
 
   if (error) throw error;
   return (data ?? []) as GuestAuditEntry[];
+}
+
+export async function loadGuestDashboardSiteSlug(weddingSiteId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('wedding_sites')
+    .select(GUEST_SITE_SLUG_SELECT)
+    .eq('id', weddingSiteId)
+    .single();
+
+  if (error) throw error;
+  return (data as { site_slug?: string | null } | null)?.site_slug ?? null;
 }
 
 export async function loadGuestItineraryDrawerSnapshot(weddingSiteId: string, guestId: string): Promise<GuestItineraryDrawerSnapshot> {
