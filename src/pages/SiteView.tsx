@@ -26,20 +26,15 @@ import { getArchiveModeDescriptor } from '../lib/archiveMode';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicWeddingData } from '../lib/publicSiteProject';
 import { fetchPublicSiteAccess, requestPublicSitePasswordUnlock } from '../lib/publicSiteAccess';
-
-interface PublicItineraryRow {
-  id?: string;
-  event_name?: string;
-  title?: string;
-  description?: string;
-  notes?: string | null;
-  event_date?: string;
-  start_time?: string | null;
-  end_time?: string | null;
-  location_name?: string | null;
-  location_address?: string | null;
-  is_visible?: boolean | null;
-}
+import {
+  buildPublicAccessArtifacts,
+  capturePublicInviteTokenFromSearch,
+  clearStoredPublicInviteToken,
+  clearStoredPublicPasswordSession,
+  writeStoredPublicPasswordSession,
+} from '../lib/publicAccessArtifacts';
+import { hasStoredGuestLanguagePreference } from '../lib/guestLanguagePreference';
+import { fetchPublicItineraryRows, hasLiveRegistryItems, type PublicItineraryRow } from './siteViewService';
 
 export function toIsoDateOrUndefined(value?: string | null): string | undefined {
   const trimmed = value?.trim();
@@ -67,26 +62,6 @@ export function combineDateAndTime(date?: string, time?: string | null): string 
   return Number.isNaN(dt.getTime()) ? undefined : dt.toISOString();
 }
 
-async function fetchPublicItineraryRows(
-  siteId: string,
-  siteSlug: string,
-  access: { inviteToken?: string | null; passwordSession?: string | null } = {},
-): Promise<PublicItineraryRow[]> {
-  const { data: fnData, error: fnError } = await supabase.functions.invoke('public-itinerary-by-slug', {
-    body: {
-      slug: siteSlug,
-      inviteToken: access.inviteToken ?? null,
-      passwordSession: access.passwordSession ?? null,
-    },
-  });
-
-  if (!fnError && Array.isArray(fnData?.events)) {
-    return fnData.events as PublicItineraryRow[];
-  }
-
-  return [];
-}
-
 async function hydrateWeddingDataFromItinerary(
   siteId: string,
   siteSlug: string,
@@ -94,7 +69,7 @@ async function hydrateWeddingDataFromItinerary(
   access: { inviteToken?: string | null; passwordSession?: string | null } = {},
 ): Promise<WeddingDataV1> {
   try {
-    const rows = (await fetchPublicItineraryRows(siteId, siteSlug, access)).filter((row) => row.is_visible !== false);
+    const rows = (await fetchPublicItineraryRows(siteSlug, access)).filter((row) => row.is_visible !== false);
     if (rows.length === 0) return base;
 
     const derivedVenues: WeddingDataV1['venues'] = [];
@@ -192,26 +167,6 @@ function normalizeSectionVariants(sections: BuilderSectionInstance[]): BuilderSe
 
 function hasRegistryBuilderSection(sections: BuilderSectionInstance[]): boolean {
   return sections.some((section) => section.type.trim().toLowerCase().replace(/[^a-z0-9-]/g, '') === 'registry');
-}
-
-async function hasLiveRegistryItems(
-  siteId: string,
-  access: { inviteToken?: string | null; passwordSession?: string | null } = {},
-): Promise<boolean> {
-  try {
-    const { data: fnData } = await supabase.functions.invoke('public-registry-items', {
-      body: {
-        wedding_site_id: siteId,
-        limit: 1,
-        inviteToken: access.inviteToken ?? null,
-        passwordSession: access.passwordSession ?? null,
-      },
-    });
-    if (Array.isArray(fnData?.items)) return fnData.items.length > 0;
-    return false;
-  } catch {
-    return false;
-  }
 }
 
 function appendRegistrySectionWhenNeeded(sections: BuilderSectionInstance[], shouldAppend: boolean): BuilderSectionInstance[] {
@@ -678,9 +633,6 @@ export const SiteView: React.FC = () => {
   const [passwordGateChecking, setPasswordGateChecking] = useState(false);
   const [privacyUnlockNonce, setPrivacyUnlockNonce] = useState(0);
 
-  const PASSWORD_SESSION_KEY = `dayof_pw_session_${resolvedSlug ?? 'unknown'}`;
-  const INVITE_TOKEN_KEY = `dayof_invite_token_${resolvedSlug ?? 'unknown'}`;
-
   const handleImageErrorCapture = useCallback((event: React.SyntheticEvent<HTMLElement>) => {
     const target = event.target;
     if (!(target instanceof HTMLImageElement)) return;
@@ -710,7 +662,7 @@ export const SiteView: React.FC = () => {
       });
 
       if (result.ok && result.passwordSession) {
-        sessionStorage.setItem(PASSWORD_SESSION_KEY, result.passwordSession);
+        writeStoredPublicPasswordSession(resolvedSlug, result.passwordSession);
         setPrivacyGate('loading');
         setPrivacyUnlockNonce((current) => current + 1);
       } else {
@@ -749,8 +701,7 @@ export const SiteView: React.FC = () => {
 
       try {
         const urlToken = searchParams.get('token');
-        const inviteToken = urlToken ?? sessionStorage.getItem(INVITE_TOKEN_KEY);
-        const passwordSession = sessionStorage.getItem(PASSWORD_SESSION_KEY);
+        const { inviteToken, passwordSession } = buildPublicAccessArtifacts(resolvedSlug, searchParams);
         const subresourceAccess = { inviteToken, passwordSession };
         const access = await fetchPublicSiteAccess({
           slug: resolvedSlug,
@@ -765,14 +716,14 @@ export const SiteView: React.FC = () => {
         }
 
         if (access.status === 'password_required') {
-          sessionStorage.removeItem(PASSWORD_SESSION_KEY);
+          clearStoredPublicPasswordSession(resolvedSlug);
           setPrivacyGate('password_required');
           setLoading(false);
           return;
         }
 
         if (access.status === 'invite_required') {
-          if (!urlToken) sessionStorage.removeItem(INVITE_TOKEN_KEY);
+          if (!urlToken) clearStoredPublicInviteToken(resolvedSlug);
           setPrivacyGate('invite_only');
           setLoading(false);
           return;
@@ -784,17 +735,14 @@ export const SiteView: React.FC = () => {
           return;
         }
 
-        if (urlToken) {
-          sessionStorage.setItem(INVITE_TOKEN_KEY, urlToken);
-        }
+        if (urlToken) capturePublicInviteTokenFromSearch(resolvedSlug, searchParams);
         setPublicSubresourceAccess(subresourceAccess);
 
         const data = access.site as unknown as Record<string, unknown>;
         setWeddingSiteId(data.id as string);
 
         const siteLang = (data.default_language as string) ?? 'en';
-        const userPref = localStorage.getItem('dayof_language');
-        if (!userPref && (siteLang === 'en' || siteLang === 'es')) {
+        if (!hasStoredGuestLanguagePreference() && (siteLang === 'en' || siteLang === 'es')) {
           i18n.changeLanguage(siteLang);
         }
 

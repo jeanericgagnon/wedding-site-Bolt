@@ -7,6 +7,20 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-07 3:48 PM PT No-Deploy Site View Public Function Service Extraction
+- Continued from `BACKLOG.md` in the no-deploy page-to-service extraction lane.
+- Fixed/proved:
+  - Added `src/pages/siteViewService.ts` so `SiteView.tsx` no longer owns direct public-subresource function calls.
+  - `src/pages/SiteView.tsx` now routes `public-itinerary-by-slug` and `public-registry-items` through `fetchPublicItineraryRows(...)` and `hasLiveRegistryItems(...)` in the new service.
+  - Added `src/pages/siteViewService.test.ts` and updated `src/lib/publicGuestSurfaceBoundary.test.ts` so that guest-facing page-to-service seam is pinned.
+- Proof passed:
+  - `npm test -- --run src/pages/siteViewService.test.ts src/pages/SiteView.test.ts src/lib/publicGuestSurfaceBoundary.test.ts src/lib/publicSiteAccess.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is another maintainability and service-boundary hardening step, and no deploy was run.
+
 ## 2026-05-07 3:46 PM PT No-Deploy Vault Function Service Extraction
 - Continued from `BACKLOG.md` in the no-deploy page-to-service extraction lane.
 - Fixed/proved:

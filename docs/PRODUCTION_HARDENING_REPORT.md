@@ -19,6 +19,23 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 3:48 PM PT - No-Deploy Site View Public Function Service Extraction
+
+What changed:
+- Added `src/pages/siteViewService.ts` so the public site page no longer owns its direct public-subresource function calls.
+- `src/pages/SiteView.tsx` now routes `public-itinerary-by-slug` and `public-registry-items` reads through `fetchPublicItineraryRows(...)` and `hasLiveRegistryItems(...)` in that service instead of directly invoking `supabase.functions.invoke(...)` inline.
+- Added `src/pages/siteViewService.test.ts` and updated `src/lib/publicGuestSurfaceBoundary.test.ts` so the guest-facing site page now has a pinned page-to-service boundary for those public function reads.
+
+Commands run:
+- `npm test -- --run src/pages/siteViewService.test.ts src/pages/SiteView.test.ts src/lib/publicGuestSurfaceBoundary.test.ts src/lib/publicSiteAccess.test.ts`: PASS, 4 files and 15 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This removes another page-owned Supabase function cluster and keeps `SiteView.tsx` more focused on public rendering flow rather than transport details. No deploy was run.
+
 ### 2026-05-07 3:46 PM PT - No-Deploy Vault Function Service Extraction
 
 What changed:
