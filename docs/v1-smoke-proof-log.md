@@ -7588,3 +7588,18 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 2:18 PM PT No-Deploy Itinerary Dashboard Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Itinerary.tsx` now caps dashboard itinerary event reads at 200 rows before schedule sync and event-card hydration.
+  - The same itinerary path now caps event invitation hydration at 10000 rows for both event counters and the event guest picker.
+  - Event guest-picker guest hydration now caps guest rows at 5000.
+  - `src/pages/dashboard/itineraryQueryBounds.test.ts` now pins the bounded event-list, invitation, and guest-picker query shape.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/itineraryQueryBounds.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryService.test.ts`: PASS, 8/8.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

@@ -2760,3 +2760,22 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps overview guest stats accurate while removing the worst full-list read from the dashboard overview path. No deploy was run.
+
+### 2026-05-07 2:18 PM PT - No-Deploy Itinerary Dashboard Bounds
+
+What changed:
+- Added `MAX_ITINERARY_EVENTS = 200`, `MAX_ITINERARY_EVENT_INVITATIONS = 10000`, and `MAX_ITINERARY_EVENT_GUESTS = 5000` in `src/pages/dashboard/Itinerary.tsx`.
+- Dashboard itinerary event hydration now caps ordered event rows before syncing schedule state.
+- Per-event invitation lookups and the event guest-picker invitation hydration now cap invitation fan-out at `10000`.
+- Event guest-picker guest hydration now caps guest rows at `5000`.
+- Added `src/pages/dashboard/itineraryQueryBounds.test.ts` to pin the bounded event-list, invitation, and guest-picker query shape.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/itineraryQueryBounds.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryService.test.ts`: PASS, 8/8.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps itinerary dashboard hydration bounded without changing current event creation, edit, invitation, or RSVP-count behavior. No deploy was run.

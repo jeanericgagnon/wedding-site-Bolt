@@ -41,6 +41,9 @@ interface ItineraryEvent {
 const ITINERARY_EVENT_SELECT = 'id, event_name, title, description, event_date, start_time, end_time, location_name, location_address, dress_code, notes, display_order, sort_order, is_visible' as const;
 
 const EVENT_GUEST_PICKER_SELECT = 'id, name, first_name, last_name, email' as const;
+export const MAX_ITINERARY_EVENTS = 200;
+export const MAX_ITINERARY_EVENT_INVITATIONS = 10000;
+export const MAX_ITINERARY_EVENT_GUESTS = 5000;
 
 // Optional table: detect once at runtime so older environments degrade quietly.
 let hasEventRsvpsTable: boolean | null = null;
@@ -272,7 +275,8 @@ export const DashboardItinerary: React.FC = () => {
         .select(ITINERARY_EVENT_SELECT)
         .eq('wedding_site_id', sites.id)
         .order('event_date', { ascending: true })
-        .order('start_time', { ascending: true });
+        .order('start_time', { ascending: true })
+        .limit(MAX_ITINERARY_EVENTS);
 
       if (error) throw error;
 
@@ -298,7 +302,8 @@ export const DashboardItinerary: React.FC = () => {
           const { data: invites, error: invitesError } = await supabase
             .from('event_invitations')
             .select('id')
-            .eq('event_id', event.id);
+            .eq('event_id', event.id)
+            .limit(MAX_ITINERARY_EVENT_INVITATIONS);
           if (invitesError) throw invitesError;
 
           const invitationIds = (invites ?? []).map((i) => i.id as string);
@@ -1262,13 +1267,15 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
         .from('guests')
         .select(EVENT_GUEST_PICKER_SELECT)
         .eq('wedding_site_id', site.id)
-        .order('name');
+        .order('name')
+        .limit(MAX_ITINERARY_EVENT_GUESTS);
       if (guestsError) throw guestsError;
 
       const { data: invitations, error: invitationsError } = await supabase
         .from('event_invitations')
         .select('guest_id')
-        .eq('event_id', eventId);
+        .eq('event_id', eventId)
+        .limit(MAX_ITINERARY_EVENT_INVITATIONS);
       if (invitationsError) throw invitationsError;
 
       setAllGuests(guests || []);
