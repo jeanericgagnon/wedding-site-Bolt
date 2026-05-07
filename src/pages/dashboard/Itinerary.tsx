@@ -12,13 +12,22 @@ import { demoEvents } from '../../lib/demoData';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
-import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds, getEventRsvpSnapshotsByInvitationIds, restoreEventRsvpSnapshots } from '../../lib/eventRsvpCleanup';
 import { formatItineraryEventDate, toValidItineraryEventDateOrNull } from './itineraryEventDate';
 import { deriveItineraryEventRsvpCounts, shouldLoadEventRsvps } from './itineraryEventRsvpCounts';
 import { readDemoItineraryEvents, writeDemoItineraryEvents } from './itineraryDemoStorage';
 import { analyzeTimeline } from '../../lib/invisibleIntelligence';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
-import { createItineraryTemplateEvents, resolveItinerarySiteId, syncItineraryScheduleMirror } from './itineraryService';
+import {
+  addItineraryEventGuestInvitation,
+  createItineraryTemplateEvents,
+  inviteAllGuestsToItineraryEvent,
+  loadItineraryEventGuestManagerSnapshot,
+  removeAllGuestsFromItineraryEvent,
+  removeItineraryEventGuestInvitation,
+  resolveItinerarySiteId,
+  syncItineraryScheduleMirror,
+  type ItineraryGuestPickerRow,
+} from './itineraryService';
 
 interface ItineraryEvent {
   id: string;
@@ -37,7 +46,6 @@ interface ItineraryEvent {
 
 const ITINERARY_EVENT_SELECT = 'id, event_name, title, description, event_date, start_time, end_time, location_name, location_address, dress_code, notes, display_order, sort_order, is_visible' as const;
 
-const EVENT_GUEST_PICKER_SELECT = 'id, name, first_name, last_name, email' as const;
 export const MAX_ITINERARY_EVENTS = 200;
 export const MAX_ITINERARY_EVENT_INVITATIONS = 10000;
 export const MAX_ITINERARY_EVENT_GUESTS = 5000;
@@ -1128,8 +1136,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
         },
       });
     });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [allGuests, setAllGuests] = useState<any[]>([]);
+  const [allGuests, setAllGuests] = useState<ItineraryGuestPickerRow[]>([]);
   const [invitedGuestIds, setInvitedGuestIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [bulkLoading, setBulkLoading] = useState(false);
@@ -1142,43 +1149,9 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
 
   async function loadGuests() {
     try {
-      const siteId = await resolveItinerarySiteId();
-      if (!siteId) {
-        setAllGuests([]);
-        setInvitedGuestIds(new Set());
-        return;
-      }
-
-      const { data: site, error: siteError } = await supabase
-        .from('wedding_sites')
-        .select('id')
-        .eq('id', siteId)
-        .single();
-      if (siteError) throw siteError;
-
-      if (!site) {
-        setAllGuests([]);
-        setInvitedGuestIds(new Set());
-        return;
-      }
-
-      const { data: guests, error: guestsError } = await supabase
-        .from('guests')
-        .select(EVENT_GUEST_PICKER_SELECT)
-        .eq('wedding_site_id', site.id)
-        .order('name')
-        .limit(MAX_ITINERARY_EVENT_GUESTS);
-      if (guestsError) throw guestsError;
-
-      const { data: invitations, error: invitationsError } = await supabase
-        .from('event_invitations')
-        .select('guest_id')
-        .eq('event_id', eventId)
-        .limit(MAX_ITINERARY_EVENT_INVITATIONS);
-      if (invitationsError) throw invitationsError;
-
-      setAllGuests(guests || []);
-      setInvitedGuestIds(new Set(invitations?.map((i) => i.guest_id) || []));
+      const snapshot = await loadItineraryEventGuestManagerSnapshot(eventId);
+      setAllGuests(snapshot.guests);
+      setInvitedGuestIds(snapshot.invitedGuestIds);
     } catch {
       setAllGuests([]);
       setInvitedGuestIds(new Set());
@@ -1191,33 +1164,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
   async function toggleGuestInvitation(guestId: string) {
     try {
       if (invitedGuestIds.has(guestId)) {
-        const { data: invitationRow, error: invitationLookupError } = await supabase
-          .from('event_invitations')
-          .select('id')
-          .eq('event_id', eventId)
-          .eq('guest_id', guestId)
-          .maybeSingle();
-
-        if (invitationLookupError) throw invitationLookupError;
-
-        const eventRsvpSnapshots = invitationRow?.id
-          ? await getEventRsvpSnapshotsByInvitationIds([invitationRow.id])
-          : [];
-
-        if (invitationRow?.id) {
-          await deleteEventRsvpByInvitationId(invitationRow.id);
-        }
-
-        const { error } = await supabase
-          .from('event_invitations')
-          .delete()
-          .eq('event_id', eventId)
-          .eq('guest_id', guestId);
-
-        if (error) {
-          await restoreEventRsvpSnapshots(eventRsvpSnapshots);
-          throw error;
-        }
+        await removeItineraryEventGuestInvitation(eventId, guestId);
 
         setInvitedGuestIds((prev) => {
           const next = new Set(prev);
@@ -1225,11 +1172,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
           return next;
         });
       } else {
-        const { error } = await supabase
-          .from('event_invitations')
-          .upsert([{ event_id: eventId, guest_id: guestId }], { onConflict: 'event_id,guest_id' });
-
-        if (error) throw error;
+        await addItineraryEventGuestInvitation(eventId, guestId);
 
         setInvitedGuestIds((prev) => new Set(prev).add(guestId));
       }
@@ -1246,11 +1189,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
       const uninvited = allGuests.filter(g => !invitedGuestIds.has(g.id));
       if (uninvited.length === 0) return;
 
-      const { error } = await supabase
-        .from('event_invitations')
-        .upsert(uninvited.map(g => ({ event_id: eventId, guest_id: g.id })), { onConflict: 'event_id,guest_id' });
-
-      if (error) throw error;
+      await inviteAllGuestsToItineraryEvent(eventId, uninvited.map((guest) => guest.id));
 
       setInvitedGuestIds(new Set(allGuests.map(g => g.id)));
       onUpdate();
@@ -1271,28 +1210,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
     if (!confirmed) return;
     setBulkLoading(true);
     try {
-      const { data: invitationRows, error: invitationLookupError } = await supabase
-        .from('event_invitations')
-        .select('id')
-        .eq('event_id', eventId);
-
-      if (invitationLookupError) throw invitationLookupError;
-
-      const invitationIds = (invitationRows ?? []).map((row: { id: string }) => row.id);
-      const eventRsvpSnapshots = await getEventRsvpSnapshotsByInvitationIds(invitationIds);
-      if (invitationIds.length > 0) {
-        await deleteEventRsvpsByInvitationIds(invitationIds);
-      }
-
-      const { error } = await supabase
-        .from('event_invitations')
-        .delete()
-        .eq('event_id', eventId);
-
-      if (error) {
-        await restoreEventRsvpSnapshots(eventRsvpSnapshots);
-        throw error;
-      }
+      await removeAllGuestsFromItineraryEvent(eventId);
 
       setInvitedGuestIds(new Set());
       onUpdate();

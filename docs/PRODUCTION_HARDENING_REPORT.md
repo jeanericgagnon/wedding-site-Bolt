@@ -3462,3 +3462,26 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the guest dashboard page-to-service migration without changing RSVP settings save behavior or invitation/reminder send tracking. No deploy was run.
+
+### 2026-05-07 5:00 PM PT - Itinerary Event Guest Manager Service Extraction
+
+- Moved itinerary event guest manager snapshot loading plus invite add/remove/invite-all/remove-all transport out of `src/pages/dashboard/Itinerary.tsx` and into `src/pages/dashboard/itineraryService.ts`.
+- `Itinerary.tsx` now calls:
+  - `loadItineraryEventGuestManagerSnapshot(eventId)`
+  - `addItineraryEventGuestInvitation(...)`
+  - `removeItineraryEventGuestInvitation(...)`
+  - `inviteAllGuestsToItineraryEvent(...)`
+  - `removeAllGuestsFromItineraryEvent(...)`
+  instead of directly reading `wedding_sites`, `guests`, and `event_invitations` inline in the event guest manager.
+- The service now owns the explicit guest-picker projection plus the bounded guest and invitation row caps for that flow.
+- Expanded `src/pages/dashboard/itineraryService.test.ts`, `src/pages/dashboard/itineraryQueryBounds.test.ts`, and `src/lib/dashboardDataBoundary.test.ts` so the itinerary page no longer silently regains those guest-manager reads/writes.
+
+Validation:
+- `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts`: PASS, 32/32.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the itinerary dashboard page-to-service migration without changing event guest search, invite toggles, invite-all/remove-all behavior, or RSVP rollback safety. No deploy was run.

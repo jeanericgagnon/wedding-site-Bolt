@@ -1,5 +1,11 @@
 import { supabase } from '../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
+import {
+  deleteEventRsvpByInvitationId,
+  deleteEventRsvpsByInvitationIds,
+  getEventRsvpSnapshotsByInvitationIds,
+  restoreEventRsvpSnapshots,
+} from '../../lib/eventRsvpCleanup';
 import type { WeddingDataV1 } from '../../types/weddingData';
 import { combineDateAndTimeISO } from './itineraryDateTime';
 
@@ -39,6 +45,23 @@ export interface ItineraryScheduleMirrorEvent {
 
 const ITINERARY_SCHEDULE_MIRROR_SITE_SELECT = 'wedding_data';
 const ITINERARY_SCHEDULE_SECTION_SELECT = 'id,data';
+const ITINERARY_EVENT_MANAGER_SITE_SELECT = 'id';
+export const ITINERARY_EVENT_GUEST_PICKER_SELECT = 'id, name, first_name, last_name, email' as const;
+export const MAX_ITINERARY_EVENT_INVITATIONS = 10000;
+export const MAX_ITINERARY_EVENT_GUESTS = 5000;
+
+export interface ItineraryGuestPickerRow {
+  id: string;
+  name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+}
+
+export interface ItineraryEventGuestManagerSnapshot {
+  guests: ItineraryGuestPickerRow[];
+  invitedGuestIds: Set<string>;
+}
 
 export async function resolveItinerarySiteId(): Promise<string | null> {
   const { data: { user }, error } = await supabase.auth.getUser();
@@ -115,6 +138,127 @@ export async function createItineraryTemplateEvents(
     .from('itinerary_events')
     .insert(buildItineraryTemplateInsertRows(weddingSiteId, events));
   if (error) throw error;
+}
+
+export async function loadItineraryEventGuestManagerSnapshot(
+  eventId: string,
+): Promise<ItineraryEventGuestManagerSnapshot> {
+  const siteId = await resolveItinerarySiteId();
+  if (!siteId) {
+    return { guests: [], invitedGuestIds: new Set() };
+  }
+
+  const { data: site, error: siteError } = await supabase
+    .from('wedding_sites')
+    .select(ITINERARY_EVENT_MANAGER_SITE_SELECT)
+    .eq('id', siteId)
+    .single();
+  if (siteError) throw siteError;
+
+  if (!site) {
+    return { guests: [], invitedGuestIds: new Set() };
+  }
+
+  const { data: guests, error: guestsError } = await supabase
+    .from('guests')
+    .select(ITINERARY_EVENT_GUEST_PICKER_SELECT)
+    .eq('wedding_site_id', site.id)
+    .order('name')
+    .limit(MAX_ITINERARY_EVENT_GUESTS);
+  if (guestsError) throw guestsError;
+
+  const { data: invitations, error: invitationsError } = await supabase
+    .from('event_invitations')
+    .select('guest_id')
+    .eq('event_id', eventId)
+    .limit(MAX_ITINERARY_EVENT_INVITATIONS);
+  if (invitationsError) throw invitationsError;
+
+  return {
+    guests: (guests ?? []) as ItineraryGuestPickerRow[],
+    invitedGuestIds: new Set((invitations ?? []).map((invitation: { guest_id: string }) => invitation.guest_id)),
+  };
+}
+
+export async function addItineraryEventGuestInvitation(
+  eventId: string,
+  guestId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('event_invitations')
+    .upsert([{ event_id: eventId, guest_id: guestId }], { onConflict: 'event_id,guest_id' });
+
+  if (error) throw error;
+}
+
+export async function removeItineraryEventGuestInvitation(
+  eventId: string,
+  guestId: string,
+): Promise<void> {
+  const { data: invitationRow, error: invitationLookupError } = await supabase
+    .from('event_invitations')
+    .select('id')
+    .eq('event_id', eventId)
+    .eq('guest_id', guestId)
+    .maybeSingle();
+  if (invitationLookupError) throw invitationLookupError;
+
+  const eventRsvpSnapshots = invitationRow?.id
+    ? await getEventRsvpSnapshotsByInvitationIds([invitationRow.id])
+    : [];
+
+  if (invitationRow?.id) {
+    await deleteEventRsvpByInvitationId(invitationRow.id);
+  }
+
+  const { error } = await supabase
+    .from('event_invitations')
+    .delete()
+    .eq('event_id', eventId)
+    .eq('guest_id', guestId);
+
+  if (error) {
+    await restoreEventRsvpSnapshots(eventRsvpSnapshots);
+    throw error;
+  }
+}
+
+export async function inviteAllGuestsToItineraryEvent(
+  eventId: string,
+  guestIds: string[],
+): Promise<void> {
+  if (guestIds.length === 0) return;
+  const { error } = await supabase
+    .from('event_invitations')
+    .upsert(guestIds.map((guestId) => ({ event_id: eventId, guest_id: guestId })), { onConflict: 'event_id,guest_id' });
+
+  if (error) throw error;
+}
+
+export async function removeAllGuestsFromItineraryEvent(
+  eventId: string,
+): Promise<void> {
+  const { data: invitationRows, error: invitationLookupError } = await supabase
+    .from('event_invitations')
+    .select('id')
+    .eq('event_id', eventId);
+  if (invitationLookupError) throw invitationLookupError;
+
+  const invitationIds = (invitationRows ?? []).map((row: { id: string }) => row.id);
+  const eventRsvpSnapshots = await getEventRsvpSnapshotsByInvitationIds(invitationIds);
+  if (invitationIds.length > 0) {
+    await deleteEventRsvpsByInvitationIds(invitationIds);
+  }
+
+  const { error } = await supabase
+    .from('event_invitations')
+    .delete()
+    .eq('event_id', eventId);
+
+  if (error) {
+    await restoreEventRsvpSnapshots(eventRsvpSnapshots);
+    throw error;
+  }
 }
 
 export async function syncItineraryScheduleMirror(
