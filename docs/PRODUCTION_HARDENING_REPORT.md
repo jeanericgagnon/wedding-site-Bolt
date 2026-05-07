@@ -2562,3 +2562,20 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps vault dashboard reads bounded without changing current vault creation, recap, reminder, or contribution behavior. No deploy was run.
+
+### 2026-05-07 1:46 PM PT - No-Deploy Name-Change Workspace Query Bounds
+
+What changed:
+- Added explicit `MAX_NAME_CHANGE_DOCUMENT_ROWS = 100`, `MAX_NAME_CHANGE_EXTRACTED_FIELD_ROWS = 500`, and `MAX_NAME_CHANGE_REMINDER_ROWS = 100` caps in `src/pages/dashboard/planning/nameChangeService.ts`.
+- Name-change workspace hydration now caps ordered document, extracted-field, and reminder reads before building the planner workspace bundle.
+- Extended `src/pages/dashboard/planning/nameChangeService.test.ts` to pin the stable cap exports and the bounded query shape.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/planning/nameChangeService.test.ts`: PASS, 42/42.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps name-change workspace hydration bounded without changing current planner, intake, document, reminder, or snapshot behavior. No deploy was run.

@@ -133,6 +133,10 @@ const NAME_CHANGE_REMINDER_SELECT = [
   'updated_at',
 ].join(', ');
 
+export const MAX_NAME_CHANGE_DOCUMENT_ROWS = 100;
+export const MAX_NAME_CHANGE_EXTRACTED_FIELD_ROWS = 500;
+export const MAX_NAME_CHANGE_REMINDER_ROWS = 100;
+
 function normalizeText(value: string | null | undefined) {
   return (value ?? '').trim();
 }
@@ -260,10 +264,10 @@ export async function loadNameChangeWorkspace(weddingSiteId: string): Promise<{
   }
 
   const [{ data: documents }, { data: extractedFields }, { data: snapshots }, remindersResult] = await Promise.all([
-    supabase.from('name_change_documents').select(NAME_CHANGE_DOCUMENT_SELECT).eq('name_change_case_id', caseId).order('created_at', { ascending: true }),
-    supabase.from('name_change_extracted_fields').select(NAME_CHANGE_EXTRACTED_FIELD_SELECT).eq('name_change_case_id', caseId).order('created_at', { ascending: true }),
+    supabase.from('name_change_documents').select(NAME_CHANGE_DOCUMENT_SELECT).eq('name_change_case_id', caseId).order('created_at', { ascending: true }).limit(MAX_NAME_CHANGE_DOCUMENT_ROWS),
+    supabase.from('name_change_extracted_fields').select(NAME_CHANGE_EXTRACTED_FIELD_SELECT).eq('name_change_case_id', caseId).order('created_at', { ascending: true }).limit(MAX_NAME_CHANGE_EXTRACTED_FIELD_ROWS),
     supabase.from('name_change_plan_snapshots').select(NAME_CHANGE_PLAN_SNAPSHOT_SELECT).eq('name_change_case_id', caseId).order('created_at', { ascending: false }).limit(1),
-    supabase.from('name_change_reminders').select(NAME_CHANGE_REMINDER_SELECT).eq('name_change_case_id', caseId).order('suggested_offset_days', { ascending: true }),
+    supabase.from('name_change_reminders').select(NAME_CHANGE_REMINDER_SELECT).eq('name_change_case_id', caseId).order('suggested_offset_days', { ascending: true }).limit(MAX_NAME_CHANGE_REMINDER_ROWS),
   ]);
 
   const reminders = remindersResult.error ? [] : ((remindersResult.data as unknown as NameChangeReminderRecord[] | null) ?? []);

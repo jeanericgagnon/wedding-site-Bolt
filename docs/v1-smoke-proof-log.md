@@ -7439,3 +7439,17 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 1:46 PM PT No-Deploy Name-Change Workspace Query Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/planning/nameChangeService.ts` now caps ordered name-change document reads at 100 rows before hydrating the workspace.
+  - The same workspace loader now caps extracted-field reads at 500 rows and reminder reads at 100 rows.
+  - `src/pages/dashboard/planning/nameChangeService.test.ts` now pins the stable cap exports and bounded query shape.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/planning/nameChangeService.test.ts`: PASS, 42/42.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

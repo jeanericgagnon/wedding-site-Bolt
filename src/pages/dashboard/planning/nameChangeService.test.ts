@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { NameChangeCaseInput, NameChangeCaseRecord, NameChangeDocumentInput, NameChangeDocumentRecord, NameChangeExtractedFieldInput } from '../../../lib/nameChange/types';
 import {
@@ -9,6 +11,9 @@ import {
   hydrateNameChangeWorkspace,
   mapCaseRecordToNameChangeInput,
   mapReminderRecordToInput,
+  MAX_NAME_CHANGE_DOCUMENT_ROWS,
+  MAX_NAME_CHANGE_EXTRACTED_FIELD_ROWS,
+  MAX_NAME_CHANGE_REMINDER_ROWS,
   mergeNameChangeReminders,
   mergeNameChangePlanExecutionState,
   normalizeNameChangeReminders,
@@ -308,6 +313,23 @@ describe('nameChangeService normalization', () => {
       expect.objectContaining({ document_id: 'db-passport', field_key: 'issuance_date' }),
       expect.objectContaining({ document_id: null, field_key: 'county' }),
     ]);
+  });
+
+  it('exports stable name-change workspace query caps', () => {
+    expect(MAX_NAME_CHANGE_DOCUMENT_ROWS).toBe(100);
+    expect(MAX_NAME_CHANGE_EXTRACTED_FIELD_ROWS).toBe(500);
+    expect(MAX_NAME_CHANGE_REMINDER_ROWS).toBe(100);
+  });
+
+  it('keeps name-change workspace document, field, and reminder reads bounded', () => {
+    const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/nameChangeService.ts'), 'utf8');
+
+    expect(source).toContain('MAX_NAME_CHANGE_DOCUMENT_ROWS = 100');
+    expect(source).toContain('MAX_NAME_CHANGE_EXTRACTED_FIELD_ROWS = 500');
+    expect(source).toContain('MAX_NAME_CHANGE_REMINDER_ROWS = 100');
+    expect(source).toContain(".from('name_change_documents').select(NAME_CHANGE_DOCUMENT_SELECT).eq('name_change_case_id', caseId).order('created_at', { ascending: true }).limit(MAX_NAME_CHANGE_DOCUMENT_ROWS)");
+    expect(source).toContain(".from('name_change_extracted_fields').select(NAME_CHANGE_EXTRACTED_FIELD_SELECT).eq('name_change_case_id', caseId).order('created_at', { ascending: true }).limit(MAX_NAME_CHANGE_EXTRACTED_FIELD_ROWS)");
+    expect(source).toContain(".from('name_change_reminders').select(NAME_CHANGE_REMINDER_SELECT).eq('name_change_case_id', caseId).order('suggested_offset_days', { ascending: true }).limit(MAX_NAME_CHANGE_REMINDER_ROWS)");
   });
 
   it('remaps legacy court-order extracted fields onto canonical persisted court-order documents', () => {
