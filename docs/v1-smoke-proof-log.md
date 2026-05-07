@@ -8015,6 +8015,20 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 4:33 PM PT No-Deploy Assisted RSVP Persistence Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestService.ts` now owns assisted RSVP persistence via `saveAssistedGuestRsvp(...)`, including guest-row update, RSVP row update/insert, and guest-row rollback on failure.
+  - `src/pages/dashboard/Guests.tsx` now calls that helper instead of directly updating `guests` and `rsvps` inline for live assisted RSVP saves.
+  - `src/pages/dashboard/guests/guestService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` now pin that assisted RSVP service boundary and rollback path.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`: PASS, 51/51.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 3:31 PM PT No-Deploy Seating Session Refresh Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

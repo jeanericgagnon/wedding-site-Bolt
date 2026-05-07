@@ -53,6 +53,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('loadGuestItineraryDrawerSnapshot(weddingSiteId, guest.id)');
     expect(source).toContain('removeGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(source).toContain('addGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
+    expect(source).toContain('saveAssistedGuestRsvp({');
     expect(source).toContain('deleteGuestWithDependencies(guestId)');
     expect(source).toContain('deleteAllGuestsForSite(weddingSiteId)');
     expect(source).toContain('insertImportedGuests(guestRows)');
@@ -70,6 +71,7 @@ describe('dashboard data boundary guards', () => {
     expect(service).toContain('export async function loadGuestItineraryDrawerSnapshot(weddingSiteId: string, guestId: string)');
     expect(service).toContain('export async function addGuestEventInvitation(eventId: string, guestId: string): Promise<void>');
     expect(service).toContain('export async function removeGuestEventInvitation(eventId: string, guestId: string): Promise<void>');
+    expect(service).toContain('export async function saveAssistedGuestRsvp(input: SaveAssistedGuestRsvpInput): Promise<SaveAssistedGuestRsvpResult>');
     expect(service).toContain('resolveActiveSiteForUser(userId)');
     expect(service).toContain('.select(GUEST_SITE_SETTINGS_SELECT)');
     expect(service).toContain(".from('guests')");
@@ -90,6 +92,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain(".from('event_invitations')\n          .select('id')");
     expect(source).not.toContain(".from('event_invitations')\n          .delete()");
     expect(source).not.toContain(".from('event_invitations')\n          .insert({ event_id: eventId, guest_id: itineraryDrawerGuest.id })");
+    expect(source).not.toContain(".from('guests')\n        .update({ rsvp_status: assistedRsvpStatus, rsvp_received_at: recordedAt, notes: nextNotes })");
+    expect(source).not.toContain(".from('rsvps')\n        .select('id, notes')");
+    expect(source).not.toContain(".from('rsvps')\n          .update(assistedRsvpPayload)");
+    expect(source).not.toContain(".from('rsvps')\n          .insert({");
     expect(source).not.toContain("supabase.from('event_invitations').insert(rows)");
     expect(source).not.toContain("supabase.from('event_invitations').insert(eventInviteRows)");
     expect(source).not.toContain("supabase.from('rsvps').insert(rsvpRows)");

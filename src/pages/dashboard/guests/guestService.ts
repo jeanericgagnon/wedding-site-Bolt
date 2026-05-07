@@ -81,6 +81,21 @@ export interface GuestItineraryDrawerSnapshot {
   auditEntries: GuestAuditEntry[];
 }
 
+export type AssistedRsvpStatus = 'confirmed' | 'declined';
+export type AssistedRsvpSource = 'phone' | 'text' | 'family' | 'in-person';
+
+export interface SaveAssistedGuestRsvpInput {
+  guest: GuestWithRSVP;
+  status: AssistedRsvpStatus;
+  source: AssistedRsvpSource;
+  notes: string;
+}
+
+export interface SaveAssistedGuestRsvpResult {
+  recordedAt: string;
+  nextNotes: string;
+}
+
 export async function loadGuestDashboardSiteSettings(userId: string): Promise<GuestDashboardSiteSettingsSnapshot> {
   const activeSite = await resolveActiveSiteForUser(userId);
   const activeSiteId = activeSite?.id ?? null;
@@ -300,6 +315,69 @@ export async function loadGuestItineraryDrawerSnapshot(weddingSiteId: string, gu
     guestEventIds: new Set((invitesResult.data ?? []).map((row: { event_id: string }) => row.event_id)),
     auditEntries: (auditResult.data ?? []) as GuestAuditEntry[],
   };
+}
+
+export async function saveAssistedGuestRsvp(input: SaveAssistedGuestRsvpInput): Promise<SaveAssistedGuestRsvpResult> {
+  const recordedAt = new Date().toISOString();
+  const manualTag = `[Manual RSVP source:${input.source} recorded:${recordedAt}]`;
+  const nextNotes = [manualTag, input.notes.trim()].filter(Boolean).join(' ');
+
+  try {
+    const { error: guestError } = await supabase
+      .from('guests')
+      .update({ rsvp_status: input.status, rsvp_received_at: recordedAt, notes: nextNotes })
+      .eq('id', input.guest.id);
+    if (guestError) throw guestError;
+
+    const { data: existingRsvp, error: existingRsvpError } = await supabase
+      .from('rsvps')
+      .select('id, notes')
+      .eq('guest_id', input.guest.id)
+      .maybeSingle();
+    if (existingRsvpError) throw existingRsvpError;
+
+    const nextAttending = input.status === 'confirmed';
+    const assistedRsvpPayload = {
+      attending: nextAttending,
+      attending_ceremony: nextAttending ? input.guest.invited_to_ceremony : false,
+      attending_reception: nextAttending ? input.guest.invited_to_reception : false,
+      notes: nextNotes,
+      responded_at: recordedAt,
+      ...(nextAttending ? {} : {
+        meal_choice: null,
+        plus_one_name: null,
+        plus_one_count: 0,
+      }),
+    };
+
+    if (existingRsvp?.id) {
+      const { error: rsvpError } = await supabase
+        .from('rsvps')
+        .update(assistedRsvpPayload)
+        .eq('id', existingRsvp.id);
+      if (rsvpError) throw rsvpError;
+    } else {
+      const { error: rsvpInsertError } = await supabase
+        .from('rsvps')
+        .insert({
+          guest_id: input.guest.id,
+          ...assistedRsvpPayload,
+        });
+      if (rsvpInsertError) throw rsvpInsertError;
+    }
+
+    return { recordedAt, nextNotes };
+  } catch (error) {
+    await supabase
+      .from('guests')
+      .update({
+        rsvp_status: input.guest.rsvp_status,
+        rsvp_received_at: input.guest.rsvp_received_at ?? null,
+        notes: input.guest.notes ?? null,
+      })
+      .eq('id', input.guest.id);
+    throw error;
+  }
 }
 
 export interface CreateGuestInput {

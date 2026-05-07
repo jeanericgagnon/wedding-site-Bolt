@@ -28,6 +28,7 @@ import {
   loadGuestDashboardSiteSettings,
   loadGuestDashboardSnapshot,
   removeGuestEventInvitation,
+  saveAssistedGuestRsvp,
   refreshGuestDashboardSession,
   toEventInvitationRows,
 } from './guestService';
@@ -122,6 +123,7 @@ describe('guestService', () => {
     expect(page).toContain('loadGuestItineraryDrawerSnapshot(weddingSiteId, guest.id)');
     expect(page).toContain('removeGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(page).toContain('addGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
+    expect(page).toContain('saveAssistedGuestRsvp({');
     expect(page).not.toContain("supabase.rpc('generate_secure_token'");
     expect(page).not.toContain('supabase.auth.refreshSession()');
     expect(page).not.toContain(".from('wedding_sites')\n        .select('id, couple_name_1, couple_name_2");
@@ -131,6 +133,10 @@ describe('guestService', () => {
     expect(page).not.toContain(".from('event_invitations')\n          .select('id')");
     expect(page).not.toContain(".from('event_invitations')\n          .delete()");
     expect(page).not.toContain(".from('event_invitations')\n          .insert({ event_id: eventId, guest_id: itineraryDrawerGuest.id })");
+    expect(page).not.toContain(".from('guests')\n        .update({ rsvp_status: assistedRsvpStatus, rsvp_received_at: recordedAt, notes: nextNotes })");
+    expect(page).not.toContain(".from('rsvps')\n        .select('id, notes')");
+    expect(page).not.toContain(".from('rsvps')\n          .update(assistedRsvpPayload)");
+    expect(page).not.toContain(".from('rsvps')\n          .insert({");
     expect(service).toContain("supabase.rpc('generate_secure_token'");
     expect(service).toContain('export async function generateSecureGuestInviteToken()');
     expect(service).toContain('export async function refreshGuestDashboardSession(): Promise<void>');
@@ -141,6 +147,7 @@ describe('guestService', () => {
     expect(service).toContain('export async function loadGuestItineraryDrawerSnapshot(weddingSiteId: string, guestId: string)');
     expect(service).toContain('export async function addGuestEventInvitation(eventId: string, guestId: string): Promise<void>');
     expect(service).toContain('export async function removeGuestEventInvitation(eventId: string, guestId: string): Promise<void>');
+    expect(service).toContain('export async function saveAssistedGuestRsvp(input: SaveAssistedGuestRsvpInput): Promise<SaveAssistedGuestRsvpResult>');
     expect(service).toContain('supabase.auth.refreshSession()');
   });
 
@@ -434,5 +441,98 @@ describe('guestService', () => {
     await expect(removeGuestEventInvitation('event-1', 'guest-1')).resolves.toBeUndefined();
     expect(deleteEqEventMock).toHaveBeenCalledWith('event_id', 'event-1');
     expect(deleteEqGuestMock).toHaveBeenCalledWith('guest_id', 'guest-1');
+  });
+
+  it('saves an assisted RSVP through the service', async () => {
+    const guestUpdateEqMock = vi.fn().mockResolvedValue({ error: null });
+    const existingRsvpMaybeSingleMock = vi.fn().mockResolvedValue({ data: { id: 'rsvp-1', notes: null }, error: null });
+    const rsvpUpdateEqMock = vi.fn().mockResolvedValue({ error: null });
+
+    fromMock
+      .mockReturnValueOnce({
+        update: vi.fn(() => ({ eq: guestUpdateEqMock })),
+      })
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({ maybeSingle: existingRsvpMaybeSingleMock })),
+        })),
+      })
+      .mockReturnValueOnce({
+        update: vi.fn(() => ({ eq: rsvpUpdateEqMock })),
+      });
+
+    await expect(saveAssistedGuestRsvp({
+      guest: {
+        id: 'guest-1',
+        first_name: 'Alex',
+        last_name: 'Jordan',
+        name: 'Alex Jordan',
+        email: null,
+        phone: null,
+        plus_one_allowed: false,
+        plus_one_name: null,
+        invited_to_ceremony: true,
+        invited_to_reception: true,
+        invite_token: null,
+        rsvp_status: 'pending',
+        rsvp_received_at: null,
+        household_id: null,
+        notes: null,
+      },
+      status: 'confirmed',
+      source: 'phone',
+      notes: 'Called and confirmed',
+    })).resolves.toEqual(expect.objectContaining({
+      recordedAt: expect.any(String),
+      nextNotes: expect.stringContaining('Called and confirmed'),
+    }));
+  });
+
+  it('rolls back guest RSVP state when assisted RSVP persistence fails', async () => {
+    const firstGuestUpdateEqMock = vi.fn().mockResolvedValue({ error: null });
+    const existingRsvpMaybeSingleMock = vi.fn().mockResolvedValue({ data: { id: 'rsvp-1', notes: null }, error: null });
+    const rsvpUpdateEqMock = vi.fn().mockResolvedValue({ error: new Error('nope') });
+    const rollbackGuestUpdateEqMock = vi.fn().mockResolvedValue({ error: null });
+
+    fromMock
+      .mockReturnValueOnce({
+        update: vi.fn(() => ({ eq: firstGuestUpdateEqMock })),
+      })
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({ maybeSingle: existingRsvpMaybeSingleMock })),
+        })),
+      })
+      .mockReturnValueOnce({
+        update: vi.fn(() => ({ eq: rsvpUpdateEqMock })),
+      })
+      .mockReturnValueOnce({
+        update: vi.fn(() => ({ eq: rollbackGuestUpdateEqMock })),
+      });
+
+    await expect(saveAssistedGuestRsvp({
+      guest: {
+        id: 'guest-1',
+        first_name: 'Alex',
+        last_name: 'Jordan',
+        name: 'Alex Jordan',
+        email: null,
+        phone: null,
+        plus_one_allowed: false,
+        plus_one_name: null,
+        invited_to_ceremony: true,
+        invited_to_reception: true,
+        invite_token: null,
+        rsvp_status: 'pending',
+        rsvp_received_at: null,
+        household_id: null,
+        notes: 'old note',
+      },
+      status: 'declined',
+      source: 'text',
+      notes: 'Declined by text',
+    })).rejects.toThrow();
+
+    expect(rollbackGuestUpdateEqMock).toHaveBeenCalledWith('id', 'guest-1');
   });
 });

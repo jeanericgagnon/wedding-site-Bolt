@@ -131,9 +131,12 @@ import {
   replaceGuestEventInvitations,
   replaceImportedGuestRsvps,
   restoreGuestEventInvitations,
+  saveAssistedGuestRsvp,
   toEventInvitationRows,
   updateGuest,
   updateHouseholdGuestIds,
+  type AssistedRsvpSource,
+  type AssistedRsvpStatus,
   type GuestEventInvitationRollback,
 } from './guests/guestService';
 
@@ -329,8 +332,8 @@ export const DashboardGuests: React.FC = () => {
   const [rsvpAuditFeed, setRsvpAuditFeed] = useState<GuestAuditEntry[]>([]);
   const [rsvpAuditLoading, setRsvpAuditLoading] = useState(false);
   const [assistedRsvpGuest, setAssistedRsvpGuest] = useState<GuestWithRSVP | null>(null);
-  const [assistedRsvpStatus, setAssistedRsvpStatus] = useState<'confirmed' | 'declined'>('confirmed');
-  const [assistedRsvpSource, setAssistedRsvpSource] = useState<'phone' | 'text' | 'family' | 'in-person'>('phone');
+  const [assistedRsvpStatus, setAssistedRsvpStatus] = useState<AssistedRsvpStatus>('confirmed');
+  const [assistedRsvpSource, setAssistedRsvpSource] = useState<AssistedRsvpSource>('phone');
   const [assistedRsvpNotes, setAssistedRsvpNotes] = useState('');
   const [assistedRsvpSaving, setAssistedRsvpSaving] = useState(false);
 
@@ -1579,14 +1582,13 @@ const handleSendBulkInvitations = async () => {
       return;
     }
     if (!assistedRsvpGuest) return;
-    let persisted = false;
     try {
       setAssistedRsvpSaving(true);
-      const recordedAt = new Date().toISOString();
-      const manualTag = `[Manual RSVP source:${assistedRsvpSource} recorded:${recordedAt}]`;
-      const nextNotes = [manualTag, assistedRsvpNotes.trim()].filter(Boolean).join(' ');
 
       if (isDemoMode) {
+        const demoRecordedAt = new Date().toISOString();
+        const demoManualTag = `[Manual RSVP source:${assistedRsvpSource} recorded:${demoRecordedAt}]`;
+        const nextNotes = [demoManualTag, assistedRsvpNotes.trim()].filter(Boolean).join(' ');
         setGuests((prev) => prev.map((guest) => guest.id === assistedRsvpGuest.id ? {
           ...guest,
           rsvp_status: assistedRsvpStatus,
@@ -1617,65 +1619,17 @@ const handleSendBulkInvitations = async () => {
         toast('RSVP recorded for guest', 'success');
         return;
       }
-      const { error: guestError } = await supabase
-        .from('guests')
-        .update({ rsvp_status: assistedRsvpStatus, rsvp_received_at: recordedAt, notes: nextNotes })
-        .eq('id', assistedRsvpGuest.id);
-      if (guestError) throw guestError;
-
-      const { data: existingRsvp, error: existingRsvpError } = await supabase
-        .from('rsvps')
-        .select('id, notes')
-        .eq('guest_id', assistedRsvpGuest.id)
-        .maybeSingle();
-      if (existingRsvpError) throw existingRsvpError;
-
-      const nextAttending = assistedRsvpStatus === 'confirmed';
-      const assistedRsvpPayload = {
-        attending: nextAttending,
-        attending_ceremony: nextAttending ? assistedRsvpGuest.invited_to_ceremony : false,
-        attending_reception: nextAttending ? assistedRsvpGuest.invited_to_reception : false,
-        notes: nextNotes,
-        responded_at: recordedAt,
-        ...(nextAttending ? {} : {
-          meal_choice: null,
-          plus_one_name: null,
-          plus_one_count: 0,
-        }),
-      };
-
-      if (existingRsvp?.id) {
-        const { error: rsvpError } = await supabase
-          .from('rsvps')
-          .update(assistedRsvpPayload)
-          .eq('id', existingRsvp.id);
-        if (rsvpError) throw rsvpError;
-      } else {
-        const { error: rsvpInsertError } = await supabase
-          .from('rsvps')
-          .insert({
-            guest_id: assistedRsvpGuest.id,
-            ...assistedRsvpPayload,
-          });
-        if (rsvpInsertError) throw rsvpInsertError;
-      }
-
-      persisted = true;
+      await saveAssistedGuestRsvp({
+        guest: assistedRsvpGuest,
+        status: assistedRsvpStatus,
+        source: assistedRsvpSource,
+        notes: assistedRsvpNotes,
+      });
 
       await fetchGuests();
       setAssistedRsvpGuest(null);
       toast('RSVP recorded for guest', 'success');
     } catch (error) {
-      if (!isDemoMode && assistedRsvpGuest && !persisted) {
-        await supabase
-          .from('guests')
-          .update({
-            rsvp_status: assistedRsvpGuest.rsvp_status,
-            rsvp_received_at: assistedRsvpGuest.rsvp_received_at ?? null,
-            notes: assistedRsvpGuest.notes ?? null,
-          })
-          .eq('id', assistedRsvpGuest.id);
-      }
       toast('Couldn’t save assisted RSVP.', 'error');
     } finally {
       setAssistedRsvpSaving(false);

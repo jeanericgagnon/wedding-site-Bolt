@@ -3370,3 +3370,21 @@ Commands run:
 
 Status:
 - PARTIAL. This materially advances the guest dashboard page-to-service migration without changing itinerary drawer hydration, invited-event state, audit history review, or RSVP-snapshot rollback behavior on invite removal. No deploy was run.
+
+### 2026-05-07 4:33 PM PT - No-Deploy Assisted RSVP Persistence Service Extraction
+
+What changed:
+- Moved assisted RSVP guest/RSVP persistence and rollback logic out of `src/pages/dashboard/Guests.tsx` and into `src/pages/dashboard/guests/guestService.ts`.
+- `Guests.tsx` now calls `saveAssistedGuestRsvp(...)` instead of owning direct `guests` updates, RSVP lookup/upsert, and guest-row rollback inline.
+- The guest service now owns the manual RSVP source tagging, guest RSVP state update, RSVP row update/insert, and guest-row rollback if the RSVP write fails.
+- Expanded `src/pages/dashboard/guests/guestService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the assisted RSVP service boundary and rollback path stay pinned.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `npm run build`
+- `git diff --check`
+
+Status:
+- PARTIAL. This materially advances the guest dashboard page-to-service migration without changing assisted RSVP source tagging, guest RSVP state updates, RSVP upsert behavior, or rollback safety on live write failure. No deploy was run.
