@@ -5,13 +5,13 @@ import { describe, expect, it } from 'vitest';
 describe('dashboard data boundary guards', () => {
   it('does not load message dashboard rows with select star', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Messages.tsx'), 'utf8');
-    const selectSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/messageSelect.ts'), 'utf8');
     const serviceSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/messageService.ts'), 'utf8');
 
-    expect(selectSource).toContain('const MESSAGES_DASHBOARD_SELECT = [');
-    expect(source).toContain('.select(MESSAGES_DASHBOARD_SELECT)');
+    expect(serviceSource).toContain('const MESSAGE_SELECT = [');
+    expect(serviceSource).toContain('.select(MESSAGE_SELECT)');
     expect(serviceSource).toContain('createDashboardMessage');
     expect(source).toContain('createDashboardMessage(payload)');
+    expect(source).toContain('loadDashboardMessages(weddingSite.id)');
     expect(source).not.toContain("supabase.from('messages').insert(payload)");
     expect(source).not.toContain(".from('messages')\n        .select('*')");
     expect(source).not.toContain('.from("messages")\n        .select("*")');
@@ -131,12 +131,13 @@ describe('dashboard data boundary guards', () => {
 
     expect(builderProjectSource).toContain('const BUILDER_PROJECT_SITE_SELECT = ');
     expect(builderProjectSource).toContain('const BUILDER_WEDDING_DATA_SITE_SELECT = ');
+    expect(builderProjectSource).toContain('const BUILDER_ENTRY_SITE_SELECT = ');
     expect(builderProjectSource).toContain('.select(BUILDER_PROJECT_SITE_SELECT)');
     expect(builderProjectSource).toContain('.select(BUILDER_WEDDING_DATA_SITE_SELECT)');
+    expect(builderProjectSource).toContain('.select(BUILDER_ENTRY_SITE_SELECT)');
     expect(mediaSource).toContain('const BUILDER_MEDIA_ASSET_SELECT = ');
     expect(mediaSource).toContain('.select(BUILDER_MEDIA_ASSET_SELECT)');
-    expect(builderPageSource).toContain('const BUILDER_ENTRY_SITE_SELECT = ');
-    expect(builderPageSource).toContain('.select(BUILDER_ENTRY_SITE_SELECT)');
+    expect(builderPageSource).toContain('builderProjectService.loadEntrySite(activeSite?.id ?? \'\')');
     expect(builderProjectSource).not.toContain(".from('wedding_sites')\n      .select('*')");
     expect(mediaSource).not.toContain(".from('builder_media_assets')\n      .select('*')");
     expect(builderPageSource).not.toContain(".from('wedding_sites')\n        .select('*')");
@@ -259,10 +260,20 @@ describe('dashboard data boundary guards', () => {
 
     expect(source).toContain('persistOverviewIntelligenceDismissals(stats.siteId, next)');
     expect(source).toContain('hideInteractiveSuggestion(id)');
+    expect(source).toContain('loadOverviewDashboardSnapshot(user.id)');
+    expect(source).toContain('loadOverviewInteractiveData(slug)');
+    expect(source).toContain('markOverviewBuilderFieldAsUserEdited(stats.siteId, fieldPath)');
     expect(source).not.toContain("supabase.from('interactive_suggestions').update({ is_hidden: true })");
     expect(source).not.toContain('intelligenceDismissals: next');
+    expect(source).not.toContain("supabase.from('wedding_sites')");
+    expect(source).not.toContain("supabase.from('guests')");
+    expect(source).not.toContain("supabase.from('interactive_suggestions')");
+    expect(source).not.toContain("supabase.from('interactive_votes')");
     expect(service).toContain("const OVERVIEW_DISMISSALS_SITE_SELECT = 'wedding_data'");
+    expect(service).toContain("const OVERVIEW_SITE_SELECT = 'id, site_slug, site_url, is_published, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location'");
     expect(service).toContain('.select(OVERVIEW_DISMISSALS_SITE_SELECT)');
+    expect(service).toContain('.select(OVERVIEW_SITE_SELECT)');
+    expect(service).toContain('.select(OVERVIEW_GUEST_SELECT)');
     expect(service).not.toContain(".from('wedding_sites')\n    .select('*')");
   });
 

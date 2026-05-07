@@ -7746,3 +7746,17 @@ A slice does **not** count as passed because:
   - `npm run lint -- --quiet`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 3:00 PM PT No-Deploy Overview Service Snapshot Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/overviewService.ts` now owns the overview site lookup, collaborator fallback lookup, exact-count guest metrics, recent RSVP hydration, registry/photo/vault counts, interactive suggestion/vote reads, builder field edit persistence, and draft-refresh seed reads/writes.
+  - `src/pages/dashboard/Overview.tsx` now consumes those service helpers instead of directly querying `wedding_sites`, `guests`, `interactive_suggestions`, or `interactive_votes`.
+  - `src/pages/dashboard/overviewQueryBounds.test.ts`, `src/pages/dashboard/overviewService.test.ts`, and `src/lib/dashboardDataBoundary.test.ts` now pin the service-layer boundary and bounded query shape for the overview lane.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/overviewService.test.ts src/pages/dashboard/overviewQueryBounds.test.ts src/pages/dashboard/overviewUtils.test.ts src/pages/dashboard/overviewDate.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 30/30.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

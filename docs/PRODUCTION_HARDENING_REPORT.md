@@ -2971,3 +2971,27 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps the overview collaborator fallback path explicit without changing overview metrics or site resolution behavior. No deploy was run.
+
+### 2026-05-07 3:00 PM PT - No-Deploy Overview Service Snapshot Extraction
+
+What changed:
+- Moved the remaining high-traffic Overview data access behind `src/pages/dashboard/overviewService.ts` instead of keeping it inline in `src/pages/dashboard/Overview.tsx`.
+- `overviewService.ts` now owns:
+  - active-site and collaborator-fallback site lookup for the overview
+  - exact-count guest metrics and recent-RSVP hydration
+  - registry, photo album, and vault count hydration
+  - interactive suggestion and vote reads
+  - builder field edit persistence
+  - draft-refresh seed reads and wedding-site patch writes
+- `Overview.tsx` now consumes `loadOverviewDashboardSnapshot(...)`, `loadOverviewInteractiveData(...)`, `markOverviewBuilderFieldAsUserEdited(...)`, and draft refresh helpers instead of directly querying `wedding_sites`, `guests`, `interactive_suggestions`, or `interactive_votes`.
+- Updated `src/pages/dashboard/overviewQueryBounds.test.ts`, `src/pages/dashboard/overviewService.test.ts`, and `src/lib/dashboardDataBoundary.test.ts` so the service-layer boundary and explicit projection/bound contract stay pinned.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/overviewService.test.ts src/pages/dashboard/overviewQueryBounds.test.ts src/pages/dashboard/overviewUtils.test.ts src/pages/dashboard/overviewDate.test.ts src/lib/dashboardDataBoundary.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `npm run build`
+- `git diff --check`
+
+Status:
+- PARTIAL. This materially advances the page-to-service migration for the owner dashboard overview without changing overview metrics, draft refresh behavior, publish state, or guest-facing output. No deploy was run.

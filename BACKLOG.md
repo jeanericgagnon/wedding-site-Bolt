@@ -95,7 +95,7 @@ Current readiness verdict for this intake:
 13. `PARTIAL` - Remove direct Supabase calls from pages.
     Problem: page components still own too much data access.
     Acceptance: sensitive reads/writes move into repository/service layers with explicit projections and testable contracts.
-    Current evidence: many broad `select("*")` projections were replaced by explicit projections; the last page-level Supabase mutation/RPC calls in `AcceptCollaboratorInvite.tsx` and `Guests.tsx` now run through helper services instead of direct TSX calls; full service-layer migration still remains.
+    Current evidence: many broad `select("*")` projections were replaced by explicit projections; the last page-level Supabase mutation/RPC calls in `AcceptCollaboratorInvite.tsx` and `Guests.tsx` now run through helper services instead of direct TSX calls; `Overview.tsx` now routes site lookup, guest/count hydration, interactive suggestion/vote reads, builder field edits, and draft-refresh seed reads through `src/pages/dashboard/overviewService.ts` instead of owning those `wedding_sites`, `guests`, `interactive_suggestions`, and `interactive_votes` queries inline; full service-layer migration still remains.
 
 14. `PARTIAL` - Performance and query safety.
     Problem: overfetching, unscoped queries, and large dataset handling need full audit.
