@@ -2507,3 +2507,21 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps coordinator bootstrap fan-out bounded without changing the current coordinator/day-of workflow shape. No deploy was run, so live runtime/manual coordinator proof expectations are unchanged.
+
+### 2026-05-07 1:39 PM PT - No-Deploy Admin Log Query Bounds
+
+What changed:
+- Added explicit `MAX_ERROR_LOG_ROWS` and `MAX_AUDIT_LOG_ROWS` caps in the dashboard admin-log services.
+- `loadDashboardErrorLogs()` now uses a named cap instead of a literal row limit.
+- `loadDashboardAuditLogs()` now uses the shared audit cap for guest-audit rows and action-audit rows, and the guest-name follow-up query now slices the guest-id fan-out to the same cap.
+- Added `src/pages/dashboard/adminLogServices.test.ts` to pin the stable cap exports and bounded query shape; refreshed `src/pages/dashboard/AuditLogs.query.test.ts` so it checks the current service boundary instead of stale page-owned query text.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/adminLogServices.test.ts src/pages/dashboard/AuditLogs.query.test.ts`: PASS, 4/4.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps admin log/dashboard history reads bounded without changing the current audit or error-log UI flow. No deploy was run.
