@@ -2601,3 +2601,20 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps the planning workspace read-side fan-out bounded without changing current planning task, vendor, budget, address-collection, or song-request behavior. No deploy was run.
+
+### 2026-05-07 1:51 PM PT - No-Deploy Guest RSVP Lookup Bounds
+
+What changed:
+- Added `MAX_GUEST_RSVP_LOOKUP_IDS = 5000` in `src/pages/dashboard/guests/guestService.ts`.
+- Guest RSVP hydration now slices inbound guest-id batches to that cap before the follow-up `rsvps` read.
+- Extended `src/pages/dashboard/guests/guestService.test.ts` to pin the stable cap export and the bounded query shape.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts`: PASS, 4/4.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps guest RSVP hydration bounded without changing current guest create/update/import/delete behavior. No deploy was run.

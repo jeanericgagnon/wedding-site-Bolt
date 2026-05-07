@@ -7467,3 +7467,16 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 1:51 PM PT No-Deploy Guest RSVP Lookup Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestService.ts` now caps guest-id fan-out at 5000 before the follow-up RSVP read.
+  - `src/pages/dashboard/guests/guestService.test.ts` now pins the stable cap export and the bounded query shape.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts`: PASS, 4/4.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

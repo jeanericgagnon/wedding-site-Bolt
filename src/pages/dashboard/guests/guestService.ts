@@ -18,6 +18,7 @@ export const GUEST_DASHBOARD_RSVP_SELECT = [
   'notes',
   'custom_answers',
 ].join(', ');
+export const MAX_GUEST_RSVP_LOOKUP_IDS = 5000;
 
 const EVENT_INVITATION_ROLLBACK_SELECT = 'id, event_id';
 const GUEST_ID_SELECT = 'id';
@@ -68,11 +69,12 @@ export function toEventInvitationRows(guestId: string, eventIds: string[]): Even
 
 export async function fetchGuestRsvps(guestIds: string[]): Promise<unknown[]> {
   if (guestIds.length === 0) return [];
+  const scopedGuestIds = guestIds.slice(0, MAX_GUEST_RSVP_LOOKUP_IDS);
 
   const { data, error } = await supabase
     .from('rsvps')
     .select(GUEST_DASHBOARD_RSVP_SELECT)
-    .in('guest_id', guestIds);
+    .in('guest_id', scopedGuestIds);
 
   if (error) throw error;
   return data ?? [];
