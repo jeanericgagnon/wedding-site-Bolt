@@ -2,18 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, ArrowRight, ArrowLeft, Check, Sparkles, Palette, Layout, Download, Upload, Users, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button, Card, Input, Textarea } from '../../components/ui';
-import { supabase } from '../../lib/supabase';
 import { buildOnboardingUpdateWithClarifying } from '../../lib/buildOnboardingUpdateWithClarifying';
 import { buildSuggestedFaqDrafts } from '../../lib/faqDraftHelper';
 import { buildWelcomeNoteDraft } from '../../lib/welcomeNoteHelper';
 import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
-import { GUIDED_SETUP_STORAGE_KEY, normalizeGuidedSetupDraftSnapshot, type GuidedSetupDraftSnapshot } from '../../lib/guidedSetupPersistence';
+import { clearGuidedSetupDraftSnapshot, persistGuidedSetupDraftSnapshot, readGuidedSetupDraftSnapshot, type GuidedSetupDraftSnapshot } from '../../lib/guidedSetupPersistence';
 import { clearAllOnboardingContinuationState } from '../../lib/onboardingContinuationCleanup';
 import { resolvePrimaryWeddingSiteId } from '../../lib/guidedSetupSiteResolver';
 import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
 import { buildGuidedSetupHydrationErrorMessage, buildGuidedSetupSaveErrorMessage } from '../../lib/guidedSetupErrorCopy';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import {
+  fetchGuidedSetupSite,
+  requireAuthenticatedOnboardingUser,
+  updateGuidedSetupSite,
+  upsertGuidedSetupGuestFromCsv,
+} from './onboardingService';
 
 type Step =
   | 'welcome'
@@ -160,7 +165,7 @@ export const GuidedSetup: React.FC = () => {
       return;
     }
 
-    const saved = window.localStorage.getItem(GUIDED_SETUP_STORAGE_KEY);
+    const saved = readGuidedSetupDraftSnapshot(guidedSetupDefaults);
     if (!saved) {
       setHasLocalDraft(false);
       setHasHydratedDraft(true);
@@ -168,13 +173,12 @@ export const GuidedSetup: React.FC = () => {
     }
 
     try {
-      const parsed = normalizeGuidedSetupDraftSnapshot(JSON.parse(saved), guidedSetupDefaults);
       setHasLocalDraft(true);
-      setCurrentStep(parsed.currentStep);
-      setCoupleNames(parsed.coupleNames);
-      setFormData(parsed.formData);
+      setCurrentStep(saved.currentStep);
+      setCoupleNames(saved.coupleNames);
+      setFormData(saved.formData);
     } catch {
-      window.localStorage.removeItem(GUIDED_SETUP_STORAGE_KEY);
+      clearGuidedSetupDraftSnapshot();
     } finally {
       setHasHydratedDraft(true);
     }
@@ -182,24 +186,19 @@ export const GuidedSetup: React.FC = () => {
 
   useEffect(() => {
     if (typeof window === 'undefined' || !hasHydratedDraft || currentStep === 'complete') return;
-    window.localStorage.setItem(GUIDED_SETUP_STORAGE_KEY, JSON.stringify({ currentStep, coupleNames, formData }));
+    persistGuidedSetupDraftSnapshot({ currentStep, coupleNames, formData }, guidedSetupDefaults);
   }, [currentStep, coupleNames, formData, hasHydratedDraft]);
 
   useEffect(() => {
     const fetchWeddingSite = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        const user = await requireAuthenticatedOnboardingUser();
 
         const resolvedSiteId = await resolvePrimaryWeddingSiteId(user.id);
         setSiteId(resolvedSiteId);
         if (!resolvedSiteId) return;
 
-        const { data } = await supabase
-        .from('wedding_sites')
-        .select('id, couple_name_1, couple_name_2, wedding_date, venue_date, venue_name, venue_address, wedding_location')
-        .eq('id', resolvedSiteId)
-        .maybeSingle();
+        const data = await fetchGuidedSetupSite(user.id);
 
         if (data) {
           setCoupleNames((prev) => ({
@@ -229,8 +228,7 @@ export const GuidedSetup: React.FC = () => {
 
 
   const clearGuidedSetupDraft = () => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.removeItem(GUIDED_SETUP_STORAGE_KEY);
+    clearGuidedSetupDraftSnapshot();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -255,8 +253,7 @@ export const GuidedSetup: React.FC = () => {
   };
 
   const persistSectionProgress = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+    const user = await requireAuthenticatedOnboardingUser();
 
     const updateData = buildOnboardingUpdateWithClarifying({
       coupleNames,
@@ -280,13 +277,7 @@ export const GuidedSetup: React.FC = () => {
     const resolvedSiteId = siteId || await resolvePrimaryWeddingSiteId(user.id);
     if (!resolvedSiteId) throw new Error('Couldn’t find your wedding site right now.');
 
-    const { error: updateError } = await supabase
-      .from('wedding_sites')
-      .update(updateData)
-      .eq('id', resolvedSiteId)
-      .eq('user_id', user.id);
-
-    if (updateError) throw updateError;
+    await updateGuidedSetupSite({ siteId: resolvedSiteId, userId: user.id, updateData });
   };
 
   const handleNext = async () => {
@@ -325,8 +316,7 @@ export const GuidedSetup: React.FC = () => {
     setError('');
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const user = await requireAuthenticatedOnboardingUser();
 
       const updateData = buildOnboardingUpdateWithClarifying({
         coupleNames,
@@ -350,13 +340,7 @@ export const GuidedSetup: React.FC = () => {
       const resolvedSiteId = siteId || await resolvePrimaryWeddingSiteId(user.id);
       if (!resolvedSiteId) throw new Error('Couldn’t find your wedding site right now.');
 
-      const { error: updateError } = await supabase
-        .from('wedding_sites')
-        .update(updateData)
-        .eq('id', resolvedSiteId)
-        .eq('user_id', user.id);
-
-      if (updateError) throw updateError;
+      await updateGuidedSetupSite({ siteId: resolvedSiteId, userId: user.id, updateData });
 
       clearAllOnboardingContinuationState();
       navigate('/dashboard', {
@@ -407,8 +391,7 @@ export const GuidedSetup: React.FC = () => {
 
       if (rows.length < 2) throw new Error('File must have a header row and at least one guest row');
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const user = await requireAuthenticatedOnboardingUser();
 
       const resolvedSiteId = siteId || await resolvePrimaryWeddingSiteId(user.id);
       if (!resolvedSiteId) throw new Error('Couldn’t find your wedding site right now.');
@@ -469,48 +452,18 @@ export const GuidedSetup: React.FC = () => {
 
         if (!firstName && !lastName && !email) { invalid++; continue; }
 
-        const name = [firstName, lastName].filter(Boolean).join(' ') || email || 'Guest';
-
-        if (email) {
-          const { data: existing, error: existingError } = await supabase
-            .from('guests')
-            .select('id')
-            .eq('wedding_site_id', resolvedSiteId)
-            .eq('email', email)
-            .maybeSingle();
-          if (existingError) throw existingError;
-
-          if (existing) {
-            const { error: updateGuestError } = await supabase.from('guests').update({
-              first_name: firstName || null,
-              last_name: lastName || null,
-              phone: phone || null,
-              group_name: groupName,
-              plus_one_allowed: plusOne,
-              invited_to_ceremony: toCeremony,
-              invited_to_reception: toReception,
-            }).eq('id', existing.id);
-            if (updateGuestError) throw updateGuestError;
-            updated++;
-            continue;
-          }
-        }
-
-        const { error: insertGuestError } = await supabase.from('guests').insert({
-          wedding_site_id: resolvedSiteId,
-          name,
-          first_name: firstName || null,
-          last_name: lastName || null,
+        const result = await upsertGuidedSetupGuestFromCsv(resolvedSiteId, {
+          firstName,
+          lastName,
           email: email || null,
           phone: phone || null,
-          group_name: groupName,
-          plus_one_allowed: plusOne,
-          invited_to_ceremony: toCeremony,
-          invited_to_reception: toReception,
-          rsvp_status: 'pending',
+          groupName,
+          plusOne,
+          invitedToCeremony: toCeremony,
+          invitedToReception: toReception,
         });
-        if (insertGuestError) throw insertGuestError;
-        created++;
+        if (result === 'updated') updated++;
+        else created++;
       }
 
       setCsvImportResult({ created, updated, invalid });

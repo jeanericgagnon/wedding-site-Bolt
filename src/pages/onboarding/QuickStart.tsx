@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { supabase } from '../../lib/supabase';
 import {
   applyInitialSetupAnswersToWeddingProfile,
   createEmptyWeddingProfile,
@@ -26,7 +25,7 @@ import { applyQuickStartAnswer, mergeClarifyingAnswer, type ConciergeQuestion } 
 import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
 import { normalizeQuickStartDraftSnapshot } from '../../lib/quickStartPersistence';
-import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, QUICK_START_STORAGE_KEY } from '../../lib/quickStartStateTransfer';
+import { clearQuickStartDraftSnapshot, normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, readQuickStartDraftSnapshot } from '../../lib/quickStartStateTransfer';
 import { buildQuickStartEntryPath, buildQuickStartGuestsPath } from '../../lib/quickStartContinuation';
 import { clearAllOnboardingContinuationState } from '../../lib/onboardingContinuationCleanup';
 import { hasMeaningfulQuickStartAnswers, mergeQuickStartSeedIntoDraft } from '../../lib/quickStartHydration';
@@ -40,8 +39,13 @@ import { runOnboardingAiOrchestration } from '../../lib/onboardingAiOrchestrator
 import { generateDraftFromWeddingProfile, mergeGeneratedDraftIntoWeddingData } from '../../lib/aiDraftGenerator';
 import { createCanonicalContentFromDraft } from '../../lib/aiCanonicalContent';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import {
+  fetchQuickStartPersistSite,
+  fetchQuickStartSeedSite,
+  requireAuthenticatedOnboardingUser,
+  updateQuickStartPersistSite,
+} from './onboardingService';
 
 type QuestionDef = {
   key: ConciergeQuestion;
@@ -137,8 +141,6 @@ const WARM = '#8B7355';
 const SOFT = '#F5F4F2';
 const SOFT_HOVER = '#EEEDEB';
 const BORDER = '#E0DED9';
-const STORAGE_KEY = QUICK_START_STORAGE_KEY;
-
 function safeQuickStartError(err: unknown, fallback: string): string {
   return customerSafeErrorMessage(err, fallback);
 }
@@ -207,7 +209,7 @@ export const QuickStart: React.FC = () => {
       nextUrl.searchParams.delete('resetQuickStart');
       window.history.replaceState(window.history.state, '', `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
       setIsResettingDraft(true);
-      localStorage.removeItem(STORAGE_KEY);
+      clearQuickStartDraftSnapshot();
       initialSetupAnswersRef.current = emptyAnswers;
       setInitialSetupAnswers(emptyAnswers);
       followUpAnswersRef.current = {};
@@ -226,13 +228,12 @@ export const QuickStart: React.FC = () => {
       return;
     }
 
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) {
+    const parsed = readQuickStartDraftSnapshot();
+    if (!parsed) {
       setHasHydratedDraft(true);
       return;
     }
     try {
-      const parsed = normalizeQuickStartDraftSnapshot(JSON.parse(saved));
       const normalizedClarifyingState = normalizeQuickStartClarifyingMode(normalizeQuickStartClarifyingState(parsed.clarifyingState));
       const restoredFollowUps = deriveFollowUpAnswersFromClarifyingState(normalizedClarifyingState, parsed.followUpAnswers);
       const restoredIndex = clampQuickStartQuestionIndex(parsed.currentIndex, questions.length);
@@ -258,7 +259,7 @@ export const QuickStart: React.FC = () => {
 
   useEffect(() => {
     if (!hasHydratedDraft || isResettingDraft) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ initialSetupAnswers, currentIndex: safeCurrentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState }));
+    persistQuickStartDraftSnapshot({ initialSetupAnswers, currentIndex: safeCurrentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState });
   }, [initialSetupAnswers, safeCurrentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState, hasHydratedDraft, isResettingDraft]);
 
   useEffect(() => {
@@ -275,15 +276,14 @@ export const QuickStart: React.FC = () => {
 
   useEffect(() => {
     const fetchWeddingSite = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      let user: { id: string };
+      try {
+        user = await requireAuthenticatedOnboardingUser();
+      } catch {
+        return;
+      }
       clearOnboardingEntryReturnPath();
-      const activeSite = await resolveActiveSiteForUser(user.id);
-      const { data } = await supabase
-        .from('wedding_sites')
-        .select('id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_location, onboarding_answers')
-        .eq('id', activeSite?.id ?? '')
-        .maybeSingle();
+      const data = await fetchQuickStartSeedSite(user.id);
       setSiteId(data?.id ?? null);
       if (data?.onboarding_answers && typeof data.onboarding_answers === 'object') {
         const restored = normalizeQuickStartDraftSnapshot({ initialSetupAnswers: data.onboarding_answers }).initialSetupAnswers;
@@ -389,8 +389,10 @@ export const QuickStart: React.FC = () => {
   ) => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      let user: { id: string };
+      try {
+        user = await requireAuthenticatedOnboardingUser();
+      } catch {
         const carriedQuickStartDraft = normalizeMeaningfulQuickStartDraftSnapshot({
           initialSetupAnswers: answersOverride,
           currentIndex: safeCurrentIndex,
@@ -422,13 +424,7 @@ export const QuickStart: React.FC = () => {
         mergedFollowUpState.initialSetupAnswers,
         mergedFollowUpState.initialSetupFollowUps,
       );
-      const activeSite = await resolveActiveSiteForUser(user.id);
-      const { data: site, error: siteError } = await supabase
-        .from('wedding_sites')
-        .select('id, wedding_data, site_json, active_template_id, template_id, wedding_date, venue_name, wedding_location, couple_name_1, couple_name_2')
-        .eq('id', activeSite?.id ?? '')
-        .maybeSingle();
-      if (siteError) throw siteError;
+      const site = await fetchQuickStartPersistSite(user.id);
       if (!site?.id) throw new Error('No wedding site found for this account');
       const clarifyingFieldPatches = clarifyingOverride ? buildClarifyingAnswerPatchSet(clarifyingOverride) : {};
       const existingWeddingData = site && 'wedding_data' in site ? ((site as { wedding_data?: Record<string, unknown> }).wedding_data || {}) : {};
@@ -465,9 +461,9 @@ export const QuickStart: React.FC = () => {
         generatedDraft,
         canonicalAiContent,
       );
-      const { error: updateError } = await supabase
-        .from('wedding_sites')
-        .update({
+      await updateQuickStartPersistSite({
+        siteId: site.id,
+        updateData: {
           onboarding_answers: derivedProfile,
           planning_status: 'quick_start_complete',
           wedding_data: {
@@ -500,10 +496,9 @@ export const QuickStart: React.FC = () => {
           wedding_date: onboardingUpdate.wedding_date,
           venue_name: onboardingUpdate.venue_name,
           wedding_location: onboardingUpdate.wedding_location,
-        })
-        .eq('id', site.id);
-      if (updateError) throw updateError;
-      localStorage.removeItem(STORAGE_KEY);
+        },
+      });
+      clearQuickStartDraftSnapshot();
       clearOnboardingEntryReturnPath();
       navigate(buildQuickStartGuestsPath(), {
         state: { showWelcome: true, nextStep: 'guest-import' },
@@ -806,7 +801,7 @@ export const QuickStart: React.FC = () => {
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-16 flex items-center gap-4">
           <button className="text-[13px] transition-opacity duration-200 hover:opacity-60" style={{ color: MUTED }} onClick={() => {
-            localStorage.removeItem(STORAGE_KEY);
+            clearQuickStartDraftSnapshot();
             window.location.href = `${buildQuickStartEntryPath()}&resetQuickStart=1`;
           }}>
             Start over

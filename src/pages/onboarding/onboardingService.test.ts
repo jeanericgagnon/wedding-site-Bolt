@@ -1,10 +1,44 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
-import { mergeOnboardingSeedsIntoWeddingData } from './onboardingService';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { mergeOnboardingSeedsIntoWeddingData, requireAuthenticatedOnboardingUser } from './onboardingService';
 import { makeSignupBaseSlug } from '../signupService';
 
+const { getUserMock } = vi.hoisted(() => ({
+  getUserMock: vi.fn(),
+}));
+
+vi.mock('../../lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getUser: getUserMock,
+    },
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          maybeSingle: vi.fn(async () => ({ data: null })),
+          order: vi.fn(() => ({
+            limit: vi.fn(() => ({
+              maybeSingle: vi.fn(async () => ({ data: null })),
+            })),
+          })),
+        })),
+      })),
+      update: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          eq: vi.fn(async () => ({ error: null })),
+        })),
+      })),
+      insert: vi.fn(async () => ({ data: null, error: null })),
+    })),
+  },
+}));
+
 describe('onboarding service boundaries', () => {
+  beforeEach(() => {
+    getUserMock.mockReset();
+  });
+
   it('merges generated event seeds without dropping existing wedding metadata', () => {
     expect(
       mergeOnboardingSeedsIntoWeddingData(
@@ -44,9 +78,12 @@ describe('onboarding service boundaries', () => {
     expect(guided).toContain('upsertGuidedSetupGuestFromCsv(resolvedSiteId');
     expect(guided).toContain('fetchGuidedSetupSite(user.id)');
     expect(guided).toContain('updateGuidedSetupSite({ siteId: resolvedSiteId, userId: user.id, updateData })');
+    expect(guided).toContain('requireAuthenticatedOnboardingUser()');
     expect(quickStart).toContain('fetchQuickStartSeedSite(user.id)');
     expect(quickStart).toContain('fetchQuickStartPersistSite(user.id)');
     expect(quickStart).toContain('updateQuickStartPersistSite({');
+    expect(quickStart).toContain('requireAuthenticatedOnboardingUser()');
+    expect(weddingStatus).toContain('requireAuthenticatedOnboardingUser()');
     expect(weddingStatus).toContain('updateWeddingPlanningStatus({ userId: user.id, updateData })');
     expect(signup).toContain('ensureMinimalWeddingSite');
     expect(signup).toContain('startSignupWithGoogle');
@@ -55,10 +92,13 @@ describe('onboarding service boundaries', () => {
     expect(onboarding).not.toContain("from '../lib/supabase'");
     expect(onboarding).not.toContain('supabase.from(');
     expect(guided).not.toContain("supabase.from('guests')");
+    expect(guided).not.toContain('supabase.auth.getUser');
     expect(guided).not.toMatch(/supabase\s*\n\s*\.from\('wedding_sites'\)/);
     expect(quickStart).not.toContain("from '../../lib/activeSite'");
+    expect(quickStart).not.toContain('supabase.auth.getUser');
     expect(quickStart).not.toMatch(/supabase\s*\n\s*\.from\('wedding_sites'\)/);
     expect(weddingStatus).not.toContain("from '../../lib/activeSite'");
+    expect(weddingStatus).not.toContain('supabase.auth.getUser');
     expect(weddingStatus).not.toMatch(/supabase\s*\n\s*\.from\('wedding_sites'\)/);
     expect(signup).not.toContain("supabase.from('wedding_sites')");
     expect(signup).not.toContain('supabase.auth.signInWithOAuth');
@@ -68,6 +108,8 @@ describe('onboarding service boundaries', () => {
     expect(onboardingService).toContain('export const GUIDED_SETUP_SITE_SELECT = ');
     expect(onboardingService).toContain('export const QUICK_START_SEED_SITE_SELECT = ');
     expect(onboardingService).toContain('export const QUICK_START_PERSIST_SITE_SELECT = ');
+    expect(onboardingService).toContain('export async function requireAuthenticatedOnboardingUser()');
+    expect(onboardingService).toContain('supabase.auth.getUser()');
     expect(onboardingService).toContain(".select('id, onboarding_answers, wedding_data')");
     expect(onboardingService).toContain(".select('event_name')");
     expect(onboardingService).toContain(".select('id')");
@@ -80,5 +122,11 @@ describe('onboarding service boundaries', () => {
     expect(signupService).toContain(".select('id')");
     expect(onboardingService).not.toContain(".select('*')");
     expect(signupService).not.toContain(".select('*')");
+  });
+
+  it('loads the authenticated onboarding user through the service helper', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'user-123' } } });
+
+    await expect(requireAuthenticatedOnboardingUser()).resolves.toEqual({ id: 'user-123' });
   });
 });

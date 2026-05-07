@@ -3079,3 +3079,21 @@ Commands run:
 
 Status:
 - PARTIAL. This materially advances the collaborator-invite page-to-service migration without changing invite validation, session-claim orchestration, or collaborator redirect behavior. No deploy was run.
+
+### 2026-05-07 3:18 PM PT - No-Deploy Onboarding Auth Lookup Service Extraction
+
+What changed:
+- Moved the shared onboarding auth lookup into `src/pages/onboarding/onboardingService.ts` via `requireAuthenticatedOnboardingUser()`.
+- `src/pages/onboarding/QuickStart.tsx`, `src/pages/onboarding/GuidedSetup.tsx`, and `src/pages/onboarding/WeddingStatus.tsx` now call that helper instead of directly invoking `supabase.auth.getUser()` inline.
+- This keeps session/user lookup behavior the same, but removes more page-owned auth access from the onboarding surface.
+- Updated `src/pages/onboarding/onboardingService.test.ts` so the onboarding boundary now pins the shared auth helper and ensures those onboarding pages no longer own direct `supabase.auth.getUser()` calls.
+
+Commands run:
+- `npm test -- --run src/pages/onboarding/onboardingService.test.ts src/pages/onboarding/GuidedSetup.test.tsx src/pages/onboarding/QuickStart.test.tsx`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `npm run build`
+- `git diff --check`
+
+Status:
+- PARTIAL. This materially advances the onboarding page-to-service migration without changing onboarding copy, draft hydration, guest CSV import behavior, or quick-start continuation routing. No deploy was run.

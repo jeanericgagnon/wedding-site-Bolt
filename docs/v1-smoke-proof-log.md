@@ -7803,3 +7803,17 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 3:18 PM PT No-Deploy Onboarding Auth Lookup Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/onboarding/onboardingService.ts` now owns the shared authenticated onboarding user lookup via `requireAuthenticatedOnboardingUser()`.
+  - `src/pages/onboarding/QuickStart.tsx`, `src/pages/onboarding/GuidedSetup.tsx`, and `src/pages/onboarding/WeddingStatus.tsx` now call that helper instead of directly invoking `supabase.auth.getUser()` inline.
+  - `src/pages/onboarding/onboardingService.test.ts` now pins the shared onboarding auth/service boundary and verifies those pages no longer own direct `supabase.auth.getUser()` calls.
+- Proof passed:
+  - `npm test -- --run src/pages/onboarding/onboardingService.test.ts src/pages/onboarding/GuidedSetup.test.tsx src/pages/onboarding/QuickStart.test.tsx`: PASS, 14/14.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
