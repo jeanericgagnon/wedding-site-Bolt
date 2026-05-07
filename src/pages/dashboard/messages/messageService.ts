@@ -87,6 +87,9 @@ const WEDDING_SITE_SELECT = [
   'sms_credits_balance',
 ].join(', ');
 
+export const MAX_MESSAGE_DELIVERY_MESSAGE_IDS = 50;
+export const MAX_MESSAGE_DELIVERY_ROWS = 1000;
+
 export async function createDashboardMessage(payload: MessageInsertPayload): Promise<void> {
   const { error } = await supabase.from('messages').insert(payload);
   if (error) throw error;
@@ -145,11 +148,13 @@ export async function loadMessageGuests(weddingSiteId: string): Promise<Guest[]>
 
 export async function loadMessageDeliveries(messageIds: string[]): Promise<DeliveryRow[]> {
   if (messageIds.length === 0) return [];
+  const scopedMessageIds = Array.from(new Set(messageIds)).slice(0, MAX_MESSAGE_DELIVERY_MESSAGE_IDS);
   const { data, error } = await supabase
     .from('message_deliveries')
     .select(DELIVERY_SELECT)
-    .in('message_id', messageIds)
-    .order('created_at', { ascending: false });
+    .in('message_id', scopedMessageIds)
+    .order('created_at', { ascending: false })
+    .limit(MAX_MESSAGE_DELIVERY_ROWS);
 
   if (error) throw error;
   return (data ?? []) as unknown as DeliveryRow[];

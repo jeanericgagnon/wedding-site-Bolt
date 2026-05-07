@@ -2451,3 +2451,20 @@ Commands run:
 
 Status:
 - PARTIAL. This narrows Overview direct-data-access drift while preserving dismissal, demo-mode, suggestion hide, and toast behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-07 1:26 PM PT - No-Deploy Messages Delivery Query Bounds
+
+What changed:
+- Added explicit query caps to `src/pages/dashboard/messages/messageService.ts` for dashboard delivery-history reads.
+- `loadMessageDeliveries(messageIds)` now deduplicates requested ids, caps the message-id filter set at 50, and caps returned rows at 1000 while preserving newest-first ordering.
+- Added `src/pages/dashboard/messages/messageService.boundary.test.ts` to pin the stable caps and prevent quiet removal of the bounded query shape.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 2/2.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows one high-volume dashboard query surface without changing the current Messages workflow. No deploy was run, so live proof status is unchanged.

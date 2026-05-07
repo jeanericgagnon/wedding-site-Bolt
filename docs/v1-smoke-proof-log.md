@@ -7347,3 +7347,17 @@ A slice does **not** count as passed because:
   - `npm run guard:file-size`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 1:26 PM PT No-Deploy Messages Delivery Query Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/messages/messageService.ts` now deduplicates requested message ids before loading delivery history.
+  - Delivery-history reads are capped to the most recent 50 message ids and 1000 returned delivery rows, preserving newest-first ordering.
+  - `src/pages/dashboard/messages/messageService.boundary.test.ts` now pins the bounded query shape so quiet regression back to unbounded dashboard delivery reads is caught locally.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 2/2.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
