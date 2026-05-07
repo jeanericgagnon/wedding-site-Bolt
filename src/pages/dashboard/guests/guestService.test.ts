@@ -1,15 +1,33 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   GUEST_DASHBOARD_RSVP_SELECT,
   MAX_GUEST_BULK_INVITATION_ROWS,
   MAX_GUEST_BULK_OPERATION_IDS,
   MAX_GUEST_RSVP_LOOKUP_IDS,
+  refreshGuestDashboardSession,
   toEventInvitationRows,
 } from './guestService';
 
+const { refreshSessionMock } = vi.hoisted(() => ({
+  refreshSessionMock: vi.fn(),
+}));
+
+vi.mock('../../../lib/supabase', () => ({
+  supabase: {
+    auth: {
+      refreshSession: refreshSessionMock,
+    },
+    from: vi.fn(),
+  },
+}));
+
 describe('guestService', () => {
+  beforeEach(() => {
+    refreshSessionMock.mockReset();
+  });
+
   it('keeps guest RSVP reads explicitly projected', () => {
     expect(GUEST_DASHBOARD_RSVP_SELECT).toContain('guest_id');
     expect(GUEST_DASHBOARD_RSVP_SELECT).toContain('custom_answers');
@@ -31,9 +49,18 @@ describe('guestService', () => {
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/guestService.ts'), 'utf8');
 
     expect(page).toContain('generateSecureGuestInviteToken()');
+    expect(page).toContain('refreshGuestDashboardSession()');
     expect(page).not.toContain("supabase.rpc('generate_secure_token'");
+    expect(page).not.toContain('supabase.auth.refreshSession()');
     expect(service).toContain("supabase.rpc('generate_secure_token'");
     expect(service).toContain('export async function generateSecureGuestInviteToken()');
+    expect(service).toContain('export async function refreshGuestDashboardSession(): Promise<void>');
+    expect(service).toContain('supabase.auth.refreshSession()');
+  });
+
+  it('refreshes the guest dashboard session through the service', async () => {
+    refreshSessionMock.mockResolvedValueOnce({ data: { session: { access_token: 'token' } } });
+    await expect(refreshGuestDashboardSession()).resolves.toBeUndefined();
   });
 
   it('keeps guest RSVP lookup fan-out bounded', () => {

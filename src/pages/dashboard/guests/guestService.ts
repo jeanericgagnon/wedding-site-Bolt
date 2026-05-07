@@ -26,6 +26,10 @@ const EVENT_INVITATION_ROLLBACK_SELECT = 'id, event_id';
 const GUEST_ID_SELECT = 'id';
 const IMPORTED_GUEST_SELECT = 'id, first_name, last_name, name, email';
 
+export async function refreshGuestDashboardSession(): Promise<void> {
+  await supabase.auth.refreshSession();
+}
+
 export interface CreateGuestInput {
   weddingSiteId: string;
   firstName: string;

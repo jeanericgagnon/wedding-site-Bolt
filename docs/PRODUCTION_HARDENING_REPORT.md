@@ -19,6 +19,24 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 3:41 PM PT - No-Deploy Auth Session Straggler Extraction
+
+What changed:
+- `src/pages/loginService.ts` now owns `getLoginSession()`, and `src/pages/Login.tsx` now uses that helper for OAuth prime-session lookup instead of directly calling `supabase.auth.getSession()` inline.
+- `src/pages/acceptCollaboratorInviteService.ts` now owns `hasCollaboratorInviteSession()`, and `src/pages/AcceptCollaboratorInvite.tsx` now uses that helper for invite-claim session presence tracing instead of directly calling `supabase.auth.getSession()` inline.
+- `src/pages/dashboard/guests/guestService.ts` now owns `refreshGuestDashboardSession()`, and `src/pages/dashboard/Guests.tsx` now uses that helper for the guest check-in retry path instead of directly calling `supabase.auth.refreshSession()` inline.
+- Expanded `src/pages/loginService.test.ts`, `src/pages/acceptCollaboratorInviteService.test.ts`, and `src/pages/dashboard/guests/guestService.test.ts` so those page-to-service auth/session boundaries are pinned.
+
+Commands run:
+- `npm test -- --run src/pages/loginService.test.ts src/pages/Login.test.tsx src/pages/acceptCollaboratorInviteService.test.ts src/pages/dashboard/guests/guestService.test.ts`: PASS, 4 files and 23 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This clears another small cluster of page-owned auth/session responsibilities without changing invite acceptance, login redirect, or guest check-in behavior. No deploy was run.
+
 ### 2026-05-07 3:36 PM PT - No-Deploy Guest Photo Auth Service Extraction
 
 What changed:

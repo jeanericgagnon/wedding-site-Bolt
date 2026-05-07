@@ -7,6 +7,21 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-07 3:41 PM PT No-Deploy Auth Session Straggler Extraction
+- Continued from `BACKLOG.md` in the no-deploy page-to-service extraction lane.
+- Fixed/proved:
+  - `src/pages/loginService.ts` now owns `getLoginSession()`, and `src/pages/Login.tsx` now uses that helper for the Google OAuth prime-session redirect check instead of directly calling `supabase.auth.getSession()` inline.
+  - `src/pages/acceptCollaboratorInviteService.ts` now owns `hasCollaboratorInviteSession()`, and `src/pages/AcceptCollaboratorInvite.tsx` now uses that helper for invite-claim session tracing instead of directly calling `supabase.auth.getSession()` inline.
+  - `src/pages/dashboard/guests/guestService.ts` now owns `refreshGuestDashboardSession()`, and `src/pages/dashboard/Guests.tsx` now uses that helper for the guest check-in auth retry path instead of directly calling `supabase.auth.refreshSession()` inline.
+  - The focused service tests now pin those boundaries and the affected pages no longer own those direct auth/session calls.
+- Proof passed:
+  - `npm test -- --run src/pages/loginService.test.ts src/pages/Login.test.tsx src/pages/acceptCollaboratorInviteService.test.ts src/pages/dashboard/guests/guestService.test.ts`: PASS, 23/23.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is another maintainability and service-boundary hardening step, and no deploy was run.
+
 ## 2026-05-07 3:36 PM PT No-Deploy Guest Photo Auth Service Extraction
 - Continued from `BACKLOG.md` in the same no-deploy service-boundary lane.
 - Fixed/proved:

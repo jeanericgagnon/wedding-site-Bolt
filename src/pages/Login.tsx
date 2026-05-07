@@ -9,7 +9,7 @@ import { clearAuthEntryReturnPath } from '../lib/authEntryCleanup';
 import { resolveLoginReturnPath } from '../lib/loginReturnResolver';
 import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
 import { safeAuthError } from '../lib/authErrorCopy';
-import { loginWithPassword, sendLoginPasswordReset, startLoginWithGoogle } from './loginService';
+import { getLoginSession, loginWithPassword, sendLoginPasswordReset, startLoginWithGoogle } from './loginService';
 
 type AuthView = 'login' | 'forgot-password' | 'forgot-sent';
 
@@ -77,10 +77,10 @@ export const Login: React.FC = () => {
     const oauthSource = searchParams.get('oauth');
 
     const primeSession = async () => {
-      const { data } = await supabase.auth.getSession();
+      const session = await getLoginSession();
       if (!mounted) return;
-      if (data.session && oauthSource === 'google') {
-        const to = consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(data.session.user.email));
+      if (session && oauthSource === 'google') {
+        const to = consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(session.user.email));
         setNotice('Google sign-in successful. Redirecting…');
         navigate(to, { replace: true });
       }

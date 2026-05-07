@@ -2,13 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, Heart, Loader2, LogOut, ShieldCheck, UserPlus } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
-import { supabase } from '../lib/supabase';
 import { useAuth, type AuthUser } from '../contexts/AuthContext';
 import { getCollaboratorRedirectPath, getInviteSiteLabel, isInviteEmailMatch, resolveInviteValidationState } from './acceptCollaboratorInviteUtils';
 import {
   claimCollaboratorInviteByToken,
   createCollaboratorInviteAccount,
   fetchCollaboratorInviteInfo,
+  hasCollaboratorInviteSession,
   signInCollaboratorInviteAccount,
   type CollaboratorInviteInfo,
 } from './acceptCollaboratorInviteService';
@@ -130,8 +130,8 @@ export const AcceptCollaboratorInvite: React.FC = () => {
     trace('claimInvite:start');
     const rpcStart = Date.now();
     trace('claimInvite:rpc:start');
-    const { data: sessionData } = await supabase.auth.getSession();
-    trace(`claimInvite:session:${sessionData.session ? 'yes' : 'no'}`);
+    const hasSession = await hasCollaboratorInviteSession();
+    trace(`claimInvite:session:${hasSession ? 'yes' : 'no'}`);
     try {
       await claimCollaboratorInviteByToken(token);
     } catch (error) {

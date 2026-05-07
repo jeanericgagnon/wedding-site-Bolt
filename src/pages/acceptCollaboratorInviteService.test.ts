@@ -6,14 +6,17 @@ import {
   COLLABORATOR_INVITE_LOOKUP_SELECT,
   COLLABORATOR_INVITE_SITE_SELECT,
   createCollaboratorInviteAccount,
+  hasCollaboratorInviteSession,
   signInCollaboratorInviteAccount,
 } from './acceptCollaboratorInviteService';
 
 const {
+  getSessionMock,
   signInWithPasswordMock,
   signUpMock,
   rpcMock,
 } = vi.hoisted(() => ({
+  getSessionMock: vi.fn(),
   signInWithPasswordMock: vi.fn(),
   signUpMock: vi.fn(),
   rpcMock: vi.fn(),
@@ -22,6 +25,7 @@ const {
 vi.mock('../lib/supabase', () => ({
   supabase: {
     auth: {
+      getSession: getSessionMock,
       signInWithPassword: signInWithPasswordMock,
       signUp: signUpMock,
     },
@@ -31,6 +35,7 @@ vi.mock('../lib/supabase', () => ({
 
 describe('accept collaborator invite data boundary', () => {
   beforeEach(() => {
+    getSessionMock.mockReset();
     signInWithPasswordMock.mockReset();
     signUpMock.mockReset();
     rpcMock.mockReset();
@@ -47,15 +52,19 @@ describe('accept collaborator invite data boundary', () => {
 
     expect(page).toContain('fetchCollaboratorInviteInfo(token)');
     expect(page).toContain('claimCollaboratorInviteByToken(token)');
+    expect(page).toContain('hasCollaboratorInviteSession()');
     expect(page).toContain('signInCollaboratorInviteAccount(');
     expect(page).toContain('createCollaboratorInviteAccount(');
     expect(page).not.toContain("from('wedding_site_collaborator_invites')");
     expect(page).not.toContain("from('wedding_sites')");
     expect(page).not.toContain("rpc('claim_collaborator_invite'");
+    expect(page).not.toContain('supabase.auth.getSession()');
     expect(page).not.toContain('supabase.auth.signInWithPassword');
     expect(page).not.toContain('supabase.auth.signUp');
     expect(service).toContain('.eq(\'invite_token\', token)');
     expect(service).toContain("rpc('claim_collaborator_invite'");
+    expect(service).toContain('export async function hasCollaboratorInviteSession(): Promise<boolean>');
+    expect(service).toContain('supabase.auth.getSession()');
     expect(service).toContain('supabase.auth.signInWithPassword');
     expect(service).toContain('supabase.auth.signUp');
     expect(service).not.toContain(".select('*')");
@@ -63,6 +72,14 @@ describe('accept collaborator invite data boundary', () => {
 
   it('exports the invite-claim helper', () => {
     expect(typeof claimCollaboratorInviteByToken).toBe('function');
+  });
+
+  it('reports whether the collaborator invite flow has a session', async () => {
+    getSessionMock.mockResolvedValueOnce({ data: { session: { access_token: 'token' } } });
+    await expect(hasCollaboratorInviteSession()).resolves.toBe(true);
+
+    getSessionMock.mockResolvedValueOnce({ data: { session: null } });
+    await expect(hasCollaboratorInviteSession()).resolves.toBe(false);
   });
 
   it('signs in collaborator invite accounts through the service', async () => {

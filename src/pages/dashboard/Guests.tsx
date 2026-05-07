@@ -122,6 +122,7 @@ import {
   generateSecureGuestInviteToken,
   insertEventInvitations,
   insertImportedGuests,
+  refreshGuestDashboardSession,
   replaceGuestEventInvitations,
   replaceImportedGuestRsvps,
   restoreGuestEventInvitations,
@@ -1140,7 +1141,7 @@ export const DashboardGuests: React.FC = () => {
       const authish = msg.includes('invalid jwt') || msg.includes('jwt') || msg.includes('401') || msg.includes('auth');
       if (authish) {
         try {
-          await supabase.auth.refreshSession();
+          await refreshGuestDashboardSession();
           await updateCheckin();
           await fetchGuests();
           toast(nextValue ? 'Guest checked in' : 'Guest check-in cleared', 'success');

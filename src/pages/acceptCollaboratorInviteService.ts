@@ -82,6 +82,11 @@ export async function claimCollaboratorInviteByToken(token: string): Promise<voi
   if (error) throw error;
 }
 
+export async function hasCollaboratorInviteSession(): Promise<boolean> {
+  const { data } = await supabase.auth.getSession();
+  return Boolean(data.session);
+}
+
 export async function signInCollaboratorInviteAccount(email: string, password: string): Promise<CollaboratorInviteAuthResult> {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
