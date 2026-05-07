@@ -19,6 +19,8 @@ export const MAX_SEATING_LOOKUP_TABLE_IDS = 500;
 export const MAX_SEATING_LOOKUP_GUEST_IDS = 2000;
 export const MAX_SEATING_ELIGIBLE_GUESTS = 5000;
 export const MAX_SEATING_EVENT_INVITATIONS = 10000;
+export const MAX_SEATING_TABLE_ROWS = 500;
+export const MAX_SEATING_ASSIGNMENT_ROWS = 10000;
 
 export interface ItineraryEvent {
   id: string;
@@ -307,7 +309,8 @@ export async function loadTables(seatingEventId: string): Promise<SeatingTable[]
     .from('seating_tables')
     .select(SEATING_TABLE_SELECT)
     .eq('seating_event_id', seatingEventId)
-    .order('sort_order', { ascending: true });
+    .order('sort_order', { ascending: true })
+    .limit(MAX_SEATING_TABLE_ROWS);
   if (error) throw error;
   return (data ?? []) as SeatingTable[];
 }
@@ -339,7 +342,8 @@ export async function loadAssignments(seatingEventId: string): Promise<SeatingAs
   const { data, error } = await supabase
     .from('seating_assignments')
     .select(SEATING_ASSIGNMENT_SELECT)
-    .eq('seating_event_id', seatingEventId);
+    .eq('seating_event_id', seatingEventId)
+    .limit(MAX_SEATING_ASSIGNMENT_ROWS);
   if (error) throw error;
   return (data ?? []) as SeatingAssignment[];
 }

@@ -7534,3 +7534,17 @@ A slice does **not** count as passed because:
   - `npm run lint -- --quiet`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 2:04 PM PT No-Deploy Seating Table and Assignment Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/seating/seatingService.ts` now caps seating table reads at 500 rows before hydrating the seating canvas.
+  - The same service now caps seating assignment reads at 10000 rows before hydrating the seating layout state.
+  - `src/pages/dashboard/seating/seatingService.test.ts` now pins the stable cap exports and bounded query shape.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/seating/seatingService.test.ts`: PASS, 9/9.
+  - `npm run proof:v1:seating-continuity`: PASS, 3/3 automated checks green.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

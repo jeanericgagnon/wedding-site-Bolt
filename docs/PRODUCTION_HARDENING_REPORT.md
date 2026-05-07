@@ -2690,3 +2690,21 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps seating service hydration bounded without changing current seating assignment, check-in, export, or continuity behavior. No deploy was run.
+
+### 2026-05-07 2:04 PM PT - No-Deploy Seating Table and Assignment Bounds
+
+What changed:
+- Added `MAX_SEATING_TABLE_ROWS = 500` and `MAX_SEATING_ASSIGNMENT_ROWS = 10000` in `src/pages/dashboard/seating/seatingService.ts`.
+- Seating table reads now cap ordered table rows before hydrating the seating canvas.
+- Seating assignment reads now cap assignment rows before hydrating the seating layout state.
+- Extended `src/pages/dashboard/seating/seatingService.test.ts` to pin the stable cap exports and the bounded query shape.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/seating/seatingService.test.ts`: PASS, 9/9.
+- `npm run proof:v1:seating-continuity`: PASS, 3/3 automated checks green.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps seating table and assignment hydration bounded without changing current seating assignment, check-in, export, or continuity behavior. No deploy was run.
