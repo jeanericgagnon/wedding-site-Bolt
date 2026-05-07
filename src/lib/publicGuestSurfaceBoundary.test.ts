@@ -55,10 +55,18 @@ describe('public guest surface boundary', () => {
     expect(photoUpload).toContain('buildPhotoUploadAccessPayload(siteSlug)');
 
     const vaultContribute = readSource('src/pages/VaultContribute.tsx');
-    expect(vaultContribute).toContain("supabase.functions.invoke('vault-upload-google-drive'");
-    expect(vaultContribute).toContain("supabase.functions.invoke('vault-entry-submit'");
+    const vaultContributionService = readSource('src/pages/vaultContributionService.ts');
+    expect(vaultContribute).toContain("from './vaultContributionService'");
+    expect(vaultContribute).toContain('loadEnabledVaultContributionConfig(siteSlug, vaultYear, buildVaultAccessPayload(siteSlug))');
+    expect(vaultContribute).toContain('listEnabledVaultContributionConfigs(siteSlug, buildVaultAccessPayload(siteSlug))');
+    expect(vaultContribute).toContain('uploadVaultContributionToGoogleDrive({');
+    expect(vaultContribute).toContain('uploadVaultContributionAttachment({');
+    expect(vaultContribute).toContain("submitVaultContributionRows(rows, buildVaultAccessPayload(siteSlug ?? ''), qaOpen)");
     expect(vaultContribute).toContain('fetchPublicSiteAccess({');
     expect(vaultContribute).toContain('buildVaultAccessPayload(siteSlug)');
+    expect(vaultContributionService).toContain("supabase.functions.invoke('vault-contribution-public'");
+    expect(vaultContributionService).toContain("supabase.functions.invoke('vault-upload-google-drive'");
+    expect(vaultContributionService).toContain("supabase.functions.invoke('vault-entry-submit'");
 
     const guestbook = readSource('src/pages/GuestbookSubmit.tsx');
     expect(guestbook).toContain('/functions/v1/guestbook-submit');
@@ -81,7 +89,6 @@ describe('public guest surface boundary', () => {
     expect(interactiveService).toContain("supabase.functions.invoke('interactive-section-public'");
     expect(interactiveService).toContain('buildPublicAccessArtifacts(siteSlug, new URLSearchParams(window.location.search))');
 
-    const vaultContributionService = readSource('src/pages/vaultContributionService.ts');
     expect(vaultContributionService).toContain("supabase.functions.invoke('vault-contribution-public'");
   });
 });

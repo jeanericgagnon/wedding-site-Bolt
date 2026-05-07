@@ -6,6 +6,25 @@ import { DEMO_MODE } from '../config/env';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import { fetchPublicSiteAccess } from '../lib/publicSiteAccess';
+import {
+  buildPublicAccessArtifacts,
+  capturePublicInviteTokenFromSearch,
+} from '../lib/publicAccessArtifacts';
+import {
+  listEnabledVaultContributionConfigs,
+  loadEnabledVaultContributionConfig,
+  submitVaultContributionRows,
+  uploadVaultContributionAttachment,
+  uploadVaultContributionToGoogleDrive,
+  type VaultContributionConfigInfo,
+} from './vaultContributionService';
+import {
+  appendDemoVaultEntries,
+  getVaultSubmittedYearsStorageKey,
+  markSubmittedVaultYear,
+  readDemoVaultState,
+  readSubmittedVaultYears,
+} from './vaultDemoStorage';
 
 interface SiteInfo {
   id: string;
@@ -16,25 +35,15 @@ interface SiteInfo {
   vault_google_drive_connected?: boolean;
 }
 
-interface VaultConfigInfo {
-  id: string;
-  label: string;
-  duration_years: number;
-  is_enabled: boolean;
-}
+type VaultConfigInfo = VaultContributionConfigInfo;
 
 type Step = 'loading' | 'hub' | 'form' | 'success' | 'error' | 'invalid';
-const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
 const MAX_UPLOAD_MB_BY_TYPE: Record<'photo' | 'video' | 'voice', number> = { photo: 8, video: 35, voice: 12 };
-const VAULT_SUBMITTED_KEY_PREFIX = 'vault_submitted_years_';
 const DEMO_WEDDING_DATE = '2026-02-23';
 
 export const buildVaultAccessPayload = (slug: string) => {
   const searchParams = new URLSearchParams(window.location.search);
-  return {
-    inviteToken: searchParams.get('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`),
-    passwordSession: sessionStorage.getItem(`dayof_pw_session_${slug}`),
-  };
+  return buildPublicAccessArtifacts(slug, searchParams);
 };
 
 export function safeVaultUploadError(err: unknown): string {
@@ -152,64 +161,19 @@ export const VaultContribute: React.FC = () => {
   const qaOpen = new URLSearchParams(window.location.search).get('vaultQaOpen') === '1';
 
 
-  const submittedKey = `${VAULT_SUBMITTED_KEY_PREFIX}${siteSlug ?? 'unknown'}`;
+  const submittedKey = getVaultSubmittedYearsStorageKey(siteSlug);
 
   function loadSubmittedYears() {
-    try {
-      const raw = localStorage.getItem(submittedKey);
-      const parsed = raw ? JSON.parse(raw) as number[] : [];
-      setSubmittedYears(Array.isArray(parsed) ? parsed : []);
-    } catch {
-      setSubmittedYears([]);
-    }
+    setSubmittedYears(readSubmittedVaultYears(submittedKey));
   }
 
   function markSubmitted(years: number) {
-    try {
-      const raw = localStorage.getItem(submittedKey);
-      const parsed = raw ? JSON.parse(raw) as number[] : [];
-      const next = Array.from(new Set([...(Array.isArray(parsed) ? parsed : []), years])).sort((a, b) => a - b);
-      localStorage.setItem(submittedKey, JSON.stringify(next));
-      setSubmittedYears(next);
-    } catch {
-      // ignore
-    }
+    setSubmittedYears(markSubmittedVaultYear(submittedKey, years));
   }
 
 
   function persistDemoEntries(vault: VaultConfigInfo, rows: Array<{ content: string; author_name: string; title: string | null; attachment_url: string | null; attachment_name: string | null; media_type: 'text' | 'photo' | 'video' | 'voice'; mime_type?: string | null; size_bytes?: number | null }>) {
-    try {
-      const raw = localStorage.getItem(DEMO_VAULT_STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) as { vaultConfigs?: VaultConfigInfo[]; entries?: Array<Record<string, unknown>> } : {};
-      const existingConfigs = (parsed.vaultConfigs ?? []).filter(Boolean) as VaultConfigInfo[];
-      const existingEntries = Array.isArray(parsed.entries) ? parsed.entries : [];
-
-      const hasConfig = existingConfigs.some((v) => v.id === vault.id);
-      const nextConfigs = hasConfig ? existingConfigs : [...existingConfigs, vault].sort((a, b) => a.duration_years - b.duration_years);
-
-      const now = Date.now();
-      const mapped = rows.map((r, i) => ({
-        id: `demo-public-${now}-${i}`,
-        vault_config_id: vault.id,
-        vault_year: vault.duration_years,
-        title: r.title,
-        content: r.content,
-        author_name: r.author_name,
-        attachment_url: r.attachment_url,
-        attachment_name: r.attachment_name,
-        media_type: r.media_type,
-        mime_type: r.mime_type ?? null,
-        size_bytes: r.size_bytes ?? null,
-        created_at: new Date(now + i).toISOString(),
-      }));
-
-      localStorage.setItem(DEMO_VAULT_STORAGE_KEY, JSON.stringify({
-        vaultConfigs: nextConfigs,
-        entries: [...existingEntries, ...mapped],
-      }));
-    } catch {
-      // noop
-    }
+    appendDemoVaultEntries(vault, rows);
   }
 
 
@@ -288,11 +252,17 @@ export const VaultContribute: React.FC = () => {
       setStep('invalid');
       return;
     }
+    capturePublicInviteTokenFromSearch(siteSlug, new URLSearchParams(window.location.search));
     loadSubmittedYears();
     loadData();
   }, [siteSlug, year]);
 
   async function loadData() {
+    if (!siteSlug) {
+      setStep('invalid');
+      return;
+    }
+
     let siteData: SiteInfo | null = null;
     let siteError: unknown = null;
 
@@ -327,29 +297,18 @@ export const VaultContribute: React.FC = () => {
           return;
         }
 
-        try {
-          const raw = localStorage.getItem(DEMO_VAULT_STORAGE_KEY);
-          const parsed = raw ? JSON.parse(raw) as { vaultConfigs?: VaultConfigInfo[] } : { vaultConfigs: [] };
-          const enabled = (parsed.vaultConfigs ?? []).filter(v => v.is_enabled);
-          const seeded = [
-            { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
-            { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
-            { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
-          ] as VaultConfigInfo[];
-          const fallback = (enabled.length > 0 ? enabled : seeded).sort((a, b) => a.duration_years - b.duration_years);
-          setVaultOptions(fallback);
-          setVaultConfig(fallback[0]);
-          setStep(hasYearParam ? 'form' : 'hub');
-        } catch {
-          const fallback = [
-            { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
-            { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
-            { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
-          ] as VaultConfigInfo[];
-          setVaultOptions(fallback.sort((a, b) => a.duration_years - b.duration_years));
-          setVaultConfig(fallback[0]);
-          setStep(hasYearParam ? 'form' : 'hub');
-        }
+        const seeded = [
+          { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
+          { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
+          { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
+        ] as VaultConfigInfo[];
+        const enabled = readDemoVaultState({ vaultConfigs: seeded.map((config, index) => ({ ...config, vault_index: index + 1 })), entries: [] })
+          .vaultConfigs
+          .filter((config) => config.is_enabled);
+        const fallback = (enabled.length > 0 ? enabled : seeded).sort((a, b) => a.duration_years - b.duration_years);
+        setVaultOptions(fallback);
+        setVaultConfig(fallback[0]);
+        setStep(hasYearParam ? 'form' : 'hub');
         return;
       }
 
@@ -360,39 +319,25 @@ export const VaultContribute: React.FC = () => {
     setSite(siteData);
 
     if (hasYearParam && vaultYear) {
-      const { data: configData, error: configError } = await supabase
-        .from('vault_configs')
-        .select('id, label, duration_years, is_enabled')
-        .eq('wedding_site_id', siteData.id)
-        .eq('duration_years', vaultYear)
-        .eq('is_enabled', true)
-        .maybeSingle();
+      const cfg = await loadEnabledVaultContributionConfig(siteSlug, vaultYear, buildVaultAccessPayload(siteSlug)).catch(() => null);
 
-      if (configError || !configData) {
+      if (!cfg) {
         setStep('invalid');
         return;
       }
 
-      const cfg = configData as VaultConfigInfo;
       setVaultOptions([cfg]);
       setVaultConfig(cfg);
       setStep('form');
       return;
     }
 
-    const { data: configList, error: listError } = await supabase
-      .from('vault_configs')
-      .select('id, label, duration_years, is_enabled')
-      .eq('wedding_site_id', siteData.id)
-      .eq('is_enabled', true)
-      .order('duration_years', { ascending: true });
+    const options = await listEnabledVaultContributionConfigs(siteSlug, buildVaultAccessPayload(siteSlug)).catch(() => []);
 
-    if (listError || !configList || configList.length === 0) {
+    if (options.length === 0) {
       setStep('invalid');
       return;
     }
-
-    const options = (configList as VaultConfigInfo[]).sort((a, b) => a.duration_years - b.duration_years);
 
     setVaultOptions(options);
     setVaultConfig(options[0]);
@@ -538,34 +483,25 @@ export const VaultContribute: React.FC = () => {
             reader.readAsDataURL(file);
           });
 
-          const { data: driveData, error: driveError } = await supabase.functions.invoke('vault-upload-google-drive', {
-            body: {
+          try {
+            const driveData = await uploadVaultContributionToGoogleDrive({
               siteId: site.id,
               vaultYear: vaultConfig.duration_years,
               fileName: file.name,
               mimeType: file.type || 'application/octet-stream',
               base64,
               ...buildVaultAccessPayload(siteSlug ?? ''),
-            },
-          });
+            });
 
-          if (driveError) {
+            const drive = driveData as { fileId?: string; webViewLink?: string | null; webContentLink?: string | null } | null;
+            uploadedItems.push({ url: null, name: file.name, mime: file.type || null, size: file.size || null, externalFileId: drive?.fileId ?? null, storageProvider: 'google_drive' });
+            setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
+          } catch (driveError) {
             setUploadProgress(null);
             setSubmitting(false);
             setSubmitError(safeVaultUploadError(driveError));
             return;
           }
-
-          const drive = driveData as { fileId?: string; webViewLink?: string | null; webContentLink?: string | null } | null;
-          uploadedItems.push({
-            url: null,
-            name: file.name,
-            mime: file.type || null,
-            size: file.size || null,
-            externalFileId: drive?.fileId ?? null,
-            storageProvider: 'google_drive',
-          });
-          setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
         } else {
           const base64 = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
@@ -578,9 +514,8 @@ export const VaultContribute: React.FC = () => {
             reader.readAsDataURL(file);
           });
 
-          const { data: uploadData, error: uploadError } = await supabase.functions.invoke('vault-entry-submit', {
-            body: {
-              action: 'upload_attachment',
+          try {
+            const uploadData = await uploadVaultContributionAttachment({
               siteId: site.id,
               vaultConfigId: vaultConfig.id,
               vaultYear: vaultConfig.duration_years,
@@ -590,32 +525,30 @@ export const VaultContribute: React.FC = () => {
               base64,
               qaOpen,
               ...buildVaultAccessPayload(siteSlug ?? ''),
-            },
-          });
+            });
 
-          if (uploadError) {
+            const uploaded = uploadData as { publicUrl?: string | null; fileName?: string | null; mimeType?: string | null; sizeBytes?: number | null } | null;
+            if (!uploaded?.publicUrl) {
+              setUploadProgress(null);
+              setSubmitting(false);
+              setSubmitError('Couldn’t finish that upload. Please try again.');
+              return;
+            }
+
+            uploadedItems.push({
+              url: uploaded.publicUrl,
+              name: uploaded.fileName || file.name,
+              mime: uploaded.mimeType || file.type || null,
+              size: uploaded.sizeBytes ?? file.size ?? null,
+              storageProvider: 'supabase',
+            });
+            setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
+          } catch (uploadError) {
             setUploadProgress(null);
             setSubmitting(false);
             setSubmitError(safeVaultUploadError(uploadError));
             return;
           }
-
-          const uploaded = uploadData as { publicUrl?: string | null; fileName?: string | null; mimeType?: string | null; sizeBytes?: number | null } | null;
-          if (!uploaded?.publicUrl) {
-            setUploadProgress(null);
-            setSubmitting(false);
-            setSubmitError('Couldn’t finish that upload. Please try again.');
-            return;
-          }
-
-          uploadedItems.push({
-            url: uploaded.publicUrl,
-            name: uploaded.fileName || file.name,
-            mime: uploaded.mimeType || file.type || null,
-            size: uploaded.sizeBytes ?? file.size ?? null,
-            storageProvider: 'supabase',
-          });
-          setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
         }
       }
     } else {
@@ -660,18 +593,15 @@ export const VaultContribute: React.FC = () => {
       unlock_at: getVaultUnlockAtIso(site.wedding_date, vaultConfig.duration_years),
     }));
 
-    const { error } = await supabase.functions.invoke('vault-entry-submit', {
-      body: { rows, qaOpen, ...buildVaultAccessPayload(siteSlug ?? '') },
-    });
-
     setSubmitting(false);
     setUploadProgress(null);
     setCompressionStatus(null);
-    if (error) {
-      setSubmitError(safeVaultUploadError(error));
-    } else {
+    try {
+      await submitVaultContributionRows(rows, buildVaultAccessPayload(siteSlug ?? ''), qaOpen);
       markSubmitted(vaultConfig.duration_years);
       setStep('success');
+    } catch (error) {
+      setSubmitError(safeVaultUploadError(error));
     }
   }
 

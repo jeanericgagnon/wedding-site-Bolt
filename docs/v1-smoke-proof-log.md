@@ -7,6 +7,20 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-07 3:53 PM PT No-Deploy Vault Contribution Function Service Extraction
+- Continued from `BACKLOG.md` in the no-deploy page-to-service extraction lane.
+- Fixed/proved:
+  - `src/pages/VaultContribute.tsx` no longer owns direct `supabase.functions.invoke(...)` calls for public vault config loading, Google Drive upload, attachment upload, or final entry submission.
+  - `src/pages/vaultContributionService.ts` now owns `loadEnabledVaultContributionConfig(...)`, `listEnabledVaultContributionConfigs(...)`, `uploadVaultContributionToGoogleDrive(...)`, `uploadVaultContributionAttachment(...)`, and `submitVaultContributionRows(...)`.
+  - `src/pages/VaultContribute.test.ts` and `src/lib/publicGuestSurfaceBoundary.test.ts` now pin that guest-facing page-to-service function boundary.
+- Proof passed:
+  - `npm test -- --run src/pages/VaultContribute.test.ts src/lib/publicGuestSurfaceBoundary.test.ts src/lib/publicSiteAccess.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is another maintainability and guest-surface boundary hardening step, and no deploy was run.
+
 ## 2026-05-07 3:48 PM PT No-Deploy Site View Public Function Service Extraction
 - Continued from `BACKLOG.md` in the no-deploy page-to-service extraction lane.
 - Fixed/proved:

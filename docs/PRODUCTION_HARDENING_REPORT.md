@@ -19,6 +19,23 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 3:53 PM PT - No-Deploy Vault Contribution Function Service Extraction
+
+What changed:
+- `src/pages/VaultContribute.tsx` no longer owns direct `supabase.functions.invoke(...)` calls for public vault config loading, Google Drive upload, attachment upload, or final entry submission.
+- `src/pages/vaultContributionService.ts` now owns `loadEnabledVaultContributionConfig(...)`, `listEnabledVaultContributionConfigs(...)`, `uploadVaultContributionToGoogleDrive(...)`, `uploadVaultContributionAttachment(...)`, and `submitVaultContributionRows(...)`.
+- Updated `src/pages/VaultContribute.test.ts` and `src/lib/publicGuestSurfaceBoundary.test.ts` so the guest-facing vault contribution page now has a pinned page-to-service boundary for those function calls.
+
+Commands run:
+- `npm test -- --run src/pages/VaultContribute.test.ts src/lib/publicGuestSurfaceBoundary.test.ts src/lib/publicSiteAccess.test.ts`: PASS, 3 files and 20 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This removes another guest-facing page-owned function cluster and keeps `VaultContribute.tsx` focused on guest form flow instead of transport details. No deploy was run.
+
 ### 2026-05-07 3:48 PM PT - No-Deploy Site View Public Function Service Extraction
 
 What changed:

@@ -1,4 +1,6 @@
 import React from 'react';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -9,15 +11,8 @@ vi.mock('../config/env', () => ({
 
 vi.mock('../lib/supabase', () => ({
   supabase: {
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          maybeSingle: async () => ({ data: null, error: new Error('demo fallback') }),
-        }),
-      }),
-    }),
     functions: {
-      invoke: vi.fn(),
+      invoke: vi.fn(async () => ({ data: { configs: [], config: null }, error: null })),
     },
   },
 }));
@@ -105,6 +100,30 @@ describe('safeVaultUploadError', () => {
     expect(safeVaultUploadError(new Error('Please choose an audio file for Voice type.'))).toBe(
       'Please choose an audio file for Voice type.'
     );
+  });
+});
+
+describe('vault contribution data boundary', () => {
+  it('loads vault configs through the public contribution service', () => {
+    const page = readFileSync(join(process.cwd(), 'src/pages/VaultContribute.tsx'), 'utf8');
+    const service = readFileSync(join(process.cwd(), 'src/pages/vaultContributionService.ts'), 'utf8');
+    const fn = readFileSync(join(process.cwd(), 'supabase/functions/vault-contribution-public/index.ts'), 'utf8');
+
+    expect(page).toContain('loadEnabledVaultContributionConfig(siteSlug, vaultYear, buildVaultAccessPayload(siteSlug))');
+    expect(page).toContain('listEnabledVaultContributionConfigs(siteSlug, buildVaultAccessPayload(siteSlug))');
+    expect(page).toContain('uploadVaultContributionToGoogleDrive({');
+    expect(page).toContain('uploadVaultContributionAttachment({');
+    expect(page).toContain('submitVaultContributionRows(rows, buildVaultAccessPayload(siteSlug ?? \'\'), qaOpen)');
+    expect(page).not.toContain("supabase.functions.invoke('vault-upload-google-drive'");
+    expect(page).not.toContain("supabase.functions.invoke('vault-entry-submit'");
+    expect(service).toContain('export const VAULT_CONTRIBUTION_CONFIG_SELECT = ');
+    expect(service).toContain("supabase.functions.invoke('vault-contribution-public'");
+    expect(service).toContain("supabase.functions.invoke('vault-upload-google-drive'");
+    expect(service).toContain("supabase.functions.invoke('vault-entry-submit'");
+    expect(service).not.toContain(".from('vault_configs')");
+    expect(fn).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
+    expect(fn).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
+    expect(fn).toContain('.from("vault_configs")');
   });
 });
 
