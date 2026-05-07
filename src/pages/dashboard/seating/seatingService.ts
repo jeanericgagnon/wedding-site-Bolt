@@ -24,6 +24,10 @@ export const MAX_SEATING_ASSIGNMENT_ROWS = 10000;
 export const MAX_SEATING_VERSION_ROWS = 12;
 export const MAX_SEATING_LOOKUP_EVENT_ROWS = 1;
 
+export async function refreshSeatingSession(): Promise<void> {
+  await supabase.auth.refreshSession();
+}
+
 export interface ItineraryEvent {
   id: string;
   event_name: string;

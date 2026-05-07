@@ -7859,3 +7859,17 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 3:31 PM PT No-Deploy Seating Session Refresh Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/seating/seatingService.ts` now owns auth-session refresh retry via `refreshSeatingSession()`.
+  - `src/pages/dashboard/Seating.tsx` now calls that helper in both check-in retry paths instead of directly invoking `supabase.auth.refreshSession()`.
+  - `src/pages/dashboard/seating/seatingService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` now pin that seating auth/service boundary.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/seating/seatingService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/seating/seatingDemoStorage.test.ts`: PASS, 32/32.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

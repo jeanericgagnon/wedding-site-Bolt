@@ -3153,3 +3153,21 @@ Commands run:
 
 Status:
 - PARTIAL. This materially advances the messages page-to-service migration without changing delivery request bodies, scheduling behavior, or message query bounds. No deploy was run.
+
+### 2026-05-07 3:31 PM PT - No-Deploy Seating Session Refresh Service Extraction
+
+What changed:
+- Moved the seating auth-session refresh retry out of `src/pages/dashboard/Seating.tsx` and into `src/pages/dashboard/seating/seatingService.ts` via `refreshSeatingSession()`.
+- `Seating.tsx` now calls that helper in both check-in retry paths instead of directly invoking `supabase.auth.refreshSession()`.
+- This removes the last direct Supabase dependency from the seating dashboard page without changing check-in retry behavior or seating data mutations.
+- Expanded `src/pages/dashboard/seating/seatingService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the seating boundary now pins that service-owned session refresh.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/seating/seatingService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/seating/seatingDemoStorage.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `npm run build`
+- `git diff --check`
+
+Status:
+- PARTIAL. This materially advances the seating page-to-service migration without changing seating query bounds, assignment logic, or check-in retry outcomes. No deploy was run.

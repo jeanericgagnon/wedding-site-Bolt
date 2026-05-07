@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   deriveEventCountersFromGuests,
   deriveGuestEventAttendance,
@@ -16,12 +16,31 @@ import {
   MAX_SEATING_LOOKUP_TABLE_IDS,
   MAX_SEATING_TABLE_ROWS,
   MAX_SEATING_VERSION_ROWS,
+  refreshSeatingSession,
   type EligibleGuest,
   type SeatingAssignment,
   type SeatingTable,
 } from './seatingService';
 
+const { refreshSessionMock } = vi.hoisted(() => ({
+  refreshSessionMock: vi.fn(),
+}));
+
+vi.mock('../../../lib/supabase', () => ({
+  supabase: {
+    auth: {
+      refreshSession: refreshSessionMock,
+      getUser: vi.fn(),
+    },
+    from: vi.fn(),
+  },
+}));
+
 describe('deriveGuestEventAttendance', () => {
+  beforeEach(() => {
+    refreshSessionMock.mockReset();
+  });
+
   it('requires an explicit positive event RSVP when event invitations exist', () => {
     expect(deriveGuestEventAttendance({
       hasEventInvitations: true,
@@ -364,5 +383,12 @@ describe('mapSeatingLookupRows', () => {
     expect(source).toContain(".order('sort_order', { ascending: true })\n    .limit(MAX_SEATING_TABLE_ROWS);");
     expect(source).toContain(".eq('seating_event_id', seatingEventId)\n    .limit(MAX_SEATING_ASSIGNMENT_ROWS);");
     expect(source).toContain(".order('created_at', { ascending: false })\n    .limit(MAX_SEATING_VERSION_ROWS);");
+  });
+
+  it('refreshes the seating session through the service helper', async () => {
+    refreshSessionMock.mockResolvedValue({ data: { session: null } });
+
+    await expect(refreshSeatingSession()).resolves.toBeUndefined();
+    expect(refreshSessionMock).toHaveBeenCalled();
   });
 });

@@ -170,6 +170,7 @@ describe('dashboard data boundary guards', () => {
 
   it('loads seating service rows with explicit projections', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/seating/seatingService.ts'), 'utf8');
+    const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Seating.tsx'), 'utf8');
     const lookupPage = readFileSync(join(process.cwd(), 'src/pages/dashboard/SeatingLookup.tsx'), 'utf8');
 
     expect(source).toContain('const SEATING_EVENT_SELECT = ');
@@ -190,6 +191,8 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('.select(SEATING_LOOKUP_ASSIGNMENT_SELECT)');
     expect(source).toContain('.select(SEATING_LOOKUP_TABLE_SELECT)');
     expect(source).toContain('.select(SEATING_LOOKUP_GUEST_SELECT)');
+    expect(source).toContain('export async function refreshSeatingSession()');
+    expect(source).toContain('supabase.auth.refreshSession()');
     expect(source).not.toContain(".from('seating_events')\n    .select('*')");
     expect(source).not.toContain(".from('seating_tables')\n    .select('*')");
     expect(source).not.toContain(".from('seating_assignments')\n    .select('*')");
@@ -197,6 +200,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain(".from('seating_assignments')\n    .upsert(assignments, { onConflict: 'seating_event_id,guest_id' })\n    .select()");
     expect(source).not.toContain(".from('guests')\n    .select('*')");
     expect(source).not.toContain(".from('seating_layout_versions')\n    .select('*')");
+    expect(page).toContain('refreshSeatingSession()');
+    expect(page).not.toContain("from '../../lib/supabase'");
+    expect(page).not.toContain('supabase.auth.refreshSession()');
     expect(lookupPage).not.toContain("from '../../lib/supabase'");
     expect(lookupPage).not.toContain("from '../../lib/activeSite'");
     expect(lookupPage).not.toContain("supabase.from(");
