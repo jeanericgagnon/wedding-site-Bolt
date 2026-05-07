@@ -270,6 +270,18 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain("supabase.from('vault_entries')");
     expect(source).not.toContain("supabase.from('vault_configs')");
     expect(source).not.toContain(".from('wedding_sites')");
+    expect(source).not.toContain("supabase.functions.invoke('vault-resolve-entry-link'");
+    expect(source).not.toContain("supabase.functions.invoke('google-drive-health'");
+    expect(source).not.toContain("supabase.functions.invoke('google-drive-auth-start'");
+    expect(source).not.toContain("supabase.functions.invoke('google-drive-auth-callback'");
+    expect(source).toContain('resolveVaultEntryLinkFromService(entry.id)');
+    expect(source).toContain('checkVaultGoogleDriveHealth(weddingSiteId)');
+    expect(source).toContain('startVaultGoogleDriveAuth(weddingSiteId)');
+    expect(source).toContain('finishVaultGoogleDriveAuth(googleCode, googleState)');
+    expect(service).toContain('export async function resolveVaultEntryLink(entryId: string): Promise<string | null>');
+    expect(service).toContain('export async function checkVaultGoogleDriveHealth(siteId: string): Promise<{');
+    expect(service).toContain('export async function startVaultGoogleDriveAuth(siteId: string): Promise<string>');
+    expect(service).toContain('export async function finishVaultGoogleDriveAuth(code: string, state: string): Promise<{');
     expect(service).not.toContain(".from('vault_configs')\n    .select('*')");
     expect(service).not.toContain(".from('vault_entries')\n    .select('*')");
     expect(service).not.toContain(".from('wedding_sites')\n    .select('*')");

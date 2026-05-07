@@ -20,15 +20,19 @@ import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import { LOCAL_E2E_VAULT_FORCE_UNLOCK_KEY, readLocalE2EBypassFlag } from '../../lib/localE2EBypassStorage';
 import { readDemoVaultState, writeDemoVaultState } from '../vaultDemoStorage';
 import {
+  checkVaultGoogleDriveHealth,
   createVaultConfig,
   createVaultEntry,
   deleteVaultConfigWithEntryRollback,
   deleteVaultEntry,
   ensureHostedVaultProvider as persistHostedVaultProvider,
+  finishVaultGoogleDriveAuth,
   loadDemoVaultDashboardData,
   loadVaultConfigsAndEntries,
   loadVaultDashboardData,
+  resolveVaultEntryLink as resolveVaultEntryLinkFromService,
   seedStarterVaultConfigs,
+  startVaultGoogleDriveAuth,
   updateVaultConfig,
   updateVaultEnabled,
   updateVaultRecapDraft,
@@ -366,11 +370,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
     setResolvingEntryId(entry.id);
     try {
-      const { data, error } = await supabase.functions.invoke('vault-resolve-entry-link', {
-        body: { entryId: entry.id },
-      });
-      if (error) throw error;
-      const url = (data as { url?: string | null } | null)?.url ?? null;
+      const url = await resolveVaultEntryLinkFromService(entry.id);
       const safeUrl = getSafePublicWebUrl(url);
       if (safeUrl) setResolvedEntryLinks((prev) => ({ ...prev, [entry.id]: safeUrl }));
       return safeUrl || null;
@@ -881,16 +881,7 @@ export const DashboardVault: React.FC = () => {
     if (!weddingSiteId || (isDemoMode && weddingSiteId === 'demo-site-id')) return;
     setDriveHealthChecking(true);
     try {
-      const { data, error } = await supabase.functions.invoke('google-drive-health', {
-        body: { siteId: weddingSiteId },
-      });
-      if (error) {
-        setDriveHealthMessage('Drive backup is not connected right now. dayof hosted storage is active.');
-        setDriveNeedsReconnect(true);
-        setGoogleDriveConnected(false);
-        return;
-      }
-      const result = data as { healthy?: boolean; needsReconnect?: boolean; message?: string } | null;
+      const result = await checkVaultGoogleDriveHealth(weddingSiteId);
       setDriveHealthMessage(result?.message ?? null);
       setDriveNeedsReconnect(!!result?.needsReconnect);
       setGoogleDriveConnected(!!result?.healthy && !result?.needsReconnect);
@@ -915,13 +906,7 @@ export const DashboardVault: React.FC = () => {
 
     setConnectingDrive(true);
     try {
-      const { data, error } = await supabase.functions.invoke('google-drive-auth-start', {
-        body: { siteId: weddingSiteId },
-      });
-
-      if (error) throw error;
-      const authUrl = (data as { authUrl?: string } | null)?.authUrl;
-      if (!authUrl) throw new Error('Missing Google OAuth URL.');
+      const authUrl = await startVaultGoogleDriveAuth(weddingSiteId);
       window.location.href = authUrl;
     } catch (err) {
       toast(safeVaultDashboardError(err, 'Couldn’t start the Google Drive connection right now.'), 'error');
@@ -1103,20 +1088,13 @@ export const DashboardVault: React.FC = () => {
 
     if (!googleCode || !googleState) return;
 
-    supabase.functions.invoke('google-drive-auth-callback', {
-      body: { code: googleCode, state: googleState },
-    }).then(({ error, data }) => {
+    finishVaultGoogleDriveAuth(googleCode, googleState).then((data) => {
       const url = new URL(window.location.href);
       url.searchParams.delete('google_drive_code');
       url.searchParams.delete('code');
       url.searchParams.delete('state');
       url.searchParams.delete('error');
       window.history.replaceState({}, '', url.toString());
-
-      if (error) {
-        toast('Google Drive connection failed. Please try again.', 'error');
-        return;
-      }
 
       const ok = (data as { success?: boolean } | null)?.success;
       if (!ok) {
@@ -1138,6 +1116,14 @@ export const DashboardVault: React.FC = () => {
           toast('Google Drive connected, but dayof could not finish the vault backup setup. Please try reconnecting.', 'error');
         }
       })();
+    }).catch(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('google_drive_code');
+      url.searchParams.delete('code');
+      url.searchParams.delete('state');
+      url.searchParams.delete('error');
+      window.history.replaceState({}, '', url.toString());
+      toast('Google Drive connection failed. Please try again.', 'error');
     });
   }, [loadData, weddingSiteId]);
 

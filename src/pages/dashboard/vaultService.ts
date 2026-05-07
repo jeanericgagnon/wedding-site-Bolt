@@ -99,6 +99,47 @@ export interface NewVaultEntry {
   attachment_name: string | null;
 }
 
+export async function resolveVaultEntryLink(entryId: string): Promise<string | null> {
+  const { data, error } = await supabase.functions.invoke('vault-resolve-entry-link', {
+    body: { entryId },
+  });
+  if (error) throw error;
+  return (data as { url?: string | null } | null)?.url ?? null;
+}
+
+export async function checkVaultGoogleDriveHealth(siteId: string): Promise<{
+  healthy?: boolean;
+  needsReconnect?: boolean;
+  message?: string;
+} | null> {
+  const { data, error } = await supabase.functions.invoke('google-drive-health', {
+    body: { siteId },
+  });
+  if (error) throw error;
+  return (data as { healthy?: boolean; needsReconnect?: boolean; message?: string } | null) ?? null;
+}
+
+export async function startVaultGoogleDriveAuth(siteId: string): Promise<string> {
+  const { data, error } = await supabase.functions.invoke('google-drive-auth-start', {
+    body: { siteId },
+  });
+  if (error) throw error;
+  const authUrl = (data as { authUrl?: string } | null)?.authUrl;
+  if (!authUrl) throw new Error('Missing Google OAuth URL.');
+  return authUrl;
+}
+
+export async function finishVaultGoogleDriveAuth(code: string, state: string): Promise<{
+  connected?: boolean;
+  connectedAt?: string | null;
+} | null> {
+  const { data, error } = await supabase.functions.invoke('google-drive-auth-callback', {
+    body: { code, state },
+  });
+  if (error) throw error;
+  return (data as { connected?: boolean; connectedAt?: string | null } | null) ?? null;
+}
+
 export async function loadVaultConfigsAndEntries(weddingSiteId: string): Promise<Pick<VaultDashboardData, 'configs' | 'entries'>> {
   const { data: configData, error: configError } = await supabase
     .from('vault_configs')

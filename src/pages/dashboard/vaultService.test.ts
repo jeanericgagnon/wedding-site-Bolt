@@ -1,16 +1,37 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildVaultEntryRollbackRows,
+  checkVaultGoogleDriveHealth,
+  finishVaultGoogleDriveAuth,
   MAX_VAULT_CONFIG_ROWS,
   MAX_VAULT_ENTRY_ROWS,
+  resolveVaultEntryLink,
+  startVaultGoogleDriveAuth,
   VAULT_CONFIG_SELECT,
   VAULT_ENTRY_SELECT,
   type VaultEntry,
 } from './vaultService';
 
+const { invokeMock } = vi.hoisted(() => ({
+  invokeMock: vi.fn(),
+}));
+
+vi.mock('../../lib/supabase', () => ({
+  supabase: {
+    functions: {
+      invoke: invokeMock,
+    },
+    from: vi.fn(),
+  },
+}));
+
 describe('vaultService', () => {
+  beforeEach(() => {
+    invokeMock.mockReset();
+  });
+
   it('uses explicit projections for vault dashboard data', () => {
     expect(VAULT_CONFIG_SELECT).toContain('id');
     expect(VAULT_CONFIG_SELECT).toContain('wedding_site_id');
@@ -54,5 +75,43 @@ describe('vaultService', () => {
     expect(source).toContain('MAX_VAULT_ENTRY_ROWS = 1000');
     expect(source).toContain(".order('duration_years', { ascending: true })\n    .limit(MAX_VAULT_CONFIG_ROWS);");
     expect(source).toContain(".order('created_at', { ascending: true })\n    .limit(MAX_VAULT_ENTRY_ROWS);");
+  });
+
+  it('keeps vault edge function invokes behind the vault service', () => {
+    const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Vault.tsx'), 'utf8');
+    const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/vaultService.ts'), 'utf8');
+
+    expect(page).toContain('resolveVaultEntryLinkFromService(entry.id)');
+    expect(page).toContain('checkVaultGoogleDriveHealth(weddingSiteId)');
+    expect(page).toContain('startVaultGoogleDriveAuth(weddingSiteId)');
+    expect(page).toContain('finishVaultGoogleDriveAuth(googleCode, googleState)');
+    expect(page).not.toContain("supabase.functions.invoke('vault-resolve-entry-link'");
+    expect(page).not.toContain("supabase.functions.invoke('google-drive-health'");
+    expect(page).not.toContain("supabase.functions.invoke('google-drive-auth-start'");
+    expect(page).not.toContain("supabase.functions.invoke('google-drive-auth-callback'");
+    expect(service).toContain("supabase.functions.invoke('vault-resolve-entry-link'");
+    expect(service).toContain("supabase.functions.invoke('google-drive-health'");
+    expect(service).toContain("supabase.functions.invoke('google-drive-auth-start'");
+    expect(service).toContain("supabase.functions.invoke('google-drive-auth-callback'");
+  });
+
+  it('resolves vault entry links through the service', async () => {
+    invokeMock.mockResolvedValueOnce({ data: { url: 'https://example.com/file.jpg' }, error: null });
+    await expect(resolveVaultEntryLink('entry-1')).resolves.toBe('https://example.com/file.jpg');
+  });
+
+  it('reads drive health and auth flow responses through the service', async () => {
+    invokeMock.mockResolvedValueOnce({ data: { healthy: true, needsReconnect: false, message: 'ok' }, error: null });
+    await expect(checkVaultGoogleDriveHealth('site-1')).resolves.toEqual({ healthy: true, needsReconnect: false, message: 'ok' });
+
+    invokeMock.mockResolvedValueOnce({ data: { authUrl: 'https://example.com/oauth' }, error: null });
+    await expect(startVaultGoogleDriveAuth('site-1')).resolves.toBe('https://example.com/oauth');
+
+    invokeMock.mockResolvedValueOnce({ data: { connected: true, success: true, connectedAt: '2026-05-07T22:41:00.000Z' }, error: null });
+    await expect(finishVaultGoogleDriveAuth('code-1', 'state-1')).resolves.toEqual({
+      connected: true,
+      success: true,
+      connectedAt: '2026-05-07T22:41:00.000Z',
+    });
   });
 });

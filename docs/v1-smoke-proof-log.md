@@ -7,6 +7,20 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-07 3:46 PM PT No-Deploy Vault Function Service Extraction
+- Continued from `BACKLOG.md` in the no-deploy page-to-service extraction lane.
+- Fixed/proved:
+  - `src/pages/dashboard/vaultService.ts` now owns `resolveVaultEntryLink(...)`, `checkVaultGoogleDriveHealth(...)`, `startVaultGoogleDriveAuth(...)`, and `finishVaultGoogleDriveAuth(...)`.
+  - `src/pages/dashboard/Vault.tsx` now uses those helpers instead of directly invoking `supabase.functions.invoke(...)` for vault attachment resolution and Google Drive health/auth flow.
+  - `src/pages/dashboard/vaultService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` now pin that the page no longer owns those direct function invokes while the service does.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/vaultService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 22/22.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is another maintainability and service-boundary hardening step, and no deploy was run.
+
 ## 2026-05-07 3:41 PM PT No-Deploy Auth Session Straggler Extraction
 - Continued from `BACKLOG.md` in the no-deploy page-to-service extraction lane.
 - Fixed/proved:

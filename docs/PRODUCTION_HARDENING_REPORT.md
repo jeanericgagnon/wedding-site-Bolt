@@ -19,6 +19,27 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 3:46 PM PT - No-Deploy Vault Function Service Extraction
+
+What changed:
+- `src/pages/dashboard/vaultService.ts` now owns the remaining dashboard vault Edge Function helpers:
+  - `resolveVaultEntryLink(...)`
+  - `checkVaultGoogleDriveHealth(...)`
+  - `startVaultGoogleDriveAuth(...)`
+  - `finishVaultGoogleDriveAuth(...)`
+- `src/pages/dashboard/Vault.tsx` now uses those service helpers instead of directly invoking `supabase.functions.invoke(...)` for vault attachment resolution and Google Drive health/auth flow.
+- Expanded `src/pages/dashboard/vaultService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the vault page-to-service function boundary is pinned.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/vaultService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 2 files and 22 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This removes another owner-dashboard page-owned Supabase function cluster and keeps `Vault.tsx` more UI-focused without changing vault attachment or Drive-connection behavior. No deploy was run.
+
 ### 2026-05-07 3:41 PM PT - No-Deploy Auth Session Straggler Extraction
 
 What changed:
