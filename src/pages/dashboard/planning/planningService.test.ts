@@ -6,6 +6,7 @@ import {
   hasPlanningSongQuestion,
   MAX_PLANNING_ADDRESS_GUEST_ROWS,
   MAX_PLANNING_BUDGET_ITEM_ROWS,
+  MAX_PLANNING_SEATING_EVENTS,
   MAX_PLANNING_SONG_REQUEST_ROWS,
   MAX_PLANNING_TASK_ROWS,
   MAX_PLANNING_VENDOR_ROWS,
@@ -48,6 +49,7 @@ describe('planning song request helpers', () => {
     expect(MAX_PLANNING_TASK_ROWS).toBe(500);
     expect(MAX_PLANNING_VENDOR_ROWS).toBe(500);
     expect(MAX_PLANNING_BUDGET_ITEM_ROWS).toBe(1000);
+    expect(MAX_PLANNING_SEATING_EVENTS).toBe(200);
   });
 
   it('keeps planning read-side guest, RSVP, task, vendor, and budget queries bounded', () => {
@@ -58,8 +60,10 @@ describe('planning song request helpers', () => {
     expect(source).toContain('MAX_PLANNING_TASK_ROWS = 500');
     expect(source).toContain('MAX_PLANNING_VENDOR_ROWS = 500');
     expect(source).toContain('MAX_PLANNING_BUDGET_ITEM_ROWS = 1000');
+    expect(source).toContain('MAX_PLANNING_SEATING_EVENTS = 200');
     expect(source).toContain(".order('name', { ascending: true })\n      .limit(MAX_PLANNING_ADDRESS_GUEST_ROWS),");
     expect(source).toContain(".order('responded_at', { ascending: false })\n      .limit(MAX_PLANNING_SONG_REQUEST_ROWS),");
+    expect(source).toContain(".eq('wedding_site_id', weddingSiteId)\n    .limit(MAX_PLANNING_SEATING_EVENTS);");
     expect(source).toContain(".order('created_at', { ascending: true })\n    .limit(MAX_PLANNING_TASK_ROWS);");
     expect(source).toContain(".order('name', { ascending: true })\n    .limit(MAX_PLANNING_VENDOR_ROWS);");
     expect(source).toContain(".order('item_name', { ascending: true })\n    .limit(MAX_PLANNING_BUDGET_ITEM_ROWS);");

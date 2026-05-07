@@ -7507,3 +7507,16 @@ A slice does **not** count as passed because:
   - `npm run lint -- --quiet`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 2:00 PM PT No-Deploy Planning Seating-Readiness Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/planning/planningService.ts` now caps planning seating-readiness event-id reads at 200 before the follow-up assignment count query.
+  - `src/pages/dashboard/planning/planningService.test.ts` now pins the stable cap export and bounded query shape.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/planning/planningService.test.ts`: PASS, 6/6.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

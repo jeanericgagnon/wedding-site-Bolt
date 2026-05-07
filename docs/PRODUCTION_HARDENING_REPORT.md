@@ -2652,3 +2652,20 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps message dashboard list hydration bounded without changing current compose, schedule, send, retry, or delivery-history behavior. No deploy was run.
+
+### 2026-05-07 2:00 PM PT - No-Deploy Planning Seating-Readiness Bounds
+
+What changed:
+- Added `MAX_PLANNING_SEATING_EVENTS = 200` in `src/pages/dashboard/planning/planningService.ts`.
+- Planning seating-readiness now caps seating-event id reads before the follow-up assignment count query.
+- Extended `src/pages/dashboard/planning/planningService.test.ts` to pin the stable cap export and the bounded query shape.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/planning/planningService.test.ts`: PASS, 6/6.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps planning seating-readiness hydration bounded without changing current planning overview or seating-readiness behavior. No deploy was run.

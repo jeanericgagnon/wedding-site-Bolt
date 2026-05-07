@@ -41,6 +41,7 @@ export const MAX_PLANNING_SONG_REQUEST_ROWS = 2000;
 export const MAX_PLANNING_TASK_ROWS = 500;
 export const MAX_PLANNING_VENDOR_ROWS = 500;
 export const MAX_PLANNING_BUDGET_ITEM_ROWS = 1000;
+export const MAX_PLANNING_SEATING_EVENTS = 200;
 
 async function updateWithDriftFallback<T extends Record<string, unknown>>(
   table: string,
@@ -229,7 +230,8 @@ export async function loadPlanningSeatingReadiness(weddingSiteId: string): Promi
   const { data: seatingEventsData, error: eventsError } = await supabase
     .from('seating_events')
     .select(SEATING_READINESS_EVENT_SELECT)
-    .eq('wedding_site_id', weddingSiteId);
+    .eq('wedding_site_id', weddingSiteId)
+    .limit(MAX_PLANNING_SEATING_EVENTS);
   if (eventsError) throw eventsError;
 
   let seatedCount = 0;
