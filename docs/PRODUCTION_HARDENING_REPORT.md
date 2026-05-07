@@ -3316,3 +3316,21 @@ Commands run:
 
 Status:
 - PARTIAL. This materially advances the seating page-to-service migration without changing seating query bounds, assignment logic, or check-in retry outcomes. No deploy was run.
+
+### 2026-05-07 4:13 PM PT - No-Deploy Guest Dashboard Snapshot Service Extraction
+
+What changed:
+- Moved guest dashboard site-settings bootstrap plus guest, RSVP, and RSVP-conflict snapshot hydration out of `src/pages/dashboard/Guests.tsx` and into `src/pages/dashboard/guests/guestService.ts`.
+- `Guests.tsx` now calls `loadGuestDashboardSiteSettings(userId)` and `loadGuestDashboardSnapshot(weddingSiteId)` instead of owning direct `wedding_sites`, `guests`, `rsvps`, and `rsvp_conflicts` table access inline.
+- The guest service now owns explicit dashboard site-settings and RSVP-conflict projections plus the bounded guest dashboard, unresolved conflict, and conflict-history row caps.
+- Expanded `src/pages/dashboard/guests/guestService.test.ts`, `src/lib/dashboardDataBoundary.test.ts`, and `src/pages/dashboard/guestQueryBounds.test.ts` so the guest dashboard bootstrap/snapshot boundary and moved query caps stay pinned.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `npm run build`
+- `git diff --check`
+
+Status:
+- PARTIAL. This materially advances the guest dashboard page-to-service migration without changing guest list hydration, RSVP merge behavior, RSVP settings bootstrap, reminder settings, or conflict review behavior. No deploy was run.

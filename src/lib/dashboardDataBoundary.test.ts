@@ -46,17 +46,26 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Guests.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/guestService.ts'), 'utf8');
 
-    expect(source).toContain(".from('guests')\n        .select('id, first_name, last_name");
-    expect(source).toContain('fetchGuestRsvps(guestIds)');
+    expect(source).toContain('loadGuestDashboardSiteSettings(user.id)');
+    expect(source).toContain('loadGuestDashboardSnapshot(weddingSiteId)');
     expect(source).toContain('deleteGuestWithDependencies(guestId)');
     expect(source).toContain('deleteAllGuestsForSite(weddingSiteId)');
     expect(source).toContain('insertImportedGuests(guestRows)');
+    expect(service).toContain('export const GUEST_SITE_SETTINGS_SELECT = ');
     expect(service).toContain('export const GUEST_DASHBOARD_RSVP_SELECT = ');
+    expect(service).toContain('export const GUEST_CONFLICT_SELECT = ');
+    expect(service).toContain('export async function loadGuestDashboardSiteSettings(userId: string)');
+    expect(service).toContain('export async function loadGuestDashboardSnapshot(weddingSiteId: string)');
+    expect(service).toContain('resolveActiveSiteForUser(userId)');
+    expect(service).toContain('.select(GUEST_SITE_SETTINGS_SELECT)');
+    expect(service).toContain(".from('guests')");
     expect(service).toContain('.select(GUEST_DASHBOARD_RSVP_SELECT)');
+    expect(service).toContain('.select(GUEST_CONFLICT_SELECT)');
     expect(service).toContain('deleteGuestWithDependencies');
     expect(service).toContain('deleteAllGuestsForSite');
     expect(service).toContain('insertImportedGuests');
     expect(source).not.toContain(".from('guests')\n        .select('*')");
+    expect(source).not.toContain(".from('wedding_sites')\n        .select('id, couple_name_1, couple_name_2");
     expect(source).not.toContain("supabase.from('rsvps').select('*')");
     expect(source).not.toContain("supabase.from('event_invitations').insert(rows)");
     expect(source).not.toContain("supabase.from('event_invitations').insert(eventInviteRows)");
@@ -319,7 +328,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('resolveGuestPhotoDashboardUserId()');
     expect(source).toContain('refreshGuestPhotoSession()');
     expect(source).toContain('getGuestPhotoCurrentUserId()');
-    expect(source).toContain('invokeGuestPhotoOwnerFunction(fnName, body)');
+    expect(source).toContain('invokeGuestPhotoOwnerFunction<T>(fnName, body)');
     expect(source).toContain('queueGuestPhotoFollowupsFromService(siteId, kind)');
     expect(source).not.toContain('supabase.auth.getUser()');
     expect(source).not.toContain('supabase.auth.getSession()');

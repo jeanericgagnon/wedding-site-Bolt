@@ -122,6 +122,9 @@ import {
   generateSecureGuestInviteToken,
   insertEventInvitations,
   insertImportedGuests,
+  loadGuestDashboardSiteSettings,
+  loadGuestDashboardSnapshot,
+  MAX_GUEST_DASHBOARD_ROWS,
   refreshGuestDashboardSession,
   replaceGuestEventInvitations,
   replaceImportedGuestRsvps,
@@ -129,17 +132,16 @@ import {
   toEventInvitationRows,
   updateGuest,
   updateHouseholdGuestIds,
+  MAX_GUEST_RSVP_CONFLICT_HISTORY_ROWS,
+  MAX_GUEST_RSVP_CONFLICT_ROWS,
   type GuestEventInvitationRollback,
 } from './guests/guestService';
 
-export const MAX_GUEST_DASHBOARD_ROWS = 5000;
 export const MAX_GUEST_ITINERARY_FILTER_EVENTS = 200;
 export const MAX_GUEST_ITINERARY_FILTER_INVITATIONS = 10000;
 export const MAX_GUEST_DRAWER_EVENTS = 200;
 export const MAX_GUEST_DRAWER_INVITATIONS = 10000;
 export const MAX_GUEST_DRAWER_AUDIT_ROWS = 12;
-export const MAX_GUEST_RSVP_CONFLICT_ROWS = 20;
-export const MAX_GUEST_RSVP_CONFLICT_HISTORY_ROWS = 500;
 export const MAX_GUEST_AUDIT_ROWS = 20;
 
 export const DashboardGuests: React.FC = () => {
@@ -370,49 +372,18 @@ export const DashboardGuests: React.FC = () => {
     }
 
     try {
-      const activeSite = await resolveActiveSiteForUser(user.id);
-      const activeSiteId = activeSite?.id ?? null;
-      setGuestsRole(activeSite?.role ?? 'owner');
-      setGuestsPermissions(activeSite?.permissions ?? null);
-      const { data, error } = activeSiteId ? await supabase
-        .from('wedding_sites')
-        .select('id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_address, site_url, site_slug, rsvp_custom_questions, rsvp_meal_config')
-        .eq('id', activeSiteId)
-        .maybeSingle() : { data: null, error: null };
+      const snapshot = await loadGuestDashboardSiteSettings(user.id);
+      setGuestsRole(snapshot.role);
+      setGuestsPermissions(snapshot.permissions);
 
-      if (error) throw error;
-
-      if (data) {
-        setWeddingSiteId(data.id);
-        setWeddingSiteInfo({
-          id: data.id,
-          couple_name_1: data.couple_name_1 ?? '',
-          couple_name_2: data.couple_name_2 ?? '',
-          wedding_date: data.wedding_date ?? null,
-          venue_name: data.venue_name ?? null,
-          venue_address: data.venue_address ?? null,
-          site_url: data.site_url ?? null,
-          site_slug: (data as { site_slug?: string | null }).site_slug ?? null,
-        });
-        const loadedQuestions = Array.isArray((data as { rsvp_custom_questions?: unknown }).rsvp_custom_questions) ? ((data as { rsvp_custom_questions?: unknown[] }).rsvp_custom_questions || []) : [];
-        const normalized = loadedQuestions
-          .map((q) => q as Partial<RSVPQuestionSetting>)
-          .filter((q) => typeof q?.id === 'string' && typeof q?.label === 'string')
-          .map((q) => ({
-            id: q.id as string,
-            label: (q.label as string) || '',
-            type: (q.type as RSVPQuestionSetting['type']) || 'short_text',
-            required: !!q.required,
-            appliesTo: (q.appliesTo as RSVPQuestionSetting['appliesTo']) || 'all',
-            options: Array.isArray(q.options) ? q.options.filter((x): x is string => typeof x === 'string') : [],
-          }));
-        setRsvpQuestions(normalized);
-        const mealCfg = (data as { rsvp_meal_config?: unknown }).rsvp_meal_config as { enabled?: unknown; options?: unknown } | undefined;
-        setRsvpMealEnabled(typeof mealCfg?.enabled === 'boolean' ? mealCfg.enabled : true);
-        setRsvpMealOptions(Array.isArray(mealCfg?.options) ? (mealCfg.options as unknown[]).filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
-        const cadence = Number((data as { reminder_cadence_days?: unknown }).reminder_cadence_days);
-        if ([1, 3, 7].includes(cadence)) setReminderCadenceDays(cadence as 1 | 3 | 7);
-        setAutoRemindersEnabled(Boolean((data as { auto_reminders_enabled?: unknown }).auto_reminders_enabled));
+      if (snapshot.siteInfo) {
+        setWeddingSiteId(snapshot.activeSiteId);
+        setWeddingSiteInfo(snapshot.siteInfo);
+        setRsvpQuestions(snapshot.questions);
+        setRsvpMealEnabled(snapshot.mealEnabled);
+        setRsvpMealOptions(snapshot.mealOptions);
+        if (snapshot.reminderCadenceDays) setReminderCadenceDays(snapshot.reminderCadenceDays);
+        setAutoRemindersEnabled(snapshot.autoRemindersEnabled);
         rsvpConfigLoadedRef.current = true;
       } else {
         setWeddingSiteId(null);
@@ -448,48 +419,10 @@ export const DashboardGuests: React.FC = () => {
         return;
       }
 
-      const { data: guestsData, error: guestsError } = await supabase
-        .from('guests')
-        .select('id, first_name, last_name, name, email, phone, plus_one_allowed, plus_one_name, children_allowed, max_children, max_additional_guests, invited_to_ceremony, invited_to_reception, invite_token, rsvp_status, rsvp_received_at, checked_in_at, checkin_notes, thank_you_sent_at, thank_you_notes, household_id, group_name, notes, mailing_address_line1, mailing_address_line2, mailing_city, mailing_state, mailing_postal_code, mailing_country')
-        .eq('wedding_site_id', weddingSiteId)
-        .order('created_at', { ascending: false })
-        .limit(MAX_GUEST_DASHBOARD_ROWS);
-
-      if (guestsError) throw guestsError;
-
-      if (guestsData) {
-        const guestIds = guestsData.map(g => g.id);
-        const windowStartIso = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString();
-        const [rsvpsData, { data: conflictsData, error: conflictsError }, { data: conflictHistoryData, error: conflictHistoryError }] = await Promise.all([
-          fetchGuestRsvps(guestIds),
-          supabase
-            .from('rsvp_conflicts')
-            .select('id, guest_id, conflict_code, message, severity, created_at, resolved, resolved_at')
-            .eq('wedding_site_id', weddingSiteId)
-            .eq('resolved', false)
-            .order('created_at', { ascending: false })
-            .limit(MAX_GUEST_RSVP_CONFLICT_ROWS),
-          supabase
-            .from('rsvp_conflicts')
-            .select('id, guest_id, conflict_code, message, severity, created_at, resolved, resolved_at')
-            .eq('wedding_site_id', weddingSiteId)
-            .gte('created_at', windowStartIso)
-            .order('created_at', { ascending: false })
-            .limit(MAX_GUEST_RSVP_CONFLICT_HISTORY_ROWS),
-        ]);
-
-        if (conflictsError) throw conflictsError;
-        if (conflictHistoryError) throw conflictHistoryError;
-
-        const guestsWithRsvps = guestsData.map(guest => ({
-          ...guest,
-          rsvp: (rsvpsData as Array<{ guest_id: string }>).find(r => r.guest_id === guest.id),
-        }));
-
-        setGuests(guestsWithRsvps as unknown as GuestWithRSVP[]);
-        setRsvpConflicts((conflictsData ?? []) as RsvpConflict[]);
-        setRsvpConflictHistory((conflictHistoryData ?? []) as RsvpConflict[]);
-      }
+      const snapshot = await loadGuestDashboardSnapshot(weddingSiteId);
+      setGuests(snapshot.guests);
+      setRsvpConflicts(snapshot.conflicts);
+      setRsvpConflictHistory(snapshot.conflictHistory);
     } catch {
       setGuests([]);
       setRsvpConflicts([]);

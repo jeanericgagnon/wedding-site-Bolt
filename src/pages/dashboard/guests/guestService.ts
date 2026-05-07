@@ -1,10 +1,13 @@
 import { supabase } from '../../../lib/supabase';
+import { resolveActiveSiteForUser } from '../../../lib/activeSite';
+import type { PlannerAccessRole, PlannerPermissionKey } from '../../../lib/plannerAccess';
 import {
   deleteEventRsvpsByInvitationIds,
   getEventRsvpSnapshotsByInvitationIds,
   restoreEventRsvpSnapshots,
   type EventRsvpSnapshot,
 } from '../../../lib/eventRsvpCleanup';
+import type { GuestWithRSVP, RSVPQuestionSetting, RsvpConflict, WeddingSiteInfo } from './guestDashboardTypes';
 
 export const GUEST_DASHBOARD_RSVP_SELECT = [
   'guest_id',
@@ -18,16 +21,171 @@ export const GUEST_DASHBOARD_RSVP_SELECT = [
   'notes',
   'custom_answers',
 ].join(', ');
+export const GUEST_SITE_SETTINGS_SELECT = 'id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_address, site_url, site_slug, rsvp_custom_questions, rsvp_meal_config, reminder_cadence_days, auto_reminders_enabled';
+export const GUEST_CONFLICT_SELECT = 'id, guest_id, conflict_code, message, severity, created_at, resolved, resolved_at';
+export const MAX_GUEST_DASHBOARD_ROWS = 5000;
 export const MAX_GUEST_RSVP_LOOKUP_IDS = 5000;
 export const MAX_GUEST_BULK_OPERATION_IDS = 5000;
 export const MAX_GUEST_BULK_INVITATION_ROWS = 10000;
+export const MAX_GUEST_RSVP_CONFLICT_ROWS = 20;
+export const MAX_GUEST_RSVP_CONFLICT_HISTORY_ROWS = 500;
 
 const EVENT_INVITATION_ROLLBACK_SELECT = 'id, event_id';
 const GUEST_ID_SELECT = 'id';
 const IMPORTED_GUEST_SELECT = 'id, first_name, last_name, name, email';
+const DEFAULT_RSVP_MEAL_OPTIONS = ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'];
 
 export async function refreshGuestDashboardSession(): Promise<void> {
   await supabase.auth.refreshSession();
+}
+
+export interface GuestDashboardSiteSettingsSnapshot {
+  activeSiteId: string | null;
+  role: PlannerAccessRole;
+  permissions: PlannerPermissionKey[] | null;
+  siteInfo: WeddingSiteInfo | null;
+  questions: RSVPQuestionSetting[];
+  mealEnabled: boolean;
+  mealOptions: string[];
+  reminderCadenceDays: 1 | 3 | 7 | null;
+  autoRemindersEnabled: boolean;
+}
+
+export interface GuestDashboardRecordsSnapshot {
+  guests: GuestWithRSVP[];
+  conflicts: RsvpConflict[];
+  conflictHistory: RsvpConflict[];
+}
+
+export async function loadGuestDashboardSiteSettings(userId: string): Promise<GuestDashboardSiteSettingsSnapshot> {
+  const activeSite = await resolveActiveSiteForUser(userId);
+  const activeSiteId = activeSite?.id ?? null;
+  const role = activeSite?.role ?? 'owner';
+  const permissions = activeSite?.permissions ?? null;
+
+  if (!activeSiteId) {
+    return {
+      activeSiteId: null,
+      role,
+      permissions,
+      siteInfo: null,
+      questions: [],
+      mealEnabled: true,
+      mealOptions: [...DEFAULT_RSVP_MEAL_OPTIONS],
+      reminderCadenceDays: null,
+      autoRemindersEnabled: false,
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('wedding_sites')
+    .select(GUEST_SITE_SETTINGS_SELECT)
+    .eq('id', activeSiteId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  if (!data) {
+    return {
+      activeSiteId: null,
+      role,
+      permissions,
+      siteInfo: null,
+      questions: [],
+      mealEnabled: true,
+      mealOptions: [...DEFAULT_RSVP_MEAL_OPTIONS],
+      reminderCadenceDays: null,
+      autoRemindersEnabled: false,
+    };
+  }
+
+  const loadedQuestions = Array.isArray((data as { rsvp_custom_questions?: unknown }).rsvp_custom_questions)
+    ? ((data as { rsvp_custom_questions?: unknown[] }).rsvp_custom_questions || [])
+    : [];
+  const questions = loadedQuestions
+    .map((q) => q as Partial<RSVPQuestionSetting>)
+    .filter((q) => typeof q?.id === 'string' && typeof q?.label === 'string')
+    .map((q) => ({
+      id: q.id as string,
+      label: (q.label as string) || '',
+      type: (q.type as RSVPQuestionSetting['type']) || 'short_text',
+      required: !!q.required,
+      appliesTo: (q.appliesTo as RSVPQuestionSetting['appliesTo']) || 'all',
+      options: Array.isArray(q.options) ? q.options.filter((x): x is string => typeof x === 'string') : [],
+    }));
+
+  const mealCfg = (data as { rsvp_meal_config?: unknown }).rsvp_meal_config as { enabled?: unknown; options?: unknown } | undefined;
+  const mealEnabled = typeof mealCfg?.enabled === 'boolean' ? mealCfg.enabled : true;
+  const mealOptions = Array.isArray(mealCfg?.options)
+    ? (mealCfg.options as unknown[]).filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
+    : [...DEFAULT_RSVP_MEAL_OPTIONS];
+  const cadence = Number((data as { reminder_cadence_days?: unknown }).reminder_cadence_days);
+
+  return {
+    activeSiteId,
+    role,
+    permissions,
+    siteInfo: {
+      id: data.id,
+      couple_name_1: data.couple_name_1 ?? '',
+      couple_name_2: data.couple_name_2 ?? '',
+      wedding_date: data.wedding_date ?? null,
+      venue_name: data.venue_name ?? null,
+      venue_address: data.venue_address ?? null,
+      site_url: data.site_url ?? null,
+      site_slug: (data as { site_slug?: string | null }).site_slug ?? null,
+    },
+    questions,
+    mealEnabled,
+    mealOptions,
+    reminderCadenceDays: [1, 3, 7].includes(cadence) ? (cadence as 1 | 3 | 7) : null,
+    autoRemindersEnabled: Boolean((data as { auto_reminders_enabled?: unknown }).auto_reminders_enabled),
+  };
+}
+
+export async function loadGuestDashboardSnapshot(weddingSiteId: string): Promise<GuestDashboardRecordsSnapshot> {
+  const { data: guestsData, error: guestsError } = await supabase
+    .from('guests')
+    .select('id, first_name, last_name, name, email, phone, plus_one_allowed, plus_one_name, children_allowed, max_children, max_additional_guests, invited_to_ceremony, invited_to_reception, invite_token, rsvp_status, rsvp_received_at, checked_in_at, checkin_notes, thank_you_sent_at, thank_you_notes, household_id, group_name, notes, mailing_address_line1, mailing_address_line2, mailing_city, mailing_state, mailing_postal_code, mailing_country')
+    .eq('wedding_site_id', weddingSiteId)
+    .order('created_at', { ascending: false })
+    .limit(MAX_GUEST_DASHBOARD_ROWS);
+
+  if (guestsError) throw guestsError;
+
+  const guestIds = (guestsData ?? []).map((g) => g.id);
+  const windowStartIso = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString();
+  const [rsvpsData, { data: conflictsData, error: conflictsError }, { data: conflictHistoryData, error: conflictHistoryError }] = await Promise.all([
+    fetchGuestRsvps(guestIds),
+    supabase
+      .from('rsvp_conflicts')
+      .select(GUEST_CONFLICT_SELECT)
+      .eq('wedding_site_id', weddingSiteId)
+      .eq('resolved', false)
+      .order('created_at', { ascending: false })
+      .limit(MAX_GUEST_RSVP_CONFLICT_ROWS),
+    supabase
+      .from('rsvp_conflicts')
+      .select(GUEST_CONFLICT_SELECT)
+      .eq('wedding_site_id', weddingSiteId)
+      .gte('created_at', windowStartIso)
+      .order('created_at', { ascending: false })
+      .limit(MAX_GUEST_RSVP_CONFLICT_HISTORY_ROWS),
+  ]);
+
+  if (conflictsError) throw conflictsError;
+  if (conflictHistoryError) throw conflictHistoryError;
+
+  const guests = ((guestsData ?? []).map((guest) => ({
+    ...guest,
+    rsvp: (rsvpsData as Array<{ guest_id: string }>).find((r) => r.guest_id === guest.id),
+  })) as unknown[]) as GuestWithRSVP[];
+
+  return {
+    guests,
+    conflicts: (conflictsData ?? []) as RsvpConflict[],
+    conflictHistory: (conflictHistoryData ?? []) as RsvpConflict[],
+  };
 }
 
 export interface CreateGuestInput {
