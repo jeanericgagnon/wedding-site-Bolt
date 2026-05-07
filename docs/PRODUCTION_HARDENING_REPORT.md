@@ -2708,3 +2708,20 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps seating table and assignment hydration bounded without changing current seating assignment, check-in, export, or continuity behavior. No deploy was run.
+
+### 2026-05-07 2:06 PM PT - No-Deploy Settings Collaborator Invite Bounds
+
+What changed:
+- Added `MAX_SETTINGS_COLLABORATOR_INVITES = 200` in `src/pages/dashboard/settings/settingsSiteData.ts`.
+- Settings collaborator invite hydration now caps ordered invite reads before hydrating the team panel.
+- Extended `src/pages/dashboard/settings/settingsSiteData.test.ts` to pin the stable cap export and the bounded query shape.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts`: PASS, 3/3.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps settings collaborator invite hydration bounded without changing current invite create, revoke, or claim behavior. No deploy was run.

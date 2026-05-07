@@ -7548,3 +7548,16 @@ A slice does **not** count as passed because:
   - `npm run lint -- --quiet`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 2:06 PM PT No-Deploy Settings Collaborator Invite Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/settings/settingsSiteData.ts` now caps ordered collaborator invite reads at 200 rows before hydrating the settings team panel.
+  - `src/pages/dashboard/settings/settingsSiteData.test.ts` now pins the stable cap export and the bounded query shape.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts`: PASS, 3/3.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
