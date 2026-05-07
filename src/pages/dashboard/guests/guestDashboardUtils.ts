@@ -56,12 +56,41 @@ type GuestAddressFields = GuestWithRSVP & {
   mailing_country?: string | null;
 };
 
-function guestDisplayName(guest: GuestWithRSVP): string {
+export function getGuestDisplayName(guest: GuestWithRSVP): string {
   return [guest.first_name, guest.last_name].filter(Boolean).join(' ').trim() || guest.name;
 }
 
 function rsvpLinkForInvite(origin: string, inviteToken: string | null | undefined): string {
   return inviteToken ? `${origin}/rsvp?token=${encodeURIComponent(inviteToken)}` : '';
+}
+
+export function buildGuestSmsRsvpLinkRows(input: { guests: GuestWithRSVP[]; siteSlug: string }): string[] {
+  return input.guests.flatMap((guest) => {
+    const link = rsvpLinkForInvite(`https://${input.siteSlug}.dayof.love`, guest.invite_token);
+    if (!link) return [];
+    return [`${getGuestDisplayName(guest)}: ${link}`];
+  });
+}
+
+export function getGuestExportSegmentSuffix(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48) || 'segment';
+}
+
+export function downloadGuestCsv(csv: string, suffix: string): void {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `dayof-${suffix}.csv`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
 }
 
 export function buildGuestExportCsv(input: {
@@ -152,7 +181,7 @@ export function buildHouseholdLabelsCsv(input: {
     }) ?? sortedMembers[0];
     const primaryAddress = primary as GuestAddressFields;
     const recipientNames = sortedMembers
-      .map(guestDisplayName)
+      .map(getGuestDisplayName)
       .filter(Boolean)
       .join(' and ');
 
@@ -201,7 +230,7 @@ export function buildEventAttendanceCsv(input: {
             : null;
       return [
         event.event_name,
-        guestDisplayName(guest),
+        getGuestDisplayName(guest),
         guest.email || '',
         guest.phone || '',
         'Yes',
@@ -401,20 +430,20 @@ export function buildRsvpExceptionChecklistLines(input: {
   return input.guests.flatMap((guest) => {
     const states = input.exceptionStateByGuest.get(guest.id) || [];
     if (!states.length) return [];
-    return [`- ${guestDisplayName(guest)}: resolve ${states.join(', ')}`];
+    return [`- ${getGuestDisplayName(guest)}: resolve ${states.join(', ')}`];
   });
 }
 
 export function buildMissingMealChecklistLines(guests: GuestWithRSVP[]): string[] {
   return guests
     .filter((guest) => isAttendingRsvpStatus(guest.rsvp_status) && !guest.rsvp?.meal_choice)
-    .map((guest) => `- ${guestDisplayName(guest)}: confirm meal choice`);
+    .map((guest) => `- ${getGuestDisplayName(guest)}: confirm meal choice`);
 }
 
 export function buildNoContactChecklistLines(guests: GuestWithRSVP[]): string[] {
   return guests
     .filter((guest) => !guest.email && !guest.phone)
-    .map((guest) => `- ${guestDisplayName(guest)}: get phone or email, then resend invite`);
+    .map((guest) => `- ${getGuestDisplayName(guest)}: get phone or email, then resend invite`);
 }
 
 export function buildFilteredEmailList(guests: GuestWithRSVP[]): string[] {
@@ -578,7 +607,7 @@ export function getGuestCampaignReadiness(input: {
 export function buildGuestOpsQueue(guests: GuestWithRSVP[], limit = 8): GuestOpsQueueItem[] {
   return guests.flatMap((guest) => {
     const items: GuestOpsQueueItem[] = [];
-    const name = guestDisplayName(guest);
+    const name = getGuestDisplayName(guest);
     const eventSelections = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
 
     if (isPendingRsvpStatus(guest.rsvp_status)) {
@@ -666,7 +695,7 @@ export function getGuestSongRequestEntries(guests: GuestWithRSVP[], limit = 12):
             .map((entry) => String(entry ?? '').trim())
             .filter(Boolean)
             .map((entry) => ({
-              guestName: guestDisplayName(guest),
+              guestName: getGuestDisplayName(guest),
               question,
               answer: entry,
             }));

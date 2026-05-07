@@ -15,6 +15,7 @@ const json = (data: unknown, status = 200) =>
 
 const RATE_LIMIT_WINDOW_MINUTES = 15;
 const RATE_LIMIT_MAX_ATTEMPTS = 10;
+const RSVP_REQUEST_INVALID_COPY = "Could not read this RSVP request. Please try again.";
 
 async function hashIp(ip: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -52,7 +53,7 @@ Deno.serve(async (req: Request) => {
     try {
       body = await req.json();
     } catch {
-      return json({ error: "Invalid JSON body" }, 400);
+      return json({ error: RSVP_REQUEST_INVALID_COPY }, 400);
     }
 
     // Honeypot field — bots fill this in, humans don't

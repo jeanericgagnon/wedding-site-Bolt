@@ -2,11 +2,15 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 import { corsHeaders, fail, json, sha256Hex, sleep } from "../_shared/photoUtils.ts";
+import { canMutatePhotos } from "../_shared/collaboratorPermissions.ts";
 
 const HOSTED_BUCKET = "photo-uploads";
 const DEFAULT_LIMIT = 40;
 const MAX_LIMIT = 80;
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
+const PHOTO_ANALYZE_SIGNIN_REQUIRED_COPY = "Please sign in to organize photos.";
+const PHOTO_ANALYZE_SITE_REQUIRED_COPY = "Choose a site before organizing photos.";
+const PHOTO_ANALYZE_SITE_UNAVAILABLE_COPY = "This site is not available for photo organization.";
 const PHOTO_UPLOAD_AI_ANALYSIS_SELECT = [
   "id",
   "upload_id",
@@ -854,7 +858,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return fail("MISSING_AUTH", "Missing authorization.", 401);
+    if (!authHeader) return fail("MISSING_AUTH", PHOTO_ANALYZE_SIGNIN_REQUIRED_COPY, 401);
 
     const token = authHeader.replace(/^Bearer\s+/i, "").trim();
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -862,7 +866,7 @@ Deno.serve(async (req: Request) => {
     const admin = createClient(supabaseUrl, serviceKey);
 
     const { data: userData, error: userError } = await admin.auth.getUser(token);
-    if (userError || !userData.user) return fail("UNAUTHORIZED", "Unauthorized.", 401);
+    if (userError || !userData.user) return fail("UNAUTHORIZED", PHOTO_ANALYZE_SIGNIN_REQUIRED_COPY, 401);
 
     const body = await req.json().catch(() => ({}));
     const siteId = String(body.siteId ?? body.wedding_site_id ?? "").trim();
@@ -872,7 +876,7 @@ Deno.serve(async (req: Request) => {
     const limit = Math.max(1, Math.min(MAX_LIMIT, Number(body.limit ?? DEFAULT_LIMIT) || DEFAULT_LIMIT));
     const uploadIds = Array.isArray(body.uploadIds) ? body.uploadIds.map((id) => String(id)).filter(Boolean).slice(0, MAX_LIMIT) : [];
 
-    if (!siteId) return fail("SITE_REQUIRED", "siteId is required.", 400);
+    if (!siteId) return fail("SITE_REQUIRED", PHOTO_ANALYZE_SITE_REQUIRED_COPY, 400);
 
     const { data: siteRow, error: siteError } = await admin
       .from("wedding_sites")
@@ -880,7 +884,7 @@ Deno.serve(async (req: Request) => {
       .eq("id", siteId)
       .maybeSingle();
     if (siteError) return fail("SITE_LOOKUP_FAILED", safePhotoAnalyzeApiError("SITE_LOOKUP_FAILED"), 500);
-    if (!siteRow) return fail("SITE_NOT_FOUND", "Wedding site not found.", 404);
+    if (!siteRow) return fail("SITE_NOT_FOUND", PHOTO_ANALYZE_SITE_UNAVAILABLE_COPY, 404);
 
     let hasAccess = siteRow.user_id === userData.user.id;
     if (!hasAccess) {
@@ -890,9 +894,7 @@ Deno.serve(async (req: Request) => {
         .eq("wedding_site_id", siteId)
         .eq("user_id", userData.user.id)
         .maybeSingle();
-      const role = String(collaborator?.role ?? "");
-      const permissions = Array.isArray(collaborator?.permissions) ? collaborator.permissions.map(String) : [];
-      hasAccess = role === "owner" || role === "coordinator" || permissions.includes("photos") || permissions.includes("media");
+      hasAccess = canMutatePhotos(collaborator?.role, collaborator?.permissions);
     }
     if (!hasAccess) return fail("FORBIDDEN", "You do not have photo analysis access for this site.", 403);
 

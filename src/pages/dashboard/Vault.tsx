@@ -9,7 +9,6 @@ import {
   ToggleRight, GripVertical, X, Sparkles
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useAuth } from '../../hooks/useAuth';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { sendAnniversaryReminder } from '../../lib/emailService';
@@ -18,44 +17,28 @@ import { formatVaultEntryDate, getVaultEntryTimestamp } from './vaultEntryTime';
 import { copyTextOrDownload } from '../../lib/copyText';
 import { getSafePublicWebUrl } from '../../sections/publicLinks';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import { LOCAL_E2E_VAULT_FORCE_UNLOCK_KEY, readLocalE2EBypassFlag } from '../../lib/localE2EBypassStorage';
+import { readDemoVaultState, writeDemoVaultState } from '../vaultDemoStorage';
+import {
+  createVaultConfig,
+  createVaultEntry,
+  deleteVaultConfigWithEntryRollback,
+  deleteVaultEntry,
+  ensureHostedVaultProvider as persistHostedVaultProvider,
+  loadDemoVaultDashboardData,
+  loadVaultConfigsAndEntries,
+  loadVaultDashboardData,
+  seedStarterVaultConfigs,
+  updateVaultConfig,
+  updateVaultEnabled,
+  updateVaultRecapDraft,
+  type VaultConfig,
+  type VaultEntry,
+} from './vaultService';
 
 const MAX_VAULTS = 5;
-const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
 const VAULT_RELEASE_NOTICE_KEY = 'dayof_vault_release_notified_v1';
 const DEMO_WEDDING_DATE = '2026-02-23';
-const E2E_FORCE_UNLOCK_KEY = 'dayof_e2e_force_vault_unlock';
-const VAULT_CONFIG_SELECT = [
-  'id',
-  'wedding_site_id',
-  'vault_index',
-  'label',
-  'duration_years',
-  'is_enabled',
-  'unlock_at',
-  'unlock_schedule_finalized_at',
-  'created_at',
-  'updated_at',
-].join(', ');
-const VAULT_ENTRY_SELECT = [
-  'id',
-  'wedding_site_id',
-  'vault_config_id',
-  'vault_year',
-  'title',
-  'content',
-  'author_name',
-  'attachment_url',
-  'attachment_name',
-  'media_type',
-  'storage_provider',
-  'external_file_id',
-  'external_file_url',
-  'unlock_at',
-  'mime_type',
-  'size_bytes',
-  'duration_seconds',
-  'created_at',
-].join(', ');
 
 function safeVaultDashboardError(err: unknown, fallback: string): string {
   return customerSafeErrorMessage(err, fallback);
@@ -63,34 +46,7 @@ function safeVaultDashboardError(err: unknown, fallback: string): string {
 
 function shouldForceUnlockForE2E(): boolean {
   if (typeof window === 'undefined') return false;
-  const host = window.location.hostname;
-  const isLocalHost = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
-  return isLocalHost && localStorage.getItem(E2E_FORCE_UNLOCK_KEY) === '1';
-}
-
-interface VaultConfig {
-  id: string;
-  vault_index: number;
-  label: string;
-  duration_years: number;
-  is_enabled: boolean;
-}
-
-interface VaultEntry {
-  id: string;
-  vault_config_id: string | null;
-  vault_year: number;
-  title: string;
-  content: string;
-  author_name: string;
-  attachment_url: string | null;
-  attachment_name: string | null;
-  media_type?: 'text' | 'photo' | 'video' | 'voice' | null;
-  storage_provider?: 'supabase' | 'google_drive' | null;
-  external_file_id?: string | null;
-  external_file_url?: string | null;
-  unlock_at?: string | null;
-  created_at: string;
+  return readLocalE2EBypassFlag(LOCAL_E2E_VAULT_FORCE_UNLOCK_KEY);
 }
 
 interface Toast {
@@ -489,15 +445,12 @@ const VaultCard: React.FC<VaultCardProps> = ({
     try {
       const nextContent = buildAnniversaryRecap(displayEntries, config.duration_years, recapStyle, recapLength, photosOnlyRecap);
       const nextTitle = `${config.duration_years}-Year Recap Draft (${recapStyle[0].toUpperCase()}${recapStyle.slice(1)})`;
-      const { error } = await supabase
-        .from('vault_entries')
-        .update({
-          title: nextTitle,
-          content: nextContent,
-          author_name: 'dayof Recap Draft',
-        })
-        .eq('id', latestRecap.id);
-      if (error) throw error;
+      await updateVaultRecapDraft({
+        entryId: latestRecap.id,
+        title: nextTitle,
+        content: nextContent,
+        authorName: 'dayof Recap Draft',
+      });
       setEntryOverrides((prev) => ({
         ...prev,
         [latestRecap.id]: {
@@ -919,12 +872,7 @@ export const DashboardVault: React.FC = () => {
       return;
     }
 
-    const { error } = await supabase
-      .from('wedding_sites')
-      .update({ vault_storage_provider: 'supabase' })
-      .eq('id', siteId);
-
-    if (error) throw error;
+    await persistHostedVaultProvider(siteId);
     setVaultStorageProvider('supabase');
   }
 
@@ -1035,18 +983,12 @@ export const DashboardVault: React.FC = () => {
 
   function loadDemoState(): { vaultConfigs: VaultConfig[]; entries: VaultEntry[] } {
     try {
-      const raw = localStorage.getItem(DEMO_VAULT_STORAGE_KEY);
-      if (!raw) {
-        const seeded = createSeedDemoState();
-        saveDemoState(seeded.vaultConfigs, seeded.entries);
-        return seeded;
-      }
-      const parsed = JSON.parse(raw) as { vaultConfigs?: VaultConfig[]; entries?: VaultEntry[] };
-      const vaultConfigs = parsed.vaultConfigs ?? [];
-      const entries = parsed.entries ?? [];
+      const seeded = createSeedDemoState();
+      const stored = readDemoVaultState(seeded);
+      const vaultConfigs = stored.vaultConfigs ?? [];
+      const entries = stored.entries ?? [];
 
       if (vaultConfigs.length === 0) {
-        const seeded = createSeedDemoState();
         saveDemoState(seeded.vaultConfigs, seeded.entries);
         return seeded;
       }
@@ -1060,7 +1002,7 @@ export const DashboardVault: React.FC = () => {
   }
 
   function saveDemoState(nextConfigs: VaultConfig[], nextEntries: VaultEntry[]) {
-    localStorage.setItem(DEMO_VAULT_STORAGE_KEY, JSON.stringify({ vaultConfigs: nextConfigs, entries: nextEntries }));
+    writeDemoVaultState(nextConfigs, nextEntries);
   }
 
   const loadData = useCallback(async () => {
@@ -1069,49 +1011,23 @@ export const DashboardVault: React.FC = () => {
       if (isDemoMode) {
         setSiteSlug('alex-jordan-demo');
 
-        const { data: demoSite, error: demoSiteError } = await supabase
-          .from('wedding_sites')
-          .select('id, wedding_date, site_slug, vault_storage_provider, vault_google_drive_connected')
-          .eq('site_slug', 'alex-jordan-demo')
-          .maybeSingle();
-        if (demoSiteError) throw demoSiteError;
+        const { site: demoSite, configs, entries } = await loadDemoVaultDashboardData('alex-jordan-demo');
 
         if (demoSite) {
           setWeddingSiteId(demoSite.id);
           setVaultStorageProvider('supabase');
-          setGoogleDriveConnected(!!(demoSite as { vault_google_drive_connected?: boolean }).vault_google_drive_connected);
+          setGoogleDriveConnected(!!demoSite.vault_google_drive_connected);
           void ensureHostedVaultProvider(demoSite.id).catch(() => {
             toast('Couldn’t sync dayof as the active vault home right now.', 'error');
           });
-if (demoSite.wedding_date) setWeddingDate(toValidDateOrNull(demoSite.wedding_date));
+          if (demoSite.wedding_date) setWeddingDate(toValidDateOrNull(demoSite.wedding_date));
           else setWeddingDate(toValidDateOrNull(DEMO_WEDDING_DATE));
-
-          const { data: configData, error: configError } = await supabase
-            .from('vault_configs')
-            .select(VAULT_CONFIG_SELECT)
-            .eq('wedding_site_id', demoSite.id)
-            .order('duration_years', { ascending: true });
-          if (configError) throw configError;
-
-          const configs = (configData ?? []) as unknown as VaultConfig[];
           setVaultConfigs(configs);
-
-          if (configs.length > 0) {
-            const configIds = configs.map(c => c.id);
-            const { data: entryData, error: entryError } = await supabase
-              .from('vault_entries')
-              .select(VAULT_ENTRY_SELECT)
-              .in('vault_config_id', configIds)
-              .order('created_at', { ascending: true });
-            if (entryError) throw entryError;
-            setEntries((entryData ?? []) as unknown as VaultEntry[]);
-          } else {
-            setEntries([]);
-          }
+          setEntries(entries);
           return;
         }
 
-setWeddingSiteId('demo-site-id');
+        setWeddingSiteId('demo-site-id');
         setVaultStorageProvider('supabase');
         setGoogleDriveConnected(false);
         setWeddingDate(toValidDateOrNull(DEMO_WEDDING_DATE));
@@ -1129,12 +1045,7 @@ setWeddingSiteId('demo-site-id');
         setDriveNeedsReconnect(false);
         return;
       }
-      const { data: site, error: siteError } = await supabase
-        .from('wedding_sites')
-        .select('id, wedding_date, site_slug, vault_storage_provider, vault_google_drive_connected, couple_name_1, couple_name_2')
-        .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
-        .maybeSingle();
-      if (siteError) throw siteError;
+      const { site, configs, entries } = await loadVaultDashboardData(user.id);
 
       if (!site) {
         setWeddingSiteId(null);
@@ -1146,37 +1057,17 @@ setWeddingSiteId('demo-site-id');
       }
       setWeddingSiteId(site.id);
       setVaultStorageProvider('supabase');
-      setGoogleDriveConnected(!!(site as { vault_google_drive_connected?: boolean }).vault_google_drive_connected);
+      setGoogleDriveConnected(!!site.vault_google_drive_connected);
       void ensureHostedVaultProvider(site.id).catch(() => {
         toast('Couldn’t sync dayof as the active vault home right now.', 'error');
       });
       if (site.wedding_date) setWeddingDate(toValidDateOrNull(site.wedding_date));
-      if (site.site_slug) setSiteSlug(site.site_slug as string);
-      setCoupleName1((site as { couple_name_1?: string | null }).couple_name_1 || 'Partner');
-      setCoupleName2((site as { couple_name_2?: string | null }).couple_name_2 || 'Partner');
+      if (site.site_slug) setSiteSlug(site.site_slug);
+      setCoupleName1(site.couple_name_1 || 'Partner');
+      setCoupleName2(site.couple_name_2 || 'Partner');
       setCoupleEmail(user.email ?? null);
-
-      const { data: configData, error: configError } = await supabase
-        .from('vault_configs')
-        .select(VAULT_CONFIG_SELECT)
-        .eq('wedding_site_id', site.id)
-        .order('duration_years', { ascending: true });
-      if (configError) throw configError;
-
-      const configs = (configData ?? []) as unknown as VaultConfig[];
       setVaultConfigs(configs);
-
-      if (configs.length > 0) {
-        const configIds = configs.map(c => c.id);
-        const { data: entryData, error } = await supabase
-          .from('vault_entries')
-          .select(VAULT_ENTRY_SELECT)
-          .in('vault_config_id', configIds)
-          .order('created_at', { ascending: true });
-
-        if (error) throw error;
-        setEntries((entryData ?? []) as unknown as VaultEntry[]);
-      }
+      setEntries(entries);
     } catch {
       setWeddingSiteId(null);
       setVaultConfigs([]);
@@ -1344,20 +1235,13 @@ setWeddingSiteId('demo-site-id');
       const years = nextAvailableYears(existingYears);
       const label = defaultVaultLabel(nextIndex, years);
 
-      const { data, error } = await supabase
-        .from('vault_configs')
-        .insert({
-          wedding_site_id: weddingSiteId,
-          vault_index: nextIndex,
-          label,
-          duration_years: years,
-          is_enabled: true,
-        })
-        .select(VAULT_CONFIG_SELECT)
-        .single();
-
-      if (error) throw error;
-      setVaultConfigs(prev => [...prev, data as unknown as VaultConfig].sort((a, b) => a.duration_years - b.duration_years));
+      const created = await createVaultConfig({
+        weddingSiteId,
+        vaultIndex: nextIndex,
+        label,
+        durationYears: years,
+      });
+      setVaultConfigs(prev => [...prev, created].sort((a, b) => a.duration_years - b.duration_years));
       toast('Vault added');
     } catch {
       toast('Couldn’t add that vault right now. Please try again.', 'error');
@@ -1376,22 +1260,8 @@ setWeddingSiteId('demo-site-id');
 
     setAddingVault(true);
     try {
-      const starter = [
-        { vault_index: 1, label: '1-Year Anniversary Vault', duration_years: 1 },
-        { vault_index: 2, label: '5-Year Anniversary Vault', duration_years: 5 },
-        { vault_index: 3, label: '10-Year Anniversary Vault', duration_years: 10 },
-      ];
-
-      const { data, error } = await supabase
-        .from('vault_configs')
-        .upsert(
-          starter.map((v) => ({ ...v, wedding_site_id: weddingSiteId, is_enabled: true })),
-          { onConflict: 'wedding_site_id,vault_index' }
-        )
-        .select(VAULT_CONFIG_SELECT);
-
-      if (error) throw error;
-      setVaultConfigs((data ?? []) as unknown as VaultConfig[]);
+      const configs = await seedStarterVaultConfigs(weddingSiteId);
+      setVaultConfigs(configs);
       toast('Starter vault set loaded (1/5/10)');
       await loadData();
     } catch {
@@ -1418,12 +1288,12 @@ setWeddingSiteId('demo-site-id');
       toast(enabled ? 'Vault enabled' : 'Vault disabled');
       return;
     }
-    const { error } = await supabase
-      .from('vault_configs')
-      .update({ is_enabled: enabled, updated_at: new Date().toISOString() })
-      .eq('id', configId);
-
-    if (error) { toast('Couldn’t update this vault. Please try again.', 'error'); return; }
+    try {
+      await updateVaultEnabled(configId, enabled);
+    } catch {
+      toast('Couldn’t update this vault. Please try again.', 'error');
+      return;
+    }
     setVaultConfigs(prev => prev.map(c => c.id === configId ? { ...c, is_enabled: enabled } : c));
     toast(enabled ? 'Vault enabled' : 'Vault disabled');
   }
@@ -1452,13 +1322,10 @@ setWeddingSiteId('demo-site-id');
       return;
     }
 
-    const { error } = await supabase
-      .from('vault_configs')
-      .update({ label, duration_years: durationYears, updated_at: new Date().toISOString() })
-      .eq('id', id);
-
-    if (error) {
-      if (error.message?.toLowerCase().includes('duplicate') || error.message?.toLowerCase().includes('unique')) {
+    try {
+      await updateVaultConfig({ id, label, durationYears });
+    } catch (error) {
+      if (error instanceof Error && (error.message?.toLowerCase().includes('duplicate') || error.message?.toLowerCase().includes('unique'))) {
         toast(`You already have a ${durationYears}-year vault.`, 'error');
         throw new Error('A vault for that anniversary already exists.');
       }
@@ -1495,14 +1362,13 @@ setWeddingSiteId('demo-site-id');
       return;
     }
 
-    const { data, error } = await supabase
-      .from('vault_entries')
-      .insert({ ...entry, wedding_site_id: weddingSiteId })
-      .select(VAULT_ENTRY_SELECT)
-      .single();
-
-    if (error) throw new Error('Couldn’t save this vault entry. Please try again.');
-    setEntries(prev => [...prev, data as unknown as VaultEntry]);
+    let created: VaultEntry;
+    try {
+      created = await createVaultEntry(weddingSiteId, entry);
+    } catch {
+      throw new Error('Couldn’t save this vault entry. Please try again.');
+    }
+    setEntries(prev => [...prev, created]);
     setActiveFormConfigId(null);
     toast('Entry added to vault');
   }
@@ -1515,8 +1381,12 @@ setWeddingSiteId('demo-site-id');
       toast('Entry removed');
       return;
     }
-    const { error } = await supabase.from('vault_entries').delete().eq('id', id);
-    if (error) { toast('Couldn’t remove that entry. Please try again.', 'error'); return; }
+    try {
+      await deleteVaultEntry(id);
+    } catch {
+      toast('Couldn’t remove that entry. Please try again.', 'error');
+      return;
+    }
     setEntries(prev => prev.filter(e => e.id !== id));
     toast('Entry removed');
   }
@@ -1532,23 +1402,9 @@ setWeddingSiteId('demo-site-id');
       return;
     }
     const deletedEntries = entries.filter((entry) => entry.vault_config_id === configId);
-    const { error: entryDeleteError } = await supabase
-      .from('vault_entries')
-      .delete()
-      .eq('vault_config_id', configId);
-    if (entryDeleteError) { toast('Couldn’t remove entries from this vault. Please try again.', 'error'); return; }
-
-    const { error } = await supabase.from('vault_configs').delete().eq('id', configId);
-    if (error) {
-      if (deletedEntries.length > 0) {
-        await supabase.from('vault_entries').insert(
-          deletedEntries.map(({ id, created_at, ...entry }) => ({
-            id,
-            created_at,
-            ...entry,
-          })),
-        );
-      }
+    try {
+      await deleteVaultConfigWithEntryRollback(configId, deletedEntries);
+    } catch {
       toast('Couldn’t remove this vault. Please try again.', 'error');
       return;
     }

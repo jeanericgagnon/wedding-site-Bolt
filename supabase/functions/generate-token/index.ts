@@ -13,6 +13,9 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+const LINK_GENERATION_SIGNIN_REQUIRED_COPY = "Please sign in to create this link.";
+const LINK_GENERATION_FAILED_COPY = "Could not create this link right now. Please try again.";
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -24,7 +27,7 @@ Deno.serve(async (req: Request) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return json({ error: "Unauthorized" }, 401);
+      return json({ error: LINK_GENERATION_SIGNIN_REQUIRED_COPY }, 401);
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -35,7 +38,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: { user }, error: authError } = await userClient.auth.getUser();
     if (authError || !user) {
-      return json({ error: "Unauthorized" }, 401);
+      return json({ error: LINK_GENERATION_SIGNIN_REQUIRED_COPY }, 401);
     }
 
     const adminClient = createClient(
@@ -74,6 +77,6 @@ Deno.serve(async (req: Request) => {
     return json({ tokens });
   } catch (err) {
     console.error("GENERATE_TOKEN_UNEXPECTED_FAILED", { reason: "UNEXPECTED_TOKEN_GENERATION_FAILURE" });
-    return json({ error: "Could not generate token. Please try again." }, 500);
+    return json({ error: LINK_GENERATION_FAILED_COPY }, 500);
   }
 });

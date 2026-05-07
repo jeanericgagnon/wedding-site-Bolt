@@ -18,8 +18,10 @@ import type { WeddingDataV1 } from '../../types/weddingData';
 import { combineDateAndTimeISO } from './itineraryDateTime';
 import { formatItineraryEventDate, toValidItineraryEventDateOrNull } from './itineraryEventDate';
 import { deriveItineraryEventRsvpCounts, shouldLoadEventRsvps } from './itineraryEventRsvpCounts';
+import { readDemoItineraryEvents, writeDemoItineraryEvents } from './itineraryDemoStorage';
 import { analyzeTimeline } from '../../lib/invisibleIntelligence';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import { createItineraryTemplateEvents } from './itineraryService';
 
 interface ItineraryEvent {
   id: string;
@@ -40,7 +42,6 @@ const ITINERARY_EVENT_SELECT = 'id, event_name, title, description, event_date, 
 
 const EVENT_GUEST_PICKER_SELECT = 'id, name, first_name, last_name, email' as const;
 
-const DEMO_ITINERARY_STORAGE_KEY = 'dayof.demo.itinerary.events';
 // Optional table: detect once at runtime so older environments degrade quietly.
 let hasEventRsvpsTable: boolean | null = null;
 
@@ -147,7 +148,7 @@ export const DashboardItinerary: React.FC = () => {
   useEffect(() => {
     if (!isDemoMode) return;
     try {
-      localStorage.setItem(DEMO_ITINERARY_STORAGE_KEY, JSON.stringify(events));
+      writeDemoItineraryEvents(events);
     } catch {}
   }, [isDemoMode, events]);
 
@@ -231,21 +232,16 @@ export const DashboardItinerary: React.FC = () => {
           pending_count: Math.max(0, ([86, 120, 120, 52][idx] ?? 0) - ([68, 98, 101, 39][idx] ?? 0) - ([4, 9, 8, 5][idx] ?? 0)),
         }));
 
-        try {
-          const raw = localStorage.getItem(DEMO_ITINERARY_STORAGE_KEY);
-          if (raw) {
-            const parsed = JSON.parse(raw) as EventWithInvites[];
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              setEvents(parsed.map((event) => ({
-                ...event,
-                pending_count: typeof event.pending_count === 'number'
-                  ? event.pending_count
-                  : Math.max(0, event.invitation_count - event.attending_count - event.declined_count),
-              })));
-              return;
-            }
-          }
-        } catch {}
+        const storedEvents = readDemoItineraryEvents(seeded as EventWithInvites[]);
+        if (storedEvents.length > 0) {
+          setEvents(storedEvents.map((event) => ({
+            ...event,
+            pending_count: typeof event.pending_count === 'number'
+              ? event.pending_count
+              : Math.max(0, event.invitation_count - event.attending_count - event.declined_count),
+          })));
+          return;
+        }
 
         setEvents(seeded as EventWithInvites[]);
         return;
@@ -740,18 +736,7 @@ export const DashboardItinerary: React.FC = () => {
       if (!user) throw new Error('Please log in again and retry.');
       const activeSite = await resolveActiveSiteForUser(user.id);
       if (!activeSite?.id) throw new Error('Couldn’t find your website right now.');
-      const { error } = await supabase.from('itinerary_events').insert(newEvents.map((event) => ({
-        wedding_site_id: activeSite.id,
-        event_name: event.event_name,
-        title: event.event_name,
-        description: event.description,
-        event_date: event.event_date,
-        start_time: event.start_time,
-        end_time: event.end_time,
-        display_order: event.display_order,
-        is_visible: true,
-      })));
-      if (error) throw error;
+      await createItineraryTemplateEvents(activeSite.id, newEvents);
       await loadEvents();
       setSaveNotice(`Added ${newEvents.length} template events.`);
     } catch (err: unknown) {

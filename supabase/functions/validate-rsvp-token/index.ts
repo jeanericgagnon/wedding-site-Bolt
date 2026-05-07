@@ -65,6 +65,8 @@ interface RsvpSessionPayload {
 const RATE_LIMIT_WINDOW_MINUTES = 15;
 const RATE_LIMIT_MAX_ATTEMPTS = 10;
 const LOOKUP_RATE_LIMIT_MAX_ATTEMPTS = 8;
+const RSVP_REQUEST_INVALID_COPY = "Could not read this RSVP request. Please try again.";
+const RSVP_SEARCH_REQUIRED_COPY = "Enter the guest name or code from your invitation.";
 
 function isMissingEventRsvpTableError(error: unknown) {
   const typed = error as { code?: string; message?: string } | null;
@@ -301,12 +303,12 @@ Deno.serve(async (req: Request) => {
     try {
       payload = await req.json();
     } catch {
-      return json({ error: "Invalid JSON body" }, 400);
+      return json({ error: RSVP_REQUEST_INVALID_COPY }, 400);
     }
 
     if (payload.action === "lookup") {
       const { searchValue } = payload;
-      if (!searchValue?.trim()) return json({ error: "searchValue is required" }, 400);
+      if (!searchValue?.trim()) return json({ error: RSVP_SEARCH_REQUIRED_COPY }, 400);
 
       const trimmed = searchValue.trim();
       if (!(await enforceRateLimit("rsvp_lookup", trimmed, LOOKUP_RATE_LIMIT_MAX_ATTEMPTS))) {

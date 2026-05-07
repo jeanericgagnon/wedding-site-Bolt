@@ -6,9 +6,9 @@ _Scope:_ 10/10 production-hardening execution. No deploy unless Eric explicitly 
 
 ## Current Verdict
 
-Final Production Readiness Score: 7/10
+Final Production Readiness Score: 8/10
 
-The app has substantial local hardening in place, but it is not production-ready until P0/P1 security boundaries are proven locally and, where production behavior is involved, after approved live deploy/proof. The active standard is real private wedding and guest data must be safe by design.
+The approved production deploy and current non-SMS postdeploy proof are green, and additional local hardening continues. The app is still not 10/10 production-ready until remaining P1/P2 security, service-role integrity, live model-backed AI, and live messaging authorization proof are complete. The active standard is real private wedding and guest data must be safe by design.
 
 ## No Feature Loss Checklist
 
@@ -18,6 +18,28 @@ The app has substantial local hardening in place, but it is not production-ready
 - Existing smoke lanes for registry, RSVP, site, CSV mapper, check-in, messages: PARTIAL, all listed lanes pass except live `smoke:rsvp`; aggregate `test:smoke` fails because it stops at RSVP.
 
 ## Batch Log
+
+### 2026-05-07 10:36 AM PT - No-Deploy Request-Copy And Storage Safety Continuation
+
+What changed:
+- Hardened customer-facing request/auth/validation copy in `setup-bootstrap`, `translate-site-content`, `send-bulk-message`, `photo-analyze-batch`, `generate-token`, `submit-rsvp`, and `validate-rsvp-token` so those flows no longer leak raw field names, auth jargon, or JSON/body wording.
+- Expanded `src/lib/launchEdgeFunctions.test.ts` to statically guard the new setup/translation/RSVP/token/photo-analysis/bulk-message safety copy.
+- Added invite-email validation and stale invite cleanup to `src/lib/plannerAccess.ts` with `PLANNER_INVITE_EMAIL_PATTERN`, normalized invite parsing, and invalid-entry removal from local storage.
+- Hardened `src/pages/dashboard/messages/messageDashboardUtils.ts` so saved composer templates and stored photo album links now use timestamped retention envelopes, bounded normalization, and migration cleanup.
+- Updated `src/pages/dashboard/Itinerary.tsx` and `src/pages/dashboard/Vault.tsx` to consume their hardened demo-storage and local E2E bypass helpers instead of raw localStorage writes/reads.
+- Restored missing shared exports in `src/lib/publicAccessArtifacts.ts`, `src/pages/dashboard/guests/guestService.ts`, `src/pages/dashboard/guests/guestDashboardUtils.ts`, and `src/pages/dashboard/messages/messageService.ts` so the ongoing split work returns to a green typecheck/build baseline.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/customerSafeError.test.ts src/lib/superNiceLaunchBacklogSafety.test.ts src/pages/dashboard/messages/messageDashboardUtils.test.ts src/pages/dashboard/itineraryDemoStorage.test.ts`: PASS, 5 files and 59 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This batch keeps the no-deploy hardening lane green locally and restores the split-files branch baseline without changing live production state.
 
 ### 2026-05-04 9:20 PM PT - Safety Harness
 
@@ -1687,3 +1709,257 @@ Live proof status:
 
 Status:
 - PARTIAL overall production hardening. The approved production deploy is live and postdeploy proof is green for the current non-SMS launch surface, but full 10/10 readiness still depends on finishing remaining P1/P2 hardening, service-role integrity proof, live model-key proof when secrets are configured, and pushing/committing the local branch.
+
+### 2026-05-05 2:28 PM PT - P1 Messaging Viewer Mutation Hardening
+
+What changed:
+- Hardened `send-bulk-message`, `send-wedding-email`, and `queue-guest-followups` so collaborators must be `planner` or `coordinator` with the relevant permission before mutating messaging or guest follow-up state.
+- Scheduled bulk-message processing now filters manageable site ids through the same role-aware mutation helper, so queued sends cannot be processed under a viewer-only collaborator grant.
+- Updated frontend planner permission helpers so `viewer` remains read-only even if a stale explicit permission array includes `messages` or `guests`.
+- Preserved owner, planner, and coordinator flows; this batch only closes the viewer mutation gap.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 2 files and 37 tests.
+- `npm run smoke:messages`: PASS.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run proof:v1:board:md`: PASS.
+- `git diff --check`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. Local email/messaging authorization risk is narrowed with focused proof. No deploy was run, so live messaging authorization proof remains open before marking this P1 item fully done.
+
+### 2026-05-05 2:35 PM PT - P1 Photo/Media Viewer Mutation Hardening
+
+What changed:
+- Hardened `photo-album-create`, `photo-export-manifest`, `photo-album-manage`, `photo-upload-moderate`, and `photo-analyze-batch` so photo/media mutations, album creation, exports, and AI analysis require owner access or a `planner`/`coordinator` collaborator role.
+- Preserved current planner/coordinator role-preset behavior when older collaborator rows do not include a permissions array, while still enforcing explicit `photos`/`media` permissions when that array is present.
+- Blocked viewer collaborators from creating albums, exporting photo manifests, changing album links/windows, moderating photos, or triggering photo analysis even if a stale explicit permission array contains `photos` or `media`.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 2 files and 37 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. Local photo/media service-role authorization risk is narrowed with static proof. No deploy was run, so live service-role/RLS proof remains open.
+
+### 2026-05-05 2:43 PM PT - Shared Collaborator Permission Helper
+
+What changed:
+- Added `supabase/functions/_shared/collaboratorPermissions.ts` for shared collaborator mutation authorization helpers.
+- Replaced local duplicate helper implementations in messaging and photo/media Edge Functions with imports from the shared helper.
+- Kept the already-proven behavior: owners retain access, planner/coordinator roles can mutate when the relevant permission rules allow it, and viewers remain read-only even with stale explicit permission arrays.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 2 files and 38 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This improves maintainability and lowers future permission-drift risk. No deploy was run, so live service-role/RLS and live messaging authorization proof remain open.
+
+### 2026-05-05 2:46 PM PT - Public Site Invite URL Cleanup
+
+What changed:
+- Added `getUrlWithoutPublicAccessToken` in `SiteView` and use it after a valid invite token is captured.
+- Public invite-only site URLs now remove `?token=` from the address bar after storing the access artifact in slug-scoped `sessionStorage`.
+- Preserved other query params and hash fragments, so language/deep-link state is not lost.
+
+Commands run:
+- `npm test -- --run src/pages/SiteView.test.ts src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 3 files and 44 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. Local browser-token exposure risk is reduced. No deploy was run, so production behavior is unchanged until an approved deploy.
+
+### 2026-05-05 2:53 PM PT - Guest Route Invite URL Cleanup
+
+What changed:
+- Added `src/lib/publicAccessArtifacts.ts` to centralize slug-scoped public invite token and password-session storage keys, access-artifact packaging, and visible `token` query cleanup.
+- Updated `SiteView`, Event Hub, Event Recap, and site-slug Photo Upload to use the shared helper.
+- Guest invite links still work, current URL tokens still take precedence, and stored access artifacts still support gated subresource calls after the visible token is removed.
+
+Commands run:
+- `npm test -- --run src/lib/publicAccessArtifacts.test.ts src/pages/SiteView.test.ts src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx src/pages/PhotoUpload.test.ts`: PASS, 5 files and 36 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. Local browser-token exposure risk is further reduced across guest routes. No deploy was run, so production behavior is unchanged until an approved deploy.
+
+### 2026-05-05 2:57 PM PT - Public Contribution Access Artifact Consolidation
+
+What changed:
+- Updated Vault Contribution, Guest Contact Update, Guestbook Submit, public RSVP section submit, and multi-event RSVP section submit to use `src/lib/publicAccessArtifacts.ts`.
+- Vault Contribution, Guest Contact Update, and Guestbook Submit now capture valid invite tokens into slug-scoped session storage and remove the visible `token` query parameter on first load.
+- Preserved valid gated contribution flows by keeping current-link tokens preferred and using stored invite/password artifacts for later subresource calls.
+
+Commands run:
+- `npm test -- --run src/lib/publicAccessArtifacts.test.ts src/pages/GuestContactUpdate.test.ts src/pages/GuestbookSubmit.test.ts src/pages/VaultContribute.test.ts src/sections/components/RsvpSection.test.tsx src/sections/variants/rsvp/multiEvent.test.tsx src/pages/SiteView.test.ts src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx src/pages/PhotoUpload.test.ts`: PASS, 10 files and 68 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. Local browser-token exposure and access-artifact drift risk are reduced across public contribution surfaces. No deploy was run, so production behavior is unchanged until an approved deploy.
+
+### 2026-05-05 3:08 PM PT - Planning Data-Boundary Service Extraction
+
+What changed:
+- Moved planning site metadata, guest-count lookup, seating-readiness lookup, and total-budget persistence out of `src/pages/dashboard/Planning.tsx` into `src/pages/dashboard/planning/planningService.ts`.
+- Added explicit planning service projections for the site metadata, total-budget, and seating-readiness reads.
+- Updated the dashboard data-boundary regression test so Planning cannot quietly reintroduce direct page-level site/guest reads for these flows.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/planning/planningServiceStarterSuite.test.ts`: PASS, 3 files and 16 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This reduces direct Supabase/page-coupling risk in the planning dashboard without changing planning behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 3:12 PM PT - Planning Sub-Tab Service Extraction
+
+What changed:
+- Moved address-collection site/guest reads, song-request site/RSVP reads, playlist save, and song-question enablement from planning sub-tabs into `src/pages/dashboard/planning/planningService.ts`.
+- Added explicit service projections for address collection and song request flows.
+- Extended static data-boundary proof so `AddressCollectionTab.tsx` and `SongRequestsTab.tsx` cannot quietly reintroduce direct Supabase page imports/calls for these paths.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/planning/planningServiceStarterSuite.test.ts`: PASS, 3 files and 18 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows planning direct-data-access drift while preserving address collection and song request behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 3:18 PM PT - Seating Lookup Service Extraction
+
+What changed:
+- Moved the seating lookup page's active-site resolution, latest seating event lookup, valid assignment reads, table reads, guest reads, and lookup-row mapping into `src/pages/dashboard/seating/seatingService.ts`.
+- Added explicit seating lookup projections for events, assignments, tables, and guests.
+- Extended static data-boundary proof so the seating lookup page cannot quietly reintroduce direct Supabase or active-site imports.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/seating/seatingService.test.ts src/pages/dashboard/seating/seatingDashboardUtils.test.ts src/pages/dashboard/seating/seatingDemoStorage.test.ts`: PASS, 4 files and 34 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows seating lookup direct-data-access drift while preserving the quick lookup feature. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 3:25 PM PT - Coordinator Mode Service Extraction
+
+What changed:
+- Moved Coordinator Mode bootstrap reads, event-invitation mapping, Q&A reads, guest check-in updates, day-of alert inserts, manual Q&A inserts, and Q&A answer updates into `src/pages/dashboard/coordinator/coordinatorService.ts`.
+- Removed direct Supabase and active-site imports from `CoordinatorMode.tsx`.
+- Added explicit Coordinator service projections for guests, itinerary events, event invitations, and Q&A rows.
+- Lowered the file-size guard baseline for `CoordinatorMode.tsx` from 2773 to 2736 lines.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts src/pages/dashboard/coordinator/coordinatorDashboardUtils.test.ts src/pages/dashboard/coordinator/coordinatorStorage.test.ts src/lib/coordinatorCheckInQueue.test.ts src/lib/coordinatorAlertLogView.test.ts src/lib/coordinatorQnaFlow.test.ts`: PASS, 7 files and 29 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows coordinator direct-data-access drift while preserving day-of coordinator behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 3:31 PM PT - Messages Scheduled Campaign Service Boundary
+
+What changed:
+- Moved the dashboard save-the-date scheduled campaign insert behind `src/pages/dashboard/messages/messageService.ts`.
+- Added an explicit `MessageInsertPayload` contract for that message insert.
+- Extended static data-boundary proof so the save-the-date path cannot quietly reintroduce direct page-owned `supabase.from('messages').insert(payload)`.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageDashboardUtils.test.ts src/pages/dashboard/messages/messageDemoStorage.test.ts src/pages/dashboard/messageTemplateVariables.test.ts src/lib/guestMessageLanguagePreview.test.ts`: PASS, 5 files and 33 tests.
+- `npm run typecheck -- --pretty false`: initially FAIL on broad inferred payload type, then PASS after annotating `payload: MessageInsertPayload`.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows messaging direct-data-access drift while preserving scheduled save-the-date behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 3:49 PM PT - Itinerary Template Insert Service Boundary
+
+What changed:
+- Moved the itinerary timeline-template event insert behind `src/pages/dashboard/itineraryService.ts`.
+- Added a pure insert-row builder for site-scoped template events.
+- Extended static data-boundary proof so the template path cannot quietly reintroduce direct page-owned `supabase.from('itinerary_events').insert(newEvents.map(...))`.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryDateTime.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts`: PASS, 5 files and 23 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows itinerary direct-data-access drift while preserving timeline-template behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 3:57 PM PT - Vault Dashboard Service Boundary
+
+What changed:
+- Moved Vault dashboard site/config/entry reads, hosted-storage provider persistence, config create/upsert/update/delete, entry create/delete, and anniversary recap draft update into `src/pages/dashboard/vaultService.ts`.
+- Added explicit Vault service projections for `wedding_sites`, `vault_configs`, and `vault_entries`.
+- Updated the static dashboard data-boundary guard so `Vault.tsx` cannot quietly reintroduce direct `wedding_sites`, `vault_configs`, or `vault_entries` table calls.
+
+Commands run:
+- `npm test -- src/pages/dashboard/vaultService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 2 files and 15 tests.
+- `npm run typecheck`: initial FAIL on two service typing errors, then PASS after narrowing service row types before using `site.id`.
+- `npm run lint`: PASS with existing warning backlog, 553 warnings and 0 errors.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows Vault direct-data-access drift while preserving vault loading, config management, entry management, rollback, and recap behavior. No deploy was run, so live proof status is unchanged.
+
+### 2026-05-05 4:00 PM PT - Overview Intelligence Service Boundary
+
+What changed:
+- Moved Overview intelligence-dismissal persistence and interactive-suggestion hide writes into `src/pages/dashboard/overviewService.ts`.
+- Added a pure merge helper so persisted intelligence dismissals preserve existing `wedding_data` and `meta` fields.
+- Updated the static dashboard data-boundary guard so these Overview paths cannot quietly reintroduce page-owned writes.
+
+Commands run:
+- `npm test -- src/pages/dashboard/overviewService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 2 files and 15 tests.
+- `npm run typecheck`: PASS.
+- `npm run lint`: PASS with existing warning backlog, 553 warnings and 0 errors.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This narrows Overview direct-data-access drift while preserving dismissal, demo-mode, suggestion hide, and toast behavior. No deploy was run, so live proof status is unchanged.

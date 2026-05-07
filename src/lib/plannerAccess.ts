@@ -66,6 +66,7 @@ export function hasPlannerPermission(
   permission: PlannerPermissionKey,
 ): boolean {
   if (role === 'owner') return true;
+  if (role === 'viewer') return false;
   if (Array.isArray(permissions)) return permissions.includes(permission);
   return getPlannerPermissionPreset(role as Exclude<PlannerAccessRole, 'owner'>).includes(permission);
 }
@@ -123,9 +124,30 @@ export interface PlannerInviteRecord {
   permissions?: PlannerPermissionKey[];
 }
 
+export const MAX_PLANNER_INVITE_STORAGE_AGE_MS = 1000 * 60 * 60 * 24 * 30;
+export const PLANNER_INVITE_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
+
 export function getPlannerInviteStorageKey(siteId: string | null | undefined): string | null {
   if (!siteId) return null;
   return `dayof.plannerInvite.${siteId}`;
+}
+
+export function normalizePlannerInvite(value: unknown): PlannerInviteRecord | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const invite = value as Partial<PlannerInviteRecord>;
+  if (!invite.name || !invite.email || !invite.role || !invite.invitedAtISO) return null;
+  if (!PLANNER_INVITE_EMAIL_PATTERN.test(invite.email.trim())) return null;
+  const invitedAt = Date.parse(invite.invitedAtISO);
+  if (Number.isNaN(invitedAt)) return null;
+  if (Date.now() - invitedAt > MAX_PLANNER_INVITE_STORAGE_AGE_MS) return null;
+  return {
+    name: invite.name,
+    email: invite.email.trim(),
+    role: invite.role,
+    status: invite.status ?? 'draft',
+    invitedAtISO: invite.invitedAtISO,
+    permissions: Array.isArray(invite.permissions) ? invite.permissions : undefined,
+  };
 }
 
 export function readPlannerInvite(siteId: string | null | undefined): PlannerInviteRecord | null {
@@ -134,9 +156,12 @@ export function readPlannerInvite(siteId: string | null | undefined): PlannerInv
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as PlannerInviteRecord;
-    if (!parsed?.name || !parsed?.email || !parsed?.role) return null;
-    return parsed;
+    const normalized = normalizePlannerInvite(JSON.parse(raw));
+    if (!normalized) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return normalized;
   } catch {
     return null;
   }

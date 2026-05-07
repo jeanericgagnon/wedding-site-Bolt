@@ -26,6 +26,11 @@ const allowedTemplateIds = new Set([
   'bold-minimal',
 ]);
 const allowedStyleTags = new Set(['Modern', 'Classic', 'Floral', 'Minimal', 'Romantic', 'Rustic', 'Bold', 'Destination']);
+const SETUP_SIGNIN_REQUIRED_COPY = "Please sign in to continue setup.";
+const SETUP_PARTNER_NAMES_REQUIRED_COPY = "Add both first names to continue setup.";
+const SETUP_GUEST_RANGE_INVALID_COPY = "Choose a valid guest count range to continue setup.";
+const SETUP_SITE_NOT_READY_COPY = "Your setup space is not ready yet.";
+const SETUP_WEDDING_DATE_INVALID_COPY = "Enter a valid wedding date.";
 
 function safeSetupBootstrapError(code: "SERVER_CONFIG_ERROR" | "SAVE_FAILED" | "LOAD_FAILED" | "INTERNAL_ERROR"): string {
   if (code === "SERVER_CONFIG_ERROR") return "Setup is not ready yet. Please try again in a few minutes.";
@@ -40,16 +45,16 @@ Deno.serve(async (req: Request) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return fail("UNAUTHORIZED", "Unauthorized", 401);
+    if (!authHeader?.startsWith("Bearer ")) return fail("UNAUTHORIZED", SETUP_SIGNIN_REQUIRED_COPY, 401);
 
     const body = (await req.json().catch(() => ({}))) as SetupPayload;
 
     const p1 = (body.partnerOneFirstName ?? "").trim();
     const p2 = (body.partnerTwoFirstName ?? "").trim();
-    if (!p1 || !p2) return fail("VALIDATION_ERROR", "Both partner first names are required", 400);
+    if (!p1 || !p2) return fail("VALIDATION_ERROR", SETUP_PARTNER_NAMES_REQUIRED_COPY, 400);
 
     if (!allowedGuestBands.has(body.guestEstimateBand ?? '')) {
-      return fail("VALIDATION_ERROR", "Invalid guest estimate band", 400);
+      return fail("VALIDATION_ERROR", SETUP_GUEST_RANGE_INVALID_COPY, 400);
     }
 
     const selectedTemplateId = allowedTemplateIds.has(body.selectedTemplateId ?? '')
@@ -78,7 +83,7 @@ Deno.serve(async (req: Request) => {
       error: userErr,
     } = await userClient.auth.getUser();
 
-    if (userErr || !user) return fail("UNAUTHORIZED", "Unauthorized", 401);
+    if (userErr || !user) return fail("UNAUTHORIZED", SETUP_SIGNIN_REQUIRED_COPY, 401);
 
     const admin = createClient(supabaseUrl, serviceRole);
 
@@ -92,13 +97,13 @@ Deno.serve(async (req: Request) => {
       console.error("SETUP_BOOTSTRAP_LOAD_FAILED", { reason: "SITE_LOAD_FAILED" });
       return fail("DB_ERROR", safeSetupBootstrapError("LOAD_FAILED"), 400);
     }
-    if (!site) return fail("NO_SITE", "No wedding site found for this account", 404);
+    if (!site) return fail("NO_SITE", SETUP_SITE_NOT_READY_COPY, 404);
 
     let weddingDateISO: string | undefined;
     if (body.dateKnown && body.weddingDate) {
       const parsedDate = new Date(body.weddingDate);
       if (Number.isNaN(parsedDate.getTime())) {
-        return fail("VALIDATION_ERROR", "Invalid wedding date", 400);
+        return fail("VALIDATION_ERROR", SETUP_WEDDING_DATE_INVALID_COPY, 400);
       }
       weddingDateISO = parsedDate.toISOString();
     }

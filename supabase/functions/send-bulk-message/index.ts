@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { escapeHtml, sanitizeEmailSubject } from "../_shared/emailSafety.ts";
+import { canMutateMessages } from "../_shared/collaboratorPermissions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +17,14 @@ interface SendBulkPayload {
 
 type SiteMessagingRole = "owner" | "planner" | "coordinator" | "viewer";
 const SMS_SEGMENT_SIZE = 160;
+const MESSAGE_EVENT_AUDIENCE_REQUIRED_COPY = "Choose an event audience before sending this message.";
+const MESSAGE_NOT_READY_TO_SEND_COPY = "This message is not ready to send yet.";
+const MESSAGE_SCHEDULED_LATER_COPY = "This message is still scheduled for later.";
+const MESSAGE_REQUEST_INVALID_COPY = "Could not read this message request. Please try again.";
+const MESSAGE_SELECTION_REQUIRED_COPY = "Choose a message before sending.";
+const MESSAGE_SIGNIN_REQUIRED_COPY = "Please sign in to send this message.";
+const MESSAGE_ACCESS_UNAVAILABLE_COPY = "This message request is not available.";
+const MESSAGE_NOT_FOUND_COPY = "This message is not available.";
 const MESSAGE_DELIVERY_SELECT = [
   "id",
   "wedding_site_id",
@@ -50,10 +59,6 @@ function safeDeliveryFailureMessage(channel: string): string {
   return channel === "sms"
     ? "Text delivery did not complete. Please review the recipient and try again."
     : "Email delivery did not complete. Please review the recipient and try again.";
-}
-
-function hasPermissionKey(permissions: unknown, key: string): boolean {
-  return Array.isArray(permissions) && permissions.includes(key);
 }
 
 function countSmsSegments(body: string): number {
@@ -204,7 +209,7 @@ async function resolveSiteMessagingRole(adminClient: ReturnType<typeof createCli
 
   if (collaboratorError) throw collaboratorError;
   const role = collaboratorRow?.role;
-  if ((role === "planner" || role === "coordinator" || role === "viewer") && hasPermissionKey(collaboratorRow?.permissions, "messages")) {
+  if (canMutateMessages(role, collaboratorRow?.permissions)) {
     return role;
   }
   return null;
@@ -228,7 +233,7 @@ async function listMessageManageableSiteIds(adminClient: ReturnType<typeof creat
   return Array.from(new Set([
     ...(ownedSites ?? []).map((row: { id: string }) => row.id),
     ...(collaboratorSites ?? [])
-      .filter((row: { permissions?: unknown }) => hasPermissionKey(row.permissions, "messages"))
+      .filter((row: { role?: unknown; permissions?: unknown }) => canMutateMessages(row.role, row.permissions))
       .map((row: { wedding_site_id: string }) => row.wedding_site_id),
   ].filter(Boolean)));
 }
@@ -251,22 +256,22 @@ async function deliverMessage(opts: {
     .maybeSingle();
 
   if (msgErr || !message) {
-    return { ok: false, status: 404, body: { error: "Message not found" } };
+    return { ok: false, status: 404, body: { error: MESSAGE_NOT_FOUND_COPY } };
   }
 
   const siteRole = await resolveSiteMessagingRole(adminClient, message.wedding_sites.id, userId);
   if (!siteRole) {
-    return { ok: false, status: 403, body: { error: "Forbidden" } };
+    return { ok: false, status: 403, body: { error: MESSAGE_ACCESS_UNAVAILABLE_COPY } };
   }
 
   if (!["queued", "scheduled", "failed"].includes(message.status)) {
-    return { ok: false, status: 400, body: { error: `Cannot send message with status '${message.status}'` } };
+    return { ok: false, status: 400, body: { error: MESSAGE_NOT_READY_TO_SEND_COPY } };
   }
 
   if (message.status === "scheduled" && message.scheduled_for) {
     const scheduledAt = new Date(message.scheduled_for).getTime();
     if (scheduledAt > Date.now()) {
-      return { ok: false, status: 400, body: { error: "Message is scheduled for a future time" } };
+      return { ok: false, status: 400, body: { error: MESSAGE_SCHEDULED_LATER_COPY } };
     }
   }
 
@@ -286,7 +291,7 @@ async function deliverMessage(opts: {
   if (audience.startsWith("event:")) {
     const eventId = audience.replace("event:", "").trim();
     if (!eventId) {
-      return { ok: false, status: 400, body: { error: "Invalid event audience" } };
+      return { ok: false, status: 400, body: { error: MESSAGE_EVENT_AUDIENCE_REQUIRED_COPY } };
     }
 
     const { data: eventInvites, error: eventInvitesError } = await adminClient
@@ -661,7 +666,7 @@ Deno.serve(async (req: Request) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return jsonResponse(401, { error: "Unauthorized" });
+      return jsonResponse(401, { error: MESSAGE_SIGNIN_REQUIRED_COPY });
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -677,14 +682,14 @@ Deno.serve(async (req: Request) => {
 
     const { data: { user }, error: authError } = await userClient.auth.getUser();
     if (authError || !user) {
-      return jsonResponse(401, { error: "Unauthorized" });
+      return jsonResponse(401, { error: MESSAGE_SIGNIN_REQUIRED_COPY });
     }
 
     let payload: SendBulkPayload;
     try {
       payload = await req.json();
     } catch {
-      return jsonResponse(400, { error: "Invalid JSON" });
+      return jsonResponse(400, { error: MESSAGE_REQUEST_INVALID_COPY });
     }
 
     const adminClient = createClient(supabaseUrl, serviceKey);
@@ -779,7 +784,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!payload.messageId) {
-      return jsonResponse(400, { error: "messageId is required" });
+      return jsonResponse(400, { error: MESSAGE_SELECTION_REQUIRED_COPY });
     }
 
     const result = await deliverMessage({

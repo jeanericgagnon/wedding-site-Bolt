@@ -7,6 +7,25 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. Active strict P0 items are live deploy/function proof for the local access-control changes, live RLS/service-role proof after static disposition, and live messaging authorization proof after local queue lockdown. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-07 10:36 AM PT Local Request-Copy And Storage Safety Batch
+
+- Continued the no-deploy hardening lane locally. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - `setup-bootstrap`, `translate-site-content`, `send-bulk-message`, `photo-analyze-batch`, `generate-token`, `submit-rsvp`, and `validate-rsvp-token` now use customer-safe request/auth/validation copy instead of raw JSON/auth/field-name wording.
+  - `plannerAccess` now validates stored planner invite emails, evicts stale/invalid invite blobs, and exposes `PLANNER_INVITE_EMAIL_PATTERN` for the backlog safety guard.
+  - `messageDashboardUtils` now stores saved composer templates and remembered photo album links inside timestamped retention envelopes with normalization and cleanup.
+  - `Itinerary.tsx` and `Vault.tsx` now use the hardened demo-storage and local-E2E helper modules instead of raw localStorage calls.
+  - Shared helper/service export gaps introduced by the ongoing splits were repaired in `publicAccessArtifacts`, guest dashboard helpers/services, and messages services so the branch is again typecheck/build green.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/customerSafeError.test.ts src/lib/superNiceLaunchBacklogSafety.test.ts src/pages/dashboard/messages/messageDashboardUtils.test.ts src/pages/dashboard/itineraryDemoStorage.test.ts`: PASS, 59/59.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with the existing non-blocking Browserslist `caniuse-lite` warning and empty `vendor-react` chunk warning.
+- Launch status did not change. This was local-only hardening and baseline repair; no deploy was run.
+
 ## 2026-05-04 5:43 PM PT Local P0 Production-Hardening Access-Control Batch
 
 - Continued from the stricter production-hardening backlog standard. No deploy, migration, or Supabase function deploy was run.
@@ -6735,3 +6754,224 @@ A slice does **not** count as passed because:
   - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`: PASS, 4/4.
   - `npm run proof:v1:postdeploy`: PASS, 8/8.
 - Launch status changed: the approved production deploy is live and the current non-SMS postdeploy proof is green. Remaining caveats are secure service-role integrity proof, live model-backed AI proof after server key configuration, deferred SMS/Telnyx, remaining P1/P2 hardening, and GitHub branch synchronization.
+
+## 2026-05-05 2:28 PM PT No-Deploy Messaging Viewer Mutation Hardening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `send-bulk-message`, `send-wedding-email`, and `queue-guest-followups` now require owner access or a `planner`/`coordinator` collaborator role with the relevant permission before sending/scheduling messages or queueing guest follow-ups.
+  - Viewer collaborators are denied mutation even if a stale/malformed explicit permission array contains `messages` or `guests`.
+  - Scheduled bulk-message processing now filters manageable site ids through the same role-aware mutation helper.
+  - Frontend planner access helpers now keep `viewer` read-only before checking explicit permission arrays, matching the Edge Function boundary.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 37/37.
+  - `npm run smoke:messages`: PASS.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This narrows local email/messaging authorization risk, but live messaging authorization proof remains required and no deploy was run.
+
+## 2026-05-05 2:35 PM PT No-Deploy Photo/Media Viewer Mutation Hardening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `photo-album-create`, `photo-export-manifest`, `photo-album-manage`, `photo-upload-moderate`, and `photo-analyze-batch` now require owner access or a `planner`/`coordinator` collaborator role before service-role photo/media album creation, mutation, export, or analysis work.
+  - Explicit `photos`/`media` permissions remain honored for planner/coordinator collaborators, and older missing-permission rows still follow the planner/coordinator role preset.
+  - Viewer collaborators are denied photo album creation, export, album management, moderation, and analysis even if a stale/malformed permission array includes `photos` or `media`.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 37/37.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This narrows local photo/media service-role authorization risk, but live service-role/RLS proof remains required and no deploy was run.
+
+## 2026-05-05 2:43 PM PT No-Deploy Shared Collaborator Permission Helper
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `supabase/functions/_shared/collaboratorPermissions.ts` to centralize collaborator mutation checks.
+  - Messaging and photo/media Edge Functions now import the shared helper instead of carrying duplicate local role/permission logic.
+  - The shared helper preserves the hardened behavior from the previous batches: viewer remains read-only; planner/coordinator mutation stays permission-scoped; owner checks remain at each owning site lookup.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 38/38.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This reduces local permission-drift risk, but no deploy was run and live service-role/RLS plus live messaging authorization proof remain required.
+
+## 2026-05-05 2:46 PM PT No-Deploy Public Site Invite URL Cleanup
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `SiteView` now strips the public invite `token` query parameter from the address bar after capturing it in the existing slug-scoped session storage key.
+  - Other query parameters and hash fragments are preserved, so language links and section anchors continue to work.
+  - This lowers accidental invite-token exposure in screenshots, copied URLs, browser history, and referrer-like contexts without removing invite-only access.
+- Proof passed:
+  - `npm test -- --run src/pages/SiteView.test.ts src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 44/44.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 2:53 PM PT No-Deploy Guest Route Invite URL Cleanup
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Added `src/lib/publicAccessArtifacts.ts` for shared public invite/password access artifact keys, packaging, capture, and visible token cleanup.
+  - `SiteView`, Event Hub, Event Recap, and site-slug Photo Upload now use the shared helper instead of duplicating token/session reads.
+  - Guest routes preserve valid invite-only access while removing raw `?token=` from the address bar after capture.
+  - Other query params and hash fragments are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/publicAccessArtifacts.test.ts src/pages/SiteView.test.ts src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx src/pages/PhotoUpload.test.ts`: PASS, 36/36.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 2:57 PM PT No-Deploy Public Contribution Access Artifact Consolidation
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Vault Contribution, Guest Contact Update, Guestbook Submit, public RSVP section submit, and multi-event RSVP section submit now use `src/lib/publicAccessArtifacts.ts`.
+  - Vault Contribution, Guest Contact Update, and Guestbook Submit now remove the raw `token` query parameter from the visible URL after capturing it into slug-scoped session storage.
+  - Public RSVP section submits and multi-event RSVP submits still send invite/password artifacts for gated public sites, but the token/session key logic no longer drifts per component.
+- Proof passed:
+  - `npm test -- --run src/lib/publicAccessArtifacts.test.ts src/pages/GuestContactUpdate.test.ts src/pages/GuestbookSubmit.test.ts src/pages/VaultContribute.test.ts src/sections/components/RsvpSection.test.tsx src/sections/variants/rsvp/multiEvent.test.tsx src/pages/SiteView.test.ts src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx src/pages/PhotoUpload.test.ts`: PASS, 68/68.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 3:08 PM PT No-Deploy Planning Data-Boundary Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Planning site metadata, guest count, seating readiness, and total-budget persistence now run through `src/pages/dashboard/planning/planningService.ts`.
+  - `src/pages/dashboard/Planning.tsx` no longer owns those direct Supabase reads/writes.
+  - Explicit service projections keep planning dashboard data access auditable and narrow.
+  - Planning overview, starter-suite readiness, seating readiness, venue/destination context, and total-budget save behavior are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/planning/planningServiceStarterSuite.test.ts`: PASS, 16/16.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 3:12 PM PT No-Deploy Planning Sub-Tab Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Address collection site/guest reads now run through `planningService` with explicit projections.
+  - Song request site/RSVP reads, playlist save, and song-question enablement now run through `planningService` with explicit projections.
+  - `AddressCollectionTab.tsx` and `SongRequestsTab.tsx` no longer import Supabase directly for these flows.
+  - Address collection links/exports, song request parsing, playlist saving, song-question enablement, demo mode, and dirty playlist state are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/planning/planningServiceStarterSuite.test.ts`: PASS, 18/18.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 3:18 PM PT No-Deploy Seating Lookup Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Seating lookup active-site resolution, latest event lookup, valid assignment reads, table reads, guest reads, and row mapping now run through `seatingService`.
+  - `DashboardSeatingLookup` no longer imports Supabase or active-site helpers directly.
+  - Explicit projections keep lookup access auditable for seating events, assignments, tables, and guests.
+  - Demo lookup rows, search filtering, table/seat answers, exception badges, and seating/coordinator links are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/seating/seatingService.test.ts src/pages/dashboard/seating/seatingDashboardUtils.test.ts src/pages/dashboard/seating/seatingDemoStorage.test.ts`: PASS, 34/34.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 3:25 PM PT No-Deploy Coordinator Mode Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Coordinator Mode bootstrap reads, event-invitation mapping, Q&A reads, guest check-in updates, day-of alert inserts, manual Q&A inserts, and Q&A answer updates now run through `coordinatorService`.
+  - `CoordinatorMode.tsx` no longer imports Supabase or active-site helpers directly.
+  - Explicit projections keep coordinator guest, itinerary event, event invitation, and Q&A access auditable.
+  - Demo coordinator state, live bootstrap, event audiences, check-in, immediate/scheduled alerts, manual Q&A, answer save/reopen, role gates, and cached Q&A fallback are preserved.
+  - `CoordinatorMode.tsx` file-size guard baseline dropped from 2773 to 2736 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts src/pages/dashboard/coordinator/coordinatorDashboardUtils.test.ts src/pages/dashboard/coordinator/coordinatorStorage.test.ts src/lib/coordinatorCheckInQueue.test.ts src/lib/coordinatorAlertLogView.test.ts src/lib/coordinatorQnaFlow.test.ts`: PASS, 29/29.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 3:31 PM PT No-Deploy Messages Scheduled Campaign Service Boundary
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - The dashboard save-the-date scheduled campaign insert now runs through `messageService`.
+  - The insert has an explicit `MessageInsertPayload` contract.
+  - `dashboardDataBoundary.test.ts` now guards against direct page-owned `supabase.from('messages').insert(payload)` returning for this path.
+  - Demo save-the-date campaign creation, live scheduled campaign insert, message refresh, recipient counts, reachable/skipped counts, and owner toast behavior are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageDashboardUtils.test.ts src/pages/dashboard/messages/messageDemoStorage.test.ts src/pages/dashboard/messageTemplateVariables.test.ts src/lib/guestMessageLanguagePreview.test.ts`: PASS, 33/33.
+  - `npm run typecheck -- --pretty false`: initially failed on broad inferred payload type, then PASS after annotating `MessageInsertPayload`.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 3:49 PM PT No-Deploy Itinerary Template Insert Service Boundary
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Itinerary timeline-template event inserts now run through `itineraryService`.
+  - Template insert rows are built by a pure helper that scopes every inserted event to one wedding site and keeps the existing event title/public visibility fields.
+  - `dashboardDataBoundary.test.ts` now guards against the direct page-owned template insert returning.
+  - Demo template insertion, duplicate-template prevention, owner active-site lookup, event reload, public visibility, event title mirroring, schedule timing, and owner notices/errors are preserved.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryDateTime.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts`: PASS, 23/23.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 3:57 PM PT No-Deploy Vault Dashboard Service Boundary
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Vault dashboard site/config/entry reads now run through `src/pages/dashboard/vaultService.ts`.
+  - Hosted-storage provider persistence, config create/upsert/update/delete, entry create/delete, rollback-on-config-delete-failure, and recap draft update now run through the same service boundary.
+  - The service keeps explicit projections for `wedding_sites`, `vault_configs`, and `vault_entries`.
+  - Demo vaults, live vault loading, starter vaults, config edit/toggle/delete, entry save/delete, rollback behavior, and recap regeneration are preserved.
+- Proof passed:
+  - `npm test -- src/pages/dashboard/vaultService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck`: initially failed on service row typing, then PASS after narrowing before reading `site.id`.
+  - `npm run lint`: PASS with existing warning backlog, 553 warnings and 0 errors.
+  - `npm run guard:file-size`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-05 4:00 PM PT No-Deploy Overview Intelligence Service Boundary
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Overview intelligence-dismissal persistence now runs through `src/pages/dashboard/overviewService.ts`.
+  - Interactive-suggestion hide writes now run through the same service boundary.
+  - The dismissal writer uses an explicit `wedding_data` projection and preserves existing wedding data/meta while replacing the dismissal list.
+  - Local dismissal state, demo behavior, persisted dismissals, suggestion hiding, and owner toasts are preserved.
+- Proof passed:
+  - `npm test -- src/pages/dashboard/overviewService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck`: PASS.
+  - `npm run lint`: PASS with existing warning backlog, 553 warnings and 0 errors.
+  - `npm run guard:file-size`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

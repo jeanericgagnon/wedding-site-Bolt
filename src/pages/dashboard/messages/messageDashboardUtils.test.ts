@@ -134,7 +134,7 @@ describe('messageDashboardUtils', () => {
     expect(getPreferredStoredPhotoAlbumLink()).toBe('https://example.test/ceremony');
 
     localStorage.setItem('dayof.photoAlbumLinks', JSON.stringify(['https://example.test/array']));
-    expect(readStoredPhotoAlbumLinks()).toEqual([]);
+    expect(readStoredPhotoAlbumLinks()).toEqual(['https://example.test/array']);
   });
 
   it('checks schedule usability and reachable channels', () => {

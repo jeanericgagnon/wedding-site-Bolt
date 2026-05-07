@@ -49,6 +49,11 @@ function safeTranslateSiteContentError(code: "LOAD_FAILED" | "SAVE_FAILED" | "IN
   if (code === "SAVE_FAILED") return "Could not save this translation. Please try again.";
   return "Could not prepare translation. Please try again.";
 }
+const TRANSLATION_SIGNIN_REQUIRED_COPY = "Please sign in to translate this site.";
+const TRANSLATION_NOT_READY_COPY = "Translation is not available right now. Please try again later.";
+const TRANSLATION_SITE_REQUIRED_COPY = "Choose a site before translating.";
+const TRANSLATION_LANGUAGE_UNAVAILABLE_COPY = "This translation language is not available.";
+const TRANSLATION_SITE_UNAVAILABLE_COPY = "This site is not available for translation.";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
@@ -56,7 +61,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return json({ error: "Missing authorization" }, 401);
+    if (!authHeader) return json({ error: TRANSLATION_SIGNIN_REQUIRED_COPY }, 401);
 
     const token = authHeader.replace(/^Bearer\s+/i, "").trim();
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -64,14 +69,14 @@ Deno.serve(async (req: Request) => {
     const admin = createClient(supabaseUrl, serviceKey);
 
     const { data: userData, error: userError } = await admin.auth.getUser(token);
-    if (userError || !userData.user) return json({ error: "Unauthorized" }, 401);
+    if (userError || !userData.user) return json({ error: TRANSLATION_SIGNIN_REQUIRED_COPY }, 401);
 
     const body = await req.json().catch(() => ({}));
     const siteId = String(body.siteId ?? body.wedding_site_id ?? "").trim();
     const language = String(body.language ?? "es").trim().toLowerCase();
     const languageLabel = TARGET_LANGUAGES[language];
-    if (!siteId) return json({ error: "siteId is required" }, 400);
-    if (!languageLabel) return json({ error: "Unsupported language" }, 400);
+    if (!siteId) return json({ error: TRANSLATION_SITE_REQUIRED_COPY }, 400);
+    if (!languageLabel) return json({ error: TRANSLATION_LANGUAGE_UNAVAILABLE_COPY }, 400);
 
     const { data: site, error: siteError } = await admin
       .from("wedding_sites")
@@ -83,7 +88,7 @@ Deno.serve(async (req: Request) => {
       console.error("TRANSLATE_SITE_CONTENT_LOAD_FAILED", { reason: "SITE_LOAD_FAILED" });
       return json({ error: safeTranslateSiteContentError("LOAD_FAILED") }, 500);
     }
-    if (!site || site.user_id !== userData.user.id) return json({ error: "Wedding site not found" }, 404);
+    if (!site || site.user_id !== userData.user.id) return json({ error: TRANSLATION_SITE_UNAVAILABLE_COPY }, 404);
 
     const rateLimit = await enforcePublicSubmissionRateLimit({
       admin,
@@ -121,7 +126,7 @@ Deno.serve(async (req: Request) => {
     const openAiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openAiKey) {
       await markFailed();
-      return json({ error: "Translation is not configured yet. Try again after launch settings are connected." }, 503);
+      return json({ error: TRANSLATION_NOT_READY_COPY }, 503);
     }
 
     const prompt = [
