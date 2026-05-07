@@ -19,6 +19,23 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 3:59 PM PT - No-Deploy Setup Bootstrap Service Extraction
+
+What changed:
+- `src/pages/setup/SetupShell.tsx` no longer owns the direct `invokeFunctionOrThrow(supabase, 'setup-bootstrap', ...)` call.
+- New `src/pages/setup/setupService.ts` now owns `submitSetupBootstrap(...)` for the setup bootstrap Edge Function handoff.
+- Added `src/pages/setup/setupService.test.ts` so the setup page-to-service boundary is pinned.
+
+Commands run:
+- `npm test -- --run src/pages/setup/setupService.test.ts src/lib/launchWordingGuard.test.ts`: PASS, 2 files and 4 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This removes another page-owned function invoke and keeps `SetupShell.tsx` focused on setup flow instead of transport wiring. No deploy was run.
+
 ### 2026-05-07 3:56 PM PT - No-Deploy Login Auth Listener Service Extraction
 
 What changed:

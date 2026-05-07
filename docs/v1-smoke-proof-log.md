@@ -7,6 +7,20 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-07 3:59 PM PT No-Deploy Setup Bootstrap Service Extraction
+- Continued from `BACKLOG.md` in the no-deploy page-to-service extraction lane.
+- Fixed/proved:
+  - `src/pages/setup/SetupShell.tsx` no longer owns the direct `invokeFunctionOrThrow(supabase, 'setup-bootstrap', ...)` call.
+  - `src/pages/setup/setupService.ts` now owns `submitSetupBootstrap(...)` for the setup bootstrap handoff.
+  - `src/pages/setup/setupService.test.ts` now pins that setup page-to-service function boundary.
+- Proof passed:
+  - `npm test -- --run src/pages/setup/setupService.test.ts src/lib/launchWordingGuard.test.ts`: PASS, 4/4.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is another maintainability and setup-flow boundary hardening step, and no deploy was run.
+
 ## 2026-05-07 3:53 PM PT No-Deploy Vault Contribution Function Service Extraction
 - Continued from `BACKLOG.md` in the no-deploy page-to-service extraction lane.
 - Fixed/proved:

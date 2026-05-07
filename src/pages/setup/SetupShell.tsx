@@ -1,12 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
-import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { templateCatalog } from '../../builder/constants/templateCatalog';
 import { TEMPLATE_USE_CASE_PACKS } from '../../builder/constants/templateUseCasePacks';
 import { clearSetupDraft, clearSetupDraftOnly, readSetupDraft, setupDraftProgress, type SetupDraft, writeSetupDraft } from '../../lib/setupDraft';
 import { deriveSetupMode, getRecommendedTemplates, SETUP_STYLE_OPTIONS } from '../../lib/setupDraftRecommendations';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import { submitSetupBootstrap } from './setupService';
 
 function safeSetupError(err: unknown): string {
   return customerSafeErrorMessage(err, 'Couldn’t save your setup right now. Please try again.');
@@ -149,7 +148,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
       setSaving(true);
       writeSetupDraft(draft);
 
-      await invokeFunctionOrThrow(supabase, 'setup-bootstrap', draft as unknown as Record<string, unknown>);
+      await submitSetupBootstrap(draft);
 
       // draft has been committed server-side; keep selected template key but clear raw draft
       clearSetupDraftOnly();
