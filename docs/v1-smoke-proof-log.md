@@ -7637,6 +7637,7 @@ A slice does **not** count as passed because:
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
   - `src/pages/dashboard/guests/guestService.ts` now caps guest-id fan-out at 5000 before bulk invitation lookup/deletes, RSVP deletes, household updates, and multi-guest updates.
+  - `src/pages/dashboard/guests/guestService.ts` now also caps event invitation rollback and bulk invitation-id hydration at `10000` rows before rollback and delete work.
   - Imported RSVP replacement now also clamps the deduped guest-id set to the same `5000` row bound before bulk delete/reinsert behavior.
   - `src/pages/dashboard/guests/guestService.test.ts` now pins the bounded bulk-helper query shape.
 - Proof passed:

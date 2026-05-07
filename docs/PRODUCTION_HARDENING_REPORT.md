@@ -2821,8 +2821,10 @@ Status:
 
 What changed:
 - Added `MAX_GUEST_BULK_OPERATION_IDS = 5000` in `src/pages/dashboard/guests/guestService.ts`.
+- Added `MAX_GUEST_BULK_INVITATION_ROWS = 10000` in `src/pages/dashboard/guests/guestService.ts`.
 - Bulk guest helper paths now slice guest-id fan-out before event invitation lookup/deletes, RSVP deletes, household updates, and multi-guest updates.
 - Imported RSVP replacement now also clamps the deduped guest-id set to the same shared maximum before bulk delete/reinsert behavior.
+- Event invitation rollback reads in `replaceGuestEventInvitations(...)` and invitation-id reads in `deleteAllGuestsForSite(...)` now cap invitation-row hydration at `10000` before rollback and delete work.
 - Extended `src/pages/dashboard/guests/guestService.test.ts` to pin the new bounded bulk-helper query shape.
 
 Commands run:

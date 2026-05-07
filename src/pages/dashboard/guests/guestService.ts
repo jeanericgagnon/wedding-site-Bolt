@@ -20,6 +20,7 @@ export const GUEST_DASHBOARD_RSVP_SELECT = [
 ].join(', ');
 export const MAX_GUEST_RSVP_LOOKUP_IDS = 5000;
 export const MAX_GUEST_BULK_OPERATION_IDS = 5000;
+export const MAX_GUEST_BULK_INVITATION_ROWS = 10000;
 
 const EVENT_INVITATION_ROLLBACK_SELECT = 'id, event_id';
 const GUEST_ID_SELECT = 'id';
@@ -137,7 +138,8 @@ export async function replaceGuestEventInvitations(guestId: string, nextEventIds
   const { data: existingInvitationRows, error: existingInvitesError } = await supabase
     .from('event_invitations')
     .select(EVENT_INVITATION_ROLLBACK_SELECT)
-    .eq('guest_id', guestId);
+    .eq('guest_id', guestId)
+    .limit(MAX_GUEST_BULK_INVITATION_ROWS);
 
   if (existingInvitesError) throw existingInvitesError;
 
@@ -213,7 +215,8 @@ export async function deleteAllGuestsForSite(weddingSiteId: string): Promise<Gue
     const { data: invitationRows } = await supabase
       .from('event_invitations')
       .select(GUEST_ID_SELECT)
-      .in('guest_id', scopedGuestIds);
+      .in('guest_id', scopedGuestIds)
+      .limit(MAX_GUEST_BULK_INVITATION_ROWS);
 
     invitationIds.push(...((invitationRows ?? []).map((row) => (row as { id: string }).id)));
 

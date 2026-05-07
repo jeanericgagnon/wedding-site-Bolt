@@ -1,7 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { GUEST_DASHBOARD_RSVP_SELECT, MAX_GUEST_BULK_OPERATION_IDS, MAX_GUEST_RSVP_LOOKUP_IDS, toEventInvitationRows } from './guestService';
+import {
+  GUEST_DASHBOARD_RSVP_SELECT,
+  MAX_GUEST_BULK_INVITATION_ROWS,
+  MAX_GUEST_BULK_OPERATION_IDS,
+  MAX_GUEST_RSVP_LOOKUP_IDS,
+  toEventInvitationRows,
+} from './guestService';
 
 describe('guestService', () => {
   it('keeps guest RSVP reads explicitly projected', () => {
@@ -10,6 +16,7 @@ describe('guestService', () => {
     expect(GUEST_DASHBOARD_RSVP_SELECT).not.toContain('*');
     expect(MAX_GUEST_RSVP_LOOKUP_IDS).toBe(5000);
     expect(MAX_GUEST_BULK_OPERATION_IDS).toBe(5000);
+    expect(MAX_GUEST_BULK_INVITATION_ROWS).toBe(10000);
   });
 
   it('builds scoped event invitation rows for one guest', () => {
@@ -41,8 +48,10 @@ describe('guestService', () => {
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/guestService.ts'), 'utf8');
 
     expect(service).toContain('MAX_GUEST_BULK_OPERATION_IDS = 5000');
+    expect(service).toContain('MAX_GUEST_BULK_INVITATION_ROWS = 10000');
     expect(service).toContain('const scopedGuestIds = guestIds.slice(0, MAX_GUEST_BULK_OPERATION_IDS);');
     expect(service).toContain(".in('guest_id', scopedGuestIds);");
+    expect(service).toContain(".limit(MAX_GUEST_BULK_INVITATION_ROWS);");
     expect(service).toContain(".in('id', scopedGuestIds);");
     expect(service).toContain("Array.from(new Set(rows.map((row) => row.guest_id))).slice(0, MAX_GUEST_BULK_OPERATION_IDS);");
   });
