@@ -2816,3 +2816,21 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps guest photo dashboard hydration bounded without changing current album creation, upload review, guestbook moderation, or recap behavior. No deploy was run.
+
+### 2026-05-07 2:30 PM PT - No-Deploy Guest Bulk Helper Bounds
+
+What changed:
+- Added `MAX_GUEST_BULK_OPERATION_IDS = 5000` in `src/pages/dashboard/guests/guestService.ts`.
+- Bulk guest helper paths now slice guest-id fan-out before event invitation lookup/deletes, RSVP deletes, household updates, and multi-guest updates.
+- Imported RSVP replacement now also clamps the deduped guest-id set to the same shared maximum before bulk delete/reinsert behavior.
+- Extended `src/pages/dashboard/guests/guestService.test.ts` to pin the new bounded bulk-helper query shape.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`: PASS, 26/26.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps bulk guest helper fan-out bounded without changing current guest import, household, bulk update, or bulk delete behavior. No deploy was run.

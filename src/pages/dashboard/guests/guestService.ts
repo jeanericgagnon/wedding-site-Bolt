@@ -19,6 +19,7 @@ export const GUEST_DASHBOARD_RSVP_SELECT = [
   'custom_answers',
 ].join(', ');
 export const MAX_GUEST_RSVP_LOOKUP_IDS = 5000;
+export const MAX_GUEST_BULK_OPERATION_IDS = 5000;
 
 const EVENT_INVITATION_ROLLBACK_SELECT = 'id, event_id';
 const GUEST_ID_SELECT = 'id';
@@ -205,13 +206,14 @@ export async function deleteAllGuestsForSite(weddingSiteId: string): Promise<Gue
   if (guestReadError) throw guestReadError;
 
   const guestIds = (guestRows ?? []).map((guest) => (guest as { id: string }).id);
+  const scopedGuestIds = guestIds.slice(0, MAX_GUEST_BULK_OPERATION_IDS);
   const invitationIds: string[] = [];
 
-  if (guestIds.length > 0) {
+  if (scopedGuestIds.length > 0) {
     const { data: invitationRows } = await supabase
       .from('event_invitations')
       .select(GUEST_ID_SELECT)
-      .in('guest_id', guestIds);
+      .in('guest_id', scopedGuestIds);
 
     invitationIds.push(...((invitationRows ?? []).map((row) => (row as { id: string }).id)));
 
@@ -222,13 +224,13 @@ export async function deleteAllGuestsForSite(weddingSiteId: string): Promise<Gue
     const { error: eventInvitationDeleteError } = await supabase
       .from('event_invitations')
       .delete()
-      .in('guest_id', guestIds);
+      .in('guest_id', scopedGuestIds);
     if (eventInvitationDeleteError) throw eventInvitationDeleteError;
 
     const { error: rsvpDeleteError } = await supabase
       .from('rsvps')
       .delete()
-      .in('guest_id', guestIds);
+      .in('guest_id', scopedGuestIds);
     if (rsvpDeleteError) throw rsvpDeleteError;
   }
 
@@ -253,10 +255,11 @@ export async function insertImportedGuests(guestRows: Array<Record<string, unkno
 
 export async function updateHouseholdGuestIds(householdId: string, guestIds: string[]): Promise<void> {
   if (guestIds.length === 0) return;
+  const scopedGuestIds = guestIds.slice(0, MAX_GUEST_BULK_OPERATION_IDS);
   const { error } = await supabase
     .from('guests')
     .update({ household_id: householdId })
-    .in('id', guestIds);
+    .in('id', scopedGuestIds);
 
   if (error) throw error;
 }
@@ -264,7 +267,7 @@ export async function updateHouseholdGuestIds(householdId: string, guestIds: str
 export async function replaceImportedGuestRsvps(rows: Array<{ guest_id: string; attending: boolean; meal_choice: string | null; plus_one_name: string | null; plus_one_count: number; children_count: number; responded_at: string | null }>): Promise<void> {
   if (rows.length === 0) return;
 
-  const rsvpGuestIds = Array.from(new Set(rows.map((row) => row.guest_id)));
+  const rsvpGuestIds = Array.from(new Set(rows.map((row) => row.guest_id))).slice(0, MAX_GUEST_BULK_OPERATION_IDS);
   const { error: rsvpDeleteError } = await supabase.from('rsvps').delete().in('guest_id', rsvpGuestIds);
   if (rsvpDeleteError) throw rsvpDeleteError;
 
@@ -301,11 +304,12 @@ export async function updateGuestsForSite(
   patch: Record<string, unknown>,
 ): Promise<void> {
   if (guestIds.length === 0) return;
+  const scopedGuestIds = guestIds.slice(0, MAX_GUEST_BULK_OPERATION_IDS);
   const { error } = await supabase
     .from('guests')
     .update(patch)
     .eq('wedding_site_id', weddingSiteId)
-    .in('id', guestIds);
+    .in('id', scopedGuestIds);
 
   if (error) throw error;
 }

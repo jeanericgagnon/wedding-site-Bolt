@@ -7632,3 +7632,17 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 2:30 PM PT No-Deploy Guest Bulk Helper Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestService.ts` now caps guest-id fan-out at 5000 before bulk invitation lookup/deletes, RSVP deletes, household updates, and multi-guest updates.
+  - Imported RSVP replacement now also clamps the deduped guest-id set to the same `5000` row bound before bulk delete/reinsert behavior.
+  - `src/pages/dashboard/guests/guestService.test.ts` now pins the bounded bulk-helper query shape.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`: PASS, 26/26.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
