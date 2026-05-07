@@ -2669,3 +2669,24 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps planning seating-readiness hydration bounded without changing current planning overview or seating-readiness behavior. No deploy was run.
+
+### 2026-05-07 2:02 PM PT - No-Deploy Seating Service Read Bounds
+
+What changed:
+- Added explicit seating read caps in `src/pages/dashboard/seating/seatingService.ts`:
+  - `MAX_SEATING_ITINERARY_EVENTS = 200`
+  - `MAX_SEATING_ELIGIBLE_GUESTS = 5000`
+  - `MAX_SEATING_EVENT_INVITATIONS = 10000`
+- Seating itinerary reads now cap event rows before hydrating the dashboard selector.
+- Eligible-guest hydration now caps guest rows and invitation rows before the event-RSVP lookup.
+- Extended `src/pages/dashboard/seating/seatingService.test.ts` to pin the stable cap exports and the bounded query shape.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/seating/seatingService.test.ts`: PASS, 9/9.
+- `npm run proof:v1:seating-continuity`: PASS, 3/3 automated checks green.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps seating service hydration bounded without changing current seating assignment, check-in, export, or continuity behavior. No deploy was run.

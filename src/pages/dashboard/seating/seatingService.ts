@@ -14,8 +14,11 @@ const SEATING_LOOKUP_EVENT_SELECT = 'id' as const;
 const SEATING_LOOKUP_ASSIGNMENT_SELECT = 'guest_id, table_id, seat_index, checked_in_at, is_valid' as const;
 const SEATING_LOOKUP_TABLE_SELECT = 'id, table_name' as const;
 const SEATING_LOOKUP_GUEST_SELECT = 'id, first_name, last_name, name, email, rsvp_status' as const;
+export const MAX_SEATING_ITINERARY_EVENTS = 200;
 export const MAX_SEATING_LOOKUP_TABLE_IDS = 500;
 export const MAX_SEATING_LOOKUP_GUEST_IDS = 2000;
+export const MAX_SEATING_ELIGIBLE_GUESTS = 5000;
+export const MAX_SEATING_EVENT_INVITATIONS = 10000;
 
 export interface ItineraryEvent {
   id: string;
@@ -187,7 +190,8 @@ export async function loadItineraryEvents(weddingSiteId: string): Promise<Itiner
     .select('id, event_name, event_date, start_time, location_name')
     .eq('wedding_site_id', weddingSiteId)
     .order('event_date', { ascending: true })
-    .order('start_time', { ascending: true });
+    .order('start_time', { ascending: true })
+    .limit(MAX_SEATING_ITINERARY_EVENTS);
   if (error) throw error;
   return (data ?? []) as ItineraryEvent[];
 }
@@ -415,14 +419,16 @@ export async function getEligibleGuests(
   const { data: allGuests, error } = await supabase
     .from('guests')
     .select(SEATING_ELIGIBLE_GUEST_SELECT)
-    .eq('wedding_site_id', weddingSiteId);
+    .eq('wedding_site_id', weddingSiteId)
+    .limit(MAX_SEATING_ELIGIBLE_GUESTS);
   if (error) throw error;
   if (!allGuests) return [];
 
   const { data: invitations } = await supabase
     .from('event_invitations')
     .select('id, guest_id')
-    .eq('event_id', itineraryEventId);
+    .eq('event_id', itineraryEventId)
+    .limit(MAX_SEATING_EVENT_INVITATIONS);
 
   const invitationRows = (invitations ?? []) as Array<{ id: string; guest_id: string }>;
   const inviteMap = new Map<string, string>(

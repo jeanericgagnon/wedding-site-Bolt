@@ -7520,3 +7520,17 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 2:02 PM PT No-Deploy Seating Service Read Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/seating/seatingService.ts` now caps itinerary-event reads at 200 rows before hydrating the seating event selector.
+  - The same service now caps eligible-guest reads at 5000 rows and event-invitation reads at 10000 rows before event-RSVP lookup.
+  - `src/pages/dashboard/seating/seatingService.test.ts` now pins the stable cap exports and bounded query shape.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/seating/seatingService.test.ts`: PASS, 9/9.
+  - `npm run proof:v1:seating-continuity`: PASS, 3/3 automated checks green.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

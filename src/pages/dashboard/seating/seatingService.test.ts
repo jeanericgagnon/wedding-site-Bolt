@@ -7,6 +7,9 @@ import {
   exportPlaceCardsCSV,
   exportSeatingCSV,
   mapSeatingLookupRows,
+  MAX_SEATING_ELIGIBLE_GUESTS,
+  MAX_SEATING_EVENT_INVITATIONS,
+  MAX_SEATING_ITINERARY_EVENTS,
   MAX_SEATING_LOOKUP_GUEST_IDS,
   MAX_SEATING_LOOKUP_TABLE_IDS,
   type EligibleGuest,
@@ -325,16 +328,25 @@ describe('mapSeatingLookupRows', () => {
   });
 
   it('exports stable seating lookup fan-out caps', () => {
+    expect(MAX_SEATING_ITINERARY_EVENTS).toBe(200);
     expect(MAX_SEATING_LOOKUP_TABLE_IDS).toBe(500);
     expect(MAX_SEATING_LOOKUP_GUEST_IDS).toBe(2000);
+    expect(MAX_SEATING_ELIGIBLE_GUESTS).toBe(5000);
+    expect(MAX_SEATING_EVENT_INVITATIONS).toBe(10000);
   });
 
-  it('keeps seating lookup table and guest fan-out bounded', () => {
+  it('keeps seating itinerary, lookup, and eligible-guest fan-out bounded', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/seating/seatingService.ts'), 'utf8');
 
+    expect(source).toContain('MAX_SEATING_ITINERARY_EVENTS');
     expect(source).toContain('MAX_SEATING_LOOKUP_TABLE_IDS');
     expect(source).toContain('MAX_SEATING_LOOKUP_GUEST_IDS');
+    expect(source).toContain('MAX_SEATING_ELIGIBLE_GUESTS');
+    expect(source).toContain('MAX_SEATING_EVENT_INVITATIONS');
+    expect(source).toContain(".order('start_time', { ascending: true })\n    .limit(MAX_SEATING_ITINERARY_EVENTS);");
     expect(source).toContain('].slice(0, MAX_SEATING_LOOKUP_TABLE_IDS);');
     expect(source).toContain('].slice(0, MAX_SEATING_LOOKUP_GUEST_IDS);');
+    expect(source).toContain(".eq('wedding_site_id', weddingSiteId)\n    .limit(MAX_SEATING_ELIGIBLE_GUESTS);");
+    expect(source).toContain(".eq('event_id', itineraryEventId)\n    .limit(MAX_SEATING_EVENT_INVITATIONS);");
   });
 });
