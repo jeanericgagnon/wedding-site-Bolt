@@ -89,6 +89,8 @@ const WEDDING_SITE_SELECT = [
 
 export const MAX_MESSAGE_DELIVERY_MESSAGE_IDS = 50;
 export const MAX_MESSAGE_DELIVERY_ROWS = 1000;
+export const MAX_MESSAGE_ITINERARY_EVENTS = 200;
+export const MAX_MESSAGE_ITINERARY_EVENT_INVITATIONS = 10000;
 
 export async function createDashboardMessage(payload: MessageInsertPayload): Promise<void> {
   const { error } = await supabase.from('messages').insert(payload);
@@ -177,7 +179,8 @@ export async function loadMessageItineraryAudience(weddingSiteId: string): Promi
     .eq('wedding_site_id', weddingSiteId)
     .eq('is_visible', true)
     .order('event_date', { ascending: true })
-    .order('start_time', { ascending: true });
+    .order('start_time', { ascending: true })
+    .limit(MAX_MESSAGE_ITINERARY_EVENTS);
 
   if (eventsError) throw eventsError;
 
@@ -187,7 +190,8 @@ export async function loadMessageItineraryAudience(weddingSiteId: string): Promi
     const { data: invitations, error: invitesError } = await supabase
       .from('event_invitations')
       .select('event_id, guest_id')
-      .in('event_id', eventIds);
+      .in('event_id', eventIds)
+      .limit(MAX_MESSAGE_ITINERARY_EVENT_INVITATIONS);
 
     if (invitesError) throw invitesError;
     for (const invitation of invitations ?? []) {

@@ -2457,14 +2457,16 @@ Status:
 What changed:
 - Added explicit query caps to `src/pages/dashboard/messages/messageService.ts` for dashboard delivery-history reads.
 - `loadMessageDeliveries(messageIds)` now deduplicates requested ids, caps the message-id filter set at 50, and caps returned rows at 1000 while preserving newest-first ordering.
+- `loadMessageItineraryAudience(weddingSiteId)` now caps visible itinerary-event reads at 200 and invitation fan-out at 10000 while preserving the current event-ordering and audience-option behavior.
 - Added `src/pages/dashboard/messages/messageService.boundary.test.ts` to pin the stable caps and prevent quiet removal of the bounded query shape.
 
 Commands run:
-- `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 2/2.
+- `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 4/4.
 - `npm run typecheck -- --pretty false`: PASS.
 - `npm run lint -- --quiet`: PASS.
 - `git diff --check`: PASS.
 - `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `npm run proof:v1:comms-center`: PASS, 3/3.
 
 Status:
 - PARTIAL. This narrows one high-volume dashboard query surface without changing the current Messages workflow. No deploy was run, so live proof status is unchanged.

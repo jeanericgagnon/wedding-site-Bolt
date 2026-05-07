@@ -7353,11 +7353,13 @@ A slice does **not** count as passed because:
 - Fixed/proved:
   - `src/pages/dashboard/messages/messageService.ts` now deduplicates requested message ids before loading delivery history.
   - Delivery-history reads are capped to the most recent 50 message ids and 1000 returned delivery rows, preserving newest-first ordering.
+  - Itinerary-audience loading is also capped to 200 visible itinerary events and 10000 invitation rows, preserving current event ordering and audience-option generation.
   - `src/pages/dashboard/messages/messageService.boundary.test.ts` now pins the bounded query shape so quiet regression back to unbounded dashboard delivery reads is caught locally.
 - Proof passed:
-  - `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 2/2.
+  - `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 4/4.
   - `npm run typecheck -- --pretty false`: PASS.
   - `npm run lint -- --quiet`: PASS.
   - `git diff --check`: PASS.
   - `npm run build`: PASS.
+  - `npm run proof:v1:comms-center`: PASS, 3/3.
 - Launch status did not change. This is local-only hardening and no deploy was run.
