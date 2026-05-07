@@ -70,6 +70,12 @@ import {
 
 export const MAX_GUEST_PHOTO_EVENTS = 200;
 export const MAX_GUEST_PHOTO_ALBUMS = 500;
+export const MAX_GUEST_PHOTO_UPLOADS = 200;
+export const MAX_GUEST_PHOTO_GUESTBOOK_ENTRIES = 50;
+export const MAX_GUEST_PHOTO_PROSPECTS = 200;
+export const MAX_GUEST_PHOTO_ANALYSES = 250;
+export const MAX_GUEST_PHOTO_METADATA_ROWS = 250;
+export const MAX_GUEST_PHOTO_BUCKET_CORRECTIONS = 100;
 
 export const GuestPhotoSharing: React.FC = () => {
   const location = useLocation();
@@ -369,7 +375,7 @@ export const GuestPhotoSharing: React.FC = () => {
           .select('id,photo_album_id,original_filename,guest_name,guest_email,note,mime_type,size_bytes,drive_web_view_link,is_hidden,is_flagged,recap_hidden,recap_featured,recap_story,uploaded_at')
           .eq('wedding_site_id', site.id)
           .order('uploaded_at', { ascending: false })
-          .limit(200),
+          .limit(MAX_GUEST_PHOTO_UPLOADS),
       ]);
 
       if (eventsError) throw eventsError;
@@ -385,34 +391,34 @@ export const GuestPhotoSharing: React.FC = () => {
         .select('id,guest_name,guest_email,message,is_hidden,is_flagged,created_at')
         .eq('wedding_site_id', site.id)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(MAX_GUEST_PHOTO_GUESTBOOK_ENTRIES);
       setGuestbookEntries((guestbookData as GuestbookEntryRow[] | null) ?? []);
       const { data: prospectData } = await supabase
         .from('guest_prospect_optins')
         .select('id,guest_name,email,phone,source,wants_photo_updates,wants_own_event_info,recap_email_queued_at,future_event_email_queued_at,created_at')
         .eq('wedding_site_id', site.id)
         .order('created_at', { ascending: false })
-        .limit(200);
+        .limit(MAX_GUEST_PHOTO_PROSPECTS);
       setGuestProspects((prospectData as GuestProspectOptinRow[] | null) ?? []);
       const { data: analysisData } = await supabase
         .from('photo_upload_ai_analysis')
         .select('id,upload_id,wedding_site_id,photo_album_id,status,detected_moment,suggested_bucket_id,suggested_bucket_name,bucket_confidence,quality_score,blur_score,people_count_range,is_video,slideshow_priority,caption,tags,warnings,error_message,analyzed_at')
         .eq('wedding_site_id', site.id)
         .order('analyzed_at', { ascending: false })
-        .limit(250);
+        .limit(MAX_GUEST_PHOTO_ANALYSES);
       setUploadAnalyses((analysisData as PhotoUploadAiAnalysisRow[] | null) ?? []);
       const { data: metadataData } = await supabase
         .from('photo_upload_metadata')
         .select('upload_id,taken_at,width,height,has_exif,has_gps,file_sha256,perceptual_hash,location_label,event_match_id,event_match_confidence,event_match_reason')
         .eq('wedding_site_id', site.id)
-        .limit(250);
+        .limit(MAX_GUEST_PHOTO_METADATA_ROWS);
       setUploadMetadata((metadataData as PhotoUploadMetadataRow[] | null) ?? []);
       const { data: correctionData } = await supabase
         .from('photo_ai_bucket_corrections')
         .select('id,upload_id,action,previous_bucket_id,suggested_bucket_id,chosen_bucket_id,confidence,reason,created_at')
         .eq('wedding_site_id', site.id)
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(MAX_GUEST_PHOTO_BUCKET_CORRECTIONS);
       setAiBucketCorrections((correctionData as PhotoAiBucketCorrectionRow[] | null) ?? []);
       const { data: hubData } = await supabase
         .from('guest_hub_settings')

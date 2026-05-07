@@ -7692,3 +7692,16 @@ A slice does **not** count as passed because:
   - `npm run lint -- --quiet`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 2:40 PM PT No-Deploy Guest Photo Hydration Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now exports named caps for upload rows, guestbook rows, prospect rows, AI analysis rows, metadata rows, and bucket-correction rows.
+  - The guest photo dashboard hydration path now uses those shared caps instead of raw inline limits.
+  - `src/pages/dashboard/guestPhotoQueryBounds.test.ts` now pins the bounded upload, guestbook, prospect, analysis, metadata, and correction query shape.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts`: PASS, 14/14.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

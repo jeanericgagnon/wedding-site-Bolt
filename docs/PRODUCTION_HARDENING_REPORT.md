@@ -2896,3 +2896,25 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps overview engagement hydration bounded without changing overview metrics, publishing status, or owner-facing dashboard behavior. No deploy was run.
+
+### 2026-05-07 2:40 PM PT - No-Deploy Guest Photo Hydration Bounds
+
+What changed:
+- Added explicit guest photo dashboard caps in `src/pages/dashboard/GuestPhotoSharing.tsx` for:
+  - uploads `200`
+  - guestbook entries `50`
+  - prospect opt-ins `200`
+  - AI analyses `250`
+  - metadata rows `250`
+  - bucket corrections `100`
+- The guest photo dashboard now uses named bounds across the whole owner hydration path instead of mixing named and inline limits.
+- Extended `src/pages/dashboard/guestPhotoQueryBounds.test.ts` to pin the bounded upload, guestbook, prospect, analysis, metadata, and correction query shape.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `git diff --check`
+
+Status:
+- PARTIAL. This keeps guest photo owner hydration bounded without changing album management, upload review, AI ops planning, or guest-facing photo behavior. No deploy was run.
