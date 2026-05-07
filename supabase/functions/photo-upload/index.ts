@@ -16,6 +16,7 @@ const HONEYPOT_FIELD = 'website';
 const MAX_ATTEMPTS_PER_10_MIN = 30;
 const MAX_ATTEMPTS_PER_10_MIN_PER_IP = 60;
 const HOSTED_BUCKET = "photo-uploads";
+const PHOTO_UPLOAD_LINK_UNAVAILABLE_COPY = "This photo upload link is not available.";
 
 const safePathSegment = (value: string) =>
   value
@@ -466,7 +467,7 @@ Deno.serve(async (req: Request) => {
 
     if (!token && !siteSlug) return fail("TOKEN_REQUIRED", "Open this photo upload link again before sending photos.", 400);
     if (siteSlug && !/^[a-z0-9-]{2,80}$/.test(siteSlug)) {
-      return fail("INVALID_SITE", "Invalid site link.", 400);
+      return fail("INVALID_SITE", PHOTO_UPLOAD_LINK_UNAVAILABLE_COPY, 400);
     }
     if (honeypot) return fail("BOT_DETECTED", "Request rejected", 400);
     if (guestEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) {
@@ -521,7 +522,7 @@ Deno.serve(async (req: Request) => {
         : false;
 
       if (!hasAccess) {
-        return fail("SITE_UNAVAILABLE", "Site not available for uploads.", 403);
+        return fail("SITE_UNAVAILABLE", PHOTO_UPLOAD_LINK_UNAVAILABLE_COPY, 403);
       }
 
       const { data } = await admin
@@ -594,7 +595,7 @@ Deno.serve(async (req: Request) => {
       .eq("id", album.wedding_site_id as string)
       .maybeSingle();
 
-    if (!site || (!tokenHash && !site.is_published)) return fail("SITE_UNAVAILABLE", "Site not available for uploads.", 403);
+    if (!site || (!tokenHash && !site.is_published)) return fail("SITE_UNAVAILABLE", PHOTO_UPLOAD_LINK_UNAVAILABLE_COPY, 403);
     const driveBackup = await resolveDriveBackup(admin, site, album.wedding_site_id as string);
     const { data: itineraryData } = await admin
       .from("itinerary_events")

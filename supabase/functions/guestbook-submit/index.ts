@@ -14,6 +14,8 @@ function json(body: Record<string, unknown>, status = 200) {
   });
 }
 
+const GUESTBOOK_LINK_UNAVAILABLE_COPY = "This wedding link is not available.";
+
 async function sha256Hex(value: string): Promise<string> {
   const buffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return Array.from(new Uint8Array(buffer)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -47,7 +49,7 @@ Deno.serve(async (req: Request) => {
     const honeypot = String(body.website ?? "").trim();
 
     if (honeypot) return json({ error: "Request rejected" }, 400);
-    if (!/^[a-z0-9-]{2,80}$/.test(siteSlug)) return json({ error: "Invalid site" }, 400);
+    if (!/^[a-z0-9-]{2,80}$/.test(siteSlug)) return json({ error: GUESTBOOK_LINK_UNAVAILABLE_COPY }, 400);
     if (!message || message.length < 2) return json({ error: "Add a guestbook message before sending." }, 400);
     if (message.length > 2000) return json({ error: "Message is too long" }, 400);
     if (guestEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) return json({ error: "Invalid email" }, 400);
@@ -71,7 +73,7 @@ Deno.serve(async (req: Request) => {
         secret: serviceRole,
       }))
     ) {
-      return json({ error: "Site not available" }, 404);
+      return json({ error: GUESTBOOK_LINK_UNAVAILABLE_COPY }, 404);
     }
     const requesterIpMarker = requesterIp ? `h:${await sha256Hex(`guestbook:${site.id}:${requesterIp}`)}` : null;
 

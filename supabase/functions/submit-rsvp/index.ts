@@ -16,6 +16,7 @@ const json = (data: unknown, status = 200) =>
 const RATE_LIMIT_WINDOW_MINUTES = 15;
 const RATE_LIMIT_MAX_ATTEMPTS = 10;
 const RSVP_REQUEST_INVALID_COPY = "Could not read this RSVP request. Please try again.";
+const RSVP_SUBMIT_LINK_REQUIRED_COPY = "Open your invitation link again before submitting your RSVP.";
 
 async function hashIp(ip: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -70,7 +71,7 @@ Deno.serve(async (req: Request) => {
     const notes = cleanText(body.notes, 1000);
 
     if (!inviteToken || typeof inviteToken !== "string" || inviteToken.trim().length < 20) {
-      return json({ error: "A valid invitation token is required to submit your RSVP." }, 400);
+      return json({ error: RSVP_SUBMIT_LINK_REQUIRED_COPY }, 400);
     }
 
     if (typeof attending !== "boolean") {

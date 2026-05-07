@@ -15,6 +15,8 @@ function json(body: Record<string, unknown>, status = 200) {
   });
 }
 
+const GUEST_LINK_UNAVAILABLE_COPY = "This wedding link is not available.";
+
 function safeReferrer(value: string | null): string | null {
   const trimmed = (value || "").trim();
   if (!trimmed) return null;
@@ -47,7 +49,7 @@ Deno.serve(async (req: Request) => {
     const eventType = String(body.eventType ?? "view").trim().toLowerCase().slice(0, 80) || "view";
     const target = String(body.target ?? "").trim().slice(0, 240) || null;
 
-    if (!/^[a-z0-9-]{2,80}$/.test(siteSlug)) return json({ error: "Invalid site" }, 400);
+    if (!/^[a-z0-9-]{2,80}$/.test(siteSlug)) return json({ error: GUEST_LINK_UNAVAILABLE_COPY }, 400);
 
     const { data: site, error: siteError } = await admin
       .from("wedding_sites")

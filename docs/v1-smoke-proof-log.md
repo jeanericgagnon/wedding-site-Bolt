@@ -60,6 +60,23 @@ _Launch call right now:_ Not production-ready under the stricter P0/P1 standard.
   - `npm run build`: PASS with the existing non-blocking Browserslist `caniuse-lite` warning and empty `vendor-react` chunk warning.
 - Launch status did not change. This narrows local guest/public helper leakage, but no deploy was run and the same live-proof blockers remain.
 
+## 2026-05-07 11:36 AM PT Local Guest Link Contract Tightening Batch
+
+- Continued the no-deploy hardening lane locally. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - `submit-rsvp` now asks guests to reopen their invitation link instead of returning `A valid invitation token is required to submit your RSVP.`
+  - `guest-hub-config`, `guest-hub-track`, `guest-recap-config`, `guest-prospect-submit`, and `guestbook-submit` now collapse malformed or unavailable public slug cases to consistent wedding-link wording instead of `Invalid site` and `Site not available`.
+  - `photo-upload` now uses consistent photo-upload-link wording instead of `Invalid site link.` and `Site not available for uploads.`
+  - `src/lib/launchEdgeFunctions.test.ts` now guards the new invitation-link, wedding-link, guest-hub, recap, guestbook, prospect, and photo-upload copy and rejects reintroduction of the old site/token wording for those routes.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 27/27.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with the existing non-blocking Browserslist `caniuse-lite` warning and empty `vendor-react` chunk warning.
+- Launch status did not change. This keeps the local guest-link contract more consistent and less implementation-shaped, but no deploy was run and the same live-proof blockers remain.
+
 ## 2026-05-07 11:17 AM PT Local Owner Helper Access-Copy Tightening Batch
 
 - Continued the no-deploy hardening lane locally. No deploy, migration, or Supabase function deploy was run.

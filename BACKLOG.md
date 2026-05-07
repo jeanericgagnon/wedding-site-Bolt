@@ -166,6 +166,15 @@ Current readiness verdict for this intake:
 - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (27/27), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `git diff --check`, and `npm run build`.
 - No deploy was run. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk during build.
 
+### 2026-05-07 11:36 AM PT - No-Deploy Guest Link Contract Tightening
+
+- Resolved locally in this batch: `submit-rsvp/index.ts` now asks guests to reopen their invitation link instead of returning `A valid invitation token is required to submit your RSVP.`
+- Resolved locally in this batch: `guest-hub-config/index.ts`, `guest-hub-track/index.ts`, `guest-recap-config/index.ts`, `guest-prospect-submit/index.ts`, and `guestbook-submit/index.ts` now collapse malformed or unavailable public slug cases to consistent wedding-link wording instead of `Invalid site` and `Site not available`.
+- Resolved locally in this batch: `photo-upload/index.ts` now uses consistent photo-upload-link wording instead of `Invalid site link.` and `Site not available for uploads.`
+- Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards the new invitation-link, wedding-link, guest-hub, recap, guestbook, prospect, and photo-upload copy and rejects reintroduction of the older raw site/token wording.
+- Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (27/27), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `git diff --check`, and `npm run build`.
+- No deploy was run. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk during build.
+
 ### 2026-05-05 2:43 PM PT - No-Deploy Shared Collaborator Permission Helper
 
 - Resolved locally in this batch: added `supabase/functions/_shared/collaboratorPermissions.ts` as the single Edge Function helper for collaborator mutation checks.

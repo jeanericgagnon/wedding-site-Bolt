@@ -15,6 +15,8 @@ function json(body: Record<string, unknown>, status = 200) {
   });
 }
 
+const GUEST_PROSPECT_LINK_UNAVAILABLE_COPY = "This wedding link is not available.";
+
 function safeReferrer(value: string | null): string | null {
   const trimmed = (value || "").trim();
   if (!trimmed) return null;
@@ -70,7 +72,7 @@ Deno.serve(async (req: Request) => {
     const wantsOwnEventInfo = body.wantsOwnEventInfo === true;
     const wantsPhotoUpdates = body.wantsPhotoUpdates !== false;
 
-    if (!/^[a-z0-9-]{2,80}$/.test(siteSlug)) return json({ error: "Invalid site" }, 400);
+    if (!/^[a-z0-9-]{2,80}$/.test(siteSlug)) return json({ error: GUEST_PROSPECT_LINK_UNAVAILABLE_COPY }, 400);
     if (!email && !phone) return json({ error: "Add an email or phone." }, 400);
 
     const { data: site, error: siteError } = await admin
@@ -79,7 +81,7 @@ Deno.serve(async (req: Request) => {
       .eq("site_slug", siteSlug)
       .maybeSingle();
     if (siteError) return json({ error: "We could not save this update. Please try again." }, 500);
-    if (!site) return json({ error: "Site not available" }, 404);
+    if (!site) return json({ error: GUEST_PROSPECT_LINK_UNAVAILABLE_COPY }, 404);
 
     const hasPublicAccess = await canReadPublicSubresource({
       isPublished: site.is_published === true,
@@ -101,7 +103,7 @@ Deno.serve(async (req: Request) => {
       hasUploadAccess = Boolean(album && album.wedding_site_id === site.id && albumUploadWindowIsOpen(album));
     }
 
-    if (!hasPublicAccess && !hasUploadAccess) return json({ error: "Site not available" }, 404);
+    if (!hasPublicAccess && !hasUploadAccess) return json({ error: GUEST_PROSPECT_LINK_UNAVAILABLE_COPY }, 404);
 
     const rateLimit = await enforcePublicSubmissionRateLimit({
       admin,

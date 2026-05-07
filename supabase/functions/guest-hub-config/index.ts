@@ -14,6 +14,9 @@ function json(body: Record<string, unknown>, status = 200) {
   });
 }
 
+const GUEST_HUB_LINK_UNAVAILABLE_COPY = "This wedding link is not available.";
+const GUEST_HUB_LOAD_FAILED_COPY = "Could not load this guest hub. Please try again.";
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
   if (req.method !== "GET") return json({ error: "Method not allowed" }, 405);
@@ -21,12 +24,12 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseUrl || !serviceRole) return json({ error: "Could not load hub config" }, 500);
+    if (!supabaseUrl || !serviceRole) return json({ error: GUEST_HUB_LOAD_FAILED_COPY }, 500);
 
     const admin = createClient(supabaseUrl, serviceRole);
     const url = new URL(req.url);
     const siteSlug = String(url.searchParams.get("site") ?? "").trim().toLowerCase();
-    if (!/^[a-z0-9-]{2,80}$/.test(siteSlug)) return json({ error: "Invalid site" }, 400);
+    if (!/^[a-z0-9-]{2,80}$/.test(siteSlug)) return json({ error: GUEST_HUB_LINK_UNAVAILABLE_COPY }, 400);
 
     const { data: site, error: siteError } = await admin
       .from("wedding_sites")
@@ -46,7 +49,7 @@ Deno.serve(async (req: Request) => {
         secret: serviceRole,
       }))
     ) {
-      return json({ error: "Site not available" }, 404);
+      return json({ error: GUEST_HUB_LINK_UNAVAILABLE_COPY }, 404);
     }
 
     const { data: settings } = await admin
@@ -74,6 +77,6 @@ Deno.serve(async (req: Request) => {
       },
     });
   } catch {
-    return json({ error: "Could not load hub config" }, 500);
+    return json({ error: GUEST_HUB_LOAD_FAILED_COPY }, 500);
   }
 });

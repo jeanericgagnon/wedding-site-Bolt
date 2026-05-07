@@ -59,6 +59,25 @@ Commands run:
 Status:
 - PARTIAL. This narrows more guest/public helper contract leakage, but live service-role/RLS proof and live messaging authorization proof are still deploy-gated blockers.
 
+### 2026-05-07 11:36 AM PT - No-Deploy Guest Link Contract Tightening
+
+What changed:
+- Updated `submit-rsvp` so guests are now asked to reopen their invitation link instead of seeing `A valid invitation token is required to submit your RSVP.`
+- Updated `guest-hub-config`, `guest-hub-track`, `guest-recap-config`, `guest-prospect-submit`, and `guestbook-submit` so malformed or unavailable public slug cases now collapse to consistent wedding-link wording instead of `Invalid site` and `Site not available`.
+- Updated `photo-upload` so upload-link failures now use consistent photo-upload-link wording instead of `Invalid site link.` and `Site not available for uploads.`
+- Expanded `src/lib/launchEdgeFunctions.test.ts` to statically guard the new invitation-link, wedding-link, guest-hub, recap, guestbook, prospect, and photo-upload copy and reject reintroduction of the old site/token wording on those routes.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 1 file and 27 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps the guest-facing public-link contract more consistent and less implementation-shaped, but live service-role/RLS proof and live messaging authorization proof are still deploy-gated blockers.
+
 ### 2026-05-07 11:19 AM PT - No-Deploy Preview Helper Copy Tightening
 
 What changed:

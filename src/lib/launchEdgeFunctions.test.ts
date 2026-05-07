@@ -663,7 +663,7 @@ describe('launch edge function guards', () => {
       ['guest-contact-submit', 'Could not save this contact update. Please try again.'],
       ['submit-contact-request', 'Could not save this contact update. Please try again.'],
       ['submit-rsvp', 'Could not submit this RSVP. Please try again.'],
-      ['guest-hub-config', 'Could not load hub config'],
+      ['guest-hub-config', 'Could not load this guest hub. Please try again.'],
       ['guest-recap-config', 'Could not load this recap. Please try again.'],
       ['google-drive-auth-start', 'Could not start this storage connection. Please try again.'],
       ['google-drive-health', 'Storage needs attention. Uploads are still available here.'],
@@ -705,6 +705,7 @@ describe('launch edge function guards', () => {
     expect(stripeWebhook).not.toContain('console.error("STRIPE_WEBHOOK_UNEXPECTED_FAILED", err)');
 
     const guestHubTrack = readFunction('guest-hub-track');
+    expect(guestHubTrack).toContain('GUEST_LINK_UNAVAILABLE_COPY = "This wedding link is not available."');
     expect(guestHubTrack).toContain('return json({ ok: true, tracked: false })');
     expect(guestHubTrack).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
     expect(guestHubTrack).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
@@ -718,8 +719,11 @@ describe('launch edge function guards', () => {
     expect(guestHubTrack).toContain('const referrer = safeReferrer(req.headers.get("referer"))');
     expect(guestHubTrack).not.toContain('(req.headers.get("referer") || "").slice(0, 500)');
     expect(guestHubTrack).not.toContain('Supabase not configured');
+    expect(guestHubTrack).not.toContain('Invalid site');
 
     const guestHubConfig = readFunction('guest-hub-config');
+    expect(guestHubConfig).toContain('GUEST_HUB_LINK_UNAVAILABLE_COPY = "This wedding link is not available."');
+    expect(guestHubConfig).toContain('GUEST_HUB_LOAD_FAILED_COPY = "Could not load this guest hub. Please try again."');
     expect(guestHubConfig).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
     expect(guestHubConfig).toContain('x-dayof-invite-token');
     expect(guestHubConfig).toContain('x-dayof-password-session');
@@ -727,8 +731,12 @@ describe('launch edge function guards', () => {
     expect(guestHubConfig).toContain('canReadPublicSubresource');
     expect(guestHubConfig).toContain('storedInviteToken: site.guest_access_token');
     expect(guestHubConfig).not.toContain('if (!site || !site.is_published)');
+    expect(guestHubConfig).not.toContain('Invalid site');
+    expect(guestHubConfig).not.toContain('Site not available');
+    expect(guestHubConfig).not.toContain('Could not load hub config');
 
     const guestRecapConfig = readFunction('guest-recap-config');
+    expect(guestRecapConfig).toContain('GUEST_RECAP_LINK_UNAVAILABLE_COPY = "This wedding link is not available."');
     expect(guestRecapConfig).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
     expect(guestRecapConfig).toContain('x-dayof-invite-token');
     expect(guestRecapConfig).toContain('x-dayof-password-session');
@@ -736,6 +744,8 @@ describe('launch edge function guards', () => {
     expect(guestRecapConfig).toContain('canReadPublicSubresource');
     expect(guestRecapConfig).toContain('storedInviteToken: site.guest_access_token');
     expect(guestRecapConfig).not.toContain('if (!site || !site.is_published)');
+    expect(guestRecapConfig).not.toContain('Invalid site');
+    expect(guestRecapConfig).not.toContain('Site not available');
 
     const logClientError = readFunction('log-client-error');
     expect(logClientError).toContain('LOG_CLIENT_ERROR_UNEXPECTED_FAILED');
@@ -1014,12 +1024,14 @@ describe('launch edge function guards', () => {
     expect(readFunction('submit-contact-request')).toContain('reason: "UNEXPECTED_CONTACT_REQUEST_SUBMIT_FAILURE"');
     expect(readFunction('submit-rsvp')).toContain('reason: "UNEXPECTED_RSVP_SUBMIT_FAILURE"');
     expect(readFunction('submit-rsvp')).toContain('RSVP_REQUEST_INVALID_COPY = "Could not read this RSVP request. Please try again."');
+    expect(readFunction('submit-rsvp')).toContain('RSVP_SUBMIT_LINK_REQUIRED_COPY = "Open your invitation link again before submitting your RSVP."');
     expect(readFunction('submit-rsvp')).toContain('hashRateLimitSubject');
     expect(readFunction('submit-rsvp')).toContain('function cleanText');
     expect(readFunction('submit-rsvp')).toContain('const notes = cleanText(body.notes, 1000)');
     expect(readFunction('submit-rsvp')).toContain('guest_token: await hashRateLimitSubject(inviteToken.trim())');
     expect(readFunction('submit-rsvp')).not.toContain('guest_token: inviteToken.slice(0, 16)');
     expect(readFunction('submit-rsvp')).not.toContain('Invalid JSON body');
+    expect(readFunction('submit-rsvp')).not.toContain('A valid invitation token is required to submit your RSVP.');
     expect(readFunction('submit-rsvp')).not.toContain('id, invite_token, wedding_site_id');
     expect(readFunction('validate-rsvp-token')).toContain('reason: "UNEXPECTED_RSVP_TOKEN_VALIDATION_FAILURE"');
     expect(readFunction('validate-rsvp-token')).toContain('RSVP_REQUEST_INVALID_COPY = "Could not read this RSVP request. Please try again."');
@@ -1113,9 +1125,12 @@ describe('launch edge function guards', () => {
     expect(source).toContain('We couldn\'t upload this file. Please try again.');
     expect(source).toContain('We couldn\'t finish this upload. Please try again.');
     expect(source).toContain('Open this photo upload link again before sending photos.');
+    expect(source).toContain('PHOTO_UPLOAD_LINK_UNAVAILABLE_COPY = "This photo upload link is not available."');
     expect(source).toContain('Choose at least one photo or video to upload.');
     expect(source).not.toContain('token or siteSlug is required');
     expect(source).not.toContain('At least one file is required');
+    expect(source).not.toContain('Invalid site link.');
+    expect(source).not.toContain('Site not available for uploads.');
     expect(source).not.toContain('return fail("INTERNAL_ERROR", err instanceof Error ? err.message');
     expect(source).not.toContain('error: error instanceof Error ? error.message');
     expect(source).not.toContain('if (error) throw new Error(error.message);');
@@ -1155,8 +1170,11 @@ describe('launch edge function guards', () => {
     expect(vaultSubmit).not.toContain('if (!site?.is_published)');
     const guestbook = readFunction('guestbook-submit');
     expect(guestbook).toContain('Guestbook is temporarily unavailable. Please try again.');
+    expect(guestbook).toContain('GUESTBOOK_LINK_UNAVAILABLE_COPY = "This wedding link is not available."');
     expect(guestbook).toContain('Add a guestbook message before sending.');
     expect(guestbook).not.toContain('Message is required');
+    expect(guestbook).not.toContain('Invalid site');
+    expect(guestbook).not.toContain('Site not available');
     expect(guestbook).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
     expect(guestbook).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
     expect(guestbook).toContain('canReadPublicSubresource');
@@ -1168,6 +1186,7 @@ describe('launch edge function guards', () => {
     expect(guestbook).not.toContain('.eq("requester_ip", requesterIp)');
     expect(guestbook).not.toContain('requester_ip: requesterIp,');
     const guestProspect = readFunction('guest-prospect-submit');
+    expect(guestProspect).toContain('GUEST_PROSPECT_LINK_UNAVAILABLE_COPY = "This wedding link is not available."');
     expect(guestProspect).toContain('eventError');
     expect(guestProspect).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
     expect(guestProspect).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
@@ -1175,8 +1194,10 @@ describe('launch edge function guards', () => {
     expect(guestProspect).toContain('const uploadToken = typeof body.uploadToken === "string" ? body.uploadToken.trim() : null');
     expect(guestProspect).toContain('.eq("upload_token_hash", await sha256Hex(uploadToken))');
     expect(guestProspect).toContain('albumUploadWindowIsOpen(album)');
-    expect(guestProspect).toContain('if (!hasPublicAccess && !hasUploadAccess) return json({ error: "Site not available" }, 404)');
+    expect(guestProspect).toContain('if (!hasPublicAccess && !hasUploadAccess) return json({ error: GUEST_PROSPECT_LINK_UNAVAILABLE_COPY }, 404)');
     expect(guestProspect).not.toContain('if (!site || !site.is_published)');
+    expect(guestProspect).not.toContain('Invalid site');
+    expect(guestProspect).not.toContain('Site not available');
 
     const guestContactSubmit = readFunction('guest-contact-submit');
     expect(guestContactSubmit).toContain('This contact request is no longer available.');

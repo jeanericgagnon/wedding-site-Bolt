@@ -16,6 +16,8 @@ function json(body: Record<string, unknown>, status = 200) {
   });
 }
 
+const GUEST_RECAP_LINK_UNAVAILABLE_COPY = "This wedding link is not available.";
+
 function isHostedStoragePath(value: unknown): value is string {
   return typeof value === "string" && value.includes("/") && !/^https?:\/\//i.test(value);
 }
@@ -44,7 +46,7 @@ Deno.serve(async (req: Request) => {
     const admin = createClient(supabaseUrl, serviceRole);
     const url = new URL(req.url);
     const siteSlug = String(url.searchParams.get("site") ?? "").trim().toLowerCase();
-    if (!/^[a-z0-9-]{2,80}$/.test(siteSlug)) return json({ error: "Invalid site" }, 400);
+    if (!/^[a-z0-9-]{2,80}$/.test(siteSlug)) return json({ error: GUEST_RECAP_LINK_UNAVAILABLE_COPY }, 400);
 
     const { data: site, error: siteError } = await admin
       .from("wedding_sites")
@@ -64,7 +66,7 @@ Deno.serve(async (req: Request) => {
         secret: serviceRole,
       }))
     ) {
-      return json({ error: "Site not available" }, 404);
+      return json({ error: GUEST_RECAP_LINK_UNAVAILABLE_COPY }, 404);
     }
 
     const { data: hubSettings, error: settingsError } = await admin
