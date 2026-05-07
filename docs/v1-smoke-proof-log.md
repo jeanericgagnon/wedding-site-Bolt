@@ -7679,3 +7679,16 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
   - `npm run build`: launch-equivalent serial build passed inside `proof:v1:comms-center`; one separate direct build attempt hit a transient local `dist/` cleanup `scandir` error and was treated as a local cleanup race, not a product regression.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 2:39 PM PT No-Deploy Overview Engagement Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Overview.tsx` now exports `MAX_OVERVIEW_INTERACTIVE_SUGGESTIONS = 8` and `MAX_OVERVIEW_INTERACTIVE_VOTES = 500`.
+  - Overview guest suggestion and vote summary reads now use those named caps instead of raw inline limits.
+  - `src/pages/dashboard/overviewQueryBounds.test.ts` now pins the bounded suggestion and vote query shape alongside the existing exact-count guest stats coverage.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/overviewQueryBounds.test.ts src/pages/dashboard/overviewService.test.ts src/pages/dashboard/overviewUtils.test.ts src/pages/dashboard/overviewDate.test.ts`: PASS, 14/14.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

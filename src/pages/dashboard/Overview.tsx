@@ -47,6 +47,8 @@ import { hideInteractiveSuggestion, persistOverviewIntelligenceDismissals } from
 
 const INTELLIGENCE_DISMISSALS_STORAGE_KEY = 'dayof_intelligence_dismissed_v1';
 export const MAX_OVERVIEW_RECENT_RSVPS = 5;
+export const MAX_OVERVIEW_INTERACTIVE_SUGGESTIONS = 8;
+export const MAX_OVERVIEW_INTERACTIVE_VOTES = 500;
 const OVERVIEW_GUEST_SELECT = 'id, rsvp_status, rsvp_received_at, first_name, last_name, name';
 
 const DEFAULT_NAME_CHANGE_INSIGHTS: NameChangeOverviewInsights = {
@@ -353,13 +355,13 @@ export const DashboardOverview: React.FC = () => {
           .eq('site_slug', slug)
           .eq('is_hidden', false)
           .order('created_at', { ascending: false })
-          .limit(8),
+          .limit(MAX_OVERVIEW_INTERACTIVE_SUGGESTIONS),
         supabase
           .from('interactive_votes')
           .select('id, widget_kind, widget_id, option_id, created_at')
           .eq('site_slug', slug)
           .order('created_at', { ascending: false })
-          .limit(500),
+          .limit(MAX_OVERVIEW_INTERACTIVE_VOTES),
       ]);
 
       if (!mounted) return;

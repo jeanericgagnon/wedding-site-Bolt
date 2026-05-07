@@ -2880,3 +2880,19 @@ Notes:
 
 Status:
 - PARTIAL. This keeps guest ops conflict/audit hydration and message credit preview reads bounded without changing guest workflows or messaging behavior. No deploy was run.
+
+### 2026-05-07 2:39 PM PT - No-Deploy Overview Engagement Bounds
+
+What changed:
+- Added `MAX_OVERVIEW_INTERACTIVE_SUGGESTIONS = 8` and `MAX_OVERVIEW_INTERACTIVE_VOTES = 500` in `src/pages/dashboard/Overview.tsx`.
+- Overview interactive engagement reads now use named caps instead of inline limits before summarizing owner-facing guest suggestions and vote activity.
+- Extended `src/pages/dashboard/overviewQueryBounds.test.ts` to pin the bounded suggestion and vote query shape alongside the existing exact-count guest stats and recent RSVP cap.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/overviewQueryBounds.test.ts src/pages/dashboard/overviewService.test.ts src/pages/dashboard/overviewUtils.test.ts src/pages/dashboard/overviewDate.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `git diff --check`
+
+Status:
+- PARTIAL. This keeps overview engagement hydration bounded without changing overview metrics, publishing status, or owner-facing dashboard behavior. No deploy was run.
