@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink, AlertTriangle, Check, X, HelpCircle, Camera, Wand2, MoveRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
@@ -19,7 +18,7 @@ import { deriveItineraryEventRsvpCounts, shouldLoadEventRsvps } from './itinerar
 import { readDemoItineraryEvents, writeDemoItineraryEvents } from './itineraryDemoStorage';
 import { analyzeTimeline } from '../../lib/invisibleIntelligence';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
-import { createItineraryTemplateEvents, syncItineraryScheduleMirror } from './itineraryService';
+import { createItineraryTemplateEvents, resolveItinerarySiteId, syncItineraryScheduleMirror } from './itineraryService';
 
 interface ItineraryEvent {
   id: string;
@@ -158,18 +157,16 @@ export const DashboardItinerary: React.FC = () => {
         return;
       }
 
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-      if (!user) {
+      const siteId = await resolveItinerarySiteId();
+      if (!siteId) {
         setEvents([]);
         return;
       }
 
-      const activeSite = await resolveActiveSiteForUser(user.id);
       const { data: sites, error: siteError } = await supabase
         .from('wedding_sites')
         .select('id')
-        .eq('id', activeSite?.id ?? '')
+        .eq('id', siteId)
         .maybeSingle();
       if (siteError) throw siteError;
 
@@ -349,8 +346,8 @@ export const DashboardItinerary: React.FC = () => {
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const siteId = await resolveItinerarySiteId();
+      if (!siteId) {
         setSaveError('Please log in again and retry.');
         return;
       }
@@ -358,7 +355,7 @@ export const DashboardItinerary: React.FC = () => {
       const { data: site } = await supabase
         .from('wedding_sites')
         .select('id')
-        .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
+        .eq('id', siteId)
         .single();
 
       if (!site) {
@@ -550,10 +547,8 @@ export const DashboardItinerary: React.FC = () => {
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Please log in again and retry.');
-      const activeSite = await resolveActiveSiteForUser(user.id);
-      if (!activeSite?.id) throw new Error('Couldn’t find your website right now.');
+      const siteId = await resolveItinerarySiteId();
+      if (!siteId) throw new Error('Please log in again and retry.');
 
       const results = await Promise.all(nextEvents.map((event) => supabase
         .from('itinerary_events')
@@ -567,7 +562,7 @@ export const DashboardItinerary: React.FC = () => {
       ));
       const failed = results.find((result) => result.error);
       if (failed?.error) throw failed.error;
-      await syncWeddingDataSchedule(activeSite.id, nextEvents);
+      await syncWeddingDataSchedule(siteId, nextEvents);
       setEvents(nextEvents);
       setSaveNotice(notice);
     } catch (err: unknown) {
@@ -645,11 +640,9 @@ export const DashboardItinerary: React.FC = () => {
         setSaveNotice(`Added ${newEvents.length} template events.`);
         return;
       }
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Please log in again and retry.');
-      const activeSite = await resolveActiveSiteForUser(user.id);
-      if (!activeSite?.id) throw new Error('Couldn’t find your website right now.');
-      await createItineraryTemplateEvents(activeSite.id, newEvents);
+      const siteId = await resolveItinerarySiteId();
+      if (!siteId) throw new Error('Please log in again and retry.');
+      await createItineraryTemplateEvents(siteId, newEvents);
       await loadEvents();
       setSaveNotice(`Added ${newEvents.length} template events.`);
     } catch (err: unknown) {
@@ -1149,19 +1142,17 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
 
   async function loadGuests() {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-      if (!user) {
+      const siteId = await resolveItinerarySiteId();
+      if (!siteId) {
         setAllGuests([]);
         setInvitedGuestIds(new Set());
         return;
       }
 
-      const activeSite = await resolveActiveSiteForUser(user.id);
       const { data: site, error: siteError } = await supabase
         .from('wedding_sites')
         .select('id')
-        .eq('id', activeSite?.id ?? '')
+        .eq('id', siteId)
         .single();
       if (siteError) throw siteError;
 

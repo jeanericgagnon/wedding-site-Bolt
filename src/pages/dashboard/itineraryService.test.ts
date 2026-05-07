@@ -1,12 +1,36 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildItineraryTemplateInsertRows,
   buildScheduleSectionEvents,
+  resolveItinerarySiteId,
   buildWeddingSchedule,
 } from './itineraryService';
 import { combineDateAndTimeISO } from './itineraryDateTime';
 
+const { getUserMock, resolveActiveSiteForUserMock } = vi.hoisted(() => ({
+  getUserMock: vi.fn(),
+  resolveActiveSiteForUserMock: vi.fn(),
+}));
+
+vi.mock('../../lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getUser: getUserMock,
+    },
+    from: vi.fn(),
+  },
+}));
+
+vi.mock('../../lib/activeSite', () => ({
+  resolveActiveSiteForUser: resolveActiveSiteForUserMock,
+}));
+
 describe('buildItineraryTemplateInsertRows', () => {
+  beforeEach(() => {
+    getUserMock.mockReset();
+    resolveActiveSiteForUserMock.mockReset();
+  });
+
   it('scopes template event inserts to one site and preserves public schedule fields', () => {
     expect(buildItineraryTemplateInsertRows('site-1', [
       {
@@ -104,5 +128,12 @@ describe('buildItineraryTemplateInsertRows', () => {
         notes: 'Rose Garden · 10 Sunset Way — Guests gather for vows. · Arrive 15 minutes early.',
       },
     ]);
+  });
+
+  it('resolves the active itinerary site id through the service helper', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
+    resolveActiveSiteForUserMock.mockResolvedValue({ id: 'site-1', role: 'owner', permissions: null });
+
+    await expect(resolveItinerarySiteId()).resolves.toBe('site-1');
   });
 });

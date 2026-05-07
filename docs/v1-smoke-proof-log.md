@@ -7831,3 +7831,17 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 3:25 PM PT No-Deploy Itinerary Auth Lookup Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/itineraryService.ts` now owns repeated active-site auth lookup via `resolveItinerarySiteId()`.
+  - `src/pages/dashboard/Itinerary.tsx` now calls that helper in the event loader, event save flow, timeline update flow, smart-template creation flow, and event guest manager instead of directly repeating `supabase.auth.getUser()` plus `resolveActiveSiteForUser(...)`.
+  - `src/pages/dashboard/itineraryService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` now pin that itinerary auth/service boundary.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts`: PASS, 26/26.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

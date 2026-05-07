@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import type { WeddingDataV1 } from '../../types/weddingData';
 import { combineDateAndTimeISO } from './itineraryDateTime';
 
@@ -38,6 +39,15 @@ export interface ItineraryScheduleMirrorEvent {
 
 const ITINERARY_SCHEDULE_MIRROR_SITE_SELECT = 'wedding_data';
 const ITINERARY_SCHEDULE_SECTION_SELECT = 'id,data';
+
+export async function resolveItinerarySiteId(): Promise<string | null> {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error) throw error;
+  if (!user) return null;
+
+  const activeSite = await resolveActiveSiteForUser(user.id);
+  return activeSite?.id ?? null;
+}
 
 export function buildItineraryTemplateInsertRows(
   weddingSiteId: string,

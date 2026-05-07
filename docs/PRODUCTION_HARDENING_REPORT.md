@@ -3118,3 +3118,20 @@ Commands run:
 
 Status:
 - PARTIAL. This materially advances the settings page-to-service migration without changing password policy copy, billing flows, planner invite flows, or site settings persistence. No deploy was run.
+
+### 2026-05-07 3:25 PM PT - No-Deploy Itinerary Auth Lookup Service Extraction
+
+What changed:
+- Moved the repeated active-site auth lookup out of `src/pages/dashboard/Itinerary.tsx` and into `src/pages/dashboard/itineraryService.ts` via `resolveItinerarySiteId()`.
+- `Itinerary.tsx` now calls that helper in the event loader, event save flow, timeline update flow, smart-template creation flow, and event guest manager instead of directly repeating `supabase.auth.getUser()` plus `resolveActiveSiteForUser(...)`.
+- Expanded `src/pages/dashboard/itineraryService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the itinerary boundary now pins that auth/service split.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `npm run build`
+- `git diff --check`
+
+Status:
+- PARTIAL. This materially advances the itinerary page-to-service migration without changing itinerary projections, guest-invite counts, schedule mirror behavior, or template event creation behavior. No deploy was run.
