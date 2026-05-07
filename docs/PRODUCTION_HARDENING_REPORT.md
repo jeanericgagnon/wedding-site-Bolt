@@ -2618,3 +2618,20 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps guest RSVP hydration bounded without changing current guest create/update/import/delete behavior. No deploy was run.
+
+### 2026-05-07 1:53 PM PT - No-Deploy Event RSVP Cleanup Bounds
+
+What changed:
+- Added `MAX_EVENT_RSVP_INVITATION_IDS = 10000` in `src/lib/eventRsvpCleanup.ts`.
+- Shared event-RSVP cleanup now slices invitation-id batches to that cap before delete fan-out and snapshot reads.
+- Extended `src/lib/eventRsvpCleanup.test.ts` to pin the stable cap export and the bounded helper shape.
+
+Commands run:
+- `npm test -- --run src/lib/eventRsvpCleanup.test.ts`: PASS, 4/4.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps shared event-RSVP cleanup fan-out bounded without changing current event RSVP restore or guest invitation rollback behavior. No deploy was run.

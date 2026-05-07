@@ -1,5 +1,7 @@
 import { supabase } from './supabase';
 
+export const MAX_EVENT_RSVP_INVITATION_IDS = 10000;
+
 export interface EventRsvpSnapshot {
   event_invitation_id: string;
   attending: boolean;
@@ -33,11 +35,12 @@ export function normalizeEventRsvpSnapshots(rows: unknown[]): EventRsvpSnapshot[
 
 export async function deleteEventRsvpsByInvitationIds(invitationIds: string[]): Promise<void> {
   if (invitationIds.length === 0) return;
+  const scopedInvitationIds = invitationIds.slice(0, MAX_EVENT_RSVP_INVITATION_IDS);
 
   const { error } = await supabase
     .from('event_rsvps')
     .delete()
-    .in('event_invitation_id', invitationIds);
+    .in('event_invitation_id', scopedInvitationIds);
 
   if (error && !isMissingEventRsvpsRelation(error.message)) {
     throw error;
@@ -51,11 +54,12 @@ export async function deleteEventRsvpByInvitationId(invitationId: string | null 
 
 export async function getEventRsvpSnapshotsByInvitationIds(invitationIds: string[]): Promise<EventRsvpSnapshot[]> {
   if (invitationIds.length === 0) return [];
+  const scopedInvitationIds = invitationIds.slice(0, MAX_EVENT_RSVP_INVITATION_IDS);
 
   const { data, error } = await supabase
     .from('event_rsvps')
     .select('event_invitation_id, attending, dietary_restrictions, notes, responded_at')
-    .in('event_invitation_id', invitationIds);
+    .in('event_invitation_id', scopedInvitationIds);
 
   if (error) {
     if (isMissingEventRsvpsRelation(error.message)) return [];

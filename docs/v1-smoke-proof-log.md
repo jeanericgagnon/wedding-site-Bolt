@@ -7480,3 +7480,16 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 1:53 PM PT No-Deploy Event RSVP Cleanup Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/lib/eventRsvpCleanup.ts` now caps invitation-id fan-out at 10000 before the shared event-RSVP delete and snapshot-read helpers run.
+  - `src/lib/eventRsvpCleanup.test.ts` now pins the stable cap export and bounded helper shape.
+- Proof passed:
+  - `npm test -- --run src/lib/eventRsvpCleanup.test.ts`: PASS, 4/4.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
