@@ -9,6 +9,7 @@ import { clearAuthEntryReturnPath } from '../lib/authEntryCleanup';
 import { resolveLoginReturnPath } from '../lib/loginReturnResolver';
 import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
 import { safeAuthError } from '../lib/authErrorCopy';
+import { loginWithPassword, sendLoginPasswordReset, startLoginWithGoogle } from './loginService';
 
 type AuthView = 'login' | 'forgot-password' | 'forgot-sent';
 
@@ -114,11 +115,7 @@ export const Login: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
-      if (signInError) throw signInError;
+      const signInData = await loginWithPassword(formData.email, formData.password);
       if (hasInviteContext) {
         navigate(`/accept-collaborator-invite${inviteReturnSearch}`, { replace: true });
         return;
@@ -160,13 +157,7 @@ export const Login: React.FC = () => {
         persistQuickStartDraftSnapshot(normalizedQuickStartDraft);
       }
 
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}${redirectPath}`,
-        },
-      });
-      if (oauthError) throw oauthError;
+      await startLoginWithGoogle(`${window.location.origin}${redirectPath}`);
     } catch (err: unknown) {
       setError(safeAuthError(err, 'Couldn’t start Google sign-in right now. Please try again.'));
       setLoading(false);
@@ -178,10 +169,7 @@ export const Login: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/login`,
-      });
-      if (resetError) throw resetError;
+      await sendLoginPasswordReset(resetEmail, `${window.location.origin}/login`);
       setView('forgot-sent');
     } catch (err: unknown) {
       setError(safeAuthError(err, 'Couldn’t send reset email right now. Please try again.'));

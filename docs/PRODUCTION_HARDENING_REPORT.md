@@ -3037,3 +3037,24 @@ Commands run:
 
 Status:
 - PARTIAL. This materially advances the auth-entry page-to-service migration without changing signup copy, invite handoff behavior, quick-start handoff, or owner checkout routing. No deploy was run.
+
+### 2026-05-07 3:12 PM PT - No-Deploy Login Auth Service Extraction
+
+What changed:
+- Moved the login auth flow out of `src/pages/Login.tsx` and into `src/pages/loginService.ts`.
+- `loginService.ts` now owns:
+  - password sign-in via `loginWithPassword(...)`
+  - Google OAuth start via `startLoginWithGoogle(...)`
+  - password reset submission via `sendLoginPasswordReset(...)`
+- `Login.tsx` now keeps the session-listener and redirect orchestration locally, but calls those service helpers instead of directly invoking `supabase.auth.signInWithPassword`, `supabase.auth.signInWithOAuth`, and `supabase.auth.resetPasswordForEmail`.
+- Added `src/pages/loginService.test.ts` to pin that auth-entry service contract.
+
+Commands run:
+- `npm test -- --run src/pages/Login.test.tsx src/pages/loginService.test.ts src/lib/authErrorCopy.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `npm run build`
+- `git diff --check`
+
+Status:
+- PARTIAL. This materially advances the auth-entry page-to-service migration without changing login copy, invite handoff behavior, quick-start handoff, or password reset routing. No deploy was run.
