@@ -78,6 +78,23 @@ Commands run:
 Status:
 - PARTIAL. This keeps the guest-facing public-link contract more consistent and less implementation-shaped, but live service-role/RLS proof and live messaging authorization proof are still deploy-gated blockers.
 
+### 2026-05-07 11:39 AM PT - No-Deploy Vault Contribution Copy Tightening
+
+What changed:
+- Updated `vault-upload-google-drive` so guest/public vault uploads now use customer-safe site-selection, vault-selection, file-selection, contribution-link, storage-readiness, vault-availability, and reconnect-needed copy instead of raw field-name, availability, and Google Drive/config wording.
+- Expanded `src/lib/launchEdgeFunctions.test.ts` to statically guard the tightened vault contribution copy and reject reintroduction of the old field-name, availability, and reconnect strings on that route.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 1 file and 27 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps guest-facing vault contribution failures less implementation-shaped, but live service-role/RLS proof and live messaging authorization proof are still deploy-gated blockers.
+
 ### 2026-05-07 11:19 AM PT - No-Deploy Preview Helper Copy Tightening
 
 What changed:

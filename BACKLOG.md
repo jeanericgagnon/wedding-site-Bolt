@@ -175,6 +175,13 @@ Current readiness verdict for this intake:
 - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (27/27), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `git diff --check`, and `npm run build`.
 - No deploy was run. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk during build.
 
+### 2026-05-07 11:39 AM PT - No-Deploy Vault Contribution Copy Tightening
+
+- Resolved locally in this batch: `vault-upload-google-drive/index.ts` now uses customer-safe site-selection, vault-selection, file-selection, contribution-link, storage-readiness, vault-availability, and reconnect-needed copy instead of raw `siteId, vaultYear, fileName, and base64 are required.`, `Site not available for public contributions.`, and Google Drive/config wording.
+- Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards the tightened vault contribution copy and rejects reintroduction of the older raw field-name, availability, and reconnect wording for that route.
+- Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (27/27), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `git diff --check`, and `npm run build`.
+- No deploy was run. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk during build.
+
 ### 2026-05-05 2:43 PM PT - No-Deploy Shared Collaborator Permission Helper
 
 - Resolved locally in this batch: added `supabase/functions/_shared/collaboratorPermissions.ts` as the single Edge Function helper for collaborator mutation checks.

@@ -815,6 +815,13 @@ describe('launch edge function guards', () => {
     expect(vaultUpload).toContain('.select("id,is_published,site_slug,privacy_mode,guest_access_token,vault_storage_provider');
     expect(vaultUpload).toContain('const hasAccess = site');
     expect(vaultUpload).toContain('storedInviteToken: typeof site.guest_access_token === "string" ? site.guest_access_token : null');
+    expect(vaultUpload).toContain('VAULT_UPLOAD_SITE_REQUIRED_COPY = "Choose a wedding site before sharing this file."');
+    expect(vaultUpload).toContain('VAULT_UPLOAD_YEAR_REQUIRED_COPY = "Choose a memory vault before sharing this file."');
+    expect(vaultUpload).toContain('VAULT_UPLOAD_FILE_REQUIRED_COPY = "Choose a file before sharing it to this memory vault."');
+    expect(vaultUpload).toContain('VAULT_UPLOAD_LINK_UNAVAILABLE_COPY = "This memory vault contribution link is not available."');
+    expect(vaultUpload).toContain('VAULT_UPLOAD_STORAGE_UNAVAILABLE_COPY = "This memory vault is not ready for file uploads right now."');
+    expect(vaultUpload).toContain('VAULT_UPLOAD_VAULT_UNAVAILABLE_COPY = "This memory vault is not open for file contributions right now."');
+    expect(vaultUpload).toContain('VAULT_UPLOAD_STORAGE_RECONNECT_COPY = "This memory vault upload connection needs attention. Please try again later."');
     expect(vaultUpload).not.toContain('if (!site || !site.is_published)');
     expect(vaultUpload).toContain('VAULT_UPLOAD_GOOGLE_DRIVE_UPLOAD_FAILED", { status: uploadRes.status }');
     expect(vaultUpload).toContain('enforcePublicSubmissionRateLimit');
@@ -825,6 +832,12 @@ describe('launch edge function guards', () => {
     expect(vaultUpload).toContain('function isAllowedVaultMimeType');
     expect(vaultUpload).toContain('value !== "image/svg+xml"');
     expect(vaultUpload).toContain('File is too large for vault uploads.');
+    expect(vaultUpload).not.toContain('siteId, vaultYear, fileName, and base64 are required.');
+    expect(vaultUpload).not.toContain('Site not available for public contributions.');
+    expect(vaultUpload).not.toContain('Vault is not configured for Google Drive uploads.');
+    expect(vaultUpload).not.toContain('Google Drive is not connected for this site.');
+    expect(vaultUpload).not.toContain('Target vault is not enabled for contributions.');
+    expect(vaultUpload).not.toContain('Google Drive connection needs reconnect.');
     expect(vaultResolve).toContain('VAULT_RESOLVE_ENTRY_GOOGLE_DRIVE_FAILED", { status: fileRes.status }');
 
     expect(readFunction('submit-contact-request')).toContain('SUBMIT_CONTACT_REQUEST_UPDATE_FAILED", { reason: "GUEST_UPDATE_FAILED" }');

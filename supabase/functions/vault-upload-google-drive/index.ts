@@ -18,6 +18,13 @@ const json = (data: unknown, status = 200) =>
 const MAX_GOOGLE_DRIVE_UPLOAD_BYTES = 35 * 1024 * 1024;
 const MAX_GOOGLE_DRIVE_UPLOAD_BASE64_CHARS = Math.ceil((MAX_GOOGLE_DRIVE_UPLOAD_BYTES * 4) / 3) + 8;
 const ALLOWED_VAULT_UPLOAD_MIME_PREFIXES = ["image/", "video/", "audio/"];
+const VAULT_UPLOAD_SITE_REQUIRED_COPY = "Choose a wedding site before sharing this file.";
+const VAULT_UPLOAD_YEAR_REQUIRED_COPY = "Choose a memory vault before sharing this file.";
+const VAULT_UPLOAD_FILE_REQUIRED_COPY = "Choose a file before sharing it to this memory vault.";
+const VAULT_UPLOAD_LINK_UNAVAILABLE_COPY = "This memory vault contribution link is not available.";
+const VAULT_UPLOAD_STORAGE_UNAVAILABLE_COPY = "This memory vault is not ready for file uploads right now.";
+const VAULT_UPLOAD_VAULT_UNAVAILABLE_COPY = "This memory vault is not open for file contributions right now.";
+const VAULT_UPLOAD_STORAGE_RECONNECT_COPY = "This memory vault upload connection needs attention. Please try again later.";
 
 function sanitizeDriveFileName(value: string) {
   const withoutControls = Array.from(value)
@@ -132,9 +139,9 @@ Deno.serve(async (req: Request) => {
     const mimeType = typeof body.mimeType === "string" ? body.mimeType.trim().toLowerCase() : "application/octet-stream";
     const base64 = typeof body.base64 === "string" ? body.base64.trim() : null;
 
-    if (!siteId || !vaultYear || !fileName || !base64) {
-      return json({ error: "siteId, vaultYear, fileName, and base64 are required." }, 400);
-    }
+    if (!siteId) return json({ error: VAULT_UPLOAD_SITE_REQUIRED_COPY }, 400);
+    if (!vaultYear) return json({ error: VAULT_UPLOAD_YEAR_REQUIRED_COPY }, 400);
+    if (!fileName || !base64) return json({ error: VAULT_UPLOAD_FILE_REQUIRED_COPY }, 400);
     if (!isAllowedVaultMimeType(mimeType)) {
       return json({ error: "Unsupported file type." }, 400);
     }
@@ -177,9 +184,9 @@ Deno.serve(async (req: Request) => {
         })
       : false;
 
-    if (!hasAccess) return json({ error: "Site not available for public contributions." }, 403);
-    if (site.vault_storage_provider !== "google_drive") return json({ error: "Vault is not configured for Google Drive uploads." }, 400);
-    if (!site.vault_google_drive_connected) return json({ error: "Google Drive is not connected for this site." }, 400);
+    if (!hasAccess) return json({ error: VAULT_UPLOAD_LINK_UNAVAILABLE_COPY }, 403);
+    if (site.vault_storage_provider !== "google_drive") return json({ error: VAULT_UPLOAD_STORAGE_UNAVAILABLE_COPY }, 400);
+    if (!site.vault_google_drive_connected) return json({ error: VAULT_UPLOAD_STORAGE_RECONNECT_COPY }, 400);
 
     const { data: config } = await adminClient
       .from("vault_configs")
@@ -189,7 +196,7 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (!config || !config.is_enabled) {
-      return json({ error: "Target vault is not enabled for contributions." }, 400);
+      return json({ error: VAULT_UPLOAD_VAULT_UNAVAILABLE_COPY }, 400);
     }
 
     let accessToken = site.vault_google_drive_access_token as string | null;
@@ -197,7 +204,7 @@ Deno.serve(async (req: Request) => {
     const tokenExpiresAt = site.vault_google_drive_token_expires_at ? new Date(site.vault_google_drive_token_expires_at as string).getTime() : 0;
 
     if (!accessToken || !tokenExpiresAt || tokenExpiresAt < Date.now() + 30_000) {
-      if (!refreshToken) return json({ error: "Google Drive connection needs reconnect." }, 400);
+      if (!refreshToken) return json({ error: VAULT_UPLOAD_STORAGE_RECONNECT_COPY }, 400);
       const refreshed = await refreshAccessToken(refreshToken);
       accessToken = refreshed.accessToken;
       await adminClient
