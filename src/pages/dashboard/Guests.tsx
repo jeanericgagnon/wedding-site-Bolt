@@ -23,7 +23,6 @@ import {
 } from '../../lib/rsvpAccessPlanner';
 import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { extractDietaryNote } from '../../lib/dietaryNotes';
-import { deleteEventRsvpByInvitationId, getEventRsvpSnapshotsByInvitationIds, restoreEventRsvpSnapshots } from '../../lib/eventRsvpCleanup';
 import { GUEST_IMPORT_MAX_FILE_BYTES, GUEST_IMPORT_MAX_ROWS, buildDefaultCsvFieldMap, buildGuestImportPreview, isCsvNameMappingValid, readGuestImportRows, type CsvFieldMap } from '../../lib/guestImportParser';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
@@ -113,6 +112,7 @@ import {
   type RsvpSavedSegment,
 } from './guests/guestDashboardStorage';
 import {
+  addGuestEventInvitation,
   createGuest,
   deleteAllGuestsForSite,
   deleteGuestById,
@@ -123,24 +123,19 @@ import {
   insertImportedGuests,
   loadGuestDashboardItineraryFilters,
   loadGuestDashboardRsvpAuditFeed,
+  loadGuestItineraryDrawerSnapshot,
   loadGuestDashboardSiteSettings,
   loadGuestDashboardSnapshot,
-  MAX_GUEST_DASHBOARD_ROWS,
   refreshGuestDashboardSession,
+  removeGuestEventInvitation,
   replaceGuestEventInvitations,
   replaceImportedGuestRsvps,
   restoreGuestEventInvitations,
   toEventInvitationRows,
   updateGuest,
   updateHouseholdGuestIds,
-  MAX_GUEST_RSVP_CONFLICT_HISTORY_ROWS,
-  MAX_GUEST_RSVP_CONFLICT_ROWS,
   type GuestEventInvitationRollback,
 } from './guests/guestService';
-
-export const MAX_GUEST_DRAWER_EVENTS = 200;
-export const MAX_GUEST_DRAWER_INVITATIONS = 10000;
-export const MAX_GUEST_DRAWER_AUDIT_ROWS = 12;
 
 export const DashboardGuests: React.FC = () => {
   const navigate = useNavigate();
@@ -1535,36 +1530,14 @@ const handleSendBulkInvitations = async () => {
           { id: `${guest.id}-a1`, action: 'update', changed_at: new Date(now - 1000 * 60 * 90).toISOString(), changed_by: null, old_data: { rsvp_status: 'pending' }, new_data: { rsvp_status: guest.rsvp_status } },
           { id: `${guest.id}-a2`, action: 'update', changed_at: new Date(now - 1000 * 60 * 60 * 26).toISOString(), changed_by: null, old_data: { invited_to_reception: false }, new_data: { invited_to_reception: guest.invited_to_reception } },
         ]);
+        setGuestEventIds(new Set());
       }
 
-      const [eventsResult, invitesResult, auditResult] = await Promise.all([
-        supabase
-          .from('itinerary_events')
-          .select('id, event_name, event_date, start_time, location_name')
-          .eq('wedding_site_id', weddingSiteId)
-          .order('event_date', { ascending: true })
-          .limit(MAX_GUEST_DRAWER_EVENTS),
-        supabase
-          .from('event_invitations')
-          .select('event_id')
-          .eq('guest_id', guest.id)
-          .limit(MAX_GUEST_DRAWER_INVITATIONS),
-        isDemoMode
-          ? Promise.resolve({ data: [], error: null } as any)
-          : supabase
-              .from('guest_audit_logs')
-              .select('id, action, changed_at, changed_by, old_data, new_data')
-              .eq('guest_id', guest.id)
-              .order('changed_at', { ascending: false })
-              .limit(MAX_GUEST_DRAWER_AUDIT_ROWS),
-      ]);
-      if (eventsResult.error) throw eventsResult.error;
-      if (invitesResult.error) throw invitesResult.error;
-      if (!isDemoMode && auditResult.error) throw auditResult.error;
-      setItineraryEvents((eventsResult.data ?? []) as ItineraryEvent[]);
-      setGuestEventIds(new Set((invitesResult.data ?? []).map((r: { event_id: string }) => r.event_id)));
       if (!isDemoMode) {
-        setGuestAuditEntries((auditResult.data ?? []) as GuestAuditEntry[]);
+        const snapshot = await loadGuestItineraryDrawerSnapshot(weddingSiteId, guest.id);
+        setItineraryEvents(snapshot.events);
+        setGuestEventIds(snapshot.guestEventIds);
+        setGuestAuditEntries(snapshot.auditEntries);
       }
     } catch {
       toast('Couldn’t load guest itinerary details right now. Please try again.', 'error');
@@ -1578,37 +1551,10 @@ const handleSendBulkInvitations = async () => {
     setTogglingEventId(eventId);
     try {
       if (currentlyInvited) {
-        const { data: invitationRow, error: invitationLookupError } = await supabase
-          .from('event_invitations')
-          .select('id')
-          .eq('event_id', eventId)
-          .eq('guest_id', itineraryDrawerGuest.id)
-          .maybeSingle();
-        if (invitationLookupError) throw invitationLookupError;
-
-        const eventRsvpSnapshots = invitationRow?.id
-          ? await getEventRsvpSnapshotsByInvitationIds([invitationRow.id])
-          : [];
-
-        if (invitationRow?.id) {
-          await deleteEventRsvpByInvitationId(invitationRow.id);
-        }
-
-        const { error: inviteDeleteError } = await supabase
-          .from('event_invitations')
-          .delete()
-          .eq('event_id', eventId)
-          .eq('guest_id', itineraryDrawerGuest.id);
-        if (inviteDeleteError) {
-          await restoreEventRsvpSnapshots(eventRsvpSnapshots);
-          throw inviteDeleteError;
-        }
+        await removeGuestEventInvitation(eventId, itineraryDrawerGuest.id);
         setGuestEventIds(prev => { const n = new Set(prev); n.delete(eventId); return n; });
       } else {
-        const { error: inviteInsertError } = await supabase
-          .from('event_invitations')
-          .insert({ event_id: eventId, guest_id: itineraryDrawerGuest.id });
-        if (inviteInsertError) throw inviteInsertError;
+        await addGuestEventInvitation(eventId, itineraryDrawerGuest.id);
         setGuestEventIds(prev => new Set([...prev, eventId]));
       }
     } catch {

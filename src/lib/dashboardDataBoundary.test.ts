@@ -50,6 +50,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('loadGuestDashboardSnapshot(weddingSiteId)');
     expect(source).toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
     expect(source).toContain('loadGuestDashboardRsvpAuditFeed(weddingSiteId)');
+    expect(source).toContain('loadGuestItineraryDrawerSnapshot(weddingSiteId, guest.id)');
+    expect(source).toContain('removeGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
+    expect(source).toContain('addGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(source).toContain('deleteGuestWithDependencies(guestId)');
     expect(source).toContain('deleteAllGuestsForSite(weddingSiteId)');
     expect(source).toContain('insertImportedGuests(guestRows)');
@@ -64,6 +67,9 @@ describe('dashboard data boundary guards', () => {
     expect(service).toContain('export async function loadGuestDashboardSnapshot(weddingSiteId: string)');
     expect(service).toContain('export async function loadGuestDashboardItineraryFilters(weddingSiteId: string)');
     expect(service).toContain('export async function loadGuestDashboardRsvpAuditFeed(weddingSiteId: string)');
+    expect(service).toContain('export async function loadGuestItineraryDrawerSnapshot(weddingSiteId: string, guestId: string)');
+    expect(service).toContain('export async function addGuestEventInvitation(eventId: string, guestId: string): Promise<void>');
+    expect(service).toContain('export async function removeGuestEventInvitation(eventId: string, guestId: string): Promise<void>');
     expect(service).toContain('resolveActiveSiteForUser(userId)');
     expect(service).toContain('.select(GUEST_SITE_SETTINGS_SELECT)');
     expect(service).toContain(".from('guests')");
@@ -81,6 +87,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain("supabase.from('rsvps').select('*')");
     expect(source).not.toContain(".from('itinerary_events')\n            .select('id, event_name, event_date, start_time, location_name')");
     expect(source).not.toContain(".from('guest_audit_logs')\n          .select('id, guest_id, action, changed_at, changed_by, old_data, new_data')");
+    expect(source).not.toContain(".from('event_invitations')\n          .select('id')");
+    expect(source).not.toContain(".from('event_invitations')\n          .delete()");
+    expect(source).not.toContain(".from('event_invitations')\n          .insert({ event_id: eventId, guest_id: itineraryDrawerGuest.id })");
     expect(source).not.toContain("supabase.from('event_invitations').insert(rows)");
     expect(source).not.toContain("supabase.from('event_invitations').insert(eventInviteRows)");
     expect(source).not.toContain("supabase.from('rsvps').insert(rsvpRows)");

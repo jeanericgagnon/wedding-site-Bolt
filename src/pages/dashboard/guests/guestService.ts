@@ -3,6 +3,7 @@ import { resolveActiveSiteForUser } from '../../../lib/activeSite';
 import { deriveInviteEvents, type RsvpSeedEvent } from '../../../lib/rsvpEventFallback';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../../lib/plannerAccess';
 import {
+  deleteEventRsvpByInvitationId,
   deleteEventRsvpsByInvitationIds,
   getEventRsvpSnapshotsByInvitationIds,
   restoreEventRsvpSnapshots,
@@ -37,6 +38,9 @@ export const MAX_GUEST_RSVP_CONFLICT_HISTORY_ROWS = 500;
 export const MAX_GUEST_ITINERARY_FILTER_EVENTS = 200;
 export const MAX_GUEST_ITINERARY_FILTER_INVITATIONS = 10000;
 export const MAX_GUEST_AUDIT_ROWS = 20;
+export const MAX_GUEST_DRAWER_EVENTS = 200;
+export const MAX_GUEST_DRAWER_INVITATIONS = 10000;
+export const MAX_GUEST_DRAWER_AUDIT_ROWS = 12;
 
 const EVENT_INVITATION_ROLLBACK_SELECT = 'id, event_id';
 const GUEST_ID_SELECT = 'id';
@@ -69,6 +73,12 @@ export interface GuestDashboardItineraryFiltersSnapshot {
   itineraryEvents: ItineraryEvent[];
   filterEvents: ItineraryEvent[];
   eventInviteGuestMap: Map<string, Set<string>>;
+}
+
+export interface GuestItineraryDrawerSnapshot {
+  events: ItineraryEvent[];
+  guestEventIds: Set<string>;
+  auditEntries: GuestAuditEntry[];
 }
 
 export async function loadGuestDashboardSiteSettings(userId: string): Promise<GuestDashboardSiteSettingsSnapshot> {
@@ -260,6 +270,38 @@ export async function loadGuestDashboardRsvpAuditFeed(weddingSiteId: string): Pr
   return (data ?? []) as GuestAuditEntry[];
 }
 
+export async function loadGuestItineraryDrawerSnapshot(weddingSiteId: string, guestId: string): Promise<GuestItineraryDrawerSnapshot> {
+  const [eventsResult, invitesResult, auditResult] = await Promise.all([
+    supabase
+      .from('itinerary_events')
+      .select(GUEST_ITINERARY_EVENT_SELECT)
+      .eq('wedding_site_id', weddingSiteId)
+      .order('event_date', { ascending: true })
+      .limit(MAX_GUEST_DRAWER_EVENTS),
+    supabase
+      .from('event_invitations')
+      .select('event_id')
+      .eq('guest_id', guestId)
+      .limit(MAX_GUEST_DRAWER_INVITATIONS),
+    supabase
+      .from('guest_audit_logs')
+      .select('id, action, changed_at, changed_by, old_data, new_data')
+      .eq('guest_id', guestId)
+      .order('changed_at', { ascending: false })
+      .limit(MAX_GUEST_DRAWER_AUDIT_ROWS),
+  ]);
+
+  if (eventsResult.error) throw eventsResult.error;
+  if (invitesResult.error) throw invitesResult.error;
+  if (auditResult.error) throw auditResult.error;
+
+  return {
+    events: (eventsResult.data ?? []) as ItineraryEvent[],
+    guestEventIds: new Set((invitesResult.data ?? []).map((row: { event_id: string }) => row.event_id)),
+    auditEntries: (auditResult.data ?? []) as GuestAuditEntry[],
+  };
+}
+
 export interface CreateGuestInput {
   weddingSiteId: string;
   firstName: string;
@@ -366,6 +408,41 @@ export async function insertEventInvitations(rows: EventInvitationRow[]): Promis
   if (rows.length === 0) return;
   const { error } = await supabase.from('event_invitations').insert(rows);
   if (error) throw error;
+}
+
+export async function addGuestEventInvitation(eventId: string, guestId: string): Promise<void> {
+  const { error } = await supabase
+    .from('event_invitations')
+    .insert({ event_id: eventId, guest_id: guestId });
+  if (error) throw error;
+}
+
+export async function removeGuestEventInvitation(eventId: string, guestId: string): Promise<void> {
+  const { data: invitationRow, error: invitationLookupError } = await supabase
+    .from('event_invitations')
+    .select('id')
+    .eq('event_id', eventId)
+    .eq('guest_id', guestId)
+    .maybeSingle();
+  if (invitationLookupError) throw invitationLookupError;
+
+  const eventRsvpSnapshots = invitationRow?.id
+    ? await getEventRsvpSnapshotsByInvitationIds([invitationRow.id])
+    : [];
+
+  if (invitationRow?.id) {
+    await deleteEventRsvpByInvitationId(invitationRow.id);
+  }
+
+  const { error: inviteDeleteError } = await supabase
+    .from('event_invitations')
+    .delete()
+    .eq('event_id', eventId)
+    .eq('guest_id', guestId);
+  if (inviteDeleteError) {
+    await restoreEventRsvpSnapshots(eventRsvpSnapshots);
+    throw inviteDeleteError;
+  }
 }
 
 export async function replaceGuestEventInvitations(guestId: string, nextEventIds: string[]): Promise<GuestEventInvitationRollback> {

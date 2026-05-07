@@ -8001,6 +8001,20 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 4:28 PM PT No-Deploy Guest Itinerary Drawer Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestService.ts` now owns drawer event/audit bootstrap via `loadGuestItineraryDrawerSnapshot(weddingSiteId, guestId)` and itinerary invite add/remove transport via `addGuestEventInvitation(...)` and `removeGuestEventInvitation(...)`.
+  - `src/pages/dashboard/Guests.tsx` now calls those service helpers instead of directly reading/writing `itinerary_events`, `event_invitations`, and `guest_audit_logs` inline for the itinerary drawer flow.
+  - `src/pages/dashboard/guests/guestService.test.ts`, `src/lib/dashboardDataBoundary.test.ts`, and `src/pages/dashboard/guestQueryBounds.test.ts` now pin that guest drawer service boundary and the moved query caps.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`: PASS, 49/49.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 3:31 PM PT No-Deploy Seating Session Refresh Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

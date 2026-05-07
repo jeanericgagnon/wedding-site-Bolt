@@ -3352,3 +3352,21 @@ Commands run:
 
 Status:
 - PARTIAL. This materially advances the guest dashboard page-to-service migration without changing itinerary filter behavior, RSVP event fallback seeding, invite guest-map hydration, or owner RSVP audit review behavior. No deploy was run.
+
+### 2026-05-07 4:28 PM PT - No-Deploy Guest Itinerary Drawer Service Extraction
+
+What changed:
+- Moved guest itinerary drawer bootstrap and itinerary invite toggle transport out of `src/pages/dashboard/Guests.tsx` and into `src/pages/dashboard/guests/guestService.ts`.
+- `Guests.tsx` now calls `loadGuestItineraryDrawerSnapshot(weddingSiteId, guestId)`, `addGuestEventInvitation(...)`, and `removeGuestEventInvitation(...)` instead of owning direct `itinerary_events`, `event_invitations`, and `guest_audit_logs` reads/writes inline.
+- The guest service now owns explicit drawer event and audit projections plus the bounded drawer event, invitation, and audit row caps.
+- Expanded `src/pages/dashboard/guests/guestService.test.ts`, `src/lib/dashboardDataBoundary.test.ts`, and `src/pages/dashboard/guestQueryBounds.test.ts` so the moved drawer service boundary and query caps stay pinned.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `npm run build`
+- `git diff --check`
+
+Status:
+- PARTIAL. This materially advances the guest dashboard page-to-service migration without changing itinerary drawer hydration, invited-event state, audit history review, or RSVP-snapshot rollback behavior on invite removal. No deploy was run.
