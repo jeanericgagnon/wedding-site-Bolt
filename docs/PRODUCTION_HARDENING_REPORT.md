@@ -19,6 +19,26 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 11:08 AM PT - No-Deploy Guest Lookup Exact-Match Tightening
+
+What changed:
+- Tightened `supabase/functions/guest-contact-lookup/index.ts` so public guest-contact lookup no longer widens through a last-name candidate sweep before exact-name filtering.
+- Kept site scoping and the shared public access gate intact while narrowing the allowed guest lookup shape to exact full-name matches from either the stored `name` field or an exact `first_name` plus `last_name` split for that site.
+- Updated `src/pages/GuestContactUpdate.tsx` so the guest flow now asks for the full invitation name up front, disables lookup until the request shape is valid, and shows guest-safe guidance instead of silently sending partial-name searches the server will reject.
+- Expanded `src/lib/launchEdgeFunctions.test.ts` and `src/pages/GuestContactUpdate.test.ts` to statically guard the exact split-name lookup and the full-name guest guidance contract.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/GuestContactUpdate.test.ts`: PASS, 2 files and 31 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This further reduces local public guest enumeration surface and aligns the guest flow with the hardened server contract, but live abuse proof and the remaining deploy-gated RSVP/service-role blockers are still open.
+
 ### 2026-05-07 10:36 AM PT - No-Deploy Request-Copy And Storage Safety Continuation
 
 What changed:

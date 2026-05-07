@@ -96,21 +96,23 @@ Deno.serve(async (req: Request) => {
     }
 
     const lastName = queryParts.at(-1) ?? "";
+    const firstName = queryParts.slice(0, -1).join(" ");
     const { data: exactNameCandidates } = await admin
       .from("guests")
       .select("id, name, first_name, last_name, household_id")
       .eq("wedding_site_id", site.id)
       .ilike("name", normalizedQuery)
-      .limit(10);
-    const { data: lastNameCandidates } = await admin
+      .limit(5);
+    const { data: splitNameCandidates } = await admin
       .from("guests")
       .select("id, name, first_name, last_name, household_id")
       .eq("wedding_site_id", site.id)
+      .ilike("first_name", firstName)
       .ilike("last_name", lastName)
-      .limit(25);
+      .limit(5);
 
     const candidateById = new Map<string, any>();
-    for (const candidate of [...(exactNameCandidates ?? []), ...(lastNameCandidates ?? [])] as any[]) {
+    for (const candidate of [...(exactNameCandidates ?? []), ...(splitNameCandidates ?? [])] as any[]) {
       if (candidate?.id) candidateById.set(candidate.id, candidate);
     }
 

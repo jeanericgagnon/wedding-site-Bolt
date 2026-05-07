@@ -7,6 +7,24 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. Active strict P0 items are live deploy/function proof for the local access-control changes, live RLS/service-role proof after static disposition, and live messaging authorization proof after local queue lockdown. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-07 11:08 AM PT Local Guest Lookup Exact-Match Tightening Batch
+
+- Continued the no-deploy hardening lane locally. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - `supabase/functions/guest-contact-lookup/index.ts` no longer widens public guest-contact lookup through a last-name candidate sweep before exact-name filtering.
+  - Guest-contact lookup now only combines exact full-name matches from the stored `name` field with exact split `first_name` plus `last_name` matches for the same site after the shared public access gate passes.
+  - `src/pages/GuestContactUpdate.tsx` now asks guests for their full invitation name up front, disables lookup until the request shape is valid, and shows clearer guest-safe guidance instead of nudging partial-name searches.
+  - `src/lib/launchEdgeFunctions.test.ts` and `src/pages/GuestContactUpdate.test.ts` now guard the exact split-name lookup contract plus the updated guest lookup copy and placeholder.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/GuestContactUpdate.test.ts`: PASS, 31/31.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with the existing non-blocking Browserslist `caniuse-lite` warning and empty `vendor-react` chunk warning.
+- Launch status did not change. This narrows a local public guest enumeration surface and keeps the guest flow aligned with the hardened server contract, but no deploy was run.
+
 ## 2026-05-07 10:36 AM PT Local Request-Copy And Storage Safety Batch
 
 - Continued the no-deploy hardening lane locally. No deploy, migration, or Supabase function deploy was run.

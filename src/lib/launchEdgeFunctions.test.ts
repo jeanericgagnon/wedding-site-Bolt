@@ -743,6 +743,9 @@ describe('launch edge function guards', () => {
     expect(lookup).toContain('signSessionToken<ContactSessionPayload>');
     expect(lookup).toContain('contact_session: await signSessionToken');
     expect(lookup).toContain('queryParts.length < 2');
+    expect(lookup).toContain('const firstName = queryParts.slice(0, -1).join(" ")');
+    expect(lookup).toContain('.ilike("first_name", firstName)');
+    expect(lookup).toContain('.ilike("last_name", lastName)');
     expect(lookup).toContain('normalizeName(displayName(guest)) === normalizedQuery');
     expect(lookup).not.toContain('name.ilike.%');
     expect(lookup).not.toContain('id: g.id');
@@ -760,6 +763,8 @@ describe('launch edge function guards', () => {
 
     expect(contactPage).toContain('contact_session: string');
     expect(contactPage).toContain('buildGuestContactAccessPayload');
+    expect(contactPage).toContain("Enter your full name as it appears on the invitation.");
+    expect(contactPage).toContain("placeholder=\"Search your full name\"");
     expect(contactPage).toContain('...buildGuestContactAccessPayload(siteRef)');
     expect(contactPage).toContain("contact_session: selectedContactSession");
     expect(contactPage).not.toContain('guest_id: selectedGuestId');

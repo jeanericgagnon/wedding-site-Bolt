@@ -1,7 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { demoGuests, demoWeddingSite } from '../lib/demoData';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
+import {
+  buildPublicAccessArtifacts,
+  capturePublicInviteTokenFromSearch,
+} from '../lib/publicAccessArtifacts';
 
 type Match = {
   contact_session: string;
@@ -15,13 +19,19 @@ export const friendlyGuestContactError = (err: unknown, fallback: string) => {
   });
 };
 
+export const safeGuestContactFunctionError = (value: unknown, fallback: string) => {
+  return friendlyGuestContactError(typeof value === 'string' ? value : '', fallback);
+};
+
 export const buildGuestContactAccessPayload = (siteRef: string) => {
   const searchParams = new URLSearchParams(window.location.search);
-  return {
-    inviteToken: searchParams.get('token') ?? sessionStorage.getItem(`dayof_invite_token_${siteRef}`),
-    passwordSession: sessionStorage.getItem(`dayof_pw_session_${siteRef}`),
-  };
+  return buildPublicAccessArtifacts(siteRef, searchParams);
 };
+
+function hasFullNameQuery(value: string) {
+  const normalized = value.trim().toLowerCase().replace(/\s+/g, ' ');
+  return normalized.length >= 5 && normalized.split(' ').filter(Boolean).length >= 2;
+}
 
 async function callPublicFn(name: string, body: unknown) {
   const base = ((import.meta as any).env?.VITE_SUPABASE_URL as string | undefined)?.trim();
@@ -36,8 +46,12 @@ async function callPublicFn(name: string, body: unknown) {
     body: JSON.stringify(body),
   });
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((json as any).error || 'Couldn’t reach the couple’s guest list right now.');
-  if ((json as any)?.error) throw new Error((json as any).error);
+  if (!res.ok) {
+    throw new Error(safeGuestContactFunctionError((json as { error?: unknown }).error, 'Couldn’t reach the couple’s guest list right now.'));
+  }
+  if ((json as { error?: unknown })?.error) {
+    throw new Error(safeGuestContactFunctionError((json as { error?: unknown }).error, 'Couldn’t reach the couple’s guest list right now.'));
+  }
   return json as any;
 }
 
@@ -76,8 +90,15 @@ export const GuestContactUpdate: React.FC = () => {
     !!mailingCountry.trim()
   ), [selectedContactSession, email, phone, rsvpStatus, mailingAddressLine1, mailingCity, mailingPostalCode, mailingCountry]);
 
+  useEffect(() => {
+    if (siteRef) capturePublicInviteTokenFromSearch(siteRef, new URLSearchParams(window.location.search));
+  }, [siteRef]);
+
   async function handleSearch() {
-    if (query.trim().length < 2) return;
+    if (!hasFullNameQuery(query)) {
+      setResult({ ok: false, message: 'Enter your full name as it appears on the invitation.' });
+      return;
+    }
     setSearching(true);
     setResult(null);
     setMatches([]);
@@ -141,7 +162,9 @@ export const GuestContactUpdate: React.FC = () => {
           mailing_postal_code: mailingPostalCode.trim() || null,
           mailing_country: mailingCountry.trim() || null,
         });
-        if ((data as any)?.error) throw new Error((data as any).error);
+        if ((data as { error?: unknown })?.error) {
+          throw new Error(safeGuestContactFunctionError((data as { error?: unknown }).error, 'Couldn’t send your update right now.'));
+        }
       }
       setResult({ ok: true, message: 'Thanks! Your information has been updated.' });
     } catch (err) {
@@ -164,15 +187,15 @@ export const GuestContactUpdate: React.FC = () => {
             id="guest-contact-search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search your first or last name"
+            placeholder="Search your full name"
             aria-describedby="guest-contact-search-helper"
             className="flex-1 px-3 py-2 border border-border rounded-lg bg-surface-subtle"
           />
-          <button onClick={handleSearch} disabled={searching || query.trim().length < 2} className="px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-50">
+          <button onClick={handleSearch} disabled={searching || !hasFullNameQuery(query)} className="px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-50">
             {searching ? 'Searching…' : 'Find'}
           </button>
           </div>
-          <p id="guest-contact-search-helper" className="mt-1 text-xs text-text-secondary">Use the name from your invitation.</p>
+          <p id="guest-contact-search-helper" className="mt-1 text-xs text-text-secondary">Use your full name exactly as it appears on the invitation.</p>
         </div>
 
         {matches.length > 0 && (

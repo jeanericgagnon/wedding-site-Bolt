@@ -46,7 +46,7 @@ Current readiness verdict for this intake:
 4. `PARTIAL` - Scope RSVP lookup.
    Problem: prevent cross-site lookup and global guest enumeration.
    Acceptance: guests cannot be discovered outside one site and guest lists cannot be enumerated through search.
-   Current evidence: local broad/ambiguous lookup responses were reduced; additional site-scoped lookup and abuse proof remains required.
+   Current evidence: invite lookup is now exact-token scoped, guest contact lookup is public-gate scoped and full-name exact-match only, and local broad/ambiguous lookup responses were reduced; additional live site-scoped abuse proof remains required.
 
 5. `DONE` - Rate limit lookup paths.
    Problem: name lookup, token lookup, and password attempts must be rate-limited.
@@ -205,6 +205,15 @@ Final acceptance criteria for this lane:
 - Tests: regression coverage exists for security-critical paths.
 - Validation: all required commands pass or are documented with exact failures.
 - Documentation: `BACKLOG.md` and `docs/PRODUCTION_HARDENING_REPORT.md` accurately reflect current state.
+
+### 2026-05-07 11:08 AM PT - No-Deploy Guest Lookup Exact-Match Tightening
+
+- Resolved locally in this batch: `supabase/functions/guest-contact-lookup/index.ts` no longer widens public guest-contact search through a last-name candidate sweep before filtering in memory.
+- Security hardening: guest-contact lookup now only combines exact full-name matches from the stored `name` field with exact split first-name/last-name matches for the same site after the shared public access gate passes, reducing residual public enumeration surface while preserving valid invitation-name lookups.
+- Guest-flow hardening: `src/pages/GuestContactUpdate.tsx` now guides guests to enter their full invitation name up front and disables the lookup button until that request shape is valid, so the page no longer nudges guests toward partial-name searches the server will not honor.
+- Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards exact split-name lookup and the full-name guest-contact UI copy/placeholder contract, and `src/pages/GuestContactUpdate.test.ts` now verifies the updated guest guidance.
+- Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/GuestContactUpdate.test.ts` (31/31), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
+- No deploy was run. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk during build.
 
 ### 2026-05-07 10:36 AM PT - No-Deploy Request-Copy And Storage Safety Continuation
 

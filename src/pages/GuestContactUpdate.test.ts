@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
-import { buildGuestContactAccessPayload, friendlyGuestContactError, GuestContactUpdate } from './GuestContactUpdate';
+import { buildGuestContactAccessPayload, friendlyGuestContactError, GuestContactUpdate, safeGuestContactFunctionError } from './GuestContactUpdate';
 
 describe('friendlyGuestContactError', () => {
   it('packages invite and password artifacts for gated guest-contact lookup', () => {
@@ -19,10 +19,13 @@ describe('friendlyGuestContactError', () => {
   it('hides internal guest contact lookup and submit failures from guests', () => {
     expect(friendlyGuestContactError(new Error('database policy denied token'), 'Please try again.')).toBe('Please try again.');
     expect(friendlyGuestContactError(new Error('request failed at functions/v1/guest-contact-submit'), 'Please try again.')).toBe('Please try again.');
+    expect(safeGuestContactFunctionError('Supabase policy denied token abc123', 'Please try again.')).toBe('Please try again.');
+    expect(safeGuestContactFunctionError({ error: 'database relation guests missing' }, 'Please try again.')).toBe('Please try again.');
   });
 
   it('keeps plain validation copy when it is already guest safe', () => {
     expect(friendlyGuestContactError(new Error('Add an email or phone first.'), 'Please try again.')).toBe('Add an email or phone first.');
+    expect(safeGuestContactFunctionError('Add an email or phone first.', 'Please try again.')).toBe('Add an email or phone first.');
   });
 
   it('labels the guest lookup and contact update fields clearly', () => {
@@ -44,7 +47,8 @@ describe('friendlyGuestContactError', () => {
     const search = screen.getByLabelText('Find your guest record');
     expect(search).toHaveAttribute('id', 'guest-contact-search');
     expect(search).toHaveAttribute('aria-describedby', 'guest-contact-search-helper');
-    expect(screen.getByText('Use the name from your invitation.')).toHaveAttribute('id', 'guest-contact-search-helper');
+    expect(screen.getByPlaceholderText('Search your full name')).toHaveAttribute('id', 'guest-contact-search');
+    expect(screen.getByText('Use your full name exactly as it appears on the invitation.')).toHaveAttribute('id', 'guest-contact-search-helper');
 
     expect(screen.getByLabelText('Email (optional)')).toHaveAttribute('id', 'guest-contact-email');
     expect(screen.getByLabelText('Phone (optional)')).toHaveAttribute('id', 'guest-contact-phone');
