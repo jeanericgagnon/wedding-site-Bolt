@@ -95,6 +95,42 @@ Commands run:
 Status:
 - PARTIAL. This keeps guest-facing vault contribution failures less implementation-shaped, but live service-role/RLS proof and live messaging authorization proof are still deploy-gated blockers.
 
+### 2026-05-07 11:41 AM PT - No-Deploy Public RSVP Submit Contract Tightening
+
+What changed:
+- Updated `public-site-rsvp-submit` so the public RSVP widget submit path now uses named customer-safe constants for missing-name, invalid-email, send-unavailable, rate-limit, and link-unavailable copy instead of ad hoc inline strings.
+- Kept the same fail-closed validation and rate-limit behavior while making the guest-facing RSVP submit contract more explicit and consistent with the broader public-link wording pass.
+- Expanded `src/lib/launchEdgeFunctions.test.ts` to statically guard the tightened public RSVP submit copy and reject reintroduction of the older inline name-required and RSVP-unavailable strings on that route.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 1 file and 27 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps the public RSVP submit contract calmer and less implementation-shaped, but live service-role/RLS proof and live messaging authorization proof are still deploy-gated blockers.
+
+### 2026-05-07 11:45 AM PT - No-Deploy Service-Role Disposition Truth Tightening
+
+What changed:
+- Updated `docs/service-role-authorization-disposition-2026-05-05.md` so the static service-role inventory now correctly distinguishes owner/collaborator auth routes from public submission routes and public or optional-auth rate-limited helpers.
+- Moved `vault-upload-google-drive` into the public submission scoped group, and documented `log-client-error`, `onboarding-ai-orchestrate`, and `vendor-profile-preview` under a new public or optional-auth rate-limited helper section instead of the owner-only group.
+- Reconciled the disposition document with `src/lib/serviceRoleAuthorizationDisposition.test.ts`, removing a real proof drift where the inventory doc and the test disagreed about the current launch-critical service-role surface.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/serviceRoleAuthorizationDisposition.test.ts`: PASS, 2 files and 29 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This fixes a real proof-truth mismatch in the service-role launch lane, but live service-role/RLS proof and live messaging authorization proof are still deploy-gated blockers.
+
 ### 2026-05-07 11:19 AM PT - No-Deploy Preview Helper Copy Tightening
 
 What changed:

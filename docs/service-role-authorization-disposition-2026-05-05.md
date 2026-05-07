@@ -13,8 +13,6 @@ Every Edge Function that reads `SUPABASE_SERVICE_ROLE_KEY` is intentionally clas
 - `google-drive-auth-callback`
 - `google-drive-auth-start`
 - `google-drive-health`
-- `log-client-error`
-- `onboarding-ai-orchestrate`
 - `photo-album-create`
 - `photo-album-manage`
 - `photo-analyze-batch`
@@ -31,8 +29,6 @@ Every Edge Function that reads `SUPABASE_SERVICE_ROLE_KEY` is intentionally clas
 - `stripe-verify-checkout-session`
 - `translate-site-content`
 - `vault-resolve-entry-link`
-- `vault-upload-google-drive`
-- `vendor-profile-preview`
 
 ## Public Token / Public Submission Scoped
 
@@ -52,7 +48,14 @@ Every Edge Function that reads `SUPABASE_SERVICE_ROLE_KEY` is intentionally clas
 - `submit-rsvp`
 - `validate-rsvp-token`
 - `vault-entry-submit`
+- `vault-upload-google-drive`
 - `vendor-profile-inquiry-submit`
+
+## Public Or Optional-Auth Rate-Limited Helpers
+
+- `log-client-error` - public-safe error logging with optional bearer inference and durable public-submission rate limiting before service-role writes.
+- `onboarding-ai-orchestrate` - public onboarding draft helper with deterministic fallback, optional site context, and durable public-submission rate limiting before model-backed service-role work.
+- `vendor-profile-preview` - public vendor-preview helper with public-source fetch hardening and durable public-submission rate limiting before preview work.
 
 ## Internal / Scheduler / Provider Scoped
 

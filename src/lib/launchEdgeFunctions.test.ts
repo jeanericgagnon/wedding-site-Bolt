@@ -943,7 +943,11 @@ describe('launch edge function guards', () => {
     expect(submit).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
     expect(submit).toContain('enforceSubmitRateLimit');
     expect(submit).toContain('function isSafeEmail');
-    expect(submit).toContain('Enter a valid email address or leave it blank.');
+    expect(submit).toContain('PUBLIC_SITE_RSVP_NAME_REQUIRED_COPY = "Add your name before sending this RSVP."');
+    expect(submit).toContain('PUBLIC_SITE_RSVP_EMAIL_INVALID_COPY = "Enter a valid email address or leave it blank."');
+    expect(submit).toContain('PUBLIC_SITE_RSVP_SEND_UNAVAILABLE_COPY = "Could not send this RSVP right now. Please try again."');
+    expect(submit).toContain('PUBLIC_SITE_RSVP_RATE_LIMIT_COPY = "Too many RSVP attempts. Please wait a few minutes and try again."');
+    expect(submit).toContain('PUBLIC_SITE_RSVP_LINK_UNAVAILABLE_COPY = "This RSVP link is not available right now."');
     expect(submit).toContain('guest_email: guestEmail');
     expect(submit).toContain('PUBLIC_SITE_RSVP_INSERT_FAILED');
     expect(submit).toContain('reason: "PUBLIC_SITE_RSVP_INSERT_FAILED"');
@@ -953,6 +957,8 @@ describe('launch edge function guards', () => {
     expect(submit).not.toContain('guest_token: slug.slice(0, 16)');
     expect(submit).not.toContain('site: row');
     expect(submit).not.toContain('.select("*")');
+    expect(submit).not.toContain('Please add your name before sending your RSVP.');
+    expect(submit).not.toContain('This RSVP is not available right now.');
 
     expect(rsvpSection).toContain("supabase.functions.invoke('public-site-rsvp-submit'");
     expect(rsvpSection).toContain("supabase.functions.invoke('public-site-access'");

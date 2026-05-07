@@ -6953,6 +6953,36 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 11:41 AM PT No-Deploy Public RSVP Submit Contract Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `supabase/functions/public-site-rsvp-submit/index.ts` now uses named customer-safe constants for missing-name, invalid-email, send-unavailable, rate-limit, and link-unavailable copy instead of ad hoc inline strings on the public RSVP submission path.
+  - Public RSVP unavailable wording now consistently refers to the RSVP link, matching the surrounding guest-facing public access contract.
+  - `src/lib/launchEdgeFunctions.test.ts` now statically guards the tightened public RSVP submit copy and rejects reintroduction of the older inline name-required and RSVP-unavailable strings.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 27/27.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 11:45 AM PT No-Deploy Service-Role Disposition Truth Tightening
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `docs/service-role-authorization-disposition-2026-05-05.md` now correctly separates owner/collaborator auth routes from public submission routes and public or optional-auth rate-limited helpers.
+  - `vault-upload-google-drive` is now documented in the public submission group, while `log-client-error`, `onboarding-ai-orchestrate`, and `vendor-profile-preview` are documented in the public or optional-auth helper group.
+  - `src/lib/serviceRoleAuthorizationDisposition.test.ts` now passes against the current source-backed disposition inventory, so service-role launch-doc drift is caught instead of hidden.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/serviceRoleAuthorizationDisposition.test.ts`: PASS, 29/29.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-05 2:53 PM PT No-Deploy Guest Route Invite URL Cleanup
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

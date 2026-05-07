@@ -10,6 +10,11 @@ const corsHeaders = {
 
 const RATE_LIMIT_WINDOW_MINUTES = 15;
 const RATE_LIMIT_MAX_ATTEMPTS = 20;
+const PUBLIC_SITE_RSVP_NAME_REQUIRED_COPY = "Add your name before sending this RSVP.";
+const PUBLIC_SITE_RSVP_EMAIL_INVALID_COPY = "Enter a valid email address or leave it blank.";
+const PUBLIC_SITE_RSVP_SEND_UNAVAILABLE_COPY = "Could not send this RSVP right now. Please try again.";
+const PUBLIC_SITE_RSVP_RATE_LIMIT_COPY = "Too many RSVP attempts. Please wait a few minutes and try again.";
+const PUBLIC_SITE_RSVP_LINK_UNAVAILABLE_COPY = "This RSVP link is not available right now.";
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -85,16 +90,16 @@ Deno.serve(async (req) => {
     const dietaryNotes = cleanText(body.dietaryNotes, 500) || null;
 
     if (!slug || !guestName) {
-      return json({ error: "Please add your name before sending your RSVP." }, 400);
+      return json({ error: PUBLIC_SITE_RSVP_NAME_REQUIRED_COPY }, 400);
     }
     if (!isSafeEmail(guestEmail)) {
-      return json({ error: "Enter a valid email address or leave it blank." }, 400);
+      return json({ error: PUBLIC_SITE_RSVP_EMAIL_INVALID_COPY }, 400);
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!supabaseUrl || !serviceRoleKey) {
-      return json({ error: "Could not send this RSVP right now. Please try again." }, 503);
+      return json({ error: PUBLIC_SITE_RSVP_SEND_UNAVAILABLE_COPY }, 503);
     }
 
     const admin = createClient(supabaseUrl, serviceRoleKey, {
@@ -103,7 +108,7 @@ Deno.serve(async (req) => {
 
     const allowed = await enforceSubmitRateLimit(admin, req, slug);
     if (!allowed) {
-      return json({ error: "Too many RSVP attempts. Please wait a few minutes and try again." }, 429);
+      return json({ error: PUBLIC_SITE_RSVP_RATE_LIMIT_COPY }, 429);
     }
 
     const { data: site, error: siteError } = await admin
@@ -125,7 +130,7 @@ Deno.serve(async (req) => {
         secret: serviceRoleKey,
       }))
     ) {
-      return json({ error: "This RSVP is not available right now." }, 403);
+      return json({ error: PUBLIC_SITE_RSVP_LINK_UNAVAILABLE_COPY }, 403);
     }
 
     const { error: insertError } = await admin.from("site_rsvps").insert({
@@ -139,12 +144,12 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       console.error("PUBLIC_SITE_RSVP_INSERT_FAILED", { reason: "PUBLIC_SITE_RSVP_INSERT_FAILED" });
-      return json({ error: "Could not send this RSVP right now. Please try again." }, 500);
+      return json({ error: PUBLIC_SITE_RSVP_SEND_UNAVAILABLE_COPY }, 500);
     }
 
     return json({ ok: true }, 200);
   } catch {
     console.error("PUBLIC_SITE_RSVP_UNEXPECTED_FAILED", { reason: "UNEXPECTED_PUBLIC_SITE_RSVP_FAILURE" });
-    return json({ error: "Could not send this RSVP right now. Please try again." }, 500);
+    return json({ error: PUBLIC_SITE_RSVP_SEND_UNAVAILABLE_COPY }, 500);
   }
 });

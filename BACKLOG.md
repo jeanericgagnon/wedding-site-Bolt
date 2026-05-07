@@ -178,9 +178,25 @@ Current readiness verdict for this intake:
 ### 2026-05-07 11:39 AM PT - No-Deploy Vault Contribution Copy Tightening
 
 - Resolved locally in this batch: `vault-upload-google-drive/index.ts` now uses customer-safe site-selection, vault-selection, file-selection, contribution-link, storage-readiness, vault-availability, and reconnect-needed copy instead of raw `siteId, vaultYear, fileName, and base64 are required.`, `Site not available for public contributions.`, and Google Drive/config wording.
-- Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards the tightened vault contribution copy and rejects reintroduction of the older raw field-name, availability, and reconnect wording for that route.
+- Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now statically guards the tightened vault contribution copy and rejects reintroduction of the old field-name, availability, and reconnect strings on that route.
 - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (27/27), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `git diff --check`, and `npm run build`.
-- No deploy was run. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk during build.
+- Launch status did not change. This keeps guest-facing vault contribution failures less implementation-shaped, but live service-role/RLS proof and live messaging authorization proof remain open. No deploy was run.
+
+### 2026-05-07 11:41 AM PT - No-Deploy Public RSVP Submit Contract Tightening
+
+- Resolved locally in this batch: `public-site-rsvp-submit/index.ts` now uses named customer-safe constants for missing-name, invalid-email, send-unavailable, rate-limit, and link-unavailable copy instead of ad hoc inline strings on the public RSVP submission path.
+- Resolved locally in this batch: public RSVP unavailable wording now consistently refers to the RSVP link, which better matches the guest-facing flow and the existing public-access contract.
+- Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now statically guards the tightened public RSVP submit copy and rejects reintroduction of the older inline name-required and RSVP-unavailable strings.
+- Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (27/27), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `git diff --check`, and `npm run build`.
+- Launch status did not change. This keeps the public RSVP submit contract calmer and more explicit without changing behavior; live service-role/RLS proof and live messaging authorization proof remain open. No deploy was run.
+
+### 2026-05-07 11:45 AM PT - No-Deploy Service-Role Disposition Truth Tightening
+
+- Resolved locally in this batch: `docs/service-role-authorization-disposition-2026-05-05.md` now correctly separates owner/collaborator routes from public submission routes and public or optional-auth rate-limited helpers.
+- Resolved locally in this batch: `vault-upload-google-drive` is now documented in the public submission scoped group, while `log-client-error`, `onboarding-ai-orchestrate`, and `vendor-profile-preview` are documented in the public or optional-auth rate-limited helper group instead of the owner-only group.
+- Proof added/updated: `src/lib/serviceRoleAuthorizationDisposition.test.ts` now passes again against the real disposition categories, so service-role inventory drift in the launch docs is caught instead of silently tolerated.
+- Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/serviceRoleAuthorizationDisposition.test.ts` (29/29), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `git diff --check`, and `npm run build`.
+- Launch status did not change. This fixes a real proof-truth mismatch in the service-role launch lane, but live service-role/RLS proof and live messaging authorization proof remain open. No deploy was run.
 
 ### 2026-05-05 2:43 PM PT - No-Deploy Shared Collaborator Permission Helper
 
