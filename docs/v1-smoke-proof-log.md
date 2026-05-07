@@ -5,7 +5,21 @@ _Owner:_ Product finish lane
 _Production:_ `https://dayof.love`
 _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
-_Launch call right now:_ Not production-ready under the stricter P0/P1 standard. Active strict P0 items are live deploy/function proof for the local access-control changes, live RLS/service-role proof after static disposition, and live messaging authorization proof after local queue lockdown. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
+_Launch call right now:_ Not production-ready under the stricter P0/P1 standard. Active strict P0 items are live deploy/function proof for the local access-control changes, authenticated role-mutation proof for the service-role and messaging lanes after the new unauthenticated live denial passes, and secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
+
+## 2026-05-07 11:46 AM PT No-Deploy Live Authorization Proof Narrowing
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `npm run proof:v1:service-role-authorization` passed live unauthenticated denial proof for `photo-album-create`, `photo-album-manage`, `photo-upload-moderate`, `photo-export-manifest`, and `photo-analyze-batch`, all returning safe `401` denial responses from the live Supabase project.
+  - `npm run proof:v1:email-messaging-authorization` passed live unauthenticated denial proof for `process-email-queue`, `queue-guest-followups`, `send-bulk-message`, and `send-wedding-email`, all returning safe `401/403` denial responses from the live Supabase project.
+  - The launch-call wording and backlog/proof docs now distinguish those green live denial proofs from the still-open authenticated role-mutation proof and secure service-role queue/storage proof.
+- Proof passed:
+  - `npm run proof:v1:service-role-authorization`: PASS.
+  - `npm run proof:v1:email-messaging-authorization`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `npm test -- --run src/lib/proofBoardFreshness.test.ts`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This narrows the remaining strict blockers to authenticated role proof plus secure service-role queue/storage proof, and no deploy was run.
 
 ## 2026-05-07 11:11 AM PT Local RSVP Invitation-Code Contract Alignment Batch
 

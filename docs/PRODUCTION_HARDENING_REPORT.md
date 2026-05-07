@@ -8,7 +8,7 @@ _Scope:_ 10/10 production-hardening execution. No deploy unless Eric explicitly 
 
 Final Production Readiness Score: 8/10
 
-The approved production deploy and current non-SMS postdeploy proof are green, and additional local hardening continues. The app is still not 10/10 production-ready until remaining P1/P2 security, service-role integrity, live model-backed AI, and live messaging authorization proof are complete. The active standard is real private wedding and guest data must be safe by design.
+The approved production deploy and current non-SMS postdeploy proof are green, and additional local hardening continues. The app is still not 10/10 production-ready until remaining P1/P2 security, authenticated role-based service-role proof, secure service-role queue/storage integrity proof, live model-backed AI, and authenticated live messaging authorization proof are complete. The active standard is real private wedding and guest data must be safe by design.
 
 ## No Feature Loss Checklist
 
@@ -18,6 +18,23 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 - Existing smoke lanes for registry, RSVP, site, CSV mapper, check-in, messages: PARTIAL, all listed lanes pass except live `smoke:rsvp`; aggregate `test:smoke` fails because it stops at RSVP.
 
 ## Batch Log
+
+### 2026-05-07 11:46 AM PT - No-Deploy Live Authorization Proof Narrowing
+
+What changed:
+- Ran `npm run proof:v1:service-role-authorization` against the live Supabase project and proved that `photo-album-create`, `photo-album-manage`, `photo-upload-moderate`, `photo-export-manifest`, and `photo-analyze-batch` all deny unauthenticated callers with safe `401` responses before privileged media/service-role work.
+- Ran `npm run proof:v1:email-messaging-authorization` against the live Supabase project and proved that `process-email-queue`, `queue-guest-followups`, `send-bulk-message`, and `send-wedding-email` all deny unauthenticated or non-service-role callers with safe `401/403` responses before privileged messaging/queue work.
+- Updated backlog/proof wording so the open blockers are now recorded as authenticated role-mutation proof plus secure service-role queue/storage proof, instead of the older broader “live service-role proof” and “live messaging authorization proof” wording that no longer matched the green live denial results.
+
+Commands run:
+- `npm run proof:v1:service-role-authorization`: PASS. Live unauthenticated denial proof returned safe `401` copy for all five service-role photo/media cases.
+- `npm run proof:v1:email-messaging-authorization`: PASS. Live unauthenticated denial proof returned safe `401/403` copy for all four messaging/queue cases.
+- `npm run proof:v1:board:md`: PASS.
+- `npm test -- --run src/lib/proofBoardFreshness.test.ts`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. Live unauthenticated denial proof is now green for both service-role photo/media and messaging/queue lanes, but authenticated role-mutation proof and secure service-role queue/storage integrity proof still remain before these launch blockers are fully closed.
 
 ### 2026-05-07 11:27 AM PT - No-Deploy Photo Owner Helper Copy Tightening
 

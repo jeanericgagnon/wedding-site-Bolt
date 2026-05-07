@@ -68,7 +68,7 @@ Current readiness verdict for this intake:
 8. `PARTIAL` - Audit service-role usage.
    Problem: service-role functions must not trust client-supplied IDs and must validate access server-side.
    Acceptance: every service-role function has authorization disposition plus tests/proof.
-   Current evidence: service-role inventory/disposition doc and static guard exist. Messaging and photo/media mutation functions now use shared role-aware collaborator checks that block `viewer` mutations even with stale explicit permission rows. Live RLS/service-role proof remains open.
+   Current evidence: service-role inventory/disposition doc and static guard exist. Messaging and photo/media mutation functions now use shared role-aware collaborator checks that block `viewer` mutations even with stale explicit permission rows. Live unauthenticated denial proof for the photo/media service-role lane is now green; remaining proof is authenticated role-mutation coverage plus secure service-role storage/cross-table and queue-processing proof.
 
 9. `PARTIAL` - Complete SSRF hardening.
    Problem: registry preview must block IPv6/private ranges, validate DNS strictly, and rate-limit strongly.
@@ -78,7 +78,7 @@ Current readiness verdict for this intake:
 10. `PARTIAL` - Email safety.
     Problem: email HTML must be escaped, URLs validated, and subjects sanitized.
     Acceptance: all email-producing paths use shared escaping/sanitization and tests cover hostile names/body/URLs/subjects.
-    Current evidence: `send-wedding-email`, `process-email-queue`, and `send-bulk-message` now import shared Edge Function email safety helpers for HTML escaping, safe URLs, href escaping, and subject sanitization. Direct wedding emails, bulk/scheduled messages, and queued guest follow-ups now reject `viewer` collaborators even when a malformed explicit `messages`/`guests` permission exists. Focused static proof, planner-access tests, typecheck, quiet lint, build, and message smoke pass; complete all-template proof and live messaging authorization proof remain required.
+    Current evidence: `send-wedding-email`, `process-email-queue`, and `send-bulk-message` now import shared Edge Function email safety helpers for HTML escaping, safe URLs, href escaping, and subject sanitization. Direct wedding emails, bulk/scheduled messages, and queued guest follow-ups now reject `viewer` collaborators even when a malformed explicit `messages`/`guests` permission exists. Focused static proof, planner-access tests, typecheck, quiet lint, build, message smoke, and live unauthenticated denial proof are green; remaining proof is authenticated owner/planner/coordinator/viewer messaging mutation coverage plus secure queue-processing proof.
 
 11. `PARTIAL` - Validation must pass and be recorded.
    Required commands: `npm run typecheck`, `npm run lint`, `npm run build`, `npm test`, `npm run test:smoke`, `npm run smoke:registry`, `npm run smoke:rsvp`, `npm run smoke:site`, `npm run guard:file-size`.
@@ -197,6 +197,14 @@ Current readiness verdict for this intake:
 - Proof added/updated: `src/lib/serviceRoleAuthorizationDisposition.test.ts` now passes again against the real disposition categories, so service-role inventory drift in the launch docs is caught instead of silently tolerated.
 - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/serviceRoleAuthorizationDisposition.test.ts` (29/29), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `git diff --check`, and `npm run build`.
 - Launch status did not change. This fixes a real proof-truth mismatch in the service-role launch lane, but live service-role/RLS proof and live messaging authorization proof remain open. No deploy was run.
+
+### 2026-05-07 11:46 AM PT - No-Deploy Live Authorization Proof Narrowing
+
+- Resolved locally in this batch: `npm run proof:v1:service-role-authorization` passed live unauthenticated denial proof for `photo-album-create`, `photo-album-manage`, `photo-upload-moderate`, `photo-export-manifest`, and `photo-analyze-batch`, all returning safe `401` denial responses from the live Supabase project.
+- Resolved locally in this batch: `npm run proof:v1:email-messaging-authorization` passed live unauthenticated denial proof for `process-email-queue`, `queue-guest-followups`, `send-bulk-message`, and `send-wedding-email`, all returning safe `401/403` denial responses from the live Supabase project.
+- Resolved locally in this batch: backlog and proof wording now distinguish the green live unauthenticated denial proofs from the still-open authenticated role-mutation proof and secure service-role queue/storage proof.
+- Validation passed: `npm run proof:v1:service-role-authorization`, `npm run proof:v1:email-messaging-authorization`, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts`, and `git diff --check`.
+- Launch status did not change. The remaining strict blockers are now the authenticated role proof and secure service-role queue/storage proof, not the previously broader unauthenticated denial checks. No deploy was run.
 
 ### 2026-05-05 2:43 PM PT - No-Deploy Shared Collaborator Permission Helper
 

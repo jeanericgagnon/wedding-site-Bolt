@@ -80,8 +80,8 @@ const proofBoard = {
   activeUngatedLaunchBlockers: [
     ...(!aiPhotoMigrationCleared ? ['ai-photo-column-privilege-migration-readback'] : []),
     ...(strictProductionHardeningP0Open ? [
-      'strict-p0-service-role-rls-live-proof-after-static-disposition',
-      'strict-p0-email-messaging-live-authorization-proof-after-local-queue-lockdown',
+      'strict-p0-service-role-authenticated-role-live-proof-after-unauth-denial-pass',
+      'strict-p0-email-messaging-authenticated-role-live-proof-after-unauth-denial-pass',
     ] : []),
   ],
   blockedOrApprovalGatedLaunchItems: [

@@ -66,8 +66,8 @@ describe('proof board freshness', () => {
 
     expect(board.summary?.secondaryTrustGap).toContain(expectedDeploy);
     expect(board.activeUngatedLaunchBlockers).toEqual([
-      'strict-p0-service-role-rls-live-proof-after-static-disposition',
-      'strict-p0-email-messaging-live-authorization-proof-after-local-queue-lockdown',
+      'strict-p0-service-role-authenticated-role-live-proof-after-unauth-denial-pass',
+      'strict-p0-email-messaging-authenticated-role-live-proof-after-unauth-denial-pass',
     ]);
     expect(board.blockedOrApprovalGatedLaunchItems?.join('\n')).not.toContain('secure-env model-backed AI');
     expect(board.blockedOrApprovalGatedLaunchItems?.join('\n')).toContain('external OpenAI key rotation');
