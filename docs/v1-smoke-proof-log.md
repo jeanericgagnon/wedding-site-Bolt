@@ -7705,3 +7705,16 @@ A slice does **not** count as passed because:
   - `npm run lint -- --quiet`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 2:42 PM PT No-Deploy Seating and Guest History Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/seating/seatingService.ts` now exports `MAX_SEATING_VERSION_ROWS = 12` for seating layout history hydration.
+  - `src/pages/dashboard/Guests.tsx` now exports `MAX_GUEST_DRAWER_AUDIT_ROWS = 12` for guest itinerary drawer audit hydration.
+  - `src/pages/dashboard/seating/seatingService.test.ts` and `src/pages/dashboard/guestQueryBounds.test.ts` now pin those bounded query shapes.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/seating/seatingService.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`: PASS, 35/35.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

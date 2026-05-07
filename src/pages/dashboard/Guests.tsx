@@ -136,6 +136,7 @@ export const MAX_GUEST_ITINERARY_FILTER_EVENTS = 200;
 export const MAX_GUEST_ITINERARY_FILTER_INVITATIONS = 10000;
 export const MAX_GUEST_DRAWER_EVENTS = 200;
 export const MAX_GUEST_DRAWER_INVITATIONS = 10000;
+export const MAX_GUEST_DRAWER_AUDIT_ROWS = 12;
 export const MAX_GUEST_RSVP_CONFLICT_ROWS = 20;
 export const MAX_GUEST_RSVP_CONFLICT_HISTORY_ROWS = 500;
 export const MAX_GUEST_AUDIT_ROWS = 20;
@@ -1667,7 +1668,7 @@ const handleSendBulkInvitations = async () => {
               .select('id, action, changed_at, changed_by, old_data, new_data')
               .eq('guest_id', guest.id)
               .order('changed_at', { ascending: false })
-              .limit(12),
+              .limit(MAX_GUEST_DRAWER_AUDIT_ROWS),
       ]);
       if (eventsResult.error) throw eventsResult.error;
       if (invitesResult.error) throw invitesResult.error;

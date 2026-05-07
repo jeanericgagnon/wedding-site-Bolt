@@ -21,6 +21,7 @@ export const MAX_SEATING_ELIGIBLE_GUESTS = 5000;
 export const MAX_SEATING_EVENT_INVITATIONS = 10000;
 export const MAX_SEATING_TABLE_ROWS = 500;
 export const MAX_SEATING_ASSIGNMENT_ROWS = 10000;
+export const MAX_SEATING_VERSION_ROWS = 12;
 
 export interface ItineraryEvent {
   id: string;
@@ -514,7 +515,7 @@ export async function loadSeatingVersions(seatingEventId: string): Promise<Seati
     .select(SEATING_LAYOUT_VERSION_SELECT)
     .eq('seating_event_id', seatingEventId)
     .order('created_at', { ascending: false })
-    .limit(12);
+    .limit(MAX_SEATING_VERSION_ROWS);
   if (error) throw error;
   return (data ?? []) as SeatingLayoutVersion[];
 }

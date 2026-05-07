@@ -2918,3 +2918,19 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps guest photo owner hydration bounded without changing album management, upload review, AI ops planning, or guest-facing photo behavior. No deploy was run.
+
+### 2026-05-07 2:42 PM PT - No-Deploy Seating and Guest History Bounds
+
+What changed:
+- Added `MAX_SEATING_VERSION_ROWS = 12` in `src/pages/dashboard/seating/seatingService.ts` so seating layout version history uses a named bound instead of an inline limit.
+- Added `MAX_GUEST_DRAWER_AUDIT_ROWS = 12` in `src/pages/dashboard/Guests.tsx` so guest itinerary drawer audit hydration uses a named bound instead of an inline limit.
+- Extended `src/pages/dashboard/seating/seatingService.test.ts` and `src/pages/dashboard/guestQueryBounds.test.ts` to pin those bounded history/query shapes.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/seating/seatingService.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `git diff --check`
+
+Status:
+- PARTIAL. This keeps seating version history and guest drawer audit hydration bounded without changing seating workflows, guest visibility, or RSVP behavior. No deploy was run.
