@@ -2725,3 +2725,20 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps settings collaborator invite hydration bounded without changing current invite create, revoke, or claim behavior. No deploy was run.
+
+### 2026-05-07 2:12 PM PT - No-Deploy Vendor Inquiry History Bounds
+
+What changed:
+- Added `MAX_VENDOR_PROFILE_INQUIRIES = 50` in `src/lib/vendorProfiles.ts`.
+- Vendor inquiry history now clamps caller-provided limits into the `1..50` range before hydrating the vendor inbox.
+- Added `src/lib/vendorProfiles.boundary.test.ts` to pin the stable cap export and bounded query behavior in isolation from older vendor draft fallback assertions.
+
+Commands run:
+- `npm test -- --run src/lib/vendorProfiles.boundary.test.ts`: PASS, 2/2.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps vendor inquiry history hydration bounded without changing current vendor inquiry submission or inbox behavior. No deploy was run.

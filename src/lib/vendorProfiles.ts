@@ -106,6 +106,7 @@ export interface VendorInquiryContext {
 }
 
 const VENDOR_PROFILE_SELECT = 'id, slug, vendor_name, descriptor, about, hero_image_url, image_urls, instagram_url, website_url, contact_email, source_payload' as const;
+export const MAX_VENDOR_PROFILE_INQUIRIES = 50;
 
 export type VendorAccentId = 'champagne' | 'sage' | 'rose' | 'ink';
 export type VendorGalleryLayoutId = 'editorial-grid' | 'stacked' | 'mosaic';
@@ -715,12 +716,14 @@ export async function listMyVendorProfileInquiries(limit = 8): Promise<VendorPro
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
+  const boundedLimit = Math.max(1, Math.min(Math.floor(limit), MAX_VENDOR_PROFILE_INQUIRIES));
+
   const { data, error } = await supabase
     .from('vendor_profile_inquiries')
     .select('id, vendor_profile_id, name, email, message, created_at, vendor_profiles!inner(vendor_name, slug, created_by)')
     .eq('vendor_profiles.created_by', user.id)
     .order('created_at', { ascending: false })
-    .limit(limit);
+    .limit(boundedLimit);
 
   if (error) throw error;
 

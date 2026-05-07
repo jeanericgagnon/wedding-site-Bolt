@@ -7561,3 +7561,16 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 2:12 PM PT No-Deploy Vendor Inquiry History Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/lib/vendorProfiles.ts` now clamps vendor inquiry history reads to the `1..50` range before hydrating the vendor inbox.
+  - `src/lib/vendorProfiles.boundary.test.ts` now pins the stable cap export and bounded query behavior in isolation.
+- Proof passed:
+  - `npm test -- --run src/lib/vendorProfiles.boundary.test.ts`: PASS, 2/2.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
