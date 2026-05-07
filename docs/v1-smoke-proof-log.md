@@ -7410,3 +7410,18 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 1:41 PM PT No-Deploy Seating Lookup Query Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/seating/seatingService.ts` now caps distinct seating-lookup table ids at 500 before follow-up table reads.
+  - The same lookup path now caps distinct guest ids at 2000 before follow-up guest reads.
+  - `src/pages/dashboard/seating/seatingService.test.ts` now pins the stable cap exports and the bounded lookup fan-out shape.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/seating/seatingService.test.ts`: PASS, 9/9.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:seating-continuity`: PASS, 3/3 automated checks green.
+- Launch status did not change. This is local-only hardening and no deploy was run.

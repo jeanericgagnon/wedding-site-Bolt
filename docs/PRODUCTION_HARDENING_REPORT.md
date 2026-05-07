@@ -2526,3 +2526,21 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps admin log/dashboard history reads bounded without changing the current audit or error-log UI flow. No deploy was run.
+
+### 2026-05-07 1:41 PM PT - No-Deploy Seating Lookup Query Bounds
+
+What changed:
+- Added explicit `MAX_SEATING_LOOKUP_TABLE_IDS = 500` and `MAX_SEATING_LOOKUP_GUEST_IDS = 2000` caps in `src/pages/dashboard/seating/seatingService.ts`.
+- Seating lookup now slices distinct assignment-derived table ids and guest ids to those caps before the follow-up `seating_tables` and `guests` reads.
+- Extended `src/pages/dashboard/seating/seatingService.test.ts` to pin the stable cap exports and the bounded lookup fan-out shape.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/seating/seatingService.test.ts`: PASS, 9/9.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `npm run proof:v1:seating-continuity`: PASS, 3/3 automated checks green.
+
+Status:
+- PARTIAL. This keeps seating lookup fan-out bounded without changing the current quick lookup, seating assignment, or check-in workflow shape. No deploy was run.
