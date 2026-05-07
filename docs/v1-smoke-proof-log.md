@@ -7379,3 +7379,18 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `npm run proof:v1:registry`: PASS, 4/4 automated checks green; manual runtime proof still pending.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 1:35 PM PT No-Deploy Coordinator Bootstrap Query Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/coordinator/coordinatorService.ts` now caps coordinator bootstrap guest reads at 2000 rows.
+  - Visible itinerary-event reads now cap at 200 rows, and coordinator event-invitation fan-out now caps at 10000 rows.
+  - `src/pages/dashboard/coordinator/coordinatorService.test.ts` now pins the stable cap exports and the bounded query shape.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/coordinator/coordinatorService.test.ts`: PASS, 3/3.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:coordinator-dayof`: PASS, 5/5 automated checks green.
+- Launch status did not change. This is local-only hardening and no deploy was run.

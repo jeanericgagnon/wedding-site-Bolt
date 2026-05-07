@@ -2489,3 +2489,21 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps public registry reads bounded and consistent across local service and function paths without changing the existing public registry layout behavior. No deploy was run, so production runtime registry truth is still deploy-gated/manual-proof-pending.
+
+### 2026-05-07 1:35 PM PT - No-Deploy Coordinator Bootstrap Query Bounds
+
+What changed:
+- Added explicit coordinator bootstrap caps in `src/pages/dashboard/coordinator/coordinatorService.ts`.
+- Guest bootstrap reads now cap at 2000 rows, itinerary-event reads cap at 200 rows, and coordinator event-invitation fan-out caps at 10000 rows.
+- Extended `src/pages/dashboard/coordinator/coordinatorService.test.ts` to pin the stable caps and the bounded query shape.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/coordinator/coordinatorService.test.ts`: PASS, 3/3.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+- `npm run proof:v1:coordinator-dayof`: PASS, 5/5 automated checks green.
+
+Status:
+- PARTIAL. This keeps coordinator bootstrap fan-out bounded without changing the current coordinator/day-of workflow shape. No deploy was run, so live runtime/manual coordinator proof expectations are unchanged.
