@@ -47,6 +47,11 @@ export type SettingsTemplateChangeSiteRow = {
   site_json: Record<string, unknown> | null;
 };
 
+export type SettingsAuthenticatedUser = {
+  id: string;
+  email?: string | null;
+};
+
 export const SETTINGS_COLLABORATOR_INVITE_SELECT = 'id, invite_email, invite_name, role, status, invited_at, expires_at, invite_token, permissions';
 export const SETTINGS_TRANSLATION_STATUS_SELECT = 'language,status,translated_at';
 export const SETTINGS_TEMPLATE_CHANGE_SELECT = 'wedding_data, layout_config, site_json';
@@ -185,4 +190,32 @@ export async function translateSettingsSiteContent(siteId: string, language: Tra
   if (error) throw error;
   const payload = data as { error?: string } | null;
   if (payload?.error) throw new Error(safeSettingsFunctionError(payload.error, 'Couldn’t prepare translation.'));
+}
+
+export async function requireSettingsAuthenticatedUser(): Promise<SettingsAuthenticatedUser> {
+  const { data } = await supabase.auth.getUser();
+  const user = data.user;
+  if (!user?.id || !user.email) {
+    throw new Error('Couldn’t verify your account email right now.');
+  }
+  return {
+    id: user.id,
+    email: user.email,
+  };
+}
+
+export async function verifySettingsCurrentPassword(email: string, currentPassword: string): Promise<void> {
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password: currentPassword,
+  });
+
+  if (error) {
+    throw new Error('Current password is incorrect.');
+  }
+}
+
+export async function updateSettingsAccountPassword(newPassword: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw error;
 }

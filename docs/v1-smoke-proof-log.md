@@ -7817,3 +7817,17 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 3:21 PM PT No-Deploy Settings Password Auth Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/settings/settingsSiteData.ts` now owns authenticated account email lookup, current-password verification, and password update for the settings password flow.
+  - `src/pages/dashboard/Settings.tsx` now calls `requireSettingsAuthenticatedUser()`, `verifySettingsCurrentPassword(...)`, and `updateSettingsAccountPassword(...)` instead of directly invoking `supabase.auth` for password changes.
+  - `src/pages/dashboard/settings/settingsSiteData.test.ts` now pins the settings auth/service boundary for that flow.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts`: PASS, 17/17.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

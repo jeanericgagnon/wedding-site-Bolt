@@ -3097,3 +3097,24 @@ Commands run:
 
 Status:
 - PARTIAL. This materially advances the onboarding page-to-service migration without changing onboarding copy, draft hydration, guest CSV import behavior, or quick-start continuation routing. No deploy was run.
+
+### 2026-05-07 3:21 PM PT - No-Deploy Settings Password Auth Service Extraction
+
+What changed:
+- Moved the settings password-update auth flow into `src/pages/dashboard/settings/settingsSiteData.ts`.
+- That service now owns:
+  - authenticated account email lookup via `requireSettingsAuthenticatedUser()`
+  - current password verification via `verifySettingsCurrentPassword(...)`
+  - password update via `updateSettingsAccountPassword(...)`
+- `src/pages/dashboard/Settings.tsx` now calls those helpers instead of directly invoking `supabase.auth.getUser`, `supabase.auth.signInWithPassword`, and `supabase.auth.updateUser`.
+- Expanded `src/pages/dashboard/settings/settingsSiteData.test.ts` so the settings boundary now pins that auth/service split.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `npm run build`
+- `git diff --check`
+
+Status:
+- PARTIAL. This materially advances the settings page-to-service migration without changing password policy copy, billing flows, planner invite flows, or site settings persistence. No deploy was run.
