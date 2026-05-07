@@ -19,6 +19,23 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 4:06 PM PT - No-Deploy Guest Photo Function Service Extraction
+
+What changed:
+- `src/pages/dashboard/GuestPhotoSharing.tsx` no longer owns the auth-retrying owner function transport or the direct `queue-guest-followups` invocation.
+- `src/pages/dashboard/guestPhotoSharingService.ts` now owns `invokeGuestPhotoOwnerFunction(...)` and `queueGuestPhotoFollowups(...)` alongside the existing guest-photo auth/session helpers.
+- Expanded `src/pages/dashboard/guestPhotoSharingService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the guest-photo dashboard boundary now pins that function-transport seam too.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts`: PASS, 4 files and 34 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This pulls another owner-dashboard function cluster out of `GuestPhotoSharing.tsx` and keeps the page more focused on moderation and sharing flow rather than Edge Function transport and auth-retry handling. No deploy was run.
+
 ### 2026-05-07 3:59 PM PT - No-Deploy Setup Bootstrap Service Extraction
 
 What changed:

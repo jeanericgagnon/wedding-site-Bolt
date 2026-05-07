@@ -3,6 +3,7 @@ import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjec
 import type { DraftGenerationResult } from '../../lib/aiDraftGenerator';
 import type { CanonicalPhotoBuckets } from '../../lib/aiPhotoBuckets';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { supabase } from '../../lib/supabase';
 
 const GUEST_PHOTO_BUCKET_SITE_SELECT = 'wedding_data, site_json';
@@ -34,6 +35,32 @@ export async function resolveGuestPhotoDashboardUserId(): Promise<string | null>
 
   const refreshed = await supabase.auth.refreshSession();
   return refreshed.data.session?.user?.id ?? null;
+}
+
+export async function invokeGuestPhotoOwnerFunction<T = unknown>(
+  fnName: string,
+  body: Record<string, unknown>,
+): Promise<T> {
+  try {
+    const data = await invokeFunctionOrThrow(supabase, fnName, body);
+    return data as T;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message.toLowerCase() : '';
+    const authish = msg.includes('invalid jwt') || msg.includes('jwt') || msg.includes('401') || msg.includes('auth');
+    if (!authish) throw err;
+
+    const refreshed = await refreshGuestPhotoSession();
+    if (!refreshed) throw err;
+    const data = await invokeFunctionOrThrow(supabase, fnName, body);
+    return data as T;
+  }
+}
+
+export async function queueGuestPhotoFollowups(
+  siteId: string,
+  kind: 'recap' | 'future_event',
+): Promise<{ queued?: number } | null> {
+  return await invokeGuestPhotoOwnerFunction<{ queued?: number }>('queue-guest-followups', { siteId, kind });
 }
 
 export function buildGuestPhotoBucketSiteUpdate(

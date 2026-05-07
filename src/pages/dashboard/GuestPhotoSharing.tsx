@@ -7,7 +7,6 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { ShareQrPanel } from '../../components/ui/ShareQrPanel';
 import { supabase } from '../../lib/supabase';
-import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { createEmptyPhotoBuckets } from '../../lib/aiPhotoBuckets';
 import { PhotoBucketCards } from '../../components/dashboard/PhotoBucketCards';
@@ -28,7 +27,9 @@ import { demoEvents, demoWeddingSite } from '../../lib/demoData';
 import { getSafePublicWebUrl } from '../../sections/publicLinks';
 import {
   getGuestPhotoCurrentUserId,
+  invokeGuestPhotoOwnerFunction,
   persistGuestPhotoBuckets,
+  queueGuestPhotoFollowups as queueGuestPhotoFollowupsFromService,
   refreshGuestPhotoSession,
   resolveGuestPhotoDashboardUserId,
 } from './guestPhotoSharingService';
@@ -217,18 +218,14 @@ export const GuestPhotoSharing: React.FC = () => {
     writeStoredBucketLinks(bucketUploadLinks);
   }, [bucketUploadLinks]);
 
-  const invokeOrThrow = async (fnName: string, body: Record<string, unknown>) => {
-    try {
-      return await invokeFunctionOrThrow(supabase, fnName, body);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message.toLowerCase() : '';
-      const authish = msg.includes('invalid jwt') || msg.includes('jwt') || msg.includes('401') || msg.includes('auth');
-      if (!authish) throw err;
+  const invokeOrThrow = async <T extends Record<string, unknown> = Record<string, unknown>>(fnName: string, body: Record<string, unknown>) => {
+    return await invokeGuestPhotoOwnerFunction<T>(fnName, body);
+  };
 
-      const refreshed = await refreshGuestPhotoSession();
-      if (!refreshed) throw err;
-      return await invokeFunctionOrThrow(supabase, fnName, body);
-    }
+  type PhotoAlbumCreateResponse = {
+    album?: { id?: string | null; name?: string | null } | null;
+    bucket?: { id?: string | null; name?: string | null } | null;
+    uploadUrl?: string | null;
   };
 
   const logPhotoAction = (type: string, summary: string, metadata?: Record<string, unknown>, targetId?: string | null, targetLabel?: string | null) => {
@@ -1134,7 +1131,7 @@ export const GuestPhotoSharing: React.FC = () => {
     try {
       setQueueingFollowups(kind);
       setError(null);
-      const data = await invokeFunctionOrThrow(supabase, 'queue-guest-followups', { siteId, kind });
+      const data = await queueGuestPhotoFollowupsFromService(siteId, kind);
       const queued = Number((data as { queued?: number } | null)?.queued ?? 0);
       setSuccess(queued > 0 ? `Prepared ${queued} ${kind === 'recap' ? 'recap' : 'future event'} follow-up email${queued === 1 ? '' : 's'}.` : 'No new guest follow-ups are ready right now.');
       await load();
@@ -1417,7 +1414,7 @@ export const GuestPhotoSharing: React.FC = () => {
       const links: Record<string, string> = {};
 
       for (const event of missingItineraryEvents) {
-        const data = await invokeOrThrow('photo-album-create', {
+        const data = await invokeOrThrow<PhotoAlbumCreateResponse>('photo-album-create', {
           siteId,
           name: event.event_name,
           itineraryEventId: event.id,
@@ -1456,7 +1453,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setSubmitting(true);
       setError(null);
       setSuccess(null);
-      const data = await invokeOrThrow('photo-album-create', {
+      const data = await invokeOrThrow<PhotoAlbumCreateResponse>('photo-album-create', {
         siteId,
         name: suggestion.label,
         itineraryEventId: suggestion.eventId,
@@ -1739,7 +1736,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setError(null);
       setSuccess(null);
 
-      const data = await invokeOrThrow('photo-album-create', {
+      const data = await invokeOrThrow<PhotoAlbumCreateResponse>('photo-album-create', {
         siteId,
         name: name.trim(),
         itineraryEventId: itineraryEventId || null,
