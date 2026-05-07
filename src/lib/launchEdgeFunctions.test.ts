@@ -80,7 +80,15 @@ describe('launch edge function guards', () => {
     expect(source).toContain('parsed.username = ""');
     expect(source).toContain('createSignedUrl(driveFileId, 60 * 60 * 24)');
     expect(source).toContain('expiresInSeconds: 60 * 60 * 24');
+    expect(source).toContain('PHOTO_EXPORT_SIGNIN_REQUIRED_COPY = "Please sign in to export this photo manifest."');
+    expect(source).toContain('PHOTO_EXPORT_SITE_REQUIRED_COPY = "Choose a site before exporting this photo manifest."');
+    expect(source).toContain('PHOTO_EXPORT_SITE_UNAVAILABLE_COPY = "This photo manifest is not available."');
+    expect(source).toContain('PHOTO_EXPORT_ACCESS_UNAVAILABLE_COPY = "You do not have access to this photo manifest."');
     expect(source).toContain('Could not export photo manifest. Please try again.');
+    expect(source).not.toContain('Unauthorized');
+    expect(source).not.toContain('siteId is required');
+    expect(source).not.toContain('Wedding site not found');
+    expect(source).not.toContain('Forbidden');
     expect(source).not.toContain('siteError.message');
     expect(source).not.toContain('collaboratorError.message');
     expect(source).not.toContain('uploadError.message');
@@ -512,11 +520,34 @@ describe('launch edge function guards', () => {
 
     expect(email).toContain('SEND_WEDDING_EMAIL_UNEXPECTED_FAILED');
     expect(email).toContain('Could not send this email. Please try again.');
+    expect(email).toContain('EMAIL_REQUEST_INVALID_COPY = "Could not read this email request. Please try again."');
+    expect(email).toContain('EMAIL_REQUEST_REQUIRED_COPY = "Complete the email details before sending."');
+    expect(email).toContain('EMAIL_ACCESS_UNAVAILABLE_COPY = "This email request is not available."');
+    expect(email).toContain('EMAIL_SIGNIN_REQUIRED_COPY = "Please sign in to send this email."');
+    expect(email).toContain('EMAIL_RECIPIENT_INVALID_COPY = "Enter a valid recipient email address."');
+    expect(email).toContain('EMAIL_SITE_REQUIRED_COPY = "Choose a site before sending this email."');
     expect(email).toContain('SERVICE_ROLE_ONLY_TYPES.has(type) && !isServiceRole');
     expect(email).toContain('type === "signup_welcome" && !isServiceRole');
     expect(email).toContain('type === "anniversary_reminder" && !isServiceRole');
+    expect(email).not.toContain('Invalid JSON body');
+    expect(email).not.toContain('Missing required fields: type, to, data');
+    expect(email).not.toContain('Unauthorized');
+    expect(email).not.toContain('Forbidden');
+    expect(email).not.toContain('Invalid recipient email address');
+    expect(email).not.toContain('Wedding site is required to send invitations');
+    expect(email).not.toContain('Wedding site is required to send this reminder');
     expect(email).not.toContain('details: errorBody');
     expect(email).not.toContain('error: message');
+
+    const registryPreview = readFunction('registry-preview');
+    expect(registryPreview).toContain('REGISTRY_PREVIEW_SIGNIN_REQUIRED_COPY = "Please sign in to preview this registry item."');
+    expect(registryPreview).toContain('REGISTRY_PREVIEW_URL_REQUIRED_COPY = "Enter a public product URL."');
+    expect(registryPreview).not.toContain('Unauthorized');
+    expect(registryPreview).not.toContain('url is required');
+
+    const vendorPreview = readFunction('vendor-profile-preview');
+    expect(vendorPreview).toContain("Add the vendor name before previewing this profile.");
+    expect(vendorPreview).not.toContain('vendorName is required');
 
     expect(googleDrive).toContain('GOOGLE_DRIVE_AUTH_TOKEN_EXCHANGE_FAILED');
     expect(googleDrive).toContain('GOOGLE_DRIVE_AUTH_TOKEN_EXCHANGE_FAILED", { status: tokenRes.status }');
@@ -691,18 +722,38 @@ describe('launch edge function guards', () => {
     expect(queueFollowups).toContain('../_shared/collaboratorPermissions.ts');
     expect(queueFollowups).toContain('allowed = canMutateMessages(collaborator?.role, collaborator?.permissions)');
     expect(queueFollowups).not.toContain('allowed = hasPermissionKey(collaborator?.permissions, "messages")');
+    expect(queueFollowups).toContain('FOLLOWUP_SIGNIN_REQUIRED_COPY = "Please sign in to queue guest follow-ups."');
+    expect(queueFollowups).toContain('FOLLOWUP_SITE_REQUIRED_COPY = "Choose a site before queueing guest follow-ups."');
+    expect(queueFollowups).toContain('FOLLOWUP_KIND_INVALID_COPY = "Choose a valid follow-up type."');
+    expect(queueFollowups).toContain('FOLLOWUP_SITE_UNAVAILABLE_COPY = "This site is not available for guest follow-ups."');
+    expect(queueFollowups).toContain('FOLLOWUP_ACCESS_UNAVAILABLE_COPY = "You do not have access to queue guest follow-ups for this site."');
     expect(queueFollowups).toContain('reason: "FOLLOWUP_QUEUE_INSERT_FAILED"');
     expect(queueFollowups).toContain('reason: "FOLLOWUP_OPTIN_MARK_FAILED"');
     expect(queueFollowups).toContain('reason: "UNEXPECTED_QUEUE_GUEST_FOLLOWUPS_FAILURE"');
+    expect(queueFollowups).not.toContain('Unauthorized');
+    expect(queueFollowups).not.toContain('Missing siteId');
+    expect(queueFollowups).not.toContain('Invalid follow-up kind');
+    expect(queueFollowups).not.toContain('Site not found');
+    expect(queueFollowups).not.toContain('Forbidden');
     expect(queueFollowups).not.toContain('hasPermissionKey(collaborator?.permissions, "photos") || hasPermissionKey(collaborator?.permissions, "messages")');
 
     const vaultResolve = readFunction('vault-resolve-entry-link');
     expect(vaultResolve).toContain('function safeVaultAttachmentUrl');
     expect(vaultResolve).toContain('parsed.protocol === "https:" || parsed.protocol === "http:"');
+    expect(vaultResolve).toContain('VAULT_RESOLVE_SIGNIN_REQUIRED_COPY = "Please sign in to open this vault attachment."');
+    expect(vaultResolve).toContain('VAULT_RESOLVE_ENTRY_REQUIRED_COPY = "Choose a vault attachment to open."');
+    expect(vaultResolve).toContain('VAULT_RESOLVE_ENTRY_UNAVAILABLE_COPY = "This vault attachment is not available."');
+    expect(vaultResolve).toContain('VAULT_RESOLVE_ACCESS_UNAVAILABLE_COPY = "This vault attachment is not available from this account."');
+    expect(vaultResolve).toContain('VAULT_RESOLVE_STORAGE_UNAVAILABLE_COPY = "This vault attachment is not ready to open right now."');
     expect(vaultResolve).toContain('safeVaultAttachmentUrl(rawUrl)');
     expect(vaultResolve).toContain('safeVaultAttachmentUrl(entry.external_file_url ?? entry.attachment_url)');
     expect(vaultResolve).toContain('safeVaultAttachmentUrl(url)');
     expect(vaultResolve).toContain('VAULT_RESOLVE_ENTRY_SIGNED_URL_FAILED", { reason: "SIGNED_URL_FAILED" }');
+    expect(vaultResolve).not.toContain('Unauthorized');
+    expect(vaultResolve).not.toContain('entryId is required');
+    expect(vaultResolve).not.toContain('Entry not found');
+    expect(vaultResolve).not.toContain('Forbidden');
+    expect(vaultResolve).not.toContain('Google Drive token unavailable');
     expect(vaultResolve).not.toContain('VAULT_RESOLVE_ENTRY_SIGNED_URL_FAILED", signedErr');
 
     const vaultUpload = readFunction('vault-upload-google-drive');

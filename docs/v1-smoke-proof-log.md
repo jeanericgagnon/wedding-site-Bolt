@@ -24,6 +24,38 @@ _Launch call right now:_ Not production-ready under the stricter P0/P1 standard.
   - `npm run build`: PASS with the existing non-blocking Browserslist `caniuse-lite` warning and empty `vendor-react` chunk warning.
 - Launch status did not change. This makes the local RSVP contract more truthful and regression-proof, but no deploy was run.
 
+## 2026-05-07 11:17 AM PT Local Owner Helper Access-Copy Tightening Batch
+
+- Continued the no-deploy hardening lane locally. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - `photo-export-manifest`, `queue-guest-followups`, `vault-resolve-entry-link`, and `send-wedding-email` now use customer-safe sign-in, access, site-selection, vault-selection, and request-shape copy instead of raw `Unauthorized`, `Forbidden`, `siteId is required`, `entryId is required`, `Entry not found`, and similar internal wording.
+  - `src/lib/launchEdgeFunctions.test.ts` now guards the new helper-copy constants and rejects reintroduction of the old raw auth and field-name strings for those routes.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 27/27.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with the existing non-blocking Browserslist `caniuse-lite` warning and empty `vendor-react` chunk warning.
+- Launch status did not change. This narrows local owner-helper auth/access leakage, but no deploy was run and the same live-proof blockers remain.
+
+## 2026-05-07 11:19 AM PT Local Preview Helper Copy Tightening Batch
+
+- Continued the no-deploy hardening lane locally. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - `registry-preview` now uses customer-safe sign-in and missing-product-URL copy instead of raw `Unauthorized` and `url is required` wording.
+  - `vendor-profile-preview` now asks for the vendor name in plain customer language instead of returning `vendorName is required`.
+  - `src/lib/launchEdgeFunctions.test.ts` now guards the new preview-helper copy and rejects reintroduction of the old raw auth and field-name strings there.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 27/27.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with the existing non-blocking Browserslist `caniuse-lite` warning and empty `vendor-react` chunk warning.
+- Launch status did not change. This narrows local preview-helper leakage, but no deploy was run and the same live-proof blockers remain.
+
 ## 2026-05-07 11:08 AM PT Local Guest Lookup Exact-Match Tightening Batch
 
 - Continued the no-deploy hardening lane locally. No deploy, migration, or Supabase function deploy was run.

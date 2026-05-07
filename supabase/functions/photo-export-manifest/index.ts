@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { canMutatePhotos } from "../_shared/collaboratorPermissions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,16 +9,16 @@ const corsHeaders = {
 };
 
 const HOSTED_BUCKET = "photo-uploads";
+const PHOTO_EXPORT_SIGNIN_REQUIRED_COPY = "Please sign in to export this photo manifest.";
+const PHOTO_EXPORT_SITE_REQUIRED_COPY = "Choose a site before exporting this photo manifest.";
+const PHOTO_EXPORT_SITE_UNAVAILABLE_COPY = "This photo manifest is not available.";
+const PHOTO_EXPORT_ACCESS_UNAVAILABLE_COPY = "You do not have access to this photo manifest.";
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-
-function hasPermissionKey(permissions: unknown, key: string): boolean {
-  return Array.isArray(permissions) && permissions.includes(key);
-}
 
 function safeSpreadsheetCell(value: unknown): string {
   const text = String(value ?? "");
@@ -48,12 +49,12 @@ Deno.serve(async (req: Request) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
+    if (!authHeader?.startsWith("Bearer ")) return json({ error: PHOTO_EXPORT_SIGNIN_REQUIRED_COPY }, 401);
 
     const body = await req.json().catch(() => ({}));
     const siteId = typeof body.siteId === "string" ? body.siteId.trim() : "";
     const includeHidden = body.includeHidden === true;
-    if (!siteId) return json({ error: "siteId is required" }, 400);
+    if (!siteId) return json({ error: PHOTO_EXPORT_SITE_REQUIRED_COPY }, 400);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -65,7 +66,7 @@ Deno.serve(async (req: Request) => {
     const {
       data: { user },
     } = await userClient.auth.getUser();
-    if (!user) return json({ error: "Unauthorized" }, 401);
+    if (!user) return json({ error: PHOTO_EXPORT_SIGNIN_REQUIRED_COPY }, 401);
 
     const admin = createClient(supabaseUrl, serviceRole);
     const { data: site, error: siteError } = await admin
@@ -74,20 +75,20 @@ Deno.serve(async (req: Request) => {
       .eq("id", siteId)
       .maybeSingle();
     if (siteError) return json({ error: "Could not export photo manifest. Please try again." }, 500);
-    if (!site) return json({ error: "Wedding site not found" }, 404);
+    if (!site) return json({ error: PHOTO_EXPORT_SITE_UNAVAILABLE_COPY }, 404);
 
     let allowed = site.user_id === user.id;
     if (!allowed) {
       const { data: collaborator, error: collaboratorError } = await admin
         .from("wedding_site_collaborators")
-        .select("permissions")
+        .select("role,permissions")
         .eq("wedding_site_id", siteId)
         .eq("user_id", user.id)
         .maybeSingle();
       if (collaboratorError) return json({ error: "Could not export photo manifest. Please try again." }, 500);
-      allowed = hasPermissionKey(collaborator?.permissions, "photos");
+      allowed = canMutatePhotos(collaborator?.role, collaborator?.permissions);
     }
-    if (!allowed) return json({ error: "Forbidden" }, 403);
+    if (!allowed) return json({ error: PHOTO_EXPORT_ACCESS_UNAVAILABLE_COPY }, 403);
 
     let query = admin
       .from("photo_uploads")

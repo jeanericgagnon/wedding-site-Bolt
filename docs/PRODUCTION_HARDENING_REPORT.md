@@ -19,6 +19,43 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 11:19 AM PT - No-Deploy Preview Helper Copy Tightening
+
+What changed:
+- Updated `registry-preview` so it now returns customer-safe sign-in and missing-product-URL copy instead of raw `Unauthorized` and `url is required` wording.
+- Updated `vendor-profile-preview` so it now asks for the vendor name in plain customer language instead of returning `vendorName is required`.
+- Expanded `src/lib/launchEdgeFunctions.test.ts` to statically guard the new registry preview and vendor preview copy and reject reintroduction of raw auth or field-name wording there.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 1 file and 27 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This removes more helper-contract leakage from preview routes, but live service-role/RLS proof and live messaging authorization proof are still deploy-gated blockers.
+
+### 2026-05-07 11:17 AM PT - No-Deploy Owner Helper Access-Copy Tightening
+
+What changed:
+- Updated `photo-export-manifest`, `queue-guest-followups`, `vault-resolve-entry-link`, and `send-wedding-email` so those owner/service-role helper paths now return customer-safe sign-in, access, site-selection, vault-selection, and request-shape copy instead of raw `Unauthorized`, `Forbidden`, `siteId is required`, `entryId is required`, `Entry not found`, `Missing required fields: type, to, data`, and similar internal wording.
+- Kept the same fail-closed authorization and validation behavior while making those helper contracts less revealing and more consistent with the rest of the hardening pass.
+- Expanded `src/lib/launchEdgeFunctions.test.ts` to statically guard the new safe-copy constants and reject reintroduction of the old raw auth and field-name strings on those helper routes.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 1 file and 27 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This removes more launch-grade auth/access copy leakage from owner helper routes, but live service-role/RLS proof and live messaging authorization proof are still deploy-gated blockers.
+
 ### 2026-05-07 11:11 AM PT - No-Deploy RSVP Invitation-Code Contract Alignment
 
 What changed:

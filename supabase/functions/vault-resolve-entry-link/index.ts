@@ -13,6 +13,12 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+const VAULT_RESOLVE_SIGNIN_REQUIRED_COPY = "Please sign in to open this vault attachment.";
+const VAULT_RESOLVE_ENTRY_REQUIRED_COPY = "Choose a vault attachment to open.";
+const VAULT_RESOLVE_ENTRY_UNAVAILABLE_COPY = "This vault attachment is not available.";
+const VAULT_RESOLVE_ACCESS_UNAVAILABLE_COPY = "This vault attachment is not available from this account.";
+const VAULT_RESOLVE_STORAGE_UNAVAILABLE_COPY = "This vault attachment is not ready to open right now.";
+
 function safeVaultAttachmentUrl(value: unknown): string | null {
   const raw = typeof value === "string" ? value.trim() : "";
   if (!raw) return null;
@@ -57,11 +63,11 @@ Deno.serve(async (req: Request) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
+    if (!authHeader?.startsWith("Bearer ")) return json({ error: VAULT_RESOLVE_SIGNIN_REQUIRED_COPY }, 401);
 
     const body = await req.json().catch(() => ({}));
     const entryId = typeof body.entryId === "string" ? body.entryId : null;
-    if (!entryId) return json({ error: "entryId is required" }, 400);
+    if (!entryId) return json({ error: VAULT_RESOLVE_ENTRY_REQUIRED_COPY }, 400);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -72,7 +78,7 @@ Deno.serve(async (req: Request) => {
     });
 
     const { data: { user } } = await userClient.auth.getUser();
-    if (!user) return json({ error: "Unauthorized" }, 401);
+    if (!user) return json({ error: VAULT_RESOLVE_SIGNIN_REQUIRED_COPY }, 401);
 
     const adminClient = createClient(supabaseUrl, serviceRole);
 
@@ -82,7 +88,7 @@ Deno.serve(async (req: Request) => {
       .eq("id", entryId)
       .maybeSingle();
 
-    if (!entry) return json({ error: "Entry not found" }, 404);
+    if (!entry) return json({ error: VAULT_RESOLVE_ENTRY_UNAVAILABLE_COPY }, 404);
 
     const { data: site } = await adminClient
       .from("wedding_sites")
@@ -90,7 +96,7 @@ Deno.serve(async (req: Request) => {
       .eq("id", entry.wedding_site_id)
       .maybeSingle();
 
-    if (!site || site.user_id !== user.id) return json({ error: "Forbidden" }, 403);
+    if (!site || site.user_id !== user.id) return json({ error: VAULT_RESOLVE_ACCESS_UNAVAILABLE_COPY }, 403);
 
     // enforce lock check server-side
     let unlockAt: Date | null = null;
@@ -140,7 +146,7 @@ Deno.serve(async (req: Request) => {
     const tokenExpiresAt = site.vault_google_drive_token_expires_at ? new Date(site.vault_google_drive_token_expires_at as string).getTime() : 0;
 
     if (!accessToken || !tokenExpiresAt || tokenExpiresAt < Date.now() + 30_000) {
-      if (!refreshToken) return json({ error: "Google Drive token unavailable" }, 400);
+      if (!refreshToken) return json({ error: VAULT_RESOLVE_STORAGE_UNAVAILABLE_COPY }, 400);
       const refreshed = await refreshAccessToken(refreshToken);
       accessToken = refreshed.accessToken;
       await adminClient.from("wedding_sites").update({

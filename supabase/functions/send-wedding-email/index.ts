@@ -1,12 +1,20 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { escapeHtml, safeEmailUrl, sanitizeEmailSubject } from "../_shared/emailSafety.ts";
+import { canMutateGuestsOrMessages, canMutateMessages } from "../_shared/collaboratorPermissions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
+
+const EMAIL_REQUEST_INVALID_COPY = "Could not read this email request. Please try again.";
+const EMAIL_REQUEST_REQUIRED_COPY = "Complete the email details before sending.";
+const EMAIL_ACCESS_UNAVAILABLE_COPY = "This email request is not available.";
+const EMAIL_SIGNIN_REQUIRED_COPY = "Please sign in to send this email.";
+const EMAIL_RECIPIENT_INVALID_COPY = "Enter a valid recipient email address.";
+const EMAIL_SITE_REQUIRED_COPY = "Choose a site before sending this email.";
 
 interface EmailPayload {
   type: "rsvp_notification" | "rsvp_confirmation" | "signup_welcome" | "wedding_invitation" | "anniversary_reminder";
@@ -256,10 +264,6 @@ function weddingInvitationHtml(data: Record<string, unknown>): string {
 const AUTHENTICATED_EMAIL_TYPES = new Set(["wedding_invitation", "signup_welcome", "anniversary_reminder"]);
 const SERVICE_ROLE_ONLY_TYPES = new Set(["rsvp_notification", "rsvp_confirmation"]);
 
-function hasPermissionKey(permissions: unknown, key: string): boolean {
-  return Array.isArray(permissions) && permissions.includes(key);
-}
-
 async function canSendWeddingInvitation(opts: {
   adminClient: ReturnType<typeof createClient>;
   weddingSiteId: string;
@@ -281,13 +285,13 @@ async function canSendWeddingInvitation(opts: {
   if (!hasSiteAccess) {
     const { data: collaborator, error: collaboratorError } = await adminClient
       .from("wedding_site_collaborators")
-      .select("permissions")
+      .select("role, permissions")
       .eq("wedding_site_id", weddingSiteId)
       .eq("user_id", userId)
       .maybeSingle();
 
     if (collaboratorError) throw collaboratorError;
-    hasSiteAccess = hasPermissionKey(collaborator?.permissions, "guests") || hasPermissionKey(collaborator?.permissions, "messages");
+    hasSiteAccess = canMutateGuestsOrMessages(collaborator?.role, collaborator?.permissions);
   }
 
   if (!hasSiteAccess) return false;
@@ -323,13 +327,13 @@ async function canSendSiteScopedEmail(opts: {
 
   const { data: collaborator, error: collaboratorError } = await adminClient
     .from("wedding_site_collaborators")
-    .select("permissions")
+    .select("role, permissions")
     .eq("wedding_site_id", weddingSiteId)
     .eq("user_id", userId)
     .maybeSingle();
 
   if (collaboratorError) throw collaboratorError;
-  return hasPermissionKey(collaborator?.permissions, "messages");
+  return canMutateMessages(collaborator?.role, collaborator?.permissions);
 }
 
 Deno.serve(async (req: Request) => {
@@ -354,7 +358,7 @@ Deno.serve(async (req: Request) => {
     try {
       payload = await req.json();
     } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+      return new Response(JSON.stringify({ error: EMAIL_REQUEST_INVALID_COPY }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -363,14 +367,14 @@ Deno.serve(async (req: Request) => {
     const { type, to, data } = payload;
 
     if (!type || !to || !data) {
-      return new Response(JSON.stringify({ error: "Missing required fields: type, to, data" }), {
+      return new Response(JSON.stringify({ error: EMAIL_REQUEST_REQUIRED_COPY }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (SERVICE_ROLE_ONLY_TYPES.has(type) && !isServiceRole) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
+      return new Response(JSON.stringify({ error: EMAIL_ACCESS_UNAVAILABLE_COPY }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -382,7 +386,7 @@ Deno.serve(async (req: Request) => {
     // Direct send types require an authenticated user or the server-side queue/service role.
     if (AUTHENTICATED_EMAIL_TYPES.has(type) && !isServiceRole) {
       if (!token) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        return new Response(JSON.stringify({ error: EMAIL_SIGNIN_REQUIRED_COPY }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -394,7 +398,7 @@ Deno.serve(async (req: Request) => {
       );
       const { data: { user }, error: authError } = await userClient.auth.getUser();
       if (authError || !user) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        return new Response(JSON.stringify({ error: EMAIL_SIGNIN_REQUIRED_COPY }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -405,7 +409,7 @@ Deno.serve(async (req: Request) => {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(to.trim())) {
-      return new Response(JSON.stringify({ error: "Invalid recipient email address" }), {
+      return new Response(JSON.stringify({ error: EMAIL_RECIPIENT_INVALID_COPY }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -420,7 +424,7 @@ Deno.serve(async (req: Request) => {
 
     if (type === "signup_welcome" && !isServiceRole) {
       if (!authedUserEmail || authedUserEmail.trim().toLowerCase() !== to.trim().toLowerCase()) {
-        return new Response(JSON.stringify({ error: "Forbidden" }), {
+        return new Response(JSON.stringify({ error: EMAIL_ACCESS_UNAVAILABLE_COPY }), {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -430,7 +434,7 @@ Deno.serve(async (req: Request) => {
     if (type === "wedding_invitation" && !isServiceRole) {
       const weddingSiteId = typeof data.weddingSiteId === "string" ? data.weddingSiteId.trim() : "";
       if (!weddingSiteId) {
-        return new Response(JSON.stringify({ error: "Wedding site is required to send invitations" }), {
+        return new Response(JSON.stringify({ error: EMAIL_SITE_REQUIRED_COPY }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -445,7 +449,7 @@ Deno.serve(async (req: Request) => {
       });
 
       if (!allowed) {
-        return new Response(JSON.stringify({ error: "Forbidden" }), {
+        return new Response(JSON.stringify({ error: EMAIL_ACCESS_UNAVAILABLE_COPY }), {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -455,7 +459,7 @@ Deno.serve(async (req: Request) => {
     if (type === "anniversary_reminder" && !isServiceRole) {
       const weddingSiteId = typeof data.weddingSiteId === "string" ? data.weddingSiteId.trim() : "";
       if (!weddingSiteId) {
-        return new Response(JSON.stringify({ error: "Wedding site is required to send this reminder" }), {
+        return new Response(JSON.stringify({ error: EMAIL_SITE_REQUIRED_COPY }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -468,7 +472,7 @@ Deno.serve(async (req: Request) => {
       });
 
       if (!allowed) {
-        return new Response(JSON.stringify({ error: "Forbidden" }), {
+        return new Response(JSON.stringify({ error: EMAIL_ACCESS_UNAVAILABLE_COPY }), {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });

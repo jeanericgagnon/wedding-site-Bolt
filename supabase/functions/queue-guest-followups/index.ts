@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { canMutateMessages } from "../_shared/collaboratorPermissions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,11 +14,13 @@ const json = (body: Record<string, unknown>, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-type FollowupKind = "recap" | "future_event";
+const FOLLOWUP_SIGNIN_REQUIRED_COPY = "Please sign in to queue guest follow-ups.";
+const FOLLOWUP_SITE_REQUIRED_COPY = "Choose a site before queueing guest follow-ups.";
+const FOLLOWUP_KIND_INVALID_COPY = "Choose a valid follow-up type.";
+const FOLLOWUP_SITE_UNAVAILABLE_COPY = "This site is not available for guest follow-ups.";
+const FOLLOWUP_ACCESS_UNAVAILABLE_COPY = "You do not have access to queue guest follow-ups for this site.";
 
-function hasPermissionKey(permissions: unknown, key: string): boolean {
-  return Array.isArray(permissions) && permissions.includes(key);
-}
+type FollowupKind = "recap" | "future_event";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
@@ -31,21 +34,21 @@ Deno.serve(async (req: Request) => {
 
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
-    if (!token) return json({ error: "Unauthorized" }, 401);
+    if (!token) return json({ error: FOLLOWUP_SIGNIN_REQUIRED_COPY }, 401);
 
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: `Bearer ${token}` } },
     });
     const { data: { user }, error: authError } = await userClient.auth.getUser();
-    if (authError || !user) return json({ error: "Unauthorized" }, 401);
+    if (authError || !user) return json({ error: FOLLOWUP_SIGNIN_REQUIRED_COPY }, 401);
 
     const admin = createClient(supabaseUrl, serviceRole);
     const body = await req.json().catch(() => ({}));
     const siteId = String(body.siteId ?? "").trim();
     const kind = String(body.kind ?? "recap") as FollowupKind;
     const limit = Math.max(1, Math.min(Number(body.limit ?? 100), 250));
-    if (!siteId) return json({ error: "Missing siteId" }, 400);
-    if (!["recap", "future_event"].includes(kind)) return json({ error: "Invalid follow-up kind" }, 400);
+    if (!siteId) return json({ error: FOLLOWUP_SITE_REQUIRED_COPY }, 400);
+    if (!["recap", "future_event"].includes(kind)) return json({ error: FOLLOWUP_KIND_INVALID_COPY }, 400);
 
     const { data: site, error: siteError } = await admin
       .from("wedding_sites")
@@ -53,20 +56,20 @@ Deno.serve(async (req: Request) => {
       .eq("id", siteId)
       .maybeSingle();
     if (siteError) throw siteError;
-    if (!site?.id) return json({ error: "Site not found" }, 404);
+    if (!site?.id) return json({ error: FOLLOWUP_SITE_UNAVAILABLE_COPY }, 404);
 
     let allowed = site.user_id === user.id;
     if (!allowed) {
       const { data: collaborator, error: collaboratorError } = await admin
         .from("wedding_site_collaborators")
-        .select("permissions")
+        .select("role, permissions")
         .eq("wedding_site_id", siteId)
         .eq("user_id", user.id)
         .maybeSingle();
       if (collaboratorError) throw collaboratorError;
-      allowed = hasPermissionKey(collaborator?.permissions, "messages");
+      allowed = canMutateMessages(collaborator?.role, collaborator?.permissions);
     }
-    if (!allowed) return json({ error: "Forbidden" }, 403);
+    if (!allowed) return json({ error: FOLLOWUP_ACCESS_UNAVAILABLE_COPY }, 403);
 
     const wantsColumn = kind === "recap" ? "wants_photo_updates" : "wants_own_event_info";
     const queuedColumn = kind === "recap" ? "recap_email_queued_at" : "future_event_email_queued_at";

@@ -331,7 +331,7 @@ Deno.serve(async (req) => {
   try {
     const { vendorName, instagramUrl, websiteUrl, pinterestUrl, tiktokUrl, facebookUrl, youtubeUrl } = await req.json();
     if (!vendorName || typeof vendorName !== 'string') {
-      return json({ error: 'vendorName is required' }, 400);
+      return json({ error: 'Add the vendor name before previewing this profile.' }, 400);
     }
     if (!instagramUrl && !websiteUrl) {
       return json({ error: 'Add at least an Instagram URL or website URL.' }, 400);

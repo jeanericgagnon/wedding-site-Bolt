@@ -31,6 +31,8 @@ const genericAdapter = new GenericAdapter();
 const MAX_PREVIEW_REDIRECTS = 3;
 const MAX_PREVIEW_BYTES = 2_000_000;
 const PREVIEW_FETCH_TIMEOUT_MS = 10_000;
+const REGISTRY_PREVIEW_SIGNIN_REQUIRED_COPY = "Please sign in to preview this registry item.";
+const REGISTRY_PREVIEW_URL_REQUIRED_COPY = "Enter a public product URL.";
 const REGISTRY_URL_CACHE_SELECT = [
   "title",
   "image_url",
@@ -619,7 +621,7 @@ Deno.serve(async (req: Request) => {
     // Verify authentication
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      return new Response(JSON.stringify({ error: REGISTRY_PREVIEW_SIGNIN_REQUIRED_COPY }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -644,7 +646,7 @@ Deno.serve(async (req: Request) => {
     } = await supabaseUser.auth.getUser();
 
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      return new Response(JSON.stringify({ error: REGISTRY_PREVIEW_SIGNIN_REQUIRED_COPY }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -677,7 +679,7 @@ Deno.serve(async (req: Request) => {
     const forceRefresh = body?.force_refresh === true;
 
     if (!rawUrl) {
-      return new Response(JSON.stringify({ error: "url is required" }), {
+      return new Response(JSON.stringify({ error: REGISTRY_PREVIEW_URL_REQUIRED_COPY }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

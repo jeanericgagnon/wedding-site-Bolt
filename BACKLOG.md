@@ -214,6 +214,22 @@ Final acceptance criteria for this lane:
 - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/RSVP.test.tsx src/pages/EventRSVP.test.tsx` (142/142), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
 - No deploy was run. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk during build.
 
+### 2026-05-07 11:17 AM PT - No-Deploy Owner Helper Access-Copy Tightening
+
+- Resolved locally in this batch: `supabase/functions/photo-export-manifest/index.ts`, `supabase/functions/queue-guest-followups/index.ts`, `supabase/functions/vault-resolve-entry-link/index.ts`, and `supabase/functions/send-wedding-email/index.ts` now use customer-safe sign-in, access, site-selection, and request-shape copy instead of raw `Unauthorized`, `Forbidden`, `siteId is required`, `entryId is required`, `Entry not found`, `Missing required fields: type, to, data`, and similar helper-internal wording.
+- Security hardening: these owner/service-role helper routes still fail closed, but they no longer leak internal auth or lookup semantics into guest-facing or owner-facing error copy.
+- Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards the new safe copy constants and rejects reintroduction of the old raw auth/field-name strings for photo manifest export, guest follow-up queueing, vault attachment resolution, and direct wedding email sending.
+- Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (27/27), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
+- No deploy was run. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk during build.
+
+### 2026-05-07 11:19 AM PT - No-Deploy Preview Helper Copy Tightening
+
+- Resolved locally in this batch: `supabase/functions/registry-preview/index.ts` now uses customer-safe sign-in and missing-URL copy instead of raw `Unauthorized` and `url is required` wording.
+- Resolved locally in this batch: `supabase/functions/vendor-profile-preview/index.ts` now asks for the vendor name in plain customer language instead of returning `vendorName is required`.
+- Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards the new registry preview and vendor preview copy so those helper routes do not drift back to raw auth or field-name wording.
+- Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (27/27), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `git diff --check`, and `npm run build`.
+- No deploy was run. Known non-blocking warnings remain the existing Browserslist `caniuse-lite` notice and the empty `vendor-react` chunk during build.
+
 ### 2026-05-07 11:08 AM PT - No-Deploy Guest Lookup Exact-Match Tightening
 
 - Resolved locally in this batch: `supabase/functions/guest-contact-lookup/index.ts` no longer widens public guest-contact search through a last-name candidate sweep before filtering in memory.
