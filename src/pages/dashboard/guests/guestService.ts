@@ -103,6 +103,13 @@ export interface SaveAssistedGuestRsvpResult {
   nextNotes: string;
 }
 
+export interface PersistGuestDashboardRsvpConfigInput {
+  weddingSiteId: string;
+  questions: RSVPQuestionSetting[];
+  mealEnabled: boolean;
+  mealOptions: string[];
+}
+
 export async function loadGuestDashboardSiteSettings(userId: string): Promise<GuestDashboardSiteSettingsSnapshot> {
   const activeSite = await resolveActiveSiteForUser(userId);
   const activeSiteId = activeSite?.id ?? null;
@@ -187,6 +194,21 @@ export async function loadGuestDashboardSiteSettings(userId: string): Promise<Gu
     reminderCadenceDays: [1, 3, 7].includes(cadence) ? (cadence as 1 | 3 | 7) : null,
     autoRemindersEnabled: Boolean((data as { auto_reminders_enabled?: unknown }).auto_reminders_enabled),
   };
+}
+
+export async function persistGuestDashboardRsvpConfig(input: PersistGuestDashboardRsvpConfigInput): Promise<void> {
+  const { error } = await supabase
+    .from('wedding_sites')
+    .update({
+      rsvp_custom_questions: input.questions,
+      rsvp_meal_config: {
+        enabled: input.mealEnabled,
+        options: input.mealOptions,
+      },
+    })
+    .eq('id', input.weddingSiteId);
+
+  if (error) throw error;
 }
 
 export async function loadGuestDashboardSnapshot(weddingSiteId: string): Promise<GuestDashboardRecordsSnapshot> {
@@ -732,6 +754,51 @@ export async function updateGuestThankYouSentForSite(
   const { error } = await supabase
     .from('guests')
     .update({ thank_you_sent_at: thankYouSentAt })
+    .eq('wedding_site_id', weddingSiteId)
+    .eq('id', guestId);
+
+  if (error) throw error;
+}
+
+export async function markGuestInvitationSentForSite(
+  weddingSiteId: string,
+  guestId: string,
+  invitationSentAt: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('guests')
+    .update({ invitation_sent_at: invitationSentAt })
+    .eq('wedding_site_id', weddingSiteId)
+    .eq('id', guestId);
+
+  if (error) throw error;
+}
+
+export async function markGuestInvitationAndReminderSentForSite(
+  weddingSiteId: string,
+  guestId: string,
+  sentAt: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('guests')
+    .update({
+      invitation_sent_at: sentAt,
+      reminder_last_sent_at: sentAt,
+    })
+    .eq('wedding_site_id', weddingSiteId)
+    .eq('id', guestId);
+
+  if (error) throw error;
+}
+
+export async function markGuestReminderSentForSite(
+  weddingSiteId: string,
+  guestId: string,
+  reminderSentAt: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('guests')
+    .update({ reminder_last_sent_at: reminderSentAt })
     .eq('wedding_site_id', weddingSiteId)
     .eq('id', guestId);
 

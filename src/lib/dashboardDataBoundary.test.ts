@@ -60,6 +60,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('updateGuestCheckInForSite(weddingSiteId, lastCheckIn.guestId, null)');
     expect(source).toContain('updateGuestThankYouSentForSite(weddingSiteId, guest.id, nextValue)');
     expect(source).toContain('markGuestsThankYouSentForSite(weddingSiteId, ids, new Date().toISOString())');
+    expect(source).toContain('persistGuestDashboardRsvpConfig({');
+    expect(source).toContain('markGuestInvitationSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString())');
+    expect(source).toContain('markGuestInvitationAndReminderSentForSite(currentWeddingSiteId, guest.id, sentAtIso)');
+    expect(source).toContain('markGuestReminderSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString())');
     expect(source).toContain('clearGuestCheckInsForSite(weddingSiteId)');
     expect(source).toContain('assignGuestsToHouseholdForSite(weddingSiteId, ids, householdId)');
     expect(source).toContain('updateGuestHouseholdForSite(weddingSiteId, guestId, null)');
@@ -88,6 +92,10 @@ describe('dashboard data boundary guards', () => {
     expect(service).toContain('export async function updateGuestCheckInForSite(');
     expect(service).toContain('export async function updateGuestThankYouSentForSite(');
     expect(service).toContain('export async function markGuestsThankYouSentForSite(');
+    expect(service).toContain('export async function persistGuestDashboardRsvpConfig(input: PersistGuestDashboardRsvpConfigInput): Promise<void>');
+    expect(service).toContain('export async function markGuestInvitationSentForSite(');
+    expect(service).toContain('export async function markGuestInvitationAndReminderSentForSite(');
+    expect(service).toContain('export async function markGuestReminderSentForSite(');
     expect(service).toContain('export async function assignGuestsToHouseholdForSite(');
     expect(service).toContain('export async function updateGuestHouseholdForSite(');
     expect(service).toContain('export async function persistGuestReminderSettings(');
@@ -117,8 +125,12 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain(".from('rsvps')\n          .insert({");
     expect(source).not.toContain(".from('wedding_sites')\n      .select('site_slug')");
     expect(source).not.toContain(".from('wedding_sites')\n      .select('id, site_slug, site_url')");
+    expect(source).not.toContain(".from('wedding_sites')\n        .update({ rsvp_custom_questions: cleanedQuestions, rsvp_meal_config: { enabled: rsvpMealEnabled, options: mealOptions } })");
     expect(source).not.toContain(".from('guests')\n        .update({ checked_in_at: null })");
     expect(source).not.toContain(".from('guests')\n        .update({ thank_you_sent_at: nextValue })");
+    expect(source).not.toContain(".from('guests')\n        .update({ invitation_sent_at: new Date().toISOString() })");
+    expect(source).not.toContain(".from('guests')\n            .update({ invitation_sent_at: sentAtIso, reminder_last_sent_at: sentAtIso })");
+    expect(source).not.toContain(".from('guests')\n            .update({ reminder_last_sent_at: new Date().toISOString() })");
     expect(source).not.toContain(".from('guests')\n        .update({ household_id: householdId })");
     expect(source).not.toContain(".from('wedding_sites')\n      .update(patch)");
     expect(source).not.toContain('await resolveActiveSiteForUser(user.id)');

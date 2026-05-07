@@ -126,7 +126,11 @@ import {
   loadGuestDashboardItineraryFilters,
   loadGuestDashboardRsvpAuditFeed,
   loadGuestDashboardSiteSlug,
+  markGuestInvitationAndReminderSentForSite,
+  markGuestInvitationSentForSite,
+  markGuestReminderSentForSite,
   markGuestsThankYouSentForSite,
+  persistGuestDashboardRsvpConfig,
   persistGuestReminderSettings,
   loadGuestItineraryDrawerSnapshot,
   loadGuestDashboardSiteSettings,
@@ -641,11 +645,12 @@ export const DashboardGuests: React.FC = () => {
         return;
       }
 
-      const { error } = await supabase
-        .from('wedding_sites')
-        .update({ rsvp_custom_questions: cleanedQuestions, rsvp_meal_config: { enabled: rsvpMealEnabled, options: mealOptions } })
-        .eq('id', weddingSiteId);
-      if (error) throw error;
+      await persistGuestDashboardRsvpConfig({
+        weddingSiteId,
+        questions: cleanedQuestions,
+        mealEnabled: rsvpMealEnabled,
+        mealOptions,
+      });
       setRsvpQuestions(cleanedQuestions);
       toast('RSVP settings saved.', 'success');
       setRsvpAutoSaveState('saved');
@@ -1034,6 +1039,11 @@ export const DashboardGuests: React.FC = () => {
       toast('Demo: invitation send simulated (no real email sent)', 'success');
       return;
     }
+    if (!weddingSiteId) {
+      toast('Missing wedding site context', 'error');
+      return;
+    }
+    const currentWeddingSiteId = weddingSiteId;
 
     setSendingInviteId(guest.id);
     try {
@@ -1054,10 +1064,7 @@ export const DashboardGuests: React.FC = () => {
         inviteToken: guest.invite_token ?? null,
       });
 
-      await supabase
-        .from('guests')
-        .update({ invitation_sent_at: new Date().toISOString() })
-        .eq('id', guest.id);
+      await markGuestInvitationSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString());
 
       toast(`Invitation sent to ${guestName}`, 'success');
     } catch {
@@ -1183,6 +1190,10 @@ export const DashboardGuests: React.FC = () => {
   };
 
   const handleSendSelectedInvitations = async () => {
+    if (!weddingSiteId) {
+      toast('Missing wedding site context', 'error');
+      return;
+    }
     const selectedRecipients = guests.filter(g => selectedGuestIds.has(g.id) && !!g.email && !!g.invite_token);
     if (selectedRecipients.length === 0) {
       toast('No selected guests with email and RSVP link.', 'error');
@@ -1200,6 +1211,7 @@ export const DashboardGuests: React.FC = () => {
       toast(`Demo: simulated reminders for ${selectedRecipients.length} selected guests`, 'success');
       return;
     }
+    const currentWeddingSiteId = weddingSiteId;
 
     setBulkSending(true);
     let successCount = 0;
@@ -1224,11 +1236,7 @@ export const DashboardGuests: React.FC = () => {
             inviteToken: guest.invite_token ?? null,
           });
           const sentAtIso = new Date().toISOString();
-          const { error: guestUpdateError } = await supabase
-            .from('guests')
-            .update({ invitation_sent_at: sentAtIso, reminder_last_sent_at: sentAtIso })
-            .eq('id', guest.id);
-          if (guestUpdateError) throw guestUpdateError;
+          await markGuestInvitationAndReminderSentForSite(currentWeddingSiteId, guest.id, sentAtIso);
           successCount += 1;
         } catch {
           failedCount += 1;
@@ -1262,6 +1270,10 @@ const handleSendBulkInvitations = async () => {
       toast('No reminder recipients in this filtered view.', 'error');
       return;
     }
+    if (!weddingSiteId) {
+      toast('Missing wedding site context', 'error');
+      return;
+    }
 
     const previewNames = reminderCandidates.slice(0, 3).map((g) => (g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name);
     const previewText = previewNames.length ? `\n\nFirst recipients: ${previewNames.join(', ')}${reminderCandidates.length > 3 ? ` +${reminderCandidates.length - 3} more` : ''}` : '';
@@ -1279,6 +1291,7 @@ const handleSendBulkInvitations = async () => {
       toast(`Demo: simulated reminders for ${reminderCandidates.length} guests`, 'success');
       return;
     }
+    const currentWeddingSiteId = weddingSiteId;
 
     setBulkSending(true);
     let successCount = 0;
@@ -1306,11 +1319,7 @@ const handleSendBulkInvitations = async () => {
           });
 
           const sentAtIso = new Date().toISOString();
-          const { error: guestUpdateError } = await supabase
-            .from('guests')
-            .update({ invitation_sent_at: sentAtIso, reminder_last_sent_at: sentAtIso })
-            .eq('id', guest.id);
-          if (guestUpdateError) throw guestUpdateError;
+          await markGuestInvitationAndReminderSentForSite(currentWeddingSiteId, guest.id, sentAtIso);
 
           successCount += 1;
         } catch {
@@ -1346,6 +1355,10 @@ const handleSendBulkInvitations = async () => {
       toast('No guests are currently due for reminders.', 'error');
       return;
     }
+    if (!weddingSiteId) {
+      toast('Missing wedding site context', 'error');
+      return;
+    }
 
     const confirmed = await requestConfirmation({
       title: 'Send due reminders now?',
@@ -1360,6 +1373,7 @@ const handleSendBulkInvitations = async () => {
       toast(`Demo: simulated reminders for ${dueReminderCandidatesGlobal.length} due guests`, 'success');
       return;
     }
+    const currentWeddingSiteId = weddingSiteId;
 
     setBulkSending(true);
     let successCount = 0;
@@ -1381,11 +1395,7 @@ const handleSendBulkInvitations = async () => {
             siteUrl: weddingSiteInfo?.site_url ?? null,
             inviteToken: guest.invite_token ?? null,
           });
-          const { error: guestUpdateError } = await supabase
-            .from('guests')
-            .update({ reminder_last_sent_at: new Date().toISOString() })
-            .eq('id', guest.id);
-          if (guestUpdateError) throw guestUpdateError;
+          await markGuestReminderSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString());
           successCount += 1;
         } catch {
           failedCount += 1;

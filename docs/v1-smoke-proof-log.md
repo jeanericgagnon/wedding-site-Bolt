@@ -8057,6 +8057,20 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 4:56 PM PT No-Deploy Guest Reminder Delivery Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guests/guestService.ts` now owns guest RSVP settings persistence plus invitation/reminder sent timestamp writes.
+  - `src/pages/dashboard/Guests.tsx` now calls `persistGuestDashboardRsvpConfig(...)`, `markGuestInvitationSentForSite(...)`, `markGuestInvitationAndReminderSentForSite(...)`, and `markGuestReminderSentForSite(...)` instead of directly mutating `wedding_sites` or `guests` inline for those flows.
+  - `src/pages/dashboard/guests/guestService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` now pin that expanded guest reminder/config service boundary.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`: PASS, 64/64.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 3:31 PM PT No-Deploy Seating Session Refresh Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

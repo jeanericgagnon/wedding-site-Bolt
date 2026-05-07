@@ -3436,3 +3436,29 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the guest dashboard page-to-service migration without changing guest check-in, thank-you tracking, household management, reminder settings, or guest update-link behavior. No deploy was run.
+
+### 2026-05-07 4:56 PM PT - Guest Reminder Delivery Service Extraction
+
+- Moved the remaining guest reminder/config persistence writes out of `src/pages/dashboard/Guests.tsx` and into `src/pages/dashboard/guests/guestService.ts`.
+- `Guests.tsx` now calls service helpers for:
+  - RSVP settings persistence
+  - single invitation sent timestamp writes
+  - selected reminder invitation/reminder timestamp writes
+  - filtered campaign invitation/reminder timestamp writes
+  - due-reminder timestamp writes
+- Added/expanded guest service helpers:
+  - `persistGuestDashboardRsvpConfig(...)`
+  - `markGuestInvitationSentForSite(...)`
+  - `markGuestInvitationAndReminderSentForSite(...)`
+  - `markGuestReminderSentForSite(...)`
+- Expanded `src/pages/dashboard/guests/guestService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the guest dashboard no longer owns those direct RSVP-config and reminder-delivery writes inline.
+
+Validation:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`: PASS, 64/64.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the guest dashboard page-to-service migration without changing RSVP settings save behavior or invitation/reminder send tracking. No deploy was run.

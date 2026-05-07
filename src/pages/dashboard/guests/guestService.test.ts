@@ -31,7 +31,11 @@ import {
   loadGuestDashboardSiteSlug,
   loadGuestDashboardSiteSettings,
   loadGuestDashboardSnapshot,
+  markGuestInvitationAndReminderSentForSite,
+  markGuestInvitationSentForSite,
+  markGuestReminderSentForSite,
   markGuestsThankYouSentForSite,
+  persistGuestDashboardRsvpConfig,
   persistGuestReminderSettings,
   removeGuestEventInvitation,
   saveAssistedGuestRsvp,
@@ -141,6 +145,10 @@ describe('guestService', () => {
     expect(page).toContain('updateGuestCheckInForSite(weddingSiteId, lastCheckIn.guestId, null)');
     expect(page).toContain('updateGuestThankYouSentForSite(weddingSiteId, guest.id, nextValue)');
     expect(page).toContain('markGuestsThankYouSentForSite(weddingSiteId, ids, new Date().toISOString())');
+    expect(page).toContain('persistGuestDashboardRsvpConfig({');
+    expect(page).toContain('markGuestInvitationSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString())');
+    expect(page).toContain('markGuestInvitationAndReminderSentForSite(currentWeddingSiteId, guest.id, sentAtIso)');
+    expect(page).toContain('markGuestReminderSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString())');
     expect(page).toContain('clearGuestCheckInsForSite(weddingSiteId)');
     expect(page).toContain('assignGuestsToHouseholdForSite(weddingSiteId, ids, householdId)');
     expect(page).toContain('updateGuestHouseholdForSite(weddingSiteId, guestId, null)');
@@ -160,9 +168,13 @@ describe('guestService', () => {
     expect(page).not.toContain(".from('rsvps')\n          .insert({");
     expect(page).not.toContain(".from('wedding_sites')\n      .select('site_slug')");
     expect(page).not.toContain(".from('wedding_sites')\n      .select('id, site_slug, site_url')");
+    expect(page).not.toContain(".from('wedding_sites')\n        .update({ rsvp_custom_questions: cleanedQuestions, rsvp_meal_config: { enabled: rsvpMealEnabled, options: mealOptions } })");
     expect(page).not.toContain(".from('guests')\n        .update({ checked_in_at: null })");
     expect(page).not.toContain(".from('guests')\n        .update({ thank_you_sent_at: nextValue })");
     expect(page).not.toContain(".from('guests')\n        .update({ thank_you_sent_at: new Date().toISOString() })");
+    expect(page).not.toContain(".from('guests')\n        .update({ invitation_sent_at: new Date().toISOString() })");
+    expect(page).not.toContain(".from('guests')\n            .update({ invitation_sent_at: sentAtIso, reminder_last_sent_at: sentAtIso })");
+    expect(page).not.toContain(".from('guests')\n            .update({ reminder_last_sent_at: new Date().toISOString() })");
     expect(page).not.toContain(".from('guests')\n        .update({ household_id: householdId })");
     expect(page).not.toContain(".from('wedding_sites')\n      .update(patch)");
     expect(page).not.toContain('await resolveActiveSiteForUser(user.id)');
@@ -183,6 +195,10 @@ describe('guestService', () => {
     expect(service).toContain('export async function updateGuestCheckInForSite(');
     expect(service).toContain('export async function updateGuestThankYouSentForSite(');
     expect(service).toContain('export async function markGuestsThankYouSentForSite(');
+    expect(service).toContain('export async function persistGuestDashboardRsvpConfig(input: PersistGuestDashboardRsvpConfigInput): Promise<void>');
+    expect(service).toContain('export async function markGuestInvitationSentForSite(');
+    expect(service).toContain('export async function markGuestInvitationAndReminderSentForSite(');
+    expect(service).toContain('export async function markGuestReminderSentForSite(');
     expect(service).toContain('export async function assignGuestsToHouseholdForSite(');
     expect(service).toContain('export async function updateGuestHouseholdForSite(');
     expect(service).toContain('export async function persistGuestReminderSettings(');
@@ -614,6 +630,50 @@ describe('guestService', () => {
     });
 
     await expect(persistGuestReminderSettings('site-1', { auto_reminders_enabled: true })).resolves.toBeUndefined();
+  });
+
+  it('persists guest RSVP config through the service', async () => {
+    const eqMock = vi.fn().mockResolvedValue({ error: null });
+    fromMock.mockReturnValueOnce({
+      update: vi.fn(() => ({ eq: eqMock })),
+    });
+
+    await expect(persistGuestDashboardRsvpConfig({
+      weddingSiteId: 'site-1',
+      questions: [],
+      mealEnabled: true,
+      mealOptions: ['Chicken', 'Fish'],
+    })).resolves.toBeUndefined();
+  });
+
+  it('marks guest invitation sent through the service', async () => {
+    const eqIdMock = vi.fn().mockResolvedValue({ error: null });
+    const eqSiteMock = vi.fn(() => ({ eq: eqIdMock }));
+    fromMock.mockReturnValueOnce({
+      update: vi.fn(() => ({ eq: eqSiteMock })),
+    });
+
+    await expect(markGuestInvitationSentForSite('site-1', 'guest-1', '2026-05-07T00:00:00Z')).resolves.toBeUndefined();
+  });
+
+  it('marks guest invitation and reminder sent through the service', async () => {
+    const eqIdMock = vi.fn().mockResolvedValue({ error: null });
+    const eqSiteMock = vi.fn(() => ({ eq: eqIdMock }));
+    fromMock.mockReturnValueOnce({
+      update: vi.fn(() => ({ eq: eqSiteMock })),
+    });
+
+    await expect(markGuestInvitationAndReminderSentForSite('site-1', 'guest-1', '2026-05-07T00:00:00Z')).resolves.toBeUndefined();
+  });
+
+  it('marks guest reminder sent through the service', async () => {
+    const eqIdMock = vi.fn().mockResolvedValue({ error: null });
+    const eqSiteMock = vi.fn(() => ({ eq: eqIdMock }));
+    fromMock.mockReturnValueOnce({
+      update: vi.fn(() => ({ eq: eqSiteMock })),
+    });
+
+    await expect(markGuestReminderSentForSite('site-1', 'guest-1', '2026-05-07T00:00:00Z')).resolves.toBeUndefined();
   });
 
   it('rolls back guest RSVP state when assisted RSVP persistence fails', async () => {
