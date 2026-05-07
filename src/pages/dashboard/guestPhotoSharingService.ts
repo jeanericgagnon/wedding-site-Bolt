@@ -12,6 +12,30 @@ export const safeGuestPhotoOwnerServiceError = (err: unknown, fallback = GUEST_P
   customerSafeErrorMessage(err, fallback)
 );
 
+export async function refreshGuestPhotoSession(): Promise<boolean> {
+  const { data } = await supabase.auth.refreshSession();
+  return Boolean(data.session);
+}
+
+export async function getGuestPhotoCurrentUserId(): Promise<string | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id ?? null;
+}
+
+export async function resolveGuestPhotoDashboardUserId(): Promise<string | null> {
+  await supabase.auth.getSession();
+
+  const currentUserId = await getGuestPhotoCurrentUserId();
+  if (currentUserId) return currentUserId;
+
+  const { data: sessionRes } = await supabase.auth.getSession();
+  const sessionUserId = sessionRes.session?.user?.id ?? null;
+  if (sessionUserId) return sessionUserId;
+
+  const refreshed = await supabase.auth.refreshSession();
+  return refreshed.data.session?.user?.id ?? null;
+}
+
 export function buildGuestPhotoBucketSiteUpdate(
   current: {
     wedding_data?: Record<string, unknown> | null;

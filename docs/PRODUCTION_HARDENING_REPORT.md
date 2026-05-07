@@ -19,6 +19,27 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 3:36 PM PT - No-Deploy Guest Photo Auth Service Extraction
+
+What changed:
+- `src/pages/dashboard/guestPhotoSharingService.ts` now owns the repeated guest-photo auth/session helpers:
+  - `refreshGuestPhotoSession()`
+  - `getGuestPhotoCurrentUserId()`
+  - `resolveGuestPhotoDashboardUserId()`
+- `src/pages/dashboard/GuestPhotoSharing.tsx` now uses those helpers instead of directly calling `supabase.auth.getSession()`, `supabase.auth.getUser()`, and `supabase.auth.refreshSession()` inline.
+- This moves the guest photo dashboard’s auth retry and owner actor-id lookup behind the service seam without changing album, upload, guestbook, prospect, or hub-setting behavior.
+- Expanded `src/pages/dashboard/guestPhotoSharingService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the page-to-service boundary is now pinned for this auth/session cluster.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 4 files and 32 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This removes another owner-dashboard page-owned Supabase auth cluster and makes `GuestPhotoSharing.tsx` more UI-focused without changing product behavior. No deploy was run.
+
 ### 2026-05-07 1:18 PM PT - No-Deploy Registry Public Contract Repair
 
 What changed:

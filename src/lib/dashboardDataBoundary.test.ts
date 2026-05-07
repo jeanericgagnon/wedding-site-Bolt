@@ -304,8 +304,20 @@ describe('dashboard data boundary guards', () => {
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotoSharingService.ts'), 'utf8');
 
     expect(source).toContain('persistGuestPhotoBuckets(siteId, nextBuckets)');
+    expect(source).toContain('resolveGuestPhotoDashboardUserId()');
+    expect(source).toContain('refreshGuestPhotoSession()');
+    expect(source).toContain('getGuestPhotoCurrentUserId()');
+    expect(source).not.toContain('supabase.auth.getUser()');
+    expect(source).not.toContain('supabase.auth.getSession()');
+    expect(source).not.toContain('supabase.auth.refreshSession()');
     expect(source).not.toContain("supabase.from('wedding_sites').update({ wedding_data: nextWeddingData, site_json: nextSiteJson })");
     expect(service).toContain("const GUEST_PHOTO_BUCKET_SITE_SELECT = 'wedding_data, site_json'");
+    expect(service).toContain('export async function refreshGuestPhotoSession(): Promise<boolean>');
+    expect(service).toContain('export async function getGuestPhotoCurrentUserId(): Promise<string | null>');
+    expect(service).toContain('export async function resolveGuestPhotoDashboardUserId(): Promise<string | null>');
+    expect(service).toContain('supabase.auth.getUser()');
+    expect(service).toContain('supabase.auth.getSession()');
+    expect(service).toContain('supabase.auth.refreshSession()');
     expect(service).toContain('.select(GUEST_PHOTO_BUCKET_SITE_SELECT)');
     expect(service).not.toContain(".from('wedding_sites')\n    .select('*')");
   });

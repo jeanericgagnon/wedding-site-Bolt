@@ -26,7 +26,12 @@ import { logAppAction } from '../../lib/actionAudit';
 import { useAuth } from '../../contexts/AuthContext';
 import { demoEvents, demoWeddingSite } from '../../lib/demoData';
 import { getSafePublicWebUrl } from '../../sections/publicLinks';
-import { persistGuestPhotoBuckets } from './guestPhotoSharingService';
+import {
+  getGuestPhotoCurrentUserId,
+  persistGuestPhotoBuckets,
+  refreshGuestPhotoSession,
+  resolveGuestPhotoDashboardUserId,
+} from './guestPhotoSharingService';
 import { buildGuestHubActions, summarizeGuestHubActions } from '../../lib/guestHubActions';
 import { buildMemoryFlowReadiness } from '../../lib/memoryFlowReadiness';
 import { buildGuestHubQrAssets, renderGuestHubQrPrintHtml } from '../../lib/guestHubQrAssets';
@@ -220,8 +225,8 @@ export const GuestPhotoSharing: React.FC = () => {
       const authish = msg.includes('invalid jwt') || msg.includes('jwt') || msg.includes('401') || msg.includes('auth');
       if (!authish) throw err;
 
-      const { data } = await supabase.auth.refreshSession();
-      if (!data.session) throw err;
+      const refreshed = await refreshGuestPhotoSession();
+      if (!refreshed) throw err;
       return await invokeFunctionOrThrow(supabase, fnName, body);
     }
   };
@@ -316,17 +321,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      await supabase.auth.getSession();
-      const { data: userRes } = await supabase.auth.getUser();
-      let userId = userRes.user?.id;
-      if (!userId) {
-        const { data: sessionRes } = await supabase.auth.getSession();
-        userId = sessionRes.session?.user?.id;
-      }
-      if (!userId) {
-        const { data: refreshed } = await supabase.auth.refreshSession();
-        userId = refreshed.session?.user?.id;
-      }
+      const userId = await resolveGuestPhotoDashboardUserId();
       if (!userId && isDemoMode) {
         loadDemoPhotoSpace();
         return;
@@ -451,7 +446,7 @@ export const GuestPhotoSharing: React.FC = () => {
       const msg = err instanceof Error ? err.message.toLowerCase() : '';
       const authish = msg.includes('invalid jwt') || msg.includes('jwt') || msg.includes('401') || msg.includes('auth');
       if (authish && !retried) {
-        await supabase.auth.refreshSession();
+        await refreshGuestPhotoSession();
         await load(true);
         return;
       }
@@ -810,7 +805,7 @@ export const GuestPhotoSharing: React.FC = () => {
     reason: string
   ) => {
     if (!siteId) return;
-    const { data: { user } } = await supabase.auth.getUser();
+    const userId = await getGuestPhotoCurrentUserId();
     const payload = {
       wedding_site_id: siteId,
       upload_id: analysis.upload_id,
@@ -824,7 +819,7 @@ export const GuestPhotoSharing: React.FC = () => {
         detected_moment: analysis.detected_moment,
         suggested_bucket_name: analysis.suggested_bucket_name,
       },
-      created_by: user?.id ?? null,
+      created_by: userId,
     };
 
     const { data, error: correctionError } = await supabase
@@ -1105,7 +1100,7 @@ export const GuestPhotoSharing: React.FC = () => {
     try {
       setSavingHubSettings(true);
       setError(null);
-      const { data: { user } } = await supabase.auth.getUser();
+      const userId = await getGuestPhotoCurrentUserId();
       const now = new Date().toISOString();
       const { error: upsertError } = await supabase
         .from('guest_hub_settings')
@@ -1116,7 +1111,7 @@ export const GuestPhotoSharing: React.FC = () => {
           recap_closed_at: hubSettings.recap_status === 'closed' ? (hubSettings.recap_closed_at ?? now) : null,
           custom_message: hubSettings.custom_message.trim() || null,
           language_default: hubSettings.language_default.trim() || 'en',
-          updated_by: user?.id ?? null,
+          updated_by: userId,
           updated_at: now,
         }, { onConflict: 'wedding_site_id' });
       if (upsertError) throw upsertError;

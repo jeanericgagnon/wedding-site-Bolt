@@ -7,6 +7,20 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-07 3:36 PM PT No-Deploy Guest Photo Auth Service Extraction
+- Continued from `BACKLOG.md` in the same no-deploy service-boundary lane.
+- Fixed/proved:
+  - `src/pages/dashboard/guestPhotoSharingService.ts` now owns the repeated guest-photo auth/session helpers `refreshGuestPhotoSession()`, `getGuestPhotoCurrentUserId()`, and `resolveGuestPhotoDashboardUserId()`.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now uses those helpers instead of directly invoking `supabase.auth.getSession()`, `supabase.auth.getUser()`, and `supabase.auth.refreshSession()` inline.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins that the page no longer owns direct auth/session calls while the service does, and `src/pages/dashboard/guestPhotoSharingService.test.ts` now covers the new helper behavior.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 32/32.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is a maintainability and service-boundary hardening step, and no deploy was run.
+
 ## 2026-05-07 12:52 PM PT No-Deploy Live AI Clearance Recheck
 - Continued from `BACKLOG.md` in a blocker-driven, no-deploy batch.
 - Fixed/proved:
