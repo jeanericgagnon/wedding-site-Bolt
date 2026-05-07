@@ -19,6 +19,23 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 3:56 PM PT - No-Deploy Login Auth Listener Service Extraction
+
+What changed:
+- `src/pages/Login.tsx` no longer owns the direct `supabase.auth.onAuthStateChange(...)` subscription.
+- `src/pages/loginService.ts` now owns `subscribeLoginAuthState(...)` alongside the existing login session priming, password sign-in, Google OAuth start, and password reset helpers.
+- Expanded `src/pages/loginService.test.ts` so the login page-to-service auth boundary now pins both session priming and auth-listener subscription.
+
+Commands run:
+- `npm test -- --run src/pages/loginService.test.ts src/pages/Login.test.tsx src/lib/authErrorCopy.test.ts`: PASS, 3 files and 14 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This removes the last direct Supabase auth call from `Login.tsx` and keeps the page focused on UI and redirect flow instead of auth transport details. No deploy was run.
+
 ### 2026-05-07 3:53 PM PT - No-Deploy Vault Contribution Function Service Extraction
 
 What changed:

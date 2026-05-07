@@ -5,6 +5,12 @@ export async function getLoginSession() {
   return data.session ?? null;
 }
 
+export function subscribeLoginAuthState(
+  callback: Parameters<typeof supabase.auth.onAuthStateChange>[0],
+) {
+  return supabase.auth.onAuthStateChange(callback);
+}
+
 export async function loginWithPassword(email: string, password: string) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,

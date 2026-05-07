@@ -4,11 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   getSessionMock,
+  onAuthStateChangeMock,
   signInWithPasswordMock,
   signInWithOAuthMock,
   resetPasswordForEmailMock,
 } = vi.hoisted(() => ({
   getSessionMock: vi.fn(),
+  onAuthStateChangeMock: vi.fn(),
   signInWithPasswordMock: vi.fn(),
   signInWithOAuthMock: vi.fn(),
   resetPasswordForEmailMock: vi.fn(),
@@ -18,6 +20,7 @@ vi.mock('../lib/supabase', () => ({
   supabase: {
     auth: {
       getSession: getSessionMock,
+      onAuthStateChange: onAuthStateChangeMock,
       signInWithPassword: signInWithPasswordMock,
       signInWithOAuth: signInWithOAuthMock,
       resetPasswordForEmail: resetPasswordForEmailMock,
@@ -25,11 +28,18 @@ vi.mock('../lib/supabase', () => ({
   },
 }));
 
-import { getLoginSession, loginWithPassword, sendLoginPasswordReset, startLoginWithGoogle } from './loginService';
+import {
+  getLoginSession,
+  loginWithPassword,
+  sendLoginPasswordReset,
+  startLoginWithGoogle,
+  subscribeLoginAuthState,
+} from './loginService';
 
 describe('loginService', () => {
   beforeEach(() => {
     getSessionMock.mockReset();
+    onAuthStateChangeMock.mockReset();
     signInWithPasswordMock.mockReset();
     signInWithOAuthMock.mockReset();
     resetPasswordForEmailMock.mockReset();
@@ -40,9 +50,13 @@ describe('loginService', () => {
     const service = readFileSync(join(process.cwd(), 'src/pages/loginService.ts'), 'utf8');
 
     expect(page).toContain('getLoginSession()');
+    expect(page).toContain('subscribeLoginAuthState(');
     expect(page).not.toContain('supabase.auth.getSession()');
+    expect(page).not.toContain('supabase.auth.onAuthStateChange(');
     expect(service).toContain('export async function getLoginSession()');
+    expect(service).toContain('export function subscribeLoginAuthState(');
     expect(service).toContain('supabase.auth.getSession()');
+    expect(service).toContain('supabase.auth.onAuthStateChange(callback)');
   });
 
   it('reads the current login session through the service', async () => {
@@ -86,5 +100,16 @@ describe('loginService', () => {
     expect(resetPasswordForEmailMock).toHaveBeenCalledWith('test@example.com', {
       redirectTo: 'https://dayof.love/login',
     });
+  });
+
+  it('subscribes to auth state changes through the service', () => {
+    const unsubscribe = vi.fn();
+    const callback = vi.fn();
+    onAuthStateChangeMock.mockReturnValue({ data: { subscription: { unsubscribe } } });
+
+    const result = subscribeLoginAuthState(callback);
+
+    expect(onAuthStateChangeMock).toHaveBeenCalledWith(callback);
+    expect(result).toEqual({ data: { subscription: { unsubscribe } } });
   });
 });

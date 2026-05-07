@@ -21,6 +21,20 @@ _Launch call right now:_ Not production-ready under the stricter P0/P1 standard.
   - `git diff --check`: PASS.
 - Launch status did not change. This is another maintainability and guest-surface boundary hardening step, and no deploy was run.
 
+## 2026-05-07 3:56 PM PT No-Deploy Login Auth Listener Service Extraction
+- Continued from `BACKLOG.md` in the no-deploy page-to-service extraction lane.
+- Fixed/proved:
+  - `src/pages/Login.tsx` no longer owns the direct `supabase.auth.onAuthStateChange(...)` subscription.
+  - `src/pages/loginService.ts` now owns `subscribeLoginAuthState(...)` alongside the existing login session priming, password sign-in, Google OAuth start, and password reset helpers.
+  - `src/pages/loginService.test.ts` now pins both the login session and auth-listener service boundary.
+- Proof passed:
+  - `npm test -- --run src/pages/loginService.test.ts src/pages/Login.test.tsx src/lib/authErrorCopy.test.ts`: PASS, 14/14.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is another maintainability and auth-boundary hardening step, and no deploy was run.
+
 ## 2026-05-07 3:48 PM PT No-Deploy Site View Public Function Service Extraction
 - Continued from `BACKLOG.md` in the no-deploy page-to-service extraction lane.
 - Fixed/proved:

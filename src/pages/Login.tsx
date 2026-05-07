@@ -2,14 +2,19 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams, createSearchParams } from 'react-router-dom';
 import { Heart, Chrome, ArrowLeft, Mail, AlertCircle } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
-import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupContinuation';
 import { clearAuthEntryReturnPath } from '../lib/authEntryCleanup';
 import { resolveLoginReturnPath } from '../lib/loginReturnResolver';
 import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
 import { safeAuthError } from '../lib/authErrorCopy';
-import { getLoginSession, loginWithPassword, sendLoginPasswordReset, startLoginWithGoogle } from './loginService';
+import {
+  getLoginSession,
+  loginWithPassword,
+  sendLoginPasswordReset,
+  startLoginWithGoogle,
+  subscribeLoginAuthState,
+} from './loginService';
 
 type AuthView = 'login' | 'forgot-password' | 'forgot-sent';
 
@@ -88,7 +93,7 @@ export const Login: React.FC = () => {
 
     primeSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: authListener } = subscribeLoginAuthState((event, session) => {
       if (!mounted) return;
       if (event === 'SIGNED_IN') {
         const to = consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(session?.user?.email));
