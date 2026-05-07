@@ -7453,3 +7453,17 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 1:49 PM PT No-Deploy Planning Workspace Query Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/planning/planningService.ts` now caps address-collection guest reads at 5000 rows.
+  - The same service now caps song-request RSVP reads at 2000 rows, task reads at 500 rows, vendor reads at 500 rows, and budget-item reads at 1000 rows.
+  - `src/pages/dashboard/planning/planningService.test.ts` now pins the stable cap exports and bounded query shape.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/planning/planningService.test.ts`: PASS, 6/6.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

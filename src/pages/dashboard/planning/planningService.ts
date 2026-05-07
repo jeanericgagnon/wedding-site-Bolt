@@ -27,6 +27,20 @@ const PLANNING_TASK_SELECT = 'id, wedding_site_id, title, description, category,
 const PLANNING_VENDOR_SELECT = 'id, wedding_site_id, vendor_type, name, contact_name, email, phone, website, contract_total, amount_paid, balance_due, next_payment_due, document_url, document_label, notes, internal_rating, rating_status, rating_notes, created_at, updated_at' as const;
 const PLANNING_VENDOR_LEGACY_SELECT = 'id, wedding_site_id, vendor_type, name, contact_name, email, phone, website, contract_total, amount_paid, balance_due, next_payment_due, document_url, document_label, notes, created_at, updated_at' as const;
 const PLANNING_BUDGET_ITEM_SELECT = 'id, wedding_site_id, category, item_name, estimated_amount, actual_amount, paid_amount, due_date, vendor_id, notes, created_at, updated_at' as const;
+const PLANNING_SITE_META_SELECT = 'wedding_data, venue_name, is_destination_wedding' as const;
+const PLANNING_TOTAL_BUDGET_SELECT = 'wedding_data' as const;
+const SEATING_READINESS_EVENT_SELECT = 'id' as const;
+const ADDRESS_COLLECTION_SITE_SELECT = 'site_slug, site_url' as const;
+const ADDRESS_COLLECTION_GUEST_SELECT = 'id, name, email, phone, household_id, mailing_address_line1, mailing_city, sms_consent' as const;
+const SONG_REQUEST_SITE_SELECT = 'music_playlist_url, rsvp_custom_questions' as const;
+const SONG_REQUEST_RSVP_SELECT = 'custom_answers, responded_at, guests!inner(name, wedding_site_id)' as const;
+
+export const PLANNING_SONG_QUESTION_ID = 'song_request' as const;
+export const MAX_PLANNING_ADDRESS_GUEST_ROWS = 5000;
+export const MAX_PLANNING_SONG_REQUEST_ROWS = 2000;
+export const MAX_PLANNING_TASK_ROWS = 500;
+export const MAX_PLANNING_VENDOR_ROWS = 500;
+export const MAX_PLANNING_BUDGET_ITEM_ROWS = 1000;
 
 async function updateWithDriftFallback<T extends Record<string, unknown>>(
   table: string,
@@ -105,6 +119,53 @@ export interface PlanningBudgetItem {
   updated_at: string;
 }
 
+export interface PlanningSiteMeta {
+  venueName: string | null;
+  destinationWedding: boolean;
+  totalBudget: number;
+}
+
+export interface PlanningSeatingReadiness {
+  attending: number;
+  seated: number;
+  unassigned: number;
+}
+
+export interface PlanningAddressGuest {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  household_id: string | null;
+  mailing_address_line1?: string | null;
+  mailing_city?: string | null;
+  sms_consent?: boolean | null;
+}
+
+export interface PlanningAddressCollectionData {
+  siteSlug: string;
+  guests: PlanningAddressGuest[];
+}
+
+export interface PlanningSongQuestion {
+  id?: string;
+  label?: string;
+  type?: string;
+  required?: boolean;
+}
+
+export interface PlanningSongRequest {
+  guestName: string;
+  answer: string;
+  respondedAt: string | null;
+}
+
+export interface PlanningSongRequestData {
+  playlistUrl: string;
+  hasQuestion: boolean;
+  requests: PlanningSongRequest[];
+}
+
 export async function getWeddingSiteId(): Promise<string | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -127,13 +188,219 @@ export async function getWeddingDate(): Promise<string | null> {
   return data?.wedding_date ?? null;
 }
 
+export async function loadPlanningSiteMeta(weddingSiteId: string): Promise<PlanningSiteMeta> {
+  const { data, error } = await supabase
+    .from('wedding_sites')
+    .select(PLANNING_SITE_META_SELECT)
+    .eq('id', weddingSiteId)
+    .maybeSingle();
+  if (error) throw error;
+
+  const weddingData = (data?.wedding_data as Record<string, unknown> | null) ?? null;
+  const planningMeta = (weddingData?.planning as Record<string, unknown> | undefined) ?? {};
+
+  return {
+    venueName: (data?.venue_name as string | null) ?? null,
+    destinationWedding: Boolean(data?.is_destination_wedding),
+    totalBudget: Number(planningMeta.totalBudget) || 0,
+  };
+}
+
+export async function loadPlanningGuestCount(weddingSiteId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('guests')
+    .select('id', { count: 'exact', head: true })
+    .eq('wedding_site_id', weddingSiteId);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export async function loadPlanningSeatingReadiness(weddingSiteId: string): Promise<PlanningSeatingReadiness> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { attending: 0, seated: 0, unassigned: 0 };
+
+  const { count: attendingCount, error: attendingError } = await supabase
+    .from('guests')
+    .select('id', { count: 'exact', head: true })
+    .eq('wedding_site_id', weddingSiteId)
+    .in('rsvp_status', ['confirmed', 'attending']);
+  if (attendingError) throw attendingError;
+
+  const { data: seatingEventsData, error: eventsError } = await supabase
+    .from('seating_events')
+    .select(SEATING_READINESS_EVENT_SELECT)
+    .eq('wedding_site_id', weddingSiteId);
+  if (eventsError) throw eventsError;
+
+  let seatedCount = 0;
+  if (seatingEventsData && seatingEventsData.length > 0) {
+    const eventIds = seatingEventsData.map(e => e.id);
+    const { count, error: assignmentError } = await supabase
+      .from('seating_assignments')
+      .select('id', { count: 'exact', head: true })
+      .in('seating_event_id', eventIds)
+      .eq('is_valid', true);
+    if (assignmentError) throw assignmentError;
+    seatedCount = count ?? 0;
+  }
+
+  const attending = attendingCount ?? 0;
+  return {
+    attending,
+    seated: seatedCount,
+    unassigned: Math.max(0, attending - seatedCount),
+  };
+}
+
+export async function updatePlanningTotalBudget(weddingSiteId: string, value: number): Promise<void> {
+  const { data: siteData, error: loadError } = await supabase
+    .from('wedding_sites')
+    .select(PLANNING_TOTAL_BUDGET_SELECT)
+    .eq('id', weddingSiteId)
+    .maybeSingle();
+  if (loadError) throw loadError;
+
+  const weddingData = (siteData?.wedding_data as Record<string, unknown> | null) ?? {};
+  const planning = (weddingData.planning as Record<string, unknown> | undefined) ?? {};
+  const nextWeddingData = {
+    ...weddingData,
+    planning: {
+      ...planning,
+      totalBudget: value,
+    },
+  };
+
+  let { error } = await supabase
+    .from('wedding_sites')
+    .update({ wedding_data: nextWeddingData, updated_at: new Date().toISOString() })
+    .eq('id', weddingSiteId);
+
+  if (error?.message?.includes('wedding_data')) {
+    const fallback = await supabase
+      .from('wedding_sites')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', weddingSiteId);
+    error = fallback.error;
+  }
+
+  if (error) throw error;
+}
+
+export function readPlanningSongAnswer(answers: Record<string, unknown> | null | undefined): string {
+  if (!answers || typeof answers !== 'object') return '';
+  const entries = Object.entries(answers);
+  const songEntry = entries.find(([key]) => key.toLowerCase().includes('song') || key === PLANNING_SONG_QUESTION_ID);
+  const value = songEntry?.[1];
+  if (Array.isArray(value)) return value.join(', ');
+  return typeof value === 'string' ? value : '';
+}
+
+export function hasPlanningSongQuestion(questions: unknown): boolean {
+  if (!Array.isArray(questions)) return false;
+  return questions.some((question) => {
+    const item = question as PlanningSongQuestion;
+    return item.id === PLANNING_SONG_QUESTION_ID || String(item.label ?? '').toLowerCase().includes('song');
+  });
+}
+
+export async function loadAddressCollectionData(weddingSiteId: string): Promise<PlanningAddressCollectionData> {
+  const [{ data: site, error: siteError }, { data: guests, error: guestsError }] = await Promise.all([
+    supabase
+      .from('wedding_sites')
+      .select(ADDRESS_COLLECTION_SITE_SELECT)
+      .eq('id', weddingSiteId)
+      .maybeSingle(),
+    supabase
+      .from('guests')
+      .select(ADDRESS_COLLECTION_GUEST_SELECT)
+      .eq('wedding_site_id', weddingSiteId)
+      .order('name', { ascending: true })
+      .limit(MAX_PLANNING_ADDRESS_GUEST_ROWS),
+  ]);
+  if (siteError) throw siteError;
+  if (guestsError) throw guestsError;
+
+  return {
+    siteSlug: String((site?.site_slug || site?.site_url || '') ?? ''),
+    guests: (guests ?? []) as PlanningAddressGuest[],
+  };
+}
+
+export async function loadSongRequestData(weddingSiteId: string): Promise<PlanningSongRequestData> {
+  const [{ data: site, error: siteError }, { data: rsvps, error: rsvpError }] = await Promise.all([
+    supabase
+      .from('wedding_sites')
+      .select(SONG_REQUEST_SITE_SELECT)
+      .eq('id', weddingSiteId)
+      .maybeSingle(),
+    supabase
+      .from('rsvps')
+      .select(SONG_REQUEST_RSVP_SELECT)
+      .eq('guests.wedding_site_id', weddingSiteId)
+      .order('responded_at', { ascending: false })
+      .limit(MAX_PLANNING_SONG_REQUEST_ROWS),
+  ]);
+  if (siteError) throw siteError;
+  if (rsvpError) throw rsvpError;
+
+  const requests = ((rsvps ?? []) as Array<{ custom_answers?: Record<string, unknown> | null; responded_at?: string | null; guests?: { name?: string } }>)
+    .map((row) => ({
+      guestName: row.guests?.name || 'Guest',
+      answer: readPlanningSongAnswer(row.custom_answers),
+      respondedAt: row.responded_at ?? null,
+    }))
+    .filter((row) => row.answer.trim().length > 0);
+
+  return {
+    playlistUrl: ((site?.music_playlist_url as string | null) ?? ''),
+    hasQuestion: hasPlanningSongQuestion((site as { rsvp_custom_questions?: unknown } | null)?.rsvp_custom_questions),
+    requests,
+  };
+}
+
+export async function savePlanningPlaylistUrl(weddingSiteId: string, playlistUrl: string): Promise<void> {
+  const { error } = await supabase
+    .from('wedding_sites')
+    .update({ music_playlist_url: playlistUrl.trim() || null, updated_at: new Date().toISOString() })
+    .eq('id', weddingSiteId);
+  if (error) throw error;
+}
+
+export async function ensurePlanningSongRequestQuestion(weddingSiteId: string): Promise<void> {
+  const { data, error: loadError } = await supabase
+    .from('wedding_sites')
+    .select('rsvp_custom_questions')
+    .eq('id', weddingSiteId)
+    .maybeSingle();
+  if (loadError) throw loadError;
+
+  const questions = Array.isArray((data as { rsvp_custom_questions?: unknown } | null)?.rsvp_custom_questions)
+    ? ([...((data as { rsvp_custom_questions?: unknown[] }).rsvp_custom_questions ?? [])] as Array<Record<string, unknown>>)
+    : [];
+  if (!questions.some((question) => question.id === PLANNING_SONG_QUESTION_ID)) {
+    questions.push({
+      id: PLANNING_SONG_QUESTION_ID,
+      label: 'What song will get you on the dance floor?',
+      type: 'short_text',
+      required: false,
+    });
+  }
+
+  const { error } = await supabase
+    .from('wedding_sites')
+    .update({ rsvp_custom_questions: questions, updated_at: new Date().toISOString() })
+    .eq('id', weddingSiteId);
+  if (error) throw error;
+}
+
 export async function loadTasks(weddingSiteId: string): Promise<PlanningTask[]> {
   const { data, error } = await supabase
     .from('planning_tasks')
     .select(PLANNING_TASK_SELECT)
     .eq('wedding_site_id', weddingSiteId)
     .order('sort_order', { ascending: true })
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: true })
+    .limit(MAX_PLANNING_TASK_ROWS);
   if (error) throw error;
   return (data ?? []) as PlanningTask[];
 }
@@ -167,7 +434,8 @@ export async function loadVendors(weddingSiteId: string): Promise<PlanningVendor
     .from('planning_vendors')
     .select(select)
     .eq('wedding_site_id', weddingSiteId)
-    .order('name', { ascending: true });
+    .order('name', { ascending: true })
+    .limit(MAX_PLANNING_VENDOR_ROWS);
 
   const { data, error } = await query(PLANNING_VENDOR_SELECT);
   if (!error) return ((data ?? []) as unknown) as PlanningVendor[];
@@ -215,7 +483,8 @@ export async function loadBudgetItems(weddingSiteId: string): Promise<PlanningBu
     .select(PLANNING_BUDGET_ITEM_SELECT)
     .eq('wedding_site_id', weddingSiteId)
     .order('category', { ascending: true })
-    .order('item_name', { ascending: true });
+    .order('item_name', { ascending: true })
+    .limit(MAX_PLANNING_BUDGET_ITEM_ROWS);
   if (error) throw error;
   return (data ?? []) as PlanningBudgetItem[];
 }

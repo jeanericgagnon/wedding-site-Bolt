@@ -2579,3 +2579,25 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps name-change workspace hydration bounded without changing current planner, intake, document, reminder, or snapshot behavior. No deploy was run.
+
+### 2026-05-07 1:49 PM PT - No-Deploy Planning Workspace Query Bounds
+
+What changed:
+- Added explicit planning read caps in `src/pages/dashboard/planning/planningService.ts`:
+  - `MAX_PLANNING_ADDRESS_GUEST_ROWS = 5000`
+  - `MAX_PLANNING_SONG_REQUEST_ROWS = 2000`
+  - `MAX_PLANNING_TASK_ROWS = 500`
+  - `MAX_PLANNING_VENDOR_ROWS = 500`
+  - `MAX_PLANNING_BUDGET_ITEM_ROWS = 1000`
+- Address collection, song-request hydration, tasks, vendors, and budget-item reads now cap ordered result sets before hydrating the planning workspace.
+- Extended `src/pages/dashboard/planning/planningService.test.ts` to pin the stable cap exports and the bounded query shape.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/planning/planningService.test.ts`: PASS, 6/6.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps the planning workspace read-side fan-out bounded without changing current planning task, vendor, budget, address-collection, or song-request behavior. No deploy was run.
