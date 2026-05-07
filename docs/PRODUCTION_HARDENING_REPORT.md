@@ -2635,3 +2635,20 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps shared event-RSVP cleanup fan-out bounded without changing current event RSVP restore or guest invitation rollback behavior. No deploy was run.
+
+### 2026-05-07 1:57 PM PT - No-Deploy Message Dashboard List Bounds
+
+What changed:
+- Added `MAX_DASHBOARD_MESSAGES = 1000` and `MAX_MESSAGE_GUESTS = 5000` in `src/pages/dashboard/messages/messageService.ts`.
+- Message dashboard hydration now caps ordered message-list reads and guest-list reads before hydrating the comms center.
+- Extended `src/pages/dashboard/messages/messageService.boundary.test.ts` to pin the stable cap exports and the bounded query shape.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 6/6.
+- `npm run proof:v1:comms-center`: PASS, 3/3 automated checks green.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps message dashboard list hydration bounded without changing current compose, schedule, send, retry, or delivery-history behavior. No deploy was run.

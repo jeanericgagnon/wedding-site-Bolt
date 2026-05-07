@@ -7493,3 +7493,17 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 1:57 PM PT No-Deploy Message Dashboard List Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/messages/messageService.ts` now caps ordered dashboard message-list reads at 1000 rows.
+  - The same service now caps ordered guest-list reads for the comms center at 5000 rows.
+  - `src/pages/dashboard/messages/messageService.boundary.test.ts` now pins the stable cap exports and bounded query shape.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 6/6.
+  - `npm run proof:v1:comms-center`: PASS, 3/3 automated checks green.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

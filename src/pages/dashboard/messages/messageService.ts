@@ -91,6 +91,8 @@ export const MAX_MESSAGE_DELIVERY_MESSAGE_IDS = 50;
 export const MAX_MESSAGE_DELIVERY_ROWS = 1000;
 export const MAX_MESSAGE_ITINERARY_EVENTS = 200;
 export const MAX_MESSAGE_ITINERARY_EVENT_INVITATIONS = 10000;
+export const MAX_DASHBOARD_MESSAGES = 1000;
+export const MAX_MESSAGE_GUESTS = 5000;
 
 export async function createDashboardMessage(payload: MessageInsertPayload): Promise<void> {
   const { error } = await supabase.from('messages').insert(payload);
@@ -130,7 +132,8 @@ export async function loadDashboardMessages(weddingSiteId: string): Promise<Mess
     .from('messages')
     .select(MESSAGE_SELECT)
     .eq('wedding_site_id', weddingSiteId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(MAX_DASHBOARD_MESSAGES);
 
   if (error) throw error;
   return (data ?? []) as unknown as Message[];
@@ -142,7 +145,8 @@ export async function loadMessageGuests(weddingSiteId: string): Promise<Guest[]>
     .select(GUEST_SELECT)
     .eq('wedding_site_id', weddingSiteId)
     .order('last_name', { ascending: true })
-    .order('first_name', { ascending: true });
+    .order('first_name', { ascending: true })
+    .limit(MAX_MESSAGE_GUESTS);
 
   if (error) throw error;
   return (data ?? []) as unknown as Guest[];
