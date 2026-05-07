@@ -7402,8 +7402,9 @@ A slice does **not** count as passed because:
   - `src/pages/dashboard/auditLogService.ts` now uses a shared audit-log cap for guest audit rows, action-audit rows, and the guest-name follow-up query.
   - `src/pages/dashboard/adminLogServices.test.ts` now pins the stable cap exports and bounded query shape.
   - `src/pages/dashboard/AuditLogs.query.test.ts` now checks the current service boundary instead of stale page-owned query text.
+  - `src/lib/actionAudit.ts` now clamps caller-provided app-action audit list limits to `MAX_APP_ACTION_AUDIT_ROWS = 100`, and `src/lib/actionAudit.test.ts` now pins that bounded helper contract.
 - Proof passed:
-  - `npm test -- --run src/pages/dashboard/adminLogServices.test.ts src/pages/dashboard/AuditLogs.query.test.ts`: PASS, 4/4.
+  - `npm test -- --run src/lib/actionAudit.test.ts src/pages/dashboard/adminLogServices.test.ts src/pages/dashboard/AuditLogs.query.test.ts`: PASS, 8/8.
   - `npm run typecheck -- --pretty false`: PASS.
   - `npm run lint -- --quiet`: PASS.
   - `git diff --check`: PASS.

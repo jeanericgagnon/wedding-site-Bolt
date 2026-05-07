@@ -2515,9 +2515,10 @@ What changed:
 - `loadDashboardErrorLogs()` now uses a named cap instead of a literal row limit.
 - `loadDashboardAuditLogs()` now uses the shared audit cap for guest-audit rows and action-audit rows, and the guest-name follow-up query now slices the guest-id fan-out to the same cap.
 - Added `src/pages/dashboard/adminLogServices.test.ts` to pin the stable cap exports and bounded query shape; refreshed `src/pages/dashboard/AuditLogs.query.test.ts` so it checks the current service boundary instead of stale page-owned query text.
+- `src/lib/actionAudit.ts` now clamps caller-provided app-action audit list limits to `MAX_APP_ACTION_AUDIT_ROWS = 100`, and `src/lib/actionAudit.test.ts` now pins that bounded helper contract.
 
 Commands run:
-- `npm test -- --run src/pages/dashboard/adminLogServices.test.ts src/pages/dashboard/AuditLogs.query.test.ts`: PASS, 4/4.
+- `npm test -- --run src/lib/actionAudit.test.ts src/pages/dashboard/adminLogServices.test.ts src/pages/dashboard/AuditLogs.query.test.ts`: PASS, 8/8.
 - `npm run typecheck -- --pretty false`: PASS.
 - `npm run lint -- --quiet`: PASS.
 - `git diff --check`: PASS.
