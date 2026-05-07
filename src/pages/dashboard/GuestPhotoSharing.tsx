@@ -14,7 +14,6 @@ import { PhotoBucketCards } from '../../components/dashboard/PhotoBucketCards';
 import { mediaRepository } from '../../builder/services/mediaRepository';
 import { PhotoBucketKind } from '../../lib/aiPhotoBuckets';
 import { buildPhotoPlacementPlan } from '../../lib/aiPhotoPlacement';
-import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
 import { buildQuickStartOverviewPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
 import { parseDatetimeLocalToIso, toDatetimeLocalOrEmpty } from './guestPhotoDateTime';
 import { formatGuestPhotoDate, formatGuestPhotoDateTime, getGuestPhotoSortTime, toGuestPhotoCsvTimestamp } from './guestPhotoUploadTime';
@@ -27,6 +26,7 @@ import { logAppAction } from '../../lib/actionAudit';
 import { useAuth } from '../../contexts/AuthContext';
 import { demoEvents, demoWeddingSite } from '../../lib/demoData';
 import { getSafePublicWebUrl } from '../../sections/publicLinks';
+import { persistGuestPhotoBuckets } from './guestPhotoSharingService';
 import { buildGuestHubActions, summarizeGuestHubActions } from '../../lib/guestHubActions';
 import { buildMemoryFlowReadiness } from '../../lib/memoryFlowReadiness';
 import { buildGuestHubQrAssets, renderGuestHubQrPrintHtml } from '../../lib/guestHubQrAssets';
@@ -67,6 +67,9 @@ import {
   type SlideshowOrderMode,
   type SlideshowTheme,
 } from './guestPhotoSharingUtils';
+
+export const MAX_GUEST_PHOTO_EVENTS = 200;
+export const MAX_GUEST_PHOTO_ALBUMS = 500;
 
 export const GuestPhotoSharing: React.FC = () => {
   const location = useLocation();
@@ -232,27 +235,7 @@ export const GuestPhotoSharing: React.FC = () => {
 
   const persistPhotoBuckets = async (nextBuckets: ReturnType<typeof createEmptyPhotoBuckets>) => {
     if (!siteId) return;
-    const { data, error } = await supabase
-      .from('wedding_sites')
-      .select('wedding_data, site_json')
-      .eq('id', siteId)
-      .maybeSingle();
-    if (error) throw error;
-    const weddingData = (data?.wedding_data as Record<string, unknown> | null) ?? {};
-    const nextWeddingData = {
-      ...weddingData,
-      meta: {
-        ...(((weddingData.meta as Record<string, unknown> | undefined) ?? {})),
-        photoBuckets: nextBuckets,
-      },
-    };
-    const aiDraft = ((((weddingData.meta as Record<string, unknown> | undefined) ?? {}).aiDraft as import('../../lib/aiDraftGenerator').DraftGenerationResult | undefined) ?? null);
-    const aiContent = ((((weddingData.meta as Record<string, unknown> | undefined) ?? {}).aiContent as import('../../lib/aiCanonicalContent').AiCanonicalSectionContent | undefined) ?? null);
-    const nextSiteJson = aiDraft
-      ? mergeGeneratedDraftIntoBuilderProject((data?.site_json as Record<string, unknown> | null) ?? null, aiDraft, aiContent, nextBuckets)
-      : data?.site_json;
-    const { error: updateError } = await supabase.from('wedding_sites').update({ wedding_data: nextWeddingData, site_json: nextSiteJson }).eq('id', siteId);
-    if (updateError) throw updateError;
+    await persistGuestPhotoBuckets(siteId, nextBuckets);
   };
 
   const handleBucketUploadClick = (bucket: PhotoBucketKind) => {
@@ -373,12 +356,14 @@ export const GuestPhotoSharing: React.FC = () => {
           .select('id,event_name,event_date,start_time,end_time')
           .eq('wedding_site_id', site.id)
           .order('event_date', { ascending: true })
-          .order('start_time', { ascending: true }),
+          .order('start_time', { ascending: true })
+          .limit(MAX_GUEST_PHOTO_EVENTS),
         supabase
           .from('photo_albums')
           .select('id,name,slug,parent_album_id,hierarchy_label,drive_folder_url,is_active,created_at,itinerary_event_id,opens_at,closes_at')
           .eq('wedding_site_id', site.id)
-          .order('created_at', { ascending: false }),
+          .order('created_at', { ascending: false })
+          .limit(MAX_GUEST_PHOTO_ALBUMS),
         supabase
           .from('photo_uploads')
           .select('id,photo_album_id,original_filename,guest_name,guest_email,note,mime_type,size_bytes,drive_web_view_link,is_hidden,is_flagged,recap_hidden,recap_featured,recap_story,uploaded_at')

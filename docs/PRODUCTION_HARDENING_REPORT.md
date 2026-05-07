@@ -2798,3 +2798,21 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps guest dashboard hydration bounded without changing current guest CRUD, RSVP conflict review, or itinerary invite management behavior. No deploy was run.
+
+### 2026-05-07 2:26 PM PT - No-Deploy Guest Photo Dashboard Bounds
+
+What changed:
+- Added `MAX_GUEST_PHOTO_EVENTS = 200` and `MAX_GUEST_PHOTO_ALBUMS = 500` in `src/pages/dashboard/GuestPhotoSharing.tsx`.
+- Guest photo dashboard hydration now caps itinerary event rows before memory-flow/event-window planning.
+- The same dashboard now caps photo album rows before upload, guestbook, prospect, analysis, and recap fan-out consume the album set.
+- Added `src/pages/dashboard/guestPhotoQueryBounds.test.ts` to pin the bounded event and album query shape.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts`: PASS, 14/14.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps guest photo dashboard hydration bounded without changing current album creation, upload review, guestbook moderation, or recap behavior. No deploy was run.

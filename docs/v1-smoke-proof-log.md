@@ -7618,3 +7618,17 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 2:26 PM PT No-Deploy Guest Photo Dashboard Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now caps guest photo dashboard itinerary event reads at 200 rows before memory-flow/event-window planning.
+  - The same dashboard now caps photo album hydration at 500 rows before upload, guestbook, prospect, analysis, and recap fan-out consume the album set.
+  - `src/pages/dashboard/guestPhotoQueryBounds.test.ts` now pins the bounded guest photo event and album query shape.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts`: PASS, 14/14.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
