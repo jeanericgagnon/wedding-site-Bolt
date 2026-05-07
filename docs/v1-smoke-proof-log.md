@@ -7574,3 +7574,17 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 2:15 PM PT No-Deploy Overview Guest Stats Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Overview.tsx` now uses exact count queries for total, confirmed, declined, pending, and contactable guest stats instead of loading the full guest list into the overview.
+  - The same overview path now uses an explicit responded-guest projection and a 5-row cap for recent RSVP hydration.
+  - `src/pages/dashboard/overviewQueryBounds.test.ts` now pins the exact-count query shape and bounded recent-RSVP read.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/overviewQueryBounds.test.ts src/pages/dashboard/overviewService.test.ts src/pages/dashboard/overviewUtils.test.ts src/pages/dashboard/overviewDate.test.ts`: PASS, 14/14.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

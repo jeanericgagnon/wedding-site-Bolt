@@ -2742,3 +2742,21 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps vendor inquiry history hydration bounded without changing current vendor inquiry submission or inbox behavior. No deploy was run.
+
+### 2026-05-07 2:15 PM PT - No-Deploy Overview Guest Stats Bounds
+
+What changed:
+- Added `MAX_OVERVIEW_RECENT_RSVPS = 5` and `OVERVIEW_GUEST_SELECT` in `src/pages/dashboard/Overview.tsx`.
+- Dashboard overview guest stats now use exact count queries for total, confirmed, declined, pending, and contactable guests instead of loading the full guest list into memory.
+- Recent RSVP hydration now uses an explicit responded-guest projection and a 5-row cap before populating the overview activity cards.
+- Added `src/pages/dashboard/overviewQueryBounds.test.ts` to pin the exact-count query shape and bounded recent-RSVP read.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/overviewQueryBounds.test.ts src/pages/dashboard/overviewService.test.ts src/pages/dashboard/overviewUtils.test.ts src/pages/dashboard/overviewDate.test.ts`: PASS, 14/14.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This keeps overview guest stats accurate while removing the worst full-list read from the dashboard overview path. No deploy was run.

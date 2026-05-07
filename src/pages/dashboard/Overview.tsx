@@ -43,8 +43,11 @@ import { buildInvisibleIntelligenceSuggestions, type IntelligenceSuggestion } fr
 import { buildCalmDigestDeliveryPreview, buildCalmOwnerDigest, type CalmDigestPriority } from '../../lib/calmOwnerDigest';
 import { buildWebsiteInviteAnalyticsFunnelReview, buildWebsiteInviteAnalyticsReadiness } from '../../lib/websiteInviteAnalyticsReadiness';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../lib/plannerAccess';
+import { hideInteractiveSuggestion, persistOverviewIntelligenceDismissals } from './overviewService';
 
 const INTELLIGENCE_DISMISSALS_STORAGE_KEY = 'dayof_intelligence_dismissed_v1';
+export const MAX_OVERVIEW_RECENT_RSVPS = 5;
+const OVERVIEW_GUEST_SELECT = 'id, rsvp_status, rsvp_received_at, first_name, last_name, name';
 
 const DEFAULT_NAME_CHANGE_INSIGHTS: NameChangeOverviewInsights = {
   coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
@@ -125,6 +128,15 @@ interface InteractiveVoteSummary {
   latestAt: string;
   options: Array<{ optionId: string; count: number; percentage: number }>;
 }
+
+type OverviewRecentRsvpRow = {
+  id: string;
+  rsvp_status: RecentRsvp['status'];
+  rsvp_received_at: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  name?: string | null;
+};
 
 function summarizeInteractiveVotes(rows: InteractiveVoteRow[]): InteractiveVoteSummary[] {
   const grouped = rows.reduce<Record<string, { widgetKind: 'poll' | 'quiz'; widgetId: string; latestAt: string; counts: Record<string, number> }>>((acc, row) => {
@@ -506,13 +518,54 @@ export const DashboardOverview: React.FC = () => {
         }
       }
 
-      const { data: guests, error: guestsErr } = await supabase
-        .from('guests')
-        .select('id, rsvp_status, rsvp_received_at, first_name, last_name, name, email, phone')
-        .eq('wedding_site_id', site?.id ?? '')
-        .order('rsvp_received_at', { ascending: false });
+      const [
+        totalGuestsResult,
+        confirmedGuestsResult,
+        declinedGuestsResult,
+        pendingGuestsResult,
+        contactableGuestsResult,
+        recentRsvpsResult,
+      ] = await Promise.all([
+        supabase
+          .from('guests')
+          .select('id', { count: 'exact', head: true })
+          .eq('wedding_site_id', site?.id ?? ''),
+        supabase
+          .from('guests')
+          .select('id', { count: 'exact', head: true })
+          .eq('wedding_site_id', site?.id ?? '')
+          .in('rsvp_status', ['confirmed', 'attending', 'accepted']),
+        supabase
+          .from('guests')
+          .select('id', { count: 'exact', head: true })
+          .eq('wedding_site_id', site?.id ?? '')
+          .in('rsvp_status', ['declined', 'not_attending']),
+        supabase
+          .from('guests')
+          .select('id', { count: 'exact', head: true })
+          .eq('wedding_site_id', site?.id ?? '')
+          .or('rsvp_status.is.null,rsvp_status.eq.pending'),
+        supabase
+          .from('guests')
+          .select('id', { count: 'exact', head: true })
+          .eq('wedding_site_id', site?.id ?? '')
+          .or('email.not.is.null,phone.not.is.null'),
+        supabase
+          .from('guests')
+          .select(OVERVIEW_GUEST_SELECT)
+          .eq('wedding_site_id', site?.id ?? '')
+          .in('rsvp_status', ['confirmed', 'attending', 'accepted', 'declined', 'not_attending'])
+          .not('rsvp_received_at', 'is', null)
+          .order('rsvp_received_at', { ascending: false })
+          .limit(MAX_OVERVIEW_RECENT_RSVPS),
+      ]);
 
-      if (guestsErr) throw guestsErr;
+      if (totalGuestsResult.error) throw totalGuestsResult.error;
+      if (confirmedGuestsResult.error) throw confirmedGuestsResult.error;
+      if (declinedGuestsResult.error) throw declinedGuestsResult.error;
+      if (pendingGuestsResult.error) throw pendingGuestsResult.error;
+      if (contactableGuestsResult.error) throw contactableGuestsResult.error;
+      if (recentRsvpsResult.error) throw recentRsvpsResult.error;
 
       const { count: registryItemCount } = await supabase
         .from('registry_items')
@@ -541,15 +594,7 @@ export const DashboardOverview: React.FC = () => {
         .eq('wedding_site_id', site?.id ?? '')
         .eq('is_enabled', true);
 
-      const allGuests = guests ?? [];
-      const confirmed = allGuests.filter((g) => isAttendingRsvpStatus(g.rsvp_status));
-      const declined = allGuests.filter((g) => isDeclinedRsvpStatus(g.rsvp_status));
-      const pending = allGuests.filter((g) => isPendingRsvpStatus(g.rsvp_status));
-      const contactableGuestCount = allGuests.filter((g) => Boolean(g.email || g.phone)).length;
-
-      const recentRsvps: RecentRsvp[] = allGuests
-        .filter((g) => hasRespondedRsvpStatus(g.rsvp_status) && g.rsvp_received_at)
-        .slice(0, 5)
+      const recentRsvps: RecentRsvp[] = ((recentRsvpsResult.data ?? []) as OverviewRecentRsvpRow[])
         .map((g) => ({
           id: g.id,
           guestName: g.name || `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() || 'Guest',
@@ -594,10 +639,10 @@ export const DashboardOverview: React.FC = () => {
         siteId: site?.id ?? null,
         publishedVersion: typeof siteJson?.publishedVersion === 'number' ? (siteJson.publishedVersion as number) : null,
         lastPublishedAt: typeof siteJson?.lastPublishedAt === 'string' ? (siteJson.lastPublishedAt as string) : null,
-        totalGuests: allGuests.length,
-        confirmedGuests: confirmed.length,
-        declinedGuests: declined.length,
-        pendingGuests: pending.length,
+        totalGuests: totalGuestsResult.count ?? 0,
+        confirmedGuests: confirmedGuestsResult.count ?? 0,
+        declinedGuests: declinedGuestsResult.count ?? 0,
+        pendingGuests: pendingGuestsResult.count ?? 0,
         daysUntilWedding: calcOverviewDaysUntil(weddingDate),
         weddingDate,
         siteSlug: resolvePublicSiteSlugFromRow((site as unknown as Record<string, unknown> | null) ?? null),
@@ -615,7 +660,7 @@ export const DashboardOverview: React.FC = () => {
         activePhotoAlbumCount: activePhotoAlbumCount ?? 0,
         vaultCount: vaultCount ?? 0,
         enabledVaultCount: enabledVaultCount ?? 0,
-        contactableGuestCount,
+        contactableGuestCount: contactableGuestsResult.count ?? 0,
         recentRsvps,
         activeSiteRole: activeSite?.role ?? 'owner',
         activeSitePermissions: activeSite?.permissions ?? null,
@@ -684,34 +729,13 @@ export const DashboardOverview: React.FC = () => {
     } catch {}
     if (!stats?.siteId || isDemoMode) return;
 
-    void (async () => {
-      const { data, error } = await supabase
-        .from('wedding_sites')
-        .select('wedding_data')
-        .eq('id', stats.siteId)
-        .maybeSingle();
-      if (error) return;
-
-      const weddingData = (data?.wedding_data as Record<string, unknown> | null) ?? {};
-      const meta = (weddingData.meta as Record<string, unknown> | undefined) ?? {};
-      await supabase
-        .from('wedding_sites')
-        .update({
-          wedding_data: {
-            ...weddingData,
-            meta: {
-              ...meta,
-              intelligenceDismissals: next,
-            },
-          },
-        })
-        .eq('id', stats.siteId);
-    })();
+    void persistOverviewIntelligenceDismissals(stats.siteId, next).catch(() => {});
   };
 
   const hideSuggestion = async (id: string) => {
-    const { error } = await supabase.from('interactive_suggestions').update({ is_hidden: true }).eq('id', id);
-    if (error) {
+    try {
+      await hideInteractiveSuggestion(id);
+    } catch {
       toast('Couldn’t hide that suggestion right now.', 'error');
       return;
     }
