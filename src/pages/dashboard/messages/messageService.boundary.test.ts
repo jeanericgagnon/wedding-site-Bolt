@@ -8,6 +8,7 @@ import {
   MAX_MESSAGE_GUESTS,
   MAX_MESSAGE_ITINERARY_EVENTS,
   MAX_MESSAGE_ITINERARY_EVENT_INVITATIONS,
+  MAX_SMS_CREDIT_TRANSACTIONS,
 } from './messageService';
 
 describe('message service query bounds', () => {
@@ -24,6 +25,7 @@ describe('message service query bounds', () => {
   it('exports stable dashboard list query caps', () => {
     expect(MAX_DASHBOARD_MESSAGES).toBe(1000);
     expect(MAX_MESSAGE_GUESTS).toBe(5000);
+    expect(MAX_SMS_CREDIT_TRANSACTIONS).toBe(20);
   });
 
   it('keeps delivery history reads bounded for dashboard usage', () => {
@@ -46,5 +48,6 @@ describe('message service query bounds', () => {
 
     expect(source).toContain('.limit(MAX_DASHBOARD_MESSAGES);');
     expect(source).toContain('.limit(MAX_MESSAGE_GUESTS);');
+    expect(source).toContain('.limit(MAX_SMS_CREDIT_TRANSACTIONS);');
   });
 });

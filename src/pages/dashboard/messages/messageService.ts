@@ -93,6 +93,7 @@ export const MAX_MESSAGE_ITINERARY_EVENTS = 200;
 export const MAX_MESSAGE_ITINERARY_EVENT_INVITATIONS = 10000;
 export const MAX_DASHBOARD_MESSAGES = 1000;
 export const MAX_MESSAGE_GUESTS = 5000;
+export const MAX_SMS_CREDIT_TRANSACTIONS = 20;
 
 export async function createDashboardMessage(payload: MessageInsertPayload): Promise<void> {
   const { error } = await supabase.from('messages').insert(payload);
@@ -231,7 +232,7 @@ export async function loadSmsCreditPreview(weddingSiteId: string, cutoffIso: str
     .select('id, credits_delta, reason, created_at, expires_at, remaining_credits')
     .eq('wedding_site_id', weddingSiteId)
     .order('created_at', { ascending: false })
-    .limit(20);
+    .limit(MAX_SMS_CREDIT_TRANSACTIONS);
 
   if (error) throw error;
 

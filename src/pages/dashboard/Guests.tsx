@@ -136,6 +136,9 @@ export const MAX_GUEST_ITINERARY_FILTER_EVENTS = 200;
 export const MAX_GUEST_ITINERARY_FILTER_INVITATIONS = 10000;
 export const MAX_GUEST_DRAWER_EVENTS = 200;
 export const MAX_GUEST_DRAWER_INVITATIONS = 10000;
+export const MAX_GUEST_RSVP_CONFLICT_ROWS = 20;
+export const MAX_GUEST_RSVP_CONFLICT_HISTORY_ROWS = 500;
+export const MAX_GUEST_AUDIT_ROWS = 20;
 
 export const DashboardGuests: React.FC = () => {
   const navigate = useNavigate();
@@ -463,14 +466,14 @@ export const DashboardGuests: React.FC = () => {
             .eq('wedding_site_id', weddingSiteId)
             .eq('resolved', false)
             .order('created_at', { ascending: false })
-            .limit(20),
+            .limit(MAX_GUEST_RSVP_CONFLICT_ROWS),
           supabase
             .from('rsvp_conflicts')
             .select('id, guest_id, conflict_code, message, severity, created_at, resolved, resolved_at')
             .eq('wedding_site_id', weddingSiteId)
             .gte('created_at', windowStartIso)
             .order('created_at', { ascending: false })
-            .limit(500),
+            .limit(MAX_GUEST_RSVP_CONFLICT_HISTORY_ROWS),
         ]);
 
         if (conflictsError) throw conflictsError;
@@ -609,7 +612,7 @@ export const DashboardGuests: React.FC = () => {
           .select('id, guest_id, action, changed_at, changed_by, old_data, new_data')
           .eq('wedding_site_id', weddingSiteId)
           .order('changed_at', { ascending: false })
-          .limit(20);
+          .limit(MAX_GUEST_AUDIT_ROWS);
 
         if (error) throw error;
         if (!cancelled) setRsvpAuditFeed((data ?? []) as GuestAuditEntry[]);

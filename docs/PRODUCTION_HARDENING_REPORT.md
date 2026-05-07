@@ -2856,3 +2856,27 @@ Commands run:
 
 Status:
 - PARTIAL. This keeps live RSVP activity and coordinator/day-of dashboard hydration bounded without changing RSVP workflows, guest check-in, or coordinator messaging behavior. No deploy was run.
+
+### 2026-05-07 2:36 PM PT - No-Deploy Guest Ops and Message Preview Bounds
+
+What changed:
+- Added `MAX_SMS_CREDIT_TRANSACTIONS = 20` in `src/pages/dashboard/messages/messageService.ts` so SMS credit preview history uses a named bounded read instead of an inline limit.
+- Added explicit guest ops caps in `src/pages/dashboard/Guests.tsx`:
+  - `MAX_GUEST_RSVP_CONFLICT_ROWS = 20`
+  - `MAX_GUEST_RSVP_CONFLICT_HISTORY_ROWS = 500`
+  - `MAX_GUEST_AUDIT_ROWS = 20`
+- Extended `src/pages/dashboard/messages/messageService.boundary.test.ts` and `src/pages/dashboard/guestQueryBounds.test.ts` to pin those bounded query shapes.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`
+- `npm run proof:v1:comms-center`
+- `npm run typecheck -- --pretty false`
+- `npm run lint -- --quiet`
+- `git diff --check`
+- `npm run build`
+
+Notes:
+- One direct `npm run build` attempt hit a transient local `dist/` cleanup `scandir` error on `dist/photos/engagement 4`. The serial build embedded in `proof:v1:comms-center` passed immediately afterward, so launch truth did not change and this was treated as a local cleanup race rather than a product regression.
+
+Status:
+- PARTIAL. This keeps guest ops conflict/audit hydration and message credit preview reads bounded without changing guest workflows or messaging behavior. No deploy was run.

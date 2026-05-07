@@ -7664,3 +7664,18 @@ A slice does **not** count as passed because:
   - `git diff --check`
   - `npm run build`
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 2:36 PM PT No-Deploy Guest Ops and Message Preview Bounds
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/messages/messageService.ts` now uses `MAX_SMS_CREDIT_TRANSACTIONS = 20` for SMS credit preview history.
+  - `src/pages/dashboard/Guests.tsx` now exports and uses `MAX_GUEST_RSVP_CONFLICT_ROWS = 20`, `MAX_GUEST_RSVP_CONFLICT_HISTORY_ROWS = 500`, and `MAX_GUEST_AUDIT_ROWS = 20` for guest ops conflict and audit hydration.
+  - `src/pages/dashboard/messages/messageService.boundary.test.ts` and `src/pages/dashboard/guestQueryBounds.test.ts` now pin those bounded query shapes.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`: PASS, 32/32.
+  - `npm run proof:v1:comms-center`: PASS, 3/3.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: launch-equivalent serial build passed inside `proof:v1:comms-center`; one separate direct build attempt hit a transient local `dist/` cleanup `scandir` error and was treated as a local cleanup race, not a product regression.
+- Launch status did not change. This is local-only hardening and no deploy was run.
