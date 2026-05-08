@@ -7,6 +7,7 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Messages.tsx'), 'utf8');
     const serviceSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/messageService.ts'), 'utf8');
     const deliveryHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDeliveryActions.ts'), 'utf8');
+    const composeHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageComposeActions.ts'), 'utf8');
 
     expect(serviceSource).toContain('const MESSAGE_SELECT = [');
     expect(serviceSource).toContain('.select(MESSAGE_SELECT)');
@@ -19,14 +20,17 @@ describe('dashboard data boundary guards', () => {
     expect(deliveryHookSource).toContain('const result = await triggerScheduledMessageDispatch(10)');
     expect(source).toContain('<MessageDashboardRouteView');
     expect(source).toContain('useMessageDeliveryActions({');
+    expect(source).toContain('useMessageComposeActions({');
     expect(source).toContain('createDashboardMessage(payload)');
-    expect(source).toContain('triggerDashboardBulkSend(inserted.id)');
     expect(source).toContain('loadDashboardMessages(weddingSite.id)');
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).not.toContain("supabase.from('messages').insert(payload)");
     expect(source).not.toContain('supabase.auth.getSession()');
     expect(source).not.toContain('fetch(BULK_SEND_URL, {');
     expect(source).not.toContain('const result = await triggerScheduledMessageDispatch(10)');
+    expect(source).not.toContain('triggerDashboardBulkSend(inserted.id)');
+    expect(source).not.toContain('insertDashboardMessageMinimal({');
+    expect(source).not.toContain('updateDashboardMessage(editingMessageId, {');
     expect(source).not.toContain(".from('messages')\n        .select('*')");
     expect(source).not.toContain('.from("messages")\n        .select("*")');
     expect(source).not.toContain('<MessageDashboardView');
@@ -45,6 +49,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('MessageComposerSchedulePanel');
     expect(source).not.toContain('MessageComposerRecipientPreviewPanel');
     expect(source).not.toContain('MessageComposerPreflightPanel');
+    expect(composeHookSource).toContain('insertDashboardMessageMinimal({');
+    expect(composeHookSource).toContain('await updateDashboardMessage(editingMessageId, {');
+    expect(composeHookSource).toContain('const result = await triggerDashboardBulkSend(inserted.id)');
+    expect(composeHookSource).not.toContain("from '../../lib/supabase'");
   });
 
   it('keeps legacy public site repository reads out of private gate internals', () => {

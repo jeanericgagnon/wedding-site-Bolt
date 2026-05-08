@@ -7420,6 +7420,22 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-08 01:28 AM PT No-Deploy Message Compose Action Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Messages.tsx` now routes draft saves, scheduled sends, immediate sends, demo delivery-state updates, and bulk-send follow-through through `src/pages/dashboard/messages/useMessageComposeActions.ts`.
+  - That hook now owns the repeated recipient validation, message insert/update flow, demo/live send orchestration, send-now delivery transport, and customer-safe compose toast handling while the page keeps campaign presets, history, filters, and dashboard composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useMessageComposeActions({ ... })` plus its `insertDashboardMessageMinimal(...)`, `updateDashboardMessage(...)`, and `triggerDashboardBulkSend(...)` contract.
+  - `src/pages/dashboard/Messages.tsx` dropped from 1333 lines to 1171 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 12:05 AM PT No-Deploy RSVP Guest-Lookup Transport Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
