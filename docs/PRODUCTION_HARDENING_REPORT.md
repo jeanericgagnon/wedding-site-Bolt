@@ -19,6 +19,19 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 6:56 AM PT - No-Deploy Registry Dashboard Route-Content Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Registry.tsx` no longer hand-renders the full owner-facing Registry dashboard shell inline.
+  - Added `src/pages/dashboard/registry/RegistryDashboardRouteContent.tsx` so the route-content component now owns the Registry hero, review/details surfaces, guest-ready and thank-you readiness cards, search/filter toolbar, duplicate/image/review utility surfaces, and the registry item grid/empty states while the page keeps orchestration, data hooks, action hooks, bulk-import modal, item form modal, and toast lane.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<RegistryDashboardRouteContent`, checks that the new file owns the hero shell, and rejects regaining the old inline `DashboardPageHero` slab in `Registry.tsx`.
+  - `src/pages/dashboard/Registry.tsx` dropped from 782 lines to 375 lines in this batch, while `src/pages/dashboard/registry/RegistryDashboardRouteContent.tsx` came in at 490 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ### 2026-05-08 6:45 AM PT - No-Deploy Seating Dashboard Route-Content Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:

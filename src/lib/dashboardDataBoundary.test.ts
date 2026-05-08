@@ -538,13 +538,17 @@ describe('dashboard data boundary guards', () => {
   it('routes registry dashboard bootstrap through a dedicated data hook', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Registry.tsx'), 'utf8');
     const hookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/registry/useRegistryDashboardData.ts'), 'utf8');
+    const routeContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/registry/RegistryDashboardRouteContent.tsx'), 'utf8');
 
     expect(source).toContain('useRegistryDashboardData({');
+    expect(source).toContain('<RegistryDashboardRouteContent');
     expect(source).not.toContain('const loadItems = useCallback(async (siteId: string) => {');
     expect(source).not.toContain('const site = await loadRegistryDashboardSite(user.id);');
     expect(source).not.toContain('setWeddingSiteId(demoWeddingSite.id);');
     expect(source).not.toContain('setItems(demoRegistryItems.map(toDemoRegistryItem));');
     expect(source).not.toContain('const loadedCap = site.registry_monthly_refresh_cap ?? 100;');
+    expect(source).not.toContain('<DashboardPageHero');
+    expect(source).not.toContain('Keep gifts helpful, optional, and easy for guests.');
     expect(hookSource).toContain('const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);');
     expect(hookSource).toContain('const loadItems = useCallback(async (siteId: string) => {');
     expect(hookSource).toContain('const site = await loadRegistryDashboardSite(userId);');
@@ -552,6 +556,9 @@ describe('dashboard data boundary guards', () => {
     expect(hookSource).toContain('setItems(demoRegistryItems.map(toDemoRegistryItem));');
     expect(hookSource).toContain('const loadedCap = site.registry_monthly_refresh_cap ?? 100;');
     expect(hookSource).not.toContain("from '../../../lib/supabase'");
+    expect(routeContent).toContain('<DashboardPageHero');
+    expect(routeContent).toContain('Keep gifts helpful, optional, and easy for guests.');
+    expect(routeContent).not.toContain("from '../../../lib/supabase'");
   });
 
   it('routes registry dashboard derived state through a dedicated helper', () => {

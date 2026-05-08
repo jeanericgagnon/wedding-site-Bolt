@@ -1,5 +1,19 @@
 # Production Hardening Backlog
 
+## 2026-05-08 6:56 AM PT - No-Deploy Registry Dashboard Route-Content Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Registry.tsx` now routes the owner-facing registry shell through `src/pages/dashboard/registry/RegistryDashboardRouteContent.tsx` instead of hand-rendering the full dashboard body inline.
+  - `RegistryDashboardRouteContent.tsx` now owns the Registry hero, review/details surfaces, guest-ready and thank-you readiness cards, search/filter toolbar, duplicate/image/review utility surfaces, and the registry item grid/empty states.
+  - `Registry.tsx` now stays focused on route orchestration: dashboard data hook, derived-state helper, action hooks, bulk-import modal, item form modal, and toast lane.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<RegistryDashboardRouteContent`, checks that the new file owns the hero shell, and rejects regaining the old inline `DashboardPageHero` slab in `Registry.tsx`.
+- Acceptance/proof target:
+  - Focused registry boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 6:45 AM PT - No-Deploy Seating Dashboard Route-Content Extraction
 
 - Status: `PARTIAL`
