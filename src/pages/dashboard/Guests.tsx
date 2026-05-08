@@ -122,6 +122,8 @@ import {
   insertEventInvitations,
   insertImportedGuests,
   loadGuestDashboardPublicSlug,
+  resolveGuestDashboardConflict,
+  resolveGuestDashboardConflicts,
   loadGuestDashboardItineraryFilters,
   loadGuestDashboardRsvpAuditFeed,
   loadGuestDashboardSiteSlug,
@@ -574,13 +576,10 @@ export const DashboardGuests: React.FC = () => {
         setRsvpConflictHistory((prev) => prev.map((c) => c.id === conflictId ? { ...c, resolved: true, resolved_at: new Date().toISOString() } : c));
         return;
       }
-      const { error } = await supabase
-        .from('rsvp_conflicts')
-        .update({ resolved: true, resolved_at: new Date().toISOString() })
-        .eq('id', conflictId);
-      if (error) throw error;
+      const resolvedAt = new Date().toISOString();
+      await resolveGuestDashboardConflict(conflictId, resolvedAt);
       setRsvpConflicts((prev) => prev.filter((c) => c.id !== conflictId));
-      setRsvpConflictHistory((prev) => prev.map((c) => c.id === conflictId ? { ...c, resolved: true, resolved_at: new Date().toISOString() } : c));
+      setRsvpConflictHistory((prev) => prev.map((c) => c.id === conflictId ? { ...c, resolved: true, resolved_at: resolvedAt } : c));
       toast('RSVP item marked done', 'success');
     } catch {
       toast('Couldn’t mark that RSVP item done.', 'error');
@@ -595,14 +594,14 @@ export const DashboardGuests: React.FC = () => {
     try {
       const ids = visibleRsvpConflicts.map((c) => c.id);
       if (!isDemoMode) {
-        const { error } = await supabase
-          .from('rsvp_conflicts')
-          .update({ resolved: true, resolved_at: new Date().toISOString() })
-          .in('id', ids);
-        if (error) throw error;
+        const resolvedAt = new Date().toISOString();
+        await resolveGuestDashboardConflicts(ids, resolvedAt);
+        setRsvpConflictHistory((prev) => prev.map((c) => ids.includes(c.id) ? { ...c, resolved: true, resolved_at: resolvedAt } : c));
+      } else {
+        const resolvedAt = new Date().toISOString();
+        setRsvpConflictHistory((prev) => prev.map((c) => ids.includes(c.id) ? { ...c, resolved: true, resolved_at: resolvedAt } : c));
       }
       setRsvpConflicts((prev) => prev.filter((c) => !ids.includes(c.id)));
-      setRsvpConflictHistory((prev) => prev.map((c) => ids.includes(c.id) ? { ...c, resolved: true, resolved_at: new Date().toISOString() } : c));
       toast(`${ids.length} RSVP item${ids.length === 1 ? '' : 's'} marked done`, 'success');
     } catch {
       toast('Couldn’t mark those RSVP items done.', 'error');
@@ -1829,7 +1828,7 @@ const handleSendBulkInvitations = async () => {
     const dupMsg = result.duplicateNames.length > 0 ? `, ${result.duplicateNames.length} possible repeat${result.duplicateNames.length === 1 ? '' : 's'}` : '';
     const householdMsg = result.householdWarnings.length > 0 ? `, ${result.householdWarnings.length} household match${result.householdWarnings.length === 1 ? '' : 'es'} need review` : '';
     toast(`${parsed.length} guest${parsed.length !== 1 ? 's' : ''} ready to import${skippedMsg}${unknownMsg}${dupMsg}${householdMsg}.`, 'success');
-  }, [isDemoMode, itineraryEvents, supabase, user?.id, weddingSiteId, toast]);
+  }, [isDemoMode, itineraryEvents, user?.id, weddingSiteId, toast]);
 
   const importCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (isGuestsReadOnly) {

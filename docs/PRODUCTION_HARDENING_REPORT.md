@@ -19,6 +19,23 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 5:45 PM PT - No-Deploy Guest Conflict Service Boundary Cleanup
+
+What changed:
+- `src/pages/dashboard/Guests.tsx` no longer owns the live `rsvp_conflicts` resolve/resolve-all writes inline.
+- `src/pages/dashboard/guests/guestService.ts` now owns `resolveGuestDashboardConflict(...)` and `resolveGuestDashboardConflicts(...)`.
+- Expanded `src/pages/dashboard/guests/guestService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the guest dashboard boundary now pins the moved RSVP-conflict writes.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 2 files and 46 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This removes the last small direct `rsvp_conflicts` write cluster from `Guests.tsx` while preserving guest conflict review behavior. No deploy was run.
+
 ### 2026-05-07 4:06 PM PT - No-Deploy Guest Photo Function Service Extraction
 
 What changed:

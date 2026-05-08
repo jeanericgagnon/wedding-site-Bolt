@@ -7273,6 +7273,20 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 5:45 PM PT No-Deploy Guest conflict service boundary cleanup
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` no longer owns the live `rsvp_conflicts` resolve/resolve-all writes inline.
+  - `src/pages/dashboard/guests/guestService.ts` now owns `resolveGuestDashboardConflict(...)` and `resolveGuestDashboardConflicts(...)`.
+  - `src/pages/dashboard/guests/guestService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` now pin that moved conflict-write seam.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 46/46.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 11:41 AM PT No-Deploy Public RSVP Submit Contract Tightening
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

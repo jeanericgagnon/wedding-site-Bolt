@@ -41,6 +41,8 @@ import {
   saveAssistedGuestRsvp,
   refreshGuestDashboardSession,
   resolveGuestDashboardSiteId,
+  resolveGuestDashboardConflict,
+  resolveGuestDashboardConflicts,
   toEventInvitationRows,
   updateGuestCheckInForSite,
   updateGuestHouseholdForSite,
@@ -133,6 +135,8 @@ describe('guestService', () => {
     expect(page).toContain('refreshGuestDashboardSession()');
     expect(page).toContain('loadGuestDashboardSiteSettings(user.id)');
     expect(page).toContain('loadGuestDashboardSnapshot(weddingSiteId)');
+    expect(page).toContain('resolveGuestDashboardConflict(conflictId, resolvedAt)');
+    expect(page).toContain('resolveGuestDashboardConflicts(ids, resolvedAt)');
     expect(page).toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
     expect(page).toContain('loadGuestDashboardRsvpAuditFeed(weddingSiteId)');
     expect(page).toContain('loadGuestItineraryDrawerSnapshot(weddingSiteId, guest.id)');
@@ -177,12 +181,15 @@ describe('guestService', () => {
     expect(page).not.toContain(".from('guests')\n            .update({ reminder_last_sent_at: new Date().toISOString() })");
     expect(page).not.toContain(".from('guests')\n        .update({ household_id: householdId })");
     expect(page).not.toContain(".from('wedding_sites')\n      .update(patch)");
+    expect(page).not.toContain(".from('rsvp_conflicts')\n          .update({ resolved: true, resolved_at: new Date().toISOString() })");
     expect(page).not.toContain('await resolveActiveSiteForUser(user.id)');
     expect(service).toContain("supabase.rpc('generate_secure_token'");
     expect(service).toContain('export async function generateSecureGuestInviteToken()');
     expect(service).toContain('export async function refreshGuestDashboardSession(): Promise<void>');
     expect(service).toContain('export async function loadGuestDashboardSiteSettings(userId: string)');
     expect(service).toContain('export async function loadGuestDashboardSnapshot(weddingSiteId: string)');
+    expect(service).toContain('export async function resolveGuestDashboardConflict(conflictId: string, resolvedAt: string): Promise<void>');
+    expect(service).toContain('export async function resolveGuestDashboardConflicts(conflictIds: string[], resolvedAt: string): Promise<void>');
     expect(service).toContain('export async function loadGuestDashboardItineraryFilters(weddingSiteId: string)');
     expect(service).toContain('export async function loadGuestDashboardRsvpAuditFeed(weddingSiteId: string)');
     expect(service).toContain('export async function loadGuestItineraryDrawerSnapshot(weddingSiteId: string, guestId: string)');
@@ -208,6 +215,30 @@ describe('guestService', () => {
   it('refreshes the guest dashboard session through the service', async () => {
     refreshSessionMock.mockResolvedValueOnce({ data: { session: { access_token: 'token' } } });
     await expect(refreshGuestDashboardSession()).resolves.toBeUndefined();
+  });
+
+  it('resolves one guest dashboard RSVP conflict through the service', async () => {
+    const eqMock = vi.fn().mockResolvedValue({ error: null });
+    const updateMock = vi.fn(() => ({ eq: eqMock }));
+    fromMock.mockReturnValue({ update: updateMock });
+
+    await expect(resolveGuestDashboardConflict('conflict-1', '2026-05-07T12:00:00.000Z')).resolves.toBeUndefined();
+
+    expect(fromMock).toHaveBeenCalledWith('rsvp_conflicts');
+    expect(updateMock).toHaveBeenCalledWith({ resolved: true, resolved_at: '2026-05-07T12:00:00.000Z' });
+    expect(eqMock).toHaveBeenCalledWith('id', 'conflict-1');
+  });
+
+  it('resolves many guest dashboard RSVP conflicts through the service', async () => {
+    const inMock = vi.fn().mockResolvedValue({ error: null });
+    const updateMock = vi.fn(() => ({ in: inMock }));
+    fromMock.mockReturnValue({ update: updateMock });
+
+    await expect(resolveGuestDashboardConflicts(['conflict-1', 'conflict-2'], '2026-05-07T12:00:00.000Z')).resolves.toBeUndefined();
+
+    expect(fromMock).toHaveBeenCalledWith('rsvp_conflicts');
+    expect(updateMock).toHaveBeenCalledWith({ resolved: true, resolved_at: '2026-05-07T12:00:00.000Z' });
+    expect(inMock).toHaveBeenCalledWith('id', ['conflict-1', 'conflict-2']);
   });
 
   it('keeps guest RSVP lookup fan-out bounded', () => {

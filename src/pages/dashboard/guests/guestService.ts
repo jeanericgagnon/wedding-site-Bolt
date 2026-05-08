@@ -256,6 +256,24 @@ export async function loadGuestDashboardSnapshot(weddingSiteId: string): Promise
   };
 }
 
+export async function resolveGuestDashboardConflict(conflictId: string, resolvedAt: string): Promise<void> {
+  const { error } = await supabase
+    .from('rsvp_conflicts')
+    .update({ resolved: true, resolved_at: resolvedAt })
+    .eq('id', conflictId);
+
+  if (error) throw error;
+}
+
+export async function resolveGuestDashboardConflicts(conflictIds: string[], resolvedAt: string): Promise<void> {
+  const { error } = await supabase
+    .from('rsvp_conflicts')
+    .update({ resolved: true, resolved_at: resolvedAt })
+    .in('id', conflictIds);
+
+  if (error) throw error;
+}
+
 export async function loadGuestDashboardItineraryFilters(weddingSiteId: string): Promise<GuestDashboardItineraryFiltersSnapshot> {
   const [eventsRes, siteRes] = await Promise.all([
     supabase

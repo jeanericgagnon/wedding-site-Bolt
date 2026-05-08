@@ -139,6 +139,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain("supabase.from('event_invitations').insert(eventInviteRows)");
     expect(source).not.toContain("supabase.from('rsvps').insert(rsvpRows)");
     expect(source).not.toContain("supabase.from('guests').delete().eq('id', createdGuestId)");
+    expect(source).not.toContain(".from('rsvp_conflicts')\n          .update({ resolved: true, resolved_at: new Date().toISOString() })");
   });
 
   it('loads itinerary events and event guest picker rows with explicit projections', () => {
