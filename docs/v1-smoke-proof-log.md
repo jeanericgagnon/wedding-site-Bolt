@@ -7433,6 +7433,21 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 9:26 PM PT No-Deploy Event Recap Route Shell Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/EventRecap.tsx` now routes its recap loading state plus no-data error fallback through `src/pages/EventRecapRouteView.tsx`.
+  - That higher-level route shell now owns the loading-vs-error-vs-content split while the page stays focused on recap data shaping, story export, sharing, and guest opt-in handlers.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/EventRecap.test.tsx` now pin `EventRecapRouteView` and reject regaining the old inline loading/error blocks in `EventRecap.tsx`.
+  - `src/pages/EventRecap.tsx` moved from 538 lines to 558 lines in this batch, while `src/pages/EventRecapRouteView.tsx` came in at 21 lines; the page got a little longer because the recap body was made explicitly route-safe instead of relying on eager `data!` assumptions.
+- Proof passed:
+  - `npm test -- --run src/pages/EventRecap.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts src/pages/guestHubPublicService.test.ts`: PASS, 18/18.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 9:10 PM PT No-Deploy Planning Dashboard Shell Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

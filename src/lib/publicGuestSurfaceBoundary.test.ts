@@ -63,11 +63,15 @@ describe('public guest surface boundary', () => {
     expect(guestHubService).toContain('/functions/v1/guest-prospect-submit');
 
     const eventRecap = readSource('src/pages/EventRecap.tsx');
+    expect(eventRecap).toContain("from './EventRecapRouteView'");
     expect(eventRecap).toContain("from './guestHubPublicService'");
+    expect(eventRecap).toContain('<EventRecapRouteView');
     expect(eventRecap).toContain('fetchGuestRecapConfig<RecapData>(');
     expect(eventRecap).toContain("trackGuestHubEvent(slug, 'view', '/event/recap'");
     expect(eventRecap).toContain('submitGuestHubProspect(');
     expect(eventRecap).toContain('buildEventRecapGuestHubAccessPayload(slug)');
+    expect(eventRecap).not.toContain("{loading && <div className=\"mt-6 rounded-lg border border-neutral-200 bg-white p-6 text-neutral-600\">");
+    expect(eventRecap).not.toContain("{error && <div className=\"mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-6 text-neutral-700\">");
     expect(guestHubService).toContain('/functions/v1/guest-recap-config?site=');
 
     const photoUpload = readSource('src/pages/PhotoUpload.tsx');

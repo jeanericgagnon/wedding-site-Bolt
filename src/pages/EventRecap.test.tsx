@@ -1,4 +1,6 @@
 import React from 'react';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -43,7 +45,7 @@ vi.mock('../lib/copyText', () => ({
   copyTextOrDownload: vi.fn(async () => 'copied'),
 }));
 
-import { EventRecap, buildEventRecapAccessHeaders, buildEventRecapGuestHubAccessPayload, formatEventRecapAlbumLabel, friendlyEventRecapError } from './EventRecap';
+import { EventRecap, buildEventRecapAccessHeaders, buildEventRecapGuestHubAccessPayload, formatEventRecapAlbumLabel, friendlyEventRecapError, safeEventRecapFunctionError } from './EventRecap';
 
 const recapPayload = {
   site: {
@@ -137,10 +139,12 @@ describe('formatEventRecapAlbumLabel', () => {
 describe('friendlyEventRecapError', () => {
   it('hides server and storage details from guest recap opt-in failures', () => {
     expect(friendlyEventRecapError(new Error('storage bucket policy denied token'), 'Please try again.')).toBe('Please try again.');
+    expect(safeEventRecapFunctionError('storage bucket policy denied token', 'Please try again.')).toBe('Please try again.');
   });
 
   it('keeps plain guest-safe copy', () => {
     expect(friendlyEventRecapError(new Error('Add an email or phone so we can send the recap.'), 'Please try again.')).toBe('Add an email or phone so we can send the recap.');
+    expect(safeEventRecapFunctionError('Add an email or phone so we can send the recap.', 'Please try again.')).toBe('Add an email or phone so we can send the recap.');
   });
 });
 
@@ -180,5 +184,19 @@ describe('EventRecap opt-in form', () => {
     await waitFor(() => {
       expect(screen.getByRole('status')).toHaveTextContent('Saved. We will send the recap when it is ready.');
     });
+  });
+});
+
+describe('event recap page boundary', () => {
+  it('routes loading, error, and content shells through a dedicated route view', () => {
+    const page = readFileSync(join(process.cwd(), 'src/pages/EventRecap.tsx'), 'utf8');
+    const routeView = readFileSync(join(process.cwd(), 'src/pages/EventRecapRouteView.tsx'), 'utf8');
+
+    expect(page).toContain("from './EventRecapRouteView'");
+    expect(page).toContain('<EventRecapRouteView');
+    expect(page).not.toContain("{loading && <div className=\"mt-6 rounded-lg border border-neutral-200 bg-white p-6 text-neutral-600\">");
+    expect(page).not.toContain("{error && <div className=\"mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-6 text-neutral-700\">");
+    expect(routeView).toContain('if (loadingState) return <>{loading}</>;');
+    expect(routeView).toContain('if (!hasData) return <>{error}</>;');
   });
 });

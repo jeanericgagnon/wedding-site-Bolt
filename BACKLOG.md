@@ -2057,3 +2057,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/EventHub.test.tsx` now pin `EventHubRouteView` plus `EventHubConfigStatusCard` and reject regaining the old inline missing-slug branch in `EventHub.tsx`.
   - Validation passed: `npm test -- --run src/pages/EventHub.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts src/pages/guestHubPublicService.test.ts` (19/19), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 oversized-file and public-surface route risk in `EventHub` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 9:26 PM PT - No-deploy Event recap route-shell extraction:
+  - Resolved in this batch: moved the guest recap loading/error/content branch selection out of `src/pages/EventRecap.tsx` and behind `src/pages/EventRecapRouteView.tsx`.
+  - Data-boundary hardening: `EventRecap.tsx` now routes its recap loading state plus no-data error fallback through one higher-level route shell instead of owning that branch ladder inline.
+  - File-size movement: `EventRecap.tsx` grew from 538 lines to 558 lines in this continuation batch while `src/pages/EventRecapRouteView.tsx` came in at 21 lines; the line count rose because the recap body was made explicitly route-safe instead of relying on eager `data!` assumptions.
+  - No feature loss: recap stats, top moments, chapter summary, story export, share actions, and guest opt-in form preserve the current behavior while shrinking page-owned route branching.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/EventRecap.test.tsx` now pin `EventRecapRouteView` and reject regaining the old inline loading/error blocks in `EventRecap.tsx`.
+  - Validation passed: `npm test -- --run src/pages/EventRecap.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts src/pages/guestHubPublicService.test.ts` (18/18), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 public-surface route risk in `EventRecap` without changing guest-facing behavior. No deploy was run.
