@@ -7,6 +7,21 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-07 6:12 PM PT No-Deploy Shared RSVP Function Transport Extraction
+- Continued from `BACKLOG.md` in the no-deploy page-to-service extraction lane.
+- Fixed/proved:
+  - Added `src/pages/rsvpFunctionService.ts` so `RSVP.tsx` and `EventRSVP.tsx` no longer own duplicate guest-facing `validate-rsvp-token` fetch transport inline.
+  - `RSVP.tsx` now routes lookup, token follow-up lookup, and submit through `callValidateRsvpToken(...)`.
+  - `EventRSVP.tsx` now routes event lookup and event submit through the same shared RSVP service and reuses `hasRsvpFunctionRuntime()` for its runtime guard.
+  - `src/pages/rsvpFunctionService.test.ts` and `src/lib/publicGuestSurfaceBoundary.test.ts` now pin that shared RSVP transport seam, while the RSVP page suites stay green on behavior.
+- Proof passed:
+  - `npm test -- --run src/pages/rsvpFunctionService.test.ts src/lib/publicGuestSurfaceBoundary.test.ts src/pages/RSVP.test.tsx src/pages/EventRSVP.test.tsx`: PASS, 119/119.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is another maintainability and guest-surface service-boundary hardening step, and no deploy was run.
+
 ## 2026-05-07 6:01 PM PT No-Deploy Guest Public Submission Service Extraction
 - Continued from `BACKLOG.md` in the no-deploy page-to-service extraction lane.
 - Fixed/proved:

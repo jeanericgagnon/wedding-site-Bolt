@@ -12,11 +12,14 @@ describe('public guest surface boundary', () => {
       'src/pages/SiteView.tsx',
       'src/pages/EventHub.tsx',
       'src/pages/EventRecap.tsx',
+      'src/pages/RSVP.tsx',
+      'src/pages/EventRSVP.tsx',
       'src/pages/PhotoUpload.tsx',
       'src/pages/VaultContribute.tsx',
       'src/pages/GuestbookSubmit.tsx',
       'src/pages/GuestContactUpdate.tsx',
       'src/pages/guestPublicSubmissionService.ts',
+      'src/pages/rsvpFunctionService.ts',
       'src/sections/components/RsvpSection.tsx',
       'src/sections/variants/rsvp/multiEvent.tsx',
       'src/sections/interactiveSectionService.ts',
@@ -94,6 +97,18 @@ describe('public guest surface boundary', () => {
     expect(guestContact).toContain("callGuestContactFunction('guest-contact-submit'");
     expect(guestContact).toContain('buildGuestContactAccessPayload(siteRef)');
     expect(guestSubmissionService).toContain('/functions/v1/${name}');
+
+    const rsvpPage = readSource('src/pages/RSVP.tsx');
+    const eventRsvpPage = readSource('src/pages/EventRSVP.tsx');
+    const rsvpFunctionService = readSource('src/pages/rsvpFunctionService.ts');
+    expect(rsvpPage).toContain("from './rsvpFunctionService'");
+    expect(rsvpPage).toContain("callValidateRsvpToken({ action: 'lookup', searchValue: searchValue.trim() })");
+    expect(rsvpPage).toContain("callValidateRsvpToken({ action: 'lookup_guest', guestId: picked.id, rsvpSession: rsvpSessionToken })");
+    expect(rsvpPage).toContain("callValidateRsvpToken({");
+    expect(eventRsvpPage).toContain("from './rsvpFunctionService'");
+    expect(eventRsvpPage).toContain('const CAN_USE_EVENT_RSVP_FUNCTION = hasRsvpFunctionRuntime()');
+    expect(eventRsvpPage).toContain("callValidateRsvpToken<Record<string, unknown>>({");
+    expect(rsvpFunctionService).toContain('/functions/v1/validate-rsvp-token');
 
     const rsvpSection = readSource('src/sections/components/RsvpSection.tsx');
     expect(rsvpSection).toContain("supabase.functions.invoke('public-site-access'");

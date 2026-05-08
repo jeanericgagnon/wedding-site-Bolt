@@ -35,40 +35,19 @@ import {
   readDemoStoredResponses,
   writeDemoStoredResponses,
 } from './rsvpDemoStorage';
+import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
+import { callValidateRsvpToken } from './rsvpFunctionService';
 
 export { normalizeRsvpGuestError, normalizeRsvpSubmitError } from './rsvpTypes';
 
-const RSVP_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-rsvp-token`;
-const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const USE_DEMO_RSVP = DEMO_MODE && !SUPABASE_CONFIGURED;
 
 function notifyRsvpContinuityUpdate() {
   if (typeof window === 'undefined') return;
 
-  const updatedAt = String(Date.now());
-
-  try {
-    window.localStorage.setItem(RSVP_CONTINUITY_STORAGE_KEY, updatedAt);
-  } catch {
-    // Ignore storage failures for continuity pings.
-  }
+  const updatedAt = writeRsvpContinuityStoragePing(RSVP_CONTINUITY_STORAGE_KEY);
 
   window.dispatchEvent(new CustomEvent(RSVP_CONTINUITY_EVENT, { detail: { updatedAt } }));
-}
-
-async function rsvpCall(body: object): Promise<{ data?: unknown; error?: string }> {
-  const res = await fetch(RSVP_FN_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${ANON_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) return { error: (json as { error?: string })?.error ?? `Error ${res.status}` };
-  if ((json as { error?: string })?.error) return { error: (json as { error?: string }).error };
-  return { data: json };
 }
 
 function getLegacyTestRsvpSessionToken(value: unknown): string | null {
@@ -622,7 +601,14 @@ export default function RSVP() {
       setFormStep(1);
       setActivePredictionIndex(-1);
     }
-    (USE_DEMO_RSVP ? Promise.resolve({ data: demoLookup(token) as unknown, error: undefined as string | undefined }) : rsvpCall({ action: 'lookup', searchValue: token }))
+    (
+      USE_DEMO_RSVP
+        ? Promise.resolve<{ data?: unknown; error?: string; status?: number }>({
+            data: demoLookup(token) as unknown,
+            error: undefined,
+          })
+        : callValidateRsvpToken({ action: 'lookup', searchValue: token })
+    )
       .then(({ data, error: err }) => {
         if (activeLookupRequestRef.current !== requestId) return;
         if (err || !data) {
@@ -709,7 +695,7 @@ export default function RSVP() {
     };
 
     const handleStorage = (event: StorageEvent) => {
-      if (event.key !== RSVP_CONTINUITY_STORAGE_KEY || !event.newValue) return;
+      if (event.key !== RSVP_CONTINUITY_STORAGE_KEY || !isFreshRsvpContinuityStorageValue(event.newValue)) return;
       refreshTokenLinkedRsvpForContinuity();
     };
 
@@ -770,7 +756,7 @@ export default function RSVP() {
     try {
       const lookupResp: { data?: unknown; error?: string } = USE_DEMO_RSVP
         ? { data: demoLookup(searchValue.trim()) as unknown }
-        : await rsvpCall({ action: 'lookup', searchValue: searchValue.trim() });
+        : await callValidateRsvpToken({ action: 'lookup', searchValue: searchValue.trim() });
       const data = lookupResp.data;
       const err = lookupResp.error;
       if (err) {
@@ -907,7 +893,7 @@ export default function RSVP() {
     try {
       const lookupResp: { data?: unknown; error?: string } = USE_DEMO_RSVP
         ? { data: demoLookup(picked.id) as unknown }
-        : await rsvpCall({ action: 'lookup_guest', guestId: picked.id, rsvpSession: rsvpSessionToken });
+        : await callValidateRsvpToken({ action: 'lookup_guest', guestId: picked.id, rsvpSession: rsvpSessionToken });
       const data = lookupResp.data;
       const err = lookupResp.error;
       if (err || !data) {
@@ -996,7 +982,7 @@ export default function RSVP() {
         ? dedupeGuestIds([guest.id, ...selectedHouseholdGuestIds])
         : [guest.id];
 
-      const { data, error: err } = await rsvpCall({
+      const { data, error: err } = await callValidateRsvpToken({
         action: 'submit',
         guestId: guest.id,
         rsvpSession: rsvpSessionToken,

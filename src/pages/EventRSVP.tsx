@@ -7,10 +7,11 @@ import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
 import { Header, Footer } from '../components/layout';
 import { formatEventRsvpDate } from './eventRsvpDate';
+import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
+import { isInternalCustomerErrorMessage } from '../lib/customerSafeError';
+import { callValidateRsvpToken, hasRsvpFunctionRuntime } from './rsvpFunctionService';
 
-const RSVP_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-rsvp-token`;
-const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const CAN_USE_EVENT_RSVP_FUNCTION = Boolean(import.meta.env.VITE_SUPABASE_URL) && Boolean(ANON_KEY);
+const CAN_USE_EVENT_RSVP_FUNCTION = hasRsvpFunctionRuntime();
 
 interface Guest {
   id: string;
@@ -68,51 +69,18 @@ const RSVP_CONTINUITY_STORAGE_KEY = 'dayof.rsvp.updatedAt';
 const INVALID_EVENT_INVITATION_MESSAGE =
   "This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.";
 
-const INTERNAL_EVENT_RSVP_ERROR_COPY =
-  /\b(supabase|configuration|request\s*failed|functions?\/v1|edge\s*function|function|jwt|permission(?:s)?|policy|database|provider|network|fetch|token|secret|service\s*role|storage|bucket|metadata|relation\s+"?event_rsvps"?|missing-config|status\s*code|error_message)\b/i;
+const EVENT_RSVP_INTERNAL_SENTINEL_ERROR_COPY = /\b(configuration|missing-config|relation\s+"?event_rsvps"?)\b/i;
 
 export function safeEventRsvpGuestError(value: string | null | undefined, fallback = INVALID_EVENT_INVITATION_MESSAGE): string {
   const cleaned = String(value ?? '').replace(/\s+/g, ' ').trim();
-  if (!cleaned || INTERNAL_EVENT_RSVP_ERROR_COPY.test(cleaned)) return fallback;
+  if (!cleaned || EVENT_RSVP_INTERNAL_SENTINEL_ERROR_COPY.test(cleaned) || isInternalCustomerErrorMessage(cleaned)) return fallback;
   return cleaned;
 }
 
 function notifyRsvpContinuityUpdate() {
-  const updatedAt = new Date().toISOString();
-
-  try {
-    window.localStorage.setItem(RSVP_CONTINUITY_STORAGE_KEY, updatedAt);
-  } catch {
-    // Ignore storage failures and still notify the current tab.
-  }
+  const updatedAt = writeRsvpContinuityStoragePing(RSVP_CONTINUITY_STORAGE_KEY);
 
   window.dispatchEvent(new CustomEvent(RSVP_CONTINUITY_EVENT, { detail: { updatedAt } }));
-}
-
-async function eventRsvpCall(body: object): Promise<{ data?: Record<string, unknown>; error?: string; status?: number }> {
-  if (!CAN_USE_EVENT_RSVP_FUNCTION) {
-    return { error: 'missing-config', status: 0 };
-  }
-
-  const response = await fetch(RSVP_FN_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${ANON_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-
-  const json = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    return { error: (json as { error?: string })?.error ?? `Error ${response.status}`, status: response.status };
-  }
-
-  if ((json as { error?: string })?.error) {
-    return { error: (json as { error?: string }).error };
-  }
-
-  return { data: json as Record<string, unknown> };
 }
 
 function resetEventRsvpModalTransientState(
@@ -242,7 +210,7 @@ export default function EventRSVP() {
 
     try {
       const edgeLookup = CAN_USE_EVENT_RSVP_FUNCTION
-        ? await eventRsvpCall({
+        ? await callValidateRsvpToken<Record<string, unknown>>({
             action: 'event_lookup',
             inviteToken: token,
           })
@@ -357,7 +325,7 @@ export default function EventRSVP() {
     };
 
     const handleStorage = (event: StorageEvent) => {
-      if (event.key !== RSVP_CONTINUITY_STORAGE_KEY || !event.newValue) return;
+      if (event.key !== RSVP_CONTINUITY_STORAGE_KEY || !isFreshRsvpContinuityStorageValue(event.newValue)) return;
       refreshGuestAndEventsForContinuity();
     };
 
@@ -523,7 +491,7 @@ export default function EventRSVP() {
       }
 
       const edgeSubmit = CAN_USE_EVENT_RSVP_FUNCTION
-        ? await eventRsvpCall({
+        ? await callValidateRsvpToken<Record<string, unknown>>({
             action: 'event_submit',
             guestId: guest.id,
             rsvpSession: rsvpSessionToken,

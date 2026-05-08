@@ -19,6 +19,24 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 6:12 PM PT - No-Deploy Shared RSVP Function Transport Extraction
+
+What changed:
+- Added `src/pages/rsvpFunctionService.ts` so `RSVP.tsx` and `EventRSVP.tsx` no longer own duplicate guest-facing `validate-rsvp-token` fetch transport inline.
+- `RSVP.tsx` now routes lookup, guest follow-up lookup, and submit through `callValidateRsvpToken(...)`.
+- `EventRSVP.tsx` now routes event lookup and event submit through the same shared RSVP function service and reuses `hasRsvpFunctionRuntime()` for the runtime guard.
+- Added `src/pages/rsvpFunctionService.test.ts` and updated `src/lib/publicGuestSurfaceBoundary.test.ts` so the shared RSVP transport boundary is pinned.
+
+Commands run:
+- `npm test -- --run src/pages/rsvpFunctionService.test.ts src/lib/publicGuestSurfaceBoundary.test.ts src/pages/RSVP.test.tsx src/pages/EventRSVP.test.tsx`: PASS, 4 files and 119 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This removes another duplicated guest-facing fetch cluster and keeps both RSVP pages more focused on guest flow instead of raw function transport. No deploy was run.
+
 ### 2026-05-07 6:01 PM PT - No-Deploy Guest Public Submission Service Extraction
 
 What changed:
