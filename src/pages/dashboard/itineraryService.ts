@@ -90,6 +90,21 @@ export interface ItineraryDashboardEvent {
   pending_count: number;
 }
 
+export interface PersistItineraryTimelineEvent {
+  id: string;
+  event_date: string;
+  start_time: string;
+  end_time: string | null;
+  display_order: number;
+  event_name: string;
+  description: string;
+  location_name: string;
+  location_address: string;
+  dress_code: string | null;
+  notes: string | null;
+  is_visible: boolean;
+}
+
 export interface SaveItineraryEventFormData {
   event_name: string;
   description: string;
@@ -380,6 +395,31 @@ export async function loadItineraryDashboardEvents(
     events: eventsWithCounts,
     hasEventRsvpsTable: nextHasEventRsvpsTable,
   };
+}
+
+export async function persistItineraryTimeline(
+  events: PersistItineraryTimelineEvent[],
+): Promise<string> {
+  const siteId = await resolveItinerarySiteId();
+  if (!siteId) {
+    throw new Error('Please log in again and retry.');
+  }
+
+  const results = await Promise.all(events.map((event) => supabase
+    .from('itinerary_events')
+    .update({
+      event_date: event.event_date,
+      start_time: event.start_time || null,
+      end_time: event.end_time || null,
+      display_order: event.display_order,
+    })
+    .eq('id', event.id),
+  ));
+  const failed = results.find((result) => result.error);
+  if (failed?.error) throw failed.error;
+
+  await syncItineraryScheduleMirror(siteId, events);
+  return siteId;
 }
 
 export async function loadItineraryEventGuestManagerSnapshot(

@@ -12,6 +12,7 @@ import {
   MAX_ITINERARY_EVENTS,
   MAX_ITINERARY_EVENT_GUESTS,
   MAX_ITINERARY_EVENT_INVITATIONS,
+  persistItineraryTimeline,
   removeAllGuestsFromItineraryEvent,
   removeItineraryEventGuestInvitation,
   resolveItinerarySiteId,
@@ -330,6 +331,85 @@ describe('buildItineraryTemplateInsertRows', () => {
       }],
       hasEventRsvpsTable: true,
     });
+  });
+
+  it('persists itinerary timeline shifts through the service and refreshes the mirror', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
+    resolveActiveSiteForUserMock.mockResolvedValue({ id: 'site-1', role: 'owner', permissions: null });
+
+    const firstUpdateEqMock = vi.fn().mockResolvedValue({ error: null });
+    const secondUpdateEqMock = vi.fn().mockResolvedValue({ error: null });
+    const sectionUpdateEqMock = vi.fn().mockResolvedValue({ error: null });
+    fromMock
+      .mockReturnValueOnce({
+        update: vi.fn(() => ({
+          eq: firstUpdateEqMock,
+        })),
+      })
+      .mockReturnValueOnce({
+        update: vi.fn(() => ({
+          eq: secondUpdateEqMock,
+        })),
+      })
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn().mockResolvedValue({ data: { wedding_data: {} }, error: null }),
+          })),
+        })),
+      })
+      .mockReturnValueOnce({
+        update: vi.fn(() => ({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+        })),
+      })
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            eq: vi.fn().mockResolvedValue({ data: [{ id: 'section-1', data: {} }], error: null }),
+          })),
+        })),
+      })
+      .mockReturnValueOnce({
+        update: vi.fn(() => ({
+          eq: sectionUpdateEqMock,
+        })),
+      });
+
+    await expect(persistItineraryTimeline([
+      {
+        id: 'event-1',
+        event_name: 'Ceremony',
+        description: 'Guests gather',
+        event_date: '2026-06-20',
+        start_time: '16:15',
+        end_time: '16:45',
+        location_name: 'Rose Garden',
+        location_address: '10 Sunset Way',
+        dress_code: null,
+        notes: null,
+        display_order: 1,
+        is_visible: true,
+      },
+      {
+        id: 'event-2',
+        event_name: 'Reception',
+        description: '',
+        event_date: '2026-06-20',
+        start_time: '18:15',
+        end_time: '22:15',
+        location_name: 'Grand Hall',
+        location_address: '',
+        dress_code: null,
+        notes: null,
+        display_order: 2,
+        is_visible: true,
+      },
+    ])).resolves.toBe('site-1');
+
+    expect(firstUpdateEqMock).toHaveBeenCalledWith('id', 'event-1');
+    expect(secondUpdateEqMock).toHaveBeenCalledWith('id', 'event-2');
+    expect(sectionUpdateEqMock).toHaveBeenCalledWith('id', 'section-1');
   });
 
   it('saves a new itinerary event through the service and triggers best-effort album creation', async () => {

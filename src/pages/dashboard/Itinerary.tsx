@@ -22,6 +22,7 @@ import {
   inviteAllGuestsToItineraryEvent,
   loadItineraryDashboardEvents,
   loadItineraryEventGuestManagerSnapshot,
+  persistItineraryTimeline,
   removeAllGuestsFromItineraryEvent,
   removeItineraryEventGuestInvitation,
   resolveItinerarySiteId,
@@ -354,22 +355,7 @@ export const DashboardItinerary: React.FC = () => {
         return;
       }
 
-      const siteId = await resolveItinerarySiteId();
-      if (!siteId) throw new Error('Please log in again and retry.');
-
-      const results = await Promise.all(nextEvents.map((event) => supabase
-        .from('itinerary_events')
-        .update({
-          event_date: event.event_date,
-          start_time: event.start_time || null,
-          end_time: event.end_time || null,
-          display_order: event.display_order,
-        })
-        .eq('id', event.id)
-      ));
-      const failed = results.find((result) => result.error);
-      if (failed?.error) throw failed.error;
-      await syncWeddingDataSchedule(siteId, nextEvents);
+      await persistItineraryTimeline(nextEvents);
       setEvents(nextEvents);
       setSaveNotice(notice);
     } catch (err: unknown) {

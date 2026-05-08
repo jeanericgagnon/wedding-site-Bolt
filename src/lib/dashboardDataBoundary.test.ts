@@ -150,6 +150,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('syncItineraryScheduleMirror(siteId, eventList)');
     expect(source).toContain('saveItineraryEvent({');
     expect(source).toContain('await deleteItineraryEvent(eventId)');
+    expect(source).toContain('await persistItineraryTimeline(nextEvents)');
     expect(source).toContain('loadItineraryEventGuestManagerSnapshot(eventId)');
     expect(source).toContain('removeItineraryEventGuestInvitation(eventId, guestId)');
     expect(source).toContain('addItineraryEventGuestInvitation(eventId, guestId)');
@@ -173,6 +174,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain(".from('itinerary_events')\n            .update(updatePayload)");
     expect(source).not.toContain(".from('itinerary_events')\n            .insert([");
     expect(source).not.toContain(".from('itinerary_events')\n        .delete()");
+    expect(source).not.toContain(".from('itinerary_events')\n        .update({\n          event_date: event.event_date,");
     expect(service).toContain('buildItineraryTemplateInsertRows(weddingSiteId, events)');
     expect(service).toContain('export async function resolveItinerarySiteId()');
     expect(service).toContain("const ITINERARY_EVENT_MANAGER_SITE_SELECT = 'id'");
@@ -184,6 +186,7 @@ describe('dashboard data boundary guards', () => {
     expect(service).toContain("export const ITINERARY_EVENT_GUEST_PICKER_SELECT = 'id, name, first_name, last_name, email' as const;");
     expect(service).toContain('export async function saveItineraryEvent(');
     expect(service).toContain('export async function deleteItineraryEvent(');
+    expect(service).toContain('export async function persistItineraryTimeline(');
     expect(service).toContain('export async function loadItineraryEventGuestManagerSnapshot(');
     expect(service).toContain('export async function addItineraryEventGuestInvitation(');
     expect(service).toContain('export async function removeItineraryEventGuestInvitation(');

@@ -3523,3 +3523,20 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the itinerary dashboard page-to-service migration without changing owner-facing event hydration, RSVP counts, or schedule mirror behavior. No deploy was run.
+
+### 2026-05-07 5:09 PM PT - Itinerary Timeline Persistence Service Extraction
+
+- Moved itinerary timeline shift persistence and mirror refresh out of `src/pages/dashboard/Itinerary.tsx` and into `src/pages/dashboard/itineraryService.ts`.
+- `Itinerary.tsx` now calls `persistItineraryTimeline(nextEvents)` instead of directly fanning out `itinerary_events` updates inline during timeline shifts and undo.
+- The service preserves the current active-site resolution, per-event date/time/display-order updates, and schedule mirror refresh behavior while the page keeps demo shifts, undo state, and save notices.
+- Expanded `src/pages/dashboard/itineraryService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the itinerary page no longer silently regains the live bulk update loop.
+
+Validation:
+- `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts`: PASS, 37/37.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the itinerary dashboard page-to-service migration without changing owner-facing timeline shift or undo behavior. No deploy was run.
