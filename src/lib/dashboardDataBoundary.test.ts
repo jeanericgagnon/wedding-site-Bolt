@@ -7,6 +7,7 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Messages.tsx'), 'utf8');
     const serviceSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/messageService.ts'), 'utf8');
     const viewPropsSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/buildMessageDashboardViewProps.ts'), 'utf8');
+    const derivedStateSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/buildMessageDashboardDerivedState.ts'), 'utf8');
     const dataHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDashboardData.ts'), 'utf8');
     const deliveryHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDeliveryActions.ts'), 'utf8');
     const composeHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageComposeActions.ts'), 'utf8');
@@ -32,6 +33,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('useMessageComposerDraftActions({');
     expect(source).toContain('useMessageComposerHistoryActions({');
     expect(source).toContain('useMessageDashboardPrefillSync({');
+    expect(source).toContain('buildMessageDashboardDerivedState({');
     expect(source).toContain('buildMessageDashboardViewProps({');
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).not.toContain("supabase.from('messages').insert(payload)");
@@ -70,6 +72,11 @@ describe('dashboard data boundary guards', () => {
     expect(viewPropsSource).toContain('historyProps: {');
     expect(viewPropsSource).toContain('reachSnapshotProps: {');
     expect(viewPropsSource).not.toContain("from '../../lib/supabase'");
+    expect(derivedStateSource).toContain('const filteredHistory = filterMessageHistory({');
+    expect(derivedStateSource).toContain('const campaignThreads = buildCampaignThreads(messages, deliveries);');
+    expect(derivedStateSource).toContain('const activeCampaignThread = getActiveCampaignThread({ campaignThreads, historyCampaignFilter, historySearch });');
+    expect(derivedStateSource).toContain('const providerTelemetry = buildProviderTelemetry(messages, deliveries);');
+    expect(derivedStateSource).not.toContain("from '../../lib/supabase'");
     expect(composeHookSource).toContain('insertDashboardMessageMinimal({');
     expect(composeHookSource).toContain('await updateDashboardMessage(editingMessageId, {');
     expect(composeHookSource).toContain('const result = await triggerDashboardBulkSend(inserted.id)');

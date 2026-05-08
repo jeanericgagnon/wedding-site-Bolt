@@ -9225,6 +9225,22 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-08 02:01 AM PT No-Deploy Message Dashboard Derived-State Helper Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Messages.tsx` now routes its remaining reachability, credit, delivery, and history analytics derivation through `src/pages/dashboard/messages/buildMessageDashboardDerivedState.ts` instead of hand-owning that pure dashboard math inline.
+  - That helper now owns recipient reachability counts, SMS credit math, email-cap math, filtered history, campaign thread selection, delivery health, retry/review candidate selection, and provider telemetry derivation for the messages dashboard.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildMessageDashboardDerivedState({ ... })` plus its `filterMessageHistory(...)`, `buildCampaignThreads(...)`, `getActiveCampaignThread(...)`, and `buildProviderTelemetry(...)` seams.
+  - `src/pages/dashboard/Messages.tsx` dropped from 530 lines to 501 lines in this batch while `src/pages/dashboard/messages/buildMessageDashboardDerivedState.ts` came in at 148 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 4:28 PM PT No-Deploy Guest Itinerary Drawer Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

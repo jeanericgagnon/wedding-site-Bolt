@@ -1,14 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Input } from '../../components/ui';
 import { useAuth } from '../../hooks/useAuth';
 import { createSmsCreditsSession } from '../../lib/stripeService';
-import { canComposeDashboardMessages, canEditPlannerSurface, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
-import { formatMessageHistoryDateTime } from './messageHistoryTime';
-import { parseScheduleInputToIso } from './messageScheduleTime';
+import { canComposeDashboardMessages, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { getMessageTemplateCoupleLabel } from './messageTemplateVariables';
-import { countSmsSegments, estimateSmsCredits } from '../../lib/smsSegments';
-import { SMS_PROVIDER_PENDING_COPY, isSmsProviderEnabled } from '../../lib/smsProvider';
+import { isSmsProviderEnabled } from '../../lib/smsProvider';
 import { logAppAction } from '../../lib/actionAudit';
 import { buildMessageAudienceOptions, filterMessageAudienceGuests, getMessageAudienceDetail } from '../../lib/messageAudienceSegments';
 import { buildGuestMessageLanguagePreviews } from '../../lib/guestMessageLanguagePreview';
@@ -26,30 +22,9 @@ import {
 } from './messages/messageDashboardTypes';
 import {
   COMPOSER_TEMPLATES,
-  buildAudienceBreakdown,
-  buildAudienceReachability,
   buildCampaignStatusSummary,
-  buildCampaignThreads,
-  buildChannelBreakdown,
-  buildDeliveryHealth,
-  buildDeliveryStats,
-  buildHistoryStatusCounts,
-  buildProviderTelemetry,
-  buildSegmentPerformance,
-  canRetryMessageStatus,
   countStoredPhotoAlbumLinks,
-  describeRecipientReview,
-  filterMessageHistory,
-  getCampaignThreadKey,
-  getCustomerDeliveryReason,
-  getActiveCampaignMessages,
-  getActiveCampaignThread,
   getPreferredStoredPhotoAlbumLink,
-  getRecipientCount,
-  hasReachableEmail,
-  hasReachableSms,
-  isEmailCapConsumingStatus,
-  isPastScheduledTime,
   migrateSavedComposerTemplatesStorage,
   readSavedComposerTemplates,
   safeMessagesError,
@@ -69,6 +44,7 @@ import { useMessageComposerDraftActions } from './messages/useMessageComposerDra
 import { useMessageComposerHistoryActions } from './messages/useMessageComposerHistoryActions';
 import { useMessageDashboardPrefillSync } from './messages/useMessageDashboardPrefillSync';
 import { buildMessageDashboardViewProps } from './messages/buildMessageDashboardViewProps';
+import { buildMessageDashboardDerivedState } from './messages/buildMessageDashboardDerivedState';
 import { MessageDashboardRouteView } from './messages/MessageDashboardRouteView';
 
 export const DashboardMessages: React.FC = () => {
@@ -243,10 +219,71 @@ export const DashboardMessages: React.FC = () => {
     ...buildMessageAudienceOptions(guests),
     ...itineraryAudienceOptions,
   ];
-
-  const selectedAudience = audienceOptions.find(opt => opt.value === formData.audience);
+  const HARD_EMAIL_CAP = 1000;
+  const derivedState = useMemo(() => buildMessageDashboardDerivedState({
+    audienceOptions,
+    deliveries,
+    eventGuestIds,
+    formData,
+    guests,
+    hardEmailCap: HARD_EMAIL_CAP,
+    historyAudienceFilter,
+    historyCampaignFilter,
+    historyChannelFilter,
+    historyDeliveryFilter,
+    historySearch,
+    historyStatusFilter,
+    itineraryAudienceOptions,
+    messages,
+    weddingSiteSmsCredits: weddingSite?.sms_credits_balance,
+  }), [
+    audienceOptions,
+    deliveries,
+    eventGuestIds,
+    formData,
+    guests,
+    historyAudienceFilter,
+    historyCampaignFilter,
+    historyChannelFilter,
+    historyDeliveryFilter,
+    historySearch,
+    historyStatusFilter,
+    itineraryAudienceOptions,
+    messages,
+    weddingSite?.sms_credits_balance,
+  ]);
+  const {
+    activeCampaignLatestMessage,
+    activeCampaignThread,
+    activeRecipients,
+    audienceBreakdown,
+    audienceReachability,
+    campaignThreads,
+    channelBreakdown,
+    deliveryHealth,
+    deliveryStats,
+    emailCapacityAfterSend,
+    emailCapacityEnough,
+    filteredHistory,
+    historyStatusCounts,
+    previewRecipients,
+    providerTelemetry,
+    recipientsWithEmail,
+    recipientsWithSmsConsent,
+    remainingEmailRecipients,
+    retryCandidates,
+    reviewCandidates,
+    selectedScheduleIsPast,
+    smsCredits,
+    smsCreditsNeeded,
+    smsCreditsSufficient,
+    smsProviderEnabled,
+    smsSegmentCount,
+    unreachableRecipients,
+    usedEmailRecipients,
+  } = derivedState;
+  const selectedAudience = derivedState.selectedAudience;
   const selectedAudienceDetail = getMessageAudienceDetail(formData.audience, audienceOptions);
-
   const {
     applyComposerTemplate,
     applySavedTemplate,
@@ -290,18 +327,6 @@ export const DashboardMessages: React.FC = () => {
     fetchGuests,
     fetchMessages,
   });
-  const recipientsWithEmail = getRecipients(formData.audience).filter(g => hasReachableEmail(g.email)).length;
-  const recipientsWithSmsConsent = getRecipients(formData.audience).filter(g => hasReachableSms(g)).length;
-  const activeRecipients = formData.channel === 'sms' ? recipientsWithSmsConsent : recipientsWithEmail;
-  const previewRecipients = getRecipients(formData.audience).filter((guest) => formData.channel === 'sms' ? hasReachableSms(guest) : hasReachableEmail(guest.email));
-  const unreachableRecipients = (selectedAudience?.count ?? 0) - activeRecipients;
-  const selectedScheduleIsPast = !!(formData.scheduleDate && formData.scheduleTime)
-    && isPastScheduledTime(`${formData.scheduleDate}T${formData.scheduleTime}:00`);
-  const smsCredits = weddingSite?.sms_credits_balance ?? 0;
-  const smsProviderEnabled = isSmsProviderEnabled();
-  const smsSegmentCount = countSmsSegments(formData.body);
-  const smsCreditsNeeded = estimateSmsCredits(formData.body, recipientsWithSmsConsent);
-  const smsCreditsSufficient = smsCredits >= smsCreditsNeeded;
   const { handleSendMessage } = useMessageComposeActions({
     weddingSite,
     isDemoMode,
@@ -322,19 +347,6 @@ export const DashboardMessages: React.FC = () => {
     setEditingMessageId,
     setFormData,
   });
-  const HARD_EMAIL_CAP = 1000;
-  const usedEmailRecipients = messages
-    .filter((m) => m.channel === 'email' && isEmailCapConsumingStatus(m.status))
-    .reduce((sum, m) => sum + getRecipientCount(m), 0);
-  const remainingEmailRecipients = Math.max(HARD_EMAIL_CAP - usedEmailRecipients, 0);
-  const emailCapacityAfterSend = Math.max(remainingEmailRecipients - recipientsWithEmail, 0);
-  const emailCapacityEnough = recipientsWithEmail <= remainingEmailRecipients;
-
-  const audienceReachability = useMemo(() => {
-    return buildAudienceReachability(getRecipients(formData.audience));
-  }, [formData.audience, guests, eventGuestIds]);
-
-  const deliveryStats = useMemo(() => buildDeliveryStats(messages), [messages]);
 
   const canCompose = canComposeDashboardMessages(messagesRole, messagesPermissions);
   const {
@@ -355,45 +367,6 @@ export const DashboardMessages: React.FC = () => {
     setMessages,
     toast,
   });
-
-  const filteredHistory = useMemo(() => filterMessageHistory({
-    messages,
-    deliveries,
-    statusFilter: historyStatusFilter,
-    channelFilter: historyChannelFilter,
-    audienceFilter: historyAudienceFilter,
-    deliveryFilter: historyDeliveryFilter,
-    campaignFilter: historyCampaignFilter,
-    search: historySearch,
-  }), [messages, deliveries, historyStatusFilter, historyChannelFilter, historyAudienceFilter, historyCampaignFilter, historyDeliveryFilter, historySearch]);
-
-  const audienceBreakdown = useMemo(() => buildAudienceBreakdown(messages), [messages]);
-
-  const retryCandidates = useMemo(
-    () => messages.filter((m) => m.status === 'failed').slice(0, 5),
-    [messages],
-  );
-
-  const reviewCandidates = useMemo(
-    () => messages.filter((m) => m.status === 'partial').slice(0, 5),
-    [messages],
-  );
-
-  const segmentPerformance = useMemo(() => buildSegmentPerformance(messages, itineraryAudienceOptions), [messages, itineraryAudienceOptions]);
-
-  const historyStatusCounts = useMemo(() => buildHistoryStatusCounts(messages), [messages]);
-
-  const channelBreakdown = useMemo(() => buildChannelBreakdown(messages), [messages]);
-
-  const deliveryHealth = useMemo(() => buildDeliveryHealth(messages, deliveries), [messages, deliveries]);
-
-  const campaignThreads = useMemo(() => buildCampaignThreads(messages, deliveries), [messages, deliveries]);
-
-  const activeCampaignThread = useMemo(() => getActiveCampaignThread({ campaignThreads, historyCampaignFilter, historySearch }), [campaignThreads, historyCampaignFilter, historySearch]);
-
-  const activeCampaignMessages = useMemo(() => getActiveCampaignMessages(messages, activeCampaignThread), [messages, activeCampaignThread]);
-
-  const activeCampaignLatestMessage = activeCampaignMessages[0] ?? null;
   const {
     loadMessageIntoComposer,
     startFollowUpFromCampaignThread,
@@ -409,8 +382,6 @@ export const DashboardMessages: React.FC = () => {
     setFormData,
     setShowRecipientPreview,
   });
-
-  const providerTelemetry = useMemo(() => buildProviderTelemetry(messages, deliveries), [messages, deliveries]);
 
   const messageDashboardViewProps = buildMessageDashboardViewProps({
     activeRecipients,
