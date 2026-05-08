@@ -5896,6 +5896,18 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 06:13 AM PT No-Deploy Registry Dashboard Derived-State Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Registry.tsx` now routes the registry dashboard filter, analytics, review counters, readiness, and thank-you derived-state slab through `src/pages/dashboard/registry/buildRegistryDashboardDerivedState.ts`.
+  - That helper now owns duplicate grouping, actionable bad-import counts, bulk review counts, filtered registry items, refresh-window/budget telemetry, summary counts, fund stats, recent activity ordering, top-progress ranking, registry quick-check insights, launch-readiness modeling, thank-you preview modeling, and alert-count shaping while the page keeps bootstrap, async actions, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildRegistryDashboardDerivedState({ ... })`, checks that `buildRegistryDashboardDerivedState.ts` owns the registry derived-state seam, and rejects regaining the old inline counts/filter/insight blocks in `Registry.tsx`.
+  - `src/pages/dashboard/Registry.tsx` dropped from 1358 lines to 1302 lines in this batch, while `src/pages/dashboard/registry/buildRegistryDashboardDerivedState.ts` came in at 146 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 17/17.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 06:10 AM PT No-Deploy Registry Dashboard Data-Hook Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

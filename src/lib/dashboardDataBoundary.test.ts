@@ -554,6 +554,26 @@ describe('dashboard data boundary guards', () => {
     expect(hookSource).not.toContain("from '../../../lib/supabase'");
   });
 
+  it('routes registry dashboard derived state through a dedicated helper', () => {
+    const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Registry.tsx'), 'utf8');
+    const helperSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/registry/buildRegistryDashboardDerivedState.ts'), 'utf8');
+
+    expect(source).toContain('buildRegistryDashboardDerivedState({');
+    expect(source).not.toContain('const counts = {');
+    expect(source).not.toContain('const fundStats = normalizedItems.reduce(');
+    expect(source).not.toContain('const recentActivity = [...normalizedItems]');
+    expect(source).not.toContain('const registryInsights = buildRegistryInsights(');
+    expect(source).not.toContain('const alertCounts = {');
+    expect(source).not.toContain('const filtered = normalizedItems.filter(item => {');
+    expect(helperSource).toContain('const counts = {');
+    expect(helperSource).toContain('const fundStats = items.reduce(');
+    expect(helperSource).toContain('const recentActivity = [...items]');
+    expect(helperSource).toContain('const registryInsights = buildRegistryInsights(');
+    expect(helperSource).toContain('const alertCounts = {');
+    expect(helperSource).toContain('const filtered = items.filter((item) => {');
+    expect(helperSource).not.toContain("from '../../../lib/supabase'");
+  });
+
   it('loads planning service rows with explicit projections', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/planningService.ts'), 'utf8');
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Planning.tsx'), 'utf8');

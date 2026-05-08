@@ -10335,6 +10335,17 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 06:13 AM PT - Local registry dashboard derived-state extraction
+- Scope: `src/pages/dashboard/Registry.tsx`, `src/pages/dashboard/registry/buildRegistryDashboardDerivedState.ts`, `src/lib/dashboardDataBoundary.test.ts`.
+- What changed:
+  - moved registry dashboard filter, analytics, review counters, readiness, and thank-you derived-state shaping out of `Registry.tsx` and into `buildRegistryDashboardDerivedState.ts`
+  - kept search/filter behavior, review counters, budget telemetry, recent/top gift ordering, registry insight copy, launch-readiness status, and thank-you preview math intact
+  - added boundary coverage that pins `buildRegistryDashboardDerivedState({ ... })` and rejects regaining the old inline counts/filter/insight slabs in `Registry.tsx`
+- Validation:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts` PASS (`17/17`)
+  - `npm run typecheck -- --pretty false` PASS
+  - `git diff --check` PASS
+- Outcome: `Registry.tsx` dropped from `1358` lines to `1302` lines; `buildRegistryDashboardDerivedState.ts` came in at `146` lines. No deploy was run.
 ## 2026-05-08 06:10 AM PT - Local registry dashboard data-hook extraction
 - Scope: `src/pages/dashboard/Registry.tsx`, `src/pages/dashboard/registry/useRegistryDashboardData.ts`, `src/lib/dashboardDataBoundary.test.ts`.
 - What changed:

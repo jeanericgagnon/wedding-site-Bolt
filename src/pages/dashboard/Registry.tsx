@@ -19,16 +19,14 @@ import { RegistryItemForm } from './registry/RegistryItemForm';
 import type { RegistryItem, RegistryFilter, RegistryItemDraft } from './registry/registryTypes';
 import { getRegistryItemMetadataState, sanitizeRegistryQuantityState } from './registry/registryTypes';
 import { getRegistryRepairStates } from './registry/repairState';
-import { findDuplicateRegistryGroups } from './registry/duplicateRegistryItems';
 import { getCurrentMonthKey, resolveRegistryRefreshBudgetState } from './registry/refreshBudget';
 import { ageExceedsMs, formatRegistryItemDate, getRegistryItemTimestamp, isRegistryItemDue } from './registryItemTime';
 import { getWeddingRefreshWindowDate, parseRefreshWindowEndIso, toValidDateOrNull } from './registryRefreshWindow';
 import { copyTextOrDownload } from '../../lib/copyText';
-import { buildRegistryInsights } from '../../lib/invisibleIntelligence';
 import { logAppAction } from '../../lib/actionAudit';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
-import { buildRegistryLaunchReadiness, buildRegistryThankYouPlan } from '../../lib/registryLaunchReadiness';
 import { normalizeOwnerDashboardRegistryItem, useRegistryDashboardData } from './registry/useRegistryDashboardData';
+import { buildRegistryDashboardDerivedState } from './registry/buildRegistryDashboardDerivedState';
 
 interface Toast {
   id: number;
@@ -136,13 +134,6 @@ export const DashboardRegistry: React.FC = () => {
   });
 
   const normalizedItems = items.map(normalizeOwnerDashboardRegistryItem);
-  const duplicateGroups = findDuplicateRegistryGroups(normalizedItems);
-  const actionableBadImportCount = normalizedItems.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length;
-  const bulkReviewCounts = {
-    repair: actionableBadImportCount,
-    duplicates: duplicateGroups.reduce((sum, group) => sum + group.length, 0),
-    imageIssues: normalizedItems.filter((item) => !item.image_url || item.image_url.includes('thum.io') || item.image_url.includes('weserv.nl')).length,
-  };
   const registryActionsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -758,26 +749,6 @@ export const DashboardRegistry: React.FC = () => {
     setShowForm(true);
   }
 
-  const filtered = normalizedItems.filter(item => {
-    const q = search.toLowerCase();
-    const matchesSearch =
-      !q ||
-      item.item_name.toLowerCase().includes(q) ||
-      (item.merchant ?? '').toLowerCase().includes(q) ||
-      (item.store_name ?? '').toLowerCase().includes(q);
-    const matchesFilter = filter === 'all' || item.purchase_status === filter;
-    const hasAlert =
-      !item.metadata_last_checked_at ||
-      ageExceedsMs(item.metadata_last_checked_at, WEEKLY_REFRESH_MS) ||
-      ((item.availability || '').toLowerCase().includes('out')) ||
-      (item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount);
-    const hasImageIssue = !item.image_url || item.image_url.includes('thum.io') || item.image_url.includes('weserv.nl');
-    const matchesAlerts = !showAlertsOnly || hasAlert;
-    const matchesImageIssues = !showImageIssuesOnly || hasImageIssue;
-    return matchesSearch && matchesFilter && matchesAlerts && matchesImageIssues;
-  });
-
-
   useEffect(() => {
     if (loading || isDemoMode || items.length === 0) return;
     const hasStale = normalizedItems.some((item) => !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > WEEKLY_REFRESH_MS);
@@ -791,14 +762,6 @@ export const DashboardRegistry: React.FC = () => {
   const refreshWindowUntil = refreshEnabledUntil
     ? toValidDateOrNull(refreshEnabledUntil)
     : getWeddingRefreshWindowDate(weddingDate);
-  const refreshWindowOpen = autoRefreshEnabled && (!refreshWindowUntil || refreshWindowUntil.getTime() >= Date.now());
-  const refreshBudgetRemaining = Math.max(0, monthlyRefreshCap - monthlyRefreshCount);
-  const budgetUtilization = monthlyRefreshCap > 0 ? monthlyRefreshCount / monthlyRefreshCap : 0;
-  const nearBudgetCap = budgetUtilization >= 0.8;
-  const eligibleItemCount = normalizedItems.filter((item) => refreshIncludePurchased || (item.purchase_status !== 'purchased' && !item.hide_when_purchased)).length;
-  const projectedMonthlyCalls = Math.min(eligibleItemCount, monthlyRefreshCap);
-  const projectedRefreshCoverage = eligibleItemCount > 0 ? Math.round((projectedMonthlyCalls / eligibleItemCount) * 100) : 100;
-  const daysUntilRefreshWindowEnd = refreshWindowUntil ? Math.ceil((refreshWindowUntil.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
   async function ensureMonthlyBudgetState() {
     const budgetState = resolveRegistryRefreshBudgetState({
       storedMonthKey: monthlyRefreshMonth,
@@ -817,55 +780,36 @@ export const DashboardRegistry: React.FC = () => {
     });
     return { monthKey: budgetState.monthKey, count: 0 };
   }
-
-  const baseRecommendedPreset: 'lean' | 'balanced' | 'aggressive' = items.length <= 40 ? 'lean' : items.length <= 120 ? 'balanced' : 'aggressive';
-  const recommendedPreset: 'lean' | 'balanced' | 'aggressive' = (daysUntilRefreshWindowEnd != null && daysUntilRefreshWindowEnd <= 14) ? 'lean' : baseRecommendedPreset;
-
-  const counts = {
-    total: normalizedItems.length,
-    purchased: normalizedItems.filter(i => i.purchase_status === 'purchased').length,
-    partial: normalizedItems.filter(i => i.purchase_status === 'partial').length,
-    available: normalizedItems.filter(i => i.purchase_status === 'available').length,
-    totalValue: normalizedItems.reduce((s, i) => s + (i.price_amount ?? 0), 0),
-  };
-
-  const fundStats = normalizedItems.reduce((acc, item) => {
-    if (item.item_type !== 'cash_fund') return acc;
-    acc.count += 1;
-    acc.goal += item.fund_goal_amount ?? 0;
-    acc.received += item.fund_received_amount ?? 0;
-    return acc;
-  }, { count: 0, goal: 0, received: 0 });
-
-  const fulfillmentRate = counts.total > 0 ? Math.round((counts.purchased / counts.total) * 100) : 0;
-  const recentActivity = [...normalizedItems]
-    .filter((item) => item.updated_at || item.created_at)
-    .sort((a, b) => getRegistryItemTimestamp(b.updated_at ?? b.created_at) - getRegistryItemTimestamp(a.updated_at ?? a.created_at))
-    .slice(0, 6);
-  const topRegistryItems = [...normalizedItems]
-    .sort((a, b) => {
-      const aProgress = (a.quantity_purchased ?? 0) / Math.max(a.quantity_needed ?? 1, 1);
-      const bProgress = (b.quantity_purchased ?? 0) / Math.max(b.quantity_needed ?? 1, 1);
-      return bProgress - aProgress;
-    })
-    .slice(0, 5);
-  const registryInsights = buildRegistryInsights(normalizedItems.map((item) => ({
-    category: item.item_type === 'cash_fund' ? 'cash funds' : null,
-    store_name: item.store_name ?? item.merchant,
-    item_name: item.item_name,
-    image_url: item.image_url,
-    price: item.price_amount,
-  }))).slice(0, 3);
-  const registryLaunchReadiness = buildRegistryLaunchReadiness(normalizedItems);
-  const registryThankYouPlan = buildRegistryThankYouPlan(normalizedItems);
-
-  const alertCounts = {
-    stale: normalizedItems.filter((i) => ageExceedsMs(i.metadata_last_checked_at, 1000 * 60 * 60 * 24)).length,
-    priceChanged: normalizedItems.filter((i) => i.previous_price_amount != null && i.price_amount != null && i.previous_price_amount !== i.price_amount).length,
-    outOfStock: normalizedItems.filter((i) => (i.availability || '').toLowerCase().includes('out')).length,
-    imageIssues: normalizedItems.filter((i) => !i.image_url || i.image_url.includes('thum.io') || i.image_url.includes('weserv.nl')).length,
-    badImports: normalizedItems.filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle).length,
-  };
+  const {
+    actionableBadImportCount,
+    alertCounts,
+    budgetUtilization,
+    bulkReviewCounts,
+    counts,
+    duplicateGroups,
+    filtered,
+    fulfillmentRate,
+    fundStats,
+    nearBudgetCap,
+    recentActivity,
+    refreshBudgetRemaining,
+    refreshWindowOpen,
+    registryInsights,
+    registryLaunchReadiness,
+    registryThankYouPlan,
+    topRegistryItems,
+  } = buildRegistryDashboardDerivedState({
+    autoRefreshEnabled,
+    items: normalizedItems,
+    monthlyRefreshCap,
+    monthlyRefreshCount,
+    refreshEnabledUntil: refreshWindowUntil,
+    refreshIncludePurchased,
+    search,
+    filter,
+    showAlertsOnly,
+    showImageIssuesOnly,
+  });
 
   const tabCount = (key: RegistryFilter) => {
     if (key === 'all') return counts.total;
