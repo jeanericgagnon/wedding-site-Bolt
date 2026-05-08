@@ -35,21 +35,13 @@ import {
   resolveGuestPhotoDashboardUserId,
   saveGuestPhotoHubSettings,
 } from './guestPhotoSharingService';
-import { buildGuestHubActions, summarizeGuestHubActions } from '../../lib/guestHubActions';
-import { buildMemoryFlowReadiness } from '../../lib/memoryFlowReadiness';
-import { buildGuestHubQrAssets } from '../../lib/guestHubQrAssets';
 import {
   DEFAULT_HUB_SETTINGS,
   analysisDisplayStatus,
   analysisSourceLabel,
-  buildPhotoDashboardCounts,
-  buildPhotoMemoryCollections,
-  eventMomentTags,
   makePhotoShareMessage,
   readStoredBucketLinks,
   safePhotoOwnerError,
-  slugTag,
-  tagLabel,
   writeStoredBucketLinks,
   type GuestHubSettings,
   type GuestProspectOptinRow,
@@ -68,6 +60,7 @@ import { GuestPhotoDashboardLiveContent } from './guestPhotos/GuestPhotoDashboar
 import { useGuestPhotoAiActions } from './guestPhotos/useGuestPhotoAiActions';
 import { buildGuestPhotoDashboardLiveContentProps } from './guestPhotos/buildGuestPhotoDashboardLiveContentProps';
 import { useGuestPhotoAlbumActions } from './guestPhotos/useGuestPhotoAlbumActions';
+import { buildGuestPhotoDashboardDerivedState } from './guestPhotos/buildGuestPhotoDashboardDerivedState';
 import { useGuestPhotoModerationActions } from './guestPhotos/useGuestPhotoModerationActions';
 import { useGuestPhotoExportActions } from './guestPhotos/useGuestPhotoExportActions';
 import { useGuestPhotoDashboardData } from './guestPhotos/useGuestPhotoDashboardData';
@@ -236,25 +229,9 @@ export const GuestPhotoSharing: React.FC = () => {
     return m;
   }, [uploads]);
 
-  const recentByBucket = useMemo(() => {
-    const m = new Map<string, PhotoUploadRow[]>();
-    const analysisMap = new Map(uploadAnalyses.map((analysis) => [analysis.upload_id, analysis]));
-    uploads
-      .filter((u) => (showHidden || !u.is_hidden) && (!showFlaggedOnly || u.is_flagged))
-      .filter((u) => {
-        if (tagFilter === 'all') return true;
-        return safePhotoAnalysisList(analysisMap.get(u.id)?.tags).some((rawTag) => rawTag.trim().toLowerCase() === tagFilter);
-      })
-      .forEach((u) => {
-        const arr = m.get(u.photo_album_id) ?? [];
-        if (arr.length < 5) arr.push(u);
-        m.set(u.photo_album_id, arr);
-      });
-    return m;
-  }, [uploads, uploadAnalyses, showHidden, showFlaggedOnly, tagFilter]);
   const analysisByUploadId = useMemo(() => new Map(uploadAnalyses.map((analysis) => [analysis.upload_id, analysis])), [uploadAnalyses]);
   const metadataByUploadId = useMemo(() => new Map(uploadMetadata.map((metadata) => [metadata.upload_id, metadata])), [uploadMetadata]);
-  const availableAiTags = useMemo(() => {
+  const availableAiTagCounts = useMemo(() => {
     const counts = new Map<string, number>();
     uploadAnalyses.forEach((analysis) => {
       safePhotoAnalysisList(analysis.tags).forEach((rawTag) => {
@@ -263,10 +240,13 @@ export const GuestPhotoSharing: React.FC = () => {
         counts.set(tag, (counts.get(tag) ?? 0) + 1);
       });
     });
-    return Array.from(counts.entries())
+    return counts;
+  }, [uploadAnalyses]);
+  const availableAiTags = useMemo(() => {
+    return Array.from(availableAiTagCounts.entries())
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
       .slice(0, 24);
-  }, [uploadAnalyses]);
+  }, [availableAiTagCounts]);
 
   const uploadMatchesTagFilter = (upload: PhotoUploadRow) => {
     if (tagFilter === 'all') return true;
@@ -396,13 +376,67 @@ export const GuestPhotoSharing: React.FC = () => {
     )),
     [uploadAnalyses]
   );
-  const photoDashboardCounts = useMemo(() => buildPhotoDashboardCounts({
-    uploads,
+  const {
+    filteredBuckets,
+    guestHubActions,
+    guestHubActionSummary,
+    guestHubQrAssets,
+    guestHubUrl,
+    guestRecapUrl,
+    memoryFlowReadiness,
+    missingItineraryEvents,
+    momentBucketSuggestions,
+    photoDashboardCounts,
+    photoMemoryCollections,
+    recapPublishWarnings,
+    recentByBucket,
+  } = useMemo(() => buildGuestPhotoDashboardDerivedState({
+    aiBucketCorrections,
+    analysisByUploadId,
+    availableAiTags: availableAiTagCounts,
+    bucketById,
+    bucketDepthById,
+    bucketSearch,
     buckets,
+    events,
+    guestProspects,
+    guestbookEntries,
+    hubSettings,
+    metadataByUploadId,
+    showFlaggedOnly,
+    showHidden,
+    siteSlug,
+    slideshowFramesLength: slideshowFrames.length,
+    slideshowReadyBucketCount,
+    statusFilter,
+    tagFilter,
     uploadAnalyses,
     uploadMetadata,
+    uploads,
+  }), [
     aiBucketCorrections,
-  }), [aiBucketCorrections, buckets, uploadAnalyses, uploadMetadata, uploads]);
+    analysisByUploadId,
+    availableAiTags,
+    bucketById,
+    bucketDepthById,
+    bucketSearch,
+    buckets,
+    events,
+    guestProspects,
+    guestbookEntries,
+    hubSettings,
+    metadataByUploadId,
+    showFlaggedOnly,
+    showHidden,
+    siteSlug,
+    slideshowFrames.length,
+    slideshowReadyBucketCount,
+    statusFilter,
+    tagFilter,
+    uploadAnalyses,
+    uploadMetadata,
+    uploads,
+  ]);
   const {
     totalUploads,
     activeBucketsCount,
@@ -420,11 +454,6 @@ export const GuestPhotoSharing: React.FC = () => {
     recapFeaturedCount,
     recapStoryCount,
   } = photoDashboardCounts;
-  const photoMemoryCollections = useMemo(() => buildPhotoMemoryCollections({
-    uploads,
-    analysisByUploadId,
-    metadataByUploadId,
-  }), [analysisByUploadId, metadataByUploadId, uploads]);
   const {
     chronologicalUploads,
     memoryChapters,
@@ -433,102 +462,6 @@ export const GuestPhotoSharing: React.FC = () => {
     similarPhotoGroups,
     duplicateExtraCount,
   } = photoMemoryCollections;
-  const guestHubUrl = siteSlug ? `${window.location.origin}/event/${encodeURIComponent(siteSlug)}` : '';
-  const guestRecapUrl = siteSlug ? `${window.location.origin}/event/${encodeURIComponent(siteSlug)}/recap` : '';
-  const guestHubActions = useMemo(() => siteSlug ? buildGuestHubActions(siteSlug, hubSettings) : [], [hubSettings, siteSlug]);
-  const guestHubActionSummary = useMemo(() => summarizeGuestHubActions(guestHubActions), [guestHubActions]);
-  const guestHubQrAssets = useMemo(() => buildGuestHubQrAssets({
-    hubUrl: guestHubUrl,
-    coupleLabel: siteSlug ?? 'Wedding guests',
-    actionSummary: guestHubActionSummary,
-    includePhotoPrompt: hubSettings.photos_enabled,
-  }), [guestHubActionSummary, guestHubUrl, hubSettings.photos_enabled, siteSlug]);
-  const recapPublishWarnings = useMemo(() => [
-    !hubSettings.photos_enabled ? 'Photo upload and recap sharing are off from the guest hub controls.' : null,
-    flaggedUploadCount > 0 ? `${flaggedUploadCount} flagged upload${flaggedUploadCount === 1 ? '' : 's'} still need review.` : null,
-    reviewUploads.length > 0 ? `${reviewUploads.length} upload${reviewUploads.length === 1 ? '' : 's'} are in the review queue.` : null,
-    recapFeaturedCount === 0 && recapStoryCount === 0 ? 'No photos have been featured or marked for story yet.' : null,
-  ].filter(Boolean) as string[], [hubSettings.photos_enabled, flaggedUploadCount, reviewUploads.length, recapFeaturedCount, recapStoryCount]);
-  const memoryFlowReadiness = useMemo(() => buildMemoryFlowReadiness({
-    albumCount: buckets.length,
-    activeAlbumCount: activeBucketsCount,
-    uploadCount: uploads.length,
-    videoUploadCount: uploads.filter((upload) => upload.mime_type?.startsWith('video/') || analysisByUploadId.get(upload.id)?.is_video).length,
-    guestbookEnabled: hubSettings.guestbook_enabled,
-    guestbookCount: guestbookEntries.length,
-    photoUploadEnabled: hubSettings.photos_enabled,
-    flaggedUploadCount,
-    reviewQueueCount: reviewUploads.length,
-    recapStatus: hubSettings.recap_status,
-    recapFeaturedCount,
-    recapStoryCount,
-    slideshowFrameCount: slideshowFrames.length,
-    slideshowReadyAlbumCount: slideshowReadyBucketCount,
-    guestHubActionCount: guestHubActions.length,
-    guestProspectCount: guestProspects.length,
-  }), [
-    activeBucketsCount,
-    analysisByUploadId,
-    buckets.length,
-    flaggedUploadCount,
-    guestHubActions.length,
-    guestProspects.length,
-    guestbookEntries.length,
-    hubSettings.guestbook_enabled,
-    hubSettings.photos_enabled,
-    hubSettings.recap_status,
-    recapFeaturedCount,
-    recapStoryCount,
-    reviewUploads.length,
-    slideshowFrames.length,
-    slideshowReadyBucketCount,
-    uploads.length,
-    uploads,
-  ]);
-
-  const filteredBuckets = useMemo(() => {
-    const q = bucketSearch.trim().toLowerCase();
-    return buckets.filter((a) => {
-      const statusOk = statusFilter === 'all' || (statusFilter === 'active' ? a.is_active : !a.is_active);
-      const parent = a.parent_album_id ? bucketById.get(a.parent_album_id) : null;
-      const haystack = `${a.name} ${a.slug} ${a.hierarchy_label ?? ''} ${parent?.name ?? ''}`.toLowerCase();
-      const searchOk = !q || haystack.includes(q);
-      return statusOk && searchOk;
-    }).sort((a, b) => {
-      const aParent = a.parent_album_id ? bucketById.get(a.parent_album_id)?.name ?? '' : a.name;
-      const bParent = b.parent_album_id ? bucketById.get(b.parent_album_id)?.name ?? '' : b.name;
-      return aParent.localeCompare(bParent) || (bucketDepthById.get(a.id) ?? 0) - (bucketDepthById.get(b.id) ?? 0) || a.name.localeCompare(b.name);
-    });
-  }, [buckets, bucketSearch, statusFilter, bucketById, bucketDepthById]);
-
-  const missingItineraryEvents = useMemo(() => {
-    const linked = new Set(buckets.map((a) => a.itinerary_event_id).filter(Boolean));
-    return events.filter((e) => !linked.has(e.id));
-  }, [events, buckets]);
-
-  const momentBucketSuggestions = useMemo(() => {
-    const tagCounts = new Map(availableAiTags);
-    const bucketNameTags = new Set(buckets.flatMap((bucket) => [
-      slugTag(bucket.name),
-      slugTag(bucket.hierarchy_label ?? ''),
-      bucket.slug,
-    ].filter(Boolean)));
-    return events.flatMap((event) => {
-      const parentBucket = buckets.find((bucket) => bucket.itinerary_event_id === event.id) ?? null;
-      return eventMomentTags(event.event_name)
-        .map((tag) => ({
-          tag,
-          label: tagLabel(tag),
-          eventId: event.id,
-          eventName: event.event_name,
-          parentBucket,
-          count: tagCounts.get(tag) ?? 0,
-        }))
-        .filter((suggestion) => suggestion.tag && !bucketNameTags.has(suggestion.tag));
-    })
-      .sort((a, b) => b.count - a.count || a.eventName.localeCompare(b.eventName) || a.label.localeCompare(b.label))
-      .slice(0, 18);
-  }, [availableAiTags, buckets, events]);
 
   const bucketCardTone = (bucketName: string) => {
     const name = bucketName.toLowerCase();

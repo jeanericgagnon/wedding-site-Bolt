@@ -6335,3 +6335,18 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 08:41 AM PT No-Deploy Guest Photo Derived-State Helper Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now routes the guest photo dashboard counts, memory collections, guest-hub shaping, readiness, filter, and suggestion math through `src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardDerivedState.ts`.
+  - That helper now owns `buildPhotoDashboardCounts(...)`, `buildPhotoMemoryCollections(...)`, guest hub URL/action/QR shaping, recap publish warnings, memory-flow readiness, filtered album sorting, missing itinerary detection, moment-bucket suggestions, and recent-upload grouping while the page keeps dashboard data hydration, bucket workspace, AI actions, moderation actions, export actions, album actions, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildGuestPhotoDashboardDerivedState({ ... })`, checks that `buildGuestPhotoDashboardDerivedState.ts` owns the dashboard count/memory/guest-hub seam, and rejects regaining the old inline derived-state slab in `GuestPhotoSharing.tsx`.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 873 lines to 806 lines in this batch, while `src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardDerivedState.ts` came in at 194 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

@@ -1130,6 +1130,7 @@ describe('dashboard data boundary guards', () => {
     const aiActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoAiActions.ts'), 'utf8');
     const bucketWorkspace = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoBucketWorkspace.ts'), 'utf8');
     const dashboardData = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoDashboardData.ts'), 'utf8');
+    const derivedState = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardDerivedState.ts'), 'utf8');
     const exportActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoExportActions.ts'), 'utf8');
     const moderationActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoModerationActions.ts'), 'utf8');
     const liveContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/GuestPhotoDashboardLiveContent.tsx'), 'utf8');
@@ -1138,6 +1139,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('await saveGuestPhotoHubSettings(siteId, hubSettings)');
     expect(source).toContain('useGuestPhotoAlbumActions({');
     expect(source).toContain('useGuestPhotoAiActions({');
+    expect(source).toContain('buildGuestPhotoDashboardDerivedState({');
     expect(source).toContain('useGuestPhotoExportActions({');
     expect(source).toContain('useGuestPhotoModerationActions({');
     expect(source).toContain('queueGuestPhotoFollowupsFromService(siteId, kind)');
@@ -1188,6 +1190,10 @@ describe('dashboard data boundary guards', () => {
     expect(aiActions).toContain('await moveGuestPhotoUploadToBucket(siteId, move.uploadId, move.targetBucketId)');
     expect(aiActions).toContain('await createGuestPhotoBucketCorrection(siteId, analysis, action, chosenBucketId, reason)');
     expect(aiActions).toContain("await analyzeGuestPhotoUploads(siteId, uploadIds, force, force ? 'vision' : 'auto')");
+    expect(derivedState).toContain('export function buildGuestPhotoDashboardDerivedState({');
+    expect(derivedState).toContain('const photoDashboardCounts = buildPhotoDashboardCounts({');
+    expect(derivedState).toContain('const photoMemoryCollections = buildPhotoMemoryCollections({');
+    expect(derivedState).toContain('const guestHubActions = siteSlug ? buildGuestHubActions(siteSlug, hubSettings) : [];');
     expect(exportActions).toContain('export function useGuestPhotoExportActions({');
     expect(exportActions).toContain('await exportGuestPhotoManifest(siteId, showHidden)');
     expect(exportActions).toContain("await manageGuestPhotoAlbum({ action: 'regenerate_link', albumId: bucket.id })");
@@ -1226,6 +1232,13 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('const generateAiPhotoOpsPlan = async () => {');
     expect(source).not.toContain('const applyVisionSuggestion = async (analysis: PhotoUploadAiAnalysisRow) => {');
     expect(source).not.toContain('const analyzeUploadsWithVision = async (force = false) => {');
+    expect(source).not.toContain('const photoDashboardCounts = useMemo(() => buildPhotoDashboardCounts({');
+    expect(source).not.toContain('const photoMemoryCollections = useMemo(() => buildPhotoMemoryCollections({');
+    expect(source).not.toContain('const guestHubActions = useMemo(() => siteSlug ? buildGuestHubActions(siteSlug, hubSettings) : [], [hubSettings, siteSlug]);');
+    expect(source).not.toContain('const recapPublishWarnings = useMemo(() => [');
+    expect(source).not.toContain('const filteredBuckets = useMemo(() => {');
+    expect(source).not.toContain('const missingItineraryEvents = useMemo(() => {');
+    expect(source).not.toContain('const momentBucketSuggestions = useMemo(() => {');
     expect(source).not.toContain('const copyText = async (value: string, key: string) => {');
     expect(source).not.toContain('const exportSlideshowPlan = async () => {');
     expect(source).not.toContain('const exportBucketCsv = (bucketId: string, bucketName: string) => {');
