@@ -4642,6 +4642,22 @@ Status:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-08 02:34 AM PT No-Deploy Overview Live-Content Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Overview.tsx` now routes the owner-facing overview dashboard body through `src/pages/dashboard/OverviewDashboardLiveContent.tsx`.
+  - That component now owns the hero, setup progress, digest cards, archive and keepsake panels, name-change assistant surface, site-status card, analytics cards, proof-only panels, and interactive suggestion rendering while the page keeps loading, snapshot hydration, intelligence actions, and top-level state.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<OverviewDashboardLiveContent`, checks that `OverviewDashboardLiveContent.tsx` owns the calm hero and site card surface, and rejects regaining the inline `A calmer place to plan {coupleLabel}.` slab in `Overview.tsx`.
+  - `src/pages/dashboard/Overview.tsx` dropped from 1372 lines to 319 lines in this batch, while `src/pages/dashboard/OverviewDashboardLiveContent.tsx` came in at 1168 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/overviewQueryBounds.test.ts src/pages/dashboard/overviewService.test.ts src/pages/dashboard/overviewUtils.test.ts src/pages/dashboard/overviewDate.test.ts`: PASS, 30/30.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 01:00 AM PT No-Deploy Overview Intelligence Action Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

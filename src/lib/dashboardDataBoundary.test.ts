@@ -575,8 +575,10 @@ describe('dashboard data boundary guards', () => {
     const actions = readFileSync(join(process.cwd(), 'src/pages/dashboard/useOverviewIntelligenceActions.ts'), 'utf8');
     const model = readFileSync(join(process.cwd(), 'src/pages/dashboard/buildOverviewDashboardModel.ts'), 'utf8');
     const snapshotState = readFileSync(join(process.cwd(), 'src/pages/dashboard/buildOverviewSnapshotState.ts'), 'utf8');
+    const liveContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/OverviewDashboardLiveContent.tsx'), 'utf8');
 
     expect(source).toContain('<OverviewDashboardRouteView');
+    expect(source).toContain('<OverviewDashboardLiveContent');
     expect(source).toContain('useOverviewIntelligenceActions({');
     expect(source).toContain('buildOverviewDashboardModel({');
     expect(source).toContain('buildOverviewSiteDraftState(site)');
@@ -604,6 +606,9 @@ describe('dashboard data boundary guards', () => {
     expect(snapshotState).toContain('export function buildOverviewSiteDraftState(site: {');
     expect(snapshotState).toContain('export function buildNameChangeOverviewSnapshotState(workspace:');
     expect(snapshotState).toContain('export function buildOverviewStatsFromSnapshot({');
+    expect(liveContent).toContain('export function OverviewDashboardLiveContent({');
+    expect(liveContent).toContain('A calmer place to plan {coupleLabel}.');
+    expect(liveContent).toContain('<CardTitle>Your wedding site</CardTitle>');
     expect(service).toContain("const OVERVIEW_DISMISSALS_SITE_SELECT = 'wedding_data'");
     expect(service).toContain("const OVERVIEW_SITE_SELECT = 'id, site_slug, site_url, is_published, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location'");
     expect(service).toContain('.select(OVERVIEW_DISMISSALS_SITE_SELECT)');
@@ -617,6 +622,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('await hideInteractiveSuggestion(id)');
     expect(model).not.toContain("from '../../lib/supabase'");
     expect(snapshotState).not.toContain("from '../../lib/supabase'");
+    expect(source).not.toContain('A calmer place to plan {coupleLabel}.');
   });
 
   it('keeps guest photo bucket persistence behind its service', () => {
