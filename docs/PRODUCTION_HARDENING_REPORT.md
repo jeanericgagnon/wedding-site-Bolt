@@ -4089,3 +4089,19 @@ Validation:
 
 Status:
 - PARTIAL. This continues the oversized-file and page-boundary cleanup in the guest photo dashboard without changing bucket rendering, upload-window editing, recent-upload moderation, or sharing controls. No deploy was run.
+
+## 2026-05-07 8:24 PM PT No-Deploy Guest Dashboard Export Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes guest CSV/export/download behavior through the existing `src/pages/dashboard/guests/useGuestDashboardExports.ts` hook instead of carrying the inline blob/download block.
+  - That seam now covers guest exports, RSVP responder/pending/meal/attendance exports, thank-you/check-in exports, address/household exports, guest update link copy, and text RSVP link copy.
+  - `useGuestDashboardExports.ts` now accepts optional slug-loader helpers so the guest dashboard keeps the current service-backed public/site slug lookup behavior instead of regressing to stale local assumptions.
+  - `src/lib/dashboardDataBoundary.test.ts` and `src/pages/dashboard/guests/guestService.test.ts` now pin the new export-hook seam and reject regaining the old inline guest export helper block.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`: PASS, 66/66.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the oversized-file and page-boundary cleanup in the guest dashboard without changing guest export behavior. No deploy was run.

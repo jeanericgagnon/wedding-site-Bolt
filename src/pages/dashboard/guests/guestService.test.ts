@@ -143,8 +143,8 @@ describe('guestService', () => {
     expect(page).toContain('removeGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(page).toContain('addGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(page).toContain('saveAssistedGuestRsvp({');
-    expect(page).toContain('loadGuestDashboardSiteSlug(weddingSiteId)');
-    expect(page).toContain('loadGuestDashboardPublicSlug(weddingSiteId)');
+    expect(page).toContain('loadPublicSlug: loadGuestDashboardPublicSlug');
+    expect(page).toContain('loadSiteSlug: loadGuestDashboardSiteSlug');
     expect(page).toContain('resolveGuestDashboardSiteId(user.id)');
     expect(page).toContain('updateGuestCheckInForSite(weddingSiteId, lastCheckIn.guestId, null)');
     expect(page).toContain('updateGuestThankYouSentForSite(weddingSiteId, guest.id, nextValue)');

@@ -1906,3 +1906,10 @@ Write a short architecture note after the highest-risk hardening lanes are imple
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.
+- 2026-05-07 8:24 PM PT - No-deploy Guest dashboard export-service extraction:
+  - Resolved in this batch: moved the guest dashboard CSV/download and guest-contact/RSVP-link export transport out of `src/pages/dashboard/Guests.tsx` and behind the existing `src/pages/dashboard/guests/useGuestDashboardExports.ts` hook.
+  - Data-boundary hardening: `Guests.tsx` now routes guest CSV exports, event attendance export, thank-you/check-in exports, address/household exports, guest update link copy, and text RSVP link copy through `useGuestDashboardExports(...)` instead of carrying the old inline browser blob/download block.
+  - No feature loss: filtered guest exports, event attendance exports, guest update link copy, and SMS RSVP link copy preserve the current behavior, including the service-backed public/site slug lookup path.
+  - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` and `src/pages/dashboard/guests/guestService.test.ts` now pin the export-hook seam and reject regaining the old inline export helpers.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts` (66/66), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest dashboard without changing guest operations behavior. No deploy was run.

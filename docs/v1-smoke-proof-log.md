@@ -7428,6 +7428,20 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 8:24 PM PT No-Deploy Guest Dashboard Export Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes guest CSV/export/download behavior through `src/pages/dashboard/guests/useGuestDashboardExports.ts` instead of carrying the old inline browser blob/download block.
+  - `useGuestDashboardExports.ts` now accepts optional slug-loader helpers so the guest dashboard can preserve its service-backed public/site slug lookup path while moving the export seam out of the page.
+  - `src/lib/dashboardDataBoundary.test.ts` and `src/pages/dashboard/guests/guestService.test.ts` now pin that export-hook seam and reject regaining the old inline guest export helper block.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts`: PASS, 66/66.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 5:57 PM PT No-Deploy Guest hub public service extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

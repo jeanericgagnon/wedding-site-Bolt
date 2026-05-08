@@ -64,8 +64,8 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('removeGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(source).toContain('addGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(source).toContain('saveAssistedGuestRsvp({');
-    expect(source).toContain('loadGuestDashboardSiteSlug(weddingSiteId)');
-    expect(source).toContain('loadGuestDashboardPublicSlug(weddingSiteId)');
+    expect(source).toContain('loadPublicSlug: loadGuestDashboardPublicSlug');
+    expect(source).toContain('loadSiteSlug: loadGuestDashboardSiteSlug');
     expect(source).toContain('resolveGuestDashboardSiteId(user.id)');
     expect(source).toContain('updateGuestCheckInForSite(weddingSiteId, lastCheckIn.guestId, null)');
     expect(source).toContain('updateGuestThankYouSentForSite(weddingSiteId, guest.id, nextValue)');
@@ -83,6 +83,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('<GuestCampaignReminderPanel');
     expect(source).toContain('<GuestOpsSummaryPanel');
     expect(source).toContain('<GuestDashboardOverlays');
+    expect(source).toContain('useGuestDashboardExports({');
     expect(source).toContain('clearGuestCheckInsForSite(weddingSiteId)');
     expect(source).toContain('assignGuestsToHouseholdForSite(weddingSiteId, ids, householdId)');
     expect(source).toContain('updateGuestHouseholdForSite(weddingSiteId, guestId, null)');
@@ -166,6 +167,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain(".from('guests')\n            .update({ reminder_last_sent_at: new Date().toISOString() })");
     expect(source).not.toContain(".from('guests')\n        .update({ household_id: householdId })");
     expect(source).not.toContain(".from('wedding_sites')\n      .update(patch)");
+    expect(source).not.toContain('const exportCSV = (rowsSource: GuestWithRSVP[] = guests, suffix = \'guests\') => {');
+    expect(source).not.toContain('const exportEventAttendanceCSV = () => {');
+    expect(source).not.toContain('async function copyContactRequestLink() {');
+    expect(source).not.toContain('const copySmsRsvpLinksForFiltered = async () => {');
     expect(source).not.toContain('await resolveActiveSiteForUser(user.id)');
     expect(source).not.toContain("supabase.from('event_invitations').insert(rows)");
     expect(source).not.toContain("supabase.from('event_invitations').insert(eventInviteRows)");

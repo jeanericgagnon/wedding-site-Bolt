@@ -63,22 +63,16 @@ import {
   type WeddingSiteInfo,
 } from './guests/guestDashboardTypes';
 import {
-  buildCheckedInGuestsCsv,
-  buildEventAttendanceCsv,
   buildGuestHouseholdGroups,
   buildGuestOpsQueue,
-  buildGuestAddressCollectionCsv,
-  buildGuestExportCsv,
   buildFilteredEmailList,
   buildFollowUpTask,
   buildGeneratedFollowUpTasks,
-  buildHouseholdLabelsCsv,
   buildMissingMealChecklistLines,
   buildNoContactChecklistLines,
   buildRsvpExceptionChecklistLines,
   buildRsvpFollowUpSummary,
   buildSavedSegment,
-  buildThankYouDueCsv,
   getGuestCustomAnswerRollup,
   getGuestCampaignReadiness,
   getGuestContactStats,
@@ -161,6 +155,7 @@ import {
   type AssistedRsvpStatus,
   type GuestEventInvitationRollback,
 } from './guests/guestService';
+import { useGuestDashboardExports } from './guests/useGuestDashboardExports';
 
 export const DashboardGuests: React.FC = () => {
   const navigate = useNavigate();
@@ -1474,27 +1469,6 @@ const handleSendBulkInvitations = async () => {
     await persistGuestReminderSettings(weddingSiteId, patch);
   };
 
-  async function copyContactRequestLink() {
-    if (!weddingSiteId) {
-      toast('Missing wedding site context', 'error');
-      return;
-    }
-
-    const publicSlug = await loadGuestDashboardPublicSlug(weddingSiteId);
-    if (!publicSlug) {
-      toast('Set a public site slug before sharing the guest update link', 'error');
-      return;
-    }
-
-    const url = `https://${publicSlug}.dayof.love/guest-contact/${publicSlug}`;
-    const result = await copyTextOrDownload(url, 'dayof-guest-update-link.txt');
-    if (result === 'copied') {
-      toast('Guest update link copied', 'success');
-    } else {
-      toast('Clipboard was blocked, so the guest update link downloaded.', 'success');
-    }
-  }
-
   async function openItineraryDrawer(guest: GuestWithRSVP) {
     if (!weddingSiteId) return;
     setItineraryDrawerGuest(guest);
@@ -1647,118 +1621,6 @@ const handleSendBulkInvitations = async () => {
       })
       .map((event) => event.id);
     setFormEventInviteIds(new Set(invitedIds));
-  };
-
-  const exportCSV = (rowsSource: GuestWithRSVP[] = guests, suffix = 'guests') => {
-    const blob = new Blob([buildGuestExportCsv({ guests: rowsSource, origin: window.location.origin })], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${suffix}_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const exportFilteredCSV = () => {
-    const segment = (segmentLabelMap[filterStatus] || filterStatus).toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    exportCSV(filteredGuests, `guests-${segment}`);
-  };
-
-  const exportRsvpRespondersCSV = () => {
-    const responders = guests.filter((g) => hasRespondedRsvpStatus(g.rsvp_status));
-    exportCSV(responders, 'guests-rsvp-responders');
-  };
-
-  const exportPendingGuestsCSV = () => {
-    exportCSV(guests.filter((g) => isPendingRsvpStatus(g.rsvp_status)), 'guests-pending-rsvp');
-  };
-
-  const exportMissingMealCSV = () => {
-    exportCSV(guests.filter((g) => g.rsvp?.attending && !g.rsvp?.meal_choice), 'guests-missing-meal');
-  };
-
-  const exportAttendingGuestsCSV = () => {
-    exportCSV(guests.filter((g) => isAttendingRsvpStatus(g.rsvp_status)), 'guests-attending');
-  };
-
-  const exportDeclinedGuestsCSV = () => {
-    exportCSV(guests.filter((g) => isDeclinedRsvpStatus(g.rsvp_status)), 'guests-declined');
-  };
-
-  const exportThankYouDueCSV = () => {
-    const due = guests.filter((g) => dueThankYouGuestIds.has(g.id));
-    const blob = new Blob([buildThankYouDueCsv(due)], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `thank-you-due_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const exportCheckedInCSV = () => {
-    const checkedIn = guests.filter((g) => !!g.checked_in_at);
-    const blob = new Blob([buildCheckedInGuestsCsv(checkedIn)], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `checked-in-guests_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const copySmsRsvpLinksForFiltered = async () => {
-    if (!weddingSiteId) {
-      toast('Missing wedding site context', 'error');
-      return;
-    }
-
-    const siteSlug = await loadGuestDashboardSiteSlug(weddingSiteId);
-    if (!siteSlug) {
-      toast('Missing site slug', 'error');
-      return;
-    }
-
-    const rows = reminderCandidates
-      .filter((g) => !!g.invite_token)
-      .map((g) => {
-        const name = (g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name;
-        const link = `https://${siteSlug}.dayof.love/rsvp?token=${g.invite_token}`;
-        return `${name}: ${link}`;
-      });
-
-    if (rows.length === 0) {
-      toast('No RSVP links available for this segment.', 'error');
-      return;
-    }
-
-    const payload = rows.join('\n');
-    const result = await copyTextOrDownload(payload, 'dayof-text-rsvp-links.txt');
-    if (result === 'copied') {
-      toast(`Copied ${rows.length} text RSVP link${rows.length === 1 ? '' : 's'}`, 'success');
-    } else {
-      toast('Clipboard was blocked, so the text RSVP links downloaded.', 'success');
-    }
-  };
-
-  const exportAddressCollectionCSV = () => {
-    const blob = new Blob([buildGuestAddressCollectionCsv(guests)], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `guest-addresses_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const exportHouseholdLabelsCSV = () => {
-    const blob = new Blob([buildHouseholdLabelsCsv({ guests, origin: window.location.origin })], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `household-labels_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
   };
 
   const handleDeleteAllGuests = async () => {
@@ -2175,17 +2037,6 @@ const handleSendBulkInvitations = async () => {
     };
   });
 
-  const exportEventAttendanceCSV = () => {
-    const csvContent = buildEventAttendanceCsv({ guests, events: effectiveItineraryEvents, eventInviteGuestMap });
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `event-attendance_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
   const mealChoiceRollup = getGuestMealChoiceRollup(guests);
   const customAnswerRollup = getGuestCustomAnswerRollup(guests);
   const songRequestEntries = getGuestSongRequestEntries(guests);
@@ -2267,6 +2118,36 @@ const handleSendBulkInvitations = async () => {
   const reminderCandidates = emailableFilteredGuests.filter((g: any) => {
     if (!skipRecentlyInvited) return true;
     return dueReminderGuestIds.has(g.id);
+  });
+
+  const {
+    copyContactRequestLink,
+    copySmsRsvpLinksForFiltered,
+    exportAddressCollectionCSV,
+    exportAttendingGuestsCSV,
+    exportCheckedInCSV,
+    exportCSV,
+    exportDeclinedGuestsCSV,
+    exportEventAttendanceCSV,
+    exportFilteredCSV,
+    exportHouseholdLabelsCSV,
+    exportMissingMealCSV,
+    exportPendingGuestsCSV,
+    exportRsvpRespondersCSV,
+    exportThankYouDueCSV,
+  } = useGuestDashboardExports({
+    dueThankYouGuestIds,
+    effectiveItineraryEvents,
+    eventInviteGuestMap,
+    filteredGuests,
+    guests,
+    loadPublicSlug: loadGuestDashboardPublicSlug,
+    loadSiteSlug: loadGuestDashboardSiteSlug,
+    reminderCandidates,
+    segmentLabel: segmentLabelMap[filterStatus] || filterStatus,
+    toast,
+    weddingSiteId,
+    weddingSiteInfo,
   });
 
   const dryRunRecipientPreview = reminderCandidates.slice(0, 8).map((g) => (g.first_name || g.last_name) ? `${g.first_name ?? ""} ${g.last_name ?? ""}`.trim() : g.name);
