@@ -120,6 +120,7 @@ import {
   updateCoordinatorGuestCheckIn,
   updateCoordinatorQnaAnswer,
 } from './coordinator/coordinatorService';
+import { buildCoordinatorDashboardBoardActions } from './coordinator/buildCoordinatorDashboardBoardActions';
 import { CoordinatorAttentionPanel, CoordinatorCheckInQueuePanel, CoordinatorDayOfMessagePanel, CoordinatorDayOfSummaryPanel, CoordinatorHandoffPanel, CoordinatorHelperAccessPanel, CoordinatorRoleSelector, CoordinatorStatCards, CoordinatorTimelinePanel } from './coordinator/CoordinatorModePanels';
 import { buildCoordinatorDashboardFocusActions } from './coordinator/buildCoordinatorDashboardFocusActions';
 import { useCoordinatorDashboardData } from './coordinator/useCoordinatorDashboardData';
@@ -1026,155 +1027,106 @@ export const DashboardCoordinatorMode: React.FC = () => {
     return () => window.clearTimeout(timer);
   }, [summaryFeedback, summaryFeedbackShownAt]);
 
-  const returnToBoard = () => {
-    const next = resolveCoordinatorReturnToBoardState({
-      hasDoorReview: guests.some((guest) => getCoordinatorDoorStatus(guest) === 'watch'),
-      hasOpenQna: qnaItems.some((item) => item.status === 'new'),
-      hasLiveEvent: events.some((event) => (timelineState[event.id] || 'up-next') === 'live'),
-    });
-    setCommandSource(next.commandSource);
-    setPanelFocus(next.panelFocus);
-    setCheckInFilter(next.checkInFilter);
-    setCheckInReviewOnly(next.checkInReviewOnly);
-    setNeutralFocusReason(getCoordinatorNeutralFocusReason(next.panelFocus));
-    if (next.panelFocus === 'qna') {
-      setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
-    }
-  };
-
-  const runPrimaryAction = () => {
-    const target = resolveCoordinatorPrimaryActionTarget(primaryAction);
-    clearCoordinatorTransientState();
-    if (target.panelFocus === 'check-in') {
-      setCommandSource('primary-action');
-      setCheckInFilter('arrivals');
-      setCheckInReviewOnly(target.reviewOnly);
-      setPanelFocus('check-in');
-      return;
-    }
-    if (target.panelFocus === 'qna') {
-      setCommandSource('primary-action');
-      setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
-      setPanelFocus('qna');
-      return;
-    }
-    if (target.panelFocus === 'timeline') {
-      if (upNextEventId && canEditTimeline) {
-        setCommandSource('primary-action');
-        runTimelineAction(upNextEventId, 'live');
-      } else {
-        setCommandSource('primary-action');
-    setPanelFocus('timeline');
-      }
-    }
-  };
-
-  const runTimelineAction = (eventId: string, nextState: TimelineState | null) => {
-    if (!nextState || !canEditTimeline) return;
-    clearCoordinatorTransientState();
-    const transitionEvent = events.find((event) => event.id === eventId) ?? null;
-    setTimelineState((prev) => setCoordinatorEventTimelineState(prev, eventId, nextState));
-    setActiveTimelineEventId(eventId);
-    const suggestedIntent = resolveCoordinatorTimelineAlertIntent(alertSuggestions, eventId);
-    const nextSuggestion = suggestedIntent
-      ? alertSuggestions.find((suggestion) => suggestion.key === suggestedIntent) ?? null
-      : null;
-    const shouldSyncAlertDraft = alertTargetCue.aligned || (!alertForm.subject.trim() && !alertForm.body.trim());
-    if (suggestedIntent) {
-      setLastAlertSuggestionKey(suggestedIntent);
-    }
-    if (nextSuggestion) {
-      setAlertForm((prev) => syncCoordinatorAlertDraftForTimelineTransition({
-        form: prev,
-        nextSuggestion,
-        shouldSync: shouldSyncAlertDraft,
-      }));
-    }
-    if (transitionEvent) {
-      setSummaryFeedback(createCoordinatorSummaryFeedback({
-        label: getCoordinatorTimelineTransitionLabel({
-          eventName: transitionEvent.event_name,
-          nextState,
-          syncedAlert: Boolean(nextSuggestion) && shouldSyncAlertDraft,
-        }),
-        panelFocus: 'timeline',
-        targetId: eventId,
-        kind: 'transition',
-      }));
-      setSummaryFeedbackShownAt(Date.now());
-    }
-    setPanelFocus('timeline');
-  };
-
-  const selectTimelineState = (eventId: string, nextState: TimelineState) => {
-    runTimelineAction(eventId, nextState);
-  };
-
-  const runCorrectionCue = (cue: (typeof correctionCues)[number]) => {
-    const target = resolveCoordinatorCorrectionCueTarget(cue);
-    clearCoordinatorTransientState();
-    setCommandSource('correction');
-    setPanelFocus(target.panelFocus);
-    setCheckInReviewOnly(target.reviewOnly);
-
-    if (cue.key === 'undo-check-in') {
-      setCheckInFilter('checked-in');
-      if (correctionGuestId) setActiveGuestId(correctionGuestId);
-      return;
-    }
-
-    if (cue.key === 'reopen-event' && correctionEventId) {
-      setActiveTimelineEventId(correctionEventId);
-    }
-  };
-
-  const runEscalationIssue = (item: (typeof liveIssues)[number]) => {
-    const focus = resolveCoordinatorQueueFocus(item.key);
-    const nextPanelFocus = resolveCoordinatorPanelFocus(item.key);
-    const timelineTarget = resolveCoordinatorEscalationTimelineTarget({ escalationKey: item.key, upNextEvent });
-    clearCoordinatorTransientState();
-    if (item.key === 'open-qna') setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
-    setCommandSource('escalation');
-    setCheckInFilter(focus.filter);
-    setCheckInReviewOnly(focus.reviewOnly);
-    setPanelFocus(nextPanelFocus);
-    if (timelineTarget && canEditTimeline) {
-      setTimelineState((prev) => setCoordinatorEventTimelineState(prev, timelineTarget, 'live'));
-    }
-  };
-
-  const focusArrivalGuest = (guest: GuestLiteForCoordinator) => {
-    focusCoordinatorCheckInLane();
-    setCheckInFilter('arrivals');
-    setCheckInReviewOnly(false);
-    setActiveGuestId(guest.id);
-  };
-
-  const saveQnaAnswer = async (id: string) => {
-    if (!canEditQna) {
-      toast('Your collaborator role cannot edit guest questions here.', 'info');
-      return;
-    }
-    focusCoordinatorQnaLane();
-    const draftAnswer = qnaDraftAnswers[id] ?? qnaItems.find((item) => item.id === id)?.answer ?? '';
-    const nextItems = updateCoordinatorQnaItem(qnaItems, id, draftAnswer);
-    const nextItem = nextItems.find((item) => item.id === id);
-    if (!nextItem) return;
-
-    if (!isDemoMode) {
-      try {
-        await updateCoordinatorQnaAnswer(id, nextItem);
-      } catch {
-        toast('Couldn’t save that answer right now.', 'error');
-        return;
-      }
-    }
-
-    setQnaItems(nextItems);
-    setQnaDraftAnswers((prev) => ({ ...prev, [id]: nextItem.answer || '' }));
-    setActiveQnaId(nextItem.status === 'answered' ? getNextCoordinatorQnaFocusId(nextItems, id) : id);
-    toast(nextItem.status === 'answered' ? 'Guest question answered.' : 'Guest question reopened.', 'success');
-  };
+  const {
+    focusArrivalGuest,
+    returnToBoard,
+    runCorrectionCue,
+    runEscalationIssue,
+    runPrimaryAction,
+    runTimelineAction,
+    saveQnaAnswer,
+    selectTimelineState,
+  } = useMemo(() => buildCoordinatorDashboardBoardActions({
+    alertForm,
+    alertSuggestions,
+    alertTargetCueAligned: alertTargetCue.aligned,
+    canEditQna,
+    canEditTimeline,
+    correctionCues,
+    correctionEventId,
+    correctionGuestId,
+    events,
+    guests,
+    isDemoMode,
+    liveIssues,
+    panelFocus,
+    primaryAction,
+    qnaBoardTargetId,
+    qnaDraftAnswers,
+    qnaItems,
+    sortedGuests,
+    siteId,
+    timelineBoardTargetId,
+    timelineState,
+    upNextEvent,
+    upNextEventId,
+    setActiveGuestId,
+    setActiveQnaId,
+    setActiveTimelineEventId,
+    setAlertForm,
+    setCheckInFilter,
+    setCheckInReviewOnly,
+    setCommandSource,
+    setLastAlertSuggestionKey,
+    setNeutralFocusReason,
+    setPanelFocus,
+    setQnaDraftAnswers,
+    setQnaItems,
+    setSummaryFeedback,
+    setSummaryFeedbackShownAt,
+    setTimelineState,
+    clearCoordinatorTransientState,
+    focusCoordinatorCheckInLane,
+    focusCoordinatorQnaLane,
+    focusCoordinatorTimelineLane,
+    toast,
+    updateCoordinatorQnaAnswer,
+  }), [
+    alertForm,
+    alertSuggestions,
+    alertTargetCue.aligned,
+    canEditQna,
+    canEditTimeline,
+    correctionCues,
+    correctionEventId,
+    correctionGuestId,
+    events,
+    guests,
+    isDemoMode,
+    liveIssues,
+    panelFocus,
+    primaryAction,
+    qnaBoardTargetId,
+    qnaDraftAnswers,
+    qnaItems,
+    sortedGuests,
+    siteId,
+    timelineBoardTargetId,
+    timelineState,
+    upNextEvent,
+    upNextEventId,
+    setActiveGuestId,
+    setActiveQnaId,
+    setActiveTimelineEventId,
+    setAlertForm,
+    setCheckInFilter,
+    setCheckInReviewOnly,
+    setCommandSource,
+    setLastAlertSuggestionKey,
+    setNeutralFocusReason,
+    setPanelFocus,
+    setQnaDraftAnswers,
+    setQnaItems,
+    setSummaryFeedback,
+    setSummaryFeedbackShownAt,
+    setTimelineState,
+    clearCoordinatorTransientState,
+    focusCoordinatorCheckInLane,
+    focusCoordinatorQnaLane,
+    focusCoordinatorTimelineLane,
+    toast,
+    updateCoordinatorQnaAnswer,
+  ]);
 
   return (
     <DashboardLayout currentPage="coordinator">

@@ -5883,3 +5883,18 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 05:38 AM PT No-Deploy Coordinator Dashboard Board-Actions Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/CoordinatorMode.tsx` now routes the coordinator dashboard board-return, primary-action, timeline-transition, correction, escalation, arrival-focus, and Q&A-save action lane through `src/pages/dashboard/coordinator/buildCoordinatorDashboardBoardActions.ts`.
+  - That helper now owns return-to-board state resolution, primary-action dispatch, timeline transitions with alert-draft sync, correction cue routing, escalation routing, arrival guest focus, and guest-question save/reopen behavior while the page keeps data hydration, alert send transport, add-question transport, derived boards, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildCoordinatorDashboardBoardActions({ ... })`, checks that `buildCoordinatorDashboardBoardActions.ts` owns the coordinator board-action seam, and rejects regaining the old inline `runPrimaryAction(...)`, `runTimelineAction(...)`, and `runEscalationIssue(...)` blocks in `CoordinatorMode.tsx`.
+  - `src/pages/dashboard/CoordinatorMode.tsx` dropped from 1558 lines to 1510 lines in this batch, while `src/pages/dashboard/coordinator/buildCoordinatorDashboardBoardActions.ts` came in at 235 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
