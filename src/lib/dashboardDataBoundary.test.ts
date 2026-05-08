@@ -486,6 +486,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('<GuestPhotoFollowupCard');
     expect(source).toContain('<GuestPhotoGuestbookCard');
     expect(source).toContain('<GuestPhotoCoupleAlbumsCard');
+    expect(source).toContain('<GuestPhotoAlbumCreateCard');
+    expect(source).toContain('<GuestPhotoAlbumControls');
+    expect(source).toContain('<GuestPhotoBucketCard');
+    expect(source).toContain('<GuestPhotoRecentUploadsList');
     expect(source).toContain('<GuestPhotoStatsCards');
     expect(source).toContain('<GuestPhotoSlideshowDraftCard');
     expect(source).toContain('<GuestPhotoSlideshowCard');
@@ -527,6 +531,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('Guests who asked for recap updates or want to hear about using dayof later.');
     expect(source).not.toContain('Written messages submitted from the one-QR hub.');
     expect(source).not.toContain('Create your own couple-photo albums here so uploads stay organized by the moments and photo types you actually care about.');
+    expect(source).not.toContain('Copy links, QR codes, and guest-facing prompts without digging through menus.');
+    expect(source).not.toContain('Share one clean upload destination for this album.');
+    expect(source).not.toContain('Recent uploads');
     expect(source).not.toContain('Turn uploaded guest photos into a simple slideshow. Start with your strongest moments, preview the sequence, then polish later.');
     expect(source).not.toContain('Sort new guest photos into the moments they belong to, then reuse that work for albums, slideshow order, captions, and quality checks.');
     expect(source).not.toContain('Moment albums from the schedule');

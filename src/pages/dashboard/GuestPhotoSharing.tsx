@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Copy, ExternalLink, Camera, Plus, Link as LinkIcon, CalendarClock, Mail, EyeOff, Eye, Flag, Clapperboard, Sparkles, FolderTree } from 'lucide-react';
+import { CalendarClock, Clapperboard, Sparkles } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { ShareQrPanel } from '../../components/ui/ShareQrPanel';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { createEmptyPhotoBuckets } from '../../lib/aiPhotoBuckets';
 import { PhotoBucketCards } from '../../components/dashboard/PhotoBucketCards';
@@ -90,6 +89,9 @@ import {
   type SlideshowTheme,
 } from './guestPhotoSharingUtils';
 import { GuestPhotoCoupleAlbumsCard } from './guestPhotos/GuestPhotoCoupleAlbumsCard';
+import { GuestPhotoAlbumControls } from './guestPhotos/GuestPhotoAlbumControls';
+import { GuestPhotoAlbumCreateCard } from './guestPhotos/GuestPhotoAlbumCreateCard';
+import { GuestPhotoBucketCard } from './guestPhotos/GuestPhotoBucketCard';
 import { GuestPhotoFollowupCard } from './guestPhotos/GuestPhotoFollowupCard';
 import { GuestPhotoGuestbookCard } from './guestPhotos/GuestPhotoGuestbookCard';
 import { GuestPhotoHeroCard } from './guestPhotos/GuestPhotoHeroCard';
@@ -100,6 +102,7 @@ import { GuestPhotoMemoryVaultsCard } from './guestPhotos/GuestPhotoMemoryVaults
 import { GuestPhotoMomentAlbumsCard } from './guestPhotos/GuestPhotoMomentAlbumsCard';
 import { GuestPhotoMomentsCard } from './guestPhotos/GuestPhotoMomentsCard';
 import { GuestPhotoOrganizerCard } from './guestPhotos/GuestPhotoOrganizerCard';
+import { GuestPhotoRecentUploadsList } from './guestPhotos/GuestPhotoRecentUploadsList';
 import { GuestPhotoRecapSharingCard } from './guestPhotos/GuestPhotoRecapSharingCard';
 import { GuestPhotoReviewCard } from './guestPhotos/GuestPhotoReviewCard';
 import { GuestPhotoSlideshowCard } from './guestPhotos/GuestPhotoSlideshowCard';
@@ -1841,242 +1844,62 @@ export const GuestPhotoSharing: React.FC = () => {
           formatDateTime={formatGuestPhotoDateTime}
         />
 
-        <Card className="overflow-hidden border border-border-subtle bg-white">
-          <div className="border-b border-neutral-100 bg-neutral-50/80 px-6 py-5">
-            <div className="flex items-center gap-2 mb-2">
-              <Plus className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold text-neutral-900">Album links</h2>
-            </div>
-            <p className="text-sm text-neutral-600">Create albums for the moments you want people to upload into. Think welcome party, dance floor, disposables, table shots, brunch, or anything else worth collecting.</p>
-          </div>
-          <div className="p-6 space-y-5">
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { label: 'Ceremony', hint: 'The core moment' },
-              { label: 'Walking down aisle', hint: 'A smaller ceremony album' },
-              { label: 'Reception', hint: 'Dinner and the party' },
-              { label: 'Dance floor', hint: 'The fun stuff' },
-            ].map((template) => (
-              <button
-                key={template.label}
-                type="button"
-                onClick={() => setName(template.label)}
-                className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-4 text-left transition hover:border-neutral-300 hover:bg-white"
-              >
-                <p className="text-sm font-medium text-neutral-900">{template.label}</p>
-                <p className="mt-1 text-xs text-neutral-500">{template.hint}</p>
-              </button>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Album name</label>
-              <Input value={name ?? ''} onChange={(e) => setName(e.target.value)} placeholder="Ceremony" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Parent album (optional)</label>
-              <select
-                value={parentAlbumId}
-                onChange={(e) => setParentAlbumId(e.target.value)}
-                className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-              >
-                <option value="">Top-level album</option>
-                {buckets
-                  .sort((a, b) => bucketDisplayName(a).localeCompare(bucketDisplayName(b)))
-                  .map((bucket) => (
-                    <option key={bucket.id} value={bucket.id}>
-                      {bucketDisplayName(bucket)}
-                    </option>
-                  ))}
-              </select>
-              <p className="mt-1 text-xs text-neutral-500">Use this for Ceremony / Walking down aisle, Reception / Dance floor, and other moment groups.</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">Link to itinerary event (optional)</label>
-              <select
-                value={itineraryEventId}
-                onChange={(e) => setItineraryEventId(e.target.value)}
-                className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-              >
-                <option value="">None</option>
-                {events.map((event) => (
-                  <option key={event.id} value={event.id}>
-                    {event.event_name} ({formatGuestPhotoEventDate(event.event_date)})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-4 space-y-2">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <Button onClick={createBucket} disabled={submitting || loading} className="w-full sm:w-auto">
-                <Camera className="w-4 h-4 mr-1" />
-                {submitting ? 'Creating...' : 'Add album'}
-              </Button>
-              {latestUploadUrl && (
-                <Button variant="outline" onClick={() => void copyText(latestUploadUrl, 'sheet-dashboard-link')} className="w-full sm:w-auto">
-                  <Copy className="w-4 h-4 mr-1" />
-                  {copied === 'sheet-dashboard-link' ? 'Copied newest album link' : 'Copy newest album link'}
-                </Button>
-              )}
-              {latestUploadUrl && (
-                <Button variant="outline" onClick={() => openSafePublicUrl(getBucketQrUrl(latestUploadUrl))} className="w-full sm:w-auto">
-                  QR for newest album
-                </Button>
-              )}
-              {latestUploadUrl && (
-                <Button variant="outline" onClick={() => openAppUrl(latestUploadUrl)} className="w-full sm:w-auto">
-                  <ExternalLink className="w-4 h-4 mr-1" /> Open newest album link
-                </Button>
-              )}
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border border-border-subtle bg-surface-subtle/40 px-3 py-2">
-              <p className="text-xs text-text-secondary">
-                Missing event albums: <span className="font-semibold text-text-primary">{missingItineraryEvents.length}</span>
-              </p>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => void createMissingBucketsFromItinerary()}
-                disabled={bulkCreating || loading || missingItineraryEvents.length === 0}
-                className="w-full sm:w-auto"
-              >
-                {bulkCreating ? 'Creating event albums...' : 'Create missing event albums'}
-              </Button>
-            </div>
-          </div>
-
-          {error && <p className="mt-3 rounded-lg border border-border-subtle bg-surface-secondary px-3 py-2 text-sm text-text-secondary">{error}</p>}
-          {success && <p className="mt-3 rounded-lg border border-border-subtle bg-surface-secondary px-3 py-2 text-sm text-text-secondary">{success}</p>}
-          {copyFallbackValue && (
-            <textarea
-              className="mt-3 min-h-24 w-full rounded-lg border border-border bg-white px-3 py-2 text-xs text-text-primary"
-              readOnly
-              value={copyFallbackValue ?? ''}
-              onFocus={(event) => event.currentTarget.select()}
-              aria-label="Copy text"
-            />
-          )}
-
-          {latestUploadUrl && (
-            <div className="grid gap-3 lg:grid-cols-[1.35fr_0.9fr]">
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle p-4">
-                <p className="text-sm font-medium text-text-primary mb-1">Newest album link</p>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 text-xs text-text-secondary break-all">{latestUploadUrl}</code>
-                  <Button size="sm" variant="outline" onClick={() => copyText(latestUploadUrl, 'latest')}>
-                    <Copy className="w-3 h-3 mr-1" /> {copied === 'latest' ? 'Copied' : 'Copy'}
-                  </Button>
-                </div>
-              </div>
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle p-4">
-                <p className="text-xs font-semibold text-text-tertiary">Newest album link</p>
-                <p className="mt-2 text-sm text-neutral-700">Use a real album upload link here. Guests should land in the right place immediately.</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {latestUploadUrl ? (
-                    <>
-                      <Button size="sm" variant="outline" onClick={() => openAppUrl(latestUploadUrl)}>Open newest album link</Button>
-                      <Button size="sm" variant="outline" onClick={() => openSafePublicUrl(getBucketQrUrl(latestUploadUrl))}>Open QR</Button>
-                    </>
-                  ) : (
-                    <p className="text-xs text-neutral-500">Create or refresh an album link before sharing uploads.</p>
-                  )}
-                </div>
-                {latestUploadUrl && (
-                  <ShareQrPanel
-                    title="Newest album QR"
-                    description="Use this on table cards or signage for the latest upload album."
-                    url={latestUploadUrl}
-                    copyLabel="Copy upload link"
-                    className="mt-4"
-                  />
-                )}
-              </div>
-            </div>
-          )}
-          </div>
-        </Card>
+        <GuestPhotoAlbumCreateCard
+          name={name}
+          parentAlbumId={parentAlbumId}
+          itineraryEventId={itineraryEventId}
+          buckets={buckets}
+          events={events}
+          submitting={submitting}
+          loading={loading}
+          latestUploadUrl={latestUploadUrl}
+          copied={copied}
+          missingItineraryEventCount={missingItineraryEvents.length}
+          bulkCreating={bulkCreating}
+          error={error}
+          success={success}
+          copyFallbackValue={copyFallbackValue}
+          onNameChange={setName}
+          onParentAlbumChange={setParentAlbumId}
+          onItineraryEventChange={setItineraryEventId}
+          onCreateBucket={() => void createBucket()}
+          onCreateMissingBuckets={() => void createMissingBucketsFromItinerary()}
+          onCopyText={(value, key) => void copyText(value, key)}
+          onOpenSafePublicUrl={openSafePublicUrl}
+          onOpenAppUrl={openAppUrl}
+          getBucketQrUrl={getBucketQrUrl}
+          bucketDisplayName={bucketDisplayName}
+          formatEventDate={formatGuestPhotoEventDate}
+        />
 
         <Card className="p-6 border border-border-subtle">
-          <div className="mb-6 space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-xl font-semibold text-neutral-900">Albums</h2>
-              <div className="text-xs text-neutral-500">{filteredBuckets.length} visible</div>
-            </div>
-            <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr]">
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle p-4">
-                <p className="text-xs font-semibold text-text-tertiary">Sharing home</p>
-                <p className="mt-2 text-sm text-neutral-700">Copy links, QR codes, and guest-facing prompts without digging through menus.</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onClick={() => void copyAllKnownLinks()}>
-                    {copied === 'all-links' ? 'Copied all links' : 'Copy all album links'}
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => void copyAllShareMessages()}>
-                    {copied === 'all-share-messages' ? 'Copied prompts' : 'Copy all share prompts'}
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => sendAllActiveBucketRequests()}>
-                    Send all active album requests
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => void regenerateAllKnownBucketLinks()} disabled={bulkRegenerating}>
-                    {bulkRegenerating ? 'Refreshing links...' : 'Refresh all links'}
-                  </Button>
-                </div>
-              </div>
-              <div className="rounded-lg border border-border-subtle bg-white p-4">
-                <p className="text-xs font-medium text-text-tertiary">Owner controls</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onClick={() => exportBucketLinksCsv()}>Save album link sheet</Button>
-                  <Button size="sm" variant="outline" onClick={() => exportSharePackCsv()}>Save sharing notes</Button>
-                  <Button size="sm" variant="outline" onClick={() => void exportMediaManifestCsv()} disabled={uploads.length === 0}>Save photo handoff sheet</Button>
-                  <Button size="sm" variant="outline" onClick={() => setShowFlaggedOnly((v) => !v)}>
-                    {showFlaggedOnly ? 'Show all uploads' : 'Show flagged only'}
-                  </Button>
-                  <select
-                    value={tagFilter}
-                    onChange={(e) => setTagFilter(e.target.value)}
-                    className="h-9 rounded-lg border border-neutral-300 bg-white px-3 text-xs text-neutral-700"
-                  >
-                    <option value="all">All tags</option>
-                    {availableAiTags.map(([tag, count]) => (
-                      <option key={tag} value={tag}>
-                        {tag} ({count})
-                      </option>
-                    ))}
-                  </select>
-                  <Button size="sm" variant="outline" onClick={() => setShowHidden((v) => !v)}>
-                    {showHidden ? 'Hide hidden items' : 'Show hidden items'}
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => void setUploadsFlaggedByFilter(true)} disabled={bulkModerating}>Flag visible</Button>
-                  <Button size="sm" variant="outline" onClick={() => void setUploadsFlaggedByFilter(false)} disabled={bulkModerating}>Unflag visible</Button>
-                  <Button size="sm" variant="outline" onClick={() => void setUploadsHiddenByFilter(true)} disabled={bulkModerating}>Hide visible</Button>
-                  <Button size="sm" variant="outline" onClick={() => void setUploadsHiddenByFilter(false)} disabled={bulkModerating}>Unhide visible</Button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-2">
-            <Input
-              value={bucketSearch ?? ''}
-              onChange={(e) => setBucketSearch(e.target.value)}
-              placeholder="Search album name"
-            />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'paused')}
-              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-            >
-              <option value="all">All statuses</option>
-              <option value="active">Active only</option>
-              <option value="paused">Paused only</option>
-            </select>
-            <div className="text-xs text-neutral-500 flex items-center">{filteredBuckets.length} album{filteredBuckets.length === 1 ? '' : 's'}</div>
-          </div>
+          <GuestPhotoAlbumControls
+            visibleAlbumCount={filteredBuckets.length}
+            totalUploadCount={uploads.length}
+            copied={copied}
+            bulkRegenerating={bulkRegenerating}
+            bulkModerating={bulkModerating}
+            showFlaggedOnly={showFlaggedOnly}
+            showHidden={showHidden}
+            tagFilter={tagFilter}
+            availableAiTags={availableAiTags}
+            bucketSearch={bucketSearch}
+            statusFilter={statusFilter}
+            onCopyAllKnownLinks={() => void copyAllKnownLinks()}
+            onCopyAllShareMessages={() => void copyAllShareMessages()}
+            onSendAllActiveBucketRequests={sendAllActiveBucketRequests}
+            onRegenerateAllKnownBucketLinks={() => void regenerateAllKnownBucketLinks()}
+            onExportBucketLinksCsv={exportBucketLinksCsv}
+            onExportSharePackCsv={exportSharePackCsv}
+            onExportMediaManifestCsv={() => void exportMediaManifestCsv()}
+            onShowFlaggedOnlyChange={setShowFlaggedOnly}
+            onTagFilterChange={setTagFilter}
+            onShowHiddenChange={setShowHidden}
+            onSetUploadsFlaggedByFilter={(isFlagged) => void setUploadsFlaggedByFilter(isFlagged)}
+            onSetUploadsHiddenByFilter={(isHidden) => void setUploadsHiddenByFilter(isHidden)}
+            onBucketSearchChange={setBucketSearch}
+            onStatusFilterChange={setStatusFilter}
+          />
 
           {loading ? (
             <p className="text-sm text-neutral-500">Loading albums…</p>
@@ -2113,139 +1936,36 @@ export const GuestPhotoSharing: React.FC = () => {
                 const recents = recentByBucket.get(bucket.id) ?? [];
                 const draft = windowDrafts[bucket.id] ?? { opensAt: '', closesAt: '' };
                 const knownUploadLink = bucketUploadLinks[bucket.id] || '';
-                const hasWindow = Boolean(bucket.opens_at || bucket.closes_at);
-                const hasLink = Boolean(knownUploadLink);
                 const parentBucket = bucket.parent_album_id ? bucketById.get(bucket.parent_album_id) : null;
                 const childBuckets = childBucketsByParent.get(bucket.id) ?? [];
                 const depth = bucketDepthById.get(bucket.id) ?? 0;
 
                 return (
-                  <div key={bucket.id} className="overflow-hidden rounded-lg border border-border-subtle bg-white">
-                    <div className="border-b border-border-subtle bg-surface-subtle px-5 py-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className={depth > 0 ? 'pl-4 border-l-2 border-border-subtle' : ''}>
-                          {parentBucket && (
-                            <p className="mb-1 inline-flex items-center rounded-lg bg-white px-2 py-0.5 text-xs font-medium text-text-secondary border border-border-subtle">
-                              <FolderTree className="mr-1 h-3 w-3" /> {parentBucket.name}
-                            </p>
-                          )}
-                          <p className="font-medium text-neutral-900">{bucket.name}</p>
-                          <p className="mt-1 text-sm text-neutral-600">{bucketCardTone(bucket.name)}</p>
-                          <p className="text-xs text-neutral-500">Created {formatGuestPhotoDateTime(bucket.created_at)}</p>
-                          <div className="mt-1 text-xs text-neutral-500 flex items-center gap-2 flex-wrap">
-                            <span className={`inline-flex rounded px-2 py-0.5 ${bucket.is_active ? 'bg-surface-secondary text-text-primary border border-border-subtle' : 'bg-neutral-100 text-neutral-600'}`}>
-                              {bucket.is_active ? 'Active' : 'Paused'}
-                            </span>
-                            <span>{uploadCount} direct uploads</span>
-                            {childBuckets.length > 0 && <span>{rollupUploadCount} with sub-albums</span>}
-                            {!hasLink && <span className="text-primary">no saved link yet</span>}
-                            {!hasWindow && <span className="text-primary">no upload window yet</span>}
-                            {flaggedCount > 0 && <span className="text-primary">{flaggedCount} flagged</span>}
-                            {hiddenCount > 0 && <span className="text-neutral-600">{hiddenCount} hidden</span>}
-                            <span>Guest album label: {bucket.slug}</span>
-                          {hasLink && <span className="text-text-secondary">upload link ready</span>}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 flex-wrap justify-end">
-                        {getSafePublicWebUrl(bucket.drive_folder_url) && (
-                          <Button size="sm" variant="outline" onClick={() => openSafePublicUrl(bucket.drive_folder_url)}>
-                            <ExternalLink className="w-3 h-3 mr-1" /> Backup
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={workingBucketId === bucket.id}
-                          onClick={() => void regenerateLink(bucket.id)}
-                        >
-                          <LinkIcon className="w-3 h-3 mr-1" />
-                          {workingBucketId === bucket.id ? 'Working...' : 'Refresh upload link'}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={!knownUploadLink}
-                          onClick={() => void copyText(knownUploadLink, `uplink-${bucket.id}`)}
-                        >
-                          <Copy className="w-3 h-3 mr-1" />
-                          {copied === `uplink-${bucket.id}` ? 'Copy ready' : 'Copy link'}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={!knownUploadLink}
-                          onClick={() => openSafePublicUrl(getBucketQrUrl(knownUploadLink))}
-                        >
-                          QR code
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={bucket.is_active ? 'outline' : 'accent'}
-                          disabled={workingBucketId === bucket.id}
-                          onClick={() => void setBucketActive(bucket.id, !bucket.is_active)}
-                        >
-                          {workingBucketId === bucket.id ? 'Working...' : bucket.is_active ? 'Pause' : 'Activate'}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => exportBucketCsv(bucket.id, bucket.name)}
-                          disabled={uploadCount === 0}
-                        >
-                          Save photo list
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={!knownUploadLink}
-                          onClick={() => void copyText(makePhotoShareMessage(bucket.name, knownUploadLink), `share-msg-${bucket.id}`)}
-                        >
-                          {copied === `share-msg-${bucket.id}` ? 'Copied share prompt' : 'Copy share prompt'}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            const shareUrl = knownUploadLink || latestUploadUrl || `${window.location.origin}/photos/upload`;
-                            const subject = encodeURIComponent(`${bucket.name} photos upload`);
-                            const body = encodeURIComponent(makePhotoShareMessage(bucket.name, shareUrl));
-                            window.location.href = `/dashboard/messages?prefillSubject=${subject}&prefillBody=${body}`;
-                          }}
-                        >
-                          <Mail className="w-3 h-3 mr-1" /> Send to messaging
-                        </Button>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="px-5 py-4 space-y-4">
-
-                    {childBuckets.length > 0 && (
-                      <div className="rounded-lg border border-border-subtle bg-surface-subtle p-3">
-                        <p className="text-xs font-semibold text-text-primary">Sub-albums</p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {childBuckets.map((child) => (
-                            <button
-                              key={child.id}
-                              type="button"
-                              onClick={() => setBucketSearch(child.name)}
-                              className="rounded-lg border border-border-subtle bg-white px-3 py-1 text-xs font-medium text-text-primary"
-                            >
-                              {child.name} · {countsByBucket.get(child.id) ?? 0}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {hasLink && (
-                      <div className="rounded-lg border border-border-subtle bg-surface-subtle p-3">
-                        <p className="text-xs font-semibold text-text-primary">Upload link ready</p>
-                        <p className="mt-1 text-sm text-text-primary">Share one clean upload destination for this album.</p>
-                        <p className="mt-2 truncate text-xs text-text-secondary">{knownUploadLink}</p>
-                      </div>
-                    )}
-
+                  <GuestPhotoBucketCard
+                    key={bucket.id}
+                    bucket={bucket}
+                    parentBucket={parentBucket ?? null}
+                    childBuckets={childBuckets}
+                    depth={depth}
+                    uploadCount={uploadCount}
+                    rollupUploadCount={rollupUploadCount}
+                    hiddenCount={hiddenCount}
+                    flaggedCount={flaggedCount}
+                    knownUploadLink={knownUploadLink}
+                    latestUploadUrl={latestUploadUrl}
+                    workingBucketId={workingBucketId}
+                    copied={copied}
+                    bucketTone={bucketCardTone}
+                    formatDateTime={formatGuestPhotoDateTime}
+                    getBucketQrUrl={getBucketQrUrl}
+                    getChildUploadCount={(bucketId) => countsByBucket.get(bucketId) ?? 0}
+                    onOpenSafePublicUrl={openSafePublicUrl}
+                    onRegenerateLink={(bucketId) => void regenerateLink(bucketId)}
+                    onCopyText={(text, key) => void copyText(text, key)}
+                    onSetBucketActive={(bucketId, isActive) => void setBucketActive(bucketId, isActive)}
+                    onExportBucketCsv={exportBucketCsv}
+                    onBucketSearchChange={setBucketSearch}
+                  >
                     <div className="rounded-lg border border-border-subtle p-3 bg-surface-subtle">
                       <div className="mb-3">
                         <label className="block text-xs text-neutral-500 mb-1">Parent album</label>
@@ -2297,85 +2017,14 @@ export const GuestPhotoSharing: React.FC = () => {
                       </div>
                     </div>
 
-                    {recents.length > 0 && (
-                      <div>
-                        <p className="text-xs font-medium text-neutral-700 mb-1">Recent uploads</p>
-                        <ul className="space-y-2 text-xs text-neutral-600">
-                          {recents.map((u) => (
-                            <li key={u.id} className={`rounded border px-2 py-1 ${u.is_hidden ? 'bg-neutral-100 border-neutral-200' : 'bg-white border-neutral-200'}`}>
-                              <div className="flex items-center justify-between gap-2">
-                                <div>
-                                  <span>
-                                    {u.original_filename} · {u.guest_name || 'Guest'}{u.guest_email ? ` (${u.guest_email})` : ''} · {formatGuestPhotoDateTime(u.uploaded_at)}
-                                  </span>
-                                  {safePhotoAnalysisList(analysisByUploadId.get(u.id)?.tags).length ? (
-                                    <div className="mt-1 flex flex-wrap gap-1">
-                                      {safePhotoAnalysisList(analysisByUploadId.get(u.id)?.tags).slice(0, 5).map((tag) => (
-                                        <button
-                                          key={`${u.id}-${tag}`}
-                                          type="button"
-                                          onClick={() => setTagFilter(tag.trim().toLowerCase())}
-                                          className="rounded-lg bg-neutral-100 px-2 py-0.5 text-[11px] text-neutral-600 hover:bg-neutral-200"
-                                        >
-                                          #{tag}
-                                        </button>
-                                      ))}
-                                    </div>
-                                  ) : null}
-                                  {(u.recap_featured || u.recap_story || u.recap_hidden) && (
-                                    <div className="mt-1 flex flex-wrap gap-1">
-                                      {u.recap_featured && <span className="rounded-lg bg-surface-subtle px-2 py-0.5 text-[11px] text-text-secondary border border-border-subtle">Featured</span>}
-                                      {u.recap_story && <span className="rounded-lg bg-neutral-100 px-2 py-0.5 text-[11px] text-neutral-700">Story</span>}
-                                      {u.recap_hidden && <span className="rounded-lg bg-neutral-200 px-2 py-0.5 text-[11px] text-neutral-700">Recap hidden</span>}
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <button
-                                    type="button"
-                                    className={`inline-flex items-center rounded px-1.5 py-0.5 border ${u.recap_featured ? 'bg-surface-subtle text-text-primary border-border-subtle' : 'bg-white text-neutral-600 border-neutral-300'}`}
-                                    onClick={() => void moderateUpload(u.id, { recap_featured: !u.recap_featured })}
-                                  >
-                                    {u.recap_featured ? 'Unfeature' : 'Feature'}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className={`inline-flex items-center rounded px-1.5 py-0.5 border ${u.recap_story ? 'bg-neutral-900 text-white border-neutral-900' : 'bg-white text-neutral-600 border-neutral-300'}`}
-                                    onClick={() => void moderateUpload(u.id, { recap_story: !u.recap_story })}
-                                  >
-                                    {u.recap_story ? 'Unstory' : 'Story'}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className={`inline-flex items-center rounded px-1.5 py-0.5 border ${u.recap_hidden ? 'bg-neutral-200 text-neutral-700 border-neutral-300' : 'bg-white text-neutral-600 border-neutral-300'}`}
-                                    onClick={() => void moderateUpload(u.id, { recap_hidden: !u.recap_hidden })}
-                                  >
-                                    {u.recap_hidden ? 'Show recap' : 'Hide recap'}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className={`inline-flex items-center rounded px-1.5 py-0.5 border ${u.is_flagged ? 'bg-surface-subtle text-text-primary border-border-subtle' : 'bg-white text-neutral-600 border-neutral-300'}`}
-                                    onClick={() => void moderateUpload(u.id, { is_flagged: !u.is_flagged })}
-                                  >
-                                    <Flag className="w-3 h-3 mr-1" /> {u.is_flagged ? 'Unflag' : 'Flag'}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="inline-flex items-center rounded px-1.5 py-0.5 border bg-white text-neutral-600 border-neutral-300"
-                                    onClick={() => void moderateUpload(u.id, { is_hidden: !u.is_hidden })}
-                                  >
-                                    {u.is_hidden ? <Eye className="w-3 h-3 mr-1" /> : <EyeOff className="w-3 h-3 mr-1" />}
-                                    {u.is_hidden ? 'Restore' : 'Remove'}
-                                  </button>
-                                </div>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    </div>
-                  </div>
+                    <GuestPhotoRecentUploadsList
+                      uploads={recents}
+                      analysisByUploadId={analysisByUploadId}
+                      onTagFilterChange={setTagFilter}
+                      onModerateUpload={(uploadId, patch) => void moderateUpload(uploadId, patch)}
+                      formatDateTime={formatGuestPhotoDateTime}
+                    />
+                  </GuestPhotoBucketCard>
                 );
               })}
             </div>

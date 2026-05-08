@@ -4006,3 +4006,21 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the oversized-file and page-boundary lanes for the guest photo dashboard without changing organizer notes, slideshow preview/export, highlight review, duplicate triage, or hidden-photo recovery behavior. No deploy was run.
+
+### 2026-05-07 8:04 PM PT - Guest Photo Album Management Extraction
+
+- Moved the guest photo album creation shell, album controls shell, bucket header shell, and recent uploads list behind existing `src/pages/dashboard/guestPhotos/*` components.
+- `src/pages/dashboard/GuestPhotoSharing.tsx` now routes those seams through `GuestPhotoAlbumCreateCard`, `GuestPhotoAlbumControls`, `GuestPhotoBucketCard`, and `GuestPhotoRecentUploadsList` instead of carrying the old inline album-management composition.
+- The page still owns guest photo state, service calls, upload-window drafts, and per-bucket handlers, while the extracted components own another large layer of display composition.
+- `GuestPhotoSharing.tsx` dropped from 2389 lines to 2038 lines in this continuation batch.
+- Tightened `src/lib/dashboardDataBoundary.test.ts` so the guest photo dashboard now pins those additional higher-level seams and rejects regaining the old inline album-management copy.
+
+Validation:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts`: PASS, 45/45.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the oversized-file and page-boundary lanes for the guest photo dashboard without changing album creation, event-album bootstrap, sharing-link actions, upload-window editing, or per-upload moderation behavior. No deploy was run.
