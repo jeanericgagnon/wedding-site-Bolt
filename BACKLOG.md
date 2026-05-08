@@ -1843,6 +1843,14 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins the higher-level `GuestOpsSummaryPanel` seam and rejects regaining the old inline `Recommended next action` and `RSVP follow-up list` copy.
   - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts` (15/15), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest dashboard without changing guest operations behavior. No deploy was run.
+- 2026-05-07 7:46 PM PT - No-deploy Guest photo card-boundary extraction:
+  - Resolved in this batch: moved the guest photo hero, guest follow-up card, guestbook card, couple albums card, stats cards, slideshow draft card, and photo moments card out of `src/pages/dashboard/GuestPhotoSharing.tsx` and behind existing `src/pages/dashboard/guestPhotos/*` components.
+  - Data-boundary hardening: `GuestPhotoSharing.tsx` now routes those display seams through `GuestPhotoHeroCard`, `GuestPhotoFollowupCard`, `GuestPhotoGuestbookCard`, `GuestPhotoCoupleAlbumsCard`, `GuestPhotoStatsCards`, `GuestPhotoSlideshowDraftCard`, and `GuestPhotoMomentsCard` instead of carrying those inline JSX sections.
+  - File-size movement: `GuestPhotoSharing.tsx` dropped from 3018 lines to 2846 lines in this continuation batch.
+  - No feature loss: hero stats, prospect follow-up actions, guestbook moderation, couple album uploads, summary counts, slideshow planning, and photo-moment review preserve the current behavior while shrinking page-owned composition.
+  - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins those higher-level guest photo seams and rejects regaining the old inline copy for the extracted cards.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts` (45/45), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest photo dashboard without changing guest photo behavior. No deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

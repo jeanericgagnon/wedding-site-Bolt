@@ -3953,3 +3953,21 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the oversized-file and page-boundary lanes for the guest dashboard without changing recommended next actions, follow-up queue review, planner handoff guidance, or quickstart continuation behavior. No deploy was run.
+
+### 2026-05-07 7:46 PM PT - Guest Photo Card-Boundary Extraction
+
+- Moved the guest photo hero, guest follow-up card, guestbook card, couple albums card, stats cards, slideshow draft card, and photo moments card behind existing `src/pages/dashboard/guestPhotos/*` components.
+- `src/pages/dashboard/GuestPhotoSharing.tsx` now routes those seams through `GuestPhotoHeroCard`, `GuestPhotoFollowupCard`, `GuestPhotoGuestbookCard`, `GuestPhotoCoupleAlbumsCard`, `GuestPhotoStatsCards`, `GuestPhotoSlideshowDraftCard`, and `GuestPhotoMomentsCard` instead of carrying those large inline JSX blocks.
+- The page still owns the guest photo state, handlers, and service calls, while the extracted components own the higher-level dashboard composition for those cards.
+- `GuestPhotoSharing.tsx` dropped from 3018 lines to 2846 lines in this continuation batch.
+- Tightened `src/lib/dashboardDataBoundary.test.ts` so the guest photo dashboard now pins those higher-level card seams and rejects regaining the old inline copy for the extracted sections.
+
+Validation:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts`: PASS, 45/45.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the oversized-file and page-boundary lanes for the guest photo dashboard without changing guest follow-up, guestbook moderation, couple albums, slideshow planning, or photo-moment review behavior. No deploy was run.

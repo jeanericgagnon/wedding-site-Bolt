@@ -477,6 +477,13 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('resolveGuestPhotoDashboardUserId()');
     expect(source).toContain('refreshGuestPhotoSession()');
     expect(source).toContain('queueGuestPhotoFollowupsFromService(siteId, kind)');
+    expect(source).toContain('<GuestPhotoHeroCard');
+    expect(source).toContain('<GuestPhotoFollowupCard');
+    expect(source).toContain('<GuestPhotoGuestbookCard');
+    expect(source).toContain('<GuestPhotoCoupleAlbumsCard');
+    expect(source).toContain('<GuestPhotoStatsCards');
+    expect(source).toContain('<GuestPhotoSlideshowDraftCard');
+    expect(source).toContain('<GuestPhotoMomentsCard');
     expect(source).not.toContain('supabase.auth.getUser()');
     expect(source).not.toContain('supabase.auth.getSession()');
     expect(source).not.toContain('supabase.auth.refreshSession()');
@@ -502,6 +509,12 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain("invokeOrThrow('photo-album-manage'");
     expect(source).not.toContain("invokeGuestPhotoOwnerFunction<PhotoAlbumCreateResponse>('photo-album-create'");
     expect(source).not.toContain("supabase.from('wedding_sites').update({ wedding_data: nextWeddingData, site_json: nextSiteJson })");
+    expect(source).not.toContain('Create simple photo albums, share one upload link or QR code, and let guests send photos without making an account.');
+    expect(source).not.toContain('Guests who asked for recap updates or want to hear about using dayof later.');
+    expect(source).not.toContain('Written messages submitted from the one-QR hub.');
+    expect(source).not.toContain('Create your own couple-photo albums here so uploads stay organized by the moments and photo types you actually care about.');
+    expect(source).not.toContain('Turn uploaded guest photos into a simple slideshow. Start with your strongest moments, preview the sequence, then polish later.');
+    expect(source).not.toContain('Sort new guest photos into the moments they belong to, then reuse that work for albums, slideshow order, captions, and quality checks.');
     expect(service).toContain("const GUEST_PHOTO_BUCKET_SITE_SELECT = 'wedding_data, site_json'");
     expect(service).toContain("const GUEST_PHOTO_DASHBOARD_SITE_SELECT = 'id, site_slug, wedding_data'");
     expect(service).toContain("const GUEST_PHOTO_EVENT_SELECT = 'id,event_name,event_date,start_time,end_time' as const;");

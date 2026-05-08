@@ -89,6 +89,13 @@ import {
   type SlideshowOrderMode,
   type SlideshowTheme,
 } from './guestPhotoSharingUtils';
+import { GuestPhotoCoupleAlbumsCard } from './guestPhotos/GuestPhotoCoupleAlbumsCard';
+import { GuestPhotoFollowupCard } from './guestPhotos/GuestPhotoFollowupCard';
+import { GuestPhotoGuestbookCard } from './guestPhotos/GuestPhotoGuestbookCard';
+import { GuestPhotoHeroCard } from './guestPhotos/GuestPhotoHeroCard';
+import { GuestPhotoMomentsCard } from './guestPhotos/GuestPhotoMomentsCard';
+import { GuestPhotoSlideshowDraftCard } from './guestPhotos/GuestPhotoSlideshowDraftCard';
+import { GuestPhotoStatsCards } from './guestPhotos/GuestPhotoStatsCards';
 
 export const GuestPhotoSharing: React.FC = () => {
   const location = useLocation();
@@ -1624,32 +1631,7 @@ export const GuestPhotoSharing: React.FC = () => {
             </div>
           </Card>
         )}
-        <div className="rounded-lg border border-border-subtle bg-white p-5">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl">
-              <p className="text-xs font-medium text-neutral-500">Memories</p>
-              <h1 className="mt-3 text-4xl font-semibold text-neutral-900">Collect guest photos around the moments you care about.</h1>
-              <p className="mt-3 text-sm leading-6 text-neutral-600">Create simple photo albums, share one upload link or QR code, and let guests send photos without making an account.</p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3 lg:w-[420px]">
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle p-4">
-                <p className="text-xs font-medium text-neutral-500">Albums</p>
-                <p className="mt-2 text-2xl font-semibold text-neutral-900">{buckets.length}</p>
-                <p className="mt-1 text-xs text-neutral-500">Start simple, then add the moments you want.</p>
-              </div>
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle p-4">
-                <p className="text-xs font-medium text-neutral-500">Uploads</p>
-                <p className="mt-2 text-2xl font-semibold text-neutral-900">{totalUploads}</p>
-                <p className="mt-1 text-xs text-neutral-500">Across all live memory albums.</p>
-              </div>
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle p-4">
-                <p className="text-xs font-medium text-neutral-500">Sharing</p>
-                <p className="mt-2 text-sm font-semibold text-neutral-900">Link + QR ready</p>
-                <p className="mt-1 text-xs text-neutral-500">Give guests one obvious way to upload.</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <GuestPhotoHeroCard albumCount={buckets.length} uploadCount={totalUploads} />
 
         <Card className="border border-stone-200 bg-stone-50/80 text-neutral-900">
           <div className="flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:justify-between">
@@ -1884,224 +1866,70 @@ export const GuestPhotoSharing: React.FC = () => {
         )}
 
         {guestProspects.length > 0 && (
-          <Card className="p-6 border border-neutral-200 bg-white">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-neutral-900">Guest follow-up</h2>
-                <p className="mt-1 text-sm text-neutral-600">Guests who asked for recap updates or want to hear about using dayof later.</p>
-                <div className="mt-3 flex flex-wrap gap-2 text-xs text-neutral-700">
-                  <span className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1">{guestProspects.length} captured</span>
-                  <span className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1">{guestProspects.filter((p) => p.wants_photo_updates).length} want recap updates</span>
-                  <span className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1">{guestProspects.filter((p) => p.wants_own_event_info).length} want their own event link</span>
-                  <span className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1">{guestProspects.filter((p) => p.recap_email_queued_at).length} recap prepared</span>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2 lg:justify-end">
-                <Button size="sm" variant="outline" onClick={exportProspectsCsv}>Export guests</Button>
-                <Button size="sm" variant="outline" disabled={queueingFollowups !== null} onClick={() => void queueGuestFollowups('recap')}>
-                  {queueingFollowups === 'recap' ? 'Preparing...' : 'Prepare recap emails'}
-                </Button>
-                <Button size="sm" variant="outline" disabled={queueingFollowups !== null} onClick={() => void queueGuestFollowups('future_event')}>
-                  {queueingFollowups === 'future_event' ? 'Preparing...' : 'Prepare later-interest emails'}
-                </Button>
-              </div>
-            </div>
-            <div className="mt-4 grid gap-2 md:grid-cols-2">
-              {guestProspects.slice(0, 6).map((entry) => (
-                <div key={entry.id} className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-3">
-                  <p className="text-sm font-medium text-neutral-900">{entry.guest_name || 'Guest'}</p>
-                  <p className="mt-1 text-xs text-neutral-600">{entry.email || entry.phone || 'Contact info not added'} · {entry.source}</p>
-                  <p className="mt-2 text-xs text-neutral-500">
-                    {entry.wants_photo_updates ? 'Recap updates' : 'No recap updates'}
-                    {entry.wants_own_event_info ? ' · Future event interest' : ''}
-                    {entry.recap_email_queued_at ? ' · Recap prepared' : ''}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </Card>
+          <GuestPhotoFollowupCard
+            guestProspects={guestProspects}
+            queueingFollowups={queueingFollowups}
+            onExportProspectsCsv={exportProspectsCsv}
+            onQueueGuestFollowups={(kind) => void queueGuestFollowups(kind)}
+          />
         )}
 
         {guestbookEntries.length > 0 && (
-          <Card className="p-6 border border-neutral-200 bg-white">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-semibold text-neutral-900">Guestbook notes</h2>
-                <p className="mt-1 text-sm text-neutral-600">Written messages submitted from the one-QR hub.</p>
-              </div>
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <Button size="sm" variant="outline" onClick={exportGuestbookCsv}>Export notes</Button>
-                <span className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-700">{guestbookEntries.length} recent</span>
-              </div>
-            </div>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {guestbookEntries.slice(0, 6).map((entry) => (
-                <div key={entry.id} className={`rounded-lg border p-4 ${entry.is_hidden ? 'border-border-subtle bg-surface-subtle opacity-75' : entry.is_flagged ? 'border-border-subtle bg-surface' : 'border-border-subtle bg-surface-subtle'}`}>
-                  <p className="text-sm leading-6 text-neutral-800">{entry.message}</p>
-                  <p className="mt-3 text-xs text-neutral-500">
-                    {entry.guest_name || 'Guest'}{entry.guest_email ? ` · ${entry.guest_email}` : ''} · {formatGuestPhotoDateTime(entry.created_at)}
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Button size="sm" variant="outline" disabled={moderatingGuestbookId === entry.id} onClick={() => void updateGuestbookEntry(entry.id, { is_flagged: !entry.is_flagged })}>
-                      {entry.is_flagged ? 'Unflag' : 'Flag'}
-                    </Button>
-                    <Button size="sm" variant="outline" disabled={moderatingGuestbookId === entry.id} onClick={() => void updateGuestbookEntry(entry.id, { is_hidden: !entry.is_hidden })}>
-                      {entry.is_hidden ? 'Unhide' : 'Hide'}
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
+          <GuestPhotoGuestbookCard
+            guestbookEntries={guestbookEntries}
+            moderatingGuestbookId={moderatingGuestbookId || null}
+            onExportGuestbookCsv={exportGuestbookCsv}
+            onUpdateGuestbookEntry={(entryId, patch) => void updateGuestbookEntry(entryId, patch)}
+            formatDateTime={formatGuestPhotoDateTime}
+          />
         )}
 
-        <Card className="p-6 border border-border bg-surface">
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold text-neutral-900">Couple photo albums</h2>
-            <p className="mt-1 text-sm text-neutral-600">Create your own couple-photo albums here so uploads stay organized by the moments and photo types you actually care about.</p>
-          </div>
-          <PhotoBucketCards buckets={photoBuckets} uploadDisabled={!siteId || submitting} onUploadClick={handleBucketUploadClick} onRemoveClick={handleBucketRemoveClick} />
-          <input ref={bucketFileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleBucketFilesSelected} />
-        </Card>
+        <GuestPhotoCoupleAlbumsCard
+          photoBuckets={photoBuckets}
+          uploadDisabled={!siteId || submitting}
+          bucketFileInputRef={bucketFileInputRef}
+          onBucketUploadClick={handleBucketUploadClick}
+          onBucketRemoveClick={handleBucketRemoveClick}
+          onBucketFilesSelected={handleBucketFilesSelected}
+        />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Card className="p-4">
-            <p className="text-xs text-neutral-500">Albums</p>
-            <p className="text-2xl font-semibold text-neutral-900">{buckets.length}</p>
-            <p className="text-xs text-neutral-500">{activeBucketsCount} active · {pausedBucketsCount} paused</p>
-          </Card>
-          <Card className="p-4">
-            <p className="text-xs text-neutral-500">Uploads</p>
-            <p className="text-2xl font-semibold text-neutral-900">{totalUploads}</p>
-            <p className="text-xs text-neutral-500">Across all albums</p>
-          </Card>
-        </div>
+        <GuestPhotoStatsCards
+          albumCount={buckets.length}
+          activeAlbumCount={activeBucketsCount}
+          pausedAlbumCount={pausedBucketsCount}
+          uploadCount={totalUploads}
+        />
 
-        <Card className="p-6 border border-border-subtle bg-white">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Clapperboard className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold text-text-primary">Slideshow draft</h2>
-              </div>
-              <p className="text-sm text-text-secondary">
-                Turn uploaded guest photos into a simple slideshow. Start with your strongest moments, preview the sequence, then polish later.
-              </p>
-              <p className="mt-2 text-xs text-text-tertiary">
-                Ready now: <span className="font-semibold text-text-primary">{slideshowReadyBucketCount}</span> album{slideshowReadyBucketCount === 1 ? '' : 's'} with 3+ uploads.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button
-                variant="accent"
-                onClick={() => void generateAiPhotoOpsPlan()}
-                disabled={aiPhotoOpsBusy || uploads.length === 0 || buckets.length === 0}
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                {aiPhotoOpsBusy ? 'Organizing...' : 'Organize uploads'}
-              </Button>
-              <Button variant="outline">
-                <Clapperboard className="w-4 h-4 mr-2" />
-                Slideshow draft ready
-              </Button>
-            </div>
-          </div>
-        </Card>
+        <GuestPhotoSlideshowDraftCard
+          slideshowReadyBucketCount={slideshowReadyBucketCount}
+          aiPhotoOpsBusy={aiPhotoOpsBusy}
+          uploadCount={uploads.length}
+          bucketCount={buckets.length}
+          onGenerateAiPhotoOpsPlan={() => void generateAiPhotoOpsPlan()}
+        />
 
-        <Card className="p-6 border border-border-subtle bg-white">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold text-text-primary">Photo moments</h2>
-              </div>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-text-secondary">
-                Sort new guest photos into the moments they belong to, then reuse that work for albums, slideshow order, captions, and quality checks.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-secondary">
-                <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{uploadAnalyses.length} reviewed</span>
-                <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{visionReadyCount} ready</span>
-                <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{visionFallbackCount} waiting</span>
-                <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{unanalyzedUploads.length} new photos</span>
-                <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{metadataExifCount} with time details</span>
-                <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{metadataGpsCount} with private place details</span>
-                <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{metadataEventMatchCount} matched to the day</span>
-                <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{aiAcceptedCorrectionCount} accepted changes</span>
-                <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{aiRejectedCorrectionCount} kept as-is</span>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button
-                variant="accent"
-                disabled={visionAiBusy || uploads.length === 0}
-                onClick={() => void analyzeUploadsWithVision(false)}
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                {visionAiBusy ? 'Reviewing...' : 'Sort new photos'}
-              </Button>
-              <Button
-                variant="outline"
-                disabled={visionAiBusy || uploads.length === 0}
-                onClick={() => void analyzeUploadsWithVision(true)}
-              >
-                Review visible
-              </Button>
-              <Button
-                variant="outline"
-                disabled={visionMovesBusy || visionHighConfidenceMoves.length === 0}
-                onClick={() => void applyHighConfidenceVisionMoves()}
-              >
-                {visionMovesBusy ? 'Applying...' : `Apply ${visionHighConfidenceMoves.length} album move${visionHighConfidenceMoves.length === 1 ? '' : 's'}`}
-              </Button>
-            </div>
-          </div>
-
-          {uploadAnalyses.length > 0 && (
-            <div className="mt-5 grid gap-3 lg:grid-cols-3">
-              {uploadAnalyses.slice(0, 6).map((analysis) => {
-                const upload = uploads.find((entry) => entry.id === analysis.upload_id);
-                const metadata = metadataByUploadId.get(analysis.upload_id);
-                return (
-                  <div key={analysis.id} className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-text-primary">{safePhotoAnalysisText(analysis.detected_moment, 'Photo')}</p>
-                        <p className="mt-1 text-xs text-text-tertiary">{upload?.original_filename ?? 'Upload'} · {analysisSourceLabel(analysis)}</p>
-                      </div>
-                      <span className="rounded-lg border border-border-subtle bg-white px-2 py-0.5 text-xs font-medium text-text-secondary">{Math.round(analysis.bucket_confidence * 100)}% sure</span>
-                    </div>
-                    <p className="mt-2 text-sm leading-5 text-neutral-700">{safePhotoAnalysisText(analysis.caption, 'No caption yet.')}</p>
-                    {safeOptionalPhotoAnalysisText(analysis.suggested_bucket_name) && (
-                      <p className="mt-2 text-xs font-medium text-text-primary">
-                        Best album: {safeOptionalPhotoAnalysisText(analysis.suggested_bucket_name)}
-                      </p>
-                    )}
-                    {metadata && (
-                      <p className="mt-2 text-xs text-text-tertiary">
-                        {metadata.taken_at ? `Taken ${formatGuestPhotoDateTime(metadata.taken_at)}` : 'Time not available'} · {metadata.width && metadata.height ? `${metadata.width}x${metadata.height}` : 'Size unavailable'}{metadata.has_gps ? ' · place details stay private' : ''}
-                      </p>
-                    )}
-                    <div className="mt-3 flex flex-wrap gap-1">
-                      {safePhotoAnalysisList(analysis.tags).slice(0, 4).map((tag) => (
-                        <span key={tag} className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">{tag}</span>
-                      ))}
-                    </div>
-                    {analysis.suggested_bucket_id && analysis.suggested_bucket_id !== analysis.photo_album_id && (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <Button size="sm" variant="outline" disabled={visionMovesBusy} onClick={() => void applyVisionSuggestion(analysis)}>
-                          Move photo
-                        </Button>
-                        <Button size="sm" variant="outline" disabled={visionMovesBusy} onClick={() => void rejectVisionSuggestion(analysis)}>
-                          Keep here
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
+        <GuestPhotoMomentsCard
+          uploadAnalyses={uploadAnalyses}
+          uploads={uploads}
+          metadataByUploadId={metadataByUploadId}
+          visionReadyCount={visionReadyCount}
+          visionFallbackCount={visionFallbackCount}
+          unanalyzedUploadCount={unanalyzedUploads.length}
+          metadataExifCount={metadataExifCount}
+          metadataGpsCount={metadataGpsCount}
+          metadataEventMatchCount={metadataEventMatchCount}
+          aiAcceptedCorrectionCount={aiAcceptedCorrectionCount}
+          aiRejectedCorrectionCount={aiRejectedCorrectionCount}
+          visionAiBusy={visionAiBusy}
+          visionMovesBusy={visionMovesBusy}
+          visionHighConfidenceMoveCount={visionHighConfidenceMoves.length}
+          onAnalyzeNewPhotos={() => void analyzeUploadsWithVision(false)}
+          onAnalyzeVisiblePhotos={() => void analyzeUploadsWithVision(true)}
+          onApplyHighConfidenceMoves={() => void applyHighConfidenceVisionMoves()}
+          onApplyVisionSuggestion={(analysis) => void applyVisionSuggestion(analysis)}
+          onRejectVisionSuggestion={(analysis) => void rejectVisionSuggestion(analysis)}
+          formatDateTime={formatGuestPhotoDateTime}
+        />
 
         <Card className="p-6 border border-border-subtle bg-white">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
