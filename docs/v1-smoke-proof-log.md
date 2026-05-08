@@ -10606,6 +10606,20 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md` PASS
   - `git diff --check` PASS
 - Outcome: `Registry.tsx` dropped from `1443` lines to `1358` lines; `useRegistryDashboardData.ts` came in at `178` lines. No deploy was run.
+## 2026-05-08 08:24 AM PT No-Deploy Guest Photo AI-Actions Hook Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now routes the guest photo AI organization and vision-review action lane through `src/pages/dashboard/guestPhotos/useGuestPhotoAiActions.ts`.
+  - That hook now owns AI ops plan generation via `buildAiPhotoOpsPlan(...)`, AI ops persistence via `persistGuestPhotoAiOpsPlan(siteId, plan)`, high-confidence album moves through `moveGuestPhotoUploadToBucket(...)`, vision suggestion corrections through `createGuestPhotoBucketCorrection(...)`, vision analysis through `analyzeGuestPhotoUploads(...)`, and the associated local success/error + busy-state handling while the route keeps dashboard data/bootstrap, exports, moderation actions, and live-content prop composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useGuestPhotoAiActions({ ... })`, checks that `useGuestPhotoAiActions.ts` owns the guest-photo AI action seam, and rejects regaining the old inline `generateAiPhotoOpsPlan`, `applyVisionSuggestion`, and `analyzeUploadsWithVision` blocks in `GuestPhotoSharing.tsx`.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 1426 lines to 1248 lines in this batch, while `src/pages/dashboard/guestPhotos/useGuestPhotoAiActions.ts` came in at 283 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 08:19 AM PT No-Deploy Guest Photo Dashboard Data-Hook Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
