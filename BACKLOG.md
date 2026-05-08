@@ -1835,6 +1835,14 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins the higher-level RSVP settings, insights, conflict, and campaign seams and rejects regaining the old inline hero/panel copy.
   - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts` (15/15), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest dashboard without changing guest operations behavior. No deploy was run.
+- 2026-05-07 7:39 PM PT - No-deploy Guest dashboard ops-summary extraction:
+  - Resolved in this batch: moved the guest dashboard recommended-action card, RSVP follow-up list, planner handoff card, and quickstart photo skip card out of `src/pages/dashboard/Guests.tsx` and behind `src/pages/dashboard/guests/GuestOpsSummaryPanel.tsx`.
+  - Data-boundary hardening: `Guests.tsx` now routes that ops-summary stack through `GuestOpsSummaryPanel` instead of carrying the inline recommended-action and follow-up queue composition.
+  - File-size movement: `Guests.tsx` dropped from 2806 lines to 2763 lines in this continuation batch.
+  - No feature loss: recommended action focus, follow-up task creation, guest queue filtering, planner handoff guidance, and quickstart photo continuation preserve the current behavior while shrinking page-owned composition.
+  - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins the higher-level `GuestOpsSummaryPanel` seam and rejects regaining the old inline `Recommended next action` and `RSVP follow-up list` copy.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts` (15/15), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest dashboard without changing guest operations behavior. No deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

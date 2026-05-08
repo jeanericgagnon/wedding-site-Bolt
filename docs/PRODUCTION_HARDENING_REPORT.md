@@ -3935,3 +3935,21 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the oversized-file and page-boundary lanes for the guest dashboard without changing RSVP settings, conflict review, or campaign reminder behavior. No deploy was run.
+
+### 2026-05-07 7:39 PM PT - Guest Dashboard Ops-Summary Extraction
+
+- Moved the guest dashboard recommended-action card, RSVP follow-up list, planner handoff card, and quickstart photo skip card behind `src/pages/dashboard/guests/GuestOpsSummaryPanel.tsx`.
+- `src/pages/dashboard/Guests.tsx` now routes that ops-summary stack through `GuestOpsSummaryPanel` instead of carrying the inline recommended-action and follow-up queue composition.
+- The page still owns the guest state, filters, handlers, and service calls, while the extracted component owns the ops-summary composition.
+- `Guests.tsx` dropped from 2806 lines to 2763 lines in this continuation batch.
+- Tightened `src/lib/dashboardDataBoundary.test.ts` so the guest dashboard now pins the higher-level `GuestOpsSummaryPanel` seam and rejects regaining the old inline `Recommended next action` and `RSVP follow-up list` copy.
+
+Validation:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the oversized-file and page-boundary lanes for the guest dashboard without changing recommended next actions, follow-up queue review, planner handoff guidance, or quickstart continuation behavior. No deploy was run.

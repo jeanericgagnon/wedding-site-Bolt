@@ -48,6 +48,7 @@ import { GuestDashboardOverlays } from './guests/GuestDashboardOverlays';
 import { GuestCampaignReminderPanel } from './guests/GuestCampaignReminderPanel';
 import { GuestListDisplaySwitcher } from './guests/GuestListDisplaySwitcher';
 import { GuestOpsToolbar } from './guests/GuestOpsToolbar';
+import { GuestOpsSummaryPanel } from './guests/GuestOpsSummaryPanel';
 import { GuestRsvpConflictPanels } from './guests/GuestRsvpConflictPanels';
 import { GuestRsvpSettingsView } from './guests/GuestRsvpSettingsView';
 import { GuestSnapshotInsightsPanel } from './guests/GuestSnapshotInsightsPanel';
@@ -2363,72 +2364,29 @@ const handleSendBulkInvitations = async () => {
           />
         )}
 
+        <GuestOpsSummaryPanel
+          cleanGuestsView={cleanGuestsView}
+          fromQuickStart={fromQuickStart}
+          nextStep={nextStep}
+          opsQueue={opsQueue}
+          plannerHandoff={plannerHandoff}
+          recommendedAction={recommendedAction}
+          onAddFollowUpTask={addFollowUpTask}
+          onFocusQueueItem={(filter, guestName) => {
+            setFilterStatus(filter as typeof filterStatus);
+            setViewMode('list');
+            setSearchQuery(guestName);
+          }}
+          onFocusRecommendedAction={(filter) => {
+            setFilterStatus(filter as typeof filterStatus);
+            setViewMode('list');
+            setSearchQuery('');
+          }}
+          onSkipToPhotos={() => navigate(buildQuickStartPhotosPath())}
+        />
+
         <Card variant="bordered" padding="lg">
           <div className="space-y-6">
-
-            {!cleanGuestsView && recommendedAction && (
-              <div className="p-3.5 rounded-lg border border-primary/20 bg-primary/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-text-primary">Recommended next action: {recommendedAction.title}</p>
-                  <p className="text-xs text-text-secondary mt-0.5">{recommendedAction.detail}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => { setFilterStatus(recommendedAction.filter); setViewMode('list'); setSearchQuery(''); }}
-                  >
-                    Focus now
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => addFollowUpTask(`${recommendedAction.title}`)}
-                  >
-                    Save task
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {!cleanGuestsView && opsQueue.length > 0 && (
-              <div className="p-3.5 rounded-lg border border-border-subtle bg-white space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-text-primary">RSVP follow-up list</p>
-                  <span className="text-xs text-text-tertiary break-words">{opsQueue.length} to review</span>
-                </div>
-                <div className="space-y-1.5">
-                  {opsQueue.map((item, idx) => (
-                    <button
-                      key={`${item.guestId}-${idx}`}
-                      onClick={() => { setFilterStatus(item.filter); setViewMode('list'); setSearchQuery(item.guestName); }}
-                      className="w-full text-left px-2.5 py-2 rounded-lg border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors"
-                    >
-                      <p className="text-xs font-semibold text-text-primary">{item.guestName}</p>
-                      <p className="text-[11px] text-text-tertiary">{item.issue}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs">
-              <p className="font-medium text-primary">{plannerHandoff.title}</p>
-              <p className="mt-1 text-primary/80">{plannerHandoff.detail}</p>
-              <p className="mt-2 text-primary/70">Use this surface to move guest work forward, but couple approval still matters for sensitive calls.</p>
-            </div>
-
-            {fromQuickStart && nextStep === 'photos' && (
-              <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-text-primary">Next up: import guests, then add photos</p>
-                  <p className="text-xs text-text-secondary mt-1">Import your guest list here. If you want to skip this for now, jump straight to photos and come back later.</p>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => navigate(buildQuickStartPhotosPath())}>
-                  Skip to photos
-                </Button>
-              </div>
-            )}
-
             <GuestOpsToolbar
               autoRemindersEnabled={autoRemindersEnabled}
               bulkSending={bulkSending}

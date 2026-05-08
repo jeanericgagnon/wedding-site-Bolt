@@ -8459,3 +8459,18 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 7:39 PM PT No-Deploy Guest Dashboard Ops-Summary Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the recommended-action card, RSVP follow-up list, planner handoff card, and quickstart photo skip card through `src/pages/dashboard/guests/GuestOpsSummaryPanel.tsx`.
+  - The guest dashboard page no longer owns that inline ops-summary composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins the higher-level `GuestOpsSummaryPanel` seam and rejects regaining the old inline `Recommended next action` and `RSVP follow-up list` copy.
+  - `src/pages/dashboard/Guests.tsx` dropped from 2806 lines to 2763 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
