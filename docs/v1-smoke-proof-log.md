@@ -9273,6 +9273,22 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-08 02:13 AM PT No-Deploy Overview Dashboard Model Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Overview.tsx` now routes its readiness, digest, visibility, and analytics derivation through `src/pages/dashboard/buildOverviewDashboardModel.ts` instead of hand-owning that pure dashboard model logic inline.
+  - That helper now owns publish-readiness modeling, launch-readiness scoring, invite analytics, invisible-intelligence filtering, calm-digest generation, site visibility/archive descriptors, and publish-state badge derivation.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildOverviewDashboardModel({ ... })` plus its `buildWebsiteInviteAnalyticsReadiness(...)`, `buildPublishReadinessItems(...)`, and `buildCalmOwnerDigest(...)` seams.
+  - `src/pages/dashboard/Overview.tsx` dropped from 1577 lines to 1500 lines in this batch while `src/pages/dashboard/buildOverviewDashboardModel.ts` came in at 192 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/overviewQueryBounds.test.ts src/pages/dashboard/overviewService.test.ts src/pages/dashboard/overviewUtils.test.ts src/pages/dashboard/overviewDate.test.ts`: PASS, 30/30.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 4:28 PM PT No-Deploy Guest Itinerary Drawer Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

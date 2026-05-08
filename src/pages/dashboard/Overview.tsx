@@ -1,13 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { readSetupDraft, setupDraftProgress } from '../../lib/setupDraft';
 import {
-  buildPublishReadinessItems,
   buildSetupChecklist,
-  getChecklistProgress,
-  getFirstIncompleteChecklistItem,
-  getIncompleteChecklistItems,
 } from './overviewUtils';
-import { buildAnalyticsBaseline } from './analyticsBaseline';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
 import { Eye, Users, ExternalLink, Edit, EyeOff, Palette, Radio } from 'lucide-react';
@@ -22,18 +17,14 @@ import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { writeOnboardingResumeTarget } from '../../lib/onboardingResumeStorage';
 import { useToast } from '../../components/ui/Toast';
-import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddingDate, getOverviewTimestamp } from './overviewDate';
+import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddingDate } from './overviewDate';
 import { getOverviewFallbackCoupleValue } from './overviewDraftBrief';
 import { buildNameChangeOverviewCardModel } from './nameChangeOverviewCard';
 import { buildNameChangeOverviewInsights, type NameChangeOverviewInsights } from './nameChangeOverviewInsights';
 import { NAME_CHANGE_LIFECYCLE_LABELS } from './nameChangeLifecycleLabels';
 import { deriveNameChangeLifecycleStatus } from './nameChangeLifecycleStatus';
 import { hydrateNameChangeWorkspace, loadNameChangeWorkspace } from './planning/nameChangeService';
-import { buildLaunchReadiness } from '../../lib/launchReadiness';
-import { buildPlanningAssistantModel } from '../../lib/aiPlanningAssistant';
-import { buildInvisibleIntelligenceSuggestions, type IntelligenceSuggestion } from '../../lib/invisibleIntelligence';
-import { buildCalmDigestDeliveryPreview, buildCalmOwnerDigest, type CalmDigestPriority } from '../../lib/calmOwnerDigest';
-import { buildWebsiteInviteAnalyticsFunnelReview, buildWebsiteInviteAnalyticsReadiness } from '../../lib/websiteInviteAnalyticsReadiness';
+import { type CalmDigestPriority } from '../../lib/calmOwnerDigest';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../lib/plannerAccess';
 import {
   loadOverviewDashboardSnapshot,
@@ -43,6 +34,7 @@ import {
 } from './overviewService';
 import { OverviewDashboardRouteView } from './OverviewDashboardRouteView';
 import { useOverviewIntelligenceActions } from './useOverviewIntelligenceActions';
+import { buildOverviewDashboardModel } from './buildOverviewDashboardModel';
 
 const INTELLIGENCE_DISMISSALS_STORAGE_KEY = 'dayof_intelligence_dismissed_v1';
 
@@ -380,51 +372,32 @@ export const DashboardOverview: React.FC = () => {
 
   const nameChangeCard = buildNameChangeOverviewCardModel(nameChangeOverviewState);
 
-  const responseRate =
-    stats && stats.totalGuests > 0
-      ? Math.round(((stats.confirmedGuests + stats.declinedGuests) / stats.totalGuests) * 100)
-      : null;
-  const attendanceRate =
-    stats && stats.totalGuests > 0
-      ? Math.round((stats.confirmedGuests / stats.totalGuests) * 100)
-      : null;
-  const contactCoverage =
-    stats && stats.totalGuests > 0
-      ? Math.round((stats.contactableGuestCount / stats.totalGuests) * 100)
-      : null;
-
-  const analyticsBaseline = buildAnalyticsBaseline({
-    totalGuests: stats?.totalGuests ?? 0,
-    confirmedGuests: stats?.confirmedGuests ?? 0,
-    declinedGuests: stats?.declinedGuests ?? 0,
-    pendingGuests: stats?.pendingGuests ?? 0,
-    contactableGuests: stats?.contactableGuestCount ?? 0,
-    registryItemCount: stats?.registryItemCount ?? 0,
-    photoAlbumCount: stats?.photoAlbumCount ?? 0,
-    activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
-    interactiveSuggestionCount: interactiveSuggestions.length,
+  const {
+    analyticsBaseline,
+    archiveMode,
+    attendanceRate,
+    calmDigest,
+    calmDigestPreview,
+    contactCoverage,
+    firstPublishBlocker,
+    invisibleSuggestions,
+    launchReadiness,
+    planningAssistant,
+    publishBadgeVariant,
+    publishBlockers,
+    publishProgress,
+    publishReadinessItems,
+    publishState,
+    responseRate,
+    siteVisibility,
+    websiteInviteAnalytics,
+    websiteInviteAnalyticsFunnel,
+  } = buildOverviewDashboardModel({
+    dismissedIntelligenceIds,
+    interactiveSuggestions,
+    interactiveVoteSummaries,
+    stats,
   });
-  const websiteInviteAnalytics = buildWebsiteInviteAnalyticsReadiness({
-    siteSlug: stats?.siteSlug ?? null,
-    isPublished: stats?.isPublished ?? false,
-    totalGuests: stats?.totalGuests ?? 0,
-    confirmedGuests: stats?.confirmedGuests ?? 0,
-    declinedGuests: stats?.declinedGuests ?? 0,
-    pendingGuests: stats?.pendingGuests ?? 0,
-    contactableGuests: stats?.contactableGuestCount ?? 0,
-    registryItemCount: stats?.registryItemCount ?? 0,
-    photoAlbumCount: stats?.photoAlbumCount ?? 0,
-    activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
-    interactiveSuggestionCount: interactiveSuggestions.length,
-    interactiveVoteWidgetCount: interactiveVoteSummaries.length,
-    recentRsvpCount: stats?.recentRsvps.length ?? 0,
-  });
-  const websiteInviteAnalyticsFunnel = buildWebsiteInviteAnalyticsFunnelReview(websiteInviteAnalytics);
-  const launchReadiness = stats ? buildLaunchReadiness(stats) : null;
-  const planningAssistant = stats && launchReadiness ? buildPlanningAssistantModel(stats, launchReadiness) : null;
-  const invisibleSuggestions: IntelligenceSuggestion[] = stats
-    ? buildInvisibleIntelligenceSuggestions(stats).filter((suggestion) => !dismissedIntelligenceIds.includes(suggestion.id))
-    : [];
   const showInternalProof = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('proof') === '1';
   const {
     dismissInvisibleSuggestion,
@@ -462,58 +435,7 @@ export const DashboardOverview: React.FC = () => {
 
   const setupCompletedCount = setupChecklist.filter((item) => item.done).length;
   const setupProgressRatio = setupChecklist.length > 0 ? setupCompletedCount / setupChecklist.length : 0;
-  const publishReadinessItems = buildPublishReadinessItems({
-    coupleName1: stats?.coupleName1 ?? '',
-    coupleName2: stats?.coupleName2 ?? '',
-    weddingDate: stats?.weddingDate ?? '',
-    venueName: stats?.venueName ?? '',
-    venueLocation: stats?.venueLocation ?? '',
-    registryItemCount: stats?.registryItemCount ?? 0,
-    photoAlbumCount: stats?.photoAlbumCount ?? 0,
-    isPublished: stats?.isPublished ?? false,
-    siteSlug: stats?.siteSlug ?? '',
-    templateName: stats?.templateName ?? '',
-  }).map((item) => ({ ...item, action: () => navigate(item.route) }));
-  const siteVisibility = getSiteVisibilityState({ isPublished: stats?.isPublished, privacyMode: stats?.privacyMode, hideFromSearch: stats?.hideFromSearch });
-  const archiveMode = getArchiveModeDescriptor({ weddingDate: stats?.weddingDate ?? null });
-  const publishState = getPublishStateDescriptor({
-    isPublished: stats?.isPublished,
-    hasUnsavedChanges: stats?.isPublished && stats?.siteUpdatedAt && stats?.lastPublishedAt
-      ? getOverviewTimestamp(stats.siteUpdatedAt) > getOverviewTimestamp(stats.lastPublishedAt)
-      : false,
-  });
-  const publishBadgeVariant = publishState.tone === 'success'
-    ? 'success'
-    : publishState.tone === 'warning'
-      ? 'warning'
-      : publishState.tone === 'danger'
-        ? 'error'
-        : 'secondary';
-  const publishProgress = getChecklistProgress(publishReadinessItems);
-  const publishBlockers = getIncompleteChecklistItems(publishReadinessItems);
-  const firstPublishBlocker = getFirstIncompleteChecklistItem(publishReadinessItems);
-  const calmDigest = stats ? buildCalmOwnerDigest({
-    role: stats.activeSiteRole,
-    permissions: stats.activeSitePermissions,
-    newRsvpCount: stats.recentRsvps.length,
-    pendingRsvpCount: stats.pendingGuests,
-    missingContactCount: Math.max(0, stats.totalGuests - stats.contactableGuestCount),
-    messageFailureCount: 0,
-    upcomingTaskCount: 0,
-    upcomingPaymentCount: 0,
-    newPhotoUploadCount: 0,
-    activePhotoAlbumCount: stats.activePhotoAlbumCount,
-    seatingGapCount: 0,
-    registryItemCount: stats.registryItemCount,
-    isPublished: stats.isPublished,
-    publishBlockerCount: publishBlockers.length,
-  }) : null;
-  const calmDigestPreview = calmDigest ? buildCalmDigestDeliveryPreview({
-    digest: calmDigest,
-    cadence: 'weekly',
-    includePlanner: stats?.activeSiteRole === 'owner',
-    emailDeliveryEnabled: false,
-  }) : null;
+  const publishReadinessItemsWithActions = publishReadinessItems.map((item) => ({ ...item, action: () => navigate(item.route) }));
   const coupleLabel = [stats?.coupleName1, stats?.coupleName2].filter(Boolean).join(' & ') || 'your wedding';
   const heroVenueLine = [stats?.venueName, stats?.venueLocation].filter(Boolean).join(' · ');
   const nextStepLabel = firstPublishBlocker?.label
@@ -527,8 +449,9 @@ export const DashboardOverview: React.FC = () => {
     : stats?.isPublished
       ? 'Open guests'
       : 'Open site builder';
-  const nextStepAction = firstPublishBlocker?.action
-    ?? (() => navigate(stats?.isPublished ? '/dashboard/guests' : '/dashboard/builder?publishNow=1'));
+  const nextStepAction = firstPublishBlocker
+    ? () => navigate(firstPublishBlocker.route)
+    : () => navigate(stats?.isPublished ? '/dashboard/guests' : '/dashboard/builder?publishNow=1');
 
   return (
     <OverviewDashboardRouteView error={error} loading={loading}>
@@ -1310,10 +1233,10 @@ export const DashboardOverview: React.FC = () => {
                         </div>
                       )}
 
-                      {firstPublishBlocker?.action && (
+                      {firstPublishBlocker?.route && (
                         <button
                           type="button"
-                          onClick={() => firstPublishBlocker.action?.()}
+                          onClick={() => navigate(firstPublishBlocker.route)}
                           className="w-full rounded border border-border-subtle bg-white px-3 py-1.5 text-xs font-medium text-text-primary hover:border-primary/25 hover:bg-surface-subtle"
                         >
                           Fix next: {firstPublishBlocker.label}

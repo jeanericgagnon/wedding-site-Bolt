@@ -573,9 +573,11 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Overview.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/overviewService.ts'), 'utf8');
     const actions = readFileSync(join(process.cwd(), 'src/pages/dashboard/useOverviewIntelligenceActions.ts'), 'utf8');
+    const model = readFileSync(join(process.cwd(), 'src/pages/dashboard/buildOverviewDashboardModel.ts'), 'utf8');
 
     expect(source).toContain('<OverviewDashboardRouteView');
     expect(source).toContain('useOverviewIntelligenceActions({');
+    expect(source).toContain('buildOverviewDashboardModel({');
     expect(source).toContain('loadOverviewDashboardSnapshot(user.id)');
     expect(source).toContain('loadOverviewInteractiveData(slug)');
     expect(source).not.toContain('<DashboardLayout');
@@ -591,6 +593,9 @@ describe('dashboard data boundary guards', () => {
     expect(actions).toContain('await updateOverviewDraftRefresh(stats.siteId, {');
     expect(actions).toContain('void persistOverviewIntelligenceDismissals(stats.siteId, next).catch(() => {})');
     expect(actions).toContain('await hideInteractiveSuggestion(id)');
+    expect(model).toContain('const websiteInviteAnalytics = buildWebsiteInviteAnalyticsReadiness({');
+    expect(model).toContain('const publishReadinessItems: OverviewChecklistItem[] = buildPublishReadinessItems({');
+    expect(model).toContain('const calmDigest = stats ? buildCalmOwnerDigest({');
     expect(service).toContain("const OVERVIEW_DISMISSALS_SITE_SELECT = 'wedding_data'");
     expect(service).toContain("const OVERVIEW_SITE_SELECT = 'id, site_slug, site_url, is_published, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location'");
     expect(service).toContain('.select(OVERVIEW_DISMISSALS_SITE_SELECT)');
@@ -602,6 +607,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('await updateOverviewDraftRefresh(stats.siteId, {');
     expect(source).not.toContain('void persistOverviewIntelligenceDismissals(stats.siteId, next).catch(() => {})');
     expect(source).not.toContain('await hideInteractiveSuggestion(id)');
+    expect(model).not.toContain("from '../../lib/supabase'");
   });
 
   it('keeps guest photo bucket persistence behind its service', () => {
