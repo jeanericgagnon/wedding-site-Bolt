@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Input, Textarea } from '../../components/ui';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { useAuth } from '../../hooks/useAuth';
@@ -15,7 +14,6 @@ import { resolveCoordinatorEscalationTimelineTarget } from '../../lib/coordinato
 import { resolveCoordinatorReturnToBoardState } from '../../lib/coordinatorReturnToBoard';
 import { getCoordinatorNeutralFocusReason } from '../../lib/coordinatorNeutralFocusReason';
 import { resolveCoordinatorNeutralFocusTarget } from '../../lib/coordinatorNeutralFocusTarget';
-import { getCoordinatorActiveTargetLabel } from '../../lib/coordinatorActiveTargetLabel';
 import { getCoordinatorTimelineTransitionLabel, syncCoordinatorAlertDraftForTimelineTransition } from '../../lib/coordinatorTimelineTransition';
 import { getCoordinatorCommandSummaryTarget } from '../../lib/coordinatorCommandSummaryTarget';
 import { getCoordinatorCommandJumpLabel } from '../../lib/coordinatorCommandJumpLabel';
@@ -29,8 +27,7 @@ import { resolveCoordinatorTimelineAlertIntent } from '../../lib/coordinatorTime
 import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor, validateCoordinatorAlertForm } from '../../lib/coordinatorAlertFlow';
 import { resetCoordinatorAlertFormAfterSend } from '../../lib/coordinatorAlertReset';
 import { updateCoordinatorQnaItem } from '../../lib/coordinatorQnaFlow';
-import { getFirstOpenCoordinatorQnaId, getNextCoordinatorQnaFocusId } from '../../lib/coordinatorQnaFocus';
-import { getCoordinatorQnaDraftStateLabel, type CoordinatorQnaFilter } from '../../lib/coordinatorQnaTriage';
+import { type CoordinatorQnaFilter } from '../../lib/coordinatorQnaTriage';
 import { resolveCoordinatorQnaFocusAfterItemsChange, resolveCoordinatorTimelineFocusAfterStateChange } from '../../lib/coordinatorResolvedFocus';
 import { getCoordinatorStablePromptTarget } from '../../lib/coordinatorStablePromptTarget';
 import { getCoordinatorStandingPromptReason } from '../../lib/coordinatorStandingPromptReason';
@@ -43,7 +40,7 @@ import {
   updateCoordinatorQnaAnswer,
 } from './coordinator/coordinatorService';
 import { buildCoordinatorDashboardBoardActions } from './coordinator/buildCoordinatorDashboardBoardActions';
-import { CoordinatorAttentionPanel, CoordinatorCheckInQueuePanel, CoordinatorDayOfMessagePanel, CoordinatorDayOfSummaryPanel, CoordinatorHandoffPanel, CoordinatorHelperAccessPanel, CoordinatorRoleSelector, CoordinatorStatCards, CoordinatorTimelinePanel } from './coordinator/CoordinatorModePanels';
+import { CoordinatorAttentionPanel, CoordinatorCheckInQueuePanel, CoordinatorDayOfMessagePanel, CoordinatorDayOfSummaryPanel, CoordinatorHandoffPanel, CoordinatorHelperAccessPanel, CoordinatorQnaPanel, CoordinatorRoleSelector, CoordinatorStatCards, CoordinatorTimelinePanel } from './coordinator/CoordinatorModePanels';
 import { buildCoordinatorDashboardFocusActions } from './coordinator/buildCoordinatorDashboardFocusActions';
 import { buildCoordinatorDashboardDerivedState } from './coordinator/buildCoordinatorDashboardDerivedState';
 import { useCoordinatorDashboardData } from './coordinator/useCoordinatorDashboardData';
@@ -844,180 +841,31 @@ export const DashboardCoordinatorMode: React.FC = () => {
               onSetLastAlertSuggestionKey={setLastAlertSuggestionKey}
             />
 
-            <div className="border-t border-border/60 pt-3">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-text-primary">Guest questions{panelFocus === 'qna' ? ' · focus' : ''}{activeQnaId ? ` · ${getCoordinatorActiveTargetLabel('qna')}` : ''}{qnaTargetState.label ? ` · ${qnaTargetState.label}` : ''}</p>
-                <p className="text-[11px] text-text-tertiary">{qnaCounts.open} open · {qnaCounts.answered} answered</p>
-              </div>
-              <fieldset disabled={!canEditQna}>
-              <div className="mb-2 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-medium text-text-primary">Q&A board</p>
-                    <p className="mt-1 text-[11px] text-text-secondary">Focused · {qnaBoard.activeLabel}</p>
-                    <p className="text-[11px] text-text-secondary">Next up · {qnaBoard.nextLabel}</p>
-                  </div>
-                  <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${qnaBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : qnaBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
-                    {qnaBoard.statusLabel}
-                  </span>
-                </div>
-                <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-                  <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                    <p className="text-[10px] text-text-tertiary">Backlog</p>
-                    <p className="mt-1 text-[11px] text-text-primary">{qnaBoard.backlogLabel}</p>
-                  </div>
-                  <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                    <p className="text-[10px] text-text-tertiary">Focused draft</p>
-                    <p className="mt-1 text-[11px] text-text-primary">{qnaBoard.draftLabel}</p>
-                  </div>
-                </div>
-              </div>
-              {activeQnaItem && (
-                <div className="mb-2 rounded-lg border border-border/50 bg-surface-subtle/30 px-3 py-2">
-                  <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                    <div>
-                      <p className="text-[11px] font-medium text-text-primary">Focused question</p>
-                      <p className="mt-1 text-sm text-text-primary">{activeQnaItem.question}</p>
-                      <p className="mt-1 text-[11px] text-text-tertiary">
-                        {activeQnaItem.status === 'answered' ? 'Answered' : 'Needs answer'} · {activeQnaDraftStateLabel}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {qnaBoardTargetId && qnaBoardTargetId !== activeQnaItem.id && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            focusCoordinatorQnaLane();
-                            setQnaFilter('open');
-                            setActiveQnaId(qnaBoardTargetId);
-                          }}
-                          className="rounded-lg border border-border bg-white px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:text-primary"
-                        >
-                          Jump to suggested question
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          focusCoordinatorQnaLane();
-                          setActiveQnaId(activeQnaItem.id);
-                          void saveQnaAnswer(activeQnaItem.id);
-                        }}
-                        className="rounded-lg border border-primary/25 bg-primary/5 px-2.5 py-1 text-[11px] text-primary"
-                      >
-                        {(qnaDraftAnswers[activeQnaItem.id] ?? activeQnaItem.answer ?? '').trim() ? 'Save focused reply' : 'Reopen focused question'}
-                      </button>
-                      {qnaCounts.open > 0 && (
-                        <button
-                          type="button"
-                          onClick={focusNextCoordinatorQna}
-                          className="rounded-lg border border-border bg-white px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:text-primary"
-                        >
-                          Open next question
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div className="flex gap-2 mb-2">
-                <Input
-                  value={qnaInput}
-                  onChange={(e) => { focusCoordinatorQnaLane(); setQnaInput(e.target.value); }}
-                  onKeyDown={(e) => {
-                    if (e.key !== 'Enter' || e.shiftKey) return;
-                    e.preventDefault();
-                    if (qnaInput.trim()) {
-                      void addQnaItem();
-                      return;
-                    }
-                    focusFirstCoordinatorOpenQna();
-                  }}
-                  placeholder="Add a guest question"
-                />
-                <button onClick={addQnaItem} className="px-3 py-2 text-xs rounded-md border border-border bg-white text-text-secondary disabled:opacity-40">Add question</button>
-              </div>
-              <div className="mb-2 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => { focusCoordinatorQnaLane(); setQnaFilter('open'); if (!activeQnaId) setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems)); }}
-                  className={`rounded-lg border px-2.5 py-1 text-[11px] ${qnaFilter === 'open' ? 'border-primary/35 bg-primary/5 text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
-                >
-                  Open only · {qnaCounts.open}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { focusCoordinatorQnaLane(); setQnaFilter('answered'); }}
-                  className={`rounded-lg border px-2.5 py-1 text-[11px] ${qnaFilter === 'answered' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
-                >
-                  Answered · {qnaCounts.answered}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { focusCoordinatorQnaLane(); setQnaFilter('all'); }}
-                  className={`rounded-lg border px-2.5 py-1 text-[11px] ${qnaFilter === 'all' ? 'border-border/70 bg-surface-subtle/40 text-text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
-                >
-                  All · {qnaItems.length}
-                </button>
-              </div>
-              <div className="space-y-1.5 max-h-40 overflow-auto">
-                {filteredQnaItems.length === 0 ? (
-                  <p className="text-xs text-text-tertiary">No guest questions match this triage view right now.</p>
-                ) : (
-                  filteredQnaItems.slice(0, 8).map((item) => (
-                    <div
-                      key={item.id}
-                      className={`text-xs border rounded-md px-2.5 py-2 space-y-2 cursor-pointer ${activeQnaId === item.id ? 'border-primary/40 ring-2 ring-primary/10 bg-primary/5' : 'border-border/50'}`}
-                      onClick={() => {
-                        focusCoordinatorQnaLane();
-                        setActiveQnaId(item.id);
-                      }}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="space-y-1">
-                          <span className="text-text-secondary">{item.question}</span>
-                          <div className="flex flex-wrap gap-1.5">
-                            {qnaBoardTargetId === item.id && (
-                              <span className={`px-2 py-0.5 rounded border whitespace-nowrap ${qnaTargetState.isBoardTargetActive ? 'border-primary/25 bg-primary/10 text-primary' : 'border-primary/20 bg-accent-light text-primary'}`}>
-                                {qnaTargetState.isBoardTargetActive ? 'Suggested question in progress' : 'Suggested question'}
-                              </span>
-                            )}
-                            {activeQnaId === item.id && qnaBoardTargetId !== item.id && (
-                              <span className="px-2 py-0.5 rounded border whitespace-nowrap border-primary/20 bg-primary/5 text-primary">
-                                Selected question
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <span className={`px-2 py-0.5 rounded border whitespace-nowrap ${item.status === 'answered' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border-subtle bg-surface-subtle text-text-secondary'}`}>
-                          {item.status === 'answered' ? 'Answered' : 'New'}
-                        </span>
-                      </div>
-                      <Textarea
-                        value={qnaDraftAnswers[item.id] ?? item.answer ?? ''}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => { focusCoordinatorQnaLane(); setQnaDraftAnswers((prev) => ({ ...prev, [item.id]: e.target.value })); setActiveQnaId(item.id); }}
-                        rows={2}
-                        placeholder="Add the answer the coordinator should use"
-                      />
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-[10px] text-text-tertiary">
-                          {getCoordinatorQnaDraftStateLabel({ draftAnswer: qnaDraftAnswers[item.id] ?? item.answer ?? '', savedAnswer: item.answer })}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); focusCoordinatorQnaLane(); setActiveQnaId(item.id); void saveQnaAnswer(item.id); }}
-                          className="px-2.5 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-40"
-                        >
-                          {(qnaDraftAnswers[item.id] ?? item.answer ?? '').trim() ? 'Save answer' : 'Mark unresolved'}
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-              </fieldset>
-            </div>
+            <CoordinatorQnaPanel
+              activeQnaDraftStateLabel={activeQnaDraftStateLabel}
+              activeQnaId={activeQnaId}
+              activeQnaItem={activeQnaItem}
+              canEditQna={canEditQna}
+              filteredQnaItems={filteredQnaItems}
+              focusCoordinatorQnaLane={focusCoordinatorQnaLane}
+              focusFirstCoordinatorOpenQna={focusFirstCoordinatorOpenQna}
+              focusNextCoordinatorQna={focusNextCoordinatorQna}
+              onAddQnaItem={() => { void addQnaItem(); }}
+              onChangeDraftAnswer={(id, value) => setQnaDraftAnswers((prev) => ({ ...prev, [id]: value }))}
+              onChangeQnaInput={setQnaInput}
+              onSaveQnaAnswer={(id) => { void saveQnaAnswer(id); }}
+              onSelectQna={setActiveQnaId}
+              onSetQnaFilter={setQnaFilter}
+              panelFocus={panelFocus}
+              qnaBoard={qnaBoard}
+              qnaBoardTargetId={qnaBoardTargetId}
+              qnaCounts={qnaCounts}
+              qnaDraftAnswers={qnaDraftAnswers}
+              qnaFilter={qnaFilter}
+              qnaInput={qnaInput}
+              qnaItemsCount={qnaItems.length}
+              qnaTargetState={qnaTargetState}
+            />
           </div>
         </div>
       </div>

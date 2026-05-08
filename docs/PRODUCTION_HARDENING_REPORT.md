@@ -4682,6 +4682,20 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 06:00 AM PT No-Deploy Coordinator Q&A Panel Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/CoordinatorMode.tsx` now routes the remaining guest-question/Q&A render slab through `CoordinatorQnaPanel` in `src/pages/dashboard/coordinator/CoordinatorModePanels.tsx`.
+  - That panel now owns the focused-question card, triage controls, add-question input lane, filtered question list, draft-answer textarea controls, and suggested-question affordances while the page keeps data hydration, derived state, transport hooks, and action routing.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<CoordinatorQnaPanel`, checks that `CoordinatorModePanels.tsx` owns the guest-question placeholder and empty-state copy, and rejects regaining the old inline Q&A markup in `CoordinatorMode.tsx`.
+  - `src/pages/dashboard/CoordinatorMode.tsx` dropped from 1028 lines to 876 lines in this batch, while `src/pages/dashboard/coordinator/CoordinatorModePanels.tsx` absorbed the extracted Q&A surface.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 
 ## 2026-05-08 01:15 AM PT No-Deploy Settings Site/Team Action Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
