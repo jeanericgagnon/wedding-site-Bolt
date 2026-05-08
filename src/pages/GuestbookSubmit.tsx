@@ -1,10 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { HeartHandshake, PenLine, Send } from 'lucide-react';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
-
-const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
-const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
+import {
+  buildPublicAccessArtifacts,
+  capturePublicInviteTokenFromSearch,
+} from '../lib/publicAccessArtifacts';
+import { hasGuestPublicSubmissionRuntime, submitGuestbookEntry } from './guestPublicSubmissionService';
 
 export const friendlyGuestbookError = (err: unknown) => {
   return customerSafeErrorMessage(err, 'Couldn’t send your note right now. Please try again in a moment.', {
@@ -12,12 +14,13 @@ export const friendlyGuestbookError = (err: unknown) => {
   });
 };
 
+export const safeGuestbookFunctionError = (value: unknown) => {
+  return friendlyGuestbookError(typeof value === 'string' ? value : '');
+};
+
 export const buildGuestbookAccessPayload = (slug: string) => {
   const searchParams = new URLSearchParams(window.location.search);
-  return {
-    inviteToken: searchParams.get('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`),
-    passwordSession: sessionStorage.getItem(`dayof_pw_session_${slug}`),
-  };
+  return buildPublicAccessArtifacts(slug, searchParams);
 };
 
 export const GuestbookSubmit: React.FC = () => {
@@ -33,11 +36,15 @@ export const GuestbookSubmit: React.FC = () => {
   const inputClassName = 'w-full rounded-lg border border-stone-200 bg-white px-4 py-3 text-base text-stone-900 outline-none transition focus:border-stone-400 focus:ring-4 focus:ring-stone-200/70';
   const labelClassName = 'mb-2 block text-sm font-medium text-stone-800';
 
+  useEffect(() => {
+    if (siteSlug) capturePublicInviteTokenFromSearch(siteSlug, new URLSearchParams(window.location.search));
+  }, [siteSlug]);
+
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     setStatus(null);
     setError(null);
-    if (!supabaseUrl || !supabaseAnonKey) {
+    if (!hasGuestPublicSubmissionRuntime()) {
       setError('Guestbook notes are not ready yet. Please check back soon.');
       return;
     }
@@ -48,16 +55,7 @@ export const GuestbookSubmit: React.FC = () => {
 
     setSubmitting(true);
     try {
-      const res = await fetch(`${supabaseUrl}/functions/v1/guestbook-submit`, {
-        method: 'POST',
-        headers: {
-          apikey: supabaseAnonKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ siteSlug, guestName, guestEmail, message, website, ...buildGuestbookAccessPayload(siteSlug) }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'Couldn’t send your note right now. Please try again in a moment.');
+      await submitGuestbookEntry({ siteSlug, guestName, guestEmail, message, website, ...buildGuestbookAccessPayload(siteSlug) });
       setStatus('Your note is in. Thank you.');
       setMessage('');
       setGuestEmail('');

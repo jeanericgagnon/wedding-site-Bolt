@@ -3,9 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Camera, Check, ImagePlus, UploadCloud } from 'lucide-react';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
-
-const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
-const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
+import {
+  buildPublicAccessArtifacts,
+  capturePublicInviteTokenFromSearch,
+} from '../lib/publicAccessArtifacts';
+import { submitGuestHubProspect } from './guestHubPublicService';
+import { hasGuestPublicSubmissionRuntime, uploadGuestPhotos } from './guestPublicSubmissionService';
 
 export const mapUploadError = (code?: string, fallback?: string): string => {
   switch (code) {
@@ -25,7 +28,7 @@ export const mapUploadError = (code?: string, fallback?: string): string => {
     case 'FILE_TOO_LARGE':
     case 'TOTAL_TOO_LARGE':
     case 'TOO_MANY_FILES':
-      return fallback || 'Your upload exceeds the allowed limits.';
+      return 'Your upload exceeds the allowed limits.';
     case 'UNSUPPORTED_FILE_TYPE':
       return 'Please upload photos or videos only.';
     default:
@@ -48,15 +51,7 @@ export const safePhotoUploadMessage = (message?: string): string => {
   return message && safeMessages.includes(message) ? message : 'Couldn’t upload that file. Please try again.';
 };
 
-export const buildPhotoUploadAccessPayload = (slug: string) => ({
-  inviteToken: paramsValue('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`),
-  passwordSession: sessionStorage.getItem(`dayof_pw_session_${slug}`),
-});
-
-function paramsValue(key: string): string | null {
-  const value = new URLSearchParams(window.location.search).get(key);
-  return value?.trim() || null;
-}
+export const buildPhotoUploadAccessPayload = (slug: string) => buildPublicAccessArtifacts(slug, new URLSearchParams(window.location.search));
 
 export const PhotoUpload: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -83,6 +78,7 @@ export const PhotoUpload: React.FC = () => {
   const labelClassName = 'mb-2 block text-sm font-medium text-stone-800';
 
   useEffect(() => {
+    if (siteSlug) capturePublicInviteTokenFromSearch(siteSlug, params);
     const languagePreference = resolveGuestLanguagePreference({
       search: params,
       storedLanguage: readStoredGuestLanguage(),
@@ -93,7 +89,7 @@ export const PhotoUpload: React.FC = () => {
     if (languagePreference.source === 'guest-link') {
       writeStoredGuestLanguage(languagePreference.language);
     }
-  }, [i18n, params]);
+  }, [i18n, params, siteSlug]);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -102,7 +98,7 @@ export const PhotoUpload: React.FC = () => {
     setFailedNames([]);
     setError(null);
 
-    if (!supabaseUrl || !supabaseAnonKey) {
+    if (!hasGuestPublicSubmissionRuntime()) {
       setError(t('photo_upload.not_configured'));
       return;
     }
@@ -120,10 +116,10 @@ export const PhotoUpload: React.FC = () => {
     try {
       setIsUploading(true);
       const form = new FormData();
+      const access = siteSlug ? buildPhotoUploadAccessPayload(siteSlug) : null;
       if (token.trim()) form.append('token', token.trim());
       if (siteSlug) form.append('siteSlug', siteSlug);
-      if (siteSlug) {
-        const access = buildPhotoUploadAccessPayload(siteSlug);
+      if (siteSlug && access) {
         if (access.inviteToken) form.append('inviteToken', access.inviteToken);
         if (access.passwordSession) form.append('passwordSession', access.passwordSession);
       }
@@ -133,18 +129,9 @@ export const PhotoUpload: React.FC = () => {
       form.append('website', ''); // honeypot field for basic bot filtering
       files.forEach((file) => form.append('files', file));
 
-      const res = await fetch(`${supabaseUrl}/functions/v1/photo-upload`, {
-        method: 'POST',
-        headers: {
-          apikey: supabaseAnonKey,
-        },
-        body: form,
+      const data = await uploadGuestPhotos(form).catch((err) => {
+        throw new Error(mapUploadError(err instanceof Error ? err.message : undefined));
       });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(mapUploadError(data?.code, data?.error));
-      }
 
       const uploaded = Array.isArray(data.uploaded) ? data.uploaded : [];
       const failed = Array.isArray(data.failed) ? data.failed : [];
@@ -156,13 +143,8 @@ export const PhotoUpload: React.FC = () => {
           : t('photo_upload.upload_success', { count: uploaded.length || files.length })
       );
       if (siteSlug && wantsPhotoUpdates && (guestEmail.trim() || guestPhone.trim())) {
-        fetch(`${supabaseUrl}/functions/v1/guest-prospect-submit`, {
-          method: 'POST',
-          headers: {
-            apikey: supabaseAnonKey,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
+        submitGuestHubProspect(
+          {
             siteSlug,
             guestName,
             email: guestEmail,
@@ -171,8 +153,10 @@ export const PhotoUpload: React.FC = () => {
             wantsOwnEventInfo,
             source: 'guest_upload',
             uploadToken: token.trim() || null,
-          }),
-        }).catch(() => {});
+            ...(access ?? {}),
+          },
+          'Couldn’t save your update right now.',
+        ).catch(() => {});
       }
       setFiles([]);
       setNote('');

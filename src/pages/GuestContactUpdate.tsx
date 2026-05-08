@@ -6,6 +6,7 @@ import {
   buildPublicAccessArtifacts,
   capturePublicInviteTokenFromSearch,
 } from '../lib/publicAccessArtifacts';
+import { callGuestContactFunction } from './guestPublicSubmissionService';
 
 type Match = {
   contact_session: string;
@@ -31,28 +32,6 @@ export const buildGuestContactAccessPayload = (siteRef: string) => {
 function hasFullNameQuery(value: string) {
   const normalized = value.trim().toLowerCase().replace(/\s+/g, ' ');
   return normalized.length >= 5 && normalized.split(' ').filter(Boolean).length >= 2;
-}
-
-async function callPublicFn(name: string, body: unknown) {
-  const base = ((import.meta as any).env?.VITE_SUPABASE_URL as string | undefined)?.trim();
-  const anonKey = ((import.meta as any).env?.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
-  if (!base || !anonKey) throw new Error('Guest contact updates are not ready yet.');
-  const res = await fetch(`${base}/functions/v1/${name}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      apikey: anonKey,
-    },
-    body: JSON.stringify(body),
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(safeGuestContactFunctionError((json as { error?: unknown }).error, 'Couldn’t reach the couple’s guest list right now.'));
-  }
-  if ((json as { error?: unknown })?.error) {
-    throw new Error(safeGuestContactFunctionError((json as { error?: unknown }).error, 'Couldn’t reach the couple’s guest list right now.'));
-  }
-  return json as any;
 }
 
 export const GuestContactUpdate: React.FC = () => {
@@ -105,7 +84,7 @@ export const GuestContactUpdate: React.FC = () => {
     setSelectedContactSession('');
     setSelectedHouseholdSize(1);
     try {
-      const data = await callPublicFn('guest-contact-lookup', {
+      const data = await callGuestContactFunction<{ matches?: Match[] }>('guest-contact-lookup', {
         site_ref: siteRef,
         query: query.trim(),
         ...buildGuestContactAccessPayload(siteRef),
@@ -147,7 +126,7 @@ export const GuestContactUpdate: React.FC = () => {
     setResult(null);
     try {
       if (!isDemoSiteRef) {
-        const data = await callPublicFn('guest-contact-submit', {
+        await callGuestContactFunction('guest-contact-submit', {
           site_ref: siteRef,
           contact_session: selectedContactSession,
           apply_household: applyHousehold,
@@ -162,9 +141,6 @@ export const GuestContactUpdate: React.FC = () => {
           mailing_postal_code: mailingPostalCode.trim() || null,
           mailing_country: mailingCountry.trim() || null,
         });
-        if ((data as { error?: unknown })?.error) {
-          throw new Error(safeGuestContactFunctionError((data as { error?: unknown }).error, 'Couldn’t send your update right now.'));
-        }
       }
       setResult({ ok: true, message: 'Thanks! Your information has been updated.' });
     } catch (err) {

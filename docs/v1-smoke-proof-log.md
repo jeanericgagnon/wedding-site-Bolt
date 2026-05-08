@@ -7,6 +7,22 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-07 6:01 PM PT No-Deploy Guest Public Submission Service Extraction
+- Continued from `BACKLOG.md` in the no-deploy page-to-service extraction lane.
+- Fixed/proved:
+  - Added `src/pages/guestPublicSubmissionService.ts` so `PhotoUpload.tsx`, `GuestbookSubmit.tsx`, and `GuestContactUpdate.tsx` no longer own direct guest-facing function fetch transport inline.
+  - `PhotoUpload.tsx` now routes photo uploads through `uploadGuestPhotos(...)` and its guest prospect follow-up through the shared `guestHubPublicService.ts`.
+  - `GuestbookSubmit.tsx` now routes guestbook submission through `submitGuestbookEntry(...)`.
+  - `GuestContactUpdate.tsx` now routes both guest contact lookup and guest contact submit through `callGuestContactFunction(...)`.
+  - `src/pages/guestPublicSubmissionService.test.ts` and `src/lib/publicGuestSurfaceBoundary.test.ts` now pin that guest-facing public submission seam, while the page tests stay green on behavior.
+- Proof passed:
+  - `npm test -- --run src/pages/guestPublicSubmissionService.test.ts src/lib/publicGuestSurfaceBoundary.test.ts src/pages/PhotoUpload.test.ts src/pages/GuestbookSubmit.test.ts src/pages/GuestContactUpdate.test.ts`: PASS, 21/21.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is another maintainability and guest-surface service-boundary hardening step, and no deploy was run.
+
 ## 2026-05-07 4:06 PM PT No-Deploy Guest Photo Function Service Extraction
 - Continued from `BACKLOG.md` in the no-deploy page-to-service extraction lane.
 - Fixed/proved:

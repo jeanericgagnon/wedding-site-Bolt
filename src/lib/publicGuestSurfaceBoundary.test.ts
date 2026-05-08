@@ -16,6 +16,7 @@ describe('public guest surface boundary', () => {
       'src/pages/VaultContribute.tsx',
       'src/pages/GuestbookSubmit.tsx',
       'src/pages/GuestContactUpdate.tsx',
+      'src/pages/guestPublicSubmissionService.ts',
       'src/sections/components/RsvpSection.tsx',
       'src/sections/variants/rsvp/multiEvent.tsx',
       'src/sections/interactiveSectionService.ts',
@@ -58,9 +59,13 @@ describe('public guest surface boundary', () => {
     expect(guestHubService).toContain('/functions/v1/guest-recap-config?site=');
 
     const photoUpload = readSource('src/pages/PhotoUpload.tsx');
-    expect(photoUpload).toContain('/functions/v1/photo-upload');
-    expect(photoUpload).toContain('/functions/v1/guest-prospect-submit');
+    const guestSubmissionService = readSource('src/pages/guestPublicSubmissionService.ts');
+    expect(photoUpload).toContain("from './guestPublicSubmissionService'");
+    expect(photoUpload).toContain('uploadGuestPhotos(form)');
+    expect(photoUpload).toContain('submitGuestHubProspect(');
     expect(photoUpload).toContain('buildPhotoUploadAccessPayload(siteSlug)');
+    expect(guestSubmissionService).toContain('/functions/v1/photo-upload');
+    expect(guestHubService).toContain('/functions/v1/guest-prospect-submit');
 
     const vaultContribute = readSource('src/pages/VaultContribute.tsx');
     const vaultContributionService = readSource('src/pages/vaultContributionService.ts');
@@ -78,12 +83,17 @@ describe('public guest surface boundary', () => {
     expect(vaultContributionService).toContain("supabase.functions.invoke('vault-entry-submit'");
 
     const guestbook = readSource('src/pages/GuestbookSubmit.tsx');
-    expect(guestbook).toContain('/functions/v1/guestbook-submit');
+    expect(guestbook).toContain("from './guestPublicSubmissionService'");
+    expect(guestbook).toContain('submitGuestbookEntry({');
     expect(guestbook).toContain('buildGuestbookAccessPayload(siteSlug)');
+    expect(guestSubmissionService).toContain('/functions/v1/guestbook-submit');
 
     const guestContact = readSource('src/pages/GuestContactUpdate.tsx');
-    expect(guestContact).toContain('/functions/v1/${name}');
+    expect(guestContact).toContain("from './guestPublicSubmissionService'");
+    expect(guestContact).toContain("callGuestContactFunction<{ matches?: Match[] }>('guest-contact-lookup'");
+    expect(guestContact).toContain("callGuestContactFunction('guest-contact-submit'");
     expect(guestContact).toContain('buildGuestContactAccessPayload(siteRef)');
+    expect(guestSubmissionService).toContain('/functions/v1/${name}');
 
     const rsvpSection = readSource('src/sections/components/RsvpSection.tsx');
     expect(rsvpSection).toContain("supabase.functions.invoke('public-site-access'");

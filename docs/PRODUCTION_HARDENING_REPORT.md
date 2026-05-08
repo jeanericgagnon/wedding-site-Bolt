@@ -19,6 +19,25 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 6:01 PM PT - No-Deploy Guest Public Submission Service Extraction
+
+What changed:
+- Added `src/pages/guestPublicSubmissionService.ts` so `PhotoUpload.tsx`, `GuestbookSubmit.tsx`, and `GuestContactUpdate.tsx` no longer own direct guest-facing public function fetch transport inline.
+- `PhotoUpload.tsx` now routes photo uploads through `uploadGuestPhotos(...)` and its guest prospect opt-in follow-up through the shared `guestHubPublicService.ts`.
+- `GuestbookSubmit.tsx` now routes guestbook submission through `submitGuestbookEntry(...)`.
+- `GuestContactUpdate.tsx` now routes both guest contact lookup and guest contact submit through `callGuestContactFunction(...)`.
+- Added `src/pages/guestPublicSubmissionService.test.ts` and updated `src/lib/publicGuestSurfaceBoundary.test.ts` so the guest-facing photo/guestbook/contact transport boundary is pinned.
+
+Commands run:
+- `npm test -- --run src/pages/guestPublicSubmissionService.test.ts src/lib/publicGuestSurfaceBoundary.test.ts src/pages/PhotoUpload.test.ts src/pages/GuestbookSubmit.test.ts src/pages/GuestContactUpdate.test.ts`: PASS, 5 files and 21 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This removes another guest-facing page-owned fetch cluster and gives the public submission surface one shared transport seam for future hardening without changing guest behavior. No deploy was run.
+
 ### 2026-05-07 5:57 PM PT - No-Deploy Guest Hub Public Service Extraction
 
 What changed:
