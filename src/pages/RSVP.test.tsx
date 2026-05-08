@@ -54,6 +54,7 @@ describe('RSVP stale submit protection', () => {
     const manualLookupResult = readFileSync(join(process.cwd(), 'src/pages/applyManualRsvpLookupResult.ts'), 'utf8');
     const resolvedGuest = readFileSync(join(process.cwd(), 'src/pages/applyResolvedRsvpGuest.ts'), 'utf8');
     const guestSelection = readFileSync(join(process.cwd(), 'src/pages/applyRsvpGuestSelection.ts'), 'utf8');
+    const lookupGuest = readFileSync(join(process.cwd(), 'src/pages/lookupRsvpGuest.ts'), 'utf8');
     const submitSuccess = readFileSync(join(process.cwd(), 'src/pages/applyRsvpSubmitSuccess.ts'), 'utf8');
     const tokenLookupResult = readFileSync(join(process.cwd(), 'src/pages/applyTokenRsvpLookupResult.ts'), 'utf8');
     const submitPayload = readFileSync(join(process.cwd(), 'src/pages/buildRsvpSubmitPayload.ts'), 'utf8');
@@ -86,6 +87,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain("from './applyResolvedRsvpGuest'");
     expect(rsvpPage).toContain("from './applyRsvpSubmitSuccess'");
     expect(rsvpPage).toContain("from './applyTokenRsvpLookupResult'");
+    expect(rsvpPage).toContain("from './lookupRsvpGuest'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitPayload'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitSuccessArgs'");
     expect(rsvpPage).toContain("from './prepareRsvpTokenLookupState'");
@@ -105,6 +107,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain('applyManualRsvpLookupResult({');
     expect(rsvpPage).toContain('applyResolvedRsvpGuest({');
     expect(rsvpPage).toContain('applyTokenRsvpLookupResult({');
+    expect(rsvpPage).toContain('lookupRsvpGuest({');
     expect(rsvpPage).toContain('buildRsvpSubmitPayload({');
     expect(rsvpPage).toContain('applyRsvpSubmitSuccess(buildRsvpSubmitSuccessArgs({');
     expect(rsvpPage).toContain('prepareRsvpTokenLookupState({');
@@ -132,6 +135,9 @@ describe('RSVP stale submit protection', () => {
     expect(resolvedGuest).toContain("tokenLinkedSessionRef.current = source === 'token'");
     expect(resolvedGuest).toContain('deriveSelectedHouseholdGuestIds(normalizedRsvp, household)');
     expect(resolvedGuest).toContain('applyRsvpGuestSelection({');
+    expect(lookupGuest).toContain("action: 'lookup_guest'");
+    expect(lookupGuest).toContain("action: 'lookup'");
+    expect(lookupGuest).toContain("data: demoLookup(guestId ?? searchValue?.trim() ?? '')");
     expect(guestSelection).toContain('existingFormData');
     expect(guestSelection).toContain('setRsvpSessionToken(sessionToken)');
     expect(guestSelection).toContain("setStep('form')");

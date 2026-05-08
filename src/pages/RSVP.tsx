@@ -39,6 +39,7 @@ import { buildRsvpLiveContentActions } from './buildRsvpLiveContentActions';
 import { buildRsvpPageViewModel } from './buildRsvpPageViewModel';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { buildRsvpLiveContentViewProps } from './buildRsvpLiveContentViewProps';
+import { lookupRsvpGuest } from './lookupRsvpGuest';
 import { callValidateRsvpToken } from './rsvpFunctionService';
 import { prepareRsvpTokenLookupState } from './prepareRsvpTokenLookupState';
 import { resetRsvpLookupFlow } from './resetRsvpLookupFlow';
@@ -721,9 +722,12 @@ export default function RSVP() {
     });
 
     try {
-      const lookupResp: { data?: unknown; error?: string } = USE_DEMO_RSVP
-        ? { data: demoLookup(searchValue.trim()) as unknown }
-        : await callValidateRsvpToken({ action: 'lookup', searchValue: searchValue.trim() });
+      const lookupResp = await lookupRsvpGuest({
+        callValidateRsvpToken,
+        demoLookup,
+        searchValue,
+        useDemoRsvp: USE_DEMO_RSVP,
+      });
       if (activeLookupRequestRef.current !== requestId) return;
       applyManualRsvpLookupResult({
         data: lookupResp.data,
@@ -825,9 +829,13 @@ export default function RSVP() {
       setSubmitting,
     });
     try {
-      const lookupResp: { data?: unknown; error?: string } = USE_DEMO_RSVP
-        ? { data: demoLookup(picked.id) as unknown }
-        : await callValidateRsvpToken({ action: 'lookup_guest', guestId: picked.id, rsvpSession: rsvpSessionToken });
+      const lookupResp = await lookupRsvpGuest({
+        callValidateRsvpToken,
+        demoLookup,
+        guestId: picked.id,
+        rsvpSessionToken,
+        useDemoRsvp: USE_DEMO_RSVP,
+      });
       if (activeLookupRequestRef.current !== requestId) return;
       applyManualRsvpLookupResult({
         data: lookupResp.data,
