@@ -23,7 +23,7 @@ import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, is
 import { extractDietaryNote } from '../../lib/dietaryNotes';
 import { GUEST_IMPORT_MAX_FILE_BYTES, GUEST_IMPORT_MAX_ROWS, buildDefaultCsvFieldMap, buildGuestImportPreview, isCsvNameMappingValid, readGuestImportRows, type CsvFieldMap } from '../../lib/guestImportParser';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
-import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
+import { Button, Badge, Input, Select, Textarea } from '../../components/ui';
 import { Download, UserPlus, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, CalendarDays, ChevronRight, Loader2, ChevronDown, Trash2, ExternalLink, Eye } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
@@ -45,8 +45,7 @@ import {
 } from './guests/guestDisplayUtils';
 import { GuestDashboardHeader } from './guests/GuestDashboardHeader';
 import { GuestDashboardOverlays } from './guests/GuestDashboardOverlays';
-import { GuestEngagementControlsPanel } from './guests/GuestEngagementControlsPanel';
-import { GuestListDisplaySwitcher } from './guests/GuestListDisplaySwitcher';
+import { GuestDashboardWorkspace } from './guests/GuestDashboardWorkspace';
 import { GuestOpsSummaryPanel } from './guests/GuestOpsSummaryPanel';
 import { GuestRsvpConflictPanels } from './guests/GuestRsvpConflictPanels';
 import { GuestRsvpSettingsView } from './guests/GuestRsvpSettingsView';
@@ -2190,6 +2189,185 @@ const handleSendBulkInvitations = async () => {
   }
 
   const canEditGuests = !isGuestsReadOnly;
+  const guestEngagementProps = {
+    activeSegmentLabel: segmentLabelMap[filterStatus] || filterStatus,
+    autoRemindersEnabled,
+    bulkSending,
+    canEditGuests,
+    campaignPreset,
+    campaignReadiness,
+    checkInMode,
+    checkedInCount: guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at).length,
+    cleanGuestsView,
+    contactNoContactCount: contactStats.withNoContact,
+    csvFileInputRef,
+    csvImporting,
+    csvMaxFileMb: Math.round(GUEST_IMPORT_MAX_FILE_BYTES / 1024 / 1024),
+    csvMaxRows: GUEST_IMPORT_MAX_ROWS,
+    csvSelectedFilename,
+    daysToWedding,
+    dueReminderCount: dueReminderCandidatesGlobal.length,
+    extraFilterCount: extraFilters.length,
+    filterStatus,
+    guestCount: guests.length,
+    hasNextUnresolvedGuest: Boolean(nextUnresolvedGuest),
+    isDemoMode,
+    lastCheckInGuestName: lastCheckIn?.guestName ?? null,
+    manualFollowUpCount: filteredGuests.filter((guest) => fallbackByGuest.get(guest.id)?.state === 'manual-follow-up').length,
+    manualHandledCount: filteredGuests.filter((guest) => fallbackByGuest.get(guest.id)?.state === 'manual-handled').length,
+    reminderCandidateCount: reminderCandidates.length,
+    reminderCandidates: reminderCandidates.map((guest) => ({
+      email: guest.email ?? null,
+      id: guest.id,
+      name: (guest.first_name || guest.last_name)
+        ? `${guest.first_name ?? ''} ${guest.last_name ?? ''}`.trim()
+        : guest.name,
+    })),
+    rsvpOps,
+    searchQuery,
+    segmentOptions: [
+      { value: 'all', label: `All (${stats.total})` },
+      { value: 'confirmed', label: `Confirmed (${stats.confirmed})` },
+      { value: 'declined', label: `Declined (${stats.declined})` },
+      { value: 'pending', label: `Pending (${stats.pending})` },
+    ],
+    selectedGuestCount: selectedGuestIds.size,
+    showCampaignModal,
+    showExceptionBanner: filteredGuests.some((guest) => (exceptionStateByGuest.get(guest.id) || []).length > 0) && filterStatus === 'all',
+    showMissingMealBanner: filterStatus === 'missing-meal',
+    showNoContactBanner: filterStatus === 'no-contact',
+    showOpsMenu,
+    showRecipientPreview,
+    skipRecentlyInvited,
+    viewMode,
+    visibleSelectedCount: filteredGuests.filter((g) => selectedGuestIds.has(g.id)).length,
+    onAddGuest: () => {
+      resetForm();
+      setShowAddModal(true);
+    },
+    onApplyCampaignPreset: applyCampaignPreset,
+    onClearAllCheckIns: () => { void handleClearAllCheckIns(); },
+    onClearFilters: () => {
+      setFilterStatus('all');
+      setExtraFilters([]);
+      setSearchQuery('');
+      setViewMode('list');
+    },
+    onClearSelection: clearGuestSelection,
+    onCopyAddressCollectionLink: () => { void copyContactRequestLink(); },
+    onCopyChecklist: () => {
+      const lines = followUpTasks.map((task) => `- [ ] ${task.text}`);
+      const text = lines.length ? lines.join('\n') : '- [ ] No follow-up tasks yet';
+      void copyTextOrDownload(text, 'dayof-guest-checklist.md', 'text/markdown;charset=utf-8')
+        .then((result) => toast(result === 'copied' ? 'Copied checklist markdown' : 'Clipboard was blocked, so the checklist downloaded.', 'success'));
+    },
+    onCopyContactRequestLink: () => { void copyContactRequestLink(); },
+    onCopyExceptionChecklist: () => { void handleCopyExceptionChecklist(); },
+    onCopyFilteredEmails: () => { void handleCopyFilteredEmails(); },
+    onCopyMissingContactList: () => { void handleCopyNoContactChecklist(); },
+    onCopyMissingMealChecklist: () => { void handleCopyMissingMealChecklist(); },
+    onCopyTextRsvpLinks: () => { void copySmsRsvpLinksForFiltered(); },
+    onCreateChecklist: generateChecklistTasks,
+    onDeleteAllGuests: () => {
+      setDeleteAllConfirmInput('');
+      setShowDeleteAllModal(true);
+    },
+    onDryRun: () => {
+      toast(`Dry run ready for ${reminderCandidates.length} ${reminderCandidates.length === 1 ? 'recipient' : 'recipients'}.`);
+      void copyTextOrDownload(
+        `Campaign dry run (${segmentLabelMap[filterStatus] || filterStatus})\nRecipients: ${reminderCandidates.length}\n\n${dryRunRecipientPreview.join('\n')}${reminderCandidates.length > dryRunRecipientPreview.length ? `\n+${reminderCandidates.length - dryRunRecipientPreview.length} more` : ''}`,
+        'dayof-campaign-dry-run.txt',
+      );
+    },
+    onExportAddressCollection: exportAddressCollectionCSV,
+    onExportAllGuests: exportCSV,
+    onExportAttendingGuests: exportAttendingGuestsCSV,
+    onExportCheckedInGuests: exportCheckedInCSV,
+    onExportDeclinedGuests: exportDeclinedGuestsCSV,
+    onExportEventAttendance: exportEventAttendanceCSV,
+    onExportFilteredGuests: exportFilteredCSV,
+    onExportHouseholdLabels: exportHouseholdLabelsCSV,
+    onExportMissingMealChoices: exportMissingMealCSV,
+    onExportPendingRsvp: exportPendingGuestsCSV,
+    onExportRsvpResponders: exportRsvpRespondersCSV,
+    onExportThankYouDue: exportThankYouDueCSV,
+    onFileChange: importCSV,
+    onFocusHandledPersonally: () => { setFilterStatus('manual-handled'); setViewMode('list'); setShowCampaignModal(false); },
+    onFocusHighRiskFirst: () => { setFilterStatus('all'); setViewMode('list'); setSearchQuery(''); setSortByPriority(true); setShowCampaignModal(false); },
+    onFocusMissingContact: () => { setSearchQuery(''); setFilterStatus('no-contact'); setViewMode('list'); setShowCampaignModal(false); },
+    onFocusMissingMeal: () => { setFilterStatus('missing-meal'); setViewMode('list'); setShowCampaignModal(false); },
+    onFocusPending: () => { setFilterStatus('pending'); setViewMode('list'); setShowCampaignModal(false); },
+    onFocusPendingNoEmail: () => { setFilterStatus('pending-no-email'); setViewMode('list'); setShowCampaignModal(false); },
+    onFocusPlusOneNames: () => { setFilterStatus('plusone-missing'); setViewMode('list'); setShowCampaignModal(false); },
+    onMarkAllDueThankYous: () => { void handleMarkAllDueThankYous(); },
+    onNextUnresolved: () => {
+      if (nextUnresolvedGuest) {
+        setSearchQuery((nextUnresolvedGuest.first_name || nextUnresolvedGuest.last_name) ? `${nextUnresolvedGuest.first_name ?? ''} ${nextUnresolvedGuest.last_name ?? ''}`.trim() : nextUnresolvedGuest.name);
+        setViewMode('list');
+      }
+    },
+    onOpenCampaignModal: () => setShowCampaignModal(true),
+    onSearchQueryChange: setSearchQuery,
+    onSelectCheckedInFilter: () => setFilterStatus('checked-in'),
+    onSelectFiltered: selectFilteredGuests,
+    onSelectPrimaryFilter: (value: string) => {
+      setFilterStatus(value as typeof filterStatus);
+      setExtraFilters([]);
+    },
+    onSelectUnresolved: selectUnresolvedGuests,
+    onSendDueReminders: () => { void handleSendDueRemindersNow(); },
+    onSendDueRemindersToggle: () => {
+      void (async () => {
+        const previous = autoRemindersEnabled;
+        const next = !previous;
+        try {
+          setAutoRemindersEnabled(next);
+          await persistReminderSettings({ auto_reminders_enabled: next });
+          toast(next ? 'Auto reminders enabled' : 'Auto reminders paused', 'success');
+        } catch {
+          setAutoRemindersEnabled(previous);
+          toast('Couldn’t save auto reminder setting.', 'error');
+        }
+      })();
+    },
+    onSendFilteredInvitations: () => { void handleSendBulkInvitations(); },
+    onSendSelectedInvitations: () => { void handleSendSelectedInvitations(); },
+    onSetShowCampaignModal: setShowCampaignModal,
+    onSetShowOpsMenu: setShowOpsMenu,
+    onSetShowRecipientPreview: setShowRecipientPreview,
+    onSetSkipRecentlyInvited: setSkipRecentlyInvited,
+    onToggleCheckInMode: () => { setCheckInMode(v => !v); setViewMode('list'); },
+    onToggleHouseholdsView: () => { setCheckInMode(false); setViewMode(v => v === 'households' ? 'list' : 'households'); },
+    onUndoLastCheckIn: () => { void handleUndoLastCheckIn(); },
+    onKeepOnlyVisibleSelection: keepOnlyVisibleSelection,
+  };
+  const guestHouseholdProps = {
+    householdBusy,
+    households,
+    isDemoMode,
+    selectedGuestIds,
+    getStatusBadge,
+    onMergeIntoHousehold: handleMergeIntoHousehold,
+    onSetSelectedGuestIds: setSelectedGuestIds,
+  };
+  const guestListProps = {
+    checkInMode,
+    confirmDeleteId,
+    deletingGuestId,
+    displayedGuests,
+    filteredGuestCount: filteredGuests.length,
+    isGuestsReadOnly,
+    searchQuery,
+    sendingInviteId,
+    getStatusBadge,
+    onDeleteGuest: handleDeleteGuest,
+    onOpenAssistedRsvpModal: openAssistedRsvpModal,
+    onOpenEditModal: openEditModal,
+    onOpenItineraryDrawer: openItineraryDrawer,
+    onSendInvitation: handleSendInvitation,
+    onToggleCheckIn: handleToggleCheckIn,
+    onMarkThankYouSent: handleMarkThankYouSent,
+  };
 
   return (
     <DashboardLayout currentPage="guests">
@@ -2265,199 +2443,18 @@ const handleSendBulkInvitations = async () => {
           onSkipToPhotos={() => navigate(buildQuickStartPhotosPath())}
         />
 
-        <Card variant="bordered" padding="lg">
-          <div className="space-y-6">
-            <GuestEngagementControlsPanel
-              activeSegmentLabel={segmentLabelMap[filterStatus] || filterStatus}
-              autoRemindersEnabled={autoRemindersEnabled}
-              bulkSending={bulkSending}
-              canEditGuests={canEditGuests}
-              campaignPreset={campaignPreset}
-              campaignReadiness={campaignReadiness}
-              checkInMode={checkInMode}
-              checkedInCount={guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at).length}
-              cleanGuestsView={cleanGuestsView}
-              contactNoContactCount={contactStats.withNoContact}
-              csvFileInputRef={csvFileInputRef}
-              csvImporting={csvImporting}
-              csvMaxFileMb={Math.round(GUEST_IMPORT_MAX_FILE_BYTES / 1024 / 1024)}
-              csvMaxRows={GUEST_IMPORT_MAX_ROWS}
-              csvSelectedFilename={csvSelectedFilename}
-              daysToWedding={daysToWedding}
-              dueReminderCount={dueReminderCandidatesGlobal.length}
-              extraFilterCount={extraFilters.length}
-              filterStatus={filterStatus}
-              guestCount={guests.length}
-              hasNextUnresolvedGuest={Boolean(nextUnresolvedGuest)}
-              isDemoMode={isDemoMode}
-              lastCheckInGuestName={lastCheckIn?.guestName ?? null}
-              manualFollowUpCount={filteredGuests.filter((guest) => fallbackByGuest.get(guest.id)?.state === 'manual-follow-up').length}
-              manualHandledCount={filteredGuests.filter((guest) => fallbackByGuest.get(guest.id)?.state === 'manual-handled').length}
-              reminderCandidateCount={reminderCandidates.length}
-              reminderCandidates={reminderCandidates.map((guest) => ({
-                email: guest.email ?? null,
-                id: guest.id,
-                name: (guest.first_name || guest.last_name)
-                  ? `${guest.first_name ?? ''} ${guest.last_name ?? ''}`.trim()
-                  : guest.name,
-              }))}
-              rsvpOps={rsvpOps}
-              searchQuery={searchQuery}
-              segmentOptions={[
-                { value: 'all', label: `All (${stats.total})` },
-                { value: 'confirmed', label: `Confirmed (${stats.confirmed})` },
-                { value: 'declined', label: `Declined (${stats.declined})` },
-                { value: 'pending', label: `Pending (${stats.pending})` },
-              ]}
-              selectedGuestCount={selectedGuestIds.size}
-              showCampaignModal={showCampaignModal}
-              showExceptionBanner={filteredGuests.some((guest) => (exceptionStateByGuest.get(guest.id) || []).length > 0) && filterStatus === 'all'}
-              showMissingMealBanner={filterStatus === 'missing-meal'}
-              showNoContactBanner={filterStatus === 'no-contact'}
-              showOpsMenu={showOpsMenu}
-              showRecipientPreview={showRecipientPreview}
-              skipRecentlyInvited={skipRecentlyInvited}
-              viewMode={viewMode}
-              visibleSelectedCount={filteredGuests.filter((g) => selectedGuestIds.has(g.id)).length}
-              onAddGuest={() => {
-                resetForm();
-                setShowAddModal(true);
-              }}
-              onApplyCampaignPreset={applyCampaignPreset}
-              onClearAllCheckIns={() => { void handleClearAllCheckIns(); }}
-              onClearFilters={() => {
-                setFilterStatus('all');
-                setExtraFilters([]);
-                setSearchQuery('');
-                setViewMode('list');
-              }}
-              onClearSelection={clearGuestSelection}
-              onCopyAddressCollectionLink={() => { void copyContactRequestLink(); }}
-              onCopyChecklist={() => {
-                const lines = followUpTasks.map((task) => `- [ ] ${task.text}`);
-                const text = lines.length ? lines.join('\n') : '- [ ] No follow-up tasks yet';
-                void copyTextOrDownload(text, 'dayof-guest-checklist.md', 'text/markdown;charset=utf-8')
-                  .then((result) => toast(result === 'copied' ? 'Copied checklist markdown' : 'Clipboard was blocked, so the checklist downloaded.', 'success'));
-              }}
-              onCopyContactRequestLink={() => { void copyContactRequestLink(); }}
-              onCopyExceptionChecklist={() => { void handleCopyExceptionChecklist(); }}
-              onCopyFilteredEmails={() => { void handleCopyFilteredEmails(); }}
-              onCopyMissingContactList={() => { void handleCopyNoContactChecklist(); }}
-              onCopyMissingMealChecklist={() => { void handleCopyMissingMealChecklist(); }}
-              onCopyTextRsvpLinks={() => { void copySmsRsvpLinksForFiltered(); }}
-              onCreateChecklist={generateChecklistTasks}
-              onDeleteAllGuests={() => {
-                setDeleteAllConfirmInput('');
-                setShowDeleteAllModal(true);
-              }}
-              onDryRun={() => {
-                toast(`Dry run ready for ${reminderCandidates.length} ${reminderCandidates.length === 1 ? 'recipient' : 'recipients'}.`);
-                void copyTextOrDownload(
-                  `Campaign dry run (${segmentLabelMap[filterStatus] || filterStatus})\nRecipients: ${reminderCandidates.length}\n\n${dryRunRecipientPreview.join('\n')}${reminderCandidates.length > dryRunRecipientPreview.length ? `\n+${reminderCandidates.length - dryRunRecipientPreview.length} more` : ''}`,
-                  'dayof-campaign-dry-run.txt',
-                );
-              }}
-              onExportAddressCollection={exportAddressCollectionCSV}
-              onExportAllGuests={exportCSV}
-              onExportAttendingGuests={exportAttendingGuestsCSV}
-              onExportCheckedInGuests={exportCheckedInCSV}
-              onExportDeclinedGuests={exportDeclinedGuestsCSV}
-              onExportEventAttendance={exportEventAttendanceCSV}
-              onExportFilteredGuests={exportFilteredCSV}
-              onExportHouseholdLabels={exportHouseholdLabelsCSV}
-              onExportMissingMealChoices={exportMissingMealCSV}
-              onExportPendingRsvp={exportPendingGuestsCSV}
-              onExportRsvpResponders={exportRsvpRespondersCSV}
-              onExportThankYouDue={exportThankYouDueCSV}
-              onFileChange={importCSV}
-              onFocusHandledPersonally={() => { setFilterStatus('manual-handled'); setViewMode('list'); setShowCampaignModal(false); }}
-              onFocusHighRiskFirst={() => { setFilterStatus('all'); setViewMode('list'); setSearchQuery(''); setSortByPriority(true); setShowCampaignModal(false); }}
-              onFocusMissingContact={() => { setSearchQuery(''); setFilterStatus('no-contact'); setViewMode('list'); setShowCampaignModal(false); }}
-              onFocusMissingMeal={() => { setFilterStatus('missing-meal'); setViewMode('list'); setShowCampaignModal(false); }}
-              onFocusPending={() => { setFilterStatus('pending'); setViewMode('list'); setShowCampaignModal(false); }}
-              onFocusPendingNoEmail={() => { setFilterStatus('pending-no-email'); setViewMode('list'); setShowCampaignModal(false); }}
-              onFocusPlusOneNames={() => { setFilterStatus('plusone-missing'); setViewMode('list'); setShowCampaignModal(false); }}
-              onMarkAllDueThankYous={() => { void handleMarkAllDueThankYous(); }}
-              onNextUnresolved={() => {
-                if (nextUnresolvedGuest) {
-                  setSearchQuery((nextUnresolvedGuest.first_name || nextUnresolvedGuest.last_name) ? `${nextUnresolvedGuest.first_name ?? ''} ${nextUnresolvedGuest.last_name ?? ''}`.trim() : nextUnresolvedGuest.name);
-                  setViewMode('list');
-                }
-              }}
-              onOpenCampaignModal={() => setShowCampaignModal(true)}
-              onSearchQueryChange={setSearchQuery}
-              onSelectCheckedInFilter={() => setFilterStatus('checked-in')}
-              onSelectFiltered={selectFilteredGuests}
-              onSelectPrimaryFilter={(value) => {
-                setFilterStatus(value as typeof filterStatus);
-                setExtraFilters([]);
-              }}
-              onSelectUnresolved={selectUnresolvedGuests}
-              onSendDueReminders={() => { void handleSendDueRemindersNow(); }}
-              onSendDueRemindersToggle={() => {
-                void (async () => {
-                  const previous = autoRemindersEnabled;
-                  const next = !previous;
-                  try {
-                    setAutoRemindersEnabled(next);
-                    await persistReminderSettings({ auto_reminders_enabled: next });
-                    toast(next ? 'Auto reminders enabled' : 'Auto reminders paused', 'success');
-                  } catch {
-                    setAutoRemindersEnabled(previous);
-                    toast('Couldn’t save auto reminder setting.', 'error');
-                  }
-                })();
-              }}
-              onSendFilteredInvitations={() => { void handleSendBulkInvitations(); }}
-              onSendSelectedInvitations={() => { void handleSendSelectedInvitations(); }}
-              onSetShowCampaignModal={setShowCampaignModal}
-              onSetShowOpsMenu={setShowOpsMenu}
-              onSetShowRecipientPreview={setShowRecipientPreview}
-              onSetSkipRecentlyInvited={setSkipRecentlyInvited}
-              onToggleCheckInMode={() => { setCheckInMode(v => !v); setViewMode('list'); }}
-              onToggleHouseholdsView={() => { setCheckInMode(false); setViewMode(v => v === 'households' ? 'list' : 'households'); }}
-              onUndoLastCheckIn={() => { void handleUndoLastCheckIn(); }}
-              onKeepOnlyVisibleSelection={keepOnlyVisibleSelection}
-            />
-
-            <GuestListDisplaySwitcher
-              filteredGuestCount={filteredGuests.length}
-              householdProps={{
-                householdBusy,
-                households,
-                isDemoMode,
-                selectedGuestIds,
-                getStatusBadge,
-                onMergeIntoHousehold: handleMergeIntoHousehold,
-                onSetSelectedGuestIds: setSelectedGuestIds,
-              }}
-              listProps={{
-                checkInMode,
-                confirmDeleteId,
-                deletingGuestId,
-                displayedGuests,
-                filteredGuestCount: filteredGuests.length,
-                isGuestsReadOnly,
-                searchQuery,
-                sendingInviteId,
-                getStatusBadge,
-                onDeleteGuest: handleDeleteGuest,
-                onOpenAssistedRsvpModal: openAssistedRsvpModal,
-                onOpenEditModal: openEditModal,
-                onOpenItineraryDrawer: openItineraryDrawer,
-                onSendInvitation: handleSendInvitation,
-                onToggleCheckIn: handleToggleCheckIn,
-                onMarkThankYouSent: handleMarkThankYouSent,
-              }}
-              viewMode={viewMode}
-              onClearFilters={() => {
-                setFilterStatus('all');
-                setExtraFilters([]);
-                setSearchQuery('');
-              }}
-            />
-          </div>
-        </Card>
+        <GuestDashboardWorkspace
+          engagementProps={guestEngagementProps}
+          filteredGuestCount={filteredGuests.length}
+          householdProps={guestHouseholdProps}
+          listProps={guestListProps}
+          viewMode={viewMode}
+          onClearFilters={() => {
+            setFilterStatus('all');
+            setExtraFilters([]);
+            setSearchQuery('');
+          }}
+        />
       </div>
 
       <GuestDashboardOverlays

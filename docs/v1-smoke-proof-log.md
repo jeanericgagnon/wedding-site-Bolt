@@ -7472,6 +7472,21 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 8:43 PM PT No-Deploy Guest Dashboard Workspace Shell Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes its bordered guest workspace card through `src/pages/dashboard/guests/GuestDashboardWorkspace.tsx`.
+  - That higher-level shell now owns the `Card` composition seam for `GuestEngagementControlsPanel` and `GuestListDisplaySwitcher`.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `GuestDashboardWorkspace` and rejects regaining the old inline guest engagement/list seam in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` dropped from 2545 lines to 2542 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts`: PASS, 46/46.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 5:57 PM PT No-Deploy Guest hub public service extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
