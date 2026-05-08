@@ -488,8 +488,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('<GuestPhotoGuestbookCard');
     expect(source).toContain('<GuestPhotoCoupleAlbumsCard');
     expect(source).toContain('<GuestPhotoAlbumCreateCard');
+    expect(source).toContain('<GuestPhotoAlbumListState');
     expect(source).toContain('<GuestPhotoAlbumControls');
     expect(source).toContain('<GuestPhotoBucketCard');
+    expect(source).toContain('<GuestPhotoQuickStartBanner');
     expect(source).toContain('<GuestPhotoRecentUploadsList');
     expect(source).toContain('<GuestPhotoStatsCards');
     expect(source).toContain('<GuestPhotoSlideshowDraftCard');
@@ -536,6 +538,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('Copy links, QR codes, and guest-facing prompts without digging through menus.');
     expect(source).not.toContain('Share one clean upload destination for this album.');
     expect(source).not.toContain('Recent uploads');
+    expect(source).not.toContain('Next up: add photos, then review your draft');
+    expect(source).not.toContain('Blank album sheet');
+    expect(source).not.toContain('No albums match those filters. Try a different search, switch the status filter, or clear your hidden / flagged view.');
     expect(source).not.toContain('Turn uploaded guest photos into a simple slideshow. Start with your strongest moments, preview the sequence, then polish later.');
     expect(source).not.toContain('Sort new guest photos into the moments they belong to, then reuse that work for albums, slideshow order, captions, and quality checks.');
     expect(source).not.toContain('Moment albums from the schedule');

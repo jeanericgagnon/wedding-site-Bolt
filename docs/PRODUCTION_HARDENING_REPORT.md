@@ -4040,3 +4040,20 @@ Validation:
 
 Status:
 - PARTIAL. This corrects a real duplicated owner-dashboard review surface without changing highlight review, duplicate triage, recap moderation, organizer notes, or slideshow planning behavior. No deploy was run.
+
+### 2026-05-07 8:13 PM PT - Guest Photo State Shell Extraction
+
+- Moved the guest photo quick-start continuation banner and album-list loading/blank/filter-empty state shells behind `GuestPhotoQuickStartBanner` and `GuestPhotoAlbumListState`.
+- `src/pages/dashboard/GuestPhotoSharing.tsx` now routes those small but noisy UI branches through dedicated guest-photo components instead of carrying the inline banner and album-state shell composition.
+- `GuestPhotoSharing.tsx` dropped from 2012 lines to 1986 lines in this cleanup batch.
+- Tightened `src/lib/dashboardDataBoundary.test.ts` so the guest photo dashboard now pins those additional seams and rejects regaining the old inline quick-start and album-state copy.
+
+Validation:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts`: PASS, 45/45.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This continues the oversized-file and page-boundary cleanup in the guest photo dashboard without changing quick-start handoff, empty-album suggestions, loading feedback, or filtered-empty behavior. No deploy was run.

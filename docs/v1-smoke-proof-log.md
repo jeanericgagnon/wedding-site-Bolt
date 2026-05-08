@@ -8548,3 +8548,18 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 8:13 PM PT No-Deploy Guest Photo State Shell Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now routes its quick-start continuation banner through `GuestPhotoQuickStartBanner` and its album-list loading/blank/filter-empty state shell through `GuestPhotoAlbumListState`.
+  - The guest photo dashboard page no longer owns those inline banner and album-state composition blocks.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins those additional seams and rejects regaining the old inline quick-start and album-state copy.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 2012 lines to 1986 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

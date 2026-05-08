@@ -1882,6 +1882,13 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: highlight review, duplicate triage, recap moderation, organizer notes, and slideshow planning preserve the current behavior while removing redundant dashboard UI.
   - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts` (45/45), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This removes a local owner-dashboard duplication bug without changing guest photo data or transport behavior. No deploy was run.
+- 2026-05-07 8:13 PM PT - No-deploy Guest photo state-shell extraction:
+  - Resolved in this batch: moved the quick-start continuation banner and album-list loading/blank/filter-empty state shells out of `src/pages/dashboard/GuestPhotoSharing.tsx` and behind `GuestPhotoQuickStartBanner` plus `GuestPhotoAlbumListState`.
+  - Data-boundary hardening: `src/lib/dashboardDataBoundary.test.ts` now pins those extra guest photo seams and rejects regaining the old inline quick-start and album-state copy in the page.
+  - File-size movement: `GuestPhotoSharing.tsx` dropped from 2012 lines to 1986 lines in this continuation batch.
+  - No feature loss: quick-start review handoff, empty-album starter suggestions, loading feedback, and filtered-empty messaging preserve the current behavior while shrinking page-owned composition.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts` (45/45), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local oversized-file and page-boundary risk in the guest photo dashboard without changing guest photo data or transport behavior. No deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.
