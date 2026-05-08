@@ -92,6 +92,10 @@ describe('settings site data boundary', () => {
       join(process.cwd(), 'src/pages/dashboard/settings/loadSettingsDashboardSnapshot.ts'),
       'utf8',
     );
+    const viewModel = readFileSync(
+      join(process.cwd(), 'src/pages/dashboard/settings/buildSettingsDashboardViewModel.ts'),
+      'utf8',
+    );
     const actionsHook = readFileSync(
       join(process.cwd(), 'src/pages/dashboard/settings/useSettingsSiteAccessActions.ts'),
       'utf8',
@@ -110,6 +114,7 @@ describe('settings site data boundary', () => {
     expect(page).toContain('<SettingsTabContent');
     expect(page).toContain('<SettingsSiteTabContent');
     expect(page).toContain('<SettingsRsvpTabContent');
+    expect(page).toContain('buildSettingsDashboardViewModel({');
     expect(page).toContain('requireSettingsAuthenticatedUser()');
     expect(page).toContain('verifySettingsCurrentPassword(authUser.email || \'\', currentPassword)');
     expect(page).toContain('updateSettingsAccountPassword(newPassword)');
@@ -126,6 +131,9 @@ describe('settings site data boundary', () => {
     expect(page).not.toContain("from('site_translations')");
     expect(page).not.toMatch(/supabase\s*\n\s*\.from\('wedding_sites'\)/);
     expect(page).not.toContain('loadSettingsSite(activeSite.id)');
+    expect(page).not.toContain('getSettingsTabs(settingsRole)');
+    expect(page).not.toContain('buildWeddingIdentityExportKit({');
+    expect(page).not.toContain('buildWeddingIdentityPrintAssets({');
     expect(page).not.toContain('supabase.auth.getUser');
     expect(page).not.toContain('supabase.auth.signInWithPassword');
     expect(page).not.toContain('supabase.auth.updateUser');
@@ -177,6 +185,10 @@ describe('settings site data boundary', () => {
     expect(snapshotLoader).toContain('loadSettingsTranslationStatuses(');
     expect(snapshotLoader).toContain('resolveActiveSiteForUser(userId)');
     expect(snapshotLoader).not.toContain("from('wedding_sites')");
+    expect(viewModel).toContain('getSettingsTabs(settingsRole)');
+    expect(viewModel).toContain('buildWeddingIdentityExportKit({');
+    expect(viewModel).toContain('buildWeddingIdentityPrintAssets({');
+    expect(viewModel).toContain("PLANNER_ROLE_OPTIONS.filter((option) => option.value !== 'owner')");
 
     expect(actionsHook).toContain('createSettingsCollaboratorInvite({');
     expect(actionsHook).toContain('revokeSettingsCollaboratorInvite(inviteId)');

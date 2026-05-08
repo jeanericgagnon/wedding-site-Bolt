@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
 import { Loader2 } from 'lucide-react';
-import { getAllTemplates } from '../../templates/registry';
 import { fetchBillingInfo, type BillingInfo } from '../../lib/stripeService';
 import { useAuth } from '../../hooks/useAuth';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
@@ -10,10 +9,6 @@ import { PLANNER_ROLE_OPTIONS, getPlannerPermissionPreset, readPlannerInvite, ty
 import { useToast } from '../../components/ui/Toast';
 import { logAppAction } from '../../lib/actionAudit';
 import { getSafePublicWebUrl } from '../../sections/publicLinks';
-import {
-  buildWeddingIdentityExportKit,
-  buildWeddingIdentityPrintAssets,
-} from '../../lib/weddingIdentityExports';
 import {
   loadSettingsCollaboratorInvites,
   loadSettingsTranslationStatuses,
@@ -34,10 +29,11 @@ import {
   safeSettingsError,
   splitCoupleNames,
 } from './settings/settingsDashboardUtils';
+import { buildSettingsDashboardViewModel } from './settings/buildSettingsDashboardViewModel';
 import { loadSettingsDashboardSnapshot } from './settings/loadSettingsDashboardSnapshot';
 import { SettingsAccountPanel } from './settings/SettingsAccountPanel';
 import { SettingsBillingPanel } from './settings/SettingsBillingPanel';
-import { getSettingsTabs, SettingsNavigation, type SettingsTabId } from './settings/SettingsNavigation';
+import { SettingsNavigation, type SettingsTabId } from './settings/SettingsNavigation';
 import { SettingsNotificationsPanel } from './settings/SettingsNotificationsPanel';
 import { SettingsRsvpTabContent } from './settings/SettingsRsvpTabContent';
 import { SettingsSiteTabContent } from './settings/SettingsSiteTabContent';
@@ -340,25 +336,21 @@ export const DashboardSettings: React.FC = () => {
     setPlannerInviteRole(invite.role);
   }, [siteSlug, user?.id]);
 
-  const publicSiteUrl = siteSlug ? `https://${siteSlug}.dayof.love` : '';
-  const plannerRoleOptions = PLANNER_ROLE_OPTIONS.filter((option) => option.value !== 'owner');
-  const currentTemplateName = getAllTemplates().find((template) => template.id === currentTemplate)?.name ?? 'Current site theme';
-  const weddingIdentityExportKit = useMemo(() => buildWeddingIdentityExportKit({
-    coupleNames,
+  const {
+    plannerRoleOptions,
     publicSiteUrl,
-    weddingDate,
-    venueName,
-    templateName: currentTemplateName,
-    defaultLanguage,
-  }), [coupleNames, currentTemplateName, defaultLanguage, publicSiteUrl, venueName, weddingDate]);
-  const weddingIdentityPrintAssets = useMemo(() => buildWeddingIdentityPrintAssets({
+    tabs,
+    weddingIdentityExportKit,
+    weddingIdentityPrintAssets,
+  } = useMemo(() => buildSettingsDashboardViewModel({
     coupleNames,
-    publicSiteUrl,
-    weddingDate,
-    venueName,
-    templateName: currentTemplateName,
+    currentTemplate,
     defaultLanguage,
-  }), [coupleNames, currentTemplateName, defaultLanguage, publicSiteUrl, venueName, weddingDate]);
+    settingsRole,
+    siteSlug,
+    venueName,
+    weddingDate,
+  }), [coupleNames, currentTemplate, defaultLanguage, settingsRole, siteSlug, venueName, weddingDate]);
 
   const downloadTextFile = (filename: string, content: string, type = 'text/plain;charset=utf-8') => {
     const blob = new Blob([content], { type });
@@ -477,7 +469,6 @@ export const DashboardSettings: React.FC = () => {
     setCurrentTemplate,
   });
 
-  const tabs = getSettingsTabs(settingsRole);
   return (
     <SettingsDashboardShell
       activeTab={activeTab}

@@ -19,6 +19,24 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 3:26 AM PT - No-Deploy Settings Dashboard View Model Extraction
+
+What changed:
+- `src/pages/dashboard/Settings.tsx` no longer hand-assembles the owner-settings derived support bundle inline.
+- New `src/pages/dashboard/settings/buildSettingsDashboardViewModel.ts` now owns public site URL derivation, visible settings tabs, filtered planner role options, current template label lookup, and wedding identity export/print asset assembly.
+- `src/lib/settingsErrorSafety.test.ts` and `src/pages/dashboard/settings/settingsSiteData.test.ts` now pin that seam and reject regaining the old inline derived-view assembly inside `Settings.tsx`.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts`: PASS.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `npm run proof:v1:board:md`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This keeps `Settings.tsx` more focused on state and handler wiring instead of derived page-model assembly. No deploy was run.
+
 ### 2026-05-08 3:22 AM PT - No-Deploy Settings Dashboard Snapshot Extraction
 
 What changed:

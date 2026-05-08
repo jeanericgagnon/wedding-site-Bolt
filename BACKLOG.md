@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 3:26 AM PT - No-Deploy Settings Dashboard View Model Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Settings.tsx` now routes its derived page-support state through `src/pages/dashboard/settings/buildSettingsDashboardViewModel.ts` instead of hand-assembling tabs, public site URL, planner role options, and identity export assets inline.
+  - `buildSettingsDashboardViewModel.ts` now owns that derived owner-settings view-model seam, including tab visibility, public site URL derivation, template label lookup, and wedding identity export/print asset assembly.
+  - `src/lib/settingsErrorSafety.test.ts` and `src/pages/dashboard/settings/settingsSiteData.test.ts` now pin the `buildSettingsDashboardViewModel(...)` seam and reject regaining the old inline derived-view assembly in `Settings.tsx`.
+- Acceptance/proof target:
+  - Focused settings tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 3:22 AM PT - No-Deploy Settings Dashboard Snapshot Extraction
 
 - Status: `PARTIAL`
