@@ -3,12 +3,9 @@ import { useSearchParams } from 'react-router-dom';
 import { SectionRenderer } from '../builder/components/SectionRenderer';
 import { BuilderSectionType, createDefaultSectionInstance } from '../types/builder/section';
 import { createEmptyWeddingData } from '../types/weddingData';
+import { loadPreviewPhotoManifest, type PreviewPhotoManifestEntry } from './previewPhotoManifestService';
 
-type PreviewPhoto = {
-  url: string;
-  bucket: 'engagement' | 'engagement_event' | 'root' | string;
-  orientation: 'portrait' | 'landscape' | 'square' | string;
-};
+type PreviewPhoto = PreviewPhotoManifestEntry;
 
 const VALID_TYPES: BuilderSectionType[] = [
   'hero','story','venue','schedule','travel','registry','faq','rsvp','gallery','countdown','wedding-party','dress-code','accommodations','contact','footer-cta','custom','quotes','menu','music','directions','video'
@@ -92,16 +89,7 @@ export default function VariantPreviewCapture() {
     let mounted = true;
     (async () => {
       try {
-        const res = await fetch('/preview-photos/manifest.json', { cache: 'no-store' });
-        const json = await res.json();
-        const items = (json?.items ?? []) as Array<{ url?: string; bucket?: string; orientation?: string }>;
-        const normalized: PreviewPhoto[] = items
-          .map((i) => ({
-            url: i.url ?? '',
-            bucket: i.bucket ?? 'root',
-            orientation: i.orientation ?? 'landscape',
-          }))
-          .filter((i) => Boolean(i.url));
+        const normalized: PreviewPhoto[] = await loadPreviewPhotoManifest();
         if (mounted) setPhotos(normalized);
       } catch {
         if (mounted) setPhotos([]);

@@ -19,6 +19,23 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 6:18 PM PT - No-Deploy Preview Photo Manifest Service Extraction
+
+What changed:
+- Added `src/pages/previewPhotoManifestService.ts` so `TemplateScrollCapture.tsx` and `VariantPreviewCapture.tsx` no longer own duplicate preview manifest fetch transport inline.
+- Both capture pages now route preview photo manifest loading through `loadPreviewPhotoManifest()`.
+- Added `src/pages/previewPhotoManifestService.test.ts` and `src/pages/previewPhotoManifestService.boundary.test.ts` so the shared preview-manifest boundary is pinned.
+
+Commands run:
+- `npm test -- --run src/pages/previewPhotoManifestService.test.ts src/pages/previewPhotoManifestService.boundary.test.ts`: PASS, 2 files and 2 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This removes another duplicated page-owned fetch cluster and keeps the preview capture pages focused on rendering rather than raw manifest transport. No deploy was run.
+
 ### 2026-05-07 6:12 PM PT - No-Deploy Shared RSVP Function Transport Extraction
 
 What changed:

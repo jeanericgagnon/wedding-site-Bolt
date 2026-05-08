@@ -7,6 +7,20 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-07 6:18 PM PT No-Deploy Preview Photo Manifest Service Extraction
+- Continued from `BACKLOG.md` in the no-deploy page-to-service extraction lane.
+- Fixed/proved:
+  - Added `src/pages/previewPhotoManifestService.ts` so `TemplateScrollCapture.tsx` and `VariantPreviewCapture.tsx` no longer own duplicate preview manifest fetch transport inline.
+  - Both preview capture pages now route manifest loading through `loadPreviewPhotoManifest()`.
+  - `src/pages/previewPhotoManifestService.test.ts` and `src/pages/previewPhotoManifestService.boundary.test.ts` now pin that shared preview-manifest seam.
+- Proof passed:
+  - `npm test -- --run src/pages/previewPhotoManifestService.test.ts src/pages/previewPhotoManifestService.boundary.test.ts`: PASS, 2/2.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is another maintainability and page-to-service cleanup step, and no deploy was run.
+
 ## 2026-05-07 6:12 PM PT No-Deploy Shared RSVP Function Transport Extraction
 - Continued from `BACKLOG.md` in the no-deploy page-to-service extraction lane.
 - Fixed/proved:
