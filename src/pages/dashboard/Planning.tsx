@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { useToast } from '../../components/ui/Toast';
-import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { demoWeddingSite, demoGuests, demoPlanningTasks, demoBudgetItems, demoVendors, demoNameChangeCase, demoNameChangeDocuments, demoNameChangeExtractedFields } from '../../lib/demoData';
-import { PLANNER_ROLE_OPTIONS, canEditPlanningBudget, canEditPlanningTasks, canEditPlanningVendors, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
+import { PLANNER_ROLE_OPTIONS, canEditPlanningBudget, canEditPlanningTasks, canEditPlanningVendors, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import {
   PlanningTask, PlanningBudgetItem, PlanningVendor,
   getWeddingSiteId, getWeddingDate,
@@ -15,6 +12,10 @@ import {
   loadVendors, createVendor, updateVendor, deleteVendor,
   generateMilestoneTasks,
   buildStarterPlannerSuite,
+  loadPlanningGuestCount,
+  loadPlanningSeatingReadiness,
+  loadPlanningSiteMeta,
+  updatePlanningTotalBudget,
 } from './planning/planningService';
 import { buildNameChangePlan } from '../../lib/nameChange/engine';
 import { syncNameChangeRemindersWithStepExecution } from '../../lib/nameChange/reminders';
@@ -29,6 +30,7 @@ import { PaymentsTab } from './planning/PaymentsTab';
 import { SongRequestsTab } from './planning/SongRequestsTab';
 import { AddressCollectionTab } from './planning/AddressCollectionTab';
 import { logAppAction } from '../../lib/actionAudit';
+import { PlanningDashboardShell } from './planning/PlanningDashboardShell';
 
 type Tab = 'overview' | 'tasks' | 'budget' | 'payments' | 'vendors' | 'songs' | 'addresses' | 'nameChange';
 
@@ -41,21 +43,11 @@ interface StarterSuiteRun {
 
 let planningLocationEventsPatched = false;
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'tasks', label: 'Tasks' },
-  { id: 'budget', label: 'Budget' },
-  { id: 'payments', label: 'Payments' },
-  { id: 'vendors', label: 'Vendors' },
-  { id: 'songs', label: 'Song requests' },
-  { id: 'addresses', label: 'Address collection' },
-  { id: 'nameChange', label: 'Name change' },
-];
-
 export function resolvePlanningTabFromSearch(search: string): Tab | null {
+  const tabs: Tab[] = ['overview', 'tasks', 'budget', 'payments', 'vendors', 'songs', 'addresses', 'nameChange'];
   const params = new URLSearchParams(search);
   const tab = params.get('tab');
-  return TABS.some((candidate) => candidate.id === tab) ? (tab as Tab) : null;
+  return tabs.includes(tab as Tab) ? (tab as Tab) : null;
 }
 
 export function ensurePlanningLocationEventsPatched() {
@@ -183,10 +175,8 @@ export const DashboardPlanning: React.FC = () => {
           setPlanningPermissions(activeSite.permissions ?? null);
         }
       }
-      try {
-        const rawRole = localStorage.getItem(`dayof.planning.role.${id}`) as PlannerAccessRole | null;
-        if (rawRole === 'owner' || rawRole === 'planner' || rawRole === 'coordinator' || rawRole === 'viewer') setPlanningRole(rawRole);
-      } catch {}
+      const storedRole = readPlannerAccessRole('planning', id);
+      if (storedRole) setPlanningRole(storedRole);
       const wDate = await getWeddingDate();
       setWeddingDate(wDate);
 
@@ -194,19 +184,16 @@ export const DashboardPlanning: React.FC = () => {
         loadTasks(id),
         loadBudgetItems(id),
         loadVendors(id),
-        supabase.from('wedding_sites').select('wedding_data, venue_name, is_destination_wedding').eq('id', id).maybeSingle(),
-        supabase.from('guests').select('id', { count: 'exact', head: true }).eq('wedding_site_id', id),
+        loadPlanningSiteMeta(id),
+        loadPlanningGuestCount(id),
       ]);
       setTasks(tasksData);
       setBudgetItems(budgetData);
       setVendors(vendorsData);
-      setGuestCount(guestCountResult.count ?? 0);
-      setVenueName((siteMeta.data?.venue_name as string | null) ?? null);
-      setDestinationWedding(Boolean(siteMeta.data?.is_destination_wedding));
-
-      const weddingData = (siteMeta.data?.wedding_data as Record<string, unknown> | null) ?? null;
-      const planningMeta = (weddingData?.planning as Record<string, unknown> | undefined) ?? {};
-      setTotalBudget(Number(planningMeta.totalBudget) || 0);
+      setGuestCount(guestCountResult);
+      setVenueName(siteMeta.venueName);
+      setDestinationWedding(siteMeta.destinationWedding);
+      setTotalBudget(siteMeta.totalBudget);
 
       await loadSeatingReadiness(id);
 
@@ -228,37 +215,7 @@ export const DashboardPlanning: React.FC = () => {
 
   async function loadSeatingReadiness(id: string) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { count: attendingCount } = await supabase
-        .from('guests')
-        .select('id', { count: 'exact', head: true })
-        .eq('wedding_site_id', id)
-        .in('rsvp_status', ['confirmed', 'attending']);
-
-      const { data: seatingEventsData } = await supabase
-        .from('seating_events')
-        .select('id')
-        .eq('wedding_site_id', id);
-
-      let seatedCount = 0;
-      if (seatingEventsData && seatingEventsData.length > 0) {
-        const eventIds = seatingEventsData.map(e => e.id);
-        const { count } = await supabase
-          .from('seating_assignments')
-          .select('id', { count: 'exact', head: true })
-          .in('seating_event_id', eventIds)
-          .eq('is_valid', true);
-        seatedCount = count ?? 0;
-      }
-
-      const attending = attendingCount ?? 0;
-      setSeatingReadiness({
-        attending,
-        seated: seatedCount,
-        unassigned: Math.max(0, attending - seatedCount),
-      });
+      setSeatingReadiness(await loadPlanningSeatingReadiness(id));
     } catch {
     }
   }
@@ -654,36 +611,7 @@ export const DashboardPlanning: React.FC = () => {
         return;
       }
 
-      const { data: siteData } = await supabase
-        .from('wedding_sites')
-        .select('wedding_data')
-        .eq('id', siteId)
-        .maybeSingle();
-
-      const weddingData = (siteData?.wedding_data as Record<string, unknown> | null) ?? {};
-      const planning = (weddingData.planning as Record<string, unknown> | undefined) ?? {};
-      const nextWeddingData = {
-        ...weddingData,
-        planning: {
-          ...planning,
-          totalBudget: value,
-        },
-      };
-
-      let { error } = await supabase
-        .from('wedding_sites')
-        .update({ wedding_data: nextWeddingData, updated_at: new Date().toISOString() })
-        .eq('id', siteId);
-
-      if (error?.message?.includes('wedding_data')) {
-        const fallback = await supabase
-          .from('wedding_sites')
-          .update({ updated_at: new Date().toISOString() })
-          .eq('id', siteId);
-        error = fallback.error;
-      }
-
-      if (error) throw error;
+      await updatePlanningTotalBudget(siteId, value);
       setTotalBudget(value);
       toast('Total budget updated', 'success');
     } catch {
@@ -850,68 +778,18 @@ export const DashboardPlanning: React.FC = () => {
   }, [isDemoMode, nameChangeDraft, nameChangeDocuments, nameChangeExtractedFields, nameChangeReminders, siteId, toast]);
 
   return (
-    <DashboardLayout currentPage="planning">
-      <div className="max-w-5xl mx-auto space-y-6">
-        <DashboardPageHero
-          eyebrow="Planner"
-          title="Keep the practical pieces moving without turning the wedding into a spreadsheet."
-          description="Tasks, money, vendors, songs, addresses, and name-change details stay together, with the deeper tools waiting only when you need them."
-          stats={[
-            { label: 'Open tasks', value: openTaskCount, detail: `${tasks.length} total` },
-            { label: 'Vendors', value: vendors.length, detail: vendors.length === 1 ? 'contact saved' : 'contacts saved' },
-            { label: 'Paid so far', value: `$${paidTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}`, detail: estimatedTotal > 0 ? `of $${estimatedTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })} estimated` : 'budget fills in as you go' },
-          ]}
-          actions={
-            <>
-              <a href="/dashboard/itinerary" className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">Schedule</a>
-              <a href="/dashboard/guests" className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">Guests</a>
-              <a href="/dashboard/coordinator" className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white no-underline hover:bg-primary/90">Day-of view</a>
-            </>
-          }
-        />
-
-        <div className="grid grid-cols-1 gap-3 rounded-lg border border-border-subtle bg-white/80 p-3 md:grid-cols-2">
-          <div>
-            <label className="text-sm font-semibold text-text-primary">Section</label>
-            <select
-              value={activeTab}
-              onChange={(e) => setActiveTab(e.target.value as Tab)}
-              className="mt-1 w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              {TABS.map(tab => (
-                <option key={tab.id} value={tab.id}>{tab.label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-sm font-semibold text-text-primary">How this page is shown</label>
-            <select
-              value={planningRole}
-              onChange={(e) => setPlanningRole(e.target.value as PlannerAccessRole)}
-              disabled={activeSiteRole !== 'owner'}
-              className="mt-1 w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              {PLANNER_ROLE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-            {activeSiteRole !== 'owner' && (
-              <p className="mt-1 text-xs text-text-tertiary">This follows your current collaborator role.</p>
-            )}
-          </div>
-        </div>
-
-        {planningRole === 'planner' && (
-          <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
-            Planner view is on. This keeps the page centered on tasks, vendors, budget, and wedding-day details.
-          </div>
-        )}
-        {planningRole === 'coordinator' && (
-          <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-secondary">
-            Day-of helper view is on. Schedule-related tasks stay editable here, while budget and vendor details stay with the couple or planner.
-          </div>
-        )}
-
+    <PlanningDashboardShell
+      activeSiteRole={activeSiteRole}
+      activeTab={activeTab}
+      estimatedTotal={estimatedTotal}
+      onPlanningRoleChange={setPlanningRole}
+      onTabChange={setActiveTab}
+      openTaskCount={openTaskCount}
+      paidTotal={paidTotal}
+      planningRole={planningRole}
+      tasksCount={tasks.length}
+      vendorsCount={vendors.length}
+    >
         {loading ? (
           <div className="space-y-4 animate-pulse" aria-hidden="true">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1047,7 +925,6 @@ export const DashboardPlanning: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
-    </DashboardLayout>
+    </PlanningDashboardShell>
   );
 };

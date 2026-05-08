@@ -305,9 +305,12 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain(".from('planning_vendors')\n    .select('*')");
     expect(source).not.toContain(".from('planning_budget_items')\n    .select('*')");
     expect(source).not.toContain('.insert(mutablePayload).select().single()');
+    expect(page).toContain('<PlanningDashboardShell');
     expect(page).not.toContain("supabase.from('wedding_sites')");
     expect(page).not.toContain("supabase.from('guests')");
     expect(page).not.toContain("supabase\n        .from('wedding_sites')");
+    expect(page).not.toContain('<DashboardLayout');
+    expect(page).not.toContain('<DashboardPageHero');
     expect(addressTab).not.toContain("from '../../../lib/supabase'");
     expect(addressTab).not.toContain("supabase.from('wedding_sites')");
     expect(addressTab).not.toContain(".from('guests')");

@@ -2025,3 +2025,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins `ItineraryDashboardRouteView` and rejects regaining the old inline itinerary layout shell in `Itinerary.tsx`.
   - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts` (37/37), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the itinerary dashboard without changing itinerary behavior. No deploy was run.
+- 2026-05-07 9:10 PM PT - No-deploy Planning dashboard-shell extraction:
+  - Resolved in this batch: moved the planning page chrome out of `src/pages/dashboard/Planning.tsx` and behind `src/pages/dashboard/planning/PlanningDashboardShell.tsx`.
+  - Data-boundary hardening: `Planning.tsx` now routes the outer layout, hero stats, section selector, role selector, and planner/coordinator mode banners through one higher-level shell instead of directly composing `DashboardLayout` and `DashboardPageHero` inline.
+  - File-size movement: `Planning.tsx` dropped from 992 lines to 930 lines in this continuation batch; the new dashboard shell is 120 lines.
+  - No feature loss: planning overview, tasks, budget, payments, vendors, songs, address collection, name-change planner, and vendor-to-budget prompt preserve the current behavior while shrinking page-owned chrome composition.
+  - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins `PlanningDashboardShell` and rejects regaining the old inline planning layout and hero shell in `Planning.tsx`.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/planning/planningService.test.ts` (21/21), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the planning dashboard without changing planning behavior. No deploy was run.

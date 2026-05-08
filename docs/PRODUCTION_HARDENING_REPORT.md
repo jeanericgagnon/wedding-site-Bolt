@@ -4329,3 +4329,19 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the oversized-file and page-boundary cleanup in the itinerary dashboard without changing itinerary loading or schedule behavior. No deploy was run.
+
+## 2026-05-07 9:10 PM PT No-Deploy Planning Dashboard Shell Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Planning.tsx` now routes its outer layout, hero stats, section selector, role selector, and planner/coordinator mode banners through `src/pages/dashboard/planning/PlanningDashboardShell.tsx`.
+  - That higher-level shell now owns the `DashboardLayout`, `DashboardPageHero`, and planning page chrome while the page stays focused on tab-specific planning content and handlers.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `PlanningDashboardShell` and rejects regaining the old inline planning layout and hero shell in `Planning.tsx`.
+  - `src/pages/dashboard/Planning.tsx` dropped from 992 lines to 930 lines in this batch, while `src/pages/dashboard/planning/PlanningDashboardShell.tsx` came in at 120 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/planning/planningService.test.ts`: PASS, 21/21.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the oversized-file and page-boundary cleanup in the planning dashboard without changing planning behavior. No deploy was run.
