@@ -4658,6 +4658,22 @@ Status:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-08 01:34 AM PT No-Deploy Message Composer Draft Action Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Messages.tsx` now routes composer template application, saved-template load/delete, reusable-template saves, save-the-date quick-create, and event/day-of presets through `src/pages/dashboard/messages/useMessageComposerDraftActions.ts`.
+  - That hook now owns the repeated draft assembly, local saved-template persistence, demo/live save-the-date creation, and success/error toast choreography while the page keeps the message loading, audience math, and high-level dashboard composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useMessageComposerDraftActions({ ... })` plus its `createDashboardMessage(payload)`, `writeSavedComposerTemplates(updated)`, and save-the-date draft contract.
+  - `src/pages/dashboard/Messages.tsx` dropped from 1171 lines to 983 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 12:34 AM PT No-Deploy Guest Dashboard Campaign Action Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

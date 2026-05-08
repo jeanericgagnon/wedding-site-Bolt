@@ -8,6 +8,7 @@ describe('dashboard data boundary guards', () => {
     const serviceSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/messageService.ts'), 'utf8');
     const deliveryHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDeliveryActions.ts'), 'utf8');
     const composeHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageComposeActions.ts'), 'utf8');
+    const draftHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageComposerDraftActions.ts'), 'utf8');
 
     expect(serviceSource).toContain('const MESSAGE_SELECT = [');
     expect(serviceSource).toContain('.select(MESSAGE_SELECT)');
@@ -21,7 +22,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('<MessageDashboardRouteView');
     expect(source).toContain('useMessageDeliveryActions({');
     expect(source).toContain('useMessageComposeActions({');
-    expect(source).toContain('createDashboardMessage(payload)');
+    expect(source).toContain('useMessageComposerDraftActions({');
     expect(source).toContain('loadDashboardMessages(weddingSite.id)');
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).not.toContain("supabase.from('messages').insert(payload)");
@@ -53,6 +54,10 @@ describe('dashboard data boundary guards', () => {
     expect(composeHookSource).toContain('await updateDashboardMessage(editingMessageId, {');
     expect(composeHookSource).toContain('const result = await triggerDashboardBulkSend(inserted.id)');
     expect(composeHookSource).not.toContain("from '../../lib/supabase'");
+    expect(draftHookSource).toContain('await createDashboardMessage(payload)');
+    expect(draftHookSource).toContain('writeSavedComposerTemplates(updated)');
+    expect(draftHookSource).toContain("applyComposerTemplate('save-the-date', {");
+    expect(draftHookSource).not.toContain("from '../../lib/supabase'");
   });
 
   it('keeps legacy public site repository reads out of private gate internals', () => {
