@@ -9,6 +9,7 @@ describe('dashboard data boundary guards', () => {
     const deliveryHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDeliveryActions.ts'), 'utf8');
     const composeHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageComposeActions.ts'), 'utf8');
     const draftHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageComposerDraftActions.ts'), 'utf8');
+    const historyHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageComposerHistoryActions.ts'), 'utf8');
 
     expect(serviceSource).toContain('const MESSAGE_SELECT = [');
     expect(serviceSource).toContain('.select(MESSAGE_SELECT)');
@@ -23,6 +24,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('useMessageDeliveryActions({');
     expect(source).toContain('useMessageComposeActions({');
     expect(source).toContain('useMessageComposerDraftActions({');
+    expect(source).toContain('useMessageComposerHistoryActions({');
     expect(source).toContain('loadDashboardMessages(weddingSite.id)');
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).not.toContain("supabase.from('messages').insert(payload)");
@@ -58,6 +60,10 @@ describe('dashboard data boundary guards', () => {
     expect(draftHookSource).toContain('writeSavedComposerTemplates(updated)');
     expect(draftHookSource).toContain("applyComposerTemplate('save-the-date', {");
     expect(draftHookSource).not.toContain("from '../../lib/supabase'");
+    expect(historyHookSource).toContain('const scheduledInputValue = toScheduleInputValue(message.scheduled_for)');
+    expect(historyHookSource).toContain("applyComposerTemplate('rsvp-reminder', {");
+    expect(historyHookSource).toContain('formatScheduledMessageDateTime(scheduledIso)');
+    expect(historyHookSource).not.toContain("from '../../lib/supabase'");
   });
 
   it('keeps legacy public site repository reads out of private gate internals', () => {

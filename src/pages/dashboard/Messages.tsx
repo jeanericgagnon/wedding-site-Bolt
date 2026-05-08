@@ -7,7 +7,7 @@ import { createSmsCreditsSession } from '../../lib/stripeService';
 import { canComposeDashboardMessages, canEditPlannerSurface, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { formatMessageEventOptionLabel } from './messageEventDate';
 import { formatMessageHistoryDateTime } from './messageHistoryTime';
-import { formatScheduledMessageDateTime, parseScheduleInputToIso, toScheduleInputValue } from './messageScheduleTime';
+import { parseScheduleInputToIso } from './messageScheduleTime';
 import { getMessageTemplateCoupleLabel } from './messageTemplateVariables';
 import { countSmsSegments, estimateSmsCredits } from '../../lib/smsSegments';
 import { SMS_PROVIDER_PENDING_COPY, isSmsProviderEnabled } from '../../lib/smsProvider';
@@ -43,15 +43,12 @@ import {
   countStoredPhotoAlbumLinks,
   describeRecipientReview,
   filterMessageHistory,
-  getCampaignName,
   getCampaignThreadKey,
-  getCampaignTypeLabel,
   getCustomerDeliveryReason,
   getActiveCampaignMessages,
   getActiveCampaignThread,
   getPreferredStoredPhotoAlbumLink,
   getRecipientCount,
-  getTemplateKey,
   hasReachableEmail,
   hasReachableSms,
   isEmailCapConsumingStatus,
@@ -82,6 +79,7 @@ import {
 import { useMessageDeliveryActions } from './messages/useMessageDeliveryActions';
 import { useMessageComposeActions } from './messages/useMessageComposeActions';
 import { useMessageComposerDraftActions } from './messages/useMessageComposerDraftActions';
+import { useMessageComposerHistoryActions } from './messages/useMessageComposerHistoryActions';
 // Optional table: can be missing in lean deployments.
 // Start unknown, then permanently disable after one confirmed missing-table miss.
 let hasMessageDeliveriesTable: boolean | null = null;
@@ -534,158 +532,6 @@ export const DashboardMessages: React.FC = () => {
     languages: ['en', 'es', 'fr'],
   }), [formData.body, formData.subject, formData.templateKey]);
 
-  function loadMessageIntoComposer(message: Message, mode: 'edit' | 'duplicate') {
-    if (!canComposeDashboardMessages(messagesRole, messagesPermissions)) {
-      toast('Your collaborator role cannot edit campaigns from Messaging.', 'info');
-      return;
-    }
-
-    const scheduledInputValue = toScheduleInputValue(message.scheduled_for);
-    const [scheduleDate = '', scheduleTime = ''] = scheduledInputValue ? scheduledInputValue.split('T') : [];
-
-    setEditingMessageId(mode === 'edit' ? message.id : null);
-    setFormData({
-      campaignName: mode === 'duplicate'
-        ? `Copy of ${getCampaignName(message) ?? getCampaignTypeLabel(message) ?? message.subject}`
-        : getCampaignName(message) ?? '',
-      templateKey: getTemplateKey(message),
-      subject: mode === 'duplicate' && message.status !== 'draft' ? `Copy of ${message.subject}` : message.subject,
-      body: message.body,
-      audience: message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all',
-      channel: message.channel === 'sms' ? 'sms' : 'email',
-      scheduleType: message.status === 'scheduled' && scheduleDate && scheduleTime ? 'later' : 'now',
-      scheduleDate,
-      scheduleTime,
-    });
-    setShowRecipientPreview(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    toast(mode === 'edit' ? 'Loaded into composer for editing.' : 'Copied into composer as a new message.', 'info');
-  }
-
-  function startFollowUpFromCampaignThread(mode: 'reminder' | 'day-of' | 'thank-you') {
-    if (!canComposeDashboardMessages(messagesRole, messagesPermissions)) {
-      toast('Your collaborator role cannot create follow-up campaigns from Messaging.', 'info');
-      return;
-    }
-
-    if (!activeCampaignLatestMessage) return;
-
-    const audience = activeCampaignLatestMessage.audience_filter ?? (activeCampaignLatestMessage.recipient_filter?.audience as string) ?? 'all';
-    const campaignBase = getCampaignName(activeCampaignLatestMessage) ?? activeCampaignThread?.name ?? activeCampaignLatestMessage.subject;
-
-    if (mode === 'reminder') {
-      applyComposerTemplate('rsvp-reminder', {
-        audience,
-        channel: 'email',
-        scheduleType: 'now',
-        scheduleDate: '',
-        scheduleTime: '',
-        campaignName: `${campaignBase} follow-up`,
-      });
-      setShowRecipientPreview(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      toast('Loaded thread follow-up reminder into composer.', 'info');
-      return;
-    }
-
-    if (mode === 'day-of') {
-      applyComposerTemplate('day-of-update', {
-        audience,
-        channel: 'sms',
-        scheduleType: 'now',
-        scheduleDate: '',
-        scheduleTime: '',
-        campaignName: `${campaignBase} day-of update`,
-      });
-      setShowRecipientPreview(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      toast('Loaded thread day-of update into composer.', 'info');
-      return;
-    }
-
-    applyComposerTemplate('thank-you', {
-      audience,
-      channel: 'email',
-      scheduleType: 'now',
-      scheduleDate: '',
-      scheduleTime: '',
-      campaignName: `${campaignBase} thank you`,
-    });
-    setShowRecipientPreview(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    toast('Loaded thread thank-you into composer.', 'info');
-  }
-
-  function startScheduledFollowUpFromCampaignThread(mode: 'reminder' | 'day-of' | 'thank-you') {
-    if (!canComposeDashboardMessages(messagesRole, messagesPermissions)) {
-      toast('Your collaborator role cannot schedule follow-up campaigns from Messaging.', 'info');
-      return;
-    }
-
-    if (!activeCampaignLatestMessage) return;
-
-    const now = new Date();
-    const scheduledAt = new Date(now);
-
-    if (mode === 'day-of') {
-      scheduledAt.setHours(now.getHours() + 2);
-    } else {
-      scheduledAt.setDate(now.getDate() + 1);
-      scheduledAt.setHours(10, 0, 0, 0);
-    }
-
-    const yyyy = scheduledAt.getFullYear();
-    const mm = String(scheduledAt.getMonth() + 1).padStart(2, '0');
-    const dd = String(scheduledAt.getDate()).padStart(2, '0');
-    const hh = String(scheduledAt.getHours()).padStart(2, '0');
-    const min = String(scheduledAt.getMinutes()).padStart(2, '0');
-
-    const audience = activeCampaignLatestMessage.audience_filter ?? (activeCampaignLatestMessage.recipient_filter?.audience as string) ?? 'all';
-    const campaignBase = getCampaignName(activeCampaignLatestMessage) ?? activeCampaignThread?.name ?? activeCampaignLatestMessage.subject;
-
-    if (mode === 'reminder') {
-      applyComposerTemplate('rsvp-reminder', {
-        audience,
-        channel: 'email',
-        scheduleType: 'later',
-        scheduleDate: `${yyyy}-${mm}-${dd}`,
-        scheduleTime: `${hh}:${min}`,
-        campaignName: `${campaignBase} scheduled follow-up`,
-      });
-      setShowRecipientPreview(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      toast(`Loaded scheduled reminder for ${formatScheduledMessageDateTime(`${yyyy}-${mm}-${dd}T${hh}:${min}:00`)}.`, 'info');
-      return;
-    }
-
-    if (mode === 'day-of') {
-      applyComposerTemplate('day-of-update', {
-        audience,
-        channel: 'sms',
-        scheduleType: 'later',
-        scheduleDate: `${yyyy}-${mm}-${dd}`,
-        scheduleTime: `${hh}:${min}`,
-        campaignName: `${campaignBase} scheduled day-of update`,
-      });
-      setShowRecipientPreview(true);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      toast(`Loaded scheduled day-of update for ${formatScheduledMessageDateTime(`${yyyy}-${mm}-${dd}T${hh}:${min}:00`)}.`, 'info');
-      return;
-    }
-
-    applyComposerTemplate('thank-you', {
-      audience,
-      channel: 'email',
-      scheduleType: 'later',
-      scheduleDate: `${yyyy}-${mm}-${dd}`,
-      scheduleTime: `${hh}:${min}`,
-      campaignName: `${campaignBase} scheduled thank you`,
-    });
-    setShowRecipientPreview(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    toast(`Loaded scheduled thank-you for ${formatScheduledMessageDateTime(`${yyyy}-${mm}-${dd}T${hh}:${min}:00`)}.`, 'info');
-  }
-
   const campaignStatusSummary = useMemo(() => buildCampaignStatusSummary(messages), [messages]);
 
   const audienceOptions = [
@@ -826,6 +672,21 @@ export const DashboardMessages: React.FC = () => {
   const activeCampaignMessages = useMemo(() => getActiveCampaignMessages(messages, activeCampaignThread), [messages, activeCampaignThread]);
 
   const activeCampaignLatestMessage = activeCampaignMessages[0] ?? null;
+  const {
+    loadMessageIntoComposer,
+    startFollowUpFromCampaignThread,
+    startScheduledFollowUpFromCampaignThread,
+  } = useMessageComposerHistoryActions({
+    activeCampaignLatestMessage,
+    activeCampaignThreadName: activeCampaignThread?.name ?? null,
+    messagesRole,
+    messagesPermissions,
+    applyComposerTemplate,
+    toast,
+    setEditingMessageId,
+    setFormData,
+    setShowRecipientPreview,
+  });
 
   const providerTelemetry = useMemo(() => buildProviderTelemetry(messages, deliveries), [messages, deliveries]);
 
