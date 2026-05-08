@@ -4057,3 +4057,19 @@ Validation:
 
 Status:
 - PARTIAL. This continues the oversized-file and page-boundary cleanup in the guest photo dashboard without changing quick-start handoff, empty-album suggestions, loading feedback, or filtered-empty behavior. No deploy was run.
+
+### 2026-05-07 8:16 PM PT - Guest Photo Window Editor Extraction
+
+- Moved the per-bucket parent-album and upload-window editor behind `GuestPhotoBucketWindowEditor`.
+- `src/pages/dashboard/GuestPhotoSharing.tsx` now routes that bucket-management seam through a dedicated guest-photo component instead of carrying the inline parent/window editor block inside the bucket map.
+- `GuestPhotoSharing.tsx` dropped from 1986 lines to 1949 lines in this cleanup batch.
+
+Validation:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts`: PASS, 45/45.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This continues the oversized-file and page-boundary cleanup in the guest photo dashboard without changing parent-album reassignment, suggested window defaults, or upload-window edit behavior. No deploy was run.

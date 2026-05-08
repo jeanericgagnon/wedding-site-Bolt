@@ -93,6 +93,7 @@ import { GuestPhotoAlbumControls } from './guestPhotos/GuestPhotoAlbumControls';
 import { GuestPhotoAlbumCreateCard } from './guestPhotos/GuestPhotoAlbumCreateCard';
 import { GuestPhotoAlbumListState } from './guestPhotos/GuestPhotoAlbumListState';
 import { GuestPhotoBucketCard } from './guestPhotos/GuestPhotoBucketCard';
+import { GuestPhotoBucketWindowEditor } from './guestPhotos/GuestPhotoBucketWindowEditor';
 import { GuestPhotoFollowupCard } from './guestPhotos/GuestPhotoFollowupCard';
 import { GuestPhotoGuestbookCard } from './guestPhotos/GuestPhotoGuestbookCard';
 import { GuestPhotoHeroCard } from './guestPhotos/GuestPhotoHeroCard';
@@ -1914,56 +1915,18 @@ export const GuestPhotoSharing: React.FC = () => {
                     onExportBucketCsv={exportBucketCsv}
                     onBucketSearchChange={setBucketSearch}
                   >
-                    <div className="rounded-lg border border-border-subtle p-3 bg-surface-subtle">
-                      <div className="mb-3">
-                        <label className="block text-xs text-neutral-500 mb-1">Parent album</label>
-                        <select
-                          value={bucket.parent_album_id ?? ''}
-                          onChange={(e) => void setBucketParent(bucket.id, e.target.value)}
-                          disabled={workingBucketId === bucket.id}
-                          className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm"
-                        >
-                          <option value="">Top-level album</option>
-                          {buckets
-                            .filter((candidate) => candidate.id !== bucket.id && !(descendantBucketIdsByParent.get(bucket.id) ?? []).includes(candidate.id))
-                            .sort((a, b) => bucketDisplayName(a).localeCompare(bucketDisplayName(b)))
-                            .map((candidate) => (
-                              <option key={candidate.id} value={candidate.id}>
-                                {bucketDisplayName(candidate)}
-                              </option>
-                            ))}
-                        </select>
-                      </div>
-
-                      <div className="flex items-center gap-2 mb-2 text-xs font-medium text-neutral-700">
-                        <CalendarClock className="w-3.5 h-3.5" /> Collect between
-                      </div>
-                      <p className="mb-3 text-xs text-neutral-500">Optional. Use this when you want uploads to open and close around a specific event.</p>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
-                        <div>
-                          <label className="block text-xs text-neutral-500 mb-1">Opens</label>
-                          <Input
-                            type="datetime-local"
-                            value={draft.opensAt ?? ''}
-                            onChange={(e) => setWindowDrafts((prev) => ({ ...prev, [bucket.id]: { ...draft, opensAt: e.target.value } }))}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-neutral-500 mb-1">Closes</label>
-                          <Input
-                            type="datetime-local"
-                            value={draft.closesAt ?? ''}
-                            onChange={(e) => setWindowDrafts((prev) => ({ ...prev, [bucket.id]: { ...draft, closesAt: e.target.value } }))}
-                          />
-                        </div>
-                        <Button size="sm" variant="outline" disabled={workingBucketId === bucket.id} onClick={() => applySuggestedWindow(bucket.id)}>
-                          Suggested window
-                        </Button>
-                        <Button size="sm" variant="outline" disabled={workingBucketId === bucket.id} onClick={() => void saveWindow(bucket.id)}>
-                          {workingBucketId === bucket.id ? 'Saving...' : 'Save window'}
-                        </Button>
-                      </div>
-                    </div>
+                    <GuestPhotoBucketWindowEditor
+                      bucket={bucket}
+                      buckets={buckets}
+                      descendantBucketIds={descendantBucketIdsByParent.get(bucket.id) ?? []}
+                      draft={draft}
+                      workingBucketId={workingBucketId}
+                      onParentChange={(bucketId, parentBucketId) => void setBucketParent(bucketId, parentBucketId)}
+                      onDraftChange={(bucketId, nextDraft) => setWindowDrafts((prev) => ({ ...prev, [bucketId]: nextDraft }))}
+                      onApplySuggestedWindow={applySuggestedWindow}
+                      onSaveWindow={(bucketId) => void saveWindow(bucketId)}
+                      bucketDisplayName={bucketDisplayName}
+                    />
 
                     <GuestPhotoRecentUploadsList
                       uploads={recents}
