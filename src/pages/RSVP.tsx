@@ -37,6 +37,7 @@ import {
 } from './rsvpDemoStorage';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { callValidateRsvpToken } from './rsvpFunctionService';
+import { RsvpFlowView } from './RsvpFlowView';
 import { RsvpRouteView } from './RsvpRouteView';
 import { RsvpGuestPickerView } from './RsvpGuestPickerView';
 import { RsvpSearchView } from './RsvpSearchView';
@@ -1196,8 +1197,9 @@ export default function RSVP() {
           t={t}
         />
       ) : (
-      <div className="container relative z-10 mx-auto max-w-2xl px-4 pb-14">
-        {step === 'pick' && (
+      <RsvpFlowView
+        step={step as 'pick' | 'form' | 'success'}
+        pickerContent={(
           <RsvpGuestPickerView
             ambiguousGuests={ambiguousGuests}
             guestLabel={guestLabel}
@@ -1206,8 +1208,7 @@ export default function RSVP() {
             onSearchAgain={() => { resetToSearch(false); }}
           />
         )}
-
-        {step === 'form' && guest && (
+        formContent={step === 'form' && guest ? (
           <Card className="p-5 md:p-7">
             <div className="text-center mb-6">
               <h1 className="text-2xl md:text-3xl font-serif mb-2">Welcome, {guestDisplayName}!</h1>
@@ -1657,9 +1658,8 @@ export default function RSVP() {
               </div>
             </form>
           </Card>
-        )}
-
-        {step === 'success' && (
+        ) : null}
+        successContent={(
           <RsvpSuccessView
             applyToHousehold={applyToHousehold}
             formData={formData}
@@ -1680,7 +1680,7 @@ export default function RSVP() {
             }}
           />
         )}
-      </div>
+      />
       )}
     </div>
   );

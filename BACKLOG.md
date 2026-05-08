@@ -2153,3 +2153,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpGuestPickerView` so the main RSVP page keeps routing through the shared picker shell.
   - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 public-surface oversized-file risk in `RSVP` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 10:14 PM PT - No-deploy RSVP flow-shell extraction:
+  - Resolved in this batch: moved the main RSVP page’s remaining non-search route/content branch shell out of `src/pages/RSVP.tsx` and behind `src/pages/RsvpFlowView.tsx`.
+  - Data-boundary hardening: `RSVP.tsx` now hands off the pick/form/success route composition through one higher-level flow view instead of owning that top-level guest branch ladder inline.
+  - File-size movement: `src/pages/RSVP.tsx` stayed flat at 1695 lines in this continuation batch while `src/pages/RsvpFlowView.tsx` came in at 23 lines, so this was primarily an ownership cleanup rather than a size win.
+  - No feature loss: ambiguous guest selection, RSVP form rendering, and success-view handoff preserve the current guest behavior while reducing page-owned route composition.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpFlowView` so the main RSVP page keeps routing through the shared flow shell.
+  - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
+  - Launch status: unchanged. This continues local public-surface ownership cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.

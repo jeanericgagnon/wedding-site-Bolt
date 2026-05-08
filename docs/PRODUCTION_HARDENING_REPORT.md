@@ -4589,3 +4589,20 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+
+## 2026-05-07 10:14 PM PT No-Deploy RSVP Flow Shell Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its remaining non-search route/content branch shell through `src/pages/RsvpFlowView.tsx`.
+  - That shared guest-facing flow component now owns the pick/form/success route composition while the page keeps state, lookup, submission, and the deeper form/content blocks local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpFlowView` so the main RSVP page keeps routing through the dedicated flow shell.
+  - `src/pages/RSVP.tsx` stayed at 1695 lines in this batch, while `src/pages/RsvpFlowView.tsx` came in at 23 lines, so this was an ownership cleanup more than a size reduction.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.

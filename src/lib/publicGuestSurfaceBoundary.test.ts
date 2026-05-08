@@ -139,6 +139,7 @@ describe('public guest surface boundary', () => {
     expect(guestSubmissionService).toContain('/functions/v1/${name}');
 
     const rsvpPage = readSource('src/pages/RSVP.tsx');
+    const rsvpFlowView = readSource('src/pages/RsvpFlowView.tsx');
     const rsvpGuestPickerView = readSource('src/pages/RsvpGuestPickerView.tsx');
     const rsvpSearchView = readSource('src/pages/RsvpSearchView.tsx');
     const rsvpSuccessView = readSource('src/pages/RsvpSuccessView.tsx');
@@ -147,10 +148,12 @@ describe('public guest surface boundary', () => {
     const rsvpFunctionService = readSource('src/pages/rsvpFunctionService.ts');
     const rsvpRouteView = readSource('src/pages/RsvpRouteView.tsx');
     expect(rsvpPage).toContain("from './RsvpRouteView'");
+    expect(rsvpPage).toContain("from './RsvpFlowView'");
     expect(rsvpPage).toContain("from './RsvpGuestPickerView'");
     expect(rsvpPage).toContain("from './RsvpSearchView'");
     expect(rsvpPage).toContain("from './RsvpSuccessView'");
     expect(rsvpPage).toContain('<RsvpRouteView');
+    expect(rsvpPage).toContain('<RsvpFlowView');
     expect(rsvpPage).toContain('<RsvpGuestPickerView');
     expect(rsvpPage).toContain('<RsvpSearchView');
     expect(rsvpPage).toContain('<RsvpSuccessView');
@@ -159,6 +162,9 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain("callValidateRsvpToken({ action: 'lookup_guest', guestId: picked.id, rsvpSession: rsvpSessionToken })");
     expect(rsvpPage).toContain("callValidateRsvpToken({");
     expect(rsvpRouteView).toContain('if (tokenAutoLoading) return <>{tokenAutoLoadingView}</>;');
+    expect(rsvpFlowView).toContain("{step === 'pick' && pickerContent}");
+    expect(rsvpFlowView).toContain("{step === 'form' && formContent}");
+    expect(rsvpFlowView).toContain("{step === 'success' && successContent}");
     expect(rsvpGuestPickerView).toContain('Multiple matches found');
     expect(rsvpGuestPickerView).toContain('Search again');
     expect(rsvpSearchView).toContain("{t('rsvp.hero_title')}");

@@ -49,20 +49,26 @@ describe('RSVP stale submit protection', () => {
 
   it('routes token auto-loading through the shared RSVP route view', () => {
     const rsvpPage = readFileSync(join(process.cwd(), 'src/pages/RSVP.tsx'), 'utf8');
+    const flowView = readFileSync(join(process.cwd(), 'src/pages/RsvpFlowView.tsx'), 'utf8');
     const routeView = readFileSync(join(process.cwd(), 'src/pages/RsvpRouteView.tsx'), 'utf8');
     const pickerView = readFileSync(join(process.cwd(), 'src/pages/RsvpGuestPickerView.tsx'), 'utf8');
     const searchView = readFileSync(join(process.cwd(), 'src/pages/RsvpSearchView.tsx'), 'utf8');
     const successView = readFileSync(join(process.cwd(), 'src/pages/RsvpSuccessView.tsx'), 'utf8');
 
     expect(rsvpPage).toContain("from './RsvpRouteView'");
+    expect(rsvpPage).toContain("from './RsvpFlowView'");
     expect(rsvpPage).toContain("from './RsvpGuestPickerView'");
     expect(rsvpPage).toContain("from './RsvpSearchView'");
     expect(rsvpPage).toContain("from './RsvpSuccessView'");
     expect(rsvpPage).toContain('<RsvpRouteView');
+    expect(rsvpPage).toContain('<RsvpFlowView');
     expect(rsvpPage).toContain('<RsvpGuestPickerView');
     expect(rsvpPage).toContain('<RsvpSearchView');
     expect(rsvpPage).toContain('<RsvpSuccessView');
     expect(routeView).toContain('if (tokenAutoLoading) return <>{tokenAutoLoadingView}</>;');
+    expect(flowView).toContain("{step === 'pick' && pickerContent}");
+    expect(flowView).toContain("{step === 'form' && formContent}");
+    expect(flowView).toContain("{step === 'success' && successContent}");
     expect(pickerView).toContain('Multiple matches found');
     expect(pickerView).toContain('Search again');
     expect(searchView).toContain("{t('rsvp.hero_title')}");
