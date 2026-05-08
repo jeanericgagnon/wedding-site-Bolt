@@ -1,5 +1,19 @@
 # Production Hardening Backlog
 
+## 2026-05-08 6:45 AM PT - No-Deploy Seating Dashboard Route-Content Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Seating.tsx` now routes the full owner-facing seating shell through `src/pages/dashboard/seating/SeatingDashboardRouteContent.tsx` instead of hand-rendering the full dashboard body inline.
+  - `SeatingDashboardRouteContent.tsx` now owns the Seating hero, event switcher, venue/catering packet, insights, versions, table actions, check-in panel, modal shells, seat picker, board layout, and print view.
+  - `Seating.tsx` now stays focused on route orchestration: data hooks, action hooks, interaction hooks, drag-drop assignment handoff, and the shared confirm dialog.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<SeatingDashboardRouteContent`, checks that the new file owns the hero plus drag/drop surface, and rejects regaining the old inline `DashboardPageHero` / `DndContext` slab in `Seating.tsx`.
+- Acceptance/proof target:
+  - Focused seating boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 6:38 AM PT - No-Deploy Seating Dashboard Interaction-State Extraction
 
 - Status: `PARTIAL`

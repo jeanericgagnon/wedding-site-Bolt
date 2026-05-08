@@ -708,6 +708,7 @@ describe('dashboard data boundary guards', () => {
     const artifactsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/seating/useSeatingDashboardArtifacts.ts'), 'utf8');
     const actionsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/seating/useSeatingDashboardActions.ts'), 'utf8');
     const interactionHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/seating/useSeatingDashboardInteractionState.ts'), 'utf8');
+    const routeContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/seating/SeatingDashboardRouteContent.tsx'), 'utf8');
 
     expect(source).toContain('const SEATING_EVENT_SELECT = ');
     expect(source).toContain('const SEATING_TABLE_SELECT = ');
@@ -741,6 +742,7 @@ describe('dashboard data boundary guards', () => {
     expect(page).toContain('useSeatingDashboardArtifacts({');
     expect(page).toContain('useSeatingDashboardActions({');
     expect(page).toContain('useSeatingDashboardInteractionState({');
+    expect(page).toContain('<SeatingDashboardRouteContent');
     expect(page).not.toContain("from '../../lib/supabase'");
     expect(page).not.toContain('supabase.auth.refreshSession()');
     expect(page).not.toContain('async function loadInitial()');
@@ -757,6 +759,9 @@ describe('dashboard data boundary guards', () => {
     expect(page).not.toContain('const requestConfirmation = (options: Pick<ConfirmDialogProps,');
     expect(page).not.toContain('const sensors = useSensors(');
     expect(page).not.toContain("const [seatPicker, setSeatPicker] = useState<{ tableId: string; seatIndex: number } | null>(null);");
+    expect(page).not.toContain('<DashboardPageHero');
+    expect(page).not.toContain('Place guests at tables without losing the room.');
+    expect(page).not.toContain('<DndContext');
     expect(page).not.toContain('async function handleCheckDrift()');
     expect(page).not.toContain('async function handleToggleCheckIn(guestId: string, checkedIn: boolean)');
     expect(page).not.toContain('async function handleBulkCheckIn(guestIds: string[], checkedIn: boolean)');
@@ -792,6 +797,10 @@ describe('dashboard data boundary guards', () => {
     expect(interactionHook).toContain("const [seatPicker, setSeatPicker] = useState<{ tableId: string; seatIndex: number } | null>(null);");
     expect(interactionHook).toContain('const handleCanvasWheelZoom = useCallback((event: React.WheelEvent<HTMLDivElement>) => {');
     expect(interactionHook).toContain('const openSeatPicker = useCallback((tableId: string, seatIndex: number) => {');
+    expect(routeContent).toContain('<DashboardPageHero');
+    expect(routeContent).toContain('Place guests at tables without losing the room.');
+    expect(routeContent).toContain('<DndContext sensors={props.sensors} onDragStart={props.handleDragStart} onDragEnd={props.handleDragEnd}>');
+    expect(routeContent).not.toContain("from '../../lib/supabase'");
     expect(actionsHook).toContain('const clearSeatAssignment = useCallback(async (tableId: string, seatIndex: number) => {');
     expect(actionsHook).toContain('const assignGuestToSeatDirect = useCallback(async (guestId: string, targetTableId: string, targetSeatIndex?: number) => {');
     expect(actionsHook).toContain('async function handleCheckDrift()');

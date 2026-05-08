@@ -7,6 +7,18 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-08 6:45 AM PT No-Deploy Seating Dashboard Route-Content Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Seating.tsx` now routes the full owner-facing Seating dashboard body through `src/pages/dashboard/seating/SeatingDashboardRouteContent.tsx`.
+  - That new route-content component owns the Seating hero, event switcher, venue/catering packet, insights, versions, table actions, check-in panel, seat picker, board layout, and print view while the page keeps orchestration, transport hooks, interaction hooks, and drag-drop assignment handoff.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<SeatingDashboardRouteContent` and rejects regaining the old inline `DashboardPageHero` / `DndContext` slab in `Seating.tsx`.
+  - `src/pages/dashboard/Seating.tsx` dropped from 960 lines to 349 lines in this batch, while `src/pages/dashboard/seating/SeatingDashboardRouteContent.tsx` came in at 811 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 6:38 AM PT No-Deploy Seating Dashboard Interaction-State Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:

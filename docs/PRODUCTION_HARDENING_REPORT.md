@@ -19,6 +19,18 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 6:45 AM PT - No-Deploy Seating Dashboard Route-Content Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Seating.tsx` no longer hand-renders the full owner-facing Seating dashboard body inline.
+  - Added `src/pages/dashboard/seating/SeatingDashboardRouteContent.tsx` so the route-content component now owns the Seating hero, event switcher, venue/catering packet, insights, versions, table actions, check-in panel, seat picker, board layout, and print view while the page keeps orchestration, transport hooks, interaction hooks, and drag-drop assignment handoff.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<SeatingDashboardRouteContent`, checks that the new file owns the hero plus drag/drop surface, and rejects regaining the old inline `DashboardPageHero` / `DndContext` render slab in `Seating.tsx`.
+  - `src/pages/dashboard/Seating.tsx` dropped from 960 lines to 349 lines in this batch, while `src/pages/dashboard/seating/SeatingDashboardRouteContent.tsx` came in at 811 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ### 2026-05-08 6:38 AM PT - No-Deploy Seating Dashboard Interaction-State Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:
