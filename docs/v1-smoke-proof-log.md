@@ -10606,6 +10606,21 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md` PASS
   - `git diff --check` PASS
 - Outcome: `Registry.tsx` dropped from `1443` lines to `1358` lines; `useRegistryDashboardData.ts` came in at `178` lines. No deploy was run.
+## 2026-05-08 08:19 AM PT No-Deploy Guest Photo Dashboard Data-Hook Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now routes the guest photo dashboard bootstrap and hydration lane through `src/pages/dashboard/guestPhotos/useGuestPhotoDashboardData.ts`.
+  - That hook now owns demo fallback bootstrapping, live bootstrap via `resolveGuestPhotoDashboardUserId()` plus `loadGuestPhotoDashboardSnapshot(userId)`, auth-refresh retry via `refreshGuestPhotoSession()`, wedding-data photo bucket restore, AI photo ops plan restore, guest upload/guestbook/prospect/analysis/metadata/correction snapshot hydration, album-link pruning, and album window-draft hydration while the route keeps dashboard derived state, AI organization actions, moderation actions, export actions, and live-content prop composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useGuestPhotoDashboardData({ ... })`, checks that `useGuestPhotoDashboardData.ts` owns the guest-photo dashboard bootstrap/auth-refresh seam, and rejects regaining the old inline `loadDemoPhotoSpace` and `load(retried = false)` blocks in `GuestPhotoSharing.tsx`.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 1556 lines to 1426 lines in this batch, while `src/pages/dashboard/guestPhotos/useGuestPhotoDashboardData.ts` came in at 255 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 08:15 AM PT No-Deploy Guest Photo Bucket-Workspace Hook Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

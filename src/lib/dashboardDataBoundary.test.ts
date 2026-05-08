@@ -1128,10 +1128,10 @@ describe('dashboard data boundary guards', () => {
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotoSharingService.ts'), 'utf8');
     const albumActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoAlbumActions.ts'), 'utf8');
     const bucketWorkspace = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoBucketWorkspace.ts'), 'utf8');
+    const dashboardData = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoDashboardData.ts'), 'utf8');
     const liveContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/GuestPhotoDashboardLiveContent.tsx'), 'utf8');
     const liveContentProps = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardLiveContentProps.ts'), 'utf8');
 
-    expect(source).toContain('loadGuestPhotoDashboardSnapshot(userId)');
     expect(source).toContain('await saveGuestPhotoHubSettings(siteId, hubSettings)');
     expect(source).toContain('await moderateGuestbookEntryFromService(entryId, patch)');
     expect(source).toContain('await persistGuestPhotoAiOpsPlan(siteId, plan)');
@@ -1141,12 +1141,11 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('await exportGuestPhotoManifest(siteId, showHidden)');
     expect(source).toContain("await moderateGuestPhotoUploads(ids, { is_hidden: hide })");
     expect(source).toContain('useGuestPhotoAlbumActions({');
-    expect(source).toContain('resolveGuestPhotoDashboardUserId()');
-    expect(source).toContain('refreshGuestPhotoSession()');
     expect(source).toContain('queueGuestPhotoFollowupsFromService(siteId, kind)');
     expect(source).toContain('buildGuestPhotoDashboardLiveContentProps({');
     expect(source).toContain('<GuestPhotoDashboardLiveContent');
     expect(source).toContain('useGuestPhotoBucketWorkspace({');
+    expect(source).toContain('useGuestPhotoDashboardData({');
     expect(liveContent).toContain('<GuestPhotoHeroCard');
     expect(liveContent).toContain('<GuestPhotoMemoryVaultsCard');
     expect(liveContent).toContain('<GuestPhotoMemoryFlowCard');
@@ -1180,6 +1179,11 @@ describe('dashboard data boundary guards', () => {
     expect(bucketWorkspace).toContain('await persistGuestPhotoBuckets(siteId, nextBuckets)');
     expect(bucketWorkspace).toContain('const handleBucketFilesSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {');
     expect(bucketWorkspace).toContain('const uploaded = await mediaRepository.upload(siteId, file);');
+    expect(dashboardData).toContain('export function useGuestPhotoDashboardData({');
+    expect(dashboardData).toContain('resolveGuestPhotoDashboardUserId()');
+    expect(dashboardData).toContain('loadGuestPhotoDashboardSnapshot(userId)');
+    expect(dashboardData).toContain('refreshGuestPhotoSession()');
+    expect(dashboardData).toContain("safePhotoOwnerError(err, 'Couldn’t load the photo space. Please refresh and try again.')");
     expect(source).not.toContain('supabase.auth.getUser()');
     expect(source).not.toContain('supabase.auth.getSession()');
     expect(source).not.toContain('supabase.auth.refreshSession()');
@@ -1205,6 +1209,8 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain("invokeOrThrow('photo-album-manage'");
     expect(source).not.toContain("invokeGuestPhotoOwnerFunction<PhotoAlbumCreateResponse>('photo-album-create'");
     expect(source).not.toContain("supabase.from('wedding_sites').update({ wedding_data: nextWeddingData, site_json: nextSiteJson })");
+    expect(source).not.toContain('const loadDemoPhotoSpace = () => {');
+    expect(source).not.toContain('async function load(retried = false) {');
     expect(source).not.toContain('const persistPhotoBuckets = async (nextBuckets:');
     expect(source).not.toContain('const handleBucketRemoveClick = async (bucket: PhotoBucketKind, itemId: string) => {');
     expect(source).not.toContain('const handleBucketFilesSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {');
