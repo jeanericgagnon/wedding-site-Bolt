@@ -10335,6 +10335,17 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 06:27 AM PT - Local registry refresh-policy actions extraction
+- Scope: `src/pages/dashboard/Registry.tsx`, `src/pages/dashboard/registry/useRegistryRefreshPolicyActions.ts`, `src/lib/dashboardDataBoundary.test.ts`.
+- What changed:
+  - moved registry refresh-policy save, preset application, wedding-date window fill, and monthly counter reset out of `Registry.tsx` and into `useRegistryRefreshPolicyActions.ts`
+  - kept refresh-cap validation, refresh-window parsing, audit logging, preset cap selection, wedding-date window autofill, and monthly counter reset behavior intact
+  - added boundary coverage that pins `useRegistryRefreshPolicyActions({ ... })` and rejects regaining the old inline save/preset/reset handlers in `Registry.tsx`
+- Validation:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts` PASS (`20/20`)
+  - `npm run typecheck -- --pretty false` PASS
+  - `git diff --check` PASS
+- Outcome: `Registry.tsx` dropped from `823` lines to `782` lines; `useRegistryRefreshPolicyActions.ts` came in at `130` lines. No deploy was run.
 ## 2026-05-08 06:24 AM PT - Local registry item-actions extraction
 - Scope: `src/pages/dashboard/Registry.tsx`, `src/pages/dashboard/registry/useRegistryItemActions.ts`, `src/lib/dashboardDataBoundary.test.ts`.
 - What changed:

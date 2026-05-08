@@ -609,6 +609,23 @@ describe('dashboard data boundary guards', () => {
     expect(hookSource).not.toContain("from '../../../lib/supabase'");
   });
 
+  it('routes registry refresh policy actions through a dedicated hook', () => {
+    const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Registry.tsx'), 'utf8');
+    const hookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/registry/useRegistryRefreshPolicyActions.ts'), 'utf8');
+
+    expect(source).toContain('useRegistryRefreshPolicyActions({');
+    expect(source).not.toContain('async function handleSaveRefreshPolicy() {');
+    expect(source).not.toContain("function setDefaultRefreshWindowFromWedding() {");
+    expect(source).not.toContain("function applyRefreshPreset(preset: 'lean' | 'balanced' | 'aggressive') {");
+    expect(source).not.toContain('async function handleResetMonthlyBudgetCounter() {');
+    expect(hookSource).toContain('async function handleSaveRefreshPolicy() {');
+    expect(hookSource).toContain("function setDefaultRefreshWindowFromWedding() {");
+    expect(hookSource).toContain("function applyRefreshPreset(preset: 'lean' | 'balanced' | 'aggressive') {");
+    expect(hookSource).toContain('async function handleResetMonthlyBudgetCounter() {');
+    expect(hookSource).toContain("toast('Refresh policy saved.')");
+    expect(hookSource).not.toContain("from '../../../lib/supabase'");
+  });
+
   it('loads planning service rows with explicit projections', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/planningService.ts'), 'utf8');
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Planning.tsx'), 'utf8');

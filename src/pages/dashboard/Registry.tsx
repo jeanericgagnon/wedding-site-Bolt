@@ -15,13 +15,14 @@ import type { RegistryItem, RegistryFilter, RegistryItemDraft } from './registry
 import { getRegistryRepairStates } from './registry/repairState';
 import { getCurrentMonthKey, resolveRegistryRefreshBudgetState } from './registry/refreshBudget';
 import { ageExceedsMs, formatRegistryItemDate } from './registryItemTime';
-import { getWeddingRefreshWindowDate, parseRefreshWindowEndIso, toValidDateOrNull } from './registryRefreshWindow';
+import { getWeddingRefreshWindowDate, toValidDateOrNull } from './registryRefreshWindow';
 import { logAppAction } from '../../lib/actionAudit';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import { normalizeOwnerDashboardRegistryItem, useRegistryDashboardData } from './registry/useRegistryDashboardData';
 import { buildRegistryDashboardDerivedState } from './registry/buildRegistryDashboardDerivedState';
 import { useRegistryItemActions } from './registry/useRegistryItemActions';
 import { useRegistryMaintenanceActions } from './registry/useRegistryMaintenanceActions';
+import { useRegistryRefreshPolicyActions } from './registry/useRegistryRefreshPolicyActions';
 
 interface Toast {
   id: number;
@@ -142,77 +143,6 @@ export const DashboardRegistry: React.FC = () => {
     });
   }
 
-  async function handleSaveRefreshPolicy() {
-    if (!weddingSiteId || isDemoMode) return;
-    const cap = Math.max(10, Math.min(2000, Number(refreshCapDraft) || 100));
-    const untilIso = parseRefreshWindowEndIso(refreshWindowDraft);
-    if (untilIso === undefined) {
-      toast('Enter a valid refresh end date.', 'error');
-      return;
-    }
-
-    setSavingRefreshPolicy(true);
-    try {
-      const updatedAt = new Date().toISOString();
-      await saveRegistryRefreshPolicy(weddingSiteId, {
-        registry_monthly_refresh_cap: cap,
-        registry_refresh_enabled_until: untilIso,
-        registry_auto_refresh_enabled: autoRefreshEnabled,
-        registry_refresh_include_purchased: refreshIncludePurchased,
-        registry_refresh_policy_updated_at: updatedAt,
-        registry_refresh_policy_updated_by: user?.id ?? null,
-      });
-
-      setMonthlyRefreshCap(cap);
-      setRefreshEnabledUntil(untilIso);
-      setPolicyUpdatedAt(updatedAt);
-      setPolicyUpdatedBy(user?.id ?? null);
-      logRegistryAction('registry_refresh_policy_saved', 'Registry refresh policy was updated.', {
-        monthlyRefreshCap: cap,
-        refreshEnabledUntil: untilIso,
-        autoRefreshEnabled,
-        refreshIncludePurchased,
-      }, weddingSiteId, 'Registry refresh policy');
-      toast('Refresh policy saved.');
-    } catch (err) {
-      toast(safeRegistryDashboardError(err, 'Couldn’t save refresh settings right now. Please try again.'), 'error');
-    } finally {
-      setSavingRefreshPolicy(false);
-    }
-  }
-
-  function setDefaultRefreshWindowFromWedding() {
-    const date = getWeddingRefreshWindowDate(weddingDate);
-    if (!date) return;
-    setRefreshWindowDraft(date.toISOString().slice(0, 10));
-  }
-
-  function applyRefreshPreset(preset: 'lean' | 'balanced' | 'aggressive') {
-    setRefreshPreset(preset);
-    const cap = preset === 'lean' ? 60 : preset === 'balanced' ? 120 : 240;
-    setRefreshCapDraft(cap);
-    const date = getWeddingRefreshWindowDate(weddingDate);
-    if (date) setRefreshWindowDraft(date.toISOString().slice(0, 10));
-  }
-
-  async function handleResetMonthlyBudgetCounter() {
-    if (!weddingSiteId || isDemoMode) return;
-    const monthKey = new Date().toISOString().slice(0, 7);
-    const updatedAt = new Date().toISOString();
-    await saveRegistryRefreshPolicy(weddingSiteId, {
-      registry_monthly_refresh_count: 0,
-      registry_monthly_refresh_month: monthKey,
-      registry_refresh_policy_updated_at: updatedAt,
-      registry_refresh_policy_updated_by: user?.id ?? null,
-    });
-    setMonthlyRefreshCount(0);
-    setMonthlyRefreshMonth(monthKey);
-    setPolicyUpdatedAt(updatedAt);
-    setPolicyUpdatedBy(user?.id ?? null);
-    logRegistryAction('registry_refresh_counter_reset', 'Registry monthly refresh counter was reset.', { monthKey }, weddingSiteId, 'Registry refresh policy');
-    toast('Monthly refresh counter reset.');
-  }
-
   function handleEdit(item: RegistryItem) {
     setEditItem(item);
     setShowForm(true);
@@ -283,6 +213,35 @@ export const DashboardRegistry: React.FC = () => {
     filter,
     showAlertsOnly,
     showImageIssuesOnly,
+  });
+
+  const {
+    applyRefreshPreset,
+    handleResetMonthlyBudgetCounter,
+    handleSaveRefreshPolicy,
+    setDefaultRefreshWindowFromWedding,
+  } = useRegistryRefreshPolicyActions({
+    autoRefreshEnabled,
+    isDemoMode,
+    refreshCapDraft,
+    refreshIncludePurchased,
+    refreshWindowDraft,
+    setMonthlyRefreshCap,
+    setMonthlyRefreshCount,
+    setMonthlyRefreshMonth,
+    setPolicyUpdatedAt,
+    setPolicyUpdatedBy,
+    setRefreshCapDraft,
+    setRefreshEnabledUntil,
+    setRefreshPreset,
+    setRefreshWindowDraft,
+    setSavingRefreshPolicy,
+    toast,
+    safeRegistryDashboardError,
+    logRegistryAction,
+    userId: user?.id,
+    weddingDate,
+    weddingSiteId,
   });
 
   const {

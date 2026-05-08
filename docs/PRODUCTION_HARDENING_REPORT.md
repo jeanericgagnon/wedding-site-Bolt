@@ -5896,6 +5896,18 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 06:27 AM PT No-Deploy Registry Refresh-Policy Actions Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Registry.tsx` now routes the registry refresh-policy save, preset, wedding-date window fill, and monthly counter reset lane through `src/pages/dashboard/registry/useRegistryRefreshPolicyActions.ts`.
+  - That hook now owns refresh-policy persistence, preset application, wedding-date refresh-window suggestion, and monthly budget counter reset while the page keeps bootstrap, item actions, maintenance actions, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useRegistryRefreshPolicyActions({ ... })`, checks that `useRegistryRefreshPolicyActions.ts` owns the registry refresh-policy seam, and rejects regaining the old inline save/preset/reset handlers in `Registry.tsx`.
+  - `src/pages/dashboard/Registry.tsx` dropped from 823 lines to 782 lines in this batch, while `src/pages/dashboard/registry/useRegistryRefreshPolicyActions.ts` came in at 130 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 06:24 AM PT No-Deploy Registry Item-Actions Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
