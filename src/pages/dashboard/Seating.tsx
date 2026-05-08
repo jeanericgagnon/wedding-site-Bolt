@@ -1,13 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import {
   DndContext,
-  DragEndEvent,
-  DragOverEvent,
-  DragStartEvent,
+  type DragEndEvent,
   DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
+  type DragStartEvent,
 } from '@dnd-kit/core';
 import { Users, Download, Wand2, Plus, AlertTriangle, TableProperties, CheckCircle2, RefreshCw, History, Image as ImageIcon } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
@@ -19,33 +15,18 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
-import { ConfirmDialog, type ConfirmDialogProps } from '../../components/ui/ConfirmDialog';
-import {
-  SeatingTable, SeatingAssignment, EligibleGuest,
-  createTable, updateTable, deleteTable,
-  assignGuestToTable, unassignGuest, resetSeating, autoCreateTables, autoSeatGuests, invalidateDriftedAssignments, refreshSeatingSession, setGuestCheckedIn,
-  SeatingLayoutVersion,
-} from './seating/seatingService';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { unassignGuest } from './seating/seatingService';
 import {
   UNASSIGNED_DROPPABLE,
-  buildDemoAutoSeatAssignments,
-  buildDemoAutoTables,
   getAssignmentsForTable,
   getGuestsAssignedToTable,
-  getSeatPickerOptions,
-  getShapeLabel,
-  type SeatingCheckInFilter,
-  type TableShape,
 } from './seating/seatingDashboardUtils';
-import {
-  readSeatingVersions,
-  writeDemoSeatingState,
-  writeSeatingVersions,
-} from './seating/seatingDemoStorage';
 import { useSeatingDashboardData } from './seating/useSeatingDashboardData';
 import { buildSeatingDashboardDerivedState } from './seating/buildSeatingDashboardDerivedState';
 import { useSeatingDashboardArtifacts } from './seating/useSeatingDashboardArtifacts';
 import { useSeatingDashboardActions } from './seating/useSeatingDashboardActions';
+import { useSeatingDashboardInteractionState } from './seating/useSeatingDashboardInteractionState';
 import {
   GuestChip,
   TableCard,
@@ -55,24 +36,6 @@ import {
 
 export const DashboardSeating: React.FC = () => {
   const { isDemoMode } = useAuth();
-  const [addingTable, setAddingTable] = useState(false);
-  const [editingTable, setEditingTable] = useState<SeatingTable | null>(null);
-  const [activeGuest, setActiveGuest] = useState<EligibleGuest | null>(null);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [showAutoTablesModal, setShowAutoTablesModal] = useState(false);
-  const [autoCapacity, setAutoCapacity] = useState(8);
-  const [seatingBusyAction, setSeatingBusyAction] = useState<'auto-create' | 'auto-seat' | 'reset' | null>(null);
-  const [checkInMode, setCheckInMode] = useState(false);
-  const [checkInQuery, setCheckInQuery] = useState('');
-  const [checkInFilter, setCheckInFilter] = useState<SeatingCheckInFilter>('not_arrived');
-  const [layoutMode, setLayoutMode] = useState<'visual' | 'list'>('visual');
-  const [movingTableId, setMovingTableId] = useState<string | null>(null);
-  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
-  const [seatPicker, setSeatPicker] = useState<{ tableId: string; seatIndex: number } | null>(null);
-  const [seatPickerQuery, setSeatPickerQuery] = useState('');
-  const [canvasZoom, setCanvasZoom] = useState(1);
-  const [canvasFullscreen, setCanvasFullscreen] = useState(false);
-  const tableDragRef = useRef<{ id: string; startX: number; startY: number; originX: number; originY: number } | null>(null);
   const { toast } = useToast();
   const {
     allGuests,
@@ -93,85 +56,54 @@ export const DashboardSeating: React.FC = () => {
     tables,
     versions,
   } = useSeatingDashboardData({ isDemoMode, toast });
-  const activeSeatAssignment = seatPicker ? assignments.find((assignment) => assignment.table_id === seatPicker.tableId && assignment.seat_index === seatPicker.seatIndex) ?? null : null;
-  const activeSeatGuest = activeSeatAssignment ? allGuests.find((guest) => guest.id === activeSeatAssignment.guest_id) ?? null : null;
-  const seatPickerOptions = seatPicker
-    ? getSeatPickerOptions({
-        guests: allGuests,
-        assignments,
-        tableId: seatPicker.tableId,
-        seatIndex: seatPicker.seatIndex,
-        query: seatPickerQuery,
-      })
-    : [];
-  const [confirmDialog, setConfirmDialog] = useState<null | Omit<ConfirmDialogProps, 'open'>>(null);
-  const requestConfirmation = (options: Pick<ConfirmDialogProps, 'title' | 'description' | 'confirmLabel' | 'tone'>) =>
-    new Promise<boolean>((resolve) => {
-      setConfirmDialog({
-        ...options,
-        onCancel: () => {
-          setConfirmDialog(null);
-          resolve(false);
-        },
-        onConfirm: () => {
-          setConfirmDialog(null);
-          resolve(true);
-        },
-      });
-    });
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
-  );
-
-  function handleDragStart(event: DragStartEvent) {
-    const guest = allGuests.find(g => g.id === event.active.id);
-    if (guest) setActiveGuest(guest);
-  }
-
-  async function handleDragEnd(event: DragEndEvent) {
-    setActiveGuest(null);
-    const { active, over } = event;
-    if (!over || !seatingEvent) return;
-
-    const guestId = active.id as string;
-    const dropId = over.id as string;
-
-    if (dropId === UNASSIGNED_DROPPABLE) {
-      try {
-        if (!isDemoMode) {
-          await unassignGuest(seatingEvent.id, guestId);
-        }
-        setAssignments(prev => prev.filter(a => a.guest_id !== guestId));
-      } catch {
-        toast('Couldn’t unassign that guest. Please try again.', 'error');
-      }
-      return;
-    }
-
-    let targetTableId: string | null = null;
-    let targetSeatIndex: number | undefined;
-
-    if (dropId.startsWith('seat:')) {
-      const [, tableId, seatRaw] = dropId.split(':');
-      targetTableId = tableId;
-      targetSeatIndex = Number(seatRaw);
-    } else {
-      targetTableId = dropId;
-    }
-
-    await assignGuestToSeatDirect(guestId, targetTableId, targetSeatIndex);
-  }
-  function handleCanvasWheelZoom(e: React.WheelEvent<HTMLDivElement>) {
-    // Trackpad pinch on desktop browsers commonly reports wheel + ctrlKey
-    if (layoutMode !== 'visual') return;
-    if (!(e.ctrlKey || e.metaKey)) return;
-    e.preventDefault();
-    const delta = e.deltaY;
-    const step = delta > 0 ? -0.05 : 0.05;
-    setCanvasZoom(z => Math.max(0.6, Math.min(1.8, Number((z + step).toFixed(2)))));
-  }
-
+  const {
+    activeGuest,
+    activeSeatGuest,
+    addingTable,
+    autoCapacity,
+    canvasFullscreen,
+    canvasZoom,
+    checkInFilter,
+    checkInMode,
+    checkInQuery,
+    closeSeatPicker,
+    confirmDialog,
+    editingTable,
+    handleCanvasWheelZoom,
+    layoutMode,
+    movingTableId,
+    openSeatPicker,
+    requestConfirmation,
+    seatPicker,
+    seatPickerOptions,
+    seatPickerQuery,
+    seatingBusyAction,
+    selectedTableId,
+    sensors,
+    setActiveGuest,
+    setAddingTable,
+    setAutoCapacity,
+    setCanvasFullscreen,
+    setCanvasZoom,
+    setCheckInFilter,
+    setCheckInMode,
+    setCheckInQuery,
+    setEditingTable,
+    setLayoutMode,
+    setMovingTableId,
+    setSeatPicker,
+    setSeatPickerQuery,
+    setSeatingBusyAction,
+    setSelectedTableId,
+    setShowAutoTablesModal,
+    setShowResetConfirm,
+    showAutoTablesModal,
+    showResetConfirm,
+    tableDragRef,
+  } = useSeatingDashboardInteractionState({
+    allGuests,
+    assignments,
+  });
   const {
     arrivedCount,
     arrivedGuestIds,
@@ -261,6 +193,47 @@ export const DashboardSeating: React.FC = () => {
     toast,
     versions,
   });
+
+  function handleDragStart(event: DragStartEvent) {
+    const guest = allGuests.find((item) => item.id === event.active.id);
+    if (guest) setActiveGuest(guest);
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    setActiveGuest(null);
+    const { active, over } = event;
+    if (!over || !seatingEvent) return;
+
+    const guestId = active.id as string;
+    const dropId = over.id as string;
+
+    if (dropId === UNASSIGNED_DROPPABLE) {
+      try {
+        if (!isDemoMode) {
+          await unassignGuest(seatingEvent.id, guestId);
+        }
+        setAssignments((prev) => prev.filter((assignment) => assignment.guest_id !== guestId));
+      } catch {
+        toast('Couldn’t unassign that guest. Please try again.', 'error');
+      }
+      return;
+    }
+
+    let targetTableId: string | null = null;
+    let targetSeatIndex: number | undefined;
+
+    if (dropId.startsWith('seat:')) {
+      const [, tableId, seatRaw] = dropId.split(':');
+      targetTableId = tableId;
+      targetSeatIndex = Number(seatRaw);
+    } else {
+      targetTableId = dropId;
+    }
+
+    if (targetTableId) {
+      await assignGuestToSeatDirect(guestId, targetTableId, targetSeatIndex);
+    }
+  }
 
   if (loading) {
     return (
@@ -739,7 +712,7 @@ export const DashboardSeating: React.FC = () => {
                 <h3 className="text-sm font-semibold text-text-primary">Map a guest to seat {seatPicker.seatIndex}</h3>
                 <p className="text-xs text-text-tertiary">Choose from RSVP’d guests not already assigned somewhere else.</p>
               </div>
-              <Button size="sm" variant="ghost" onClick={() => { setSeatPicker(null); setSeatPickerQuery(''); }}>Close</Button>
+              <Button size="sm" variant="ghost" onClick={closeSeatPicker}>Close</Button>
             </div>
             {activeSeatGuest && (
               <div className="rounded-lg border border-primary/20 bg-primary-light/20 px-3 py-3 flex items-center justify-between gap-3">
@@ -908,7 +881,7 @@ export const DashboardSeating: React.FC = () => {
                                 isSelected={selectedTableId === table.id}
                                 onSelect={() => setSelectedTableId(table.id)}
                                 onRotate={(delta) => handleRotateTable(table.id, delta)}
-                                onSelectSeat={(tableId, seatIndex) => { setSeatPicker({ tableId, seatIndex }); setSeatPickerQuery(''); }}
+                                onSelectSeat={openSeatPicker}
                               />
                             </div>
                           );
@@ -938,7 +911,7 @@ export const DashboardSeating: React.FC = () => {
                             isSelected={selectedTableId === table.id}
                             onSelect={() => setSelectedTableId(table.id)}
                             onRotate={(delta) => handleRotateTable(table.id, delta)}
-                            onSelectSeat={(tableId, seatIndex) => { setSeatPicker({ tableId, seatIndex }); setSeatPickerQuery(''); }}
+                            onSelectSeat={openSeatPicker}
                           />
                         )
                       ))}

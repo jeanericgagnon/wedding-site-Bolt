@@ -19,6 +19,18 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 6:38 AM PT - No-Deploy Seating Dashboard Interaction-State Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Seating.tsx` no longer hand-owns the local interaction-state slab for check-in UI, canvas zoom/fullscreen state, seat-picker state, confirmation-dialog state, and request-confirmation wiring inline.
+  - Added `src/pages/dashboard/seating/useSeatingDashboardInteractionState.ts` so that hook now owns the seating route's UI-state, interaction sensors, seat-picker derivation, and canvas interaction seam while the page keeps route composition and drag-drop assignment handoff.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useSeatingDashboardInteractionState({ ... })`, checks that the new hook owns the `useState(...)` / `requestConfirmation(...)` / `useSensors(...)` slab, and rejects regaining that interaction glue directly inside `Seating.tsx`.
+  - `src/pages/dashboard/Seating.tsx` dropped from 987 lines to 960 lines in this batch, while `src/pages/dashboard/seating/useSeatingDashboardInteractionState.ts` came in at 138 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ### 2026-05-08 3:26 AM PT - No-Deploy Settings Dashboard View Model Extraction
 
 What changed:

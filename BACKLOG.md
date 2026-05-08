@@ -1,5 +1,19 @@
 # Production Hardening Backlog
 
+## 2026-05-08 6:38 AM PT - No-Deploy Seating Dashboard Interaction-State Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Seating.tsx` now routes its local interaction and presentation-state lane through `src/pages/dashboard/seating/useSeatingDashboardInteractionState.ts` instead of hand-owning all of that UI glue inline.
+  - `useSeatingDashboardInteractionState.ts` now owns the seating route's check-in UI state, canvas zoom/fullscreen state, seat-picker state, confirmation-dialog state, saved interaction toggles, pointer sensors, and request-confirmation helper seam.
+  - `Seating.tsx` keeps only the drag-drop assignment handoff and page composition while the hook now carries the local interaction state that had been bloating the route.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useSeatingDashboardInteractionState({ ... })` and rejects regaining the old inline `useState(...)` / `requestConfirmation(...)` / `useSensors(...)` interaction slab in `Seating.tsx`.
+- Acceptance/proof target:
+  - Focused seating boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 3:26 AM PT - No-Deploy Settings Dashboard View Model Extraction
 
 - Status: `PARTIAL`
