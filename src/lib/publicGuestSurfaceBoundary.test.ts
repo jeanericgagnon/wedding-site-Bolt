@@ -145,6 +145,7 @@ describe('public guest surface boundary', () => {
     const rsvpSubmitSuccess = readSource('src/pages/applyRsvpSubmitSuccess.ts');
     const rsvpSubmitPayload = readSource('src/pages/buildRsvpSubmitPayload.ts');
     const rsvpSubmitSuccessArgs = readSource('src/pages/buildRsvpSubmitSuccessArgs.ts');
+    const rsvpTokenLookupPreparation = readSource('src/pages/prepareRsvpTokenLookupState.ts');
     const rsvpLookupClassification = readSource('src/pages/classifyRsvpLookupResponse.ts');
     const rsvpLiveContentActions = readSource('src/pages/buildRsvpLiveContentActions.ts');
     const rsvpPageViewModel = readSource('src/pages/buildRsvpPageViewModel.ts');
@@ -174,6 +175,7 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain("from './applyRsvpSubmitSuccess'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitPayload'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitSuccessArgs'");
+    expect(rsvpPage).toContain("from './prepareRsvpTokenLookupState'");
     expect(rsvpPage).toContain("from './classifyRsvpLookupResponse'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentActions'");
     expect(rsvpPage).toContain("from './buildRsvpPageViewModel'");
@@ -192,6 +194,7 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain('applyRsvpGuestSelection({');
     expect(rsvpPage).toContain('buildRsvpSubmitPayload({');
     expect(rsvpPage).toContain('applyRsvpSubmitSuccess(buildRsvpSubmitSuccessArgs({');
+    expect(rsvpPage).toContain('prepareRsvpTokenLookupState({');
     expect(rsvpPage).toContain('classifyRsvpLookupResponse(');
     expect(rsvpPage).toContain('applyDemoRsvpSubmit({ payload, targetGuestIds: targetIds })');
     expect(rsvpPage).toContain('submitRsvpResponse({');
@@ -221,6 +224,9 @@ describe('public guest surface boundary', () => {
     expect(rsvpSubmitSuccessArgs).toContain('ignoreNextLocalContinuityEventRef.current = true');
     expect(rsvpSubmitSuccessArgs).toContain('notifyRsvpContinuityUpdate()');
     expect(rsvpSubmitSuccessArgs).toContain("submitSource: tokenLinkedSession ? 'token' : 'manual'");
+    expect(rsvpTokenLookupPreparation).toContain("kind: 'empty'");
+    expect(rsvpTokenLookupPreparation).toContain("kind: 'lookup'");
+    expect(rsvpTokenLookupPreparation).toContain('searchValue: token');
     expect(rsvpLookupClassification).toContain("kind: 'guest'");
     expect(rsvpLookupClassification).toContain("kind: 'ambiguous'");
     expect(rsvpLookupClassification).toContain("kind: 'not_found'");

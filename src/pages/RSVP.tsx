@@ -39,6 +39,7 @@ import { classifyRsvpLookupResponse } from './classifyRsvpLookupResponse';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { buildRsvpLiveContentViewProps } from './buildRsvpLiveContentViewProps';
 import { callValidateRsvpToken } from './rsvpFunctionService';
+import { prepareRsvpTokenLookupState } from './prepareRsvpTokenLookupState';
 import { resetRsvpLookupFlow } from './resetRsvpLookupFlow';
 import { resetRsvpPageState } from './resetRsvpPageState';
 import { restoreLoadedRsvpState } from './restoreLoadedRsvpState';
@@ -549,70 +550,42 @@ export default function RSVP() {
   }, []);
 
   const loadInvitationForToken = useCallback((token: string, { preserveVisibleState = false }: { preserveVisibleState?: boolean } = {}) => {
-    if (!token) {
-      activeLookupRequestRef.current += 1;
-      activeSubmitRequestRef.current += 1;
-      submitInFlightRef.current = false;
-      pendingContinuityRefreshRef.current = false;
-      ignoreNextLocalContinuityEventRef.current = false;
-      tokenLinkedSessionRef.current = false;
-      loadInFlightRef.current = false;
-      resetRsvpPageState({
-        setActivePredictionIndex,
-        setAmbiguousGuests,
-        setApplyToHousehold,
-        setCustomAnswers,
-        setError,
-        setExistingRsvp,
-        setFormData,
-        setFormStep,
-        setGuest,
-        setHouseholdGuests,
-        setLoading,
-        setMealConfig,
-        setMusicPlaylistUrl,
-        setRsvpDeadline,
-        setRsvpQuestions,
-        setRsvpSessionToken,
-        setSearchValue,
-        setSelectedHouseholdGuestIds,
-        setStep,
-        setSubmitting,
-        setTokenAutoLoading,
-      });
+    const lookupState = prepareRsvpTokenLookupState({
+      activeLookupRequestRef,
+      activeSubmitRequestRef,
+      ignoreNextLocalContinuityEventRef,
+      loadInFlightRef,
+      pendingContinuityRefreshRef,
+      preserveVisibleState,
+      setActivePredictionIndex,
+      setAmbiguousGuests,
+      setApplyToHousehold,
+      setCustomAnswers,
+      setError,
+      setExistingRsvp,
+      setFormData,
+      setFormStep,
+      setGuest,
+      setHouseholdGuests,
+      setLoading,
+      setMealConfig,
+      setMusicPlaylistUrl,
+      setRsvpDeadline,
+      setRsvpQuestions,
+      setRsvpSessionToken,
+      setSearchValue,
+      setSelectedHouseholdGuestIds,
+      setStep,
+      setSubmitting,
+      setTokenAutoLoading,
+      submitInFlightRef,
+      token,
+      tokenLinkedSessionRef,
+    });
+    if (lookupState.kind === 'empty') {
       return;
     }
-    const requestId = activeLookupRequestRef.current + 1;
-    activeLookupRequestRef.current = requestId;
-    activeSubmitRequestRef.current += 1;
-    loadInFlightRef.current = true;
-    submitInFlightRef.current = false;
-    pendingContinuityRefreshRef.current = false;
-    ignoreNextLocalContinuityEventRef.current = false;
-    const shouldPreserveVisibleState = preserveVisibleState && tokenLinkedSessionRef.current;
-    setLoading(false);
-    setTokenAutoLoading(!shouldPreserveVisibleState);
-    setSubmitting(false);
-    if (!shouldPreserveVisibleState) {
-      setStep('search');
-      setError('');
-      setSearchValue(token);
-      setGuest(null);
-      setRsvpSessionToken(null);
-      setExistingRsvp(null);
-      setAmbiguousGuests([]);
-      setRsvpDeadline(null);
-      setMusicPlaylistUrl(null);
-      setRsvpQuestions([]);
-      setMealConfig(DEFAULT_MEAL_CONFIG);
-      setHouseholdGuests([]);
-      setApplyToHousehold(true);
-      setSelectedHouseholdGuestIds([]);
-      setCustomAnswers({});
-      setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', children_count: 0, notes: '' });
-      setFormStep(1);
-      setActivePredictionIndex(-1);
-    }
+    const { requestId, shouldPreserveVisibleState } = lookupState;
     (
       USE_DEMO_RSVP
         ? Promise.resolve<{ data?: unknown; error?: string; status?: number }>({
