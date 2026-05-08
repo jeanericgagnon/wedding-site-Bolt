@@ -10073,6 +10073,21 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 04:23 AM PT No-Deploy Guest Dashboard Check-In-Actions Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the guest dashboard check-in and thank-you utility lifecycle through `src/pages/dashboard/guests/useGuestDashboardCheckIns.ts`.
+  - That hook now owns undo-last-check-in, mark-thank-you, bulk thank-you, and clear-all-check-ins while the page keeps state, campaigns, exports, overlays, and route-level dashboard orchestration.
+  - `src/lib/dashboardDataBoundary.test.ts` and `src/pages/dashboard/guests/guestService.test.ts` now pin `useGuestDashboardCheckIns({ ... })`, check that `useGuestDashboardCheckIns.ts` owns the guest check-in seam, and reject regaining the old inline check-in/thank-you handlers in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` dropped from 1301 lines to 1228 lines in this batch, while `src/pages/dashboard/guests/useGuestDashboardCheckIns.ts` came in at 173 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 04:17 AM PT No-Deploy Guest Dashboard CRUD-Actions Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

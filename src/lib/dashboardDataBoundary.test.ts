@@ -141,6 +141,7 @@ describe('dashboard data boundary guards', () => {
     const viewPropsHelper = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/buildGuestDashboardViewProps.ts'), 'utf8');
     const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardData.ts'), 'utf8');
     const followUpHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardFollowUpActions.ts'), 'utf8');
+    const checkInsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCheckIns.ts'), 'utf8');
     const crudHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCrudActions.ts'), 'utf8');
     const detailHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts'), 'utf8');
 
@@ -149,14 +150,12 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('useGuestDashboardClipboardActions({');
     expect(source).toContain('useGuestDashboardCsvImport({');
     expect(source).toContain('useGuestDashboardFollowUpActions({');
+    expect(source).toContain('useGuestDashboardCheckIns({');
     expect(source).toContain('useGuestDashboardCrudActions({');
     expect(source).toContain('useGuestDashboardGuestDetailActions({');
     expect(source).toContain('buildGuestDashboardViewProps({');
     expect(source).toContain('loadPublicSlug: loadGuestDashboardPublicSlug');
     expect(source).toContain('loadSiteSlug: loadGuestDashboardSiteSlug');
-    expect(source).toContain('updateGuestCheckInForSite(weddingSiteId, lastCheckIn.guestId, null)');
-    expect(source).toContain('updateGuestThankYouSentForSite(weddingSiteId, guest.id, nextValue)');
-    expect(source).toContain('markGuestsThankYouSentForSite(weddingSiteId, ids, new Date().toISOString())');
     expect(source).toContain('persistGuestDashboardRsvpConfig({');
     expect(source).toContain('useGuestDashboardCampaignActions({');
     expect(source).toContain('buildGuestDashboardOverlayProps({');
@@ -183,6 +182,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('const saveCurrentSegment = () => {');
     expect(source).not.toContain('const addFollowUpTask = (text: string) => {');
     expect(source).not.toContain('const generateChecklistTasks = () => {');
+    expect(source).not.toContain('const handleUndoLastCheckIn = async () => {');
+    expect(source).not.toContain('const handleMarkThankYouSent = async (guest: GuestWithRSVP) => {');
+    expect(source).not.toContain('const handleMarkAllDueThankYous = async () => {');
+    expect(source).not.toContain('const handleClearAllCheckIns = async () => {');
     expect(source).not.toContain('loadGuestDashboardSiteSettings(user.id)');
     expect(source).not.toContain('loadGuestDashboardSnapshot(weddingSiteId)');
     expect(source).not.toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
@@ -195,7 +198,6 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('addGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(source).not.toContain('saveAssistedGuestRsvp({');
     expect(source).toContain('useGuestDashboardExports({');
-    expect(source).toContain('clearGuestCheckInsForSite(weddingSiteId)');
     expect(source).toContain('persistGuestReminderSettings(weddingSiteId, patch)');
     expect(source).toContain('deleteAllGuestsForSite(weddingSiteId)');
     expect(service).toContain('export const GUEST_SITE_SETTINGS_SELECT = ');
@@ -243,6 +245,15 @@ describe('dashboard data boundary guards', () => {
     expect(followUpHook).toContain('buildFollowUpTask({ now: new Date(), text })');
     expect(followUpHook).toContain('buildGeneratedFollowUpTasks({ now: new Date(), rsvpOps, contactStats })');
     expect(followUpHook).not.toContain("from '../../../lib/supabase'");
+    expect(checkInsHook).toContain('const handleUndoLastCheckIn = async () => {');
+    expect(checkInsHook).toContain('const handleMarkThankYouSent = async (guest: GuestWithRSVP) => {');
+    expect(checkInsHook).toContain('const handleMarkAllDueThankYous = async () => {');
+    expect(checkInsHook).toContain('const handleClearAllCheckIns = async () => {');
+    expect(checkInsHook).toContain('await updateGuestForSite(weddingSiteId, lastCheckIn.guestId, { checked_in_at: null });');
+    expect(checkInsHook).toContain('await updateGuestForSite(weddingSiteId, guest.id, { thank_you_sent_at: nextValue });');
+    expect(checkInsHook).toContain('await updateGuestsForSite(weddingSiteId, ids, { thank_you_sent_at: new Date().toISOString() });');
+    expect(checkInsHook).toContain('await clearGuestCheckInsForSite(weddingSiteId);');
+    expect(checkInsHook).not.toContain("from '../../../lib/supabase'");
     expect(crudHook).toContain('const resetForm = () => {');
     expect(crudHook).toContain('const openEditModal = (guest: GuestWithRSVP) => {');
     expect(crudHook).toContain('const handleAddGuest = async (event: FormEvent) => {');

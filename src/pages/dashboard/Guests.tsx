@@ -87,21 +87,18 @@ import {
   type RsvpSavedSegment,
 } from './guests/guestDashboardStorage';
 import {
-  clearGuestCheckInsForSite,
   deleteAllGuestsForSite,
   fetchGuestRsvps,
   generateSecureGuestInviteToken,
   loadGuestDashboardPublicSlug,
   loadGuestDashboardSiteSlug,
-  markGuestsThankYouSentForSite,
   persistGuestDashboardRsvpConfig,
   persistGuestReminderSettings,
   resolveGuestDashboardConflict,
   resolveGuestDashboardConflicts,
-  updateGuestCheckInForSite,
-  updateGuestThankYouSentForSite,
 } from './guests/guestService';
 import { useGuestDashboardCampaignActions } from './guests/useGuestDashboardCampaignActions';
+import { useGuestDashboardCheckIns } from './guests/useGuestDashboardCheckIns';
 import { useGuestDashboardClipboardActions } from './guests/useGuestDashboardClipboardActions';
 import { useGuestDashboardCsvImport } from './guests/useGuestDashboardCsvImport';
 import { useGuestDashboardData } from './guests/useGuestDashboardData';
@@ -548,93 +545,6 @@ export const DashboardGuests: React.FC = () => {
   const [deletingGuestId, setDeletingGuestId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const handleUndoLastCheckIn = async () => {
-    if (isGuestsReadOnly) {
-      toast('Your collaborator role cannot update guest check-in.', 'info');
-      return;
-    }
-    if (!weddingSiteId || !lastCheckIn || isDemoMode) return;
-    try {
-      await updateGuestCheckInForSite(weddingSiteId, lastCheckIn.guestId, null);
-      await fetchGuests();
-      toast(`Undid check-in for ${lastCheckIn.guestName}`, 'success');
-      setLastCheckIn(null);
-    } catch {
-      toast('Couldn’t undo last check-in.', 'error');
-    }
-  };
-
-  const handleMarkThankYouSent = async (guest: GuestWithRSVP) => {
-    if (isGuestsReadOnly) {
-      toast('Your collaborator role cannot update thank-you status.', 'info');
-      return;
-    }
-    if (!weddingSiteId || isDemoMode) return;
-    try {
-      const current = (guest as GuestWithRSVP & { thank_you_sent_at?: string | null }).thank_you_sent_at;
-      const nextValue = current ? null : new Date().toISOString();
-      await updateGuestThankYouSentForSite(weddingSiteId, guest.id, nextValue);
-      await fetchGuests();
-      toast(nextValue ? 'Marked thank-you sent' : 'Cleared thank-you status', 'success');
-    } catch {
-      toast('Couldn’t update thank-you status.', 'error');
-    }
-  };
-
-  const handleMarkAllDueThankYous = async () => {
-    if (isGuestsReadOnly) {
-      toast('Your collaborator role cannot update thank-you status.', 'info');
-      return;
-    }
-    if (!weddingSiteId || isDemoMode) return;
-    const ids = guests.filter((g) => dueThankYouGuestIds.has(g.id)).map((g) => g.id);
-    if (ids.length === 0) {
-      toast('No guests currently due for thank-you.', 'error');
-      return;
-    }
-    const confirmed = await requestConfirmation({
-      title: 'Mark thank-you notes sent?',
-      description: `This will mark thank-you sent for ${ids.length} ${ids.length === 1 ? 'guest' : 'guests'}.`,
-      confirmLabel: 'Mark sent',
-    });
-    if (!confirmed) return;
-    try {
-      await markGuestsThankYouSentForSite(weddingSiteId, ids, new Date().toISOString());
-      await fetchGuests();
-      toast(`Marked ${ids.length} thank-you sent`, 'success');
-    } catch {
-      toast('Couldn’t mark thank-you notes sent.', 'error');
-    }
-  };
-
-  const handleClearAllCheckIns = async () => {
-    if (isGuestsReadOnly) {
-      toast('Your collaborator role cannot clear guest check-ins.', 'info');
-      return;
-    }
-    if (!weddingSiteId || isDemoMode) return;
-    const checkedInCount = guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at).length;
-    if (checkedInCount === 0) {
-      toast('No checked-in guests to clear.', 'error');
-      return;
-    }
-    const confirmed = await requestConfirmation({
-      title: 'Clear all check-ins?',
-      description: `This will clear check-in status and notes for ${checkedInCount} ${checkedInCount === 1 ? 'guest' : 'guests'}.`,
-      confirmLabel: 'Clear check-ins',
-      tone: 'danger',
-    });
-    if (!confirmed) return;
-    try {
-      await clearGuestCheckInsForSite(weddingSiteId);
-      await fetchGuests();
-      setLastCheckIn(null);
-      toast('Cleared all check-ins', 'success');
-    } catch {
-      toast('Couldn’t clear check-ins.', 'error');
-    }
-  };
-
   const applyCampaignPreset = (preset: 'pending' | 'missing-meal' | 'plusone-missing' | 'ceremony-no' | 'reception-no' | 'pending-no-email') => {
     setCampaignPreset(preset);
     setFilterStatus(preset);
@@ -918,6 +828,23 @@ export const DashboardGuests: React.FC = () => {
   const reminderCandidates = emailableFilteredGuests.filter((g: any) => {
     if (!skipRecentlyInvited) return true;
     return dueReminderGuestIds.has(g.id);
+  });
+  const {
+    handleClearAllCheckIns,
+    handleMarkAllDueThankYous,
+    handleMarkThankYouSent,
+    handleUndoLastCheckIn,
+  } = useGuestDashboardCheckIns({
+    dueThankYouGuestIds,
+    fetchGuests,
+    guests,
+    isDemoMode,
+    isGuestsReadOnly,
+    lastCheckIn,
+    requestConfirmation,
+    setLastCheckIn,
+    toast,
+    weddingSiteId,
   });
   const { addFollowUpTask, generateChecklistTasks, saveCurrentSegment } = useGuestDashboardFollowUpActions({
     contactStats,
