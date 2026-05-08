@@ -11,6 +11,10 @@ const settingsExperienceActionsSource = () => readFileSync(
   join(process.cwd(), 'src/pages/dashboard/settings/useSettingsExperienceActions.ts'),
   'utf8',
 );
+const settingsAccountActionsSource = () => readFileSync(
+  join(process.cwd(), 'src/pages/dashboard/settings/useSettingsAccountActions.ts'),
+  'utf8',
+);
 const settingsTabContentSource = () => readFileSync(
   join(process.cwd(), 'src/pages/dashboard/settings/SettingsTabContent.tsx'),
   'utf8',
@@ -39,6 +43,7 @@ describe('settings error safety', () => {
     const source = settingsSource();
     const actionsSource = settingsSiteAccessActionsSource();
     const experienceSource = settingsExperienceActionsSource();
+    const accountActionsSource = settingsAccountActionsSource();
 
     expect(source).toContain("setBillingError(safeSettingsError(err, 'Couldn’t load billing right now.'))");
     expect(experienceSource).toContain("setSubscribeError(safeSettingsError(err, 'Couldn’t start checkout right now.'))");
@@ -47,10 +52,14 @@ describe('settings error safety', () => {
     expect(experienceSource).toContain("setNotifError(safeSettingsError(err, 'Couldn’t save preferences.'))");
     expect(actionsSource).toContain("setPlannerInviteError(safeSettingsError(err, 'Couldn’t save planner invite.'))");
     expect(actionsSource).toContain("setPlannerInviteError(safeSettingsError(err, 'Couldn’t remove planner invite.'))");
+    expect(accountActionsSource).toContain("setAccountError(safeSettingsError(err, 'Couldn’t save changes.'))");
+    expect(accountActionsSource).toContain("setPasswordError(safeSettingsError(err, 'Couldn’t update password.'))");
     expect(source).not.toContain('.catch(err => setBillingError(err.message))');
     expect(experienceSource).not.toContain("setSubscribeError(err instanceof Error ? err.message : 'Couldn’t start checkout right now.')");
     expect(actionsSource).not.toContain("setPlannerInviteError(err instanceof Error ? err.message : 'Couldn’t save planner invite.')");
     expect(actionsSource).not.toContain("setPlannerInviteError(err instanceof Error ? err.message : 'Couldn’t remove planner invite.')");
+    expect(accountActionsSource).not.toContain("setAccountError(err instanceof Error ? err.message : 'Couldn’t save changes.')");
+    expect(accountActionsSource).not.toContain("setPasswordError(err instanceof Error ? err.message : 'Couldn’t update password.')");
   });
 
   it('treats payment/provider/backend-shaped wording as unsafe for settings copy', () => {

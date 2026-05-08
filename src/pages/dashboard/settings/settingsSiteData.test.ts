@@ -96,6 +96,10 @@ describe('settings site data boundary', () => {
       join(process.cwd(), 'src/pages/dashboard/settings/buildSettingsDashboardViewModel.ts'),
       'utf8',
     );
+    const accountHook = readFileSync(
+      join(process.cwd(), 'src/pages/dashboard/settings/useSettingsAccountActions.ts'),
+      'utf8',
+    );
     const actionsHook = readFileSync(
       join(process.cwd(), 'src/pages/dashboard/settings/useSettingsSiteAccessActions.ts'),
       'utf8',
@@ -110,14 +114,17 @@ describe('settings site data boundary', () => {
     expect(page).toContain('loadSettingsCollaboratorInvites(siteId)');
     expect(page).toContain('useSettingsSiteAccessActions({');
     expect(page).toContain('useSettingsExperienceActions({');
+    expect(page).toContain('useSettingsAccountActions({');
     expect(page).toContain('<SettingsDashboardShell');
     expect(page).toContain('<SettingsTabContent');
     expect(page).toContain('<SettingsSiteTabContent');
     expect(page).toContain('<SettingsRsvpTabContent');
     expect(page).toContain('buildSettingsDashboardViewModel({');
-    expect(page).toContain('requireSettingsAuthenticatedUser()');
-    expect(page).toContain('verifySettingsCurrentPassword(authUser.email || \'\', currentPassword)');
-    expect(page).toContain('updateSettingsAccountPassword(newPassword)');
+    expect(page).not.toContain('requireSettingsAuthenticatedUser()');
+    expect(page).not.toContain('verifySettingsCurrentPassword(authUser.email || \'\', currentPassword)');
+    expect(page).not.toContain('updateSettingsAccountPassword(newPassword)');
+    expect(page).not.toContain('const handleSaveAccount = async (e: React.FormEvent) => {');
+    expect(page).not.toContain('const handleUpdatePassword = async (e: React.FormEvent) => {');
     expect(page).not.toContain('<DashboardLayout');
     expect(page).not.toContain('<DashboardPageHero');
     expect(page).not.toContain('<SettingsNavigation');
@@ -189,6 +196,12 @@ describe('settings site data boundary', () => {
     expect(viewModel).toContain('buildWeddingIdentityExportKit({');
     expect(viewModel).toContain('buildWeddingIdentityPrintAssets({');
     expect(viewModel).toContain("PLANNER_ROLE_OPTIONS.filter((option) => option.value !== 'owner')");
+
+    expect(accountHook).toContain('export function useSettingsAccountActions({');
+    expect(accountHook).toContain('await updateSettingsSite(weddingSiteId, { couple_name_1: name1, couple_name_2: name2 });');
+    expect(accountHook).toContain("await verifySettingsCurrentPassword(authUser.email || '', currentPassword);");
+    expect(accountHook).toContain('await updateSettingsAccountPassword(newPassword);');
+    expect(accountHook).toContain("logSettingsAction('account_password_changed', 'Account password was changed.')");
 
     expect(actionsHook).toContain('createSettingsCollaboratorInvite({');
     expect(actionsHook).toContain('revokeSettingsCollaboratorInvite(inviteId)');

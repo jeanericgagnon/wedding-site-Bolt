@@ -12,10 +12,6 @@ import { getSafePublicWebUrl } from '../../sections/publicLinks';
 import {
   loadSettingsCollaboratorInvites,
   loadSettingsTranslationStatuses,
-  requireSettingsAuthenticatedUser,
-  updateSettingsAccountPassword,
-  updateSettingsSite,
-  verifySettingsCurrentPassword,
   type SettingsCollaboratorInviteRow,
 } from './settings/settingsSiteData';
 import {
@@ -27,7 +23,6 @@ import {
 import {
   makeQuestion,
   safeSettingsError,
-  splitCoupleNames,
 } from './settings/settingsDashboardUtils';
 import { buildSettingsDashboardViewModel } from './settings/buildSettingsDashboardViewModel';
 import { loadSettingsDashboardSnapshot } from './settings/loadSettingsDashboardSnapshot';
@@ -40,6 +35,7 @@ import { SettingsSiteTabContent } from './settings/SettingsSiteTabContent';
 import { SettingsTeamAccessPanel } from './settings/SettingsTeamAccessPanel';
 import { SettingsDashboardShell } from './settings/SettingsDashboardShell';
 import { SettingsTabContent } from './settings/SettingsTabContent';
+import { useSettingsAccountActions } from './settings/useSettingsAccountActions';
 import { useSettingsSiteAccessActions } from './settings/useSettingsSiteAccessActions';
 import { useSettingsExperienceActions } from './settings/useSettingsExperienceActions';
 
@@ -285,47 +281,26 @@ export const DashboardSettings: React.FC = () => {
     }
   };
 
-  const handleSaveAccount = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!weddingSiteId) return;
-    setAccountSaving(true);
-    setAccountError(null);
-    setAccountSuccess(null);
-    try {
-      const { name1, name2 } = splitCoupleNames(coupleNames);
-      await updateSettingsSite(weddingSiteId, { couple_name_1: name1, couple_name_2: name2 });
-      setAccountSuccess('Account information saved.');
-    } catch (err) {
-      setAccountError(safeSettingsError(err, 'Couldn’t save changes.'));
-    } finally {
-      setAccountSaving(false);
-    }
-  };
-
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPasswordError(null);
-    setPasswordSuccess(null);
-    if (!currentPassword) { setPasswordError('Current password is required.'); return; }
-    if (!newPassword) { setPasswordError('New password is required.'); return; }
-    if (newPassword !== confirmPassword) { setPasswordError('Passwords do not match.'); return; }
-    if (newPassword.length < 8) { setPasswordError('Password must be at least 8 characters.'); return; }
-    setPasswordSaving(true);
-    try {
-      const authUser = await requireSettingsAuthenticatedUser();
-      await verifySettingsCurrentPassword(authUser.email || '', currentPassword);
-      await updateSettingsAccountPassword(newPassword);
-      logSettingsAction('account_password_changed', 'Account password was changed.');
-      setPasswordSuccess('Password updated successfully.');
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch (err) {
-      setPasswordError(safeSettingsError(err, 'Couldn’t update password.'));
-    } finally {
-      setPasswordSaving(false);
-    }
-  };
+  const {
+    handleSaveAccount,
+    handleUpdatePassword,
+  } = useSettingsAccountActions({
+    coupleNames,
+    currentPassword,
+    newPassword,
+    confirmPassword,
+    logSettingsAction,
+    setAccountError,
+    setAccountSaving,
+    setAccountSuccess,
+    setConfirmPassword,
+    setCurrentPassword,
+    setNewPassword,
+    setPasswordError,
+    setPasswordSaving,
+    setPasswordSuccess,
+    weddingSiteId,
+  });
 
   useEffect(() => {
     const invite = readPlannerInvite(siteSlug || user?.id || null);

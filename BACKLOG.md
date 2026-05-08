@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 7:58 AM PT - No-Deploy Settings Account-Actions Hook Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Settings.tsx` no longer owns the inline account-profile save and password update handlers.
+  - Added `src/pages/dashboard/settings/useSettingsAccountActions.ts` so the new hook now owns couple-name save, password validation, authenticated current-password verification, password update, and success/error reset behavior while the route keeps settings bootstrap, tab composition, and the existing site/experience action families.
+  - Settings boundary tests now pin `useSettingsAccountActions({ ... })`, check that the new hook owns the account/password service seams, and reject regaining the old inline `handleSaveAccount` and `handleUpdatePassword` handlers in `Settings.tsx`.
+- Acceptance/proof target:
+  - Focused settings tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 7:54 AM PT - No-Deploy Vault Dashboard Data Hook Extraction
 
 - Status: `PARTIAL`

@@ -7,6 +7,22 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-08 7:58 AM PT No-Deploy Settings Account-Actions Hook Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Settings.tsx` now routes its account-profile save and password update lane through `src/pages/dashboard/settings/useSettingsAccountActions.ts`.
+  - That new hook now owns couple-name save, password validation, authenticated current-password verification, password update, and success/error reset behavior while the route keeps settings bootstrap, tab composition, and the existing site/experience action families.
+  - Settings boundary tests now pin `useSettingsAccountActions({ ... })`, check that `useSettingsAccountActions.ts` owns the account/password service seams, and reject regaining the old inline `handleSaveAccount` and `handleUpdatePassword` handlers in `Settings.tsx`.
+  - `src/pages/dashboard/Settings.tsx` dropped from 742 lines to 717 lines in this batch, while `src/pages/dashboard/settings/useSettingsAccountActions.ts` came in at 116 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts`: PASS, 18/18.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 7:54 AM PT No-Deploy Vault Dashboard Data Hook Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:
