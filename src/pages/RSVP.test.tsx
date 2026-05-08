@@ -54,6 +54,7 @@ describe('RSVP stale submit protection', () => {
     const guestSelection = readFileSync(join(process.cwd(), 'src/pages/applyRsvpGuestSelection.ts'), 'utf8');
     const submitSuccess = readFileSync(join(process.cwd(), 'src/pages/applyRsvpSubmitSuccess.ts'), 'utf8');
     const submitPayload = readFileSync(join(process.cwd(), 'src/pages/buildRsvpSubmitPayload.ts'), 'utf8');
+    const submitSuccessArgs = readFileSync(join(process.cwd(), 'src/pages/buildRsvpSubmitSuccessArgs.ts'), 'utf8');
     const lookupClassification = readFileSync(join(process.cwd(), 'src/pages/classifyRsvpLookupResponse.ts'), 'utf8');
     const liveContentActions = readFileSync(join(process.cwd(), 'src/pages/buildRsvpLiveContentActions.ts'), 'utf8');
     const pageViewModel = readFileSync(join(process.cwd(), 'src/pages/buildRsvpPageViewModel.ts'), 'utf8');
@@ -80,6 +81,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain("from './applyRsvpGuestSelection'");
     expect(rsvpPage).toContain("from './applyRsvpSubmitSuccess'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitPayload'");
+    expect(rsvpPage).toContain("from './buildRsvpSubmitSuccessArgs'");
     expect(rsvpPage).toContain("from './classifyRsvpLookupResponse'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentActions'");
     expect(rsvpPage).toContain("from './buildRsvpPageViewModel'");
@@ -96,8 +98,8 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
     expect(rsvpPage).toContain('applyAmbiguousRsvpLookupState({');
     expect(rsvpPage).toContain('applyRsvpGuestSelection({');
-    expect(rsvpPage).toContain('applyRsvpSubmitSuccess({');
     expect(rsvpPage).toContain('buildRsvpSubmitPayload({');
+    expect(rsvpPage).toContain('applyRsvpSubmitSuccess(buildRsvpSubmitSuccessArgs({');
     expect(rsvpPage).toContain('classifyRsvpLookupResponse(');
     expect(rsvpPage).toContain('applyDemoRsvpSubmit({ payload, targetGuestIds: targetIds })');
     expect(rsvpPage).toContain('submitRsvpResponse({');
@@ -124,6 +126,9 @@ describe('RSVP stale submit protection', () => {
     expect(submitPayload).toContain('targetGuestIds');
     expect(submitPayload).toContain('normalizedExistingRsvp');
     expect(submitPayload).toContain('plusOneCount: plusOneName ? 1 : 0');
+    expect(submitSuccessArgs).toContain('ignoreNextLocalContinuityEventRef.current = true');
+    expect(submitSuccessArgs).toContain('notifyRsvpContinuityUpdate()');
+    expect(submitSuccessArgs).toContain("submitSource: tokenLinkedSession ? 'token' : 'manual'");
     expect(lookupClassification).toContain("kind: 'guest'");
     expect(lookupClassification).toContain("kind: 'ambiguous'");
     expect(lookupClassification).toContain("kind: 'not_found'");

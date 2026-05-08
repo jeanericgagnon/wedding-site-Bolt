@@ -2321,3 +2321,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `restoreLoadedRsvpState(...)` and its form-step / loaded-RSVP / token-linked-session handoff so the main RSVP page keeps routing loaded-state restore through the shared helper.
   - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This continues local public-surface ownership cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 11:39 PM PT - No-deploy RSVP submit-success-args extraction:
+  - Resolved in this batch: moved the shared post-submit RSVP success arg bundling out of `src/pages/RSVP.tsx` and behind `src/pages/buildRsvpSubmitSuccessArgs.ts`.
+  - Data-boundary hardening: `RSVP.tsx` now routes both the demo submit-success path and the live submit-success path through one helper for continuity ping wiring and `submitSource` derivation instead of hand-building those `applyRsvpSubmitSuccess(...)` args inline twice.
+  - File-size movement: `src/pages/RSVP.tsx` dropped from 1242 lines to 1237 lines in this continuation batch while `src/pages/buildRsvpSubmitSuccessArgs.ts` came in at 63 lines.
+  - No feature loss: demo RSVP submit and live RSVP submit still trigger the same continuity update behavior, still guard the next local continuity event, and still preserve the same token-vs-manual submit-source handoff.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `buildRsvpSubmitSuccessArgs(...)` plus its continuity-update and submit-source contract so the main RSVP page keeps routing submit-success arg assembly through the shared helper.
+  - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
+  - Launch status: unchanged. This continues local public-surface ownership cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.

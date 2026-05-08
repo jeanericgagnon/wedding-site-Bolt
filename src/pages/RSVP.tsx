@@ -31,6 +31,7 @@ import { applyAmbiguousRsvpLookupState } from './applyAmbiguousRsvpLookupState';
 import { applyRsvpGuestSelection } from './applyRsvpGuestSelection';
 import { applyRsvpSubmitSuccess } from './applyRsvpSubmitSuccess';
 import { buildRsvpSubmitPayload } from './buildRsvpSubmitPayload';
+import { buildRsvpSubmitSuccessArgs } from './buildRsvpSubmitSuccessArgs';
 import { buildRsvpDerivedViewState } from './buildRsvpDerivedViewState';
 import { buildRsvpLiveContentActions } from './buildRsvpLiveContentActions';
 import { buildRsvpPageViewModel } from './buildRsvpPageViewModel';
@@ -985,21 +986,18 @@ export default function RSVP() {
       if (USE_DEMO_RSVP) {
         const targetIds = submitPayload.targetGuestIds;
         const payload = buildNormalizedExistingRsvp(formData, customAnswers, `demo-rsvp-${guest.id}`, targetIds);
-        const submitSource = tokenLinkedSessionRef.current ? 'token' : 'manual';
         applyDemoRsvpSubmit({ payload, targetGuestIds: targetIds });
         if (activeSubmitRequestRef.current !== requestId) return;
-        applyRsvpSubmitSuccess({
+        applyRsvpSubmitSuccess(buildRsvpSubmitSuccessArgs({
           applyToHousehold,
           guest,
           householdGuests,
+          ignoreNextLocalContinuityEventRef,
           mealConfig,
           musicPlaylistUrl,
           normalizedExistingRsvp: payload,
           normalizeSelectedHouseholdGuestIds,
-          onContinuityUpdate: () => {
-            ignoreNextLocalContinuityEventRef.current = true;
-            notifyRsvpContinuityUpdate();
-          },
+          notifyRsvpContinuityUpdate,
           rsvpDeadline,
           rsvpQuestions,
           rsvpSessionToken,
@@ -1008,8 +1006,8 @@ export default function RSVP() {
           setApplyToHousehold,
           setSelectedHouseholdGuestIds,
           setStep,
-          submitSource,
-        });
+          tokenLinkedSession: tokenLinkedSessionRef.current,
+        }));
         return;
       }
 
@@ -1040,19 +1038,16 @@ export default function RSVP() {
       }
 
       if (activeSubmitRequestRef.current !== requestId) return;
-      const submitSource = tokenLinkedSessionRef.current ? 'token' : 'manual';
-      applyRsvpSubmitSuccess({
+      applyRsvpSubmitSuccess(buildRsvpSubmitSuccessArgs({
         applyToHousehold,
         guest,
         householdGuests,
+        ignoreNextLocalContinuityEventRef,
         mealConfig,
         musicPlaylistUrl,
         normalizedExistingRsvp: submitPayload.normalizedExistingRsvp,
         normalizeSelectedHouseholdGuestIds,
-        onContinuityUpdate: () => {
-          ignoreNextLocalContinuityEventRef.current = true;
-          notifyRsvpContinuityUpdate();
-        },
+        notifyRsvpContinuityUpdate,
         rsvpDeadline,
         rsvpQuestions,
         rsvpSessionToken,
@@ -1061,8 +1056,8 @@ export default function RSVP() {
         setApplyToHousehold,
         setSelectedHouseholdGuestIds,
         setStep,
-        submitSource,
-      });
+        tokenLinkedSession: tokenLinkedSessionRef.current,
+      }));
     } catch {
       if (activeSubmitRequestRef.current !== requestId) return;
       setError(RSVP_SUBMIT_ERROR_COPY);

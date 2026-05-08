@@ -4561,6 +4561,23 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+
+## 2026-05-07 11:39 PM PT No-Deploy RSVP Submit-Success-Args Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its repeated post-submit success arg assembly through `src/pages/buildRsvpSubmitSuccessArgs.ts`.
+  - That shared helper now owns continuity ping wiring and `submitSource` derivation for both the demo submit-success path and the live submit-success path while the page keeps submit validation, transport, and success application local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `buildRsvpSubmitSuccessArgs(...)` plus its continuity-update and token-vs-manual submit-source contract so the main RSVP page keeps routing through the dedicated helper.
+  - `src/pages/RSVP.tsx` dropped from 1242 lines to 1237 lines in this batch, while `src/pages/buildRsvpSubmitSuccessArgs.ts` came in at 63 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
   - `src/pages/RSVP.tsx` now routes its full page-reset bundle through `src/pages/resetRsvpPageState.ts`.
