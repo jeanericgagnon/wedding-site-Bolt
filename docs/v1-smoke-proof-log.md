@@ -10754,3 +10754,18 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 08:35 AM PT No-Deploy Guest Photo Export-Actions Hook Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now routes the guest photo copy, export, and share utility lane through `src/pages/dashboard/guestPhotos/useGuestPhotoExportActions.ts`.
+  - That hook now owns clipboard copy fallback, slideshow plan export, bucket CSV export, guest hub print-pack download, media manifest export with signed-link fallback, guestbook/prospect/curation export, memory/recap JSON export, share-message copy, known-link copy, bulk link regeneration, and share-pack/bucket-links CSV export while the page keeps dashboard data hydration, bucket workspace, AI actions, moderation actions, album actions, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useGuestPhotoExportActions({ ... })`, checks that `useGuestPhotoExportActions.ts` owns the manifest export / link regeneration / clipboard fallback seam, and rejects regaining the old inline export/share handlers in `GuestPhotoSharing.tsx`.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 1106 lines to 873 lines in this batch, while `src/pages/dashboard/guestPhotos/useGuestPhotoExportActions.ts` came in at 393 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
