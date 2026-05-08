@@ -50,10 +50,15 @@ describe('RSVP stale submit protection', () => {
   it('routes token auto-loading through the shared RSVP route view', () => {
     const rsvpPage = readFileSync(join(process.cwd(), 'src/pages/RSVP.tsx'), 'utf8');
     const routeView = readFileSync(join(process.cwd(), 'src/pages/RsvpRouteView.tsx'), 'utf8');
+    const searchView = readFileSync(join(process.cwd(), 'src/pages/RsvpSearchView.tsx'), 'utf8');
 
     expect(rsvpPage).toContain("from './RsvpRouteView'");
+    expect(rsvpPage).toContain("from './RsvpSearchView'");
     expect(rsvpPage).toContain('<RsvpRouteView');
+    expect(rsvpPage).toContain('<RsvpSearchView');
     expect(routeView).toContain('if (tokenAutoLoading) return <>{tokenAutoLoadingView}</>;');
+    expect(searchView).toContain("{t('rsvp.hero_title')}");
+    expect(searchView).toContain("{t('rsvp.search_button')}");
   });
 
   it('sanitizes internal RSVP lookup and submit errors before showing guest copy', () => {

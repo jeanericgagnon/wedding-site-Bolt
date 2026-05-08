@@ -7404,6 +7404,22 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 10:05 PM PT No-Deploy RSVP Search View Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its large guest-facing search/hero entry slab through `src/pages/RsvpSearchView.tsx`.
+  - That shared guest-facing search component now owns the public hero image shell, invitation search form, prediction list, helper guidance, and guest-safe search error slab while the page keeps token auto-load handling, private RSVP lookup, prediction state, and downstream pick/form/success logic local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpSearchView` so the main RSVP page keeps routing through the dedicated search shell.
+  - `src/pages/RSVP.tsx` dropped from 1954 lines to 1831 lines in this batch, while `src/pages/RsvpSearchView.tsx` came in at 182 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 9:54 PM PT No-Deploy Event Recap Live Content Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
