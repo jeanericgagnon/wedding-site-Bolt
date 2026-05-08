@@ -912,6 +912,7 @@ describe('dashboard data boundary guards', () => {
     const boardActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/buildCoordinatorDashboardBoardActions.ts'), 'utf8');
     const cueLifecycle = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/useCoordinatorDashboardCueLifecycle.ts'), 'utf8');
     const derivedState = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/buildCoordinatorDashboardDerivedState.ts'), 'utf8');
+    const uiState = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/useCoordinatorDashboardUiState.ts'), 'utf8');
     const routeContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/CoordinatorDashboardRouteContent.tsx'), 'utf8');
     const panels = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/CoordinatorModePanels.tsx'), 'utf8');
     const actionsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/useCoordinatorDashboardActions.ts'), 'utf8');
@@ -935,6 +936,8 @@ describe('dashboard data boundary guards', () => {
     expect(page).toContain('buildCoordinatorDashboardDerivedState({');
     expect(page).toContain('useCoordinatorDashboardActions({');
     expect(page).toContain('useCoordinatorDashboardCueLifecycle({');
+    expect(page).toContain('useCoordinatorDashboardUiState()');
+    expect(page).toContain('useCoordinatorDashboardUiStateSync({');
     expect(page).toContain('<CoordinatorDashboardRouteContent');
     expect(page).not.toContain('const bootstrap = await loadCoordinatorBootstrapData(user.id);');
     expect(page).not.toContain('const storedTimelineState = readStoredCoordinatorTimelineState(siteId);');
@@ -953,6 +956,10 @@ describe('dashboard data boundary guards', () => {
     expect(page).not.toContain('const addQnaItem = async () => {');
     expect(page).not.toContain('if (shouldResetCoordinatorCommandJumpLabel({');
     expect(page).not.toContain('const timer = window.setTimeout(() => {');
+    expect(page).not.toContain('const [neutralFocusReason, setNeutralFocusReason] = useState<string | null>(null);');
+    expect(page).not.toContain("if (commandSource !== 'primary-action') return;");
+    expect(page).not.toContain("if (commandSource !== 'escalation') return;");
+    expect(page).not.toContain("if (commandSource !== 'correction') return;");
     expect(page).not.toContain('<DashboardPageHero');
     expect(page).not.toContain('<CoordinatorCheckInQueuePanel');
     expect(page).not.toContain('<CoordinatorDayOfSummaryPanel');
@@ -973,6 +980,12 @@ describe('dashboard data boundary guards', () => {
     expect(derivedState).toContain('const alertStats = {');
     expect(derivedState).toContain('const standingPromptMode: \'full\' | \'secondary\' = getCoordinatorStandingPromptMode(Boolean(summaryDisplayCue));');
     expect(derivedState).toContain('const filteredAlertLogView = buildCoordinatorAlertLogView(filteredAlertLog);');
+    expect(uiState).toContain('export function useCoordinatorDashboardUiState(_args?: Args)');
+    expect(uiState).toContain('export function useCoordinatorDashboardUiStateSync(args: SyncArgs)');
+    expect(uiState).toContain("const [neutralFocusReason, setNeutralFocusReason] = useState<string | null>(null);");
+    expect(uiState).toContain("if (args.commandSource !== 'primary-action') return;");
+    expect(uiState).toContain("if (args.commandSource !== 'escalation') return;");
+    expect(uiState).toContain("if (args.commandSource !== 'correction') return;");
     expect(routeContent).toContain('export function CoordinatorDashboardRouteContent(');
     expect(routeContent).toContain('<DashboardPageHero');
     expect(routeContent).toContain('<CoordinatorCheckInQueuePanel');

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../hooks/useAuth';
 import { type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
@@ -32,23 +32,12 @@ import { buildCoordinatorDashboardFocusActions } from './coordinator/buildCoordi
 import { buildCoordinatorDashboardDerivedState } from './coordinator/buildCoordinatorDashboardDerivedState';
 import { useCoordinatorDashboardData } from './coordinator/useCoordinatorDashboardData';
 import { useCoordinatorDashboardCueLifecycle } from './coordinator/useCoordinatorDashboardCueLifecycle';
+import { useCoordinatorDashboardUiState, useCoordinatorDashboardUiStateSync } from './coordinator/useCoordinatorDashboardUiState';
 
 
 export const DashboardCoordinatorMode: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const { toast } = useToast();
-  const [neutralFocusReason, setNeutralFocusReason] = useState<string | null>(null);
-  const [commandJumpLabel, setCommandJumpLabel] = useState<string | null>(null);
-  const [commandJumpPanelFocus, setCommandJumpPanelFocus] = useState<CoordinatorPanelFocus | null>(null);
-  const [commandJumpTargetId, setCommandJumpTargetId] = useState<string | null>(null);
-  const [manualOverrideLabel, setManualOverrideLabel] = useState<string | null>(null);
-  const [manualOverrideUpdatedAt, setManualOverrideUpdatedAt] = useState<number | null>(null);
-  const [alertOverrideLabelState, setAlertOverrideLabelState] = useState<string | null>(null);
-  const [alertOverrideUpdatedAt, setAlertOverrideUpdatedAt] = useState<number | null>(null);
-  const [overrideCueShownAt, setOverrideCueShownAt] = useState<number | null>(null);
-  const [summaryFeedbackShownAt, setSummaryFeedbackShownAt] = useState<number | null>(null);
-  const [previousAlertAligned, setPreviousAlertAligned] = useState<boolean | null>(null);
-  const [summaryFeedback, setSummaryFeedback] = useState<CoordinatorSummaryFeedback | null>(null);
   const {
     activeGuestId,
     activeQnaId,
@@ -107,6 +96,32 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const canEditTimeline = canManageCoordinatorTimeline(coordinatorRole, coordinatorPermissions);
   const canSendAlerts = canSendImmediateCoordinatorAlerts(coordinatorRole, coordinatorPermissions);
   const canScheduleAlerts = canScheduleCoordinatorAlerts(coordinatorRole, coordinatorPermissions);
+  const {
+    alertOverrideLabelState,
+    alertOverrideUpdatedAt,
+    commandJumpLabel,
+    commandJumpPanelFocus,
+    commandJumpTargetId,
+    manualOverrideLabel,
+    manualOverrideUpdatedAt,
+    neutralFocusReason,
+    overrideCueShownAt,
+    previousAlertAligned,
+    setAlertOverrideLabelState,
+    setAlertOverrideUpdatedAt,
+    setCommandJumpLabel,
+    setCommandJumpPanelFocus,
+    setCommandJumpTargetId,
+    setManualOverrideLabel,
+    setManualOverrideUpdatedAt,
+    setNeutralFocusReason,
+    setOverrideCueShownAt,
+    setPreviousAlertAligned,
+    setSummaryFeedback,
+    setSummaryFeedbackShownAt,
+    summaryFeedback,
+    summaryFeedbackShownAt,
+  } = useCoordinatorDashboardUiState();
 
   const {
     activeCheckInGuest,
@@ -263,28 +278,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
     canScheduleAlerts,
   ]);
   const alertValidationError = validateCoordinatorAlertForm(alertForm, alertAudienceCount);
-
-
-  useEffect(() => {
-    if (commandSource !== 'primary-action') return;
-    if (primaryAction.key !== 'all-clear') return;
-    setCommandSource(null);
-    setNeutralFocusReason(getCoordinatorNeutralFocusReason(panelFocus));
-  }, [commandSource, primaryAction.key, panelFocus]);
-
-  useEffect(() => {
-    if (commandSource !== 'escalation') return;
-    if (liveIssues.length > 0) return;
-    setCommandSource(null);
-    setNeutralFocusReason(getCoordinatorNeutralFocusReason(panelFocus));
-  }, [commandSource, liveIssues.length, panelFocus]);
-
-  useEffect(() => {
-    if (commandSource !== 'correction') return;
-    if (correctionCues.length > 0) return;
-    setCommandSource(null);
-    setNeutralFocusReason(getCoordinatorNeutralFocusReason(panelFocus));
-  }, [commandSource, correctionCues.length, panelFocus]);
+  useCoordinatorDashboardUiStateSync({
+    commandSource,
+    correctionCueCount: correctionCues.length,
+    liveIssueCount: liveIssues.length,
+    panelFocus,
+    primaryActionKey: primaryAction.key,
+    setCommandSource,
+    setNeutralFocusReason,
+  });
   const {
     clearCoordinatorTransientState,
     escalateDoorReview,

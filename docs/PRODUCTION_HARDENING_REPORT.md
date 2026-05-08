@@ -34,6 +34,22 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 09:38 AM PT No-Deploy Coordinator UI-State Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/CoordinatorMode.tsx` now routes the remaining jump/override/summary local state lane through `src/pages/dashboard/coordinator/useCoordinatorDashboardUiState.ts`.
+  - That coordinator hook now owns neutral-focus, command-jump, manual-override, alert-override, override-cue, previous-alert-alignment, and summary-feedback state while the route keeps coordinator bootstrap, board-derived state, action hooks, route content composition, and board-level orchestration.
+  - `src/pages/dashboard/coordinator/useCoordinatorDashboardUiState.ts` also owns the reset/sync effects for all-clear, resolved escalation, and resolved correction states through `useCoordinatorDashboardUiStateSync(...)`, which removes the old inline command-source reset `useEffect(...)` block from `CoordinatorMode.tsx`.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useCoordinatorDashboardUiState()` and `useCoordinatorDashboardUiStateSync({ ... })`, checks that `useCoordinatorDashboardUiState.ts` owns the coordinator local-state and reset-effect seam, and rejects regaining the old inline `useState(...)` cluster and command-source reset effects in `CoordinatorMode.tsx`.
+  - `src/pages/dashboard/CoordinatorMode.tsx` moved from 736 lines to 738 lines in this batch, while `src/pages/dashboard/coordinator/useCoordinatorDashboardUiState.ts` came in at 88 lines. This batch was about route ownership and guardrails more than raw shrinkage.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 
 ### 2026-05-08 9:23 AM PT - No-Deploy Itinerary Dashboard UI-State Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
