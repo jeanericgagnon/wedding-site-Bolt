@@ -41,8 +41,6 @@ import {
   parseRsvpEventSelections,
   summarizeAuditEntry,
 } from './guests/guestDisplayUtils';
-import { GuestDashboardOverlays } from './guests/GuestDashboardOverlays';
-import { GuestDashboardOpsView } from './guests/GuestDashboardOpsView';
 import { GuestDashboardRouteView } from './guests/GuestDashboardRouteView';
 import {
   type Guest,
@@ -2431,94 +2429,94 @@ const handleSendBulkInvitations = async () => {
     onSetRsvpMealOptions: setRsvpMealOptions,
     onSetRsvpQuestions: setRsvpQuestions,
   };
+  const guestOverlayProps = {
+    assistedRsvpGuest,
+    assistedRsvpNotes,
+    assistedRsvpSaving,
+    assistedRsvpSource,
+    assistedRsvpStatus,
+    confirmDialog,
+    csvColumnSamples,
+    csvDataRows,
+    csvDuplicateNames,
+    csvFieldMap,
+    csvHeaders,
+    csvHouseholdWarnings,
+    csvImporting,
+    csvMappingSummary,
+    csvNameMappingValid,
+    csvPreview,
+    csvSelectedFilename,
+    csvShowMapper,
+    csvSkipped,
+    csvUnknownEvents,
+    deleteAllBusy,
+    deleteAllConfirmInput,
+    editingGuest,
+    effectiveItineraryEvents,
+    formData,
+    formEventInviteIds,
+    guestAuditEntries,
+    guestEventIds,
+    guests,
+    itineraryDrawerGuest,
+    itineraryEvents,
+    itineraryFilterEventCount: itineraryFilterEvents.length,
+    loadingDrawer,
+    showAddModal,
+    showDeleteAllModal,
+    togglingEventId,
+    weddingSiteInfo,
+    onAddFollowUpTask: addFollowUpTask,
+    onBuildCsvPreview: buildCsvPreviewFromMapping,
+    onCloseAddModal: () => {
+      setShowAddModal(false);
+      resetForm();
+    },
+    onCloseAssistedRsvp: () => setAssistedRsvpGuest(null),
+    onCloseDeleteAllModal: () => setShowDeleteAllModal(false),
+    onCloseEditModal: () => {
+      setEditingGuest(null);
+      resetForm();
+    },
+    onCloseItineraryDrawer: () => {
+      setItineraryDrawerGuest(null);
+      setGuestAuditEntries([]);
+    },
+    onConfirmCsvImport: confirmCsvImport,
+    onConfirmDeleteAllGuests: handleDeleteAllGuests,
+    onCopyContactRequestLink: copyContactRequestLink,
+    onFocusGuestSearch: setSearchQuery,
+    onResetCsvReview: () => {
+      if (!csvImporting) {
+        setCsvPreview(null);
+        setCsvUnknownEvents([]);
+        setCsvDuplicateNames([]);
+        setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [], weak: [] });
+      }
+    },
+    onSaveAssistedRsvp: handleSaveAssistedRsvp,
+    onSetAssistedRsvpNotes: setAssistedRsvpNotes,
+    onSetAssistedRsvpSource: setAssistedRsvpSource,
+    onSetAssistedRsvpStatus: setAssistedRsvpStatus,
+    onSetCsvFieldMap: setCsvFieldMap,
+    onSetCsvShowMapper: setCsvShowMapper,
+    onSetDeleteAllConfirmInput: setDeleteAllConfirmInput,
+    onSetFormData: setFormData,
+    onSetFormEventInviteIds: setFormEventInviteIds,
+    onSubmitAddGuest: handleAddGuest,
+    onSubmitEditGuest: handleEditGuest,
+    onToast: toast,
+    onToggleEventInvite: handleToggleEventInvite,
+  };
 
   return (
     <GuestDashboardRouteView
       loading={loading}
+      overlayProps={guestOverlayProps}
       opsViewProps={guestDashboardOpsViewProps}
       rsvpConfigViewProps={guestRsvpConfigViewProps}
       showRsvpConfig={guestsTab === 'rsvp-config'}
-    >
-      <GuestDashboardOverlays
-        assistedRsvpGuest={assistedRsvpGuest}
-        assistedRsvpNotes={assistedRsvpNotes}
-        assistedRsvpSaving={assistedRsvpSaving}
-        assistedRsvpSource={assistedRsvpSource}
-        assistedRsvpStatus={assistedRsvpStatus}
-        confirmDialog={confirmDialog}
-        csvColumnSamples={csvColumnSamples}
-        csvDataRows={csvDataRows}
-        csvDuplicateNames={csvDuplicateNames}
-        csvFieldMap={csvFieldMap}
-        csvHeaders={csvHeaders}
-        csvHouseholdWarnings={csvHouseholdWarnings}
-        csvImporting={csvImporting}
-        csvMappingSummary={csvMappingSummary}
-        csvNameMappingValid={csvNameMappingValid}
-        csvPreview={csvPreview}
-        csvSelectedFilename={csvSelectedFilename}
-        csvShowMapper={csvShowMapper}
-        csvSkipped={csvSkipped}
-        csvUnknownEvents={csvUnknownEvents}
-        deleteAllBusy={deleteAllBusy}
-        deleteAllConfirmInput={deleteAllConfirmInput}
-        editingGuest={editingGuest}
-        effectiveItineraryEvents={effectiveItineraryEvents}
-        formData={formData}
-        formEventInviteIds={formEventInviteIds}
-        guestAuditEntries={guestAuditEntries}
-        guestEventIds={guestEventIds}
-        guests={guests}
-        itineraryDrawerGuest={itineraryDrawerGuest}
-        itineraryEvents={itineraryEvents}
-        itineraryFilterEventCount={itineraryFilterEvents.length}
-        loadingDrawer={loadingDrawer}
-        showAddModal={showAddModal}
-        showDeleteAllModal={showDeleteAllModal}
-        togglingEventId={togglingEventId}
-        weddingSiteInfo={weddingSiteInfo}
-        onAddFollowUpTask={addFollowUpTask}
-        onBuildCsvPreview={buildCsvPreviewFromMapping}
-        onCloseAddModal={() => {
-          setShowAddModal(false);
-          resetForm();
-        }}
-        onCloseAssistedRsvp={() => setAssistedRsvpGuest(null)}
-        onCloseDeleteAllModal={() => setShowDeleteAllModal(false)}
-        onCloseEditModal={() => {
-          setEditingGuest(null);
-          resetForm();
-        }}
-        onCloseItineraryDrawer={() => {
-          setItineraryDrawerGuest(null);
-          setGuestAuditEntries([]);
-        }}
-        onConfirmCsvImport={confirmCsvImport}
-        onConfirmDeleteAllGuests={handleDeleteAllGuests}
-        onCopyContactRequestLink={copyContactRequestLink}
-        onFocusGuestSearch={setSearchQuery}
-        onResetCsvReview={() => {
-          if (!csvImporting) {
-            setCsvPreview(null);
-            setCsvUnknownEvents([]);
-            setCsvDuplicateNames([]);
-            setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [], weak: [] });
-          }
-        }}
-        onSaveAssistedRsvp={handleSaveAssistedRsvp}
-        onSetAssistedRsvpNotes={setAssistedRsvpNotes}
-        onSetAssistedRsvpSource={setAssistedRsvpSource}
-        onSetAssistedRsvpStatus={setAssistedRsvpStatus}
-        onSetCsvFieldMap={setCsvFieldMap}
-        onSetCsvShowMapper={setCsvShowMapper}
-        onSetDeleteAllConfirmInput={setDeleteAllConfirmInput}
-        onSetFormData={setFormData}
-        onSetFormEventInviteIds={setFormEventInviteIds}
-        onSubmitAddGuest={handleAddGuest}
-        onSubmitEditGuest={handleEditGuest}
-        onToast={toast}
-        onToggleEventInvite={handleToggleEventInvite}
-      />
-    </GuestDashboardRouteView>
+    />
   );
 };

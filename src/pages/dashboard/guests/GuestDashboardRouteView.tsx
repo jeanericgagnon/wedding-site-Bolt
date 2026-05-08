@@ -1,20 +1,21 @@
-import React, { type ComponentProps, type ReactNode } from 'react';
+import React, { type ComponentProps } from 'react';
 import { DashboardLayout } from '../../../components/dashboard/DashboardLayout';
 import { DashboardStateBlock } from '../../../components/dashboard/DashboardStateBlock';
 import { GuestDashboardOpsView } from './GuestDashboardOpsView';
+import { GuestDashboardOverlays } from './GuestDashboardOverlays';
 import { GuestRsvpSettingsView } from './GuestRsvpSettingsView';
 
 interface GuestDashboardRouteViewProps {
-  children?: ReactNode;
   loading: boolean;
+  overlayProps: ComponentProps<typeof GuestDashboardOverlays>;
   opsViewProps: ComponentProps<typeof GuestDashboardOpsView>;
   rsvpConfigViewProps: ComponentProps<typeof GuestRsvpSettingsView>;
   showRsvpConfig: boolean;
 }
 
 export function GuestDashboardRouteView({
-  children,
   loading,
+  overlayProps,
   opsViewProps,
   rsvpConfigViewProps,
   showRsvpConfig,
@@ -33,5 +34,9 @@ export function GuestDashboardRouteView({
     return <GuestRsvpSettingsView {...rsvpConfigViewProps} />;
   }
 
-  return <GuestDashboardOpsView {...opsViewProps}>{children}</GuestDashboardOpsView>;
+  return (
+    <GuestDashboardOpsView {...opsViewProps}>
+      <GuestDashboardOverlays {...overlayProps} />
+    </GuestDashboardOpsView>
+  );
 }

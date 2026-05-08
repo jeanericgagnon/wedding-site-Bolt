@@ -7532,6 +7532,21 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 8:59 PM PT No-Deploy Guest Dashboard Overlay Route Consolidation
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` no longer mounts `GuestDashboardOverlays` directly; that overlay branch now routes through `src/pages/dashboard/guests/GuestDashboardRouteView.tsx`.
+  - The route shell now owns the combined loading/RSVP/ops/overlay composition seam instead of the page hand-wiring overlays after the route branch.
+  - `src/lib/dashboardDataBoundary.test.ts` continues to pin `GuestDashboardRouteView` and now also rejects regaining the old inline overlay mount in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` dropped from 2524 lines to 2522 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts`: PASS, 46/46.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 5:57 PM PT No-Deploy Guest hub public service extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
