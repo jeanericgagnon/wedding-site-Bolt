@@ -140,6 +140,7 @@ describe('public guest surface boundary', () => {
 
     const rsvpPage = readSource('src/pages/RSVP.tsx');
     const rsvpDerivedViewState = readSource('src/pages/buildRsvpDerivedViewState.ts');
+    const rsvpPageViewModel = readSource('src/pages/buildRsvpPageViewModel.ts');
     const rsvpLiveContentProps = readSource('src/pages/buildRsvpLiveContentViewProps.ts');
     const rsvpValidateAdvance = readSource('src/pages/validateRsvpFormAdvance.ts');
     const rsvpLiveContentView = readSource('src/pages/RsvpLiveContentView.tsx');
@@ -157,17 +158,22 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain("from './RsvpLiveContentView'");
     expect(rsvpPage).toContain("from './RsvpTokenLoadingView'");
     expect(rsvpPage).toContain("from './buildRsvpDerivedViewState'");
+    expect(rsvpPage).toContain("from './buildRsvpPageViewModel'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentViewProps'");
     expect(rsvpPage).toContain("from './validateRsvpFormAdvance'");
     expect(rsvpPage).toContain('<RsvpRouteView');
     expect(rsvpPage).toContain('<RsvpLiveContentView');
     expect(rsvpPage).toContain('<RsvpTokenLoadingView');
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
+    expect(rsvpPage).toContain('buildRsvpPageViewModel({');
     expect(rsvpPage).toContain('{...buildRsvpLiveContentViewProps({');
     expect(rsvpPage).toContain('validateRsvpFormAdvance({');
     expect(rsvpDerivedViewState).toContain('guestPredictions');
     expect(rsvpDerivedViewState).toContain('childCountOptions');
     expect(rsvpDerivedViewState).toContain('inheritedHouseholdMembers');
+    expect(rsvpPageViewModel).toContain('guestDisplayName');
+    expect(rsvpPageViewModel).toContain('deadlinePassed');
+    expect(rsvpPageViewModel).toContain('searchInputId');
     expect(rsvpLiveContentProps).toContain('return props;');
     expect(rsvpValidateAdvance).toContain('Please choose a meal option before review.');
     expect(rsvpValidateAdvance).toContain('Please answer:');

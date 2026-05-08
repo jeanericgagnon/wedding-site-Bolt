@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { CheckCircle, Search, User } from 'lucide-react';
 import { demoGuests, demoRSVPs } from '../lib/demoData';
 import { DEMO_MODE, SUPABASE_CONFIGURED } from '../config/env';
-import { isRsvpDeadlinePassed } from './rsvpDeadline';
 import { getSafePublicWebUrl } from '../sections/publicLinks';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
 import {
@@ -29,6 +28,7 @@ import {
   writeDemoStoredResponses,
 } from './rsvpDemoStorage';
 import { buildRsvpDerivedViewState } from './buildRsvpDerivedViewState';
+import { buildRsvpPageViewModel } from './buildRsvpPageViewModel';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { buildRsvpLiveContentViewProps } from './buildRsvpLiveContentViewProps';
 import { callValidateRsvpToken } from './rsvpFunctionService';
@@ -1028,18 +1028,21 @@ export default function RSVP() {
     }
   };
 
-  const guestDisplayName = guest
-    ? guest.first_name && guest.last_name
-      ? `${guest.first_name} ${guest.last_name}`
-      : guest.name
-    : '';
-
-  const deadlinePassed = isRsvpDeadlinePassed(rsvpDeadline);
-
-  const canSubmit = !!rsvpSessionToken && !(deadlinePassed && !existingRsvp);
-  const searchInputId = 'rsvp-guest-search';
-  const searchHintId = 'rsvp-search-hint';
-  const predictionListId = 'rsvp-guest-predictions';
+  const {
+    availableMealValues,
+    canSubmit,
+    deadlinePassed,
+    guestDisplayName,
+    predictionListId,
+    searchHintId,
+    searchInputId,
+  } = useMemo(() => buildRsvpPageViewModel({
+    existingRsvp,
+    guest,
+    mealConfig,
+    rsvpDeadline,
+    rsvpSessionToken,
+  }), [existingRsvp, guest, mealConfig, rsvpDeadline, rsvpSessionToken]);
 
   useEffect(() => {
     setActivePredictionIndex(-1);
@@ -1105,8 +1108,6 @@ export default function RSVP() {
     setError('');
     setFormStep(result.nextStep);
   };
-  const availableMealValues = useMemo(() => new Set(mealConfig.options.map((o) => o.toLowerCase())), [mealConfig.options]);
-
   useEffect(() => {
     if (!mealConfig.enabled) {
       if (formData.meal_choice) setFormData((prev) => ({ ...prev, meal_choice: '' }));

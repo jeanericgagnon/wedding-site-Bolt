@@ -2209,3 +2209,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `validateRsvpFormAdvance(...)` so the main RSVP page keeps routing through the shared step-validation helper.
   - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
   - Launch status: unchanged. This continues local public-surface ownership cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 10:50 PM PT - No-deploy RSVP page-view-model extraction:
+  - Resolved in this batch: moved another layer of guest-facing RSVP page view state out of `src/pages/RSVP.tsx` and behind `src/pages/buildRsvpPageViewModel.ts`.
+  - Data-boundary hardening: `RSVP.tsx` now hands off guest display name, deadline state, submit availability, meal-option membership, and the shared search/prediction ids through one helper instead of deriving those scalars inline.
+  - File-size movement: `src/pages/RSVP.tsx` moved from 1211 lines to 1212 lines in this continuation batch while `src/pages/buildRsvpPageViewModel.ts` came in at 46 lines.
+  - No feature loss: deadline gating, token-backed submit eligibility, meal-choice normalization guardrails, and ARIA-linked RSVP search ids preserve the current guest RSVP flow while reducing page-owned view-model wiring.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `buildRsvpPageViewModel(...)` so the main RSVP page keeps routing through the shared page-view-model helper.
+  - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
+  - Launch status: unchanged. This continues local public-surface ownership cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
