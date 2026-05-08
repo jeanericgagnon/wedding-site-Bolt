@@ -144,6 +144,7 @@ describe('dashboard data boundary guards', () => {
     const checkInsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCheckIns.ts'), 'utf8');
     const crudHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCrudActions.ts'), 'utf8');
     const detailHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts'), 'utf8');
+    const rsvpConfigHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardRsvpConfigActions.ts'), 'utf8');
 
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).toContain('useGuestDashboardData({');
@@ -153,10 +154,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('useGuestDashboardCheckIns({');
     expect(source).toContain('useGuestDashboardCrudActions({');
     expect(source).toContain('useGuestDashboardGuestDetailActions({');
+    expect(source).toContain('useGuestDashboardRsvpConfigActions({');
     expect(source).toContain('buildGuestDashboardViewProps({');
     expect(source).toContain('loadPublicSlug: loadGuestDashboardPublicSlug');
     expect(source).toContain('loadSiteSlug: loadGuestDashboardSiteSlug');
-    expect(source).toContain('persistGuestDashboardRsvpConfig({');
     expect(source).toContain('useGuestDashboardCampaignActions({');
     expect(source).toContain('buildGuestDashboardOverlayProps({');
     expect(source).toContain('<GuestDashboardRouteView');
@@ -197,6 +198,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('removeGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(source).not.toContain('addGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(source).not.toContain('saveAssistedGuestRsvp({');
+    expect(source).not.toContain('const addRsvpQuestionTemplate = useCallback((template: RsvpQuestionTemplate) => {');
+    expect(source).not.toContain('const handleSaveRsvpConfig = async () => {');
+    expect(source).not.toContain('writeStoredDemoRsvpConfig({ questions: cleanedQuestions, mealEnabled: rsvpMealEnabled, mealOptions });');
+    expect(source).not.toContain('await persistGuestDashboardRsvpConfig({');
     expect(source).toContain('useGuestDashboardExports({');
     expect(source).toContain('persistGuestReminderSettings(weddingSiteId, patch)');
     expect(source).toContain('deleteAllGuestsForSite(weddingSiteId)');
@@ -294,6 +299,12 @@ describe('dashboard data boundary guards', () => {
     expect(detailHook).toContain('await assignGuestsToHouseholdForSite(weddingSiteId, ids, householdId);');
     expect(detailHook).toContain('await updateGuestHouseholdForSite(weddingSiteId, guestId, null);');
     expect(detailHook).not.toContain("from '../../../lib/supabase'");
+    expect(rsvpConfigHook).toContain('const addRsvpQuestionTemplate = useCallback((template: RsvpQuestionTemplate) => {');
+    expect(rsvpConfigHook).toContain('const handleSaveRsvpConfig = useCallback(async () => {');
+    expect(rsvpConfigHook).toContain('writeStoredDemoRsvpConfig({ questions: cleanedQuestions, mealEnabled: rsvpMealEnabled, mealOptions });');
+    expect(rsvpConfigHook).toContain('await persistGuestDashboardRsvpConfig({');
+    expect(rsvpConfigHook).toContain('autoSaveTimer.current = window.setTimeout(() => {');
+    expect(rsvpConfigHook).not.toContain("from '../../../lib/supabase'");
     expect(service).toContain('export async function assignGuestsToHouseholdForSite(');
     expect(service).toContain('export async function updateGuestHouseholdForSite(');
     expect(service).toContain('export async function persistGuestReminderSettings(');

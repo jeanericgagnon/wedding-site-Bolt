@@ -10073,6 +10073,20 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 04:29 AM PT No-Deploy Guest Dashboard RSVP-Config Actions Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the guest dashboard RSVP question-template, save, and autosave lifecycle through `src/pages/dashboard/guests/useGuestDashboardRsvpConfigActions.ts`.
+  - That hook now owns RSVP template insertion, cleaned question persistence, demo-mode RSVP config writes, live RSVP config persistence, dirty-state tracking, and autosave timing while the page keeps campaigns, exports, overlays, route-level dashboard orchestration, and RSVP settings view wiring.
+  - `src/lib/dashboardDataBoundary.test.ts` and `src/pages/dashboard/guests/guestService.test.ts` now pin `useGuestDashboardRsvpConfigActions({ ... })`, check that `useGuestDashboardRsvpConfigActions.ts` owns the RSVP template/save/autosave seam, and reject regaining the old inline RSVP config handlers in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` dropped from 1228 lines to 1150 lines in this batch, while `src/pages/dashboard/guests/useGuestDashboardRsvpConfigActions.ts` came in at 156 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 04:23 AM PT No-Deploy Guest Dashboard Check-In-Actions Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

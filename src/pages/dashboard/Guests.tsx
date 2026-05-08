@@ -15,8 +15,6 @@ import {
   buildRsvpAccessModePlan,
   buildRsvpQuestionTemplateCoverage,
   buildRsvpSetupChecklist,
-  createRsvpQuestionFromTemplate,
-  type RsvpQuestionTemplate,
 } from '../../lib/rsvpAccessPlanner';
 import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { extractDietaryNote } from '../../lib/dietaryNotes';
@@ -78,7 +76,6 @@ import {
   readStoredSavedSegments,
   writeStoredCampaignLog,
   writeStoredCampaignPreset,
-  writeStoredDemoRsvpConfig,
   writeStoredFollowUpTasks,
   writeStoredSavedSegments,
   type RsvpCampaignLogEntry,
@@ -92,7 +89,6 @@ import {
   generateSecureGuestInviteToken,
   loadGuestDashboardPublicSlug,
   loadGuestDashboardSiteSlug,
-  persistGuestDashboardRsvpConfig,
   persistGuestReminderSettings,
   resolveGuestDashboardConflict,
   resolveGuestDashboardConflicts,
@@ -105,6 +101,7 @@ import { useGuestDashboardData } from './guests/useGuestDashboardData';
 import { useGuestDashboardFollowUpActions } from './guests/useGuestDashboardFollowUpActions';
 import { useGuestDashboardCrudActions } from './guests/useGuestDashboardCrudActions';
 import { useGuestDashboardGuestDetailActions } from './guests/useGuestDashboardGuestDetailActions';
+import { useGuestDashboardRsvpConfigActions } from './guests/useGuestDashboardRsvpConfigActions';
 import { useGuestDashboardExports } from './guests/useGuestDashboardExports';
 
 export const DashboardGuests: React.FC = () => {
@@ -141,9 +138,6 @@ export const DashboardGuests: React.FC = () => {
   const [sortByPriority, setSortByPriority] = useState(false);
   const [savedSegments, setSavedSegments] = useState<RsvpSavedSegment[]>([]);
   const [guestsTab, setGuestsTab] = useState<'ops' | 'rsvp-config'>('ops');
-  const [rsvpConfigSaving, setRsvpConfigSaving] = useState(false);
-  const [rsvpAutoSaveState, setRsvpAutoSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [rsvpConfigDirty, setRsvpConfigDirty] = useState(false);
   const [conflictFilter, setConflictFilter] = useState<'all' | 'error' | 'warning'>('all');
   const rsvpConfigLoadedRef = useRef(false);
   const [skipRecentlyInvited, setSkipRecentlyInvited] = useState(true);
@@ -215,19 +209,24 @@ export const DashboardGuests: React.FC = () => {
     mealOptionCount: rsvpMealOptions.filter((option) => option.trim().length > 0).length,
   }), [effectiveItineraryEvents.length, guests, rsvpMealEnabled, rsvpMealOptions, rsvpQuestions]);
 
-  const addRsvpQuestionTemplate = useCallback((template: RsvpQuestionTemplate) => {
-    const alreadyExists = rsvpQuestions.some((question) => question.label.trim().toLowerCase() === template.label.toLowerCase());
-    if (alreadyExists) {
-      toast('That RSVP question is already in your list.', 'info');
-      return;
-    }
-
-    setRsvpQuestions((prev) => [
-      ...prev,
-      createRsvpQuestionFromTemplate(template, `q_${Date.now().toString(36)}_${template.key}`),
-    ]);
-    setRsvpConfigDirty(true);
-  }, [rsvpQuestions, toast]);
+  const {
+    addRsvpQuestionTemplate,
+    handleSaveRsvpConfig,
+    rsvpAutoSaveState,
+    rsvpConfigDirty,
+    rsvpConfigSaving,
+    setRsvpConfigDirty,
+  } = useGuestDashboardRsvpConfigActions({
+    guestsTab,
+    isDemoMode,
+    rsvpConfigLoadedRef,
+    rsvpMealEnabled,
+    rsvpMealOptions,
+    rsvpQuestions,
+    setRsvpQuestions,
+    toast,
+    weddingSiteId,
+  });
 
   const logGuestAction = (type: string, summary: string, metadata?: Record<string, unknown>, targetId?: string | null, targetLabel?: string | null) => {
     if (!weddingSiteId) return;
@@ -464,83 +463,6 @@ export const DashboardGuests: React.FC = () => {
       setResolvingConflictId(null);
     }
   }, [isDemoMode, toast, visibleRsvpConflicts]);
-
-  const handleSaveRsvpConfig = async () => {
-    setRsvpConfigSaving(true);
-    try {
-      const normalizedQuestions = rsvpQuestions
-        .map((q) => ({
-          ...q,
-          label: q.label.trim(),
-          options: (q.type === 'single_choice' || q.type === 'multi_choice') ? (q.options ?? []).map((o) => o.trim()).filter(Boolean) : [],
-        }));
-
-      const cleanedQuestions = normalizedQuestions.filter((q) => q.label.length > 0);
-
-      const missingOptions = cleanedQuestions.find((q) => (q.type === 'single_choice' || q.type === 'multi_choice') && (q.options?.length ?? 0) < 2);
-      if (missingOptions) {
-        toast(`Choice question "${missingOptions.label}" needs at least 2 options.`, 'error');
-        return;
-      }
-
-      const mealOptions = rsvpMealOptions.map((o) => toTitleCase(o.trim())).filter(Boolean);
-      if (rsvpMealEnabled && mealOptions.length < 2) {
-        toast('Meal choices need at least 2 options when enabled.', 'error');
-        return;
-      }
-
-      if (isDemoMode || !weddingSiteId) {
-        writeStoredDemoRsvpConfig({ questions: cleanedQuestions, mealEnabled: rsvpMealEnabled, mealOptions });
-        setRsvpQuestions(cleanedQuestions);
-      toast('RSVP settings saved (demo).', 'success');
-        setRsvpAutoSaveState('saved');
-        setRsvpConfigDirty(false);
-        return;
-      }
-
-      await persistGuestDashboardRsvpConfig({
-        weddingSiteId,
-        questions: cleanedQuestions,
-        mealEnabled: rsvpMealEnabled,
-        mealOptions,
-      });
-      setRsvpQuestions(cleanedQuestions);
-      toast('RSVP settings saved.', 'success');
-      setRsvpAutoSaveState('saved');
-      setRsvpConfigDirty(false);
-    } catch (err) {
-      setRsvpAutoSaveState('error');
-      toast(safeGuestsDashboardError(err, 'Couldn’t save RSVP settings.'), 'error');
-    } finally {
-      setRsvpConfigSaving(false);
-    }
-  };
-
-
-  const autoSaveTimer = useRef<number | null>(null);
-  useEffect(() => {
-    if (guestsTab !== 'rsvp-config') return;
-    if (!rsvpConfigLoadedRef.current) return;
-    if (!rsvpConfigDirty) return;
-
-    const hasDraftQuestion = rsvpQuestions.some((q) => q.label.trim().length === 0);
-    if (hasDraftQuestion) {
-      setRsvpAutoSaveState('idle');
-      if (autoSaveTimer.current) window.clearTimeout(autoSaveTimer.current);
-      return;
-    }
-
-    setRsvpAutoSaveState('saving');
-
-    if (autoSaveTimer.current) window.clearTimeout(autoSaveTimer.current);
-    autoSaveTimer.current = window.setTimeout(() => {
-      handleSaveRsvpConfig();
-    }, 700);
-
-    return () => {
-      if (autoSaveTimer.current) window.clearTimeout(autoSaveTimer.current);
-    };
-  }, [guestsTab, rsvpConfigDirty, rsvpQuestions, rsvpMealEnabled, rsvpMealOptions]);
 
   const [deletingGuestId, setDeletingGuestId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);

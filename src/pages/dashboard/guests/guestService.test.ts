@@ -139,6 +139,7 @@ describe('guestService', () => {
     const checkInsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCheckIns.ts'), 'utf8');
     const crudHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCrudActions.ts'), 'utf8');
     const detailHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts'), 'utf8');
+    const rsvpConfigHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardRsvpConfigActions.ts'), 'utf8');
 
     expect(page).toContain('useGuestDashboardData({');
     expect(page).toContain('useGuestDashboardClipboardActions({');
@@ -147,12 +148,12 @@ describe('guestService', () => {
     expect(page).toContain('useGuestDashboardCheckIns({');
     expect(page).toContain('useGuestDashboardCrudActions({');
     expect(page).toContain('useGuestDashboardGuestDetailActions({');
+    expect(page).toContain('useGuestDashboardRsvpConfigActions({');
     expect(page).toContain('buildGuestDashboardViewProps({');
     expect(page).toContain('resolveGuestDashboardConflict(conflictId, resolvedAt)');
     expect(page).toContain('resolveGuestDashboardConflicts(ids, resolvedAt)');
     expect(page).toContain('loadPublicSlug: loadGuestDashboardPublicSlug');
     expect(page).toContain('loadSiteSlug: loadGuestDashboardSiteSlug');
-    expect(page).toContain('persistGuestDashboardRsvpConfig({');
     expect(page).toContain('useGuestDashboardCampaignActions({');
     expect(page).toContain('persistGuestReminderSettings(weddingSiteId, patch)');
     expect(page).not.toContain('generateSecureGuestInviteToken()');
@@ -185,9 +186,18 @@ describe('guestService', () => {
     expect(page).not.toContain('removeGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(page).not.toContain('addGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(page).not.toContain('saveAssistedGuestRsvp({');
+    expect(page).not.toContain('const addRsvpQuestionTemplate = useCallback((template: RsvpQuestionTemplate) => {');
+    expect(page).not.toContain('const handleSaveRsvpConfig = async () => {');
+    expect(page).not.toContain('writeStoredDemoRsvpConfig({ questions: cleanedQuestions, mealEnabled: rsvpMealEnabled, mealOptions });');
+    expect(page).not.toContain('await persistGuestDashboardRsvpConfig({');
     expect(campaignHook).toContain('await sendGuestInvitationEmail({ guest, weddingSiteId, weddingSiteInfo })');
     expect(campaignHook).toContain('await markGuestInvitationSentForSite(weddingSiteId, guest.id, new Date().toISOString())');
     expect(campaignHook).toContain('await markGuestInvitationAndReminderSentForSite(weddingSiteId, guest.id, sentAtIso)');
+    expect(rsvpConfigHook).toContain('const addRsvpQuestionTemplate = useCallback((template: RsvpQuestionTemplate) => {');
+    expect(rsvpConfigHook).toContain('const handleSaveRsvpConfig = useCallback(async () => {');
+    expect(rsvpConfigHook).toContain('writeStoredDemoRsvpConfig({ questions: cleanedQuestions, mealEnabled: rsvpMealEnabled, mealOptions });');
+    expect(rsvpConfigHook).toContain('await persistGuestDashboardRsvpConfig({');
+    expect(rsvpConfigHook).toContain('autoSaveTimer.current = window.setTimeout(() => {');
     expect(campaignHook).toContain('await markGuestReminderSentForSite(weddingSiteId, guest.id, new Date().toISOString())');
     expect(clipboardHook).toContain('const handleCopyOpsSummary = async () => {');
     expect(clipboardHook).toContain('const handleCopyExceptionChecklist = async () => {');
