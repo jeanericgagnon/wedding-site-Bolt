@@ -44,6 +44,7 @@ import {
   summarizeAuditEntry,
 } from './guests/guestDisplayUtils';
 import { GuestDashboardHeader } from './guests/GuestDashboardHeader';
+import { GuestDashboardContent } from './guests/GuestDashboardContent';
 import { GuestDashboardOverlays } from './guests/GuestDashboardOverlays';
 import { GuestDashboardWorkspace } from './guests/GuestDashboardWorkspace';
 import { GuestOpsSummaryPanel } from './guests/GuestOpsSummaryPanel';
@@ -2368,6 +2369,68 @@ const handleSendBulkInvitations = async () => {
     onToggleCheckIn: handleToggleCheckIn,
     onMarkThankYouSent: handleMarkThankYouSent,
   };
+  const guestInsightsProps = {
+    contactStats,
+    customAnswerRollup,
+    eventReport,
+    mealChoiceRollup,
+    mealSummary,
+    rsvpOps,
+    songRequestEntries,
+    stats,
+    onFocusCeremonyNo: () => { setSearchQuery(''); setFilterStatus('ceremony-no'); },
+    onFocusMissingMeal: () => { setSearchQuery(''); setFilterStatus('missing-meal'); setViewMode('list'); },
+    onFocusNoResponse: () => { setSearchQuery(''); setFilterStatus('pending'); },
+    onFocusPendingNoEmail: () => { setSearchQuery(''); setFilterStatus('pending-no-email'); setViewMode('list'); },
+    onFocusPlusOneMissing: () => { setSearchQuery(''); setFilterStatus('plusone-missing'); setViewMode('list'); },
+    onFocusReceptionNo: () => { setSearchQuery(''); setFilterStatus('reception-no'); },
+  };
+  const guestConflictProps = {
+    conflictFilter,
+    guests,
+    resolvingConflictId,
+    rsvpConflicts,
+    rsvpConflictStats,
+    showConflictDetails,
+    visibleRsvpConflicts,
+    onResolveAllVisibleConflicts: resolveAllVisibleConflicts,
+    onResolveConflict: resolveConflict,
+    onReviewPending: () => { setFilterStatus('pending'); setViewMode('list'); },
+    onSetConflictFilter: setConflictFilter,
+    onToggleConflictDetails: () => setShowConflictDetails((value) => !value),
+  };
+  const guestOpsSummaryProps = {
+    cleanGuestsView,
+    fromQuickStart,
+    nextStep,
+    opsQueue,
+    plannerHandoff,
+    recommendedAction,
+    onAddFollowUpTask: addFollowUpTask,
+    onFocusQueueItem: (filter: string, guestName: string) => {
+      setFilterStatus(filter as typeof filterStatus);
+      setViewMode('list');
+      setSearchQuery(guestName);
+    },
+    onFocusRecommendedAction: (filter: string) => {
+      setFilterStatus(filter as typeof filterStatus);
+      setViewMode('list');
+      setSearchQuery('');
+    },
+    onSkipToPhotos: () => navigate(buildQuickStartPhotosPath()),
+  };
+  const guestWorkspaceProps = {
+    engagementProps: guestEngagementProps,
+    filteredGuestCount: filteredGuests.length,
+    householdProps: guestHouseholdProps,
+    listProps: guestListProps,
+    viewMode,
+    onClearFilters: () => {
+      setFilterStatus('all');
+      setExtraFilters([]);
+      setSearchQuery('');
+    },
+  };
 
   return (
     <DashboardLayout currentPage="guests">
@@ -2385,75 +2448,12 @@ const handleSendBulkInvitations = async () => {
           onToggleInsights={() => setShowInsights((value) => !value)}
         />
 
-
-        {!cleanGuestsView && (
-          <GuestSnapshotInsightsPanel
-            contactStats={contactStats}
-            customAnswerRollup={customAnswerRollup}
-            eventReport={eventReport}
-            mealChoiceRollup={mealChoiceRollup}
-            mealSummary={mealSummary}
-            rsvpOps={rsvpOps}
-            songRequestEntries={songRequestEntries}
-            stats={stats}
-            onFocusCeremonyNo={() => { setSearchQuery(''); setFilterStatus('ceremony-no'); }}
-            onFocusMissingMeal={() => { setSearchQuery(''); setFilterStatus('missing-meal'); setViewMode('list'); }}
-            onFocusNoResponse={() => { setSearchQuery(''); setFilterStatus('pending'); }}
-            onFocusPendingNoEmail={() => { setSearchQuery(''); setFilterStatus('pending-no-email'); setViewMode('list'); }}
-            onFocusPlusOneMissing={() => { setSearchQuery(''); setFilterStatus('plusone-missing'); setViewMode('list'); }}
-            onFocusReceptionNo={() => { setSearchQuery(''); setFilterStatus('reception-no'); }}
-          />
-        )}
-
-        {!cleanGuestsView && (
-          <GuestRsvpConflictPanels
-            conflictFilter={conflictFilter}
-            guests={guests}
-            resolvingConflictId={resolvingConflictId}
-            rsvpConflicts={rsvpConflicts}
-            rsvpConflictStats={rsvpConflictStats}
-            showConflictDetails={showConflictDetails}
-            visibleRsvpConflicts={visibleRsvpConflicts}
-            onResolveAllVisibleConflicts={resolveAllVisibleConflicts}
-            onResolveConflict={resolveConflict}
-            onReviewPending={() => { setFilterStatus('pending'); setViewMode('list'); }}
-            onSetConflictFilter={setConflictFilter}
-            onToggleConflictDetails={() => setShowConflictDetails((value) => !value)}
-          />
-        )}
-
-        <GuestOpsSummaryPanel
+        <GuestDashboardContent
           cleanGuestsView={cleanGuestsView}
-          fromQuickStart={fromQuickStart}
-          nextStep={nextStep}
-          opsQueue={opsQueue}
-          plannerHandoff={plannerHandoff}
-          recommendedAction={recommendedAction}
-          onAddFollowUpTask={addFollowUpTask}
-          onFocusQueueItem={(filter, guestName) => {
-            setFilterStatus(filter as typeof filterStatus);
-            setViewMode('list');
-            setSearchQuery(guestName);
-          }}
-          onFocusRecommendedAction={(filter) => {
-            setFilterStatus(filter as typeof filterStatus);
-            setViewMode('list');
-            setSearchQuery('');
-          }}
-          onSkipToPhotos={() => navigate(buildQuickStartPhotosPath())}
-        />
-
-        <GuestDashboardWorkspace
-          engagementProps={guestEngagementProps}
-          filteredGuestCount={filteredGuests.length}
-          householdProps={guestHouseholdProps}
-          listProps={guestListProps}
-          viewMode={viewMode}
-          onClearFilters={() => {
-            setFilterStatus('all');
-            setExtraFilters([]);
-            setSearchQuery('');
-          }}
+          conflictProps={guestConflictProps}
+          insightsProps={guestInsightsProps}
+          opsSummaryProps={guestOpsSummaryProps}
+          workspaceProps={guestWorkspaceProps}
         />
       </div>
 
