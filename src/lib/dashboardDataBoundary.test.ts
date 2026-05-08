@@ -139,6 +139,7 @@ describe('dashboard data boundary guards', () => {
     const clipboardHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardClipboardActions.ts'), 'utf8');
     const csvImportHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCsvImport.ts'), 'utf8');
     const viewPropsHelper = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/buildGuestDashboardViewProps.ts'), 'utf8');
+    const overlayActionsHelper = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/buildGuestDashboardOverlayActions.ts'), 'utf8');
     const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardData.ts'), 'utf8');
     const followUpHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardFollowUpActions.ts'), 'utf8');
     const checkInsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCheckIns.ts'), 'utf8');
@@ -164,6 +165,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('buildGuestDashboardDerivedState({');
     expect(source).toContain('buildGuestDashboardRouteActions({');
     expect(source).toContain('buildGuestDashboardViewProps({');
+    expect(source).toContain('buildGuestDashboardOverlayActions({');
     expect(source).toContain('loadPublicSlug: loadGuestDashboardPublicSlug');
     expect(source).toContain('loadSiteSlug: loadGuestDashboardSiteSlug');
     expect(source).toContain('useGuestDashboardCampaignActions({');
@@ -206,6 +208,11 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('const keepOnlyVisibleSelection = () => {');
     expect(source).not.toContain('const selectUnresolvedGuests = () => {');
     expect(source).not.toContain('const getStatusBadge = (status: string) => {');
+    expect(source).not.toContain('onCloseAddModal: () => {');
+    expect(source).not.toContain('onCloseEditModal: () => {');
+    expect(source).not.toContain('onCloseItineraryDrawer: () => {');
+    expect(source).not.toContain('onSubmitAddGuest: (event) => { void handleAddGuest(event); },');
+    expect(source).not.toContain('onSubmitEditGuest: (event) => { void handleEditGuest(event, editingGuest); },');
     expect(source).not.toContain('const filteredGuests = guests.filter((guest) => {');
     expect(source).not.toContain('const stats = {');
     expect(source).not.toContain('const eventReport = effectiveItineraryEvents.map((event) => {');
@@ -329,6 +336,13 @@ describe('dashboard data boundary guards', () => {
     expect(viewPropsHelper).toContain('const guestRsvpConfigViewProps = {');
     expect(viewPropsHelper).toContain('return {');
     expect(viewPropsHelper).not.toContain("from '../../../lib/supabase'");
+    expect(overlayActionsHelper).toContain('onCloseAddModal: () => {');
+    expect(overlayActionsHelper).toContain('onCloseEditModal: () => {');
+    expect(overlayActionsHelper).toContain('onCloseItineraryDrawer: () => {');
+    expect(overlayActionsHelper).toContain("import type { FormEvent } from 'react';");
+    expect(overlayActionsHelper).toContain('onSubmitAddGuest: (event: FormEvent<Element>) => { void args.handleAddGuest(event); },');
+    expect(overlayActionsHelper).toContain('onSubmitEditGuest: (event: FormEvent<Element>) => { void args.handleEditGuest(event, args.editingGuest); },');
+    expect(overlayActionsHelper).not.toContain("from '../../../lib/supabase'");
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardSiteSettings(userId);');
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardSnapshot(weddingSiteId);');
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardItineraryFilters(weddingSiteId);');

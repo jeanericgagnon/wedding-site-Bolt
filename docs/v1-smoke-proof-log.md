@@ -10202,3 +10202,18 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 04:54 AM PT No-Deploy Guest Dashboard Overlay-Actions Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the guest dashboard overlay/modal close-reset-submit callback wiring through `src/pages/dashboard/guests/buildGuestDashboardOverlayActions.ts`.
+  - That helper now owns add/edit modal close resets, assisted-RSVP close, itinerary drawer cleanup, delete-all modal close, CSV review reset, and add/edit submit callback wiring while the page keeps state, data hooks, service hooks, route actions, and final route composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildGuestDashboardOverlayActions({ ... })`, checks that `buildGuestDashboardOverlayActions.ts` owns the overlay close/reset/submit seam, and rejects regaining the old inline overlay callbacks in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` dropped from 845 lines to 844 lines in this batch, while `src/pages/dashboard/guests/buildGuestDashboardOverlayActions.ts` came in at 25 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

@@ -26,6 +26,9 @@ import { buildQuickStartPhotosPath, readQuickStartDashboardContinuation } from '
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { logAppAction } from '../../lib/actionAudit';
 import {
+  buildGuestDashboardOverlayActions,
+} from './guests/buildGuestDashboardOverlayActions';
+import {
   formatCustomAnswers,
   getAuditActionIcon,
   getAuditActionTone,
@@ -634,6 +637,20 @@ export const DashboardGuests: React.FC = () => {
     setViewMode,
     toast,
   });
+  const guestDashboardOverlayActions = buildGuestDashboardOverlayActions({
+    csvImporting,
+    editingGuest,
+    handleAddGuest,
+    handleEditGuest,
+    resetCsvReviewState,
+    resetForm,
+    setAssistedRsvpGuest,
+    setEditingGuest,
+    setGuestAuditEntries,
+    setItineraryDrawerGuest,
+    setShowAddModal,
+    setShowDeleteAllModal,
+  });
   const { guestDashboardOpsViewProps, guestRsvpConfigViewProps } = buildGuestDashboardViewProps({
     autoRemindersEnabled,
     bulkSending,
@@ -797,27 +814,10 @@ export const DashboardGuests: React.FC = () => {
     weddingSiteInfo,
     onAddFollowUpTask: addFollowUpTask,
     onBuildCsvPreview: buildCsvPreviewFromMapping,
-    onCloseAddModal: () => {
-      setShowAddModal(false);
-      resetForm();
-    },
-    onCloseAssistedRsvp: () => setAssistedRsvpGuest(null),
-    onCloseDeleteAllModal: () => setShowDeleteAllModal(false),
-    onCloseEditModal: () => {
-      setEditingGuest(null);
-      resetForm();
-    },
-    onCloseItineraryDrawer: () => {
-      setItineraryDrawerGuest(null);
-      setGuestAuditEntries([]);
-    },
     onConfirmCsvImport: confirmCsvImport,
     onConfirmDeleteAllGuests: handleDeleteAllGuests,
     onCopyContactRequestLink: copyContactRequestLink,
     onFocusGuestSearch: setSearchQuery,
-    onResetCsvReview: () => {
-      if (!csvImporting) resetCsvReviewState();
-    },
     onSaveAssistedRsvp: handleSaveAssistedRsvp,
     onSetAssistedRsvpNotes: setAssistedRsvpNotes,
     onSetAssistedRsvpSource: setAssistedRsvpSource,
@@ -827,10 +827,9 @@ export const DashboardGuests: React.FC = () => {
     onSetDeleteAllConfirmInput: setDeleteAllConfirmInput,
     onSetFormData: setFormData,
     onSetFormEventInviteIds: setFormEventInviteIds,
-    onSubmitAddGuest: (event) => { void handleAddGuest(event); },
-    onSubmitEditGuest: (event) => { void handleEditGuest(event, editingGuest); },
     onToast: toast,
     onToggleEventInvite: handleToggleEventInvite,
+    ...guestDashboardOverlayActions,
   });
 
   return (
