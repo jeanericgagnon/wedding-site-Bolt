@@ -19,6 +19,23 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 6:36 PM PT - No-Deploy Settings Identity Exports Panel Extraction
+
+What changed:
+- `src/pages/dashboard/Settings.tsx` no longer carries the full wedding identity exports card inline.
+- New `src/pages/dashboard/settings/SettingsIdentityExportsPanel.tsx` now owns the export readiness badge, export item cards, manifest grid, warnings, and manifest/print-pack actions.
+- `src/pages/dashboard/settings/settingsSiteData.test.ts` now pins that seam and rejects regaining the old inline identity-export copy directly inside the page.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts`: PASS, 1 file and 6 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This trims another owner-facing card out of the oversized `Settings.tsx` file and keeps the page more focused on state/handlers instead of large export UI markup. No deploy was run.
+
 ### 2026-05-07 6:18 PM PT - No-Deploy Preview Photo Manifest Service Extraction
 
 What changed:
