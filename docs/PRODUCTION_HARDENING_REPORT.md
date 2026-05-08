@@ -19,6 +19,22 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 7:33 AM PT - No-Deploy Vault Card Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Vault.tsx` now routes the per-vault entry surface through `src/pages/dashboard/VaultCard.tsx` instead of hand-owning the inline anniversary recap builder, entry form, attachment reveal, and vault card rendering slab.
+  - That new component now owns entry creation, entry unlock/read state, attachment reveal, recap draft generation/refresh, and share-link affordances while the route keeps dashboard bootstrap, Drive health/auth, list orchestration, reminder sends, and delete flows.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<VaultCard`, checks that `VaultCard.tsx` owns `EntryForm`, `buildAnniversaryRecap(...)`, and the vault-entry link resolution seam, and rejects regaining the old inline `VaultCard` / `EntryForm` blocks in `Vault.tsx`.
+  - `src/pages/dashboard/Vault.tsx` dropped from 1138 lines to 498 lines in this batch, while `src/pages/dashboard/VaultCard.tsx` came in at 566 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ### 2026-05-08 7:24 AM PT - No-Deploy Guest Photo Dashboard Props-Helper Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:

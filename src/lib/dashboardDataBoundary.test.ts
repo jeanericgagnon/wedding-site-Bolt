@@ -952,11 +952,13 @@ describe('dashboard data boundary guards', () => {
     const actions = readFileSync(join(process.cwd(), 'src/pages/dashboard/useVaultDashboardActions.ts'), 'utf8');
     const editModal = readFileSync(join(process.cwd(), 'src/pages/dashboard/VaultEditModal.tsx'), 'utf8');
     const liveContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/VaultDashboardLiveContent.tsx'), 'utf8');
+    const vaultCard = readFileSync(join(process.cwd(), 'src/pages/dashboard/VaultCard.tsx'), 'utf8');
 
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).toContain('<VaultDashboardRouteView');
     expect(source).toContain('<VaultDashboardLiveContent');
     expect(source).toContain('<EditVaultModal');
+    expect(source).toContain('<VaultCard');
     expect(source).toContain('useVaultDashboardActions({');
     expect(service).toContain('export const VAULT_CONFIG_SELECT = ');
     expect(service).toContain('export const VAULT_ENTRY_SELECT = ');
@@ -975,7 +977,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain("supabase.functions.invoke('google-drive-health'");
     expect(source).not.toContain("supabase.functions.invoke('google-drive-auth-start'");
     expect(source).not.toContain("supabase.functions.invoke('google-drive-auth-callback'");
-    expect(source).toContain('resolveVaultEntryLinkFromService(entry.id)');
+    expect(source).toContain('resolveVaultEntryLink={resolveVaultEntryLinkFromService}');
     expect(source).toContain('checkVaultGoogleDriveHealth(weddingSiteId)');
     expect(source).toContain('startVaultGoogleDriveAuth(weddingSiteId)');
     expect(source).toContain('finishVaultGoogleDriveAuth(googleCode, googleState)');
@@ -991,6 +993,11 @@ describe('dashboard data boundary guards', () => {
     expect(liveContent).toContain('<DashboardPageHero');
     expect(liveContent).toContain('Create 1, 5, and 10 year vaults');
     expect(liveContent).toContain('How Vaults work');
+    expect(vaultCard).toContain('export function VaultCard({');
+    expect(vaultCard).toContain('function EntryForm({');
+    expect(vaultCard).toContain('function buildAnniversaryRecap(');
+    expect(vaultCard).toContain('const safeUrl = getSafePublicWebUrl(await resolveVaultEntryLink(entry.id));');
+    expect(vaultCard).toContain("await updateVaultRecapDraft({");
     expect(editModal).toContain('export function EditVaultModal(');
     expect(editModal).toContain('Edit Vault Settings');
     expect(editModal).toContain('This vault already has submissions, so its anniversary year is locked.');
@@ -998,6 +1005,8 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('<DashboardStateBlock');
     expect(source).not.toContain('Create 1, 5, and 10 year vaults');
     expect(source).not.toContain('const EditVaultModal: React.FC<EditVaultModalProps>');
+    expect(source).not.toContain('const VaultCard: React.FC<VaultCardProps>');
+    expect(source).not.toContain('const EntryForm: React.FC<EntryFormProps>');
     expect(source).not.toContain('function defaultVaultLabel(index: number, years: number): string');
     expect(service).toContain('export async function resolveVaultEntryLink(entryId: string): Promise<string | null>');
     expect(service).toContain('export async function checkVaultGoogleDriveHealth(siteId: string): Promise<{');

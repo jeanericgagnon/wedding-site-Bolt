@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 7:33 AM PT - No-Deploy Vault Card Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Vault.tsx` no longer owns the inline anniversary recap builder, entry form, and vault card rendering slab.
+  - Added `src/pages/dashboard/VaultCard.tsx` so the per-vault entry surface now owns entry creation, entry unlock/read state, attachment reveal, recap draft generation/refresh, and share-link affordances while the route keeps dashboard bootstrap, Drive health/auth, list orchestration, and reminder/delete actions.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<VaultCard`, checks that the new file owns `EntryForm`, `buildAnniversaryRecap(...)`, and the vault-entry link resolution seam, and rejects regaining the old inline `VaultCard` / `EntryForm` components in `Vault.tsx`.
+- Acceptance/proof target:
+  - Focused dashboard boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 7:24 AM PT - No-Deploy Guest Photo Dashboard Props-Helper Extraction
 
 - Status: `PARTIAL`
