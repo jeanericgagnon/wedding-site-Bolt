@@ -7405,6 +7405,23 @@ A slice does **not** count as passed because:
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
 
+## 2026-05-07 11:53 PM PT No-Deploy RSVP Token-Lookup Result Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its shared token-lookup guest/ambiguous/not-found resolution branch through `src/pages/applyTokenRsvpLookupResult.ts`.
+  - That shared helper now owns the preserve-visible-state branch, token session toggles, guest handoff, ambiguous handoff, and guest-safe not-found handling while the page keeps the request transport and stale-request guard local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `applyTokenRsvpLookupResult(...)` plus its token/manual source contract, preserve-visible-state branch, and guest-safe not-found handling so the main RSVP page keeps routing through the dedicated helper.
+  - `src/pages/RSVP.tsx` dropped from 1210 lines to 1185 lines in this batch, while `src/pages/applyTokenRsvpLookupResult.ts` came in at 113 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+
 ## 2026-05-07 11:39 PM PT No-Deploy RSVP Submit-Success-Args Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

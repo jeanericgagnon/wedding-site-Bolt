@@ -143,6 +143,7 @@ describe('public guest surface boundary', () => {
     const rsvpAmbiguousLookupState = readSource('src/pages/applyAmbiguousRsvpLookupState.ts');
     const rsvpGuestSelection = readSource('src/pages/applyRsvpGuestSelection.ts');
     const rsvpSubmitSuccess = readSource('src/pages/applyRsvpSubmitSuccess.ts');
+    const rsvpTokenLookupResult = readSource('src/pages/applyTokenRsvpLookupResult.ts');
     const rsvpSubmitPayload = readSource('src/pages/buildRsvpSubmitPayload.ts');
     const rsvpSubmitSuccessArgs = readSource('src/pages/buildRsvpSubmitSuccessArgs.ts');
     const rsvpTokenLookupPreparation = readSource('src/pages/prepareRsvpTokenLookupState.ts');
@@ -173,6 +174,7 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain("from './applyAmbiguousRsvpLookupState'");
     expect(rsvpPage).toContain("from './applyRsvpGuestSelection'");
     expect(rsvpPage).toContain("from './applyRsvpSubmitSuccess'");
+    expect(rsvpPage).toContain("from './applyTokenRsvpLookupResult'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitPayload'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitSuccessArgs'");
     expect(rsvpPage).toContain("from './prepareRsvpTokenLookupState'");
@@ -192,6 +194,7 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
     expect(rsvpPage).toContain('applyAmbiguousRsvpLookupState({');
     expect(rsvpPage).toContain('applyRsvpGuestSelection({');
+    expect(rsvpPage).toContain('applyTokenRsvpLookupResult({');
     expect(rsvpPage).toContain('buildRsvpSubmitPayload({');
     expect(rsvpPage).toContain('applyRsvpSubmitSuccess(buildRsvpSubmitSuccessArgs({');
     expect(rsvpPage).toContain('prepareRsvpTokenLookupState({');
@@ -218,6 +221,9 @@ describe('public guest surface boundary', () => {
     expect(rsvpSubmitSuccess).toContain('onContinuityUpdate()');
     expect(rsvpSubmitSuccess).toContain("setStep('success')");
     expect(rsvpSubmitSuccess).toContain('normalizeSelectedHouseholdGuestIds(');
+    expect(rsvpTokenLookupResult).toContain("source?: 'manual' | 'token'");
+    expect(rsvpTokenLookupResult).toContain('shouldPreserveVisibleState');
+    expect(rsvpTokenLookupResult).toContain('setError(RSVP_LOOKUP_ERROR_COPY)');
     expect(rsvpSubmitPayload).toContain('targetGuestIds');
     expect(rsvpSubmitPayload).toContain('normalizedExistingRsvp');
     expect(rsvpSubmitPayload).toContain('plusOneCount: plusOneName ? 1 : 0');

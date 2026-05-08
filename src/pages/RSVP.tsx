@@ -30,6 +30,7 @@ import { applyDemoRsvpSubmit } from './applyDemoRsvpSubmit';
 import { applyAmbiguousRsvpLookupState } from './applyAmbiguousRsvpLookupState';
 import { applyRsvpGuestSelection } from './applyRsvpGuestSelection';
 import { applyRsvpSubmitSuccess } from './applyRsvpSubmitSuccess';
+import { applyTokenRsvpLookupResult } from './applyTokenRsvpLookupResult';
 import { buildRsvpSubmitPayload } from './buildRsvpSubmitPayload';
 import { buildRsvpSubmitSuccessArgs } from './buildRsvpSubmitSuccessArgs';
 import { buildRsvpDerivedViewState } from './buildRsvpDerivedViewState';
@@ -596,50 +597,24 @@ export default function RSVP() {
     )
       .then(({ data, error: err }) => {
         if (activeLookupRequestRef.current !== requestId) return;
-        if (err || !data) {
-          if (shouldPreserveVisibleState) {
-            tokenLinkedSessionRef.current = true;
-            return;
-          }
-          tokenLinkedSessionRef.current = false;
-          setError(normalizeRsvpGuestError(err));
-          setTokenAutoLoading(false);
-          return;
-        }
-        const resolution = classifyRsvpLookupResponse(data as LookupResponse);
-        if (resolution.kind === 'guest') {
-          selectGuest(resolution.guest, resolution.existingRsvp, resolution.rsvpDeadline, resolution.rsvpQuestions, resolution.mealConfig, resolution.householdGuests, resolution.musicPlaylistUrl, 'token', resolution.rsvpSession);
-        } else if (resolution.kind === 'ambiguous') {
-          if (shouldPreserveVisibleState) {
-            tokenLinkedSessionRef.current = true;
-            return;
-          }
-          tokenLinkedSessionRef.current = false;
-          applyAmbiguousRsvpLookupState({
-            guests: resolution.guests,
-            householdGuests: resolution.householdGuests,
-            mealConfig: resolution.mealConfig,
-            musicPlaylistUrl: resolution.musicPlaylistUrl,
-            rsvpDeadline: resolution.rsvpDeadline,
-            rsvpQuestions: resolution.rsvpQuestions,
-            setAmbiguousGuests,
-            setApplyToHousehold,
-            setHouseholdGuests,
-            setMealConfig,
-            setMusicPlaylistUrl,
-            setRsvpDeadline,
-            setRsvpQuestions,
-            setSelectedHouseholdGuestIds,
-            setStep,
-          });
-        } else {
-          if (shouldPreserveVisibleState) {
-            tokenLinkedSessionRef.current = true;
-            return;
-          }
-          tokenLinkedSessionRef.current = false;
-          setError(RSVP_LOOKUP_ERROR_COPY);
-        }
+        applyTokenRsvpLookupResult({
+          data,
+          error: err,
+          normalizeRsvpGuestError,
+          selectGuest,
+          setAmbiguousGuests,
+          setApplyToHousehold,
+          setError,
+          setHouseholdGuests,
+          setMealConfig,
+          setMusicPlaylistUrl,
+          setRsvpDeadline,
+          setRsvpQuestions,
+          setSelectedHouseholdGuestIds,
+          setStep,
+          shouldPreserveVisibleState,
+          tokenLinkedSessionRef,
+        });
       })
       .catch(() => {
         if (activeLookupRequestRef.current !== requestId) return;
@@ -809,7 +784,7 @@ export default function RSVP() {
 
   function selectGuest(
     foundGuest: Guest,
-    foundRsvp: ExistingRSVP | null,
+    foundRsvp: ExistingRSVP | null = null,
     deadline: string | null = null,
     questions: RSVPQuestion[] = [],
     meal: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] },

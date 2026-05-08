@@ -53,6 +53,7 @@ describe('RSVP stale submit protection', () => {
     const ambiguousLookupState = readFileSync(join(process.cwd(), 'src/pages/applyAmbiguousRsvpLookupState.ts'), 'utf8');
     const guestSelection = readFileSync(join(process.cwd(), 'src/pages/applyRsvpGuestSelection.ts'), 'utf8');
     const submitSuccess = readFileSync(join(process.cwd(), 'src/pages/applyRsvpSubmitSuccess.ts'), 'utf8');
+    const tokenLookupResult = readFileSync(join(process.cwd(), 'src/pages/applyTokenRsvpLookupResult.ts'), 'utf8');
     const submitPayload = readFileSync(join(process.cwd(), 'src/pages/buildRsvpSubmitPayload.ts'), 'utf8');
     const submitSuccessArgs = readFileSync(join(process.cwd(), 'src/pages/buildRsvpSubmitSuccessArgs.ts'), 'utf8');
     const tokenLookupPreparation = readFileSync(join(process.cwd(), 'src/pages/prepareRsvpTokenLookupState.ts'), 'utf8');
@@ -81,6 +82,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain("from './applyAmbiguousRsvpLookupState'");
     expect(rsvpPage).toContain("from './applyRsvpGuestSelection'");
     expect(rsvpPage).toContain("from './applyRsvpSubmitSuccess'");
+    expect(rsvpPage).toContain("from './applyTokenRsvpLookupResult'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitPayload'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitSuccessArgs'");
     expect(rsvpPage).toContain("from './prepareRsvpTokenLookupState'");
@@ -100,6 +102,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
     expect(rsvpPage).toContain('applyAmbiguousRsvpLookupState({');
     expect(rsvpPage).toContain('applyRsvpGuestSelection({');
+    expect(rsvpPage).toContain('applyTokenRsvpLookupResult({');
     expect(rsvpPage).toContain('buildRsvpSubmitPayload({');
     expect(rsvpPage).toContain('applyRsvpSubmitSuccess(buildRsvpSubmitSuccessArgs({');
     expect(rsvpPage).toContain('prepareRsvpTokenLookupState({');
@@ -126,6 +129,9 @@ describe('RSVP stale submit protection', () => {
     expect(submitSuccess).toContain('onContinuityUpdate()');
     expect(submitSuccess).toContain("setStep('success')");
     expect(submitSuccess).toContain('normalizeSelectedHouseholdGuestIds(');
+    expect(tokenLookupResult).toContain("source?: 'manual' | 'token'");
+    expect(tokenLookupResult).toContain('shouldPreserveVisibleState');
+    expect(tokenLookupResult).toContain('setError(RSVP_LOOKUP_ERROR_COPY)');
     expect(submitPayload).toContain('targetGuestIds');
     expect(submitPayload).toContain('normalizedExistingRsvp');
     expect(submitPayload).toContain('plusOneCount: plusOneName ? 1 : 0');
