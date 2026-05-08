@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Copy, ExternalLink, Camera, Plus, Link as LinkIcon, CalendarClock, Mail, EyeOff, Eye, Flag, Clapperboard, QrCode, Sparkles, FolderTree } from 'lucide-react';
+import { Copy, ExternalLink, Camera, Plus, Link as LinkIcon, CalendarClock, Mail, EyeOff, Eye, Flag, Clapperboard, Sparkles, FolderTree } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card } from '../../components/ui/Card';
@@ -93,7 +93,13 @@ import { GuestPhotoCoupleAlbumsCard } from './guestPhotos/GuestPhotoCoupleAlbums
 import { GuestPhotoFollowupCard } from './guestPhotos/GuestPhotoFollowupCard';
 import { GuestPhotoGuestbookCard } from './guestPhotos/GuestPhotoGuestbookCard';
 import { GuestPhotoHeroCard } from './guestPhotos/GuestPhotoHeroCard';
+import { GuestPhotoHubControlsCard } from './guestPhotos/GuestPhotoHubControlsCard';
+import { GuestPhotoHubQrCard } from './guestPhotos/GuestPhotoHubQrCard';
+import { GuestPhotoMemoryFlowCard } from './guestPhotos/GuestPhotoMemoryFlowCard';
+import { GuestPhotoMemoryVaultsCard } from './guestPhotos/GuestPhotoMemoryVaultsCard';
+import { GuestPhotoMomentAlbumsCard } from './guestPhotos/GuestPhotoMomentAlbumsCard';
 import { GuestPhotoMomentsCard } from './guestPhotos/GuestPhotoMomentsCard';
+import { GuestPhotoRecapSharingCard } from './guestPhotos/GuestPhotoRecapSharingCard';
 import { GuestPhotoSlideshowDraftCard } from './guestPhotos/GuestPhotoSlideshowDraftCard';
 import { GuestPhotoStatsCards } from './guestPhotos/GuestPhotoStatsCards';
 
@@ -1633,236 +1639,49 @@ export const GuestPhotoSharing: React.FC = () => {
         )}
         <GuestPhotoHeroCard albumCount={buckets.length} uploadCount={totalUploads} />
 
-        <Card className="border border-stone-200 bg-stone-50/80 text-neutral-900">
-          <div className="flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs font-medium text-text-tertiary">Memories and vaults</p>
-              <h2 className="mt-2 text-xl font-semibold text-text-primary">Albums collect the weekend. Vaults keep the pieces you want to revisit later.</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">Use albums for easy guest uploads, then save the most meaningful notes and media for anniversaries and quiet moments after the wedding.</p>
-            </div>
-            <Button variant="outline" onClick={() => navigate('/dashboard/vault')}>
-              Open Vaults
-            </Button>
-          </div>
-        </Card>
+        <GuestPhotoMemoryVaultsCard onOpenVaults={() => navigate('/dashboard/vault')} />
 
-        <Card className="p-6 border border-neutral-200 bg-white">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="text-xs font-semibold text-text-tertiary">No-app memory flow</p>
-              <h2 className="mt-2 text-xl font-semibold text-text-primary">Know what is ready before the QR goes on a sign.</h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-text-secondary">
-                This keeps upload links, guestbook notes, moderation, recap, and follow-up in one launch checklist instead of scattered album controls.
-              </p>
-            </div>
-            <span className="inline-flex w-fit items-center rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1.5 text-sm font-medium text-text-primary">
-              {memoryFlowReadiness.readyCount} of {memoryFlowReadiness.steps.length} ready
-            </span>
-          </div>
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {memoryFlowReadiness.steps.map((step) => (
-              <div key={step.id} className="rounded-lg border border-border-subtle bg-surface-subtle/50 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-semibold text-text-primary">{step.label}</p>
-                  <span className={`shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-medium ${
-                    step.status === 'ready'
-                      ? 'bg-success/10 text-success'
-                      : step.status === 'needs-action'
-                        ? 'bg-warning/10 text-warning'
-                        : step.status === 'planned'
-                          ? 'bg-surface-subtle text-text-tertiary'
-                          : 'bg-white text-text-tertiary'
-                  }`}>
-                    {step.status === 'ready' ? 'Ready' : step.status === 'needs-action' ? 'Needs action' : step.status === 'planned' ? 'Planned' : 'Empty'}
-                  </span>
-                </div>
-                <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
-              </div>
-            ))}
-          </div>
-          {memoryFlowReadiness.blockers.length > 0 && (
-            <div className="mt-4 rounded-lg border border-warning/20 bg-warning/5 p-4">
-              <p className="text-sm font-semibold text-text-primary">Before sharing broadly</p>
-              <ul className="mt-2 space-y-1 text-xs text-text-secondary">
-                {memoryFlowReadiness.blockers.map((blocker) => (
-                  <li key={blocker}>{blocker}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </Card>
+        <GuestPhotoMemoryFlowCard memoryFlowReadiness={memoryFlowReadiness} />
 
         {guestHubUrl && (
-          <Card className="p-6 border border-neutral-200 bg-white">
-            <div className="grid gap-5 lg:grid-cols-[1.2fr_0.85fr] lg:items-center">
-              <div>
-                <div className="flex items-center gap-2">
-                  <QrCode className="h-5 w-5 text-neutral-900" />
-                  <h2 className="text-xl font-semibold text-neutral-900">One QR guest hub</h2>
-                </div>
-                <p className="mt-2 text-sm leading-6 text-neutral-600">
-                  Print this single link on signage. Guests can RSVP, upload photos or video, leave a guestbook note, and find guest update flows without installing anything.
-                </p>
-                <p className="mt-2 text-sm text-neutral-500">
-                  Current hub includes {guestHubActionSummary}.
-                </p>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {guestHubActions.map((action) => (
-                    <span key={action.id} className="rounded-lg border border-neutral-200 bg-neutral-50 px-2 py-1 text-[11px] font-medium text-neutral-600">
-                      {action.id === 'rsvp' ? 'RSVP' : action.id.replace(/^\w/, (char) => char.toUpperCase())}
-                    </span>
-                  ))}
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => void copyText(guestHubUrl, 'guest-hub')}>
-                    <Copy className="w-4 h-4 mr-2" /> {copied === 'guest-hub' ? 'Copied' : 'Copy hub link'}
-                  </Button>
-                  <Button variant="outline" onClick={() => openAppUrl(guestHubUrl)}>
-                    <ExternalLink className="w-4 h-4 mr-2" /> Open hub
-                  </Button>
-                  <Button variant="outline" onClick={() => openSafePublicUrl(getBucketQrUrl(guestHubUrl))}>
-                    <QrCode className="w-4 h-4 mr-2" /> Open QR
-                  </Button>
-                  <Button variant="outline" onClick={downloadGuestHubPrintPack} disabled={guestHubQrAssets.length === 0}>
-                    <QrCode className="w-4 h-4 mr-2" /> Save print cards
-                  </Button>
-                  {guestRecapUrl && (
-                    <>
-                      <Button variant="outline" onClick={() => void copyText(guestRecapUrl, 'guest-recap')}>
-                        <Sparkles className="w-4 h-4 mr-2" /> {copied === 'guest-recap' ? 'Copied' : 'Copy recap'}
-                      </Button>
-                      <Button variant="outline" onClick={() => openAppUrl(guestRecapUrl)}>
-                        <ExternalLink className="w-4 h-4 mr-2" /> Open recap
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="grid gap-3">
-                <ShareQrPanel
-                  title="Guest hub QR"
-                  description={`One QR for ${guestHubActionSummary}.`}
-                  url={guestHubUrl}
-                  copyLabel="Copy hub link"
-                />
-                {guestRecapUrl && (
-                  <ShareQrPanel
-                    title="Photo recap QR"
-                    description="Share highlight moments, memory chapters, and opt-in capture after the event."
-                    url={guestRecapUrl}
-                    copyLabel="Copy recap link"
-                  />
-                )}
-              </div>
-            </div>
-          </Card>
+          <GuestPhotoHubQrCard
+            guestHubUrl={guestHubUrl}
+            guestRecapUrl={guestRecapUrl || ''}
+            guestHubActionSummary={guestHubActionSummary}
+            guestHubActions={guestHubActions}
+            copied={copied}
+            guestHubQrAssetCount={guestHubQrAssets.length}
+            getBucketQrUrl={getBucketQrUrl}
+            onCopyText={(text, key) => void copyText(text, key)}
+            onOpenAppUrl={openAppUrl}
+            onOpenSafePublicUrl={openSafePublicUrl}
+            onDownloadGuestHubPrintPack={downloadGuestHubPrintPack}
+          />
         )}
 
         {guestRecapUrl && (
-          <Card className="p-6 border border-border-subtle bg-white">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <p className="text-xs font-semibold text-text-tertiary">Recap sharing</p>
-                <h2 className="mt-2 text-xl font-semibold text-text-primary">Control when the photo recap is guest-facing.</h2>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-text-secondary">
-                  Keep the recap in draft while curating, use private link for a quiet review, publish when it is ready, or close it after the event.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2 lg:justify-end">
-                <Button variant="outline" onClick={() => openAppUrl(guestRecapUrl)} disabled={hubSettings.recap_status === 'draft' || hubSettings.recap_status === 'closed'}>
-                  Preview recap
-                </Button>
-                <Button variant="accent" onClick={() => void saveHubSettings()} disabled={savingHubSettings}>
-                  {savingHubSettings ? 'Saving...' : 'Save status'}
-                </Button>
-              </div>
-            </div>
-            <div className="mt-5 grid gap-3 md:grid-cols-[220px_1fr]">
-              <select
-                value={hubSettings.recap_status}
-                onChange={(e) => setHubSettings((prev) => ({
-                  ...prev,
-                  recap_status: e.target.value as GuestHubSettings['recap_status'],
-                  recap_published_at: e.target.value === 'published' ? (prev.recap_published_at ?? new Date().toISOString()) : prev.recap_published_at,
-                  recap_closed_at: e.target.value === 'closed' ? new Date().toISOString() : null,
-                }))}
-                className="h-11 rounded-lg border border-border-subtle bg-white px-3 text-sm text-text-primary"
-              >
-                <option value="draft">Draft</option>
-                <option value="private_link">Private link</option>
-                <option value="published">Published</option>
-                <option value="closed">Closed</option>
-              </select>
-              <div className="grid gap-2 sm:grid-cols-4">
-                <span className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-3 text-sm text-text-primary">{uploads.length} uploads</span>
-                <span className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-3 text-sm text-text-primary">{recapFeaturedCount} featured</span>
-                <span className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-3 text-sm text-text-primary">{recapStoryCount} story picks</span>
-                <span className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-3 text-sm text-text-primary">{recapHiddenCount} recap hidden</span>
-              </div>
-            </div>
-            <div className="mt-4 rounded-lg border border-border-subtle bg-surface-subtle p-4">
-              <p className="text-sm font-semibold text-text-primary">
-                Current mode: {hubSettings.recap_status === 'private_link' ? 'Private link' : hubSettings.recap_status.charAt(0).toUpperCase() + hubSettings.recap_status.slice(1)}
-              </p>
-              <p className="mt-1 text-sm text-text-secondary">
-                {hubSettings.recap_status === 'draft' && 'Guests cannot view the recap yet. Use this while curating.'}
-                {hubSettings.recap_status === 'private_link' && 'Anyone with the recap link can view it, but it is treated as quietly shared.'}
-                {hubSettings.recap_status === 'published' && 'The recap is live for guests.'}
-                {hubSettings.recap_status === 'closed' && 'The recap is intentionally unavailable.'}
-              </p>
-              {recapPublishWarnings.length > 0 && (
-                <ul className="mt-3 space-y-1 text-xs text-text-secondary">
-                  {recapPublishWarnings.map((warning) => <li key={warning}>{warning}</li>)}
-                </ul>
-              )}
-            </div>
-          </Card>
+          <GuestPhotoRecapSharingCard
+            guestRecapUrl={guestRecapUrl}
+            hubSettings={hubSettings}
+            savingHubSettings={savingHubSettings}
+            uploadCount={uploads.length}
+            recapFeaturedCount={recapFeaturedCount}
+            recapStoryCount={recapStoryCount}
+            recapHiddenCount={recapHiddenCount}
+            recapPublishWarnings={recapPublishWarnings}
+            onOpenAppUrl={openAppUrl}
+            onSaveHubSettings={() => void saveHubSettings()}
+            onHubSettingsChange={setHubSettings}
+          />
         )}
 
         {guestHubUrl && (
-          <Card className="p-6 border border-neutral-200 bg-white">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-neutral-900">Guest hub controls</h2>
-                <p className="mt-1 text-sm text-neutral-600">Choose which no-login guest actions are available from the one QR code. Turning photos off also blocks upload links and the public recap.</p>
-              </div>
-              <Button variant="outline" onClick={() => void saveHubSettings()} disabled={savingHubSettings}>
-                {savingHubSettings ? 'Saving...' : 'Save hub controls'}
-              </Button>
-            </div>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {[
-                ['rsvp_enabled', 'RSVP'],
-                ['photos_enabled', 'Photo upload + recap'],
-                ['guestbook_enabled', 'Guestbook notes'],
-                ['registry_enabled', 'Registry'],
-                ['schedule_enabled', 'Schedule'],
-                ['travel_enabled', 'Travel'],
-              ].map(([key, label]) => (
-                <label key={key} className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-surface-subtle px-4 py-3 text-sm font-medium text-text-primary">
-                  {label}
-                  <input
-                    type="checkbox"
-                    checked={Boolean(hubSettings[key as keyof GuestHubSettings])}
-                    onChange={(e) => setHubSettings((prev) => ({ ...prev, [key]: e.target.checked }))}
-                    className="h-4 w-4"
-                  />
-                </label>
-              ))}
-            </div>
-            <div className="mt-4 grid gap-3 md:grid-cols-[1fr_160px]">
-              <Input
-                value={hubSettings.custom_message ?? ''}
-                onChange={(e) => setHubSettings((prev) => ({ ...prev, custom_message: e.target.value }))}
-                placeholder="Optional custom message for the hub"
-              />
-              <Input
-                value={hubSettings.language_default ?? DEFAULT_HUB_SETTINGS.language_default}
-                onChange={(e) => setHubSettings((prev) => ({ ...prev, language_default: e.target.value }))}
-                placeholder="Default language"
-              />
-            </div>
-          </Card>
+          <GuestPhotoHubControlsCard
+            hubSettings={hubSettings}
+            savingHubSettings={savingHubSettings}
+            onSaveHubSettings={() => void saveHubSettings()}
+            onHubSettingsChange={setHubSettings}
+          />
         )}
 
         {guestProspects.length > 0 && (
@@ -1931,50 +1750,11 @@ export const GuestPhotoSharing: React.FC = () => {
           formatDateTime={formatGuestPhotoDateTime}
         />
 
-        <Card className="p-6 border border-border-subtle bg-white">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <FolderTree className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold text-text-primary">Moment albums from the schedule</h2>
-              </div>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-text-secondary">
-                The schedule helps suggest natural groups like cocktail hour, aisle walk, first dance, toasts, and dance floor. When those moments appear in reviewed photos, you can turn them into real albums or sub-albums.
-              </p>
-            </div>
-            <div className="text-xs text-text-secondary">
-              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{momentBucketSuggestions.length} suggestions</span>
-            </div>
-          </div>
-          {momentBucketSuggestions.length > 0 ? (
-            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {momentBucketSuggestions.slice(0, 9).map((suggestion) => (
-                <div key={`${suggestion.eventId}-${suggestion.tag}`} className="rounded-lg border border-border-subtle bg-surface-subtle p-4">
-                  <p className="text-sm font-semibold text-text-primary">{suggestion.label}</p>
-                  <p className="mt-1 text-xs text-text-secondary">
-                    {suggestion.parentBucket ? `${suggestion.parentBucket.name} / ${suggestion.label}` : suggestion.eventName}
-                  </p>
-                  <p className="mt-2 text-xs text-neutral-500">
-                    {suggestion.count > 0 ? `${suggestion.count} reviewed photo${suggestion.count === 1 ? '' : 's'} tagged #${suggestion.tag}` : `Expected from ${suggestion.eventName}`}
-                  </p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="mt-3"
-                    disabled={submitting}
-                    onClick={() => void createMomentBucketFromSuggestion(suggestion)}
-                  >
-                    Create album
-                  </Button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="mt-4 rounded-lg border border-border-subtle bg-surface-subtle px-4 py-5 text-sm text-text-secondary">
-              No new moment album suggestions right now. Add itinerary events or sort photos after uploads to unlock more.
-            </div>
-          )}
-        </Card>
+        <GuestPhotoMomentAlbumsCard
+          suggestions={momentBucketSuggestions}
+          submitting={submitting}
+          onCreateMomentBucket={(suggestion) => void createMomentBucketFromSuggestion(suggestion)}
+        />
 
         <Card className="p-6 border border-border-subtle bg-white">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
