@@ -5634,6 +5634,20 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 04:34 AM PT No-Deploy Guest Dashboard Conflict-Actions Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the guest dashboard RSVP conflict filter, metrics, and resolve lifecycle through `src/pages/dashboard/guests/useGuestDashboardConflictActions.ts`.
+  - That hook now owns visible conflict filtering, 24h/72h conflict stats, single conflict resolution, and bulk visible conflict resolution while the page keeps campaigns, exports, overlays, route-level dashboard orchestration, and RSVP settings view wiring.
+  - `src/lib/dashboardDataBoundary.test.ts` and `src/pages/dashboard/guests/guestService.test.ts` now pin `useGuestDashboardConflictActions({ ... })`, check that `useGuestDashboardConflictActions.ts` owns the conflict stats/resolve seam, and reject regaining the old inline conflict handlers in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` dropped from 1150 lines to 1086 lines in this batch, while `src/pages/dashboard/guests/useGuestDashboardConflictActions.ts` came in at 120 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 04:29 AM PT No-Deploy Guest Dashboard RSVP-Config Actions Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

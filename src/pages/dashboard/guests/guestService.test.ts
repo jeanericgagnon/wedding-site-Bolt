@@ -138,6 +138,7 @@ describe('guestService', () => {
     const followUpHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardFollowUpActions.ts'), 'utf8');
     const checkInsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCheckIns.ts'), 'utf8');
     const crudHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCrudActions.ts'), 'utf8');
+    const conflictHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardConflictActions.ts'), 'utf8');
     const detailHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts'), 'utf8');
     const rsvpConfigHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardRsvpConfigActions.ts'), 'utf8');
 
@@ -147,11 +148,10 @@ describe('guestService', () => {
     expect(page).toContain('useGuestDashboardFollowUpActions({');
     expect(page).toContain('useGuestDashboardCheckIns({');
     expect(page).toContain('useGuestDashboardCrudActions({');
+    expect(page).toContain('useGuestDashboardConflictActions({');
     expect(page).toContain('useGuestDashboardGuestDetailActions({');
     expect(page).toContain('useGuestDashboardRsvpConfigActions({');
     expect(page).toContain('buildGuestDashboardViewProps({');
-    expect(page).toContain('resolveGuestDashboardConflict(conflictId, resolvedAt)');
-    expect(page).toContain('resolveGuestDashboardConflicts(ids, resolvedAt)');
     expect(page).toContain('loadPublicSlug: loadGuestDashboardPublicSlug');
     expect(page).toContain('loadSiteSlug: loadGuestDashboardSiteSlug');
     expect(page).toContain('useGuestDashboardCampaignActions({');
@@ -177,6 +177,10 @@ describe('guestService', () => {
     expect(page).not.toContain('const handleMarkThankYouSent = async (guest: GuestWithRSVP) => {');
     expect(page).not.toContain('const handleMarkAllDueThankYous = async () => {');
     expect(page).not.toContain('const handleClearAllCheckIns = async () => {');
+    expect(page).not.toContain('await resolveGuestDashboardConflict(conflictId, resolvedAt);');
+    expect(page).not.toContain('await resolveGuestDashboardConflicts(ids, resolvedAt);');
+    expect(page).not.toContain('const resolveConflict = useCallback(async (conflictId: string) => {');
+    expect(page).not.toContain('const resolveAllVisibleConflicts = useCallback(async () => {');
     expect(page).not.toContain('buildGuestImportPreview({');
     expect(page).not.toContain('readGuestImportRows(file)');
     expect(page).not.toContain('insertImportedGuests(guestRows)');
@@ -198,6 +202,11 @@ describe('guestService', () => {
     expect(rsvpConfigHook).toContain('writeStoredDemoRsvpConfig({ questions: cleanedQuestions, mealEnabled: rsvpMealEnabled, mealOptions });');
     expect(rsvpConfigHook).toContain('await persistGuestDashboardRsvpConfig({');
     expect(rsvpConfigHook).toContain('autoSaveTimer.current = window.setTimeout(() => {');
+    expect(conflictHook).toContain('const visibleRsvpConflicts = useMemo(');
+    expect(conflictHook).toContain('const rsvpConflictStats = useMemo<RsvpConflictStats>(() => {');
+    expect(conflictHook).toContain('await resolveGuestDashboardConflict(conflictId, resolvedAt);');
+    expect(conflictHook).toContain('await resolveGuestDashboardConflicts(ids, resolvedAt);');
+    expect(conflictHook).toContain("toast('RSVP item marked done', 'success');");
     expect(campaignHook).toContain('await markGuestReminderSentForSite(weddingSiteId, guest.id, new Date().toISOString())');
     expect(clipboardHook).toContain('const handleCopyOpsSummary = async () => {');
     expect(clipboardHook).toContain('const handleCopyExceptionChecklist = async () => {');

@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PLANNER_ROLE_OPTIONS, canManageGuests, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole } from '../../lib/plannerAccess';
-import { formatGuestOpsDate, formatGuestOpsDateTime, formatGuestOpsRelativeTime, getGuestOpsTimestamp } from './guestOpsTime';
+import { formatGuestOpsDate, formatGuestOpsDateTime, formatGuestOpsRelativeTime } from './guestOpsTime';
 import { formatGuestEventDate } from './guestEventDate';
 import { getDaysUntilGuestWedding } from './guestWeddingDate';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
@@ -43,7 +43,6 @@ import {
   type Guest,
   type GuestWithRSVP,
   type ItineraryEvent,
-  type RsvpConflictStats,
 } from './guests/guestDashboardTypes';
 import {
   buildGuestHouseholdGroups,
@@ -90,12 +89,11 @@ import {
   loadGuestDashboardPublicSlug,
   loadGuestDashboardSiteSlug,
   persistGuestReminderSettings,
-  resolveGuestDashboardConflict,
-  resolveGuestDashboardConflicts,
 } from './guests/guestService';
 import { useGuestDashboardCampaignActions } from './guests/useGuestDashboardCampaignActions';
 import { useGuestDashboardCheckIns } from './guests/useGuestDashboardCheckIns';
 import { useGuestDashboardClipboardActions } from './guests/useGuestDashboardClipboardActions';
+import { useGuestDashboardConflictActions } from './guests/useGuestDashboardConflictActions';
 import { useGuestDashboardCsvImport } from './guests/useGuestDashboardCsvImport';
 import { useGuestDashboardData } from './guests/useGuestDashboardData';
 import { useGuestDashboardFollowUpActions } from './guests/useGuestDashboardFollowUpActions';
@@ -181,7 +179,6 @@ export const DashboardGuests: React.FC = () => {
   });
   const isGuestsReadOnly = !canManageGuests(guestsRole, guestsPermissions);
   const [showConflictDetails, setShowConflictDetails] = useState(false);
-  const [resolvingConflictId, setResolvingConflictId] = useState<string | null>(null);
   const effectiveItineraryEvents = useMemo<ItineraryEvent[]>(() => {
     if (itineraryFilterEvents.length > 0) return itineraryFilterEvents;
     return [
@@ -307,11 +304,6 @@ export const DashboardGuests: React.FC = () => {
   });
   const [formEventInviteIds, setFormEventInviteIds] = useState<Set<string>>(new Set());
 
-  const visibleRsvpConflicts = useMemo(
-    () => rsvpConflicts.filter((c) => conflictFilter === 'all' ? true : c.severity === conflictFilter),
-    [rsvpConflicts, conflictFilter]
-  );
-
   const {
     assistedRsvpGuest,
     assistedRsvpNotes,
@@ -392,77 +384,21 @@ export const DashboardGuests: React.FC = () => {
     weddingSiteId,
   });
 
-  const rsvpConflictStats = useMemo<RsvpConflictStats>(() => {
-    const now = Date.now();
-    const dayAgo = now - (24 * 60 * 60 * 1000);
-    const threeDaysAgo = now - (72 * 60 * 60 * 1000);
-
-    const opened24h = rsvpConflictHistory.filter((c) => getGuestOpsTimestamp(c.created_at) >= dayAgo).length;
-    const resolved24h = rsvpConflictHistory.filter((c) => getGuestOpsTimestamp(c.resolved_at) >= dayAgo).length;
-    const unresolvedOver24h = rsvpConflicts.filter((c) => getGuestOpsTimestamp(c.created_at) < dayAgo).length;
-    const unresolvedOver72h = rsvpConflicts.filter((c) => getGuestOpsTimestamp(c.created_at) < threeDaysAgo).length;
-
-    const codeCounts = new Map<string, number>();
-    for (const c of rsvpConflictHistory) {
-      codeCounts.set(c.conflict_code, (codeCounts.get(c.conflict_code) ?? 0) + 1);
-    }
-
-    const topCodes = [...codeCounts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([code, count]) => ({ code, count }));
-
-    return {
-      openNow: rsvpConflicts.length,
-      opened24h,
-      resolved24h,
-      unresolvedOver24h,
-      unresolvedOver72h,
-      topCodes,
-    };
-  }, [rsvpConflicts.length, rsvpConflictHistory]);
-
-  const resolveConflict = useCallback(async (conflictId: string) => {
-    setResolvingConflictId(conflictId);
-    try {
-      if (isDemoMode) {
-        setRsvpConflicts((prev) => prev.filter((c) => c.id !== conflictId));
-        setRsvpConflictHistory((prev) => prev.map((c) => c.id === conflictId ? { ...c, resolved: true, resolved_at: new Date().toISOString() } : c));
-        return;
-      }
-      const resolvedAt = new Date().toISOString();
-      await resolveGuestDashboardConflict(conflictId, resolvedAt);
-      setRsvpConflicts((prev) => prev.filter((c) => c.id !== conflictId));
-      setRsvpConflictHistory((prev) => prev.map((c) => c.id === conflictId ? { ...c, resolved: true, resolved_at: resolvedAt } : c));
-      toast('RSVP item marked done', 'success');
-    } catch {
-      toast('Couldn’t mark that RSVP item done.', 'error');
-    } finally {
-      setResolvingConflictId(null);
-    }
-  }, [isDemoMode, toast]);
-
-  const resolveAllVisibleConflicts = useCallback(async () => {
-    if (visibleRsvpConflicts.length === 0) return;
-    setResolvingConflictId('all');
-    try {
-      const ids = visibleRsvpConflicts.map((c) => c.id);
-      if (!isDemoMode) {
-        const resolvedAt = new Date().toISOString();
-        await resolveGuestDashboardConflicts(ids, resolvedAt);
-        setRsvpConflictHistory((prev) => prev.map((c) => ids.includes(c.id) ? { ...c, resolved: true, resolved_at: resolvedAt } : c));
-      } else {
-        const resolvedAt = new Date().toISOString();
-        setRsvpConflictHistory((prev) => prev.map((c) => ids.includes(c.id) ? { ...c, resolved: true, resolved_at: resolvedAt } : c));
-      }
-      setRsvpConflicts((prev) => prev.filter((c) => !ids.includes(c.id)));
-      toast(`${ids.length} RSVP item${ids.length === 1 ? '' : 's'} marked done`, 'success');
-    } catch {
-      toast('Couldn’t mark those RSVP items done.', 'error');
-    } finally {
-      setResolvingConflictId(null);
-    }
-  }, [isDemoMode, toast, visibleRsvpConflicts]);
+  const {
+    resolveAllVisibleConflicts,
+    resolveConflict,
+    resolvingConflictId,
+    rsvpConflictStats,
+    visibleRsvpConflicts,
+  } = useGuestDashboardConflictActions({
+    conflictFilter,
+    isDemoMode,
+    rsvpConflictHistory,
+    rsvpConflicts,
+    setRsvpConflictHistory,
+    setRsvpConflicts,
+    toast,
+  });
 
   const [deletingGuestId, setDeletingGuestId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
