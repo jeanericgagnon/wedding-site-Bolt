@@ -4623,3 +4623,20 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This materially reduces public-surface oversized-file risk in `RSVP` without changing guest-facing behavior. No deploy was run.
+
+## 2026-05-07 10:30 PM PT No-Deploy RSVP Live Content Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its live search-vs-flow guest surface through `src/pages/RsvpLiveContentView.tsx`.
+  - That shared guest-facing content component now owns the top-level live handoff between `RsvpSearchView` and `RsvpFlowView`, plus the nested guest picker, form, and success shells, while the page keeps lookup state, token continuity behavior, and submit orchestration local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpLiveContentView` so the main RSVP page keeps routing through the dedicated live-content shell.
+  - `src/pages/RSVP.tsx` dropped from 1283 lines to 1250 lines in this batch, while `src/pages/RsvpLiveContentView.tsx` came in at 208 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.

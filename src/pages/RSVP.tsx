@@ -32,12 +32,8 @@ import {
 } from './rsvpDemoStorage';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { callValidateRsvpToken } from './rsvpFunctionService';
-import { RsvpFlowView } from './RsvpFlowView';
-import { RsvpFormView } from './RsvpFormView';
-import { RsvpGuestPickerView } from './RsvpGuestPickerView';
+import { RsvpLiveContentView } from './RsvpLiveContentView';
 import { RsvpRouteView } from './RsvpRouteView';
-import { RsvpSearchView } from './RsvpSearchView';
-import { RsvpSuccessView } from './RsvpSuccessView';
 
 export { normalizeRsvpGuestError, normalizeRsvpSubmitError } from './rsvpTypes';
 
@@ -1167,110 +1163,81 @@ export default function RSVP() {
   );
 
   const liveContent = (
-    <div className="min-h-screen overflow-hidden bg-background">
-      {step === 'search' ? (
-        <RsvpSearchView
-          activePredictionId={activePredictionId}
-          activePredictionIndex={activePredictionIndex}
-          error={error}
-          guestPredictions={guestPredictions}
-          loading={loading}
-          onActivePredictionIndexChange={setActivePredictionIndex}
-          onCancelLoading={() => {
-            if (loading) {
-              activeLookupRequestRef.current += 1;
-              setLoading(false);
-              setSubmitting(false);
-            }
-            setError('');
-          }}
-          onSearchSubmit={handleSearch}
-          onSearchValueChange={setSearchValue}
-          predictionListId={predictionListId}
-          searchHintId={searchHintId}
-          searchInputId={searchInputId}
-          searchValue={searchValue}
-          t={t}
-        />
-      ) : (
-      <RsvpFlowView
-        step={step as 'pick' | 'form' | 'success'}
-        pickerContent={(
-          <RsvpGuestPickerView
-            ambiguousGuests={ambiguousGuests}
-            guestLabel={guestLabel}
-            loading={loading}
-            onPickGuest={handlePickGuest}
-            onSearchAgain={() => { resetToSearch(false); }}
-          />
-        )}
-        formContent={step === 'form' && guest ? (
-          <RsvpFormView
-            allowedChildrenCount={allowedChildrenCount}
-            applyToHousehold={applyToHousehold}
-            canSubmit={canSubmit}
-            childCountOptions={childCountOptions}
-            customAnswers={customAnswers}
-            deadlinePassed={deadlinePassed}
-            error={error}
-            existingRsvp={existingRsvp}
-            formData={formData}
-            formStep={formStep}
-            getQuestionLabel={getRsvpQuestionLabel}
-            goToNextFormStep={goToNextFormStep}
-            guest={guest}
-            guestDisplayName={guestDisplayName}
-            handleSubmit={handleSubmit}
-            householdGuests={householdGuests}
-            inheritedHouseholdMembers={inheritedHouseholdMembers}
-            invitedEvents={invitedEvents}
-            loading={loading}
-            mealConfig={mealConfig}
-            onBack={() => {
-              invalidateActiveSubmit();
-              if (formStep > 1) {
-                setError('');
-                setFormStep((formStep - 1) as 1 | 2 | 3);
-              } else {
-                resetToSearch(false);
-              }
-            }}
-            onHouseholdSelectionChange={updateSelectedHouseholdGuestIds}
-            onHouseholdToggle={updateApplyToHousehold}
-            onStepAnswerChange={updateCustomAnswers}
-            onStepDataChange={updateFormData}
-            rsvpDeadline={rsvpDeadline}
-            rsvpQuestions={rsvpQuestions}
-            rsvpSessionToken={rsvpSessionToken}
-            safeMusicPlaylistUrl={safeMusicPlaylistUrl}
-            selectedHouseholdGuestIds={selectedHouseholdGuestIds}
-            submitting={submitting}
-          />
-        ) : null}
-        successContent={(
-          <RsvpSuccessView
-            applyToHousehold={applyToHousehold}
-            formData={formData}
-            guestDisplayName={guestDisplayName}
-            guestInvitedToCeremony={!!guest?.invited_to_ceremony}
-            guestInvitedToReception={!!guest?.invited_to_reception}
-            guestPresent={!!guest}
-            inheritedHouseholdMembers={inheritedHouseholdMembers}
-            onDone={() => {
-              if (guest) {
-                returnToLoadedRsvp();
-                return;
-              }
-              resetToSearch(true);
-            }}
-            onSubmitAnother={() => {
-              resetToSearch(false);
-            }}
-          />
-        )}
-      />
-      )}
-    </div>
+    <RsvpLiveContentView
+      activePredictionId={activePredictionId}
+      activePredictionIndex={activePredictionIndex}
+      allowedChildrenCount={allowedChildrenCount}
+      ambiguousGuests={ambiguousGuests}
+      applyToHousehold={applyToHousehold}
+      canSubmit={canSubmit}
+      childCountOptions={childCountOptions}
+      customAnswers={customAnswers}
+      deadlinePassed={deadlinePassed}
+      error={error}
+      existingRsvp={existingRsvp}
+      formData={formData}
+      formStep={formStep}
+      getQuestionLabel={getRsvpQuestionLabel}
+      goToNextFormStep={goToNextFormStep}
+      guest={guest}
+      guestDisplayName={guestDisplayName}
+      guestLabel={guestLabel}
+      guestPredictions={guestPredictions}
+      handleSubmit={handleSubmit}
+      householdGuests={householdGuests}
+      inheritedHouseholdMembers={inheritedHouseholdMembers}
+      invitedEvents={invitedEvents}
+      loading={loading}
+      mealConfig={mealConfig}
+      onActivePredictionIndexChange={setActivePredictionIndex}
+      onBack={() => {
+        invalidateActiveSubmit();
+        if (formStep > 1) {
+          setError('');
+          setFormStep((formStep - 1) as 1 | 2 | 3);
+        } else {
+          resetToSearch(false);
+        }
+      }}
+      onCancelLoading={() => {
+        if (loading) {
+          activeLookupRequestRef.current += 1;
+          setLoading(false);
+          setSubmitting(false);
+        }
+        setError('');
+      }}
+      onDone={() => {
+        if (guest) {
+          returnToLoadedRsvp();
+          return;
+        }
+        resetToSearch(true);
+      }}
+      onHouseholdSelectionChange={updateSelectedHouseholdGuestIds}
+      onHouseholdToggle={updateApplyToHousehold}
+      onPickGuest={handlePickGuest}
+      onSearchAgain={() => { resetToSearch(false); }}
+      onSearchSubmit={handleSearch}
+      onSearchValueChange={setSearchValue}
+      onStepAnswerChange={updateCustomAnswers}
+      onStepDataChange={updateFormData}
+      onSubmitAnother={() => {
+        resetToSearch(false);
+      }}
+      predictionListId={predictionListId}
+      rsvpDeadline={rsvpDeadline}
+      rsvpQuestions={rsvpQuestions}
+      rsvpSessionToken={rsvpSessionToken}
+      safeMusicPlaylistUrl={safeMusicPlaylistUrl}
+      searchHintId={searchHintId}
+      searchInputId={searchInputId}
+      searchValue={searchValue}
+      selectedHouseholdGuestIds={selectedHouseholdGuestIds}
+      step={step}
+      submitting={submitting}
+      t={t}
+    />
   );
 
   return (

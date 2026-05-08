@@ -2169,3 +2169,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpFormView` so the main RSVP page keeps routing through the shared form shell.
   - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
   - Launch status: unchanged. This materially reduces local P1/P2 oversized-file risk in `RSVP` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 10:30 PM PT - No-deploy RSVP live-content extraction:
+  - Resolved in this batch: moved the main RSVP page’s live search-vs-flow guest surface out of `src/pages/RSVP.tsx` and behind `src/pages/RsvpLiveContentView.tsx`.
+  - Data-boundary hardening: `RSVP.tsx` now hands off the main guest-facing live body through one higher-level content view instead of directly composing `RsvpSearchView`, `RsvpFlowView`, `RsvpFormView`, `RsvpGuestPickerView`, and `RsvpSuccessView` inline.
+  - File-size movement: `src/pages/RSVP.tsx` dropped from 1283 lines to 1250 lines in this continuation batch while `src/pages/RsvpLiveContentView.tsx` came in at 208 lines.
+  - No feature loss: invitation search, guest prediction keyboard flow, ambiguous guest selection, RSVP form progression, success handoff, and token-backed reset/return behavior preserve the current guest RSVP flow while shrinking page-owned public-surface composition.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpLiveContentView` so the main RSVP page keeps routing through the shared live-content shell.
+  - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
+  - Launch status: unchanged. This continues local public-surface ownership cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
