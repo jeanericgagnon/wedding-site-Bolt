@@ -4772,6 +4772,23 @@ Status:
 - Status:
   - PARTIAL. This continues message dashboard ownership cleanup without changing collaborator behavior. No deploy was run.
 
+## 2026-05-08 01:56 AM PT No-Deploy Message Dashboard View-Props Helper Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Messages.tsx` now routes its remaining route-view prop assembly through `src/pages/dashboard/messages/buildMessageDashboardViewProps.ts` instead of hand-owning the dashboard prop bundle inline.
+  - That helper now owns the `composerProps`, `historyProps`, `reachSnapshotProps`, `savedTemplatesProps`, `sendingDetailsProps`, `startingPointsProps`, and `detailModalProps` composition for `MessageDashboardView`.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildMessageDashboardViewProps({ ... })` plus the helper-owned `detailModalProps`, `composerProps`, `historyProps`, and `reachSnapshotProps` seams.
+  - `src/pages/dashboard/Messages.tsx` dropped from 565 lines to 530 lines in this batch while `src/pages/dashboard/messages/buildMessageDashboardViewProps.ts` came in at 256 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues message dashboard ownership cleanup without changing collaborator behavior. No deploy was run.
+
 ## 2026-05-08 12:49 AM PT No-Deploy Guest Photo Album Action Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
