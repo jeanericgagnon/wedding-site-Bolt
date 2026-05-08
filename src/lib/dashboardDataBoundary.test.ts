@@ -150,6 +150,7 @@ describe('dashboard data boundary guards', () => {
     const opsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardOpsActions.ts'), 'utf8');
     const routeActionsHelper = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/buildGuestDashboardRouteActions.tsx'), 'utf8');
     const rsvpConfigHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardRsvpConfigActions.ts'), 'utf8');
+    const routeSupportHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardRouteSupport.ts'), 'utf8');
     const uiStateHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardUiState.ts'), 'utf8');
 
     expect(source).not.toContain("from '../../lib/supabase'");
@@ -163,6 +164,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('useGuestDashboardGuestDetailActions({');
     expect(source).toContain('useGuestDashboardOpsActions({');
     expect(source).toContain('useGuestDashboardRsvpConfigActions({');
+    expect(source).toContain('useGuestDashboardRouteSupport({');
     expect(source).toContain('useGuestDashboardUiState()');
     expect(source).toContain('buildGuestDashboardDerivedState({');
     expect(source).toContain('buildGuestDashboardRouteActions({');
@@ -212,6 +214,11 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('const getStatusBadge = (status: string) => {');
     expect(source).not.toContain('const [campaignPreset, setCampaignPreset] = useState');
     expect(source).not.toContain('const [campaignLog, setCampaignLog] = useState');
+    expect(source).not.toContain("const [confirmDialog, setConfirmDialog] = useState<null | Omit<ConfirmDialogProps, 'open'>>(null);");
+    expect(source).not.toContain("const requestConfirmation = (options: Pick<ConfirmDialogProps, 'title' | 'description' | 'confirmLabel' | 'tone'>) =>");
+    expect(source).not.toContain("const rawRole = readPlannerAccessRole('guests', weddingSiteId ?? 'global');");
+    expect(source).not.toContain("writePlannerAccessRole('guests', weddingSiteId ?? 'global', guestsRole);");
+    expect(source).not.toContain('const rsvpAccessModePlan = useMemo(() => buildRsvpAccessModePlan({');
     expect(source).not.toContain('readStoredCampaignPreset()');
     expect(source).not.toContain('writeStoredCampaignPreset(campaignPreset)');
     expect(source).not.toContain('onCloseAddModal: () => {');
@@ -375,6 +382,12 @@ describe('dashboard data boundary guards', () => {
     expect(rsvpConfigHook).toContain('const handleSaveRsvpConfig = useCallback(async () => {');
     expect(rsvpConfigHook).toContain('writeStoredDemoRsvpConfig({ questions: cleanedQuestions, mealEnabled: rsvpMealEnabled, mealOptions });');
     expect(rsvpConfigHook).toContain('await persistGuestDashboardRsvpConfig({');
+    expect(routeSupportHook).toContain('export function useGuestDashboardRouteSupport({');
+    expect(routeSupportHook).toContain("const [confirmDialog, setConfirmDialog] = useState<null | Omit<ConfirmDialogProps, 'open'>>(null);");
+    expect(routeSupportHook).toContain("const requestConfirmation = (options: Pick<ConfirmDialogProps, 'title' | 'description' | 'confirmLabel' | 'tone'>) =>");
+    expect(routeSupportHook).toContain("const rawRole = readPlannerAccessRole('guests', weddingSiteId ?? 'global');");
+    expect(routeSupportHook).toContain("writePlannerAccessRole('guests', weddingSiteId ?? 'global', guestsRole);");
+    expect(routeSupportHook).toContain('const rsvpAccessModePlan = useMemo(() => buildRsvpAccessModePlan({');
     expect(rsvpConfigHook).toContain('autoSaveTimer.current = window.setTimeout(() => {');
     expect(rsvpConfigHook).not.toContain("from '../../../lib/supabase'");
     expect(service).toContain('export async function assignGuestsToHouseholdForSite(');

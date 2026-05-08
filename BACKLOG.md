@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 09:55 AM PT - No-Deploy Guest Dashboard Route-Support Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Guests.tsx` no longer owns the inline confirm-dialog, planner-role persistence, fallback itinerary-event selection, and RSVP setup planning slab.
+  - Added `src/pages/dashboard/guests/useGuestDashboardRouteSupport.ts` so the new hook now owns `confirmDialog` state, `requestConfirmation(...)`, planner access-role read/write sync, fallback `effectiveItineraryEvents`, `rsvpAccessModePlan`, `recommendedRsvpAccessMode`, `rsvpQuestionTemplateCoverage`, and `rsvpSetupChecklist` while the route keeps data loading, UI state, CRUD and ops actions, route actions, overlay actions, and render composition.
+  - Guest dashboard boundary tests now pin `useGuestDashboardRouteSupport({ ... })`, check that the new hook owns the confirm-dialog and RSVP setup planning seam, and reject regaining the old inline `requestConfirmation`, planner-role persistence, and RSVP access-mode/setup block in `Guests.tsx`.
+- Acceptance/proof target:
+  - Focused guest/dashboard boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 9:33 AM PT - No-Deploy Itinerary Dashboard Route-Content Extraction
 
 - Status: `PARTIAL`

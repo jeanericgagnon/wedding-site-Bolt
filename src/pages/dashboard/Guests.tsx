@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { PLANNER_ROLE_OPTIONS, canManageGuests, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole } from '../../lib/plannerAccess';
+import { PLANNER_ROLE_OPTIONS, canManageGuests, derivePlannerRoleFromPermissions } from '../../lib/plannerAccess';
 import { formatGuestOpsDate, formatGuestOpsDateTime, formatGuestOpsRelativeTime } from './guestOpsTime';
 import { formatGuestEventDate } from './guestEventDate';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
@@ -69,6 +69,7 @@ import { useGuestDashboardCrudActions } from './guests/useGuestDashboardCrudActi
 import { useGuestDashboardGuestDetailActions } from './guests/useGuestDashboardGuestDetailActions';
 import { useGuestDashboardOpsActions } from './guests/useGuestDashboardOpsActions';
 import { useGuestDashboardRsvpConfigActions } from './guests/useGuestDashboardRsvpConfigActions';
+import { useGuestDashboardRouteSupport } from './guests/useGuestDashboardRouteSupport';
 import { useGuestDashboardUiState } from './guests/useGuestDashboardUiState';
 import { useGuestDashboardExports } from './guests/useGuestDashboardExports';
 
@@ -78,21 +79,6 @@ export const DashboardGuests: React.FC = () => {
   const { fromQuickStart, nextStep } = readQuickStartDashboardContinuation(searchParams);
   const { user, isDemoMode } = useAuth();
   const { toast } = useToast();
-  const [confirmDialog, setConfirmDialog] = useState<null | Omit<ConfirmDialogProps, 'open'>>(null);
-  const requestConfirmation = (options: Pick<ConfirmDialogProps, 'title' | 'description' | 'confirmLabel' | 'tone'>) =>
-    new Promise<boolean>((resolve) => {
-      setConfirmDialog({
-        ...options,
-        onCancel: () => {
-          setConfirmDialog(null);
-          resolve(false);
-        },
-        onConfirm: () => {
-          setConfirmDialog(null);
-          resolve(true);
-        },
-      });
-    });
   const rsvpConfigLoadedRef = useRef(false);
   const {
     autoRemindersEnabled,
@@ -192,49 +178,26 @@ export const DashboardGuests: React.FC = () => {
     toast,
     userId: user?.id ?? null,
   });
+  const {
+    confirmDialog,
+    effectiveItineraryEvents,
+    recommendedRsvpAccessMode,
+    requestConfirmation,
+    rsvpAccessModePlan,
+    rsvpQuestionTemplateCoverage,
+    rsvpSetupChecklist,
+    setConfirmDialog,
+  } = useGuestDashboardRouteSupport({
+    guests,
+    guestsRole,
+    itineraryFilterEvents,
+    rsvpMealEnabled,
+    rsvpMealOptions,
+    rsvpQuestions,
+    setGuestsRole,
+    weddingSiteId,
+  });
   const isGuestsReadOnly = !canManageGuests(guestsRole, guestsPermissions);
-  useEffect(() => {
-    try {
-      const rawRole = readPlannerAccessRole('guests', weddingSiteId ?? 'global');
-      if (rawRole) setGuestsRole(rawRole);
-    } catch {
-      // noop
-    }
-  }, [setGuestsRole, weddingSiteId]);
-
-  useEffect(() => {
-    try {
-      writePlannerAccessRole('guests', weddingSiteId ?? 'global', guestsRole);
-    } catch {
-      // noop
-    }
-  }, [guestsRole, weddingSiteId]);
-  const effectiveItineraryEvents = useMemo<ItineraryEvent[]>(() => {
-    if (itineraryFilterEvents.length > 0) return itineraryFilterEvents;
-    return [
-      { id: 'legacy-ceremony', event_name: 'Ceremony', event_date: '', start_time: '', location_name: '' },
-      { id: 'legacy-reception', event_name: 'Reception', event_date: '', start_time: '', location_name: '' },
-    ];
-  }, [itineraryFilterEvents]);
-
-  const rsvpAccessModePlan = useMemo(() => buildRsvpAccessModePlan({
-    guestCount: guests.length,
-    inviteTokenCount: guests.filter((guest) => Boolean(guest.invite_token)).length,
-    householdCount: new Set(guests.map((guest) => guest.household_id).filter(Boolean)).size,
-    eventCount: effectiveItineraryEvents.length,
-  }), [effectiveItineraryEvents.length, guests]);
-
-  const recommendedRsvpAccessMode = rsvpAccessModePlan.find((mode) => mode.status === 'recommended') ?? rsvpAccessModePlan[0];
-  const rsvpQuestionTemplateCoverage = useMemo(() => buildRsvpQuestionTemplateCoverage(rsvpQuestions), [rsvpQuestions]);
-  const rsvpSetupChecklist = useMemo(() => buildRsvpSetupChecklist({
-    guestCount: guests.length,
-    inviteTokenCount: guests.filter((guest) => Boolean(guest.invite_token)).length,
-    householdCount: new Set(guests.map((guest) => guest.household_id).filter(Boolean)).size,
-    eventCount: effectiveItineraryEvents.length,
-    questions: rsvpQuestions,
-    mealEnabled: rsvpMealEnabled,
-    mealOptionCount: rsvpMealOptions.filter((option) => option.trim().length > 0).length,
-  }), [effectiveItineraryEvents.length, guests, rsvpMealEnabled, rsvpMealOptions, rsvpQuestions]);
 
   const {
     addRsvpQuestionTemplate,

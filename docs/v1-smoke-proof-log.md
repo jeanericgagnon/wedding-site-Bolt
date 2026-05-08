@@ -7,6 +7,22 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-08 09:55 AM PT No-Deploy Guest Dashboard Route-Support Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the remaining guest dashboard confirm-dialog, planner-role persistence, fallback itinerary-event selection, and RSVP setup planning seam through `src/pages/dashboard/guests/useGuestDashboardRouteSupport.ts`.
+  - That new hook now owns `confirmDialog` state, `requestConfirmation(...)`, planner access-role read/write sync, fallback `effectiveItineraryEvents`, `rsvpAccessModePlan`, `recommendedRsvpAccessMode`, `rsvpQuestionTemplateCoverage`, and `rsvpSetupChecklist` while the route keeps data loading, UI state, CRUD and ops actions, route actions, overlay actions, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useGuestDashboardRouteSupport({ ... })`, checks that `useGuestDashboardRouteSupport.ts` owns the confirm-dialog and RSVP setup planning seam, and rejects regaining the old inline `requestConfirmation`, planner-role persistence, and RSVP access-mode/setup block in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` dropped from 814 lines to 777 lines in this batch, while `src/pages/dashboard/guests/useGuestDashboardRouteSupport.ts` came in at 97 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 09:33 AM PT No-Deploy Itinerary Dashboard Route-Content Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:
