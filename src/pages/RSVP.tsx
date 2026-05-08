@@ -28,6 +28,7 @@ import {
   readDemoStoredResponses,
   writeDemoStoredResponses,
 } from './rsvpDemoStorage';
+import { buildRsvpDerivedViewState } from './buildRsvpDerivedViewState';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { buildRsvpLiveContentViewProps } from './buildRsvpLiveContentViewProps';
 import { callValidateRsvpToken } from './rsvpFunctionService';
@@ -1043,20 +1044,22 @@ export default function RSVP() {
     setActivePredictionIndex(-1);
   }, [searchValue]);
 
-  const guestPredictions = useMemo(() => {
-    if (!USE_DEMO_RSVP) return [] as string[];
-    const q = searchValue.trim().toLowerCase();
-    if (q.length < 2) return [] as string[];
-    return demoGuests
-      .map((g) => g.name)
-      .filter((name, idx, arr) => arr.indexOf(name) === idx)
-      .filter((name) => name.toLowerCase().includes(q))
-      .slice(0, 6);
-  }, [searchValue]);
-  const activePredictionId =
-    activePredictionIndex >= 0 && guestPredictions[activePredictionIndex]
-      ? `${predictionListId}-${activePredictionIndex}`
-      : undefined;
+  const {
+    activePredictionId,
+    allowedChildrenCount,
+    childCountOptions,
+    guestPredictions,
+    inheritedHouseholdMembers,
+    invitedEvents,
+  } = useMemo(() => buildRsvpDerivedViewState({
+    activePredictionIndex,
+    guest,
+    householdGuests,
+    predictionListId,
+    searchValue,
+    selectedHouseholdGuestIds,
+    useDemoRsvp: USE_DEMO_RSVP,
+  }), [activePredictionIndex, guest, householdGuests, predictionListId, searchValue, selectedHouseholdGuestIds]);
 
   const updateFormData = useCallback((updater: (current: typeof formData) => typeof formData) => {
     invalidateSubmitFromEdit();
@@ -1132,20 +1135,6 @@ export default function RSVP() {
     }
   }, [mealConfig.enabled, availableMealValues, formData.meal_choice]);
 
-  const invitedEvents = [
-    guest?.invited_to_ceremony ? 'Ceremony' : null,
-    guest?.invited_to_reception ? 'Reception' : null,
-  ].filter(Boolean) as string[];
-  const allowedChildrenCount = guest?.children_allowed ? Math.max(0, Number(guest.max_children ?? 0)) : 0;
-  const childCountOptions = Array.from({ length: allowedChildrenCount + 1 }, (_, count) => ({
-    value: String(count),
-    label: count === 0 ? 'No children' : `${count} child${count === 1 ? '' : 'ren'}`,
-  }));
-
-  const inheritedHouseholdMembers = useMemo(
-    () => householdGuests.filter((h) => selectedHouseholdGuestIds.includes(h.id)),
-    [householdGuests, selectedHouseholdGuestIds]
-  );
   const tokenAutoLoadingView = (
     <RsvpTokenLoadingView onEnterCodeInstead={() => resetToSearch(false)} />
   );

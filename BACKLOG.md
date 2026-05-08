@@ -2193,3 +2193,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `buildRsvpLiveContentViewProps(...)` so the main RSVP page keeps routing through the shared prop-assembly helper.
   - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
   - Launch status: unchanged. This continues local public-surface ownership cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 10:40 PM PT - No-deploy RSVP derived-view-state extraction:
+  - Resolved in this batch: moved the main RSVP page’s derived guest-facing view state out of `src/pages/RSVP.tsx` and behind `src/pages/buildRsvpDerivedViewState.ts`.
+  - Data-boundary hardening: `RSVP.tsx` now hands off guest prediction suggestions, active prediction id, invited event labels, allowed-children stepper options, and inherited household member derivation through one helper instead of recalculating that presentation state inline.
+  - File-size movement: `src/pages/RSVP.tsx` dropped from 1240 lines to 1229 lines in this continuation batch while `src/pages/buildRsvpDerivedViewState.ts` came in at 72 lines.
+  - No feature loss: demo RSVP search suggestions, keyboard-activedescendant wiring, event-label summaries, children option sizing, and inherited-household recap preserve the current guest RSVP behavior while shrinking page-owned presentation derivation.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `buildRsvpDerivedViewState(...)` so the main RSVP page keeps routing through the shared derived-state helper.
+  - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
+  - Launch status: unchanged. This continues local public-surface ownership cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.

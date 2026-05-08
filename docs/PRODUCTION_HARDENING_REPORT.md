@@ -4674,3 +4674,20 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+
+## 2026-05-07 10:40 PM PT No-Deploy RSVP Derived View State Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its derived guest-facing view state through `src/pages/buildRsvpDerivedViewState.ts`.
+  - That shared helper now owns demo RSVP guest suggestions, active prediction id, invited event labels, allowed-children option sizing, and inherited household member derivation while the page keeps lookup state, continuity behavior, and submit orchestration local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `buildRsvpDerivedViewState(...)` so the main RSVP page keeps routing through the dedicated derived-state helper.
+  - `src/pages/RSVP.tsx` dropped from 1240 lines to 1229 lines in this batch, while `src/pages/buildRsvpDerivedViewState.ts` came in at 72 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
