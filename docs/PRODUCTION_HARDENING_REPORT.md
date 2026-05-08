@@ -5823,3 +5823,18 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 05:14 AM PT No-Deploy Seating Dashboard Artifact-Actions Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Seating.tsx` now routes the seating dashboard export and version artifact lane through `src/pages/dashboard/seating/useSeatingDashboardArtifacts.ts`.
+  - That hook now owns seating CSV export, place-card export, table-summary CSV export, catering CSV export, print, PDF export, image export, version save, and version restore while the page keeps loading, derived state, drag/drop, check-in actions, and layout interactions.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useSeatingDashboardArtifacts({ ... })`, checks that `useSeatingDashboardArtifacts.ts` owns the seating export/version seam, and rejects regaining the old inline `handleSaveVersion()`, `handleRestoreVersion(...)`, `handleExportPDF()`, and `handleExportImage()` handlers in `Seating.tsx`.
+  - `src/pages/dashboard/Seating.tsx` dropped from 1446 lines to 1343 lines in this batch, while `src/pages/dashboard/seating/useSeatingDashboardArtifacts.ts` came in at 169 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

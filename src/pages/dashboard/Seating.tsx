@@ -14,7 +14,6 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
-import { cateringRowsToCsv } from '../../lib/seatingCateringExportReadiness';
 import { formatSeatingEventLabel } from './seatingEventDate';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -24,22 +23,17 @@ import { ConfirmDialog, type ConfirmDialogProps } from '../../components/ui/Conf
 import {
   SeatingTable, SeatingAssignment, EligibleGuest,
   createTable, updateTable, deleteTable,
-  assignGuestToTable, unassignGuest, resetSeating, autoCreateTables, autoSeatGuests, exportSeatingCSV,
-  exportPlaceCardsCSV, downloadCSV, invalidateDriftedAssignments, refreshSeatingSession, setGuestCheckedIn,
-  SeatingLayoutVersion, createSeatingVersion, markSeatingVersionRestored,
+  assignGuestToTable, unassignGuest, resetSeating, autoCreateTables, autoSeatGuests, invalidateDriftedAssignments, refreshSeatingSession, setGuestCheckedIn,
+  SeatingLayoutVersion,
 } from './seating/seatingService';
 import {
   UNASSIGNED_DROPPABLE,
   buildDemoAutoSeatAssignments,
   buildDemoAutoTables,
-  buildSeatingLayoutSvg,
-  buildSeatingReportHtml,
-  buildTableSummaryCsv,
   getAssignmentsForTable,
   getGuestsAssignedToTable,
   getSeatPickerOptions,
   getShapeLabel,
-  safeExportSlug,
   type SeatingCheckInFilter,
   type TableShape,
 } from './seating/seatingDashboardUtils';
@@ -50,6 +44,7 @@ import {
 } from './seating/seatingDemoStorage';
 import { useSeatingDashboardData } from './seating/useSeatingDashboardData';
 import { buildSeatingDashboardDerivedState } from './seating/buildSeatingDashboardDerivedState';
+import { useSeatingDashboardArtifacts } from './seating/useSeatingDashboardArtifacts';
 import {
   GuestChip,
   TableCard,
@@ -572,133 +567,6 @@ export const DashboardSeating: React.FC = () => {
     setCanvasZoom(z => Math.max(0.6, Math.min(1.8, Number((z + step).toFixed(2)))));
   }
 
-  function handleExportCSV() {
-    const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
-    const csv = exportSeatingCSV(allGuests, tables, assignments, selectedEvent?.event_name ?? 'Event');
-    downloadCSV(csv, `seating-${selectedEvent?.event_name ?? 'event'}.csv`);
-  }
-
-  function handleExportPlaceCards() {
-    const csv = exportPlaceCardsCSV(allGuests, tables, assignments);
-    downloadCSV(csv, 'place-cards.csv');
-  }
-
-  function handleExportTableSummaryCSV() {
-    const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
-    const eventName = selectedEvent?.event_name ?? 'Event';
-    const safeName = safeExportSlug(eventName);
-    downloadCSV(buildTableSummaryCsv(cateringPacket), `table-summary-${safeName}.csv`);
-  }
-
-  function handleExportCateringCSV() {
-    const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
-    const eventName = selectedEvent?.event_name ?? 'Event';
-    downloadCSV(cateringRowsToCsv(cateringPacket.rows), `catering-packet-${safeExportSlug(eventName)}.csv`);
-  }
-
-  function handlePrint() {
-    window.print();
-  }
-
-  function handleExportPDF() {
-    const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
-    const eventName = selectedEvent?.event_name ?? 'Event';
-    const now = new Date().toLocaleString();
-    const html = buildSeatingReportHtml({
-      eventName,
-      createdLabel: now,
-      guests: allGuests,
-      tables,
-      assignments,
-      counters,
-      arrivedCount,
-    });
-
-    const w = window.open('', '_blank', 'noopener,noreferrer,width=1000,height=900');
-    if (!w) {
-      toast('Popup blocked. Please allow popups to export PDF.', 'error');
-      return;
-    }
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
-    w.focus();
-    w.print();
-  }
-
-  function handleExportImage() {
-    const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
-    const eventName = selectedEvent?.event_name ?? 'Event';
-    const svg = buildSeatingLayoutSvg({ eventName, tables, assignments });
-    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `seating-layout-${(eventName || 'event').replace(/[^a-z0-9-_]+/gi, '-').toLowerCase()}.svg`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  async function handleSaveVersion() {
-    if (!selectedEventId || !siteId || !seatingEvent) return;
-    const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
-    if (!isDemoMode) {
-      try {
-        const saved = await createSeatingVersion({
-          weddingSiteId: siteId,
-          seatingEventId: seatingEvent.id,
-          itineraryEventId: selectedEventId,
-          label: `${selectedEvent?.event_name ?? 'Layout'} v${versions.length + 1}`,
-          tables,
-          assignments,
-        });
-        setVersions((prev) => [saved, ...prev].slice(0, 12));
-        toast('Seating version saved for the team', 'success');
-      } catch {
-        toast('Couldn’t save that seating version. Please try again.', 'error');
-      }
-      return;
-    }
-
-    const nextVersion: SeatingLayoutVersion = {
-      id: `version-${Date.now()}`,
-      wedding_site_id: siteId,
-      seating_event_id: seatingEvent.id,
-      itinerary_event_id: selectedEventId,
-      label: `${selectedEvent?.event_name ?? 'Layout'} v${versions.length + 1}`,
-      created_at: new Date().toISOString(),
-      created_by: null,
-      restored_at: null,
-      tables,
-      assignments,
-    };
-    const allVersions = [nextVersion, ...readSeatingVersions().filter((version) => version.id !== nextVersion.id)].slice(0, 40);
-    writeSeatingVersions(allVersions);
-    setVersions(allVersions.filter((version) => version.itinerary_event_id === selectedEventId));
-    toast('Seating version saved on this device', 'success');
-  }
-
-  async function handleRestoreVersion(version: SeatingLayoutVersion) {
-    const confirmed = await requestConfirmation({
-      title: `Restore ${version.label}?`,
-      description: 'This replaces the current local layout view with the saved version. You can still apply changes after reviewing it.',
-      confirmLabel: 'Restore version',
-    });
-    if (!confirmed) return;
-    setTables(version.tables);
-    setAssignments(version.assignments);
-    if (isDemoMode && selectedEventId) {
-      writeDemoSeatingState(selectedEventId, version.tables, version.assignments);
-    } else {
-      try {
-        await markSeatingVersionRestored(version.id);
-      } catch {}
-    }
-    toast(isDemoMode ? 'Version restored locally.' : 'Version restored as a working copy. Apply changes to persist the live seating board.', 'success');
-  }
-
   const {
     arrivedCount,
     arrivedGuestIds,
@@ -719,6 +587,35 @@ export const DashboardSeating: React.FC = () => {
     itineraryEvents,
     selectedEventId,
     tables,
+  });
+  const {
+    handleExportCSV,
+    handleExportCateringCSV,
+    handleExportImage,
+    handleExportPDF,
+    handleExportPlaceCards,
+    handleExportTableSummaryCSV,
+    handlePrint,
+    handleRestoreVersion,
+    handleSaveVersion,
+  } = useSeatingDashboardArtifacts({
+    allGuests,
+    arrivedCount,
+    assignments,
+    cateringPacket,
+    counters,
+    isDemoMode,
+    itineraryEvents,
+    requestConfirmation,
+    selectedEventId,
+    seatingEvent,
+    setAssignments,
+    setTables,
+    setVersions,
+    siteId,
+    tables,
+    toast,
+    versions,
   });
 
   if (loading) {
