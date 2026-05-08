@@ -29,6 +29,7 @@ import {
   writeDemoStoredResponses,
 } from './rsvpDemoStorage';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
+import { buildRsvpLiveContentViewProps } from './buildRsvpLiveContentViewProps';
 import { callValidateRsvpToken } from './rsvpFunctionService';
 import { RsvpLiveContentView } from './RsvpLiveContentView';
 import { RsvpRouteView } from './RsvpRouteView';
@@ -1151,79 +1152,81 @@ export default function RSVP() {
 
   const liveContent = (
     <RsvpLiveContentView
-      activePredictionId={activePredictionId}
-      activePredictionIndex={activePredictionIndex}
-      allowedChildrenCount={allowedChildrenCount}
-      ambiguousGuests={ambiguousGuests}
-      applyToHousehold={applyToHousehold}
-      canSubmit={canSubmit}
-      childCountOptions={childCountOptions}
-      customAnswers={customAnswers}
-      deadlinePassed={deadlinePassed}
-      error={error}
-      existingRsvp={existingRsvp}
-      formData={formData}
-      formStep={formStep}
-      getQuestionLabel={getRsvpQuestionLabel}
-      goToNextFormStep={goToNextFormStep}
-      guest={guest}
-      guestDisplayName={guestDisplayName}
-      guestLabel={guestLabel}
-      guestPredictions={guestPredictions}
-      handleSubmit={handleSubmit}
-      householdGuests={householdGuests}
-      inheritedHouseholdMembers={inheritedHouseholdMembers}
-      invitedEvents={invitedEvents}
-      loading={loading}
-      mealConfig={mealConfig}
-      onActivePredictionIndexChange={setActivePredictionIndex}
-      onBack={() => {
-        invalidateActiveSubmit();
-        if (formStep > 1) {
+      {...buildRsvpLiveContentViewProps({
+        activePredictionId: activePredictionId,
+        activePredictionIndex: activePredictionIndex,
+        allowedChildrenCount: allowedChildrenCount,
+        ambiguousGuests: ambiguousGuests,
+        applyToHousehold: applyToHousehold,
+        canSubmit: canSubmit,
+        childCountOptions: childCountOptions,
+        customAnswers: customAnswers,
+        deadlinePassed: deadlinePassed,
+        error: error,
+        existingRsvp: existingRsvp,
+        formData: formData,
+        formStep: formStep,
+        getQuestionLabel: getRsvpQuestionLabel,
+        goToNextFormStep: goToNextFormStep,
+        guest: guest,
+        guestDisplayName: guestDisplayName,
+        guestLabel: guestLabel,
+        guestPredictions: guestPredictions,
+        handleSubmit: handleSubmit,
+        householdGuests: householdGuests,
+        inheritedHouseholdMembers: inheritedHouseholdMembers,
+        invitedEvents: invitedEvents,
+        loading: loading,
+        mealConfig: mealConfig,
+        onActivePredictionIndexChange: setActivePredictionIndex,
+        onBack: () => {
+          invalidateActiveSubmit();
+          if (formStep > 1) {
+            setError('');
+            setFormStep((formStep - 1) as 1 | 2 | 3);
+          } else {
+            resetToSearch(false);
+          }
+        },
+        onCancelLoading: () => {
+          if (loading) {
+            activeLookupRequestRef.current += 1;
+            setLoading(false);
+            setSubmitting(false);
+          }
           setError('');
-          setFormStep((formStep - 1) as 1 | 2 | 3);
-        } else {
+        },
+        onDone: () => {
+          if (guest) {
+            returnToLoadedRsvp();
+            return;
+          }
+          resetToSearch(true);
+        },
+        onHouseholdSelectionChange: updateSelectedHouseholdGuestIds,
+        onHouseholdToggle: updateApplyToHousehold,
+        onPickGuest: handlePickGuest,
+        onSearchAgain: () => { resetToSearch(false); },
+        onSearchSubmit: handleSearch,
+        onSearchValueChange: setSearchValue,
+        onStepAnswerChange: updateCustomAnswers,
+        onStepDataChange: updateFormData,
+        onSubmitAnother: () => {
           resetToSearch(false);
-        }
-      }}
-      onCancelLoading={() => {
-        if (loading) {
-          activeLookupRequestRef.current += 1;
-          setLoading(false);
-          setSubmitting(false);
-        }
-        setError('');
-      }}
-      onDone={() => {
-        if (guest) {
-          returnToLoadedRsvp();
-          return;
-        }
-        resetToSearch(true);
-      }}
-      onHouseholdSelectionChange={updateSelectedHouseholdGuestIds}
-      onHouseholdToggle={updateApplyToHousehold}
-      onPickGuest={handlePickGuest}
-      onSearchAgain={() => { resetToSearch(false); }}
-      onSearchSubmit={handleSearch}
-      onSearchValueChange={setSearchValue}
-      onStepAnswerChange={updateCustomAnswers}
-      onStepDataChange={updateFormData}
-      onSubmitAnother={() => {
-        resetToSearch(false);
-      }}
-      predictionListId={predictionListId}
-      rsvpDeadline={rsvpDeadline}
-      rsvpQuestions={rsvpQuestions}
-      rsvpSessionToken={rsvpSessionToken}
-      safeMusicPlaylistUrl={safeMusicPlaylistUrl}
-      searchHintId={searchHintId}
-      searchInputId={searchInputId}
-      searchValue={searchValue}
-      selectedHouseholdGuestIds={selectedHouseholdGuestIds}
-      step={step}
-      submitting={submitting}
-      t={t}
+        },
+        predictionListId: predictionListId,
+        rsvpDeadline: rsvpDeadline,
+        rsvpQuestions: rsvpQuestions,
+        rsvpSessionToken: rsvpSessionToken,
+        safeMusicPlaylistUrl: safeMusicPlaylistUrl,
+        searchHintId: searchHintId,
+        searchInputId: searchInputId,
+        searchValue: searchValue,
+        selectedHouseholdGuestIds: selectedHouseholdGuestIds,
+        step: step,
+        submitting: submitting,
+        t: t,
+      })}
     />
   );
 

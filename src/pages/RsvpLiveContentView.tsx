@@ -18,7 +18,7 @@ interface RsvpFormData {
   notes: string;
 }
 
-interface RsvpLiveContentViewProps {
+export interface RsvpLiveContentViewProps {
   activePredictionId?: string;
   activePredictionIndex: number;
   allowedChildrenCount: number;

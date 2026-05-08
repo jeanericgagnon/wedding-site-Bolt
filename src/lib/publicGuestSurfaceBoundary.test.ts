@@ -139,6 +139,7 @@ describe('public guest surface boundary', () => {
     expect(guestSubmissionService).toContain('/functions/v1/${name}');
 
     const rsvpPage = readSource('src/pages/RSVP.tsx');
+    const rsvpLiveContentProps = readSource('src/pages/buildRsvpLiveContentViewProps.ts');
     const rsvpLiveContentView = readSource('src/pages/RsvpLiveContentView.tsx');
     const rsvpTokenLoadingView = readSource('src/pages/RsvpTokenLoadingView.tsx');
     const rsvpFlowView = readSource('src/pages/RsvpFlowView.tsx');
@@ -153,9 +154,12 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain("from './RsvpRouteView'");
     expect(rsvpPage).toContain("from './RsvpLiveContentView'");
     expect(rsvpPage).toContain("from './RsvpTokenLoadingView'");
+    expect(rsvpPage).toContain("from './buildRsvpLiveContentViewProps'");
     expect(rsvpPage).toContain('<RsvpRouteView');
     expect(rsvpPage).toContain('<RsvpLiveContentView');
     expect(rsvpPage).toContain('<RsvpTokenLoadingView');
+    expect(rsvpPage).toContain('{...buildRsvpLiveContentViewProps({');
+    expect(rsvpLiveContentProps).toContain('return props;');
     expect(rsvpPage).toContain("from './rsvpFunctionService'");
     expect(rsvpPage).toContain("callValidateRsvpToken({ action: 'lookup', searchValue: searchValue.trim() })");
     expect(rsvpPage).toContain("callValidateRsvpToken({ action: 'lookup_guest', guestId: picked.id, rsvpSession: rsvpSessionToken })");

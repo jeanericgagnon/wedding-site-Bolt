@@ -7516,6 +7516,22 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 10:37 PM PT No-Deploy RSVP Live Content Prop Helper Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its large `RsvpLiveContentView` prop bundle through `src/pages/buildRsvpLiveContentViewProps.ts`.
+  - That shared helper now owns the live-content prop assembly seam while the page keeps lookup state, continuity behavior, and submit orchestration local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `buildRsvpLiveContentViewProps(...)` so the main RSVP page keeps routing through the dedicated prop-assembly helper.
+  - `src/pages/RSVP.tsx` moved from 1237 lines to 1240 lines in this batch, while `src/pages/buildRsvpLiveContentViewProps.ts` came in at 7 lines, so this was an ownership cleanup rather than a size reduction.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 9:54 PM PT No-Deploy Event Recap Live Content Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
