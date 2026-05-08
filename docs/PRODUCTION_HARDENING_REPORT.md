@@ -4489,3 +4489,19 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `GuestbookSubmit` without changing guest-facing behavior. No deploy was run.
+
+## 2026-05-07 9:50 PM PT No-Deploy Event Hub Live Content Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/EventHub.tsx` now routes its full guest hub live-content shell through `src/pages/EventHubLiveContent.tsx`.
+  - That shared guest-facing live-content component now owns the hero, enabled action cards, travel guest path, save-link notice, hub-details board, and recap opt-in form while the page keeps slug normalization, config loading, access headers, tracking, and opt-in transport local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/EventHub.test.tsx` now pin `EventHubLiveContent` so the event hub page keeps routing through the dedicated live-content shell.
+  - `src/pages/EventHub.tsx` dropped from 524 lines to 269 lines in this batch, while `src/pages/EventHubLiveContent.tsx` came in at 280 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/EventHub.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts src/pages/guestHubPublicService.test.ts`: PASS, 19/19.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `EventHub` without changing guest-facing behavior. No deploy was run.

@@ -2105,3 +2105,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/GuestbookSubmit.test.ts` now pin `GuestbookSubmitFormPanel` so the guestbook page keeps routing through the shared form shell.
   - Validation passed: `npm test -- --run src/pages/GuestbookSubmit.test.ts src/lib/publicGuestSurfaceBoundary.test.ts` (8/8), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 public-surface oversized-file risk in `GuestbookSubmit` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 9:50 PM PT - No-deploy event hub live-content extraction:
+  - Resolved in this batch: moved the guest hub’s full live-content shell out of `src/pages/EventHub.tsx` and behind `src/pages/EventHubLiveContent.tsx`.
+  - Data-boundary hardening: `EventHub.tsx` now hands off the hero, enabled action list, travel guest path, save-link notice, hub-details board, and recap opt-in form through one higher-level live-content component instead of owning that guest-facing shell inline.
+  - File-size movement: `EventHub.tsx` dropped from 524 lines to 269 lines in this continuation batch while `src/pages/EventHubLiveContent.tsx` came in at 280 lines.
+  - No feature loss: gated guest-hub config loading, view/click tracking, action routing, travel guest path, day-of readiness copy, and recap opt-in behavior preserve the current guest behavior while shrinking page-owned public-surface composition.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/EventHub.test.tsx` now pin `EventHubLiveContent` so the event hub page keeps routing through the shared live-content shell.
+  - Validation passed: `npm test -- --run src/pages/EventHub.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts src/pages/guestHubPublicService.test.ts` (19/19), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 public-surface oversized-file risk in `EventHub` without changing guest-facing behavior. No deploy was run.

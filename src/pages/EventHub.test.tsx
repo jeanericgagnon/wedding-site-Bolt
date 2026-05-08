@@ -82,18 +82,20 @@ describe('shouldOpenHubDetailsByDefault', () => {
 });
 
 describe('event hub page boundary', () => {
-  it('routes missing-slug and config-status shells through dedicated components', () => {
+  it('routes missing-slug, config-status, and live-content shells through dedicated components', () => {
     const page = readFileSync(join(process.cwd(), 'src/pages/EventHub.tsx'), 'utf8');
     const routeView = readFileSync(join(process.cwd(), 'src/pages/EventHubRouteView.tsx'), 'utf8');
-    const statusCard = readFileSync(join(process.cwd(), 'src/pages/EventHubConfigStatusCard.tsx'), 'utf8');
+    const liveContent = readFileSync(join(process.cwd(), 'src/pages/EventHubLiveContent.tsx'), 'utf8');
 
     expect(page).toContain("from './EventHubRouteView'");
-    expect(page).toContain("from './EventHubConfigStatusCard'");
+    expect(page).toContain("from './EventHubLiveContent'");
     expect(page).toContain('<EventHubRouteView');
-    expect(page).toContain('<EventHubConfigStatusCard');
+    expect(page).toContain('<EventHubLiveContent');
     expect(page).not.toContain('if (!slug) {');
     expect(routeView).toContain('if (!hasSlug) return <>{missingSlugView}</>;');
-    expect(statusCard).toContain("if (status === 'ready') return null;");
-    expect(statusCard).toContain("status === 'loading' ? 'Loading the latest wedding details' : 'Showing the saved guest hub'");
+    expect(liveContent).toContain("from './EventHubConfigStatusCard'");
+    expect(liveContent).toContain('<EventHubConfigStatusCard');
+    expect(liveContent).toContain("Travel guest path");
+    expect(liveContent).toContain("Hub details");
   });
 });

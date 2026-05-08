@@ -47,17 +47,20 @@ describe('public guest surface boundary', () => {
     expect(siteViewService).toContain("supabase.functions.invoke('public-registry-items'");
 
     const eventHub = readSource('src/pages/EventHub.tsx');
+    const eventHubLiveContent = readSource('src/pages/EventHubLiveContent.tsx');
     const guestHubService = readSource('src/pages/guestHubPublicService.ts');
     expect(eventHub).toContain("from './EventHubRouteView'");
-    expect(eventHub).toContain("from './EventHubConfigStatusCard'");
+    expect(eventHub).toContain("from './EventHubLiveContent'");
     expect(eventHub).toContain("from './guestHubPublicService'");
     expect(eventHub).toContain('<EventHubRouteView');
-    expect(eventHub).toContain('<EventHubConfigStatusCard');
+    expect(eventHub).toContain('<EventHubLiveContent');
     expect(eventHub).toContain('fetchGuestHubConfig<');
     expect(eventHub).toContain("trackGuestHubEvent(slug, 'view', '/event'");
     expect(eventHub).toContain('submitGuestHubProspect(');
     expect(eventHub).toContain('buildGuestHubAccessPayload(slug, searchParams)');
     expect(eventHub).not.toContain('if (!slug) {');
+    expect(eventHubLiveContent).toContain("from './EventHubConfigStatusCard'");
+    expect(eventHubLiveContent).toContain("Travel guest path");
     expect(guestHubService).toContain('/functions/v1/guest-hub-config?site=');
     expect(guestHubService).toContain('/functions/v1/guest-hub-track');
     expect(guestHubService).toContain('/functions/v1/guest-prospect-submit');
