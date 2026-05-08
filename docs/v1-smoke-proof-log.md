@@ -7404,6 +7404,22 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-08 01:22 AM PT No-Deploy Settings Experience Action Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Settings.tsx` now routes RSVP settings saves, notification preference saves, billing checkout launch, and template regeneration/switching through `src/pages/dashboard/settings/useSettingsExperienceActions.ts`.
+  - That hook now owns the repeated RSVP validation/persistence flow, notification preference writes, checkout-session redirect choreography, template regeneration/remap path, and customer-safe success/error handling while the page keeps the settings shell and panel composition.
+  - `src/pages/dashboard/settings/settingsSiteData.test.ts` and `src/lib/settingsErrorSafety.test.ts` now pin `useSettingsExperienceActions({ ... })` plus its RSVP, notification, billing, and template-change contract.
+  - `src/pages/dashboard/Settings.tsx` dropped from 1004 lines to 883 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts`: PASS, 17/17.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 12:05 AM PT No-Deploy RSVP Guest-Lookup Transport Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

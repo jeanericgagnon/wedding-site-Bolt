@@ -4,12 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Inpu
 import { Loader2 } from 'lucide-react';
 import { getSiteVisibilityState, getVisibilityModeOptions } from '../../lib/siteVisibilityState';
 import { getAllTemplates } from '../../templates/registry';
-import { WeddingDataV1 } from '../../types/weddingData';
-import { LayoutConfigV1 } from '../../types/layoutConfig';
-import { regenerateLayout } from '../../lib/generateInitialLayout';
-import { fromExistingLayoutToBuilderProject } from '../../builder/adapters/layoutAdapter';
-import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
-import { fetchBillingInfo, createSubscriptionSession, type BillingInfo } from '../../lib/stripeService';
+import { fetchBillingInfo, type BillingInfo } from '../../lib/stripeService';
 import { useAuth } from '../../hooks/useAuth';
 import { PLANNER_ROLE_OPTIONS, getPlannerPermissionPreset, readPlannerInvite, type PlannerAccessRole, type PlannerInviteRecord, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
@@ -24,7 +19,6 @@ import {
 import {
   loadSettingsCollaboratorInvites,
   loadSettingsSite,
-  loadSettingsTemplateChangeSite,
   loadSettingsTranslationStatuses,
   requireSettingsAuthenticatedUser,
   updateSettingsAccountPassword,
@@ -42,7 +36,6 @@ import {
 } from './settings/settingsDashboardTypes';
 import {
   SETTINGS_SITE_MISSING_COPY,
-  cleanRsvpSettings,
   formatTranslationStatusDate,
   makeQuestion,
   normalizeMealOptions,
@@ -50,7 +43,7 @@ import {
   safeSettingsError,
   splitCoupleNames,
 } from './settings/settingsDashboardUtils';
-import { readDemoRsvpSettings, writeDemoRsvpSettings } from './settings/settingsDemoStorage';
+import { readDemoRsvpSettings } from './settings/settingsDemoStorage';
 import { SettingsAccountPanel } from './settings/SettingsAccountPanel';
 import { SettingsBillingPanel } from './settings/SettingsBillingPanel';
 import { SettingsIdentityExportsPanel } from './settings/SettingsIdentityExportsPanel';
@@ -64,6 +57,7 @@ import { SettingsTemplatePanel } from './settings/SettingsTemplatePanel';
 import { SettingsTeamAccessPanel } from './settings/SettingsTeamAccessPanel';
 import { SettingsDashboardShell } from './settings/SettingsDashboardShell';
 import { useSettingsSiteAccessActions } from './settings/useSettingsSiteAccessActions';
+import { useSettingsExperienceActions } from './settings/useSettingsExperienceActions';
 
 const useDraftHydrationGuard = (clearStatus: () => void) => {
   const dirtyRef = useRef(false);
@@ -550,159 +544,44 @@ export const DashboardSettings: React.FC = () => {
     setWeddingSiteId,
   });
 
-  const saveRsvpSettings = async () => {
-    setRsvpQuestionsSaving(true);
-    setRsvpQuestionsSuccess(null);
-    setRsvpQuestionsError(null);
-
-    try {
-      const { cleanedQuestions, cleanedMealOptions, validationError } = cleanRsvpSettings({
-        questions: rsvpQuestions,
-        mealEnabled: rsvpMealEnabled,
-        mealOptions: rsvpMealOptions,
-      });
-      if (validationError) {
-        setRsvpQuestionsError(validationError);
-        return;
-      }
-
-      let targetSiteId = weddingSiteId;
-      if (!targetSiteId && user?.id) {
-        const activeSite = await resolveActiveSiteForUser(user.id);
-        targetSiteId = activeSite?.id ?? null;
-        if (targetSiteId) setWeddingSiteId(targetSiteId);
-      }
-
-      if (!targetSiteId) {
-        if (isDemoMode) {
-          writeDemoRsvpSettings({ questions: cleanedQuestions, mealEnabled: rsvpMealEnabled, mealOptions: cleanedMealOptions });
-          setRsvpQuestions(cleanedQuestions);
-          setRsvpQuestionsSuccess('RSVP settings saved (demo).');
-          return;
-        }
-
-        setRsvpQuestionsError(SETTINGS_SITE_MISSING_COPY);
-        return;
-      }
-
-      await updateSettingsSite(targetSiteId, {
-        rsvp_custom_questions: cleanedQuestions,
-        rsvp_meal_config: { enabled: rsvpMealEnabled, options: cleanedMealOptions },
-      });
-      setRsvpQuestions(cleanedQuestions);
-      setRsvpMealOptions(cleanedMealOptions);
-      rsvpDraftGuard.markSaved();
-      logSettingsAction('rsvp_settings_saved', 'RSVP custom questions and meal settings were updated.', {
-        customQuestionCount: cleanedQuestions.length,
-        mealEnabled: rsvpMealEnabled,
-        mealOptionCount: cleanedMealOptions.length,
-      }, targetSiteId, 'RSVP settings', targetSiteId);
-      setRsvpQuestionsSuccess('RSVP settings saved.');
-    } catch (err) {
-      setRsvpQuestionsError(safeSettingsError(err, 'Couldn’t save RSVP questions.'));
-    } finally {
-      setRsvpQuestionsSaving(false);
-    }
-  };
-
-  const handleSaveRsvpQuestions = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await saveRsvpSettings();
-  };
-
-  const handleSaveNotifications = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setNotifSaving(true);
-    setNotifError(null);
-    setNotifSuccess(null);
-    try {
-      const targetSiteId = await resolveSettingsSiteId();
-      if (!targetSiteId) {
-        setNotifError(SETTINGS_SITE_MISSING_COPY);
-        return;
-      }
-
-      await updateSettingsSite(targetSiteId, {
-        notification_prefs: { rsvp: notifRsvp, photos: notifPhotos, digest: notifDigest, updates: notifUpdates },
-      });
-      notifDraftGuard.markSaved();
-      logSettingsAction('notification_preferences_saved', 'Notification preferences were updated.', {
-        rsvp: notifRsvp,
-        photos: notifPhotos,
-        digest: notifDigest,
-        updates: notifUpdates,
-      }, targetSiteId, 'Notification preferences', targetSiteId);
-      setNotifSuccess('Preferences saved.');
-    } catch (err) {
-      setNotifError(safeSettingsError(err, 'Couldn’t save preferences.'));
-    } finally {
-      setNotifSaving(false);
-    }
-  };
-
-  const handleSubscribe = async () => {
-    if (!billingInfo) return;
-    setSubscribeLoading(true);
-    setSubscribeError(null);
-    try {
-      const origin = window.location.origin;
-      const url = await createSubscriptionSession(
-        billingInfo.wedding_site_id,
-        `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-        `${origin}/dashboard/settings?tab=billing&canceled=1`
-      );
-      void logAppAction({
-        weddingSiteId: billingInfo.wedding_site_id,
-        area: 'billing',
-        type: 'subscription_checkout_started',
-        summary: 'Subscription checkout was started.',
-        targetId: billingInfo.wedding_site_id,
-        targetLabel: 'Subscription checkout',
-        metadata: {
-          currentPaymentStatus: billingInfo.payment_status,
-          currentBillingType: billingInfo.billing_type,
-        },
-      });
-      window.location.href = url;
-    } catch (err) {
-      setSubscribeError(safeSettingsError(err, 'Couldn’t start checkout right now.'));
-      setSubscribeLoading(false);
-    }
-  };
-
-  const handleTemplateChange = async (newTemplateId: string) => {
-    if (!weddingSiteId) return;
-    setChangingTemplate(true);
-    setTemplateError(null);
-    setTemplateSuccess(null);
-    try {
-      const data = await loadSettingsTemplateChangeSite(weddingSiteId);
-      if (!data) throw new Error(SETTINGS_SITE_MISSING_COPY);
-
-      const weddingData = data.wedding_data as WeddingDataV1;
-      const currentLayout = data.layout_config as LayoutConfigV1;
-      const newLayout = regenerateLayout(newTemplateId, weddingData, currentLayout);
-      const rebuiltProject = fromExistingLayoutToBuilderProject(weddingSiteId, newLayout);
-      const aiDraft = ((((data.wedding_data as Record<string, unknown> | null)?.meta as Record<string, unknown> | undefined)?.aiDraft as import('../../lib/aiDraftGenerator').DraftGenerationResult | undefined) ?? null);
-      const aiContent = ((((data.wedding_data as Record<string, unknown> | null)?.meta as Record<string, unknown> | undefined)?.aiContent as import('../../lib/aiCanonicalContent').AiCanonicalSectionContent | undefined) ?? null);
-      const photoBuckets = ((((data.wedding_data as Record<string, unknown> | null)?.meta as Record<string, unknown> | undefined)?.photoBuckets as import('../../lib/aiPhotoBuckets').CanonicalPhotoBuckets | undefined) ?? null);
-      const remappedSiteJson = aiDraft
-        ? mergeGeneratedDraftIntoBuilderProject(rebuiltProject as unknown as Record<string, unknown>, aiDraft, aiContent, photoBuckets)
-        : rebuiltProject;
-
-      await updateSettingsSite(weddingSiteId, { active_template_id: newTemplateId, layout_config: newLayout, site_json: remappedSiteJson });
-      setCurrentTemplate(newTemplateId);
-      logSettingsAction('template_changed', 'Site template was changed.', {
-        templateId: newTemplateId,
-        preservedContent: true,
-      }, weddingSiteId, newTemplateId, weddingSiteId);
-      setTemplateSuccess('Template changed successfully. Your content has been preserved.');
-    } catch (err: unknown) {
-      setTemplateError(safeSettingsError(err, 'Couldn’t change design.'));
-    } finally {
-      setChangingTemplate(false);
-    }
-  };
+  const {
+    handleSaveNotifications,
+    handleSaveRsvpQuestions,
+    handleSubscribe,
+    handleTemplateChange,
+    saveRsvpSettings,
+  } = useSettingsExperienceActions({
+    userId: user?.id,
+    isDemoMode,
+    weddingSiteId,
+    rsvpQuestions,
+    rsvpMealEnabled,
+    rsvpMealOptions,
+    notifRsvp,
+    notifPhotos,
+    notifDigest,
+    notifUpdates,
+    billingInfo,
+    resolveSettingsSiteId,
+    logSettingsAction,
+    rsvpDraftGuard,
+    notifDraftGuard,
+    setWeddingSiteId,
+    setRsvpQuestions,
+    setRsvpMealOptions,
+    setRsvpQuestionsSaving,
+    setRsvpQuestionsSuccess,
+    setRsvpQuestionsError,
+    setNotifSaving,
+    setNotifSuccess,
+    setNotifError,
+    setSubscribeLoading,
+    setSubscribeError,
+    setChangingTemplate,
+    setTemplateError,
+    setTemplateSuccess,
+    setCurrentTemplate,
+  });
 
   const tabs = getSettingsTabs(settingsRole);
   return (

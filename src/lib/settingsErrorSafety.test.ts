@@ -7,6 +7,10 @@ const settingsSiteAccessActionsSource = () => readFileSync(
   join(process.cwd(), 'src/pages/dashboard/settings/useSettingsSiteAccessActions.ts'),
   'utf8',
 );
+const settingsExperienceActionsSource = () => readFileSync(
+  join(process.cwd(), 'src/pages/dashboard/settings/useSettingsExperienceActions.ts'),
+  'utf8',
+);
 const customerSafeErrorSource = () => readFileSync(join(process.cwd(), 'src/lib/customerSafeError.ts'), 'utf8');
 const settingsSiteDataSource = () => readFileSync(join(process.cwd(), 'src/pages/dashboard/settings/settingsSiteData.ts'), 'utf8');
 
@@ -14,11 +18,17 @@ describe('settings error safety', () => {
   it('does not render raw billing or planner invite exception messages directly', () => {
     const source = settingsSource();
     const actionsSource = settingsSiteAccessActionsSource();
+    const experienceSource = settingsExperienceActionsSource();
 
     expect(source).toContain("setBillingError(safeSettingsError(err, 'Couldn’t load billing right now.'))");
+    expect(experienceSource).toContain("setSubscribeError(safeSettingsError(err, 'Couldn’t start checkout right now.'))");
+    expect(experienceSource).toContain("setTemplateError(safeSettingsError(err, 'Couldn’t change design.'))");
+    expect(experienceSource).toContain("setRsvpQuestionsError(safeSettingsError(err, 'Couldn’t save RSVP questions.'))");
+    expect(experienceSource).toContain("setNotifError(safeSettingsError(err, 'Couldn’t save preferences.'))");
     expect(actionsSource).toContain("setPlannerInviteError(safeSettingsError(err, 'Couldn’t save planner invite.'))");
     expect(actionsSource).toContain("setPlannerInviteError(safeSettingsError(err, 'Couldn’t remove planner invite.'))");
     expect(source).not.toContain('.catch(err => setBillingError(err.message))');
+    expect(experienceSource).not.toContain("setSubscribeError(err instanceof Error ? err.message : 'Couldn’t start checkout right now.')");
     expect(actionsSource).not.toContain("setPlannerInviteError(err instanceof Error ? err.message : 'Couldn’t save planner invite.')");
     expect(actionsSource).not.toContain("setPlannerInviteError(err instanceof Error ? err.message : 'Couldn’t remove planner invite.')");
   });
@@ -41,6 +51,7 @@ describe('settings error safety', () => {
     const source = settingsSiteDataSource();
     const pageSource = settingsSource();
     const actionsSource = settingsSiteAccessActionsSource();
+    const experienceSource = settingsExperienceActionsSource();
     const selectMatch = source.match(/export const SETTINGS_SITE_SELECT = \[([\s\S]*?)\]\.join/);
     expect(selectMatch?.[1]).toBeTruthy();
     const selectedColumns = new Set(
@@ -73,8 +84,9 @@ describe('settings error safety', () => {
     expect(actionsSource).toContain('hashSettingsSitePassword(sitePassword)');
     expect(actionsSource).toContain('generateSettingsSecureToken()');
     expect(actionsSource).toContain('translateSettingsSiteContent(targetSiteId, language)');
-    expect(pageSource).toContain('updateSettingsSite(targetSiteId');
-    expect(pageSource).toContain('rsvp_custom_questions: cleaned');
-    expect(pageSource).toContain('notification_prefs: { rsvp: notifRsvp');
+    expect(pageSource).toContain('useSettingsExperienceActions({');
+    expect(experienceSource).toContain('updateSettingsSite(targetSiteId');
+    expect(experienceSource).toContain('rsvp_custom_questions: cleanedQuestions');
+    expect(experienceSource).toContain('notification_prefs: { rsvp: notifRsvp');
   });
 });
