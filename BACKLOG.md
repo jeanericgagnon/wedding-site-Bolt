@@ -2121,3 +2121,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/EventRecap.test.tsx` now pin `EventRecapLiveContent` so the recap page keeps routing through the shared live-content shell.
   - Validation passed: `npm test -- --run src/pages/EventRecap.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts src/pages/guestHubPublicService.test.ts` (18/18), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 public-surface oversized-file risk in `EventRecap` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 10:03 PM PT - No-deploy event RSVP live-content extraction:
+  - Resolved in this batch: moved the event RSVP page’s full guest-facing live-content shell out of `src/pages/EventRSVP.tsx` and behind `src/pages/EventRsvpLiveContent.tsx`.
+  - Data-boundary hardening: `EventRSVP.tsx` now hands off the invitation list shell, event metadata rows, RSVP badge state, empty-state card, and event RSVP CTA stack through one higher-level live-content component instead of owning that guest-facing surface inline.
+  - File-size movement: `EventRSVP.tsx` dropped from 845 lines to 730 lines in this continuation batch while `src/pages/EventRsvpLiveContent.tsx` came in at 172 lines.
+  - No feature loss: token lookup, continuity refresh behavior, modal RSVP editor, session-backed submit flow, and guest-safe invalid-link handling preserve the current guest behavior while shrinking page-owned public-surface composition.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/EventRSVP.test.tsx` now pin `EventRsvpLiveContent` so the event RSVP page keeps routing through the shared live-content shell.
+  - Validation passed: `npm test -- --run src/pages/EventRSVP.test.tsx src/pages/rsvpFunctionService.test.ts src/lib/publicGuestSurfaceBoundary.test.ts` (10/10), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 public-surface oversized-file risk in `EventRSVP` without changing guest-facing behavior. No deploy was run.

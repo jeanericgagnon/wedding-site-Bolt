@@ -234,10 +234,15 @@ describe('EventRSVP secure flow', () => {
   it('routes loading and invalid-link shells through a dedicated route view', async () => {
     const page = readFileSync(join(process.cwd(), 'src/pages/EventRSVP.tsx'), 'utf8');
     const routeView = readFileSync(join(process.cwd(), 'src/pages/EventRsvpRouteView.tsx'), 'utf8');
+    const liveContent = readFileSync(join(process.cwd(), 'src/pages/EventRsvpLiveContent.tsx'), 'utf8');
 
     expect(page).toContain("from './EventRsvpRouteView'");
+    expect(page).toContain("from './EventRsvpLiveContent'");
     expect(page).toContain('<EventRsvpRouteView');
+    expect(page).toContain('<EventRsvpLiveContent');
     expect(routeView).toContain('if (loading) return <>{loadingView}</>;');
     expect(routeView).toContain('if (error) return <>{errorView}</>;');
+    expect(liveContent).toContain('Hello, {guestName}!');
+    expect(liveContent).toContain('No additional events found for your invitation.');
   });
 });

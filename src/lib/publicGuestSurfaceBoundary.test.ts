@@ -140,6 +140,7 @@ describe('public guest surface boundary', () => {
 
     const rsvpPage = readSource('src/pages/RSVP.tsx');
     const eventRsvpPage = readSource('src/pages/EventRSVP.tsx');
+    const eventRsvpLiveContent = readSource('src/pages/EventRsvpLiveContent.tsx');
     const rsvpFunctionService = readSource('src/pages/rsvpFunctionService.ts');
     const rsvpRouteView = readSource('src/pages/RsvpRouteView.tsx');
     expect(rsvpPage).toContain("from './RsvpRouteView'");
@@ -151,9 +152,13 @@ describe('public guest surface boundary', () => {
     expect(rsvpRouteView).toContain('if (tokenAutoLoading) return <>{tokenAutoLoadingView}</>;');
     expect(eventRsvpPage).toContain("from './rsvpFunctionService'");
     expect(eventRsvpPage).toContain("from './EventRsvpRouteView'");
+    expect(eventRsvpPage).toContain("from './EventRsvpLiveContent'");
     expect(eventRsvpPage).toContain('const CAN_USE_EVENT_RSVP_FUNCTION = hasRsvpFunctionRuntime()');
     expect(eventRsvpPage).toContain('<EventRsvpRouteView');
+    expect(eventRsvpPage).toContain('<EventRsvpLiveContent');
     expect(eventRsvpPage).toContain("callValidateRsvpToken<Record<string, unknown>>({");
+    expect(eventRsvpLiveContent).toContain('Hello, {guestName}!');
+    expect(eventRsvpLiveContent).toContain('No additional events found for your invitation.');
     expect(rsvpFunctionService).toContain('/functions/v1/validate-rsvp-token');
 
     const rsvpSection = readSource('src/sections/components/RsvpSection.tsx');

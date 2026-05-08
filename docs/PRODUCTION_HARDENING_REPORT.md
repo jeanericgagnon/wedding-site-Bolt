@@ -4521,3 +4521,20 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `EventRecap` without changing guest-facing behavior. No deploy was run.
+
+## 2026-05-07 10:03 PM PT No-Deploy Event RSVP Live Content Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/EventRSVP.tsx` now routes its full guest-facing live-content shell through `src/pages/EventRsvpLiveContent.tsx`.
+  - That shared guest-facing live-content component now owns the invitation list shell, event metadata rows, RSVP badge state, empty-state card, and event RSVP CTA stack while the page keeps token lookup, continuity refresh behavior, modal RSVP editing, and session-backed submit transport local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/EventRSVP.test.tsx` now pin `EventRsvpLiveContent` so the event RSVP page keeps routing through the dedicated live-content shell.
+  - `src/pages/EventRSVP.tsx` dropped from 845 lines to 730 lines in this batch, while `src/pages/EventRsvpLiveContent.tsx` came in at 172 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/EventRSVP.test.tsx src/pages/rsvpFunctionService.test.ts src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 10/10.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `EventRSVP` without changing guest-facing behavior. No deploy was run.
