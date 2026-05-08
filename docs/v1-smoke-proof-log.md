@@ -7388,6 +7388,21 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 9:39 PM PT No-Deploy Photo Upload Status Panel Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/PhotoUpload.tsx` now routes its upload feedback slab through `src/pages/PhotoUploadStatusPanel.tsx`.
+  - That shared guest-facing status panel now owns upload error copy, success copy, recap/back-to-hub CTAs, create-your-own CTA, and uploaded/failed filename summaries while the page keeps runtime gating, prospect opt-in, file capture, and submit flow local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/PhotoUpload.test.ts` now pin `PhotoUploadStatusPanel` so the photo upload page keeps routing through the dedicated feedback shell.
+  - `src/pages/PhotoUpload.tsx` dropped from 392 lines to 342 lines in this batch, while `src/pages/PhotoUploadStatusPanel.tsx` came in at 55 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/PhotoUpload.test.ts src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 9/9.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 9:35 PM PT No-Deploy RSVP Route Shell Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

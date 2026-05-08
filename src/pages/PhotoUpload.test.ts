@@ -1,6 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildPhotoUploadAccessPayload, mapUploadError, PhotoUpload, safePhotoUploadMessage } from './PhotoUpload';
 
 vi.mock('react-i18next', () => ({
@@ -39,6 +40,11 @@ vi.mock('../components/ui/LanguageSwitcher', () => ({
   LanguageSwitcher: () => React.createElement('div', { 'data-testid': 'language-switcher' }),
 }));
 
+afterEach(() => {
+  sessionStorage.clear();
+  window.history.replaceState({}, '', '/');
+});
+
 describe('photo upload guest error copy', () => {
   it('packages invite and password artifacts for gated site photo uploads', () => {
     sessionStorage.setItem('dayof_invite_token_ericandkaras', 'stored-invite');
@@ -55,6 +61,7 @@ describe('photo upload guest error copy', () => {
     expect(mapUploadError('INVALID_TOKEN')).toBe('This upload link is invalid. Ask the couple for a fresh link.');
     expect(mapUploadError('DRIVE_RECONNECT_REQUIRED')).toBe('Uploads are available here. Please refresh and try again.');
     expect(mapUploadError('UNSUPPORTED_FILE_TYPE')).toBe('Please upload photos or videos only.');
+    expect(mapUploadError('FILE_TOO_LARGE', 'storage bucket policy denied token')).toBe('Your upload exceeds the allowed limits.');
   });
 
   it('does not pass raw backend upload errors through to guests', () => {
@@ -64,6 +71,24 @@ describe('photo upload guest error copy', () => {
 
   it('keeps known guest-safe upload messages', () => {
     expect(safePhotoUploadMessage('This album is closed for uploads.')).toBe('This album is closed for uploads.');
+  });
+
+  it('forwards gated access artifacts to the guest prospect opt-in follow-up', () => {
+    const source = readFileSync('src/pages/PhotoUpload.tsx', 'utf8');
+
+    expect(source).toContain("const access = siteSlug ? buildPhotoUploadAccessPayload(siteSlug) : null;");
+    expect(source).toContain("...(access ?? {}),");
+    expect(source).toContain("uploadToken: token.trim() || null,");
+  });
+
+  it('routes upload feedback and post-upload CTAs through the shared status panel', () => {
+    const source = readFileSync('src/pages/PhotoUpload.tsx', 'utf8');
+    const statusPanel = readFileSync('src/pages/PhotoUploadStatusPanel.tsx', 'utf8');
+
+    expect(source).toContain("from './PhotoUploadStatusPanel'");
+    expect(source).toContain('<PhotoUploadStatusPanel');
+    expect(statusPanel).toContain("href={`/event/${encodeURIComponent(siteSlug)}/recap`}");
+    expect(statusPanel).toContain('href="/signup"');
   });
 
   it('connects the file chooser to upload limits and live selected-file status', () => {

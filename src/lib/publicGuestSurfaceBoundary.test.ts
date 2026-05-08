@@ -75,11 +75,15 @@ describe('public guest surface boundary', () => {
     expect(guestHubService).toContain('/functions/v1/guest-recap-config?site=');
 
     const photoUpload = readSource('src/pages/PhotoUpload.tsx');
+    const photoUploadStatusPanel = readSource('src/pages/PhotoUploadStatusPanel.tsx');
     const guestSubmissionService = readSource('src/pages/guestPublicSubmissionService.ts');
+    expect(photoUpload).toContain("from './PhotoUploadStatusPanel'");
+    expect(photoUpload).toContain('<PhotoUploadStatusPanel');
     expect(photoUpload).toContain("from './guestPublicSubmissionService'");
     expect(photoUpload).toContain('uploadGuestPhotos(form)');
     expect(photoUpload).toContain('submitGuestHubProspect(');
     expect(photoUpload).toContain('buildPhotoUploadAccessPayload(siteSlug)');
+    expect(photoUploadStatusPanel).toContain("href={`/event/${encodeURIComponent(siteSlug)}/recap`}");
     expect(guestSubmissionService).toContain('/functions/v1/photo-upload');
     expect(guestHubService).toContain('/functions/v1/guest-prospect-submit');
 

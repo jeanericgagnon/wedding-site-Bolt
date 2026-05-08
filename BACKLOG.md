@@ -2081,3 +2081,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpRouteView` so the RSVP page keeps routing through the shared route shell instead of hand-owning the token-loading split.
   - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 public-surface route risk in `RSVP` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 9:39 PM PT - No-deploy photo upload status-panel extraction:
+  - Resolved in this batch: moved the guest photo upload feedback slab out of `src/pages/PhotoUpload.tsx` and behind `src/pages/PhotoUploadStatusPanel.tsx`.
+  - Data-boundary hardening: `PhotoUpload.tsx` now routes its upload error state, success message, hub recap/back CTA pair, create-your-own CTA, and uploaded/failed filename lists through one higher-level status panel instead of owning that guest-facing state stack inline.
+  - File-size movement: `PhotoUpload.tsx` dropped from 392 lines to 342 lines in this continuation batch while `src/pages/PhotoUploadStatusPanel.tsx` came in at 55 lines.
+  - No feature loss: upload runtime gating, guest prospect follow-up opt-in, file chooser status, upload submit flow, and post-upload recap/hub links preserve the current guest behavior while shrinking page-owned public-surface composition.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/PhotoUpload.test.ts` now pin `PhotoUploadStatusPanel` so the photo upload page keeps routing through the shared guest feedback shell.
+  - Validation passed: `npm test -- --run src/pages/PhotoUpload.test.ts src/lib/publicGuestSurfaceBoundary.test.ts` (9/9), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 public-surface oversized-file risk in `PhotoUpload` without changing guest-facing behavior. No deploy was run.
