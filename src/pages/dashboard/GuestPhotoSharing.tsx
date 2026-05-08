@@ -61,6 +61,7 @@ import { useGuestPhotoAiActions } from './guestPhotos/useGuestPhotoAiActions';
 import { buildGuestPhotoDashboardLiveContentProps } from './guestPhotos/buildGuestPhotoDashboardLiveContentProps';
 import { useGuestPhotoAlbumActions } from './guestPhotos/useGuestPhotoAlbumActions';
 import { buildGuestPhotoDashboardDerivedState } from './guestPhotos/buildGuestPhotoDashboardDerivedState';
+import { useGuestPhotoHubActions } from './guestPhotos/useGuestPhotoHubActions';
 import { useGuestPhotoModerationActions } from './guestPhotos/useGuestPhotoModerationActions';
 import { useGuestPhotoExportActions } from './guestPhotos/useGuestPhotoExportActions';
 import { useGuestPhotoDashboardData } from './guestPhotos/useGuestPhotoDashboardData';
@@ -90,8 +91,6 @@ export const GuestPhotoSharing: React.FC = () => {
   const [guestbookEntries, setGuestbookEntries] = useState<GuestbookEntryRow[]>([]);
   const [guestProspects, setGuestProspects] = useState<GuestProspectOptinRow[]>([]);
   const [hubSettings, setHubSettings] = useState<GuestHubSettings>(DEFAULT_HUB_SETTINGS);
-  const [savingHubSettings, setSavingHubSettings] = useState(false);
-  const [queueingFollowups, setQueueingFollowups] = useState<'recap' | 'future_event' | null>(null);
   const [showHidden, setShowHidden] = useState(false);
   const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
   const [tagFilter, setTagFilter] = useState('all');
@@ -322,42 +321,6 @@ export const GuestPhotoSharing: React.FC = () => {
     },
   };
 
-  const saveHubSettings = async () => {
-    if (!siteId) return;
-    try {
-      setSavingHubSettings(true);
-      setError(null);
-      await saveGuestPhotoHubSettings(siteId, hubSettings);
-      logPhotoAction('guest_hub_settings_saved', 'Guest hub settings were updated.', {
-        photosEnabled: hubSettings.photos_enabled,
-        guestbookEnabled: hubSettings.guestbook_enabled,
-        recapStatus: hubSettings.recap_status,
-        languageDefault: hubSettings.language_default,
-      });
-      setSuccess('Guest hub settings saved.');
-    } catch (err: unknown) {
-      setError(safePhotoOwnerError(err, 'Couldn’t save guest hub controls yet.'));
-    } finally {
-      setSavingHubSettings(false);
-    }
-  };
-
-  const queueGuestFollowups = async (kind: 'recap' | 'future_event') => {
-    if (!siteId) return;
-    try {
-      setQueueingFollowups(kind);
-      setError(null);
-      const data = await queueGuestPhotoFollowupsFromService(siteId, kind);
-      const queued = Number((data as { queued?: number } | null)?.queued ?? 0);
-      setSuccess(queued > 0 ? `Prepared ${queued} ${kind === 'recap' ? 'recap' : 'future event'} follow-up email${queued === 1 ? '' : 's'}.` : 'No new guest follow-ups are ready right now.');
-      await load();
-    } catch (err: unknown) {
-      setError(safePhotoOwnerError(err, 'Couldn’t prepare guest follow-ups yet.'));
-    } finally {
-      setQueueingFollowups(null);
-    }
-  };
-
   const aiHighConfidenceMoves = useMemo(
     () => aiPhotoOpsPlan?.bucketSuggestions.filter((suggestion) => suggestion.confidence >= 0.74 && suggestion.targetBucketId !== suggestion.currentBucketId) ?? [],
     [aiPhotoOpsPlan]
@@ -578,6 +541,20 @@ export const GuestPhotoSharing: React.FC = () => {
     slideshowTheme,
     uploadAnalyses,
     uploads,
+  });
+
+  const {
+    queueGuestFollowups,
+    queueingFollowups,
+    saveHubSettings,
+    savingHubSettings,
+  } = useGuestPhotoHubActions({
+    hubSettings,
+    load,
+    logPhotoAction,
+    setError,
+    setSuccess,
+    siteId,
   });
 
   const {

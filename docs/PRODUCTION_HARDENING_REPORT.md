@@ -6350,3 +6350,18 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 08:44 AM PT No-Deploy Guest Photo Hub-Actions Hook Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now routes the guest hub settings save flow and follow-up queueing lane through `src/pages/dashboard/guestPhotos/useGuestPhotoHubActions.ts`.
+  - That hook now owns guest hub settings persistence, action-audit logging for hub updates, recap/future-event follow-up queue prep, success/error handling, queue-busy state, save-busy state, and dashboard reload after follow-up generation while the page keeps dashboard data hydration, derived-state shaping, bucket workspace, AI actions, moderation actions, export actions, album actions, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useGuestPhotoHubActions({ ... })`, checks that `useGuestPhotoHubActions.ts` owns the guest hub settings / follow-up queue seam, and rejects regaining the old inline save/queue handlers in `GuestPhotoSharing.tsx`.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 806 lines to 783 lines in this batch, while `src/pages/dashboard/guestPhotos/useGuestPhotoHubActions.ts` came in at 85 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

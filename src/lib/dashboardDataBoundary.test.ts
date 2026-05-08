@@ -1132,17 +1132,17 @@ describe('dashboard data boundary guards', () => {
     const dashboardData = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoDashboardData.ts'), 'utf8');
     const derivedState = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardDerivedState.ts'), 'utf8');
     const exportActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoExportActions.ts'), 'utf8');
+    const hubActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoHubActions.ts'), 'utf8');
     const moderationActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoModerationActions.ts'), 'utf8');
     const liveContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/GuestPhotoDashboardLiveContent.tsx'), 'utf8');
     const liveContentProps = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardLiveContentProps.ts'), 'utf8');
 
-    expect(source).toContain('await saveGuestPhotoHubSettings(siteId, hubSettings)');
     expect(source).toContain('useGuestPhotoAlbumActions({');
     expect(source).toContain('useGuestPhotoAiActions({');
     expect(source).toContain('buildGuestPhotoDashboardDerivedState({');
     expect(source).toContain('useGuestPhotoExportActions({');
+    expect(source).toContain('useGuestPhotoHubActions({');
     expect(source).toContain('useGuestPhotoModerationActions({');
-    expect(source).toContain('queueGuestPhotoFollowupsFromService(siteId, kind)');
     expect(source).toContain('buildGuestPhotoDashboardLiveContentProps({');
     expect(source).toContain('<GuestPhotoDashboardLiveContent');
     expect(source).toContain('useGuestPhotoBucketWorkspace({');
@@ -1198,6 +1198,9 @@ describe('dashboard data boundary guards', () => {
     expect(exportActions).toContain('await exportGuestPhotoManifest(siteId, showHidden)');
     expect(exportActions).toContain("await manageGuestPhotoAlbum({ action: 'regenerate_link', albumId: bucket.id })");
     expect(exportActions).toContain("const result = await copyTextOrDownload(value, `dayof-photo-${key}.txt`)");
+    expect(hubActions).toContain('export function useGuestPhotoHubActions({');
+    expect(hubActions).toContain('await saveGuestPhotoHubSettings(siteId, hubSettings)');
+    expect(hubActions).toContain('const data = await queueGuestPhotoFollowupsFromService(siteId, kind)');
     expect(moderationActions).toContain('export function useGuestPhotoModerationActions({');
     expect(moderationActions).toContain('await moderateGuestbookEntryFromService(entryId, patch)');
     expect(moderationActions).toContain("await moderateGuestPhotoUploads(ids, { is_hidden: hide })");
@@ -1232,6 +1235,8 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('const generateAiPhotoOpsPlan = async () => {');
     expect(source).not.toContain('const applyVisionSuggestion = async (analysis: PhotoUploadAiAnalysisRow) => {');
     expect(source).not.toContain('const analyzeUploadsWithVision = async (force = false) => {');
+    expect(source).not.toContain('const saveHubSettings = async () => {');
+    expect(source).not.toContain("const queueGuestFollowups = async (kind: 'recap' | 'future_event') => {");
     expect(source).not.toContain('const photoDashboardCounts = useMemo(() => buildPhotoDashboardCounts({');
     expect(source).not.toContain('const photoMemoryCollections = useMemo(() => buildPhotoMemoryCollections({');
     expect(source).not.toContain('const guestHubActions = useMemo(() => siteSlug ? buildGuestHubActions(siteSlug, hubSettings) : [], [hubSettings, siteSlug]);');
