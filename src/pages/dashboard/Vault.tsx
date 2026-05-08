@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
-import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button } from '../../components/ui';
 import {
   Lock, Unlock, Plus, Trash2, ChevronDown, ChevronUp, Loader2,
@@ -38,6 +36,7 @@ import {
   type VaultConfig,
   type VaultEntry,
 } from './vaultService';
+import { VaultDashboardRouteView } from './VaultDashboardRouteView';
 
 const MAX_VAULTS = 5;
 const VAULT_RELEASE_NOTICE_KEY = 'dayof_vault_release_notified_v1';
@@ -1401,16 +1400,6 @@ export const DashboardVault: React.FC = () => {
     toast('Vault removed');
   }
 
-  if (loading) {
-    return (
-      <DashboardLayout currentPage="vault">
-        <div className="max-w-4xl mx-auto">
-          <DashboardStateBlock title="Loading vaults…" description="Preparing your time capsule settings." />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
   const totalEntries = entries.length;
   const orderedVaultConfigs = [...vaultConfigs].sort((a, b) => a.duration_years - b.duration_years);
   const archiveMode = getArchiveModeDescriptor({ weddingDate: weddingDate ? weddingDate.toISOString() : null });
@@ -1418,7 +1407,7 @@ export const DashboardVault: React.FC = () => {
   const showReconnectButton = !googleDriveConnected || driveNeedsReconnect;
 
   return (
-    <DashboardLayout currentPage="vault">
+    <VaultDashboardRouteView loading={loading}>
       <div className="max-w-4xl mx-auto space-y-8">
         <DashboardPageHero
           eyebrow="Private keepsakes"
@@ -1624,6 +1613,6 @@ export const DashboardVault: React.FC = () => {
       )}
 
       <ToastList toasts={toasts} />
-    </DashboardLayout>
+    </VaultDashboardRouteView>
   );
 };

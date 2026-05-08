@@ -432,6 +432,7 @@ describe('dashboard data boundary guards', () => {
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/vaultService.ts'), 'utf8');
 
     expect(source).not.toContain("from '../../lib/supabase'");
+    expect(source).toContain('<VaultDashboardRouteView');
     expect(service).toContain('export const VAULT_CONFIG_SELECT = ');
     expect(service).toContain('export const VAULT_ENTRY_SELECT = ');
     expect(service).toContain('const VAULT_SITE_SELECT = ');
@@ -453,6 +454,8 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('checkVaultGoogleDriveHealth(weddingSiteId)');
     expect(source).toContain('startVaultGoogleDriveAuth(weddingSiteId)');
     expect(source).toContain('finishVaultGoogleDriveAuth(googleCode, googleState)');
+    expect(source).not.toContain('<DashboardLayout');
+    expect(source).not.toContain('<DashboardStateBlock');
     expect(service).toContain('export async function resolveVaultEntryLink(entryId: string): Promise<string | null>');
     expect(service).toContain('export async function checkVaultGoogleDriveHealth(siteId: string): Promise<{');
     expect(service).toContain('export async function startVaultGoogleDriveAuth(siteId: string): Promise<string>');

@@ -1993,3 +1993,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins `MessageDashboardRouteView` and rejects regaining the old inline loading shell, dashboard cards, modal, and toast composition in `Messages.tsx`.
   - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageService.boundary.test.ts` (24/24), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the messages dashboard without changing message delivery behavior. No deploy was run.
+- 2026-05-07 8:59 PM PT - No-deploy Vault dashboard route-view extraction:
+  - Resolved in this batch: moved the vault dashboard loading-vs-live shell out of `src/pages/dashboard/Vault.tsx` and behind `src/pages/dashboard/VaultDashboardRouteView.tsx`.
+  - Data-boundary hardening: `Vault.tsx` now routes both the loading state and the live anniversary-vault workspace through one higher-level route shell instead of directly switching between `DashboardLayout`, `DashboardStateBlock`, and the dashboard body.
+  - File-size movement: `Vault.tsx` dropped from 1629 lines to 1618 lines in this continuation batch; the new route shell is 22 lines.
+  - No feature loss: vault hero actions, Google Drive health controls, archive-mode guidance, vault cards, edit modal, and toast rendering preserve the current behavior while shrinking page-owned route composition.
+  - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins `VaultDashboardRouteView` and rejects regaining the old inline loading shell in `Vault.tsx`.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/vaultService.test.ts` (22/22), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the vault dashboard without changing vault behavior. No deploy was run.

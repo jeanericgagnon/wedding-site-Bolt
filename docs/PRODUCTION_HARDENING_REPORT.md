@@ -4265,3 +4265,19 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the oversized-file and page-boundary cleanup in the messages dashboard without changing message loading or delivery behavior. No deploy was run.
+
+## 2026-05-07 8:59 PM PT No-Deploy Vault Dashboard Route View Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Vault.tsx` now routes its loading-vs-live vault dashboard branch through `src/pages/dashboard/VaultDashboardRouteView.tsx`.
+  - That higher-level route shell now owns the `DashboardLayout` plus `DashboardStateBlock` loading branch and hands the live branch through to the anniversary-vault dashboard body.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `VaultDashboardRouteView` and rejects regaining the old inline loading shell in `Vault.tsx`.
+  - `src/pages/dashboard/Vault.tsx` dropped from 1629 lines to 1618 lines in this batch, while `src/pages/dashboard/VaultDashboardRouteView.tsx` came in at 22 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/vaultService.test.ts`: PASS, 22/22.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the oversized-file and page-boundary cleanup in the vault dashboard without changing vault loading or dashboard behavior. No deploy was run.
