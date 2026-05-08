@@ -137,13 +137,11 @@ describe('dashboard data boundary guards', () => {
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/guestService.ts'), 'utf8');
     const campaignHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCampaignActions.ts'), 'utf8');
     const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardData.ts'), 'utf8');
+    const detailHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts'), 'utf8');
 
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).toContain('useGuestDashboardData({');
-    expect(source).toContain('loadGuestItineraryDrawerSnapshot(weddingSiteId, guest.id)');
-    expect(source).toContain('removeGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
-    expect(source).toContain('addGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
-    expect(source).toContain('saveAssistedGuestRsvp({');
+    expect(source).toContain('useGuestDashboardGuestDetailActions({');
     expect(source).toContain('loadPublicSlug: loadGuestDashboardPublicSlug');
     expect(source).toContain('loadSiteSlug: loadGuestDashboardSiteSlug');
     expect(source).toContain('resolveGuestDashboardSiteId(user.id)');
@@ -169,10 +167,12 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('loadGuestDashboardSnapshot(weddingSiteId)');
     expect(source).not.toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
     expect(source).not.toContain('loadGuestDashboardRsvpAuditFeed(weddingSiteId)');
+    expect(source).not.toContain('loadGuestItineraryDrawerSnapshot(weddingSiteId, guest.id)');
+    expect(source).not.toContain('removeGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
+    expect(source).not.toContain('addGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
+    expect(source).not.toContain('saveAssistedGuestRsvp({');
     expect(source).toContain('useGuestDashboardExports({');
     expect(source).toContain('clearGuestCheckInsForSite(weddingSiteId)');
-    expect(source).toContain('assignGuestsToHouseholdForSite(weddingSiteId, ids, householdId)');
-    expect(source).toContain('updateGuestHouseholdForSite(weddingSiteId, guestId, null)');
     expect(source).toContain('persistGuestReminderSettings(weddingSiteId, patch)');
     expect(source).toContain('deleteGuestWithDependencies(guestId)');
     expect(source).toContain('deleteAllGuestsForSite(weddingSiteId)');
@@ -215,6 +215,14 @@ describe('dashboard data boundary guards', () => {
     expect(dataHook).toContain('setItineraryEvents(snapshot.itineraryEvents);');
     expect(dataHook).toContain('setRsvpAuditFeed(feed);');
     expect(dataHook).not.toContain("from '../../../lib/supabase'");
+    expect(detailHook).toContain('const snapshot = await loadGuestItineraryDrawerSnapshot(weddingSiteId, guest.id);');
+    expect(detailHook).toContain('await removeGuestEventInvitation(eventId, itineraryDrawerGuest.id);');
+    expect(detailHook).toContain('await addGuestEventInvitation(eventId, itineraryDrawerGuest.id);');
+    expect(detailHook).toContain('await saveAssistedGuestRsvp({');
+    expect(detailHook).toContain('await refreshGuestDashboardSession();');
+    expect(detailHook).toContain('await assignGuestsToHouseholdForSite(weddingSiteId, ids, householdId);');
+    expect(detailHook).toContain('await updateGuestHouseholdForSite(weddingSiteId, guestId, null);');
+    expect(detailHook).not.toContain("from '../../../lib/supabase'");
     expect(service).toContain('export async function assignGuestsToHouseholdForSite(');
     expect(service).toContain('export async function updateGuestHouseholdForSite(');
     expect(service).toContain('export async function persistGuestReminderSettings(');

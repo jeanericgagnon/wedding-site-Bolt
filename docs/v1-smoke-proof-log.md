@@ -10028,3 +10028,18 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 03:44 AM PT No-Deploy Guest Dashboard Detail-Actions Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the guest dashboard household/detail/drawer mutation lane through `src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts`.
+  - That hook now owns household merge/split/reassign flows, itinerary drawer loading, event-invite toggles, assisted RSVP save behavior, check-in toggle retry behavior, and the related drawer/modal state while the page keeps the broader guest ops summary, config, export, and import flows.
+  - `src/lib/dashboardDataBoundary.test.ts` and `src/pages/dashboard/guests/guestService.test.ts` now pin `useGuestDashboardGuestDetailActions({ ... })`, check that `useGuestDashboardGuestDetailActions.ts` owns the guest itinerary drawer, invite-toggle, assisted-RSVP, refresh-session, and household service calls, and reject regaining those direct paths in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` dropped from 2103 lines to 1924 lines in this batch, while `src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts` came in at 289 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

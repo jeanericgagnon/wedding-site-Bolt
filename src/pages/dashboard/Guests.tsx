@@ -43,7 +43,6 @@ import { buildGuestDashboardOverlayProps } from './guests/buildGuestDashboardOve
 import { GuestDashboardRouteView } from './guests/GuestDashboardRouteView';
 import {
   type Guest,
-  type GuestAuditEntry,
   type GuestWithRSVP,
   type ItineraryEvent,
   type RsvpConflictStats,
@@ -97,8 +96,6 @@ import {
   type RsvpSavedSegment,
 } from './guests/guestDashboardStorage';
 import {
-  addGuestEventInvitation,
-  assignGuestsToHouseholdForSite,
   clearGuestCheckInsForSite,
   createGuest,
   deleteAllGuestsForSite,
@@ -110,31 +107,25 @@ import {
   insertImportedGuests,
   loadGuestDashboardPublicSlug,
   loadGuestDashboardSiteSlug,
-  loadGuestItineraryDrawerSnapshot,
   markGuestsThankYouSentForSite,
   persistGuestDashboardRsvpConfig,
   persistGuestReminderSettings,
-  refreshGuestDashboardSession,
-  removeGuestEventInvitation,
   resolveGuestDashboardConflict,
   resolveGuestDashboardConflicts,
   resolveGuestDashboardSiteId,
   replaceGuestEventInvitations,
   replaceImportedGuestRsvps,
   restoreGuestEventInvitations,
-  saveAssistedGuestRsvp,
   toEventInvitationRows,
   updateGuest,
   updateGuestCheckInForSite,
-  updateGuestHouseholdForSite,
   updateGuestThankYouSentForSite,
   updateHouseholdGuestIds,
-  type AssistedRsvpSource,
-  type AssistedRsvpStatus,
   type GuestEventInvitationRollback,
 } from './guests/guestService';
 import { useGuestDashboardCampaignActions } from './guests/useGuestDashboardCampaignActions';
 import { useGuestDashboardData } from './guests/useGuestDashboardData';
+import { useGuestDashboardGuestDetailActions } from './guests/useGuestDashboardGuestDetailActions';
 import { useGuestDashboardExports } from './guests/useGuestDashboardExports';
 
 export const DashboardGuests: React.FC = () => {
@@ -322,7 +313,6 @@ export const DashboardGuests: React.FC = () => {
   const [viewMode, setViewMode] = useState<'list' | 'households'>('households');
   const [checkInMode, setCheckInMode] = useState(false);
   const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
-  const [householdBusy, setHouseholdBusy] = useState(false);
 
   const [csvPreview, setCsvPreview] = useState<Record<string, unknown>[] | null>(null);
   const [csvSkipped, setCsvSkipped] = useState<string[]>([]);
@@ -343,17 +333,6 @@ export const DashboardGuests: React.FC = () => {
   const cleanGuestsView = !showInsights;
   const csvNameMappingValid = isCsvNameMappingValid(csvFieldMap);
 
-  const [itineraryDrawerGuest, setItineraryDrawerGuest] = useState<GuestWithRSVP | null>(null);
-  const [guestEventIds, setGuestEventIds] = useState<Set<string>>(new Set());
-  const [loadingDrawer, setLoadingDrawer] = useState(false);
-  const [togglingEventId, setTogglingEventId] = useState<string | null>(null);
-  const [guestAuditEntries, setGuestAuditEntries] = useState<GuestAuditEntry[]>([]);
-  const [assistedRsvpGuest, setAssistedRsvpGuest] = useState<GuestWithRSVP | null>(null);
-  const [assistedRsvpStatus, setAssistedRsvpStatus] = useState<AssistedRsvpStatus>('confirmed');
-  const [assistedRsvpSource, setAssistedRsvpSource] = useState<AssistedRsvpSource>('phone');
-  const [assistedRsvpNotes, setAssistedRsvpNotes] = useState('');
-  const [assistedRsvpSaving, setAssistedRsvpSaving] = useState(false);
-
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -370,6 +349,45 @@ export const DashboardGuests: React.FC = () => {
     () => rsvpConflicts.filter((c) => conflictFilter === 'all' ? true : c.severity === conflictFilter),
     [rsvpConflicts, conflictFilter]
   );
+
+  const {
+    assistedRsvpGuest,
+    assistedRsvpNotes,
+    assistedRsvpSaving,
+    assistedRsvpSource,
+    assistedRsvpStatus,
+    guestAuditEntries,
+    guestEventIds,
+    handleMergeIntoHousehold,
+    handleReassignHousehold,
+    handleSaveAssistedRsvp,
+    handleSplitFromHousehold,
+    handleToggleCheckIn,
+    handleToggleEventInvite,
+    householdBusy,
+    itineraryDrawerGuest,
+    drawerItineraryEvents,
+    lastCheckIn,
+    loadingDrawer,
+    openAssistedRsvpModal,
+    openItineraryDrawer,
+    setAssistedRsvpGuest,
+    setAssistedRsvpNotes,
+    setAssistedRsvpSource,
+    setAssistedRsvpStatus,
+    setGuestAuditEntries,
+    setItineraryDrawerGuest,
+    setLastCheckIn,
+    togglingEventId,
+  } = useGuestDashboardGuestDetailActions({
+    fetchGuests,
+    guests,
+    isDemoMode,
+    isGuestsReadOnly,
+    setGuests,
+    toast,
+    weddingSiteId,
+  });
 
   const rsvpConflictStats = useMemo<RsvpConflictStats>(() => {
     const now = Date.now();
@@ -814,49 +832,6 @@ export const DashboardGuests: React.FC = () => {
     }
   };
 
-  const [lastCheckIn, setLastCheckIn] = useState<{ guestId: string; guestName: string; at: number } | null>(null);
-
-  const handleToggleCheckIn = async (guest: GuestWithRSVP) => {
-    if (isGuestsReadOnly) {
-      toast('Your collaborator role cannot update guest check-in.', 'info');
-      return;
-    }
-    if (!weddingSiteId || isDemoMode) {
-      toast('Check-in is unavailable in demo mode.', 'error');
-      return;
-    }
-
-    const nextValue = guest.checked_in_at ? null : new Date().toISOString();
-    const updateCheckin = async () => updateGuestCheckInForSite(weddingSiteId, guest.id, nextValue);
-
-    try {
-      await updateCheckin();
-      await fetchGuests();
-      if (nextValue) {
-        const guestName = (guest.first_name || guest.last_name)
-          ? `${guest.first_name ?? ''} ${guest.last_name ?? ''}`.trim()
-          : guest.name;
-        setLastCheckIn({ guestId: guest.id, guestName, at: Date.now() });
-      }
-      toast(nextValue ? 'Guest checked in' : 'Guest check-in cleared', 'success');
-    } catch (err) {
-      const msg = err instanceof Error ? err.message.toLowerCase() : '';
-      const authish = msg.includes('invalid jwt') || msg.includes('jwt') || msg.includes('401') || msg.includes('auth');
-      if (authish) {
-        try {
-          await refreshGuestDashboardSession();
-          await updateCheckin();
-          await fetchGuests();
-          toast(nextValue ? 'Guest checked in' : 'Guest check-in cleared', 'success');
-          return;
-        } catch {
-          // fall through to canonical error toast
-        }
-      }
-      toast('Couldn’t update check-in status.', 'error');
-    }
-  };
-
   const handleCopyOpsSummary = async () => {
     const summary = buildRsvpFollowUpSummary({
       generatedAt: new Date(),
@@ -970,166 +945,12 @@ export const DashboardGuests: React.FC = () => {
     toast(`Created ${tasks.length} follow-up task${tasks.length === 1 ? '' : 's'}`, 'success');
   };
 
-  async function handleMergeIntoHousehold() {
-    if (selectedGuestIds.size < 2 || !weddingSiteId || isDemoMode) return;
-    setHouseholdBusy(true);
-    try {
-      const ids = [...selectedGuestIds];
-      const householdId = ids[0];
-      await assignGuestsToHouseholdForSite(weddingSiteId, ids, householdId);
-      await fetchGuests();
-      setSelectedGuestIds(new Set());
-      toast(`${ids.length} guests merged into one household`, 'success');
-    } catch {
-      toast('Couldn’t merge guests.', 'error');
-    } finally {
-      setHouseholdBusy(false);
-    }
-  }
-
-  async function handleSplitFromHousehold(guestId: string) {
-    if (!weddingSiteId || isDemoMode) return;
-    setHouseholdBusy(true);
-    try {
-      await updateGuestHouseholdForSite(weddingSiteId, guestId, null);
-      await fetchGuests();
-      toast('Guest removed from household', 'success');
-    } catch {
-      toast('Couldn’t remove guest from household.', 'error');
-    } finally {
-      setHouseholdBusy(false);
-    }
-  }
-
-  async function handleReassignHousehold(guestId: string, newHouseholdId: string) {
-    if (!weddingSiteId || isDemoMode) return;
-    try {
-      await updateGuestHouseholdForSite(weddingSiteId, guestId, newHouseholdId || null);
-      await fetchGuests();
-      toast('Guest reassigned', 'success');
-    } catch {
-      toast('Couldn’t move guest to that household.', 'error');
-    }
-  }
-
   const persistReminderSettings = async (patch: { reminder_cadence_days?: 1 | 3 | 7; auto_reminders_enabled?: boolean }) => {
     if (!weddingSiteId || isDemoMode) return;
     await persistGuestReminderSettings(weddingSiteId, patch);
   };
 
-  async function openItineraryDrawer(guest: GuestWithRSVP) {
-    if (!weddingSiteId) return;
-    setItineraryDrawerGuest(guest);
-    setLoadingDrawer(true);
-    try {
-      if (isDemoMode) {
-        const now = Date.now();
-        setGuestAuditEntries([
-          { id: `${guest.id}-a1`, action: 'update', changed_at: new Date(now - 1000 * 60 * 90).toISOString(), changed_by: null, old_data: { rsvp_status: 'pending' }, new_data: { rsvp_status: guest.rsvp_status } },
-          { id: `${guest.id}-a2`, action: 'update', changed_at: new Date(now - 1000 * 60 * 60 * 26).toISOString(), changed_by: null, old_data: { invited_to_reception: false }, new_data: { invited_to_reception: guest.invited_to_reception } },
-        ]);
-        setGuestEventIds(new Set());
-      }
-
-      if (!isDemoMode) {
-        const snapshot = await loadGuestItineraryDrawerSnapshot(weddingSiteId, guest.id);
-        setItineraryEvents(snapshot.events);
-        setGuestEventIds(snapshot.guestEventIds);
-        setGuestAuditEntries(snapshot.auditEntries);
-      }
-    } catch {
-      toast('Couldn’t load guest itinerary details right now. Please try again.', 'error');
-    } finally {
-      setLoadingDrawer(false);
-    }
-  }
-
-  async function handleToggleEventInvite(eventId: string, currentlyInvited: boolean) {
-    if (!itineraryDrawerGuest || togglingEventId) return;
-    setTogglingEventId(eventId);
-    try {
-      if (currentlyInvited) {
-        await removeGuestEventInvitation(eventId, itineraryDrawerGuest.id);
-        setGuestEventIds(prev => { const n = new Set(prev); n.delete(eventId); return n; });
-      } else {
-        await addGuestEventInvitation(eventId, itineraryDrawerGuest.id);
-        setGuestEventIds(prev => new Set([...prev, eventId]));
-      }
-    } catch {
-      toast('Couldn’t update that event invite.', 'error');
-    } finally {
-      setTogglingEventId(null);
-    }
-  }
-
   const households = useMemo(() => buildGuestHouseholdGroups(guests), [guests]);
-
-  const openAssistedRsvpModal = (guest: GuestWithRSVP) => {
-    setAssistedRsvpGuest(guest);
-    setAssistedRsvpStatus(isDeclinedRsvpStatus(guest.rsvp_status) ? 'declined' : 'confirmed');
-    setAssistedRsvpSource('phone');
-    setAssistedRsvpNotes('');
-  };
-
-  const handleSaveAssistedRsvp = async () => {
-    if (isGuestsReadOnly) {
-      toast('Your collaborator role cannot record assisted RSVPs.', 'info');
-      return;
-    }
-    if (!assistedRsvpGuest) return;
-    try {
-      setAssistedRsvpSaving(true);
-
-      if (isDemoMode) {
-        const demoRecordedAt = new Date().toISOString();
-        const demoManualTag = `[Manual RSVP source:${assistedRsvpSource} recorded:${demoRecordedAt}]`;
-        const nextNotes = [demoManualTag, assistedRsvpNotes.trim()].filter(Boolean).join(' ');
-        setGuests((prev) => prev.map((guest) => guest.id === assistedRsvpGuest.id ? {
-          ...guest,
-          rsvp_status: assistedRsvpStatus,
-          rsvp_received_at: new Date().toISOString(),
-          notes: nextNotes,
-          rsvp: assistedRsvpStatus === 'confirmed'
-            ? guest.rsvp
-              ? {
-                  ...guest.rsvp,
-                  attending: true,
-                  attending_ceremony: guest.invited_to_ceremony,
-                  attending_reception: guest.invited_to_reception,
-                }
-              : guest.rsvp
-            : guest.rsvp
-              ? {
-                  ...guest.rsvp,
-                  attending: false,
-                  attending_ceremony: false,
-                  attending_reception: false,
-                  meal_choice: null,
-                  plus_one_name: null,
-                  plus_one_count: 0,
-                }
-              : guest.rsvp,
-        } : guest));
-        setAssistedRsvpGuest(null);
-        toast('RSVP recorded for guest', 'success');
-        return;
-      }
-      await saveAssistedGuestRsvp({
-        guest: assistedRsvpGuest,
-        status: assistedRsvpStatus,
-        source: assistedRsvpSource,
-        notes: assistedRsvpNotes,
-      });
-
-      await fetchGuests();
-      setAssistedRsvpGuest(null);
-      toast('RSVP recorded for guest', 'success');
-    } catch (error) {
-      toast('Couldn’t save assisted RSVP.', 'error');
-    } finally {
-      setAssistedRsvpSaving(false);
-    }
-  };
 
   const resetForm = () => {
     setFormData({
@@ -1222,7 +1043,7 @@ export const DashboardGuests: React.FC = () => {
       headers,
       dataRows,
       fieldMap,
-      itineraryEvents,
+        itineraryEvents: drawerItineraryEvents,
       weddingSiteId: resolvedSiteId,
     });
     const parsed = result.parsed;
@@ -1882,7 +1703,7 @@ export const DashboardGuests: React.FC = () => {
     isDemoMode,
     selectedGuestIds,
     getStatusBadge,
-    onMergeIntoHousehold: handleMergeIntoHousehold,
+    onMergeIntoHousehold: () => handleMergeIntoHousehold(selectedGuestIds, () => setSelectedGuestIds(new Set())),
     onSetSelectedGuestIds: setSelectedGuestIds,
   };
   const guestListProps = {
