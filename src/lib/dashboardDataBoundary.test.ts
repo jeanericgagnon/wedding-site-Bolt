@@ -950,11 +950,13 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Vault.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/vaultService.ts'), 'utf8');
     const actions = readFileSync(join(process.cwd(), 'src/pages/dashboard/useVaultDashboardActions.ts'), 'utf8');
+    const editModal = readFileSync(join(process.cwd(), 'src/pages/dashboard/VaultEditModal.tsx'), 'utf8');
     const liveContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/VaultDashboardLiveContent.tsx'), 'utf8');
 
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).toContain('<VaultDashboardRouteView');
     expect(source).toContain('<VaultDashboardLiveContent');
+    expect(source).toContain('<EditVaultModal');
     expect(source).toContain('useVaultDashboardActions({');
     expect(service).toContain('export const VAULT_CONFIG_SELECT = ');
     expect(service).toContain('export const VAULT_ENTRY_SELECT = ');
@@ -989,9 +991,14 @@ describe('dashboard data boundary guards', () => {
     expect(liveContent).toContain('<DashboardPageHero');
     expect(liveContent).toContain('Create 1, 5, and 10 year vaults');
     expect(liveContent).toContain('How Vaults work');
+    expect(editModal).toContain('export function EditVaultModal(');
+    expect(editModal).toContain('Edit Vault Settings');
+    expect(editModal).toContain('This vault already has submissions, so its anniversary year is locked.');
     expect(source).not.toContain('<DashboardLayout');
     expect(source).not.toContain('<DashboardStateBlock');
     expect(source).not.toContain('Create 1, 5, and 10 year vaults');
+    expect(source).not.toContain('const EditVaultModal: React.FC<EditVaultModalProps>');
+    expect(source).not.toContain('function defaultVaultLabel(index: number, years: number): string');
     expect(service).toContain('export async function resolveVaultEntryLink(entryId: string): Promise<string | null>');
     expect(service).toContain('export async function checkVaultGoogleDriveHealth(siteId: string): Promise<{');
     expect(service).toContain('export async function startVaultGoogleDriveAuth(siteId: string): Promise<string>');

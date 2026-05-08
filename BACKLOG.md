@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 7:13 AM PT - No-Deploy Vault Edit-Modal Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Vault.tsx` no longer owns the vault settings modal inline.
+  - Added `src/pages/dashboard/VaultEditModal.tsx` so the modal now owns vault-name edits, anniversary-year selection, custom-duration handling, and the locked-year helper copy while the page keeps vault data, entry flows, and Google Drive/archive orchestration.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<EditVaultModal`, checks that the new file owns the vault-settings modal seam, and rejects regaining the old inline modal plus `defaultVaultLabel(...)` helper in `Vault.tsx`.
+- Acceptance/proof target:
+  - Focused vault boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 7:05 AM PT - No-Deploy Planning Dashboard Tab-Content Extraction
 
 - Status: `PARTIAL`
