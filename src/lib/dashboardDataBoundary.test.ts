@@ -450,16 +450,21 @@ describe('dashboard data boundary guards', () => {
 
   it('loads itinerary events and event guest picker rows with explicit projections', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Itinerary.tsx'), 'utf8');
+    const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/useItineraryDashboardData.ts'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/itineraryService.ts'), 'utf8');
     const actions = readFileSync(join(process.cwd(), 'src/pages/dashboard/useItineraryTimelineActions.ts'), 'utf8');
     const guestManager = readFileSync(join(process.cwd(), 'src/pages/dashboard/EventGuestManagerModal.tsx'), 'utf8');
 
     expect(source).toContain('<ItineraryDashboardRouteView');
     expect(source).toContain('<EventGuestManagerModal');
+    expect(source).toContain('useItineraryDashboardData({ isDemoMode, toast })');
     expect(source).toContain('useItineraryTimelineActions({');
     expect(source).not.toContain("from '../../lib/supabase'");
-    expect(source).toContain('loadItineraryDashboardEvents(hasEventRsvpsTable)');
-    expect(source).toContain('syncItineraryScheduleMirror(siteId, eventList)');
+    expect(source).not.toContain('loadItineraryDashboardEvents(hasEventRsvpsTable)');
+    expect(source).not.toContain('syncItineraryScheduleMirror(siteId, eventList)');
+    expect(source).not.toContain('const seeded = demoEvents.map((event, idx) => ({');
+    expect(source).not.toContain('const storedEvents = readDemoItineraryEvents(seeded as EventWithInvites[])');
+    expect(source).not.toContain('writeDemoItineraryEvents(events);');
     expect(guestManager).toContain('loadItineraryEventGuestManagerSnapshot(eventId)');
     expect(guestManager).toContain('removeItineraryEventGuestInvitation(eventId, guestId)');
     expect(guestManager).toContain('addItineraryEventGuestInvitation(eventId, guestId)');
@@ -500,6 +505,11 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('addItineraryEventGuestInvitation(eventId, guestId)');
     expect(source).not.toContain('inviteAllGuestsToItineraryEvent(eventId, uninvited.map((guest) => guest.id))');
     expect(source).not.toContain('removeAllGuestsFromItineraryEvent(eventId)');
+    expect(dataHook).toContain('export function useItineraryDashboardData({ isDemoMode, toast }: Args)');
+    expect(dataHook).toContain('const snapshot = await loadItineraryDashboardEvents(hasEventRsvpsTable);');
+    expect(dataHook).toContain('const storedEvents = readDemoItineraryEvents(seeded);');
+    expect(dataHook).toContain("toast('Couldn’t load itinerary events. Please try again.', 'error');");
+    expect(dataHook).toContain('writeDemoItineraryEvents(events);');
     expect(service).toContain('buildItineraryTemplateInsertRows(weddingSiteId, events)');
     expect(service).toContain('export async function resolveItinerarySiteId()');
     expect(service).toContain("const ITINERARY_EVENT_MANAGER_SITE_SELECT = 'id'");

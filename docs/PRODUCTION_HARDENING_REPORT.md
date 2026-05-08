@@ -19,6 +19,22 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 9:13 AM PT - No-Deploy Itinerary Dashboard Data-Hook Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Itinerary.tsx` now routes its itinerary bootstrap, demo hydration, and demo persistence lane through `src/pages/dashboard/useItineraryDashboardData.ts` instead of owning that load path inline.
+  - That new hook now owns demo/live event loading, demo itinerary writeback, `events` / `loading` state, `loadItineraryDashboardEvents(hasEventRsvpsTable)`, demo storage hydration via `readDemoItineraryEvents(...)`, and the itinerary load failure toast.
+  - Itinerary boundary tests now pin `useItineraryDashboardData({ isDemoMode, toast })`, check that `useItineraryDashboardData.ts` owns the itinerary bootstrap and demo storage seams, and reject regaining the old inline load/bootstrap slab in `Itinerary.tsx`.
+  - `src/pages/dashboard/Itinerary.tsx` dropped from 699 lines to 624 lines in this batch, while `src/pages/dashboard/useItineraryDashboardData.ts` came in at 92 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ### 2026-05-08 9:08 AM PT - No-Deploy Settings UI-State Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:

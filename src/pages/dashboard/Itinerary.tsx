@@ -1,29 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink, AlertTriangle, Check, X, HelpCircle, Camera, Wand2, MoveRight } from 'lucide-react';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { Button } from '../../components/ui/Button';
 import { useToast } from '../../components/ui/Toast';
 import { ConfirmDialog, type ConfirmDialogProps } from '../../components/ui/ConfirmDialog';
 import { useAuth } from '../../hooks/useAuth';
-import { demoEvents } from '../../lib/demoData';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { formatItineraryEventDate } from './itineraryEventDate';
-import { readDemoItineraryEvents, writeDemoItineraryEvents } from './itineraryDemoStorage';
 import { analyzeTimeline } from '../../lib/invisibleIntelligence';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import { useItineraryTimelineActions } from './useItineraryTimelineActions';
-import {
-  loadItineraryDashboardEvents,
-  syncItineraryScheduleMirror,
-  type ItineraryDashboardEvent,
-} from './itineraryService';
+import { type ItineraryDashboardEvent } from './itineraryService';
 import { EventGuestManagerModal } from './EventGuestManagerModal';
 import { ItineraryDashboardRouteView } from './ItineraryDashboardRouteView';
+import { useItineraryDashboardData } from './useItineraryDashboardData';
 
-// Optional table: detect once at runtime so older environments degrade quietly.
-let hasEventRsvpsTable: boolean | null = null;
 type EventWithInvites = ItineraryDashboardEvent;
 type ItineraryEvent = Omit<ItineraryDashboardEvent, 'invitation_count' | 'rsvp_count' | 'attending_count' | 'declined_count' | 'pending_count'>;
 
@@ -45,8 +38,6 @@ export const DashboardItinerary: React.FC = () => {
         },
       });
     });
-  const [events, setEvents] = useState<EventWithInvites[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showEventForm, setShowEventForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<ItineraryEvent | null>(null);
   const [autoCreateAlbum, setAutoCreateAlbum] = useState(true);
@@ -74,73 +65,7 @@ export const DashboardItinerary: React.FC = () => {
     is_visible: true,
   });
 
-  useEffect(() => {
-    loadEvents();
-  }, [isDemoMode]);
-
-  useEffect(() => {
-    if (!isDemoMode) return;
-    try {
-      writeDemoItineraryEvents(events);
-    } catch {}
-  }, [isDemoMode, events]);
-
-  async function syncWeddingDataSchedule(siteId: string, eventList: ItineraryEvent[]) {
-    try {
-      await syncItineraryScheduleMirror(siteId, eventList);
-    } catch {
-      // non-blocking mirror write; itinerary CRUD still succeeds
-    }
-  }
-
-  async function loadEvents() {
-    try {
-      if (isDemoMode) {
-        const seeded = demoEvents.map((event, idx) => ({
-          id: event.id,
-          event_name: event.event_name,
-          description: event.description,
-          event_date: event.event_date,
-          start_time: event.start_time,
-          end_time: null,
-          location_name: event.location_name,
-          location_address: '',
-          dress_code: idx % 2 === 0 ? 'Cocktail Attire' : null,
-          notes: idx === 0 ? 'Shuttle departs from hotel lobby at 5:30 PM.' : null,
-          display_order: event.display_order,
-          is_visible: true,
-          invitation_count: [86, 120, 120, 52][idx] ?? 0,
-          rsvp_count: [72, 107, 109, 44][idx] ?? 0,
-          attending_count: [68, 98, 101, 39][idx] ?? 0,
-          declined_count: [4, 9, 8, 5][idx] ?? 0,
-          pending_count: Math.max(0, ([86, 120, 120, 52][idx] ?? 0) - ([68, 98, 101, 39][idx] ?? 0) - ([4, 9, 8, 5][idx] ?? 0)),
-        }));
-
-        const storedEvents = readDemoItineraryEvents(seeded as EventWithInvites[]);
-        if (storedEvents.length > 0) {
-          setEvents(storedEvents.map((event) => ({
-            ...event,
-            pending_count: typeof event.pending_count === 'number'
-              ? event.pending_count
-              : Math.max(0, event.invitation_count - event.attending_count - event.declined_count),
-          })));
-          return;
-        }
-
-        setEvents(seeded as EventWithInvites[]);
-        return;
-      }
-
-      const snapshot = await loadItineraryDashboardEvents(hasEventRsvpsTable);
-      hasEventRsvpsTable = snapshot.hasEventRsvpsTable;
-      setEvents(snapshot.events);
-    } catch {
-      setEvents([]);
-      toast('Couldn’t load itinerary events. Please try again.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }
+  const { events, loadEvents, loading, setEvents } = useItineraryDashboardData({ isDemoMode, toast });
 
   function openEventForm(event?: ItineraryEvent) {
     if (event) {

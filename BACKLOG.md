@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 9:13 AM PT - No-Deploy Itinerary Dashboard Data-Hook Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Itinerary.tsx` no longer owns the inline itinerary bootstrap and demo-persistence lane for event loading, demo hydration, and event-state bootstrapping.
+  - Added `src/pages/dashboard/useItineraryDashboardData.ts` so the new hook now owns demo/live itinerary loading, demo itinerary writeback, and the `events` / `loading` dashboard state while the route keeps form state, timeline orchestration, and render composition.
+  - Itinerary boundary tests now pin `useItineraryDashboardData({ isDemoMode, toast })`, check that the new hook owns `loadItineraryDashboardEvents(hasEventRsvpsTable)`, demo storage hydration, and the itinerary load error toast, and reject regaining the old inline load/bootstrap slab in `Itinerary.tsx`.
+- Acceptance/proof target:
+  - Focused itinerary/dashboard boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 9:08 AM PT - No-Deploy Settings UI-State Extraction
 
 - Status: `PARTIAL`
