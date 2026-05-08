@@ -14,7 +14,7 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
-import { buildSeatingCateringHandoffReview, buildSeatingCateringPacket, cateringRowsToCsv } from '../../lib/seatingCateringExportReadiness';
+import { cateringRowsToCsv } from '../../lib/seatingCateringExportReadiness';
 import { formatSeatingEventLabel } from './seatingEventDate';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -30,20 +30,15 @@ import {
 } from './seating/seatingService';
 import {
   UNASSIGNED_DROPPABLE,
-  buildArrivedGuestIdSet,
-  buildAssignedGuestIdSet,
   buildDemoAutoSeatAssignments,
   buildDemoAutoTables,
   buildSeatingLayoutSvg,
   buildSeatingReportHtml,
   buildTableSummaryCsv,
-  countArrivedAttendingGuests,
   getAssignmentsForTable,
-  getCheckInCandidates,
   getGuestsAssignedToTable,
   getSeatPickerOptions,
   getShapeLabel,
-  getUnassignedAttendingGuests,
   safeExportSlug,
   type SeatingCheckInFilter,
   type TableShape,
@@ -54,6 +49,7 @@ import {
   writeSeatingVersions,
 } from './seating/seatingDemoStorage';
 import { useSeatingDashboardData } from './seating/useSeatingDashboardData';
+import { buildSeatingDashboardDerivedState } from './seating/buildSeatingDashboardDerivedState';
 import {
   GuestChip,
   TableCard,
@@ -131,7 +127,6 @@ export const DashboardSeating: React.FC = () => {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
-  const unassignedGuests = getUnassignedAttendingGuests(allGuests, assignments);
 
   function handleDragStart(event: DragStartEvent) {
     const guest = allGuests.find(g => g.id === event.active.id);
@@ -591,17 +586,14 @@ export const DashboardSeating: React.FC = () => {
   function handleExportTableSummaryCSV() {
     const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
     const eventName = selectedEvent?.event_name ?? 'Event';
-    const packet = buildSeatingCateringPacket({ guests: allGuests, tables, assignments });
-
     const safeName = safeExportSlug(eventName);
-    downloadCSV(buildTableSummaryCsv(packet), `table-summary-${safeName}.csv`);
+    downloadCSV(buildTableSummaryCsv(cateringPacket), `table-summary-${safeName}.csv`);
   }
 
   function handleExportCateringCSV() {
     const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
     const eventName = selectedEvent?.event_name ?? 'Event';
-    const packet = buildSeatingCateringPacket({ guests: allGuests, tables, assignments });
-    downloadCSV(cateringRowsToCsv(packet.rows), `catering-packet-${safeExportSlug(eventName)}.csv`);
+    downloadCSV(cateringRowsToCsv(cateringPacket.rows), `catering-packet-${safeExportSlug(eventName)}.csv`);
   }
 
   function handlePrint() {
@@ -707,26 +699,27 @@ export const DashboardSeating: React.FC = () => {
     toast(isDemoMode ? 'Version restored locally.' : 'Version restored as a working copy. Apply changes to persist the live seating board.', 'success');
   }
 
-  const selectedItineraryEvent = itineraryEvents.find(e => e.id === selectedEventId);
-  const arrivedGuestIds = buildArrivedGuestIdSet(assignments);
-  const assignedGuestIdSet = buildAssignedGuestIdSet(assignments);
-  const arrivedCount = countArrivedAttendingGuests(allGuests, arrivedGuestIds);
-  const checkInCandidates = getCheckInCandidates({
-    guests: allGuests,
-    arrivedIds: arrivedGuestIds,
-    assignedIds: assignedGuestIdSet,
-    filter: checkInFilter,
-    query: checkInQuery,
+  const {
+    arrivedCount,
+    arrivedGuestIds,
+    assignedGuestIdSet,
+    cateringHandoffReview,
+    cateringPacket,
+    checkInCandidates,
+    mealHeadcountByTable,
+    packetReadyTone,
+    selectedItineraryEvent,
+    unassignedGuests,
+  } = buildSeatingDashboardDerivedState({
+    allGuests,
+    assignments,
+    checkInFilter,
+    checkInQuery,
+    counters,
+    itineraryEvents,
+    selectedEventId,
+    tables,
   });
-
-  const cateringPacket = buildSeatingCateringPacket({ guests: allGuests, tables, assignments });
-  const cateringHandoffReview = buildSeatingCateringHandoffReview(cateringPacket);
-  const mealHeadcountByTable = cateringPacket.tableSummaries;
-  const packetReadyTone = cateringPacket.readiness.status === 'ready'
-    ? 'border-success/25 bg-success/5'
-    : cateringPacket.readiness.status === 'needs-review'
-      ? 'border-primary/25 bg-primary/5'
-      : 'border-border-subtle bg-surface';
 
   if (loading) {
     return (

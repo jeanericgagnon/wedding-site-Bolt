@@ -613,6 +613,7 @@ describe('dashboard data boundary guards', () => {
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Seating.tsx'), 'utf8');
     const lookupPage = readFileSync(join(process.cwd(), 'src/pages/dashboard/SeatingLookup.tsx'), 'utf8');
     const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/seating/useSeatingDashboardData.ts'), 'utf8');
+    const derivedState = readFileSync(join(process.cwd(), 'src/pages/dashboard/seating/buildSeatingDashboardDerivedState.ts'), 'utf8');
 
     expect(source).toContain('const SEATING_EVENT_SELECT = ');
     expect(source).toContain('const SEATING_TABLE_SELECT = ');
@@ -642,11 +643,14 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain(".from('guests')\n    .select('*')");
     expect(source).not.toContain(".from('seating_layout_versions')\n    .select('*')");
     expect(page).toContain('useSeatingDashboardData({ isDemoMode, toast })');
+    expect(page).toContain('buildSeatingDashboardDerivedState({');
     expect(page).toContain('refreshSeatingSession()');
     expect(page).not.toContain("from '../../lib/supabase'");
     expect(page).not.toContain('supabase.auth.refreshSession()');
     expect(page).not.toContain('async function loadInitial()');
     expect(page).not.toContain('async function loadSeatingData()');
+    expect(page).not.toContain('const arrivedGuestIds = buildArrivedGuestIdSet(assignments);');
+    expect(page).not.toContain('const cateringPacket = buildSeatingCateringPacket({ guests: allGuests, tables, assignments });');
     expect(dataHook).toContain('const id = await getWeddingSiteId();');
     expect(dataHook).toContain('const events = await loadItineraryEvents(id);');
     expect(dataHook).toContain('const se = await getOrCreateSeatingEvent(siteId, selectedEventId);');
@@ -657,6 +661,11 @@ describe('dashboard data boundary guards', () => {
     expect(dataHook).toContain('loadSeatingVersions(se.id)');
     expect(dataHook).toContain('writeDemoSeatingState(selectedEventId, tables, assignments);');
     expect(dataHook).not.toContain("from '../../../lib/supabase'");
+    expect(derivedState).toContain('const unassignedGuests = getUnassignedAttendingGuests(args.allGuests, args.assignments);');
+    expect(derivedState).toContain('const arrivedGuestIds = buildArrivedGuestIdSet(args.assignments);');
+    expect(derivedState).toContain('const checkInCandidates = getCheckInCandidates({');
+    expect(derivedState).toContain('const cateringPacket = buildSeatingCateringPacket({');
+    expect(derivedState).toContain('const cateringHandoffReview = buildSeatingCateringHandoffReview(cateringPacket);');
     expect(lookupPage).not.toContain("from '../../lib/supabase'");
     expect(lookupPage).not.toContain("from '../../lib/activeSite'");
     expect(lookupPage).not.toContain("supabase.from(");

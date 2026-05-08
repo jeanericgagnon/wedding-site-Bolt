@@ -10247,3 +10247,18 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 05:10 AM PT No-Deploy Seating Dashboard Derived-State Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Seating.tsx` now routes the seating dashboard derived support state through `src/pages/dashboard/seating/buildSeatingDashboardDerivedState.ts`.
+  - That helper now owns unassigned guest derivation, selected itinerary event lookup, arrived guest IDs, assigned guest IDs, arrived counts, check-in candidate filtering, catering packet assembly, catering handoff review assembly, meal headcount rows, and packet tone while the page keeps loading, seat assignment, check-in actions, exports, versions, and layout interactions.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildSeatingDashboardDerivedState({ ... })`, checks that `buildSeatingDashboardDerivedState.ts` owns the seating dashboard derived-state seam, and rejects regaining the old inline arrival/catering packet assembly in `Seating.tsx`.
+  - `src/pages/dashboard/Seating.tsx` dropped from 1453 lines to 1446 lines in this batch, while `src/pages/dashboard/seating/buildSeatingDashboardDerivedState.ts` came in at 59 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
