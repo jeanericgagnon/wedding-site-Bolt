@@ -2145,3 +2145,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpSuccessView` so the main RSVP page keeps routing through the shared success shell.
   - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 public-surface oversized-file risk in `RSVP` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 10:11 PM PT - No-deploy RSVP guest-picker extraction:
+  - Resolved in this batch: moved the main RSVP page’s ambiguous-guest picker slab out of `src/pages/RSVP.tsx` and behind `src/pages/RsvpGuestPickerView.tsx`.
+  - Data-boundary hardening: `RSVP.tsx` now hands off the multiple-match explanation copy, guest choice list, invite-access hint rows, and search-again CTA through one higher-level picker view instead of owning that guest-selection surface inline.
+  - File-size movement: `src/pages/RSVP.tsx` dropped from 1734 lines to 1695 lines in this continuation batch while `src/pages/RsvpGuestPickerView.tsx` came in at 79 lines.
+  - No feature loss: ambiguous-name lookup flow, guest pick handling, loading-safe selection buttons, and reset-to-search behavior preserve the current guest behavior while shrinking page-owned public-surface composition.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpGuestPickerView` so the main RSVP page keeps routing through the shared picker shell.
+  - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 public-surface oversized-file risk in `RSVP` without changing guest-facing behavior. No deploy was run.
