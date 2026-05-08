@@ -58,7 +58,6 @@ import {
   getGuestRsvpOpsStats,
   getGuestSongRequestEntries,
   makeRsvpQuestion,
-  safeGuestsDashboardError,
   sortGuestsForDisplay,
   toTitleCase,
   buildGuestExceptionStateMap,
@@ -83,12 +82,10 @@ import {
   type RsvpSavedSegment,
 } from './guests/guestDashboardStorage';
 import {
-  deleteAllGuestsForSite,
   fetchGuestRsvps,
   generateSecureGuestInviteToken,
   loadGuestDashboardPublicSlug,
   loadGuestDashboardSiteSlug,
-  persistGuestReminderSettings,
 } from './guests/guestService';
 import { useGuestDashboardCampaignActions } from './guests/useGuestDashboardCampaignActions';
 import { useGuestDashboardCheckIns } from './guests/useGuestDashboardCheckIns';
@@ -99,6 +96,7 @@ import { useGuestDashboardData } from './guests/useGuestDashboardData';
 import { useGuestDashboardFollowUpActions } from './guests/useGuestDashboardFollowUpActions';
 import { useGuestDashboardCrudActions } from './guests/useGuestDashboardCrudActions';
 import { useGuestDashboardGuestDetailActions } from './guests/useGuestDashboardGuestDetailActions';
+import { useGuestDashboardOpsActions } from './guests/useGuestDashboardOpsActions';
 import { useGuestDashboardRsvpConfigActions } from './guests/useGuestDashboardRsvpConfigActions';
 import { useGuestDashboardExports } from './guests/useGuestDashboardExports';
 
@@ -403,18 +401,6 @@ export const DashboardGuests: React.FC = () => {
   const [deletingGuestId, setDeletingGuestId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const applyCampaignPreset = (preset: 'pending' | 'missing-meal' | 'plusone-missing' | 'ceremony-no' | 'reception-no' | 'pending-no-email') => {
-    setCampaignPreset(preset);
-    setFilterStatus(preset);
-    setViewMode('list');
-    setSearchQuery('');
-  };
-
-  const persistReminderSettings = async (patch: { reminder_cadence_days?: 1 | 3 | 7; auto_reminders_enabled?: boolean }) => {
-    if (!weddingSiteId || isDemoMode) return;
-    await persistGuestReminderSettings(weddingSiteId, patch);
-  };
-
   const households = useMemo(() => buildGuestHouseholdGroups(guests), [guests]);
 
   const {
@@ -443,37 +429,6 @@ export const DashboardGuests: React.FC = () => {
     toast,
     weddingSiteId,
   });
-
-  const handleDeleteAllGuests = async () => {
-    if (!weddingSiteId || isDemoMode) {
-      toast('Deleting the full guest list is unavailable in demo mode.', 'error');
-      return;
-    }
-
-    const required = String(guests.length);
-    if (deleteAllConfirmInput.trim() !== required) {
-      toast(`Type ${required} to confirm deletion.`, 'error');
-      return;
-    }
-
-    setDeleteAllBusy(true);
-    try {
-      const { guestIds } = await deleteAllGuestsForSite(weddingSiteId);
-
-      await fetchGuests();
-      setSelectedGuestIds(new Set());
-      setShowDeleteAllModal(false);
-      setDeleteAllConfirmInput('');
-      logGuestAction('guest_list_deleted_bulk', 'All guests were deleted from the guest list.', {
-        guestCount: guestIds.length,
-      }, weddingSiteId, 'Guest list');
-      toast(`Deleted ${required} guests.`, 'success');
-    } catch (err) {
-      toast(safeGuestsDashboardError(err, 'Couldn’t delete all guests. Please try again.'), 'error');
-    } finally {
-      setDeleteAllBusy(false);
-    }
-  };
 
   const filteredGuests = guests.filter((guest) => {
     const searchTerm = searchQuery.toLowerCase();
@@ -540,28 +495,6 @@ export const DashboardGuests: React.FC = () => {
     const ids = displayedGuests.filter((g) => getGuestIssueCount(g) > 0).map((g) => g.id);
     setSelectedGuestIds(new Set(ids));
     toast(ids.length > 0 ? `Selected ${ids.length} unresolved guest${ids.length === 1 ? '' : 's'}` : 'No unresolved guests in current view', ids.length > 0 ? 'success' : 'error');
-  };
-
-  const clearGuestSelection = () => {
-    setSelectedGuestIds(new Set());
-  };
-
-  const selectFilteredGuests = () => {
-    const ids = filteredGuests.map((g) => g.id);
-    setSelectedGuestIds(new Set(ids));
-    toast(ids.length > 0 ? `Selected ${ids.length} guest${ids.length === 1 ? '' : 's'} in current filter` : 'No guests in current filter', ids.length > 0 ? 'success' : 'error');
-  };
-
-  const keepOnlyVisibleSelection = () => {
-    const visibleIds = new Set(filteredGuests.map((g) => g.id));
-    setSelectedGuestIds((prev) => {
-      const next = new Set<string>();
-      prev.forEach((id) => {
-        if (visibleIds.has(id)) next.add(id);
-      });
-      return next;
-    });
-    toast('Selection trimmed to current filter', 'success');
   };
 
   const stats = {
@@ -686,6 +619,35 @@ export const DashboardGuests: React.FC = () => {
   const reminderCandidates = emailableFilteredGuests.filter((g: any) => {
     if (!skipRecentlyInvited) return true;
     return dueReminderGuestIds.has(g.id);
+  });
+  const {
+    applyCampaignPreset,
+    clearFilters,
+    clearGuestSelection,
+    focusHighRiskFirst,
+    handleDeleteAllGuests,
+    keepOnlyVisibleSelection,
+    persistReminderSettingsForSite,
+    selectFilteredGuests,
+  } = useGuestDashboardOpsActions({
+    deleteAllConfirmInput,
+    fetchGuests,
+    filteredGuests,
+    guests,
+    isDemoMode,
+    logGuestAction,
+    setCampaignPreset,
+    setDeleteAllBusy,
+    setDeleteAllConfirmInput,
+    setExtraFilters,
+    setFilterStatus,
+    setSearchQuery,
+    setSelectedGuestIds,
+    setShowDeleteAllModal,
+    setSortByPriority,
+    setViewMode,
+    toast,
+    weddingSiteId,
   });
   const {
     handleClearAllCheckIns,
@@ -877,12 +839,7 @@ export const DashboardGuests: React.FC = () => {
     onAddRsvpQuestionTemplate: addRsvpQuestionTemplate,
     onApplyCampaignPreset: applyCampaignPreset,
     onClearAllCheckIns: () => { void handleClearAllCheckIns(); },
-    onClearFilters: () => {
-      setFilterStatus('all');
-      setExtraFilters([]);
-      setSearchQuery('');
-      setViewMode('list');
-    },
+    onClearFilters: clearFilters,
     onClearSelection: clearGuestSelection,
     onCopyAddressCollectionLink: () => { void copyContactRequestLink(); },
     onCopyChecklist: () => { void handleCopyChecklist(); },
@@ -914,7 +871,7 @@ export const DashboardGuests: React.FC = () => {
     onFileChange: importCSV,
     onFocusCeremonyNo: () => { setSearchQuery(''); setFilterStatus('ceremony-no'); },
     onFocusHandledPersonally: () => { setFilterStatus('manual-handled'); setViewMode('list'); setShowCampaignModal(false); },
-    onFocusHighRiskFirst: () => { setFilterStatus('all'); setViewMode('list'); setSearchQuery(''); setSortByPriority(true); setShowCampaignModal(false); },
+    onFocusHighRiskFirst: () => { focusHighRiskFirst(); setShowCampaignModal(false); },
     onFocusMissingContact: () => { setSearchQuery(''); setFilterStatus('no-contact'); setViewMode('list'); setShowCampaignModal(false); },
     onFocusMissingMeal: () => { setSearchQuery(''); setFilterStatus('missing-meal'); setViewMode('list'); setShowCampaignModal(false); },
     onFocusNoResponse: () => { setSearchQuery(''); setFilterStatus('pending'); },
@@ -966,7 +923,7 @@ export const DashboardGuests: React.FC = () => {
         const next = !previous;
         try {
           setAutoRemindersEnabled(next);
-          await persistReminderSettings({ auto_reminders_enabled: next });
+          await persistReminderSettingsForSite({ auto_reminders_enabled: next });
           toast(next ? 'Auto reminders enabled' : 'Auto reminders paused', 'success');
         } catch {
           setAutoRemindersEnabled(previous);

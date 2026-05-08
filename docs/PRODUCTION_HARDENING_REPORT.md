@@ -5634,6 +5634,20 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 04:38 AM PT No-Deploy Guest Dashboard Ops-Actions Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the guest dashboard preset-switching, reminder-setting persistence, delete-all, and visible-selection lifecycle through `src/pages/dashboard/guests/useGuestDashboardOpsActions.ts`.
+  - That hook now owns campaign preset application, reminder-setting persistence, delete-all guest confirmation flow, filtered selection, visible-selection trimming, and filter-reset controls while the page keeps campaigns, exports, overlays, route-level dashboard orchestration, and RSVP settings view wiring.
+  - `src/lib/dashboardDataBoundary.test.ts` and `src/pages/dashboard/guests/guestService.test.ts` now pin `useGuestDashboardOpsActions({ ... })`, check that `useGuestDashboardOpsActions.ts` owns the reminder/delete-all/selection seam, and reject regaining the old inline ops-action handlers in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` dropped from 1086 lines to 1043 lines in this batch, while `src/pages/dashboard/guests/useGuestDashboardOpsActions.ts` came in at 159 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 04:34 AM PT No-Deploy Guest Dashboard Conflict-Actions Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

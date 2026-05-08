@@ -145,6 +145,7 @@ describe('dashboard data boundary guards', () => {
     const crudHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCrudActions.ts'), 'utf8');
     const conflictHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardConflictActions.ts'), 'utf8');
     const detailHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts'), 'utf8');
+    const opsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardOpsActions.ts'), 'utf8');
     const rsvpConfigHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardRsvpConfigActions.ts'), 'utf8');
 
     expect(source).not.toContain("from '../../lib/supabase'");
@@ -156,6 +157,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('useGuestDashboardCrudActions({');
     expect(source).toContain('useGuestDashboardConflictActions({');
     expect(source).toContain('useGuestDashboardGuestDetailActions({');
+    expect(source).toContain('useGuestDashboardOpsActions({');
     expect(source).toContain('useGuestDashboardRsvpConfigActions({');
     expect(source).toContain('buildGuestDashboardViewProps({');
     expect(source).toContain('loadPublicSlug: loadGuestDashboardPublicSlug');
@@ -193,6 +195,11 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('await resolveGuestDashboardConflicts(ids, resolvedAt);');
     expect(source).not.toContain('const resolveConflict = useCallback(async (conflictId: string) => {');
     expect(source).not.toContain('const resolveAllVisibleConflicts = useCallback(async () => {');
+    expect(source).not.toContain("await persistGuestReminderSettings(weddingSiteId, patch);");
+    expect(source).not.toContain('const handleDeleteAllGuests = async () => {');
+    expect(source).not.toContain('const selectFilteredGuests = () => {');
+    expect(source).not.toContain('const clearGuestSelection = () => {');
+    expect(source).not.toContain('const keepOnlyVisibleSelection = () => {');
     expect(source).not.toContain('loadGuestDashboardSiteSettings(user.id)');
     expect(source).not.toContain('loadGuestDashboardSnapshot(weddingSiteId)');
     expect(source).not.toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
@@ -209,8 +216,6 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('writeStoredDemoRsvpConfig({ questions: cleanedQuestions, mealEnabled: rsvpMealEnabled, mealOptions });');
     expect(source).not.toContain('await persistGuestDashboardRsvpConfig({');
     expect(source).toContain('useGuestDashboardExports({');
-    expect(source).toContain('persistGuestReminderSettings(weddingSiteId, patch)');
-    expect(source).toContain('deleteAllGuestsForSite(weddingSiteId)');
     expect(service).toContain('export const GUEST_SITE_SETTINGS_SELECT = ');
     expect(service).toContain('export const GUEST_DASHBOARD_RSVP_SELECT = ');
     expect(service).toContain('export const GUEST_CONFLICT_SELECT = ');
@@ -271,6 +276,14 @@ describe('dashboard data boundary guards', () => {
     expect(conflictHook).toContain('await resolveGuestDashboardConflicts(ids, resolvedAt);');
     expect(conflictHook).toContain("toast('RSVP item marked done', 'success');");
     expect(conflictHook).not.toContain("from '../../../lib/supabase'");
+    expect(opsHook).toContain('const applyCampaignPreset = useCallback((preset:');
+    expect(opsHook).toContain('await persistGuestReminderSettings(weddingSiteId, patch);');
+    expect(opsHook).toContain('const handleDeleteAllGuests = useCallback(async () => {');
+    expect(opsHook).toContain('const selectFilteredGuests = useCallback(() => {');
+    expect(opsHook).toContain('const clearGuestSelection = useCallback(() => {');
+    expect(opsHook).toContain('const keepOnlyVisibleSelection = useCallback(() => {');
+    expect(opsHook).toContain('await deleteAllGuestsForSite(weddingSiteId);');
+    expect(opsHook).not.toContain("from '../../../lib/supabase'");
     expect(crudHook).toContain('const resetForm = () => {');
     expect(crudHook).toContain('const openEditModal = (guest: GuestWithRSVP) => {');
     expect(crudHook).toContain('const handleAddGuest = async (event: FormEvent) => {');
