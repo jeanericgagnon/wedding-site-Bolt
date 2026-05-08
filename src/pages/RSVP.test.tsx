@@ -54,6 +54,7 @@ describe('RSVP stale submit protection', () => {
     const pageViewModel = readFileSync(join(process.cwd(), 'src/pages/buildRsvpPageViewModel.ts'), 'utf8');
     const liveContentProps = readFileSync(join(process.cwd(), 'src/pages/buildRsvpLiveContentViewProps.ts'), 'utf8');
     const validateAdvance = readFileSync(join(process.cwd(), 'src/pages/validateRsvpFormAdvance.ts'), 'utf8');
+    const pageRouteView = readFileSync(join(process.cwd(), 'src/pages/RsvpPageRouteView.tsx'), 'utf8');
     const flowView = readFileSync(join(process.cwd(), 'src/pages/RsvpFlowView.tsx'), 'utf8');
     const formView = readFileSync(join(process.cwd(), 'src/pages/RsvpFormView.tsx'), 'utf8');
     const liveContentView = readFileSync(join(process.cwd(), 'src/pages/RsvpLiveContentView.tsx'), 'utf8');
@@ -63,21 +64,17 @@ describe('RSVP stale submit protection', () => {
     const searchView = readFileSync(join(process.cwd(), 'src/pages/RsvpSearchView.tsx'), 'utf8');
     const successView = readFileSync(join(process.cwd(), 'src/pages/RsvpSuccessView.tsx'), 'utf8');
 
-    expect(rsvpPage).toContain("from './RsvpRouteView'");
-    expect(rsvpPage).toContain("from './RsvpLiveContentView'");
-    expect(rsvpPage).toContain("from './RsvpTokenLoadingView'");
     expect(rsvpPage).toContain("from './buildRsvpDerivedViewState'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentActions'");
     expect(rsvpPage).toContain("from './buildRsvpPageViewModel'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentViewProps'");
+    expect(rsvpPage).toContain("from './RsvpPageRouteView'");
     expect(rsvpPage).toContain("from './validateRsvpFormAdvance'");
-    expect(rsvpPage).toContain('<RsvpRouteView');
-    expect(rsvpPage).toContain('<RsvpLiveContentView');
-    expect(rsvpPage).toContain('<RsvpTokenLoadingView');
+    expect(rsvpPage).toContain('<RsvpPageRouteView');
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
     expect(rsvpPage).toContain('buildRsvpLiveContentActions({');
     expect(rsvpPage).toContain('buildRsvpPageViewModel({');
-    expect(rsvpPage).toContain('{...buildRsvpLiveContentViewProps({');
+    expect(rsvpPage).toContain('const liveContentProps = buildRsvpLiveContentViewProps({');
     expect(rsvpPage).toContain('validateRsvpFormAdvance({');
     expect(derivedViewState).toContain('guestPredictions');
     expect(derivedViewState).toContain('childCountOptions');
@@ -88,6 +85,12 @@ describe('RSVP stale submit protection', () => {
     expect(pageViewModel).toContain('guestDisplayName');
     expect(pageViewModel).toContain('deadlinePassed');
     expect(pageViewModel).toContain('searchInputId');
+    expect(pageRouteView).toContain("from './RsvpRouteView'");
+    expect(pageRouteView).toContain("from './RsvpLiveContentView'");
+    expect(pageRouteView).toContain("from './RsvpTokenLoadingView'");
+    expect(pageRouteView).toContain('<RsvpRouteView');
+    expect(pageRouteView).toContain('<RsvpLiveContentView');
+    expect(pageRouteView).toContain('<RsvpTokenLoadingView');
     expect(liveContentProps).toContain('return props;');
     expect(validateAdvance).toContain('Please choose a meal option before review.');
     expect(validateAdvance).toContain('Please answer:');

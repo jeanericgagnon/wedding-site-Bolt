@@ -33,9 +33,7 @@ import { buildRsvpPageViewModel } from './buildRsvpPageViewModel';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { buildRsvpLiveContentViewProps } from './buildRsvpLiveContentViewProps';
 import { callValidateRsvpToken } from './rsvpFunctionService';
-import { RsvpLiveContentView } from './RsvpLiveContentView';
-import { RsvpRouteView } from './RsvpRouteView';
-import { RsvpTokenLoadingView } from './RsvpTokenLoadingView';
+import { RsvpPageRouteView } from './RsvpPageRouteView';
 import { validateRsvpFormAdvance } from './validateRsvpFormAdvance';
 
 export { normalizeRsvpGuestError, normalizeRsvpSubmitError } from './rsvpTypes';
@@ -1119,10 +1117,6 @@ export default function RSVP() {
     }
   }, [mealConfig.enabled, availableMealValues, formData.meal_choice]);
 
-  const tokenAutoLoadingView = (
-    <RsvpTokenLoadingView onEnterCodeInstead={() => resetToSearch(false)} />
-  );
-
   const liveContentActions = buildRsvpLiveContentActions({
     activeLookupRequestRef,
     formStep,
@@ -1137,68 +1131,64 @@ export default function RSVP() {
     setSubmitting,
   });
 
-  const liveContent = (
-    <RsvpLiveContentView
-      {...buildRsvpLiveContentViewProps({
-        activePredictionId: activePredictionId,
-        activePredictionIndex: activePredictionIndex,
-        allowedChildrenCount: allowedChildrenCount,
-        ambiguousGuests: ambiguousGuests,
-        applyToHousehold: applyToHousehold,
-        canSubmit: canSubmit,
-        childCountOptions: childCountOptions,
-        customAnswers: customAnswers,
-        deadlinePassed: deadlinePassed,
-        error: error,
-        existingRsvp: existingRsvp,
-        formData: formData,
-        formStep: formStep,
-        getQuestionLabel: getRsvpQuestionLabel,
-        goToNextFormStep: goToNextFormStep,
-        guest: guest,
-        guestDisplayName: guestDisplayName,
-        guestLabel: guestLabel,
-        guestPredictions: guestPredictions,
-        handleSubmit: handleSubmit,
-        householdGuests: householdGuests,
-        inheritedHouseholdMembers: inheritedHouseholdMembers,
-        invitedEvents: invitedEvents,
-        loading: loading,
-        mealConfig: mealConfig,
-        onActivePredictionIndexChange: setActivePredictionIndex,
-        onBack: liveContentActions.onBack,
-        onCancelLoading: liveContentActions.onCancelLoading,
-        onDone: liveContentActions.onDone,
-        onHouseholdSelectionChange: updateSelectedHouseholdGuestIds,
-        onHouseholdToggle: updateApplyToHousehold,
-        onPickGuest: handlePickGuest,
-        onSearchAgain: liveContentActions.onSearchAgain,
-        onSearchSubmit: handleSearch,
-        onSearchValueChange: setSearchValue,
-        onStepAnswerChange: updateCustomAnswers,
-        onStepDataChange: updateFormData,
-        onSubmitAnother: liveContentActions.onSubmitAnother,
-        predictionListId: predictionListId,
-        rsvpDeadline: rsvpDeadline,
-        rsvpQuestions: rsvpQuestions,
-        rsvpSessionToken: rsvpSessionToken,
-        safeMusicPlaylistUrl: safeMusicPlaylistUrl,
-        searchHintId: searchHintId,
-        searchInputId: searchInputId,
-        searchValue: searchValue,
-        selectedHouseholdGuestIds: selectedHouseholdGuestIds,
-        step: step,
-        submitting: submitting,
-        t: t,
-      })}
-    />
-  );
+  const liveContentProps = buildRsvpLiveContentViewProps({
+    activePredictionId: activePredictionId,
+    activePredictionIndex: activePredictionIndex,
+    allowedChildrenCount: allowedChildrenCount,
+    ambiguousGuests: ambiguousGuests,
+    applyToHousehold: applyToHousehold,
+    canSubmit: canSubmit,
+    childCountOptions: childCountOptions,
+    customAnswers: customAnswers,
+    deadlinePassed: deadlinePassed,
+    error: error,
+    existingRsvp: existingRsvp,
+    formData: formData,
+    formStep: formStep,
+    getQuestionLabel: getRsvpQuestionLabel,
+    goToNextFormStep: goToNextFormStep,
+    guest: guest,
+    guestDisplayName: guestDisplayName,
+    guestLabel: guestLabel,
+    guestPredictions: guestPredictions,
+    handleSubmit: handleSubmit,
+    householdGuests: householdGuests,
+    inheritedHouseholdMembers: inheritedHouseholdMembers,
+    invitedEvents: invitedEvents,
+    loading: loading,
+    mealConfig: mealConfig,
+    onActivePredictionIndexChange: setActivePredictionIndex,
+    onBack: liveContentActions.onBack,
+    onCancelLoading: liveContentActions.onCancelLoading,
+    onDone: liveContentActions.onDone,
+    onHouseholdSelectionChange: updateSelectedHouseholdGuestIds,
+    onHouseholdToggle: updateApplyToHousehold,
+    onPickGuest: handlePickGuest,
+    onSearchAgain: liveContentActions.onSearchAgain,
+    onSearchSubmit: handleSearch,
+    onSearchValueChange: setSearchValue,
+    onStepAnswerChange: updateCustomAnswers,
+    onStepDataChange: updateFormData,
+    onSubmitAnother: liveContentActions.onSubmitAnother,
+    predictionListId: predictionListId,
+    rsvpDeadline: rsvpDeadline,
+    rsvpQuestions: rsvpQuestions,
+    rsvpSessionToken: rsvpSessionToken,
+    safeMusicPlaylistUrl: safeMusicPlaylistUrl,
+    searchHintId: searchHintId,
+    searchInputId: searchInputId,
+    searchValue: searchValue,
+    selectedHouseholdGuestIds: selectedHouseholdGuestIds,
+    step: step,
+    submitting: submitting,
+    t: t,
+  });
 
   return (
-    <RsvpRouteView
+    <RsvpPageRouteView
+      liveContentProps={liveContentProps}
+      onEnterCodeInstead={() => resetToSearch(false)}
       tokenAutoLoading={tokenAutoLoading}
-      tokenAutoLoadingView={tokenAutoLoadingView}
-      liveContent={liveContent}
     />
   );
 }

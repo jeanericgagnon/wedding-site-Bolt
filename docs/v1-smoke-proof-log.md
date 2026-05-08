@@ -7420,6 +7420,22 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 10:57 PM PT No-Deploy RSVP Page Route-View Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its top-level route/content composition through `src/pages/RsvpPageRouteView.tsx`.
+  - That wrapper now owns the `RsvpRouteView` handoff, token-loading shell, and live-content mount while the page keeps state, validation, lookup logic, and live-content prop assembly local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpPageRouteView` and the named `liveContentProps` handoff so the main RSVP page keeps routing through the dedicated route wrapper.
+  - `src/pages/RSVP.tsx` dropped from 1204 lines to 1194 lines in this batch, while `src/pages/RsvpPageRouteView.tsx` came in at 25 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 10:03 PM PT No-Deploy Event RSVP Live Content Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
