@@ -2161,3 +2161,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpFlowView` so the main RSVP page keeps routing through the shared flow shell.
   - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
   - Launch status: unchanged. This continues local public-surface ownership cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 10:25 PM PT - No-deploy RSVP form-view extraction:
+  - Resolved in this batch: moved the main RSVP page’s giant live form/review card out of `src/pages/RSVP.tsx` and behind `src/pages/RsvpFormView.tsx`.
+  - Data-boundary hardening: `RSVP.tsx` now hands off the deadline/status notices, progress rail, attendance/details/review steps, household inheritance controls, meal and custom-question inputs, error slab, and back/continue/submit CTA stack through one higher-level form view instead of owning that guest-facing form shell inline.
+  - File-size movement: `src/pages/RSVP.tsx` dropped from 1695 lines to 1283 lines in this continuation batch while `src/pages/RsvpFormView.tsx` came in at 529 lines.
+  - No feature loss: token-backed submit gating, household inheritance selection, event attendance choices, meal and plus-one capture, child-count selection, Spotify playlist handoff, custom question handling, and final review behavior preserve the current guest RSVP flow while shrinking page-owned public-surface composition.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpFormView` so the main RSVP page keeps routing through the shared form shell.
+  - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
+  - Launch status: unchanged. This materially reduces local P1/P2 oversized-file risk in `RSVP` without changing guest-facing behavior. No deploy was run.

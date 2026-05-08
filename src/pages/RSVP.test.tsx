@@ -50,6 +50,7 @@ describe('RSVP stale submit protection', () => {
   it('routes token auto-loading through the shared RSVP route view', () => {
     const rsvpPage = readFileSync(join(process.cwd(), 'src/pages/RSVP.tsx'), 'utf8');
     const flowView = readFileSync(join(process.cwd(), 'src/pages/RsvpFlowView.tsx'), 'utf8');
+    const formView = readFileSync(join(process.cwd(), 'src/pages/RsvpFormView.tsx'), 'utf8');
     const routeView = readFileSync(join(process.cwd(), 'src/pages/RsvpRouteView.tsx'), 'utf8');
     const pickerView = readFileSync(join(process.cwd(), 'src/pages/RsvpGuestPickerView.tsx'), 'utf8');
     const searchView = readFileSync(join(process.cwd(), 'src/pages/RsvpSearchView.tsx'), 'utf8');
@@ -57,11 +58,13 @@ describe('RSVP stale submit protection', () => {
 
     expect(rsvpPage).toContain("from './RsvpRouteView'");
     expect(rsvpPage).toContain("from './RsvpFlowView'");
+    expect(rsvpPage).toContain("from './RsvpFormView'");
     expect(rsvpPage).toContain("from './RsvpGuestPickerView'");
     expect(rsvpPage).toContain("from './RsvpSearchView'");
     expect(rsvpPage).toContain("from './RsvpSuccessView'");
     expect(rsvpPage).toContain('<RsvpRouteView');
     expect(rsvpPage).toContain('<RsvpFlowView');
+    expect(rsvpPage).toContain('<RsvpFormView');
     expect(rsvpPage).toContain('<RsvpGuestPickerView');
     expect(rsvpPage).toContain('<RsvpSearchView');
     expect(rsvpPage).toContain('<RsvpSuccessView');
@@ -69,6 +72,9 @@ describe('RSVP stale submit protection', () => {
     expect(flowView).toContain("{step === 'pick' && pickerContent}");
     expect(flowView).toContain("{step === 'form' && formContent}");
     expect(flowView).toContain("{step === 'success' && successContent}");
+    expect(formView).toContain('Welcome, {guestDisplayName}!');
+    expect(formView).toContain("Can't submit — missing invitation link");
+    expect(formView).toContain("Continue to review");
     expect(pickerView).toContain('Multiple matches found');
     expect(pickerView).toContain('Search again');
     expect(searchView).toContain("{t('rsvp.hero_title')}");

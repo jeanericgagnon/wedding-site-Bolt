@@ -1,17 +1,12 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
-import { Textarea } from '../components/ui/Textarea';
-import { Card } from '../components/ui/Card';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
-import { CheckCircle, Search, AlertCircle, User } from 'lucide-react';
+import { CheckCircle, Search, User } from 'lucide-react';
 import { demoGuests, demoRSVPs } from '../lib/demoData';
 import { DEMO_MODE, SUPABASE_CONFIGURED } from '../config/env';
-import { formatRsvpDeadline, isRsvpDeadlinePassed } from './rsvpDeadline';
+import { isRsvpDeadlinePassed } from './rsvpDeadline';
 import { getSafePublicWebUrl } from '../sections/publicLinks';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
 import {
@@ -38,8 +33,9 @@ import {
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { callValidateRsvpToken } from './rsvpFunctionService';
 import { RsvpFlowView } from './RsvpFlowView';
-import { RsvpRouteView } from './RsvpRouteView';
+import { RsvpFormView } from './RsvpFormView';
 import { RsvpGuestPickerView } from './RsvpGuestPickerView';
+import { RsvpRouteView } from './RsvpRouteView';
 import { RsvpSearchView } from './RsvpSearchView';
 import { RsvpSuccessView } from './RsvpSuccessView';
 
@@ -1209,455 +1205,47 @@ export default function RSVP() {
           />
         )}
         formContent={step === 'form' && guest ? (
-          <Card className="p-5 md:p-7">
-            <div className="text-center mb-6">
-              <h1 className="text-2xl md:text-3xl font-serif mb-2">Welcome, {guestDisplayName}!</h1>
-              {existingRsvp && (
-                <p className="text-sm text-gray-600">
-                  You've already responded. You can update your response below.
-                </p>
-              )}
-            </div>
-
-            {deadlinePassed && !existingRsvp && (
-              <div className="mb-6 p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg text-text-secondary text-sm flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-medium">RSVP deadline has passed</p>
-                  <p className="mt-0.5">The deadline was {formatRsvpDeadline(rsvpDeadline)}. Please contact the couple directly.</p>
-                </div>
-              </div>
-            )}
-
-            {existingRsvp && (
-              <>
-                <div className="mb-6 p-4 bg-primary/5 border border-primary/15 rounded-lg text-text-secondary text-sm space-y-1">
-                  <p className="font-medium">We have your current RSVP on file.</p>
-                  <p>You can review or update your details here. If plans change later, use this same link again.</p>
-                </div>
-                <div className="mb-6 p-4 bg-surface-subtle/40 border border-border-subtle rounded-lg text-text-secondary text-sm space-y-1">
-                  <p className="font-medium text-text-primary">Check back here for updates</p>
-                  <p>The couple may refine timing, travel notes, or day-of details later. This same RSVP link will still bring you back to the right place.</p>
-                </div>
-              </>
-            )}
-
-            {deadlinePassed && existingRsvp && (
-              <div className="mb-6 p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg text-text-secondary text-sm flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                The RSVP deadline has passed, but you can still update your existing response.
-              </div>
-            )}
-
-            {!rsvpSessionToken && (
-              <div className="mb-6 p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg text-text-secondary text-base space-y-2">
-                <div className="flex items-start gap-2 font-medium">
-                  <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                  Can't submit — missing invitation link
-                </div>
-                <p className="pl-7 text-sm text-text-secondary">To RSVP, open the invitation email you received and click the RSVP button. That link takes you to the right response for your invitation.</p>
-              </div>
-            )}
-
-            <div className="mb-5 p-4 bg-surface-subtle/40 border border-border-subtle rounded-lg">
-              <div className="flex items-center gap-2 text-xs">
-                {[1, 2, 3].map((n) => (
-                  <div key={n} className={`flex items-center gap-2 ${n < 3 ? 'flex-1' : ''}`}>
-                    <div className={`w-6 h-6 rounded-md grid place-items-center font-semibold ${formStep >= n ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'}`}>{n}</div>
-                    {n < 3 && <div className={`h-0.5 flex-1 ${formStep > n ? 'bg-primary/50' : 'bg-gray-200'}`} />}
-                  </div>
-                ))}
-              </div>
-              <p className="mt-3 text-sm text-gray-600">{formStep === 1 ? 'Step 1: Attendance' : formStep === 2 ? 'Step 2: Details' : 'Step 3: Final review & submit'} · {Math.round((formStep / 3) * 100)}% complete</p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {formStep === 1 && (
-                <>
-                  <div>
-                    <label className="block text-base font-semibold mb-2">Will you be attending?</label>
-                    <Select
-                      value={formData.attending ? 'yes' : 'no'}
-                      onChange={(e) => updateFormData((current) => ({ ...current, attending: e.target.value === 'yes' }))}
-                      className="h-12 text-base"
-                      required
-                      options={[
-                        { value: 'yes', label: "Yes, I'll be there!" },
-                        { value: 'no', label: "Sorry, I can't make it" },
-                      ]}
-                    />
-                  </div>
-
-                  {invitedEvents.length > 0 && (
-                    <div className="p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg text-sm">
-                      <p className="font-semibold mb-1.5 text-base text-gray-900">Your event access details</p>
-                      <ul className="list-disc list-inside space-y-1.5 text-base text-gray-800">
-                        {invitedEvents.map((ev) => <li key={ev}>{ev}</li>)}
-                      </ul>
-                    </div>
-                  )}
-                  {householdGuests.length > 0 && (
-                    <div className="text-sm p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg space-y-3">
-                      <label className="flex items-start gap-3">
-                        <input type="checkbox" checked={applyToHousehold} onChange={(e) => updateApplyToHousehold(e.target.checked)} className="w-5 h-5 mt-0.5" />
-                        <span className="font-semibold text-base text-gray-900">Inherit this RSVP to selected household guests</span>
-                      </label>
-
-                      {applyToHousehold && (
-                        <details className="rounded-lg border border-border-subtle bg-white p-3">
-                          <summary className="cursor-pointer text-sm font-semibold text-text-primary flex items-center justify-between gap-2">
-                            <span>Choose household guests</span>
-                            <span className="text-xs text-text-tertiary">{selectedHouseholdGuestIds.length}/{householdGuests.length} selected</span>
-                          </summary>
-                          <div className="mt-2 space-y-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <button
-                                type="button"
-                                onClick={() => updateSelectedHouseholdGuestIds(() => householdGuests.map((h) => h.id))}
-                                className="text-xs px-3 py-2 rounded-lg border border-border-subtle text-text-secondary hover:bg-surface-subtle"
-                              >
-                                Select all
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => updateSelectedHouseholdGuestIds(() => [])}
-                                className="text-xs px-3 py-2 rounded-lg border border-border-subtle text-text-secondary hover:bg-surface-subtle"
-                              >
-                                Clear
-                              </button>
-                            </div>
-                            <div className="space-y-1.5">
-                              {householdGuests.map((h) => {
-                                const label = h.first_name && h.last_name ? `${h.first_name} ${h.last_name}` : h.name;
-                                const checked = selectedHouseholdGuestIds.includes(h.id);
-                                const access = [h.invited_to_ceremony ? 'Ceremony' : null, h.invited_to_reception ? 'Reception' : null].filter(Boolean).join(' + ') || 'No event access';
-                                return (
-                                  <label key={h.id} className="flex items-center justify-between gap-3 bg-white border border-border-subtle rounded-lg px-3 py-2.5">
-                                    <span className="text-sm text-gray-800 font-medium">{label}</span>
-                                    <div className="flex items-center gap-3">
-                                      <span className="text-xs text-gray-600">{access}</span>
-                                      <input
-                                        type="checkbox"
-                                        checked={checked}
-                                        onChange={(e) => {
-                                          updateSelectedHouseholdGuestIds((prev) => e.target.checked ? [...new Set([...prev, h.id])] : prev.filter((id) => id !== h.id));
-                                        }}
-                                        className="w-5 h-5"
-                                      />
-                                    </div>
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </details>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-
-              {formStep === 2 && (
-                <>
-                  {formData.attending && (
-                    <>
-                      {(guest.invited_to_ceremony || guest.invited_to_reception) && (
-                        <div className="p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg space-y-4">
-                          <div className="space-y-1.5">
-                            <p className="text-base font-semibold text-gray-900">Which events will you attend?</p>
-                            <p className="text-sm text-gray-600">Choose the parts of the celebration you're joining.</p>
-                          </div>
-                          {guest.invited_to_ceremony && (
-                            <label className="flex items-center justify-between gap-4 rounded-lg border border-border-subtle bg-white px-4 py-3 text-sm">
-                              <span className="text-base font-medium text-gray-900">Wedding Ceremony</span>
-                              <input
-                                type="checkbox"
-                                checked={formData.attendCeremony}
-                                onChange={(e) => updateFormData((current) => ({ ...current, attendCeremony: e.target.checked }))}
-                                className="w-5 h-5"
-                              />
-                            </label>
-                          )}
-                          {guest.invited_to_reception && (
-                            <label className="flex items-center justify-between gap-4 rounded-lg border border-border-subtle bg-white px-4 py-3 text-sm">
-                              <span className="text-base font-medium text-gray-900">Reception</span>
-                              <input
-                                type="checkbox"
-                                checked={formData.attendReception}
-                                onChange={(e) => updateFormData((current) => ({ ...current, attendReception: e.target.checked }))}
-                                className="w-5 h-5"
-                              />
-                            </label>
-                          )}
-                          <p className="text-sm text-gray-600">Your event choices will be saved with your RSVP.</p>
-                        </div>
-                      )}
-
-                      {mealConfig.enabled && (
-                        <div>
-                          <label className="block text-base font-semibold mb-2">Meal choice</label>
-                          <Select
-                            value={formData.meal_choice}
-                            onChange={(e) => updateFormData((current) => ({ ...current, meal_choice: e.target.value }))}
-                            className="h-12 text-base"
-                            options={[
-                              { value: '', label: 'Select a meal option' },
-                              ...mealConfig.options.map((opt) => ({ value: opt, label: opt })),
-                            ]}
-                          />
-                        </div>
-                      )}
-
-                      {guest.plus_one_allowed && (
-                        <div>
-                          <label className="block text-base font-semibold mb-2">
-                            Plus-one name (optional)
-                          </label>
-                          <Input
-                            type="text"
-                            value={formData.plus_one_name}
-                            onChange={(e) => updateFormData((current) => ({ ...current, plus_one_name: e.target.value }))}
-                            placeholder="Plus-one full name"
-                            className="h-12 text-base"
-                          />
-                          <p className="text-sm text-gray-600 mt-2">You're welcome to bring a guest.</p>
-                        </div>
-                      )}
-
-                      {allowedChildrenCount > 0 && (
-                        <div>
-                          <label className="block text-base font-semibold mb-2">
-                            Children attending
-                          </label>
-                          <Select
-                            value={String(formData.children_count)}
-                            onChange={(e) => updateFormData((current) => ({ ...current, children_count: Number(e.target.value) }))}
-                            className="h-12 text-base"
-                            options={childCountOptions}
-                          />
-                          <p className="text-sm text-gray-600 mt-2">Your invitation allows up to {allowedChildrenCount} child{allowedChildrenCount === 1 ? '' : 'ren'}.</p>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-
-                  {safeMusicPlaylistUrl && (
-                    <div className="p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg">
-                      <p className="text-base font-semibold text-text-primary">Song requests</p>
-                      <p className="text-sm text-text-secondary mt-1.5">Add your song picks directly to our collaborative Spotify playlist.</p>
-                      <a
-                        href={safeMusicPlaylistUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center mt-3 px-4 py-3 rounded-lg bg-primary text-white text-base hover:bg-primary-hover"
-                      >
-                        Open Spotify playlist
-                      </a>
-                    </div>
-                  )}
-
-                  {rsvpQuestions.length > 0 && (
-                    <div className="space-y-4 p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg">
-                      <p className="text-base font-semibold text-gray-900">A few quick questions from the couple</p>
-                      {rsvpQuestions
-                        .filter((q) => (q.appliesTo ?? 'all') === 'all' || ((q.appliesTo === 'ceremony' && formData.attendCeremony) || (q.appliesTo === 'reception' && formData.attendReception)))
-                        .map((q) => (
-                          <div key={q.id} className="space-y-2">
-                            <label className="block text-base font-medium text-gray-900">{getRsvpQuestionLabel(q)}{q.required ? ' *' : ''}</label>
-                            {q.type === 'long_text' ? (
-                              <Textarea
-                                value={customAnswers[q.id] ?? ''}
-                                onChange={(e) => updateCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
-                                rows={3}
-                                placeholder="Your answer"
-                              />
-                            ) : (q.type === 'single_choice' || q.type === 'multi_choice') ? (
-                              <div className="space-y-2">
-                                {(q.options ?? []).map((opt) => {
-                                  const current = customAnswers[q.id];
-                                  const checked = q.type === 'multi_choice'
-                                    ? (Array.isArray(current) ? current.includes(opt) : false)
-                                    : (current ?? '') === opt;
-                                  return (
-                                  <label key={`${q.id}-${opt}`} className="flex items-center gap-3 rounded-lg border border-border-subtle bg-white px-3 py-3 text-sm text-gray-800">
-                                      <input
-                                        type="checkbox"
-                                        checked={checked}
-                                        onChange={(e) => {
-                                          if (q.type === 'multi_choice') {
-                                            updateCustomAnswers((prev) => {
-                                              const curr = Array.isArray(prev[q.id]) ? [...(prev[q.id] as string[])] : [];
-                                              if (e.target.checked) {
-                                                if (!curr.includes(opt)) curr.push(opt);
-                                              } else {
-                                                const i = curr.indexOf(opt);
-                                                if (i >= 0) curr.splice(i, 1);
-                                              }
-                                              return { ...prev, [q.id]: curr };
-                                            });
-                                          } else {
-                                            if (e.target.checked) {
-                                              updateCustomAnswers((prev) => ({ ...prev, [q.id]: opt }));
-                                            } else {
-                                              updateCustomAnswers((prev) => ({ ...prev, [q.id]: '' }));
-                                            }
-                                          }
-                                        }}
-                                        className="w-5 h-5"
-                                      />
-                                      <span className="text-base text-gray-900">{opt}</span>
-                                    </label>
-                                  );
-                                })}
-                              </div>
-                            ) : (
-                              <Input
-                                type="text"
-                                value={customAnswers[q.id] ?? ''}
-                                onChange={(e) => updateCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
-                                placeholder="Your answer"
-                              />
-                            )}
-                          </div>
-                        ))}
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-base font-semibold mb-2">
-                      Additional notes (optional)
-                    </label>
-                    <Textarea
-                      value={formData.notes}
-                      onChange={(e) => updateFormData((current) => ({ ...current, notes: e.target.value }))}
-                      placeholder="Dietary restrictions, accessibility needs, or special requests"
-                      rows={3}
-                    />
-                  </div>
-                </>
-              )}
-
-              {formStep === 3 && (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
-                  {formData.attending && guest?.invited_to_ceremony && guest?.invited_to_reception && !formData.attendCeremony && !formData.attendReception && (
-                    <div className="text-sm text-warning bg-warning/10 border border-warning/30 rounded-lg px-3 py-2.5">
-                      Please review: attending is on, but no events are selected.
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between text-sm gap-4 rounded-lg bg-white px-4 py-3 border border-gray-200">
-                    <span className="text-gray-700 font-semibold">Attendance</span>
-                    <span className={`font-semibold px-2.5 py-1 rounded-lg text-xs ${formData.attending ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-700'}`}>
-                      {formData.attending ? 'Attending' : 'Not attending'}
-                    </span>
-                  </div>
-                  {formData.attending && (guest.invited_to_ceremony || guest.invited_to_reception) && (
-                    <div className="flex items-center justify-between text-sm gap-4 rounded-lg bg-white px-4 py-3 border border-gray-200">
-                      <span className="text-gray-700 font-semibold">Events</span>
-                      <span className="text-gray-900 text-right">{[guest.invited_to_ceremony ? (formData.attendCeremony ? 'Ceremony' : null) : null, guest.invited_to_reception ? (formData.attendReception ? 'Reception' : null) : null].filter(Boolean).join(' + ') || 'None selected'}</span>
-                    </div>
-                  )}
-                  {formData.attending && formData.meal_choice && (
-                    <div className="flex items-center justify-between text-sm gap-4 rounded-lg bg-white px-4 py-3 border border-gray-200">
-                      <span className="text-gray-700 font-semibold">Meal</span>
-                      <span className="text-gray-900 capitalize text-right">{formData.meal_choice}</span>
-                    </div>
-                  )}
-                  {formData.attending && formData.plus_one_name && (
-                    <div className="flex items-center justify-between text-sm gap-4 rounded-lg bg-white px-4 py-3 border border-gray-200">
-                      <span className="text-gray-700 font-semibold">Plus one</span>
-                      <span className="text-gray-900 text-right">{formData.plus_one_name}</span>
-                    </div>
-                  )}
-                  {formData.attending && formData.children_count > 0 && (
-                    <div className="flex items-center justify-between text-sm gap-4 rounded-lg bg-white px-4 py-3 border border-gray-200">
-                      <span className="text-gray-700 font-semibold">Children</span>
-                      <span className="text-gray-900 text-right">{formData.children_count}</span>
-                    </div>
-                  )}
-
-                  {applyToHousehold && inheritedHouseholdMembers.length > 0 && (
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-medium text-gray-500">Inherited to household</p>
-                      {inheritedHouseholdMembers.map((h) => {
-                        const name = h.first_name && h.last_name ? `${h.first_name} ${h.last_name}` : h.name;
-                        const access = [h.invited_to_ceremony ? 'Ceremony' : null, h.invited_to_reception ? 'Reception' : null].filter(Boolean).join(' + ') || 'No event access';
-                        return (
-                          <div key={h.id} className="flex items-center justify-between text-sm gap-4">
-                            <span className="text-gray-600 font-medium">{name}</span>
-                            <span className="text-gray-900 text-right">{access}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {rsvpQuestions.length > 0 && Object.keys(customAnswers).length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-gray-500">Custom answers</p>
-                      {rsvpQuestions.filter((q) => { const v = customAnswers[q.id]; return Array.isArray(v) ? v.length > 0 : String(v ?? '').trim().length > 0; }).map((q) => (
-                        <div key={q.id} className="flex items-start justify-between text-sm gap-4 rounded-lg bg-white px-4 py-3 border border-gray-200">
-                          <span className="text-gray-700 font-semibold flex-shrink-0">{getRsvpQuestionLabel(q)}</span>
-                          <span className="text-gray-900 text-right">{Array.isArray(customAnswers[q.id]) ? (customAnswers[q.id] as string[]).join(', ') : String(customAnswers[q.id] ?? '')}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {formData.notes && (
-                    <div className="flex items-start justify-between text-sm gap-4 rounded-lg bg-white px-4 py-3 border border-gray-200">
-                      <span className="text-gray-700 font-semibold flex-shrink-0">Notes</span>
-                      <span className="text-gray-900 text-right">{formData.notes}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {error && (
-                <div className="p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg text-text-secondary text-base flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                  {error}
-                </div>
-              )}
-
-              <div className="flex gap-4 flex-col sm:flex-row">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    invalidateActiveSubmit();
-                    if (formStep > 1) {
-                      setError('');
-                      setFormStep((formStep - 1) as 1 | 2 | 3);
-                    } else {
-                      resetToSearch(false);
-                    }
-                  }}
-                  className="flex-1 min-h-[48px] text-base"
-                  disabled={loading}
-                >
-                  {formStep > 1 ? 'Back' : 'Cancel'}
-                </Button>
-
-                {formStep < 3 ? (
-                  <Button
-                    type="button"
-                    onClick={goToNextFormStep}
-                    className="flex-1 min-h-[48px] text-base"
-                  >
-                    {formStep === 1 ? 'Continue to details' : 'Continue to review'}
-                  </Button>
-                ) : (
-                  <Button
-                    type="submit"
-                    disabled={loading || submitting || !canSubmit}
-                    className="flex-1 min-h-[48px] text-base"
-                  >
-                    {loading ? 'Submitting...' : existingRsvp ? 'Update RSVP' : 'Submit RSVP'}
-                  </Button>
-                )}
-              </div>
-            </form>
-          </Card>
+          <RsvpFormView
+            allowedChildrenCount={allowedChildrenCount}
+            applyToHousehold={applyToHousehold}
+            canSubmit={canSubmit}
+            childCountOptions={childCountOptions}
+            customAnswers={customAnswers}
+            deadlinePassed={deadlinePassed}
+            error={error}
+            existingRsvp={existingRsvp}
+            formData={formData}
+            formStep={formStep}
+            getQuestionLabel={getRsvpQuestionLabel}
+            goToNextFormStep={goToNextFormStep}
+            guest={guest}
+            guestDisplayName={guestDisplayName}
+            handleSubmit={handleSubmit}
+            householdGuests={householdGuests}
+            inheritedHouseholdMembers={inheritedHouseholdMembers}
+            invitedEvents={invitedEvents}
+            loading={loading}
+            mealConfig={mealConfig}
+            onBack={() => {
+              invalidateActiveSubmit();
+              if (formStep > 1) {
+                setError('');
+                setFormStep((formStep - 1) as 1 | 2 | 3);
+              } else {
+                resetToSearch(false);
+              }
+            }}
+            onHouseholdSelectionChange={updateSelectedHouseholdGuestIds}
+            onHouseholdToggle={updateApplyToHousehold}
+            onStepAnswerChange={updateCustomAnswers}
+            onStepDataChange={updateFormData}
+            rsvpDeadline={rsvpDeadline}
+            rsvpQuestions={rsvpQuestions}
+            rsvpSessionToken={rsvpSessionToken}
+            safeMusicPlaylistUrl={safeMusicPlaylistUrl}
+            selectedHouseholdGuestIds={selectedHouseholdGuestIds}
+            submitting={submitting}
+          />
         ) : null}
         successContent={(
           <RsvpSuccessView

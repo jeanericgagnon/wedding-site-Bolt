@@ -4606,3 +4606,20 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+
+## 2026-05-07 10:25 PM PT No-Deploy RSVP Form View Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its giant live RSVP form/review card through `src/pages/RsvpFormView.tsx`.
+  - That shared guest-facing form component now owns the deadline/status notices, progress rail, attendance/details/review steps, household inheritance controls, meal and custom-question inputs, error slab, and back/continue/submit CTA stack while the page keeps lookup state, submit orchestration, continuity refresh behavior, and route switching local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpFormView` so the main RSVP page keeps routing through the dedicated form shell.
+  - `src/pages/RSVP.tsx` dropped from 1695 lines to 1283 lines in this batch, while `src/pages/RsvpFormView.tsx` came in at 529 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This materially reduces public-surface oversized-file risk in `RSVP` without changing guest-facing behavior. No deploy was run.
