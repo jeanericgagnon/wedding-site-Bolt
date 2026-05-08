@@ -206,6 +206,7 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Itinerary.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/itineraryService.ts'), 'utf8');
 
+    expect(source).toContain('<ItineraryDashboardRouteView');
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).toContain('loadItineraryDashboardEvents(hasEventRsvpsTable)');
     expect(source).toContain('resolveItinerarySiteId()');
@@ -238,6 +239,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain(".from('itinerary_events')\n            .insert([");
     expect(source).not.toContain(".from('itinerary_events')\n        .delete()");
     expect(source).not.toContain(".from('itinerary_events')\n        .update({\n          event_date: event.event_date,");
+    expect(source).not.toContain('<DashboardLayout');
     expect(service).toContain('buildItineraryTemplateInsertRows(weddingSiteId, events)');
     expect(service).toContain('export async function resolveItinerarySiteId()');
     expect(service).toContain("const ITINERARY_EVENT_MANAGER_SITE_SELECT = 'id'");

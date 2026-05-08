@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink, AlertTriangle, Check, X, HelpCircle, Camera, Wand2, MoveRight } from 'lucide-react';
-import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { Button } from '../../components/ui/Button';
 import { useToast } from '../../components/ui/Toast';
@@ -30,6 +29,7 @@ import {
   type ItineraryDashboardEvent,
   type ItineraryGuestPickerRow,
 } from './itineraryService';
+import { ItineraryDashboardRouteView } from './ItineraryDashboardRouteView';
 
 // Optional table: detect once at runtime so older environments degrade quietly.
 let hasEventRsvpsTable: boolean | null = null;
@@ -444,19 +444,6 @@ export const DashboardItinerary: React.FC = () => {
     }
   }
 
-  if (loading) {
-    return (
-      <DashboardLayout currentPage="itinerary">
-        <div className="space-y-4 animate-pulse" aria-hidden="true">
-          <div className="h-12 w-64 rounded-lg bg-surface-subtle border border-border-subtle" />
-          <div className="h-24 rounded-lg bg-surface-subtle border border-border-subtle" />
-          <div className="h-24 rounded-lg bg-surface-subtle border border-border-subtle" />
-          <div className="h-24 rounded-lg bg-surface-subtle border border-border-subtle" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
   const timelineInsights = analyzeTimeline(events.map((event) => ({
     id: event.id,
     name: event.event_name,
@@ -473,7 +460,7 @@ export const DashboardItinerary: React.FC = () => {
     : `${shiftPreviewCount} event${shiftPreviewCount === 1 ? '' : 's'} from ${sortedShiftEvents[shiftFromIndex]?.event_name ?? 'selected event'}`;
 
   return (
-    <DashboardLayout currentPage="itinerary">
+    <ItineraryDashboardRouteView loading={loading}>
       <div className="space-y-6">
       <DashboardPageHero
         eyebrow="Schedule"
@@ -893,7 +880,7 @@ export const DashboardItinerary: React.FC = () => {
           onCancel={confirmDialog.onCancel}
         />
       )}
-    </DashboardLayout>
+    </ItineraryDashboardRouteView>
   );
 };
 
