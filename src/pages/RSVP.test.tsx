@@ -50,6 +50,7 @@ describe('RSVP stale submit protection', () => {
   it('routes token auto-loading through the shared RSVP route view', () => {
     const rsvpPage = readFileSync(join(process.cwd(), 'src/pages/RSVP.tsx'), 'utf8');
     const derivedViewState = readFileSync(join(process.cwd(), 'src/pages/buildRsvpDerivedViewState.ts'), 'utf8');
+    const liveContentActions = readFileSync(join(process.cwd(), 'src/pages/buildRsvpLiveContentActions.ts'), 'utf8');
     const pageViewModel = readFileSync(join(process.cwd(), 'src/pages/buildRsvpPageViewModel.ts'), 'utf8');
     const liveContentProps = readFileSync(join(process.cwd(), 'src/pages/buildRsvpLiveContentViewProps.ts'), 'utf8');
     const validateAdvance = readFileSync(join(process.cwd(), 'src/pages/validateRsvpFormAdvance.ts'), 'utf8');
@@ -66,6 +67,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain("from './RsvpLiveContentView'");
     expect(rsvpPage).toContain("from './RsvpTokenLoadingView'");
     expect(rsvpPage).toContain("from './buildRsvpDerivedViewState'");
+    expect(rsvpPage).toContain("from './buildRsvpLiveContentActions'");
     expect(rsvpPage).toContain("from './buildRsvpPageViewModel'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentViewProps'");
     expect(rsvpPage).toContain("from './validateRsvpFormAdvance'");
@@ -73,12 +75,16 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain('<RsvpLiveContentView');
     expect(rsvpPage).toContain('<RsvpTokenLoadingView');
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
+    expect(rsvpPage).toContain('buildRsvpLiveContentActions({');
     expect(rsvpPage).toContain('buildRsvpPageViewModel({');
     expect(rsvpPage).toContain('{...buildRsvpLiveContentViewProps({');
     expect(rsvpPage).toContain('validateRsvpFormAdvance({');
     expect(derivedViewState).toContain('guestPredictions');
     expect(derivedViewState).toContain('childCountOptions');
     expect(derivedViewState).toContain('inheritedHouseholdMembers');
+    expect(liveContentActions).toContain('onCancelLoading');
+    expect(liveContentActions).toContain('onDone');
+    expect(liveContentActions).toContain('onSubmitAnother');
     expect(pageViewModel).toContain('guestDisplayName');
     expect(pageViewModel).toContain('deadlinePassed');
     expect(pageViewModel).toContain('searchInputId');

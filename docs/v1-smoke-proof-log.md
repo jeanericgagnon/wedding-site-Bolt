@@ -7404,6 +7404,22 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 10:53 PM PT No-Deploy RSVP Live-Content Action Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes the guest-facing live-content action bundle through `src/pages/buildRsvpLiveContentActions.ts`.
+  - That helper now owns back-navigation, loading cancellation, done routing, search-again reset, and submit-another reset while the page keeps lookup state, form state, and submit orchestration local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `buildRsvpLiveContentActions(...)` so the main RSVP page keeps routing through the dedicated live-content action helper.
+  - `src/pages/RSVP.tsx` dropped from 1212 lines to 1204 lines in this batch, while `src/pages/buildRsvpLiveContentActions.ts` came in at 70 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 10:03 PM PT No-Deploy Event RSVP Live Content Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

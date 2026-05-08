@@ -28,6 +28,7 @@ import {
   writeDemoStoredResponses,
 } from './rsvpDemoStorage';
 import { buildRsvpDerivedViewState } from './buildRsvpDerivedViewState';
+import { buildRsvpLiveContentActions } from './buildRsvpLiveContentActions';
 import { buildRsvpPageViewModel } from './buildRsvpPageViewModel';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { buildRsvpLiveContentViewProps } from './buildRsvpLiveContentViewProps';
@@ -1122,6 +1123,20 @@ export default function RSVP() {
     <RsvpTokenLoadingView onEnterCodeInstead={() => resetToSearch(false)} />
   );
 
+  const liveContentActions = buildRsvpLiveContentActions({
+    activeLookupRequestRef,
+    formStep,
+    guestPresent: !!guest,
+    invalidateActiveSubmit,
+    loading,
+    resetToSearch,
+    returnToLoadedRsvp,
+    setError,
+    setFormStep,
+    setLoading,
+    setSubmitting,
+  });
+
   const liveContent = (
     <RsvpLiveContentView
       {...buildRsvpLiveContentViewProps({
@@ -1151,41 +1166,18 @@ export default function RSVP() {
         loading: loading,
         mealConfig: mealConfig,
         onActivePredictionIndexChange: setActivePredictionIndex,
-        onBack: () => {
-          invalidateActiveSubmit();
-          if (formStep > 1) {
-            setError('');
-            setFormStep((formStep - 1) as 1 | 2 | 3);
-          } else {
-            resetToSearch(false);
-          }
-        },
-        onCancelLoading: () => {
-          if (loading) {
-            activeLookupRequestRef.current += 1;
-            setLoading(false);
-            setSubmitting(false);
-          }
-          setError('');
-        },
-        onDone: () => {
-          if (guest) {
-            returnToLoadedRsvp();
-            return;
-          }
-          resetToSearch(true);
-        },
+        onBack: liveContentActions.onBack,
+        onCancelLoading: liveContentActions.onCancelLoading,
+        onDone: liveContentActions.onDone,
         onHouseholdSelectionChange: updateSelectedHouseholdGuestIds,
         onHouseholdToggle: updateApplyToHousehold,
         onPickGuest: handlePickGuest,
-        onSearchAgain: () => { resetToSearch(false); },
+        onSearchAgain: liveContentActions.onSearchAgain,
         onSearchSubmit: handleSearch,
         onSearchValueChange: setSearchValue,
         onStepAnswerChange: updateCustomAnswers,
         onStepDataChange: updateFormData,
-        onSubmitAnother: () => {
-          resetToSearch(false);
-        },
+        onSubmitAnother: liveContentActions.onSubmitAnother,
         predictionListId: predictionListId,
         rsvpDeadline: rsvpDeadline,
         rsvpQuestions: rsvpQuestions,
