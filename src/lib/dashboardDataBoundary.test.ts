@@ -144,6 +144,7 @@ describe('dashboard data boundary guards', () => {
     const checkInsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCheckIns.ts'), 'utf8');
     const crudHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCrudActions.ts'), 'utf8');
     const conflictHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardConflictActions.ts'), 'utf8');
+    const derivedStateHelper = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/buildGuestDashboardDerivedState.ts'), 'utf8');
     const detailHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts'), 'utf8');
     const opsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardOpsActions.ts'), 'utf8');
     const rsvpConfigHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardRsvpConfigActions.ts'), 'utf8');
@@ -159,6 +160,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('useGuestDashboardGuestDetailActions({');
     expect(source).toContain('useGuestDashboardOpsActions({');
     expect(source).toContain('useGuestDashboardRsvpConfigActions({');
+    expect(source).toContain('buildGuestDashboardDerivedState({');
     expect(source).toContain('buildGuestDashboardViewProps({');
     expect(source).toContain('loadPublicSlug: loadGuestDashboardPublicSlug');
     expect(source).toContain('loadSiteSlug: loadGuestDashboardSiteSlug');
@@ -200,6 +202,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('const selectFilteredGuests = () => {');
     expect(source).not.toContain('const clearGuestSelection = () => {');
     expect(source).not.toContain('const keepOnlyVisibleSelection = () => {');
+    expect(source).not.toContain('const filteredGuests = guests.filter((guest) => {');
+    expect(source).not.toContain('const stats = {');
+    expect(source).not.toContain('const eventReport = effectiveItineraryEvents.map((event) => {');
+    expect(source).not.toContain('const dueReminderCandidatesGlobal = guests.filter((g) => !!g.email && !!g.invite_token && isDueReminder(g));');
     expect(source).not.toContain('loadGuestDashboardSiteSettings(user.id)');
     expect(source).not.toContain('loadGuestDashboardSnapshot(weddingSiteId)');
     expect(source).not.toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
@@ -276,6 +282,12 @@ describe('dashboard data boundary guards', () => {
     expect(conflictHook).toContain('await resolveGuestDashboardConflicts(ids, resolvedAt);');
     expect(conflictHook).toContain("toast('RSVP item marked done', 'success');");
     expect(conflictHook).not.toContain("from '../../../lib/supabase'");
+    expect(derivedStateHelper).toContain('const filteredGuests = guests.filter((guest) => {');
+    expect(derivedStateHelper).toContain('const stats = {');
+    expect(derivedStateHelper).toContain('const eventReport = effectiveItineraryEvents.map((event) => {');
+    expect(derivedStateHelper).toContain('const dueReminderCandidatesGlobal = guests.filter((guest) => !!guest.email && !!guest.invite_token && isDueReminder(guest));');
+    expect(derivedStateHelper).toContain('const reminderCandidates = emailableFilteredGuests.filter((guest) => {');
+    expect(derivedStateHelper).not.toContain("from '../../../lib/supabase'");
     expect(opsHook).toContain('const applyCampaignPreset = useCallback((preset:');
     expect(opsHook).toContain('await persistGuestReminderSettings(weddingSiteId, patch);');
     expect(opsHook).toContain('const handleDeleteAllGuests = useCallback(async () => {');
