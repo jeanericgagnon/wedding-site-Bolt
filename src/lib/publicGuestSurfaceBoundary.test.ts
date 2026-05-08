@@ -141,6 +141,7 @@ describe('public guest surface boundary', () => {
     const rsvpPage = readSource('src/pages/RSVP.tsx');
     const rsvpDerivedViewState = readSource('src/pages/buildRsvpDerivedViewState.ts');
     const rsvpLiveContentProps = readSource('src/pages/buildRsvpLiveContentViewProps.ts');
+    const rsvpValidateAdvance = readSource('src/pages/validateRsvpFormAdvance.ts');
     const rsvpLiveContentView = readSource('src/pages/RsvpLiveContentView.tsx');
     const rsvpTokenLoadingView = readSource('src/pages/RsvpTokenLoadingView.tsx');
     const rsvpFlowView = readSource('src/pages/RsvpFlowView.tsx');
@@ -157,15 +158,19 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain("from './RsvpTokenLoadingView'");
     expect(rsvpPage).toContain("from './buildRsvpDerivedViewState'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentViewProps'");
+    expect(rsvpPage).toContain("from './validateRsvpFormAdvance'");
     expect(rsvpPage).toContain('<RsvpRouteView');
     expect(rsvpPage).toContain('<RsvpLiveContentView');
     expect(rsvpPage).toContain('<RsvpTokenLoadingView');
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
     expect(rsvpPage).toContain('{...buildRsvpLiveContentViewProps({');
+    expect(rsvpPage).toContain('validateRsvpFormAdvance({');
     expect(rsvpDerivedViewState).toContain('guestPredictions');
     expect(rsvpDerivedViewState).toContain('childCountOptions');
     expect(rsvpDerivedViewState).toContain('inheritedHouseholdMembers');
     expect(rsvpLiveContentProps).toContain('return props;');
+    expect(rsvpValidateAdvance).toContain('Please choose a meal option before review.');
+    expect(rsvpValidateAdvance).toContain('Please answer:');
     expect(rsvpPage).toContain("from './rsvpFunctionService'");
     expect(rsvpPage).toContain("callValidateRsvpToken({ action: 'lookup', searchValue: searchValue.trim() })");
     expect(rsvpPage).toContain("callValidateRsvpToken({ action: 'lookup_guest', guestId: picked.id, rsvpSession: rsvpSessionToken })");

@@ -35,6 +35,7 @@ import { callValidateRsvpToken } from './rsvpFunctionService';
 import { RsvpLiveContentView } from './RsvpLiveContentView';
 import { RsvpRouteView } from './RsvpRouteView';
 import { RsvpTokenLoadingView } from './RsvpTokenLoadingView';
+import { validateRsvpFormAdvance } from './validateRsvpFormAdvance';
 
 export { normalizeRsvpGuestError, normalizeRsvpSubmitError } from './rsvpTypes';
 
@@ -1086,42 +1087,23 @@ export default function RSVP() {
 
 
   const goToNextFormStep = () => {
-    if (formStep === 1) {
-      if (formData.attending && guest && !guest.invited_to_ceremony && !guest.invited_to_reception) {
-        setError('You are marked attending, but no event invitations are enabled for this guest.');
-        return;
-      }
-      setError('');
-      setFormStep(2);
+    const result = validateRsvpFormAdvance({
+      customAnswers,
+      formData,
+      formStep,
+      getRequiredQuestionValidationLabel,
+      guest,
+      mealConfig,
+      rsvpQuestions,
+    });
+
+    if ('error' in result) {
+      setError(result.error);
       return;
     }
 
-    if (formStep === 2) {
-      if (formData.attending && guest?.invited_to_ceremony && guest?.invited_to_reception && !formData.attendCeremony && !formData.attendReception) {
-        setError('Please select at least one event before continuing.');
-        return;
-      }
-      if (formData.attending && mealConfig.enabled && !formData.meal_choice) {
-        setError('Please choose a meal option before review.');
-        return;
-      }
-
-      const requiredMissing = rsvpQuestions
-        .filter((q) => q.required)
-        .filter((q) => (q.appliesTo ?? 'all') === 'all' || ((q.appliesTo === 'ceremony' && formData.attendCeremony) || (q.appliesTo === 'reception' && formData.attendReception)))
-        .find((q) => {
-          const v = customAnswers[q.id];
-          if (Array.isArray(v)) return v.length === 0;
-          return !(v || '').toString().trim();
-        });
-
-      if (requiredMissing) {
-        setError(`Please answer: ${getRequiredQuestionValidationLabel(requiredMissing)}`);
-        return;
-      }
-      setError('');
-      setFormStep(3);
-    }
+    setError('');
+    setFormStep(result.nextStep);
   };
   const availableMealValues = useMemo(() => new Set(mealConfig.options.map((o) => o.toLowerCase())), [mealConfig.options]);
 

@@ -7548,6 +7548,22 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 10:43 PM PT No-Deploy RSVP Step Validation Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its step-advance validation rules through `src/pages/validateRsvpFormAdvance.ts`.
+  - That shared helper now owns attendance/event-selection validation, meal-choice gating, and required custom-question checks while the page keeps form state, lookup state, and submit orchestration local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `validateRsvpFormAdvance(...)` so the main RSVP page keeps routing through the dedicated step-validation helper.
+  - `src/pages/RSVP.tsx` dropped from 1229 lines to 1211 lines in this batch, while `src/pages/validateRsvpFormAdvance.ts` came in at 69 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 9:54 PM PT No-Deploy Event Recap Live Content Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
