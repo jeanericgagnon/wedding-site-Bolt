@@ -6,6 +6,7 @@ describe('dashboard data boundary guards', () => {
   it('does not load message dashboard rows with select star', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Messages.tsx'), 'utf8');
     const serviceSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/messageService.ts'), 'utf8');
+    const deliveryHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDeliveryActions.ts'), 'utf8');
 
     expect(serviceSource).toContain('const MESSAGE_SELECT = [');
     expect(serviceSource).toContain('.select(MESSAGE_SELECT)');
@@ -14,15 +15,18 @@ describe('dashboard data boundary guards', () => {
     expect(serviceSource).toContain('export async function triggerDashboardBulkSend(messageId: string)');
     expect(serviceSource).toContain('export async function triggerScheduledMessageDispatch(limit = 10)');
     expect(serviceSource).toContain('supabase.auth.getSession()');
+    expect(deliveryHookSource).toContain('await triggerDashboardBulkSend(message.id)');
+    expect(deliveryHookSource).toContain('const result = await triggerScheduledMessageDispatch(10)');
     expect(source).toContain('<MessageDashboardRouteView');
+    expect(source).toContain('useMessageDeliveryActions({');
     expect(source).toContain('createDashboardMessage(payload)');
     expect(source).toContain('triggerDashboardBulkSend(inserted.id)');
-    expect(source).toContain('triggerScheduledMessageDispatch(10)');
     expect(source).toContain('loadDashboardMessages(weddingSite.id)');
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).not.toContain("supabase.from('messages').insert(payload)");
     expect(source).not.toContain('supabase.auth.getSession()');
     expect(source).not.toContain('fetch(BULK_SEND_URL, {');
+    expect(source).not.toContain('const result = await triggerScheduledMessageDispatch(10)');
     expect(source).not.toContain(".from('messages')\n        .select('*')");
     expect(source).not.toContain('.from("messages")\n        .select("*")');
     expect(source).not.toContain('<MessageDashboardView');

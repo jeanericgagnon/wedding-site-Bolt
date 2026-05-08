@@ -4579,6 +4579,23 @@ Status:
 - Status:
   - PARTIAL. This continues guest dashboard ownership cleanup without changing collaborator or guest-facing behavior. No deploy was run.
 
+## 2026-05-08 12:42 AM PT No-Deploy Message Delivery Action Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Messages.tsx` now routes retry sends, send-now from scheduled, reschedule, cancel-schedule, and run-due-scheduled actions through `src/pages/dashboard/messages/useMessageDeliveryActions.ts`.
+  - That hook now owns the repeated demo/live delivery transport, recipient recount, and history refresh choreography for message-history actions while the page keeps the compose flow and higher-level dashboard assembly.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useMessageDeliveryActions({ ... })` plus its `triggerDashboardBulkSend(...)` and `triggerScheduledMessageDispatch(10)` contract.
+  - `src/pages/dashboard/Messages.tsx` dropped from 1665 lines to 1333 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues message dashboard ownership cleanup without changing collaborator behavior. No deploy was run.
+
 ## 2026-05-08 12:05 AM PT No-Deploy RSVP Guest-Lookup Transport Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
