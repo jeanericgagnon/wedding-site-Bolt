@@ -4217,3 +4217,19 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the oversized-file and page-boundary cleanup in the guest dashboard without changing guest overlay behavior. No deploy was run.
+
+## 2026-05-07 9:03 PM PT No-Deploy Guest Dashboard Overlay Props Helper Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes its guest overlay prop bundle through `src/pages/dashboard/guests/buildGuestDashboardOverlayProps.ts`.
+  - The page no longer carries the old long inline `GuestDashboardOverlays` prop assembly block even though the route shell still owns the actual overlay mount.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins the `buildGuestDashboardOverlayProps({` helper seam so the page does not quietly regrow the old inline overlay prop block.
+  - `src/pages/dashboard/Guests.tsx` moved slightly from 2522 lines to 2523 lines in this batch; this was an ownership cleanup, not a size optimization.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts`: PASS, 46/46.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the oversized-file and page-boundary cleanup in the guest dashboard without changing guest overlay behavior. No deploy was run.

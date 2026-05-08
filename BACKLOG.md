@@ -1969,3 +1969,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now keeps `GuestDashboardRouteView` as the pinned seam and rejects regaining the old inline overlay mount in `Guests.tsx`.
   - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts` (46/46), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest dashboard without changing guest operations behavior. No deploy was run.
+- 2026-05-07 9:03 PM PT - No-deploy Guest dashboard overlay-props helper extraction:
+  - Resolved in this batch: moved the guest dashboard overlay prop assembly out of `src/pages/dashboard/Guests.tsx` and behind `src/pages/dashboard/guests/buildGuestDashboardOverlayProps.ts`.
+  - Data-boundary hardening: `Guests.tsx` now routes the overlay prop bundle through a dedicated helper instead of carrying the old long inline `GuestDashboardOverlays` prop object assembly in the page body.
+  - File-size movement: `Guests.tsx` nudged from 2522 lines to 2523 lines in this continuation batch; the value here is ownership cleanup rather than size reduction.
+  - No feature loss: assisted RSVP, add/edit guest, itinerary drawer, CSV import review, delete-all confirmation, and confirm-dialog prop wiring preserve the current flow while reducing page-owned assembly noise.
+  - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins the `buildGuestDashboardOverlayProps({` helper seam so the page does not quietly regrow the old inline overlay prop block.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts` (46/46), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest dashboard without changing guest operations behavior. No deploy was run.

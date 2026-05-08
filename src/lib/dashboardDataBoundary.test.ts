@@ -74,6 +74,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('markGuestInvitationSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString())');
     expect(source).toContain('markGuestInvitationAndReminderSentForSite(currentWeddingSiteId, guest.id, sentAtIso)');
     expect(source).toContain('markGuestReminderSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString())');
+    expect(source).toContain('buildGuestDashboardOverlayProps({');
     expect(source).toContain('<GuestDashboardRouteView');
     expect(source).not.toContain('<GuestDashboardOpsView');
     expect(source).not.toContain('<GuestRsvpSettingsView');

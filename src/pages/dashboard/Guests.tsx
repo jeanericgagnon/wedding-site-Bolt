@@ -41,6 +41,7 @@ import {
   parseRsvpEventSelections,
   summarizeAuditEntry,
 } from './guests/guestDisplayUtils';
+import { buildGuestDashboardOverlayProps } from './guests/buildGuestDashboardOverlayProps';
 import { GuestDashboardRouteView } from './guests/GuestDashboardRouteView';
 import {
   type Guest,
@@ -2429,7 +2430,7 @@ const handleSendBulkInvitations = async () => {
     onSetRsvpMealOptions: setRsvpMealOptions,
     onSetRsvpQuestions: setRsvpQuestions,
   };
-  const guestOverlayProps = {
+  const guestOverlayProps = buildGuestDashboardOverlayProps({
     assistedRsvpGuest,
     assistedRsvpNotes,
     assistedRsvpSaving,
@@ -2508,7 +2509,7 @@ const handleSendBulkInvitations = async () => {
     onSubmitEditGuest: handleEditGuest,
     onToast: toast,
     onToggleEventInvite: handleToggleEventInvite,
-  };
+  });
 
   return (
     <GuestDashboardRouteView
