@@ -4,14 +4,10 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Inpu
 import { Loader2 } from 'lucide-react';
 import { fetchBillingInfo, type BillingInfo } from '../../lib/stripeService';
 import { useAuth } from '../../hooks/useAuth';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { PLANNER_ROLE_OPTIONS, getPlannerPermissionPreset, readPlannerInvite, type PlannerAccessRole, type PlannerInviteRecord, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { useToast } from '../../components/ui/Toast';
-import { logAppAction } from '../../lib/actionAudit';
 import { getSafePublicWebUrl } from '../../sections/publicLinks';
 import {
-  loadSettingsCollaboratorInvites,
-  loadSettingsTranslationStatuses,
   type SettingsCollaboratorInviteRow,
 } from './settings/settingsSiteData';
 import {
@@ -36,6 +32,7 @@ import { SettingsTeamAccessPanel } from './settings/SettingsTeamAccessPanel';
 import { SettingsDashboardShell } from './settings/SettingsDashboardShell';
 import { SettingsTabContent } from './settings/SettingsTabContent';
 import { useSettingsAccountActions } from './settings/useSettingsAccountActions';
+import { useSettingsDashboardSupport } from './settings/useSettingsDashboardSupport';
 import { useSettingsSiteAccessActions } from './settings/useSettingsSiteAccessActions';
 import { useSettingsExperienceActions } from './settings/useSettingsExperienceActions';
 
@@ -183,59 +180,19 @@ export const DashboardSettings: React.FC = () => {
     navigate('/', { replace: true });
   };
 
-  const loadCollaboratorInvites = async (siteId: string) => {
-    setCollaboratorInvites(await loadSettingsCollaboratorInvites(siteId));
-  };
-
-  const resolveSettingsSiteId = async () => {
-    if (weddingSiteId) return weddingSiteId;
-    if (!user?.id) return null;
-    const activeSite = await resolveActiveSiteForUser(user.id);
-    const activeSiteId = activeSite?.id ?? null;
-    if (activeSiteId) setWeddingSiteId(activeSiteId);
-    return activeSiteId;
-  };
-
-  const logSettingsAction = (
-    type: string,
-    summary: string,
-    metadata?: Record<string, unknown>,
-    targetId?: string | null,
-    targetLabel?: string | null,
-    siteIdOverride?: string | null,
-  ) => {
-    const targetSiteId = siteIdOverride ?? weddingSiteId;
-    if (!targetSiteId) return;
-    void logAppAction({
-      weddingSiteId: targetSiteId,
-      area: 'settings',
-      type,
-      summary,
-      targetId,
-      targetLabel,
-      metadata,
-    });
-  };
-
-  const loadTranslationStatuses = async (siteId: string) => {
-    try {
-      const rows = await loadSettingsTranslationStatuses(
-        siteId,
-        ['es', 'fr', 'it', 'de', 'pt'],
-      );
-      setTranslationStatuses(
-        rows
-          .filter((row): row is TranslationStatusRow => row.status === 'ready' || row.status === 'failed')
-          .map((row) => ({
-            language: row.language as TranslationLanguageCode,
-            status: row.status,
-            translated_at: row.translated_at ?? null,
-          })),
-      );
-    } catch {
-      setTranslationStatuses([]);
-    }
-  };
+  const {
+    downloadTextFile,
+    loadCollaboratorInvites,
+    loadTranslationStatuses,
+    logSettingsAction,
+    resolveSettingsSiteId,
+  } = useSettingsDashboardSupport({
+    setCollaboratorInvites,
+    setTranslationStatuses,
+    setWeddingSiteId,
+    userId: user?.id,
+    weddingSiteId,
+  });
 
   const loadSiteData = async () => {
     try {
@@ -326,18 +283,6 @@ export const DashboardSettings: React.FC = () => {
     venueName,
     weddingDate,
   }), [coupleNames, currentTemplate, defaultLanguage, settingsRole, siteSlug, venueName, weddingDate]);
-
-  const downloadTextFile = (filename: string, content: string, type = 'text/plain;charset=utf-8') => {
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  };
 
   const {
     copyIdentityManifest,

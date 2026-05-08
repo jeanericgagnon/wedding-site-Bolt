@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 8:02 AM PT - No-Deploy Settings Support-Hook Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Settings.tsx` no longer owns the inline settings support helper cluster for collaborator invite reloads, site-id resolution, settings audit logging, translation status reloads, and text-file download export.
+  - Added `src/pages/dashboard/settings/useSettingsDashboardSupport.ts` so the new hook now owns collaborator invite reloads, site-id resolution through active-site lookup, settings audit logging, translation status reloads, and text-file export plumbing while the route keeps bootstrap, tab composition, and the existing account/site/experience action families.
+  - Settings boundary tests now pin `useSettingsDashboardSupport({ ... })`, check that the new hook owns the support helper seams, and reject regaining the old inline `loadCollaboratorInvites`, `resolveSettingsSiteId`, `logSettingsAction`, `loadTranslationStatuses`, and `downloadTextFile` blocks in `Settings.tsx`.
+- Acceptance/proof target:
+  - Focused settings tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 7:58 AM PT - No-Deploy Settings Account-Actions Hook Extraction
 
 - Status: `PARTIAL`

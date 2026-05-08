@@ -100,6 +100,10 @@ describe('settings site data boundary', () => {
       join(process.cwd(), 'src/pages/dashboard/settings/useSettingsAccountActions.ts'),
       'utf8',
     );
+    const supportHook = readFileSync(
+      join(process.cwd(), 'src/pages/dashboard/settings/useSettingsDashboardSupport.ts'),
+      'utf8',
+    );
     const actionsHook = readFileSync(
       join(process.cwd(), 'src/pages/dashboard/settings/useSettingsSiteAccessActions.ts'),
       'utf8',
@@ -111,10 +115,10 @@ describe('settings site data boundary', () => {
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/settings/settingsSiteData.ts'), 'utf8');
 
     expect(page).toContain('loadSettingsDashboardSnapshot({');
-    expect(page).toContain('loadSettingsCollaboratorInvites(siteId)');
     expect(page).toContain('useSettingsSiteAccessActions({');
     expect(page).toContain('useSettingsExperienceActions({');
     expect(page).toContain('useSettingsAccountActions({');
+    expect(page).toContain('useSettingsDashboardSupport({');
     expect(page).toContain('<SettingsDashboardShell');
     expect(page).toContain('<SettingsTabContent');
     expect(page).toContain('<SettingsSiteTabContent');
@@ -141,6 +145,11 @@ describe('settings site data boundary', () => {
     expect(page).not.toContain('getSettingsTabs(settingsRole)');
     expect(page).not.toContain('buildWeddingIdentityExportKit({');
     expect(page).not.toContain('buildWeddingIdentityPrintAssets({');
+    expect(page).not.toContain('const loadCollaboratorInvites = async (siteId: string) => {');
+    expect(page).not.toContain('const resolveSettingsSiteId = async () => {');
+    expect(page).not.toContain('const logSettingsAction = (');
+    expect(page).not.toContain('const loadTranslationStatuses = async (siteId: string) => {');
+    expect(page).not.toContain("const downloadTextFile = (filename: string, content: string, type = 'text/plain;charset=utf-8') => {");
     expect(page).not.toContain('supabase.auth.getUser');
     expect(page).not.toContain('supabase.auth.signInWithPassword');
     expect(page).not.toContain('supabase.auth.updateUser');
@@ -202,6 +211,13 @@ describe('settings site data boundary', () => {
     expect(accountHook).toContain("await verifySettingsCurrentPassword(authUser.email || '', currentPassword);");
     expect(accountHook).toContain('await updateSettingsAccountPassword(newPassword);');
     expect(accountHook).toContain("logSettingsAction('account_password_changed', 'Account password was changed.')");
+
+    expect(supportHook).toContain('export function useSettingsDashboardSupport({');
+    expect(supportHook).toContain('setCollaboratorInvites(await loadSettingsCollaboratorInvites(siteId));');
+    expect(supportHook).toContain('const activeSite = await resolveActiveSiteForUser(userId);');
+    expect(supportHook).toContain('void logAppAction({');
+    expect(supportHook).toContain('const rows = await loadSettingsTranslationStatuses(');
+    expect(supportHook).toContain('const blob = new Blob([content], { type });');
 
     expect(actionsHook).toContain('createSettingsCollaboratorInvite({');
     expect(actionsHook).toContain('revokeSettingsCollaboratorInvite(inviteId)');

@@ -15,6 +15,10 @@ const settingsAccountActionsSource = () => readFileSync(
   join(process.cwd(), 'src/pages/dashboard/settings/useSettingsAccountActions.ts'),
   'utf8',
 );
+const settingsDashboardSupportSource = () => readFileSync(
+  join(process.cwd(), 'src/pages/dashboard/settings/useSettingsDashboardSupport.ts'),
+  'utf8',
+);
 const settingsTabContentSource = () => readFileSync(
   join(process.cwd(), 'src/pages/dashboard/settings/SettingsTabContent.tsx'),
   'utf8',
@@ -83,6 +87,7 @@ describe('settings error safety', () => {
     const experienceSource = settingsExperienceActionsSource();
     const snapshotSource = settingsDashboardSnapshotSource();
     const viewModelSource = settingsDashboardViewModelSource();
+    const supportSource = settingsDashboardSupportSource();
     const selectMatch = source.match(/export const SETTINGS_SITE_SELECT = \[([\s\S]*?)\]\.join/);
     expect(selectMatch?.[1]).toBeTruthy();
     const selectedColumns = new Set(
@@ -119,9 +124,14 @@ describe('settings error safety', () => {
     expect(source).toContain("supabase.rpc('hash_site_password'");
     expect(source).toContain("supabase.rpc('generate_secure_token'");
     expect(source).toContain("supabase.functions.invoke('translate-site-content'");
+    expect(pageSource).toContain('useSettingsDashboardSupport({');
     expect(actionsSource).toContain('hashSettingsSitePassword(sitePassword)');
     expect(actionsSource).toContain('generateSettingsSecureToken()');
     expect(actionsSource).toContain('translateSettingsSiteContent(targetSiteId, language)');
+    expect(supportSource).toContain('resolveActiveSiteForUser(userId)');
+    expect(supportSource).toContain('loadSettingsCollaboratorInvites(siteId)');
+    expect(supportSource).toContain('loadSettingsTranslationStatuses(');
+    expect(supportSource).toContain('logAppAction({');
     expect(pageSource).toContain('useSettingsExperienceActions({');
     expect(experienceSource).toContain('updateSettingsSite(targetSiteId');
     expect(experienceSource).toContain('rsvp_custom_questions: cleanedQuestions');

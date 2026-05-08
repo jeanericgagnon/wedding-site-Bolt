@@ -19,6 +19,22 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 8:02 AM PT - No-Deploy Settings Support-Hook Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Settings.tsx` now routes its collaborator invite reloads, site-id resolution, settings audit logging, translation status reloads, and text-file export support helpers through `src/pages/dashboard/settings/useSettingsDashboardSupport.ts` instead of hand-owning that helper cluster inline.
+  - That new hook now owns collaborator invite reloads, site-id resolution through active-site lookup, settings audit logging, translation status reloads, and text-file export plumbing while the route keeps bootstrap, tab composition, and the existing account/site/experience action families.
+  - Settings boundary tests now pin `useSettingsDashboardSupport({ ... })`, check that `useSettingsDashboardSupport.ts` owns the support helper seams, and reject regaining the old inline `loadCollaboratorInvites`, `resolveSettingsSiteId`, `logSettingsAction`, `loadTranslationStatuses`, and `downloadTextFile` blocks in `Settings.tsx`.
+  - `src/pages/dashboard/Settings.tsx` dropped from 717 lines to 662 lines in this batch, while `src/pages/dashboard/settings/useSettingsDashboardSupport.ts` came in at 96 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts`: PASS, 18/18.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ### 2026-05-08 7:58 AM PT - No-Deploy Settings Account-Actions Hook Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:
