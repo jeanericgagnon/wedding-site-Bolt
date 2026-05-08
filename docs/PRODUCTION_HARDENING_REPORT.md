@@ -3900,3 +3900,20 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the oversized-file and page-boundary lanes for the guest dashboard without changing guest add/edit, assisted RSVP, itinerary invitation, delete-all, or CSV import behavior. No deploy was run.
+
+### 2026-05-07 7:16 PM PT - Guest Dashboard Header And List-Display Boundary Extraction
+
+- Moved the guest dashboard hero/header shell, import/actions toolbar shell, and list-vs-households display composition behind existing guest dashboard components.
+- `src/pages/dashboard/Guests.tsx` now routes those seams through `src/pages/dashboard/guests/GuestDashboardHeader.tsx`, `src/pages/dashboard/guests/GuestOpsToolbar.tsx`, and `src/pages/dashboard/guests/GuestListDisplaySwitcher.tsx` instead of carrying the large inline JSX blocks.
+- The page still owns the guest state, filters, handlers, and service calls, while the extracted components own the top-level guest dashboard composition.
+- Tightened `src/lib/dashboardDataBoundary.test.ts` so the guest dashboard now pins the higher-level header, toolbar, and list-display seams and rejects regaining the old inline search/empty-state composition.
+
+Validation:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the oversized-file and page-boundary lanes for the guest dashboard without changing guest insights, import actions, household grouping, or list actions. No deploy was run.

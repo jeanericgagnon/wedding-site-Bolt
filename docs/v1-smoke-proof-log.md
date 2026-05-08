@@ -8427,3 +8427,18 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 7:16 PM PT No-Deploy Guest Dashboard Header And List-Display Boundary Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the guest dashboard hero/header shell through `src/pages/dashboard/guests/GuestDashboardHeader.tsx`.
+  - `src/pages/dashboard/Guests.tsx` now routes the import/actions toolbar shell through `src/pages/dashboard/guests/GuestOpsToolbar.tsx`.
+  - `src/pages/dashboard/Guests.tsx` now routes the list-vs-households composition through `src/pages/dashboard/guests/GuestListDisplaySwitcher.tsx`.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins those seams and rejects regaining the old inline search/empty-state composition.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

@@ -74,6 +74,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('markGuestInvitationSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString())');
     expect(source).toContain('markGuestInvitationAndReminderSentForSite(currentWeddingSiteId, guest.id, sentAtIso)');
     expect(source).toContain('markGuestReminderSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString())');
+    expect(source).toContain('<GuestDashboardHeader');
+    expect(source).toContain('<GuestOpsToolbar');
+    expect(source).toContain('<GuestListDisplaySwitcher');
     expect(source).toContain('<GuestDashboardOverlays');
     expect(source).toContain('clearGuestCheckInsForSite(weddingSiteId)');
     expect(source).toContain('assignGuestsToHouseholdForSite(weddingSiteId, ids, householdId)');
@@ -125,6 +128,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain(".from('guests')\n        .select('*')");
     expect(source).not.toContain(".from('wedding_sites')\n        .select('id, couple_name_1, couple_name_2");
     expect(source).not.toContain("supabase.from('rsvps').select('*')");
+    expect(source).not.toContain('placeholder="Search guests..."');
+    expect(source).not.toContain('placeholder=\"Search guests...\"');
+    expect(source).not.toContain('No guests in this segment right now.');
     expect(source).not.toContain(".from('itinerary_events')\n            .select('id, event_name, event_date, start_time, location_name')");
     expect(source).not.toContain(".from('guest_audit_logs')\n          .select('id, guest_id, action, changed_at, changed_by, old_data, new_data')");
     expect(source).not.toContain(".from('event_invitations')\n          .select('id')");

@@ -1820,6 +1820,13 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins the higher-level `GuestDashboardOverlays` seam and rejects regaining the older inline overlay copy.
   - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts` (15/15), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest dashboard without changing guest operations behavior. No deploy was run.
+- 2026-05-07 7:16 PM PT - No-deploy Guest dashboard header and list-display boundary extraction:
+  - Resolved in this batch: moved the guest dashboard hero/header shell, import/actions toolbar shell, and list-vs-households display composition out of `src/pages/dashboard/Guests.tsx` and behind existing guest dashboard components.
+  - Data-boundary hardening: `Guests.tsx` now routes those seams through `src/pages/dashboard/guests/GuestDashboardHeader.tsx`, `src/pages/dashboard/guests/GuestOpsToolbar.tsx`, and `src/pages/dashboard/guests/GuestListDisplaySwitcher.tsx` instead of carrying the large inline JSX blocks.
+  - No feature loss: guest insights toggles, import CTA, bulk action menu, check-in mode, household grouping, and guest list actions preserve the current behavior while shrinking page-owned composition.
+  - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins the higher-level header, toolbar, and list-display seams and rejects regaining the old inline search/empty-state composition.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts` (15/15), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest dashboard without changing guest operations behavior. No deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

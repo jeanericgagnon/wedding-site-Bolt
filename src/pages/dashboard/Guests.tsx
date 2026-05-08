@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { PLANNER_ROLE_OPTIONS, canManageGuests, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { formatGuestOpsDate, formatGuestOpsDateTime, formatGuestOpsRelativeTime, getGuestOpsTimestamp } from './guestOpsTime';
 import { formatGuestEventDate } from './guestEventDate';
@@ -23,6 +22,7 @@ import {
 import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { extractDietaryNote } from '../../lib/dietaryNotes';
 import { GUEST_IMPORT_MAX_FILE_BYTES, GUEST_IMPORT_MAX_ROWS, buildDefaultCsvFieldMap, buildGuestImportPreview, isCsvNameMappingValid, readGuestImportRows, type CsvFieldMap } from '../../lib/guestImportParser';
+import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
 import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, ChevronDown, Trash2, ExternalLink, Eye } from 'lucide-react';
@@ -44,7 +44,10 @@ import {
   parseRsvpEventSelections,
   summarizeAuditEntry,
 } from './guests/guestDisplayUtils';
+import { GuestDashboardHeader } from './guests/GuestDashboardHeader';
 import { GuestDashboardOverlays } from './guests/GuestDashboardOverlays';
+import { GuestListDisplaySwitcher } from './guests/GuestListDisplaySwitcher';
+import { GuestOpsToolbar } from './guests/GuestOpsToolbar';
 import {
   type Guest,
   type GuestAuditEntry,
@@ -2546,64 +2549,18 @@ const handleSendBulkInvitations = async () => {
   return (
     <DashboardLayout currentPage="guests">
       <div className="max-w-[1100px] mx-auto space-y-5">
-        <DashboardPageHero
-          eyebrow="Guests & RSVP"
-          title="Know who is coming and who still needs a gentle nudge."
-          description="Households, plus-ones, event invites, meal choices, and custom answers stay together without making the guest list feel heavy."
-          stats={[
-            { label: 'Invited', value: stats.total, detail: `${contactStats.contactCoverage}% reachable` },
-            { label: 'Coming', value: stats.confirmed, detail: `${stats.rsvpRate}% replied` },
-            { label: 'Still pending', value: stats.pending, detail: rsvpOps.noResponse > 0 ? 'ready for a reminder' : 'no reminder needed' },
-          ]}
-          actions={
-            <>
-              <a href="/dashboard/rsvp-board" className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">RSVP view</a>
-              <button
-                onClick={() => setShowAddModal(true)}
-                disabled={!canEditGuests}
-                className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
-              >
-                Add guest
-              </button>
-            </>
-          }
-        >
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="inline-flex rounded-lg border border-border-subtle bg-white p-1">
-              <button className="px-3 py-1.5 text-sm rounded-md bg-surface-subtle text-text-primary border border-border-subtle" onClick={() => setGuestsTab('ops')}>Guests</button>
-              <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('rsvp-config')}>RSVP Settings</button>
-            </div>
-            <button
-              onClick={() => setShowInsights(v => !v)}
-              className="px-3 py-1.5 text-xs rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
-            >
-              {showInsights ? 'Hide insights' : 'Show insights'}
-            </button>
-          </div>
-        </DashboardPageHero>
-
-        {csvImportSummary && (
-          <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-3 text-sm space-y-2">
-            <p className="font-medium text-text-primary">Last import summary</p>
-            <p className="text-text-secondary">Imported {csvImportSummary.imported} guest{csvImportSummary.imported === 1 ? '' : 's'} · rows needing review {csvImportSummary.skipped} · household groups {csvImportSummary.householdKeys} · household matches left separate {csvImportSummary.guardedHouseholds} · event names to review {csvImportSummary.unknownEvents} · possible repeats {csvImportSummary.duplicateNames}</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-text-secondary">
-                <p className="font-medium">What came through</p>
-                <p className="mt-1">Guest rows imported, event links mapped where possible, and safer household grouping applied when the keys looked trustworthy.</p>
-              </div>
-              <div className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-text-secondary">
-                <p className="font-medium">Still review</p>
-                <p className="mt-1">Check rows that need names, possible repeats, household matches left separate, event names to review, and any guests still missing direct contact info.</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {guestsRole === 'planner' && (
-          <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
-            Planner view is on. This view stays focused on guest follow-up, response cleanup, and who still needs a nudge.
-          </div>
-        )}
+        <GuestDashboardHeader
+          canEditGuests={canEditGuests}
+          contactCoverage={contactStats.contactCoverage}
+          csvImportSummary={csvImportSummary}
+          guestsRole={guestsRole}
+          rsvpNoResponseCount={rsvpOps.noResponse}
+          showInsights={showInsights}
+          stats={stats}
+          onAddGuest={() => setShowAddModal(true)}
+          onSetGuestsTab={setGuestsTab}
+          onToggleInsights={() => setShowInsights((value) => !value)}
+        />
 
 
         {!cleanGuestsView && (
@@ -2974,119 +2931,93 @@ const handleSendBulkInvitations = async () => {
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search guests..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <div className="flex gap-2 flex-wrap items-start [&>*]:whitespace-nowrap">
-                <input
-                  ref={csvFileInputRef}
-                  type="file"
-                  accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                  onChange={importCSV}
-                  className="hidden"
-                />
-                <Button
-                  variant="outline"
-                  size="md"
-                  onClick={() => csvFileInputRef.current?.click()}
-                  disabled={csvImporting || !canEditGuests}
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  {csvImporting ? 'Parsing…' : 'Import Guests'}
-                </Button>
-                <p className="basis-full text-[11px] text-text-tertiary">
-                  CSV or .xlsx, first sheet only, up to {GUEST_IMPORT_MAX_ROWS.toLocaleString()} rows and {Math.round(GUEST_IMPORT_MAX_FILE_BYTES / 1024 / 1024)}MB.
-                </p>
-
-
-                <Button variant="primary" size="md" onClick={() => { resetForm(); setShowAddModal(true); }} disabled={!canEditGuests}>
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Add Guest
-                </Button>
-
-                <div className="relative">
-                  <Button variant="outline" size="md" onClick={() => setShowOpsMenu(v => !v)} disabled={!canEditGuests}>
-                    Actions
-                    <ChevronDown className="w-4 h-4 ml-1" />
-                  </Button>
-                  {showOpsMenu && (
-                    <div className="absolute right-0 z-20 mt-1 w-64 bg-white border border-border rounded-lg p-1 max-h-96 overflow-auto">
-                      <fieldset disabled={!canEditGuests} className="disabled:opacity-50">
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportCSV(); setShowOpsMenu(false); }}>Export all guests</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportFilteredCSV(); setShowOpsMenu(false); }}>Export filtered guests</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportRsvpRespondersCSV(); setShowOpsMenu(false); }}>Export RSVP responders</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportAttendingGuestsCSV(); setShowOpsMenu(false); }}>Export attending guests</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportDeclinedGuestsCSV(); setShowOpsMenu(false); }}>Export declined guests</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportPendingGuestsCSV(); setShowOpsMenu(false); }}>Export pending RSVP</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportMissingMealCSV(); setShowOpsMenu(false); }}>Export missing meal choices</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportAddressCollectionCSV(); setShowOpsMenu(false); }}>Export addresses (mailing)</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportHouseholdLabelsCSV(); setShowOpsMenu(false); }}>Export household labels</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportEventAttendanceCSV(); setShowOpsMenu(false); }}>Export event attendance</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportCheckedInCSV(); setShowOpsMenu(false); }}>Export checked-in guests</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportThankYouDueCSV(); setShowOpsMenu(false); }}>Export thank-you due</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { copyContactRequestLink(); setShowOpsMenu(false); }}>Copy address collection link</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { handleCopyNoContactChecklist(); setShowOpsMenu(false); }}>Copy missing-contact list</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { copySmsRsvpLinksForFiltered(); setShowOpsMenu(false); }}>Copy text RSVP links</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowOpsMenu(false); }}>Copy filtered emails</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || reminderCandidates.length === 0} onClick={() => { handleSendBulkInvitations(); setShowOpsMenu(false); }} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>{bulkSending ? 'Sending…' : `Remind filtered (${reminderCandidates.length})`}</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || dueReminderCandidatesGlobal.length === 0} onClick={() => { handleSendDueRemindersNow(); setShowOpsMenu(false); }} title={dueReminderCandidatesGlobal.length === 0 ? 'No guests due for reminders' : undefined}>{bulkSending ? 'Sending…' : `Send due reminders (${dueReminderCandidatesGlobal.length})`}</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { const previous = autoRemindersEnabled; const next = !previous; try { setAutoRemindersEnabled(next); await persistReminderSettings({ auto_reminders_enabled: next }); toast(next ? 'Auto reminders enabled' : 'Auto reminders paused', 'success'); } catch { setAutoRemindersEnabled(previous); toast('Couldn’t save auto reminder setting.', 'error'); } setShowOpsMenu(false); }}>{autoRemindersEnabled ? '✓ ' : ''}{autoRemindersEnabled ? 'Auto reminders: On' : 'Auto reminders: Off'}</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { await handleMarkAllDueThankYous(); setShowOpsMenu(false); }}>Mark all thank-you due as sent</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { await handleClearAllCheckIns(); setShowOpsMenu(false); }}>Clear all check-ins</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { generateChecklistTasks(); setShowOpsMenu(false); }}>Create checklist</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => {
-                        const lines = followUpTasks.map((t) => `- [ ] ${t.text}`);
-                        const text = lines.length ? lines.join('\n') : '- [ ] No follow-up tasks yet';
-                        void copyTextOrDownload(text, 'dayof-guest-checklist.md', 'text/markdown;charset=utf-8')
-                          .then((result) => toast(result === 'copied' ? 'Copied checklist markdown' : 'Clipboard was blocked, so the checklist downloaded.', 'success'));
-                        setShowOpsMenu(false);
-                      }}>Copy checklist</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { selectUnresolvedGuests(); setShowOpsMenu(false); }}>Select unresolved</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { selectFilteredGuests(); setShowOpsMenu(false); }}>Select filtered</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || selectedGuestIds.size === 0} onClick={() => { handleSendSelectedInvitations(); setShowOpsMenu(false); }}>{bulkSending ? 'Sending…' : `Remind selected (${selectedGuestIds.size})`}</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={selectedGuestIds.size === 0} onClick={() => { clearGuestSelection(); setShowOpsMenu(false); }}>Clear selection</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={!nextUnresolvedGuest} onClick={() => {
-                        if (nextUnresolvedGuest) {
-                          setSearchQuery((nextUnresolvedGuest.first_name || nextUnresolvedGuest.last_name) ? `${nextUnresolvedGuest.first_name ?? ''} ${nextUnresolvedGuest.last_name ?? ''}`.trim() : nextUnresolvedGuest.name);
-                          setViewMode('list');
-                        }
-                        setShowOpsMenu(false);
-                      }}>Next unresolved</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => {
-                        toast(`Dry run ready for ${reminderCandidates.length} ${reminderCandidates.length === 1 ? 'recipient' : 'recipients'}.`);
-                        void copyTextOrDownload(
-                          `Campaign dry run (${segmentLabelMap[filterStatus] || filterStatus})\nRecipients: ${reminderCandidates.length}\n\n${dryRunRecipientPreview.join('\n')}${reminderCandidates.length > dryRunRecipientPreview.length ? `\n+${reminderCandidates.length - dryRunRecipientPreview.length} more` : ''}`,
-                          'dayof-campaign-dry-run.txt',
-                        );
-                        setShowOpsMenu(false);
-                      }}>Dry run</button>
-                      <div className="my-1 border-t border-border-subtle" />
-                      <button
-                        className="w-full text-left px-3 py-2 text-sm text-text-secondary hover:bg-surface-subtle hover:text-text-primary rounded disabled:opacity-50"
-                        disabled={guests.length === 0 || isDemoMode}
-                        onClick={() => {
-                          setShowOpsMenu(false);
-                          setDeleteAllConfirmInput('');
-                          setShowDeleteAllModal(true);
-                        }}
-                      >
-                        Delete all guests
-                      </button>
-                      </fieldset>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {csvSelectedFilename && (
-              <p className="text-xs text-text-tertiary mt-2">Selected file: <span className="font-medium text-text-secondary">{csvSelectedFilename}</span></p>
-            )}
+            <GuestOpsToolbar
+              autoRemindersEnabled={autoRemindersEnabled}
+              bulkSending={bulkSending}
+              canEditGuests={canEditGuests}
+              csvFileInputRef={csvFileInputRef}
+              csvImporting={csvImporting}
+              csvMaxFileMb={Math.round(GUEST_IMPORT_MAX_FILE_BYTES / 1024 / 1024)}
+              csvMaxRows={GUEST_IMPORT_MAX_ROWS}
+              csvSelectedFilename={csvSelectedFilename}
+              dueReminderCount={dueReminderCandidatesGlobal.length}
+              guestCount={guests.length}
+              hasNextUnresolvedGuest={Boolean(nextUnresolvedGuest)}
+              isDemoMode={isDemoMode}
+              reminderCandidateCount={reminderCandidates.length}
+              searchQuery={searchQuery}
+              selectedGuestCount={selectedGuestIds.size}
+              showOpsMenu={showOpsMenu}
+              onAddGuest={() => {
+                resetForm();
+                setShowAddModal(true);
+              }}
+              onClearAllCheckIns={() => { void handleClearAllCheckIns(); }}
+              onClearSelection={clearGuestSelection}
+              onCopyAddressCollectionLink={copyContactRequestLink}
+              onCopyChecklist={() => {
+                const lines = followUpTasks.map((task) => `- [ ] ${task.text}`);
+                const text = lines.length ? lines.join('\n') : '- [ ] No follow-up tasks yet';
+                void copyTextOrDownload(text, 'dayof-guest-checklist.md', 'text/markdown;charset=utf-8')
+                  .then((result) => toast(result === 'copied' ? 'Copied checklist markdown' : 'Clipboard was blocked, so the checklist downloaded.', 'success'));
+              }}
+              onCopyFilteredEmails={handleCopyFilteredEmails}
+              onCopyMissingContactList={handleCopyNoContactChecklist}
+              onCopyTextRsvpLinks={copySmsRsvpLinksForFiltered}
+              onCreateChecklist={generateChecklistTasks}
+              onDeleteAllGuests={() => {
+                setDeleteAllConfirmInput('');
+                setShowDeleteAllModal(true);
+              }}
+              onDryRun={() => {
+                toast(`Dry run ready for ${reminderCandidates.length} ${reminderCandidates.length === 1 ? 'recipient' : 'recipients'}.`);
+                void copyTextOrDownload(
+                  `Campaign dry run (${segmentLabelMap[filterStatus] || filterStatus})\nRecipients: ${reminderCandidates.length}\n\n${dryRunRecipientPreview.join('\n')}${reminderCandidates.length > dryRunRecipientPreview.length ? `\n+${reminderCandidates.length - dryRunRecipientPreview.length} more` : ''}`,
+                  'dayof-campaign-dry-run.txt',
+                );
+              }}
+              onExportAddressCollection={exportAddressCollectionCSV}
+              onExportAllGuests={exportCSV}
+              onExportAttendingGuests={exportAttendingGuestsCSV}
+              onExportCheckedInGuests={exportCheckedInCSV}
+              onExportDeclinedGuests={exportDeclinedGuestsCSV}
+              onExportEventAttendance={exportEventAttendanceCSV}
+              onExportFilteredGuests={exportFilteredCSV}
+              onExportHouseholdLabels={exportHouseholdLabelsCSV}
+              onExportMissingMealChoices={exportMissingMealCSV}
+              onExportPendingRsvp={exportPendingGuestsCSV}
+              onExportRsvpResponders={exportRsvpRespondersCSV}
+              onExportThankYouDue={exportThankYouDueCSV}
+              onFileChange={importCSV}
+              onMarkAllDueThankYous={() => { void handleMarkAllDueThankYous(); }}
+              onNextUnresolved={() => {
+                if (nextUnresolvedGuest) {
+                  setSearchQuery((nextUnresolvedGuest.first_name || nextUnresolvedGuest.last_name) ? `${nextUnresolvedGuest.first_name ?? ''} ${nextUnresolvedGuest.last_name ?? ''}`.trim() : nextUnresolvedGuest.name);
+                  setViewMode('list');
+                }
+              }}
+              onSearchQueryChange={setSearchQuery}
+              onSelectFiltered={selectFilteredGuests}
+              onSelectUnresolved={selectUnresolvedGuests}
+              onSendDueReminders={() => { void handleSendDueRemindersNow(); }}
+              onSendFilteredInvitations={() => { void handleSendBulkInvitations(); }}
+              onSendSelectedInvitations={() => { void handleSendSelectedInvitations(); }}
+              onSetShowOpsMenu={setShowOpsMenu}
+              onToggleAutoReminders={() => {
+                void (async () => {
+                  const previous = autoRemindersEnabled;
+                  const next = !previous;
+                  try {
+                    setAutoRemindersEnabled(next);
+                    await persistReminderSettings({ auto_reminders_enabled: next });
+                    toast(next ? 'Auto reminders enabled' : 'Auto reminders paused', 'success');
+                  } catch {
+                    setAutoRemindersEnabled(previous);
+                    toast('Couldn’t save auto reminder setting.', 'error');
+                  }
+                })();
+              }}
+            />
 
             {!cleanGuestsView && (
             <div className="p-3 rounded-lg border border-border-subtle bg-surface-subtle">
@@ -3315,321 +3246,42 @@ const handleSendBulkInvitations = async () => {
               </div>
             )}
 
-            {filteredGuests.length === 0 && viewMode === 'list' ? (
-              <div className="p-6 border border-dashed border-border rounded-lg text-center bg-surface-subtle">
-                <p className="text-sm text-text-secondary">No guests in this segment right now.</p>
-                <button
-                  onClick={() => { setFilterStatus('all'); setExtraFilters([]); setSearchQuery(''); }}
-                  className="mt-2 text-xs text-primary hover:underline"
-                >
-                  Clear filters to view all guests
-                </button>
-              </div>
-            ) : viewMode === 'households' ? (
-              <div className="space-y-6">
-                {selectedGuestIds.size >= 2 && (
-                  <div className="flex items-center justify-between px-4 py-3 bg-primary/8 border border-primary/20 rounded-lg">
-                    <span className="text-sm font-medium text-primary">{selectedGuestIds.size} guests selected</span>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={handleMergeIntoHousehold}
-                      disabled={householdBusy || isDemoMode}
-                    >
-                      <Merge className="w-3.5 h-3.5 mr-1.5" />
-                      Merge into Household
-                    </Button>
-                  </div>
-                )}
-
-                {households.grouped.length === 0 && households.ungrouped.length === 0 && (
-                  <div className="text-center py-12">
-                    <Home className="w-12 h-12 text-text-tertiary mx-auto mb-3" />
-                    <p className="text-text-secondary font-medium mb-1">No households yet</p>
-                    <p className="text-sm text-text-tertiary">Select guests from the list view to group them into a household.</p>
-                  </div>
-                )}
-
-                {households.grouped.map(([householdId, members]) => {
-                  return (
-                    <div key={householdId} className="overflow-hidden rounded-lg border border-border-subtle bg-white transition-colors hover:border-primary/25">
-                      <div className="divide-y divide-border-subtle/60 bg-white">
-                        {members.map(guest => {
-                            const name = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
-                            return (
-                              <div key={guest.id} className="flex items-center justify-between px-5 py-3.5">
-                                <div>
-                                  <p className="text-sm font-medium text-text-primary">{name}</p>
-                                  <p className="text-xs text-text-tertiary break-words">{guest.email || 'No email'}</p>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  {getStatusBadge(guest.rsvp_status)}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                    </div>
-                  );
-                })}
-
-                {households.ungrouped.length > 0 && (
-                  <div className="border border-border rounded-lg overflow-hidden">
-                    <div className="flex items-center justify-between px-5 py-3 bg-surface-subtle border-b border-border">
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-text-tertiary" />
-                        <span className="font-semibold text-text-primary text-sm">Ungrouped guests</span>
-                        <span className="text-xs text-text-tertiary break-words">({households.ungrouped.length})</span>
-                      </div>
-                      <p className="text-xs text-text-tertiary break-words">Select guests to group them into households</p>
-                    </div>
-                    <div className="divide-y divide-border-subtle">
-                      {households.ungrouped.map(guest => {
-                        const name = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
-                        const isSelected = selectedGuestIds.has(guest.id);
-                        return (
-                          <div
-                            key={guest.id}
-                            className={`flex items-center gap-3 px-5 py-3 transition-colors cursor-pointer ${isSelected ? 'bg-primary/5' : 'hover:bg-surface-subtle'}`}
-                            onClick={() => setSelectedGuestIds(prev => {
-                              const next = new Set(prev);
-                              if (isSelected) {
-                                next.delete(guest.id);
-                              } else {
-                                next.add(guest.id);
-                              }
-                              return next;
-                            })}
-                          >
-                            <div className={`w-4 h-4 rounded border-2 flex-shrink-0 transition-colors ${isSelected ? 'bg-primary border-primary' : 'border-border'}`}>
-                              {isSelected && (
-                                <svg viewBox="0 0 10 10" className="w-full h-full p-0.5 text-white" fill="none">
-                                  <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-text-primary">{name}</p>
-                              <p className="text-xs text-text-tertiary break-words">{guest.email || 'No email'}</p>
-                            </div>
-                            {getStatusBadge(guest.rsvp_status)}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <>
-                <div className="border border-border rounded-lg overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead className="bg-surface-subtle border-b border-border">
-                      <tr>
-                        <th className="text-left px-4 py-2 text-[11px] font-semibold text-text-tertiary">Guest</th>
-                        <th className="text-left px-4 py-2 text-[11px] font-semibold text-text-tertiary">Status</th>
-                        <th className="text-left px-4 py-2 text-[11px] font-semibold text-text-tertiary hidden md:table-cell">Plus One</th>
-                        <th className="text-left px-4 py-2 text-[11px] font-semibold text-text-tertiary hidden lg:table-cell">Meal Choice</th>
-                        <th className="text-right px-4 py-2 text-[11px] font-semibold text-text-tertiary">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border-subtle">
-                      {displayedGuests.map((guest) => (
-                        <tr
-                          key={guest.id}
-                          className="border-b border-border-subtle/70 hover:bg-surface-subtle/60 transition-colors cursor-pointer"
-                          onClick={() => openItineraryDrawer(guest)}
-                        >
-                          <td className="px-4 py-2.5">
-                            <div className="flex items-center gap-2">
-                              <div>
-                                <p className="text-sm font-medium text-text-primary">
-                                  {guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name}
-                                </p>
-                                <p className="text-sm text-text-secondary">{guest.email || '—'}</p>
-                                {checkInMode && (guest as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at && (
-                                  <p className="text-xs text-success">Checked in {formatGuestOpsDateTime((guest as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at, { hour: 'numeric', minute: '2-digit' })}</p>
-                                )}
-                              </div>
-                              <ChevronRight className="w-3.5 h-3.5 text-text-tertiary ml-1 opacity-0 group-hover:opacity-100" />
-                            </div>
-                          </td>
-                          <td className="px-4 py-2.5">
-                            <div className="flex flex-col gap-1">
-                              {getStatusBadge(guest.rsvp_status)}
-                              {guest.rsvp_received_at && hasRespondedRsvpStatus(guest.rsvp_status) && (
-                                <span className="text-xs text-text-tertiary break-words">
-                                  {formatGuestOpsDate(guest.rsvp_received_at)}
-                                </span>
-                              )}
-                              {(() => {
-                                const lifecycle = getInviteLifecycleState({
-                                  invitationSentAt: (guest as GuestWithRSVP & { invitation_sent_at?: string | null }).invitation_sent_at ?? null,
-                                  reminderLastSentAt: (guest as GuestWithRSVP & { reminder_last_sent_at?: string | null }).reminder_last_sent_at ?? null,
-                                  rsvpStatus: guest.rsvp_status,
-                                  manualHandled: typeof guest.notes === 'string' && guest.notes.toLowerCase().includes('[manual rsvp]'),
-                                });
-                                return (
-                                  <span className="text-[10px] px-2 py-0.5 rounded-lg border bg-surface-subtle text-text-tertiary border-border">
-                                    {lifecycle.label}
-                                  </span>
-                                );
-                              })()}
-                              {(() => {
-                                const issues = getGuestIssueCount(guest);
-                                if (issues <= 0) return null;
-                                return (
-                                  <span className={`text-[10px] px-2 py-0.5 rounded-lg border ${issues >= 3 ? 'bg-surface-subtle text-text-secondary border-border-subtle' : 'bg-primary/5 text-primary border-primary/20'}`}>
-                                    {issues >= 3 ? 'High risk' : 'Needs review'} · {issues}
-                                  </span>
-                                );
-                              })()}
-                              {(() => {
-                                const events = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
-                                if (!events) return null;
-                                return (
-                                  <div className="flex flex-wrap gap-1 pt-1">
-                                    {typeof events.ceremony === 'boolean' && (
-                                      <span className={`text-[10px] px-2 py-0.5 rounded-lg border ${events.ceremony ? 'bg-success-light text-success border-success/20' : 'bg-surface-subtle text-text-tertiary border-border'}`}>
-                                        Ceremony: {events.ceremony ? 'Yes' : 'No'}
-                                      </span>
-                                    )}
-                                    {typeof events.reception === 'boolean' && (
-                                      <span className={`text-[10px] px-2 py-0.5 rounded-lg border ${events.reception ? 'bg-success-light text-success border-success/20' : 'bg-surface-subtle text-text-tertiary border-border'}`}>
-                                        Reception: {events.reception ? 'Yes' : 'No'}
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              })()}
-                              {(() => {
-                                const custom = formatCustomAnswers(guest.rsvp?.custom_answers || null);
-                                if (!custom) return null;
-                                return (
-                                  <p className="text-[11px] text-text-tertiary pt-1 truncate" title={custom}>
-                                    Custom answers saved
-                                  </p>
-                                );
-                              })()}
-                            </div>
-                          </td>
-                          <td className="px-4 py-2.5 text-text-secondary hidden md:table-cell">
-                            {(() => { const plusOneState = getPlusOneState({ plusOneAllowed: guest.plus_one_allowed, plusOneName: guest.rsvp?.plus_one_name, attending: guest.rsvp?.attending }); return plusOneState.label; })()}
-                          </td>
-                          <td className="px-4 py-2.5 text-text-secondary hidden lg:table-cell">
-                            {guest.rsvp?.meal_choice || '—'}
-                          </td>
-                          <td className="px-4 py-2.5 text-right" onClick={e => e.stopPropagation()}>
-                            <div className="flex justify-end gap-1.5">
-                              {checkInMode ? (
-                                <Button
-                                  variant={guest.checked_in_at ? 'outline' : 'primary'}
-                                  size="sm"
-                                  className={`px-3 py-1.5 text-xs ${guest.checked_in_at ? 'text-success border-success/40' : ''}`}
-                                  onClick={() => handleToggleCheckIn(guest)}
-                                  title={guest.checked_in_at ? 'Clear check-in' : 'Mark checked in'}
-                                >
-                                  <CheckCircle2 className="w-4 h-4 mr-1" />
-                                  {guest.checked_in_at ? 'Checked in' : 'Check in'}
-                                </Button>
-                              ) : (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="px-2 py-1 text-xs"
-                                    onClick={() => openItineraryDrawer(guest)}
-                                    title="Manage event invitations"
-                                  >
-                                    <CalendarDays className="w-4 h-4 mr-1" />
-                                    Events
-                                  </Button>
-                                  {guest.invite_token && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="px-2 py-1 text-xs"
-                                      onClick={() => window.open(`/rsvp?token=${encodeURIComponent(guest.invite_token ?? '')}&previewGuest=${encodeURIComponent(guest.id)}`, '_blank', 'noopener,noreferrer')}
-                                      title="Preview the RSVP flow as this guest"
-                                    >
-                                      <ExternalLink className="w-4 h-4 mr-1" />
-                                      Preview
-                                    </Button>
-                                  )}
-                                  {guest.email && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="px-2 py-1 text-xs"
-                                      onClick={() => handleSendInvitation(guest)}
-                                      disabled={sendingInviteId === guest.id || isGuestsReadOnly}
-                                      title={guest.invite_token ? 'Send invitation email' : 'Send invitation'}
-                                    >
-                                      <Mail className="w-4 h-4 mr-1" />
-                                      {sendingInviteId === guest.id ? 'Sending…' : 'Invite'}
-                                    </Button>
-                                  )}
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className={`px-2 py-1 text-xs ${guest.checked_in_at ? 'text-success' : ''}`}
-                                    onClick={() => handleToggleCheckIn(guest)}
-                                    disabled={isGuestsReadOnly}
-                                    title={guest.checked_in_at ? 'Clear check-in' : 'Mark checked in'}
-                                  >
-                                    <CheckCircle2 className="w-4 h-4 mr-1" />
-                                    {guest.checked_in_at ? 'Checked in' : 'Check in'}
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className={`px-2 py-1 text-xs ${(guest as GuestWithRSVP & { thank_you_sent_at?: string | null }).thank_you_sent_at ? 'text-success' : ''}`}
-                                    onClick={() => handleMarkThankYouSent(guest)}
-                                    disabled={isGuestsReadOnly}
-                                    title={(guest as GuestWithRSVP & { thank_you_sent_at?: string | null }).thank_you_sent_at ? 'Clear thank-you sent' : 'Mark thank-you sent'}
-                                  >
-                                    {(guest as GuestWithRSVP & { thank_you_sent_at?: string | null }).thank_you_sent_at ? 'Thanked' : 'Thank-you'}
-                                  </Button>
-                                  <Button variant="ghost" size="sm" className="px-2 py-1 text-xs" onClick={() => openAssistedRsvpModal(guest)} disabled={isGuestsReadOnly}>
-                                    Record RSVP
-                                  </Button>
-                                  <Button variant="ghost" size="sm" className="px-2 py-1 text-xs" onClick={() => openEditModal(guest)} disabled={isGuestsReadOnly}>
-                                    Edit
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDeleteGuest(guest.id)}
-                                    disabled={deletingGuestId === guest.id || isGuestsReadOnly}
-                                    className={`px-2 py-1 text-xs ${confirmDeleteId === guest.id ? 'text-text-primary' : ''}`}
-                                  >
-                                    {deletingGuestId === guest.id
-                                      ? 'Removing…'
-                                      : confirmDeleteId === guest.id
-                                      ? 'Confirm?'
-                                      : 'Delete'}
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {filteredGuests.length === 0 && (
-                  <div className="text-center py-12">
-                    <Users className="w-12 h-12 text-text-tertiary mx-auto mb-3" aria-hidden="true" />
-                    <p className="text-text-secondary font-medium mb-1">No guests found</p>
-                    <p className="text-sm text-text-tertiary">
-                      {searchQuery ? 'Try a different search term' : 'Add your first guest to get started.'}
-                    </p>
-                  </div>
-                )}
-              </>
-            )}
+            <GuestListDisplaySwitcher
+              filteredGuestCount={filteredGuests.length}
+              householdProps={{
+                householdBusy,
+                households,
+                isDemoMode,
+                selectedGuestIds,
+                getStatusBadge,
+                onMergeIntoHousehold: handleMergeIntoHousehold,
+                onSetSelectedGuestIds: setSelectedGuestIds,
+              }}
+              listProps={{
+                checkInMode,
+                confirmDeleteId,
+                deletingGuestId,
+                displayedGuests,
+                filteredGuestCount: filteredGuests.length,
+                isGuestsReadOnly,
+                searchQuery,
+                sendingInviteId,
+                getStatusBadge,
+                onDeleteGuest: handleDeleteGuest,
+                onOpenAssistedRsvpModal: openAssistedRsvpModal,
+                onOpenEditModal: openEditModal,
+                onOpenItineraryDrawer: openItineraryDrawer,
+                onSendInvitation: handleSendInvitation,
+                onToggleCheckIn: handleToggleCheckIn,
+                onMarkThankYouSent: handleMarkThankYouSent,
+              }}
+              viewMode={viewMode}
+              onClearFilters={() => {
+                setFilterStatus('all');
+                setExtraFilters([]);
+                setSearchQuery('');
+              }}
+            />
           </div>
         </Card>
       </div>
