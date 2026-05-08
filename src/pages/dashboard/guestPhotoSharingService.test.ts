@@ -3,6 +3,7 @@ import { createEmptyPhotoBuckets } from '../../lib/aiPhotoBuckets';
 import {
   analyzeGuestPhotoUploads,
   buildGuestPhotoBucketSiteUpdate,
+  createGuestPhotoAlbum,
   createGuestPhotoBucketCorrection,
   exportGuestPhotoManifest,
   getGuestPhotoCurrentUserId,
@@ -189,6 +190,20 @@ describe('guestPhotoSharingService', () => {
       expect.anything(),
       'photo-album-manage',
       { action: 'regenerate_link', albumId: 'album-1' },
+    );
+  });
+
+  it('creates guest photo albums through the service helper', async () => {
+    invokeFunctionOrThrowMock.mockResolvedValueOnce({ album: { id: 'album-1', name: 'Ceremony' }, uploadUrl: 'https://example.com/upload' });
+
+    await expect(createGuestPhotoAlbum({ siteId: 'site-1', name: 'Ceremony', itineraryEventId: 'event-1' })).resolves.toEqual({
+      album: { id: 'album-1', name: 'Ceremony' },
+      uploadUrl: 'https://example.com/upload',
+    });
+    expect(invokeFunctionOrThrowMock).toHaveBeenCalledWith(
+      expect.anything(),
+      'photo-album-create',
+      { siteId: 'site-1', name: 'Ceremony', itineraryEventId: 'event-1' },
     );
   });
 

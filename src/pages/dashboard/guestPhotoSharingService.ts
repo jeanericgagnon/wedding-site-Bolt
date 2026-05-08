@@ -259,6 +259,23 @@ export async function manageGuestPhotoAlbum(body: {
   return await invokeGuestPhotoOwnerFunction<Record<string, unknown>>('photo-album-manage', body);
 }
 
+export async function createGuestPhotoAlbum(body: {
+  siteId: string;
+  name: string;
+  itineraryEventId?: string | null;
+  parentAlbumId?: string | null;
+}): Promise<{
+  album?: { id?: string | null; name?: string | null } | null;
+  bucket?: { id?: string | null; name?: string | null } | null;
+  uploadUrl?: string | null;
+}> {
+  return await invokeGuestPhotoOwnerFunction<{
+    album?: { id?: string | null; name?: string | null } | null;
+    bucket?: { id?: string | null; name?: string | null } | null;
+    uploadUrl?: string | null;
+  }>('photo-album-create', body);
+}
+
 export async function loadGuestPhotoDashboardSnapshot(userId: string): Promise<GuestPhotoDashboardSnapshot> {
   const activeSite = await resolveActiveSiteForUser(userId);
   if (!activeSite?.id) throw new Error(GUEST_PHOTO_SITE_LOAD_ERROR_COPY);

@@ -25,7 +25,6 @@ import { demoEvents, demoWeddingSite } from '../../lib/demoData';
 import { getSafePublicWebUrl } from '../../sections/publicLinks';
 import {
   getGuestPhotoCurrentUserId,
-  invokeGuestPhotoOwnerFunction,
   loadGuestPhotoDashboardSnapshot,
   MAX_GUEST_PHOTO_ALBUMS,
   MAX_GUEST_PHOTO_ANALYSES,
@@ -36,6 +35,7 @@ import {
   MAX_GUEST_PHOTO_PROSPECTS,
   MAX_GUEST_PHOTO_UPLOADS,
   analyzeGuestPhotoUploads,
+  createGuestPhotoAlbum,
   createGuestPhotoBucketCorrection,
   exportGuestPhotoManifest,
   manageGuestPhotoAlbum,
@@ -224,12 +224,6 @@ export const GuestPhotoSharing: React.FC = () => {
   useEffect(() => {
     writeStoredBucketLinks(bucketUploadLinks);
   }, [bucketUploadLinks]);
-
-  type PhotoAlbumCreateResponse = {
-    album?: { id?: string | null; name?: string | null } | null;
-    bucket?: { id?: string | null; name?: string | null } | null;
-    uploadUrl?: string | null;
-  };
 
   const logPhotoAction = (type: string, summary: string, metadata?: Record<string, unknown>, targetId?: string | null, targetLabel?: string | null) => {
     if (!siteId) return;
@@ -1267,7 +1261,7 @@ export const GuestPhotoSharing: React.FC = () => {
       const links: Record<string, string> = {};
 
       for (const event of missingItineraryEvents) {
-        const data = await invokeGuestPhotoOwnerFunction<PhotoAlbumCreateResponse>('photo-album-create', {
+        const data = await createGuestPhotoAlbum({
           siteId,
           name: event.event_name,
           itineraryEventId: event.id,
@@ -1306,7 +1300,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setSubmitting(true);
       setError(null);
       setSuccess(null);
-      const data = await invokeGuestPhotoOwnerFunction<PhotoAlbumCreateResponse>('photo-album-create', {
+      const data = await createGuestPhotoAlbum({
         siteId,
         name: suggestion.label,
         itineraryEventId: suggestion.eventId,
@@ -1589,7 +1583,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setError(null);
       setSuccess(null);
 
-      const data = await invokeGuestPhotoOwnerFunction<PhotoAlbumCreateResponse>('photo-album-create', {
+      const data = await createGuestPhotoAlbum({
         siteId,
         name: name.trim(),
         itineraryEventId: itineraryEventId || null,

@@ -8189,6 +8189,20 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 5:41 PM PT No-Deploy Guest Photo Album Creation Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guestPhotoSharingService.ts` now owns album creation requests through `createGuestPhotoAlbum(...)`.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now calls that helper for itinerary album creation, suggestion-driven moment album creation, and manual album creation instead of directly invoking the `photo-album-create` owner function inline.
+  - `src/pages/dashboard/guestPhotoSharingService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` now pin that helper and the fact that the page no longer owns direct Supabase/auth/owner-function transport.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 3:31 PM PT No-Deploy Seating Session Refresh Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

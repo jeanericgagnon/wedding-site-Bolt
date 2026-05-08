@@ -3629,3 +3629,20 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the guest photo dashboard page-to-service migration without changing owner-facing moderation, album-link, or export behavior. No deploy was run.
+
+### 2026-05-07 5:41 PM PT - Guest Photo Album Creation Service Extraction
+
+- Moved the last direct owner-function transport out of `src/pages/dashboard/GuestPhotoSharing.tsx` and into `src/pages/dashboard/guestPhotoSharingService.ts`.
+- `GuestPhotoSharing.tsx` now routes itinerary-driven album creation, suggestion-driven moment album creation, and manual album creation through `createGuestPhotoAlbum(...)`.
+- With this batch, the guest photo dashboard page no longer owns direct Supabase auth transport, direct Supabase table access, or direct owner Edge Function transport inline.
+- Expanded `src/pages/dashboard/guestPhotoSharingService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the album-create helper and the no-direct-transport page boundary are both pinned.
+
+Validation:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 45/45.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the guest photo dashboard page-to-service migration and leaves the page UI-focused, without changing owner-facing album creation behavior. No deploy was run.

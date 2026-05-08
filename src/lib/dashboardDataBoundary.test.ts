@@ -434,12 +434,12 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('await moveGuestPhotoUploadToBucket(siteId, move.uploadId, move.targetBucketId)');
     expect(source).toContain('await createGuestPhotoBucketCorrection(siteId, analysis, action, chosenBucketId, reason)');
     expect(source).toContain("await analyzeGuestPhotoUploads(siteId, uploadIds, force, force ? 'vision' : 'auto')");
+    expect(source).toContain('await createGuestPhotoAlbum({');
     expect(source).toContain('await exportGuestPhotoManifest(siteId, showHidden)');
     expect(source).toContain("await moderateGuestPhotoUploads(ids, { is_hidden: hide })");
     expect(source).toContain("await manageGuestPhotoAlbum({ action: 'regenerate_link', albumId: bucket.id })");
     expect(source).toContain('resolveGuestPhotoDashboardUserId()');
     expect(source).toContain('refreshGuestPhotoSession()');
-    expect(source).toContain("invokeGuestPhotoOwnerFunction<PhotoAlbumCreateResponse>('photo-album-create'");
     expect(source).toContain('queueGuestPhotoFollowupsFromService(siteId, kind)');
     expect(source).not.toContain('supabase.auth.getUser()');
     expect(source).not.toContain('supabase.auth.getSession()');
@@ -464,6 +464,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain("invokeOrThrow('photo-export-manifest'");
     expect(source).not.toContain("invokeOrThrow('photo-upload-moderate'");
     expect(source).not.toContain("invokeOrThrow('photo-album-manage'");
+    expect(source).not.toContain("invokeGuestPhotoOwnerFunction<PhotoAlbumCreateResponse>('photo-album-create'");
     expect(source).not.toContain("supabase.from('wedding_sites').update({ wedding_data: nextWeddingData, site_json: nextSiteJson })");
     expect(service).toContain("const GUEST_PHOTO_BUCKET_SITE_SELECT = 'wedding_data, site_json'");
     expect(service).toContain("const GUEST_PHOTO_DASHBOARD_SITE_SELECT = 'id, site_slug, wedding_data'");
@@ -477,6 +478,7 @@ describe('dashboard data boundary guards', () => {
     expect(service).toContain('export async function moveGuestPhotoUploadToBucket(');
     expect(service).toContain('export async function createGuestPhotoBucketCorrection(');
     expect(service).toContain('export async function analyzeGuestPhotoUploads(');
+    expect(service).toContain('export async function createGuestPhotoAlbum(');
     expect(service).toContain('export async function exportGuestPhotoManifest(');
     expect(service).toContain('export async function moderateGuestPhotoUploads(');
     expect(service).toContain('export async function manageGuestPhotoAlbum(');
@@ -492,6 +494,7 @@ describe('dashboard data boundary guards', () => {
     expect(service).toContain("const data = await invokeFunctionOrThrow(supabase, fnName, body);");
     expect(service).toContain("return await invokeGuestPhotoOwnerFunction<{ queued?: number }>('queue-guest-followups', { siteId, kind })");
     expect(service).toContain("return await invokeGuestPhotoOwnerFunction<{ analyzed?: number; skipped?: number; results?: PhotoUploadAiAnalysisRow[] }>('photo-analyze-batch', {");
+    expect(service).toContain("return await invokeGuestPhotoOwnerFunction<{");
     expect(service).toContain("return await invokeGuestPhotoOwnerFunction<{ rows?: Array<Record<string, unknown>> }>('photo-export-manifest', {");
     expect(service).toContain("await invokeGuestPhotoOwnerFunction('photo-upload-moderate', { uploadIds, patch });");
     expect(service).toContain("return await invokeGuestPhotoOwnerFunction<Record<string, unknown>>('photo-album-manage', body);");
