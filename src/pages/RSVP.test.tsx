@@ -57,6 +57,7 @@ describe('RSVP stale submit protection', () => {
     const lookupGuest = readFileSync(join(process.cwd(), 'src/pages/lookupRsvpGuest.ts'), 'utf8');
     const lookupToken = readFileSync(join(process.cwd(), 'src/pages/lookupRsvpToken.ts'), 'utf8');
     const runGuestLookup = readFileSync(join(process.cwd(), 'src/pages/runRsvpGuestLookup.ts'), 'utf8');
+    const runSubmit = readFileSync(join(process.cwd(), 'src/pages/runRsvpSubmit.ts'), 'utf8');
     const runTokenLookup = readFileSync(join(process.cwd(), 'src/pages/runRsvpTokenLookup.ts'), 'utf8');
     const submitSuccess = readFileSync(join(process.cwd(), 'src/pages/applyRsvpSubmitSuccess.ts'), 'utf8');
     const tokenLookupResult = readFileSync(join(process.cwd(), 'src/pages/applyTokenRsvpLookupResult.ts'), 'utf8');
@@ -92,6 +93,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain("from './applyTokenRsvpLookupResult'");
     expect(rsvpPage).toContain("from './lookupRsvpGuest'");
     expect(rsvpPage).toContain("from './runRsvpGuestLookup'");
+    expect(rsvpPage).toContain("from './runRsvpSubmit'");
     expect(rsvpPage).toContain("from './runRsvpTokenLookup'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitPayload'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitSuccessArgs'");
@@ -111,18 +113,14 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
     expect(rsvpPage).toContain('applyResolvedRsvpGuest({');
     expect(rsvpPage).toContain('runRsvpGuestLookup({');
+    expect(rsvpPage).toContain('runRsvpSubmit({');
     expect(rsvpPage).toContain('runRsvpTokenLookup({');
-    expect(rsvpPage).toContain('buildRsvpSubmitPayload({');
-    expect(rsvpPage).toContain('applyRsvpSubmitSuccess(buildRsvpSubmitSuccessArgs({');
     expect(rsvpPage).toContain('prepareRsvpTokenLookupState({');
-    expect(rsvpPage).toContain('applyDemoRsvpSubmit({ payload, targetGuestIds: targetIds })');
-    expect(rsvpPage).toContain('submitRsvpResponse({');
     expect(rsvpPage).toContain('buildRsvpLiveContentActions({');
     expect(rsvpPage).toContain('buildRsvpPageViewModel({');
     expect(rsvpPage).toContain('resetRsvpLookupFlow({');
     expect(rsvpPage).toContain('resetRsvpPageState({');
     expect(rsvpPage).toContain('restoreLoadedRsvpState({');
-    expect(rsvpPage).toContain('validateRsvpSubmitReadiness({');
     expect(rsvpPage).toContain('const liveContentProps = buildRsvpLiveContentViewProps({');
     expect(rsvpPage).toContain('validateRsvpFormAdvance({');
     expect(derivedViewState).toContain('guestPredictions');
@@ -146,6 +144,11 @@ describe('RSVP stale submit protection', () => {
     expect(runGuestLookup).toContain('await lookupRsvpGuest({');
     expect(runGuestLookup).toContain('applyManualRsvpLookupResult({');
     expect(runGuestLookup).toContain("lookupSource === 'pick' && fallbackGuest");
+    expect(runSubmit).toContain('validateRsvpSubmitReadiness({');
+    expect(runSubmit).toContain('buildRsvpSubmitPayload({');
+    expect(runSubmit).toContain('applyDemoRsvpSubmit({ payload, targetGuestIds: targetIds })');
+    expect(runSubmit).toContain('await submitRsvpResponse({');
+    expect(runSubmit).toContain('applyRsvpSubmitSuccess(buildRsvpSubmitSuccessArgs({');
     expect(lookupToken).toContain("action: 'lookup'");
     expect(lookupToken).toContain("data: demoLookup(token) as unknown");
     expect(runTokenLookup).toContain('await lookupRsvpToken({');

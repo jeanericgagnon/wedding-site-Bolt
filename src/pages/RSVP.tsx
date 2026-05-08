@@ -47,6 +47,7 @@ import { resetRsvpPageState } from './resetRsvpPageState';
 import { restoreLoadedRsvpState } from './restoreLoadedRsvpState';
 import { RsvpPageRouteView } from './RsvpPageRouteView';
 import { runRsvpGuestLookup } from './runRsvpGuestLookup';
+import { runRsvpSubmit } from './runRsvpSubmit';
 import { submitRsvpResponse } from './submitRsvpResponse';
 import { validateRsvpFormAdvance } from './validateRsvpFormAdvance';
 import { validateRsvpSubmitReadiness } from './validateRsvpSubmitReadiness';
@@ -839,126 +840,45 @@ export default function RSVP() {
     setLoading(true);
     setSubmitting(true);
     setError('');
-
-    try {
-      const submitReadinessError = validateRsvpSubmitReadiness({
-        applyToHousehold,
-        deadlinePassed,
-        existingRsvpPresent: !!existingRsvp,
-        formData,
-        guest,
-        householdGuestCount: householdGuests.length,
-        rsvpSessionToken,
-        selectedHouseholdGuestCount: selectedHouseholdGuestIds.length,
-      });
-
-      if (submitReadinessError === 'missing-guest') return;
-
-      if (submitReadinessError) {
-        if (activeSubmitRequestRef.current !== requestId) return;
-        setError(submitReadinessError);
-        return;
-      }
-
-      if (!guest) return;
-
-      const submitPayload = buildRsvpSubmitPayload({
-        applyToHousehold,
-        buildNormalizedExistingRsvp,
-        customAnswers,
-        dedupeGuestIds,
-        existingRsvpId: existingRsvp?.id ?? 'submitted-rsvp',
-        formData,
-        guestId: guest.id,
-        normalizeCustomAnswers,
-        selectedHouseholdGuestIds,
-      });
-
-      if (USE_DEMO_RSVP) {
-        const targetIds = submitPayload.targetGuestIds;
-        const payload = buildNormalizedExistingRsvp(formData, customAnswers, `demo-rsvp-${guest.id}`, targetIds);
-        applyDemoRsvpSubmit({ payload, targetGuestIds: targetIds });
-        if (activeSubmitRequestRef.current !== requestId) return;
-        applyRsvpSubmitSuccess(buildRsvpSubmitSuccessArgs({
-          applyToHousehold,
-          guest,
-          householdGuests,
-          ignoreNextLocalContinuityEventRef,
-          mealConfig,
-          musicPlaylistUrl,
-          normalizedExistingRsvp: payload,
-          normalizeSelectedHouseholdGuestIds,
-          notifyRsvpContinuityUpdate,
-          rsvpDeadline,
-          rsvpQuestions,
-          rsvpSessionToken,
-          selectedGuestIds: targetIds,
-          selectGuest,
-          setApplyToHousehold,
-          setSelectedHouseholdGuestIds,
-          setStep,
-          tokenLinkedSession: tokenLinkedSessionRef.current,
-        }));
-        return;
-      }
-
-      const targetGuestIds = applyToHousehold
-        ? dedupeGuestIds([guest.id, ...selectedHouseholdGuestIds])
-        : [guest.id];
-
-      const { error: err, submitSucceeded } = await submitRsvpResponse({
-        applyToHousehold,
-        attending: formData.attending,
-        attendCeremony: formData.attendCeremony,
-        attendReception: formData.attendReception,
-        childrenCount: submitPayload.childrenCount,
-        customAnswers: submitPayload.normalizedCustomAnswers,
-        guestId: guest.id,
-        mealChoice: submitPayload.mealChoice || null,
-        notes: submitPayload.notes || null,
-        plusOneCount: submitPayload.plusOneCount,
-        plusOneName: submitPayload.plusOneName || null,
-        rsvpSession: rsvpSessionToken,
-        targetGuestIds: submitPayload.targetGuestIds,
-      });
-
-      if (err || !submitSucceeded) {
-        if (activeSubmitRequestRef.current !== requestId) return;
-        setError(normalizeRsvpSubmitError(err));
-        return;
-      }
-
-      if (activeSubmitRequestRef.current !== requestId) return;
-      applyRsvpSubmitSuccess(buildRsvpSubmitSuccessArgs({
-        applyToHousehold,
-        guest,
-        householdGuests,
-        ignoreNextLocalContinuityEventRef,
-        mealConfig,
-        musicPlaylistUrl,
-        normalizedExistingRsvp: submitPayload.normalizedExistingRsvp,
-        normalizeSelectedHouseholdGuestIds,
-        notifyRsvpContinuityUpdate,
-        rsvpDeadline,
-        rsvpQuestions,
-        rsvpSessionToken,
-        selectedGuestIds: submitPayload.targetGuestIds,
-        selectGuest,
-        setApplyToHousehold,
-        setSelectedHouseholdGuestIds,
-        setStep,
-        tokenLinkedSession: tokenLinkedSessionRef.current,
-      }));
-    } catch {
-      if (activeSubmitRequestRef.current !== requestId) return;
-      setError(RSVP_SUBMIT_ERROR_COPY);
-    } finally {
-      if (activeSubmitRequestRef.current === requestId) {
-        submitInFlightRef.current = false;
-        setLoading(false);
-        setSubmitting(false);
-      }
-    }
+    await runRsvpSubmit({
+      activeSubmitRequestRef,
+      applyDemoRsvpSubmit,
+      applyRsvpSubmitSuccess,
+      applyToHousehold,
+      buildNormalizedExistingRsvp,
+      buildRsvpSubmitPayload,
+      buildRsvpSubmitSuccessArgs,
+      customAnswers,
+      dedupeGuestIds,
+      existingRsvp,
+      formData,
+      guest,
+      householdGuests,
+      ignoreNextLocalContinuityEventRef,
+      mealConfig,
+      musicPlaylistUrl,
+      normalizeCustomAnswers,
+      normalizeRsvpSubmitError,
+      normalizeSelectedHouseholdGuestIds,
+      notifyRsvpContinuityUpdate,
+      requestId,
+      rsvpDeadline,
+      rsvpQuestions,
+      rsvpSessionToken,
+      selectGuest,
+      selectedHouseholdGuestIds,
+      setApplyToHousehold,
+      setError,
+      setLoading,
+      setSelectedHouseholdGuestIds,
+      setStep,
+      setSubmitting,
+      submitInFlightRef,
+      submitRsvpResponse,
+      tokenLinkedSession: tokenLinkedSessionRef.current,
+      useDemoRsvp: USE_DEMO_RSVP,
+      validateRsvpSubmitReadiness,
+    });
   };
 
   const {
