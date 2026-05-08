@@ -4823,6 +4823,23 @@ Status:
 - Status:
   - PARTIAL. This continues message dashboard ownership cleanup without changing collaborator behavior. No deploy was run.
 
+## 2026-05-08 02:08 AM PT No-Deploy Message Billing Action Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Messages.tsx` now routes the text-credit checkout flow through `src/pages/dashboard/messages/useMessageBillingActions.ts` instead of hand-owning that billing action inline.
+  - That hook now owns provider-enabled gating, checkout session launch, billing audit logging, and customer-safe billing failure handling for SMS credit checkout.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useMessageBillingActions({ ... })` plus its `createSmsCreditsSession(...)`, `sms_credits_checkout_started`, and `safeMessagesError(...)` seams.
+  - `src/pages/dashboard/Messages.tsx` dropped from 478 lines to 449 lines in this batch while `src/pages/dashboard/messages/useMessageBillingActions.ts` came in at 56 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues message dashboard ownership cleanup without changing collaborator behavior. No deploy was run.
+
 ## 2026-05-08 12:49 AM PT No-Deploy Guest Photo Album Action Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

@@ -1,11 +1,8 @@
 import React, { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { createSmsCreditsSession } from '../../lib/stripeService';
 import { canComposeDashboardMessages } from '../../lib/plannerAccess';
 import { getMessageTemplateCoupleLabel } from './messageTemplateVariables';
-import { isSmsProviderEnabled } from '../../lib/smsProvider';
-import { logAppAction } from '../../lib/actionAudit';
 import { buildMessageAudienceOptions, filterMessageAudienceGuests, getMessageAudienceDetail } from '../../lib/messageAudienceSegments';
 import { buildGuestMessageLanguagePreviews } from '../../lib/guestMessageLanguagePreview';
 import {
@@ -33,6 +30,7 @@ import { useMessageDashboardPrefillSync } from './messages/useMessageDashboardPr
 import { buildMessageDashboardViewProps } from './messages/buildMessageDashboardViewProps';
 import { buildMessageDashboardDerivedState } from './messages/buildMessageDashboardDerivedState';
 import { useMessageDashboardUiState } from './messages/useMessageDashboardUiState';
+import { useMessageBillingActions } from './messages/useMessageBillingActions';
 import { MessageDashboardRouteView } from './messages/MessageDashboardRouteView';
 
 export const DashboardMessages: React.FC = () => {
@@ -95,38 +93,11 @@ export const DashboardMessages: React.FC = () => {
     viewingMessage,
     weddingSite,
   } = useMessageDashboardUiState();
-
-  async function handleBuySmsPack(pack: 'sms_100' | 'sms_500' | 'sms_1000') {
-    if (!weddingSite) return;
-    if (!isSmsProviderEnabled()) {
-      toast('Text credit purchases will open after the final texting setup is complete.', 'info');
-      return;
-    }
-    setBuyingPack(pack);
-    try {
-      const base = window.location.origin;
-      const success = `${base}/dashboard/messages?smsCredits=success`;
-      const cancel = `${base}/dashboard/messages?smsCredits=cancel`;
-      const url = await createSmsCreditsSession(weddingSite.id, success, cancel, pack);
-      void logAppAction({
-        weddingSiteId: weddingSite.id,
-        area: 'billing',
-        type: 'sms_credits_checkout_started',
-        summary: 'Text credits checkout was started.',
-        targetId: weddingSite.id,
-        targetLabel: 'Text credits',
-        metadata: {
-          pack,
-          currentCredits: weddingSite.sms_credits_balance ?? 0,
-        },
-      });
-      window.location.href = url;
-    } catch (err) {
-      toast(safeMessagesError(err, 'Couldn’t open checkout right now. Please try again.'), 'error');
-    } finally {
-      setBuyingPack(null);
-    }
-  }
+  const { handleBuySmsPack } = useMessageBillingActions({
+    setBuyingPack,
+    toast,
+    weddingSite,
+  });
 
   const {
     fetchWeddingSite,

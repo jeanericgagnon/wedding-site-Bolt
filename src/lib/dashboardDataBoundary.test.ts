@@ -9,6 +9,7 @@ describe('dashboard data boundary guards', () => {
     const viewPropsSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/buildMessageDashboardViewProps.ts'), 'utf8');
     const derivedStateSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/buildMessageDashboardDerivedState.ts'), 'utf8');
     const uiStateSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDashboardUiState.ts'), 'utf8');
+    const billingActionsSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageBillingActions.ts'), 'utf8');
     const dataHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDashboardData.ts'), 'utf8');
     const deliveryHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDeliveryActions.ts'), 'utf8');
     const composeHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageComposeActions.ts'), 'utf8');
@@ -36,6 +37,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('useMessageDashboardPrefillSync({');
     expect(source).toContain('buildMessageDashboardDerivedState({');
     expect(source).toContain('buildMessageDashboardViewProps({');
+    expect(source).toContain('useMessageBillingActions({');
     expect(source).toContain('useMessageDashboardUiState()');
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).not.toContain("supabase.from('messages').insert(payload)");
@@ -84,6 +86,10 @@ describe('dashboard data boundary guards', () => {
     expect(uiStateSource).toContain("const raw = readPlannerAccessRole('messages', weddingSite.id);");
     expect(uiStateSource).toContain("writePlannerAccessRole('messages', weddingSite.id, messagesRole);");
     expect(uiStateSource).not.toContain("from '../../lib/supabase'");
+    expect(billingActionsSource).toContain('const url = await createSmsCreditsSession(weddingSite.id, success, cancel, pack);');
+    expect(billingActionsSource).toContain("type: 'sms_credits_checkout_started'");
+    expect(billingActionsSource).toContain('toast(safeMessagesError(err,');
+    expect(billingActionsSource).not.toContain("from '../../lib/supabase'");
     expect(composeHookSource).toContain('insertDashboardMessageMinimal({');
     expect(composeHookSource).toContain('await updateDashboardMessage(editingMessageId, {');
     expect(composeHookSource).toContain('const result = await triggerDashboardBulkSend(inserted.id)');
