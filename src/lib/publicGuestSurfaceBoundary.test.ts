@@ -154,6 +154,7 @@ describe('public guest surface boundary', () => {
     const rsvpValidateAdvance = readSource('src/pages/validateRsvpFormAdvance.ts');
     const rsvpValidateSubmitReadiness = readSource('src/pages/validateRsvpSubmitReadiness.ts');
     const rsvpDemoSubmit = readSource('src/pages/applyDemoRsvpSubmit.ts');
+    const rsvpSubmitResponse = readSource('src/pages/submitRsvpResponse.ts');
     const rsvpLiveContentView = readSource('src/pages/RsvpLiveContentView.tsx');
     const rsvpTokenLoadingView = readSource('src/pages/RsvpTokenLoadingView.tsx');
     const rsvpFlowView = readSource('src/pages/RsvpFlowView.tsx');
@@ -180,6 +181,7 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain("from './validateRsvpFormAdvance'");
     expect(rsvpPage).toContain("from './validateRsvpSubmitReadiness'");
     expect(rsvpPage).toContain("from './applyDemoRsvpSubmit'");
+    expect(rsvpPage).toContain("from './submitRsvpResponse'");
     expect(rsvpPage).toContain('<RsvpPageRouteView');
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
     expect(rsvpPage).toContain('applyAmbiguousRsvpLookupState({');
@@ -188,6 +190,7 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain('buildRsvpSubmitPayload({');
     expect(rsvpPage).toContain('classifyRsvpLookupResponse(');
     expect(rsvpPage).toContain('applyDemoRsvpSubmit({ payload, targetGuestIds: targetIds })');
+    expect(rsvpPage).toContain('submitRsvpResponse({');
     expect(rsvpPage).toContain('buildRsvpLiveContentActions({');
     expect(rsvpPage).toContain('buildRsvpPageViewModel({');
     expect(rsvpPage).toContain('resetRsvpLookupFlow({');
@@ -232,6 +235,9 @@ describe('public guest surface boundary', () => {
     expect(rsvpDemoSubmit).toContain('readDemoStoredResponses()');
     expect(rsvpDemoSubmit).toContain('writeDemoStoredResponses(stored)');
     expect(rsvpDemoSubmit).toContain("id: `demo-rsvp-${id}`");
+    expect(rsvpSubmitResponse).toContain("action: 'submit'");
+    expect(rsvpSubmitResponse).toContain('callValidateRsvpToken({');
+    expect(rsvpSubmitResponse).toContain('submitSucceeded');
     expect(rsvpPageRouteView).toContain("from './RsvpRouteView'");
     expect(rsvpPageRouteView).toContain("from './RsvpLiveContentView'");
     expect(rsvpPageRouteView).toContain("from './RsvpTokenLoadingView'");

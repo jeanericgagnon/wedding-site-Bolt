@@ -41,6 +41,7 @@ import { callValidateRsvpToken } from './rsvpFunctionService';
 import { resetRsvpLookupFlow } from './resetRsvpLookupFlow';
 import { resetRsvpPageState } from './resetRsvpPageState';
 import { RsvpPageRouteView } from './RsvpPageRouteView';
+import { submitRsvpResponse } from './submitRsvpResponse';
 import { validateRsvpFormAdvance } from './validateRsvpFormAdvance';
 import { validateRsvpSubmitReadiness } from './validateRsvpSubmitReadiness';
 
@@ -1008,24 +1009,21 @@ export default function RSVP() {
         ? dedupeGuestIds([guest.id, ...selectedHouseholdGuestIds])
         : [guest.id];
 
-      const { data, error: err } = await callValidateRsvpToken({
-        action: 'submit',
-        guestId: guest.id,
-        rsvpSession: rsvpSessionToken,
+      const { error: err, submitSucceeded } = await submitRsvpResponse({
+        applyToHousehold,
         attending: formData.attending,
         attendCeremony: formData.attendCeremony,
         attendReception: formData.attendReception,
-        mealChoice: submitPayload.mealChoice || null,
-        plusOneName: submitPayload.plusOneName || null,
-        plusOneCount: submitPayload.plusOneCount,
         childrenCount: submitPayload.childrenCount,
-        notes: submitPayload.notes || null,
         customAnswers: submitPayload.normalizedCustomAnswers,
-        applyToHousehold,
+        guestId: guest.id,
+        mealChoice: submitPayload.mealChoice || null,
+        notes: submitPayload.notes || null,
+        plusOneCount: submitPayload.plusOneCount,
+        plusOneName: submitPayload.plusOneName || null,
+        rsvpSession: rsvpSessionToken,
         targetGuestIds: submitPayload.targetGuestIds,
       });
-
-      const submitSucceeded = !!(data && typeof data === 'object' && 'success' in data && (data as { success?: boolean }).success);
 
       if (err || !submitSucceeded) {
         if (activeSubmitRequestRef.current !== requestId) return;
