@@ -7502,6 +7502,21 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 8:50 PM PT No-Deploy Guest Dashboard Ops View Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes its ops-mode page shell through `src/pages/dashboard/guests/GuestDashboardOpsView.tsx`.
+  - That higher-level shell now owns the `DashboardLayout` composition seam for `GuestDashboardHeader` and `GuestDashboardContent`, while still rendering `GuestDashboardOverlays` from the page.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `GuestDashboardOpsView` and rejects regaining the old inline guest ops-page shell in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` held at 2542 lines in this batch, but the page owns one less top-level route/layout seam.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts`: PASS, 46/46.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 5:57 PM PT No-Deploy Guest hub public service extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

@@ -1945,3 +1945,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins `GuestDashboardContent` and rejects regaining the old inline insight/conflict/ops/workspace seam in `Guests.tsx`.
   - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts` (46/46), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest dashboard without changing guest operations behavior. No deploy was run.
+- 2026-05-07 8:50 PM PT - No-deploy Guest dashboard ops-view extraction:
+  - Resolved in this batch: moved the guest dashboard ops-mode page shell out of `src/pages/dashboard/Guests.tsx` and behind `src/pages/dashboard/guests/GuestDashboardOpsView.tsx`.
+  - Data-boundary hardening: `Guests.tsx` now routes the ops-mode layout branch through one higher-level shell instead of directly composing `DashboardLayout`, `GuestDashboardHeader`, and `GuestDashboardContent` inline.
+  - File-size movement: `Guests.tsx` held at 2542 lines in this continuation batch, but the page owns one less top-level route/layout seam.
+  - No feature loss: ops-mode header controls, insight toggles, guest dashboard content, and overlays preserve the current behavior while shrinking page-owned composition.
+  - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins `GuestDashboardOpsView` and rejects regaining the old inline guest ops-page shell in `Guests.tsx`.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts` (46/46), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest dashboard without changing guest operations behavior. No deploy was run.

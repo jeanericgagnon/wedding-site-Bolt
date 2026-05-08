@@ -46,6 +46,7 @@ import {
 import { GuestDashboardHeader } from './guests/GuestDashboardHeader';
 import { GuestDashboardContent } from './guests/GuestDashboardContent';
 import { GuestDashboardOverlays } from './guests/GuestDashboardOverlays';
+import { GuestDashboardOpsView } from './guests/GuestDashboardOpsView';
 import { GuestDashboardWorkspace } from './guests/GuestDashboardWorkspace';
 import { GuestOpsSummaryPanel } from './guests/GuestOpsSummaryPanel';
 import { GuestRsvpConflictPanels } from './guests/GuestRsvpConflictPanels';
@@ -2431,32 +2432,31 @@ const handleSendBulkInvitations = async () => {
       setSearchQuery('');
     },
   };
+  const guestHeaderProps = {
+    canEditGuests,
+    contactCoverage: contactStats.contactCoverage,
+    csvImportSummary,
+    guestsRole,
+    rsvpNoResponseCount: rsvpOps.noResponse,
+    showInsights,
+    stats,
+    onAddGuest: () => setShowAddModal(true),
+    onSetGuestsTab: setGuestsTab,
+    onToggleInsights: () => setShowInsights((value) => !value),
+  };
+  const guestDashboardContentProps = {
+    cleanGuestsView,
+    conflictProps: guestConflictProps,
+    insightsProps: guestInsightsProps,
+    opsSummaryProps: guestOpsSummaryProps,
+    workspaceProps: guestWorkspaceProps,
+  };
 
   return (
-    <DashboardLayout currentPage="guests">
-      <div className="max-w-[1100px] mx-auto space-y-5">
-        <GuestDashboardHeader
-          canEditGuests={canEditGuests}
-          contactCoverage={contactStats.contactCoverage}
-          csvImportSummary={csvImportSummary}
-          guestsRole={guestsRole}
-          rsvpNoResponseCount={rsvpOps.noResponse}
-          showInsights={showInsights}
-          stats={stats}
-          onAddGuest={() => setShowAddModal(true)}
-          onSetGuestsTab={setGuestsTab}
-          onToggleInsights={() => setShowInsights((value) => !value)}
-        />
-
-        <GuestDashboardContent
-          cleanGuestsView={cleanGuestsView}
-          conflictProps={guestConflictProps}
-          insightsProps={guestInsightsProps}
-          opsSummaryProps={guestOpsSummaryProps}
-          workspaceProps={guestWorkspaceProps}
-        />
-      </div>
-
+    <GuestDashboardOpsView
+      contentProps={guestDashboardContentProps}
+      headerProps={guestHeaderProps}
+    >
       <GuestDashboardOverlays
         assistedRsvpGuest={assistedRsvpGuest}
         assistedRsvpNotes={assistedRsvpNotes}
@@ -2537,6 +2537,6 @@ const handleSendBulkInvitations = async () => {
         onToast={toast}
         onToggleEventInvite={handleToggleEventInvite}
       />
-    </DashboardLayout>
+    </GuestDashboardOpsView>
   );
 };
