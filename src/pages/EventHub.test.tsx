@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { buildGuestHubAccessHeaders, buildGuestHubAccessPayload, formatEventHubCoupleLabel, friendlyGuestHubError, shouldOpenHubDetailsByDefault } from './EventHub';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { buildGuestHubAccessHeaders, buildGuestHubAccessPayload, formatEventHubCoupleLabel, friendlyGuestHubError, safeGuestHubFunctionError, shouldOpenHubDetailsByDefault } from './EventHub';
 
 afterEach(() => {
   sessionStorage.clear();
@@ -58,10 +60,12 @@ describe('formatEventHubCoupleLabel', () => {
 describe('friendlyGuestHubError', () => {
   it('hides implementation details from guest opt-in failures', () => {
     expect(friendlyGuestHubError(new Error('Supabase function policy denied token'), 'Please try again.')).toBe('Please try again.');
+    expect(safeGuestHubFunctionError('Supabase function policy denied token', 'Please try again.')).toBe('Please try again.');
   });
 
   it('keeps plain guest-safe copy', () => {
     expect(friendlyGuestHubError(new Error('Add an email or phone first.'), 'Please try again.')).toBe('Add an email or phone first.');
+    expect(safeGuestHubFunctionError('Add an email or phone first.', 'Please try again.')).toBe('Add an email or phone first.');
   });
 });
 
@@ -74,5 +78,22 @@ describe('shouldOpenHubDetailsByDefault', () => {
   it('keeps guest hub details collapsed by default for normal guest links', () => {
     expect(shouldOpenHubDetailsByDefault(new URLSearchParams(''))).toBe(false);
     expect(shouldOpenHubDetailsByDefault(new URLSearchParams('guestLang=es'))).toBe(false);
+  });
+});
+
+describe('event hub page boundary', () => {
+  it('routes missing-slug and config-status shells through dedicated components', () => {
+    const page = readFileSync(join(process.cwd(), 'src/pages/EventHub.tsx'), 'utf8');
+    const routeView = readFileSync(join(process.cwd(), 'src/pages/EventHubRouteView.tsx'), 'utf8');
+    const statusCard = readFileSync(join(process.cwd(), 'src/pages/EventHubConfigStatusCard.tsx'), 'utf8');
+
+    expect(page).toContain("from './EventHubRouteView'");
+    expect(page).toContain("from './EventHubConfigStatusCard'");
+    expect(page).toContain('<EventHubRouteView');
+    expect(page).toContain('<EventHubConfigStatusCard');
+    expect(page).not.toContain('if (!slug) {');
+    expect(routeView).toContain('if (!hasSlug) return <>{missingSlugView}</>;');
+    expect(statusCard).toContain("if (status === 'ready') return null;");
+    expect(statusCard).toContain("status === 'loading' ? 'Loading the latest wedding details' : 'Showing the saved guest hub'");
   });
 });

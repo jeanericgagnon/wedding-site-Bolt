@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
-import { CalendarDays, Camera, ClipboardList, Gift, HeartHandshake, MapPin, Plane, QrCode, RefreshCw, Sparkles, WifiOff } from 'lucide-react';
+import { CalendarDays, Camera, ClipboardList, Gift, HeartHandshake, MapPin, Plane, QrCode, Sparkles } from 'lucide-react';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
@@ -19,6 +19,8 @@ import {
   submitGuestHubProspect,
   trackGuestHubEvent,
 } from './guestHubPublicService';
+import { EventHubConfigStatusCard } from './EventHubConfigStatusCard';
+import { EventHubRouteView } from './EventHubRouteView';
 
 type HubAction = {
   id: GuestHubActionId;
@@ -255,16 +257,14 @@ export const EventHub: React.FC = () => {
     }
   };
 
-  if (!slug) {
-    return (
-      <div className="min-h-screen bg-neutral-950 px-4 py-10 text-white">
-        <div className="mx-auto max-w-xl rounded-lg border border-white/10 bg-white/10 p-6">
-          <h1 className="text-3xl font-semibold">{t('guest_hub.missing_title')}</h1>
-          <p className="mt-3 text-white/75">{t('guest_hub.missing_subtitle')}</p>
-        </div>
+  const missingSlugView = (
+    <div className="min-h-screen bg-neutral-950 px-4 py-10 text-white">
+      <div className="mx-auto max-w-xl rounded-lg border border-white/10 bg-white/10 p-6">
+        <h1 className="text-3xl font-semibold">{t('guest_hub.missing_title')}</h1>
+        <p className="mt-3 text-white/75">{t('guest_hub.missing_subtitle')}</p>
       </div>
-    );
-  }
+    </div>
+  );
 
   const hubUrl = `${origin}/event/${encodeURIComponent(slug)}`;
   const coupleLabel = formatEventHubCoupleLabel(slug, siteSummary?.coupleName1, siteSummary?.coupleName2);
@@ -292,7 +292,7 @@ export const EventHub: React.FC = () => {
     enabledActionIds: actions.map((action) => action.id),
   });
 
-  return (
+  const liveContent = (
     <div className="min-h-screen bg-[#fbf7f1] text-neutral-950">
       <OwnerPreviewBanner />
       <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-6 sm:px-6 sm:py-10">
@@ -335,39 +335,10 @@ export const EventHub: React.FC = () => {
                 </p>
               </div>
 
-              {hubConfigStatus !== 'ready' && (
-                <div className="mt-5 rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="flex gap-3">
-                      {hubConfigStatus === 'offline' ? (
-                        <WifiOff className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#8b6f53]" />
-                      ) : (
-                        <RefreshCw className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#8b6f53]" />
-                      )}
-                      <div>
-                        <p className="text-sm font-semibold text-[#2f261d]">
-                          {hubConfigStatus === 'loading' ? 'Loading the latest wedding details' : 'Showing the saved guest hub'}
-                        </p>
-                        <p className="mt-1 text-sm leading-6 text-[#6f5843]">
-                          {hubConfigStatus === 'loading'
-                            ? 'The hub will stay usable while the newest details load.'
-                            : 'Travel, RSVP, and photo links are still available. Try again when the connection feels steadier.'}
-                        </p>
-                      </div>
-                    </div>
-                    {hubConfigStatus !== 'loading' && (
-                      <button
-                        type="button"
-                        onClick={() => setHubConfigRetryKey((value) => value + 1)}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#d8c8b6] px-3 py-2 text-xs font-semibold text-[#69513f] transition-colors hover:bg-[#f3eadf]"
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                        Try again
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
+              <EventHubConfigStatusCard
+                status={hubConfigStatus}
+                onRetry={() => setHubConfigRetryKey((value) => value + 1)}
+              />
 
               <div className="mt-8 space-y-3">
                 {actions.map((action) => {
@@ -539,6 +510,14 @@ export const EventHub: React.FC = () => {
         </section>
       </main>
     </div>
+  );
+
+  return (
+    <EventHubRouteView
+      hasSlug={Boolean(slug)}
+      liveContent={liveContent}
+      missingSlugView={missingSlugView}
+    />
   );
 };
 

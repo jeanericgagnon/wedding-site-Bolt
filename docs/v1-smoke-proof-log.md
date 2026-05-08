@@ -7418,6 +7418,21 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 9:22 PM PT No-Deploy Event Hub Shell Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/EventHub.tsx` now routes its missing-slug branch through `src/pages/EventHubRouteView.tsx` and its loading/offline/fallback retry notice through `src/pages/EventHubConfigStatusCard.tsx`.
+  - Those higher-level components now own the top-level public guest hub route split plus the config-status notice slab while the page stays focused on guest-hub config state, actions, and opt-in handlers.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/EventHub.test.tsx` now pin `EventHubRouteView` plus `EventHubConfigStatusCard` and reject regaining the old inline missing-slug branch in `EventHub.tsx`.
+  - `src/pages/EventHub.tsx` dropped from 545 lines to 524 lines in this batch, while `src/pages/EventHubRouteView.tsx` came in at 12 lines and `src/pages/EventHubConfigStatusCard.tsx` came in at 47 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/EventHub.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts src/pages/guestHubPublicService.test.ts`: PASS, 19/19.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 9:10 PM PT No-Deploy Planning Dashboard Shell Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
