@@ -7644,6 +7644,22 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 11:12 PM PT No-Deploy RSVP Lookup Response Classification Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes token lookup, manual guest search, and guest-pick lookup follow-up through `src/pages/classifyRsvpLookupResponse.ts`.
+  - That shared lookup classifier now owns the guest vs ambiguous vs not-found outcome split plus the default meal config, household guest list, playlist URL, RSVP question list, deadline, and session hydration that used to be repeated inline across multiple RSVP lookup paths.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `classifyRsvpLookupResponse(...)` and its explicit `guest` / `ambiguous` / `not_found` outcomes so the main RSVP page keeps routing lookup-result branching through the dedicated classifier.
+  - `src/pages/RSVP.tsx` dropped from 1212 lines to 1208 lines in this batch, while `src/pages/classifyRsvpLookupResponse.ts` came in at 54 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 10:43 PM PT No-Deploy RSVP Step Validation Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

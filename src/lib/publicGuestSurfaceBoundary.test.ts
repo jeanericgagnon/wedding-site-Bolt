@@ -142,6 +142,7 @@ describe('public guest surface boundary', () => {
     const rsvpDerivedViewState = readSource('src/pages/buildRsvpDerivedViewState.ts');
     const rsvpAmbiguousLookupState = readSource('src/pages/applyAmbiguousRsvpLookupState.ts');
     const rsvpGuestSelection = readSource('src/pages/applyRsvpGuestSelection.ts');
+    const rsvpLookupClassification = readSource('src/pages/classifyRsvpLookupResponse.ts');
     const rsvpLiveContentActions = readSource('src/pages/buildRsvpLiveContentActions.ts');
     const rsvpPageViewModel = readSource('src/pages/buildRsvpPageViewModel.ts');
     const rsvpLiveContentProps = readSource('src/pages/buildRsvpLiveContentViewProps.ts');
@@ -162,6 +163,7 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain("from './buildRsvpDerivedViewState'");
     expect(rsvpPage).toContain("from './applyAmbiguousRsvpLookupState'");
     expect(rsvpPage).toContain("from './applyRsvpGuestSelection'");
+    expect(rsvpPage).toContain("from './classifyRsvpLookupResponse'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentActions'");
     expect(rsvpPage).toContain("from './buildRsvpPageViewModel'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentViewProps'");
@@ -172,6 +174,7 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
     expect(rsvpPage).toContain('applyAmbiguousRsvpLookupState({');
     expect(rsvpPage).toContain('applyRsvpGuestSelection({');
+    expect(rsvpPage).toContain('classifyRsvpLookupResponse(');
     expect(rsvpPage).toContain('buildRsvpLiveContentActions({');
     expect(rsvpPage).toContain('buildRsvpPageViewModel({');
     expect(rsvpPage).toContain('resetRsvpLookupFlow({');
@@ -186,6 +189,9 @@ describe('public guest surface boundary', () => {
     expect(rsvpGuestSelection).toContain('existingFormData');
     expect(rsvpGuestSelection).toContain('setRsvpSessionToken(sessionToken)');
     expect(rsvpGuestSelection).toContain("setStep('form')");
+    expect(rsvpLookupClassification).toContain("kind: 'guest'");
+    expect(rsvpLookupClassification).toContain("kind: 'ambiguous'");
+    expect(rsvpLookupClassification).toContain("kind: 'not_found'");
     expect(rsvpLiveContentActions).toContain('onCancelLoading');
     expect(rsvpLiveContentActions).toContain('onDone');
     expect(rsvpLiveContentActions).toContain('onSubmitAnother');

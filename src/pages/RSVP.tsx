@@ -32,6 +32,7 @@ import { applyRsvpGuestSelection } from './applyRsvpGuestSelection';
 import { buildRsvpDerivedViewState } from './buildRsvpDerivedViewState';
 import { buildRsvpLiveContentActions } from './buildRsvpLiveContentActions';
 import { buildRsvpPageViewModel } from './buildRsvpPageViewModel';
+import { classifyRsvpLookupResponse } from './classifyRsvpLookupResponse';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { buildRsvpLiveContentViewProps } from './buildRsvpLiveContentViewProps';
 import { callValidateRsvpToken } from './rsvpFunctionService';
@@ -622,24 +623,22 @@ export default function RSVP() {
           setTokenAutoLoading(false);
           return;
         }
-        const result = data as LookupResponse;
-        if (result.guest) {
-          selectGuest(result.guest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null, 'token', result.rsvpSession ?? null);
-        } else if (result.guests && result.guests.length === 1) {
-          selectGuest(result.guests[0], result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null, 'token', result.rsvpSession ?? null);
-        } else if (result.guests && result.guests.length > 1) {
+        const resolution = classifyRsvpLookupResponse(data as LookupResponse);
+        if (resolution.kind === 'guest') {
+          selectGuest(resolution.guest, resolution.existingRsvp, resolution.rsvpDeadline, resolution.rsvpQuestions, resolution.mealConfig, resolution.householdGuests, resolution.musicPlaylistUrl, 'token', resolution.rsvpSession);
+        } else if (resolution.kind === 'ambiguous') {
           if (shouldPreserveVisibleState) {
             tokenLinkedSessionRef.current = true;
             return;
           }
           tokenLinkedSessionRef.current = false;
           applyAmbiguousRsvpLookupState({
-            guests: result.guests,
-            householdGuests: result.householdGuests ?? [],
-            mealConfig: result.rsvpMealConfig ?? DEFAULT_MEAL_CONFIG,
-            musicPlaylistUrl: result.musicPlaylistUrl ?? null,
-            rsvpDeadline: result.rsvpDeadline,
-            rsvpQuestions: result.rsvpQuestions ?? [],
+            guests: resolution.guests,
+            householdGuests: resolution.householdGuests,
+            mealConfig: resolution.mealConfig,
+            musicPlaylistUrl: resolution.musicPlaylistUrl,
+            rsvpDeadline: resolution.rsvpDeadline,
+            rsvpQuestions: resolution.rsvpQuestions,
             setAmbiguousGuests,
             setApplyToHousehold,
             setHouseholdGuests,
@@ -780,17 +779,17 @@ export default function RSVP() {
         return;
       }
 
-      const result = data as LookupResponse;
+      const resolution = classifyRsvpLookupResponse(data as LookupResponse);
 
-      if (result.guests && result.guests.length > 1) {
+      if (resolution.kind === 'ambiguous') {
         if (activeLookupRequestRef.current !== requestId) return;
         applyAmbiguousRsvpLookupState({
-          guests: result.guests,
-          householdGuests: result.householdGuests ?? [],
-          mealConfig: result.rsvpMealConfig ?? DEFAULT_MEAL_CONFIG,
-          musicPlaylistUrl: result.musicPlaylistUrl ?? null,
-          rsvpDeadline: result.rsvpDeadline,
-          rsvpQuestions: result.rsvpQuestions ?? [],
+          guests: resolution.guests,
+          householdGuests: resolution.householdGuests,
+          mealConfig: resolution.mealConfig,
+          musicPlaylistUrl: resolution.musicPlaylistUrl,
+          rsvpDeadline: resolution.rsvpDeadline,
+          rsvpQuestions: resolution.rsvpQuestions,
           setAmbiguousGuests,
           setApplyToHousehold,
           setHouseholdGuests,
@@ -804,21 +803,17 @@ export default function RSVP() {
         return;
       }
 
-      if (result.guests && result.guests.length === 1) {
+      if (resolution.kind === 'guest') {
         if (activeLookupRequestRef.current !== requestId) return;
-        selectGuest(result.guests[0], result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null, 'manual', result.rsvpSession ?? null);
+        selectGuest(resolution.guest, resolution.existingRsvp, resolution.rsvpDeadline, resolution.rsvpQuestions, resolution.mealConfig, resolution.householdGuests, resolution.musicPlaylistUrl, 'manual', resolution.rsvpSession);
         return;
       }
 
-      if (!result.guest) {
+      if (resolution.kind === 'not_found') {
         if (activeLookupRequestRef.current !== requestId) return;
         setError(RSVP_LOOKUP_ERROR_COPY);
         return;
       }
-
-      const foundGuest = result.guest;
-      if (activeLookupRequestRef.current !== requestId) return;
-      selectGuest(foundGuest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null, 'manual', result.rsvpSession ?? null);
     } catch {
       if (activeLookupRequestRef.current !== requestId) return;
       setError('Something interrupted the search. Please try again.');
@@ -917,12 +912,13 @@ export default function RSVP() {
         selectGuest(picked, null, null, [], DEFAULT_MEAL_CONFIG, [], null);
         return;
       }
-      const result = data as LookupResponse;
+      const resolution = classifyRsvpLookupResponse(data as LookupResponse);
       if (activeLookupRequestRef.current !== requestId) return;
-      const resolvedGuest = result.guest
-        ?? (result.guests && result.guests.length === 1 ? result.guests[0] : null)
-        ?? picked;
-      selectGuest(resolvedGuest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null, 'manual', result.rsvpSession ?? null);
+      if (resolution.kind === 'guest') {
+        selectGuest(resolution.guest, resolution.existingRsvp, resolution.rsvpDeadline, resolution.rsvpQuestions, resolution.mealConfig, resolution.householdGuests, resolution.musicPlaylistUrl, 'manual', resolution.rsvpSession);
+        return;
+      }
+      selectGuest(picked, null, null, [], DEFAULT_MEAL_CONFIG, [], null);
     } catch {
       if (activeLookupRequestRef.current !== requestId) return;
       selectGuest(picked, null, null, [], DEFAULT_MEAL_CONFIG, [], null);
