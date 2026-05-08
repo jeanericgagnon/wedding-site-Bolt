@@ -36,8 +36,11 @@ import {
   MAX_GUEST_PHOTO_METADATA_ROWS,
   MAX_GUEST_PHOTO_PROSPECTS,
   MAX_GUEST_PHOTO_UPLOADS,
+  createGuestPhotoBucketCorrection,
+  moveGuestPhotoUploadToBucket,
   moderateGuestbookEntry as moderateGuestbookEntryFromService,
   persistGuestPhotoBuckets,
+  persistGuestPhotoAiOpsPlan,
   queueGuestPhotoFollowups as queueGuestPhotoFollowupsFromService,
   refreshGuestPhotoSession,
   resolveGuestPhotoDashboardUserId,
@@ -612,29 +615,7 @@ export const GuestPhotoSharing: React.FC = () => {
 
   const persistAiPhotoOpsPlan = async (plan: AiPhotoOpsPlan) => {
     if (!siteId) return;
-    const { data, error: readError } = await supabase
-      .from('wedding_sites')
-      .select('wedding_data')
-      .eq('id', siteId)
-      .maybeSingle();
-
-    if (readError) throw readError;
-
-    const weddingData = (data?.wedding_data as Record<string, unknown> | null) ?? {};
-    const nextWeddingData = {
-      ...weddingData,
-      meta: {
-        ...(((weddingData.meta as Record<string, unknown> | undefined) ?? {})),
-        aiPhotoOps: plan,
-      },
-    };
-
-    const { error: updateError } = await supabase
-      .from('wedding_sites')
-      .update({ wedding_data: nextWeddingData })
-      .eq('id', siteId);
-
-    if (updateError) throw updateError;
+    await persistGuestPhotoAiOpsPlan(siteId, plan);
   };
 
   const generateAiPhotoOpsPlan = async () => {
@@ -708,12 +689,7 @@ export const GuestPhotoSharing: React.FC = () => {
     setSuccess(null);
     try {
       for (const move of moves) {
-        const { error: moveError } = await supabase
-          .from('photo_uploads')
-          .update({ photo_album_id: move.targetBucketId })
-          .eq('id', move.uploadId)
-          .eq('wedding_site_id', siteId);
-        if (moveError) throw moveError;
+        await moveGuestPhotoUploadToBucket(siteId, move.uploadId, move.targetBucketId);
       }
 
       setUploads((prev) => prev.map((upload) => {
@@ -735,30 +711,8 @@ export const GuestPhotoSharing: React.FC = () => {
     reason: string
   ) => {
     if (!siteId) return;
-    const userId = await getGuestPhotoCurrentUserId();
-    const payload = {
-      wedding_site_id: siteId,
-      upload_id: analysis.upload_id,
-      previous_bucket_id: analysis.photo_album_id,
-      suggested_bucket_id: analysis.suggested_bucket_id,
-      chosen_bucket_id: chosenBucketId,
-      action,
-      confidence: analysis.bucket_confidence,
-      reason,
-      metadata: {
-        detected_moment: analysis.detected_moment,
-        suggested_bucket_name: analysis.suggested_bucket_name,
-      },
-      created_by: userId,
-    };
-
-    const { data, error: correctionError } = await supabase
-      .from('photo_ai_bucket_corrections')
-      .insert(payload)
-      .select('id,upload_id,action,previous_bucket_id,suggested_bucket_id,chosen_bucket_id,confidence,reason,created_at')
-      .single();
-    if (correctionError) throw correctionError;
-    setAiBucketCorrections((prev) => [data as PhotoAiBucketCorrectionRow, ...prev].slice(0, 100));
+    const nextCorrection = await createGuestPhotoBucketCorrection(siteId, analysis, action, chosenBucketId, reason);
+    setAiBucketCorrections((prev) => [nextCorrection, ...prev].slice(0, 100));
   };
 
   const applyVisionSuggestion = async (analysis: PhotoUploadAiAnalysisRow) => {
@@ -767,12 +721,7 @@ export const GuestPhotoSharing: React.FC = () => {
     setError(null);
     setSuccess(null);
     try {
-      const { error: moveError } = await supabase
-        .from('photo_uploads')
-        .update({ photo_album_id: analysis.suggested_bucket_id })
-        .eq('id', analysis.upload_id)
-        .eq('wedding_site_id', siteId);
-      if (moveError) throw moveError;
+      await moveGuestPhotoUploadToBucket(siteId, analysis.upload_id, analysis.suggested_bucket_id);
       await recordVisionCorrection(analysis, 'accepted', analysis.suggested_bucket_id, 'Accepted album suggestion.');
       setUploads((prev) => prev.map((upload) => upload.id === analysis.upload_id ? { ...upload, photo_album_id: analysis.suggested_bucket_id as string } : upload));
       setUploadAnalyses((prev) => prev.map((entry) => entry.upload_id === analysis.upload_id ? { ...entry, photo_album_id: analysis.suggested_bucket_id } : entry));
@@ -853,12 +802,8 @@ export const GuestPhotoSharing: React.FC = () => {
     setSuccess(null);
     try {
       for (const move of moves) {
-        const { error: moveError } = await supabase
-          .from('photo_uploads')
-          .update({ photo_album_id: move.suggested_bucket_id })
-          .eq('id', move.upload_id)
-          .eq('wedding_site_id', siteId);
-        if (moveError) throw moveError;
+        if (!move.suggested_bucket_id) continue;
+        await moveGuestPhotoUploadToBucket(siteId, move.upload_id, move.suggested_bucket_id);
         await recordVisionCorrection(move, 'accepted', move.suggested_bucket_id, 'Accepted high-confidence album suggestion.');
       }
 

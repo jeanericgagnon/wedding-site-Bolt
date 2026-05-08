@@ -91,6 +91,81 @@ export async function moderateGuestbookEntry(
   if (updateError) throw updateError;
 }
 
+export async function persistGuestPhotoAiOpsPlan(
+  siteId: string,
+  plan: unknown,
+): Promise<void> {
+  const { data, error: readError } = await supabase
+    .from('wedding_sites')
+    .select('wedding_data')
+    .eq('id', siteId)
+    .maybeSingle();
+
+  if (readError) throw readError;
+
+  const weddingData = (data?.wedding_data as Record<string, unknown> | null) ?? {};
+  const nextWeddingData = {
+    ...weddingData,
+    meta: {
+      ...(((weddingData.meta as Record<string, unknown> | undefined) ?? {})),
+      aiPhotoOps: plan,
+    },
+  };
+
+  const { error: updateError } = await supabase
+    .from('wedding_sites')
+    .update({ wedding_data: nextWeddingData })
+    .eq('id', siteId);
+
+  if (updateError) throw updateError;
+}
+
+export async function moveGuestPhotoUploadToBucket(
+  siteId: string,
+  uploadId: string,
+  photoAlbumId: string,
+): Promise<void> {
+  const { error: moveError } = await supabase
+    .from('photo_uploads')
+    .update({ photo_album_id: photoAlbumId })
+    .eq('id', uploadId)
+    .eq('wedding_site_id', siteId);
+  if (moveError) throw moveError;
+}
+
+export async function createGuestPhotoBucketCorrection(
+  siteId: string,
+  analysis: PhotoUploadAiAnalysisRow,
+  action: PhotoAiBucketCorrectionRow['action'],
+  chosenBucketId: string | null,
+  reason: string,
+): Promise<PhotoAiBucketCorrectionRow> {
+  const userId = await getGuestPhotoCurrentUserId();
+  const payload = {
+    wedding_site_id: siteId,
+    upload_id: analysis.upload_id,
+    previous_bucket_id: analysis.photo_album_id,
+    suggested_bucket_id: analysis.suggested_bucket_id,
+    chosen_bucket_id: chosenBucketId,
+    action,
+    confidence: analysis.bucket_confidence,
+    reason,
+    metadata: {
+      detected_moment: analysis.detected_moment,
+      suggested_bucket_name: analysis.suggested_bucket_name,
+    },
+    created_by: userId,
+  };
+
+  const { data, error: correctionError } = await supabase
+    .from('photo_ai_bucket_corrections')
+    .insert(payload)
+    .select('id,upload_id,action,previous_bucket_id,suggested_bucket_id,chosen_bucket_id,confidence,reason,created_at')
+    .single();
+  if (correctionError) throw correctionError;
+  return data as PhotoAiBucketCorrectionRow;
+}
+
 export async function refreshGuestPhotoSession(): Promise<boolean> {
   const { data } = await supabase.auth.refreshSession();
   return Boolean(data.session);

@@ -2,10 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createEmptyPhotoBuckets } from '../../lib/aiPhotoBuckets';
 import {
   buildGuestPhotoBucketSiteUpdate,
+  createGuestPhotoBucketCorrection,
   getGuestPhotoCurrentUserId,
   invokeGuestPhotoOwnerFunction,
   loadGuestPhotoDashboardSnapshot,
+  moveGuestPhotoUploadToBucket,
   moderateGuestbookEntry,
+  persistGuestPhotoAiOpsPlan,
   queueGuestPhotoFollowups,
   refreshGuestPhotoSession,
   resolveGuestPhotoDashboardUserId,
@@ -284,5 +287,98 @@ describe('guestPhotoSharingService', () => {
 
     await expect(moderateGuestbookEntry('entry-1', { is_hidden: true })).resolves.toBeUndefined();
     expect(eqMock).toHaveBeenCalledWith('id', 'entry-1');
+  });
+
+  it('persists guest photo AI ops plans through the service', async () => {
+    const maybeSingleMock = vi.fn().mockResolvedValue({
+      data: { wedding_data: { meta: { existing: true } } },
+      error: null,
+    });
+    const readEqMock = vi.fn(() => ({ maybeSingle: maybeSingleMock }));
+    const updateEqMock = vi.fn().mockResolvedValue({ error: null });
+
+    fromMock
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: readEqMock,
+        })),
+      })
+      .mockReturnValueOnce({
+        update: vi.fn(() => ({
+          eq: updateEqMock,
+        })),
+      });
+
+    await expect(persistGuestPhotoAiOpsPlan('site-1', { summary: 'plan' })).resolves.toBeUndefined();
+    expect(readEqMock).toHaveBeenCalledWith('id', 'site-1');
+    expect(updateEqMock).toHaveBeenCalledWith('id', 'site-1');
+  });
+
+  it('moves guest photo uploads through the service', async () => {
+    const weddingSiteEqMock = vi.fn().mockResolvedValue({ error: null });
+    const idEqMock = vi.fn(() => ({ eq: weddingSiteEqMock }));
+
+    fromMock.mockReturnValueOnce({
+      update: vi.fn(() => ({
+        eq: idEqMock,
+      })),
+    });
+
+    await expect(moveGuestPhotoUploadToBucket('site-1', 'upload-1', 'album-2')).resolves.toBeUndefined();
+    expect(idEqMock).toHaveBeenCalledWith('id', 'upload-1');
+    expect(weddingSiteEqMock).toHaveBeenCalledWith('wedding_site_id', 'site-1');
+  });
+
+  it('creates guest photo bucket corrections through the service', async () => {
+    getUserMock.mockResolvedValueOnce({ data: { user: { id: 'user-1' } } });
+
+    fromMock.mockReturnValueOnce({
+      insert: vi.fn(() => ({
+        select: vi.fn(() => ({
+          single: vi.fn().mockResolvedValue({
+            data: {
+              id: 'correction-1',
+              upload_id: 'upload-1',
+              action: 'accepted',
+              previous_bucket_id: 'album-1',
+              suggested_bucket_id: 'album-2',
+              chosen_bucket_id: 'album-2',
+              confidence: 0.9,
+              reason: 'Accepted album suggestion.',
+              created_at: 'now',
+            },
+            error: null,
+          }),
+        })),
+      })),
+    });
+
+    await expect(createGuestPhotoBucketCorrection(
+      'site-1',
+      {
+        id: 'analysis-1',
+        upload_id: 'upload-1',
+        wedding_site_id: 'site-1',
+        photo_album_id: 'album-1',
+        status: 'ready',
+        detected_moment: 'dance-floor',
+        suggested_bucket_id: 'album-2',
+        suggested_bucket_name: 'Reception',
+        bucket_confidence: 0.9,
+        quality_score: 0.8,
+        blur_score: 0.1,
+        people_count_range: '2-4',
+        is_video: false,
+        slideshow_priority: 50,
+        caption: 'Caption',
+        tags: [],
+        warnings: [],
+        error_message: null,
+        analyzed_at: 'now',
+      },
+      'accepted',
+      'album-2',
+      'Accepted album suggestion.',
+    )).resolves.toMatchObject({ id: 'correction-1', upload_id: 'upload-1' });
   });
 });

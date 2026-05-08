@@ -430,9 +430,11 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('persistGuestPhotoBuckets(siteId, nextBuckets)');
     expect(source).toContain('await saveGuestPhotoHubSettings(siteId, hubSettings)');
     expect(source).toContain('await moderateGuestbookEntryFromService(entryId, patch)');
+    expect(source).toContain('await persistGuestPhotoAiOpsPlan(siteId, plan)');
+    expect(source).toContain('await moveGuestPhotoUploadToBucket(siteId, move.uploadId, move.targetBucketId)');
+    expect(source).toContain('await createGuestPhotoBucketCorrection(siteId, analysis, action, chosenBucketId, reason)');
     expect(source).toContain('resolveGuestPhotoDashboardUserId()');
     expect(source).toContain('refreshGuestPhotoSession()');
-    expect(source).toContain('getGuestPhotoCurrentUserId()');
     expect(source).toContain('invokeGuestPhotoOwnerFunction<T>(fnName, body)');
     expect(source).toContain('queueGuestPhotoFollowupsFromService(siteId, kind)');
     expect(source).not.toContain('supabase.auth.getUser()');
@@ -448,8 +450,11 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain("supabase.from('photo_upload_metadata')");
     expect(source).not.toContain("supabase.from('photo_ai_bucket_corrections')");
     expect(source).not.toContain("supabase.from('guest_hub_settings')");
+    expect(source).not.toContain(".from('wedding_sites')\n      .select('wedding_data')");
     expect(source).not.toContain(".from('guest_hub_settings')\n        .upsert({");
     expect(source).not.toContain(".from('guestbook_entries')\n        .update({ ...patch, moderated_at: new Date().toISOString() })");
+    expect(source).not.toContain(".from('photo_uploads')\n          .update({ photo_album_id: move.targetBucketId })");
+    expect(source).not.toContain(".from('photo_ai_bucket_corrections')\n      .insert(payload)");
     expect(source).not.toContain('resolveActiveSiteForUser(userId)');
     expect(source).not.toContain("invokeFunctionOrThrow(supabase, fnName, body)");
     expect(source).not.toContain("invokeFunctionOrThrow(supabase, 'queue-guest-followups'");
@@ -462,6 +467,9 @@ describe('dashboard data boundary guards', () => {
     expect(service).toContain('export async function loadGuestPhotoDashboardSnapshot(userId: string): Promise<GuestPhotoDashboardSnapshot>');
     expect(service).toContain('export async function saveGuestPhotoHubSettings(');
     expect(service).toContain('export async function moderateGuestbookEntry(');
+    expect(service).toContain('export async function persistGuestPhotoAiOpsPlan(');
+    expect(service).toContain('export async function moveGuestPhotoUploadToBucket(');
+    expect(service).toContain('export async function createGuestPhotoBucketCorrection(');
     expect(service).toContain('export async function refreshGuestPhotoSession(): Promise<boolean>');
     expect(service).toContain('export async function getGuestPhotoCurrentUserId(): Promise<string | null>');
     expect(service).toContain('export async function resolveGuestPhotoDashboardUserId(): Promise<string | null>');

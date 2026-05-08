@@ -3588,3 +3588,23 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the guest photo dashboard page-to-service migration without changing owner-facing hub settings or guestbook moderation behavior. No deploy was run.
+
+### 2026-05-07 5:31 PM PT - Guest Photo AI Curation Service Extraction
+
+- Moved the guest photo AI curation write primitives out of `src/pages/dashboard/GuestPhotoSharing.tsx` and into `src/pages/dashboard/guestPhotoSharingService.ts`.
+- `GuestPhotoSharing.tsx` now routes:
+  - AI photo ops plan persistence through `persistGuestPhotoAiOpsPlan(siteId, plan)`
+  - upload bucket moves through `moveGuestPhotoUploadToBucket(siteId, uploadId, photoAlbumId)`
+  - AI bucket-correction inserts through `createGuestPhotoBucketCorrection(siteId, analysis, action, chosenBucketId, reason)`
+- The page still owns the higher-level UI state transitions, success/error messaging, and optimistic local list updates, while the service now owns the direct `wedding_sites`, `photo_uploads`, and `photo_ai_bucket_corrections` write contracts.
+- Expanded `src/pages/dashboard/guestPhotoSharingService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the page no longer silently regains those AI curation write paths.
+
+Validation:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 40/40.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the guest photo dashboard page-to-service migration without changing owner-facing AI sort, album move, or correction behavior. No deploy was run.
