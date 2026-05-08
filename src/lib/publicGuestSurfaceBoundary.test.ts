@@ -39,16 +39,23 @@ describe('public guest surface boundary', () => {
     expect(siteViewService).toContain("supabase.functions.invoke('public-registry-items'");
 
     const eventHub = readSource('src/pages/EventHub.tsx');
-    expect(eventHub).toContain('/functions/v1/guest-hub-config?site=');
-    expect(eventHub).toContain('/functions/v1/guest-hub-track');
-    expect(eventHub).toContain('/functions/v1/guest-prospect-submit');
+    const guestHubService = readSource('src/pages/guestHubPublicService.ts');
+    expect(eventHub).toContain("from './guestHubPublicService'");
+    expect(eventHub).toContain('fetchGuestHubConfig<');
+    expect(eventHub).toContain("trackGuestHubEvent(slug, 'view', '/event'");
+    expect(eventHub).toContain('submitGuestHubProspect(');
     expect(eventHub).toContain('buildGuestHubAccessPayload(slug, searchParams)');
+    expect(guestHubService).toContain('/functions/v1/guest-hub-config?site=');
+    expect(guestHubService).toContain('/functions/v1/guest-hub-track');
+    expect(guestHubService).toContain('/functions/v1/guest-prospect-submit');
 
     const eventRecap = readSource('src/pages/EventRecap.tsx');
-    expect(eventRecap).toContain('/functions/v1/guest-recap-config?site=');
-    expect(eventRecap).toContain('/functions/v1/guest-hub-track');
-    expect(eventRecap).toContain('/functions/v1/guest-prospect-submit');
+    expect(eventRecap).toContain("from './guestHubPublicService'");
+    expect(eventRecap).toContain('fetchGuestRecapConfig<RecapData>(');
+    expect(eventRecap).toContain("trackGuestHubEvent(slug, 'view', '/event/recap'");
+    expect(eventRecap).toContain('submitGuestHubProspect(');
     expect(eventRecap).toContain('buildEventRecapGuestHubAccessPayload(slug)');
+    expect(guestHubService).toContain('/functions/v1/guest-recap-config?site=');
 
     const photoUpload = readSource('src/pages/PhotoUpload.tsx');
     expect(photoUpload).toContain('/functions/v1/photo-upload');

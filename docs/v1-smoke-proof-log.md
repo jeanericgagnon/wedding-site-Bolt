@@ -7273,6 +7273,20 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 5:57 PM PT No-Deploy Guest hub public service extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/EventHub.tsx` and `src/pages/EventRecap.tsx` no longer own direct public guest-hub function fetch transport inline.
+  - `src/pages/guestHubPublicService.ts` now owns guest hub config loading, recap config loading, guest-hub telemetry, and guest prospect opt-in submission.
+  - `src/pages/guestHubPublicService.test.ts` and `src/lib/publicGuestSurfaceBoundary.test.ts` now pin that moved guest-hub transport seam, while `src/pages/EventHub.test.tsx` and `src/pages/EventRecap.test.tsx` stay green on guest-facing behavior.
+- Proof passed:
+  - `npm test -- --run src/pages/guestHubPublicService.test.ts src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 28/28.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 5:53 PM PT No-Deploy Message bulk send transport extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

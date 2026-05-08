@@ -9,6 +9,16 @@ import { buildGuestHubActions, type GuestHubActionId } from '../lib/guestHubActi
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
 import { buildDayOfHubStatusBoard, buildDayOfWebModeReadiness, type DayOfWebActionId } from '../lib/dayOfWebModeReadiness';
 import { buildTravelGuestJourney } from '../lib/travelGuestPortal';
+import {
+  buildPublicAccessArtifacts,
+  capturePublicInviteTokenFromSearch,
+} from '../lib/publicAccessArtifacts';
+import {
+  fetchGuestHubConfig,
+  hasGuestHubPublicRuntime,
+  submitGuestHubProspect,
+  trackGuestHubEvent,
+} from './guestHubPublicService';
 
 type HubAction = {
   id: GuestHubActionId;
@@ -40,13 +50,7 @@ type HubSiteSummary = {
 type HubConfigStatus = 'loading' | 'ready' | 'fallback' | 'offline';
 
 const normalizeSiteRef = (value?: string) => (value ?? '').trim().toLowerCase();
-const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
-const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
-
-export const buildGuestHubAccessPayload = (slug: string, searchParams: URLSearchParams) => ({
-  inviteToken: searchParams.get('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`),
-  passwordSession: sessionStorage.getItem(`dayof_pw_session_${slug}`),
-});
+export const buildGuestHubAccessPayload = (slug: string, searchParams: URLSearchParams) => buildPublicAccessArtifacts(slug, searchParams);
 
 export const buildGuestHubAccessHeaders = (slug: string, searchParams: URLSearchParams) => {
   const access = buildGuestHubAccessPayload(slug, searchParams);
@@ -67,6 +71,10 @@ export const friendlyGuestHubError = (err: unknown, fallback: string) => {
   return customerSafeErrorMessage(err, fallback, {
     allow: [/^Add an email or phone first\.$/i],
   });
+};
+
+export const safeGuestHubFunctionError = (value: unknown, fallback: string) => {
+  return friendlyGuestHubError(typeof value === 'string' ? value : '', fallback);
 };
 
 export const formatEventHubCoupleLabel = (
@@ -154,19 +162,21 @@ export const EventHub: React.FC = () => {
 
   useEffect(() => {
     if (!slug) return;
+    capturePublicInviteTokenFromSearch(slug, searchParams);
     if (searchParams.has('hubQaConfigFallback')) {
       setHubConfigStatus('fallback');
       return;
     }
-    if (!supabaseUrl || !supabaseAnonKey) {
+    if (!hasGuestHubPublicRuntime()) {
       setHubConfigStatus('ready');
       return;
     }
     let cancelled = false;
-    const headers = { apikey: supabaseAnonKey, ...buildGuestHubAccessHeaders(slug, searchParams) };
     setHubConfigStatus(typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'loading');
-    fetch(`${supabaseUrl}/functions/v1/guest-hub-config?site=${encodeURIComponent(slug)}`, { headers })
-      .then((res) => res.ok ? res.json() : null)
+    fetchGuestHubConfig<{
+      settings?: Partial<HubSettings>;
+      site?: { slug?: string; coupleName1?: string; coupleName2?: string; weddingDate?: string };
+    }>(slug, buildGuestHubAccessHeaders(slug, searchParams))
       .then((data) => {
         if (!cancelled && data?.settings) {
           const nextSettings = { ...defaultSettings, ...data.settings };
@@ -200,28 +210,20 @@ export const EventHub: React.FC = () => {
           setHubConfigStatus(typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'fallback');
         }
       });
-    fetch(`${supabaseUrl}/functions/v1/guest-hub-track`, {
-      method: 'POST',
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ siteSlug: slug, eventType: 'view', target: '/event', ...buildGuestHubAccessPayload(slug, searchParams) }),
-    }).catch(() => {});
+    trackGuestHubEvent(slug, 'view', '/event', buildGuestHubAccessPayload(slug, searchParams)).catch(() => {});
     return () => {
       cancelled = true;
     };
   }, [hubConfigRetryKey, i18n, searchParams, slug]);
 
   const trackClick = (target: string) => {
-    if (!slug || !supabaseUrl || !supabaseAnonKey) return;
-    fetch(`${supabaseUrl}/functions/v1/guest-hub-track`, {
-      method: 'POST',
-      headers: { apikey: supabaseAnonKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ siteSlug: slug, eventType: 'click', target, ...buildGuestHubAccessPayload(slug, new URLSearchParams(window.location.search)) }),
-    }).catch(() => {});
+    if (!slug) return;
+    trackGuestHubEvent(slug, 'click', target, buildGuestHubAccessPayload(slug, new URLSearchParams(window.location.search))).catch(() => {});
   };
 
   const submitOptIn = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!slug || !supabaseUrl || !supabaseAnonKey || savingOptIn) return;
+    if (!slug || !hasGuestHubPublicRuntime() || savingOptIn) return;
     const contact = guestContact.trim();
     if (!contact) {
       setOptInStatus(t('guest_hub.need_contact'));
@@ -231,10 +233,8 @@ export const EventHub: React.FC = () => {
       setOptInStatus(null);
     const isEmail = contact.includes('@');
     try {
-      const res = await fetch(`${supabaseUrl}/functions/v1/guest-prospect-submit`, {
-        method: 'POST',
-        headers: { apikey: supabaseAnonKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      await submitGuestHubProspect(
+        {
           siteSlug: slug,
           guestName,
           email: isEmail ? contact : '',
@@ -243,10 +243,9 @@ export const EventHub: React.FC = () => {
           wantsOwnEventInfo,
           source: 'guest_hub',
           ...buildGuestHubAccessPayload(slug, searchParams),
-        }),
-      });
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(payload?.error || t('guest_hub.could_not_save'));
+        },
+        t('guest_hub.could_not_save'),
+      );
       setOptInStatus(t('guest_hub.saved_recap'));
       setGuestContact('');
     } catch (err) {

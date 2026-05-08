@@ -19,6 +19,24 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 5:57 PM PT - No-Deploy Guest Hub Public Service Extraction
+
+What changed:
+- Added `src/pages/guestHubPublicService.ts` so `EventHub.tsx` and `EventRecap.tsx` no longer own direct public guest-hub fetch transport inline.
+- `EventHub.tsx` now routes guest hub config loading, guest-hub telemetry, and guest prospect opt-in submission through the shared service.
+- `EventRecap.tsx` now routes recap config loading, guest-hub telemetry, and guest prospect opt-in submission through the same shared service.
+- Added `src/pages/guestHubPublicService.test.ts` and updated `src/lib/publicGuestSurfaceBoundary.test.ts` so the guest-facing event hub/recap transport boundary is pinned.
+
+Commands run:
+- `npm test -- --run src/pages/guestHubPublicService.test.ts src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 4 files and 28 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This removes another guest-facing page-owned fetch cluster and keeps the event hub and recap pages more focused on guest flow rather than function transport. No deploy was run.
+
 ### 2026-05-07 5:53 PM PT - No-Deploy Message Bulk Send Transport Extraction
 
 What changed:

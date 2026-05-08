@@ -6,16 +6,20 @@ import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { copyTextOrDownload } from '../lib/copyText';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
-
-const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
-const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
+import {
+  buildPublicAccessArtifacts,
+  capturePublicInviteTokenFromSearch,
+} from '../lib/publicAccessArtifacts';
+import {
+  fetchGuestRecapConfig,
+  hasGuestHubPublicRuntime,
+  submitGuestHubProspect,
+  trackGuestHubEvent,
+} from './guestHubPublicService';
 
 export const buildEventRecapGuestHubAccessPayload = (slug: string) => {
   const searchParams = new URLSearchParams(window.location.search);
-  return {
-    inviteToken: searchParams.get('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`),
-    passwordSession: sessionStorage.getItem(`dayof_pw_session_${slug}`),
-  };
+  return buildPublicAccessArtifacts(slug, searchParams);
 };
 
 export const buildEventRecapAccessHeaders = (slug: string) => {
@@ -72,6 +76,10 @@ export const friendlyEventRecapError = (err: unknown, fallback: string) => {
   });
 };
 
+export const safeEventRecapFunctionError = (value: unknown, fallback: string) => {
+  return friendlyEventRecapError(typeof value === 'string' ? value : '', fallback);
+};
+
 export const formatEventRecapAlbumLabel = (value: string | null | undefined) => {
   const cleaned = (value ?? '')
     .replace(/[_-]+/g, ' ')
@@ -105,6 +113,7 @@ export const EventRecap: React.FC = () => {
   const [generatingStory, setGeneratingStory] = useState(false);
 
   useEffect(() => {
+    if (slug) capturePublicInviteTokenFromSearch(slug, searchParams);
     const languagePreference = resolveGuestLanguagePreference({
       search: searchParams,
       storedLanguage: readStoredGuestLanguage(),
@@ -115,20 +124,13 @@ export const EventRecap: React.FC = () => {
     if (languagePreference.source === 'guest-link') {
       writeStoredGuestLanguage(languagePreference.language);
     }
-  }, [i18n, searchParams]);
+  }, [i18n, searchParams, slug]);
 
   useEffect(() => {
-    if (!slug || !supabaseUrl || !supabaseAnonKey) return;
+    if (!slug || !hasGuestHubPublicRuntime()) return;
     let cancelled = false;
     setLoading(true);
-    fetch(`${supabaseUrl}/functions/v1/guest-recap-config?site=${encodeURIComponent(slug)}`, {
-      headers: { apikey: supabaseAnonKey, ...buildEventRecapAccessHeaders(slug) },
-    })
-      .then(async (res) => {
-        const payload = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(payload?.error || 'Couldn’t load the recap.');
-        return payload as RecapData;
-      })
+    fetchGuestRecapConfig<RecapData>(slug, buildEventRecapAccessHeaders(slug), 'Couldn’t load the recap.')
       .then((payload) => {
         if (!cancelled) setData(payload);
       })
@@ -144,12 +146,8 @@ export const EventRecap: React.FC = () => {
   }, [slug]);
 
   useEffect(() => {
-    if (!slug || !supabaseUrl || !supabaseAnonKey) return;
-    fetch(`${supabaseUrl}/functions/v1/guest-hub-track`, {
-      method: 'POST',
-      headers: { apikey: supabaseAnonKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ siteSlug: slug, eventType: 'view', target: '/event/recap', ...buildEventRecapGuestHubAccessPayload(slug) }),
-    }).catch(() => {});
+    if (!slug) return;
+    trackGuestHubEvent(slug, 'view', '/event/recap', buildEventRecapGuestHubAccessPayload(slug)).catch(() => {});
   }, [slug]);
 
   const coupleLabel = useMemo(() => {
@@ -160,7 +158,7 @@ export const EventRecap: React.FC = () => {
 
   const submitOptIn = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!supabaseUrl || !supabaseAnonKey) return;
+    if (!hasGuestHubPublicRuntime()) return;
     if (!email.trim() && !phone.trim()) {
       setOptInStatus('Add an email or phone so we can send the recap.');
       return;
@@ -168,10 +166,8 @@ export const EventRecap: React.FC = () => {
     setSavingOptIn(true);
     setOptInStatus(null);
     try {
-      const res = await fetch(`${supabaseUrl}/functions/v1/guest-prospect-submit`, {
-        method: 'POST',
-        headers: { apikey: supabaseAnonKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      await submitGuestHubProspect(
+        {
           siteSlug: slug,
           guestName,
           email,
@@ -180,10 +176,9 @@ export const EventRecap: React.FC = () => {
           wantsOwnEventInfo,
           source: 'guest_recap',
           ...buildEventRecapGuestHubAccessPayload(slug),
-        }),
-      });
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(payload?.error || 'Couldn’t save.');
+        },
+        'Couldn’t save.',
+      );
       setOptInStatus(wantsOwnEventInfo ? 'Saved. We will send the recap and a dayof link for your own event.' : 'Saved. We will send the recap when it is ready.');
       setEmail('');
       setPhone('');
