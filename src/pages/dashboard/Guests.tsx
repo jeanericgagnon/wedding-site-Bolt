@@ -50,9 +50,6 @@ import {
 import {
   buildGuestHouseholdGroups,
   buildGuestOpsQueue,
-  buildFollowUpTask,
-  buildGeneratedFollowUpTasks,
-  buildSavedSegment,
   getGuestCustomAnswerRollup,
   getGuestCampaignReadiness,
   getGuestContactStats,
@@ -117,6 +114,7 @@ import { useGuestDashboardCampaignActions } from './guests/useGuestDashboardCamp
 import { useGuestDashboardClipboardActions } from './guests/useGuestDashboardClipboardActions';
 import { useGuestDashboardCsvImport } from './guests/useGuestDashboardCsvImport';
 import { useGuestDashboardData } from './guests/useGuestDashboardData';
+import { useGuestDashboardFollowUpActions } from './guests/useGuestDashboardFollowUpActions';
 import { useGuestDashboardGuestDetailActions } from './guests/useGuestDashboardGuestDetailActions';
 import { useGuestDashboardExports } from './guests/useGuestDashboardExports';
 
@@ -851,36 +849,6 @@ export const DashboardGuests: React.FC = () => {
     setSearchQuery('');
   };
 
-
-  const saveCurrentSegment = () => {
-    const seg = buildSavedSegment({
-      now: new Date(),
-      filterStatus,
-      segmentLabel: segmentLabelMap[filterStatus] || filterStatus,
-      guestCount: filteredGuests.length,
-    });
-    setSavedSegments((prev) => [seg, ...prev.filter((x) => x.filter !== filterStatus)].slice(0, 12));
-    toast('Segment saved', 'success');
-  };
-
-  const addFollowUpTask = (text: string) => {
-    const task = buildFollowUpTask({ now: new Date(), text });
-    setFollowUpTasks((prev) => [task, ...prev].slice(0, 6));
-    toast('Follow-up task captured', 'success');
-  };
-
-
-  const generateChecklistTasks = () => {
-    const tasks = buildGeneratedFollowUpTasks({ now: new Date(), rsvpOps, contactStats });
-
-    if (tasks.length === 0) {
-      toast('No blockers right now. Great shape!', 'success');
-      return;
-    }
-    setFollowUpTasks((prev) => [...tasks, ...prev].slice(0, 12));
-    toast(`Created ${tasks.length} follow-up task${tasks.length === 1 ? '' : 's'}`, 'success');
-  };
-
   const persistReminderSettings = async (patch: { reminder_cadence_days?: 1 | 3 | 7; auto_reminders_enabled?: boolean }) => {
     if (!weddingSiteId || isDemoMode) return;
     await persistGuestReminderSettings(weddingSiteId, patch);
@@ -1170,6 +1138,16 @@ export const DashboardGuests: React.FC = () => {
   const reminderCandidates = emailableFilteredGuests.filter((g: any) => {
     if (!skipRecentlyInvited) return true;
     return dueReminderGuestIds.has(g.id);
+  });
+  const { addFollowUpTask, generateChecklistTasks, saveCurrentSegment } = useGuestDashboardFollowUpActions({
+    contactStats,
+    filterStatus,
+    filteredGuestCount: filteredGuests.length,
+    rsvpOps,
+    segmentLabel: segmentLabelMap[filterStatus] || filterStatus,
+    setFollowUpTasks,
+    setSavedSegments,
+    toast,
   });
   const {
     handleCopyCampaignDryRun,

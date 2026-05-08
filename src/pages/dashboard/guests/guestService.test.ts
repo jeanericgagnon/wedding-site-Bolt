@@ -135,12 +135,14 @@ describe('guestService', () => {
     const csvImportHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCsvImport.ts'), 'utf8');
     const viewPropsHelper = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/buildGuestDashboardViewProps.ts'), 'utf8');
     const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardData.ts'), 'utf8');
+    const followUpHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardFollowUpActions.ts'), 'utf8');
     const detailHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts'), 'utf8');
 
     expect(page).toContain('generateSecureGuestInviteToken()');
     expect(page).toContain('useGuestDashboardData({');
     expect(page).toContain('useGuestDashboardClipboardActions({');
     expect(page).toContain('useGuestDashboardCsvImport({');
+    expect(page).toContain('useGuestDashboardFollowUpActions({');
     expect(page).toContain('useGuestDashboardGuestDetailActions({');
     expect(page).toContain('buildGuestDashboardViewProps({');
     expect(page).toContain('resolveGuestDashboardConflict(conflictId, resolvedAt)');
@@ -167,6 +169,9 @@ describe('guestService', () => {
     expect(page).not.toContain('const handleCopyMissingMealChecklist = async () => {');
     expect(page).not.toContain('const handleCopyNoContactChecklist = async () => {');
     expect(page).not.toContain('const handleCopyFilteredEmails = async () => {');
+    expect(page).not.toContain('const saveCurrentSegment = () => {');
+    expect(page).not.toContain('const addFollowUpTask = (text: string) => {');
+    expect(page).not.toContain('const generateChecklistTasks = () => {');
     expect(page).not.toContain('buildGuestImportPreview({');
     expect(page).not.toContain('readGuestImportRows(file)');
     expect(page).not.toContain('insertImportedGuests(guestRows)');
@@ -189,6 +194,13 @@ describe('guestService', () => {
     expect(clipboardHook).toContain('const handleCopyCampaignDryRun = async () => {');
     expect(clipboardHook).toContain('copyTextOrDownload(');
     expect(clipboardHook).not.toContain("from '../../../lib/supabase'");
+    expect(followUpHook).toContain('const saveCurrentSegment = () => {');
+    expect(followUpHook).toContain('const addFollowUpTask = (text: string) => {');
+    expect(followUpHook).toContain('const generateChecklistTasks = () => {');
+    expect(followUpHook).toContain('buildSavedSegment({');
+    expect(followUpHook).toContain('buildFollowUpTask({ now: new Date(), text })');
+    expect(followUpHook).toContain('buildGeneratedFollowUpTasks({ now: new Date(), rsvpOps, contactStats })');
+    expect(followUpHook).not.toContain("from '../../../lib/supabase'");
     expect(csvImportHook).toContain('const result = buildGuestImportPreview({');
     expect(csvImportHook).toContain('const { headers, dataRows, samples } = await readGuestImportRows(file);');
     expect(csvImportHook).toContain('const inserted = await insertImportedGuests(guestRows);');

@@ -140,12 +140,14 @@ describe('dashboard data boundary guards', () => {
     const csvImportHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCsvImport.ts'), 'utf8');
     const viewPropsHelper = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/buildGuestDashboardViewProps.ts'), 'utf8');
     const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardData.ts'), 'utf8');
+    const followUpHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardFollowUpActions.ts'), 'utf8');
     const detailHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts'), 'utf8');
 
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).toContain('useGuestDashboardData({');
     expect(source).toContain('useGuestDashboardClipboardActions({');
     expect(source).toContain('useGuestDashboardCsvImport({');
+    expect(source).toContain('useGuestDashboardFollowUpActions({');
     expect(source).toContain('useGuestDashboardGuestDetailActions({');
     expect(source).toContain('buildGuestDashboardViewProps({');
     expect(source).toContain('loadPublicSlug: loadGuestDashboardPublicSlug');
@@ -176,6 +178,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('const handleCopyMissingMealChecklist = async () => {');
     expect(source).not.toContain('const handleCopyNoContactChecklist = async () => {');
     expect(source).not.toContain('const handleCopyFilteredEmails = async () => {');
+    expect(source).not.toContain('const saveCurrentSegment = () => {');
+    expect(source).not.toContain('const addFollowUpTask = (text: string) => {');
+    expect(source).not.toContain('const generateChecklistTasks = () => {');
     expect(source).not.toContain('loadGuestDashboardSiteSettings(user.id)');
     expect(source).not.toContain('loadGuestDashboardSnapshot(weddingSiteId)');
     expect(source).not.toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
@@ -230,6 +235,13 @@ describe('dashboard data boundary guards', () => {
     expect(clipboardHook).toContain('const handleCopyCampaignDryRun = async () => {');
     expect(clipboardHook).toContain('copyTextOrDownload(');
     expect(clipboardHook).not.toContain("from '../../../lib/supabase'");
+    expect(followUpHook).toContain('const saveCurrentSegment = () => {');
+    expect(followUpHook).toContain('const addFollowUpTask = (text: string) => {');
+    expect(followUpHook).toContain('const generateChecklistTasks = () => {');
+    expect(followUpHook).toContain('buildSavedSegment({');
+    expect(followUpHook).toContain('buildFollowUpTask({ now: new Date(), text })');
+    expect(followUpHook).toContain('buildGeneratedFollowUpTasks({ now: new Date(), rsvpOps, contactStats })');
+    expect(followUpHook).not.toContain("from '../../../lib/supabase'");
     expect(csvImportHook).toContain('const result = buildGuestImportPreview({');
     expect(csvImportHook).toContain('const { headers, dataRows, samples } = await readGuestImportRows(file);');
     expect(csvImportHook).toContain('const inserted = await insertImportedGuests(guestRows);');
