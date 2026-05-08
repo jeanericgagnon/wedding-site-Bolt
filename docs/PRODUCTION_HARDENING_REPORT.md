@@ -4073,3 +4073,19 @@ Validation:
 
 Status:
 - PARTIAL. This continues the oversized-file and page-boundary cleanup in the guest photo dashboard without changing parent-album reassignment, suggested window defaults, or upload-window edit behavior. No deploy was run.
+
+### 2026-05-07 8:20 PM PT - Guest Photo Bucket List Extraction
+
+- Moved the guest photo bucket render loop behind `GuestPhotoBucketList`.
+- `src/pages/dashboard/GuestPhotoSharing.tsx` now routes that larger bucket-list seam through a dedicated guest-photo component instead of owning the repeated `GuestPhotoBucketCard` / `GuestPhotoBucketWindowEditor` / `GuestPhotoRecentUploadsList` loop inline.
+- `GuestPhotoSharing.tsx` dropped from 1949 lines to 1917 lines in this cleanup batch.
+
+Validation:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts`: PASS, 45/45.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This continues the oversized-file and page-boundary cleanup in the guest photo dashboard without changing bucket rendering, upload-window editing, recent-upload moderation, or sharing controls. No deploy was run.

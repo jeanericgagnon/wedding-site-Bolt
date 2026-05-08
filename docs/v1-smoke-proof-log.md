@@ -8577,3 +8577,18 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 8:20 PM PT No-Deploy Guest Photo Bucket List Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now routes its guest photo bucket render loop through `GuestPhotoBucketList`.
+  - The guest photo dashboard page no longer owns the repeated `GuestPhotoBucketCard` / `GuestPhotoBucketWindowEditor` / `GuestPhotoRecentUploadsList` loop inline.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins the higher-level bucket-list seam instead of the old lower-level page-owned loop.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 1949 lines to 1917 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

@@ -1,10 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarClock, Clapperboard, Sparkles } from 'lucide-react';
+import { Clapperboard, Sparkles } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { createEmptyPhotoBuckets } from '../../lib/aiPhotoBuckets';
 import { PhotoBucketCards } from '../../components/dashboard/PhotoBucketCards';
@@ -92,8 +90,7 @@ import { GuestPhotoCoupleAlbumsCard } from './guestPhotos/GuestPhotoCoupleAlbums
 import { GuestPhotoAlbumControls } from './guestPhotos/GuestPhotoAlbumControls';
 import { GuestPhotoAlbumCreateCard } from './guestPhotos/GuestPhotoAlbumCreateCard';
 import { GuestPhotoAlbumListState } from './guestPhotos/GuestPhotoAlbumListState';
-import { GuestPhotoBucketCard } from './guestPhotos/GuestPhotoBucketCard';
-import { GuestPhotoBucketWindowEditor } from './guestPhotos/GuestPhotoBucketWindowEditor';
+import { GuestPhotoBucketList } from './guestPhotos/GuestPhotoBucketList';
 import { GuestPhotoFollowupCard } from './guestPhotos/GuestPhotoFollowupCard';
 import { GuestPhotoGuestbookCard } from './guestPhotos/GuestPhotoGuestbookCard';
 import { GuestPhotoHeroCard } from './guestPhotos/GuestPhotoHeroCard';
@@ -105,7 +102,6 @@ import { GuestPhotoMomentAlbumsCard } from './guestPhotos/GuestPhotoMomentAlbums
 import { GuestPhotoMomentsCard } from './guestPhotos/GuestPhotoMomentsCard';
 import { GuestPhotoOrganizerCard } from './guestPhotos/GuestPhotoOrganizerCard';
 import { GuestPhotoQuickStartBanner } from './guestPhotos/GuestPhotoQuickStartBanner';
-import { GuestPhotoRecentUploadsList } from './guestPhotos/GuestPhotoRecentUploadsList';
 import { GuestPhotoRecapSharingCard } from './guestPhotos/GuestPhotoRecapSharingCard';
 import { GuestPhotoReviewCard } from './guestPhotos/GuestPhotoReviewCard';
 import { GuestPhotoSlideshowCard } from './guestPhotos/GuestPhotoSlideshowCard';
@@ -1839,7 +1835,7 @@ export const GuestPhotoSharing: React.FC = () => {
           formatEventDate={formatGuestPhotoEventDate}
         />
 
-        <Card className="p-6 border border-border-subtle">
+        <div className="rounded-lg border border-border-subtle bg-white p-6">
           <GuestPhotoAlbumControls
             visibleAlbumCount={filteredBuckets.length}
             totalUploadCount={uploads.length}
@@ -1876,71 +1872,43 @@ export const GuestPhotoSharing: React.FC = () => {
               onSuggestionSelect={setName}
             />
           ) : (
-            <div className="space-y-3">
-              {filteredBuckets.map((bucket) => {
-                const uploadCount = countsByBucket.get(bucket.id) ?? 0;
-                const rollupUploadCount = uploadCountWithChildren(bucket.id);
-                const hiddenCount = hiddenCountsByBucket.get(bucket.id) ?? 0;
-                const flaggedCount = flaggedCountsByBucket.get(bucket.id) ?? 0;
-                const recents = recentByBucket.get(bucket.id) ?? [];
-                const draft = windowDrafts[bucket.id] ?? { opensAt: '', closesAt: '' };
-                const knownUploadLink = bucketUploadLinks[bucket.id] || '';
-                const parentBucket = bucket.parent_album_id ? bucketById.get(bucket.parent_album_id) : null;
-                const childBuckets = childBucketsByParent.get(bucket.id) ?? [];
-                const depth = bucketDepthById.get(bucket.id) ?? 0;
-
-                return (
-                  <GuestPhotoBucketCard
-                    key={bucket.id}
-                    bucket={bucket}
-                    parentBucket={parentBucket ?? null}
-                    childBuckets={childBuckets}
-                    depth={depth}
-                    uploadCount={uploadCount}
-                    rollupUploadCount={rollupUploadCount}
-                    hiddenCount={hiddenCount}
-                    flaggedCount={flaggedCount}
-                    knownUploadLink={knownUploadLink}
-                    latestUploadUrl={latestUploadUrl}
-                    workingBucketId={workingBucketId}
-                    copied={copied}
-                    bucketTone={bucketCardTone}
-                    formatDateTime={formatGuestPhotoDateTime}
-                    getBucketQrUrl={getBucketQrUrl}
-                    getChildUploadCount={(bucketId) => countsByBucket.get(bucketId) ?? 0}
-                    onOpenSafePublicUrl={openSafePublicUrl}
-                    onRegenerateLink={(bucketId) => void regenerateLink(bucketId)}
-                    onCopyText={(text, key) => void copyText(text, key)}
-                    onSetBucketActive={(bucketId, isActive) => void setBucketActive(bucketId, isActive)}
-                    onExportBucketCsv={exportBucketCsv}
-                    onBucketSearchChange={setBucketSearch}
-                  >
-                    <GuestPhotoBucketWindowEditor
-                      bucket={bucket}
-                      buckets={buckets}
-                      descendantBucketIds={descendantBucketIdsByParent.get(bucket.id) ?? []}
-                      draft={draft}
-                      workingBucketId={workingBucketId}
-                      onParentChange={(bucketId, parentBucketId) => void setBucketParent(bucketId, parentBucketId)}
-                      onDraftChange={(bucketId, nextDraft) => setWindowDrafts((prev) => ({ ...prev, [bucketId]: nextDraft }))}
-                      onApplySuggestedWindow={applySuggestedWindow}
-                      onSaveWindow={(bucketId) => void saveWindow(bucketId)}
-                      bucketDisplayName={bucketDisplayName}
-                    />
-
-                    <GuestPhotoRecentUploadsList
-                      uploads={recents}
-                      analysisByUploadId={analysisByUploadId}
-                      onTagFilterChange={setTagFilter}
-                      onModerateUpload={(uploadId, patch) => void moderateUpload(uploadId, patch)}
-                      formatDateTime={formatGuestPhotoDateTime}
-                    />
-                  </GuestPhotoBucketCard>
-                );
-              })}
-            </div>
+            <GuestPhotoBucketList
+              filteredBuckets={filteredBuckets}
+              buckets={buckets}
+              countsByBucket={countsByBucket}
+              hiddenCountsByBucket={hiddenCountsByBucket}
+              flaggedCountsByBucket={flaggedCountsByBucket}
+              recentByBucket={recentByBucket}
+              windowDrafts={windowDrafts}
+              bucketUploadLinks={bucketUploadLinks}
+              bucketById={bucketById}
+              childBucketsByParent={childBucketsByParent}
+              bucketDepthById={bucketDepthById}
+              descendantBucketIdsByParent={descendantBucketIdsByParent}
+              analysisByUploadId={analysisByUploadId}
+              latestUploadUrl={latestUploadUrl}
+              workingBucketId={workingBucketId}
+              copied={copied}
+              uploadCountWithChildren={uploadCountWithChildren}
+              bucketTone={bucketCardTone}
+              bucketDisplayName={bucketDisplayName}
+              formatDateTime={formatGuestPhotoDateTime}
+              getBucketQrUrl={getBucketQrUrl}
+              onOpenSafePublicUrl={openSafePublicUrl}
+              onRegenerateLink={(bucketId) => void regenerateLink(bucketId)}
+              onCopyText={(text, key) => void copyText(text, key)}
+              onSetBucketActive={(bucketId, isActive) => void setBucketActive(bucketId, isActive)}
+              onExportBucketCsv={exportBucketCsv}
+              onBucketSearchChange={setBucketSearch}
+              onParentChange={(bucketId, parentBucketId) => void setBucketParent(bucketId, parentBucketId)}
+              onDraftChange={(bucketId, draft) => setWindowDrafts((prev) => ({ ...prev, [bucketId]: draft }))}
+              onApplySuggestedWindow={applySuggestedWindow}
+              onSaveWindow={(bucketId) => void saveWindow(bucketId)}
+              onTagFilterChange={setTagFilter}
+              onModerateUpload={(uploadId, patch) => void moderateUpload(uploadId, patch)}
+            />
           )}
-        </Card>
+        </div>
       </div>
     </DashboardLayout>
   );
