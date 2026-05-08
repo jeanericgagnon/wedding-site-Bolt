@@ -77,6 +77,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('<GuestDashboardHeader');
     expect(source).toContain('<GuestOpsToolbar');
     expect(source).toContain('<GuestListDisplaySwitcher');
+    expect(source).toContain('<GuestRsvpSettingsView');
+    expect(source).toContain('<GuestSnapshotInsightsPanel');
+    expect(source).toContain('<GuestRsvpConflictPanels');
+    expect(source).toContain('<GuestCampaignReminderPanel');
     expect(source).toContain('<GuestDashboardOverlays');
     expect(source).toContain('clearGuestCheckInsForSite(weddingSiteId)');
     expect(source).toContain('assignGuestsToHouseholdForSite(weddingSiteId, ids, householdId)');
@@ -131,6 +135,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('placeholder="Search guests..."');
     expect(source).not.toContain('placeholder=\"Search guests...\"');
     expect(source).not.toContain('No guests in this segment right now.');
+    expect(source).not.toContain('<DashboardPageHero');
+    expect(source).not.toContain('Snapshot & RSVP insights');
+    expect(source).not.toContain('Campaign insights & reminders');
     expect(source).not.toContain(".from('itinerary_events')\n            .select('id, event_name, event_date, start_time, location_name')");
     expect(source).not.toContain(".from('guest_audit_logs')\n          .select('id, guest_id, action, changed_at, changed_by, old_data, new_data')");
     expect(source).not.toContain(".from('event_invitations')\n          .select('id')");

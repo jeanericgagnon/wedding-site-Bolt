@@ -3917,3 +3917,21 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the oversized-file and page-boundary lanes for the guest dashboard without changing guest insights, import actions, household grouping, or list actions. No deploy was run.
+
+### 2026-05-07 7:27 PM PT - Guest Dashboard Panel Extraction Continuation
+
+- Moved the guest RSVP settings screen, snapshot/insights panel, RSVP conflict review panels, and campaign reminder modal shell behind existing guest dashboard components.
+- `src/pages/dashboard/Guests.tsx` now routes those seams through `src/pages/dashboard/guests/GuestRsvpSettingsView.tsx`, `src/pages/dashboard/guests/GuestSnapshotInsightsPanel.tsx`, `src/pages/dashboard/guests/GuestRsvpConflictPanels.tsx`, and `src/pages/dashboard/guests/GuestCampaignReminderPanel.tsx` instead of carrying the large inline JSX blocks.
+- The page still owns the guest state, filters, handlers, and service calls, while the extracted components own the RSVP-settings, insight, conflict-review, and campaign-planning composition.
+- `Guests.tsx` dropped from 3371 lines to 2806 lines in this continuation batch.
+- Tightened `src/lib/dashboardDataBoundary.test.ts` so the guest dashboard now pins the higher-level RSVP settings, insights, conflict, and campaign seams and rejects regaining the old inline hero/panel copy.
+
+Validation:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the oversized-file and page-boundary lanes for the guest dashboard without changing RSVP settings, conflict review, or campaign reminder behavior. No deploy was run.

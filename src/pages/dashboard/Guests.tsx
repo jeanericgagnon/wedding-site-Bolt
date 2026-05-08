@@ -22,7 +22,6 @@ import {
 import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { extractDietaryNote } from '../../lib/dietaryNotes';
 import { GUEST_IMPORT_MAX_FILE_BYTES, GUEST_IMPORT_MAX_ROWS, buildDefaultCsvFieldMap, buildGuestImportPreview, isCsvNameMappingValid, readGuestImportRows, type CsvFieldMap } from '../../lib/guestImportParser';
-import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
 import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, ChevronDown, Trash2, ExternalLink, Eye } from 'lucide-react';
@@ -46,8 +45,12 @@ import {
 } from './guests/guestDisplayUtils';
 import { GuestDashboardHeader } from './guests/GuestDashboardHeader';
 import { GuestDashboardOverlays } from './guests/GuestDashboardOverlays';
+import { GuestCampaignReminderPanel } from './guests/GuestCampaignReminderPanel';
 import { GuestListDisplaySwitcher } from './guests/GuestListDisplaySwitcher';
 import { GuestOpsToolbar } from './guests/GuestOpsToolbar';
+import { GuestRsvpConflictPanels } from './guests/GuestRsvpConflictPanels';
+import { GuestRsvpSettingsView } from './guests/GuestRsvpSettingsView';
+import { GuestSnapshotInsightsPanel } from './guests/GuestSnapshotInsightsPanel';
 import {
   type Guest,
   type GuestAuditEntry,
@@ -2280,267 +2283,28 @@ const handleSendBulkInvitations = async () => {
 
   if (guestsTab === 'rsvp-config') {
     return (
-      <DashboardLayout currentPage="guests">
-        <div className="max-w-[1100px] mx-auto space-y-5">
-          <DashboardPageHero
-            eyebrow="RSVP settings"
-            title="Ask only what you truly need from guests."
-            description="Meal choices, custom questions, and event-specific answers stay editable before guests see them."
-            stats={[
-              { label: 'Questions', value: rsvpQuestions.length, detail: 'custom prompts' },
-              { label: 'Meal choices', value: rsvpMealEnabled ? rsvpMealOptions.length : 'Off', detail: rsvpMealEnabled ? 'shown on RSVP' : 'hidden from guests' },
-              { label: 'Responses', value: stats.confirmed + stats.declined, detail: `${stats.pending} still pending` },
-            ]}
-            actions={<a href="/dashboard/rsvp-board" className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white no-underline hover:bg-primary/90">Open RSVP view</a>}
-          >
-            <div className="inline-flex rounded-lg border border-border-subtle bg-white p-1">
-              <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('ops')}>Guests</button>
-              <button className="px-3 py-1.5 text-sm rounded-md bg-surface-subtle text-text-primary border border-border-subtle" onClick={() => setGuestsTab('rsvp-config')}>RSVP questions</button>
-            </div>
-          </DashboardPageHero>
-
-          <Card variant="bordered" padding="lg">
-            <div className="space-y-4">
-              <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-text-primary">RSVP access mode</h3>
-                  <p className="text-sm text-text-secondary">Current guest access uses private guest links with name lookup as the backup.</p>
-                </div>
-                <Badge variant="success">Recommended: {recommendedRsvpAccessMode.label}</Badge>
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-2">
-                {rsvpAccessModePlan.map((mode) => (
-                  <div
-                    key={mode.id}
-                    className={`rounded-lg border p-4 ${
-                      mode.status === 'recommended'
-                        ? 'border-primary/40 bg-primary/5'
-                        : mode.status === 'future'
-                          ? 'border-border-subtle bg-surface-subtle/50'
-                          : 'border-border-subtle bg-white'
-                    }`}
-                  >
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-text-primary">{mode.label}</p>
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                        mode.status === 'recommended'
-                          ? 'bg-primary/10 text-primary'
-                          : mode.status === 'needs-setup'
-                            ? 'bg-warning/10 text-warning'
-                            : mode.status === 'future'
-                              ? 'bg-surface-subtle text-text-tertiary'
-                              : 'bg-success/10 text-success'
-                      }`}>
-                        {mode.status === 'recommended' ? 'Recommended' : mode.status === 'needs-setup' ? 'Needs setup' : mode.status === 'future' ? 'Planned' : 'Ready'}
-                      </span>
-                    </div>
-                    <p className="text-sm text-text-secondary">{mode.detail}</p>
-                    <p className="mt-2 text-xs text-text-tertiary">{mode.tradeoff}</p>
-                  </div>
-                ))}
-              </div>
-
-              <p className="text-xs text-text-tertiary">
-                Guest codes, shared passwords, and open RSVP stay planned until recovery, privacy, and capacity rules are fully proven.
-              </p>
-            </div>
-          </Card>
-
-          <Card variant="bordered" padding="lg">
-            <div className="space-y-5">
-              <div>
-                <h3 className="text-lg font-semibold text-text-primary">RSVP Questions & Meal Choices</h3>
-                          <p className="text-sm text-text-secondary">Choose what guests answer when they reply on the RSVP page.</p>
-              </div>
-
-              <div className="rounded-lg border border-border-subtle bg-white p-4">
-                <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-text-primary">Setup proof checklist</p>
-                    <p className="text-sm text-text-secondary">Use this before publishing RSVP changes so launch modes stay clear.</p>
-                  </div>
-                  <Badge variant="neutral">Owner readback</Badge>
-                </div>
-                <div className="grid gap-2 md:grid-cols-2">
-                  {rsvpSetupChecklist.map((item) => (
-                    <div key={item.id} className="rounded-md border border-border-subtle bg-surface-subtle/30 p-3">
-                      <div className="mb-1 flex items-center justify-between gap-3">
-                        <p className="text-sm font-medium text-text-primary">{item.label}</p>
-                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                          item.status === 'ready'
-                            ? 'bg-success/10 text-success'
-                            : item.status === 'planned'
-                              ? 'bg-surface-subtle text-text-tertiary'
-                              : 'bg-warning/10 text-warning'
-                        }`}>
-                          {item.status === 'ready' ? 'Ready' : item.status === 'planned' ? 'Planned' : 'Needs setup'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-text-tertiary">{item.detail}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
-                <div className="mb-3">
-                  <p className="text-sm font-semibold text-text-primary">Question templates</p>
-                  <p className="text-sm text-text-secondary">Add common wedding questions, then edit the wording before guests see them.</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {RSVP_QUESTION_TEMPLATES.map((template) => {
-                    const templateAdded = rsvpQuestionTemplateCoverage.find((item) => item.key === template.key)?.added ?? false;
-                    const templateLabel = template.key === 'dietary'
-                      ? 'Dietary notes'
-                      : template.key === 'song'
-                        ? 'Song request'
-                        : template.key === 'shuttle'
-                          ? 'Shuttle'
-                          : template.key === 'lodging'
-                            ? 'Lodging'
-                            : template.key === 'childcare'
-                              ? 'Childcare'
-                              : template.key === 'plus_one_note'
-                                ? 'Plus-one note'
-                                : 'Event attendance';
-
-                    return (
-                      <Button
-                        key={template.key}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={templateAdded}
-                        onClick={() => addRsvpQuestionTemplate(template)}
-                      >
-                        {templateAdded ? `${templateLabel} added` : templateLabel}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-3 p-4 border border-border rounded-lg">
-                <label className="flex items-center gap-2 text-sm text-text-primary">
-                  <input type="checkbox" checked={rsvpMealEnabled} onChange={(e) => { setRsvpMealEnabled(e.target.checked); setRsvpConfigDirty(true); }} className="w-4 h-4" />
-                  Collect meal choice on the RSVP form
-                </label>
-                {rsvpMealEnabled && (
-                  <div className="space-y-2">
-                    {rsvpMealOptions.map((opt, idx) => (
-                      <div key={`meal-${idx}`} className="flex items-center gap-2">
-                        <Input value={opt} onChange={(e) => setRsvpMealOptions((prev) => { const n=[...prev]; n[idx]=toTitleCase(e.target.value); return n; })} placeholder={`Meal option ${idx+1}`} />
-                        <Button type="button" variant="ghost" size="sm" onClick={() => { setRsvpMealOptions((prev) => prev.filter((_, i) => i !== idx)); setRsvpConfigDirty(true); }}>Remove</Button>
-                      </div>
-                    ))}
-                  <Button type="button" variant="outline" size="sm" onClick={() => { setRsvpMealOptions((prev) => [...prev, '']); setRsvpConfigDirty(true); }}>Add meal choice</Button>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                {rsvpQuestions.map((q, idx) => (
-                  <div key={q.id} className="p-4 border border-border rounded-lg space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold">Question {idx + 1}</p>
-                      <button
-                        type="button"
-                        aria-label="Delete question"
-                        title="Delete question"
-                        className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-subtle"
-                        onClick={() => {
-                          setConfirmDialog({
-                            title: 'Delete this RSVP question?',
-                            description: 'Guests will no longer see this question. Existing saved answers stay in response history.',
-                            confirmLabel: 'Delete question',
-                            tone: 'danger',
-                            onCancel: () => setConfirmDialog(null),
-                            onConfirm: () => {
-                              setRsvpQuestions((prev) => prev.filter((x) => x.id !== q.id));
-                              setRsvpConfigDirty(true);
-                              setConfirmDialog(null);
-                            },
-                          });
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <Input value={q.label} onChange={(e) => { setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, label: e.target.value } : x)); setRsvpConfigDirty(true); }} placeholder="Question prompt" />
-                    <div className="grid md:grid-cols-3 gap-3">
-                      <Select value={q.type} onChange={(e) => { setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, type: e.target.value as RSVPQuestionSetting['type'], options: (e.target.value === 'single_choice' || e.target.value === 'multi_choice') ? (x.options?.length ? x.options : ['', '']) : [] } : x)); setRsvpConfigDirty(true); }} options={[{ value:'short_text', label:'Short text' },{ value:'long_text', label:'Long text' },{ value:'single_choice', label:'Single choice' },{ value:'multi_choice', label:'Multiple choice' }]} />
-                      <Select value={q.appliesTo} onChange={(e) => { setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, appliesTo: e.target.value as RSVPQuestionSetting['appliesTo'] } : x)); setRsvpConfigDirty(true); }} options={[{ value:'all', label:'All attendees' },{ value:'ceremony', label:'Ceremony attendees' },{ value:'reception', label:'Reception attendees' }]} />
-                      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={q.required} onChange={(e) => { setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, required: e.target.checked } : x)); setRsvpConfigDirty(true); }} />Required</label>
-                    </div>
-                    {(q.type === 'single_choice' || q.type === 'multi_choice') && (
-                      <div className="space-y-2">
-                        {(q.options ?? []).map((opt, optIdx) => (
-                          <div key={`${q.id}-opt-${optIdx}`} className="flex items-center gap-2">
-                            <Input value={opt} onChange={(e) => { setRsvpQuestions((prev) => prev.map((x) => { if (x.id !== q.id) return x; const n=[...(x.options ?? [])]; n[optIdx]=toTitleCase(e.target.value); return { ...x, options:n }; })); setRsvpConfigDirty(true); }} placeholder={`Option ${optIdx+1}`} />
-                            <Button type="button" variant="ghost" size="sm" onClick={() => { setRsvpQuestions((prev) => prev.map((x) => { if (x.id !== q.id) return x; const n=[...(x.options ?? [])]; n.splice(optIdx,1); return { ...x, options:n }; })); setRsvpConfigDirty(true); }}>Remove</Button>
-                          </div>
-                        ))}
-                        <Button type="button" variant="outline" size="sm" onClick={() => { setRsvpQuestions((prev) => prev.map((x) => x.id === q.id ? { ...x, options: [...(x.options ?? []), ''] } : x)); setRsvpConfigDirty(true); }}>Add choice</Button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                <div className="flex gap-2">
-                  <Button type="button" variant="outline" onClick={() => { setRsvpQuestions((prev) => [...prev, makeRsvpQuestion()]); setRsvpConfigDirty(true); }}>Add question</Button>
-                  <div className="flex items-center gap-3">
-                    <Button type="button" variant="primary" onClick={handleSaveRsvpConfig} disabled={rsvpConfigSaving}>{rsvpConfigSaving ? 'Saving…' : 'Save Now'}</Button>
-                    <span className="text-xs text-text-tertiary">{rsvpAutoSaveState === 'saving' ? 'Auto-saving…' : rsvpAutoSaveState === 'saved' ? 'Auto-saved' : rsvpAutoSaveState === 'error' ? 'Auto-save needs retry' : 'Auto-save on'}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card variant="bordered" padding="lg">
-            <details className="group" open>
-              <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-lg font-semibold text-text-primary">Guest change history</h3>
-                  <p className="text-sm text-text-secondary">Recent guest updates so you can track what changed without leaving RSVP settings.</p>
-                </div>
-                <span className="text-xs text-text-tertiary">{rsvpAuditFeed.length} recent</span>
-              </summary>
-
-              <div className="mt-4 space-y-2">
-                {rsvpAuditLoading ? (
-                  <div className="text-sm text-text-secondary">Loading history…</div>
-                ) : rsvpAuditFeed.length === 0 ? (
-                  <div className="text-sm text-text-secondary">No recent guest changes yet.</div>
-                ) : (
-                  rsvpAuditFeed.slice(0, 8).map((entry) => (
-                    <div key={entry.id} className="rounded-lg border border-border-subtle bg-surface-subtle/40 px-3 py-2.5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            {(() => {
-                              const ActionIcon = getAuditActionIcon(entry.action);
-                              return (
-                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-lg border ${getAuditActionTone(entry.action)}`}>
-                                  <ActionIcon className="w-3 h-3" />
-                                  <span>{entry.action === 'insert' ? 'Created' : entry.action === 'delete' ? 'Removed' : 'Updated'}</span>
-                                </span>
-                              );
-                            })()}
-                            <span className="text-xs text-text-tertiary truncate">{getAuditGuestLabel(entry)}</span>
-                          </div>
-                          <p className="text-sm text-text-secondary leading-relaxed">{summarizeAuditEntry(entry)}</p>
-                        </div>
-                        <span className="text-xs text-text-tertiary whitespace-nowrap">{formatGuestOpsRelativeTime(entry.changed_at)}</span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </details>
-          </Card>
-        </div>
-      </DashboardLayout>
+      <GuestRsvpSettingsView
+        recommendedRsvpAccessMode={recommendedRsvpAccessMode}
+        rsvpAccessModePlan={rsvpAccessModePlan}
+        rsvpAuditFeed={rsvpAuditFeed}
+        rsvpAuditLoading={rsvpAuditLoading}
+        rsvpAutoSaveState={rsvpAutoSaveState}
+        rsvpConfigSaving={rsvpConfigSaving}
+        rsvpMealEnabled={rsvpMealEnabled}
+        rsvpMealOptions={rsvpMealOptions}
+        rsvpQuestionTemplateCoverage={rsvpQuestionTemplateCoverage}
+        rsvpQuestions={rsvpQuestions}
+        rsvpSetupChecklist={rsvpSetupChecklist}
+        stats={stats}
+        onAddRsvpQuestionTemplate={addRsvpQuestionTemplate}
+        onSaveRsvpConfig={handleSaveRsvpConfig}
+        onSetConfirmDialog={setConfirmDialog}
+        onSetGuestsTab={setGuestsTab}
+        onSetRsvpConfigDirty={setRsvpConfigDirty}
+        onSetRsvpMealEnabled={setRsvpMealEnabled}
+        onSetRsvpMealOptions={setRsvpMealOptions}
+        onSetRsvpQuestions={setRsvpQuestions}
+      />
     );
   }
 
@@ -2564,305 +2328,39 @@ const handleSendBulkInvitations = async () => {
 
 
         {!cleanGuestsView && (
-        <details className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-3">
-          <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
-            <span className="text-sm font-semibold text-text-primary">Snapshot & RSVP insights</span>
-            <span className="text-xs text-text-tertiary">View details</span>
-          </summary>
-          <div className="mt-3 space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Card variant="bordered" padding="md">
-                <div className="flex items-center gap-3">
-                  <Users className="w-5 h-5 text-primary" aria-hidden="true" />
-                  <div>
-                    <p className="text-xl font-bold text-text-primary">{stats.total}</p>
-                    <p className="text-xs text-text-secondary">Invited</p>
-                  </div>
-                </div>
-              </Card>
-              <Card variant="bordered" padding="md">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-success" aria-hidden="true" />
-                  <div>
-                    <p className="text-xl font-bold text-text-primary">{stats.confirmed}</p>
-                    <p className="text-xs text-text-secondary">Coming</p>
-                  </div>
-                </div>
-              </Card>
-              <Card variant="bordered" padding="md">
-                <div className="flex items-center gap-3">
-                  <XCircle className="w-5 h-5 text-text-tertiary" aria-hidden="true" />
-                  <div>
-                    <p className="text-xl font-bold text-text-primary">{stats.declined}</p>
-                    <p className="text-xs text-text-secondary">Cannot make it</p>
-                  </div>
-                </div>
-              </Card>
-              <Card variant="bordered" padding="md">
-                <div className="flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-text-tertiary" aria-hidden="true" />
-                  <div>
-                    <p className="text-xl font-bold text-text-primary">{stats.pending}</p>
-                    <p className="text-xs text-text-secondary">Pending</p>
-                  </div>
-                </div>
-              </Card>
-            </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <Card variant="bordered" padding="md">
-                <p className="text-xs font-medium text-text-tertiary">Replies</p>
-                <p className="mt-1 text-xl font-bold text-text-primary">{stats.rsvpRate}%</p>
-                <p className="mt-1 text-xs text-text-secondary">Guests who already replied</p>
-              </Card>
-              <Card variant="bordered" padding="md">
-                <p className="text-xs font-medium text-text-tertiary">Meal choices</p>
-                <p className="mt-1 text-xl font-bold text-text-primary">{mealSummary.withMealChoice}</p>
-                <p className="mt-1 text-xs text-text-secondary">Guests with a meal choice saved</p>
-              </Card>
-              <Card variant="bordered" padding="md">
-                <p className="text-xs font-medium text-text-tertiary">Dietary notes</p>
-                <p className="mt-1 text-xl font-bold text-text-primary">{mealSummary.withDietaryNote}</p>
-                <p className="mt-1 text-xs text-text-secondary">Guests with dietary detail captured</p>
-              </Card>
-              <Card variant="bordered" padding="md">
-                <p className="text-xs font-medium text-text-tertiary">Reachable guests</p>
-                <p className="mt-1 text-xl font-bold text-text-primary">{contactStats.contactCoverage}%</p>
-                <p className="mt-1 text-xs text-text-secondary">Guests with email or phone on file</p>
-              </Card>
-            </div>
-
-            {(eventReport.length > 0 || mealChoiceRollup.length > 0 || customAnswerRollup.length > 0) && (
-              <div className="grid gap-3 lg:grid-cols-3">
-                <Card variant="bordered" padding="md">
-                  <p className="text-sm font-semibold text-text-primary">By event</p>
-                  <div className="mt-3 space-y-2.5">
-                    {eventReport.length === 0 ? (
-                      <p className="text-sm text-text-secondary">No event-level reporting yet.</p>
-                    ) : eventReport.map((event) => (
-                      <div key={event.id} className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-medium text-text-primary">{event.name}</p>
-                          <span className="text-xs text-text-tertiary">Invited {event.invited}</span>
-                        </div>
-                        <p className="mt-1 text-xs text-text-secondary">Yes {event.attending} · No {event.declined} · Pending {event.pending}</p>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-
-                <Card variant="bordered" padding="md">
-                  <p className="text-sm font-semibold text-text-primary">Meals</p>
-                  <div className="mt-3 space-y-2.5">
-                    {mealChoiceRollup.length === 0 ? (
-                      <p className="text-sm text-text-secondary">No meal data yet.</p>
-                    ) : mealChoiceRollup.slice(0, 6).map(([meal, count]) => (
-                      <div key={meal} className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-white px-3 py-2.5">
-                        <span className="text-sm text-text-primary">{meal}</span>
-                        <span className="text-sm font-semibold text-text-primary">{count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-
-                <Card variant="bordered" padding="md">
-                  <p className="text-sm font-semibold text-text-primary">Top custom answers</p>
-                  <div className="mt-3 space-y-2.5">
-                    {customAnswerRollup.length === 0 ? (
-                      <p className="text-sm text-text-secondary">No custom answers captured yet.</p>
-                    ) : customAnswerRollup.map((entry, index) => (
-                      <div key={`${entry.question}-${entry.answer}-${index}`} className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
-                        <p className="text-xs text-text-tertiary">{entry.question}</p>
-                        <div className="mt-1 flex items-center justify-between gap-3">
-                          <span className="text-sm text-text-primary">{entry.answer}</span>
-                          <span className="text-sm font-semibold text-text-primary">{entry.count}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-
-                <Card variant="bordered" padding="md">
-                  <p className="text-sm font-semibold text-text-primary">Song requests</p>
-                  <div className="mt-3 space-y-2.5">
-                    {songRequestEntries.length === 0 ? (
-                      <p className="text-sm text-text-secondary">No song requests captured yet.</p>
-                    ) : songRequestEntries.map((entry, index) => (
-                      <div key={`${entry.guestName}-${entry.answer}-${index}`} className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-medium text-text-primary">{entry.answer}</p>
-                          <span className="text-xs text-text-tertiary">{entry.guestName}</span>
-                        </div>
-                        <p className="mt-1 text-xs text-text-tertiary">{entry.question}</p>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
-              <button onClick={() => { setSearchQuery(''); setFilterStatus('missing-meal'); setViewMode('list'); }} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-                <p className="text-xs text-text-tertiary">Missing meal</p>
-                <p className="text-base font-semibold text-text-primary">{rsvpOps.missingMeal}</p>
-              </button>
-              <button onClick={() => { setSearchQuery(''); setFilterStatus('plusone-missing'); setViewMode('list'); }} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-                <p className="text-xs text-text-tertiary">Plus-one missing</p>
-                <p className="text-base font-semibold text-text-primary">{rsvpOps.plusOneMissingName}</p>
-              </button>
-              <button onClick={() => { setSearchQuery(''); setFilterStatus('pending'); }} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-                <p className="text-xs text-text-tertiary">No response</p>
-                <p className="text-base font-semibold text-text-primary">{rsvpOps.noResponse}</p>
-              </button>
-              <button onClick={() => { setSearchQuery(''); setFilterStatus('pending-no-email'); setViewMode('list'); }} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-                <p className="text-xs text-text-tertiary">Pending, no email</p>
-                <p className="text-base font-semibold text-text-primary">{rsvpOps.pendingNoEmail}</p>
-              </button>
-              <button onClick={() => { setSearchQuery(''); setFilterStatus('ceremony-no'); }} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-                <p className="text-xs text-text-tertiary">Ceremony: No</p>
-                <p className="text-base font-semibold text-text-primary">{rsvpOps.ceremonyNo}</p>
-              </button>
-              <button onClick={() => { setSearchQuery(''); setFilterStatus('reception-no'); }} className="text-left p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 hover:bg-primary/5 transition-colors">
-                <p className="text-xs text-text-tertiary">Reception: No</p>
-                <p className="text-base font-semibold text-text-primary">{rsvpOps.receptionNo}</p>
-              </button>
-            </div>
-          </div>
-        </details>
+          <GuestSnapshotInsightsPanel
+            contactStats={contactStats}
+            customAnswerRollup={customAnswerRollup}
+            eventReport={eventReport}
+            mealChoiceRollup={mealChoiceRollup}
+            mealSummary={mealSummary}
+            rsvpOps={rsvpOps}
+            songRequestEntries={songRequestEntries}
+            stats={stats}
+            onFocusCeremonyNo={() => { setSearchQuery(''); setFilterStatus('ceremony-no'); }}
+            onFocusMissingMeal={() => { setSearchQuery(''); setFilterStatus('missing-meal'); setViewMode('list'); }}
+            onFocusNoResponse={() => { setSearchQuery(''); setFilterStatus('pending'); }}
+            onFocusPendingNoEmail={() => { setSearchQuery(''); setFilterStatus('pending-no-email'); setViewMode('list'); }}
+            onFocusPlusOneMissing={() => { setSearchQuery(''); setFilterStatus('plusone-missing'); setViewMode('list'); }}
+            onFocusReceptionNo={() => { setSearchQuery(''); setFilterStatus('reception-no'); }}
+          />
         )}
 
-        {!cleanGuestsView && (() => {
-          const conflicts: string[] = [];
-          const emailsSeen = new Map<string, string>();
-          guests.forEach(g => {
-            if (g.email) {
-              const key = g.email.toLowerCase();
-              if (emailsSeen.has(key)) {
-                conflicts.push(`Duplicate email ${g.email}: ${emailsSeen.get(key)} and ${g.first_name ?? ''} ${g.last_name ?? ''}`);
-              } else {
-                emailsSeen.set(key, `${g.first_name ?? ''} ${g.last_name ?? ''}`);
-              }
-            }
-            if (g.plus_one_allowed && g.rsvp?.attending === false) {
-              conflicts.push(`${g.first_name ?? ''} ${g.last_name ?? ''} declined but still has plus-one allowed`);
-            }
-          });
-          if (conflicts.length === 0) return null;
-          return (
-            <div className="p-4 bg-surface-subtle/60 border border-border-subtle rounded-lg space-y-2">
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <div className="flex items-center gap-2 flex-wrap min-w-0">
-                  <AlertCircle className="w-4 h-4 text-text-tertiary flex-shrink-0" />
-                  <p className="text-sm font-medium text-text-primary">{conflicts.length} RSVP {conflicts.length === 1 ? 'item' : 'items'} to review</p>
-                </div>
-                <button
-                  onClick={() => { setFilterStatus('pending'); setViewMode('list'); }}
-                  className="text-xs px-2 py-1 rounded-md border border-border-subtle text-text-secondary hover:bg-white"
-                >
-                  Review pending
-                </button>
-              </div>
-              <ul className="space-y-0.5">
-                {conflicts.map((c, i) => (
-                  <li key={i} className="text-xs text-text-secondary">• {c}</li>
-                ))}
-              </ul>
-            </div>
-          );
-        })()}
-
-        {!cleanGuestsView && rsvpConflicts.length > 0 && (
-          <div className="p-4 bg-surface-subtle/60 border border-border-subtle rounded-lg space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-text-tertiary" />
-                <p className="text-sm font-medium text-text-primary">{rsvpConflicts.length} RSVP {rsvpConflicts.length === 1 ? 'item' : 'items'} to review</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Select
-                  value={conflictFilter}
-                  onChange={(e) => setConflictFilter(e.target.value as 'all' | 'error' | 'warning')}
-                  options={[
-                    { value: 'all', label: 'All' },
-                    { value: 'error', label: 'Needs attention' },
-                    { value: 'warning', label: 'Heads-up' },
-                  ]}
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={visibleRsvpConflicts.length === 0 || resolvingConflictId === 'all'}
-                  onClick={resolveAllVisibleConflicts}
-                >
-                  {resolvingConflictId === 'all' ? 'Resolving…' : `Resolve ${visibleRsvpConflicts.length}`}
-                </Button>
-              </div>
-            </div>
-            <div className="text-xs text-text-secondary">
-              {rsvpConflictStats.unresolvedOver72h > 0
-                ? `${rsvpConflictStats.unresolvedOver72h} item${rsvpConflictStats.unresolvedOver72h === 1 ? '' : 's'} have been waiting over 3 days.`
-                : rsvpConflictStats.unresolvedOver24h > 0
-                  ? `${rsvpConflictStats.unresolvedOver24h} item${rsvpConflictStats.unresolvedOver24h === 1 ? '' : 's'} have been waiting over a day.`
-                  : 'You have RSVP items ready for review.'}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowConflictDetails((v) => !v)}
-              >
-                {showConflictDetails ? 'Hide details' : 'View details'}
-              </Button>
-            </div>
-
-            {showConflictDetails && (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <div className="bg-white/80 border border-border-subtle rounded-md px-2.5 py-2">
-                    <p className="text-[10px] text-text-tertiary">Open now</p>
-                    <p className="text-sm font-semibold text-text-primary">{rsvpConflictStats.openNow}</p>
-                  </div>
-                  <div className="bg-white/80 border border-border-subtle rounded-md px-2.5 py-2">
-                    <p className="text-[10px] text-text-tertiary">Opened (24h)</p>
-                    <p className="text-sm font-semibold text-text-primary">{rsvpConflictStats.opened24h}</p>
-                  </div>
-                  <div className="bg-white/80 border border-border-subtle rounded-md px-2.5 py-2">
-                    <p className="text-[10px] text-text-tertiary">Resolved (24h)</p>
-                    <p className="text-sm font-semibold text-text-primary">{rsvpConflictStats.resolved24h}</p>
-                  </div>
-                </div>
-
-                {rsvpConflictStats.topCodes.length > 0 && (
-                  <div className="text-[11px] text-text-secondary">
-                    <span className="font-semibold">Top reasons:</span>{' '}
-                    {rsvpConflictStats.topCodes.map((c) => `${c.code} (${c.count})`).join(' · ')}
-                  </div>
-                )}
-              </>
-            )}
-
-            <ul className="space-y-1.5">
-              {visibleRsvpConflicts.slice(0, 8).map((c) => {
-                const guestName = guests.find((g) => g.id === c.guest_id)?.name || 'Unknown guest';
-                return (
-                  <li key={c.id} className="text-xs text-text-secondary flex items-start justify-between gap-3">
-                    <span>
-                      • {guestName}: {c.message}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={resolvingConflictId === c.id}
-                      onClick={() => resolveConflict(c.id)}
-                    >
-                      {resolvingConflictId === c.id ? 'Resolving…' : 'Resolve'}
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+        {!cleanGuestsView && (
+          <GuestRsvpConflictPanels
+            conflictFilter={conflictFilter}
+            guests={guests}
+            resolvingConflictId={resolvingConflictId}
+            rsvpConflicts={rsvpConflicts}
+            rsvpConflictStats={rsvpConflictStats}
+            showConflictDetails={showConflictDetails}
+            visibleRsvpConflicts={visibleRsvpConflicts}
+            onResolveAllVisibleConflicts={resolveAllVisibleConflicts}
+            onResolveConflict={resolveConflict}
+            onReviewPending={() => { setFilterStatus('pending'); setViewMode('list'); }}
+            onSetConflictFilter={setConflictFilter}
+            onToggleConflictDetails={() => setShowConflictDetails((value) => !value)}
+          />
         )}
 
         <Card variant="bordered" padding="lg">
@@ -3020,102 +2518,38 @@ const handleSendBulkInvitations = async () => {
             />
 
             {!cleanGuestsView && (
-            <div className="p-3 rounded-lg border border-border-subtle bg-surface-subtle">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-text-primary">Campaign insights & reminders</p>
-                  <p className="text-xs text-text-secondary mt-0.5">
-                    Segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span> · Eligible: <span className="font-semibold text-text-primary">{reminderCandidates.length}</span>
-                  </p>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => setShowCampaignModal(true)}>Open</Button>
-              </div>
-            </div>
-            )}
-
-            {!cleanGuestsView && showCampaignModal && (
-              <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-3">
-                <div className="w-full max-w-2xl max-h-[88vh] overflow-auto rounded-lg border border-border bg-white">
-                  <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-border px-4 py-3 flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-text-primary">Campaign insights & reminders</p>
-                      <p className="text-xs text-text-tertiary">Focused controls without cluttering the main screen</p>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => setShowCampaignModal(false)}>Close</Button>
-                  </div>
-
-                  <div className="p-4 space-y-3">
-                    <div className="text-xs text-text-secondary">Worth checking: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Personal follow-up ({filteredGuests.filter((g) => fallbackByGuest.get(g.id)?.state === 'manual-follow-up').length})</span> · <span className="font-medium text-text-primary">Handled personally ({filteredGuests.filter((g) => fallbackByGuest.get(g.id)?.state === 'manual-handled').length})</span> · <span className="font-medium text-text-primary">Pending without email ({rsvpOps.pendingNoEmail})</span> · <span className="font-medium text-text-primary">Missing contact info ({contactStats.withNoContact})</span></div>
-                    {daysToWedding !== null && (
-                      <div className={`text-xs rounded-md px-2 py-1 inline-flex items-center gap-1 ${daysToWedding <= 30 ? 'bg-surface-subtle text-text-secondary border border-border-subtle' : 'bg-primary/5 text-primary border border-primary/20'}`}>
-                        Wedding in {daysToWedding} day{daysToWedding === 1 ? '' : 's'}
-                      </div>
-                    )}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <p className="text-xs text-text-secondary">
-                        Segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span> ·
-                        Eligible reminders: <span className="font-semibold text-text-primary">{reminderCandidates.length}</span> ·
-                        Reminder detail: <span className="font-semibold text-text-primary">{campaignReadiness}%</span>
-                      </p>
-                      <label className="inline-flex items-center gap-2 text-xs text-text-secondary">
-                        <input type="checkbox" checked={skipRecentlyInvited} onChange={(e) => setSkipRecentlyInvited(e.target.checked)} />
-                        Skip guests invited in last 24h
-                      </label>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                      <label className="text-xs text-text-secondary w-28">Campaign preset</label>
-                      <select
-                        value={campaignPreset}
-                        onChange={(e) => applyCampaignPreset(e.target.value as any)}
-                        className="text-xs border border-border rounded-md px-2 py-1.5 bg-white text-text-primary"
-                      >
-                        <option value="pending">Pending responses ({rsvpOps.noResponse})</option>
-                        <option value="missing-meal">Missing meal ({rsvpOps.missingMeal})</option>
-                        <option value="plusone-missing">Missing plus-one name ({rsvpOps.plusOneMissingName})</option>
-                        <option value="ceremony-no">Ceremony: No ({rsvpOps.ceremonyNo})</option>
-                        <option value="reception-no">Reception: No ({rsvpOps.receptionNo})</option>
-                        <option value="pending-no-email">Pending, no email ({rsvpOps.pendingNoEmail})</option>
-                        <option value="manual-handled">Handled personally ({filteredGuests.filter((g) => fallbackByGuest.get(g.id)?.state === 'manual-handled').length})</option>
-                      </select>
-                    </div>
-
-                    {reminderCandidates.length > 0 && (
-                      <div className="space-y-1">
-                        <button
-                          onClick={() => setShowRecipientPreview(v => !v)}
-                          className="text-xs text-primary hover:underline"
-                        >
-                          {showRecipientPreview ? 'Hide' : 'Show'} recipient preview ({reminderCandidates.length})
-                        </button>
-                        {showRecipientPreview && (
-                          <div className="max-h-28 overflow-auto rounded-lg border border-border bg-white p-2 text-xs text-text-secondary">
-                            {reminderCandidates.slice(0, 20).map((g) => (
-                              <div key={g.id} className="py-0.5">
-                                {(g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name}
-                                {g.email ? ` · ${g.email}` : ''}
-                              </div>
-                            ))}
-                            {reminderCandidates.length > 20 && (
-                              <div className="pt-1 text-text-tertiary">+{reminderCandidates.length - 20} more</div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    <div className="flex flex-wrap gap-2">
-                      <button onClick={() => { setFilterStatus('pending'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending</button>
-                      <button onClick={() => { setFilterStatus('missing-meal'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
-                      <button onClick={() => { setFilterStatus('plusone-missing'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus plus-one names</button>
-                      <button onClick={() => { setFilterStatus('pending-no-email'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending without email</button>
-                      <button onClick={() => { setFilterStatus('manual-handled'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus handled personally</button>
-                      <button onClick={() => { setFilterStatus('missing-meal'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
-                      <button onClick={() => { setFilterStatus('all'); setViewMode('list'); setSearchQuery(''); setSortByPriority(true); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus high-risk first</button>
-                      <button onClick={() => { setSearchQuery(''); setFilterStatus('no-contact'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Review missing contact ({contactStats.withNoContact})</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <GuestCampaignReminderPanel
+                campaignPreset={campaignPreset}
+                campaignReadiness={campaignReadiness}
+                contactNoContactCount={contactStats.withNoContact}
+                daysToWedding={daysToWedding}
+                manualFollowUpCount={filteredGuests.filter((guest) => fallbackByGuest.get(guest.id)?.state === 'manual-follow-up').length}
+                manualHandledCount={filteredGuests.filter((guest) => fallbackByGuest.get(guest.id)?.state === 'manual-handled').length}
+                reminderCandidates={reminderCandidates.map((guest) => ({
+                  email: guest.email ?? null,
+                  id: guest.id,
+                  name: (guest.first_name || guest.last_name)
+                    ? `${guest.first_name ?? ''} ${guest.last_name ?? ''}`.trim()
+                    : guest.name,
+                }))}
+                rsvpOps={rsvpOps}
+                segmentLabel={segmentLabelMap[filterStatus] || filterStatus}
+                showCampaignModal={showCampaignModal}
+                showRecipientPreview={showRecipientPreview}
+                skipRecentlyInvited={skipRecentlyInvited}
+                onApplyCampaignPreset={applyCampaignPreset}
+                onCloseCampaignModal={() => setShowCampaignModal(false)}
+                onFocusHandledPersonally={() => { setFilterStatus('manual-handled'); setViewMode('list'); setShowCampaignModal(false); }}
+                onFocusHighRiskFirst={() => { setFilterStatus('all'); setViewMode('list'); setSearchQuery(''); setSortByPriority(true); setShowCampaignModal(false); }}
+                onFocusMissingContact={() => { setSearchQuery(''); setFilterStatus('no-contact'); setViewMode('list'); setShowCampaignModal(false); }}
+                onFocusMissingMeal={() => { setFilterStatus('missing-meal'); setViewMode('list'); setShowCampaignModal(false); }}
+                onFocusPending={() => { setFilterStatus('pending'); setViewMode('list'); setShowCampaignModal(false); }}
+                onFocusPendingNoEmail={() => { setFilterStatus('pending-no-email'); setViewMode('list'); setShowCampaignModal(false); }}
+                onFocusPlusOneNames={() => { setFilterStatus('plusone-missing'); setViewMode('list'); setShowCampaignModal(false); }}
+                onOpenCampaignModal={() => setShowCampaignModal(true)}
+                onSetShowRecipientPreview={setShowRecipientPreview}
+                onSetSkipRecentlyInvited={setSkipRecentlyInvited}
+              />
             )}
 
             <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-border-subtle bg-surface-subtle">

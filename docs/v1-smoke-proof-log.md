@@ -8442,3 +8442,20 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 7:27 PM PT No-Deploy Guest Dashboard Panel Extraction Continuation
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the guest RSVP settings screen through `src/pages/dashboard/guests/GuestRsvpSettingsView.tsx`.
+  - `src/pages/dashboard/Guests.tsx` now routes the snapshot/insights panel through `src/pages/dashboard/guests/GuestSnapshotInsightsPanel.tsx`.
+  - `src/pages/dashboard/Guests.tsx` now routes RSVP conflict review through `src/pages/dashboard/guests/GuestRsvpConflictPanels.tsx`.
+  - `src/pages/dashboard/Guests.tsx` now routes the campaign reminder summary and modal shell through `src/pages/dashboard/guests/GuestCampaignReminderPanel.tsx`.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins those seams and rejects regaining the old inline hero/panel copy.
+  - `src/pages/dashboard/Guests.tsx` dropped from 3371 lines to 2806 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
