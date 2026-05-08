@@ -3505,3 +3505,21 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the itinerary dashboard page-to-service migration without changing live event save/delete behavior or the best-effort photo album sidecar flow. No deploy was run.
+
+### 2026-05-07 5:06 PM PT - Itinerary Dashboard Loader Service Extraction
+
+- Moved itinerary dashboard event loading, invitation-count hydration, RSVP-count hydration, and schedule mirror refresh trigger out of `src/pages/dashboard/Itinerary.tsx` and into `src/pages/dashboard/itineraryService.ts`.
+- `Itinerary.tsx` now calls `loadItineraryDashboardEvents(hasEventRsvpsTable)` instead of directly reading `wedding_sites`, `itinerary_events`, `event_invitations`, and `event_rsvps` inline for the live dashboard load path.
+- The service now owns the explicit itinerary event projection plus the bounded event-list, invitation, and guest row caps for the dashboard loader and event guest manager paths.
+- It also preserves the current optional `event_rsvps` table detection, event normalization, invitation counts, RSVP counts, and schedule mirror refresh behavior.
+- Expanded `src/pages/dashboard/itineraryService.test.ts`, `src/pages/dashboard/itineraryQueryBounds.test.ts`, and `src/lib/dashboardDataBoundary.test.ts` so the itinerary page no longer silently regains those read paths.
+
+Validation:
+- `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts`: PASS, 36/36.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the itinerary dashboard page-to-service migration without changing owner-facing event hydration, RSVP counts, or schedule mirror behavior. No deploy was run.

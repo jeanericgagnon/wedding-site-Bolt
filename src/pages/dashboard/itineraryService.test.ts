@@ -5,8 +5,11 @@ import {
   buildScheduleSectionEvents,
   deleteItineraryEvent,
   inviteAllGuestsToItineraryEvent,
+  ITINERARY_EVENT_SELECT,
   ITINERARY_EVENT_GUEST_PICKER_SELECT,
+  loadItineraryDashboardEvents,
   loadItineraryEventGuestManagerSnapshot,
+  MAX_ITINERARY_EVENTS,
   MAX_ITINERARY_EVENT_GUESTS,
   MAX_ITINERARY_EVENT_INVITATIONS,
   removeAllGuestsFromItineraryEvent,
@@ -221,9 +224,112 @@ describe('buildItineraryTemplateInsertRows', () => {
   });
 
   it('keeps itinerary guest picker queries bounded in the service', () => {
+    expect(ITINERARY_EVENT_SELECT).toBe('id, event_name, title, description, event_date, start_time, end_time, location_name, location_address, dress_code, notes, display_order, sort_order, is_visible');
+    expect(MAX_ITINERARY_EVENTS).toBe(200);
     expect(ITINERARY_EVENT_GUEST_PICKER_SELECT).toBe('id, name, first_name, last_name, email');
     expect(MAX_ITINERARY_EVENT_GUESTS).toBe(5000);
     expect(MAX_ITINERARY_EVENT_INVITATIONS).toBe(10000);
+  });
+
+  it('loads itinerary dashboard events through the service', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
+    resolveActiveSiteForUserMock.mockResolvedValue({ id: 'site-1', role: 'owner', permissions: null });
+
+    const sectionUpdateEqMock = vi.fn().mockResolvedValue({ error: null });
+    fromMock
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'site-1' }, error: null }),
+          })),
+        })),
+      })
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            order: vi.fn(() => ({
+              order: vi.fn(() => ({
+                limit: vi.fn().mockResolvedValue({
+                  data: [{
+                    id: 'event-1',
+                    event_name: 'Ceremony',
+                    description: 'Guests gather',
+                    event_date: '2026-06-20',
+                    start_time: '16:00',
+                    end_time: '16:30',
+                    location_name: 'Rose Garden',
+                    location_address: '10 Sunset Way',
+                    dress_code: null,
+                    notes: null,
+                    display_order: 1,
+                    is_visible: true,
+                  }],
+                  error: null,
+                }),
+              })),
+            })),
+          })),
+        })),
+      })
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn().mockResolvedValue({ data: { wedding_data: {} }, error: null }),
+          })),
+        })),
+      })
+      .mockReturnValueOnce({
+        update: vi.fn(() => ({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+        })),
+      })
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            eq: vi.fn().mockResolvedValue({ data: [{ id: 'section-1', data: {} }], error: null }),
+          })),
+        })),
+      })
+      .mockReturnValueOnce({
+        update: vi.fn(() => ({
+          eq: sectionUpdateEqMock,
+        })),
+      })
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            limit: vi.fn().mockResolvedValue({ data: [{ id: 'invite-1' }], error: null }),
+          })),
+        })),
+      })
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          in: vi.fn().mockResolvedValue({ data: [{ attending: true }], error: null }),
+        })),
+      });
+
+    await expect(loadItineraryDashboardEvents(null)).resolves.toEqual({
+      events: [{
+        id: 'event-1',
+        event_name: 'Ceremony',
+        description: 'Guests gather',
+        event_date: '2026-06-20',
+        start_time: '16:00',
+        end_time: '16:30',
+        location_name: 'Rose Garden',
+        location_address: '10 Sunset Way',
+        dress_code: null,
+        notes: null,
+        display_order: 1,
+        is_visible: true,
+        invitation_count: 1,
+        rsvp_count: 1,
+        attending_count: 1,
+        declined_count: 0,
+        pending_count: 0,
+      }],
+      hasEventRsvpsTable: true,
+    });
   });
 
   it('saves a new itinerary event through the service and triggers best-effort album creation', async () => {

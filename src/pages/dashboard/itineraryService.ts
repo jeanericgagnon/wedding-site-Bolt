@@ -9,6 +9,7 @@ import {
 } from '../../lib/eventRsvpCleanup';
 import type { WeddingDataV1 } from '../../types/weddingData';
 import { combineDateAndTimeISO } from './itineraryDateTime';
+import { deriveItineraryEventRsvpCounts, shouldLoadEventRsvps } from './itineraryEventRsvpCounts';
 
 export interface ItineraryTemplateEventDraft {
   event_name: string;
@@ -48,7 +49,10 @@ const ITINERARY_SCHEDULE_MIRROR_SITE_SELECT = 'wedding_data';
 const ITINERARY_SCHEDULE_SECTION_SELECT = 'id,data';
 const ITINERARY_EVENT_MANAGER_SITE_SELECT = 'id';
 const ITINERARY_EVENT_MUTATION_SITE_SELECT = 'id';
+const ITINERARY_EVENT_LIST_SITE_SELECT = 'id';
+export const ITINERARY_EVENT_SELECT = 'id, event_name, title, description, event_date, start_time, end_time, location_name, location_address, dress_code, notes, display_order, sort_order, is_visible' as const;
 export const ITINERARY_EVENT_GUEST_PICKER_SELECT = 'id, name, first_name, last_name, email' as const;
+export const MAX_ITINERARY_EVENTS = 200;
 export const MAX_ITINERARY_EVENT_INVITATIONS = 10000;
 export const MAX_ITINERARY_EVENT_GUESTS = 5000;
 const ITINERARY_EVENT_DRIFT_FIELDS = ['event_name', 'is_visible', 'dress_code', 'notes', 'location_address', 'end_time'] as const;
@@ -64,6 +68,26 @@ export interface ItineraryGuestPickerRow {
 export interface ItineraryEventGuestManagerSnapshot {
   guests: ItineraryGuestPickerRow[];
   invitedGuestIds: Set<string>;
+}
+
+export interface ItineraryDashboardEvent {
+  id: string;
+  event_name: string;
+  description: string;
+  event_date: string;
+  start_time: string;
+  end_time: string | null;
+  location_name: string;
+  location_address: string;
+  dress_code: string | null;
+  notes: string | null;
+  display_order: number;
+  is_visible: boolean;
+  invitation_count: number;
+  rsvp_count: number;
+  attending_count: number;
+  declined_count: number;
+  pending_count: number;
 }
 
 export interface SaveItineraryEventFormData {
@@ -261,6 +285,101 @@ export async function deleteItineraryEvent(eventId: string): Promise<void> {
     .eq('id', eventId);
 
   if (error) throw error;
+}
+
+export async function loadItineraryDashboardEvents(
+  hasEventRsvpsTable: boolean | null,
+): Promise<{ events: ItineraryDashboardEvent[]; hasEventRsvpsTable: boolean | null }> {
+  const siteId = await resolveItinerarySiteId();
+  if (!siteId) {
+    return { events: [], hasEventRsvpsTable };
+  }
+
+  const { data: site, error: siteError } = await supabase
+    .from('wedding_sites')
+    .select(ITINERARY_EVENT_LIST_SITE_SELECT)
+    .eq('id', siteId)
+    .maybeSingle();
+  if (siteError) throw siteError;
+
+  if (!site) {
+    return { events: [], hasEventRsvpsTable };
+  }
+
+  const { data: eventsData, error } = await supabase
+    .from('itinerary_events')
+    .select(ITINERARY_EVENT_SELECT)
+    .eq('wedding_site_id', site.id)
+    .order('event_date', { ascending: true })
+    .order('start_time', { ascending: true })
+    .limit(MAX_ITINERARY_EVENTS);
+  if (error) throw error;
+
+  const normalizedEvents = (eventsData || []).map((event: Record<string, unknown>) => ({
+    id: String(event.id ?? ''),
+    event_name: (event.event_name as string) || (event.title as string) || 'Event',
+    description: (event.description as string) || '',
+    event_date: (event.event_date as string) || new Date().toISOString().slice(0, 10),
+    start_time: (event.start_time as string) || '',
+    end_time: (event.end_time as string | null) ?? null,
+    location_name: (event.location_name as string) || '',
+    location_address: (event.location_address as string) || '',
+    dress_code: (event.dress_code as string | null) ?? null,
+    notes: (event.notes as string | null) ?? null,
+    display_order: (event.display_order as number) ?? (event.sort_order as number) ?? 0,
+    is_visible: (event.is_visible as boolean) ?? true,
+  }));
+
+  await syncItineraryScheduleMirror(site.id, normalizedEvents);
+
+  let nextHasEventRsvpsTable = hasEventRsvpsTable;
+  const eventsWithCounts = await Promise.all(
+    normalizedEvents.map(async (event) => {
+      const { data: invites, error: invitesError } = await supabase
+        .from('event_invitations')
+        .select('id')
+        .eq('event_id', event.id)
+        .limit(MAX_ITINERARY_EVENT_INVITATIONS);
+      if (invitesError) throw invitesError;
+
+      const invitationIds = (invites ?? []).map((i) => i.id as string);
+      const inviteCount = invitationIds.length;
+
+      let rsvps: Array<{ attending: boolean | null }> = [];
+      if (shouldLoadEventRsvps(invitationIds.length, nextHasEventRsvpsTable)) {
+        const { data, error: eventRsvpError } = await supabase
+          .from('event_rsvps')
+          .select('attending')
+          .in('event_invitation_id', invitationIds);
+
+        if (eventRsvpError) {
+          const msg = (eventRsvpError.message || '').toLowerCase();
+          if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404') || msg.includes('relation')) {
+            nextHasEventRsvpsTable = false;
+          }
+        } else {
+          nextHasEventRsvpsTable = true;
+          rsvps = (data ?? []) as Array<{ attending: boolean | null }>;
+        }
+      }
+
+      const { rsvpCount, attendingCount, declinedCount, pendingCount } = deriveItineraryEventRsvpCounts(rsvps, inviteCount);
+
+      return {
+        ...event,
+        invitation_count: inviteCount,
+        rsvp_count: rsvpCount,
+        attending_count: attendingCount,
+        declined_count: declinedCount,
+        pending_count: pendingCount,
+      };
+    }),
+  );
+
+  return {
+    events: eventsWithCounts,
+    hasEventRsvpsTable: nextHasEventRsvpsTable,
+  };
 }
 
 export async function loadItineraryEventGuestManagerSnapshot(

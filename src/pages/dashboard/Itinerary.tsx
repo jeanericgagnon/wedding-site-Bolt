@@ -12,7 +12,6 @@ import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { formatItineraryEventDate, toValidItineraryEventDateOrNull } from './itineraryEventDate';
-import { deriveItineraryEventRsvpCounts, shouldLoadEventRsvps } from './itineraryEventRsvpCounts';
 import { readDemoItineraryEvents, writeDemoItineraryEvents } from './itineraryDemoStorage';
 import { analyzeTimeline } from '../../lib/invisibleIntelligence';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
@@ -21,46 +20,21 @@ import {
   createItineraryTemplateEvents,
   deleteItineraryEvent,
   inviteAllGuestsToItineraryEvent,
+  loadItineraryDashboardEvents,
   loadItineraryEventGuestManagerSnapshot,
   removeAllGuestsFromItineraryEvent,
   removeItineraryEventGuestInvitation,
   resolveItinerarySiteId,
   saveItineraryEvent,
   syncItineraryScheduleMirror,
+  type ItineraryDashboardEvent,
   type ItineraryGuestPickerRow,
 } from './itineraryService';
 
-interface ItineraryEvent {
-  id: string;
-  event_name: string;
-  description: string;
-  event_date: string;
-  start_time: string;
-  end_time: string | null;
-  location_name: string;
-  location_address: string;
-  dress_code: string | null;
-  notes: string | null;
-  display_order: number;
-  is_visible: boolean;
-}
-
-const ITINERARY_EVENT_SELECT = 'id, event_name, title, description, event_date, start_time, end_time, location_name, location_address, dress_code, notes, display_order, sort_order, is_visible' as const;
-
-export const MAX_ITINERARY_EVENTS = 200;
-export const MAX_ITINERARY_EVENT_INVITATIONS = 10000;
-export const MAX_ITINERARY_EVENT_GUESTS = 5000;
-
 // Optional table: detect once at runtime so older environments degrade quietly.
 let hasEventRsvpsTable: boolean | null = null;
-
-interface EventWithInvites extends ItineraryEvent {
-  invitation_count: number;
-  rsvp_count: number;
-  attending_count: number;
-  declined_count: number;
-  pending_count: number;
-}
+type EventWithInvites = ItineraryDashboardEvent;
+type ItineraryEvent = Omit<ItineraryDashboardEvent, 'invitation_count' | 'rsvp_count' | 'attending_count' | 'declined_count' | 'pending_count'>;
 
 export const DashboardItinerary: React.FC = () => {
   const { isDemoMode } = useAuth();
@@ -166,95 +140,9 @@ export const DashboardItinerary: React.FC = () => {
         return;
       }
 
-      const siteId = await resolveItinerarySiteId();
-      if (!siteId) {
-        setEvents([]);
-        return;
-      }
-
-      const { data: sites, error: siteError } = await supabase
-        .from('wedding_sites')
-        .select('id')
-        .eq('id', siteId)
-        .maybeSingle();
-      if (siteError) throw siteError;
-
-      if (!sites) {
-        setEvents([]);
-        return;
-      }
-
-      const { data: eventsData, error } = await supabase
-        .from('itinerary_events')
-        .select(ITINERARY_EVENT_SELECT)
-        .eq('wedding_site_id', sites.id)
-        .order('event_date', { ascending: true })
-        .order('start_time', { ascending: true })
-        .limit(MAX_ITINERARY_EVENTS);
-
-      if (error) throw error;
-
-      const normalizedEvents: ItineraryEvent[] = (eventsData || []).map((event: Record<string, unknown>) => ({
-        id: String(event.id ?? ''),
-        event_name: (event.event_name as string) || (event.title as string) || 'Event',
-        description: (event.description as string) || '',
-        event_date: (event.event_date as string) || new Date().toISOString().slice(0, 10),
-        start_time: (event.start_time as string) || '',
-        end_time: (event.end_time as string | null) ?? null,
-        location_name: (event.location_name as string) || '',
-        location_address: (event.location_address as string) || '',
-        dress_code: (event.dress_code as string | null) ?? null,
-        notes: (event.notes as string | null) ?? null,
-        display_order: (event.display_order as number) ?? (event.sort_order as number) ?? 0,
-        is_visible: (event.is_visible as boolean) ?? true,
-      }));
-
-      await syncWeddingDataSchedule(sites.id, normalizedEvents);
-
-      const eventsWithCounts = await Promise.all(
-        normalizedEvents.map(async (event) => {
-          const { data: invites, error: invitesError } = await supabase
-            .from('event_invitations')
-            .select('id')
-            .eq('event_id', event.id)
-            .limit(MAX_ITINERARY_EVENT_INVITATIONS);
-          if (invitesError) throw invitesError;
-
-          const invitationIds = (invites ?? []).map((i) => i.id as string);
-          const inviteCount = invitationIds.length;
-
-          let rsvps: Array<{ attending: boolean | null }> = [];
-          if (shouldLoadEventRsvps(invitationIds.length, hasEventRsvpsTable)) {
-            const { data, error } = await supabase
-              .from('event_rsvps')
-              .select('attending')
-              .in('event_invitation_id', invitationIds);
-
-            if (error) {
-              const msg = (error.message || '').toLowerCase();
-              if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404') || msg.includes('relation')) {
-                hasEventRsvpsTable = false;
-              }
-            } else {
-              hasEventRsvpsTable = true;
-              rsvps = (data ?? []) as Array<{ attending: boolean | null }>;
-            }
-          }
-
-          const { rsvpCount, attendingCount, declinedCount, pendingCount } = deriveItineraryEventRsvpCounts(rsvps, inviteCount);
-
-          return {
-            ...event,
-            invitation_count: inviteCount,
-            rsvp_count: rsvpCount,
-            attending_count: attendingCount,
-            declined_count: declinedCount,
-            pending_count: pendingCount,
-          };
-        })
-      );
-
-      setEvents(eventsWithCounts);
+      const snapshot = await loadItineraryDashboardEvents(hasEventRsvpsTable);
+      hasEventRsvpsTable = snapshot.hasEventRsvpsTable;
+      setEvents(snapshot.events);
     } catch {
       setEvents([]);
       toast('Couldn’t load itinerary events. Please try again.', 'error');

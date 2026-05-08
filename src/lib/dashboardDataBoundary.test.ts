@@ -144,8 +144,7 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Itinerary.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/itineraryService.ts'), 'utf8');
 
-    expect(source).toContain('const ITINERARY_EVENT_SELECT = ');
-    expect(source).toContain('.select(ITINERARY_EVENT_SELECT)');
+    expect(source).toContain('loadItineraryDashboardEvents(hasEventRsvpsTable)');
     expect(source).toContain('resolveItinerarySiteId()');
     expect(source).toContain('createItineraryTemplateEvents(siteId, newEvents)');
     expect(source).toContain('syncItineraryScheduleMirror(siteId, eventList)');
@@ -162,6 +161,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain(".from('sections')\n        .select('id,data')");
     expect(source).not.toContain('const EVENT_GUEST_PICKER_SELECT = ');
     expect(source).not.toContain("invokeFunctionOrThrow(supabase, 'photo-album-create'");
+    expect(source).not.toContain(".from('wedding_sites')\n        .select('id')");
+    expect(source).not.toContain(".from('itinerary_events')\n        .select(ITINERARY_EVENT_SELECT)");
+    expect(source).not.toContain(".from('event_invitations')\n            .select('id')");
+    expect(source).not.toContain(".from('event_rsvps')\n              .select('attending')");
     expect(source).not.toContain(".from('guests')\n        .select(ITINERARY_EVENT_GUEST_PICKER_SELECT)");
     expect(source).not.toContain(".from('event_invitations')\n    .select('guest_id')");
     expect(source).not.toContain(".from('event_invitations')\n    .select('id')");
@@ -174,6 +177,10 @@ describe('dashboard data boundary guards', () => {
     expect(service).toContain('export async function resolveItinerarySiteId()');
     expect(service).toContain("const ITINERARY_EVENT_MANAGER_SITE_SELECT = 'id'");
     expect(service).toContain("const ITINERARY_EVENT_MUTATION_SITE_SELECT = 'id'");
+    expect(service).toContain("const ITINERARY_EVENT_LIST_SITE_SELECT = 'id'");
+    expect(service).toContain("export const ITINERARY_EVENT_SELECT = 'id, event_name, title, description, event_date, start_time, end_time, location_name, location_address, dress_code, notes, display_order, sort_order, is_visible' as const;");
+    expect(service).toContain('export async function loadItineraryDashboardEvents(');
+    expect(service).toContain(".select(ITINERARY_EVENT_SELECT)");
     expect(service).toContain("export const ITINERARY_EVENT_GUEST_PICKER_SELECT = 'id, name, first_name, last_name, email' as const;");
     expect(service).toContain('export async function saveItineraryEvent(');
     expect(service).toContain('export async function deleteItineraryEvent(');
