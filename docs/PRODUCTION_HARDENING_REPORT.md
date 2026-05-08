@@ -19,6 +19,22 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+## 2026-05-08 10:16 AM PT No-Deploy Coordinator Route-Support Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/CoordinatorMode.tsx` now routes the remaining coordinator capability-gate seam through `src/pages/dashboard/coordinator/buildCoordinatorDashboardRouteSupport.ts`.
+  - That new helper now owns `canCheckIn`, `canEditQna`, `canEditTimeline`, `canSendAlerts`, and `canScheduleAlerts` derivation from the current coordinator role and permissions while the route keeps dashboard bootstrap, derived state, alert validation, focus/board actions, cue lifecycle, route-content props, and async mutation hooks.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildCoordinatorDashboardRouteSupport({ ... })`, checks that `buildCoordinatorDashboardRouteSupport.ts` owns the coordinator capability-gate seam, and rejects regaining the old inline `canManageCoordinator...` permission block in `CoordinatorMode.tsx`.
+  - `src/pages/dashboard/CoordinatorMode.tsx` moved from 743 lines to 748 lines in this batch, while `src/pages/dashboard/coordinator/buildCoordinatorDashboardRouteSupport.ts` came in at 32 lines. This batch was about route ownership and regression guardrails more than raw shrinkage.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 10:11 AM PT No-Deploy Coordinator Route-Content Props Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

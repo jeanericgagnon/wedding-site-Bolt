@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 10:16 AM PT - No-Deploy Coordinator Route-Support Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/CoordinatorMode.tsx` no longer owns the inline coordinator capability-gate block for check-in, Q&A, timeline, and alert permissions.
+  - Added `src/pages/dashboard/coordinator/buildCoordinatorDashboardRouteSupport.ts` so the new helper now owns the coordinator role/permission gate seam while the route keeps bootstrap, derived state, alert validation, focus/board actions, cue lifecycle, and route-content prop assembly.
+  - Coordinator boundary tests now pin `buildCoordinatorDashboardRouteSupport({ ... })`, check that the new helper owns the coordinator capability-gate seam, and reject regaining the old inline permission block in `CoordinatorMode.tsx`.
+- Acceptance/proof target:
+  - Focused dashboard boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 10:11 AM PT - No-Deploy Coordinator Route-Content Props Extraction
 
 - Status: `PARTIAL`

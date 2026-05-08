@@ -14,7 +14,6 @@ import { getCoordinatorCommandSummaryTarget } from '../../lib/coordinatorCommand
 import { getCoordinatorCommandJumpLabel } from '../../lib/coordinatorCommandJumpLabel';
 import { shouldResetCoordinatorAlertOverride } from '../../lib/coordinatorAlertOverrideReset';
 import { createCoordinatorSummaryFeedback, type CoordinatorSummaryFeedback } from '../../lib/coordinatorSummaryFeedback';
-import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import { setCoordinatorEventTimelineState } from '../../lib/coordinatorTimelineState';
 import { resolveCoordinatorTimelineAlertIntent } from '../../lib/coordinatorTimelineAlertIntent';
 import { validateCoordinatorAlertForm } from '../../lib/coordinatorAlertFlow';
@@ -27,6 +26,7 @@ import { getCoordinatorStandingPromptReasonTightened } from '../../lib/coordinat
 import { updateCoordinatorQnaAnswer } from './coordinator/coordinatorService';
 import { buildCoordinatorDashboardBoardActions } from './coordinator/buildCoordinatorDashboardBoardActions';
 import { buildCoordinatorDashboardRouteContentProps } from './coordinator/buildCoordinatorDashboardRouteContentProps';
+import { buildCoordinatorDashboardRouteSupport } from './coordinator/buildCoordinatorDashboardRouteSupport';
 import { CoordinatorDashboardRouteContent } from './coordinator/CoordinatorDashboardRouteContent';
 import { useCoordinatorDashboardActions } from './coordinator/useCoordinatorDashboardActions';
 import { buildCoordinatorDashboardFocusActions } from './coordinator/buildCoordinatorDashboardFocusActions';
@@ -92,11 +92,16 @@ export const DashboardCoordinatorMode: React.FC = () => {
     toast,
     userId: user?.id,
   });
-  const canCheckIn = canManageCoordinatorCheckIn(coordinatorRole, coordinatorPermissions);
-  const canEditQna = canManageCoordinatorQna(coordinatorRole, coordinatorPermissions);
-  const canEditTimeline = canManageCoordinatorTimeline(coordinatorRole, coordinatorPermissions);
-  const canSendAlerts = canSendImmediateCoordinatorAlerts(coordinatorRole, coordinatorPermissions);
-  const canScheduleAlerts = canScheduleCoordinatorAlerts(coordinatorRole, coordinatorPermissions);
+  const {
+    canCheckIn,
+    canEditQna,
+    canEditTimeline,
+    canScheduleAlerts,
+    canSendAlerts,
+  } = buildCoordinatorDashboardRouteSupport({
+    coordinatorPermissions,
+    coordinatorRole,
+  });
   const {
     alertOverrideLabelState,
     alertOverrideUpdatedAt,
