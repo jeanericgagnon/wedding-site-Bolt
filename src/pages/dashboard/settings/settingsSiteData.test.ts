@@ -88,6 +88,10 @@ describe('settings site data boundary', () => {
       join(process.cwd(), 'src/pages/dashboard/settings/SettingsRsvpTabContent.tsx'),
       'utf8',
     );
+    const snapshotLoader = readFileSync(
+      join(process.cwd(), 'src/pages/dashboard/settings/loadSettingsDashboardSnapshot.ts'),
+      'utf8',
+    );
     const actionsHook = readFileSync(
       join(process.cwd(), 'src/pages/dashboard/settings/useSettingsSiteAccessActions.ts'),
       'utf8',
@@ -98,6 +102,7 @@ describe('settings site data boundary', () => {
     );
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/settings/settingsSiteData.ts'), 'utf8');
 
+    expect(page).toContain('loadSettingsDashboardSnapshot({');
     expect(page).toContain('loadSettingsCollaboratorInvites(siteId)');
     expect(page).toContain('useSettingsSiteAccessActions({');
     expect(page).toContain('useSettingsExperienceActions({');
@@ -120,6 +125,7 @@ describe('settings site data boundary', () => {
     expect(page).not.toContain("from('wedding_site_collaborator_invites')");
     expect(page).not.toContain("from('site_translations')");
     expect(page).not.toMatch(/supabase\s*\n\s*\.from\('wedding_sites'\)/);
+    expect(page).not.toContain('loadSettingsSite(activeSite.id)');
     expect(page).not.toContain('supabase.auth.getUser');
     expect(page).not.toContain('supabase.auth.signInWithPassword');
     expect(page).not.toContain('supabase.auth.updateUser');
@@ -165,6 +171,12 @@ describe('settings site data boundary', () => {
     expect(rsvpTabContent).toContain('<SettingsRsvpQuestionsPanel');
     expect(rsvpTabContent).toContain('onSaveMealSettings');
     expect(rsvpTabContent).toContain('onToggleAdvancedVisibility');
+
+    expect(snapshotLoader).toContain('loadSettingsSite(activeSite.id)');
+    expect(snapshotLoader).toContain('loadSettingsCollaboratorInvites(siteId)');
+    expect(snapshotLoader).toContain('loadSettingsTranslationStatuses(');
+    expect(snapshotLoader).toContain('resolveActiveSiteForUser(userId)');
+    expect(snapshotLoader).not.toContain("from('wedding_sites')");
 
     expect(actionsHook).toContain('createSettingsCollaboratorInvite({');
     expect(actionsHook).toContain('revokeSettingsCollaboratorInvite(inviteId)');

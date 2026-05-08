@@ -23,6 +23,10 @@ const settingsRsvpTabContentSource = () => readFileSync(
   join(process.cwd(), 'src/pages/dashboard/settings/SettingsRsvpTabContent.tsx'),
   'utf8',
 );
+const settingsDashboardSnapshotSource = () => readFileSync(
+  join(process.cwd(), 'src/pages/dashboard/settings/loadSettingsDashboardSnapshot.ts'),
+  'utf8',
+);
 const customerSafeErrorSource = () => readFileSync(join(process.cwd(), 'src/lib/customerSafeError.ts'), 'utf8');
 const settingsSiteDataSource = () => readFileSync(join(process.cwd(), 'src/pages/dashboard/settings/settingsSiteData.ts'), 'utf8');
 
@@ -64,6 +68,7 @@ describe('settings error safety', () => {
     const pageSource = settingsSource();
     const actionsSource = settingsSiteAccessActionsSource();
     const experienceSource = settingsExperienceActionsSource();
+    const snapshotSource = settingsDashboardSnapshotSource();
     const selectMatch = source.match(/export const SETTINGS_SITE_SELECT = \[([\s\S]*?)\]\.join/);
     expect(selectMatch?.[1]).toBeTruthy();
     const selectedColumns = new Set(
@@ -88,7 +93,10 @@ describe('settings error safety', () => {
 
     expect(source).toContain('.select(SETTINGS_SITE_SELECT)');
     expect(source).not.toContain(".select('*')");
-    expect(pageSource).toContain('loadSettingsSite(activeSite.id)');
+    expect(pageSource).toContain('loadSettingsDashboardSnapshot({');
+    expect(snapshotSource).toContain('loadSettingsSite(activeSite.id)');
+    expect(snapshotSource).toContain('loadSettingsCollaboratorInvites(siteId)');
+    expect(snapshotSource).toContain('loadSettingsTranslationStatuses(');
     expect(source).toContain('function updateSettingsSite');
     expect(source).toContain("supabase.rpc('hash_site_password'");
     expect(source).toContain("supabase.rpc('generate_secure_token'");

@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 3:22 AM PT - No-Deploy Settings Dashboard Snapshot Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Settings.tsx` now routes its bootstrap and hydration fetch path through `src/pages/dashboard/settings/loadSettingsDashboardSnapshot.ts` instead of owning the full settings snapshot load inline.
+  - `loadSettingsDashboardSnapshot.ts` now owns the signed-out, demo, and live settings snapshot fetch/normalization seam, including collaborator invite hydration, translation status hydration, RSVP settings normalization, and notification/privacy defaults.
+  - `src/lib/settingsErrorSafety.test.ts` and `src/pages/dashboard/settings/settingsSiteData.test.ts` now pin the `loadSettingsDashboardSnapshot(...)` seam and reject regaining the old page-owned `loadSettingsSite(...)` snapshot path in `Settings.tsx`.
+- Acceptance/proof target:
+  - Focused settings tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 3:15 AM PT - No-Deploy Settings RSVP Tab Content Extraction
 
 - Status: `PARTIAL`

@@ -19,6 +19,24 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 3:22 AM PT - No-Deploy Settings Dashboard Snapshot Extraction
+
+What changed:
+- `src/pages/dashboard/Settings.tsx` no longer owns the full owner-settings bootstrap and hydration fetch path inline.
+- New `src/pages/dashboard/settings/loadSettingsDashboardSnapshot.ts` now owns the signed-out, demo, and live snapshot load/normalization seam for settings bootstrap, including collaborator invites, translation statuses, RSVP settings, and notification/privacy defaults.
+- `src/lib/settingsErrorSafety.test.ts` and `src/pages/dashboard/settings/settingsSiteData.test.ts` now pin that seam and reject regaining the old page-owned `loadSettingsSite(...)` snapshot path inside `Settings.tsx`.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts`: PASS.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `npm run proof:v1:board:md`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This pulls a big chunk of bootstrap logic out of `Settings.tsx` and keeps the page more focused on local state and action wiring instead of fetch-and-normalize choreography. No deploy was run.
+
 ### 2026-05-08 3:15 AM PT - No-Deploy Settings RSVP Tab Content Extraction
 
 What changed:

@@ -2,15 +2,13 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
 import { Loader2 } from 'lucide-react';
-import { getSiteVisibilityState, getVisibilityModeOptions } from '../../lib/siteVisibilityState';
 import { getAllTemplates } from '../../templates/registry';
 import { fetchBillingInfo, type BillingInfo } from '../../lib/stripeService';
 import { useAuth } from '../../hooks/useAuth';
-import { PLANNER_ROLE_OPTIONS, getPlannerPermissionPreset, readPlannerInvite, type PlannerAccessRole, type PlannerInviteRecord, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
+import { PLANNER_ROLE_OPTIONS, getPlannerPermissionPreset, readPlannerInvite, type PlannerAccessRole, type PlannerInviteRecord, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { useToast } from '../../components/ui/Toast';
 import { logAppAction } from '../../lib/actionAudit';
-import { demoWeddingSite } from '../../lib/demoData';
 import { getSafePublicWebUrl } from '../../sections/publicLinks';
 import {
   buildWeddingIdentityExportKit,
@@ -18,7 +16,6 @@ import {
 } from '../../lib/weddingIdentityExports';
 import {
   loadSettingsCollaboratorInvites,
-  loadSettingsSite,
   loadSettingsTranslationStatuses,
   requireSettingsAuthenticatedUser,
   updateSettingsAccountPassword,
@@ -27,23 +24,17 @@ import {
   type SettingsCollaboratorInviteRow,
 } from './settings/settingsSiteData';
 import {
-  SITE_LANGUAGE_OPTIONS,
-  TRANSLATION_LANGUAGE_OPTIONS,
   type RSVPQuestionSetting,
   type SiteLanguageCode,
   type TranslationLanguageCode,
   type TranslationStatusRow,
 } from './settings/settingsDashboardTypes';
 import {
-  SETTINGS_SITE_MISSING_COPY,
-  formatTranslationStatusDate,
   makeQuestion,
-  normalizeMealOptions,
-  normalizeRsvpQuestions,
   safeSettingsError,
   splitCoupleNames,
 } from './settings/settingsDashboardUtils';
-import { readDemoRsvpSettings } from './settings/settingsDemoStorage';
+import { loadSettingsDashboardSnapshot } from './settings/loadSettingsDashboardSnapshot';
 import { SettingsAccountPanel } from './settings/SettingsAccountPanel';
 import { SettingsBillingPanel } from './settings/SettingsBillingPanel';
 import { getSettingsTabs, SettingsNavigation, type SettingsTabId } from './settings/SettingsNavigation';
@@ -235,157 +226,63 @@ export const DashboardSettings: React.FC = () => {
   };
 
   const loadTranslationStatuses = async (siteId: string) => {
-    let data: Awaited<ReturnType<typeof loadSettingsTranslationStatuses>>;
     try {
-      data = await loadSettingsTranslationStatuses(
+      const rows = await loadSettingsTranslationStatuses(
         siteId,
-        TRANSLATION_LANGUAGE_OPTIONS.map((option) => option.value),
+        ['es', 'fr', 'it', 'de', 'pt'],
+      );
+      setTranslationStatuses(
+        rows
+          .filter((row): row is TranslationStatusRow => row.status === 'ready' || row.status === 'failed')
+          .map((row) => ({
+            language: row.language as TranslationLanguageCode,
+            status: row.status,
+            translated_at: row.translated_at ?? null,
+          })),
       );
     } catch {
       setTranslationStatuses([]);
-      return;
     }
-
-    setTranslationStatuses(
-      data
-        .filter((row): row is TranslationStatusRow =>
-          TRANSLATION_LANGUAGE_OPTIONS.some((option) => option.value === row.language) &&
-          (row.status === 'ready' || row.status === 'failed')
-        )
-        .map((row) => ({
-          language: row.language,
-          status: row.status,
-          translated_at: row.translated_at ?? null,
-        }))
-    );
   };
 
   const loadSiteData = async () => {
-    if (!user) {
-      setWeddingSiteId(null);
-      setCoupleNames('');
-      setAccountEmail('');
-      setSiteSlug('');
-      setGuestAccessToken(null);
-      setCollaboratorInvites([]);
-      setSettingsRole('owner');
-      return;
-    }
-
-    if (isDemoMode) {
-      const demoRsvpSettings = readDemoRsvpSettings();
-      if (rsvpDraftGuard.shouldHydrate()) {
-        if (demoRsvpSettings.questions) setRsvpQuestions(demoRsvpSettings.questions);
-        if (typeof demoRsvpSettings.mealEnabled === 'boolean') setRsvpMealEnabled(demoRsvpSettings.mealEnabled);
-        if (demoRsvpSettings.mealOptions) setRsvpMealOptions(demoRsvpSettings.mealOptions);
-      }
-
-      setSettingsRole('owner');
-      setWeddingSiteId(demoWeddingSite.id);
-      setAccountEmail(user.email ?? '');
-      setCoupleNames(`${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`);
-      setWeddingDate(demoWeddingSite.wedding_date);
-      setVenueName(demoWeddingSite.venue_name);
-      setCurrentTemplate('base');
-      setSiteSlug(demoWeddingSite.site_url);
-      setMusicPlaylistUrl('');
-      if (visibilityDraftGuard.shouldHydrate()) {
-        setPrivacyMode('public');
-        setHideFromSearch(false);
-        setGuestAccessToken(null);
-        setDefaultLanguage('en');
-      }
-      if (notifDraftGuard.shouldHydrate()) {
-        setNotifRsvp(true);
-        setNotifPhotos(true);
-        setNotifDigest(false);
-        setNotifUpdates(false);
-      }
-      setCollaboratorInvites([]);
-      return;
-    }
-
     try {
-      const activeSite = await resolveActiveSiteForUser(user.id);
-      setSettingsRole(activeSite?.role ?? 'owner');
-      if (isDemoMode && activeSite?.id === 'demo-site-id') {
-        setWeddingSiteId(demoWeddingSite.id);
-        setAccountEmail(user.email ?? '');
-        setCoupleNames(`${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`);
-        setWeddingDate(demoWeddingSite.wedding_date);
-        setVenueName(demoWeddingSite.venue_name);
-        setCurrentTemplate('base');
-        setSiteSlug(demoWeddingSite.site_url);
-        setMusicPlaylistUrl('');
-        if (visibilityDraftGuard.shouldHydrate()) {
-          setPrivacyMode('public');
-          setHideFromSearch(false);
-          setGuestAccessToken(null);
-          setDefaultLanguage('en');
-        }
-        if (notifDraftGuard.shouldHydrate()) {
-          setNotifRsvp(true);
-          setNotifPhotos(true);
-          setNotifDigest(false);
-          setNotifUpdates(false);
-        }
-        setCollaboratorInvites([]);
-        return;
+      const snapshot = await loadSettingsDashboardSnapshot({
+        isDemoMode,
+        userEmail: user?.email ?? null,
+        userId: user?.id ?? null,
+      });
+
+      setSettingsRole(snapshot.settingsRole);
+      setWeddingSiteId(snapshot.weddingSiteId);
+      setAccountEmail(snapshot.accountEmail);
+      setCoupleNames(snapshot.coupleNames);
+      setWeddingDate(snapshot.weddingDate);
+      setVenueName(snapshot.venueName);
+      setCurrentTemplate(snapshot.currentTemplate);
+      setSiteSlug(snapshot.siteSlug);
+      setMusicPlaylistUrl(snapshot.musicPlaylistUrl);
+      setCollaboratorInvites(snapshot.collaboratorInvites);
+      setTranslationStatuses(snapshot.translationStatuses);
+
+      if (visibilityDraftGuard.shouldHydrate()) {
+        setPrivacyMode(snapshot.privacyMode);
+        setHideFromSearch(snapshot.hideFromSearch);
+        setGuestAccessToken(snapshot.guestAccessToken);
+        setDefaultLanguage(snapshot.defaultLanguage);
       }
-      const data = activeSite?.id ? await loadSettingsSite(activeSite.id) : null;
 
-      if (data) {
-        setWeddingSiteId((data.id as string) ?? null);
-        if (typeof data.id === 'string') {
-          void loadTranslationStatuses(data.id);
-        }
-        const name1 = (data.couple_name_1 as string) ?? '';
-        const name2 = (data.couple_name_2 as string) ?? '';
-        setCoupleNames(name1 && name2 ? `${name1} & ${name2}` : name1 || name2 || '');
-        setWeddingDate((data.wedding_date as string | null) ?? null);
-        setVenueName((data.venue_name as string | null) ?? null);
-        setAccountEmail(user.email ?? '');
-        setCurrentTemplate((data.active_template_id as string) || 'base');
-        setSiteSlug((data.site_slug as string) ?? '');
-        setMusicPlaylistUrl((data.music_playlist_url as string) ?? '');
-        if (visibilityDraftGuard.shouldHydrate()) {
-          setPrivacyMode((data.privacy_mode as 'public' | 'password_protected' | 'invite_only') ?? 'public');
-          setHideFromSearch(!!(data.hide_from_search as boolean | null | undefined));
-          setGuestAccessToken((data.guest_access_token as string | null) ?? null);
-        }
-        const loadedLanguage = SITE_LANGUAGE_OPTIONS.some((option) => option.value === data.default_language)
-          ? data.default_language as SiteLanguageCode
-          : 'en';
-        if (visibilityDraftGuard.shouldHydrate()) {
-          setDefaultLanguage(loadedLanguage);
-        }
-        const prefs = data.notification_prefs as Record<string, boolean> | null;
-        if (prefs && notifDraftGuard.shouldHydrate()) {
-          setNotifRsvp(prefs.rsvp ?? true);
-          setNotifPhotos(prefs.photos ?? true);
-          setNotifDigest(prefs.digest ?? false);
-          setNotifUpdates(prefs.updates ?? false);
-        }
+      if (notifDraftGuard.shouldHydrate()) {
+        setNotifRsvp(snapshot.notifRsvp);
+        setNotifPhotos(snapshot.notifPhotos);
+        setNotifDigest(snapshot.notifDigest);
+        setNotifUpdates(snapshot.notifUpdates);
+      }
 
-        const normalized = normalizeRsvpQuestions((data as { rsvp_custom_questions?: unknown }).rsvp_custom_questions);
-        if (rsvpDraftGuard.shouldHydrate()) {
-          setRsvpQuestions(normalized);
-
-          const mealCfg = (data as { rsvp_meal_config?: unknown }).rsvp_meal_config as { enabled?: boolean; options?: unknown[] } | undefined;
-          setRsvpMealEnabled(mealCfg?.enabled ?? true);
-          setRsvpMealOptions(normalizeMealOptions(mealCfg?.options));
-        }
-
-        if ((data.id as string | undefined)) {
-          await loadCollaboratorInvites(data.id as string);
-        }
-
-      } else {
-        setWeddingSiteId(null);
-        setAccountEmail(user.email ?? '');
-        setSiteSlug('');
-        setGuestAccessToken(null);
-        setCollaboratorInvites([]);
+      if (rsvpDraftGuard.shouldHydrate()) {
+        setRsvpQuestions(snapshot.rsvpQuestions);
+        setRsvpMealEnabled(snapshot.rsvpMealEnabled);
+        setRsvpMealOptions(snapshot.rsvpMealOptions);
       }
     } catch (err) {
       setAccountError(safeSettingsError(err, 'Couldn’t load settings right now.'));
