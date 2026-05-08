@@ -7675,6 +7675,21 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 11:20 PM PT No-Deploy RSVP Submit Readiness Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its shared pre-submit guest-facing guardrails through `src/pages/validateRsvpSubmitReadiness.ts`.
+  - That shared submit-readiness helper now owns deadline enforcement, invitation-session enforcement, event-selection guardrails, and household-share selection requirements that used to sit inline at the top of `handleSubmit(...)`.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `validateRsvpSubmitReadiness(...)` and its exact guest-facing error copy so the main RSVP page keeps routing pre-submit checks through the dedicated helper.
+  - `src/pages/RSVP.tsx` dropped from 1205 lines to 1201 lines in this batch, while `src/pages/validateRsvpSubmitReadiness.ts` came in at 58 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 10:43 PM PT No-Deploy RSVP Step Validation Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

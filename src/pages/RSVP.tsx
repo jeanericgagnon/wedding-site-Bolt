@@ -40,6 +40,7 @@ import { resetRsvpLookupFlow } from './resetRsvpLookupFlow';
 import { resetRsvpPageState } from './resetRsvpPageState';
 import { RsvpPageRouteView } from './RsvpPageRouteView';
 import { validateRsvpFormAdvance } from './validateRsvpFormAdvance';
+import { validateRsvpSubmitReadiness } from './validateRsvpSubmitReadiness';
 
 export { normalizeRsvpGuestError, normalizeRsvpSubmitError } from './rsvpTypes';
 
@@ -937,37 +938,32 @@ export default function RSVP() {
     setError('');
 
     try {
+      const submitReadinessError = validateRsvpSubmitReadiness({
+        applyToHousehold,
+        deadlinePassed,
+        existingRsvpPresent: !!existingRsvp,
+        formData,
+        guest,
+        householdGuestCount: householdGuests.length,
+        rsvpSessionToken,
+        selectedHouseholdGuestCount: selectedHouseholdGuestIds.length,
+      });
+
+      if (submitReadinessError === 'missing-guest') return;
+
+      if (submitReadinessError) {
+        if (activeSubmitRequestRef.current !== requestId) return;
+        setError(submitReadinessError);
+        return;
+      }
+
       if (!guest) return;
-
-      if (deadlinePassed && !existingRsvp) {
-        if (activeSubmitRequestRef.current !== requestId) return;
-        setError('The RSVP deadline has passed. Please contact the couple directly if you still need to respond.');
-        return;
-      }
-
-      if (!rsvpSessionToken) {
-        if (activeSubmitRequestRef.current !== requestId) return;
-        setError('Please use the RSVP button from your invitation email so we can open the right response.');
-        return;
-      }
-
-      if (formData.attending && guest.invited_to_ceremony && guest.invited_to_reception && !formData.attendCeremony && !formData.attendReception) {
-        if (activeSubmitRequestRef.current !== requestId) return;
-        setError('Please choose at least one event from your invitation, or mark not attending.');
-        return;
-      }
 
       const notesPayload = (formData.notes || '').trim();
       const mealChoice = (formData.meal_choice || '').trim();
       const plusOneName = (formData.plus_one_name || '').trim();
       const childrenCount = formData.attending ? Math.max(0, Number(formData.children_count ?? 0)) : 0;
       const normalizedCustomAnswers = normalizeCustomAnswers(customAnswers);
-
-      if (applyToHousehold && householdGuests.length > 0 && selectedHouseholdGuestIds.length === 0) {
-        if (activeSubmitRequestRef.current !== requestId) return;
-        setError('Pick at least one household guest to share this RSVP with, or turn inheritance off.');
-        return;
-      }
 
       if (USE_DEMO_RSVP) {
         const stored = readDemoStoredResponses();

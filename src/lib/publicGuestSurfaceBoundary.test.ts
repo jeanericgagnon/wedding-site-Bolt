@@ -150,6 +150,7 @@ describe('public guest surface boundary', () => {
     const rsvpResetPageState = readSource('src/pages/resetRsvpPageState.ts');
     const rsvpPageRouteView = readSource('src/pages/RsvpPageRouteView.tsx');
     const rsvpValidateAdvance = readSource('src/pages/validateRsvpFormAdvance.ts');
+    const rsvpValidateSubmitReadiness = readSource('src/pages/validateRsvpSubmitReadiness.ts');
     const rsvpLiveContentView = readSource('src/pages/RsvpLiveContentView.tsx');
     const rsvpTokenLoadingView = readSource('src/pages/RsvpTokenLoadingView.tsx');
     const rsvpFlowView = readSource('src/pages/RsvpFlowView.tsx');
@@ -172,6 +173,7 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain("from './resetRsvpPageState'");
     expect(rsvpPage).toContain("from './RsvpPageRouteView'");
     expect(rsvpPage).toContain("from './validateRsvpFormAdvance'");
+    expect(rsvpPage).toContain("from './validateRsvpSubmitReadiness'");
     expect(rsvpPage).toContain('<RsvpPageRouteView');
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
     expect(rsvpPage).toContain('applyAmbiguousRsvpLookupState({');
@@ -181,6 +183,7 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain('buildRsvpPageViewModel({');
     expect(rsvpPage).toContain('resetRsvpLookupFlow({');
     expect(rsvpPage).toContain('resetRsvpPageState({');
+    expect(rsvpPage).toContain('validateRsvpSubmitReadiness({');
     expect(rsvpPage).toContain('const liveContentProps = buildRsvpLiveContentViewProps({');
     expect(rsvpPage).toContain('validateRsvpFormAdvance({');
     expect(rsvpDerivedViewState).toContain('guestPredictions');
@@ -207,6 +210,10 @@ describe('public guest surface boundary', () => {
     expect(rsvpResetPageState).toContain('setTokenAutoLoading?.(false)');
     expect(rsvpResetPageState).toContain("setStep('search')");
     expect(rsvpResetPageState).toContain('setSearchValue(searchValue)');
+    expect(rsvpValidateSubmitReadiness).toContain('The RSVP deadline has passed.');
+    expect(rsvpValidateSubmitReadiness).toContain('Please use the RSVP button from your invitation email');
+    expect(rsvpValidateSubmitReadiness).toContain('Please choose at least one event from your invitation');
+    expect(rsvpValidateSubmitReadiness).toContain('Pick at least one household guest to share this RSVP with');
     expect(rsvpPageRouteView).toContain("from './RsvpRouteView'");
     expect(rsvpPageRouteView).toContain("from './RsvpLiveContentView'");
     expect(rsvpPageRouteView).toContain("from './RsvpTokenLoadingView'");

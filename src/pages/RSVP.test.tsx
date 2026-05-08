@@ -59,6 +59,7 @@ describe('RSVP stale submit protection', () => {
     const resetLookupFlow = readFileSync(join(process.cwd(), 'src/pages/resetRsvpLookupFlow.ts'), 'utf8');
     const resetPageState = readFileSync(join(process.cwd(), 'src/pages/resetRsvpPageState.ts'), 'utf8');
     const validateAdvance = readFileSync(join(process.cwd(), 'src/pages/validateRsvpFormAdvance.ts'), 'utf8');
+    const validateSubmitReadiness = readFileSync(join(process.cwd(), 'src/pages/validateRsvpSubmitReadiness.ts'), 'utf8');
     const pageRouteView = readFileSync(join(process.cwd(), 'src/pages/RsvpPageRouteView.tsx'), 'utf8');
     const flowView = readFileSync(join(process.cwd(), 'src/pages/RsvpFlowView.tsx'), 'utf8');
     const formView = readFileSync(join(process.cwd(), 'src/pages/RsvpFormView.tsx'), 'utf8');
@@ -80,6 +81,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain("from './resetRsvpPageState'");
     expect(rsvpPage).toContain("from './RsvpPageRouteView'");
     expect(rsvpPage).toContain("from './validateRsvpFormAdvance'");
+    expect(rsvpPage).toContain("from './validateRsvpSubmitReadiness'");
     expect(rsvpPage).toContain('<RsvpPageRouteView');
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
     expect(rsvpPage).toContain('applyAmbiguousRsvpLookupState({');
@@ -89,6 +91,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain('buildRsvpPageViewModel({');
     expect(rsvpPage).toContain('resetRsvpLookupFlow({');
     expect(rsvpPage).toContain('resetRsvpPageState({');
+    expect(rsvpPage).toContain('validateRsvpSubmitReadiness({');
     expect(rsvpPage).toContain('const liveContentProps = buildRsvpLiveContentViewProps({');
     expect(rsvpPage).toContain('validateRsvpFormAdvance({');
     expect(derivedViewState).toContain('guestPredictions');
@@ -115,6 +118,10 @@ describe('RSVP stale submit protection', () => {
     expect(resetPageState).toContain('setTokenAutoLoading?.(false)');
     expect(resetPageState).toContain("setStep('search')");
     expect(resetPageState).toContain('setSearchValue(searchValue)');
+    expect(validateSubmitReadiness).toContain('The RSVP deadline has passed.');
+    expect(validateSubmitReadiness).toContain('Please use the RSVP button from your invitation email');
+    expect(validateSubmitReadiness).toContain('Please choose at least one event from your invitation');
+    expect(validateSubmitReadiness).toContain('Pick at least one household guest to share this RSVP with');
     expect(pageRouteView).toContain("from './RsvpRouteView'");
     expect(pageRouteView).toContain("from './RsvpLiveContentView'");
     expect(pageRouteView).toContain("from './RsvpTokenLoadingView'");
