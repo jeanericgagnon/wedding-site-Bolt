@@ -640,6 +640,7 @@ describe('dashboard data boundary guards', () => {
     const pendingVendorPrompt = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/PendingVendorBudgetPrompt.tsx'), 'utf8');
     const tabContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/PlanningDashboardTabContent.tsx'), 'utf8');
     const songTab = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/SongRequestsTab.tsx'), 'utf8');
+    const starterSuiteHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/usePlanningStarterSuiteActions.ts'), 'utf8');
 
     expect(source).toContain('const PLANNING_TASK_SELECT = ');
     expect(source).toContain('const PLANNING_VENDOR_SELECT = ');
@@ -669,6 +670,7 @@ describe('dashboard data boundary guards', () => {
     expect(page).toContain('<PlanningDashboardShell');
     expect(page).toContain('<PlanningDashboardTabContent');
     expect(page).toContain('<PendingVendorBudgetPrompt');
+    expect(page).toContain('usePlanningStarterSuiteActions({');
     expect(page).not.toContain("supabase.from('wedding_sites')");
     expect(page).not.toContain("supabase.from('guests')");
     expect(page).not.toContain("supabase\n        .from('wedding_sites')");
@@ -685,6 +687,10 @@ describe('dashboard data boundary guards', () => {
     expect(tabContent).toContain('<NameChangePlannerTab');
     expect(pendingVendorPrompt).toContain('export function PendingVendorBudgetPrompt({');
     expect(pendingVendorPrompt).toContain('Add this vendor to your budget?');
+    expect(starterSuiteHook).toContain('export function usePlanningStarterSuiteActions({');
+    expect(starterSuiteHook).toContain('const starterSuite = useMemo<StarterPlannerSuite | null>(() => {');
+    expect(starterSuiteHook).toContain("type: 'starter_suite_applied'");
+    expect(starterSuiteHook).toContain("type: 'starter_suite_undone'");
     expect(addressTab).not.toContain("from '../../../lib/supabase'");
     expect(addressTab).not.toContain("supabase.from('wedding_sites')");
     expect(addressTab).not.toContain(".from('guests')");
@@ -692,6 +698,8 @@ describe('dashboard data boundary guards', () => {
     expect(songTab).not.toContain("supabase.from('wedding_sites')");
     expect(songTab).not.toContain(".from('rsvps')");
     expect(page).not.toContain('Would you like to create a matching budget line too?');
+    expect(page).not.toContain('const handleApplyStarterSuite = useCallback(async () => {');
+    expect(page).not.toContain('const handleUndoStarterSuite = useCallback(async () => {');
   });
 
   it('loads builder editor and media rows with explicit projections', () => {

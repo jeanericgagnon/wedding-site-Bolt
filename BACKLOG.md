@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 7:42 AM PT - No-Deploy Planning Starter-Suite Hook Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Planning.tsx` no longer owns the inline starter-suite memo plus apply and undo orchestration.
+  - Added `src/pages/dashboard/planning/usePlanningStarterSuiteActions.ts` so the new hook now owns starter-suite generation, apply/undo busy state, created-id tracking, demo/live record fanout, QA suffixing, and internal action-audit logging while the route keeps page composition, tab routing, and vendor-budget follow-up behavior.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `usePlanningStarterSuiteActions({ ... })`, checks that the new hook owns the starter-suite memo and applied/undone audit seams, and rejects regaining the old inline `handleApplyStarterSuite` and `handleUndoStarterSuite` handlers in `Planning.tsx`.
+- Acceptance/proof target:
+  - Focused dashboard boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 7:37 AM PT - No-Deploy Planning Vendor-Budget Prompt Extraction
 
 - Status: `PARTIAL`

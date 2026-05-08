@@ -19,6 +19,22 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 7:42 AM PT - No-Deploy Planning Starter-Suite Hook Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Planning.tsx` now routes its starter-suite generation plus apply/undo orchestration through `src/pages/dashboard/planning/usePlanningStarterSuiteActions.ts` instead of hand-owning that memoized orchestration lane inline.
+  - That new hook now owns starter-suite generation, apply/undo busy state, created-id tracking, demo/live task-budget-vendor fanout, QA suffixing, and internal action-audit logging while the route keeps page composition, tab routing, and vendor-budget follow-up behavior.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `usePlanningStarterSuiteActions({ ... })`, checks that `usePlanningStarterSuiteActions.ts` owns the starter-suite memo plus applied/undone audit seams, and rejects regaining the old inline `handleApplyStarterSuite` and `handleUndoStarterSuite` handlers in `Planning.tsx`.
+  - `src/pages/dashboard/Planning.tsx` dropped from 851 lines to 676 lines in this batch, while `src/pages/dashboard/planning/usePlanningStarterSuiteActions.ts` came in at 274 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ### 2026-05-08 7:37 AM PT - No-Deploy Planning Vendor-Budget Prompt Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:

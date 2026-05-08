@@ -11,7 +11,6 @@ import {
   loadBudgetItems, createBudgetItem, updateBudgetItem, deleteBudgetItem,
   loadVendors, createVendor, updateVendor, deleteVendor,
   generateMilestoneTasks,
-  buildStarterPlannerSuite,
   loadPlanningGuestCount,
   loadPlanningSeatingReadiness,
   loadPlanningSiteMeta,
@@ -21,19 +20,12 @@ import { buildNameChangePlan } from '../../lib/nameChange/engine';
 import { syncNameChangeRemindersWithStepExecution } from '../../lib/nameChange/reminders';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput, NameChangePlan, NameChangeReminderInput } from '../../lib/nameChange/types';
 import { annotateNameChangePlanStepsFromReminderChanges, appendNameChangeExecutionActivity, buildNameChangeWorkspaceBundle, deriveNameChangeWorkflowStatus, hydrateNameChangeWorkspace, loadNameChangeWorkspace, defaultNameChangeCaseInput, mergeNameChangePlanExecutionState, saveNameChangeWorkspace } from './planning/nameChangeService';
-import { logAppAction } from '../../lib/actionAudit';
 import { PlanningDashboardShell } from './planning/PlanningDashboardShell';
 import { PendingVendorBudgetPrompt } from './planning/PendingVendorBudgetPrompt';
 import { PlanningDashboardTabContent } from './planning/PlanningDashboardTabContent';
+import { usePlanningStarterSuiteActions } from './planning/usePlanningStarterSuiteActions';
 
 type Tab = 'overview' | 'tasks' | 'budget' | 'payments' | 'vendors' | 'songs' | 'addresses' | 'nameChange';
-
-interface StarterSuiteRun {
-  taskIds: string[];
-  budgetItemIds: string[];
-  vendorIds: string[];
-  createdAt: string;
-}
 
 let planningLocationEventsPatched = false;
 
@@ -81,9 +73,6 @@ export const DashboardPlanning: React.FC = () => {
   const [venueName, setVenueName] = useState<string | null>(null);
   const [destinationWedding, setDestinationWedding] = useState(false);
   const [pendingVendorForBudget, setPendingVendorForBudget] = useState<PlanningVendor | null>(null);
-  const [applyingStarterSuite, setApplyingStarterSuite] = useState(false);
-  const [undoingStarterSuite, setUndoingStarterSuite] = useState(false);
-  const [lastStarterSuiteRun, setLastStarterSuiteRun] = useState<StarterSuiteRun | null>(null);
   const [planningRole, setPlanningRole] = useState<PlannerAccessRole>('owner');
   const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
   const [planningPermissions, setPlanningPermissions] = useState<PlannerPermissionKey[] | null>(null);
@@ -304,198 +293,34 @@ export const DashboardPlanning: React.FC = () => {
     }
   }, [siteId, weddingDate, toast, isDemoMode, planningRole, planningPermissions]);
 
-  const starterSuite = useMemo(() => {
-    if (!siteId) return null;
-    return buildStarterPlannerSuite({
-      weddingSiteId: siteId,
-      weddingDateISO: weddingDate,
-      venueName,
-      guestCount,
-      destinationWedding,
-    });
-  }, [siteId, weddingDate, venueName, guestCount, destinationWedding]);
   const openTaskCount = useMemo(() => tasks.filter((task) => task.status !== 'done').length, [tasks]);
   const paidTotal = useMemo(() => budgetItems.reduce((sum, item) => sum + Number(item.paid_amount ?? 0), 0), [budgetItems]);
   const estimatedTotal = useMemo(() => budgetItems.reduce((sum, item) => sum + Number(item.estimated_amount ?? 0), 0), [budgetItems]);
-
-  const handleApplyStarterSuite = useCallback(async () => {
-    if (!siteId || !starterSuite || applyingStarterSuite) return;
-    if (!canEditPlanningTasks(planningRole, planningPermissions) || !canEditPlanningBudget(planningRole, planningPermissions) || !canEditPlanningVendors(planningRole, planningPermissions)) {
-      toast('Your collaborator role cannot add the full planner starter suite.', 'info');
-      return;
-    }
-
-    setApplyingStarterSuite(true);
-    try {
-      const now = Date.now();
-      const isStarterSuiteQa = starterSuiteQaRunId.length > 0;
-      const qaSuffix = isStarterSuiteQa ? ` QA ${starterSuiteQaRunId}` : '';
-      const shouldAddTasks = isStarterSuiteQa || tasks.length === 0;
-      const shouldAddBudget = isStarterSuiteQa || budgetItems.length === 0;
-      const shouldAddVendors = isStarterSuiteQa || vendors.length === 0;
-      let createdTaskIds: string[] = [];
-      let createdBudgetItemIds: string[] = [];
-      let createdVendorIds: string[] = [];
-
-      if (isDemoMode) {
-        if (shouldAddTasks) {
-          const createdTasks = starterSuite.tasks.map((task, index) => ({
-            ...(task as PlanningTask),
-            title: `${task.title ?? 'Starter task'}${qaSuffix}`,
-            id: `demo-starter-task-${now}-${index}`,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }));
-          createdTaskIds = createdTasks.map((task) => task.id);
-          setTasks((prev) => [
-            ...prev,
-            ...createdTasks,
-          ]);
-        }
-        if (shouldAddBudget) {
-          const createdBudgetItems = starterSuite.budgetItems.map((item, index) => ({
-            ...(item as PlanningBudgetItem),
-            item_name: `${item.item_name ?? 'Starter budget line'}${qaSuffix}`,
-            id: `demo-starter-budget-${now}-${index}`,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }));
-          createdBudgetItemIds = createdBudgetItems.map((item) => item.id);
-          setBudgetItems((prev) => [
-            ...prev,
-            ...createdBudgetItems,
-          ]);
-        }
-        if (shouldAddVendors) {
-          const createdVendors = starterSuite.vendors.map((vendor, index) => ({
-            ...(vendor as PlanningVendor),
-            name: `${vendor.name ?? 'Starter vendor'}${qaSuffix}`,
-            id: `demo-starter-vendor-${now}-${index}`,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }));
-          createdVendorIds = createdVendors.map((vendor) => vendor.id);
-          setVendors((prev) => [
-            ...prev,
-            ...createdVendors,
-          ]);
-        }
-      } else {
-        const [createdTasks, createdBudgetItems, createdVendors] = await Promise.all([
-          shouldAddTasks ? Promise.all(starterSuite.tasks.map((task) => createTask(siteId, { ...task, title: `${task.title ?? 'Starter task'}${qaSuffix}` }))) : Promise.resolve([]),
-          shouldAddBudget ? Promise.all(starterSuite.budgetItems.map((item) => createBudgetItem(siteId, { ...item, item_name: `${item.item_name ?? 'Starter budget line'}${qaSuffix}` }))) : Promise.resolve([]),
-          shouldAddVendors ? Promise.all(starterSuite.vendors.map((vendor) => createVendor(siteId, { ...vendor, name: `${vendor.name ?? 'Starter vendor'}${qaSuffix}` }))) : Promise.resolve([]),
-        ]);
-        if (createdTasks.length > 0) setTasks((prev) => [...prev, ...createdTasks]);
-        if (createdBudgetItems.length > 0) setBudgetItems((prev) => [...prev, ...createdBudgetItems]);
-        if (createdVendors.length > 0) setVendors((prev) => [...prev, ...createdVendors]);
-        createdTaskIds = createdTasks.map((task) => task.id);
-        createdBudgetItemIds = createdBudgetItems.map((item) => item.id);
-        createdVendorIds = createdVendors.map((vendor) => vendor.id);
-      }
-
-      const addedGroups = [
-        shouldAddTasks ? 'tasks' : null,
-        shouldAddBudget ? 'budget' : null,
-        shouldAddVendors ? 'vendors' : null,
-      ].filter(Boolean);
-      if (addedGroups.length > 0) {
-        setLastStarterSuiteRun({
-          taskIds: createdTaskIds,
-          budgetItemIds: createdBudgetItemIds,
-          vendorIds: createdVendorIds,
-          createdAt: new Date().toISOString(),
-        });
-      }
-      if (!isDemoMode && addedGroups.length > 0) {
-        void logAppAction({
-          weddingSiteId: siteId,
-          area: 'planner',
-          type: 'starter_suite_applied',
-          summary: `Planner starter suite added ${addedGroups.join(', ')}.`,
-          targetLabel: 'Planner starter suite',
-          metadata: {
-            taskCount: shouldAddTasks ? starterSuite.tasks.length : 0,
-            budgetItemCount: shouldAddBudget ? starterSuite.budgetItems.length : 0,
-            vendorCount: shouldAddVendors ? starterSuite.vendors.length : 0,
-            weddingDate,
-            guestCount,
-            destinationWedding,
-          },
-        });
-      }
-      toast(addedGroups.length > 0 ? `Starter suite added: ${addedGroups.join(', ')}.` : 'Planner already has starter data.', 'success');
-    } catch {
-      toast('Couldn’t add the starter suite right now. Please try again.', 'error');
-    } finally {
-      setApplyingStarterSuite(false);
-    }
-  }, [
+  const {
     applyingStarterSuite,
-    budgetItems.length,
+    handleApplyStarterSuite,
+    handleUndoStarterSuite,
+    lastStarterSuiteRun,
+    starterSuite,
+    undoingStarterSuite,
+  } = usePlanningStarterSuiteActions({
     destinationWedding,
     guestCount,
     isDemoMode,
     planningPermissions,
     planningRole,
+    qaRunId: starterSuiteQaRunId,
+    setBudgetItems,
+    setTasks,
+    setVendors,
     siteId,
-    starterSuite,
-    starterSuiteQaRunId,
-    tasks.length,
+    tasks,
+    budgetItems,
+    vendors,
     toast,
-    vendors.length,
+    venueName,
     weddingDate,
-  ]);
-
-  const handleUndoStarterSuite = useCallback(async () => {
-    if (!siteId || !lastStarterSuiteRun || undoingStarterSuite) return;
-    if (!canEditPlanningTasks(planningRole, planningPermissions) || !canEditPlanningBudget(planningRole, planningPermissions) || !canEditPlanningVendors(planningRole, planningPermissions)) {
-      toast('Your collaborator role cannot undo the full starter suite.', 'info');
-      return;
-    }
-
-    setUndoingStarterSuite(true);
-    try {
-      const taskIds = new Set(lastStarterSuiteRun.taskIds);
-      const budgetItemIds = new Set(lastStarterSuiteRun.budgetItemIds);
-      const vendorIds = new Set(lastStarterSuiteRun.vendorIds);
-
-      if (!isDemoMode) {
-        await Promise.all([
-          ...lastStarterSuiteRun.taskIds.map((id) => deleteTask(id)),
-          ...lastStarterSuiteRun.budgetItemIds.map((id) => deleteBudgetItem(id)),
-          ...lastStarterSuiteRun.vendorIds.map((id) => deleteVendor(id)),
-        ]);
-      }
-
-      setTasks((prev) => prev.filter((task) => !taskIds.has(task.id)));
-      setBudgetItems((prev) => prev.filter((item) => !budgetItemIds.has(item.id)));
-      setVendors((prev) => prev.filter((vendor) => !vendorIds.has(vendor.id)));
-      setLastStarterSuiteRun(null);
-
-      if (!isDemoMode) {
-        void logAppAction({
-          weddingSiteId: siteId,
-          area: 'planner',
-          type: 'starter_suite_undone',
-          summary: 'Planner starter suite changes were undone.',
-          targetLabel: 'Planner starter suite',
-          metadata: {
-            taskCount: lastStarterSuiteRun.taskIds.length,
-            budgetItemCount: lastStarterSuiteRun.budgetItemIds.length,
-            vendorCount: lastStarterSuiteRun.vendorIds.length,
-            createdAt: lastStarterSuiteRun.createdAt,
-          },
-        });
-      }
-
-      toast('Starter suite changes undone.', 'success');
-    } catch {
-      toast('Couldn’t undo the starter suite right now. Please try again.', 'error');
-    } finally {
-      setUndoingStarterSuite(false);
-    }
-  }, [isDemoMode, lastStarterSuiteRun, planningPermissions, planningRole, siteId, toast, undoingStarterSuite]);
+  });
 
   const handleAddBudgetItem = useCallback(async (item: Partial<PlanningBudgetItem>) => {
     if (!canEditPlanningBudget(planningRole, planningPermissions)) {
