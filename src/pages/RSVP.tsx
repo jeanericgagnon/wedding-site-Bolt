@@ -30,6 +30,7 @@ import {
 import { applyAmbiguousRsvpLookupState } from './applyAmbiguousRsvpLookupState';
 import { applyRsvpGuestSelection } from './applyRsvpGuestSelection';
 import { applyRsvpSubmitSuccess } from './applyRsvpSubmitSuccess';
+import { buildRsvpSubmitPayload } from './buildRsvpSubmitPayload';
 import { buildRsvpDerivedViewState } from './buildRsvpDerivedViewState';
 import { buildRsvpLiveContentActions } from './buildRsvpLiveContentActions';
 import { buildRsvpPageViewModel } from './buildRsvpPageViewModel';
@@ -960,15 +961,21 @@ export default function RSVP() {
 
       if (!guest) return;
 
-      const notesPayload = (formData.notes || '').trim();
-      const mealChoice = (formData.meal_choice || '').trim();
-      const plusOneName = (formData.plus_one_name || '').trim();
-      const childrenCount = formData.attending ? Math.max(0, Number(formData.children_count ?? 0)) : 0;
-      const normalizedCustomAnswers = normalizeCustomAnswers(customAnswers);
+      const submitPayload = buildRsvpSubmitPayload({
+        applyToHousehold,
+        buildNormalizedExistingRsvp,
+        customAnswers,
+        dedupeGuestIds,
+        existingRsvpId: existingRsvp?.id ?? 'submitted-rsvp',
+        formData,
+        guestId: guest.id,
+        normalizeCustomAnswers,
+        selectedHouseholdGuestIds,
+      });
 
       if (USE_DEMO_RSVP) {
         const stored = readDemoStoredResponses();
-        const targetIds = applyToHousehold ? dedupeGuestIds([guest.id, ...selectedHouseholdGuestIds]) : [guest.id];
+        const targetIds = submitPayload.targetGuestIds;
         const payload = buildNormalizedExistingRsvp(formData, customAnswers, `demo-rsvp-${guest.id}`, targetIds);
         const submitSource = tokenLinkedSessionRef.current ? 'token' : 'manual';
         targetIds.forEach((id) => { stored[id] = { ...payload, id: `demo-rsvp-${id}` }; });
@@ -1010,14 +1017,14 @@ export default function RSVP() {
         attending: formData.attending,
         attendCeremony: formData.attendCeremony,
         attendReception: formData.attendReception,
-        mealChoice: mealChoice || null,
-        plusOneName: plusOneName || null,
-        plusOneCount: plusOneName ? 1 : 0,
-        childrenCount,
-        notes: notesPayload || null,
-        customAnswers: normalizedCustomAnswers,
+        mealChoice: submitPayload.mealChoice || null,
+        plusOneName: submitPayload.plusOneName || null,
+        plusOneCount: submitPayload.plusOneCount,
+        childrenCount: submitPayload.childrenCount,
+        notes: submitPayload.notes || null,
+        customAnswers: submitPayload.normalizedCustomAnswers,
         applyToHousehold,
-        targetGuestIds,
+        targetGuestIds: submitPayload.targetGuestIds,
       });
 
       const submitSucceeded = !!(data && typeof data === 'object' && 'success' in data && (data as { success?: boolean }).success);
@@ -1029,7 +1036,6 @@ export default function RSVP() {
       }
 
       if (activeSubmitRequestRef.current !== requestId) return;
-      const normalizedExistingRsvp = buildNormalizedExistingRsvp(formData, customAnswers, existingRsvp?.id ?? 'submitted-rsvp', targetGuestIds);
       const submitSource = tokenLinkedSessionRef.current ? 'token' : 'manual';
       applyRsvpSubmitSuccess({
         applyToHousehold,
@@ -1037,7 +1043,7 @@ export default function RSVP() {
         householdGuests,
         mealConfig,
         musicPlaylistUrl,
-        normalizedExistingRsvp,
+        normalizedExistingRsvp: submitPayload.normalizedExistingRsvp,
         normalizeSelectedHouseholdGuestIds,
         onContinuityUpdate: () => {
           ignoreNextLocalContinuityEventRef.current = true;
@@ -1046,7 +1052,7 @@ export default function RSVP() {
         rsvpDeadline,
         rsvpQuestions,
         rsvpSessionToken,
-        selectedGuestIds: targetGuestIds,
+        selectedGuestIds: submitPayload.targetGuestIds,
         selectGuest,
         setApplyToHousehold,
         setSelectedHouseholdGuestIds,

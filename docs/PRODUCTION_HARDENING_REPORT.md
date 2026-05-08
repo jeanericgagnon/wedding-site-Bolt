@@ -4604,6 +4604,20 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its shared RSVP submit payload assembly through `src/pages/buildRsvpSubmitPayload.ts`.
+  - That shared payload helper now owns target guest-id selection, notes/meal/plus-one normalization, child-count normalization, custom-answer normalization, and normalized existing-RSVP assembly that used to be hand-built inline in `handleSubmit(...)`.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `buildRsvpSubmitPayload(...)` and its target-guest / normalized-RSVP / plus-one-count assembly so the main RSVP page keeps routing submit-payload prep through the dedicated helper.
+  - `src/pages/RSVP.tsx` moved from 1232 lines to 1238 lines in this batch, while `src/pages/buildRsvpSubmitPayload.ts` came in at 66 lines, so this was an ownership cleanup rather than a size reduction.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
 - Proof passed:
   - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
   - `npm run typecheck -- --pretty false`: PASS.

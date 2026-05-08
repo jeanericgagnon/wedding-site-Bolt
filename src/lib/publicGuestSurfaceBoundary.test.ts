@@ -143,6 +143,7 @@ describe('public guest surface boundary', () => {
     const rsvpAmbiguousLookupState = readSource('src/pages/applyAmbiguousRsvpLookupState.ts');
     const rsvpGuestSelection = readSource('src/pages/applyRsvpGuestSelection.ts');
     const rsvpSubmitSuccess = readSource('src/pages/applyRsvpSubmitSuccess.ts');
+    const rsvpSubmitPayload = readSource('src/pages/buildRsvpSubmitPayload.ts');
     const rsvpLookupClassification = readSource('src/pages/classifyRsvpLookupResponse.ts');
     const rsvpLiveContentActions = readSource('src/pages/buildRsvpLiveContentActions.ts');
     const rsvpPageViewModel = readSource('src/pages/buildRsvpPageViewModel.ts');
@@ -167,6 +168,7 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain("from './applyAmbiguousRsvpLookupState'");
     expect(rsvpPage).toContain("from './applyRsvpGuestSelection'");
     expect(rsvpPage).toContain("from './applyRsvpSubmitSuccess'");
+    expect(rsvpPage).toContain("from './buildRsvpSubmitPayload'");
     expect(rsvpPage).toContain("from './classifyRsvpLookupResponse'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentActions'");
     expect(rsvpPage).toContain("from './buildRsvpPageViewModel'");
@@ -181,6 +183,7 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain('applyAmbiguousRsvpLookupState({');
     expect(rsvpPage).toContain('applyRsvpGuestSelection({');
     expect(rsvpPage).toContain('applyRsvpSubmitSuccess({');
+    expect(rsvpPage).toContain('buildRsvpSubmitPayload({');
     expect(rsvpPage).toContain('classifyRsvpLookupResponse(');
     expect(rsvpPage).toContain('buildRsvpLiveContentActions({');
     expect(rsvpPage).toContain('buildRsvpPageViewModel({');
@@ -201,6 +204,9 @@ describe('public guest surface boundary', () => {
     expect(rsvpSubmitSuccess).toContain('onContinuityUpdate()');
     expect(rsvpSubmitSuccess).toContain("setStep('success')");
     expect(rsvpSubmitSuccess).toContain('normalizeSelectedHouseholdGuestIds(');
+    expect(rsvpSubmitPayload).toContain('targetGuestIds');
+    expect(rsvpSubmitPayload).toContain('normalizedExistingRsvp');
+    expect(rsvpSubmitPayload).toContain('plusOneCount: plusOneName ? 1 : 0');
     expect(rsvpLookupClassification).toContain("kind: 'guest'");
     expect(rsvpLookupClassification).toContain("kind: 'ambiguous'");
     expect(rsvpLookupClassification).toContain("kind: 'not_found'");
