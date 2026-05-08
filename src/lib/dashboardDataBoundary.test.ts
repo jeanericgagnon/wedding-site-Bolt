@@ -46,6 +46,7 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Guests.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/guestService.ts'), 'utf8');
 
+    expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).toContain('loadGuestDashboardSiteSettings(user.id)');
     expect(source).toContain('loadGuestDashboardSnapshot(weddingSiteId)');
     expect(source).toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
@@ -144,6 +145,7 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Itinerary.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/itineraryService.ts'), 'utf8');
 
+    expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).toContain('loadItineraryDashboardEvents(hasEventRsvpsTable)');
     expect(source).toContain('resolveItinerarySiteId()');
     expect(source).toContain('createItineraryTemplateEvents(siteId, newEvents)');
@@ -368,6 +370,7 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Vault.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/vaultService.ts'), 'utf8');
 
+    expect(source).not.toContain("from '../../lib/supabase'");
     expect(service).toContain('export const VAULT_CONFIG_SELECT = ');
     expect(service).toContain('export const VAULT_ENTRY_SELECT = ');
     expect(service).toContain('const VAULT_SITE_SELECT = ');

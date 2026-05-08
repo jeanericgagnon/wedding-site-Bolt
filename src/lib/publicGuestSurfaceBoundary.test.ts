@@ -30,6 +30,7 @@ describe('public guest surface boundary', () => {
   it('routes audited guest flows through public gate helpers and edge functions', () => {
     const siteView = readSource('src/pages/SiteView.tsx');
     const siteViewService = readSource('src/pages/siteViewService.ts');
+    expect(siteView).not.toContain("from '../lib/supabase'");
     expect(siteView).toContain("from './siteViewService'");
     expect(siteView).toContain('fetchPublicItineraryRows(siteSlug, access)');
     expect(siteView).toContain('hasLiveRegistryItems(siteId, access)');
@@ -56,6 +57,7 @@ describe('public guest surface boundary', () => {
 
     const vaultContribute = readSource('src/pages/VaultContribute.tsx');
     const vaultContributionService = readSource('src/pages/vaultContributionService.ts');
+    expect(vaultContribute).not.toContain("from '../lib/supabase'");
     expect(vaultContribute).toContain("from './vaultContributionService'");
     expect(vaultContribute).toContain('loadEnabledVaultContributionConfig(siteSlug, vaultYear, buildVaultAccessPayload(siteSlug))');
     expect(vaultContribute).toContain('listEnabledVaultContributionConfigs(siteSlug, buildVaultAccessPayload(siteSlug))');

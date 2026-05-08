@@ -8,7 +8,6 @@ import {
   AlertCircle, Paperclip, Link2, Check, Settings2, ToggleLeft,
   ToggleRight, GripVertical, X, Sparkles
 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { sendAnniversaryReminder } from '../../lib/emailService';

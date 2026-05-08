@@ -3,7 +3,6 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, Lock, Eye, EyeOff } from 'lucide-react';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
-import { supabase } from '../lib/supabase';
 import { WeddingDataV1, createEmptyWeddingData, normalizeWeddingData } from '../types/weddingData';
 import { LayoutConfigV1, SectionInstance } from '../types/layoutConfig';
 import { getSectionComponent } from '../sections/sectionRegistry';
