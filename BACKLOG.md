@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 9:23 AM PT - No-Deploy Itinerary Dashboard UI-State Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Itinerary.tsx` no longer owns the inline itinerary workspace/UI state slab for event-form visibility, edit target, album toggle, selected guest-manager event, template controls, shift controls, timeline busy state, save notices, and local form draft handling.
+  - Added `src/pages/dashboard/useItineraryDashboardUiState.ts` so the new hook now owns itinerary dashboard workspace state plus `openEventForm(...)` and empty-form reset behavior while the route keeps data loading, derived-state helpers, timeline actions, and render composition.
+  - Itinerary boundary tests now pin `useItineraryDashboardUiState()`, check that the new hook owns the local `useState(...)` and `openEventForm(...)` seam, and reject regaining the old inline workspace state slab in `Itinerary.tsx`.
+- Acceptance/proof target:
+  - Focused itinerary/dashboard boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 9:19 AM PT - No-Deploy Itinerary Dashboard Derived-State Extraction
 
 - Status: `PARTIAL`

@@ -16,6 +16,7 @@ import { EventGuestManagerModal } from './EventGuestManagerModal';
 import { ItineraryDashboardRouteView } from './ItineraryDashboardRouteView';
 import { useItineraryDashboardData } from './useItineraryDashboardData';
 import { buildItineraryDashboardDerivedState } from './buildItineraryDashboardDerivedState';
+import { useItineraryDashboardUiState } from './useItineraryDashboardUiState';
 
 type EventWithInvites = ItineraryDashboardEvent;
 type ItineraryEvent = Omit<ItineraryDashboardEvent, 'invitation_count' | 'rsvp_count' | 'attending_count' | 'declined_count' | 'pending_count'>;
@@ -38,71 +39,39 @@ export const DashboardItinerary: React.FC = () => {
         },
       });
     });
-  const [showEventForm, setShowEventForm] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<ItineraryEvent | null>(null);
-  const [autoCreateAlbum, setAutoCreateAlbum] = useState(true);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [saveNotice, setSaveNotice] = useState<string | null>(null);
-  const [isSavingEvent, setIsSavingEvent] = useState(false);
-  const [templateDate, setTemplateDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [templateStart, setTemplateStart] = useState('11:00');
-  const [shiftMinutes, setShiftMinutes] = useState(15);
-  const [shiftFromEventId, setShiftFromEventId] = useState<string>('all');
-  const [timelineBusy, setTimelineBusy] = useState<string | null>(null);
-  const [lastTimelineSnapshot, setLastTimelineSnapshot] = useState<EventWithInvites[] | null>(null);
-
-  const [formData, setFormData] = useState({
-    event_name: '',
-    description: '',
-    event_date: '',
-    start_time: '',
-    end_time: '',
-    location_name: '',
-    location_address: '',
-    dress_code: '',
-    notes: '',
-    is_visible: true,
-  });
+  const {
+    autoCreateAlbum,
+    editingEvent,
+    formData,
+    isSavingEvent,
+    lastTimelineSnapshot,
+    openEventForm,
+    saveError,
+    saveNotice,
+    selectedEventId,
+    setAutoCreateAlbum,
+    setEditingEvent,
+    setFormData,
+    setIsSavingEvent,
+    setLastTimelineSnapshot,
+    setSaveError,
+    setSaveNotice,
+    setSelectedEventId,
+    setShiftFromEventId,
+    setShiftMinutes,
+    setShowEventForm,
+    setTemplateDate,
+    setTemplateStart,
+    setTimelineBusy,
+    shiftFromEventId,
+    shiftMinutes,
+    showEventForm,
+    templateDate,
+    templateStart,
+    timelineBusy,
+  } = useItineraryDashboardUiState();
 
   const { events, loadEvents, loading, setEvents } = useItineraryDashboardData({ isDemoMode, toast });
-
-  function openEventForm(event?: ItineraryEvent) {
-    if (event) {
-      setEditingEvent(event);
-      setAutoCreateAlbum(false);
-      setFormData({
-        event_name: event.event_name,
-        description: event.description || '',
-        event_date: event.event_date,
-        start_time: event.start_time || '',
-        end_time: event.end_time || '',
-        location_name: event.location_name || '',
-        location_address: event.location_address || '',
-        dress_code: event.dress_code || '',
-        notes: event.notes || '',
-        is_visible: event.is_visible,
-      });
-    } else {
-      setEditingEvent(null);
-      setAutoCreateAlbum(true);
-      setFormData({
-        event_name: '',
-        description: '',
-        event_date: '',
-        start_time: '',
-        end_time: '',
-        location_name: '',
-        location_address: '',
-        dress_code: '',
-        notes: '',
-        is_visible: true,
-      });
-    }
-    setSaveError(null);
-    setSaveNotice(null);
-    setShowEventForm(true);
-  }
 
   const {
     handleCreateSmartTemplate,
