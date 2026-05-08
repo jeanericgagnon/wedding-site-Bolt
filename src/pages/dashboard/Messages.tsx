@@ -14,7 +14,6 @@ import { SMS_PROVIDER_PENDING_COPY, isSmsProviderEnabled } from '../../lib/smsPr
 import { logAppAction } from '../../lib/actionAudit';
 import { buildMessageAudienceOptions, filterMessageAudienceGuests, getMessageAudienceDetail } from '../../lib/messageAudienceSegments';
 import { buildGuestMessageLanguagePreviews } from '../../lib/guestMessageLanguagePreview';
-import { isFreshRsvpContinuityStorageValue } from '../rsvpContinuityStorage';
 import {
   type AudienceOption,
   type ChannelType,
@@ -61,8 +60,6 @@ import {
   type MessageHistoryStatusFilter,
 } from './messages/messageDashboardUtils';
 import {
-  RSVP_CONTINUITY_EVENT,
-  RSVP_CONTINUITY_STORAGE_KEY,
   readDemoMessages,
   writeDemoMessages,
 } from './messages/messageDemoStorage';
@@ -78,6 +75,7 @@ import {
 } from './messages/messageService';
 import { useMessageDeliveryActions } from './messages/useMessageDeliveryActions';
 import { useMessageComposeActions } from './messages/useMessageComposeActions';
+import { useMessageDashboardContinuitySync } from './messages/useMessageDashboardContinuitySync';
 import { useMessageComposerDraftActions } from './messages/useMessageComposerDraftActions';
 import { useMessageComposerHistoryActions } from './messages/useMessageComposerHistoryActions';
 import { useMessageDashboardPrefillSync } from './messages/useMessageDashboardPrefillSync';
@@ -397,41 +395,6 @@ export const DashboardMessages: React.FC = () => {
   }, [weddingSite, fetchMessages, fetchGuests, fetchSmsExpiryPreview, fetchItinerarySegments]);
 
   useEffect(() => {
-    if (!weddingSite || isDemoMode) return;
-
-    const refreshGuestMessageContinuity = () => {
-      void fetchGuests();
-      void fetchMessages();
-    };
-
-    const handleRsvpContinuityUpdate = () => {
-      refreshGuestMessageContinuity();
-    };
-
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key !== RSVP_CONTINUITY_STORAGE_KEY || !isFreshRsvpContinuityStorageValue(event.newValue)) return;
-      refreshGuestMessageContinuity();
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState !== 'visible') return;
-      refreshGuestMessageContinuity();
-    };
-
-    window.addEventListener('focus', refreshGuestMessageContinuity);
-    window.addEventListener(RSVP_CONTINUITY_EVENT, handleRsvpContinuityUpdate);
-    window.addEventListener('storage', handleStorage);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('focus', refreshGuestMessageContinuity);
-      window.removeEventListener(RSVP_CONTINUITY_EVENT, handleRsvpContinuityUpdate);
-      window.removeEventListener('storage', handleStorage);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [weddingSite, isDemoMode, fetchGuests, fetchMessages]);
-
-  useEffect(() => {
     if (weddingSite && messages.length > 0) {
       fetchDeliveries();
     }
@@ -519,6 +482,12 @@ export const DashboardMessages: React.FC = () => {
     setEditingMessageId,
     setFormData,
     setShowRecipientPreview,
+  });
+  useMessageDashboardContinuitySync({
+    hasWeddingSite: !!weddingSite,
+    isDemoMode,
+    fetchGuests,
+    fetchMessages,
   });
   const recipientsWithEmail = getRecipients(formData.audience).filter(g => hasReachableEmail(g.email)).length;
   const recipientsWithSmsConsent = getRecipients(formData.audience).filter(g => hasReachableSms(g)).length;

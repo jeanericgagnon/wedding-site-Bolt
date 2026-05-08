@@ -4706,6 +4706,22 @@ Status:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-08 01:45 AM PT No-Deploy Message Dashboard Continuity Sync Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Messages.tsx` now routes focus refresh, RSVP continuity event refresh, cross-tab storage refresh, and visibility refresh through `src/pages/dashboard/messages/useMessageDashboardContinuitySync.ts`.
+  - That hook now owns the repeated continuity event listener setup/teardown and guest/message refresh choreography while the page keeps the data loading, compose state, and high-level dashboard composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useMessageDashboardContinuitySync({ ... })` plus its focus listener, RSVP continuity event listener, and visibility-change contract.
+  - `src/pages/dashboard/Messages.tsx` dropped from 796 lines to 765 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 12:34 AM PT No-Deploy Guest Dashboard Campaign Action Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

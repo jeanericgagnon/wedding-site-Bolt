@@ -8,6 +8,7 @@ describe('dashboard data boundary guards', () => {
     const serviceSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/messageService.ts'), 'utf8');
     const deliveryHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDeliveryActions.ts'), 'utf8');
     const composeHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageComposeActions.ts'), 'utf8');
+    const continuityHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDashboardContinuitySync.ts'), 'utf8');
     const draftHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageComposerDraftActions.ts'), 'utf8');
     const historyHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageComposerHistoryActions.ts'), 'utf8');
     const prefillHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDashboardPrefillSync.ts'), 'utf8');
@@ -24,6 +25,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('<MessageDashboardRouteView');
     expect(source).toContain('useMessageDeliveryActions({');
     expect(source).toContain('useMessageComposeActions({');
+    expect(source).toContain('useMessageDashboardContinuitySync({');
     expect(source).toContain('useMessageComposerDraftActions({');
     expect(source).toContain('useMessageComposerHistoryActions({');
     expect(source).toContain('useMessageDashboardPrefillSync({');
@@ -58,6 +60,10 @@ describe('dashboard data boundary guards', () => {
     expect(composeHookSource).toContain('await updateDashboardMessage(editingMessageId, {');
     expect(composeHookSource).toContain('const result = await triggerDashboardBulkSend(inserted.id)');
     expect(composeHookSource).not.toContain("from '../../lib/supabase'");
+    expect(continuityHookSource).toContain("window.addEventListener('focus', refreshGuestMessageContinuity)");
+    expect(continuityHookSource).toContain("window.addEventListener(RSVP_CONTINUITY_EVENT, handleRsvpContinuityUpdate)");
+    expect(continuityHookSource).toContain("document.addEventListener('visibilitychange', handleVisibilityChange)");
+    expect(continuityHookSource).not.toContain("from '../../lib/supabase'");
     expect(draftHookSource).toContain('await createDashboardMessage(payload)');
     expect(draftHookSource).toContain('writeSavedComposerTemplates(updated)');
     expect(draftHookSource).toContain("applyComposerTemplate('save-the-date', {");
