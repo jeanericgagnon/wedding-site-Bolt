@@ -121,6 +121,7 @@ import {
   updateCoordinatorQnaAnswer,
 } from './coordinator/coordinatorService';
 import { CoordinatorAttentionPanel, CoordinatorCheckInQueuePanel, CoordinatorDayOfMessagePanel, CoordinatorDayOfSummaryPanel, CoordinatorHandoffPanel, CoordinatorHelperAccessPanel, CoordinatorRoleSelector, CoordinatorStatCards, CoordinatorTimelinePanel } from './coordinator/CoordinatorModePanels';
+import { buildCoordinatorDashboardFocusActions } from './coordinator/buildCoordinatorDashboardFocusActions';
 import { useCoordinatorDashboardData } from './coordinator/useCoordinatorDashboardData';
 
 
@@ -689,108 +690,95 @@ export const DashboardCoordinatorMode: React.FC = () => {
     [alertLog, alertChannelFilter, alertTimingFilter],
   );
   const filteredAlertLogView = useMemo(() => buildCoordinatorAlertLogView(filteredAlertLog), [filteredAlertLog]);
-
-  const clearCoordinatorTransientState = () => {
-    setNeutralFocusReason(null);
-    setSummaryFeedback(null);
-    setSummaryFeedbackShownAt(null);
-    setAlertOverrideUpdatedAt(null);
-    setManualOverrideUpdatedAt(null);
-    setOverrideCueShownAt(null);
-    setCommandJumpLabel(null);
-    setCommandJumpPanelFocus(null);
-    setCommandJumpTargetId(null);
-  };
-
-  const focusCoordinatorAlertLane = () => {
-    clearCoordinatorTransientState();
-    setPanelFocus('timeline');
-    setCommandSource(null);
-  };
-
-  const focusCoordinatorCheckInLane = () => {
-    clearCoordinatorTransientState();
-    setPanelFocus('check-in');
-    setCommandSource(null);
-  };
-
-  const focusCoordinatorTimelineLane = () => {
-    clearCoordinatorTransientState();
-    setPanelFocus('timeline');
-    setCommandSource(null);
-  };
-
-  const jumpToTimelineEvent = (eventId: string | null | undefined) => {
-    if (!eventId) return;
-    focusCoordinatorTimelineLane();
-    setActiveTimelineEventId(eventId);
-  };
-
-  const focusFirstCoordinatorQueueGuest = () => {
-    const firstGuest = checkInQueue[0];
-    if (!firstGuest) return;
-    focusCoordinatorCheckInLane();
-    setActiveGuestId(firstGuest.id);
-  };
-
-  const focusFirstCoordinatorOpenQna = () => {
-    const nextQnaId = getFirstOpenCoordinatorQnaId(qnaItems) ?? qnaItems[0]?.id ?? null;
-    if (!nextQnaId) return;
-    focusCoordinatorQnaLane();
-    setActiveQnaId(nextQnaId);
-  };
-
-  const focusCoordinatorQnaLane = () => {
-    clearCoordinatorTransientState();
-    setPanelFocus('qna');
-    setCommandSource(null);
-  };
-
-  const focusNextCoordinatorQna = () => {
-    const nextQnaId = getFirstOpenCoordinatorQnaId(qnaItems) ?? qnaItems[0]?.id ?? null;
-    if (!nextQnaId) return;
-    focusCoordinatorQnaLane();
-    setQnaFilter('open');
-    setActiveQnaId(nextQnaId);
-  };
-
-  const jumpToOpsSnapshotLane = (key: 'check-in' | 'timeline' | 'qna' | 'alerting') => {
-    if (key === 'check-in') {
-      focusCoordinatorCheckInLane();
-      if (checkInBoardTargetId) {
-        setCheckInReviewOnly(checkInWatchCount > 0);
-        setActiveGuestId(checkInBoardTargetId);
-      } else if (nextArrivals[0]) {
-        setCheckInFilter('arrivals');
-        setCheckInReviewOnly(false);
-        setActiveGuestId(nextArrivals[0].id);
-      }
-      return;
-    }
-
-    if (key === 'timeline') {
-      focusCoordinatorTimelineLane();
-      if (liveEventId) {
-        setActiveTimelineEventId(liveEventId);
-      } else if (upNextEventId) {
-        setActiveTimelineEventId(upNextEventId);
-      } else if (timelineBoardTargetId) {
-        setActiveTimelineEventId(timelineBoardTargetId);
-      }
-      return;
-    }
-
-    if (key === 'qna') {
-      focusCoordinatorQnaLane();
-      if (qnaBoardTargetId) setActiveQnaId(qnaBoardTargetId);
-      return;
-    }
-
-    focusCoordinatorAlertLane();
-    if (preferredAlertSuggestion && !alertTargetCue.aligned && canSendAlerts) {
-      setAlertForm((prev) => applyCoordinatorAlertSuggestion({ form: prev, suggestion: preferredAlertSuggestion }));
-    }
-  };
+  const {
+    clearCoordinatorTransientState,
+    escalateDoorReview,
+    focusCoordinatorAlertLane,
+    focusCoordinatorCheckInLane,
+    focusCoordinatorQnaLane,
+    focusCoordinatorTimelineLane,
+    focusFirstCoordinatorOpenQna,
+    focusFirstCoordinatorQueueGuest,
+    focusNextCoordinatorQna,
+    jumpToCommandSummaryItem,
+    jumpToOpsSnapshotLane,
+    jumpToStablePrompt,
+    jumpToTimelineEvent,
+    returnToBoardTarget,
+    revisitNeutralFocus,
+  } = useMemo(() => buildCoordinatorDashboardFocusActions({
+    alertTargetCueAligned: alertTargetCue.aligned,
+    canEditQna,
+    canSendAlerts,
+    checkInBoardTargetId,
+    checkInQueue,
+    checkInWatchCount,
+    liveEventId,
+    nextArrivals,
+    panelFocus,
+    preferredAlertSuggestion,
+    priorityCommandLabel,
+    qnaBoardTargetId,
+    qnaItems,
+    timelineBoardTargetId,
+    upNextEventId,
+    setActiveGuestId,
+    setActiveQnaId,
+    setActiveTimelineEventId,
+    setAlertForm,
+    setCheckInFilter,
+    setCheckInReviewOnly,
+    setCommandJumpLabel,
+    setCommandJumpPanelFocus,
+    setCommandJumpTargetId,
+    setCommandSource,
+    setManualOverrideUpdatedAt,
+    setNeutralFocusReason,
+    setOverrideCueShownAt,
+    setPanelFocus,
+    setQnaFilter,
+    setQnaInput,
+    setSummaryFeedback,
+    setSummaryFeedbackShownAt,
+    setAlertOverrideUpdatedAt,
+    toast,
+  }), [
+    alertTargetCue.aligned,
+    canEditQna,
+    canSendAlerts,
+    checkInBoardTargetId,
+    checkInQueue,
+    checkInWatchCount,
+    liveEventId,
+    nextArrivals,
+    panelFocus,
+    preferredAlertSuggestion,
+    priorityCommandLabel,
+    qnaBoardTargetId,
+    qnaItems,
+    timelineBoardTargetId,
+    upNextEventId,
+    setActiveGuestId,
+    setActiveQnaId,
+    setActiveTimelineEventId,
+    setAlertForm,
+    setCheckInFilter,
+    setCheckInReviewOnly,
+    setCommandJumpLabel,
+    setCommandJumpPanelFocus,
+    setCommandJumpTargetId,
+    setCommandSource,
+    setManualOverrideUpdatedAt,
+    setNeutralFocusReason,
+    setOverrideCueShownAt,
+    setPanelFocus,
+    setQnaFilter,
+    setQnaInput,
+    setSummaryFeedback,
+    setSummaryFeedbackShownAt,
+    setAlertOverrideUpdatedAt,
+    toast,
+  ]);
 
   const sendDayOfAlert = async () => {
     if (!siteId) return;
@@ -874,96 +862,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
   };
 
 
-  const escalateDoorReview = (guest: GuestLiteForCoordinator) => {
-    if (!canEditQna) {
-      toast('Your collaborator role cannot escalate door issues into guest Q&A.', 'info');
-      return;
-    }
-    clearCoordinatorTransientState();
-    setQnaInput(buildCoordinatorDoorEscalationPrompt(guest));
-    setCommandSource('escalation');
-    setPanelFocus('qna');
-    setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
-    toast('Door issue moved into guest Q&A triage.', 'success');
-  };
-
-
-
-
-
-  const revisitNeutralFocus = () => {
-    const target = resolveCoordinatorNeutralFocusTarget(panelFocus);
-    clearCoordinatorTransientState();
-    setNeutralFocusReason(getCoordinatorNeutralFocusReason(target.panelFocus));
-    setPanelFocus(target.panelFocus);
-    setCheckInReviewOnly(target.reviewOnly);
-    if (target.panelFocus === 'check-in') {
-      setCheckInFilter('arrivals');
-    }
-    if (target.panelFocus === 'qna') {
-      setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
-    }
-  };
-
-
-
-  const jumpToStablePrompt = () => {
-    const target = getCoordinatorStablePromptTarget(priorityCommandLabel);
-    setPanelFocus(target.panelFocus);
-    setCheckInReviewOnly(target.reviewOnly);
-
-    if (priorityCommandLabel === 'Check-in') {
-      setCheckInFilter('arrivals');
-      if (checkInBoardTargetId) setActiveGuestId(checkInBoardTargetId);
-      return;
-    }
-
-    if (priorityCommandLabel === 'Timeline') {
-      if (timelineBoardTargetId) setActiveTimelineEventId(timelineBoardTargetId);
-      return;
-    }
-
-    if (priorityCommandLabel === 'Q&A') {
-      const nextQnaId = qnaBoardTargetId ?? getFirstOpenCoordinatorQnaId(qnaItems);
-      setActiveQnaId(nextQnaId);
-    }
-  };
-
-  const jumpToCommandSummaryItem = (label: 'Check-in' | 'Timeline' | 'Q&A' | 'Alerting') => {
-    const target = getCoordinatorCommandSummaryTarget(label);
-    clearCoordinatorTransientState();
-    setPanelFocus(target.panelFocus);
-    setCheckInReviewOnly(target.reviewOnly);
-    const jumpLabel = getCoordinatorCommandJumpLabel(label);
-    setCommandJumpLabel(jumpLabel);
-    setCommandJumpPanelFocus(target.panelFocus);
-    if (label === 'Check-in') {
-      setCheckInFilter('arrivals');
-      setCommandJumpTargetId(checkInBoardTargetId);
-      setSummaryFeedback(createCoordinatorSummaryFeedback({ label: jumpLabel, panelFocus: 'check-in', targetId: checkInBoardTargetId, kind: 'jump' }));
-      setSummaryFeedbackShownAt(Date.now());
-      if (checkInBoardTargetId) setActiveGuestId(checkInBoardTargetId);
-      return;
-    }
-    if (label === 'Timeline') {
-      setCommandJumpTargetId(timelineBoardTargetId);
-      setSummaryFeedback(createCoordinatorSummaryFeedback({ label: jumpLabel, panelFocus: 'timeline', targetId: timelineBoardTargetId, kind: 'jump' }));
-      setSummaryFeedbackShownAt(Date.now());
-      if (timelineBoardTargetId) setActiveTimelineEventId(timelineBoardTargetId);
-      return;
-    }
-    if (label === 'Q&A') {
-      const nextQnaId = qnaBoardTargetId ?? getFirstOpenCoordinatorQnaId(qnaItems);
-      setCommandJumpTargetId(nextQnaId);
-      setSummaryFeedback(createCoordinatorSummaryFeedback({ label: jumpLabel, panelFocus: 'qna', targetId: nextQnaId, kind: 'jump' }));
-      setSummaryFeedbackShownAt(Date.now());
-      setActiveQnaId(nextQnaId);
-      return;
-    }
-    setCommandJumpTargetId(null);
-    setSummaryFeedback(createCoordinatorSummaryFeedback({ label: jumpLabel, panelFocus: null, targetId: null, kind: 'jump' }));
-    setSummaryFeedbackShownAt(Date.now());
-  };
 
 
   useEffect(() => {
@@ -1001,34 +899,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setCommandJumpTargetId(null);
     }
   }, [commandJumpLabel, commandJumpPanelFocus, commandJumpTargetId, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId]);
-
-
-  const returnToBoardTarget = () => {
-    clearCoordinatorTransientState();
-    if (panelFocus === 'check-in' && checkInBoardTargetId) {
-      setActiveGuestId(checkInBoardTargetId);
-      setCheckInFilter('arrivals');
-      setCheckInReviewOnly(true);
-      setManualOverrideLabel(null);
-      setManualOverrideUpdatedAt(null);
-      setOverrideCueShownAt(null);
-      return;
-    }
-    if (panelFocus === 'timeline' && timelineBoardTargetId) {
-      setActiveTimelineEventId(timelineBoardTargetId);
-      setManualOverrideLabel(null);
-      setManualOverrideUpdatedAt(null);
-      setOverrideCueShownAt(null);
-      return;
-    }
-    if (panelFocus === 'qna') {
-      const nextQnaId = qnaBoardTargetId ?? getFirstOpenCoordinatorQnaId(qnaItems);
-      setActiveQnaId(nextQnaId);
-      setManualOverrideLabel(null);
-      setManualOverrideUpdatedAt(null);
-      setOverrideCueShownAt(null);
-    }
-  };
 
 
   useEffect(() => {

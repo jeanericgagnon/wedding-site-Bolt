@@ -5868,3 +5868,18 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 05:32 AM PT No-Deploy Coordinator Dashboard Focus-Actions Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/CoordinatorMode.tsx` now routes the coordinator dashboard focus, jump, and board-return interaction lane through `src/pages/dashboard/coordinator/buildCoordinatorDashboardFocusActions.ts`.
+  - That helper now owns transient-state clearing, alert/check-in/timeline/Q&A lane focus, timeline-event jumps, ops snapshot jumps, first-open-Q&A targeting, door-review escalation into guest Q&A, neutral-focus revisit, stable prompt jumps, command-summary jumps, and board-target returns while the page keeps check-in transport, alert send transport, timeline mutation transport, Q&A save transport, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildCoordinatorDashboardFocusActions({ ... })`, checks that `buildCoordinatorDashboardFocusActions.ts` owns the coordinator focus/jump seam, and rejects regaining the old inline `jumpToOpsSnapshotLane(...)` plus transient-state clearing block in `CoordinatorMode.tsx`.
+  - `src/pages/dashboard/CoordinatorMode.tsx` dropped from 1688 lines to 1558 lines in this batch, while `src/pages/dashboard/coordinator/buildCoordinatorDashboardFocusActions.ts` came in at 289 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

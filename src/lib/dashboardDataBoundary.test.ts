@@ -700,6 +700,7 @@ describe('dashboard data boundary guards', () => {
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/CoordinatorMode.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/coordinatorService.ts'), 'utf8');
     const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/useCoordinatorDashboardData.ts'), 'utf8');
+    const focusActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/buildCoordinatorDashboardFocusActions.ts'), 'utf8');
 
     expect(service).toContain('const COORDINATOR_GUEST_SELECT = ');
     expect(service).toContain('const COORDINATOR_EVENT_SELECT = ');
@@ -715,12 +716,19 @@ describe('dashboard data boundary guards', () => {
     expect(service).not.toContain(".from('itinerary_events')\n      .select('*')");
     expect(service).not.toContain(".from('guest_qna_items')\n      .select('*')");
     expect(page).toContain('useCoordinatorDashboardData({');
+    expect(page).toContain('buildCoordinatorDashboardFocusActions({');
     expect(page).not.toContain('const bootstrap = await loadCoordinatorBootstrapData(user.id);');
     expect(page).not.toContain('const storedTimelineState = readStoredCoordinatorTimelineState(siteId);');
+    expect(page).not.toContain("const jumpToOpsSnapshotLane = (key: 'check-in' | 'timeline' | 'qna' | 'alerting') => {");
+    expect(page).not.toContain('const clearCoordinatorTransientState = () => {');
     expect(dataHook).toContain('const bootstrap = await loadCoordinatorBootstrapData(args.userId);');
     expect(dataHook).toContain('const storedTimelineState = readStoredCoordinatorTimelineState(siteId);');
     expect(dataHook).toContain("writeStoredCoordinatorSessionState(siteId, {");
     expect(dataHook).toContain("writePlannerAccessRole('coordinator', siteId, coordinatorRole);");
+    expect(focusActions).toContain('export function buildCoordinatorDashboardFocusActions(');
+    expect(focusActions).toContain("const jumpToOpsSnapshotLane = (key: 'check-in' | 'timeline' | 'qna' | 'alerting') => {");
+    expect(focusActions).toContain("args.setQnaInput(buildCoordinatorDoorEscalationPrompt(guest));");
+    expect(focusActions).toContain("args.setAlertForm((prev) => applyCoordinatorAlertSuggestion({ form: prev, suggestion: args.preferredAlertSuggestion! }));");
     expect(page).not.toContain("from '../../lib/supabase'");
     expect(page).not.toContain("from '../../lib/activeSite'");
     expect(page).not.toContain("supabase.from(");
