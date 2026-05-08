@@ -8127,6 +8127,20 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 5:16 PM PT No-Deploy Guest Photo Dashboard Snapshot Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guestPhotoSharingService.ts` now owns guest photo dashboard snapshot loading through `loadGuestPhotoDashboardSnapshot(userId)`.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now calls that helper instead of directly reading `wedding_sites`, `itinerary_events`, `photo_albums`, `photo_uploads`, `guestbook_entries`, `guest_prospect_optins`, `photo_upload_ai_analysis`, `photo_upload_metadata`, `photo_ai_bucket_corrections`, and `guest_hub_settings` inline for the live owner snapshot path.
+  - `src/pages/dashboard/guestPhotoSharingService.test.ts`, `src/pages/dashboard/guestPhotoQueryBounds.test.ts`, and `src/lib/dashboardDataBoundary.test.ts` now pin that service boundary and the migrated row caps.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 35/35.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 3:31 PM PT No-Deploy Seating Session Refresh Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

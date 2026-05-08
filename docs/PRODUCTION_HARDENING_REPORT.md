@@ -3540,3 +3540,31 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the itinerary dashboard page-to-service migration without changing owner-facing timeline shift or undo behavior. No deploy was run.
+
+### 2026-05-07 5:16 PM PT - Guest Photo Dashboard Snapshot Service Extraction
+
+- Moved guest photo dashboard snapshot loading out of `src/pages/dashboard/GuestPhotoSharing.tsx` and into `src/pages/dashboard/guestPhotoSharingService.ts`.
+- `GuestPhotoSharing.tsx` now calls `loadGuestPhotoDashboardSnapshot(userId)` instead of directly reading:
+  - `wedding_sites`
+  - `itinerary_events`
+  - `photo_albums`
+  - `photo_uploads`
+  - `guestbook_entries`
+  - `guest_prospect_optins`
+  - `photo_upload_ai_analysis`
+  - `photo_upload_metadata`
+  - `photo_ai_bucket_corrections`
+  - `guest_hub_settings`
+- The service now owns the explicit dashboard snapshot projections plus the bounded event, album, upload, guestbook, prospect, analysis, metadata, and correction row caps.
+- It also preserves the current active-site lookup, wedding meta hydration, and guest-hub settings defaults while the page keeps demo loading, state wiring, and auth-retry behavior.
+- Expanded `src/pages/dashboard/guestPhotoSharingService.test.ts`, `src/pages/dashboard/guestPhotoQueryBounds.test.ts`, and `src/lib/dashboardDataBoundary.test.ts` so the page no longer silently regains those read paths.
+
+Validation:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 35/35.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the guest photo dashboard page-to-service migration without changing owner-facing photo dashboard hydration or moderation workflows. No deploy was run.

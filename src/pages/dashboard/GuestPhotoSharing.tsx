@@ -18,7 +18,6 @@ import { parseDatetimeLocalToIso, toDatetimeLocalOrEmpty } from './guestPhotoDat
 import { formatGuestPhotoDate, formatGuestPhotoDateTime, getGuestPhotoSortTime, toGuestPhotoCsvTimestamp } from './guestPhotoUploadTime';
 import { formatGuestPhotoEventDate, getSuggestedGuestPhotoWindowStart } from './guestPhotoEventDate';
 import { buildAiPhotoOpsPlan, type AiPhotoOpsPlan } from '../../lib/aiPhotoOps';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { copyTextOrDownload } from '../../lib/copyText';
 import { safeOptionalPhotoAnalysisText, safePhotoAnalysisList, safePhotoAnalysisText } from '../../lib/photoAnalysisCustomerCopy';
 import { logAppAction } from '../../lib/actionAudit';
@@ -28,6 +27,15 @@ import { getSafePublicWebUrl } from '../../sections/publicLinks';
 import {
   getGuestPhotoCurrentUserId,
   invokeGuestPhotoOwnerFunction,
+  loadGuestPhotoDashboardSnapshot,
+  MAX_GUEST_PHOTO_ALBUMS,
+  MAX_GUEST_PHOTO_ANALYSES,
+  MAX_GUEST_PHOTO_BUCKET_CORRECTIONS,
+  MAX_GUEST_PHOTO_EVENTS,
+  MAX_GUEST_PHOTO_GUESTBOOK_ENTRIES,
+  MAX_GUEST_PHOTO_METADATA_ROWS,
+  MAX_GUEST_PHOTO_PROSPECTS,
+  MAX_GUEST_PHOTO_UPLOADS,
   persistGuestPhotoBuckets,
   queueGuestPhotoFollowups as queueGuestPhotoFollowupsFromService,
   refreshGuestPhotoSession,
@@ -73,15 +81,6 @@ import {
   type SlideshowOrderMode,
   type SlideshowTheme,
 } from './guestPhotoSharingUtils';
-
-export const MAX_GUEST_PHOTO_EVENTS = 200;
-export const MAX_GUEST_PHOTO_ALBUMS = 500;
-export const MAX_GUEST_PHOTO_UPLOADS = 200;
-export const MAX_GUEST_PHOTO_GUESTBOOK_ENTRIES = 50;
-export const MAX_GUEST_PHOTO_PROSPECTS = 200;
-export const MAX_GUEST_PHOTO_ANALYSES = 250;
-export const MAX_GUEST_PHOTO_METADATA_ROWS = 250;
-export const MAX_GUEST_PHOTO_BUCKET_CORRECTIONS = 100;
 
 export const GuestPhotoSharing: React.FC = () => {
   const location = useLocation();
@@ -325,104 +324,36 @@ export const GuestPhotoSharing: React.FC = () => {
       }
       if (!userId) throw new Error('Your session needs a quick refresh. Please refresh and try again.');
 
-      const activeSite = await resolveActiveSiteForUser(userId);
-      if (!activeSite?.id && isDemoMode) {
+      const snapshot = await loadGuestPhotoDashboardSnapshot(userId).catch((err) => {
+        const message = err instanceof Error ? err.message : '';
+        if (isDemoMode && message === 'Choose a wedding site before managing photos.') {
+          return null;
+        }
+        throw err;
+      });
+      if (!snapshot && isDemoMode) {
         loadDemoPhotoSpace();
         return;
       }
-      if (!activeSite?.id) throw new Error('Choose a wedding site before managing photos.');
+      if (!snapshot) throw new Error('Choose a wedding site before managing photos.');
 
-      const { data: site, error: siteErr } = await supabase
-        .from('wedding_sites')
-        .select('id, site_slug, wedding_data')
-        .eq('id', activeSite.id)
-        .maybeSingle();
-
-      if (siteErr || !site) throw new Error(siteErr?.message ?? 'Choose a wedding site before managing photos.');
-
-      setSiteId(site.id as string);
-      setSiteSlug((site.site_slug as string) ?? null);
-      const weddingMeta = (((site.wedding_data as Record<string, unknown> | null)?.meta as Record<string, unknown> | undefined) ?? {});
+      setSiteId(snapshot.siteId);
+      setSiteSlug(snapshot.siteSlug);
+      const weddingMeta = snapshot.weddingMeta;
       const savedBuckets = ((weddingMeta.photoBuckets as ReturnType<typeof createEmptyPhotoBuckets> | undefined) ?? null);
       if (savedBuckets) setPhotoBuckets(savedBuckets);
       const savedAiPhotoOps = ((weddingMeta.aiPhotoOps as AiPhotoOpsPlan | undefined) ?? null);
       if (savedAiPhotoOps) setAiPhotoOpsPlan(savedAiPhotoOps);
-
-      const [{ data: eventsData, error: eventsError }, { data: bucketData, error: bucketError }, { data: uploadsData, error: uploadsError }] = await Promise.all([
-        supabase
-          .from('itinerary_events')
-          .select('id,event_name,event_date,start_time,end_time')
-          .eq('wedding_site_id', site.id)
-          .order('event_date', { ascending: true })
-          .order('start_time', { ascending: true })
-          .limit(MAX_GUEST_PHOTO_EVENTS),
-        supabase
-          .from('photo_albums')
-          .select('id,name,slug,parent_album_id,hierarchy_label,drive_folder_url,is_active,created_at,itinerary_event_id,opens_at,closes_at')
-          .eq('wedding_site_id', site.id)
-          .order('created_at', { ascending: false })
-          .limit(MAX_GUEST_PHOTO_ALBUMS),
-        supabase
-          .from('photo_uploads')
-          .select('id,photo_album_id,original_filename,guest_name,guest_email,note,mime_type,size_bytes,drive_web_view_link,is_hidden,is_flagged,recap_hidden,recap_featured,recap_story,uploaded_at')
-          .eq('wedding_site_id', site.id)
-          .order('uploaded_at', { ascending: false })
-          .limit(MAX_GUEST_PHOTO_UPLOADS),
-      ]);
-
-      if (eventsError) throw eventsError;
-      if (bucketError) throw bucketError;
-      if (uploadsError) throw uploadsError;
-
-      const nextBuckets = (bucketData as PhotoBucketRow[] | null) ?? [];
-      setEvents((eventsData as ItineraryEvent[] | null) ?? []);
+      const nextBuckets = snapshot.buckets;
+      setEvents(snapshot.events);
       setBuckets(nextBuckets);
-      setUploads((uploadsData as PhotoUploadRow[] | null) ?? []);
-      const { data: guestbookData } = await supabase
-        .from('guestbook_entries')
-        .select('id,guest_name,guest_email,message,is_hidden,is_flagged,created_at')
-        .eq('wedding_site_id', site.id)
-        .order('created_at', { ascending: false })
-        .limit(MAX_GUEST_PHOTO_GUESTBOOK_ENTRIES);
-      setGuestbookEntries((guestbookData as GuestbookEntryRow[] | null) ?? []);
-      const { data: prospectData } = await supabase
-        .from('guest_prospect_optins')
-        .select('id,guest_name,email,phone,source,wants_photo_updates,wants_own_event_info,recap_email_queued_at,future_event_email_queued_at,created_at')
-        .eq('wedding_site_id', site.id)
-        .order('created_at', { ascending: false })
-        .limit(MAX_GUEST_PHOTO_PROSPECTS);
-      setGuestProspects((prospectData as GuestProspectOptinRow[] | null) ?? []);
-      const { data: analysisData } = await supabase
-        .from('photo_upload_ai_analysis')
-        .select('id,upload_id,wedding_site_id,photo_album_id,status,detected_moment,suggested_bucket_id,suggested_bucket_name,bucket_confidence,quality_score,blur_score,people_count_range,is_video,slideshow_priority,caption,tags,warnings,error_message,analyzed_at')
-        .eq('wedding_site_id', site.id)
-        .order('analyzed_at', { ascending: false })
-        .limit(MAX_GUEST_PHOTO_ANALYSES);
-      setUploadAnalyses((analysisData as PhotoUploadAiAnalysisRow[] | null) ?? []);
-      const { data: metadataData } = await supabase
-        .from('photo_upload_metadata')
-        .select('upload_id,taken_at,width,height,has_exif,has_gps,file_sha256,perceptual_hash,location_label,event_match_id,event_match_confidence,event_match_reason')
-        .eq('wedding_site_id', site.id)
-        .limit(MAX_GUEST_PHOTO_METADATA_ROWS);
-      setUploadMetadata((metadataData as PhotoUploadMetadataRow[] | null) ?? []);
-      const { data: correctionData } = await supabase
-        .from('photo_ai_bucket_corrections')
-        .select('id,upload_id,action,previous_bucket_id,suggested_bucket_id,chosen_bucket_id,confidence,reason,created_at')
-        .eq('wedding_site_id', site.id)
-        .order('created_at', { ascending: false })
-        .limit(MAX_GUEST_PHOTO_BUCKET_CORRECTIONS);
-      setAiBucketCorrections((correctionData as PhotoAiBucketCorrectionRow[] | null) ?? []);
-      const { data: hubData } = await supabase
-        .from('guest_hub_settings')
-        .select('rsvp_enabled,photos_enabled,guestbook_enabled,registry_enabled,schedule_enabled,travel_enabled,recap_status,recap_published_at,recap_closed_at,custom_message,language_default')
-        .eq('wedding_site_id', site.id)
-        .maybeSingle();
-      const nextHubSettings = { ...DEFAULT_HUB_SETTINGS, ...(hubData as Partial<GuestHubSettings> | null ?? {}) };
-      setHubSettings({
-        ...nextHubSettings,
-        custom_message: nextHubSettings.custom_message ?? '',
-        language_default: nextHubSettings.language_default ?? DEFAULT_HUB_SETTINGS.language_default,
-      });
+      setUploads(snapshot.uploads);
+      setGuestbookEntries(snapshot.guestbookEntries);
+      setGuestProspects(snapshot.guestProspects);
+      setUploadAnalyses(snapshot.uploadAnalyses);
+      setUploadMetadata(snapshot.uploadMetadata);
+      setAiBucketCorrections(snapshot.aiBucketCorrections);
+      setHubSettings(snapshot.hubSettings);
       setBucketUploadLinks((prev) => {
         const liveBucketIds = new Set(nextBuckets.map((bucket) => bucket.id));
         const nextLinks = Object.fromEntries(

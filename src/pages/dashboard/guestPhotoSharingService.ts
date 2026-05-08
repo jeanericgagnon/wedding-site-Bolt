@@ -2,16 +2,62 @@ import type { AiCanonicalSectionContent } from '../../lib/aiCanonicalContent';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
 import type { DraftGenerationResult } from '../../lib/aiDraftGenerator';
 import type { CanonicalPhotoBuckets } from '../../lib/aiPhotoBuckets';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { supabase } from '../../lib/supabase';
+import {
+  DEFAULT_HUB_SETTINGS,
+  type GuestHubSettings,
+  type GuestProspectOptinRow,
+  type GuestbookEntryRow,
+  type ItineraryEvent,
+  type PhotoAiBucketCorrectionRow,
+  type PhotoBucketRow,
+  type PhotoUploadAiAnalysisRow,
+  type PhotoUploadMetadataRow,
+  type PhotoUploadRow,
+} from './guestPhotoSharingUtils';
 
 const GUEST_PHOTO_BUCKET_SITE_SELECT = 'wedding_data, site_json';
+const GUEST_PHOTO_DASHBOARD_SITE_SELECT = 'id, site_slug, wedding_data';
+const GUEST_PHOTO_EVENT_SELECT = 'id,event_name,event_date,start_time,end_time' as const;
+const GUEST_PHOTO_ALBUM_SELECT = 'id,name,slug,parent_album_id,hierarchy_label,drive_folder_url,is_active,created_at,itinerary_event_id,opens_at,closes_at' as const;
+const GUEST_PHOTO_UPLOAD_SELECT = 'id,photo_album_id,original_filename,guest_name,guest_email,note,mime_type,size_bytes,drive_web_view_link,is_hidden,is_flagged,recap_hidden,recap_featured,recap_story,uploaded_at' as const;
+const GUEST_PHOTO_GUESTBOOK_SELECT = 'id,guest_name,guest_email,message,is_hidden,is_flagged,created_at' as const;
+const GUEST_PHOTO_PROSPECT_SELECT = 'id,guest_name,email,phone,source,wants_photo_updates,wants_own_event_info,recap_email_queued_at,future_event_email_queued_at,created_at' as const;
+const GUEST_PHOTO_ANALYSIS_SELECT = 'id,upload_id,wedding_site_id,photo_album_id,status,detected_moment,suggested_bucket_id,suggested_bucket_name,bucket_confidence,quality_score,blur_score,people_count_range,is_video,slideshow_priority,caption,tags,warnings,error_message,analyzed_at' as const;
+const GUEST_PHOTO_METADATA_SELECT = 'upload_id,taken_at,width,height,has_exif,has_gps,file_sha256,perceptual_hash,location_label,event_match_id,event_match_confidence,event_match_reason' as const;
+const GUEST_PHOTO_BUCKET_CORRECTION_SELECT = 'id,upload_id,action,previous_bucket_id,suggested_bucket_id,chosen_bucket_id,confidence,reason,created_at' as const;
+const GUEST_PHOTO_HUB_SETTINGS_SELECT = 'rsvp_enabled,photos_enabled,guestbook_enabled,registry_enabled,schedule_enabled,travel_enabled,recap_status,recap_published_at,recap_closed_at,custom_message,language_default' as const;
 const GUEST_PHOTO_SITE_LOAD_ERROR_COPY = 'Choose a wedding site before managing photos.';
+export const MAX_GUEST_PHOTO_EVENTS = 200;
+export const MAX_GUEST_PHOTO_ALBUMS = 500;
+export const MAX_GUEST_PHOTO_UPLOADS = 200;
+export const MAX_GUEST_PHOTO_GUESTBOOK_ENTRIES = 50;
+export const MAX_GUEST_PHOTO_PROSPECTS = 200;
+export const MAX_GUEST_PHOTO_ANALYSES = 250;
+export const MAX_GUEST_PHOTO_METADATA_ROWS = 250;
+export const MAX_GUEST_PHOTO_BUCKET_CORRECTIONS = 100;
 
 export const safeGuestPhotoOwnerServiceError = (err: unknown, fallback = GUEST_PHOTO_SITE_LOAD_ERROR_COPY) => (
   customerSafeErrorMessage(err, fallback)
 );
+
+export interface GuestPhotoDashboardSnapshot {
+  siteId: string;
+  siteSlug: string | null;
+  weddingMeta: Record<string, unknown>;
+  events: ItineraryEvent[];
+  buckets: PhotoBucketRow[];
+  uploads: PhotoUploadRow[];
+  guestbookEntries: GuestbookEntryRow[];
+  guestProspects: GuestProspectOptinRow[];
+  uploadAnalyses: PhotoUploadAiAnalysisRow[];
+  uploadMetadata: PhotoUploadMetadataRow[];
+  aiBucketCorrections: PhotoAiBucketCorrectionRow[];
+  hubSettings: GuestHubSettings;
+}
 
 export async function refreshGuestPhotoSession(): Promise<boolean> {
   const { data } = await supabase.auth.refreshSession();
@@ -61,6 +107,109 @@ export async function queueGuestPhotoFollowups(
   kind: 'recap' | 'future_event',
 ): Promise<{ queued?: number } | null> {
   return await invokeGuestPhotoOwnerFunction<{ queued?: number }>('queue-guest-followups', { siteId, kind });
+}
+
+export async function loadGuestPhotoDashboardSnapshot(userId: string): Promise<GuestPhotoDashboardSnapshot> {
+  const activeSite = await resolveActiveSiteForUser(userId);
+  if (!activeSite?.id) throw new Error(GUEST_PHOTO_SITE_LOAD_ERROR_COPY);
+
+  const { data: site, error: siteErr } = await supabase
+    .from('wedding_sites')
+    .select(GUEST_PHOTO_DASHBOARD_SITE_SELECT)
+    .eq('id', activeSite.id)
+    .maybeSingle();
+  if (siteErr || !site) throw new Error(siteErr?.message ?? GUEST_PHOTO_SITE_LOAD_ERROR_COPY);
+
+  const [{ data: eventsData, error: eventsError }, { data: bucketData, error: bucketError }, { data: uploadsData, error: uploadsError }] = await Promise.all([
+    supabase
+      .from('itinerary_events')
+      .select(GUEST_PHOTO_EVENT_SELECT)
+      .eq('wedding_site_id', site.id)
+      .order('event_date', { ascending: true })
+      .order('start_time', { ascending: true })
+      .limit(MAX_GUEST_PHOTO_EVENTS),
+    supabase
+      .from('photo_albums')
+      .select(GUEST_PHOTO_ALBUM_SELECT)
+      .eq('wedding_site_id', site.id)
+      .order('created_at', { ascending: false })
+      .limit(MAX_GUEST_PHOTO_ALBUMS),
+    supabase
+      .from('photo_uploads')
+      .select(GUEST_PHOTO_UPLOAD_SELECT)
+      .eq('wedding_site_id', site.id)
+      .order('uploaded_at', { ascending: false })
+      .limit(MAX_GUEST_PHOTO_UPLOADS),
+  ]);
+
+  if (eventsError) throw eventsError;
+  if (bucketError) throw bucketError;
+  if (uploadsError) throw uploadsError;
+
+  const [
+    { data: guestbookData },
+    { data: prospectData },
+    { data: analysisData },
+    { data: metadataData },
+    { data: correctionData },
+    { data: hubData },
+  ] = await Promise.all([
+    supabase
+      .from('guestbook_entries')
+      .select(GUEST_PHOTO_GUESTBOOK_SELECT)
+      .eq('wedding_site_id', site.id)
+      .order('created_at', { ascending: false })
+      .limit(MAX_GUEST_PHOTO_GUESTBOOK_ENTRIES),
+    supabase
+      .from('guest_prospect_optins')
+      .select(GUEST_PHOTO_PROSPECT_SELECT)
+      .eq('wedding_site_id', site.id)
+      .order('created_at', { ascending: false })
+      .limit(MAX_GUEST_PHOTO_PROSPECTS),
+    supabase
+      .from('photo_upload_ai_analysis')
+      .select(GUEST_PHOTO_ANALYSIS_SELECT)
+      .eq('wedding_site_id', site.id)
+      .order('analyzed_at', { ascending: false })
+      .limit(MAX_GUEST_PHOTO_ANALYSES),
+    supabase
+      .from('photo_upload_metadata')
+      .select(GUEST_PHOTO_METADATA_SELECT)
+      .eq('wedding_site_id', site.id)
+      .limit(MAX_GUEST_PHOTO_METADATA_ROWS),
+    supabase
+      .from('photo_ai_bucket_corrections')
+      .select(GUEST_PHOTO_BUCKET_CORRECTION_SELECT)
+      .eq('wedding_site_id', site.id)
+      .order('created_at', { ascending: false })
+      .limit(MAX_GUEST_PHOTO_BUCKET_CORRECTIONS),
+    supabase
+      .from('guest_hub_settings')
+      .select(GUEST_PHOTO_HUB_SETTINGS_SELECT)
+      .eq('wedding_site_id', site.id)
+      .maybeSingle(),
+  ]);
+
+  const nextHubSettings = { ...DEFAULT_HUB_SETTINGS, ...(hubData as Partial<GuestHubSettings> | null ?? {}) };
+
+  return {
+    siteId: site.id as string,
+    siteSlug: (site.site_slug as string) ?? null,
+    weddingMeta: (((site.wedding_data as Record<string, unknown> | null)?.meta as Record<string, unknown> | undefined) ?? {}),
+    events: (eventsData as ItineraryEvent[] | null) ?? [],
+    buckets: (bucketData as PhotoBucketRow[] | null) ?? [],
+    uploads: (uploadsData as PhotoUploadRow[] | null) ?? [],
+    guestbookEntries: (guestbookData as GuestbookEntryRow[] | null) ?? [],
+    guestProspects: (prospectData as GuestProspectOptinRow[] | null) ?? [],
+    uploadAnalyses: (analysisData as PhotoUploadAiAnalysisRow[] | null) ?? [],
+    uploadMetadata: (metadataData as PhotoUploadMetadataRow[] | null) ?? [],
+    aiBucketCorrections: (correctionData as PhotoAiBucketCorrectionRow[] | null) ?? [],
+    hubSettings: {
+      ...nextHubSettings,
+      custom_message: nextHubSettings.custom_message ?? '',
+      language_default: nextHubSettings.language_default ?? DEFAULT_HUB_SETTINGS.language_default,
+    },
+  };
 }
 
 export function buildGuestPhotoBucketSiteUpdate(
