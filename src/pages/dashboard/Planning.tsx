@@ -21,16 +21,9 @@ import { buildNameChangePlan } from '../../lib/nameChange/engine';
 import { syncNameChangeRemindersWithStepExecution } from '../../lib/nameChange/reminders';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput, NameChangePlan, NameChangeReminderInput } from '../../lib/nameChange/types';
 import { annotateNameChangePlanStepsFromReminderChanges, appendNameChangeExecutionActivity, buildNameChangeWorkspaceBundle, deriveNameChangeWorkflowStatus, hydrateNameChangeWorkspace, loadNameChangeWorkspace, defaultNameChangeCaseInput, mergeNameChangePlanExecutionState, saveNameChangeWorkspace } from './planning/nameChangeService';
-import { PlanningOverviewTab } from './planning/PlanningOverviewTab';
-import { TasksTab } from './planning/TasksTab';
-import { BudgetTab } from './planning/BudgetTab';
-import { VendorsTab } from './planning/VendorsTab';
-import { NameChangePlannerTab } from './planning/NameChangePlannerTab';
-import { PaymentsTab } from './planning/PaymentsTab';
-import { SongRequestsTab } from './planning/SongRequestsTab';
-import { AddressCollectionTab } from './planning/AddressCollectionTab';
 import { logAppAction } from '../../lib/actionAudit';
 import { PlanningDashboardShell } from './planning/PlanningDashboardShell';
+import { PlanningDashboardTabContent } from './planning/PlanningDashboardTabContent';
 
 type Tab = 'overview' | 'tasks' | 'budget' | 'payments' | 'vendors' | 'songs' | 'addresses' | 'nameChange';
 
@@ -790,108 +783,52 @@ export const DashboardPlanning: React.FC = () => {
       tasksCount={tasks.length}
       vendorsCount={vendors.length}
     >
-        {loading ? (
-          <div className="space-y-4 animate-pulse" aria-hidden="true">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="h-24 rounded-lg bg-surface-subtle border border-border-subtle" />
-              <div className="h-24 rounded-lg bg-surface-subtle border border-border-subtle" />
-              <div className="h-24 rounded-lg bg-surface-subtle border border-border-subtle" />
-            </div>
-            <div className="h-56 rounded-lg bg-surface-subtle border border-border-subtle" />
-          </div>
-        ) : (
-          <>
-            {activeTab === 'overview' && (
-              <PlanningOverviewTab
-                tasks={tasks}
-                budgetItems={budgetItems}
-                vendors={vendors}
-                seatingReadiness={seatingReadiness}
-                weddingDate={weddingDate}
-                nameChangePlan={nameChangePlan}
-                onTabChange={(tab) => setActiveTab(tab as Tab)}
-                starterSuite={starterSuite}
-                onApplyStarterSuite={handleApplyStarterSuite}
-                applyingStarterSuite={applyingStarterSuite}
-                lastStarterSuiteRun={lastStarterSuiteRun}
-                onUndoStarterSuite={handleUndoStarterSuite}
-                undoingStarterSuite={undoingStarterSuite}
-              />
-            )}
-            {activeTab === 'tasks' && (
-              <TasksTab
-                tasks={tasks}
-                weddingDate={weddingDate}
-                onAdd={handleAddTask}
-                onUpdate={handleUpdateTask}
-                onDelete={handleDeleteTask}
-                onCreateMilestones={handleCreateMilestones}
-                canEdit={canEditPlanningTasks(planningRole, planningPermissions)}
-              />
-            )}
-            {activeTab === 'budget' && (
-              <BudgetTab
-                items={budgetItems}
-                vendors={vendors}
-                totalBudget={totalBudget}
-                onTotalBudgetChange={handleSaveTotalBudget}
-                onAdd={handleAddBudgetItem}
-                onUpdate={handleUpdateBudgetItem}
-                onDelete={handleDeleteBudgetItem}
-                canEdit={canEditPlanningBudget(planningRole, planningPermissions)}
-              />
-            )}
-            {activeTab === 'payments' && (
-              <PaymentsTab
-                items={budgetItems}
-                vendors={vendors}
-                onUpdateBudgetItem={handleUpdateBudgetItem}
-                onUpdateVendor={handleUpdateVendor}
-                canEdit={canEditPlanningBudget(planningRole, planningPermissions) || canEditPlanningVendors(planningRole, planningPermissions)}
-              />
-            )}
-            {activeTab === 'vendors' && (
-              <VendorsTab
-                vendors={vendors}
-                onAdd={handleAddVendor}
-                onUpdate={handleUpdateVendor}
-                onDelete={handleDeleteVendor}
-                canEdit={canEditPlanningVendors(planningRole, planningPermissions)}
-              />
-            )}
-            {activeTab === 'songs' && (
-              <SongRequestsTab
-                siteId={siteId}
-                isDemoMode={isDemoMode}
-                canEdit={canEditPlanningTasks(planningRole, planningPermissions)}
-              />
-            )}
-            {activeTab === 'addresses' && (
-              <AddressCollectionTab
-                siteId={siteId}
-                isDemoMode={isDemoMode}
-              />
-            )}
-            {activeTab === 'nameChange' && (
-              <NameChangePlannerTab
-                draft={nameChangeDraft}
-                documents={nameChangeDocuments}
-                extractedFields={nameChangeExtractedFields}
-                plan={nameChangePlan}
-                reminders={nameChangeReminders}
-                saving={nameChangeSaving}
-                onDraftChange={handleNameChangeDraft}
-                onStructuredIntakeChange={handleStructuredIntake}
-                onDocumentsChange={handleNameChangeDocuments}
-                onExtractedFieldsChange={handleNameChangeExtractedFields}
-                onRemindersChange={handleNameChangeReminders}
-                onStepExecutionStatusChange={handleNameChangeStepExecutionStatus}
-                onStepExecutionNoteChange={handleNameChangeStepExecutionNote}
-                onSave={handleSaveNameChange}
-              />
-            )}
-          </>
-        )}
+        <PlanningDashboardTabContent
+          activeTab={activeTab}
+          applyingStarterSuite={applyingStarterSuite}
+          budgetItems={budgetItems}
+          isDemoMode={isDemoMode}
+          lastStarterSuiteRun={lastStarterSuiteRun}
+          loading={loading}
+          nameChangeDocuments={nameChangeDocuments}
+          nameChangeDraft={nameChangeDraft}
+          nameChangeExtractedFields={nameChangeExtractedFields}
+          nameChangePlan={nameChangePlan}
+          nameChangeReminders={nameChangeReminders}
+          nameChangeSaving={nameChangeSaving}
+          planningPermissions={planningPermissions}
+          planningRole={planningRole}
+          seatingReadiness={seatingReadiness}
+          siteId={siteId}
+          starterSuite={starterSuite}
+          tasks={tasks}
+          totalBudget={totalBudget}
+          undoingStarterSuite={undoingStarterSuite}
+          vendors={vendors}
+          weddingDate={weddingDate}
+          onAddBudgetItem={handleAddBudgetItem}
+          onAddTask={handleAddTask}
+          onAddVendor={handleAddVendor}
+          onApplyStarterSuite={handleApplyStarterSuite}
+          onCreateMilestones={handleCreateMilestones}
+          onDeleteBudgetItem={handleDeleteBudgetItem}
+          onDeleteTask={handleDeleteTask}
+          onDeleteVendor={handleDeleteVendor}
+          onDraftChange={handleNameChangeDraft}
+          onDocumentsChange={handleNameChangeDocuments}
+          onExtractedFieldsChange={handleNameChangeExtractedFields}
+          onRemindersChange={handleNameChangeReminders}
+          onSaveNameChange={handleSaveNameChange}
+          onSaveTotalBudget={handleSaveTotalBudget}
+          onStepExecutionNoteChange={handleNameChangeStepExecutionNote}
+          onStepExecutionStatusChange={handleNameChangeStepExecutionStatus}
+          onStructuredIntakeChange={handleStructuredIntake}
+          onTabChange={setActiveTab}
+          onUndoStarterSuite={handleUndoStarterSuite}
+          onUpdateBudgetItem={handleUpdateBudgetItem}
+          onUpdateTask={handleUpdateTask}
+          onUpdateVendor={handleUpdateVendor}
+        />
 
         {pendingVendorForBudget && (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">

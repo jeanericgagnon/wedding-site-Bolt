@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 7:05 AM PT - No-Deploy Planning Dashboard Tab-Content Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Planning.tsx` now routes its loading state and owner-facing tab switch slab through `src/pages/dashboard/planning/PlanningDashboardTabContent.tsx` instead of hand-rendering every tab surface inline.
+  - `PlanningDashboardTabContent.tsx` now owns the loading skeleton plus the overview, tasks, budget, payments, vendors, songs, addresses, and name-change tab handoff while the page keeps data, mutations, role gating, starter-suite flows, and vendor-to-budget follow-up orchestration.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<PlanningDashboardTabContent`, checks that the new file owns the tab-content seam, and rejects regaining the old inline `PlanningOverviewTab` / `TasksTab` / `BudgetTab` / `NameChangePlannerTab` slab in `Planning.tsx`.
+- Acceptance/proof target:
+  - Focused planning boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 7:00 AM PT - No-Deploy Coordinator Dashboard Route-Content Extraction
 
 - Status: `PARTIAL`

@@ -637,6 +637,7 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/planningService.ts'), 'utf8');
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Planning.tsx'), 'utf8');
     const addressTab = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/AddressCollectionTab.tsx'), 'utf8');
+    const tabContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/PlanningDashboardTabContent.tsx'), 'utf8');
     const songTab = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/SongRequestsTab.tsx'), 'utf8');
 
     expect(source).toContain('const PLANNING_TASK_SELECT = ');
@@ -665,11 +666,21 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain(".from('planning_budget_items')\n    .select('*')");
     expect(source).not.toContain('.insert(mutablePayload).select().single()');
     expect(page).toContain('<PlanningDashboardShell');
+    expect(page).toContain('<PlanningDashboardTabContent');
     expect(page).not.toContain("supabase.from('wedding_sites')");
     expect(page).not.toContain("supabase.from('guests')");
     expect(page).not.toContain("supabase\n        .from('wedding_sites')");
     expect(page).not.toContain('<DashboardLayout');
     expect(page).not.toContain('<DashboardPageHero');
+    expect(page).not.toContain('<PlanningOverviewTab');
+    expect(page).not.toContain('<TasksTab');
+    expect(page).not.toContain('<BudgetTab');
+    expect(page).not.toContain('<NameChangePlannerTab');
+    expect(tabContent).toContain('export function PlanningDashboardTabContent(');
+    expect(tabContent).toContain('<PlanningOverviewTab');
+    expect(tabContent).toContain('<TasksTab');
+    expect(tabContent).toContain('<BudgetTab');
+    expect(tabContent).toContain('<NameChangePlannerTab');
     expect(addressTab).not.toContain("from '../../../lib/supabase'");
     expect(addressTab).not.toContain("supabase.from('wedding_sites')");
     expect(addressTab).not.toContain(".from('guests')");

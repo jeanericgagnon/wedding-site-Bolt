@@ -19,6 +19,22 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 7:05 AM PT - No-Deploy Planning Dashboard Tab-Content Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Planning.tsx` no longer hand-renders the loading state and owner-facing planning tab switch slab inline.
+  - Added `src/pages/dashboard/planning/PlanningDashboardTabContent.tsx` so the extracted tab-content component now owns the loading skeleton plus the overview, tasks, budget, payments, vendors, songs, addresses, and name-change tab handoff while the page keeps data loading, mutations, role gating, starter-suite flows, and vendor-to-budget follow-up orchestration.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<PlanningDashboardTabContent`, checks that the new file owns the tab-content seam, and rejects regaining the old inline `PlanningOverviewTab` / `TasksTab` / `BudgetTab` / `NameChangePlannerTab` slab in `Planning.tsx`.
+  - `src/pages/dashboard/Planning.tsx` dropped from 930 lines to 867 lines in this batch, while `src/pages/dashboard/planning/PlanningDashboardTabContent.tsx` came in at 227 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ### 2026-05-08 7:00 AM PT - No-Deploy Coordinator Dashboard Route-Content Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:
