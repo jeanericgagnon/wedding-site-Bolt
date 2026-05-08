@@ -143,6 +143,7 @@ describe('public guest surface boundary', () => {
     const rsvpLiveContentActions = readSource('src/pages/buildRsvpLiveContentActions.ts');
     const rsvpPageViewModel = readSource('src/pages/buildRsvpPageViewModel.ts');
     const rsvpLiveContentProps = readSource('src/pages/buildRsvpLiveContentViewProps.ts');
+    const rsvpResetLookupFlow = readSource('src/pages/resetRsvpLookupFlow.ts');
     const rsvpPageRouteView = readSource('src/pages/RsvpPageRouteView.tsx');
     const rsvpValidateAdvance = readSource('src/pages/validateRsvpFormAdvance.ts');
     const rsvpLiveContentView = readSource('src/pages/RsvpLiveContentView.tsx');
@@ -160,12 +161,14 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain("from './buildRsvpLiveContentActions'");
     expect(rsvpPage).toContain("from './buildRsvpPageViewModel'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentViewProps'");
+    expect(rsvpPage).toContain("from './resetRsvpLookupFlow'");
     expect(rsvpPage).toContain("from './RsvpPageRouteView'");
     expect(rsvpPage).toContain("from './validateRsvpFormAdvance'");
     expect(rsvpPage).toContain('<RsvpPageRouteView');
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
     expect(rsvpPage).toContain('buildRsvpLiveContentActions({');
     expect(rsvpPage).toContain('buildRsvpPageViewModel({');
+    expect(rsvpPage).toContain('resetRsvpLookupFlow({');
     expect(rsvpPage).toContain('const liveContentProps = buildRsvpLiveContentViewProps({');
     expect(rsvpPage).toContain('validateRsvpFormAdvance({');
     expect(rsvpDerivedViewState).toContain('guestPredictions');
@@ -177,6 +180,9 @@ describe('public guest surface boundary', () => {
     expect(rsvpPageViewModel).toContain('guestDisplayName');
     expect(rsvpPageViewModel).toContain('deadlinePassed');
     expect(rsvpPageViewModel).toContain('searchInputId');
+    expect(rsvpResetLookupFlow).toContain('setFormData({');
+    expect(rsvpResetLookupFlow).toContain('setMealConfig(DEFAULT_MEAL_CONFIG)');
+    expect(rsvpResetLookupFlow).toContain('setSelectedHouseholdGuestIds([])');
     expect(rsvpPageRouteView).toContain("from './RsvpRouteView'");
     expect(rsvpPageRouteView).toContain("from './RsvpLiveContentView'");
     expect(rsvpPageRouteView).toContain("from './RsvpTokenLoadingView'");

@@ -33,6 +33,7 @@ import { buildRsvpPageViewModel } from './buildRsvpPageViewModel';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { buildRsvpLiveContentViewProps } from './buildRsvpLiveContentViewProps';
 import { callValidateRsvpToken } from './rsvpFunctionService';
+import { resetRsvpLookupFlow } from './resetRsvpLookupFlow';
 import { RsvpPageRouteView } from './RsvpPageRouteView';
 import { validateRsvpFormAdvance } from './validateRsvpFormAdvance';
 
@@ -727,29 +728,31 @@ export default function RSVP() {
     e.preventDefault();
     const requestId = activeLookupRequestRef.current + 1;
     activeLookupRequestRef.current = requestId;
-    invalidateActiveSubmit();
     pendingContinuityRefreshRef.current = false;
     ignoreNextLocalContinuityEventRef.current = false;
     tokenLinkedSessionRef.current = false;
     setTokenAutoLoading(false);
-    setLoading(true);
-    setSubmitting(false);
-    setActivePredictionIndex(-1);
-    setError('');
-    setStep('search');
-    setGuest(null);
-    setExistingRsvp(null);
-    setAmbiguousGuests([]);
-    setRsvpDeadline(null);
-    setMusicPlaylistUrl(null);
-    setFormData({ attending: true, attendCeremony: false, attendReception: false, meal_choice: '', plus_one_name: '', children_count: 0, notes: '' });
-    setCustomAnswers({});
-    setRsvpQuestions([]);
-    setMealConfig(DEFAULT_MEAL_CONFIG);
-    setHouseholdGuests([]);
-    setApplyToHousehold(true);
-    setSelectedHouseholdGuestIds([]);
-    setFormStep(1);
+    resetRsvpLookupFlow({
+      invalidateActiveSubmit,
+      setActivePredictionIndex,
+      setAmbiguousGuests,
+      setApplyToHousehold,
+      setCustomAnswers,
+      setError,
+      setExistingRsvp,
+      setFormData,
+      setFormStep,
+      setGuest,
+      setHouseholdGuests,
+      setLoading,
+      setMealConfig,
+      setMusicPlaylistUrl,
+      setRsvpDeadline,
+      setRsvpQuestions,
+      setSelectedHouseholdGuestIds,
+      setStep,
+      setSubmitting,
+    });
 
     try {
       const lookupResp: { data?: unknown; error?: string } = USE_DEMO_RSVP
@@ -867,27 +870,30 @@ export default function RSVP() {
   const handlePickGuest = async (picked: Guest) => {
     const requestId = activeLookupRequestRef.current + 1;
     activeLookupRequestRef.current = requestId;
-    invalidateActiveSubmit();
-    setLoading(true);
-    setSubmitting(false);
-    setActivePredictionIndex(-1);
-    setError('');
-    setStep('search');
-    setSearchValue(guestLabel(picked));
-    setAmbiguousGuests([]);
-      setGuest(null);
-      setRsvpSessionToken(null);
-      setExistingRsvp(null);
-    setRsvpDeadline(null);
-    setMusicPlaylistUrl(null);
-    setFormData({ attending: true, attendCeremony: false, attendReception: false, meal_choice: '', plus_one_name: '', children_count: 0, notes: '' });
-    setCustomAnswers({});
-    setRsvpQuestions([]);
-    setMealConfig(DEFAULT_MEAL_CONFIG);
-    setFormStep(1);
-    setHouseholdGuests([]);
-    setApplyToHousehold(true);
-    setSelectedHouseholdGuestIds([]);
+    resetRsvpLookupFlow({
+      invalidateActiveSubmit,
+      searchValue: guestLabel(picked),
+      setActivePredictionIndex,
+      setAmbiguousGuests,
+      setApplyToHousehold,
+      setCustomAnswers,
+      setError,
+      setExistingRsvp,
+      setFormData,
+      setFormStep,
+      setGuest,
+      setHouseholdGuests,
+      setLoading,
+      setMealConfig,
+      setMusicPlaylistUrl,
+      setRsvpDeadline,
+      setRsvpQuestions,
+      setRsvpSessionToken,
+      setSearchValue,
+      setSelectedHouseholdGuestIds,
+      setStep,
+      setSubmitting,
+    });
     try {
       const lookupResp: { data?: unknown; error?: string } = USE_DEMO_RSVP
         ? { data: demoLookup(picked.id) as unknown }

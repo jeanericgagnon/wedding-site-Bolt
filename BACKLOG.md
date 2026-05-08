@@ -2233,3 +2233,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpPageRouteView` and the named `liveContentProps` handoff so the main RSVP page keeps routing through the shared route wrapper.
   - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
   - Launch status: unchanged. This continues local public-surface ownership cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 11:00 PM PT - No-deploy RSVP lookup-reset extraction:
+  - Resolved in this batch: moved the shared manual lookup reset path out of `src/pages/RSVP.tsx` and behind `src/pages/resetRsvpLookupFlow.ts`.
+  - Data-boundary hardening: `RSVP.tsx` now routes the repeated pre-search and pre-guest-pick reset bundle through one helper instead of hand-resetting loading state, guest selection, RSVP state, form state, meal config, household state, and step state in two separate branches.
+  - File-size movement: `src/pages/RSVP.tsx` moved from 1194 lines to 1200 lines in this continuation batch while `src/pages/resetRsvpLookupFlow.ts` came in at 93 lines.
+  - No feature loss: manual RSVP search, ambiguous guest selection, and guest-pick lookup retries preserve the current reset behavior while reducing page-owned lookup choreography duplication.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `resetRsvpLookupFlow(...)` so the main RSVP page keeps routing repeated lookup resets through the shared helper.
+  - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
+  - Launch status: unchanged. This continues local public-surface ownership cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.

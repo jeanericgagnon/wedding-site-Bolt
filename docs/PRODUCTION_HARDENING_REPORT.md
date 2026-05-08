@@ -4759,3 +4759,20 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+
+## 2026-05-07 11:00 PM PT No-Deploy RSVP Lookup-Reset Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its repeated manual lookup reset path through `src/pages/resetRsvpLookupFlow.ts`.
+  - That shared helper now owns the pre-search and pre-guest-pick reset bundle for loading state, guest selection, RSVP state, form state, meal config, household state, and form step while the page keeps lookup branching, selection hydration, and submit orchestration local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `resetRsvpLookupFlow(...)` so the main RSVP page keeps routing repeated lookup resets through the dedicated helper.
+  - `src/pages/RSVP.tsx` moved from 1194 lines to 1200 lines in this batch, while `src/pages/resetRsvpLookupFlow.ts` came in at 93 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
