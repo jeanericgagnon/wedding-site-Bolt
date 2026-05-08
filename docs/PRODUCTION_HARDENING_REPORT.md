@@ -4640,3 +4640,20 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+
+## 2026-05-07 10:34 PM PT No-Deploy RSVP Token Loading Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its token-autoload loading shell through `src/pages/RsvpTokenLoadingView.tsx`.
+  - That shared guest-facing loading component now owns the loading spinner and “Enter invitation code instead” fallback while the page keeps token resolution state and reset behavior local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpTokenLoadingView` so the main RSVP page keeps routing through the dedicated token-loading shell.
+  - `src/pages/RSVP.tsx` dropped from 1250 lines to 1237 lines in this batch, while `src/pages/RsvpTokenLoadingView.tsx` came in at 21 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.

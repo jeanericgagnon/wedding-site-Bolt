@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
-import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
 import { CheckCircle, Search, User } from 'lucide-react';
 import { demoGuests, demoRSVPs } from '../lib/demoData';
 import { DEMO_MODE, SUPABASE_CONFIGURED } from '../config/env';
@@ -34,6 +32,7 @@ import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } fro
 import { callValidateRsvpToken } from './rsvpFunctionService';
 import { RsvpLiveContentView } from './RsvpLiveContentView';
 import { RsvpRouteView } from './RsvpRouteView';
+import { RsvpTokenLoadingView } from './RsvpTokenLoadingView';
 
 export { normalizeRsvpGuestError, normalizeRsvpSubmitError } from './rsvpTypes';
 
@@ -1147,19 +1146,7 @@ export default function RSVP() {
     [householdGuests, selectedHouseholdGuestIds]
   );
   const tokenAutoLoadingView = (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="text-center space-y-3">
-        <div className="w-12 h-12 border-4 border-gray-200 border-t-gray-500 rounded-full animate-spin mx-auto" />
-        <p className="text-gray-500 text-sm">Loading your invitation…</p>
-        <button
-          type="button"
-          onClick={() => resetToSearch(false)}
-          className="text-sm text-gray-500 hover:text-gray-700"
-        >
-          Enter invitation code instead
-        </button>
-      </div>
-    </div>
+    <RsvpTokenLoadingView onEnterCodeInstead={() => resetToSearch(false)} />
   );
 
   const liveContent = (

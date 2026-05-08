@@ -53,15 +53,20 @@ describe('RSVP stale submit protection', () => {
     const formView = readFileSync(join(process.cwd(), 'src/pages/RsvpFormView.tsx'), 'utf8');
     const liveContentView = readFileSync(join(process.cwd(), 'src/pages/RsvpLiveContentView.tsx'), 'utf8');
     const routeView = readFileSync(join(process.cwd(), 'src/pages/RsvpRouteView.tsx'), 'utf8');
+    const tokenLoadingView = readFileSync(join(process.cwd(), 'src/pages/RsvpTokenLoadingView.tsx'), 'utf8');
     const pickerView = readFileSync(join(process.cwd(), 'src/pages/RsvpGuestPickerView.tsx'), 'utf8');
     const searchView = readFileSync(join(process.cwd(), 'src/pages/RsvpSearchView.tsx'), 'utf8');
     const successView = readFileSync(join(process.cwd(), 'src/pages/RsvpSuccessView.tsx'), 'utf8');
 
     expect(rsvpPage).toContain("from './RsvpRouteView'");
     expect(rsvpPage).toContain("from './RsvpLiveContentView'");
+    expect(rsvpPage).toContain("from './RsvpTokenLoadingView'");
     expect(rsvpPage).toContain('<RsvpRouteView');
     expect(rsvpPage).toContain('<RsvpLiveContentView');
+    expect(rsvpPage).toContain('<RsvpTokenLoadingView');
     expect(routeView).toContain('if (tokenAutoLoading) return <>{tokenAutoLoadingView}</>;');
+    expect(tokenLoadingView).toContain('Loading your invitation…');
+    expect(tokenLoadingView).toContain('Enter invitation code instead');
     expect(liveContentView).toContain("from './RsvpSearchView'");
     expect(liveContentView).toContain("from './RsvpFlowView'");
     expect(liveContentView).toContain("from './RsvpFormView'");
