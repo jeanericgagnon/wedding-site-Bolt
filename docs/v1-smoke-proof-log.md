@@ -10606,6 +10606,20 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md` PASS
   - `git diff --check` PASS
 - Outcome: `Registry.tsx` dropped from `1443` lines to `1358` lines; `useRegistryDashboardData.ts` came in at `178` lines. No deploy was run.
+## 2026-05-08 08:11 AM PT No-Deploy Planning Name-Change Workspace Hook Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Planning.tsx` now routes the name-change planner workspace state and mutation lane through `src/pages/dashboard/planning/usePlanningNameChangeWorkspace.ts`.
+  - That hook now owns draft/document/extracted-field state, hydrated workspace restore, plan recomputation, reminder state, reminder activity annotation, step execution status updates, step execution notes, workflow-status sync, and the live/demo save lane while the page keeps planning bootstrap, role/site metadata load, starter-suite actions, budget/task/vendor actions, and tab/render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `usePlanningNameChangeWorkspace({ ... })`, checks that `usePlanningNameChangeWorkspace.ts` owns the draft/save seam, and rejects regaining the old inline `handleNameChangeDraft` plus `handleSaveNameChange` workflow blocks in `Planning.tsx`.
+  - `src/pages/dashboard/Planning.tsx` dropped from 468 lines to 352 lines in this batch, while `src/pages/dashboard/planning/usePlanningNameChangeWorkspace.ts` came in at 217 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 08:06 AM PT No-Deploy Settings Snapshot-Hydration Hook Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

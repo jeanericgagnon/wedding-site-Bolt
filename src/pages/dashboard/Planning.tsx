@@ -17,11 +17,12 @@ import {
 import { buildNameChangePlan } from '../../lib/nameChange/engine';
 import { syncNameChangeRemindersWithStepExecution } from '../../lib/nameChange/reminders';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput, NameChangePlan, NameChangeReminderInput } from '../../lib/nameChange/types';
-import { annotateNameChangePlanStepsFromReminderChanges, appendNameChangeExecutionActivity, buildNameChangeWorkspaceBundle, deriveNameChangeWorkflowStatus, hydrateNameChangeWorkspace, loadNameChangeWorkspace, defaultNameChangeCaseInput, mergeNameChangePlanExecutionState, saveNameChangeWorkspace } from './planning/nameChangeService';
+import { buildNameChangeWorkspaceBundle, hydrateNameChangeWorkspace as hydrateLoadedNameChangeWorkspace, loadNameChangeWorkspace, defaultNameChangeCaseInput, mergeNameChangePlanExecutionState } from './planning/nameChangeService';
 import { PlanningDashboardShell } from './planning/PlanningDashboardShell';
 import { PendingVendorBudgetPrompt } from './planning/PendingVendorBudgetPrompt';
 import { PlanningDashboardTabContent } from './planning/PlanningDashboardTabContent';
 import { usePlanningDashboardActions } from './planning/usePlanningDashboardActions';
+import { usePlanningNameChangeWorkspace } from './planning/usePlanningNameChangeWorkspace';
 import { usePlanningStarterSuiteActions } from './planning/usePlanningStarterSuiteActions';
 
 type Tab = 'overview' | 'tasks' | 'budget' | 'payments' | 'vendors' | 'songs' | 'addresses' | 'nameChange';
@@ -78,13 +79,29 @@ export const DashboardPlanning: React.FC = () => {
     if (typeof window === 'undefined') return '';
     return new URLSearchParams(window.location.search).get('starterSuiteQa') ?? '';
   });
-  const [nameChangeDraft, setNameChangeDraft] = useState<NameChangeCaseInput>(defaultNameChangeCaseInput);
-  const [nameChangeDocuments, setNameChangeDocuments] = useState<NameChangeDocumentInput[]>([]);
-  const [nameChangeExtractedFields, setNameChangeExtractedFields] = useState<NameChangeExtractedFieldInput[]>([]);
-  const [nameChangePlan, setNameChangePlan] = useState<NameChangePlan>(() => buildNameChangePlan({ profile: defaultNameChangeCaseInput, documents: [], extractedFields: [] }));
-  const [nameChangeReminders, setNameChangeReminders] = useState<NameChangeReminderInput[]>([]);
-  const [nameChangeSaving, setNameChangeSaving] = useState(false);
   const { toast } = useToast();
+
+  const {
+    handleDocumentsChange,
+    handleDraftChange,
+    handleExtractedFieldsChange,
+    handleRemindersChange,
+    handleSaveNameChange,
+    handleStepExecutionNoteChange,
+    handleStepExecutionStatusChange,
+    handleStructuredIntakeChange,
+    hydrateNameChangeWorkspace,
+    nameChangeDocuments,
+    nameChangeDraft,
+    nameChangeExtractedFields,
+    nameChangePlan,
+    nameChangeReminders,
+    nameChangeSaving,
+  } = usePlanningNameChangeWorkspace({
+    isDemoMode,
+    siteId,
+    toast,
+  });
 
   useEffect(() => {
     loadAll();
@@ -136,12 +153,14 @@ export const DashboardPlanning: React.FC = () => {
         };
         const demoDocuments = [...demoNameChangeDocuments] as unknown as NameChangeDocumentInput[];
         const demoFields = [...demoNameChangeExtractedFields] as unknown as NameChangeExtractedFieldInput[];
-        setNameChangeDraft(demoCase);
-        setNameChangeDocuments(demoDocuments);
-        setNameChangeExtractedFields(demoFields);
         const demoWorkspace = buildNameChangeWorkspaceBundle(demoCase, demoDocuments, demoFields);
-        setNameChangePlan(mergeNameChangePlanExecutionState(demoWorkspace.plan, null));
-        setNameChangeReminders(demoWorkspace.reminders);
+        hydrateNameChangeWorkspace({
+          draft: demoCase,
+          documents: demoDocuments,
+          extractedFields: demoFields,
+          plan: mergeNameChangePlanExecutionState(demoWorkspace.plan, null),
+          reminders: demoWorkspace.reminders,
+        });
         return;
       }
 
@@ -180,12 +199,8 @@ export const DashboardPlanning: React.FC = () => {
 
       const workspace = await loadNameChangeWorkspace(id);
       if (workspace.caseRecord) {
-        const hydrated = hydrateNameChangeWorkspace(workspace);
-        setNameChangeDraft(hydrated.draft);
-        setNameChangeDocuments(hydrated.documents);
-        setNameChangeExtractedFields(hydrated.extractedFields);
-        setNameChangePlan(hydrated.plan);
-        setNameChangeReminders(hydrated.reminders);
+        const hydrated = hydrateLoadedNameChangeWorkspace(workspace);
+        hydrateNameChangeWorkspace(hydrated);
       }
     } catch {
       toast('Couldn’t load planning data right now. Please try again.', 'error');
@@ -257,137 +272,6 @@ export const DashboardPlanning: React.FC = () => {
     weddingDate,
   });
 
-  const handleNameChangeDraft = useCallback((updates: Partial<NameChangeCaseInput>) => {
-    setNameChangeDraft((prev) => {
-      const next = { ...prev, ...updates }; 
-      const nextWorkspace = buildNameChangeWorkspaceBundle(next, nameChangeDocuments, nameChangeExtractedFields, nameChangeReminders);
-      setNameChangePlan(mergeNameChangePlanExecutionState(nextWorkspace.plan, nameChangePlan));
-      setNameChangeReminders(nextWorkspace.reminders);
-      return next;
-    });
-  }, [nameChangeDocuments, nameChangeExtractedFields, nameChangePlan, nameChangeReminders]);
-
-  const handleStructuredIntake = useCallback((key: string, value: unknown) => {
-    setNameChangeDraft((prev) => {
-      const next = {
-        ...prev,
-        structured_intake: {
-          ...prev.structured_intake,
-          [key]: value,
-        },
-      };
-      const nextWorkspace = buildNameChangeWorkspaceBundle(next, nameChangeDocuments, nameChangeExtractedFields, nameChangeReminders);
-      setNameChangePlan(mergeNameChangePlanExecutionState(nextWorkspace.plan, nameChangePlan));
-      setNameChangeReminders(nextWorkspace.reminders);
-      return next;
-    });
-  }, [nameChangeDocuments, nameChangeExtractedFields, nameChangePlan, nameChangeReminders]);
-
-  const handleNameChangeDocuments = useCallback((nextDocuments: NameChangeDocumentInput[]) => {
-    setNameChangeDocuments(nextDocuments);
-    const nextWorkspace = buildNameChangeWorkspaceBundle(nameChangeDraft, nextDocuments, nameChangeExtractedFields, nameChangeReminders);
-    setNameChangePlan(mergeNameChangePlanExecutionState(nextWorkspace.plan, nameChangePlan));
-    setNameChangeReminders(nextWorkspace.reminders);
-  }, [nameChangeDraft, nameChangeExtractedFields, nameChangePlan, nameChangeReminders]);
-
-  const handleNameChangeExtractedFields = useCallback((nextFields: NameChangeExtractedFieldInput[]) => {
-    setNameChangeExtractedFields(nextFields);
-    const nextWorkspace = buildNameChangeWorkspaceBundle(nameChangeDraft, nameChangeDocuments, nextFields, nameChangeReminders);
-    setNameChangePlan(mergeNameChangePlanExecutionState(nextWorkspace.plan, nameChangePlan));
-    setNameChangeReminders(nextWorkspace.reminders);
-  }, [nameChangeDraft, nameChangeDocuments, nameChangePlan, nameChangeReminders]);
-
-  const handleNameChangeStepExecutionStatus = useCallback((stepId: string, executionStatus: 'todo' | 'in_progress' | 'complete') => {
-    const now = new Date().toISOString();
-    const nextPlan = mergeNameChangePlanExecutionState({
-      ...nameChangePlan,
-      steps: nameChangePlan.steps.map((step) => step.id === stepId ? {
-        ...step,
-        executionStatus,
-        executionUpdatedAt: now,
-        completedAt: executionStatus === 'complete' ? now : null,
-      } : step),
-    }, nameChangePlan);
-    setNameChangePlan(nextPlan);
-    setNameChangeReminders((prev) => syncNameChangeRemindersWithStepExecution(prev, stepId, executionStatus));
-    setNameChangeDraft((prev) => ({ ...prev, workflow_status: deriveNameChangeWorkflowStatus(nextPlan) }));
-  }, [nameChangePlan]);
-
-  const handleNameChangeStepExecutionNote = useCallback((stepId: string, note: string) => {
-    const now = new Date().toISOString();
-    const nextPlan = mergeNameChangePlanExecutionState({
-      ...nameChangePlan,
-      steps: nameChangePlan.steps.map((step) => step.id === stepId ? {
-        ...step,
-        executionNote: note,
-        executionUpdatedAt: now,
-      } : step),
-    }, nameChangePlan);
-    setNameChangePlan(nextPlan);
-  }, [nameChangePlan]);
-
-  const handleNameChangeReminders = useCallback((nextReminders: NameChangeReminderInput[], context?: { action: 'single-update' | 'bulk-update' | 'schedule-stale' }) => {
-    const previousReminders = new Map(nameChangeReminders.map((reminder) => [reminder.reminder_key, reminder]));
-    const changedReminders = nextReminders.filter((reminder) => previousReminders.get(reminder.reminder_key)?.status !== reminder.status);
-    setNameChangeReminders(nextReminders);
-    if (changedReminders.length === 0) return;
-
-    setNameChangePlan((prev) => {
-      const annotated = annotateNameChangePlanStepsFromReminderChanges(prev, changedReminders);
-
-      if (changedReminders.length === 1) {
-        const changedReminder = changedReminders[0];
-        return appendNameChangeExecutionActivity(annotated, {
-          title: `Reminder updated: ${changedReminder.label}`,
-          executionStatus: changedReminder.status === 'dismissed' ? 'todo' : changedReminder.status === 'sent' ? 'complete' : 'in_progress',
-          note: `Reminder status changed to ${changedReminder.status}`,
-        });
-      }
-
-      const statusCounts = changedReminders.reduce<Record<string, number>>((counts, reminder) => {
-        counts[reminder.status] = (counts[reminder.status] ?? 0) + 1;
-        return counts;
-      }, {});
-      const dominantStatus = (Object.entries(statusCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'scheduled') as NameChangeReminderInput['status'];
-      const title = context?.action === 'schedule-stale'
-        ? `Scheduled stale reminders (${changedReminders.length})`
-        : `Bulk reminder update (${changedReminders.length})`;
-
-      return appendNameChangeExecutionActivity(annotated, {
-        title,
-        executionStatus: dominantStatus === 'dismissed' ? 'todo' : dominantStatus === 'sent' ? 'complete' : 'in_progress',
-        note: changedReminders
-          .map((reminder) => `${reminder.label} → ${reminder.status}`)
-          .slice(0, 3)
-          .join(' · '),
-      });
-    });
-  }, [nameChangeReminders]);
-
-  const handleSaveNameChange = useCallback(async () => {
-    if (isDemoMode) {
-      toast('Demo mode saved the planner state locally.', 'success');
-      return;
-    }
-    if (!siteId) {
-      toast('Missing site context for name change planner.', 'error');
-      return;
-    }
-
-    try {
-      setNameChangeSaving(true);
-      const result = await saveNameChangeWorkspace(siteId, nameChangeDraft, nameChangeDocuments, nameChangeExtractedFields, nameChangeReminders, nameChangePlan);
-      setNameChangeDraft((prev) => ({ ...prev, workflow_status: result.caseRecord.workflow_status, latest_plan_summary: result.plan.summary as unknown as Record<string, unknown> }));
-      setNameChangePlan(result.plan);
-      setNameChangeReminders(result.reminders);
-      toast('Name change planner saved.', 'success');
-    } catch {
-      toast('Couldn’t save the name change planner right now.', 'error');
-    } finally {
-      setNameChangeSaving(false);
-    }
-  }, [isDemoMode, nameChangeDraft, nameChangeDocuments, nameChangeExtractedFields, nameChangeReminders, siteId, toast]);
-
   return (
     <PlanningDashboardShell
       activeSiteRole={activeSiteRole}
@@ -432,15 +316,15 @@ export const DashboardPlanning: React.FC = () => {
           onDeleteBudgetItem={handleDeleteBudgetItem}
           onDeleteTask={handleDeleteTask}
           onDeleteVendor={handleDeleteVendor}
-          onDraftChange={handleNameChangeDraft}
-          onDocumentsChange={handleNameChangeDocuments}
-          onExtractedFieldsChange={handleNameChangeExtractedFields}
-          onRemindersChange={handleNameChangeReminders}
+          onDraftChange={handleDraftChange}
+          onDocumentsChange={handleDocumentsChange}
+          onExtractedFieldsChange={handleExtractedFieldsChange}
+          onRemindersChange={handleRemindersChange}
           onSaveNameChange={handleSaveNameChange}
           onSaveTotalBudget={handleSaveTotalBudget}
-          onStepExecutionNoteChange={handleNameChangeStepExecutionNote}
-          onStepExecutionStatusChange={handleNameChangeStepExecutionStatus}
-          onStructuredIntakeChange={handleStructuredIntake}
+          onStepExecutionNoteChange={handleStepExecutionNoteChange}
+          onStepExecutionStatusChange={handleStepExecutionStatusChange}
+          onStructuredIntakeChange={handleStructuredIntakeChange}
           onTabChange={setActiveTab}
           onUndoStarterSuite={handleUndoStarterSuite}
           onUpdateBudgetItem={handleUpdateBudgetItem}

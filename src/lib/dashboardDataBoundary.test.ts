@@ -641,6 +641,7 @@ describe('dashboard data boundary guards', () => {
     const tabContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/PlanningDashboardTabContent.tsx'), 'utf8');
     const songTab = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/SongRequestsTab.tsx'), 'utf8');
     const actionsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/usePlanningDashboardActions.ts'), 'utf8');
+    const nameChangeWorkspaceHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/usePlanningNameChangeWorkspace.ts'), 'utf8');
     const starterSuiteHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/usePlanningStarterSuiteActions.ts'), 'utf8');
 
     expect(source).toContain('const PLANNING_TASK_SELECT = ');
@@ -672,6 +673,7 @@ describe('dashboard data boundary guards', () => {
     expect(page).toContain('<PlanningDashboardTabContent');
     expect(page).toContain('<PendingVendorBudgetPrompt');
     expect(page).toContain('usePlanningDashboardActions({');
+    expect(page).toContain('usePlanningNameChangeWorkspace({');
     expect(page).toContain('usePlanningStarterSuiteActions({');
     expect(page).not.toContain("supabase.from('wedding_sites')");
     expect(page).not.toContain("supabase.from('guests')");
@@ -694,6 +696,10 @@ describe('dashboard data boundary guards', () => {
     expect(actionsHook).toContain('const handleAddBudgetItem = useCallback(async (item: Partial<PlanningBudgetItem>) => {');
     expect(actionsHook).toContain('const addVendorToBudget = useCallback(async (vendor: PlanningVendor) => {');
     expect(actionsHook).toContain('const handleAddVendor = useCallback(async (vendor: Partial<PlanningVendor>) => {');
+    expect(nameChangeWorkspaceHook).toContain('export function usePlanningNameChangeWorkspace({');
+    expect(nameChangeWorkspaceHook).toContain('const handleDraftChange = useCallback((updates: Partial<NameChangeCaseInput>) => {');
+    expect(nameChangeWorkspaceHook).toContain('const handleSaveNameChange = useCallback(async () => {');
+    expect(nameChangeWorkspaceHook).toContain("toast('Name change planner saved.', 'success');");
     expect(starterSuiteHook).toContain('export function usePlanningStarterSuiteActions({');
     expect(starterSuiteHook).toContain('const starterSuite = useMemo<StarterPlannerSuite | null>(() => {');
     expect(starterSuiteHook).toContain("type: 'starter_suite_applied'");
@@ -709,6 +715,8 @@ describe('dashboard data boundary guards', () => {
     expect(page).not.toContain('const handleAddBudgetItem = useCallback(async (item: Partial<PlanningBudgetItem>) => {');
     expect(page).not.toContain('const addVendorToBudget = useCallback(async (vendor: PlanningVendor) => {');
     expect(page).not.toContain('const handleAddVendor = useCallback(async (vendor: Partial<PlanningVendor>) => {');
+    expect(page).not.toContain('const handleNameChangeDraft = useCallback((updates: Partial<NameChangeCaseInput>) => {');
+    expect(page).not.toContain("const handleSaveNameChange = useCallback(async () => {");
     expect(page).not.toContain('const handleApplyStarterSuite = useCallback(async () => {');
     expect(page).not.toContain('const handleUndoStarterSuite = useCallback(async () => {');
   });
