@@ -80,6 +80,10 @@ describe('settings site data boundary', () => {
       join(process.cwd(), 'src/pages/dashboard/settings/SettingsTabContent.tsx'),
       'utf8',
     );
+    const siteTabContent = readFileSync(
+      join(process.cwd(), 'src/pages/dashboard/settings/SettingsSiteTabContent.tsx'),
+      'utf8',
+    );
     const actionsHook = readFileSync(
       join(process.cwd(), 'src/pages/dashboard/settings/useSettingsSiteAccessActions.ts'),
       'utf8',
@@ -95,12 +99,17 @@ describe('settings site data boundary', () => {
     expect(page).toContain('useSettingsExperienceActions({');
     expect(page).toContain('<SettingsDashboardShell');
     expect(page).toContain('<SettingsTabContent');
+    expect(page).toContain('<SettingsSiteTabContent');
     expect(page).toContain('requireSettingsAuthenticatedUser()');
     expect(page).toContain('verifySettingsCurrentPassword(authUser.email || \'\', currentPassword)');
     expect(page).toContain('updateSettingsAccountPassword(newPassword)');
     expect(page).not.toContain('<DashboardLayout');
     expect(page).not.toContain('<DashboardPageHero');
     expect(page).not.toContain('<SettingsNavigation');
+    expect(page).not.toContain('<SettingsSiteUrlPanel');
+    expect(page).not.toContain('<SettingsIdentityExportsPanel');
+    expect(page).not.toContain('<SettingsPrivacyPanel');
+    expect(page).not.toContain('<SettingsTemplatePanel');
     expect(page).not.toContain("from('wedding_site_collaborator_invites')");
     expect(page).not.toContain("from('site_translations')");
     expect(page).not.toMatch(/supabase\s*\n\s*\.from\('wedding_sites'\)/);
@@ -138,6 +147,13 @@ describe('settings site data boundary', () => {
     expect(tabContent).toContain('<>{rsvpContent}</>');
     expect(tabContent).toContain('<>{notificationsContent}</>');
     expect(tabContent).toContain('<>{billingContent}</>');
+
+    expect(siteTabContent).toContain('<SettingsSiteUrlPanel');
+    expect(siteTabContent).toContain('<SettingsIdentityExportsPanel');
+    expect(siteTabContent).toContain('<SettingsPrivacyPanel');
+    expect(siteTabContent).toContain('<SettingsTemplatePanel');
+    expect(siteTabContent).toContain('onSubmitSiteSlug');
+    expect(siteTabContent).toContain('onToggleTemplateSettings');
 
     expect(actionsHook).toContain('createSettingsCollaboratorInvite({');
     expect(actionsHook).toContain('revokeSettingsCollaboratorInvite(inviteId)');

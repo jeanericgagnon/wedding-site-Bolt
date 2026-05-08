@@ -15,6 +15,10 @@ const settingsTabContentSource = () => readFileSync(
   join(process.cwd(), 'src/pages/dashboard/settings/SettingsTabContent.tsx'),
   'utf8',
 );
+const settingsSiteTabContentSource = () => readFileSync(
+  join(process.cwd(), 'src/pages/dashboard/settings/SettingsSiteTabContent.tsx'),
+  'utf8',
+);
 const customerSafeErrorSource = () => readFileSync(join(process.cwd(), 'src/lib/customerSafeError.ts'), 'utf8');
 const settingsSiteDataSource = () => readFileSync(join(process.cwd(), 'src/pages/dashboard/settings/settingsSiteData.ts'), 'utf8');
 
@@ -97,8 +101,10 @@ describe('settings error safety', () => {
   it('keeps settings tab rendering behind the shared tab-content seam', () => {
     const pageSource = settingsSource();
     const tabContentSource = settingsTabContentSource();
+    const siteTabContentSource = settingsSiteTabContentSource();
 
     expect(pageSource).toContain('<SettingsTabContent');
+    expect(pageSource).toContain('<SettingsSiteTabContent');
     expect(tabContentSource).toContain('switch (activeTab)');
     expect(tabContentSource).toContain('case \'account\'');
     expect(tabContentSource).toContain('case \'team\'');
@@ -112,5 +118,9 @@ describe('settings error safety', () => {
     expect(tabContentSource).toContain('rsvpContent');
     expect(tabContentSource).toContain('notificationsContent');
     expect(tabContentSource).toContain('billingContent');
+    expect(siteTabContentSource).toContain('<SettingsSiteUrlPanel');
+    expect(siteTabContentSource).toContain('<SettingsIdentityExportsPanel');
+    expect(siteTabContentSource).toContain('<SettingsPrivacyPanel');
+    expect(siteTabContentSource).toContain('<SettingsTemplatePanel');
   });
 });

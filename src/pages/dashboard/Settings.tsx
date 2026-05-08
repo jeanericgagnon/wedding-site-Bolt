@@ -46,14 +46,11 @@ import {
 import { readDemoRsvpSettings } from './settings/settingsDemoStorage';
 import { SettingsAccountPanel } from './settings/SettingsAccountPanel';
 import { SettingsBillingPanel } from './settings/SettingsBillingPanel';
-import { SettingsIdentityExportsPanel } from './settings/SettingsIdentityExportsPanel';
 import { getSettingsTabs, SettingsNavigation, type SettingsTabId } from './settings/SettingsNavigation';
 import { SettingsNotificationsPanel } from './settings/SettingsNotificationsPanel';
-import { SettingsPrivacyPanel } from './settings/SettingsPrivacyPanel';
 import { SettingsRsvpMealPanel } from './settings/SettingsRsvpMealPanel';
 import { SettingsRsvpQuestionsPanel } from './settings/SettingsRsvpQuestionsPanel';
-import { SettingsSiteUrlPanel } from './settings/SettingsSiteUrlPanel';
-import { SettingsTemplatePanel } from './settings/SettingsTemplatePanel';
+import { SettingsSiteTabContent } from './settings/SettingsSiteTabContent';
 import { SettingsTeamAccessPanel } from './settings/SettingsTeamAccessPanel';
 import { SettingsDashboardShell } from './settings/SettingsDashboardShell';
 import { SettingsTabContent } from './settings/SettingsTabContent';
@@ -653,70 +650,58 @@ export const DashboardSettings: React.FC = () => {
           />
         )}
         siteContent={(
-          <>
-            <SettingsSiteUrlPanel
-              onSiteSlugChange={(value) => setSiteSlug(value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-              onSubmit={handleUpdateSlug}
-              publicSiteUrl={publicSiteUrl}
-              siteSlug={siteSlug}
-              slugError={slugError}
-              slugSaving={slugSaving}
-              slugSuccess={slugSuccess}
-            />
-
-            <SettingsIdentityExportsPanel
-              onCopyIdentityManifest={() => { void copyIdentityManifest(); }}
-              onDownloadIdentityPrintPack={downloadIdentityPrintPack}
-              weddingIdentityExportKit={weddingIdentityExportKit}
-              weddingIdentityPrintAssets={weddingIdentityPrintAssets}
-            />
-
-            <SettingsPrivacyPanel
-              defaultLanguage={defaultLanguage}
-              guestAccessToken={guestAccessToken}
-              hideFromSearch={hideFromSearch}
-              onAutoTranslateLanguage={(language) => { void handleAutoTranslateLanguage(language); }}
-              onCopyInviteLink={copyInviteLink}
-              onDefaultLanguageChange={(language) => { void handleDefaultLanguageChange(language); }}
-              onHideFromSearchChange={(checked) => {
-                visibilityDraftGuard.markDirty();
-                setHideFromSearch(checked);
-              }}
-              onRegenerateToken={() => { void handleRegenerateToken(); }}
-              onSavePrivacy={handleSavePrivacy}
-              onSitePasswordChange={(value) => {
-                visibilityDraftGuard.markDirty();
-                setSitePassword(value);
-              }}
-              onToggleShowPrivacySettings={() => setShowPrivacySettings((value) => !value)}
-              onToggleShowSitePassword={() => setShowSitePassword((value) => !value)}
-              onVisibilityModeChange={(mode) => {
-                visibilityDraftGuard.markDirty();
-                setPrivacyMode(mode);
-              }}
-              privacyCopied={privacyCopied}
-              privacyMode={privacyMode}
-              showPrivacySettings={showPrivacySettings}
-              showSitePassword={showSitePassword}
-              sitePassword={sitePassword}
-              siteSlug={siteSlug}
-              translatingLanguage={translatingLanguage}
-              translationStatuses={translationStatuses}
-              visibilityError={visibilityError}
-              visibilitySaving={visibilitySaving}
-              visibilitySuccess={visibilitySuccess}
-            />
-
-            <SettingsTemplatePanel
-              changingTemplate={changingTemplate}
-              currentTemplate={currentTemplate}
-              onTemplateChange={(templateId) => { void handleTemplateChange(templateId); }}
-              onToggleVisibility={() => setShowTemplateSettings((value) => !value)}
-              showTemplateSettings={showTemplateSettings}
-              templateError={templateError}
-              templateSuccess={templateSuccess}
-            />
-          </>
+          <SettingsSiteTabContent
+            changingTemplate={changingTemplate}
+            currentTemplate={currentTemplate}
+            defaultLanguage={defaultLanguage}
+            guestAccessToken={guestAccessToken}
+            hideFromSearch={hideFromSearch}
+            onAutoTranslateLanguage={(language) => { void handleAutoTranslateLanguage(language); }}
+            onCopyIdentityManifest={() => { void copyIdentityManifest(); }}
+            onCopyInviteLink={copyInviteLink}
+            onDefaultLanguageChange={(language) => { void handleDefaultLanguageChange(language); }}
+            onDownloadIdentityPrintPack={downloadIdentityPrintPack}
+            onHideFromSearchChange={(checked) => {
+              visibilityDraftGuard.markDirty();
+              setHideFromSearch(checked);
+            }}
+            onPrivacyModeChange={(mode) => {
+              visibilityDraftGuard.markDirty();
+              setPrivacyMode(mode);
+            }}
+            onRegenerateToken={() => { void handleRegenerateToken(); }}
+            onSavePrivacy={handleSavePrivacy}
+            onSitePasswordChange={(value) => {
+              visibilityDraftGuard.markDirty();
+              setSitePassword(value);
+            }}
+            onSiteSlugChange={(value) => setSiteSlug(value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+            onSubmitSiteSlug={handleUpdateSlug}
+            onTemplateChange={(templateId) => { void handleTemplateChange(templateId); }}
+            onTogglePrivacySettings={() => setShowPrivacySettings((value) => !value)}
+            onToggleShowSitePassword={() => setShowSitePassword((value) => !value)}
+            onToggleTemplateSettings={() => setShowTemplateSettings((value) => !value)}
+            privacyCopied={privacyCopied}
+            privacyMode={privacyMode}
+            publicSiteUrl={publicSiteUrl}
+            showPrivacySettings={showPrivacySettings}
+            showSitePassword={showSitePassword}
+            showTemplateSettings={showTemplateSettings}
+            sitePassword={sitePassword}
+            siteSlug={siteSlug}
+            slugError={slugError}
+            slugSaving={slugSaving}
+            slugSuccess={slugSuccess}
+            templateError={templateError}
+            templateSuccess={templateSuccess}
+            translatingLanguage={translatingLanguage}
+            translationStatuses={translationStatuses}
+            visibilityError={visibilityError}
+            visibilitySaving={visibilitySaving}
+            visibilitySuccess={visibilitySuccess}
+            weddingIdentityExportKit={weddingIdentityExportKit}
+            weddingIdentityPrintAssets={weddingIdentityPrintAssets}
+          />
         )}
         rsvpContent={(
           <>
