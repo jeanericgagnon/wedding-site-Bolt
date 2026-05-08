@@ -51,14 +51,19 @@ describe('RSVP stale submit protection', () => {
     const rsvpPage = readFileSync(join(process.cwd(), 'src/pages/RSVP.tsx'), 'utf8');
     const routeView = readFileSync(join(process.cwd(), 'src/pages/RsvpRouteView.tsx'), 'utf8');
     const searchView = readFileSync(join(process.cwd(), 'src/pages/RsvpSearchView.tsx'), 'utf8');
+    const successView = readFileSync(join(process.cwd(), 'src/pages/RsvpSuccessView.tsx'), 'utf8');
 
     expect(rsvpPage).toContain("from './RsvpRouteView'");
     expect(rsvpPage).toContain("from './RsvpSearchView'");
+    expect(rsvpPage).toContain("from './RsvpSuccessView'");
     expect(rsvpPage).toContain('<RsvpRouteView');
     expect(rsvpPage).toContain('<RsvpSearchView');
+    expect(rsvpPage).toContain('<RsvpSuccessView');
     expect(routeView).toContain('if (tokenAutoLoading) return <>{tokenAutoLoadingView}</>;');
     expect(searchView).toContain("{t('rsvp.hero_title')}");
     expect(searchView).toContain("{t('rsvp.search_button')}");
+    expect(successView).toContain(`{formData.attending ? "You're confirmed!" : "Response recorded"}`);
+    expect(successView).toContain('Submit another RSVP');
   });
 
   it('sanitizes internal RSVP lookup and submit errors before showing guest copy', () => {

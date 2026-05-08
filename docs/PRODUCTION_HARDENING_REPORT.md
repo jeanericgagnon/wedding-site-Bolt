@@ -4555,3 +4555,20 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+
+## 2026-05-07 10:08 PM PT No-Deploy RSVP Success View Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its guest-facing confirmation/success slab through `src/pages/RsvpSuccessView.tsx`.
+  - That shared guest-facing success component now owns the confirmation badge shell, RSVP summary drawer, inherited-household recap, confirmation copy, and done / submit-another CTA stack while the page keeps submit state, post-submit transitions, and reset/reload behavior local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpSuccessView` so the main RSVP page keeps routing through the dedicated success shell.
+  - `src/pages/RSVP.tsx` dropped from 1831 lines to 1734 lines in this batch, while `src/pages/RsvpSuccessView.tsx` came in at 158 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
