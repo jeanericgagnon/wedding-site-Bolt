@@ -453,15 +453,16 @@ describe('dashboard data boundary guards', () => {
     const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/useItineraryDashboardData.ts'), 'utf8');
     const derivedState = readFileSync(join(process.cwd(), 'src/pages/dashboard/buildItineraryDashboardDerivedState.ts'), 'utf8');
     const uiStateHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/useItineraryDashboardUiState.ts'), 'utf8');
+    const routeContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/ItineraryDashboardRouteContent.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/itineraryService.ts'), 'utf8');
     const actions = readFileSync(join(process.cwd(), 'src/pages/dashboard/useItineraryTimelineActions.ts'), 'utf8');
     const guestManager = readFileSync(join(process.cwd(), 'src/pages/dashboard/EventGuestManagerModal.tsx'), 'utf8');
 
     expect(source).toContain('<ItineraryDashboardRouteView');
-    expect(source).toContain('<EventGuestManagerModal');
     expect(source).toContain('useItineraryDashboardData({ isDemoMode, toast })');
     expect(source).toContain('useItineraryDashboardUiState()');
     expect(source).toContain('buildItineraryDashboardDerivedState({');
+    expect(source).toContain('<ItineraryDashboardRouteContent');
     expect(source).toContain('useItineraryTimelineActions({');
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).not.toContain('loadItineraryDashboardEvents(hasEventRsvpsTable)');
@@ -478,6 +479,8 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('function openEventForm(event?: ItineraryEvent) {');
     expect(source).not.toContain('const timelineInsights = analyzeTimeline(events.map((event) => ({');
     expect(source).not.toContain('const sortedShiftEvents = [...events].sort((a, b) => `${a.event_date}T${a.start_time}`.localeCompare(`${b.event_date}T${b.start_time}`));');
+    expect(source).not.toContain('<DashboardPageHero');
+    expect(source).not.toContain('No itinerary events yet');
     expect(guestManager).toContain('loadItineraryEventGuestManagerSnapshot(eventId)');
     expect(guestManager).toContain('removeItineraryEventGuestInvitation(eventId, guestId)');
     expect(guestManager).toContain('addItineraryEventGuestInvitation(eventId, guestId)');
@@ -529,6 +532,10 @@ describe('dashboard data boundary guards', () => {
     expect(uiStateHook).toContain('const [templateDate, setTemplateDate] = useState(() => new Date().toISOString().slice(0, 10));');
     expect(uiStateHook).toContain('function openEventForm(event?: ItineraryEvent) {');
     expect(uiStateHook).toContain('setFormData(createEmptyItineraryFormData());');
+    expect(routeContent).toContain('<DashboardPageHero');
+    expect(routeContent).toContain('Shape the rhythm of the wedding weekend.');
+    expect(routeContent).toContain('No itinerary events yet');
+    expect(routeContent).toContain('<EventGuestManagerModal');
     expect(derivedState).toContain('export function buildItineraryDashboardDerivedState({ events, shiftFromEventId }: Args)');
     expect(derivedState).toContain('const timelineInsights = analyzeTimeline(events.map((event) => ({');
     expect(derivedState).toContain('const sortedShiftEvents = [...events].sort((a, b) => `${a.event_date}T${a.start_time}`.localeCompare(`${b.event_date}T${b.start_time}`));');

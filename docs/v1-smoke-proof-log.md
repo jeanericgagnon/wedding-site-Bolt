@@ -7,6 +7,22 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-08 09:33 AM PT No-Deploy Itinerary Dashboard Route-Content Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Itinerary.tsx` now routes the owner-facing itinerary shell through `src/pages/dashboard/ItineraryDashboardRouteContent.tsx`.
+  - That new route-content component now owns the itinerary hero, event form, smart-template panel, bulk-shift panel, timeline quick-check, empty state, event cards, and guest-manager modal while the route keeps data hooks, UI-state hooks, derived-state helpers, timeline actions, and confirm-dialog orchestration.
+  - Itinerary boundary tests now pin `<ItineraryDashboardRouteContent`, check that `ItineraryDashboardRouteContent.tsx` owns the public itinerary render slab, and reject regaining the old inline `DashboardPageHero` / empty-state / event-card / modal markup in `Itinerary.tsx`.
+  - `src/pages/dashboard/Itinerary.tsx` dropped from 540 lines to 167 lines in this batch, while `src/pages/dashboard/ItineraryDashboardRouteContent.tsx` came in at 524 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 09:23 AM PT No-Deploy Itinerary Dashboard UI-State Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:

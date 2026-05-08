@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 9:33 AM PT - No-Deploy Itinerary Dashboard Route-Content Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Itinerary.tsx` no longer hand-renders the owner-facing itinerary shell inline.
+  - Added `src/pages/dashboard/ItineraryDashboardRouteContent.tsx` so the new route-content component now owns the itinerary hero, event form, smart-template panel, bulk-shift panel, timeline quick-check, empty state, event cards, and guest-manager modal while the route keeps data hooks, UI-state hooks, derived-state helpers, timeline actions, and confirm-dialog orchestration.
+  - Itinerary boundary tests now pin `<ItineraryDashboardRouteContent`, check that the new file owns the public itinerary render slab, and reject regaining the old inline `DashboardPageHero` / empty-state / event-card / modal markup in `Itinerary.tsx`.
+- Acceptance/proof target:
+  - Focused itinerary/dashboard boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 9:23 AM PT - No-Deploy Itinerary Dashboard UI-State Extraction
 
 - Status: `PARTIAL`
