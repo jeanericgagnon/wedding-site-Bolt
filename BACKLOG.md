@@ -1813,6 +1813,13 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/pages/previewPhotoManifestService.test.ts` and `src/pages/previewPhotoManifestService.boundary.test.ts` now pin the shared preview-manifest seam.
   - Validation passed: `npm test -- --run src/pages/previewPhotoManifestService.test.ts src/pages/previewPhotoManifestService.boundary.test.ts` (2/2), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local duplicate preview transport without changing runtime launch behavior. No deploy was run.
+- 2026-05-07 7:07 PM PT - No-deploy Guest dashboard overlay boundary extraction:
+  - Resolved in this batch: moved the remaining guest dashboard overlay stack behind `src/pages/dashboard/guests/GuestDashboardOverlays.tsx`.
+  - Data-boundary hardening: `src/pages/dashboard/Guests.tsx` no longer owns the assisted RSVP modal, add/edit guest modal wiring, itinerary drawer shell, delete-all modal, CSV import modal stack, or inline confirm dialog rendering.
+  - No feature loss: guest add/edit, assisted RSVP capture, itinerary invitation toggles, delete-all confirmation, CSV import review, and confirm-dialog flows preserve the current behavior while shrinking page-owned UI transport.
+  - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins the higher-level `GuestDashboardOverlays` seam and rejects regaining the older inline overlay copy.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts` (15/15), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest dashboard without changing guest operations behavior. No deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

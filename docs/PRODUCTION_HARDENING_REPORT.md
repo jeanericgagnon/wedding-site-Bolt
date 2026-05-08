@@ -3883,3 +3883,20 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the oversized-file and page-boundary lanes for settings without changing public site link behavior. No deploy was run.
+
+### 2026-05-07 7:07 PM PT - Guest Dashboard Overlay Boundary Extraction
+
+- Moved the remaining guest dashboard overlay stack behind `src/pages/dashboard/guests/GuestDashboardOverlays.tsx`.
+- `src/pages/dashboard/Guests.tsx` no longer owns the assisted RSVP modal, add/edit guest modal shell, itinerary drawer shell, delete-all modal, CSV import modal stack, or inline confirm dialog render path.
+- The page still owns the guest state, handlers, and mutation/service calls, while the extracted overlay layer owns the modal/drawer composition.
+- Tightened `src/lib/dashboardDataBoundary.test.ts` so the guest dashboard now pins the higher-level `GuestDashboardOverlays` seam and rejects regaining the old inline overlay copy.
+
+Validation:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the oversized-file and page-boundary lanes for the guest dashboard without changing guest add/edit, assisted RSVP, itinerary invitation, delete-all, or CSV import behavior. No deploy was run.

@@ -74,6 +74,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('markGuestInvitationSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString())');
     expect(source).toContain('markGuestInvitationAndReminderSentForSite(currentWeddingSiteId, guest.id, sentAtIso)');
     expect(source).toContain('markGuestReminderSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString())');
+    expect(source).toContain('<GuestDashboardOverlays');
     expect(source).toContain('clearGuestCheckInsForSite(weddingSiteId)');
     expect(source).toContain('assignGuestsToHouseholdForSite(weddingSiteId, ids, householdId)');
     expect(source).toContain('updateGuestHouseholdForSite(weddingSiteId, guestId, null)');
@@ -133,8 +134,14 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain(".from('rsvps')\n        .select('id, notes')");
     expect(source).not.toContain(".from('rsvps')\n          .update(assistedRsvpPayload)");
     expect(source).not.toContain(".from('rsvps')\n          .insert({");
+    expect(source).not.toContain('<GuestImportMapperModal');
+    expect(source).not.toContain('<GuestImportReviewModal');
+    expect(source).not.toContain('renderGuestFormModal');
+    expect(source).not.toContain('Record RSVP for guest');
     expect(source).not.toContain(".from('wedding_sites')\n      .select('site_slug')");
     expect(source).not.toContain(".from('wedding_sites')\n      .select('id, site_slug, site_url')");
+    expect(source).not.toContain('Match columns');
+    expect(source).not.toContain('Review Import');
     expect(source).not.toContain(".from('wedding_sites')\n        .update({ rsvp_custom_questions: cleanedQuestions, rsvp_meal_config: { enabled: rsvpMealEnabled, options: mealOptions } })");
     expect(source).not.toContain(".from('guests')\n        .update({ checked_in_at: null })");
     expect(source).not.toContain(".from('guests')\n        .update({ thank_you_sent_at: nextValue })");

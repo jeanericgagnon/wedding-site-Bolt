@@ -8413,3 +8413,17 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 7:07 PM PT No-Deploy Guest Dashboard Overlay Boundary Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the remaining guest overlay stack through `src/pages/dashboard/guests/GuestDashboardOverlays.tsx`.
+  - The guest dashboard page no longer owns the assisted RSVP modal, add/edit guest modal shell, itinerary drawer shell, delete-all modal, CSV import modal stack, or inline confirm dialog render path.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins the higher-level `GuestDashboardOverlays` seam and rejects regaining the old inline overlay copy.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

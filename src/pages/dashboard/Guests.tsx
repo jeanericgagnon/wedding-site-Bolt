@@ -25,10 +25,10 @@ import { extractDietaryNote } from '../../lib/dietaryNotes';
 import { GUEST_IMPORT_MAX_FILE_BYTES, GUEST_IMPORT_MAX_ROWS, buildDefaultCsvFieldMap, buildGuestImportPreview, isCsvNameMappingValid, readGuestImportRows, type CsvFieldMap } from '../../lib/guestImportParser';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
-import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown, Trash2, ExternalLink, Eye } from 'lucide-react';
+import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, ChevronDown, Trash2, ExternalLink, Eye } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
-import { ConfirmDialog, type ConfirmDialogProps } from '../../components/ui/ConfirmDialog';
+import type { ConfirmDialogProps } from '../../components/ui/ConfirmDialog';
 import { demoWeddingSite, demoGuests, demoRSVPs } from '../../lib/demoData';
 import { buildQuickStartPhotosPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
 import { sendWeddingInvitation } from '../../lib/emailService';
@@ -44,6 +44,7 @@ import {
   parseRsvpEventSelections,
   summarizeAuditEntry,
 } from './guests/guestDisplayUtils';
+import { GuestDashboardOverlays } from './guests/GuestDashboardOverlays';
 import {
   type Guest,
   type GuestAuditEntry,
@@ -2223,117 +2224,6 @@ const handleSendBulkInvitations = async () => {
     return <Badge variant={variants[status] || 'warning'}>{labels[status] || status}</Badge>;
   };
 
-  const renderGuestFormModal = ({ onSubmit, onClose, title, submitLabel }: { onSubmit: (e: React.FormEvent) => void; onClose: () => void; title: string; submitLabel: string }) => (
-    <>
-      <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} aria-hidden="true" />
-      <div className="fixed inset-0 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="guest-modal-title">
-        <div className="bg-surface rounded-lg max-w-md w-full p-6 max-h-[90vh] overflow-y-auto border border-border-subtle">
-          <div className="flex justify-between items-center mb-5">
-            <h2 id="guest-modal-title" className="text-xl font-semibold text-text-primary">{title}</h2>
-            <button onClick={onClose} className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-surface-subtle rounded-lg transition-colors" aria-label="Close">
-              <X className="w-5 h-5" aria-hidden="true" />
-            </button>
-          </div>
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">First Name *</label>
-              <Input
-                value={formData.first_name}
-                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Last Name *</label>
-              <Input
-                value={formData.last_name}
-                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Email</label>
-              <Input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Phone</label>
-              <Input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.plus_one_allowed}
-                  onChange={(e) => setFormData({ ...formData, plus_one_allowed: e.target.checked, require_plus_one_name: e.target.checked ? formData.require_plus_one_name : false })}
-                  className="rounded"
-                />
-                <span className="text-sm text-text-primary">Allow Plus One</span>
-              </label>
-
-              {formData.plus_one_allowed && (
-                <label className="flex items-center gap-2 pl-6">
-                  <input
-                    type="checkbox"
-                    checked={formData.require_plus_one_name}
-                    onChange={(e) => setFormData({ ...formData, require_plus_one_name: e.target.checked })}
-                    className="rounded"
-                  />
-                  <span className="text-sm text-text-primary">Require plus-one name</span>
-                </label>
-              )}
-
-              {effectiveItineraryEvents.length > 0 && (
-                <div className="pt-1 border-t border-border-subtle">
-                  <p className="text-xs font-medium text-text-secondary mb-2">Itinerary invitations</p>
-                  {itineraryFilterEvents.length === 0 && (
-                    <p className="text-[11px] text-text-tertiary mb-2">No itinerary events yet — using Ceremony/Reception defaults for now.</p>
-                  )}
-                  <div className="space-y-1.5 max-h-40 overflow-auto pr-1">
-                    {effectiveItineraryEvents.map((event) => {
-                      const checked = formEventInviteIds.has(event.id);
-                      return (
-                        <label key={event.id} className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={(e) => {
-                              const next = new Set(formEventInviteIds);
-                              if (e.target.checked) next.add(event.id);
-                              else next.delete(event.id);
-                              setFormEventInviteIds(next);
-                            }}
-                            className="rounded"
-                          />
-                          <span className="text-sm text-text-primary truncate">{event.event_name}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="flex gap-3 pt-4">
-              <Button type="button" variant="outline" fullWidth onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="submit" variant="primary" fullWidth>
-                {submitLabel}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </>
-  );
-
   const [skipRecentlyInvited, setSkipRecentlyInvited] = useState(true);
   const [reminderCadenceDays, setReminderCadenceDays] = useState<1 | 3 | 7>(3);
   const [autoRemindersEnabled, setAutoRemindersEnabled] = useState(false);
@@ -3744,707 +3634,86 @@ const handleSendBulkInvitations = async () => {
         </Card>
       </div>
 
-
-
-      {assistedRsvpGuest && (
-        <>
-          <div className="fixed inset-0 z-40 bg-black/30" onClick={() => !assistedRsvpSaving && setAssistedRsvpGuest(null)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-lg rounded-lg border border-border bg-white">
-              <div className="flex items-center justify-between border-b border-border px-5 py-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-text-primary">Record RSVP for guest</h3>
-                  <p className="text-sm text-text-secondary mt-1">Save a response that came in by phone, text, family relay, or in person.</p>
-                </div>
-                <button onClick={() => !assistedRsvpSaving && setAssistedRsvpGuest(null)} className="p-2 rounded-lg hover:bg-surface-subtle text-text-secondary">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="p-5 space-y-4">
-                <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
-                  <p className="text-sm font-medium text-text-primary">{assistedRsvpGuest.first_name && assistedRsvpGuest.last_name ? `${assistedRsvpGuest.first_name} ${assistedRsvpGuest.last_name}` : assistedRsvpGuest.name}</p>
-                  <p className="mt-1 text-xs text-text-secondary">This keeps assisted responses clear without pretending the guest submitted it themselves.</p>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary mb-2">Response</label>
-                    <Select value={assistedRsvpStatus} onChange={(e) => setAssistedRsvpStatus(e.target.value as 'confirmed' | 'declined')} options={[{ value: 'confirmed', label: 'Attending' }, { value: 'declined', label: 'Declined' }]} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary mb-2">Source</label>
-                    <Select value={assistedRsvpSource} onChange={(e) => setAssistedRsvpSource(e.target.value as 'phone' | 'text' | 'family' | 'in-person')} options={[{ value: 'phone', label: 'Phone call' }, { value: 'text', label: 'Text message' }, { value: 'family', label: 'Family relay' }, { value: 'in-person', label: 'In person' }]} />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-text-primary mb-2">Notes</label>
-                  <Textarea value={assistedRsvpNotes} onChange={(e) => setAssistedRsvpNotes(e.target.value)} placeholder="Optional detail, like who confirmed it or what still needs follow-up." rows={4} />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2 border-t border-border px-5 py-4">
-                <Button variant="outline" size="sm" onClick={() => setAssistedRsvpGuest(null)} disabled={assistedRsvpSaving}>Cancel</Button>
-                <Button variant="primary" size="md" onClick={handleSaveAssistedRsvp} disabled={assistedRsvpSaving}>
-                  {assistedRsvpSaving ? 'Saving…' : 'Save assisted RSVP'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {showAddModal && renderGuestFormModal({
-        title: 'Add guest',
-        submitLabel: 'Add guest',
-        onSubmit: handleAddGuest,
-        onClose: () => { setShowAddModal(false); resetForm(); },
-      })}
-
-      {editingGuest && renderGuestFormModal({
-        title: 'Edit guest',
-        submitLabel: 'Save guest',
-        onSubmit: handleEditGuest,
-        onClose: () => { setEditingGuest(null); resetForm(); },
-      })}
-
-      {itineraryDrawerGuest && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/30 z-40"
-            onClick={() => { setItineraryDrawerGuest(null); setGuestAuditEntries([]); }}
-          />
-          <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-surface z-50 flex flex-col border-l border-border">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-              <div>
-                <h2 className="text-base font-semibold text-text-primary">
-                  {itineraryDrawerGuest.first_name && itineraryDrawerGuest.last_name
-                    ? `${itineraryDrawerGuest.first_name} ${itineraryDrawerGuest.last_name}`
-                    : itineraryDrawerGuest.name}
-                </h2>
-                <p className="text-xs text-text-secondary mt-0.5">Guest updates and itinerary invitations</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <button
-                    onClick={() => copyContactRequestLink()}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border hover:border-primary hover:text-primary transition-colors"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                    Copy guest update link
-                  </button>
-                  {itineraryDrawerGuest.invite_token && (
-                    <button
-                      onClick={async () => {
-                        const inviteToken = itineraryDrawerGuest.invite_token ?? '';
-                        const inviteLink = `${window.location.origin}/rsvp?token=${encodeURIComponent(inviteToken)}`;
-                        const result = await copyTextOrDownload(inviteLink, 'dayof-rsvp-link.txt');
-                        if (result === 'copied') {
-                          toast('Copied RSVP link', 'success');
-                        } else {
-                          toast('Clipboard was blocked, so the RSVP link downloaded.', 'success');
-                        }
-                      }}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border hover:border-primary hover:text-primary transition-colors"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                      Copy RSVP link
-                    </button>
-                  )}
-                </div>
-              </div>
-              <button
-                onClick={() => { setItineraryDrawerGuest(null); setGuestAuditEntries([]); }}
-                className="p-2 rounded-lg hover:bg-surface-subtle text-text-secondary transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-5">
-              {(() => {
-                const entries = getCustomAnswerEntries(itineraryDrawerGuest.rsvp?.custom_answers || null);
-                const status = itineraryDrawerGuest.rsvp_status;
-                const meal = itineraryDrawerGuest.rsvp?.meal_choice;
-                const plusOne = itineraryDrawerGuest.rsvp?.plus_one_name;
-                const dietaryNote = extractDietaryNote(itineraryDrawerGuest.rsvp?.custom_answers as Record<string, unknown> | null | undefined, itineraryDrawerGuest.notes);
-                const householdMembers = itineraryDrawerGuest.household_id
-                  ? guests.filter((guest) => guest.household_id === itineraryDrawerGuest.household_id)
-                  : [];
-                const visibilityPreview = buildGuestVisibilityPreview({
-                  guest: {
-                    id: itineraryDrawerGuest.id,
-                    firstName: itineraryDrawerGuest.first_name,
-                    lastName: itineraryDrawerGuest.last_name,
-                    name: itineraryDrawerGuest.name,
-                    inviteToken: itineraryDrawerGuest.invite_token,
-                    invitedToCeremony: itineraryDrawerGuest.invited_to_ceremony,
-                    invitedToReception: itineraryDrawerGuest.invited_to_reception,
-                    plusOneAllowed: itineraryDrawerGuest.plus_one_allowed,
-                    householdId: itineraryDrawerGuest.household_id,
-                  },
-                  events: itineraryEvents.map((event) => ({
-                    id: event.id,
-                    eventName: event.event_name,
-                    eventDate: event.event_date,
-                    startTime: event.start_time,
-                    locationName: event.location_name,
-                  })),
-                  invitedEventIds: guestEventIds,
-                  householdMembers: householdMembers.map((member) => ({
-                    id: member.id,
-                    firstName: member.first_name,
-                    lastName: member.last_name,
-                    name: member.name,
-                    rsvpStatus: member.rsvp_status,
-                  })),
-                  publicSiteSlug: resolvePublicSiteSlugFromRow({
-                    site_slug: weddingSiteInfo?.site_slug ?? null,
-                    site_url: weddingSiteInfo?.site_url ?? null,
-                  }),
-                });
-
-                return (
-                  <>
-                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-xs text-text-tertiary">Visibility preview</p>
-                          <p className="text-sm font-medium text-text-primary">{visibilityPreview.bannerLabel}</p>
-                          <p className="text-sm text-text-secondary">{visibilityPreview.accessSummary}</p>
-                        </div>
-                        <span className="inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1 text-[10px] font-medium text-primary">
-                          <Eye className="w-3 h-3" />
-                          Guest view
-                        </span>
-                      </div>
-                      <p className="text-sm text-text-secondary">{visibilityPreview.accessDetail}</p>
-                      <p className="text-xs text-text-tertiary">{visibilityPreview.householdSummary}</p>
-                      {visibilityPreview.visibleEvents.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
-                          {visibilityPreview.visibleEvents.slice(0, 4).map((event) => (
-                            <span key={event.id} className="rounded-lg border border-primary/20 bg-white px-2 py-1 text-[11px] text-primary">
-                              {event.eventName}
-                            </span>
-                          ))}
-                          {visibilityPreview.visibleEvents.length > 4 && (
-                            <span className="rounded-lg border border-border bg-white px-2 py-1 text-[11px] text-text-tertiary">
-                              +{visibilityPreview.visibleEvents.length - 4} more
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      {visibilityPreview.hiddenEvents.length > 0 && (
-                        <p className="text-xs text-text-tertiary">
-                          Hidden from this guest: {visibilityPreview.hiddenEvents.slice(0, 3).map((event) => event.eventName).join(', ')}
-                          {visibilityPreview.hiddenEvents.length > 3 ? `, and ${visibilityPreview.hiddenEvents.length - 3} more` : ''}
-                        </p>
-                      )}
-                      {visibilityPreview.links.length > 0 && (
-                        <div className="flex flex-wrap gap-2 pt-1">
-                          {visibilityPreview.links.map((link) => (
-                            <button
-                              key={`${link.kind}-${link.href}`}
-                              onClick={() => window.open(link.href, '_blank', 'noopener,noreferrer')}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border bg-white hover:border-primary hover:text-primary transition-colors"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                              {link.label}
-                            </button>
-                          ))}
-                          {visibilityPreview.links.find((link) => link.kind === 'rsvp') && (
-                            <button
-                              onClick={async () => {
-                                const rsvpLink = visibilityPreview.links.find((link) => link.kind === 'rsvp');
-                                if (!rsvpLink) return;
-                                const result = await copyTextOrDownload(`${window.location.origin}${rsvpLink.href}`, 'dayof-guest-preview-link.txt');
-                                toast(result === 'copied' ? 'Copied guest preview link' : 'Clipboard was blocked, so the preview link downloaded.', 'success');
-                              }}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border bg-white hover:border-primary hover:text-primary transition-colors"
-                            >
-                              <Copy className="w-3.5 h-3.5" />
-                              Copy preview link
-                            </button>
-                          )}
-                        </div>
-                      )}
-                      {visibilityPreview.warnings.length > 0 && (
-                        <div className="space-y-1">
-                          {visibilityPreview.warnings.map((warning) => (
-                            <p key={warning} className="text-xs text-text-tertiary">• {warning}</p>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-2">
-                      <p className="text-xs text-text-tertiary">RSVP details</p>
-                      <div className="text-sm text-text-primary">
-                        <span className="font-medium">Status:</span>{' '}
-                        <span className="capitalize">{status}</span>
-                      </div>
-                      {meal && (
-                        <div className="text-sm text-text-primary">
-                          <span className="font-medium">Meal:</span> <span className="capitalize">{meal}</span>
-                        </div>
-                      )}
-                      {plusOne && (
-                        <div className="text-sm text-text-primary">
-                          <span className="font-medium">Plus-one guest:</span> {plusOne}
-                        </div>
-                      )}
-                      {Number(itineraryDrawerGuest.rsvp?.children_count ?? 0) > 0 && (
-                        <div className="text-sm text-text-primary">
-                          <span className="font-medium">Children:</span> {Number(itineraryDrawerGuest.rsvp?.children_count ?? 0)}
-                        </div>
-                      )}
-                      {itineraryDrawerGuest.rsvp?.notes && (
-                        <div className="text-sm text-text-primary">
-                          <span className="font-medium">RSVP notes:</span> {itineraryDrawerGuest.rsvp.notes}
-                        </div>
-                      )}
-                      {dietaryNote && (
-                        <div className="text-sm text-text-primary">
-                          <span className="font-medium">Dietary note:</span> {dietaryNote}
-                        </div>
-                      )}
-                      {entries.length > 0 && (
-                        <div className="pt-1 space-y-1.5">
-                          <p className="text-xs text-text-tertiary">Custom answers</p>
-                          {entries.map((entry) => (
-                            <div key={entry.key} className="text-sm text-text-primary flex items-start justify-between gap-3">
-                              <span className="text-text-secondary truncate">{entry.key}</span>
-                              <span className="text-right">{entry.value}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-2">
-                      <p className="text-xs text-text-tertiary">Per-event RSVP structure</p>
-                      {(() => { const eventState = getPerEventRsvpState({ invitedToCeremony: itineraryDrawerGuest.invited_to_ceremony, invitedToReception: itineraryDrawerGuest.invited_to_reception, invitedEventIds: itineraryDrawerGuest.invited_event_ids as string[] | null | undefined }); return (<>
-                        <p className="text-sm text-text-primary">{eventState.summary}</p>
-                        <p className="text-sm text-text-secondary">{eventState.detail}</p>
-                      </>); })()}
-                    </div>
-
-                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-2">
-                      <p className="text-xs text-text-tertiary">Plus-one truth</p>
-                      {(() => { const plusOneState = getPlusOneState({ plusOneAllowed: itineraryDrawerGuest.plus_one_allowed, plusOneName: itineraryDrawerGuest.rsvp?.plus_one_name, attending: itineraryDrawerGuest.rsvp?.attending }); return (<>
-                        <p className="text-sm text-text-primary">{plusOneState.label}</p>
-                        <p className="text-sm text-text-secondary">{plusOneState.detail}</p>
-                      </>); })()}
-                    </div>
-
-                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-2">
-                      <p className="text-xs text-text-tertiary">RSVP exceptions</p>
-                      {(() => {
-                        const states = getRsvpExceptionStates({
-                          householdStatuses: householdMembers.map((member) => member.rsvp_status),
-                          plusOneAllowed: itineraryDrawerGuest.plus_one_allowed,
-                          plusOneName: itineraryDrawerGuest.rsvp?.plus_one_name,
-                          attending: itineraryDrawerGuest.rsvp?.attending,
-                          mealChoice: itineraryDrawerGuest.rsvp?.meal_choice,
-                          manualHandled: typeof itineraryDrawerGuest.notes === 'string' && itineraryDrawerGuest.notes.toLowerCase().includes('[manual rsvp]'),
-                        });
-                        return states.length > 0
-                          ? <div className="space-y-2">
-                              {states.map((state) => <p key={state} className="text-sm text-text-primary">• {state}</p>)}
-                              <div className="flex flex-wrap gap-2 pt-1">
-                                <button onClick={() => addFollowUpTask(`Resolve RSVP exception for ${(itineraryDrawerGuest.first_name || itineraryDrawerGuest.last_name) ? `${itineraryDrawerGuest.first_name ?? ''} ${itineraryDrawerGuest.last_name ?? ''}`.trim() : itineraryDrawerGuest.name}`)} className="px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Save follow-up task</button>
-                                <button onClick={() => setSearchQuery((itineraryDrawerGuest.first_name || itineraryDrawerGuest.last_name) ? `${itineraryDrawerGuest.first_name ?? ''} ${itineraryDrawerGuest.last_name ?? ''}`.trim() : itineraryDrawerGuest.name)} className="px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus this guest</button>
-                              </div>
-                            </div>
-                          : <p className="text-sm text-text-secondary">No active exception states for this guest.</p>;
-                      })()}
-                    </div>
-
-                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-2">
-                      <p className="text-xs text-text-tertiary">Household context</p>
-                      {householdMembers.length > 1 ? (
-                        <>
-                          <p className="text-sm text-text-secondary">This guest is grouped with {householdMembers.length - 1} other household member{householdMembers.length === 2 ? '' : 's'}.</p>
-                          <p className={`text-xs ${new Set(householdMembers.map((member) => member.rsvp_status)).size > 1 ? 'text-primary' : 'text-text-tertiary'}`}>{new Set(householdMembers.map((member) => member.rsvp_status)).size > 1 ? 'Household responses are mixed right now.' : 'Household responses are aligned right now.'}</p>
-                          <div className="space-y-1">
-                            {householdMembers.map((member) => (
-                              <p key={member.id} className="text-sm text-text-primary">• {member.first_name && member.last_name ? `${member.first_name} ${member.last_name}` : member.name}</p>
-                            ))}
-                          </div>
-                        </>
-                      ) : (
-                        <p className="text-sm text-text-secondary">This guest is not currently grouped into a larger household.</p>
-                      )}
-                    </div>
-                  </>
-                );
-              })()}
-
-              <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs text-text-tertiary">Recent guest updates</p>
-                  <span className="text-[11px] text-text-tertiary">Last {guestAuditEntries.length} updates</span>
-                </div>
-                {guestAuditEntries.length === 0 ? (
-                  <p className="text-xs text-text-tertiary">No recent changes yet. Updates to this guest will appear here automatically.</p>
-                ) : (
-                  <div className="space-y-2.5">
-                    {guestAuditEntries.map((entry) => {
-                      const absolute = formatGuestOpsDateTime(entry.changed_at);
-                      const relative = formatGuestOpsRelativeTime(entry.changed_at);
-                      const Icon = getAuditActionIcon(entry.action);
-                      return (
-                        <div key={entry.id} className="text-xs text-text-primary border border-border-subtle rounded-lg p-2.5 bg-surface">
-                          <div className="flex items-start justify-between gap-3">
-                            <span className={`capitalize px-2 py-0.5 rounded border inline-flex items-center gap-1.5 ${getAuditActionTone(entry.action)}`}>
-                              <Icon className="w-3 h-3" />
-                              {entry.action}
-                            </span>
-                            <div className="text-right leading-tight">
-                              <span className="text-text-secondary whitespace-nowrap">{relative}</span>
-                              <p className="text-[10px] text-text-tertiary mt-0.5">{absolute}</p>
-                            </div>
-                          </div>
-                          <p className="mt-1.5 text-text-secondary leading-relaxed">{summarizeAuditEntry(entry)}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {loadingDrawer ? (
-                <div className="flex items-center justify-center h-32">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                </div>
-              ) : itineraryEvents.length === 0 ? (
-                <div className="text-center py-12">
-                  <CalendarDays className="w-10 h-10 text-text-tertiary mx-auto mb-3" />
-                  <p className="text-sm font-medium text-text-secondary mb-1">No events on the itinerary</p>
-                  <p className="text-xs text-text-tertiary break-words">Add events on the Itinerary page first.</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <p className="text-xs text-text-tertiary mb-3">
-                    Toggle each event to invite or uninvite this guest.
-                  </p>
-                  {itineraryEvents.map(event => {
-                    const invited = guestEventIds.has(event.id);
-                    const isToggling = togglingEventId === event.id;
-                    return (
-                      <button
-                        key={event.id}
-                        onClick={() => handleToggleEventInvite(event.id, invited)}
-                        disabled={isToggling}
-                        className={`w-full flex items-center gap-3 p-3.5 rounded-lg border text-left transition-all ${
-                          invited
-                            ? 'border-primary/30 bg-primary/5'
-                            : 'border-border hover:border-border hover:bg-surface-subtle'
-                        } ${isToggling ? 'opacity-50' : ''}`}
-                      >
-                        <div className={`w-5 h-5 rounded-sm border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
-                          invited ? 'border-primary bg-primary' : 'border-border'
-                        }`}>
-                          {isToggling
-                            ? <Loader2 className="w-3 h-3 animate-spin text-white" />
-                            : invited
-                              ? <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-                              : null
-                          }
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium truncate ${invited ? 'text-primary' : 'text-text-primary'}`}>
-                            {event.event_name}
-                          </p>
-                          <p className="text-xs text-text-tertiary mt-0.5">
-                            {event.event_date
-                              ? formatGuestEventDate(event.event_date)
-                              : 'No date set'}
-                            {event.start_time && ` · ${event.start_time}`}
-                            {event.location_name && ` · ${event.location_name}`}
-                          </p>
-                        </div>
-                        <span className={`text-xs font-medium flex-shrink-0 ${invited ? 'text-primary' : 'text-text-tertiary'}`}>
-                          {invited ? 'Invited' : 'Not invited'}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {!loadingDrawer && itineraryEvents.length > 0 && (
-              <div className="px-5 py-4 border-t border-border bg-surface-subtle">
-                <p className="text-xs text-text-tertiary text-center">
-                  {guestEventIds.size} of {itineraryEvents.length} events · Changes save instantly
-                </p>
-              </div>
-            )}
-          </div>
-        </>
-      )}
-
-      {showDeleteAllModal && (
-        <>
-          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => !deleteAllBusy && setShowDeleteAllModal(false)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="bg-surface rounded-lg border border-border-subtle w-full max-w-md">
-              <div className="p-6 border-b border-border-subtle">
-                <h2 className="text-lg font-semibold text-text-primary">Delete all guests</h2>
-                <p className="text-sm text-text-secondary mt-1">This permanently deletes every guest in this site.</p>
-              </div>
-              <div className="p-6 space-y-3">
-                <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-sm text-text-secondary">
-                  Type <span className="font-semibold">{guests.length}</span> to confirm deletion.
-                </div>
-                <input
-                  type="text"
-                  value={deleteAllConfirmInput}
-                  onChange={(e) => setDeleteAllConfirmInput(e.target.value)}
-                  placeholder={`Type ${guests.length}`}
-                  className="w-full rounded-md border border-border px-3 py-2 text-sm"
-                  disabled={deleteAllBusy}
-                />
-              </div>
-              <div className="p-6 pt-0 flex gap-2">
-                <Button variant="outline" fullWidth disabled={deleteAllBusy} onClick={() => setShowDeleteAllModal(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  variant="primary"
-                  fullWidth
-                  className="!bg-text-primary hover:!bg-text-secondary"
-                  disabled={deleteAllBusy || deleteAllConfirmInput.trim() !== String(guests.length)}
-                  onClick={handleDeleteAllGuests}
-                >
-                  {deleteAllBusy ? 'Deleting…' : 'Delete all guests'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {csvShowMapper && csvFieldMap && (
-        <>
-          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => { if (!csvImporting) setCsvShowMapper(false); }} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="bg-surface rounded-lg border border-border-subtle w-full max-w-2xl max-h-[80vh] flex flex-col">
-              <div className="flex items-center justify-between p-6 border-b border-border-subtle">
-                <div>
-                  <h2 className="text-lg font-semibold text-text-primary">Match columns</h2>
-                  <p className="text-sm text-text-secondary mt-0.5">Confirm how this file should become your guest list{csvSelectedFilename ? ` · ${csvSelectedFilename}` : ''}</p>
-                </div>
-                <button onClick={() => setCsvShowMapper(false)} className="p-2 hover:bg-surface-subtle rounded-lg transition-colors">
-                  <X className="w-5 h-5 text-text-secondary" />
-                </button>
-              </div>
-              <div className="overflow-y-auto flex-1 p-6 space-y-3">
-                {!csvNameMappingValid && (
-                <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-secondary">
-                    Map First Name + Last Name, or use Full Name instead.
-                  </div>
-                )}
-                {([
-                  ['first_name', 'First Name (recommended)'],
-                  ['last_name', 'Last Name (recommended)'],
-                  ['full_name', 'Full Name (optional)'],
-                  ['email', 'Email'],
-                  ['phone', 'Phone'],
-                  ['plus_one', 'Plus One Allowed'],
-                  ['plus_one_name', 'Plus One Name'],
-                  ['plus_one_count', 'Plus One Count'],
-                  ['children_allowed', 'Children Allowed'],
-                  ['children_count', 'Children Count'],
-                  ['max_additional_guests', 'Max Additional Guests'],
-                  ['status', 'RSVP Status'],
-                  ['meal_choice', 'Meal Choice'],
-                  ['rsvp_date', 'RSVP Date'],
-                  ['invite_token', 'Existing invitation link'],
-                  ['household_id', 'Household ID'],
-                  ['household_name', 'Household Name / Group Name'],
-                  ['invited_events', 'Invited Events (list)'],
-                ] as Array<[keyof CsvFieldMap, string]>).map(([key, label]) => (
-                  <label key={key} className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center">
-                    <span className="text-sm text-text-primary">{label}</span>
-                    <div>
-                    {key === 'invited_events' ? (
-                      <select
-                        multiple
-                        value={csvFieldMap.invited_events.map(String)}
-                        onChange={(e) => {
-                          const vals = Array.from(e.currentTarget.selectedOptions).map((o) => Number(o.value));
-                          setCsvFieldMap(prev => prev ? { ...prev, invited_events: vals } : prev);
-                        }}
-                        className="w-full rounded-md border border-border px-3 py-2 text-sm bg-surface min-h-[110px]"
-                      >
-                        {csvHeaders.map((header, idx) => (
-                          <option key={`${key}-${idx}`} value={idx}>
-                            ({csvColumnLetter(idx)}) {header || `column ${idx + 1}`} → {csvColumnSamples[idx] ? csvColumnSamples[idx].slice(0, 40) : 'example'}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <select
-                        value={csvFieldMap[key] as number}
-                        onChange={(e) => setCsvFieldMap(prev => prev ? { ...prev, [key]: Number(e.target.value) } : prev)}
-                        className="w-full rounded-md border border-border px-3 py-2 text-sm bg-surface"
-                      >
-                        <option value={-1}>— Not mapped —</option>
-                        {csvHeaders.map((header, idx) => (
-                          <option key={`${key}-${idx}`} value={idx}>
-                            ({csvColumnLetter(idx)}) {header || `column ${idx + 1}`} → {csvColumnSamples[idx] ? csvColumnSamples[idx].slice(0, 40) : 'example'}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                    {key === 'invited_events' && (
-                      <p className="mt-1 text-[11px] text-text-tertiary">Multi-select supported (Cmd/Ctrl+Click).</p>
-                    )}
-                    </div>
-                  </label>
-                ))}
-              </div>
-              <div className="flex gap-3 p-6 border-t border-border-subtle">
-                <Button variant="outline" fullWidth onClick={() => setCsvShowMapper(false)} disabled={csvImporting}>Cancel</Button>
-                <Button
-                  variant="primary"
-                  fullWidth
-                  onClick={() => buildCsvPreviewFromMapping(csvHeaders, csvDataRows, csvFieldMap)}
-                  disabled={csvImporting || !csvNameMappingValid}
-                >
-                  Continue to Review
-                </Button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {csvPreview && (
-        <>
-          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => { if (!csvImporting) { setCsvPreview(null); setCsvUnknownEvents([]); setCsvDuplicateNames([]); setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [], weak: [] }); } }} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="bg-surface rounded-lg border border-border-subtle w-full max-w-2xl max-h-[80vh] flex flex-col">
-              <div className="flex items-center justify-between p-6 border-b border-border-subtle">
-                <div>
-                  <h2 className="text-lg font-semibold text-text-primary">Review Import</h2>
-                  <p className="text-sm text-text-secondary mt-0.5">
-                    {csvPreview.length} guest{csvPreview.length !== 1 ? 's' : ''} ready to import
-                    {csvSkipped.length > 0 && ` · ${csvSkipped.length} row${csvSkipped.length !== 1 ? 's' : ''} need review`}
-                  </p>
-                </div>
-                {!csvImporting && (
-                  <button onClick={() => { setCsvPreview(null); setCsvUnknownEvents([]); setCsvDuplicateNames([]); setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [], weak: [] }); }} className="p-2 hover:bg-surface-subtle rounded-lg transition-colors">
-                    <X className="w-5 h-5 text-text-secondary" />
-                  </button>
-                )}
-              </div>
-
-              <div className="overflow-y-auto flex-1 p-6">
-                {(csvMappingSummary.core.length > 0 || csvMappingSummary.rsvp.length > 0 || csvMappingSummary.household.length > 0 || csvMappingSummary.eventCols.length > 0 || csvMappingSummary.weak.length > 0) && (
-                  <div className="mb-4 p-3 bg-surface-subtle border border-border rounded-lg space-y-2">
-                    <p className="text-xs font-medium text-text-primary">Detected mapping</p>
-                    {csvMappingSummary.core.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">Core:</span> {csvMappingSummary.core.join(', ')}</p>}
-                    {csvMappingSummary.rsvp.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">RSVP:</span> {csvMappingSummary.rsvp.join(', ')}</p>}
-                    {csvMappingSummary.household.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">Households:</span> {csvMappingSummary.household.join(', ')}</p>}
-                    {csvMappingSummary.eventCols.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">Itinerary columns:</span> {csvMappingSummary.eventCols.join(', ')}</p>}
-                    {csvMappingSummary.weak.length > 0 && <p className="text-xs text-primary"><span className="font-medium text-primary">Review closely:</span> {csvMappingSummary.weak.join(' · ')}</p>}
-                    <p className="text-[11px] text-text-tertiary">Invite values: Yes/Y/1/True/Included/Invited = invited · No/N/0/False/Excluded/Not Invited = not invited</p>
-                  </div>
-                )}
-
-                {csvSkipped.length > 0 && (
-                  <div className="mb-4 p-3 bg-surface-subtle border border-border-subtle rounded-lg">
-                    <p className="text-xs font-medium text-text-primary mb-1">{csvSkipped.length} row{csvSkipped.length !== 1 ? 's' : ''} need a guest name</p>
-                    <ul className="space-y-0.5">
-                      {csvSkipped.map((s, i) => <li key={i} className="text-xs text-text-secondary">• {s}</li>)}
-                    </ul>
-                  </div>
-                )}
-
-                {csvUnknownEvents.length > 0 && (
-                  <div className="mb-4 p-3 bg-surface-subtle border border-border rounded-lg">
-                    <p className="text-xs font-medium text-text-primary mb-1">Unmatched itinerary event names ({csvUnknownEvents.length})</p>
-                    <p className="text-xs text-text-secondary mb-1">Match these names to a schedule event when you are ready. Those event invites will stay unassigned for now.</p>
-                    <ul className="space-y-0.5">
-                      {csvUnknownEvents.slice(0, 10).map((name, i) => <li key={i} className="text-xs text-text-secondary">• {name}</li>)}
-                    </ul>
-                  </div>
-                )}
-
-                {csvHouseholdWarnings.length > 0 && (
-                  <div className="mb-4 p-3 bg-surface-subtle border border-border-subtle rounded-lg">
-                    <p className="text-xs font-medium text-text-primary mb-1">Household matches to review ({csvHouseholdWarnings.length})</p>
-                    <p className="text-xs text-text-secondary mb-1">These name-only groups mix last names, so they will stay separate until you confirm them.</p>
-                    <ul className="space-y-0.5">
-                      {csvHouseholdWarnings.slice(0, 10).map((name, i) => <li key={i} className="text-xs text-text-secondary">• {name}</li>)}
-                    </ul>
-                  </div>
-                )}
-
-                {csvDuplicateNames.length > 0 && (
-                  <div className="mb-4 p-3 bg-surface-subtle border border-border-subtle rounded-lg">
-                    <p className="text-xs font-medium text-text-primary mb-1">Possible repeated names ({csvDuplicateNames.length})</p>
-                    <p className="text-xs text-text-secondary mb-1">These guests share the same First + Last name. Import will continue, but they are worth checking.</p>
-                    <ul className="space-y-0.5">
-                      {csvDuplicateNames.slice(0, 10).map((name, i) => <li key={i} className="text-xs text-text-secondary">• {name}</li>)}
-                    </ul>
-                  </div>
-                )}
-
-                <div className="divide-y divide-border-subtle">
-                  {csvPreview.slice(0, 50).map((g, i) => (
-                    <div key={i} className="py-2.5 flex items-center gap-4">
-                      <div className="w-7 h-7 rounded-lg bg-surface-subtle flex items-center justify-center text-xs font-medium text-text-secondary flex-shrink-0">
-                        {i + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate">
-                          {String(g.first_name || '')} {String(g.last_name || '')}
-                        </p>
-                        {Boolean(g.email) && <p className="text-xs text-text-secondary truncate">{String(g.email)}</p>}
-                        {Boolean(g.group_name) && <p className="text-[11px] text-text-tertiary truncate">Household: {String(g.group_name)}</p>}
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {Boolean(g.rsvp_status) && <span className="text-[10px] px-1.5 py-0.5 rounded-lg border border-border text-text-tertiary">{String(g.rsvp_status)}</span>}
-                          {Boolean(g.__meal_choice) && <span className="text-[10px] px-1.5 py-0.5 rounded-lg border border-border text-text-tertiary">Meal: {String(g.__meal_choice)}</span>}
-                          {Boolean(g.__plus_one_name) && <span className="text-[10px] px-1.5 py-0.5 rounded-lg border border-border text-text-tertiary">+1: {String(g.__plus_one_name)}</span>}
-                          {Number(g.__children_count ?? 0) > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-lg border border-border text-text-tertiary">Children: {String(g.__children_count)}</span>}
-                          {Array.isArray(g.__invited_event_ids) && (g.__invited_event_ids as unknown[]).length > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-lg border border-primary/30 text-primary">{(g.__invited_event_ids as unknown[]).length} event invites</span>}
-                        </div>
-                      </div>
-                      {Boolean(g.plus_one_allowed) && (
-                        <span className="text-xs px-2 py-0.5 bg-surface-subtle rounded-lg text-text-secondary flex-shrink-0">+1</span>
-                      )}
-                    </div>
-                  ))}
-                  {csvPreview.length > 50 && (
-                    <p className="py-3 text-sm text-text-secondary text-center">
-                      …and {csvPreview.length - 50} more
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex gap-3 p-6 border-t border-border-subtle">
-                <Button variant="outline" fullWidth onClick={() => { setCsvPreview(null); setCsvUnknownEvents([]); setCsvDuplicateNames([]); }} disabled={csvImporting}>
-                  Cancel
-                </Button>
-                <Button variant="primary" fullWidth onClick={confirmCsvImport} disabled={csvImporting}>
-                  {csvImporting ? 'Importing...' : `Import ${csvPreview.length} Guest${csvPreview.length !== 1 ? 's' : ''}`}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-      {confirmDialog && (
-        <ConfirmDialog
-          open
-          title={confirmDialog.title}
-          description={confirmDialog.description}
-          confirmLabel={confirmDialog.confirmLabel}
-          tone={confirmDialog.tone}
-          onConfirm={confirmDialog.onConfirm}
-          onCancel={confirmDialog.onCancel}
-        />
-      )}
+      <GuestDashboardOverlays
+        assistedRsvpGuest={assistedRsvpGuest}
+        assistedRsvpNotes={assistedRsvpNotes}
+        assistedRsvpSaving={assistedRsvpSaving}
+        assistedRsvpSource={assistedRsvpSource}
+        assistedRsvpStatus={assistedRsvpStatus}
+        confirmDialog={confirmDialog}
+        csvColumnSamples={csvColumnSamples}
+        csvDataRows={csvDataRows}
+        csvDuplicateNames={csvDuplicateNames}
+        csvFieldMap={csvFieldMap}
+        csvHeaders={csvHeaders}
+        csvHouseholdWarnings={csvHouseholdWarnings}
+        csvImporting={csvImporting}
+        csvMappingSummary={csvMappingSummary}
+        csvNameMappingValid={csvNameMappingValid}
+        csvPreview={csvPreview}
+        csvSelectedFilename={csvSelectedFilename}
+        csvShowMapper={csvShowMapper}
+        csvSkipped={csvSkipped}
+        csvUnknownEvents={csvUnknownEvents}
+        deleteAllBusy={deleteAllBusy}
+        deleteAllConfirmInput={deleteAllConfirmInput}
+        editingGuest={editingGuest}
+        effectiveItineraryEvents={effectiveItineraryEvents}
+        formData={formData}
+        formEventInviteIds={formEventInviteIds}
+        guestAuditEntries={guestAuditEntries}
+        guestEventIds={guestEventIds}
+        guests={guests}
+        itineraryDrawerGuest={itineraryDrawerGuest}
+        itineraryEvents={itineraryEvents}
+        itineraryFilterEventCount={itineraryFilterEvents.length}
+        loadingDrawer={loadingDrawer}
+        showAddModal={showAddModal}
+        showDeleteAllModal={showDeleteAllModal}
+        togglingEventId={togglingEventId}
+        weddingSiteInfo={weddingSiteInfo}
+        onAddFollowUpTask={addFollowUpTask}
+        onBuildCsvPreview={buildCsvPreviewFromMapping}
+        onCloseAddModal={() => {
+          setShowAddModal(false);
+          resetForm();
+        }}
+        onCloseAssistedRsvp={() => setAssistedRsvpGuest(null)}
+        onCloseDeleteAllModal={() => setShowDeleteAllModal(false)}
+        onCloseEditModal={() => {
+          setEditingGuest(null);
+          resetForm();
+        }}
+        onCloseItineraryDrawer={() => {
+          setItineraryDrawerGuest(null);
+          setGuestAuditEntries([]);
+        }}
+        onConfirmCsvImport={confirmCsvImport}
+        onConfirmDeleteAllGuests={handleDeleteAllGuests}
+        onCopyContactRequestLink={copyContactRequestLink}
+        onFocusGuestSearch={setSearchQuery}
+        onResetCsvReview={() => {
+          if (!csvImporting) {
+            setCsvPreview(null);
+            setCsvUnknownEvents([]);
+            setCsvDuplicateNames([]);
+            setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [], weak: [] });
+          }
+        }}
+        onSaveAssistedRsvp={handleSaveAssistedRsvp}
+        onSetAssistedRsvpNotes={setAssistedRsvpNotes}
+        onSetAssistedRsvpSource={setAssistedRsvpSource}
+        onSetAssistedRsvpStatus={setAssistedRsvpStatus}
+        onSetCsvFieldMap={setCsvFieldMap}
+        onSetCsvShowMapper={setCsvShowMapper}
+        onSetDeleteAllConfirmInput={setDeleteAllConfirmInput}
+        onSetFormData={setFormData}
+        onSetFormEventInviteIds={setFormEventInviteIds}
+        onSubmitAddGuest={handleAddGuest}
+        onSubmitEditGuest={handleEditGuest}
+        onToast={toast}
+        onToggleEventInvite={handleToggleEventInvite}
+      />
     </DashboardLayout>
   );
 };
