@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
-import { Save, ExternalLink, Layout, Sparkles, Loader2, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown, Users } from 'lucide-react';
+import { Save, ExternalLink, Layout, Sparkles, Loader2, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown } from 'lucide-react';
 import { getSiteVisibilityState, getVisibilityModeOptions } from '../../lib/siteVisibilityState';
 import { getAllTemplates } from '../../templates/registry';
 import { WeddingDataV1 } from '../../types/weddingData';
@@ -13,10 +13,9 @@ import { fromExistingLayoutToBuilderProject } from '../../builder/adapters/layou
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
 import { fetchBillingInfo, createSubscriptionSession, type BillingInfo } from '../../lib/stripeService';
 import { useAuth } from '../../hooks/useAuth';
-import { PLANNER_ROLE_OPTIONS, PLANNER_PERMISSION_GROUPS, getPlannerPermissionPreset, readPlannerInvite, writePlannerInvite, type PlannerAccessRole, type PlannerInviteRecord, type PlannerPermissionKey } from '../../lib/plannerAccess';
+import { PLANNER_ROLE_OPTIONS, getPlannerPermissionPreset, readPlannerInvite, writePlannerInvite, type PlannerAccessRole, type PlannerInviteRecord, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useToast } from '../../components/ui/Toast';
-import { formatSettingsDate } from './settingsDate';
 import { ShareQrPanel } from '../../components/ui/ShareQrPanel';
 import { copyTextOrDownload } from '../../lib/copyText';
 import { logAppAction } from '../../lib/actionAudit';
@@ -64,7 +63,6 @@ import {
   normalizeMealOptions,
   normalizeRsvpQuestions,
   normalizeSettingsSlug,
-  plannerPermissionLabel,
   safeSettingsError,
   splitCoupleNames,
 } from './settings/settingsDashboardUtils';
@@ -73,6 +71,7 @@ import { SettingsAccountPanel } from './settings/SettingsAccountPanel';
 import { SettingsBillingPanel } from './settings/SettingsBillingPanel';
 import { getSettingsTabs, SettingsNavigation, type SettingsTabId } from './settings/SettingsNavigation';
 import { SettingsNotificationsPanel } from './settings/SettingsNotificationsPanel';
+import { SettingsTeamAccessPanel } from './settings/SettingsTeamAccessPanel';
 
 const useDraftHydrationGuard = (clearStatus: () => void) => {
   const dirtyRef = useRef(false);
@@ -1047,176 +1046,32 @@ export const DashboardSettings: React.FC = () => {
 
             {activeTab === 'team' && (
               <>
-
-                <Card variant="bordered" padding="lg">
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <CardTitle className="flex items-center gap-2">
-                          <Users className="w-5 h-5" />
-                          Planner access
-                        </CardTitle>
-                        <CardDescription>Invite planners, coordinators, or trusted helpers with role-based access that stays separate from couple ownership and billing.</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 space-y-2">
-                      <p className="text-sm font-medium text-text-primary">Invite your planner, not a generic staff account</p>
-                      <p className="text-sm text-text-secondary">Keep ownership with the couple while sharing the parts of dayof that help someone run the event well. Helpers claim access from a secure invite link and do not touch billing.</p>
-                    </div>
-
-                    {plannerInviteSuccess && (
-                      <div className="rounded-lg border border-success/20 bg-success-light p-3 text-sm text-success">{plannerInviteSuccess}</div>
-                    )}
-                    {plannerInviteError && (
-                      <div className="rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{plannerInviteError}</div>
-                    )}
-
-                    <div className="grid gap-3 md:grid-cols-3">
-                      {plannerRoleOptions.map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => {
-                            const nextRole = option.value as 'planner' | 'coordinator' | 'viewer';
-                            setPlannerInviteRole(nextRole);
-                            setPlannerInvitePermissions(getPlannerPermissionPreset(nextRole));
-                          }}
-                          className={`rounded-lg border p-4 text-left transition-colors ${plannerInviteRole === option.value ? 'border-primary bg-primary/5' : 'border-border-subtle bg-white hover:border-primary/35'}`}
-                        >
-                          <p className="text-sm font-medium text-text-primary">{option.label}</p>
-                          <p className="mt-1 text-xs text-text-secondary">{option.description}</p>
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <div>
-                        <label htmlFor="planner-invite-name" className="block text-sm font-medium text-text-primary mb-2">Planner name</label>
-                        <Input id="planner-invite-name" value={plannerInviteName} onChange={(e) => setPlannerInviteName(e.target.value)} placeholder="Your planner or coordinator" />
-                      </div>
-                      <div>
-                        <label htmlFor="planner-invite-email" className="block text-sm font-medium text-text-primary mb-2">Planner email</label>
-                        <Input id="planner-invite-email" value={plannerInviteEmail} onChange={(e) => setPlannerInviteEmail(e.target.value)} placeholder="planner@example.com" />
-                      </div>
-                    </div>
-
-                    <div className="rounded-lg border border-dashed border-border bg-surface-subtle/20 p-4 space-y-3">
-                      <div>
-                        <p className="text-sm font-medium text-text-primary">Permissions</p>
-                        <p className="mt-1 text-sm text-text-secondary">Start with a role preset, then tighten or expand access simply before you send the invite.</p>
-                      </div>
-                      <div className="grid gap-3 md:grid-cols-2">
-                        {PLANNER_PERMISSION_GROUPS.map((permission) => {
-                          const checked = plannerInvitePermissions.includes(permission.key);
-                          return (
-                            <label key={permission.key} className={`rounded-lg border p-3 cursor-pointer transition-colors ${checked ? 'border-primary bg-primary/5' : 'border-border-subtle bg-white hover:border-primary/30'}`}>
-                              <div className="flex items-start gap-3">
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={() => togglePlannerPermission(permission.key)}
-                                  className="mt-1 h-4 w-4 rounded border-border-subtle text-primary focus:ring-primary/30"
-                                />
-                                <div>
-                                  <p className="text-sm font-medium text-text-primary">{permission.label}</p>
-                                  <p className="mt-1 text-xs text-text-secondary">{permission.description}</p>
-                                </div>
-                              </div>
-                            </label>
-                          );
-                        })}
-                      </div>
-                      <p className="text-xs text-text-tertiary">Billing and couple ownership stay with the owner. This selector is for support access only.</p>
-                    </div>
-
-                    {plannerInvite && (
-                      <div className="rounded-lg border border-border-subtle bg-white p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-medium text-text-primary">Access setup saved for {plannerInvite.name}</p>
-                            <p className="mt-1 text-xs text-text-secondary">{plannerInvite.email} · {plannerRoleOptions.find((option) => option.value === plannerInvite.role)?.label} · {plannerInvite.status === 'active' ? 'Active' : 'Pending'}</p>
-                          </div>
-                          <Badge variant={plannerInvite.status === 'active' ? 'success' : 'secondary'}>{plannerInvite.status === 'active' ? 'Active' : 'Pending'}</Badge>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4 space-y-3">
-                      <div>
-                        <p className="text-sm font-medium text-text-primary">Collaborator list</p>
-                        <p className="mt-1 text-xs text-text-secondary">Track pending and accepted access links, copy invite URLs, and revoke pending access before it is claimed.</p>
-                      </div>
-
-                      {plannerInvite ? (
-                        <div className="rounded-lg border border-border-subtle bg-white px-4 py-3">
-                          <div className="flex items-center justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-medium text-text-primary">{plannerInvite.name}</p>
-                              <p className="mt-1 text-xs text-text-secondary">{plannerInvite.email}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="secondary">{plannerRoleOptions.find((option) => option.value === plannerInvite.role)?.label || plannerInvite.role}</Badge>
-                              <Badge variant={plannerInvite.status === 'active' ? 'success' : 'secondary'}>{plannerInvite.status === 'active' ? 'Active' : 'Pending'}</Badge>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="rounded-lg border border-dashed border-border-subtle bg-white px-4 py-3 text-sm text-text-secondary">
-                          No collaborator access setups saved yet.
-                        </div>
-                      )}
-
-                      {collaboratorInvites.length > 0 && (
-                        <div className="space-y-2">
-                          <p className="text-xs font-medium text-text-tertiary">Sent invite links</p>
-                          {collaboratorInvites.map((invite) => (
-                            <div key={invite.id} className="rounded-lg border border-border-subtle bg-white px-4 py-3">
-                              <div className="flex items-center justify-between gap-3">
-                                <div>
-                                  <p className="text-sm font-medium text-text-primary">{invite.invite_name || invite.invite_email}</p>
-                                  <p className="mt-1 text-xs text-text-secondary">{invite.invite_email} · {invite.role} · {formatSettingsDate(invite.invited_at)}{invite.expires_at ? ` · expires ${formatSettingsDate(invite.expires_at)}` : ''}</p>
-                                  {invite.permissions && invite.permissions.length > 0 && <p className="mt-1 text-[11px] text-text-tertiary">{invite.permissions.map(plannerPermissionLabel).join(' · ')}</p>}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Badge variant={invite.status === 'accepted' ? 'success' : invite.status === 'pending' ? 'secondary' : 'warning'}>{invite.status}</Badge>
-                                  {invite.status === 'pending' && (
-                                    <Button type="button" variant="outline" size="sm" onClick={() => handleCopyCollaboratorInviteLink(invite.invite_token)}>
-                                      Copy link
-                                    </Button>
-                                  )}
-                                  {invite.status === 'pending' && (
-                                    <Button type="button" variant="outline" size="sm" onClick={() => { void handleResendCollaboratorInvite(invite.invite_token); }}>
-                                      Copy again
-                                    </Button>
-                                  )}
-                                  {invite.status === 'pending' && (
-                                    <Button type="button" variant="outline" size="sm" onClick={() => handleRevokeCollaboratorInvite(invite.id)} disabled={revokingCollaboratorInviteId === invite.id}>
-                                      {revokingCollaboratorInviteId === invite.id ? 'Revoking…' : 'Revoke'}
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap justify-end gap-2">
-                      {plannerInvite && (
-                        <Button type="button" variant="outline" size="sm" onClick={handleRemovePlannerInvite}>Remove invite</Button>
-                      )}
-                      <Button type="button" variant="outline" size="sm" onClick={handleCreateCollaboratorInvite} disabled={creatingCollaboratorInvite}>
-                        {creatingCollaboratorInvite ? 'Creating invite…' : 'Create invite link'}
-                      </Button>
-                      <Button type="button" variant="primary" size="md" onClick={handleSavePlannerInvite}>
-                        {plannerInvite ? 'Update planner access' : 'Save planner invite'}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <SettingsTeamAccessPanel
+                  collaboratorInvites={collaboratorInvites}
+                  creatingCollaboratorInvite={creatingCollaboratorInvite}
+                  onCopyCollaboratorInviteLink={handleCopyCollaboratorInviteLink}
+                  onCreateCollaboratorInvite={() => { void handleCreateCollaboratorInvite(); }}
+                  onPlannerInviteEmailChange={setPlannerInviteEmail}
+                  onPlannerInviteNameChange={setPlannerInviteName}
+                  onPlannerInviteRoleChange={(nextRole) => {
+                    setPlannerInviteRole(nextRole);
+                    setPlannerInvitePermissions(getPlannerPermissionPreset(nextRole));
+                  }}
+                  onRemovePlannerInvite={handleRemovePlannerInvite}
+                  onResendCollaboratorInvite={(inviteToken) => { void handleResendCollaboratorInvite(inviteToken); }}
+                  onRevokeCollaboratorInvite={(inviteId) => { void handleRevokeCollaboratorInvite(inviteId); }}
+                  onSavePlannerInvite={handleSavePlannerInvite}
+                  onTogglePlannerPermission={togglePlannerPermission}
+                  plannerInvite={plannerInvite}
+                  plannerInviteEmail={plannerInviteEmail}
+                  plannerInviteError={plannerInviteError}
+                  plannerInviteName={plannerInviteName}
+                  plannerInvitePermissions={plannerInvitePermissions}
+                  plannerInviteRole={plannerInviteRole}
+                  plannerInviteSuccess={plannerInviteSuccess}
+                  plannerRoleOptions={plannerRoleOptions}
+                  revokingCollaboratorInviteId={revokingCollaboratorInviteId}
+                />
 
               </>
             )}

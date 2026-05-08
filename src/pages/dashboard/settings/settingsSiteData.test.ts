@@ -81,6 +81,7 @@ describe('settings site data boundary', () => {
     expect(page).toContain('loadSettingsCollaboratorInvites(siteId)');
     expect(page).toContain('createSettingsCollaboratorInvite({');
     expect(page).toContain('revokeSettingsCollaboratorInvite(inviteId)');
+    expect(page).toContain('<SettingsTeamAccessPanel');
     expect(page).toContain('findSettingsSiteBySlug(cleaned)');
     expect(page).toContain('loadSettingsTemplateChangeSite(weddingSiteId)');
     expect(page).toContain('requireSettingsAuthenticatedUser()');
@@ -92,6 +93,8 @@ describe('settings site data boundary', () => {
     expect(page).not.toContain('supabase.auth.getUser');
     expect(page).not.toContain('supabase.auth.signInWithPassword');
     expect(page).not.toContain('supabase.auth.updateUser');
+    expect(page).not.toContain('Invite your planner, not a generic staff account');
+    expect(page).not.toContain('Sent invite links');
 
     expect(service).toContain('.select(SETTINGS_SITE_SELECT)');
     expect(service).toContain('.select(SETTINGS_COLLABORATOR_INVITE_SELECT)');

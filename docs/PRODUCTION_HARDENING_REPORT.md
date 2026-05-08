@@ -3768,3 +3768,18 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the oversized-file and service-boundary lanes for the messages dashboard without changing composer behavior. No deploy was run.
+
+### 2026-05-07 6:29 PM PT - Settings Team Access Panel Extraction
+
+- Moved the full planner/collaborator invite card out of `src/pages/dashboard/Settings.tsx` and into `src/pages/dashboard/settings/SettingsTeamAccessPanel.tsx`.
+- `Settings.tsx` now keeps the state and handlers for invite creation, resend, revoke, and local planner invite persistence, while the extracted panel owns the large role-picker, permission-picker, collaborator list, and action-card UI shell.
+- Tightened `src/pages/dashboard/settings/settingsSiteData.test.ts` so the settings boundary now expects the page to render `SettingsTeamAccessPanel` and rejects silently regaining the old inline planner invite/collaborator list copy.
+
+Validation:
+- `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts`: PASS, 6/6.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+
+Status:
+- PARTIAL. This materially advances the oversized-file and page-boundary lanes for settings without changing owner/team access behavior. No deploy was run.

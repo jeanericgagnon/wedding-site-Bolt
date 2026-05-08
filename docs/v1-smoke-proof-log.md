@@ -7318,6 +7318,19 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 6:29 PM PT No-Deploy Settings Team Access Panel Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/settings/SettingsTeamAccessPanel.tsx` now owns the full planner/collaborator invite card UI for the settings dashboard.
+  - `src/pages/dashboard/Settings.tsx` now routes the team-access tab through that extracted panel instead of carrying the role selector, permission grid, collaborator list, and invite actions inline.
+  - `src/pages/dashboard/settings/settingsSiteData.test.ts` now pins the `SettingsTeamAccessPanel` seam and rejects reintroducing the old inline planner invite copy directly inside the page.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts`: PASS, 6/6.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 5:52 PM PT No-Deploy Messages Composer Component Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
