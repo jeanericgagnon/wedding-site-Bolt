@@ -29,6 +29,7 @@ import {
 } from './rsvpDemoStorage';
 import { applyAmbiguousRsvpLookupState } from './applyAmbiguousRsvpLookupState';
 import { applyRsvpGuestSelection } from './applyRsvpGuestSelection';
+import { applyRsvpSubmitSuccess } from './applyRsvpSubmitSuccess';
 import { buildRsvpDerivedViewState } from './buildRsvpDerivedViewState';
 import { buildRsvpLiveContentActions } from './buildRsvpLiveContentActions';
 import { buildRsvpPageViewModel } from './buildRsvpPageViewModel';
@@ -969,17 +970,32 @@ export default function RSVP() {
         const stored = readDemoStoredResponses();
         const targetIds = applyToHousehold ? dedupeGuestIds([guest.id, ...selectedHouseholdGuestIds]) : [guest.id];
         const payload = buildNormalizedExistingRsvp(formData, customAnswers, `demo-rsvp-${guest.id}`, targetIds);
-        const normalizedSelectedHouseholdGuestIds = normalizeSelectedHouseholdGuestIds(targetIds.filter((id) => id !== guest.id), householdGuests);
         const submitSource = tokenLinkedSessionRef.current ? 'token' : 'manual';
         targetIds.forEach((id) => { stored[id] = { ...payload, id: `demo-rsvp-${id}` }; });
         writeDemoStoredResponses(stored);
         if (activeSubmitRequestRef.current !== requestId) return;
-        selectGuest(guest, payload, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl, submitSource, rsvpSessionToken);
-        setApplyToHousehold(applyToHousehold && normalizedSelectedHouseholdGuestIds.length > 0);
-        setSelectedHouseholdGuestIds(applyToHousehold ? normalizedSelectedHouseholdGuestIds : []);
-        ignoreNextLocalContinuityEventRef.current = true;
-        notifyRsvpContinuityUpdate();
-        setStep('success');
+        applyRsvpSubmitSuccess({
+          applyToHousehold,
+          guest,
+          householdGuests,
+          mealConfig,
+          musicPlaylistUrl,
+          normalizedExistingRsvp: payload,
+          normalizeSelectedHouseholdGuestIds,
+          onContinuityUpdate: () => {
+            ignoreNextLocalContinuityEventRef.current = true;
+            notifyRsvpContinuityUpdate();
+          },
+          rsvpDeadline,
+          rsvpQuestions,
+          rsvpSessionToken,
+          selectedGuestIds: targetIds,
+          selectGuest,
+          setApplyToHousehold,
+          setSelectedHouseholdGuestIds,
+          setStep,
+          submitSource,
+        });
         return;
       }
 
@@ -1014,14 +1030,29 @@ export default function RSVP() {
 
       if (activeSubmitRequestRef.current !== requestId) return;
       const normalizedExistingRsvp = buildNormalizedExistingRsvp(formData, customAnswers, existingRsvp?.id ?? 'submitted-rsvp', targetGuestIds);
-      const normalizedSelectedHouseholdGuestIds = normalizeSelectedHouseholdGuestIds(targetGuestIds.filter((id) => id !== guest.id), householdGuests);
       const submitSource = tokenLinkedSessionRef.current ? 'token' : 'manual';
-      selectGuest(guest, normalizedExistingRsvp, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl, submitSource, rsvpSessionToken);
-      setApplyToHousehold(applyToHousehold && normalizedSelectedHouseholdGuestIds.length > 0);
-      setSelectedHouseholdGuestIds(applyToHousehold ? normalizedSelectedHouseholdGuestIds : []);
-      ignoreNextLocalContinuityEventRef.current = true;
-      notifyRsvpContinuityUpdate();
-      setStep('success');
+      applyRsvpSubmitSuccess({
+        applyToHousehold,
+        guest,
+        householdGuests,
+        mealConfig,
+        musicPlaylistUrl,
+        normalizedExistingRsvp,
+        normalizeSelectedHouseholdGuestIds,
+        onContinuityUpdate: () => {
+          ignoreNextLocalContinuityEventRef.current = true;
+          notifyRsvpContinuityUpdate();
+        },
+        rsvpDeadline,
+        rsvpQuestions,
+        rsvpSessionToken,
+        selectedGuestIds: targetGuestIds,
+        selectGuest,
+        setApplyToHousehold,
+        setSelectedHouseholdGuestIds,
+        setStep,
+        submitSource,
+      });
     } catch {
       if (activeSubmitRequestRef.current !== requestId) return;
       setError(RSVP_SUBMIT_ERROR_COPY);
