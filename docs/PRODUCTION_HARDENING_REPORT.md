@@ -4457,3 +4457,19 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `PhotoUpload` without changing guest-facing behavior. No deploy was run.
+
+## 2026-05-07 9:42 PM PT No-Deploy Guest Contact Lookup Panel Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/GuestContactUpdate.tsx` now routes its guest contact search-and-match picker through `src/pages/GuestContactLookupPanel.tsx`.
+  - That shared guest-facing lookup panel now owns the full-name search field, lookup CTA, matched-guest selector, and apply-to-household toggle while the page keeps gated lookup transport, demo fallback, mailing/contact fields, and submit flow local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/GuestContactUpdate.test.ts` now pin `GuestContactLookupPanel` so the guest contact update page keeps routing through the dedicated lookup shell.
+  - `src/pages/GuestContactUpdate.tsx` dropped from 271 lines to 225 lines in this batch, while `src/pages/GuestContactLookupPanel.tsx` came in at 72 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/GuestContactUpdate.test.ts src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 7/7.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `GuestContactUpdate` without changing guest-facing behavior. No deploy was run.

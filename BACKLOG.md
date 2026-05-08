@@ -2089,3 +2089,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/PhotoUpload.test.ts` now pin `PhotoUploadStatusPanel` so the photo upload page keeps routing through the shared guest feedback shell.
   - Validation passed: `npm test -- --run src/pages/PhotoUpload.test.ts src/lib/publicGuestSurfaceBoundary.test.ts` (9/9), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 public-surface oversized-file risk in `PhotoUpload` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 9:42 PM PT - No-deploy guest contact lookup-panel extraction:
+  - Resolved in this batch: moved the guest contact search-and-match picker slab out of `src/pages/GuestContactUpdate.tsx` and behind `src/pages/GuestContactLookupPanel.tsx`.
+  - Data-boundary hardening: `GuestContactUpdate.tsx` now routes its guest-record search input, lookup CTA, match selector, and apply-to-household toggle through one higher-level lookup panel instead of owning that guest-facing discovery stack inline.
+  - File-size movement: `GuestContactUpdate.tsx` dropped from 271 lines to 225 lines in this continuation batch while `src/pages/GuestContactLookupPanel.tsx` came in at 72 lines.
+  - No feature loss: gated guest-contact lookup, demo fallback lookup, selected household sizing, mailing/contact update form, and submit flow preserve the current guest behavior while shrinking page-owned public-surface composition.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/GuestContactUpdate.test.ts` now pin `GuestContactLookupPanel` so the guest contact page keeps routing through the shared lookup shell.
+  - Validation passed: `npm test -- --run src/pages/GuestContactUpdate.test.ts src/lib/publicGuestSurfaceBoundary.test.ts` (7/7), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 public-surface oversized-file risk in `GuestContactUpdate` without changing guest-facing behavior. No deploy was run.

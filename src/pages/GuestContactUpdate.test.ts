@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { buildGuestContactAccessPayload, friendlyGuestContactError, GuestContactUpdate, safeGuestContactFunctionError } from './GuestContactUpdate';
@@ -56,5 +57,15 @@ describe('friendlyGuestContactError', () => {
     expect(screen.getByLabelText('Address line 1')).toHaveAttribute('id', 'guest-contact-address-line-1');
     expect(screen.getByLabelText('ZIP / Postal code')).toHaveAttribute('id', 'guest-contact-postal-code');
     expect(screen.getByLabelText('RSVP (optional)')).toHaveAttribute('id', 'guest-contact-rsvp');
+  });
+
+  it('routes guest lookup and match selection through the shared lookup panel', () => {
+    const pageSource = readFileSync('src/pages/GuestContactUpdate.tsx', 'utf8');
+    const panelSource = readFileSync('src/pages/GuestContactLookupPanel.tsx', 'utf8');
+
+    expect(pageSource).toContain("from './GuestContactLookupPanel'");
+    expect(pageSource).toContain('<GuestContactLookupPanel');
+    expect(panelSource).toContain('id="guest-contact-search"');
+    expect(panelSource).toContain('id="guest-contact-match"');
   });
 });

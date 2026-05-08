@@ -7,6 +7,7 @@ import {
   capturePublicInviteTokenFromSearch,
 } from '../lib/publicAccessArtifacts';
 import { callGuestContactFunction } from './guestPublicSubmissionService';
+import { GuestContactLookupPanel } from './GuestContactLookupPanel';
 
 type Match = {
   contact_session: string;
@@ -156,50 +157,23 @@ export const GuestContactUpdate: React.FC = () => {
         <h1 className="text-xl font-semibold text-text-primary">Update contact & RSVP</h1>
         <p className="text-sm text-text-secondary">Search your name, choose your record, then update details for yourself or your party.</p>
 
-        <div>
-          <label htmlFor="guest-contact-search" className="mb-1 block text-sm font-medium text-text-primary">Find your guest record</label>
-          <div className="flex gap-2">
-          <input
-            id="guest-contact-search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search your full name"
-            aria-describedby="guest-contact-search-helper"
-            className="flex-1 px-3 py-2 border border-border rounded-lg bg-surface-subtle"
-          />
-          <button onClick={handleSearch} disabled={searching || !hasFullNameQuery(query)} className="px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-50">
-            {searching ? 'Searching…' : 'Find'}
-          </button>
-          </div>
-          <p id="guest-contact-search-helper" className="mt-1 text-xs text-text-secondary">Use your full name exactly as it appears on the invitation.</p>
-        </div>
-
-        {matches.length > 0 && (
-          <div className="space-y-2">
-            <label htmlFor="guest-contact-match" className="block text-sm font-medium text-text-primary">Select your name</label>
-            <select
-              id="guest-contact-match"
-              value={selectedContactSession}
-              onChange={(e) => {
-                const contactSession = e.target.value;
-                setSelectedContactSession(contactSession);
-                const hit = matches.find((m) => m.contact_session === contactSession);
-                setSelectedHouseholdSize(hit?.household_size ?? 1);
-              }}
-              className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle"
-            >
-              {matches.map((m) => (
-                <option key={m.contact_session} value={m.contact_session}>{m.name}{(m.household_size ?? 1) > 1 ? ` (party of ${m.household_size})` : ''}</option>
-              ))}
-            </select>
-            {(selectedHouseholdSize ?? 1) > 1 && (
-              <label className="flex items-center gap-2 text-sm text-text-secondary">
-                <input type="checkbox" checked={applyHousehold} onChange={(e) => setApplyHousehold(e.target.checked)} />
-                Apply these updates to my whole party ({selectedHouseholdSize} guests)
-              </label>
-            )}
-          </div>
-        )}
+        <GuestContactLookupPanel
+          query={query}
+          searching={searching}
+          matches={matches}
+          selectedContactSession={selectedContactSession}
+          selectedHouseholdSize={selectedHouseholdSize}
+          applyHousehold={applyHousehold}
+          onQueryChange={setQuery}
+          onSearch={handleSearch}
+          onSelectContactSession={(contactSession) => {
+            setSelectedContactSession(contactSession);
+            const hit = matches.find((match) => match.contact_session === contactSession);
+            setSelectedHouseholdSize(hit?.household_size ?? 1);
+          }}
+          onToggleApplyHousehold={setApplyHousehold}
+          canSearch={hasFullNameQuery(query)}
+        />
 
         <form onSubmit={handleSubmit} className="space-y-4" aria-busy={loading}>
           <div>

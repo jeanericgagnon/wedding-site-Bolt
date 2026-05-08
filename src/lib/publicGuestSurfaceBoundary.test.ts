@@ -116,10 +116,15 @@ describe('public guest surface boundary', () => {
     expect(guestSubmissionService).toContain('/functions/v1/guestbook-submit');
 
     const guestContact = readSource('src/pages/GuestContactUpdate.tsx');
+    const guestContactLookupPanel = readSource('src/pages/GuestContactLookupPanel.tsx');
+    expect(guestContact).toContain("from './GuestContactLookupPanel'");
+    expect(guestContact).toContain('<GuestContactLookupPanel');
     expect(guestContact).toContain("from './guestPublicSubmissionService'");
     expect(guestContact).toContain("callGuestContactFunction<{ matches?: Match[] }>('guest-contact-lookup'");
     expect(guestContact).toContain("callGuestContactFunction('guest-contact-submit'");
     expect(guestContact).toContain('buildGuestContactAccessPayload(siteRef)');
+    expect(guestContactLookupPanel).toContain('id="guest-contact-search"');
+    expect(guestContactLookupPanel).toContain('id="guest-contact-match"');
     expect(guestSubmissionService).toContain('/functions/v1/${name}');
 
     const rsvpPage = readSource('src/pages/RSVP.tsx');
