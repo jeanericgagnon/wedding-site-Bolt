@@ -3,25 +3,30 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const settingsSource = () => readFileSync(join(process.cwd(), 'src/pages/dashboard/Settings.tsx'), 'utf8');
+const settingsSiteAccessActionsSource = () => readFileSync(
+  join(process.cwd(), 'src/pages/dashboard/settings/useSettingsSiteAccessActions.ts'),
+  'utf8',
+);
 const customerSafeErrorSource = () => readFileSync(join(process.cwd(), 'src/lib/customerSafeError.ts'), 'utf8');
 const settingsSiteDataSource = () => readFileSync(join(process.cwd(), 'src/pages/dashboard/settings/settingsSiteData.ts'), 'utf8');
 
 describe('settings error safety', () => {
   it('does not render raw billing or planner invite exception messages directly', () => {
     const source = settingsSource();
+    const actionsSource = settingsSiteAccessActionsSource();
 
     expect(source).toContain("setBillingError(safeSettingsError(err, 'Couldn’t load billing right now.'))");
-    expect(source).toContain("setPlannerInviteError(safeSettingsError(err, 'Couldn’t save planner invite.'))");
-    expect(source).toContain("setPlannerInviteError(safeSettingsError(err, 'Couldn’t remove planner invite.'))");
+    expect(actionsSource).toContain("setPlannerInviteError(safeSettingsError(err, 'Couldn’t save planner invite.'))");
+    expect(actionsSource).toContain("setPlannerInviteError(safeSettingsError(err, 'Couldn’t remove planner invite.'))");
     expect(source).not.toContain('.catch(err => setBillingError(err.message))');
-    expect(source).not.toContain("setPlannerInviteError(err instanceof Error ? err.message : 'Couldn’t save planner invite.')");
-    expect(source).not.toContain("setPlannerInviteError(err instanceof Error ? err.message : 'Couldn’t remove planner invite.')");
+    expect(actionsSource).not.toContain("setPlannerInviteError(err instanceof Error ? err.message : 'Couldn’t save planner invite.')");
+    expect(actionsSource).not.toContain("setPlannerInviteError(err instanceof Error ? err.message : 'Couldn’t remove planner invite.')");
   });
 
   it('treats payment/provider/backend-shaped wording as unsafe for settings copy', () => {
     const source = customerSafeErrorSource();
 
-    expect(source).toContain('service\\s*role');
+    expect(source).toContain('service[-_\\s]*role');
     expect(source).toContain('database');
     expect(source).toContain('network');
     expect(source).toContain('fetch');
@@ -35,6 +40,7 @@ describe('settings error safety', () => {
   it('explicitly selects every privacy, language, and notification setting it hydrates', () => {
     const source = settingsSiteDataSource();
     const pageSource = settingsSource();
+    const actionsSource = settingsSiteAccessActionsSource();
     const selectMatch = source.match(/export const SETTINGS_SITE_SELECT = \[([\s\S]*?)\]\.join/);
     expect(selectMatch?.[1]).toBeTruthy();
     const selectedColumns = new Set(
@@ -64,10 +70,10 @@ describe('settings error safety', () => {
     expect(source).toContain("supabase.rpc('hash_site_password'");
     expect(source).toContain("supabase.rpc('generate_secure_token'");
     expect(source).toContain("supabase.functions.invoke('translate-site-content'");
-    expect(pageSource).toContain('hashSettingsSitePassword(sitePassword)');
-    expect(pageSource).toContain('generateSettingsSecureToken()');
+    expect(actionsSource).toContain('hashSettingsSitePassword(sitePassword)');
+    expect(actionsSource).toContain('generateSettingsSecureToken()');
+    expect(actionsSource).toContain('translateSettingsSiteContent(targetSiteId, language)');
     expect(pageSource).toContain('updateSettingsSite(targetSiteId');
-    expect(pageSource).toContain('translateSettingsSiteContent(targetSiteId, language)');
     expect(pageSource).toContain('rsvp_custom_questions: cleaned');
     expect(pageSource).toContain('notification_prefs: { rsvp: notifRsvp');
   });

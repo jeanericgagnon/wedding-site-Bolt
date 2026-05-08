@@ -76,11 +76,14 @@ describe('settings site data boundary', () => {
 
   it('keeps owner settings table access behind the settings data service', () => {
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Settings.tsx'), 'utf8');
+    const actionsHook = readFileSync(
+      join(process.cwd(), 'src/pages/dashboard/settings/useSettingsSiteAccessActions.ts'),
+      'utf8',
+    );
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/settings/settingsSiteData.ts'), 'utf8');
 
     expect(page).toContain('loadSettingsCollaboratorInvites(siteId)');
-    expect(page).toContain('createSettingsCollaboratorInvite({');
-    expect(page).toContain('revokeSettingsCollaboratorInvite(inviteId)');
+    expect(page).toContain('useSettingsSiteAccessActions({');
     expect(page).toContain('<SettingsDashboardShell');
     expect(page).toContain('<SettingsIdentityExportsPanel');
     expect(page).toContain('<SettingsPrivacyPanel');
@@ -89,7 +92,6 @@ describe('settings site data boundary', () => {
     expect(page).toContain('<SettingsTeamAccessPanel');
     expect(page).toContain('<SettingsSiteUrlPanel');
     expect(page).toContain('<SettingsTemplatePanel');
-    expect(page).toContain('findSettingsSiteBySlug(cleaned)');
     expect(page).toContain('loadSettingsTemplateChangeSite(weddingSiteId)');
     expect(page).toContain('requireSettingsAuthenticatedUser()');
     expect(page).toContain('verifySettingsCurrentPassword(authUser.email || \'\', currentPassword)');
@@ -116,6 +118,24 @@ describe('settings site data boundary', () => {
     expect(page).not.toContain('Collect meal choice on RSVP form');
     expect(page).not.toContain('Add optional questions to collect extra details from guests');
     expect(page).not.toContain('Song request playlist (Spotify collaborative)');
+    expect(page).not.toContain('createSettingsCollaboratorInvite({');
+    expect(page).not.toContain('revokeSettingsCollaboratorInvite(inviteId)');
+    expect(page).not.toContain('findSettingsSiteBySlug(cleaned)');
+    expect(page).not.toContain('translateSettingsSiteContent(targetSiteId, language)');
+    expect(page).not.toContain('buildWeddingIdentityManifestText(weddingIdentityExportKit)');
+    expect(page).not.toContain('renderWeddingIdentityPrintHtml(weddingIdentityPrintAssets)');
+
+    expect(actionsHook).toContain('createSettingsCollaboratorInvite({');
+    expect(actionsHook).toContain('revokeSettingsCollaboratorInvite(inviteId)');
+    expect(actionsHook).toContain('findSettingsSiteBySlug(cleaned)');
+    expect(actionsHook).toContain('translateSettingsSiteContent(targetSiteId, language)');
+    expect(actionsHook).toContain('generateSettingsSecureToken()');
+    expect(actionsHook).toContain('hashSettingsSitePassword(sitePassword)');
+    expect(actionsHook).toContain('buildWeddingIdentityManifestText(weddingIdentityExportKit)');
+    expect(actionsHook).toContain('renderWeddingIdentityPrintHtml(weddingIdentityPrintAssets)');
+    expect(actionsHook).not.toContain("from('wedding_site_collaborator_invites')");
+    expect(actionsHook).not.toContain("from('site_translations')");
+    expect(actionsHook).not.toMatch(/supabase\s*\n\s*\.from\('wedding_sites'\)/);
 
     expect(service).toContain('.select(SETTINGS_SITE_SELECT)');
     expect(service).toContain('.select(SETTINGS_COLLABORATOR_INVITE_SELECT)');

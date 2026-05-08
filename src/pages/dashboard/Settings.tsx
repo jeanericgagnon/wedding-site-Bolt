@@ -11,36 +11,26 @@ import { fromExistingLayoutToBuilderProject } from '../../builder/adapters/layou
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
 import { fetchBillingInfo, createSubscriptionSession, type BillingInfo } from '../../lib/stripeService';
 import { useAuth } from '../../hooks/useAuth';
-import { PLANNER_ROLE_OPTIONS, getPlannerPermissionPreset, readPlannerInvite, writePlannerInvite, type PlannerAccessRole, type PlannerInviteRecord, type PlannerPermissionKey } from '../../lib/plannerAccess';
+import { PLANNER_ROLE_OPTIONS, getPlannerPermissionPreset, readPlannerInvite, type PlannerAccessRole, type PlannerInviteRecord, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useToast } from '../../components/ui/Toast';
-import { copyTextOrDownload } from '../../lib/copyText';
 import { logAppAction } from '../../lib/actionAudit';
 import { demoWeddingSite } from '../../lib/demoData';
 import { getSafePublicWebUrl } from '../../sections/publicLinks';
 import {
   buildWeddingIdentityExportKit,
-  buildWeddingIdentityManifestText,
   buildWeddingIdentityPrintAssets,
-  renderWeddingIdentityPrintHtml,
 } from '../../lib/weddingIdentityExports';
 import {
-  generateSettingsSecureToken,
-  hashSettingsSitePassword,
-  createSettingsCollaboratorInvite,
-  findSettingsSiteBySlug,
   loadSettingsCollaboratorInvites,
   loadSettingsSite,
   loadSettingsTemplateChangeSite,
   loadSettingsTranslationStatuses,
   requireSettingsAuthenticatedUser,
-  revokeSettingsCollaboratorInvite,
-  translateSettingsSiteContent,
   updateSettingsAccountPassword,
   updateSettingsSite,
   verifySettingsCurrentPassword,
   type SettingsCollaboratorInviteRow,
-  type SettingsSiteUpdates,
 } from './settings/settingsSiteData';
 import {
   SITE_LANGUAGE_OPTIONS,
@@ -52,14 +42,11 @@ import {
 } from './settings/settingsDashboardTypes';
 import {
   SETTINGS_SITE_MISSING_COPY,
-  buildPrivacySettingsUpdates,
   cleanRsvpSettings,
   formatTranslationStatusDate,
-  getSiteLanguageLabel,
   makeQuestion,
   normalizeMealOptions,
   normalizeRsvpQuestions,
-  normalizeSettingsSlug,
   safeSettingsError,
   splitCoupleNames,
 } from './settings/settingsDashboardUtils';
@@ -76,6 +63,7 @@ import { SettingsSiteUrlPanel } from './settings/SettingsSiteUrlPanel';
 import { SettingsTemplatePanel } from './settings/SettingsTemplatePanel';
 import { SettingsTeamAccessPanel } from './settings/SettingsTeamAccessPanel';
 import { SettingsDashboardShell } from './settings/SettingsDashboardShell';
+import { useSettingsSiteAccessActions } from './settings/useSettingsSiteAccessActions';
 
 const useDraftHydrationGuard = (clearStatus: () => void) => {
   const dirtyRef = useRef(false);
@@ -464,264 +452,6 @@ export const DashboardSettings: React.FC = () => {
     setPlannerInviteRole(invite.role);
   }, [siteSlug, user?.id]);
 
-  const handleSavePlannerInvite = () => {
-    setPlannerInviteError(null);
-    setPlannerInviteSuccess(null);
-    const name = plannerInviteName.trim();
-    const email = plannerInviteEmail.trim().toLowerCase();
-
-    if (!name) {
-      setPlannerInviteError("Add your planner's name.");
-      return;
-    }
-
-    if (!email || !email.includes('@')) {
-      setPlannerInviteError('Add a valid planner email.');
-      return;
-    }
-
-    const invite: PlannerInviteRecord = {
-      name,
-      email,
-      role: plannerInviteRole,
-      status: plannerInvite?.status === 'active' ? 'active' : 'pending',
-      invitedAtISO: plannerInvite?.invitedAtISO ?? new Date().toISOString(),
-      permissions: plannerInvitePermissions,
-    };
-
-    try {
-      writePlannerInvite(siteSlug || user?.id || null, invite);
-      setPlannerInvite(invite);
-      setPlannerInviteSuccess(plannerInvite ? 'Planner access updated.' : 'Planner invite saved.');
-    } catch (err) {
-      setPlannerInviteError(safeSettingsError(err, 'Couldn’t save planner invite.'));
-    }
-  };
-
-  const handleCreateCollaboratorInvite = async () => {
-    setPlannerInviteError(null);
-    setPlannerInviteSuccess(null);
-    const name = plannerInviteName.trim();
-    const email = plannerInviteEmail.trim().toLowerCase();
-
-    const targetSiteId = await resolveSettingsSiteId();
-    if (!targetSiteId) {
-      setPlannerInviteError(SETTINGS_SITE_MISSING_COPY);
-      return;
-    }
-    if (!user?.id) {
-      setPlannerInviteError('Sign in again before creating an invite.');
-      return;
-    }
-    if (!name) {
-      setPlannerInviteError("Add your planner's name.");
-      return;
-    }
-    if (!email || !email.includes('@')) {
-      setPlannerInviteError('Add a valid planner email.');
-      return;
-    }
-
-    setCreatingCollaboratorInvite(true);
-    try {
-      const inviteToken = crypto.randomUUID();
-      const data = await createSettingsCollaboratorInvite({
-        weddingSiteId: targetSiteId,
-        inviteEmail: email,
-        inviteName: name,
-        role: plannerInviteRole,
-        inviteToken,
-        invitedBy: user.id,
-        permissions: plannerInvitePermissions,
-      });
-
-      await loadCollaboratorInvites(targetSiteId);
-      logSettingsAction('collaborator_invite_created', 'Collaborator invite was created.', {
-        role: plannerInviteRole,
-        permissionCount: plannerInvitePermissions.length,
-        status: 'pending',
-      }, data.id as string, name, targetSiteId);
-      setPlannerInviteSuccess('Collaborator invite link created. Copy it and send it to the invited teammate.');
-    } catch (err) {
-      setPlannerInviteError(safeSettingsError(err, 'Couldn’t create helper invite.'));
-    } finally {
-      setCreatingCollaboratorInvite(false);
-    }
-  };
-
-  const handleRevokeCollaboratorInvite = async (inviteId: string) => {
-    setPlannerInviteError(null);
-    setPlannerInviteSuccess(null);
-    setRevokingCollaboratorInviteId(inviteId);
-    try {
-      const invite = collaboratorInvites.find((row) => row.id === inviteId);
-      await revokeSettingsCollaboratorInvite(inviteId);
-
-      if (weddingSiteId) {
-        await loadCollaboratorInvites(weddingSiteId);
-      }
-      logSettingsAction('collaborator_invite_revoked', 'Collaborator invite was revoked.', {
-        role: invite?.role ?? null,
-        previousStatus: invite?.status ?? null,
-      }, inviteId, invite?.invite_name || invite?.invite_email || 'Collaborator invite');
-      setPlannerInviteSuccess('Collaborator invite revoked.');
-    } catch (err) {
-      setPlannerInviteError(safeSettingsError(err, 'Couldn’t revoke helper invite.'));
-    } finally {
-      setRevokingCollaboratorInviteId(null);
-    }
-  };
-
-  const handleCopyCollaboratorInviteLink = async (inviteToken: string | undefined) => {
-    if (!inviteToken) {
-      setPlannerInviteError('This invite link is not ready yet.');
-      return;
-    }
-
-    const inviteUrl = `${window.location.origin}/accept-collaborator-invite?token=${inviteToken}`;
-    const result = await copyTextOrDownload(inviteUrl, 'dayof-collaborator-invite-link.txt');
-    if (result === 'copied') {
-      setPlannerInviteSuccess('Invite link copied.');
-    } else {
-      setPlannerInviteSuccess('Clipboard was blocked, so the invite link downloaded.');
-    }
-    setPlannerInviteError(null);
-  };
-
-  const handleResendCollaboratorInvite = async (inviteToken: string | undefined) => {
-    await handleCopyCollaboratorInviteLink(inviteToken);
-    setPlannerInviteSuccess('Invite link copied for sending.');
-  };
-
-  const handleRemovePlannerInvite = () => {
-    try {
-      writePlannerInvite(siteSlug || user?.id || null, null);
-      setPlannerInvite(null);
-      setPlannerInviteName('');
-      setPlannerInviteEmail('');
-      setPlannerInviteRole('planner');
-      setPlannerInviteError(null);
-      setPlannerInviteSuccess('Planner invite removed.');
-    } catch (err) {
-      setPlannerInviteError(safeSettingsError(err, 'Couldn’t remove planner invite.'));
-    }
-  };
-
-  const handleUpdateSlug = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSlugSaving(true);
-    setSlugError(null);
-    setSlugSuccess(null);
-    try {
-      const cleaned = normalizeSettingsSlug(siteSlug);
-      if (!cleaned) { setSlugError('URL cannot be empty.'); setSlugSaving(false); return; }
-
-      let targetSiteId = weddingSiteId;
-      if (!targetSiteId && user?.id) {
-        targetSiteId = await resolveSettingsSiteId();
-        if (targetSiteId) setWeddingSiteId(targetSiteId);
-      }
-      if (!targetSiteId) {
-        setSlugError(SETTINGS_SITE_MISSING_COPY);
-        setSlugSaving(false);
-        return;
-      }
-
-      const existing = await findSettingsSiteBySlug(cleaned);
-      if (existing && existing.id !== targetSiteId) {
-        setSlugError('That URL is already taken. Please choose another.');
-        setSlugSaving(false);
-        return;
-      }
-      await updateSettingsSite(targetSiteId, { site_slug: cleaned });
-      setSiteSlug(cleaned);
-      logSettingsAction('site_slug_updated', 'Public site URL slug was updated.', { slug: cleaned }, targetSiteId, cleaned, targetSiteId);
-      setSlugSuccess(`Site URL updated to /${cleaned}`);
-    } catch (err) {
-      setSlugError(safeSettingsError(err, 'Couldn’t update URL.'));
-    } finally {
-      setSlugSaving(false);
-    }
-  };
-
-  const handleSavePrivacy = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setVisibilitySaving(true);
-    setVisibilityError(null);
-    setVisibilitySuccess(null);
-    let nextGuestAccessToken: string | null = null;
-    try {
-      const targetSiteId = await resolveSettingsSiteId();
-      if (!targetSiteId) {
-        setVisibilityError(SETTINGS_SITE_MISSING_COPY);
-        return;
-      }
-
-      const sitePasswordHash = privacyMode === 'password_protected' && sitePassword
-        ? await hashSettingsSitePassword(sitePassword)
-        : null;
-
-      if (privacyMode === 'invite_only' && !guestAccessToken) {
-        nextGuestAccessToken = await generateSettingsSecureToken();
-      }
-
-      const updates: SettingsSiteUpdates = buildPrivacySettingsUpdates({
-        privacyMode,
-        hideFromSearch,
-        defaultLanguage,
-        sitePasswordHash,
-        guestAccessToken: nextGuestAccessToken,
-      });
-
-      await updateSettingsSite(targetSiteId, updates);
-      if (nextGuestAccessToken) setGuestAccessToken(nextGuestAccessToken);
-      visibilityDraftGuard.markSaved();
-      setSitePassword('');
-      logSettingsAction('site_privacy_saved', 'Site privacy and access settings were updated.', {
-        privacyMode,
-        hideFromSearch,
-        defaultLanguage,
-        passwordChanged: privacyMode === 'password_protected' && Boolean(sitePassword),
-        guestAccessTokenCreated: Boolean(nextGuestAccessToken),
-      }, targetSiteId, 'Site privacy', targetSiteId);
-      setVisibilitySuccess('Privacy settings saved.');
-    } catch (err) {
-      setVisibilityError(safeSettingsError(err, 'Couldn’t save sharing settings.'));
-    } finally {
-      setVisibilitySaving(false);
-    }
-  };
-
-  const handleRegenerateToken = async () => {
-    try {
-      const targetSiteId = await resolveSettingsSiteId();
-      if (!targetSiteId) {
-        toast(SETTINGS_SITE_MISSING_COPY, 'error');
-        return;
-      }
-
-      const data = await generateSettingsSecureToken();
-      await updateSettingsSite(targetSiteId, { guest_access_token: data });
-      setGuestAccessToken(data);
-      logSettingsAction('guest_access_token_regenerated', 'Invite-only guest access link was regenerated.', { privacyMode }, targetSiteId, 'Guest access link', targetSiteId);
-      toast('Guest access link refreshed.', 'success');
-    } catch (err) {
-      toast(safeSettingsError(err, 'Couldn’t refresh guest access link.'), 'error');
-    }
-  };
-
-  const copyInviteLink = async () => {
-    if (!guestAccessToken || !siteSlug) return;
-    const url = `${window.location.origin}/site/${siteSlug}?token=${guestAccessToken}`;
-    const result = await copyTextOrDownload(url, 'dayof-guest-access-link.txt');
-    if (result === 'copied') {
-      setPrivacyCopied(true);
-      setTimeout(() => setPrivacyCopied(false), 2000);
-    } else {
-      toast('Clipboard was blocked, so the guest access link downloaded.', 'success');
-    }
-  };
-
   const publicSiteUrl = siteSlug ? `https://${siteSlug}.dayof.love` : '';
   const plannerRoleOptions = PLANNER_ROLE_OPTIONS.filter((option) => option.value !== 'owner');
   const currentTemplateName = getAllTemplates().find((template) => template.id === currentTemplate)?.name ?? 'Current site theme';
@@ -754,95 +484,71 @@ export const DashboardSettings: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const copyIdentityManifest = async () => {
-    const manifest = buildWeddingIdentityManifestText(weddingIdentityExportKit);
-    const result = await copyTextOrDownload(manifest, 'dayof-wedding-identity-export-manifest.txt');
-    toast(result === 'copied' ? 'Wedding identity manifest copied.' : 'Wedding identity manifest downloaded.', 'success');
-  };
-
-  const downloadIdentityPrintPack = () => {
-    if (weddingIdentityPrintAssets.length === 0) {
-      toast('Set a public site URL before saving the identity print pack.', 'error');
-      return;
-    }
-
-    downloadTextFile(
-      'dayof-wedding-identity-print-pack.html',
-      renderWeddingIdentityPrintHtml(weddingIdentityPrintAssets),
-      'text/html;charset=utf-8'
-    );
-    toast('Wedding identity print pack saved.', 'success');
-  };
-
-  const togglePlannerPermission = (key: PlannerPermissionKey) => {
-    setPlannerInvitePermissions((prev) => prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]);
-  };
-  const handleDefaultLanguageChange = async (next: SiteLanguageCode) => {
-    const previous = defaultLanguage;
-    visibilityDraftGuard.markDirty();
-    setDefaultLanguage(next);
-    setVisibilityError(null);
-    setVisibilitySuccess(null);
-    try {
-      const targetSiteId = await resolveSettingsSiteId();
-      if (!targetSiteId) {
-        setDefaultLanguage(previous);
-        visibilityDraftGuard.markSaved();
-        setVisibilityError(SETTINGS_SITE_MISSING_COPY);
-        return;
-      }
-
-      await updateSettingsSite(targetSiteId, { default_language: next });
-      visibilityDraftGuard.markSaved();
-      logSettingsAction('default_language_updated', 'Default public-site language was updated.', { language: next }, targetSiteId, getSiteLanguageLabel(next), targetSiteId);
-      setVisibilitySuccess(`Default language set to ${getSiteLanguageLabel(next)}.`);
-    } catch (err) {
-      setDefaultLanguage(previous);
-      visibilityDraftGuard.markSaved();
-      setVisibilityError(safeSettingsError(err, 'Couldn’t save default language.'));
-    }
-  };
-
-  const handleAutoTranslateLanguage = async (language: TranslationLanguageCode) => {
-    setTranslatingLanguage(language);
-    setVisibilityError(null);
-    setVisibilitySuccess(null);
-    try {
-      const targetSiteId = await resolveSettingsSiteId();
-      if (!targetSiteId) {
-        setVisibilityError(SETTINGS_SITE_MISSING_COPY);
-        return;
-      }
-
-      await translateSettingsSiteContent(targetSiteId, language);
-      await loadTranslationStatuses(targetSiteId);
-      logSettingsAction('site_translation_generated', 'Site translation was generated.', { language }, targetSiteId, getSiteLanguageLabel(language), targetSiteId);
-      setVisibilitySuccess(`${getSiteLanguageLabel(language)} translation generated. Guests can switch languages on the public site.`);
-    } catch (err) {
-      setVisibilityError(safeSettingsError(err, 'Couldn’t prepare translation.'));
-    } finally {
-      setTranslatingLanguage(null);
-    }
-  };
-
-  const handleSaveMusicPlaylist = async () => {
-    setVisibilityError(null);
-    setVisibilitySuccess(null);
-    try {
-      const targetSiteId = await resolveSettingsSiteId();
-      if (!targetSiteId) {
-        setVisibilityError(SETTINGS_SITE_MISSING_COPY);
-        return;
-      }
-
-      const value = musicPlaylistUrl.trim();
-      await updateSettingsSite(targetSiteId, { music_playlist_url: value || null });
-      logSettingsAction('music_playlist_saved', 'Song request playlist link was saved.', { hasPlaylist: Boolean(value) }, targetSiteId, 'Song request playlist', targetSiteId);
-      setVisibilitySuccess('Song request playlist link saved.');
-    } catch (err) {
-      setVisibilityError(safeSettingsError(err, 'Couldn’t save playlist link.'));
-    }
-  };
+  const {
+    copyIdentityManifest,
+    copyInviteLink,
+    downloadIdentityPrintPack,
+    handleAutoTranslateLanguage,
+    handleCopyCollaboratorInviteLink,
+    handleCreateCollaboratorInvite,
+    handleDefaultLanguageChange,
+    handleRegenerateToken,
+    handleRemovePlannerInvite,
+    handleResendCollaboratorInvite,
+    handleRevokeCollaboratorInvite,
+    handleSaveMusicPlaylist,
+    handleSavePlannerInvite,
+    handleSavePrivacy,
+    handleUpdateSlug,
+    togglePlannerPermission,
+  } = useSettingsSiteAccessActions({
+    userId: user?.id,
+    siteSlug,
+    weddingSiteId,
+    plannerInvite,
+    plannerInviteName,
+    plannerInviteEmail,
+    plannerInviteRole,
+    plannerInvitePermissions,
+    collaboratorInvites,
+    privacyMode,
+    hideFromSearch,
+    defaultLanguage,
+    sitePassword,
+    guestAccessToken,
+    musicPlaylistUrl,
+    weddingIdentityExportKit,
+    weddingIdentityPrintAssets,
+    resolveSettingsSiteId,
+    loadCollaboratorInvites,
+    loadTranslationStatuses,
+    logSettingsAction,
+    toast,
+    visibilityDraftGuard,
+    downloadTextFile,
+    setPlannerInvite,
+    setPlannerInviteName,
+    setPlannerInviteEmail,
+    setPlannerInviteRole,
+    setPlannerInvitePermissions,
+    setCreatingCollaboratorInvite,
+    setDefaultLanguage,
+    setGuestAccessToken,
+    setPlannerInviteError,
+    setPlannerInviteSuccess,
+    setPrivacyCopied,
+    setRevokingCollaboratorInviteId,
+    setSitePassword,
+    setSiteSlug,
+    setSlugError,
+    setSlugSaving,
+    setSlugSuccess,
+    setTranslatingLanguage,
+    setVisibilityError,
+    setVisibilitySaving,
+    setVisibilitySuccess,
+    setWeddingSiteId,
+  });
 
   const saveRsvpSettings = async () => {
     setRsvpQuestionsSaving(true);

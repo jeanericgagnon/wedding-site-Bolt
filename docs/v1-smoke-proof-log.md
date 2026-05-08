@@ -7388,6 +7388,22 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-08 01:15 AM PT No-Deploy Settings Site/Team Action Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Settings.tsx` now routes planner invite save/remove, collaborator invite create/revoke/resend/copy, site slug updates, privacy saves, guest-link regeneration, identity export actions, default-language updates, translation generation, and music-playlist saves through `src/pages/dashboard/settings/useSettingsSiteAccessActions.ts`.
+  - That hook now owns the repeated settings action transport, identity export copy/download flow, guest-link handling, collaborator invite lifecycle, translation/privacy persistence, and customer-safe success/error choreography while the page keeps account, RSVP, notification, billing, and template orchestration.
+  - `src/pages/dashboard/settings/settingsSiteData.test.ts` and `src/lib/settingsErrorSafety.test.ts` now pin `useSettingsSiteAccessActions({ ... })` plus its collaborator-invite, slug/privacy, translation, and identity-export contract.
+  - `src/pages/dashboard/Settings.tsx` dropped from 1298 lines to 1004 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts`: PASS, 17/17.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 12:05 AM PT No-Deploy RSVP Guest-Lookup Transport Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
