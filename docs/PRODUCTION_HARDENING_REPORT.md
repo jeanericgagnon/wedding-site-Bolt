@@ -4658,6 +4658,22 @@ Status:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-08 02:40 AM PT No-Deploy Vault Live-Content Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Vault.tsx` now routes the owner-facing vault summary shell and list wrapper through `src/pages/dashboard/VaultDashboardLiveContent.tsx`.
+  - That component now owns the anniversary-vault hero, media backup status panel, no-date warning, archive-mode note ideas, starter-vault empty state, add-another/maxed-out shell, and vault guidance footer while the page keeps loading, data hydration, card-level entry state, and the extracted vault action transport.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<VaultDashboardLiveContent`, checks that `VaultDashboardLiveContent.tsx` owns the `DashboardPageHero`, starter-vault CTA, and `How Vaults work` shell, and rejects regaining the old inline starter-vault slab in `Vault.tsx`.
+  - `src/pages/dashboard/Vault.tsx` dropped from 1393 lines to 1262 lines in this batch, while `src/pages/dashboard/VaultDashboardLiveContent.tsx` came in at 196 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/vaultService.test.ts`: PASS, 22/22.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 01:00 AM PT No-Deploy Overview Intelligence Action Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
