@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
-import { Save, Loader2, Plus, Trash2, ChevronDown } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { getSiteVisibilityState, getVisibilityModeOptions } from '../../lib/siteVisibilityState';
 import { getAllTemplates } from '../../templates/registry';
 import { WeddingDataV1 } from '../../types/weddingData';
@@ -73,6 +73,7 @@ import { getSettingsTabs, SettingsNavigation, type SettingsTabId } from './setti
 import { SettingsNotificationsPanel } from './settings/SettingsNotificationsPanel';
 import { SettingsPrivacyPanel } from './settings/SettingsPrivacyPanel';
 import { SettingsRsvpMealPanel } from './settings/SettingsRsvpMealPanel';
+import { SettingsRsvpQuestionsPanel } from './settings/SettingsRsvpQuestionsPanel';
 import { SettingsSiteUrlPanel } from './settings/SettingsSiteUrlPanel';
 import { SettingsTemplatePanel } from './settings/SettingsTemplatePanel';
 import { SettingsTeamAccessPanel } from './settings/SettingsTeamAccessPanel';
@@ -1181,213 +1182,97 @@ export const DashboardSettings: React.FC = () => {
                   showMealChoiceSettings={showMealChoiceSettings}
                 />
 
-                <Card variant="bordered" padding="lg">
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <CardTitle>RSVP Custom Questions</CardTitle>
-                        <CardDescription>Add optional questions to collect extra details from guests</CardDescription>
-                      </div>
-                      <Button type="button" variant="outline" size="sm" onClick={() => setShowAdvancedRsvp((v) => !v)}>
-                        {showAdvancedRsvp ? 'Hide advanced RSVP' : 'Show advanced RSVP'}
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {!showAdvancedRsvp ? (
-                      <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
-                        Hidden by default to keep RSVP setup simple. Open this section if you want to ask extra questions or let guests share song requests.
-                      </div>
-                    ) : (
-                    <form onSubmit={handleSaveRsvpQuestions} className="space-y-4">
-                      {rsvpQuestionsSuccess && (
-                        <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{rsvpQuestionsSuccess}</div>
-                      )}
-                      {rsvpQuestionsError && (
-                        <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">{rsvpQuestionsError}</div>
-                      )}
-
-                      <div className="space-y-3">
-                        {rsvpQuestions.length === 0 && (
-                          <p className="text-sm text-text-secondary">No custom questions yet. Add one below if you need something beyond the standard RSVP flow.</p>
-                        )}
-
-                        {rsvpQuestions.map((q, idx) => {
-                          const isCollapsed = collapsedQuestionIds.has(q.id);
-                          return (
-                          <div key={q.id} className="p-4 border border-border rounded-lg space-y-3 bg-surface-subtle">
-                            <div className="flex items-center justify-between">
-                              <button
-                                type="button"
-                                onClick={() => setCollapsedQuestionIds((prev) => {
-                                  const next = new Set(prev);
-                                  if (next.has(q.id)) next.delete(q.id); else next.add(q.id);
-                                  return next;
-                                })}
-                                className="inline-flex items-center gap-2 text-sm font-semibold text-text-primary"
-                              >
-                                <ChevronDown className={`w-4 h-4 transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
-                                Question {idx + 1}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  rsvpDraftGuard.markDirty();
-                                  setRsvpQuestions((prev) => prev.filter((item) => item.id !== q.id));
-                                  setCollapsedQuestionIds((prev) => {
-                                    const next = new Set(prev);
-                                    next.delete(q.id);
-                                    return next;
-                                  });
-                                }}
-                                className="text-text-tertiary hover:text-text-primary"
-                                aria-label="Remove question"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-
-                            {!isCollapsed && (
-                              <>
-                            <Input
-                              label="Prompt"
-                              value={q.label}
-                              onChange={(e) => { rsvpDraftGuard.markDirty(); setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, label: e.target.value } : item)); }}
-                              placeholder="e.g., Song request"
-                            />
-
-                            <div className="grid md:grid-cols-3 gap-3">
-                              <Select
-                                label="Type"
-                                value={q.type}
-                                onChange={(e) => { rsvpDraftGuard.markDirty(); setRsvpQuestions((prev) => prev.map((item) => {
-                                  if (item.id !== q.id) return item;
-                                  const nextType = e.target.value as RSVPQuestionSetting['type'];
-                                  if (nextType === 'single_choice' || nextType === 'multi_choice') {
-                                    const current = item.options ?? [];
-                                    return { ...item, type: nextType, options: current.length > 0 ? current : ['', ''] };
-                                  }
-                                  return { ...item, type: nextType, options: [] };
-                                })); }}
-                                options={[
-                                  { value: 'short_text', label: 'Short text' },
-                                  { value: 'long_text', label: 'Long text' },
-                                  { value: 'single_choice', label: 'Single choice' },
-                                  { value: 'multi_choice', label: 'Multiple choice' },
-                                ]}
-                              />
-
-                              <Select
-                                label="Applies to"
-                                value={q.appliesTo}
-                                onChange={(e) => { rsvpDraftGuard.markDirty(); setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, appliesTo: e.target.value as RSVPQuestionSetting['appliesTo'] } : item)); }}
-                                options={[
-                                  { value: 'all', label: 'All attendees' },
-                                  { value: 'ceremony', label: 'Ceremony attendees' },
-                                  { value: 'reception', label: 'Reception attendees' },
-                                ]}
-                              />
-
-                              <label className="flex items-center gap-2 mt-7 text-sm text-text-primary">
-                                <input
-                                  type="checkbox"
-                                  checked={q.required}
-                                  onChange={(e) => { rsvpDraftGuard.markDirty(); setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, required: e.target.checked } : item)); }}
-                                  className="w-4 h-4 rounded border-border text-primary"
-                                />
-                                Required
-                              </label>
-                            </div>
-
-                            {(q.type === 'single_choice' || q.type === 'multi_choice') && (
-                              <div className="space-y-2">
-                                <label className="block text-sm font-medium text-text-primary">Choices</label>
-                                {(q.options ?? []).map((opt, optIdx) => (
-                                  <div key={`${q.id}-opt-${optIdx}`} className="flex items-center gap-2">
-                                    <Input
-                                      value={opt}
-                                      onChange={(e) => { rsvpDraftGuard.markDirty(); setRsvpQuestions((prev) => prev.map((item) => {
-                                        if (item.id !== q.id) return item;
-                                        const next = [...(item.options ?? [])];
-                                        next[optIdx] = e.target.value;
-                                        return { ...item, options: next };
-                                      })); }}
-                                      placeholder={`Option ${optIdx + 1}`}
-                                    />
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => { rsvpDraftGuard.markDirty(); setRsvpQuestions((prev) => prev.map((item) => {
-                                        if (item.id !== q.id) return item;
-                                        const next = [...(item.options ?? [])];
-                                        next.splice(optIdx, 1);
-                                        return { ...item, options: next };
-                                      })); }}
-                                      aria-label="Remove choice"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                ))}
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => { rsvpDraftGuard.markDirty(); setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, options: [...(item.options ?? []), ''] } : item)); }}
-                                >
-                                  <Plus className="w-4 h-4 mr-1" />
-                                  Add choice
-                                </Button>
-                                <p className="text-xs text-text-tertiary">Add at least 2 options so guests can choose clearly.</p>
-                              </div>
-                            )}
-                              </>
-                            )}
-                          </div>
-                          );
-                        })}
-                      </div>
-
-                      <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 space-y-3">
-                        <p className="text-sm font-medium text-text-primary">Song request playlist (Spotify collaborative)</p>
-                        <Input
-                          label="Playlist URL"
-                          value={musicPlaylistUrl}
-                          onChange={(e) => setMusicPlaylistUrl(e.target.value)}
-                          placeholder="https://open.spotify.com/playlist/..."
-                        />
-                        <div className="flex gap-2">
-                          <Button type="button" variant="outline" size="sm" onClick={handleSaveMusicPlaylist}>
-                            Save playlist link
-                          </Button>
-                          {safeMusicPlaylistUrl && (
-                            <Button type="button" variant="outline" size="sm" onClick={() => window.open(safeMusicPlaylistUrl, '_blank', 'noopener,noreferrer')}>
-                              Open
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 justify-between pt-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => { rsvpDraftGuard.markDirty(); const q = makeQuestion(); setRsvpQuestions((prev) => [...prev, q]); setCollapsedQuestionIds((prev) => { const next = new Set(prev); next.delete(q.id); return next; }); }}
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Question
-                        </Button>
-
-                        <Button variant="primary" size="md" type="submit" disabled={rsvpQuestionsSaving}>
-                          {rsvpQuestionsSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                          Save RSVP Settings
-                        </Button>
-                      </div>
-                    </form>
-                    )}
-                  </CardContent>
-                </Card>
+                <SettingsRsvpQuestionsPanel
+                  collapsedQuestionIds={collapsedQuestionIds}
+                  musicPlaylistUrl={musicPlaylistUrl}
+                  onAddChoice={(questionId) => {
+                    rsvpDraftGuard.markDirty();
+                    setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, options: [...(item.options ?? []), ''] } : item));
+                  }}
+                  onAddQuestion={() => {
+                    rsvpDraftGuard.markDirty();
+                    const question = makeQuestion();
+                    setRsvpQuestions((prev) => [...prev, question]);
+                    setCollapsedQuestionIds((prev) => {
+                      const next = new Set(prev);
+                      next.delete(question.id);
+                      return next;
+                    });
+                  }}
+                  onAppliesToChange={(questionId, value) => {
+                    rsvpDraftGuard.markDirty();
+                    setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, appliesTo: value } : item));
+                  }}
+                  onMusicPlaylistUrlChange={setMusicPlaylistUrl}
+                  onOpenPlaylist={() => {
+                    if (safeMusicPlaylistUrl) {
+                      window.open(safeMusicPlaylistUrl, '_blank', 'noopener,noreferrer');
+                    }
+                  }}
+                  onPromptChange={(questionId, value) => {
+                    rsvpDraftGuard.markDirty();
+                    setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, label: value } : item));
+                  }}
+                  onRemoveChoice={(questionId, optionIndex) => {
+                    rsvpDraftGuard.markDirty();
+                    setRsvpQuestions((prev) => prev.map((item) => {
+                      if (item.id !== questionId) return item;
+                      const next = [...(item.options ?? [])];
+                      next.splice(optionIndex, 1);
+                      return { ...item, options: next };
+                    }));
+                  }}
+                  onRemoveQuestion={(questionId) => {
+                    rsvpDraftGuard.markDirty();
+                    setRsvpQuestions((prev) => prev.filter((item) => item.id !== questionId));
+                    setCollapsedQuestionIds((prev) => {
+                      const next = new Set(prev);
+                      next.delete(questionId);
+                      return next;
+                    });
+                  }}
+                  onRequiredChange={(questionId, checked) => {
+                    rsvpDraftGuard.markDirty();
+                    setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, required: checked } : item));
+                  }}
+                  onSave={handleSaveRsvpQuestions}
+                  onSaveMusicPlaylist={() => { void handleSaveMusicPlaylist(); }}
+                  onToggleCollapse={(questionId) => {
+                    setCollapsedQuestionIds((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(questionId)) next.delete(questionId);
+                      else next.add(questionId);
+                      return next;
+                    });
+                  }}
+                  onToggleVisibility={() => setShowAdvancedRsvp((value) => !value)}
+                  onTypeChange={(questionId, value) => {
+                    rsvpDraftGuard.markDirty();
+                    setRsvpQuestions((prev) => prev.map((item) => {
+                      if (item.id !== questionId) return item;
+                      if (value === 'single_choice' || value === 'multi_choice') {
+                        const current = item.options ?? [];
+                        return { ...item, type: value, options: current.length > 0 ? current : ['', ''] };
+                      }
+                      return { ...item, type: value, options: [] };
+                    }));
+                  }}
+                  onUpdateChoice={(questionId, optionIndex, value) => {
+                    rsvpDraftGuard.markDirty();
+                    setRsvpQuestions((prev) => prev.map((item) => {
+                      if (item.id !== questionId) return item;
+                      const next = [...(item.options ?? [])];
+                      next[optionIndex] = value;
+                      return { ...item, options: next };
+                    }));
+                  }}
+                  questions={rsvpQuestions}
+                  rsvpQuestionsError={rsvpQuestionsError}
+                  rsvpQuestionsSaving={rsvpQuestionsSaving}
+                  rsvpQuestionsSuccess={rsvpQuestionsSuccess}
+                  safeMusicPlaylistUrl={safeMusicPlaylistUrl}
+                  showAdvancedRsvp={showAdvancedRsvp}
+                />
               </>
             )}
 

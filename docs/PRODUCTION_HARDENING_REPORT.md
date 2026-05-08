@@ -19,6 +19,23 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 6:52 PM PT - No-Deploy Settings RSVP Questions Panel Extraction
+
+What changed:
+- `src/pages/dashboard/Settings.tsx` no longer carries the advanced RSVP custom-questions card inline.
+- New `src/pages/dashboard/settings/SettingsRsvpQuestionsPanel.tsx` now owns the advanced RSVP visibility toggle, question list/editor, choice editing, song-request playlist block, and save action.
+- `src/pages/dashboard/settings/settingsSiteData.test.ts` now pins that seam and rejects regaining the old inline advanced-RSVP copy directly inside the page.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts`: PASS, 1 file and 6 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This removes the biggest remaining self-contained form block from `Settings.tsx` and leaves the page much more focused on state and orchestration instead of advanced RSVP markup. No deploy was run.
+
 ### 2026-05-07 6:47 PM PT - No-Deploy Settings RSVP Meal Panel Extraction
 
 What changed:
