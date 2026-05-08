@@ -131,15 +131,13 @@ describe('guestService', () => {
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Guests.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/guestService.ts'), 'utf8');
     const campaignHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCampaignActions.ts'), 'utf8');
+    const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardData.ts'), 'utf8');
 
     expect(page).toContain('generateSecureGuestInviteToken()');
     expect(page).toContain('refreshGuestDashboardSession()');
-    expect(page).toContain('loadGuestDashboardSiteSettings(user.id)');
-    expect(page).toContain('loadGuestDashboardSnapshot(weddingSiteId)');
+    expect(page).toContain('useGuestDashboardData({');
     expect(page).toContain('resolveGuestDashboardConflict(conflictId, resolvedAt)');
     expect(page).toContain('resolveGuestDashboardConflicts(ids, resolvedAt)');
-    expect(page).toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
-    expect(page).toContain('loadGuestDashboardRsvpAuditFeed(weddingSiteId)');
     expect(page).toContain('loadGuestItineraryDrawerSnapshot(weddingSiteId, guest.id)');
     expect(page).toContain('removeGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(page).toContain('addGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
@@ -156,10 +154,18 @@ describe('guestService', () => {
     expect(page).toContain('assignGuestsToHouseholdForSite(weddingSiteId, ids, householdId)');
     expect(page).toContain('updateGuestHouseholdForSite(weddingSiteId, guestId, null)');
     expect(page).toContain('persistGuestReminderSettings(weddingSiteId, patch)');
+    expect(page).not.toContain('loadGuestDashboardSiteSettings(user.id)');
+    expect(page).not.toContain('loadGuestDashboardSnapshot(weddingSiteId)');
+    expect(page).not.toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
+    expect(page).not.toContain('loadGuestDashboardRsvpAuditFeed(weddingSiteId)');
     expect(campaignHook).toContain('await sendGuestInvitationEmail({ guest, weddingSiteId, weddingSiteInfo })');
     expect(campaignHook).toContain('await markGuestInvitationSentForSite(weddingSiteId, guest.id, new Date().toISOString())');
     expect(campaignHook).toContain('await markGuestInvitationAndReminderSentForSite(weddingSiteId, guest.id, sentAtIso)');
     expect(campaignHook).toContain('await markGuestReminderSentForSite(weddingSiteId, guest.id, new Date().toISOString())');
+    expect(dataHook).toContain('const snapshot = await loadGuestDashboardSiteSettings(userId);');
+    expect(dataHook).toContain('const snapshot = await loadGuestDashboardSnapshot(weddingSiteId);');
+    expect(dataHook).toContain('const snapshot = await loadGuestDashboardItineraryFilters(weddingSiteId);');
+    expect(dataHook).toContain('const feed = await loadGuestDashboardRsvpAuditFeed(weddingSiteId);');
     expect(page).not.toContain("supabase.rpc('generate_secure_token'");
     expect(page).not.toContain('supabase.auth.refreshSession()');
     expect(page).not.toContain(".from('wedding_sites')\n        .select('id, couple_name_1, couple_name_2");

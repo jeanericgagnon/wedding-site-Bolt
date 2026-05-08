@@ -136,12 +136,10 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Guests.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/guestService.ts'), 'utf8');
     const campaignHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCampaignActions.ts'), 'utf8');
+    const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardData.ts'), 'utf8');
 
     expect(source).not.toContain("from '../../lib/supabase'");
-    expect(source).toContain('loadGuestDashboardSiteSettings(user.id)');
-    expect(source).toContain('loadGuestDashboardSnapshot(weddingSiteId)');
-    expect(source).toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
-    expect(source).toContain('loadGuestDashboardRsvpAuditFeed(weddingSiteId)');
+    expect(source).toContain('useGuestDashboardData({');
     expect(source).toContain('loadGuestItineraryDrawerSnapshot(weddingSiteId, guest.id)');
     expect(source).toContain('removeGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(source).toContain('addGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
@@ -167,6 +165,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('<GuestOpsSummaryPanel');
     expect(source).not.toContain('<GuestEngagementControlsPanel');
     expect(source).not.toContain('<GuestListDisplaySwitcher');
+    expect(source).not.toContain('loadGuestDashboardSiteSettings(user.id)');
+    expect(source).not.toContain('loadGuestDashboardSnapshot(weddingSiteId)');
+    expect(source).not.toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
+    expect(source).not.toContain('loadGuestDashboardRsvpAuditFeed(weddingSiteId)');
     expect(source).toContain('useGuestDashboardExports({');
     expect(source).toContain('clearGuestCheckInsForSite(weddingSiteId)');
     expect(source).toContain('assignGuestsToHouseholdForSite(weddingSiteId, ids, householdId)');
@@ -204,6 +206,15 @@ describe('dashboard data boundary guards', () => {
     expect(campaignHook).toContain('await markGuestInvitationSentForSite(weddingSiteId, guest.id, new Date().toISOString())');
     expect(campaignHook).toContain('await markGuestInvitationAndReminderSentForSite(weddingSiteId, guest.id, sentAtIso)');
     expect(campaignHook).toContain('await markGuestReminderSentForSite(weddingSiteId, guest.id, new Date().toISOString())');
+    expect(dataHook).toContain('const snapshot = await loadGuestDashboardSiteSettings(userId);');
+    expect(dataHook).toContain('const snapshot = await loadGuestDashboardSnapshot(weddingSiteId);');
+    expect(dataHook).toContain('const snapshot = await loadGuestDashboardItineraryFilters(weddingSiteId);');
+    expect(dataHook).toContain('const feed = await loadGuestDashboardRsvpAuditFeed(weddingSiteId);');
+    expect(dataHook).toContain('setRsvpQuestions(demoRsvpConfig.questions);');
+    expect(dataHook).toContain('setGuests(snapshot.guests);');
+    expect(dataHook).toContain('setItineraryEvents(snapshot.itineraryEvents);');
+    expect(dataHook).toContain('setRsvpAuditFeed(feed);');
+    expect(dataHook).not.toContain("from '../../../lib/supabase'");
     expect(service).toContain('export async function assignGuestsToHouseholdForSite(');
     expect(service).toContain('export async function updateGuestHouseholdForSite(');
     expect(service).toContain('export async function persistGuestReminderSettings(');

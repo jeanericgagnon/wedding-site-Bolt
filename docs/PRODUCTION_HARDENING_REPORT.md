@@ -5574,3 +5574,18 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 03:36 AM PT No-Deploy Guest Dashboard Data-Hook Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the guest dashboard bootstrap and refresh lifecycle through `src/pages/dashboard/guests/useGuestDashboardData.ts`.
+  - That hook now owns site-settings hydration, guest snapshot loading, itinerary filter hydration, RSVP audit-feed hydration, demo-mode RSVP/bootstrap state, and refresh wiring while the page keeps the guest ops actions, RSVP conflict handling, modal state, and owner-facing render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` and `src/pages/dashboard/guests/guestService.test.ts` now pin `useGuestDashboardData({ ... })`, check that `useGuestDashboardData.ts` owns the guest dashboard site-settings/snapshot/itinerary/audit service calls, and reject regaining those direct load paths in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` dropped from 2262 lines to 2103 lines in this batch, while `src/pages/dashboard/guests/useGuestDashboardData.ts` came in at 258 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

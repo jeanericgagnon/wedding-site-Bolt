@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { PLANNER_ROLE_OPTIONS, canManageGuests, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
+import { PLANNER_ROLE_OPTIONS, canManageGuests, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole } from '../../lib/plannerAccess';
 import { formatGuestOpsDate, formatGuestOpsDateTime, formatGuestOpsRelativeTime, getGuestOpsTimestamp } from './guestOpsTime';
 import { formatGuestEventDate } from './guestEventDate';
 import { getDaysUntilGuestWedding } from './guestWeddingDate';
@@ -26,7 +26,6 @@ import { Download, UserPlus, XCircle, Clock, X, Upload, Users, Mail, AlertCircle
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
 import type { ConfirmDialogProps } from '../../components/ui/ConfirmDialog';
-import { demoWeddingSite, demoGuests, demoRSVPs } from '../../lib/demoData';
 import { buildQuickStartPhotosPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { copyTextOrDownload } from '../../lib/copyText';
@@ -47,10 +46,7 @@ import {
   type GuestAuditEntry,
   type GuestWithRSVP,
   type ItineraryEvent,
-  type RSVPQuestionSetting,
-  type RsvpConflict,
   type RsvpConflictStats,
-  type WeddingSiteInfo,
 } from './guests/guestDashboardTypes';
 import {
   buildGuestHouseholdGroups,
@@ -88,7 +84,6 @@ import {
 import {
   readStoredCampaignLog,
   readStoredCampaignPreset,
-  readStoredDemoRsvpConfig,
   readStoredFollowUpTasks,
   readStoredSavedSegments,
   writeStoredCampaignLog,
@@ -114,19 +109,15 @@ import {
   insertEventInvitations,
   insertImportedGuests,
   loadGuestDashboardPublicSlug,
-  resolveGuestDashboardConflict,
-  resolveGuestDashboardConflicts,
-  loadGuestDashboardItineraryFilters,
-  loadGuestDashboardRsvpAuditFeed,
   loadGuestDashboardSiteSlug,
+  loadGuestItineraryDrawerSnapshot,
   markGuestsThankYouSentForSite,
   persistGuestDashboardRsvpConfig,
   persistGuestReminderSettings,
-  loadGuestItineraryDrawerSnapshot,
-  loadGuestDashboardSiteSettings,
-  loadGuestDashboardSnapshot,
   refreshGuestDashboardSession,
   removeGuestEventInvitation,
+  resolveGuestDashboardConflict,
+  resolveGuestDashboardConflicts,
   resolveGuestDashboardSiteId,
   replaceGuestEventInvitations,
   replaceImportedGuestRsvps,
@@ -143,6 +134,7 @@ import {
   type GuestEventInvitationRollback,
 } from './guests/guestService';
 import { useGuestDashboardCampaignActions } from './guests/useGuestDashboardCampaignActions';
+import { useGuestDashboardData } from './guests/useGuestDashboardData';
 import { useGuestDashboardExports } from './guests/useGuestDashboardExports';
 
 export const DashboardGuests: React.FC = () => {
@@ -166,24 +158,10 @@ export const DashboardGuests: React.FC = () => {
         },
       });
     });
-  const [guests, setGuests] = useState<GuestWithRSVP[]>([]);
-  const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
-  const [weddingSiteInfo, setWeddingSiteInfo] = useState<WeddingSiteInfo | null>(null);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'checked-in' | 'thank-you-due' | 'due-reminder' | 'missing-address' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'manual-follow-up' | 'manual-handled' | 'no-contact'>('all');
   const [extraFilters, setExtraFilters] = useState<string[]>([]);
   const [extraFilterDraft, setExtraFilterDraft] = useState<string>('');
-  const [itineraryFilterEvents, setItineraryFilterEvents] = useState<ItineraryEvent[]>([]);
-  const [eventInviteGuestMap, setEventInviteGuestMap] = useState<Map<string, Set<string>>>(new Map());
-
-  const effectiveItineraryEvents = useMemo<ItineraryEvent[]>(() => {
-    if (itineraryFilterEvents.length > 0) return itineraryFilterEvents;
-    return [
-      { id: 'legacy-ceremony', event_name: 'Ceremony', event_date: '', start_time: '', location_name: '' },
-      { id: 'legacy-reception', event_name: 'Reception', event_date: '', start_time: '', location_name: '' },
-    ];
-  }, [itineraryFilterEvents]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState<GuestWithRSVP | null>(null);
   const [campaignLog, setCampaignLog] = useState<RsvpCampaignLogEntry[]>([]);
@@ -193,21 +171,60 @@ export const DashboardGuests: React.FC = () => {
   const [sortByPriority, setSortByPriority] = useState(false);
   const [savedSegments, setSavedSegments] = useState<RsvpSavedSegment[]>([]);
   const [guestsTab, setGuestsTab] = useState<'ops' | 'rsvp-config'>('ops');
-  const [guestsRole, setGuestsRole] = useState<PlannerAccessRole>('owner');
-  const [guestsPermissions, setGuestsPermissions] = useState<PlannerPermissionKey[] | null>(null);
-  const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestionSetting[]>([]);
-  const [rsvpMealEnabled, setRsvpMealEnabled] = useState(true);
-  const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken','Beef','Fish','Vegetarian','Vegan']);
   const [rsvpConfigSaving, setRsvpConfigSaving] = useState(false);
   const [rsvpAutoSaveState, setRsvpAutoSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [rsvpConfigDirty, setRsvpConfigDirty] = useState(false);
-  const [rsvpConflicts, setRsvpConflicts] = useState<RsvpConflict[]>([]);
-  const [rsvpConflictHistory, setRsvpConflictHistory] = useState<RsvpConflict[]>([]);
   const [conflictFilter, setConflictFilter] = useState<'all' | 'error' | 'warning'>('all');
+  const rsvpConfigLoadedRef = useRef(false);
+  const [skipRecentlyInvited, setSkipRecentlyInvited] = useState(true);
+  const [reminderCadenceDays, setReminderCadenceDays] = useState<1 | 3 | 7>(3);
+  const [autoRemindersEnabled, setAutoRemindersEnabled] = useState(false);
+  const {
+    eventInviteGuestMap,
+    fetchGuests,
+    guests,
+    guestsPermissions,
+    guestsRole,
+    itineraryEvents,
+    itineraryFilterEvents,
+    loading,
+    rsvpAuditFeed,
+    rsvpAuditLoading,
+    rsvpConflictHistory,
+    rsvpConflicts,
+    rsvpMealEnabled,
+    rsvpMealOptions,
+    rsvpQuestions,
+    setGuests,
+    setGuestsRole,
+    setItineraryEvents,
+    setRsvpConflictHistory,
+    setRsvpConflicts,
+    setRsvpMealEnabled,
+    setRsvpMealOptions,
+    setRsvpQuestions,
+    setWeddingSiteId,
+    weddingSiteId,
+    weddingSiteInfo,
+  } = useGuestDashboardData({
+    guestsTab,
+    isDemoMode,
+    rsvpConfigLoadedRef,
+    setAutoRemindersEnabled,
+    setReminderCadenceDays,
+    toast,
+    userId: user?.id ?? null,
+  });
   const isGuestsReadOnly = !canManageGuests(guestsRole, guestsPermissions);
   const [showConflictDetails, setShowConflictDetails] = useState(false);
   const [resolvingConflictId, setResolvingConflictId] = useState<string | null>(null);
-  const rsvpConfigLoadedRef = useRef(false);
+  const effectiveItineraryEvents = useMemo<ItineraryEvent[]>(() => {
+    if (itineraryFilterEvents.length > 0) return itineraryFilterEvents;
+    return [
+      { id: 'legacy-ceremony', event_name: 'Ceremony', event_date: '', start_time: '', location_name: '' },
+      { id: 'legacy-reception', event_name: 'Reception', event_date: '', start_time: '', location_name: '' },
+    ];
+  }, [itineraryFilterEvents]);
 
   const rsvpAccessModePlan = useMemo(() => buildRsvpAccessModePlan({
     guestCount: guests.length,
@@ -327,13 +344,10 @@ export const DashboardGuests: React.FC = () => {
   const csvNameMappingValid = isCsvNameMappingValid(csvFieldMap);
 
   const [itineraryDrawerGuest, setItineraryDrawerGuest] = useState<GuestWithRSVP | null>(null);
-  const [itineraryEvents, setItineraryEvents] = useState<ItineraryEvent[]>([]);
   const [guestEventIds, setGuestEventIds] = useState<Set<string>>(new Set());
   const [loadingDrawer, setLoadingDrawer] = useState(false);
   const [togglingEventId, setTogglingEventId] = useState<string | null>(null);
   const [guestAuditEntries, setGuestAuditEntries] = useState<GuestAuditEntry[]>([]);
-  const [rsvpAuditFeed, setRsvpAuditFeed] = useState<GuestAuditEntry[]>([]);
-  const [rsvpAuditLoading, setRsvpAuditLoading] = useState(false);
   const [assistedRsvpGuest, setAssistedRsvpGuest] = useState<GuestWithRSVP | null>(null);
   const [assistedRsvpStatus, setAssistedRsvpStatus] = useState<AssistedRsvpStatus>('confirmed');
   const [assistedRsvpSource, setAssistedRsvpSource] = useState<AssistedRsvpSource>('phone');
@@ -351,176 +365,6 @@ export const DashboardGuests: React.FC = () => {
     invited_to_reception: true,
   });
   const [formEventInviteIds, setFormEventInviteIds] = useState<Set<string>>(new Set());
-
-  const fetchWeddingSite = useCallback(async () => {
-    if (!user) {
-      setWeddingSiteId(null);
-      setWeddingSiteInfo(null);
-      setGuests([]);
-      return;
-    }
-
-    if (isDemoMode) {
-      setWeddingSiteId(demoWeddingSite.id);
-      const demoRsvpConfig = readStoredDemoRsvpConfig();
-      setRsvpQuestions(demoRsvpConfig.questions);
-      setRsvpMealEnabled(demoRsvpConfig.mealEnabled);
-      setRsvpMealOptions(demoRsvpConfig.mealOptions);
-      rsvpConfigLoadedRef.current = true;
-      return;
-    }
-
-    try {
-      const snapshot = await loadGuestDashboardSiteSettings(user.id);
-      setGuestsRole(snapshot.role);
-      setGuestsPermissions(snapshot.permissions);
-
-      if (snapshot.siteInfo) {
-        setWeddingSiteId(snapshot.activeSiteId);
-        setWeddingSiteInfo(snapshot.siteInfo);
-        setRsvpQuestions(snapshot.questions);
-        setRsvpMealEnabled(snapshot.mealEnabled);
-        setRsvpMealOptions(snapshot.mealOptions);
-        if (snapshot.reminderCadenceDays) setReminderCadenceDays(snapshot.reminderCadenceDays);
-        setAutoRemindersEnabled(snapshot.autoRemindersEnabled);
-        rsvpConfigLoadedRef.current = true;
-      } else {
-        setWeddingSiteId(null);
-        setWeddingSiteInfo(null);
-        setGuests([]);
-      }
-    } catch {
-      setWeddingSiteId(null);
-      setWeddingSiteInfo(null);
-      setGuests([]);
-      toast('Couldn’t load guest site settings right now. Please try again.', 'error');
-    }
-  }, [user, isDemoMode]);
-
-  const fetchGuests = useCallback(async () => {
-    if (!weddingSiteId) return;
-
-    setLoading(true);
-    try {
-      if (isDemoMode) {
-        const guestsWithRsvps = demoGuests.map(guest => ({
-          ...guest,
-          phone: null,
-          plus_one_allowed: false,
-          plus_one_name: null,
-          rsvp_received_at: hasRespondedRsvpStatus(guest.rsvp_status) ? new Date().toISOString() : null,
-          rsvp: demoRSVPs.find(r => r.guest_id === guest.id),
-        }));
-        setGuests(guestsWithRsvps as unknown as GuestWithRSVP[]);
-        setRsvpConflicts([]);
-        setRsvpConflictHistory([]);
-        setLoading(false);
-        return;
-      }
-
-      const snapshot = await loadGuestDashboardSnapshot(weddingSiteId);
-      setGuests(snapshot.guests);
-      setRsvpConflicts(snapshot.conflicts);
-      setRsvpConflictHistory(snapshot.conflictHistory);
-    } catch {
-      setGuests([]);
-      setRsvpConflicts([]);
-      setRsvpConflictHistory([]);
-      toast('Couldn’t load guest records right now. Please try again.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [weddingSiteId, isDemoMode]);
-
-  useEffect(() => {
-    fetchWeddingSite();
-  }, [fetchWeddingSite]);
-
-  useEffect(() => {
-    if (weddingSiteId) {
-      fetchGuests();
-    }
-  }, [weddingSiteId, fetchGuests]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadItineraryFilterData() {
-      if (!weddingSiteId || isDemoMode) {
-        if (!cancelled) {
-          setItineraryFilterEvents([]);
-          setEventInviteGuestMap(new Map());
-        }
-        return;
-      }
-
-      try {
-        const snapshot = await loadGuestDashboardItineraryFilters(weddingSiteId);
-
-        if (cancelled) return;
-        setItineraryEvents(snapshot.itineraryEvents);
-        setItineraryFilterEvents(snapshot.filterEvents);
-        setEventInviteGuestMap(snapshot.eventInviteGuestMap);
-      } catch {
-        if (!cancelled) {
-          toast('Couldn’t load itinerary filters right now. Please try again.', 'error');
-          setItineraryFilterEvents([]);
-          setEventInviteGuestMap(new Map());
-        }
-      }
-    }
-
-    void loadItineraryFilterData();
-    return () => {
-      cancelled = true;
-    };
-  }, [weddingSiteId, isDemoMode]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadRsvpAuditFeed() {
-      if (guestsTab !== 'rsvp-config') return;
-
-      setRsvpAuditLoading(true);
-      try {
-        if (isDemoMode) {
-          const now = Date.now();
-          const demoEntries: GuestAuditEntry[] = guests.slice(0, 4).map((g, idx) => ({
-            id: `demo-rsvp-audit-${g.id}-${idx}`,
-            guest_id: g.id,
-            action: idx % 3 === 0 ? 'insert' : 'update',
-            changed_at: new Date(now - (idx + 1) * 1000 * 60 * 35).toISOString(),
-            changed_by: null,
-            old_data: { rsvp_status: 'pending', name: g.name },
-            new_data: { rsvp_status: g.rsvp_status, name: g.name },
-          }));
-          if (!cancelled) setRsvpAuditFeed(demoEntries);
-          return;
-        }
-
-        if (!weddingSiteId) {
-          if (!cancelled) setRsvpAuditFeed([]);
-          return;
-        }
-
-        const feed = await loadGuestDashboardRsvpAuditFeed(weddingSiteId);
-        if (!cancelled) setRsvpAuditFeed(feed);
-      } catch {
-        if (!cancelled) {
-          setRsvpAuditFeed([]);
-          toast('Couldn’t load RSVP history right now. Please try again.', 'error');
-        }
-      } finally {
-        if (!cancelled) setRsvpAuditLoading(false);
-      }
-    }
-
-    void loadRsvpAuditFeed();
-    return () => {
-      cancelled = true;
-    };
-  }, [guestsTab, isDemoMode, guests, weddingSiteId]);
 
   const visibleRsvpConflicts = useMemo(
     () => rsvpConflicts.filter((c) => conflictFilter === 'all' ? true : c.severity === conflictFilter),
@@ -1786,9 +1630,6 @@ export const DashboardGuests: React.FC = () => {
     return <Badge variant={variants[status] || 'warning'}>{labels[status] || status}</Badge>;
   };
 
-  const [skipRecentlyInvited, setSkipRecentlyInvited] = useState(true);
-  const [reminderCadenceDays, setReminderCadenceDays] = useState<1 | 3 | 7>(3);
-  const [autoRemindersEnabled, setAutoRemindersEnabled] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showOpsMenu, setShowOpsMenu] = useState(false);
   const [showCampaignModal, setShowCampaignModal] = useState(false);
