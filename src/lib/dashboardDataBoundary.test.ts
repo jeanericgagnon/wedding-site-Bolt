@@ -637,6 +637,7 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/planningService.ts'), 'utf8');
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Planning.tsx'), 'utf8');
     const addressTab = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/AddressCollectionTab.tsx'), 'utf8');
+    const pendingVendorPrompt = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/PendingVendorBudgetPrompt.tsx'), 'utf8');
     const tabContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/PlanningDashboardTabContent.tsx'), 'utf8');
     const songTab = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/SongRequestsTab.tsx'), 'utf8');
 
@@ -667,6 +668,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('.insert(mutablePayload).select().single()');
     expect(page).toContain('<PlanningDashboardShell');
     expect(page).toContain('<PlanningDashboardTabContent');
+    expect(page).toContain('<PendingVendorBudgetPrompt');
     expect(page).not.toContain("supabase.from('wedding_sites')");
     expect(page).not.toContain("supabase.from('guests')");
     expect(page).not.toContain("supabase\n        .from('wedding_sites')");
@@ -681,12 +683,15 @@ describe('dashboard data boundary guards', () => {
     expect(tabContent).toContain('<TasksTab');
     expect(tabContent).toContain('<BudgetTab');
     expect(tabContent).toContain('<NameChangePlannerTab');
+    expect(pendingVendorPrompt).toContain('export function PendingVendorBudgetPrompt({');
+    expect(pendingVendorPrompt).toContain('Add this vendor to your budget?');
     expect(addressTab).not.toContain("from '../../../lib/supabase'");
     expect(addressTab).not.toContain("supabase.from('wedding_sites')");
     expect(addressTab).not.toContain(".from('guests')");
     expect(songTab).not.toContain("from '../../../lib/supabase'");
     expect(songTab).not.toContain("supabase.from('wedding_sites')");
     expect(songTab).not.toContain(".from('rsvps')");
+    expect(page).not.toContain('Would you like to create a matching budget line too?');
   });
 
   it('loads builder editor and media rows with explicit projections', () => {

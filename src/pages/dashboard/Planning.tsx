@@ -23,6 +23,7 @@ import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedF
 import { annotateNameChangePlanStepsFromReminderChanges, appendNameChangeExecutionActivity, buildNameChangeWorkspaceBundle, deriveNameChangeWorkflowStatus, hydrateNameChangeWorkspace, loadNameChangeWorkspace, defaultNameChangeCaseInput, mergeNameChangePlanExecutionState, saveNameChangeWorkspace } from './planning/nameChangeService';
 import { logAppAction } from '../../lib/actionAudit';
 import { PlanningDashboardShell } from './planning/PlanningDashboardShell';
+import { PendingVendorBudgetPrompt } from './planning/PendingVendorBudgetPrompt';
 import { PlanningDashboardTabContent } from './planning/PlanningDashboardTabContent';
 
 type Tab = 'overview' | 'tasks' | 'budget' | 'payments' | 'vendors' | 'songs' | 'addresses' | 'nameChange';
@@ -831,36 +832,19 @@ export const DashboardPlanning: React.FC = () => {
         />
 
         {pendingVendorForBudget && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-md rounded-lg bg-surface border border-border p-5">
-              <h3 className="text-lg font-semibold text-text-primary mb-2">Add this vendor to your budget?</h3>
-              <p className="text-sm text-text-secondary mb-4">
-                "{pendingVendorForBudget.name}" was added. Would you like to create a matching budget line too?
-              </p>
-              <div className="flex justify-end gap-2">
-                <button
-                  className="px-3 py-2 rounded-lg border border-border-subtle text-text-secondary hover:text-text-primary"
-                  onClick={() => setPendingVendorForBudget(null)}
-                >
-                  No thanks
-                </button>
-                <button
-                  className="px-3 py-2 rounded-lg bg-primary text-white hover:bg-primary/90"
-                  onClick={async () => {
-                    try {
-                      await addVendorToBudget(pendingVendorForBudget);
-                    } catch {
-                      toast('Couldn’t add this vendor to budget right now. Please try again.', 'error');
-                    } finally {
-                      setPendingVendorForBudget(null);
-                    }
-                  }}
-                >
-                  Yes, add it to budget
-                </button>
-              </div>
-            </div>
-          </div>
+          <PendingVendorBudgetPrompt
+            vendor={pendingVendorForBudget}
+            onClose={() => setPendingVendorForBudget(null)}
+            onConfirm={async () => {
+              try {
+                await addVendorToBudget(pendingVendorForBudget);
+              } catch {
+                toast('Couldn’t add this vendor to budget right now. Please try again.', 'error');
+              } finally {
+                setPendingVendorForBudget(null);
+              }
+            }}
+          />
         )}
     </PlanningDashboardShell>
   );

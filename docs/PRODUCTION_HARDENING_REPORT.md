@@ -19,6 +19,22 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 7:37 AM PT - No-Deploy Planning Vendor-Budget Prompt Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Planning.tsx` now routes the post-vendor “add this vendor to your budget” overlay through `src/pages/dashboard/planning/PendingVendorBudgetPrompt.tsx` instead of hand-rendering that confirm/cancel shell inline.
+  - That new component now owns the modal UI shell while the route keeps the actual vendor-to-budget follow-through logic, collaborator-role gating, toast handling, and cleanup state.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<PendingVendorBudgetPrompt`, checks that `PendingVendorBudgetPrompt.tsx` owns the vendor-budget prompt copy, and rejects regaining the old inline prompt copy in `Planning.tsx`.
+  - `src/pages/dashboard/Planning.tsx` dropped from 867 lines to 851 lines in this batch, while `src/pages/dashboard/planning/PendingVendorBudgetPrompt.tsx` came in at 38 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ### 2026-05-08 7:33 AM PT - No-Deploy Vault Card Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:

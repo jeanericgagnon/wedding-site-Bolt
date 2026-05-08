@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 7:37 AM PT - No-Deploy Planning Vendor-Budget Prompt Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Planning.tsx` no longer owns the inline post-vendor “add this vendor to your budget” overlay.
+  - Added `src/pages/dashboard/planning/PendingVendorBudgetPrompt.tsx` so that confirm/cancel modal now owns its own UI shell while the route keeps the actual vendor-to-budget follow-through logic and toast/error handling.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<PendingVendorBudgetPrompt`, checks that the new file owns the vendor-budget prompt copy, and rejects regaining that inline modal copy in `Planning.tsx`.
+- Acceptance/proof target:
+  - Focused dashboard boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 7:33 AM PT - No-Deploy Vault Card Extraction
 
 - Status: `PARTIAL`
