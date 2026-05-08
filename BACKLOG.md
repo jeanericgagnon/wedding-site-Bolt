@@ -2001,3 +2001,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins `VaultDashboardRouteView` and rejects regaining the old inline loading shell in `Vault.tsx`.
   - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/vaultService.test.ts` (22/22), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the vault dashboard without changing vault behavior. No deploy was run.
+- 2026-05-07 9:02 PM PT - No-deploy Overview dashboard route-view extraction:
+  - Resolved in this batch: moved the overview dashboard layout/error/loading shell out of `src/pages/dashboard/Overview.tsx` and behind `src/pages/dashboard/OverviewDashboardRouteView.tsx`.
+  - Data-boundary hardening: `Overview.tsx` now routes the overview layout, recoverable error state, and loading skeleton through one higher-level route shell instead of directly composing `DashboardLayout`, `DashboardStateBlock`, and the page skeleton inline.
+  - File-size movement: `Overview.tsx` dropped from 1661 lines to 1644 lines in this continuation batch; the new route shell is 36 lines.
+  - No feature loss: overview hero, setup progress, calm digest, guest pulse, interactive suggestions, and voting summary rendering preserve the current behavior while shrinking page-owned route composition.
+  - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins `OverviewDashboardRouteView` and rejects regaining the old inline overview layout and state shell in `Overview.tsx`.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/overviewQueryBounds.test.ts src/pages/dashboard/overviewService.test.ts src/pages/dashboard/overviewUtils.test.ts src/pages/dashboard/overviewDate.test.ts` (30/30), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the overview dashboard without changing overview behavior. No deploy was run.

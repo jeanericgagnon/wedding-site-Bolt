@@ -470,11 +470,14 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Overview.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/overviewService.ts'), 'utf8');
 
+    expect(source).toContain('<OverviewDashboardRouteView');
     expect(source).toContain('persistOverviewIntelligenceDismissals(stats.siteId, next)');
     expect(source).toContain('hideInteractiveSuggestion(id)');
     expect(source).toContain('loadOverviewDashboardSnapshot(user.id)');
     expect(source).toContain('loadOverviewInteractiveData(slug)');
     expect(source).toContain('markOverviewBuilderFieldAsUserEdited(stats.siteId, fieldPath)');
+    expect(source).not.toContain('<DashboardLayout');
+    expect(source).not.toContain('<DashboardStateBlock');
     expect(source).not.toContain("supabase.from('interactive_suggestions').update({ is_hidden: true })");
     expect(source).not.toContain('intelligenceDismissals: next');
     expect(source).not.toContain("supabase.from('wedding_sites')");

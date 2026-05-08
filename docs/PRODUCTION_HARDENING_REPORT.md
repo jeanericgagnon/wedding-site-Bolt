@@ -4281,3 +4281,19 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the oversized-file and page-boundary cleanup in the vault dashboard without changing vault loading or dashboard behavior. No deploy was run.
+
+## 2026-05-07 9:02 PM PT No-Deploy Overview Dashboard Route View Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Overview.tsx` now routes its layout, recoverable error state, and loading skeleton through `src/pages/dashboard/OverviewDashboardRouteView.tsx`.
+  - That higher-level route shell now owns the `DashboardLayout` plus `DashboardStateBlock` shell and hands the live branch through to the overview dashboard body.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `OverviewDashboardRouteView` and rejects regaining the old inline overview layout and state shell in `Overview.tsx`.
+  - `src/pages/dashboard/Overview.tsx` dropped from 1661 lines to 1644 lines in this batch, while `src/pages/dashboard/OverviewDashboardRouteView.tsx` came in at 36 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/overviewQueryBounds.test.ts src/pages/dashboard/overviewService.test.ts src/pages/dashboard/overviewUtils.test.ts src/pages/dashboard/overviewDate.test.ts`: PASS, 30/30.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the oversized-file and page-boundary cleanup in the overview dashboard without changing overview loading or dashboard behavior. No deploy was run.

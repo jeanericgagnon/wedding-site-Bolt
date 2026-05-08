@@ -9,8 +9,6 @@ import {
 } from './overviewUtils';
 import { buildAnalyticsBaseline } from './analyticsBaseline';
 import { Link, useNavigate } from 'react-router-dom';
-import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
 import { Eye, Users, ExternalLink, Edit, EyeOff, Palette, Radio } from 'lucide-react';
 import { buildDraftSitePatchFromProfile, getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
@@ -52,6 +50,7 @@ import {
   type OverviewInteractiveSuggestion as OverviewInteractiveSuggestionRow,
   type OverviewInteractiveVoteSummary,
 } from './overviewService';
+import { OverviewDashboardRouteView } from './OverviewDashboardRouteView';
 
 const INTELLIGENCE_DISMISSALS_STORAGE_KEY = 'dayof_intelligence_dismissed_v1';
 
@@ -599,8 +598,7 @@ export const DashboardOverview: React.FC = () => {
     ?? (() => navigate(stats?.isPublished ? '/dashboard/guests' : '/dashboard/builder?publishNow=1'));
 
   return (
-    <DashboardLayout currentPage="overview">
-      <div className="mx-auto max-w-[1100px] space-y-5">
+    <OverviewDashboardRouteView error={error} loading={loading}>
         <section className="overflow-hidden rounded-lg border border-border-subtle bg-white">
           <div className="grid gap-0 lg:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.9fr)]">
             <div className="p-5 md:p-6">
@@ -734,20 +732,7 @@ export const DashboardOverview: React.FC = () => {
           </Card>
         )}
 
-        {error && <DashboardStateBlock title="Couldn’t load overview right now" description={error} tone="error" />}
-
-        {loading ? (
-          <div className="space-y-6 animate-pulse" aria-hidden="true">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="h-32 rounded-lg bg-surface-subtle border border-border-subtle" />
-              <div className="h-32 rounded-lg bg-surface-subtle border border-border-subtle" />
-              <div className="h-32 rounded-lg bg-surface-subtle border border-border-subtle" />
-              <div className="h-32 rounded-lg bg-surface-subtle border border-border-subtle" />
-            </div>
-            <div className="h-44 rounded-lg bg-surface-subtle border border-border-subtle" />
-          </div>
-        ) : (
-          <>
+        <>
             {calmDigest && calmDigest.items.length > 0 && (
               <Card variant="bordered" padding="lg" className="border-border-subtle bg-white">
                 <CardHeader>
@@ -1653,9 +1638,7 @@ export const DashboardOverview: React.FC = () => {
               </Card>
               )}
             </div>
-          </>
-        )}
-      </div>
-    </DashboardLayout>
+        </>
+    </OverviewDashboardRouteView>
   );
 };
