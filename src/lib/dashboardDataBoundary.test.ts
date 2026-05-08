@@ -279,17 +279,19 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Itinerary.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/itineraryService.ts'), 'utf8');
     const actions = readFileSync(join(process.cwd(), 'src/pages/dashboard/useItineraryTimelineActions.ts'), 'utf8');
+    const guestManager = readFileSync(join(process.cwd(), 'src/pages/dashboard/EventGuestManagerModal.tsx'), 'utf8');
 
     expect(source).toContain('<ItineraryDashboardRouteView');
+    expect(source).toContain('<EventGuestManagerModal');
     expect(source).toContain('useItineraryTimelineActions({');
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).toContain('loadItineraryDashboardEvents(hasEventRsvpsTable)');
     expect(source).toContain('syncItineraryScheduleMirror(siteId, eventList)');
-    expect(source).toContain('loadItineraryEventGuestManagerSnapshot(eventId)');
-    expect(source).toContain('removeItineraryEventGuestInvitation(eventId, guestId)');
-    expect(source).toContain('addItineraryEventGuestInvitation(eventId, guestId)');
-    expect(source).toContain('inviteAllGuestsToItineraryEvent(eventId, uninvited.map((guest) => guest.id))');
-    expect(source).toContain('removeAllGuestsFromItineraryEvent(eventId)');
+    expect(guestManager).toContain('loadItineraryEventGuestManagerSnapshot(eventId)');
+    expect(guestManager).toContain('removeItineraryEventGuestInvitation(eventId, guestId)');
+    expect(guestManager).toContain('addItineraryEventGuestInvitation(eventId, guestId)');
+    expect(guestManager).toContain('inviteAllGuestsToItineraryEvent(eventId, uninvited.map((guest) => guest.id))');
+    expect(guestManager).toContain('removeAllGuestsFromItineraryEvent(eventId)');
     expect(source).not.toContain('supabase.auth.getUser()');
     expect(source).not.toContain("supabase.from('itinerary_events').insert(newEvents.map");
     expect(source).not.toContain(".from('wedding_sites')\n        .select('wedding_data')");
@@ -320,6 +322,11 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('await persistItineraryTimeline(nextEvents)');
     expect(source).not.toContain('const siteId = await resolveItinerarySiteId()');
     expect(source).not.toContain('await createItineraryTemplateEvents(siteId, newEvents)');
+    expect(source).not.toContain('loadItineraryEventGuestManagerSnapshot(eventId)');
+    expect(source).not.toContain('removeItineraryEventGuestInvitation(eventId, guestId)');
+    expect(source).not.toContain('addItineraryEventGuestInvitation(eventId, guestId)');
+    expect(source).not.toContain('inviteAllGuestsToItineraryEvent(eventId, uninvited.map((guest) => guest.id))');
+    expect(source).not.toContain('removeAllGuestsFromItineraryEvent(eventId)');
     expect(service).toContain('buildItineraryTemplateInsertRows(weddingSiteId, events)');
     expect(service).toContain('export async function resolveItinerarySiteId()');
     expect(service).toContain("const ITINERARY_EVENT_MANAGER_SITE_SELECT = 'id'");
@@ -344,6 +351,7 @@ describe('dashboard data boundary guards', () => {
     expect(service).toContain('supabase.auth.getUser()');
     expect(source).not.toContain(".from('itinerary_events')\n        .select('*')");
     expect(source).not.toContain(".from('guests')\n        .select('*')");
+    expect(guestManager).not.toContain("from '../../lib/supabase'");
   });
 
   it('loads registry service items with an explicit projection', () => {

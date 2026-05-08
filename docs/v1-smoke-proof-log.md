@@ -9922,3 +9922,18 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 03:01 AM PT No-Deploy Itinerary Guest-Manager Modal Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Itinerary.tsx` now routes the event guest invitation modal through `src/pages/dashboard/EventGuestManagerModal.tsx`.
+  - That component now owns guest snapshot loading, invitation toggles, bulk invite-all/remove-all flows, guest search filtering, and the confirmation modal while the page keeps the timeline hero, event form, schedule actions, and top-level route state.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<EventGuestManagerModal`, checks that `EventGuestManagerModal.tsx` owns the itinerary guest invitation service calls, and rejects regaining that event-guest transport block in `Itinerary.tsx`.
+  - `src/pages/dashboard/Itinerary.tsx` dropped from 928 lines to 699 lines in this batch, while `src/pages/dashboard/EventGuestManagerModal.tsx` came in at 235 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts`: PASS, 37/37.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
