@@ -136,15 +136,16 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Guests.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/guestService.ts'), 'utf8');
     const campaignHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCampaignActions.ts'), 'utf8');
+    const csvImportHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCsvImport.ts'), 'utf8');
     const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardData.ts'), 'utf8');
     const detailHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts'), 'utf8');
 
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).toContain('useGuestDashboardData({');
+    expect(source).toContain('useGuestDashboardCsvImport({');
     expect(source).toContain('useGuestDashboardGuestDetailActions({');
     expect(source).toContain('loadPublicSlug: loadGuestDashboardPublicSlug');
     expect(source).toContain('loadSiteSlug: loadGuestDashboardSiteSlug');
-    expect(source).toContain('resolveGuestDashboardSiteId(user.id)');
     expect(source).toContain('updateGuestCheckInForSite(weddingSiteId, lastCheckIn.guestId, null)');
     expect(source).toContain('updateGuestThankYouSentForSite(weddingSiteId, guest.id, nextValue)');
     expect(source).toContain('markGuestsThankYouSentForSite(weddingSiteId, ids, new Date().toISOString())');
@@ -167,6 +168,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('loadGuestDashboardSnapshot(weddingSiteId)');
     expect(source).not.toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
     expect(source).not.toContain('loadGuestDashboardRsvpAuditFeed(weddingSiteId)');
+    expect(source).not.toContain('buildGuestImportPreview({');
+    expect(source).not.toContain('readGuestImportRows(file)');
+    expect(source).not.toContain('insertImportedGuests(guestRows)');
     expect(source).not.toContain('loadGuestItineraryDrawerSnapshot(weddingSiteId, guest.id)');
     expect(source).not.toContain('removeGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(source).not.toContain('addGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
@@ -176,7 +180,6 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('persistGuestReminderSettings(weddingSiteId, patch)');
     expect(source).toContain('deleteGuestWithDependencies(guestId)');
     expect(source).toContain('deleteAllGuestsForSite(weddingSiteId)');
-    expect(source).toContain('insertImportedGuests(guestRows)');
     expect(service).toContain('export const GUEST_SITE_SETTINGS_SELECT = ');
     expect(service).toContain('export const GUEST_DASHBOARD_RSVP_SELECT = ');
     expect(service).toContain('export const GUEST_CONFLICT_SELECT = ');
@@ -206,6 +209,14 @@ describe('dashboard data boundary guards', () => {
     expect(campaignHook).toContain('await markGuestInvitationSentForSite(weddingSiteId, guest.id, new Date().toISOString())');
     expect(campaignHook).toContain('await markGuestInvitationAndReminderSentForSite(weddingSiteId, guest.id, sentAtIso)');
     expect(campaignHook).toContain('await markGuestReminderSentForSite(weddingSiteId, guest.id, new Date().toISOString())');
+    expect(csvImportHook).toContain('const result = buildGuestImportPreview({');
+    expect(csvImportHook).toContain('const { headers, dataRows, samples } = await readGuestImportRows(file);');
+    expect(csvImportHook).toContain('const inserted = await insertImportedGuests(guestRows);');
+    expect(csvImportHook).toContain('await updateHouseholdGuestIds(ids[0], ids);');
+    expect(csvImportHook).toContain('await replaceImportedGuestRsvps(rsvpRows);');
+    expect(csvImportHook).toContain('toast(safeGuestImportReadError(err), \'error\')');
+    expect(csvImportHook).toContain('resolvedSiteId = userId ? await resolveGuestDashboardSiteId(userId) : null;');
+    expect(csvImportHook).not.toContain("from '../../../lib/supabase'");
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardSiteSettings(userId);');
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardSnapshot(weddingSiteId);');
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardItineraryFilters(weddingSiteId);');

@@ -20,7 +20,7 @@ import {
 } from '../../lib/rsvpAccessPlanner';
 import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { extractDietaryNote } from '../../lib/dietaryNotes';
-import { GUEST_IMPORT_MAX_FILE_BYTES, GUEST_IMPORT_MAX_ROWS, buildDefaultCsvFieldMap, buildGuestImportPreview, isCsvNameMappingValid, readGuestImportRows, type CsvFieldMap } from '../../lib/guestImportParser';
+import { GUEST_IMPORT_MAX_FILE_BYTES, GUEST_IMPORT_MAX_ROWS } from '../../lib/guestImportParser';
 import { Button, Badge, Input, Select, Textarea } from '../../components/ui';
 import { Download, UserPlus, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, CalendarDays, ChevronRight, Loader2, ChevronDown, Trash2, ExternalLink, Eye } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -69,7 +69,6 @@ import {
   getGuestRsvpOpsStats,
   getGuestSongRequestEntries,
   makeRsvpQuestion,
-  safeGuestImportReadError,
   safeGuestsDashboardError,
   sortGuestsForDisplay,
   toTitleCase,
@@ -104,7 +103,6 @@ import {
   fetchGuestRsvps,
   generateSecureGuestInviteToken,
   insertEventInvitations,
-  insertImportedGuests,
   loadGuestDashboardPublicSlug,
   loadGuestDashboardSiteSlug,
   markGuestsThankYouSentForSite,
@@ -112,18 +110,16 @@ import {
   persistGuestReminderSettings,
   resolveGuestDashboardConflict,
   resolveGuestDashboardConflicts,
-  resolveGuestDashboardSiteId,
   replaceGuestEventInvitations,
-  replaceImportedGuestRsvps,
   restoreGuestEventInvitations,
   toEventInvitationRows,
   updateGuest,
   updateGuestCheckInForSite,
   updateGuestThankYouSentForSite,
-  updateHouseholdGuestIds,
   type GuestEventInvitationRollback,
 } from './guests/guestService';
 import { useGuestDashboardCampaignActions } from './guests/useGuestDashboardCampaignActions';
+import { useGuestDashboardCsvImport } from './guests/useGuestDashboardCsvImport';
 import { useGuestDashboardData } from './guests/useGuestDashboardData';
 import { useGuestDashboardGuestDetailActions } from './guests/useGuestDashboardGuestDetailActions';
 import { useGuestDashboardExports } from './guests/useGuestDashboardExports';
@@ -314,24 +310,8 @@ export const DashboardGuests: React.FC = () => {
   const [checkInMode, setCheckInMode] = useState(false);
   const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
 
-  const [csvPreview, setCsvPreview] = useState<Record<string, unknown>[] | null>(null);
-  const [csvSkipped, setCsvSkipped] = useState<string[]>([]);
-  const [csvImporting, setCsvImporting] = useState(false);
-  const [csvUnknownEvents, setCsvUnknownEvents] = useState<string[]>([]);
-  const [csvDuplicateNames, setCsvDuplicateNames] = useState<string[]>([]);
-  const [csvHouseholdWarnings, setCsvHouseholdWarnings] = useState<string[]>([]);
-  const [csvSelectedFilename, setCsvSelectedFilename] = useState<string | null>(null);
-  const [csvMappingSummary, setCsvMappingSummary] = useState<{ core: string[]; rsvp: string[]; household: string[]; eventCols: string[]; weak: string[] }>({ core: [], rsvp: [], household: [], eventCols: [], weak: [] });
-  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
-  const [csvDataRows, setCsvDataRows] = useState<string[][]>([]);
-  const [csvColumnSamples, setCsvColumnSamples] = useState<string[]>([]);
-  const [csvFieldMap, setCsvFieldMap] = useState<CsvFieldMap | null>(null);
-  const [csvShowMapper, setCsvShowMapper] = useState(false);
-  const [csvImportSummary, setCsvImportSummary] = useState<{ imported: number; skipped: number; unknownEvents: number; duplicateNames: number; guardedHouseholds: number; householdKeys: number } | null>(null);
-  const csvFileInputRef = useRef<HTMLInputElement | null>(null);
   const [showInsights, setShowInsights] = useState(false);
   const cleanGuestsView = !showInsights;
-  const csvNameMappingValid = isCsvNameMappingValid(csvFieldMap);
 
   const [formData, setFormData] = useState({
     first_name: '',
@@ -386,6 +366,48 @@ export const DashboardGuests: React.FC = () => {
     isGuestsReadOnly,
     setGuests,
     toast,
+    weddingSiteId,
+  });
+  const generateSecureToken = async (): Promise<string> => generateSecureGuestInviteToken();
+  const generateLocalInviteToken = () => `demo_${Math.random().toString(36).slice(2, 14)}`;
+  const {
+    csvColumnSamples,
+    csvDataRows,
+    csvDuplicateNames,
+    csvFieldMap,
+    csvFileInputRef,
+    csvHeaders,
+    csvHouseholdWarnings,
+    csvImporting,
+    csvImportSummary,
+    csvMappingSummary,
+    csvNameMappingValid,
+    csvPreview,
+    csvSelectedFilename,
+    csvShowMapper,
+    csvSkipped,
+    csvUnknownEvents,
+    buildCsvPreviewFromMapping,
+    confirmCsvImport,
+    importCSV,
+    resetCsvReviewState,
+    setCsvFieldMap,
+    setCsvShowMapper,
+  } = useGuestDashboardCsvImport({
+    buildQuickStartPhotosPath,
+    drawerItineraryEvents,
+    fetchGuests,
+    fromQuickStart,
+    generateLocalInviteToken,
+    generateSecureToken,
+    isDemoMode,
+    isGuestsReadOnly,
+    navigate,
+    nextStep,
+    setGuests,
+    setWeddingSiteId,
+    toast,
+    userId: user?.id ?? null,
     weddingSiteId,
   });
 
@@ -537,12 +559,6 @@ export const DashboardGuests: React.FC = () => {
       if (autoSaveTimer.current) window.clearTimeout(autoSaveTimer.current);
     };
   }, [guestsTab, rsvpConfigDirty, rsvpQuestions, rsvpMealEnabled, rsvpMealOptions]);
-
-  const generateSecureToken = async (): Promise<string> => {
-    return generateSecureGuestInviteToken();
-  };
-
-  const generateLocalInviteToken = () => `demo_${Math.random().toString(36).slice(2, 14)}`;
 
   const handleAddGuest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1020,256 +1036,6 @@ export const DashboardGuests: React.FC = () => {
       toast(safeGuestsDashboardError(err, 'Couldn’t delete all guests. Please try again.'), 'error');
     } finally {
       setDeleteAllBusy(false);
-    }
-  };
-
-  const buildCsvPreviewFromMapping = useCallback(async (headers: string[], dataRows: string[][], fieldMap: CsvFieldMap) => {
-    if (!isCsvNameMappingValid(fieldMap)) {
-      toast('Please map First Name + Last Name, or use Full Name instead.', 'error');
-      return;
-    }
-
-    let resolvedSiteId = weddingSiteId;
-    if (!resolvedSiteId && !isDemoMode) {
-      resolvedSiteId = user?.id ? await resolveGuestDashboardSiteId(user.id) : null;
-      if (resolvedSiteId) setWeddingSiteId(resolvedSiteId);
-    }
-    if (!resolvedSiteId && !isDemoMode) {
-      toast('Couldn’t find your website right now. Refresh and try again.', 'error');
-      return;
-    }
-
-    const result = buildGuestImportPreview({
-      headers,
-      dataRows,
-      fieldMap,
-        itineraryEvents: drawerItineraryEvents,
-      weddingSiteId: resolvedSiteId,
-    });
-    const parsed = result.parsed;
-
-    if (parsed.length === 0) {
-      setCsvUnknownEvents([]);
-      setCsvDuplicateNames([]);
-      toast('No guests could be read from this file. Check the name columns and try again.', 'error');
-      return;
-    }
-
-    setCsvPreview(parsed);
-    setCsvSkipped(result.skipped);
-    setCsvUnknownEvents(result.unknownEvents);
-    setCsvDuplicateNames(result.duplicateNames);
-    setCsvShowMapper(false);
-    setCsvHouseholdWarnings(result.householdWarnings);
-    setCsvMappingSummary(result.mappingSummary);
-    const skippedMsg = result.skipped.length > 0 ? ` (${result.skipped.length} row${result.skipped.length === 1 ? '' : 's'} need review)` : '';
-    const unknownMsg = result.unknownEvents.length > 0 ? `, ${result.unknownEvents.length} event name${result.unknownEvents.length === 1 ? '' : 's'} need review` : '';
-    const dupMsg = result.duplicateNames.length > 0 ? `, ${result.duplicateNames.length} possible repeat${result.duplicateNames.length === 1 ? '' : 's'}` : '';
-    const householdMsg = result.householdWarnings.length > 0 ? `, ${result.householdWarnings.length} household match${result.householdWarnings.length === 1 ? '' : 'es'} need review` : '';
-    toast(`${parsed.length} guest${parsed.length !== 1 ? 's' : ''} ready to import${skippedMsg}${unknownMsg}${dupMsg}${householdMsg}.`, 'success');
-  }, [isDemoMode, itineraryEvents, user?.id, weddingSiteId, toast]);
-
-  const importCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (isGuestsReadOnly) {
-      toast('Your collaborator role is read-only for guest imports.', 'info');
-      e.target.value = '';
-      return;
-    }
-
-    const file = e.target.files?.[0];
-    if (!file) {
-      toast('Please choose a CSV file to import.', 'error');
-      return;
-    }
-    setCsvSelectedFilename(file.name);
-    toast(`Parsing ${file.name}…`, 'success');
-
-    try {
-      const { headers, dataRows, samples } = await readGuestImportRows(file);
-
-      if (headers.length === 0 || dataRows.length === 0) {
-        setCsvUnknownEvents([]);
-        setCsvDuplicateNames([]);
-        toast('File appears to be empty or missing a header row.', 'error');
-        return;
-      }
-
-      const defaultMap = buildDefaultCsvFieldMap(headers);
-
-      setCsvHeaders(headers);
-      setCsvDataRows(dataRows);
-      setCsvColumnSamples(samples);
-      setCsvFieldMap(defaultMap);
-      setCsvShowMapper(true);
-    } catch (err) {
-      setCsvUnknownEvents([]);
-      setCsvDuplicateNames([]);
-      toast(safeGuestImportReadError(err), 'error');
-    } finally {
-      e.target.value = '';
-    }
-  };
-
-  const confirmCsvImport = async () => {
-    if (!csvPreview) return;
-    setCsvImporting(true);
-    try {
-      let resolvedSiteId = weddingSiteId;
-      if (!resolvedSiteId && !isDemoMode) {
-        resolvedSiteId = user?.id ? await resolveGuestDashboardSiteId(user.id) : null;
-        if (resolvedSiteId) setWeddingSiteId(resolvedSiteId);
-      }
-      if (!resolvedSiteId && !isDemoMode) {
-        toast('Couldn’t find your wedding site. Refresh and try again.', 'error');
-        return;
-      }
-      if (isDemoMode) {
-        const importedGuests = csvPreview.map((g, idx) => ({
-          id: `demo-import-${Date.now()}-${idx}`,
-          first_name: String(g.first_name || ''),
-          last_name: String(g.last_name || ''),
-          name: `${String(g.first_name || '')} ${String(g.last_name || '')}`.trim(),
-          email: g.email ? String(g.email) : null,
-          phone: g.phone ? String(g.phone) : null,
-          plus_one_allowed: Boolean(g.plus_one_allowed),
-          plus_one_name: null,
-          children_allowed: Boolean(g.children_allowed),
-          max_children: Number(g.max_children ?? 0),
-          max_additional_guests: Number(g.max_additional_guests ?? 0),
-          invited_to_ceremony: true,
-          invited_to_reception: true,
-          invite_token: generateLocalInviteToken(),
-          rsvp_status: 'pending',
-          rsvp_received_at: null,
-          household_id: (g.__household_key as string | null) || null,
-          group_name: (g.group_name as string | null) || null,
-        } as GuestWithRSVP));
-
-        setGuests(prev => [...importedGuests, ...prev]);
-        setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: 0, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
-        const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} row${csvSkipped.length === 1 ? '' : 's'} need review` : '';
-        toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}`, 'success');
-        setCsvPreview(null);
-        if (fromQuickStart && nextStep === 'photos') {
-          navigate(buildQuickStartPhotosPath());
-          return;
-        }
-        setCsvSkipped([]);
-        setCsvUnknownEvents([]);
-        setCsvDuplicateNames([]);
-        setCsvHouseholdWarnings([]);
-        setCsvSelectedFilename(null);
-        setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [], weak: [] });
-        return;
-      }
-
-      const guestsWithTokens: Array<Record<string, unknown>> = await Promise.all(
-        csvPreview.map(async g => {
-          const existingToken = (g.invite_token as string | null | undefined) ?? null;
-          return {
-            ...g,
-            invite_token: existingToken && existingToken.length > 0 ? existingToken : await generateSecureToken(),
-          };
-        })
-      );
-
-      const guestRows = guestsWithTokens.map((g) => {
-        const row = { ...g } as Record<string, unknown>;
-        delete row.__household_key;
-        delete row.__invited_event_ids;
-        delete row.__meal_choice;
-        delete row.__plus_one_name;
-        delete row.__plus_one_count;
-        delete row.__children_count;
-        delete row.__rsvp_date;
-        return row;
-      });
-
-      const inserted = await insertImportedGuests(guestRows);
-      const keyToGuestIds = new Map<string, string[]>();
-      const householdLastNames = new Map<string, Set<string>>();
-      guestsWithTokens.forEach((row, idx) => {
-        const key = row.__household_key as string | null | undefined;
-        if (!key) return;
-        const guestId = inserted[idx]?.id as string | undefined;
-        if (!guestId) return;
-        const existing = keyToGuestIds.get(key) ?? [];
-        existing.push(guestId);
-        keyToGuestIds.set(key, existing);
-        const lastNames = householdLastNames.get(key) ?? new Set();
-        const lastName = String(row.last_name || '').trim().toLowerCase();
-        if (lastName) lastNames.add(lastName);
-        householdLastNames.set(key, lastNames);
-      });
-
-      let guardedHouseholds = 0;
-      for (const [key, ids] of keyToGuestIds) {
-        if (ids.length < 2) continue;
-        const lastNames = householdLastNames.get(key) ?? new Set();
-        if (key.startsWith('name:') && lastNames.size > 1) {
-          guardedHouseholds += 1;
-          continue;
-        }
-        await updateHouseholdGuestIds(ids[0], ids);
-      }
-
-      const eventInviteRows: Array<{ event_id: string; guest_id: string }> = [];
-      const rsvpRows: Array<{ guest_id: string; attending: boolean; meal_choice: string | null; plus_one_name: string | null; plus_one_count: number; children_count: number; responded_at: string | null }> = [];
-      guestsWithTokens.forEach((row, idx) => {
-        const guestId = inserted[idx]?.id as string | undefined;
-        if (!guestId) return;
-        const eventIds = (row.__invited_event_ids as string[] | undefined) ?? [];
-        eventIds.forEach((eventId) => eventInviteRows.push({ event_id: eventId, guest_id: guestId }));
-
-        const status = String(row.rsvp_status || 'pending').toLowerCase();
-        const attending = isAttendingRsvpStatus(status);
-        const declined = isDeclinedRsvpStatus(status) || status === 'no';
-        if (attending || declined) {
-          rsvpRows.push({
-            guest_id: guestId,
-            attending,
-            meal_choice: (row.__meal_choice as string | null | undefined) ?? null,
-            plus_one_name: (row.__plus_one_name as string | null | undefined) ?? null,
-            plus_one_count: Number(row.__plus_one_count ?? 0),
-            children_count: Number(row.__children_count ?? 0),
-            responded_at: (row.__rsvp_date as string | null | undefined)
-              || (row.rsvp_received_at as string | null | undefined)
-              || new Date().toISOString(),
-          });
-        }
-      });
-
-      if (eventInviteRows.length > 0) {
-        await insertEventInvitations(eventInviteRows);
-      }
-
-      if (rsvpRows.length > 0) {
-        await replaceImportedGuestRsvps(rsvpRows);
-      }
-
-      await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
-      const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} row${csvSkipped.length === 1 ? '' : 's'} need review` : '';
-      const householdsMsg = keyToGuestIds.size > 0 ? `, ${keyToGuestIds.size} household group${keyToGuestIds.size === 1 ? '' : 's'}` : '';
-      const guardedMsg = guardedHouseholds > 0 ? `, ${guardedHouseholds} household match${guardedHouseholds === 1 ? '' : 'es'} left separate` : '';
-      const eventsMsg = eventInviteRows.length > 0 ? `, ${eventInviteRows.length} event invite${eventInviteRows.length === 1 ? '' : 's'}` : '';
-      const unknownEventsMsg = csvUnknownEvents.length > 0 ? `, ${csvUnknownEvents.length} event name${csvUnknownEvents.length === 1 ? '' : 's'} need review` : '';
-      toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}${householdsMsg}${guardedMsg}${eventsMsg}${unknownEventsMsg}`, 'success');
-      setCsvPreview(null);
-      if (fromQuickStart && nextStep === 'photos') {
-        navigate(buildQuickStartPhotosPath());
-        return;
-      }
-      setCsvSkipped([]);
-      setCsvUnknownEvents([]);
-      setCsvDuplicateNames([]);
-      setCsvHouseholdWarnings([]);
-      setCsvSelectedFilename(null);
-      setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [], weak: [] });
-    } catch (err) {
-      toast(safeGuestsDashboardError(err, 'Couldn’t import guests. Please try again.'), 'error');
-    } finally {
-      setCsvImporting(false);
     }
   };
 
@@ -1890,12 +1656,7 @@ export const DashboardGuests: React.FC = () => {
     onCopyContactRequestLink: copyContactRequestLink,
     onFocusGuestSearch: setSearchQuery,
     onResetCsvReview: () => {
-      if (!csvImporting) {
-        setCsvPreview(null);
-        setCsvUnknownEvents([]);
-        setCsvDuplicateNames([]);
-        setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [], weak: [] });
-      }
+      if (!csvImporting) resetCsvReviewState();
     },
     onSaveAssistedRsvp: handleSaveAssistedRsvp,
     onSetAssistedRsvpNotes: setAssistedRsvpNotes,

@@ -131,17 +131,18 @@ describe('guestService', () => {
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Guests.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/guestService.ts'), 'utf8');
     const campaignHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCampaignActions.ts'), 'utf8');
+    const csvImportHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCsvImport.ts'), 'utf8');
     const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardData.ts'), 'utf8');
     const detailHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts'), 'utf8');
 
     expect(page).toContain('generateSecureGuestInviteToken()');
     expect(page).toContain('useGuestDashboardData({');
+    expect(page).toContain('useGuestDashboardCsvImport({');
     expect(page).toContain('useGuestDashboardGuestDetailActions({');
     expect(page).toContain('resolveGuestDashboardConflict(conflictId, resolvedAt)');
     expect(page).toContain('resolveGuestDashboardConflicts(ids, resolvedAt)');
     expect(page).toContain('loadPublicSlug: loadGuestDashboardPublicSlug');
     expect(page).toContain('loadSiteSlug: loadGuestDashboardSiteSlug');
-    expect(page).toContain('resolveGuestDashboardSiteId(user.id)');
     expect(page).toContain('updateGuestCheckInForSite(weddingSiteId, lastCheckIn.guestId, null)');
     expect(page).toContain('updateGuestThankYouSentForSite(weddingSiteId, guest.id, nextValue)');
     expect(page).toContain('markGuestsThankYouSentForSite(weddingSiteId, ids, new Date().toISOString())');
@@ -154,6 +155,11 @@ describe('guestService', () => {
     expect(page).not.toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
     expect(page).not.toContain('loadGuestDashboardRsvpAuditFeed(weddingSiteId)');
     expect(page).not.toContain('refreshGuestDashboardSession()');
+    expect(page).not.toContain('buildGuestImportPreview({');
+    expect(page).not.toContain('readGuestImportRows(file)');
+    expect(page).not.toContain('insertImportedGuests(guestRows)');
+    expect(page).not.toContain('updateHouseholdGuestIds(ids[0], ids)');
+    expect(page).not.toContain('replaceImportedGuestRsvps(rsvpRows)');
     expect(page).not.toContain('loadGuestItineraryDrawerSnapshot(weddingSiteId, guest.id)');
     expect(page).not.toContain('removeGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
     expect(page).not.toContain('addGuestEventInvitation(eventId, itineraryDrawerGuest.id)');
@@ -162,6 +168,14 @@ describe('guestService', () => {
     expect(campaignHook).toContain('await markGuestInvitationSentForSite(weddingSiteId, guest.id, new Date().toISOString())');
     expect(campaignHook).toContain('await markGuestInvitationAndReminderSentForSite(weddingSiteId, guest.id, sentAtIso)');
     expect(campaignHook).toContain('await markGuestReminderSentForSite(weddingSiteId, guest.id, new Date().toISOString())');
+    expect(csvImportHook).toContain('const result = buildGuestImportPreview({');
+    expect(csvImportHook).toContain('const { headers, dataRows, samples } = await readGuestImportRows(file);');
+    expect(csvImportHook).toContain('const inserted = await insertImportedGuests(guestRows);');
+    expect(csvImportHook).toContain('await updateHouseholdGuestIds(ids[0], ids);');
+    expect(csvImportHook).toContain('await replaceImportedGuestRsvps(rsvpRows);');
+    expect(csvImportHook).toContain('toast(safeGuestImportReadError(err), \'error\')');
+    expect(csvImportHook).toContain('resolvedSiteId = userId ? await resolveGuestDashboardSiteId(userId) : null;');
+    expect(csvImportHook).not.toContain("from '../../../lib/supabase'");
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardSiteSettings(userId);');
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardSnapshot(weddingSiteId);');
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardItineraryFilters(weddingSiteId);');

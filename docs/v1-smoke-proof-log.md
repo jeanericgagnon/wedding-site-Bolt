@@ -10043,3 +10043,18 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 03:52 AM PT No-Deploy Guest Dashboard CSV-Import Hook Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the guest dashboard CSV import parse/map/preview/import lifecycle through `src/pages/dashboard/guests/useGuestDashboardCsvImport.ts`.
+  - That hook now owns parser state, mapper modal state, review state, import summary state, demo/live import transport, event invite and RSVP import hydration, and customer-safe review reset behavior while the page keeps guest ops, RSVP settings, export actions, and top-level dashboard composition.
+  - `src/lib/dashboardDataBoundary.test.ts` and `src/pages/dashboard/guests/guestService.test.ts` now pin `useGuestDashboardCsvImport({ ... })`, check that `useGuestDashboardCsvImport.ts` owns the guest import parser/service choreography, and reject regaining direct import parsing or inserted-guest transport in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` dropped from 1924 lines to 1685 lines in this batch, while `src/pages/dashboard/guests/useGuestDashboardCsvImport.ts` came in at 429 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
