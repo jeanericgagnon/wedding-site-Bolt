@@ -7318,6 +7318,20 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 5:52 PM PT No-Deploy Messages Composer Component Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/messages/MessageDashboardComponents.tsx` now owns the large `MessageComposerCard` shell for the messages dashboard composer.
+  - `src/pages/dashboard/Messages.tsx` now routes the composer through that extracted component instead of carrying the full campaign/template/channel/audience/message/schedule/preflight/send JSX inline.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins the higher-level `MessageComposerCard` boundary and rejects reintroducing the lower-level composer panel wiring back into the page.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 5:57 PM PT No-Deploy Guest hub public service extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

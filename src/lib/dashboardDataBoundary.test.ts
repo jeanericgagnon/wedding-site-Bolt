@@ -14,6 +14,7 @@ describe('dashboard data boundary guards', () => {
     expect(serviceSource).toContain('export async function triggerDashboardBulkSend(messageId: string)');
     expect(serviceSource).toContain('export async function triggerScheduledMessageDispatch(limit = 10)');
     expect(serviceSource).toContain('supabase.auth.getSession()');
+    expect(source).toContain('<MessageComposerCard');
     expect(source).toContain('createDashboardMessage(payload)');
     expect(source).toContain('triggerDashboardBulkSend(inserted.id)');
     expect(source).toContain('triggerScheduledMessageDispatch(10)');
@@ -24,6 +25,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('fetch(BULK_SEND_URL, {');
     expect(source).not.toContain(".from('messages')\n        .select('*')");
     expect(source).not.toContain('.from("messages")\n        .select("*")');
+    expect(source).not.toContain('MessageComposerLanguagePreviewPanel');
+    expect(source).not.toContain('MessageComposerSchedulePanel');
+    expect(source).not.toContain('MessageComposerRecipientPreviewPanel');
+    expect(source).not.toContain('MessageComposerPreflightPanel');
   });
 
   it('keeps legacy public site repository reads out of private gate internals', () => {

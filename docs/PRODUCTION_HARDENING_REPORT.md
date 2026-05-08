@@ -3752,3 +3752,19 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the guest photo dashboard page-to-service migration and leaves the page UI-focused, without changing owner-facing album creation behavior. No deploy was run.
+
+### 2026-05-07 5:52 PM PT - Messages Composer Component Extraction
+
+- Moved the large inline composer shell out of `src/pages/dashboard/Messages.tsx` and into `src/pages/dashboard/messages/MessageDashboardComponents.tsx` as `MessageComposerCard`.
+- The extracted component now owns the campaign name, template picker, channel switcher, audience picker, message body form, schedule panel, recipient preview panel, preflight panel, and send/save buttons, while `Messages.tsx` keeps the state and callbacks.
+- Tightened `src/lib/dashboardDataBoundary.test.ts` so the page is now pinned to the higher-level `MessageComposerCard` seam instead of silently regaining the lower-level composer panel wiring inline.
+
+Validation:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the oversized-file and service-boundary lanes for the messages dashboard without changing composer behavior. No deploy was run.

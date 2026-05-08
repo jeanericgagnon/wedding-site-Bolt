@@ -3,8 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
-import { Card, Button, Input, Textarea } from '../../components/ui';
-import { Send, Clock, Calendar, Save, Loader2 } from 'lucide-react';
+import { Button, Input } from '../../components/ui';
+import { Clock, Loader2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { demoEvents, demoGuests, demoWeddingSite } from '../../lib/demoData';
 import { createSmsCreditsSession } from '../../lib/stripeService';
@@ -96,10 +96,7 @@ import {
 let hasMessageDeliveriesTable: boolean | null = null;
 
 import {
-  MessageComposerLanguagePreviewPanel,
-  MessageComposerPreflightPanel,
-  MessageComposerRecipientPreviewPanel,
-  MessageComposerSchedulePanel,
+  MessageComposerCard,
   MessageGuestFlowCard,
   MessageHistoryCard,
   MessageReachSnapshotCard,
@@ -1624,202 +1621,40 @@ export const DashboardMessages: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <Card variant="bordered" padding="lg" className="overflow-hidden border-border-subtle">
-              <div className="-mx-6 -mt-6 mb-6 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
-                <p className="text-xs font-semibold text-text-tertiary">Composer</p>
-                <h2 className="mt-2 text-2xl font-semibold text-text-primary">Send a guest update</h2>
-                <p className="mt-1 text-sm text-text-secondary">Pick who needs it, adjust the wording, then send now or schedule it.</p>
-              </div>
-              {!canCompose && <p className="text-xs text-text-tertiary mb-3">Viewer mode is on, so writing and sending are turned off.</p>}
-              <form onSubmit={(e) => handleSendMessage(e, false)} className="space-y-6">
-                <fieldset disabled={!canCompose} className="space-y-6">
-                <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <label className="block text-sm font-medium text-text-primary mb-2">Campaign name</label>
-                      <Input
-                        value={formData.campaignName}
-                        onChange={(e) => setFormData({ ...formData, campaignName: e.target.value })}
-                        placeholder="Spring RSVP reminder"
-                      />
-                      <p className="text-xs text-text-tertiary mt-1">Used to organize drafts, scheduled sends, and history. Subject stays separate.</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-text-primary mb-2">Template</label>
-                      <select
-                        aria-label="Template"
-                        value={formData.templateKey}
-                        onChange={(e) => applyComposerTemplate(e.target.value as MessageTemplateKey)}
-                        className="w-full px-4 py-2.5 border border-border rounded-lg bg-surface-subtle text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                      >
-                        {COMPOSER_TEMPLATES.map((template) => (
-                          <option key={template.key} value={template.key}>{template.label}</option>
-                        ))}
-                      </select>
-                      <p className="text-xs text-text-tertiary mt-1">{selectedTemplate.detail}</p>
-                    </div>
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Button type="button" size="sm" variant="outline" onClick={saveCurrentComposerAsTemplate} disabled={!canCompose}>
-                      <Save className="w-3.5 h-3.5 mr-1.5" />Save as reusable template
-                    </Button>
-                    <span className="text-xs text-text-tertiary self-center">Keeps a lightweight reusable version in this browser for fast repeat campaigns.</span>
-                  </div>
-                </div>
-
-                <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
-                  <label className="block text-sm font-medium text-text-primary mb-2">Channel</label>
-                  <div className="inline-flex rounded-lg border border-border overflow-hidden bg-white">
-                    <button type="button" className={`px-3 py-1.5 text-sm ${formData.channel === 'email' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => setFormData({ ...formData, channel: 'email' })}>Email</button>
-                    <button type="button" className={`px-3 py-1.5 text-sm border-l border-border ${formData.channel === 'sms' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => setFormData({ ...formData, channel: 'sms' })}>Text</button>
-                  </div>
-                  {formData.channel === 'sms' && (
-                    <p className="text-xs text-text-tertiary mt-1">
-                      Texts use credits by 160-character segment and only send to guests with phone numbers and text consent.
-                      {!smsProviderEnabled ? ' Sending is locked until texting setup is complete.' : ''}
-                    </p>
-                  )}
-                </div>
-
-                <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
-                  <label className="block text-sm font-medium text-text-primary mb-2">Who should get this?</label>
-                  {audienceOptions.some((a) => a.value.startsWith('event:')) && (
-                    <p className="text-xs text-text-tertiary mb-1">You can also send to itinerary groups from the dropdown.</p>
-                  )}
-                  <select
-                    key={`aud-${audienceOptions.length}`}
-                    value={formData.audience}
-                    onChange={(e) => setFormData({ ...formData, audience: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-border rounded-lg bg-surface-subtle text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    {audienceOptions.map(option => (
-                      <option key={option.value} value={option.value}>
-                        {option.label} ({option.count} guests)
-                      </option>
-                    ))}
-                  </select>
-                  <p className="mt-2 text-xs text-text-tertiary">{selectedAudienceDetail}</p>
-                  {formData.channel === 'email' && activeRecipients < (selectedAudience?.count || 0) && (
-                    <p className="text-sm text-warning mt-1">
-                      {activeRecipients} of {selectedAudience?.count} guests have email addresses
-                    </p>
-                  )}
-                  {formData.channel === 'sms' && recipientsWithSmsConsent < (selectedAudience?.count || 0) && (
-                    <p className="text-sm text-warning mt-1">
-                      {recipientsWithSmsConsent} of {selectedAudience?.count} guests have phone numbers and text consent
-                    </p>
-                  )}
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="inline-flex items-center px-2 py-1 text-xs rounded-lg border border-border bg-white text-text-secondary">
-                      Reaches {activeRecipients} guest{activeRecipients !== 1 ? 's' : ''}
-                    </span>
-                    <span className={`inline-flex items-center px-2 py-1 text-xs rounded-lg border ${unreachableRecipients > 0 ? 'border-warning/30 bg-warning-light text-warning' : 'border-success/30 bg-success-light text-success'}`}>
-                      {unreachableRecipients > 0 ? `${unreachableRecipients} missing ${formData.channel === 'sms' ? 'phone/consent' : 'email addresses'}` : `Everyone in this group is reachable by ${formData.channel === 'sms' ? 'text' : 'email'}`}
-                    </span>
-                    {formData.channel === 'sms' && (
-                      <span className={`inline-flex items-center px-2 py-1 text-xs rounded-lg border ${smsCreditsSufficient ? 'border-success/30 bg-success-light text-success' : 'border-error/30 bg-error-light text-error'}`}>
-                        {smsCreditsSufficient ? `${smsCreditsNeeded} credits ready` : `Need ${smsCreditsNeeded - smsCredits} more credits`}
-                      </span>
-                    )}
-                    {formData.channel === 'sms' && (
-                      <span className="inline-flex items-center px-2 py-1 text-xs rounded-lg border border-border bg-white text-text-secondary">
-                        {smsSegmentCount || 0} segment{smsSegmentCount === 1 ? '' : 's'} x {recipientsWithSmsConsent} recipient{recipientsWithSmsConsent === 1 ? '' : 's'}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {formData.channel === 'email' && (
-                  <div>
-                    <label className="block text-sm font-medium text-text-primary mb-2">
-                      Subject <span className="text-error">*</span>
-                    </label>
-                    <Input
-                      value={formData.subject}
-                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                      placeholder="For example: Wedding day reminder"
-                      required
-                    />
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-text-primary mb-2">
-                    Message <span className="text-error">*</span>
-                  </label>
-                  <Textarea
-                    value={formData.body}
-                    onChange={(e) => setFormData({ ...formData, body: e.target.value })}
-                    placeholder="Write your message here"
-                    rows={8}
-                    required
-                  />
-                  <p className="text-sm text-text-tertiary mt-1">
-                    Include the details guests need most, like time, place, or dress code.
-                  </p>
-                </div>
-
-                <MessageComposerLanguagePreviewPanel languagePreviews={languagePreviews} />
-
-                <MessageComposerSchedulePanel
-                  formData={formData}
-                  onSetFormData={setFormData}
-                />
-
-                <MessageComposerRecipientPreviewPanel
-                  activeRecipients={activeRecipients}
-                  formData={formData}
-                  onTogglePreview={() => setShowRecipientPreview(!showRecipientPreview)}
-                  previewRecipients={previewRecipients}
-                  showRecipientPreview={showRecipientPreview}
-                />
-
-                <MessageComposerPreflightPanel
-                  activeRecipients={activeRecipients}
-                  audienceReachability={audienceReachability}
-                  buyingPack={buyingPack}
-                  emailCapacityAfterSend={emailCapacityAfterSend}
-                  emailCapacityEnough={emailCapacityEnough}
-                  formData={formData}
-                  onBuySmsPack={(pack) => { void handleBuySmsPack(pack); }}
-                  recipientsWithEmail={recipientsWithEmail}
-                  remainingEmailRecipients={remainingEmailRecipients}
-                  sending={sending}
-                  smsCredits={smsCredits}
-                  smsCreditsNeeded={smsCreditsNeeded}
-                  smsCreditsSufficient={smsCreditsSufficient}
-                  smsProviderEnabled={smsProviderEnabled}
-                  smsSegmentCount={smsSegmentCount}
-                />
-
-                <div className="flex gap-3">
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    fullWidth
-                    disabled={sending || activeRecipients === 0 || (formData.channel === 'email' && !emailCapacityEnough) || (formData.channel === 'sms' && !smsProviderEnabled)}
-                  >
-                    {sending ? 'Processing...' : (
-                      formData.scheduleType === 'later' && !selectedScheduleIsPast ? (
-                        <><Calendar className="w-4 h-4 mr-2" />Schedule message</>
-                      ) : (
-                        <><Send className="w-4 h-4 mr-2" />Send now</>
-                      )
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleSendMessage(e, true)}
-                    disabled={sending}
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Draft
-                  </Button>
-                </div>
-                </fieldset>
-              </form>
-            </Card>
+            <MessageComposerCard
+              activeRecipients={activeRecipients}
+              applyComposerTemplate={applyComposerTemplate}
+              audienceOptions={audienceOptions}
+              audienceReachability={audienceReachability}
+              buyingPack={buyingPack}
+              canCompose={canCompose}
+              emailCapacityAfterSend={emailCapacityAfterSend}
+              emailCapacityEnough={emailCapacityEnough}
+              formData={formData}
+              languagePreviews={languagePreviews}
+              onBuySmsPack={(pack) => { void handleBuySmsPack(pack); }}
+              onSaveCurrentComposerAsTemplate={saveCurrentComposerAsTemplate}
+              onSetFormData={setFormData}
+              onSubmit={(e) => { void handleSendMessage(e, false); }}
+              onSubmitDraft={(e) => { void handleSendMessage(e, true); }}
+              onToggleRecipientPreview={() => setShowRecipientPreview(!showRecipientPreview)}
+              previewRecipients={previewRecipients}
+              recipientsWithEmail={recipientsWithEmail}
+              recipientsWithSmsConsent={recipientsWithSmsConsent}
+              remainingEmailRecipients={remainingEmailRecipients}
+              selectedAudienceCount={selectedAudience?.count || 0}
+              selectedAudienceDetail={selectedAudienceDetail}
+              selectedScheduleIsPast={selectedScheduleIsPast}
+              selectedTemplateDetail={selectedTemplate.detail}
+              sending={sending}
+              showRecipientPreview={showRecipientPreview}
+              smsCredits={smsCredits}
+              smsCreditsNeeded={smsCreditsNeeded}
+              smsCreditsSufficient={smsCreditsSufficient}
+              smsProviderEnabled={smsProviderEnabled}
+              smsSegmentCount={smsSegmentCount}
+              unreachableRecipients={unreachableRecipients}
+            />
 
             <MessageSavedTemplatesCard
               audienceOptions={audienceOptions}
