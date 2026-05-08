@@ -21,7 +21,6 @@ import {
   safeSettingsError,
 } from './settings/settingsDashboardUtils';
 import { buildSettingsDashboardViewModel } from './settings/buildSettingsDashboardViewModel';
-import { loadSettingsDashboardSnapshot } from './settings/loadSettingsDashboardSnapshot';
 import { SettingsAccountPanel } from './settings/SettingsAccountPanel';
 import { SettingsBillingPanel } from './settings/SettingsBillingPanel';
 import { SettingsNavigation, type SettingsTabId } from './settings/SettingsNavigation';
@@ -35,6 +34,7 @@ import { useSettingsAccountActions } from './settings/useSettingsAccountActions'
 import { useSettingsDashboardSupport } from './settings/useSettingsDashboardSupport';
 import { useSettingsSiteAccessActions } from './settings/useSettingsSiteAccessActions';
 import { useSettingsExperienceActions } from './settings/useSettingsExperienceActions';
+import { useSettingsDashboardSnapshotHydration } from './settings/useSettingsDashboardSnapshotHydration';
 
 const useDraftHydrationGuard = (clearStatus: () => void) => {
   const dirtyRef = useRef(false);
@@ -156,10 +156,6 @@ export const DashboardSettings: React.FC = () => {
   const [subscribeError, setSubscribeError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadSiteData();
-  }, [user, isDemoMode]);
-
-  useEffect(() => {
     if (activeTab === 'billing' && settingsRole === 'owner' && user && !billingInfo) {
       setBillingLoading(true);
       fetchBillingInfo(user.id)
@@ -194,49 +190,37 @@ export const DashboardSettings: React.FC = () => {
     weddingSiteId,
   });
 
-  const loadSiteData = async () => {
-    try {
-      const snapshot = await loadSettingsDashboardSnapshot({
-        isDemoMode,
-        userEmail: user?.email ?? null,
-        userId: user?.id ?? null,
-      });
-
-      setSettingsRole(snapshot.settingsRole);
-      setWeddingSiteId(snapshot.weddingSiteId);
-      setAccountEmail(snapshot.accountEmail);
-      setCoupleNames(snapshot.coupleNames);
-      setWeddingDate(snapshot.weddingDate);
-      setVenueName(snapshot.venueName);
-      setCurrentTemplate(snapshot.currentTemplate);
-      setSiteSlug(snapshot.siteSlug);
-      setMusicPlaylistUrl(snapshot.musicPlaylistUrl);
-      setCollaboratorInvites(snapshot.collaboratorInvites);
-      setTranslationStatuses(snapshot.translationStatuses);
-
-      if (visibilityDraftGuard.shouldHydrate()) {
-        setPrivacyMode(snapshot.privacyMode);
-        setHideFromSearch(snapshot.hideFromSearch);
-        setGuestAccessToken(snapshot.guestAccessToken);
-        setDefaultLanguage(snapshot.defaultLanguage);
-      }
-
-      if (notifDraftGuard.shouldHydrate()) {
-        setNotifRsvp(snapshot.notifRsvp);
-        setNotifPhotos(snapshot.notifPhotos);
-        setNotifDigest(snapshot.notifDigest);
-        setNotifUpdates(snapshot.notifUpdates);
-      }
-
-      if (rsvpDraftGuard.shouldHydrate()) {
-        setRsvpQuestions(snapshot.rsvpQuestions);
-        setRsvpMealEnabled(snapshot.rsvpMealEnabled);
-        setRsvpMealOptions(snapshot.rsvpMealOptions);
-      }
-    } catch (err) {
-      setAccountError(safeSettingsError(err, 'Couldn’t load settings right now.'));
-    }
-  };
+  useSettingsDashboardSnapshotHydration({
+    isDemoMode,
+    notifDraftGuard,
+    rsvpDraftGuard,
+    setAccountEmail,
+    setAccountError,
+    setCollaboratorInvites,
+    setCoupleNames,
+    setCurrentTemplate,
+    setDefaultLanguage,
+    setGuestAccessToken,
+    setHideFromSearch,
+    setMusicPlaylistUrl,
+    setNotifDigest,
+    setNotifPhotos,
+    setNotifRsvp,
+    setNotifUpdates,
+    setPrivacyMode,
+    setRsvpMealEnabled,
+    setRsvpMealOptions,
+    setRsvpQuestions,
+    setSettingsRole,
+    setSiteSlug,
+    setTranslationStatuses,
+    setVenueName,
+    setWeddingDate,
+    setWeddingSiteId,
+    userEmail: user?.email ?? null,
+    userId: user?.id ?? null,
+    visibilityDraftGuard,
+  });
 
   const {
     handleSaveAccount,

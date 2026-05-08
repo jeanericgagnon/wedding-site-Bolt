@@ -19,6 +19,10 @@ const settingsDashboardSupportSource = () => readFileSync(
   join(process.cwd(), 'src/pages/dashboard/settings/useSettingsDashboardSupport.ts'),
   'utf8',
 );
+const settingsDashboardSnapshotHydrationSource = () => readFileSync(
+  join(process.cwd(), 'src/pages/dashboard/settings/useSettingsDashboardSnapshotHydration.ts'),
+  'utf8',
+);
 const settingsTabContentSource = () => readFileSync(
   join(process.cwd(), 'src/pages/dashboard/settings/SettingsTabContent.tsx'),
   'utf8',
@@ -88,6 +92,7 @@ describe('settings error safety', () => {
     const snapshotSource = settingsDashboardSnapshotSource();
     const viewModelSource = settingsDashboardViewModelSource();
     const supportSource = settingsDashboardSupportSource();
+    const hydrationSource = settingsDashboardSnapshotHydrationSource();
     const selectMatch = source.match(/export const SETTINGS_SITE_SELECT = \[([\s\S]*?)\]\.join/);
     expect(selectMatch?.[1]).toBeTruthy();
     const selectedColumns = new Set(
@@ -112,7 +117,7 @@ describe('settings error safety', () => {
 
     expect(source).toContain('.select(SETTINGS_SITE_SELECT)');
     expect(source).not.toContain(".select('*')");
-    expect(pageSource).toContain('loadSettingsDashboardSnapshot({');
+    expect(pageSource).toContain('useSettingsDashboardSnapshotHydration({');
     expect(pageSource).toContain('buildSettingsDashboardViewModel({');
     expect(snapshotSource).toContain('loadSettingsSite(activeSite.id)');
     expect(snapshotSource).toContain('loadSettingsCollaboratorInvites(siteId)');
@@ -132,6 +137,10 @@ describe('settings error safety', () => {
     expect(supportSource).toContain('loadSettingsCollaboratorInvites(siteId)');
     expect(supportSource).toContain('loadSettingsTranslationStatuses(');
     expect(supportSource).toContain('logAppAction({');
+    expect(hydrationSource).toContain('loadSettingsDashboardSnapshot({');
+    expect(hydrationSource).toContain('if (visibilityDraftGuard.shouldHydrate())');
+    expect(hydrationSource).toContain('if (notifDraftGuard.shouldHydrate())');
+    expect(hydrationSource).toContain('if (rsvpDraftGuard.shouldHydrate())');
     expect(pageSource).toContain('useSettingsExperienceActions({');
     expect(experienceSource).toContain('updateSettingsSite(targetSiteId');
     expect(experienceSource).toContain('rsvp_custom_questions: cleanedQuestions');

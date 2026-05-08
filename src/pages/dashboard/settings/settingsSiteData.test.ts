@@ -104,6 +104,10 @@ describe('settings site data boundary', () => {
       join(process.cwd(), 'src/pages/dashboard/settings/useSettingsDashboardSupport.ts'),
       'utf8',
     );
+    const hydrationHook = readFileSync(
+      join(process.cwd(), 'src/pages/dashboard/settings/useSettingsDashboardSnapshotHydration.ts'),
+      'utf8',
+    );
     const actionsHook = readFileSync(
       join(process.cwd(), 'src/pages/dashboard/settings/useSettingsSiteAccessActions.ts'),
       'utf8',
@@ -114,7 +118,7 @@ describe('settings site data boundary', () => {
     );
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/settings/settingsSiteData.ts'), 'utf8');
 
-    expect(page).toContain('loadSettingsDashboardSnapshot({');
+    expect(page).toContain('useSettingsDashboardSnapshotHydration({');
     expect(page).toContain('useSettingsSiteAccessActions({');
     expect(page).toContain('useSettingsExperienceActions({');
     expect(page).toContain('useSettingsAccountActions({');
@@ -150,6 +154,7 @@ describe('settings site data boundary', () => {
     expect(page).not.toContain('const logSettingsAction = (');
     expect(page).not.toContain('const loadTranslationStatuses = async (siteId: string) => {');
     expect(page).not.toContain("const downloadTextFile = (filename: string, content: string, type = 'text/plain;charset=utf-8') => {");
+    expect(page).not.toContain('const loadSiteData = async () => {');
     expect(page).not.toContain('supabase.auth.getUser');
     expect(page).not.toContain('supabase.auth.signInWithPassword');
     expect(page).not.toContain('supabase.auth.updateUser');
@@ -218,6 +223,14 @@ describe('settings site data boundary', () => {
     expect(supportHook).toContain('void logAppAction({');
     expect(supportHook).toContain('const rows = await loadSettingsTranslationStatuses(');
     expect(supportHook).toContain('const blob = new Blob([content], { type });');
+
+    expect(hydrationHook).toContain('export function useSettingsDashboardSnapshotHydration({');
+    expect(hydrationHook).toContain('loadSettingsDashboardSnapshot({');
+    expect(hydrationHook).toContain('setSettingsRole(snapshot.settingsRole);');
+    expect(hydrationHook).toContain('if (visibilityDraftGuard.shouldHydrate())');
+    expect(hydrationHook).toContain('if (notifDraftGuard.shouldHydrate())');
+    expect(hydrationHook).toContain('if (rsvpDraftGuard.shouldHydrate())');
+    expect(hydrationHook).toContain("setAccountError(safeSettingsError(err, 'Couldn’t load settings right now.'))");
 
     expect(actionsHook).toContain('createSettingsCollaboratorInvite({');
     expect(actionsHook).toContain('revokeSettingsCollaboratorInvite(inviteId)');

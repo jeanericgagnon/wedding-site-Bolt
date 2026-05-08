@@ -10606,6 +10606,21 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md` PASS
   - `git diff --check` PASS
 - Outcome: `Registry.tsx` dropped from `1443` lines to `1358` lines; `useRegistryDashboardData.ts` came in at `178` lines. No deploy was run.
+## 2026-05-08 08:06 AM PT No-Deploy Settings Snapshot-Hydration Hook Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Settings.tsx` now routes the remaining settings bootstrap and hydration lane through `src/pages/dashboard/settings/useSettingsDashboardSnapshotHydration.ts`.
+  - That hook now owns `loadSettingsDashboardSnapshot({ ... })` bootstrap, settings-role/site/email/name/date/venue/template/slug/playlist hydration, collaborator invite snapshot restore, translation status snapshot restore, guarded visibility hydration, guarded notifications hydration, guarded RSVP hydration, and customer-safe settings-load failure handling while the page keeps billing fetch, planner invite restore, derived view-model assembly, and action/render composition.
+  - `src/lib/settingsErrorSafety.test.ts` and `src/pages/dashboard/settings/settingsSiteData.test.ts` now pin `useSettingsDashboardSnapshotHydration({ ... })`, check that `useSettingsDashboardSnapshotHydration.ts` owns the guarded snapshot-load seam, and reject regaining the old inline `loadSiteData` lifecycle in `Settings.tsx`.
+  - `src/pages/dashboard/Settings.tsx` dropped from 662 lines to 646 lines in this batch, while `src/pages/dashboard/settings/useSettingsDashboardSnapshotHydration.ts` came in at 156 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts`: PASS, 18/18.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 05:25 AM PT No-Deploy Coordinator Dashboard Data-Hook Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
