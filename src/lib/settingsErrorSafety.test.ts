@@ -31,6 +31,10 @@ const settingsTabContentSource = () => readFileSync(
   join(process.cwd(), 'src/pages/dashboard/settings/SettingsTabContent.tsx'),
   'utf8',
 );
+const settingsRouteContentSource = () => readFileSync(
+  join(process.cwd(), 'src/pages/dashboard/settings/SettingsDashboardRouteContent.tsx'),
+  'utf8',
+);
 const settingsSiteTabContentSource = () => readFileSync(
   join(process.cwd(), 'src/pages/dashboard/settings/SettingsSiteTabContent.tsx'),
   'utf8',
@@ -160,13 +164,15 @@ describe('settings error safety', () => {
 
   it('keeps settings tab rendering behind the shared tab-content seam', () => {
     const pageSource = settingsSource();
+    const routeContentSource = settingsRouteContentSource();
     const tabContentSource = settingsTabContentSource();
     const siteTabContentSource = settingsSiteTabContentSource();
     const rsvpTabContentSource = settingsRsvpTabContentSource();
 
-    expect(pageSource).toContain('<SettingsTabContent');
-    expect(pageSource).toContain('<SettingsSiteTabContent');
-    expect(pageSource).toContain('<SettingsRsvpTabContent');
+    expect(pageSource).toContain('<SettingsDashboardRouteContent');
+    expect(routeContentSource).toContain('<SettingsTabContent');
+    expect(routeContentSource).toContain('<SettingsSiteTabContent');
+    expect(routeContentSource).toContain('<SettingsRsvpTabContent');
     expect(tabContentSource).toContain('switch (activeTab)');
     expect(tabContentSource).toContain('case \'account\'');
     expect(tabContentSource).toContain('case \'team\'');

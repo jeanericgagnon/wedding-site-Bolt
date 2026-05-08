@@ -108,6 +108,10 @@ describe('settings site data boundary', () => {
       join(process.cwd(), 'src/pages/dashboard/settings/useSettingsDashboardUiState.ts'),
       'utf8',
     );
+    const routeContent = readFileSync(
+      join(process.cwd(), 'src/pages/dashboard/settings/SettingsDashboardRouteContent.tsx'),
+      'utf8',
+    );
     const hydrationHook = readFileSync(
       join(process.cwd(), 'src/pages/dashboard/settings/useSettingsDashboardSnapshotHydration.ts'),
       'utf8',
@@ -128,10 +132,7 @@ describe('settings site data boundary', () => {
     expect(page).toContain('useSettingsAccountActions({');
     expect(page).toContain('useSettingsDashboardSupport({');
     expect(page).toContain('useSettingsDashboardUiState({ userId: user?.id })');
-    expect(page).toContain('<SettingsDashboardShell');
-    expect(page).toContain('<SettingsTabContent');
-    expect(page).toContain('<SettingsSiteTabContent');
-    expect(page).toContain('<SettingsRsvpTabContent');
+    expect(page).toContain('<SettingsDashboardRouteContent');
     expect(page).toContain('buildSettingsDashboardViewModel({');
     expect(page).not.toContain('requireSettingsAuthenticatedUser()');
     expect(page).not.toContain('verifySettingsCurrentPassword(authUser.email || \'\', currentPassword)');
@@ -141,6 +142,9 @@ describe('settings site data boundary', () => {
     expect(page).not.toContain('<DashboardLayout');
     expect(page).not.toContain('<DashboardPageHero');
     expect(page).not.toContain('<SettingsNavigation');
+    expect(page).not.toContain('<SettingsTabContent');
+    expect(page).not.toContain('<SettingsSiteTabContent');
+    expect(page).not.toContain('<SettingsRsvpTabContent');
     expect(page).not.toContain('<SettingsSiteUrlPanel');
     expect(page).not.toContain('<SettingsIdentityExportsPanel');
     expect(page).not.toContain('<SettingsPrivacyPanel');
@@ -188,6 +192,11 @@ describe('settings site data boundary', () => {
     expect(page).not.toContain('buildWeddingIdentityManifestText(weddingIdentityExportKit)');
     expect(page).not.toContain('renderWeddingIdentityPrintHtml(weddingIdentityPrintAssets)');
     expect(page).not.toContain('loadSettingsTemplateChangeSite(weddingSiteId)');
+    expect(routeContent).toContain('export function SettingsDashboardRouteContent(props: Props)');
+    expect(routeContent).toContain('<SettingsDashboardShell');
+    expect(routeContent).toContain('<SettingsTabContent');
+    expect(routeContent).toContain('<SettingsSiteTabContent');
+    expect(routeContent).toContain('<SettingsRsvpTabContent');
     expect(page).not.toContain('createSubscriptionSession(');
     expect(page).not.toContain('notification_prefs: { rsvp: notifRsvp');
     expect(page).not.toContain('rsvp_custom_questions: cleanedQuestions');

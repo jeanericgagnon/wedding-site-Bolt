@@ -1,34 +1,20 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
-import { Loader2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { PLANNER_ROLE_OPTIONS, getPlannerPermissionPreset } from '../../lib/plannerAccess';
+import { getPlannerPermissionPreset } from '../../lib/plannerAccess';
 import { useToast } from '../../components/ui/Toast';
 import { getSafePublicWebUrl } from '../../sections/publicLinks';
 import {
   type SettingsCollaboratorInviteRow,
 } from './settings/settingsSiteData';
 import {
-  type RSVPQuestionSetting,
   type SiteLanguageCode,
-  type TranslationLanguageCode,
-  type TranslationStatusRow,
 } from './settings/settingsDashboardTypes';
 import {
-  makeQuestion,
   safeSettingsError,
 } from './settings/settingsDashboardUtils';
 import { buildSettingsDashboardViewModel } from './settings/buildSettingsDashboardViewModel';
-import { SettingsAccountPanel } from './settings/SettingsAccountPanel';
-import { SettingsBillingPanel } from './settings/SettingsBillingPanel';
-import { SettingsNavigation, type SettingsTabId } from './settings/SettingsNavigation';
-import { SettingsNotificationsPanel } from './settings/SettingsNotificationsPanel';
-import { SettingsRsvpTabContent } from './settings/SettingsRsvpTabContent';
-import { SettingsSiteTabContent } from './settings/SettingsSiteTabContent';
-import { SettingsTeamAccessPanel } from './settings/SettingsTeamAccessPanel';
-import { SettingsDashboardShell } from './settings/SettingsDashboardShell';
-import { SettingsTabContent } from './settings/SettingsTabContent';
+import { SettingsDashboardRouteContent } from './settings/SettingsDashboardRouteContent';
 import { useSettingsAccountActions } from './settings/useSettingsAccountActions';
 import { useSettingsDashboardSupport } from './settings/useSettingsDashboardSupport';
 import { useSettingsSiteAccessActions } from './settings/useSettingsSiteAccessActions';
@@ -389,273 +375,142 @@ export const DashboardSettings: React.FC = () => {
   });
 
   return (
-    <SettingsDashboardShell
+    <SettingsDashboardRouteContent
+      accountEmail={accountEmail}
+      accountError={accountError}
+      accountSaving={accountSaving}
+      accountSuccess={accountSuccess}
       activeTab={activeTab}
+      billingError={billingError}
+      billingInfo={billingInfo}
+      billingLoading={billingLoading}
+      changingTemplate={changingTemplate}
+      collapsedQuestionIds={collapsedQuestionIds}
+      collaboratorInvites={collaboratorInvites}
+      confirmPassword={confirmPassword}
+      coupleNames={coupleNames}
+      creatingCollaboratorInvite={creatingCollaboratorInvite}
+      currentPassword={currentPassword}
+      currentTemplate={currentTemplate}
       defaultLanguage={defaultLanguage}
-      onTabChange={setActiveTab}
-      rsvpQuestionCount={rsvpQuestions.length}
+      guestAccessToken={guestAccessToken}
+      onAutoTranslateLanguage={handleAutoTranslateLanguage}
+      handleCopyCollaboratorInviteLink={handleCopyCollaboratorInviteLink}
+      handleCreateCollaboratorInvite={handleCreateCollaboratorInvite}
+      handleDefaultLanguageChange={handleDefaultLanguageChange}
+      handleLogout={handleLogout}
+      handleRegenerateToken={handleRegenerateToken}
+      handleRemovePlannerInvite={handleRemovePlannerInvite}
+      handleResendCollaboratorInvite={handleResendCollaboratorInvite}
+      handleRevokeCollaboratorInvite={handleRevokeCollaboratorInvite}
+      handleSaveAccount={handleSaveAccount}
+      handleSaveMusicPlaylist={handleSaveMusicPlaylist}
+      handleSaveNotifications={handleSaveNotifications}
+      handleSavePlannerInvite={handleSavePlannerInvite}
+      handleSavePrivacy={handleSavePrivacy}
+      handleSaveRsvpQuestions={handleSaveRsvpQuestions}
+      handleSubscribe={handleSubscribe}
+      handleTemplateChange={handleTemplateChange}
+      handleUpdatePassword={handleUpdatePassword}
+      handleUpdateSlug={handleUpdateSlug}
+      hideFromSearch={hideFromSearch}
+      musicPlaylistUrl={musicPlaylistUrl}
+      newPassword={newPassword}
+      notifDigest={notifDigest}
+      notifDraftMarkDirty={notifDraftGuard.markDirty}
+      notifError={notifError}
+      notifPhotos={notifPhotos}
+      notifRsvp={notifRsvp}
+      notifSaving={notifSaving}
+      notifSuccess={notifSuccess}
+      notifUpdates={notifUpdates}
+      onCopyIdentityManifest={copyIdentityManifest}
+      onCopyInviteLink={copyInviteLink}
+      onDownloadIdentityPrintPack={downloadIdentityPrintPack}
+      passwordError={passwordError}
+      passwordSaving={passwordSaving}
+      passwordSuccess={passwordSuccess}
+      plannerInvite={plannerInvite}
+      plannerInviteEmail={plannerInviteEmail}
+      plannerInviteError={plannerInviteError}
+      plannerInviteName={plannerInviteName}
+      plannerInvitePermissions={plannerInvitePermissions}
+      plannerInviteRole={plannerInviteRole}
+      plannerInviteSuccess={plannerInviteSuccess}
+      plannerRoleOptions={plannerRoleOptions}
+      privacyCopied={privacyCopied}
+      privacyMode={privacyMode}
+      publicSiteUrl={publicSiteUrl}
+      revokingCollaboratorInviteId={revokingCollaboratorInviteId}
+      rsvpDraftMarkDirty={rsvpDraftGuard.markDirty}
+      rsvpMealEnabled={rsvpMealEnabled}
+      rsvpMealOptions={rsvpMealOptions}
+      rsvpQuestions={rsvpQuestions}
+      rsvpQuestionsError={rsvpQuestionsError}
+      rsvpQuestionsSaving={rsvpQuestionsSaving}
+      rsvpQuestionsSuccess={rsvpQuestionsSuccess}
+      safeMusicPlaylistUrl={safeMusicPlaylistUrl}
+      saveRsvpSettings={saveRsvpSettings}
+      setActiveTab={setActiveTab}
+      setCollapsedQuestionIds={setCollapsedQuestionIds}
+      setConfirmPassword={setConfirmPassword}
+      setCoupleNames={setCoupleNames}
+      setCurrentPassword={setCurrentPassword}
+      setHideFromSearch={setHideFromSearch}
+      setMusicPlaylistUrl={setMusicPlaylistUrl}
+      setNewPassword={setNewPassword}
+      setNotifDigest={setNotifDigest}
+      setNotifPhotos={setNotifPhotos}
+      setNotifRsvp={setNotifRsvp}
+      setNotifUpdates={setNotifUpdates}
+      setPlannerInviteEmail={setPlannerInviteEmail}
+      setPlannerInviteName={setPlannerInviteName}
+      setPlannerInvitePermissions={setPlannerInvitePermissions}
+      setPlannerInviteRole={setPlannerInviteRole}
+      setPrivacyMode={setPrivacyMode}
+      setRsvpMealEnabled={setRsvpMealEnabled}
+      setRsvpMealOptions={setRsvpMealOptions}
+      setRsvpQuestions={setRsvpQuestions}
+      setShowAdvancedRsvp={setShowAdvancedRsvp}
+      setShowConfirmPw={setShowConfirmPw}
+      setShowCurrentPw={setShowCurrentPw}
+      setShowMealChoiceSettings={setShowMealChoiceSettings}
+      setShowNewPw={setShowNewPw}
+      setShowNotificationSettings={setShowNotificationSettings}
+      setShowPrivacySettings={setShowPrivacySettings}
+      setShowSitePassword={setShowSitePassword}
+      setShowTemplateSettings={setShowTemplateSettings}
+      setSitePassword={setSitePassword}
+      setSiteSlug={setSiteSlug}
       settingsRole={settingsRole}
+      showAdvancedRsvp={showAdvancedRsvp}
+      showConfirmPw={showConfirmPw}
+      showCurrentPw={showCurrentPw}
+      showMealChoiceSettings={showMealChoiceSettings}
+      showNewPw={showNewPw}
+      showNotificationSettings={showNotificationSettings}
+      showPrivacySettings={showPrivacySettings}
+      showSitePassword={showSitePassword}
+      showTemplateSettings={showTemplateSettings}
+      sitePassword={sitePassword}
+      siteSlug={siteSlug}
+      slugError={slugError}
+      slugSaving={slugSaving}
+      slugSuccess={slugSuccess}
+      subscribeError={subscribeError}
+      subscribeLoading={subscribeLoading}
       tabs={tabs}
-    >
-      <SettingsTabContent
-        activeTab={activeTab}
-        accountContent={(
-          <SettingsAccountPanel
-            coupleNames={coupleNames}
-            accountEmail={accountEmail}
-            accountSaving={accountSaving}
-            accountSuccess={accountSuccess}
-            accountError={accountError}
-            currentPassword={currentPassword}
-            newPassword={newPassword}
-            confirmPassword={confirmPassword}
-            showCurrentPw={showCurrentPw}
-            showNewPw={showNewPw}
-            showConfirmPw={showConfirmPw}
-            passwordSaving={passwordSaving}
-            passwordSuccess={passwordSuccess}
-            passwordError={passwordError}
-            onCoupleNamesChange={setCoupleNames}
-            onCurrentPasswordChange={setCurrentPassword}
-            onNewPasswordChange={setNewPassword}
-            onConfirmPasswordChange={setConfirmPassword}
-            onToggleCurrentPassword={() => setShowCurrentPw((value) => !value)}
-            onToggleNewPassword={() => setShowNewPw((value) => !value)}
-            onToggleConfirmPassword={() => setShowConfirmPw((value) => !value)}
-            onSaveAccount={handleSaveAccount}
-            onUpdatePassword={handleUpdatePassword}
-            onLogout={handleLogout}
-          />
-        )}
-        teamContent={(
-          <SettingsTeamAccessPanel
-            collaboratorInvites={collaboratorInvites}
-            creatingCollaboratorInvite={creatingCollaboratorInvite}
-            onCopyCollaboratorInviteLink={handleCopyCollaboratorInviteLink}
-            onCreateCollaboratorInvite={() => { void handleCreateCollaboratorInvite(); }}
-            onPlannerInviteEmailChange={setPlannerInviteEmail}
-            onPlannerInviteNameChange={setPlannerInviteName}
-            onPlannerInviteRoleChange={(nextRole) => {
-              setPlannerInviteRole(nextRole);
-              setPlannerInvitePermissions(getPlannerPermissionPreset(nextRole));
-            }}
-            onRemovePlannerInvite={handleRemovePlannerInvite}
-            onResendCollaboratorInvite={(inviteToken) => { void handleResendCollaboratorInvite(inviteToken); }}
-            onRevokeCollaboratorInvite={(inviteId) => { void handleRevokeCollaboratorInvite(inviteId); }}
-            onSavePlannerInvite={handleSavePlannerInvite}
-            onTogglePlannerPermission={togglePlannerPermission}
-            plannerInvite={plannerInvite}
-            plannerInviteEmail={plannerInviteEmail}
-            plannerInviteError={plannerInviteError}
-            plannerInviteName={plannerInviteName}
-            plannerInvitePermissions={plannerInvitePermissions}
-            plannerInviteRole={plannerInviteRole}
-            plannerInviteSuccess={plannerInviteSuccess}
-            plannerRoleOptions={plannerRoleOptions}
-            revokingCollaboratorInviteId={revokingCollaboratorInviteId}
-          />
-        )}
-        siteContent={(
-          <SettingsSiteTabContent
-            changingTemplate={changingTemplate}
-            currentTemplate={currentTemplate}
-            defaultLanguage={defaultLanguage}
-            guestAccessToken={guestAccessToken}
-            hideFromSearch={hideFromSearch}
-            onAutoTranslateLanguage={(language) => { void handleAutoTranslateLanguage(language); }}
-            onCopyIdentityManifest={() => { void copyIdentityManifest(); }}
-            onCopyInviteLink={copyInviteLink}
-            onDefaultLanguageChange={(language) => { void handleDefaultLanguageChange(language); }}
-            onDownloadIdentityPrintPack={downloadIdentityPrintPack}
-            onHideFromSearchChange={(checked) => {
-              visibilityDraftGuard.markDirty();
-              setHideFromSearch(checked);
-            }}
-            onPrivacyModeChange={(mode) => {
-              visibilityDraftGuard.markDirty();
-              setPrivacyMode(mode);
-            }}
-            onRegenerateToken={() => { void handleRegenerateToken(); }}
-            onSavePrivacy={handleSavePrivacy}
-            onSitePasswordChange={(value) => {
-              visibilityDraftGuard.markDirty();
-              setSitePassword(value);
-            }}
-            onSiteSlugChange={(value) => setSiteSlug(value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-            onSubmitSiteSlug={handleUpdateSlug}
-            onTemplateChange={(templateId) => { void handleTemplateChange(templateId); }}
-            onTogglePrivacySettings={() => setShowPrivacySettings((value) => !value)}
-            onToggleShowSitePassword={() => setShowSitePassword((value) => !value)}
-            onToggleTemplateSettings={() => setShowTemplateSettings((value) => !value)}
-            privacyCopied={privacyCopied}
-            privacyMode={privacyMode}
-            publicSiteUrl={publicSiteUrl}
-            showPrivacySettings={showPrivacySettings}
-            showSitePassword={showSitePassword}
-            showTemplateSettings={showTemplateSettings}
-            sitePassword={sitePassword}
-            siteSlug={siteSlug}
-            slugError={slugError}
-            slugSaving={slugSaving}
-            slugSuccess={slugSuccess}
-            templateError={templateError}
-            templateSuccess={templateSuccess}
-            translatingLanguage={translatingLanguage}
-            translationStatuses={translationStatuses}
-            visibilityError={visibilityError}
-            visibilitySaving={visibilitySaving}
-            visibilitySuccess={visibilitySuccess}
-            weddingIdentityExportKit={weddingIdentityExportKit}
-            weddingIdentityPrintAssets={weddingIdentityPrintAssets}
-          />
-        )}
-        rsvpContent={(
-          <SettingsRsvpTabContent
-            collapsedQuestionIds={collapsedQuestionIds}
-            mealOptions={rsvpMealOptions}
-            musicPlaylistUrl={musicPlaylistUrl}
-            onAddChoice={(questionId) => {
-              rsvpDraftGuard.markDirty();
-              setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, options: [...(item.options ?? []), ''] } : item));
-            }}
-            onAddMealOption={() => {
-              rsvpDraftGuard.markDirty();
-              setRsvpMealOptions((prev) => [...prev, '']);
-            }}
-            onAddQuestion={() => {
-              rsvpDraftGuard.markDirty();
-              const question = makeQuestion();
-              setRsvpQuestions((prev) => [...prev, question]);
-              setCollapsedQuestionIds((prev) => {
-                const next = new Set(prev);
-                next.delete(question.id);
-                return next;
-              });
-            }}
-            onAppliesToChange={(questionId, value) => {
-              rsvpDraftGuard.markDirty();
-              setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, appliesTo: value } : item));
-            }}
-            onMealChoiceEnabledChange={(enabled) => {
-              rsvpDraftGuard.markDirty();
-              setRsvpMealEnabled(enabled);
-            }}
-            onMealOptionChange={(index, value) => {
-              rsvpDraftGuard.markDirty();
-              setRsvpMealOptions((prev) => {
-                const next = [...prev];
-                next[index] = value;
-                return next;
-              });
-            }}
-            onMusicPlaylistUrlChange={setMusicPlaylistUrl}
-            onOpenPlaylist={() => {
-              if (safeMusicPlaylistUrl) {
-                window.open(safeMusicPlaylistUrl, '_blank', 'noopener,noreferrer');
-              }
-            }}
-            onPromptChange={(questionId, value) => {
-              rsvpDraftGuard.markDirty();
-              setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, label: value } : item));
-            }}
-            onRemoveChoice={(questionId, optionIndex) => {
-              rsvpDraftGuard.markDirty();
-              setRsvpQuestions((prev) => prev.map((item) => {
-                if (item.id !== questionId) return item;
-                const next = [...(item.options ?? [])];
-                next.splice(optionIndex, 1);
-                return { ...item, options: next };
-              }));
-            }}
-            onRemoveMealOption={(index) => {
-              rsvpDraftGuard.markDirty();
-              setRsvpMealOptions((prev) => prev.filter((_, optionIndex) => optionIndex !== index));
-            }}
-            onRemoveQuestion={(questionId) => {
-              rsvpDraftGuard.markDirty();
-              setRsvpQuestions((prev) => prev.filter((item) => item.id !== questionId));
-              setCollapsedQuestionIds((prev) => {
-                const next = new Set(prev);
-                next.delete(questionId);
-                return next;
-              });
-            }}
-            onRequiredChange={(questionId, checked) => {
-              rsvpDraftGuard.markDirty();
-              setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, required: checked } : item));
-            }}
-            onSaveMealSettings={() => { void saveRsvpSettings(); }}
-            onSaveMusicPlaylist={() => { void handleSaveMusicPlaylist(); }}
-            onSaveQuestions={handleSaveRsvpQuestions}
-            onToggleAdvancedVisibility={() => setShowAdvancedRsvp((value) => !value)}
-            onToggleCollapse={(questionId) => {
-              setCollapsedQuestionIds((prev) => {
-                const next = new Set(prev);
-                if (next.has(questionId)) next.delete(questionId);
-                else next.add(questionId);
-                return next;
-              });
-            }}
-            onToggleMealVisibility={() => setShowMealChoiceSettings((value) => !value)}
-            onTypeChange={(questionId, value) => {
-              rsvpDraftGuard.markDirty();
-              setRsvpQuestions((prev) => prev.map((item) => {
-                if (item.id !== questionId) return item;
-                if (value === 'single_choice' || value === 'multi_choice') {
-                  const current = item.options ?? [];
-                  return { ...item, type: value, options: current.length > 0 ? current : ['', ''] };
-                }
-                return { ...item, type: value, options: [] };
-              }));
-            }}
-            onUpdateChoice={(questionId, optionIndex, value) => {
-              rsvpDraftGuard.markDirty();
-              setRsvpQuestions((prev) => prev.map((item) => {
-                if (item.id !== questionId) return item;
-                const next = [...(item.options ?? [])];
-                next[optionIndex] = value;
-                return { ...item, options: next };
-              }));
-            }}
-            questions={rsvpQuestions}
-            rsvpMealEnabled={rsvpMealEnabled}
-            rsvpQuestionsError={rsvpQuestionsError}
-            rsvpQuestionsSaving={rsvpQuestionsSaving}
-            rsvpQuestionsSuccess={rsvpQuestionsSuccess}
-            safeMusicPlaylistUrl={safeMusicPlaylistUrl}
-            showAdvancedRsvp={showAdvancedRsvp}
-            showMealChoiceSettings={showMealChoiceSettings}
-          />
-        )}
-        notificationsContent={(
-          <SettingsNotificationsPanel
-            showNotificationSettings={showNotificationSettings}
-            notifRsvp={notifRsvp}
-            notifPhotos={notifPhotos}
-            notifDigest={notifDigest}
-            notifUpdates={notifUpdates}
-            notifSaving={notifSaving}
-            notifSuccess={notifSuccess}
-            notifError={notifError}
-            onToggleVisibility={() => setShowNotificationSettings((value) => !value)}
-            onRsvpChange={(value) => { notifDraftGuard.markDirty(); setNotifRsvp(value); }}
-            onPhotosChange={(value) => { notifDraftGuard.markDirty(); setNotifPhotos(value); }}
-            onDigestChange={(value) => { notifDraftGuard.markDirty(); setNotifDigest(value); }}
-            onUpdatesChange={(value) => { notifDraftGuard.markDirty(); setNotifUpdates(value); }}
-            onSaveNotifications={handleSaveNotifications}
-          />
-        )}
-        billingContent={(
-          <SettingsBillingPanel
-            billingInfo={billingInfo}
-            billingLoading={billingLoading}
-            billingError={billingError}
-            subscribeError={subscribeError}
-            subscribeLoading={subscribeLoading}
-            onSubscribe={handleSubscribe}
-          />
-        )}
-      />
-    </SettingsDashboardShell>
+      templateError={templateError}
+      templateSuccess={templateSuccess}
+      togglePlannerPermission={togglePlannerPermission}
+      translatingLanguage={translatingLanguage}
+      translationStatuses={translationStatuses}
+      visibilityDraftMarkDirty={visibilityDraftGuard.markDirty}
+      visibilityError={visibilityError}
+      visibilitySaving={visibilitySaving}
+      visibilitySuccess={visibilitySuccess}
+      weddingIdentityExportKit={weddingIdentityExportKit}
+      weddingIdentityPrintAssets={weddingIdentityPrintAssets}
+    />
   );
 };

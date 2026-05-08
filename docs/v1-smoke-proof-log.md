@@ -22,6 +22,22 @@ _Launch call right now:_ Not production-ready under the stricter P0/P1 standard.
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 09:46 AM PT No-Deploy Settings Route-Content Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Settings.tsx` now routes the owner-facing settings composition slab through `src/pages/dashboard/settings/SettingsDashboardRouteContent.tsx`.
+  - That new route-content component now owns the `SettingsDashboardShell` wrapper plus the `SettingsTabContent` handoff into account, team access, site, RSVP, notifications, and billing surfaces, including the local draft-dirty callbacks and panel-specific interaction wiring that belonged with the render lane.
+  - `src/pages/dashboard/settings/settingsSiteData.test.ts` now pins `<SettingsDashboardRouteContent`, checks that `SettingsDashboardRouteContent.tsx` owns the settings tab composition seam, and rejects regaining the old inline `SettingsTabContent` / `SettingsSiteTabContent` / `SettingsRsvpTabContent` slab in `Settings.tsx`.
+  - `src/lib/settingsErrorSafety.test.ts` now follows the same seam, keeping the tab-render boundary assertion on the route-content component instead of the page route.
+  - `src/pages/dashboard/Settings.tsx` dropped from 661 lines to 516 lines in this batch, while `src/pages/dashboard/settings/SettingsDashboardRouteContent.tsx` came in at 431 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts`: PASS, 18/18.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 09:38 AM PT No-Deploy Coordinator UI-State Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
