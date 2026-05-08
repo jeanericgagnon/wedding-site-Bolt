@@ -508,6 +508,7 @@ describe('dashboard data boundary guards', () => {
   it('keeps guest photo bucket persistence behind its service', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/GuestPhotoSharing.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotoSharingService.ts'), 'utf8');
+    const albumActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoAlbumActions.ts'), 'utf8');
     const reviewCardCount = source.match(/<GuestPhotoReviewCard/g)?.length ?? 0;
 
     expect(source).toContain('loadGuestPhotoDashboardSnapshot(userId)');
@@ -518,10 +519,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('await moveGuestPhotoUploadToBucket(siteId, move.uploadId, move.targetBucketId)');
     expect(source).toContain('await createGuestPhotoBucketCorrection(siteId, analysis, action, chosenBucketId, reason)');
     expect(source).toContain("await analyzeGuestPhotoUploads(siteId, uploadIds, force, force ? 'vision' : 'auto')");
-    expect(source).toContain('await createGuestPhotoAlbum({');
     expect(source).toContain('await exportGuestPhotoManifest(siteId, showHidden)');
     expect(source).toContain("await moderateGuestPhotoUploads(ids, { is_hidden: hide })");
-    expect(source).toContain("await manageGuestPhotoAlbum({ action: 'regenerate_link', albumId: bucket.id })");
+    expect(source).toContain('useGuestPhotoAlbumActions({');
     expect(source).toContain('resolveGuestPhotoDashboardUserId()');
     expect(source).toContain('refreshGuestPhotoSession()');
     expect(source).toContain('queueGuestPhotoFollowupsFromService(siteId, kind)');
@@ -547,6 +547,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('<GuestPhotoOrganizerCard');
     expect(source).toContain('<GuestPhotoReviewCard');
     expect(reviewCardCount).toBe(1);
+    expect(albumActions).toContain('await createGuestPhotoAlbum({');
+    expect(albumActions).toContain("await manageGuestPhotoAlbum({ action: 'regenerate_link', albumId: bucketId })");
+    expect(albumActions).toContain("await manageGuestPhotoAlbum({ action: 'set_window', albumId: bucketId, opensAt, closesAt })");
     expect(source).not.toContain('supabase.auth.getUser()');
     expect(source).not.toContain('supabase.auth.getSession()');
     expect(source).not.toContain('supabase.auth.refreshSession()');

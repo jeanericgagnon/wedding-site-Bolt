@@ -4596,6 +4596,23 @@ Status:
 - Status:
   - PARTIAL. This continues message dashboard ownership cleanup without changing collaborator behavior. No deploy was run.
 
+## 2026-05-08 12:49 AM PT No-Deploy Guest Photo Album Action Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now routes itinerary-album creation, moment-album creation, direct album creation, album activation/parenting/link regeneration, and upload-window saves through `src/pages/dashboard/guestPhotos/useGuestPhotoAlbumActions.ts`.
+  - That hook now owns the repeated owner album transport, upload-link persistence, and success/error choreography for those album-management actions while the page keeps the broader moderation and review workflow.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useGuestPhotoAlbumActions({ ... })` plus its `createGuestPhotoAlbum(...)`, `manageGuestPhotoAlbum({ action: 'regenerate_link' ... })`, and `manageGuestPhotoAlbum({ action: 'set_window' ... })` contract.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 1917 lines to 1750 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues guest photo dashboard ownership cleanup without changing collaborator behavior. No deploy was run.
+
 ## 2026-05-08 12:05 AM PT No-Deploy RSVP Guest-Lookup Transport Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

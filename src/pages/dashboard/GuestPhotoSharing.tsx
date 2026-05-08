@@ -10,9 +10,9 @@ import { mediaRepository } from '../../builder/services/mediaRepository';
 import { PhotoBucketKind } from '../../lib/aiPhotoBuckets';
 import { buildPhotoPlacementPlan } from '../../lib/aiPhotoPlacement';
 import { buildQuickStartOverviewPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
-import { parseDatetimeLocalToIso, toDatetimeLocalOrEmpty } from './guestPhotoDateTime';
+import { toDatetimeLocalOrEmpty } from './guestPhotoDateTime';
 import { formatGuestPhotoDate, formatGuestPhotoDateTime, getGuestPhotoSortTime, toGuestPhotoCsvTimestamp } from './guestPhotoUploadTime';
-import { formatGuestPhotoEventDate, getSuggestedGuestPhotoWindowStart } from './guestPhotoEventDate';
+import { formatGuestPhotoEventDate } from './guestPhotoEventDate';
 import { buildAiPhotoOpsPlan, type AiPhotoOpsPlan } from '../../lib/aiPhotoOps';
 import { copyTextOrDownload } from '../../lib/copyText';
 import { safeOptionalPhotoAnalysisText, safePhotoAnalysisList, safePhotoAnalysisText } from '../../lib/photoAnalysisCustomerCopy';
@@ -107,6 +107,7 @@ import { GuestPhotoReviewCard } from './guestPhotos/GuestPhotoReviewCard';
 import { GuestPhotoSlideshowCard } from './guestPhotos/GuestPhotoSlideshowCard';
 import { GuestPhotoSlideshowDraftCard } from './guestPhotos/GuestPhotoSlideshowDraftCard';
 import { GuestPhotoStatsCards } from './guestPhotos/GuestPhotoStatsCards';
+import { useGuestPhotoAlbumActions } from './guestPhotos/useGuestPhotoAlbumActions';
 
 export const GuestPhotoSharing: React.FC = () => {
   const location = useLocation();
@@ -1263,79 +1264,6 @@ export const GuestPhotoSharing: React.FC = () => {
     downloadTextFile('photo-album-links.csv', csv);
   };
 
-  const createMissingBucketsFromItinerary = async () => {
-    if (!siteId) return;
-    if (missingItineraryEvents.length === 0) {
-      setSuccess('All itinerary events already have albums.');
-      return;
-    }
-
-    try {
-      setBulkCreating(true);
-      setError(null);
-      setSuccess(null);
-
-      const created: string[] = [];
-      const links: Record<string, string> = {};
-
-      for (const event of missingItineraryEvents) {
-        const data = await createGuestPhotoAlbum({
-          siteId,
-          name: event.event_name,
-          itineraryEventId: event.id,
-        });
-        const createdAlbum = data?.album ?? data?.bucket;
-        if (createdAlbum?.id) {
-          created.push(event.event_name);
-          if (typeof data.uploadUrl === 'string' && data.uploadUrl) {
-            links[String(createdAlbum.id)] = data.uploadUrl;
-          }
-        }
-      }
-
-      if (Object.keys(links).length > 0) {
-        setBucketUploadLinks((prev) => ({ ...prev, ...links }));
-      }
-
-      await load();
-      setSuccess(`Created ${created.length} album${created.length === 1 ? '' : 's'} from itinerary events.`);
-    } catch (err: unknown) {
-      setError(safePhotoOwnerError(err, 'Couldn’t create itinerary albums yet.'));
-    } finally {
-      setBulkCreating(false);
-    }
-  };
-
-  const createMomentBucketFromSuggestion = async (suggestion: {
-    tag: string;
-    label: string;
-    eventId: string;
-    eventName: string;
-    parentBucket: PhotoBucketRow | null;
-  }) => {
-    if (!siteId) return;
-    try {
-      setSubmitting(true);
-      setError(null);
-      setSuccess(null);
-      const data = await createGuestPhotoAlbum({
-        siteId,
-        name: suggestion.label,
-        itineraryEventId: suggestion.eventId,
-        parentAlbumId: suggestion.parentBucket?.id ?? null,
-      });
-      const createdAlbum = data?.album ?? data?.bucket;
-      if (!createdAlbum?.id) throw new Error('Couldn’t create that moment album yet.');
-      const uploadUrl = (data.uploadUrl as string) ?? '';
-      if (uploadUrl) setBucketUploadLinks((prev) => ({ ...prev, [String(createdAlbum.id)]: uploadUrl }));
-      await load();
-      setSuccess(suggestion.parentBucket ? `Created ${suggestion.parentBucket.name} / ${suggestion.label}.` : `Created ${suggestion.label} from ${suggestion.eventName}.`);
-    } catch (err: unknown) {
-      setError(safePhotoOwnerError(err, 'Couldn’t create that moment album yet.'));
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const setUploadsHiddenByFilter = async (hide: boolean) => {
     const target = uploads.filter((u) => (showFlaggedOnly ? u.is_flagged : true) && (showHidden || !u.is_hidden));
@@ -1490,97 +1418,39 @@ export const GuestPhotoSharing: React.FC = () => {
     }
   };
 
-  const setBucketActive = async (bucketId: string, isActive: boolean) => {
-    try {
-      setWorkingBucketId(bucketId);
-      setError(null);
-      await manageGuestPhotoAlbum({ action: 'set_active', albumId: bucketId, isActive });
-      await load();
-      logPhotoAction(isActive ? 'bucket_activated' : 'bucket_paused', `${isActive ? 'Opened' : 'Paused'} a photo album.`, { isActive }, bucketId, bucketDisplayName(bucketById.get(bucketId)));
-    } catch (err: unknown) {
-      setError(safePhotoOwnerError(err, 'Couldn’t update album sharing yet.'));
-    } finally {
-      setWorkingBucketId('');
-    }
-  };
-
-  const setBucketParent = async (bucketId: string, nextParentAlbumId: string) => {
-    try {
-      setWorkingBucketId(bucketId);
-      setError(null);
-      await manageGuestPhotoAlbum({ action: 'set_parent', albumId: bucketId, parentAlbumId: nextParentAlbumId || null });
-      await load();
-      setSuccess(nextParentAlbumId ? 'Sub-album relationship saved.' : 'Album moved back to top level.');
-    } catch (err: unknown) {
-      setError(safePhotoOwnerError(err, 'Couldn’t update the album grouping yet.'));
-    } finally {
-      setWorkingBucketId('');
-    }
-  };
-
-  const regenerateLink = async (bucketId: string) => {
-    try {
-      setWorkingBucketId(bucketId);
-      setError(null);
-      setSuccess(null);
-      const data = await manageGuestPhotoAlbum({ action: 'regenerate_link', albumId: bucketId });
-      const uploadUrl = (data?.uploadUrl as string) ?? '';
-      setLatestUploadUrl(uploadUrl);
-      if (uploadUrl) {
-        setBucketUploadLinks((prev) => ({ ...prev, [bucketId]: uploadUrl }));
-      }
-      setSuccess('Album link refreshed. The previous link no longer accepts uploads.');
-      await load();
-    } catch (err: unknown) {
-      setError(safePhotoOwnerError(err, 'Couldn’t refresh that upload link yet.'));
-    } finally {
-      setWorkingBucketId('');
-    }
-  };
-
-  const applySuggestedWindow = (bucketId: string) => {
-    const bucket = buckets.find((a) => a.id === bucketId);
-    if (!bucket) return;
-
-    const event = events.find((e) => e.id === bucket.itinerary_event_id);
-    const baseDate = getSuggestedGuestPhotoWindowStart(event?.event_date);
-    const opens = baseDate;
-    const closes = new Date(baseDate.getTime() + 72 * 60 * 60 * 1000); // +72h
-
-    const toLocal = (d: Date) => {
-      const pad = (n: number) => String(n).padStart(2, '0');
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    };
-
-    setWindowDrafts((prev) => ({
-      ...prev,
-      [bucketId]: { opensAt: toLocal(opens), closesAt: toLocal(closes) },
-    }));
-  };
-
-  const saveWindow = async (bucketId: string) => {
-    try {
-      setWorkingBucketId(bucketId);
-      setError(null);
-      setSuccess(null);
-      const draft = windowDrafts[bucketId] ?? { opensAt: '', closesAt: '' };
-      const opensAt = parseDatetimeLocalToIso(draft.opensAt);
-      const closesAt = parseDatetimeLocalToIso(draft.closesAt);
-      if (opensAt === undefined || closesAt === undefined) {
-        throw new Error('Enter a clear open and close time.');
-      }
-      if (opensAt && closesAt && new Date(closesAt) <= new Date(opensAt)) {
-        throw new Error('Close time must be after open time.');
-      }
-      await manageGuestPhotoAlbum({ action: 'set_window', albumId: bucketId, opensAt, closesAt });
-      setSuccess('Upload window saved.');
-      await load();
-    } catch (err: unknown) {
-      setError(safePhotoOwnerError(err, 'Couldn’t save that upload window yet.'));
-    } finally {
-      setWorkingBucketId('');
-    }
-  };
+  const {
+    applySuggestedWindow,
+    createBucket,
+    createMissingBucketsFromItinerary,
+    createMomentBucketFromSuggestion,
+    regenerateLink,
+    saveWindow,
+    setBucketActive,
+    setBucketParent,
+  } = useGuestPhotoAlbumActions({
+    bucketById,
+    bucketDisplayName,
+    buckets,
+    events,
+    itineraryEventId,
+    load,
+    logPhotoAction,
+    missingItineraryEvents,
+    name,
+    parentAlbumId,
+    setBucketUploadLinks,
+    setBulkCreating,
+    setError,
+    setLatestUploadUrl,
+    setName,
+    setParentAlbumId,
+    setSubmitting,
+    setSuccess,
+    setWorkingBucketId,
+    setWindowDrafts,
+    siteId,
+    windowDrafts,
+  });
 
   const getBucketQrUrl = (uploadUrl: string) => `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(uploadUrl)}`;
   const openSafePublicUrl = (url: string | null | undefined) => {
@@ -1588,43 +1458,6 @@ export const GuestPhotoSharing: React.FC = () => {
     if (safeUrl) window.open(safeUrl, '_blank', 'noopener,noreferrer');
   };
   const openAppUrl = (url: string) => window.open(url, '_blank', 'noopener,noreferrer');
-
-  const createBucket = async () => {
-    if (!siteId) return;
-    if (!name.trim()) {
-      setError('Album name is required.');
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-      setError(null);
-      setSuccess(null);
-
-      const data = await createGuestPhotoAlbum({
-        siteId,
-        name: name.trim(),
-        itineraryEventId: itineraryEventId || null,
-        parentAlbumId: parentAlbumId || null,
-      });
-      const createdAlbum = data?.album ?? data?.bucket;
-      if (!createdAlbum?.id) throw new Error('Couldn’t create that album yet.');
-
-      const uploadUrl = (data.uploadUrl as string) ?? '';
-      setLatestUploadUrl(uploadUrl);
-      if (uploadUrl && createdAlbum.id) {
-        setBucketUploadLinks((prev) => ({ ...prev, [String(createdAlbum.id)]: uploadUrl }));
-      }
-      setSuccess(`Album "${createdAlbum.name ?? name.trim()}" created.`);
-      setName('');
-      setParentAlbumId('');
-      await load();
-    } catch (err: unknown) {
-      setError(safePhotoOwnerError(err, 'Couldn’t create that album yet.'));
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   return (
     <DashboardLayout currentPage="photos">
