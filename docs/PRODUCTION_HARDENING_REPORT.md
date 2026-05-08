@@ -5896,6 +5896,18 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 06:24 AM PT No-Deploy Registry Item-Actions Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Registry.tsx` now routes the registry item save, delete, and purchase-update lane through `src/pages/dashboard/registry/useRegistryItemActions.ts`.
+  - That hook now owns item create/edit save flow, direct-image validation and preview fallback hydration, demo/live item persistence, item delete, and owner purchase-status updates while the page keeps bootstrap, maintenance actions, refresh-policy saves, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useRegistryItemActions({ ... })`, checks that `useRegistryItemActions.ts` owns the registry item-action seam, and rejects regaining the old inline save/delete/purchase handlers in `Registry.tsx`.
+  - `src/pages/dashboard/Registry.tsx` dropped from 1021 lines to 823 lines in this batch, while `src/pages/dashboard/registry/useRegistryItemActions.ts` came in at 248 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 19/19.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 06:18 AM PT No-Deploy Registry Maintenance-Actions Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

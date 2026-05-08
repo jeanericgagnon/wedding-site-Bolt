@@ -594,6 +594,21 @@ describe('dashboard data boundary guards', () => {
     expect(hookSource).not.toContain("from '../../../lib/supabase'");
   });
 
+  it('routes registry item actions through a dedicated hook', () => {
+    const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Registry.tsx'), 'utf8');
+    const hookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/registry/useRegistryItemActions.ts'), 'utf8');
+
+    expect(source).toContain('useRegistryItemActions({');
+    expect(source).not.toContain('async function handleSave(draft: RegistryItemDraft) {');
+    expect(source).not.toContain('async function handleDelete(id: string) {');
+    expect(source).not.toContain('async function handleMarkPurchased(item: RegistryItem, qty: number) {');
+    expect(hookSource).toContain('async function handleSave(draft: RegistryItemDraft) {');
+    expect(hookSource).toContain('async function handleDelete(id: string) {');
+    expect(hookSource).toContain('async function handleMarkPurchased(item: RegistryItem, qty: number) {');
+    expect(hookSource).toContain("toast('Image URL must be a direct image file link");
+    expect(hookSource).not.toContain("from '../../../lib/supabase'");
+  });
+
   it('loads planning service rows with explicit projections', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/planningService.ts'), 'utf8');
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Planning.tsx'), 'utf8');

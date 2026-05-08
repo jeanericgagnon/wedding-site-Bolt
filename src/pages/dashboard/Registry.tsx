@@ -6,18 +6,12 @@ import { Card, Button, ActionsMenu } from '../../components/ui';
 import { Gift, Plus, CheckCircle2, DollarSign, Search, Package, Sparkles } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import {
-  createRegistryItem,
-  updateRegistryItem,
-  deleteRegistryItem,
-  ownerMarkPurchased,
-  fetchUrlPreview,
   saveRegistryRefreshPolicy,
   updateRegistryRefreshBudget,
 } from './registry/registryService';
 import { RegistryItemCard } from './registry/RegistryItemCard';
 import { RegistryItemForm } from './registry/RegistryItemForm';
 import type { RegistryItem, RegistryFilter, RegistryItemDraft } from './registry/registryTypes';
-import { sanitizeRegistryQuantityState } from './registry/registryTypes';
 import { getRegistryRepairStates } from './registry/repairState';
 import { getCurrentMonthKey, resolveRegistryRefreshBudgetState } from './registry/refreshBudget';
 import { ageExceedsMs, formatRegistryItemDate } from './registryItemTime';
@@ -26,6 +20,7 @@ import { logAppAction } from '../../lib/actionAudit';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import { normalizeOwnerDashboardRegistryItem, useRegistryDashboardData } from './registry/useRegistryDashboardData';
 import { buildRegistryDashboardDerivedState } from './registry/buildRegistryDashboardDerivedState';
+import { useRegistryItemActions } from './registry/useRegistryItemActions';
 import { useRegistryMaintenanceActions } from './registry/useRegistryMaintenanceActions';
 
 interface Toast {
@@ -62,25 +57,6 @@ const FILTER_TABS: { key: RegistryFilter; label: string }[] = [
   { key: 'available', label: 'Available' },
   { key: 'purchased', label: 'Purchased' },
 ];
-
-const DIRECT_IMAGE_HOST_HINTS = ['images-na.ssl-images-amazon.com', 'm.media-amazon.com', 'cdn', 'images'];
-const IMAGE_EXT_RE = /\.(png|jpe?g|webp|gif|avif|heic)(\?.*)?$/i;
-
-function normalizeRegistryImageUrl(raw: string): string | null {
-  const v = (raw || '').trim();
-  if (!v) return null;
-  try {
-    const u = new URL(v);
-    if (!['http:', 'https:'].includes(u.protocol)) return null;
-    const host = u.hostname.toLowerCase();
-    const path = u.pathname.toLowerCase();
-    if (IMAGE_EXT_RE.test(path)) return u.toString();
-    if (DIRECT_IMAGE_HOST_HINTS.some((h) => host.includes(h)) && !path.includes('/dp/')) return u.toString();
-    return null;
-  } catch {
-    return null;
-  }
-}
 
 export const DashboardRegistry: React.FC = () => {
   const { isDemoMode, user } = useAuth();
@@ -164,197 +140,6 @@ export const DashboardRegistry: React.FC = () => {
       targetLabel,
       metadata,
     });
-  }
-
-  async function handleSave(draft: RegistryItemDraft) {
-    if (!weddingSiteId) throw new Error('No wedding site found');
-
-    const parsedPrice = draft.price_amount ? parseFloat(draft.price_amount) : null;
-    const parsedGoal = draft.fund_goal_amount ? parseFloat(draft.fund_goal_amount) : null;
-    const parsedReceived = draft.fund_received_amount ? parseFloat(draft.fund_received_amount) : null;
-    const isCashFund = draft.item_type === 'cash_fund';
-
-    let normalizedImageUrl = isCashFund ? null : normalizeRegistryImageUrl(draft.image_url || '');
-    if (!isCashFund && !normalizedImageUrl && draft.item_url?.trim()) {
-      try {
-        const preview = await fetchUrlPreview(draft.item_url.trim(), false);
-        normalizedImageUrl = normalizeRegistryImageUrl(preview.image_url || '');
-      } catch {
-        // ignore preview fetch failures
-      }
-    }
-
-    if (!isCashFund && draft.image_url.trim() && !normalizedImageUrl) {
-      toast('Image URL must be a direct image file link (or leave it blank and we’ll auto-pull one).', 'error');
-      return;
-    }
-
-    const quantityState = sanitizeRegistryQuantityState(
-      editItem?.quantity_purchased ?? 0,
-      isCashFund ? 1 : (parseInt(draft.desired_quantity) || 1),
-    );
-
-    const fields: Partial<RegistryItem> = {
-      item_type: isCashFund ? 'cash_fund' : 'product',
-      item_name: draft.item_name.trim(),
-      price_label: null,
-      price_amount: isCashFund ? null : (parsedPrice !== null && !isNaN(parsedPrice) ? parsedPrice : null),
-      merchant: isCashFund ? null : (draft.merchant || null),
-      store_name: isCashFund ? null : (draft.merchant || null),
-      item_url: isCashFund ? null : (draft.item_url || null),
-      canonical_url: isCashFund ? null : (draft.canonical_url || draft.item_url || null),
-      image_url: normalizedImageUrl,
-      description: isCashFund ? null : (draft.description || null),
-      notes: draft.notes || draft.description || null,
-      quantity_needed: quantityState.quantityNeeded,
-      quantity_purchased: quantityState.quantityPurchased,
-      purchase_status: quantityState.purchaseStatus,
-      hide_when_purchased: isCashFund ? false : draft.hide_when_purchased,
-      availability: isCashFund ? null : (draft.availability || null),
-      metadata_fetch_status: isCashFund ? 'manual' : (draft.metadata_fetch_status || 'manual'),
-      metadata_confidence_score: isCashFund ? null : (draft.metadata_confidence_score ?? null),
-      metadata_source_method: isCashFund ? 'manual' : (draft.metadata_source_method ?? 'manual'),
-      metadata_retailer: isCashFund ? null : (draft.metadata_retailer || draft.merchant || null),
-      fund_goal_amount: parsedGoal !== null && !isNaN(parsedGoal) ? parsedGoal : null,
-      fund_received_amount: parsedReceived !== null && !isNaN(parsedReceived) ? parsedReceived : 0,
-      fund_venmo_url: draft.fund_venmo_url || null,
-      fund_paypal_url: draft.fund_paypal_url || null,
-      fund_zelle_handle: draft.fund_zelle_handle || null,
-      fund_custom_url: draft.fund_custom_url || null,
-      fund_custom_label: draft.fund_custom_label || null,
-      metadata_last_checked_at: new Date().toISOString(),
-      next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
-    };
-
-    if (isDemoMode) {
-      if (editItem) {
-        setItems(prev => prev.map(i => (i.id === editItem.id ? normalizeOwnerDashboardRegistryItem({ ...i, ...fields, updated_at: new Date().toISOString() }) : i)));
-        toast('Item updated');
-      } else {
-        const created: RegistryItem = {
-          id: `demo-registry-${Date.now()}`,
-          wedding_site_id: weddingSiteId,
-          item_type: (fields.item_type as 'product' | 'cash_fund') ?? 'product',
-          item_name: fields.item_name || 'Untitled item',
-          price_label: fields.price_label ?? null,
-          price_amount: fields.price_amount ?? null,
-          store_name: fields.store_name ?? null,
-          merchant: fields.merchant ?? null,
-          item_url: fields.item_url ?? null,
-          canonical_url: fields.canonical_url ?? null,
-          image_url: fields.image_url ?? null,
-          description: fields.description ?? null,
-          notes: fields.notes ?? null,
-          quantity_needed: fields.quantity_needed ?? 1,
-          quantity_purchased: 0,
-          purchaser_name: null,
-          purchase_status: 'available',
-          hide_when_purchased: fields.hide_when_purchased ?? false,
-          sort_order: items.length,
-          priority: 'medium',
-          availability: fields.availability ?? null,
-          metadata_last_checked_at: new Date().toISOString(),
-          metadata_fetch_status: fields.metadata_fetch_status ?? 'manual',
-          metadata_confidence_score: fields.metadata_confidence_score ?? null,
-          metadata_source_method: fields.metadata_source_method ?? 'manual',
-          metadata_retailer: fields.metadata_retailer ?? null,
-          previous_price_amount: null,
-          price_last_changed_at: null,
-          next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
-          last_auto_refreshed_at: null,
-          refresh_fail_count: 0,
-          fund_goal_amount: fields.fund_goal_amount ?? null,
-          fund_received_amount: fields.fund_received_amount ?? 0,
-          fund_venmo_url: fields.fund_venmo_url ?? null,
-          fund_paypal_url: fields.fund_paypal_url ?? null,
-          fund_zelle_handle: fields.fund_zelle_handle ?? null,
-          fund_custom_url: fields.fund_custom_url ?? null,
-          fund_custom_label: fields.fund_custom_label ?? null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        setItems(prev => [...prev, normalizeOwnerDashboardRegistryItem(created)]);
-        toast('Item added to registry');
-      }
-      setShowForm(false);
-      setEditItem(null);
-      return;
-    }
-
-    if (editItem) {
-      const updated = await updateRegistryItem(editItem.id, fields);
-      setItems(prev => prev.map(i => (i.id === updated.id ? normalizeOwnerDashboardRegistryItem(updated) : i)));
-      logRegistryAction('registry_item_updated', 'Registry item was updated.', {
-        itemType: updated.item_type ?? 'product',
-        hideWhenPurchased: updated.hide_when_purchased,
-        purchaseStatus: updated.purchase_status,
-        quantityNeeded: updated.quantity_needed,
-      }, updated.id, updated.item_name);
-      toast('Item updated');
-    } else {
-      const created = await createRegistryItem(weddingSiteId, fields);
-      setItems(prev => [...prev, normalizeOwnerDashboardRegistryItem(created)]);
-      logRegistryAction('registry_item_created', 'Registry item was created.', {
-        itemType: created.item_type ?? 'product',
-        hideWhenPurchased: created.hide_when_purchased,
-        purchaseStatus: created.purchase_status,
-        quantityNeeded: created.quantity_needed,
-      }, created.id, created.item_name);
-      toast('Item added to registry');
-    }
-
-    setShowForm(false);
-    setEditItem(null);
-  }
-
-  async function handleDelete(id: string) {
-    try {
-      const item = items.find((candidate) => candidate.id === id);
-      if (!isDemoMode) {
-        await deleteRegistryItem(id);
-      }
-      setItems(prev => prev.filter(i => i.id !== id));
-      logRegistryAction('registry_item_deleted', 'Registry item was deleted.', {
-        purchaseStatus: item?.purchase_status ?? null,
-        quantityPurchased: item?.quantity_purchased ?? null,
-        quantityNeeded: item?.quantity_needed ?? null,
-      }, id, item?.item_name || 'Registry item');
-      toast('Item removed');
-    } catch {
-      toast('Couldn’t remove that item. Please try again.', 'error');
-    }
-  }
-
-  async function handleMarkPurchased(item: RegistryItem, qty: number) {
-    try {
-      const updated = isDemoMode
-        ? (() => {
-            const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased + qty, item.quantity_needed);
-            return {
-              ...item,
-              quantity_needed: quantityState.quantityNeeded,
-              quantity_purchased: quantityState.quantityPurchased,
-              purchase_status: quantityState.purchaseStatus,
-              updated_at: new Date().toISOString(),
-            };
-          })()
-        : await ownerMarkPurchased(item.id, qty);
-
-      setItems(prev => prev.map(i => (i.id === updated.id ? normalizeOwnerDashboardRegistryItem(updated) : i)));
-      logRegistryAction('registry_purchase_marked', 'Registry purchase status was updated by the owner.', {
-        incrementBy: qty,
-        quantityPurchased: updated.quantity_purchased,
-        quantityNeeded: updated.quantity_needed,
-        purchaseStatus: updated.purchase_status,
-      }, updated.id, updated.item_name);
-      toast(
-        updated.purchase_status === 'purchased'
-          ? `"${item.item_name}" marked as fully purchased`
-          : `"${item.item_name}" updated — ${updated.quantity_purchased}/${updated.quantity_needed} purchased`
-      );
-    } catch {
-      toast('Couldn’t update purchase status. Please try again.', 'error');
-    }
   }
 
   async function handleSaveRefreshPolicy() {
@@ -498,6 +283,23 @@ export const DashboardRegistry: React.FC = () => {
     filter,
     showAlertsOnly,
     showImageIssuesOnly,
+  });
+
+  const {
+    handleDelete,
+    handleMarkPurchased,
+    handleSave,
+  } = useRegistryItemActions({
+    editItem,
+    isDemoMode,
+    items,
+    normalizeOwnerDashboardRegistryItem,
+    setEditItem,
+    setItems,
+    setShowForm,
+    toast,
+    logRegistryAction,
+    weddingSiteId,
   });
 
   const {

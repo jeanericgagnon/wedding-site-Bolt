@@ -10335,6 +10335,17 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 06:24 AM PT - Local registry item-actions extraction
+- Scope: `src/pages/dashboard/Registry.tsx`, `src/pages/dashboard/registry/useRegistryItemActions.ts`, `src/lib/dashboardDataBoundary.test.ts`.
+- What changed:
+  - moved registry item save, delete, and purchase-update handlers out of `Registry.tsx` and into `useRegistryItemActions.ts`
+  - kept create/edit save behavior, image-link validation and preview fallback, demo/live persistence, delete flow, and owner purchase updates intact
+  - added boundary coverage that pins `useRegistryItemActions({ ... })` and rejects regaining the old inline save/delete/purchase handlers in `Registry.tsx`
+- Validation:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts` PASS (`19/19`)
+  - `npm run typecheck -- --pretty false` PASS
+  - `git diff --check` PASS
+- Outcome: `Registry.tsx` dropped from `1021` lines to `823` lines; `useRegistryItemActions.ts` came in at `248` lines. No deploy was run.
 ## 2026-05-08 06:18 AM PT - Local registry maintenance-actions extraction
 - Scope: `src/pages/dashboard/Registry.tsx`, `src/pages/dashboard/registry/useRegistryMaintenanceActions.ts`, `src/lib/dashboardDataBoundary.test.ts`.
 - What changed:
