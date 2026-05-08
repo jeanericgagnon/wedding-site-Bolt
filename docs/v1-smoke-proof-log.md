@@ -7420,6 +7420,22 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-08 12:15 AM PT No-Deploy RSVP Token-Lookup Lifecycle Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes token invitation lookup execution through `src/pages/runRsvpTokenLookup.ts`.
+  - That shared helper now owns the token transport call, token result application via `applyTokenRsvpLookupResult(...)`, preserve-visible-state fallback, and token lookup finalization while the page keeps token preflight and continuity scheduling local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `runRsvpTokenLookup(...)` so the main RSVP page keeps routing token lookup execution through the dedicated helper.
+  - `src/pages/RSVP.tsx` dropped from 1161 lines to 1146 lines in this batch, while `src/pages/runRsvpTokenLookup.ts` came in at 113 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 11:49 PM PT No-Deploy RSVP Token-Lookup Preflight Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

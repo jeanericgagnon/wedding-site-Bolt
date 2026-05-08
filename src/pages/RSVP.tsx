@@ -40,7 +40,6 @@ import { buildRsvpPageViewModel } from './buildRsvpPageViewModel';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { buildRsvpLiveContentViewProps } from './buildRsvpLiveContentViewProps';
 import { lookupRsvpGuest } from './lookupRsvpGuest';
-import { lookupRsvpToken } from './lookupRsvpToken';
 import { callValidateRsvpToken } from './rsvpFunctionService';
 import { prepareRsvpTokenLookupState } from './prepareRsvpTokenLookupState';
 import { resetRsvpLookupFlow } from './resetRsvpLookupFlow';
@@ -50,6 +49,7 @@ import { RsvpPageRouteView } from './RsvpPageRouteView';
 import { submitRsvpResponse } from './submitRsvpResponse';
 import { validateRsvpFormAdvance } from './validateRsvpFormAdvance';
 import { validateRsvpSubmitReadiness } from './validateRsvpSubmitReadiness';
+import { runRsvpTokenLookup } from './runRsvpTokenLookup';
 
 export { normalizeRsvpGuestError, normalizeRsvpSubmitError } from './rsvpTypes';
 
@@ -589,48 +589,33 @@ export default function RSVP() {
       return;
     }
     const { requestId, shouldPreserveVisibleState } = lookupState;
-    lookupRsvpToken({
+    runRsvpTokenLookup({
+      activeLookupRequestRef,
+      applyTokenRsvpLookupResult,
       callValidateRsvpToken,
       demoLookup,
+      loadInFlightRef,
+      normalizeRsvpGuestError,
+      requestId,
+      selectGuest,
+      setAmbiguousGuests,
+      setApplyToHousehold,
+      setError,
+      setHouseholdGuests,
+      setLoadCycle,
+      setMealConfig,
+      setMusicPlaylistUrl,
+      setRsvpDeadline,
+      setRsvpQuestions,
+      setSelectedHouseholdGuestIds,
+      setStep,
+      setTokenAutoLoading,
+      shouldPreserveVisibleState,
       token,
+      tokenLinkedSessionRef,
       useDemoRsvp: USE_DEMO_RSVP,
     })
-      .then(({ data, error: err }) => {
-        if (activeLookupRequestRef.current !== requestId) return;
-        applyTokenRsvpLookupResult({
-          data,
-          error: err,
-          normalizeRsvpGuestError,
-          selectGuest,
-          setAmbiguousGuests,
-          setApplyToHousehold,
-          setError,
-          setHouseholdGuests,
-          setMealConfig,
-          setMusicPlaylistUrl,
-          setRsvpDeadline,
-          setRsvpQuestions,
-          setSelectedHouseholdGuestIds,
-          setStep,
-          shouldPreserveVisibleState,
-          tokenLinkedSessionRef,
-        });
-      })
-      .catch(() => {
-        if (activeLookupRequestRef.current !== requestId) return;
-        if (shouldPreserveVisibleState) {
-          tokenLinkedSessionRef.current = true;
-          return;
-        }
-        tokenLinkedSessionRef.current = false;
-        setError(RSVP_LOOKUP_ERROR_COPY);
-      })
-      .finally(() => {
-        if (activeLookupRequestRef.current !== requestId) return;
-        loadInFlightRef.current = false;
-        setTokenAutoLoading(false);
-        setLoadCycle((cycle) => cycle + 1);
-      });
+      .catch(() => undefined);
   }, []);
 
   const refreshTokenLinkedRsvpForContinuity = useCallback(() => {
