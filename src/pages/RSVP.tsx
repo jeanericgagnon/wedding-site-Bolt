@@ -46,6 +46,7 @@ import { resetRsvpLookupFlow } from './resetRsvpLookupFlow';
 import { resetRsvpPageState } from './resetRsvpPageState';
 import { restoreLoadedRsvpState } from './restoreLoadedRsvpState';
 import { RsvpPageRouteView } from './RsvpPageRouteView';
+import { runRsvpGuestLookup } from './runRsvpGuestLookup';
 import { submitRsvpResponse } from './submitRsvpResponse';
 import { validateRsvpFormAdvance } from './validateRsvpFormAdvance';
 import { validateRsvpSubmitReadiness } from './validateRsvpSubmitReadiness';
@@ -704,39 +705,29 @@ export default function RSVP() {
       setStep,
       setSubmitting,
     });
-
-    try {
-      const lookupResp = await lookupRsvpGuest({
-        callValidateRsvpToken,
-        demoLookup,
-        searchValue,
-        useDemoRsvp: USE_DEMO_RSVP,
-      });
-      if (activeLookupRequestRef.current !== requestId) return;
-      applyManualRsvpLookupResult({
-        data: lookupResp.data,
-        error: lookupResp.error,
-        normalizeRsvpGuestError,
-        selectGuest,
-        setAmbiguousGuests,
-        setApplyToHousehold,
-        setError,
-        setHouseholdGuests,
-        setMealConfig,
-        setMusicPlaylistUrl,
-        setRsvpDeadline,
-        setRsvpQuestions,
-        setSelectedHouseholdGuestIds,
-        setStep,
-      });
-    } catch {
-      if (activeLookupRequestRef.current !== requestId) return;
-      setError('Something interrupted the search. Please try again.');
-    } finally {
-      if (activeLookupRequestRef.current === requestId) {
-        setLoading(false);
-      }
-    }
+    await runRsvpGuestLookup({
+      activeLookupRequestRef,
+      applyManualRsvpLookupResult,
+      callValidateRsvpToken,
+      demoLookup,
+      lookupSource: 'search',
+      normalizeRsvpGuestError,
+      requestId,
+      searchValue,
+      selectGuest,
+      setAmbiguousGuests,
+      setApplyToHousehold,
+      setError,
+      setHouseholdGuests,
+      setLoading,
+      setMealConfig,
+      setMusicPlaylistUrl,
+      setRsvpDeadline,
+      setRsvpQuestions,
+      setSelectedHouseholdGuestIds,
+      setStep,
+      useDemoRsvp: USE_DEMO_RSVP,
+    });
   };
 
   function selectGuest(
@@ -812,40 +803,31 @@ export default function RSVP() {
       setStep,
       setSubmitting,
     });
-    try {
-      const lookupResp = await lookupRsvpGuest({
-        callValidateRsvpToken,
-        demoLookup,
-        guestId: picked.id,
-        rsvpSessionToken,
-        useDemoRsvp: USE_DEMO_RSVP,
-      });
-      if (activeLookupRequestRef.current !== requestId) return;
-      applyManualRsvpLookupResult({
-        data: lookupResp.data,
-        error: lookupResp.error,
-        fallbackGuest: picked,
-        normalizeRsvpGuestError,
-        selectGuest,
-        setAmbiguousGuests,
-        setApplyToHousehold,
-        setError,
-        setHouseholdGuests,
-        setMealConfig,
-        setMusicPlaylistUrl,
-        setRsvpDeadline,
-        setRsvpQuestions,
-        setSelectedHouseholdGuestIds,
-        setStep,
-      });
-    } catch {
-      if (activeLookupRequestRef.current !== requestId) return;
-      selectGuest(picked, null, null, [], DEFAULT_MEAL_CONFIG, [], null);
-    } finally {
-      if (activeLookupRequestRef.current === requestId) {
-        setLoading(false);
-      }
-    }
+    await runRsvpGuestLookup({
+      activeLookupRequestRef,
+      applyManualRsvpLookupResult,
+      callValidateRsvpToken,
+      demoLookup,
+      fallbackGuest: picked,
+      guestId: picked.id,
+      lookupSource: 'pick',
+      normalizeRsvpGuestError,
+      requestId,
+      rsvpSessionToken,
+      selectGuest,
+      setAmbiguousGuests,
+      setApplyToHousehold,
+      setError,
+      setHouseholdGuests,
+      setLoading,
+      setMealConfig,
+      setMusicPlaylistUrl,
+      setRsvpDeadline,
+      setRsvpQuestions,
+      setSelectedHouseholdGuestIds,
+      setStep,
+      useDemoRsvp: USE_DEMO_RSVP,
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
