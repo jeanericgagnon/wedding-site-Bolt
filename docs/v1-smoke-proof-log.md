@@ -7388,6 +7388,21 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 9:35 PM PT No-Deploy RSVP Route Shell Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its token-linked invitation loading state plus “Enter invitation code instead” fallback through `src/pages/RsvpRouteView.tsx`.
+  - That higher-level route shell now owns the token-auto-loading vs live RSVP content split while the page keeps the invitation search, picked-guest lookup, household RSVP editing, and submit flow local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpRouteView` so the RSVP page keeps routing through the dedicated route shell.
+  - `src/pages/RSVP.tsx` stayed effectively flat in this batch, while `src/pages/RsvpRouteView.tsx` came in at 13 lines; this was primarily a boundary cleanup rather than a file-size win.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 9:13 PM PT No-Deploy Site View Route Shell Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

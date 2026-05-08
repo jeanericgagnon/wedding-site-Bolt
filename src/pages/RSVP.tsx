@@ -37,6 +37,7 @@ import {
 } from './rsvpDemoStorage';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { callValidateRsvpToken } from './rsvpFunctionService';
+import { RsvpRouteView } from './RsvpRouteView';
 
 export { normalizeRsvpGuestError, normalizeRsvpSubmitError } from './rsvpTypes';
 
@@ -1151,25 +1152,23 @@ export default function RSVP() {
   );
   const isSearchStep = step === 'search';
 
-  if (tokenAutoLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <div className="w-12 h-12 border-4 border-gray-200 border-t-gray-500 rounded-full animate-spin mx-auto" />
-          <p className="text-gray-500 text-sm">Loading your invitation…</p>
-          <button
-            type="button"
-            onClick={() => resetToSearch(false)}
-            className="text-sm text-gray-500 hover:text-gray-700"
-          >
-            Enter invitation code instead
-          </button>
-        </div>
+  const tokenAutoLoadingView = (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center space-y-3">
+        <div className="w-12 h-12 border-4 border-gray-200 border-t-gray-500 rounded-full animate-spin mx-auto" />
+        <p className="text-gray-500 text-sm">Loading your invitation…</p>
+        <button
+          type="button"
+          onClick={() => resetToSearch(false)}
+          className="text-sm text-gray-500 hover:text-gray-700"
+        >
+          Enter invitation code instead
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
 
-  return (
+  const liveContent = (
     <div className="min-h-screen overflow-hidden bg-background">
       <OwnerPreviewBanner />
       <div className="relative z-10 flex justify-end px-6 pt-4">
@@ -1943,5 +1942,13 @@ export default function RSVP() {
         )}
       </div>
     </div>
+  );
+
+  return (
+    <RsvpRouteView
+      tokenAutoLoading={tokenAutoLoading}
+      tokenAutoLoadingView={tokenAutoLoadingView}
+      liveContent={liveContent}
+    />
   );
 }

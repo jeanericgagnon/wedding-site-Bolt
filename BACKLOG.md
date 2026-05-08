@@ -2073,3 +2073,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/EventRSVP.test.tsx` now pin `EventRsvpRouteView` so the event RSVP page keeps routing through the shared route shell instead of hand-owning the loading/error split.
   - Validation passed: `npm test -- --run src/pages/EventRSVP.test.tsx src/pages/rsvpFunctionService.test.ts src/lib/publicGuestSurfaceBoundary.test.ts` (10/10), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 public-surface route risk in `EventRSVP` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 9:35 PM PT - No-deploy RSVP route-shell extraction:
+  - Resolved in this batch: moved the guest RSVP token-auto-loading invitation shell out of `src/pages/RSVP.tsx` and behind `src/pages/RsvpRouteView.tsx`.
+  - Data-boundary hardening: `RSVP.tsx` now routes its token-linked loading spinner plus fallback “Enter invitation code instead” affordance through one higher-level route view while keeping the main RSVP search and form flow explicit and local.
+  - File-size movement: `RSVP.tsx` stayed effectively flat in this continuation batch while `src/pages/RsvpRouteView.tsx` came in at 13 lines; this was an ownership cleanup more than a size win.
+  - No feature loss: invitation lookup, picked-guest follow-up lookup, household RSVP editing, continuity refresh behavior, and submit flow preserve the current guest behavior while shrinking page-owned route branching.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `RsvpRouteView` so the RSVP page keeps routing through the shared route shell instead of hand-owning the token-loading split.
+  - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 public-surface route risk in `RSVP` without changing guest-facing behavior. No deploy was run.

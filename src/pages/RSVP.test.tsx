@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import React from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -45,9 +47,19 @@ describe('RSVP stale submit protection', () => {
     vi.unstubAllGlobals();
   });
 
+  it('routes token auto-loading through the shared RSVP route view', () => {
+    const rsvpPage = readFileSync(join(process.cwd(), 'src/pages/RSVP.tsx'), 'utf8');
+    const routeView = readFileSync(join(process.cwd(), 'src/pages/RsvpRouteView.tsx'), 'utf8');
+
+    expect(rsvpPage).toContain("from './RsvpRouteView'");
+    expect(rsvpPage).toContain('<RsvpRouteView');
+    expect(routeView).toContain('if (tokenAutoLoading) return <>{tokenAutoLoadingView}</>;');
+  });
+
   it('sanitizes internal RSVP lookup and submit errors before showing guest copy', () => {
     expect(normalizeRsvpGuestError('missing-config')).toBe('Invitation not recognized. Please use the private RSVP link or code from your invitation.');
     expect(normalizeRsvpGuestError('permission denied for table guests')).toBe('Invitation not recognized. Please use the private RSVP link or code from your invitation.');
+    expect(normalizeRsvpGuestError('Google OAuth service_role api-key refresh failed')).toBe('Invitation not recognized. Please use the private RSVP link or code from your invitation.');
     expect(normalizeRsvpSubmitError('Failed to submit RSVP. Please try again.')).toBe('Couldn’t send your RSVP. Please try again.');
     expect(normalizeRsvpSubmitError('request failed at functions/v1/validate-rsvp-token')).toBe('Couldn’t send your RSVP. Please try again.');
     expect(normalizeRsvpGuestError('The RSVP deadline has passed.')).toBe('The RSVP deadline has passed.');
