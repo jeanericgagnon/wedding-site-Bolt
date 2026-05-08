@@ -34,6 +34,21 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 09:50 AM PT No-Deploy Overview Dashboard Data-Hook Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Overview.tsx` now routes the overview dashboard bootstrap and local snapshot lane through `src/pages/dashboard/useOverviewDashboardData.ts`.
+  - That hook now owns demo/live snapshot loading, setup-draft progress refresh, draft brief hydration, persisted dismissal merge, name-change workspace snapshot restore, recent builder revision loading, and interactive suggestion hydration while the route keeps intelligence actions, dashboard modeling, checklist shaping, and navigation.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useOverviewDashboardData({ ... })`, checks that `useOverviewDashboardData.ts` owns the overview snapshot and interactive suggestion seam, and rejects regaining the old inline `loadOverviewDashboardSnapshot(...)`, `loadOverviewInteractiveData(...)`, and overview state slab in `Overview.tsx`.
+  - `src/pages/dashboard/Overview.tsx` dropped from 319 lines to 195 lines in this batch, while `src/pages/dashboard/useOverviewDashboardData.ts` came in at 205 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 09:46 AM PT No-Deploy Settings Route-Content Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
