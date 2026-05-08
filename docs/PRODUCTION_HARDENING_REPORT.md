@@ -4121,3 +4121,19 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the oversized-file and page-boundary cleanup in the guest dashboard without changing segment/filter behavior. No deploy was run.
+
+## 2026-05-07 8:37 PM PT No-Deploy Guest Dashboard Engagement Shell Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the guest engagement controls stack through `src/pages/dashboard/guests/GuestEngagementControlsPanel.tsx`.
+  - That higher-level shell now owns the page composition seam for `GuestOpsToolbar`, `GuestCampaignReminderPanel`, and `GuestSegmentControlsPanel`.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `GuestEngagementControlsPanel` and rejects regaining the old inline engagement stack in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` dropped from 2560 lines to 2545 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts`: PASS, 46/46.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the oversized-file and page-boundary cleanup in the guest dashboard without changing engagement controls behavior. No deploy was run.

@@ -75,13 +75,11 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('markGuestInvitationAndReminderSentForSite(currentWeddingSiteId, guest.id, sentAtIso)');
     expect(source).toContain('markGuestReminderSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString())');
     expect(source).toContain('<GuestDashboardHeader');
-    expect(source).toContain('<GuestOpsToolbar');
+    expect(source).toContain('<GuestEngagementControlsPanel');
     expect(source).toContain('<GuestListDisplaySwitcher');
     expect(source).toContain('<GuestRsvpSettingsView');
     expect(source).toContain('<GuestSnapshotInsightsPanel');
     expect(source).toContain('<GuestRsvpConflictPanels');
-    expect(source).toContain('<GuestCampaignReminderPanel');
-    expect(source).toContain('<GuestSegmentControlsPanel');
     expect(source).toContain('<GuestOpsSummaryPanel');
     expect(source).toContain('<GuestDashboardOverlays');
     expect(source).toContain('useGuestDashboardExports({');
@@ -172,6 +170,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('const exportEventAttendanceCSV = () => {');
     expect(source).not.toContain('async function copyContactRequestLink() {');
     expect(source).not.toContain('const copySmsRsvpLinksForFiltered = async () => {');
+    expect(source).not.toContain('<GuestOpsToolbar');
+    expect(source).not.toContain('<GuestCampaignReminderPanel');
+    expect(source).not.toContain('<GuestSegmentControlsPanel');
     expect(source).not.toContain('Active segment: <span className="font-semibold text-text-primary">');
     expect(source).not.toContain('Some guests have RSVP details that are worth reviewing personally.');
     expect(source).not.toContain('These guests have no email or phone. Add contact info before reminder campaigns.');

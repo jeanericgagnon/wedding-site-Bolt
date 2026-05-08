@@ -1921,3 +1921,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins `GuestSegmentControlsPanel` and rejects regaining the old inline segment/banner copy.
   - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts` (46/46), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest dashboard without changing guest operations behavior. No deploy was run.
+- 2026-05-07 8:37 PM PT - No-deploy Guest dashboard engagement-shell extraction:
+  - Resolved in this batch: moved the guest dashboard engagement controls stack out of `src/pages/dashboard/Guests.tsx` and behind `src/pages/dashboard/guests/GuestEngagementControlsPanel.tsx`.
+  - Data-boundary hardening: `Guests.tsx` now routes `GuestOpsToolbar`, `GuestCampaignReminderPanel`, and `GuestSegmentControlsPanel` through one higher-level guest shell instead of composing those three sections inline.
+  - File-size movement: `Guests.tsx` dropped from 2560 lines to 2545 lines in this continuation batch.
+  - No feature loss: guest exports/imports, reminder campaign controls, auto-reminder toggles, segment focus actions, filter banners, and check-in/selection controls preserve the current behavior while shrinking page-owned composition.
+  - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins `GuestEngagementControlsPanel` and rejects regaining the old inline engagement stack.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts` (46/46), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest dashboard without changing guest operations behavior. No deploy was run.
