@@ -43,7 +43,6 @@ import { buildGuestDashboardViewProps } from './guests/buildGuestDashboardViewPr
 import { GuestDashboardRouteView } from './guests/GuestDashboardRouteView';
 import {
   type Guest,
-  type GuestWithRSVP,
   type ItineraryEvent,
 } from './guests/guestDashboardTypes';
 import {
@@ -53,20 +52,6 @@ import {
   csvColumnLetter,
   GUEST_SEGMENT_LABELS,
 } from './guests/guestDashboardUtils';
-import {
-  readStoredCampaignLog,
-  readStoredCampaignPreset,
-  readStoredFollowUpTasks,
-  readStoredSavedSegments,
-  writeStoredCampaignLog,
-  writeStoredCampaignPreset,
-  writeStoredFollowUpTasks,
-  writeStoredSavedSegments,
-  type RsvpCampaignLogEntry,
-  type RsvpCampaignPreset,
-  type RsvpFollowUpTask,
-  type RsvpSavedSegment,
-} from './guests/guestDashboardStorage';
 import {
   fetchGuestRsvps,
   generateSecureGuestInviteToken,
@@ -84,6 +69,7 @@ import { useGuestDashboardCrudActions } from './guests/useGuestDashboardCrudActi
 import { useGuestDashboardGuestDetailActions } from './guests/useGuestDashboardGuestDetailActions';
 import { useGuestDashboardOpsActions } from './guests/useGuestDashboardOpsActions';
 import { useGuestDashboardRsvpConfigActions } from './guests/useGuestDashboardRsvpConfigActions';
+import { useGuestDashboardUiState } from './guests/useGuestDashboardUiState';
 import { useGuestDashboardExports } from './guests/useGuestDashboardExports';
 
 export const DashboardGuests: React.FC = () => {
@@ -107,24 +93,69 @@ export const DashboardGuests: React.FC = () => {
         },
       });
     });
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'declined' | 'pending' | 'checked-in' | 'thank-you-due' | 'due-reminder' | 'missing-address' | 'ceremony-no' | 'reception-no' | 'missing-meal' | 'plusone-missing' | 'pending-no-email' | 'manual-follow-up' | 'manual-handled' | 'no-contact'>('all');
-  const [extraFilters, setExtraFilters] = useState<string[]>([]);
-  const [extraFilterDraft, setExtraFilterDraft] = useState<string>('');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingGuest, setEditingGuest] = useState<GuestWithRSVP | null>(null);
-  const [campaignLog, setCampaignLog] = useState<RsvpCampaignLogEntry[]>([]);
-  const [showRecipientPreview, setShowRecipientPreview] = useState(false);
-  const [campaignPreset, setCampaignPreset] = useState<RsvpCampaignPreset>('pending');
-  const [followUpTasks, setFollowUpTasks] = useState<RsvpFollowUpTask[]>([]);
-  const [sortByPriority, setSortByPriority] = useState(false);
-  const [savedSegments, setSavedSegments] = useState<RsvpSavedSegment[]>([]);
-  const [guestsTab, setGuestsTab] = useState<'ops' | 'rsvp-config'>('ops');
-  const [conflictFilter, setConflictFilter] = useState<'all' | 'error' | 'warning'>('all');
   const rsvpConfigLoadedRef = useRef(false);
-  const [skipRecentlyInvited, setSkipRecentlyInvited] = useState(true);
-  const [reminderCadenceDays, setReminderCadenceDays] = useState<1 | 3 | 7>(3);
-  const [autoRemindersEnabled, setAutoRemindersEnabled] = useState(false);
+  const {
+    autoRemindersEnabled,
+    campaignLog,
+    campaignPreset,
+    checkInMode,
+    confirmDeleteId,
+    conflictFilter,
+    deleteAllBusy,
+    deleteAllConfirmInput,
+    deletingGuestId,
+    editingGuest,
+    extraFilters,
+    filterStatus,
+    followUpTasks,
+    formData,
+    formEventInviteIds,
+    guestsTab,
+    reminderCadenceDays,
+    savedSegments,
+    searchQuery,
+    selectedGuestIds,
+    setAutoRemindersEnabled,
+    setCampaignLog,
+    setCampaignPreset,
+    setCheckInMode,
+    setConfirmDeleteId,
+    setConflictFilter,
+    setDeleteAllBusy,
+    setDeleteAllConfirmInput,
+    setDeletingGuestId,
+    setEditingGuest,
+    setExtraFilters,
+    setFilterStatus,
+    setFollowUpTasks,
+    setFormData,
+    setFormEventInviteIds,
+    setGuestsTab,
+    setReminderCadenceDays,
+    setSavedSegments,
+    setSearchQuery,
+    setSelectedGuestIds,
+    setShowAddModal,
+    setShowCampaignModal,
+    setShowConflictDetails,
+    setShowDeleteAllModal,
+    setShowInsights,
+    setShowOpsMenu,
+    setShowRecipientPreview,
+    setSkipRecentlyInvited,
+    setSortByPriority,
+    setViewMode,
+    showAddModal,
+    showCampaignModal,
+    showConflictDetails,
+    showDeleteAllModal,
+    showInsights,
+    showOpsMenu,
+    showRecipientPreview,
+    skipRecentlyInvited,
+    sortByPriority,
+    viewMode,
+  } = useGuestDashboardUiState();
   const {
     eventInviteGuestMap,
     fetchGuests,
@@ -162,7 +193,22 @@ export const DashboardGuests: React.FC = () => {
     userId: user?.id ?? null,
   });
   const isGuestsReadOnly = !canManageGuests(guestsRole, guestsPermissions);
-  const [showConflictDetails, setShowConflictDetails] = useState(false);
+  useEffect(() => {
+    try {
+      const rawRole = readPlannerAccessRole('guests', weddingSiteId ?? 'global');
+      if (rawRole) setGuestsRole(rawRole);
+    } catch {
+      // noop
+    }
+  }, [setGuestsRole, weddingSiteId]);
+
+  useEffect(() => {
+    try {
+      writePlannerAccessRole('guests', weddingSiteId ?? 'global', guestsRole);
+    } catch {
+      // noop
+    }
+  }, [guestsRole, weddingSiteId]);
   const effectiveItineraryEvents = useMemo<ItineraryEvent[]>(() => {
     if (itineraryFilterEvents.length > 0) return itineraryFilterEvents;
     return [
@@ -221,72 +267,7 @@ export const DashboardGuests: React.FC = () => {
       metadata,
     });
   };
-
-
-  useEffect(() => {
-    const preset = readStoredCampaignPreset();
-    if (preset) {
-      setCampaignPreset(preset);
-      setFilterStatus(preset);
-    }
-    setFollowUpTasks(readStoredFollowUpTasks());
-    setSavedSegments(readStoredSavedSegments());
-
-    try {
-      const rawRole = readPlannerAccessRole('guests', weddingSiteId ?? 'global');
-      if (rawRole) setGuestsRole(rawRole);
-    } catch {
-      // noop
-    }
-  }, [weddingSiteId]);
-
-  useEffect(() => {
-    writeStoredCampaignPreset(campaignPreset);
-  }, [campaignPreset]);
-
-  useEffect(() => {
-    writeStoredFollowUpTasks(followUpTasks);
-  }, [followUpTasks]);
-
-  useEffect(() => {
-    writeStoredSavedSegments(savedSegments);
-  }, [savedSegments]);
-
-  useEffect(() => {
-    try {
-      writePlannerAccessRole('guests', weddingSiteId ?? 'global', guestsRole);
-    } catch {
-      // noop
-    }
-  }, [guestsRole, weddingSiteId]);
-
-
-  useEffect(() => {
-    setCampaignLog(readStoredCampaignLog());
-  }, []);
-
-  useEffect(() => {
-    writeStoredCampaignLog(campaignLog);
-  }, [campaignLog]);
-
-  const [viewMode, setViewMode] = useState<'list' | 'households'>('households');
-  const [checkInMode, setCheckInMode] = useState(false);
-  const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
-
-  const [showInsights, setShowInsights] = useState(false);
   const cleanGuestsView = !showInsights;
-
-  const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    plus_one_allowed: false,
-    require_plus_one_name: false,
-    invited_to_ceremony: true,
-    invited_to_reception: true,
-  });
-  const [formEventInviteIds, setFormEventInviteIds] = useState<Set<string>>(new Set());
 
   const {
     assistedRsvpGuest,
@@ -383,10 +364,6 @@ export const DashboardGuests: React.FC = () => {
     setRsvpConflicts,
     toast,
   });
-
-  const [deletingGuestId, setDeletingGuestId] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-
   const households = useMemo(() => buildGuestHouseholdGroups(guests), [guests]);
 
   const {
@@ -456,13 +433,6 @@ export const DashboardGuests: React.FC = () => {
   });
 
   const segmentLabelMap = GUEST_SEGMENT_LABELS;
-
-  const [showExportMenu, setShowExportMenu] = useState(false);
-  const [showOpsMenu, setShowOpsMenu] = useState(false);
-  const [showCampaignModal, setShowCampaignModal] = useState(false);
-  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
-  const [deleteAllConfirmInput, setDeleteAllConfirmInput] = useState('');
-  const [deleteAllBusy, setDeleteAllBusy] = useState(false);
 
   const {
     applyCampaignPreset,

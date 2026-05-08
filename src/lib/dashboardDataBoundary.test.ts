@@ -150,6 +150,7 @@ describe('dashboard data boundary guards', () => {
     const opsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardOpsActions.ts'), 'utf8');
     const routeActionsHelper = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/buildGuestDashboardRouteActions.tsx'), 'utf8');
     const rsvpConfigHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardRsvpConfigActions.ts'), 'utf8');
+    const uiStateHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardUiState.ts'), 'utf8');
 
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).toContain('useGuestDashboardData({');
@@ -162,6 +163,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('useGuestDashboardGuestDetailActions({');
     expect(source).toContain('useGuestDashboardOpsActions({');
     expect(source).toContain('useGuestDashboardRsvpConfigActions({');
+    expect(source).toContain('useGuestDashboardUiState()');
     expect(source).toContain('buildGuestDashboardDerivedState({');
     expect(source).toContain('buildGuestDashboardRouteActions({');
     expect(source).toContain('buildGuestDashboardViewProps({');
@@ -208,6 +210,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('const keepOnlyVisibleSelection = () => {');
     expect(source).not.toContain('const selectUnresolvedGuests = () => {');
     expect(source).not.toContain('const getStatusBadge = (status: string) => {');
+    expect(source).not.toContain('const [campaignPreset, setCampaignPreset] = useState');
+    expect(source).not.toContain('const [campaignLog, setCampaignLog] = useState');
+    expect(source).not.toContain('readStoredCampaignPreset()');
+    expect(source).not.toContain('writeStoredCampaignPreset(campaignPreset)');
     expect(source).not.toContain('onCloseAddModal: () => {');
     expect(source).not.toContain('onCloseEditModal: () => {');
     expect(source).not.toContain('onCloseItineraryDrawer: () => {');
@@ -305,6 +311,11 @@ describe('dashboard data boundary guards', () => {
     expect(routeActionsHelper).toContain("args.setFilterStatus('no-contact');");
     expect(routeActionsHelper).toContain('onSendSelectedInvitations: () => { void args.handleSendSelectedInvitations(); },');
     expect(routeActionsHelper).not.toContain("from '../../../lib/supabase'");
+    expect(uiStateHook).toContain('const [campaignLog, setCampaignLog] = useState<RsvpCampaignLogEntry[]>([]);');
+    expect(uiStateHook).toContain('const [campaignPreset, setCampaignPreset] = useState<RsvpCampaignPreset>(\'pending\');');
+    expect(uiStateHook).toContain('writeStoredCampaignPreset(campaignPreset);');
+    expect(uiStateHook).toContain('writeStoredCampaignLog(campaignLog);');
+    expect(uiStateHook).not.toContain("from '../../../lib/supabase'");
     expect(opsHook).toContain('const applyCampaignPreset = useCallback((preset:');
     expect(opsHook).toContain('await persistGuestReminderSettings(weddingSiteId, patch);');
     expect(opsHook).toContain('const handleDeleteAllGuests = useCallback(async () => {');

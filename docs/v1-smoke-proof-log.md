@@ -10217,3 +10217,18 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 05:01 AM PT No-Deploy Guest Dashboard UI-State Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the guest dashboard persisted UI/storage state lane through `src/pages/dashboard/guests/useGuestDashboardUiState.ts`.
+  - That hook now owns campaign preset/log state, follow-up task state, saved-segment state, filter/search state, modal/view toggles, selection state, reminder cadence state, and guest-form state while the page keeps data hooks, service hooks, role persistence, route actions, overlays, and final route composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useGuestDashboardUiState()`, checks that `useGuestDashboardUiState.ts` owns the guest dashboard campaign preset/log persistence seam, and rejects regaining the old inline storage-backed state slab in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` dropped from 844 lines to 814 lines in this batch, while `src/pages/dashboard/guests/useGuestDashboardUiState.ts` came in at 171 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
