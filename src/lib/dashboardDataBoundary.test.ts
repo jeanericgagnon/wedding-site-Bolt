@@ -699,6 +699,7 @@ describe('dashboard data boundary guards', () => {
   it('keeps coordinator mode dashboard reads and writes behind its service', () => {
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/CoordinatorMode.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/coordinatorService.ts'), 'utf8');
+    const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/useCoordinatorDashboardData.ts'), 'utf8');
 
     expect(service).toContain('const COORDINATOR_GUEST_SELECT = ');
     expect(service).toContain('const COORDINATOR_EVENT_SELECT = ');
@@ -713,6 +714,13 @@ describe('dashboard data boundary guards', () => {
     expect(service).not.toContain(".from('guests')\n      .select('*')");
     expect(service).not.toContain(".from('itinerary_events')\n      .select('*')");
     expect(service).not.toContain(".from('guest_qna_items')\n      .select('*')");
+    expect(page).toContain('useCoordinatorDashboardData({');
+    expect(page).not.toContain('const bootstrap = await loadCoordinatorBootstrapData(user.id);');
+    expect(page).not.toContain('const storedTimelineState = readStoredCoordinatorTimelineState(siteId);');
+    expect(dataHook).toContain('const bootstrap = await loadCoordinatorBootstrapData(args.userId);');
+    expect(dataHook).toContain('const storedTimelineState = readStoredCoordinatorTimelineState(siteId);');
+    expect(dataHook).toContain("writeStoredCoordinatorSessionState(siteId, {");
+    expect(dataHook).toContain("writePlannerAccessRole('coordinator', siteId, coordinatorRole);");
     expect(page).not.toContain("from '../../lib/supabase'");
     expect(page).not.toContain("from '../../lib/activeSite'");
     expect(page).not.toContain("supabase.from(");

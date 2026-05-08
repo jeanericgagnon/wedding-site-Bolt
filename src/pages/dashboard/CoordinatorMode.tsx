@@ -3,14 +3,11 @@ import { Input, Textarea } from '../../components/ui';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { useAuth } from '../../hooks/useAuth';
-import { supabase } from '../../lib/supabase';
-import { PLANNER_ROLE_OPTIONS, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
+import { type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { useToast } from '../../components/ui/Toast';
 import { filterCoordinatorCheckInQueue, type CoordinatorCheckInFilter } from '../../lib/coordinatorCheckInQueue';
 import { getNextCoordinatorCheckInFocusId } from '../../lib/coordinatorCheckInAdvance';
-import { getCoordinatorDoorStatus, getCoordinatorDoorStatusLabel } from '../../lib/coordinatorCheckInStatus';
-import { getCoordinatorCheckInActionLabel, getCoordinatorTimelineCorrectionAction } from '../../lib/coordinatorCorrectionActions';
+import { getCoordinatorDoorStatus } from '../../lib/coordinatorCheckInStatus';
 import { buildCoordinatorDoorEscalationPrompt } from '../../lib/coordinatorDoorEscalation';
 import { buildCoordinatorEscalations } from '../../lib/coordinatorEscalations';
 import { buildCoordinatorPrimaryAction } from '../../lib/coordinatorPrimaryAction';
@@ -26,14 +23,12 @@ import { getCoordinatorCommandModeGuidance } from '../../lib/coordinatorCommandM
 import { resolveCoordinatorReturnToBoardState } from '../../lib/coordinatorReturnToBoard';
 import { getCoordinatorNeutralFocusReason } from '../../lib/coordinatorNeutralFocusReason';
 import { resolveCoordinatorNeutralFocusTarget } from '../../lib/coordinatorNeutralFocusTarget';
-import { getCoordinatorActionHint } from '../../lib/coordinatorActionCopy';
 import { getCoordinatorActiveTargetLabel } from '../../lib/coordinatorActiveTargetLabel';
 import { getCoordinatorCheckInBoardTargetId, getCoordinatorCheckInTargetState } from '../../lib/coordinatorCheckInTargetState';
 import { getCoordinatorTimelineBoardTargetId, getCoordinatorTimelineTargetState } from '../../lib/coordinatorTimelineTargetState';
 import { getCoordinatorQnaTargetState } from '../../lib/coordinatorQnaTargetState';
 import { getCoordinatorTimelineTransitionLabel, syncCoordinatorAlertDraftForTimelineTransition } from '../../lib/coordinatorTimelineTransition';
 import { buildCoordinatorCommandSummary } from '../../lib/coordinatorCommandSummary';
-import { formatCoordinatorEventDateTime } from './coordinatorEventTime';
 import { getCoordinatorCommandSummaryTarget } from '../../lib/coordinatorCommandSummaryTarget';
 import { getCoordinatorCommandPriority } from '../../lib/coordinatorCommandPriority';
 import { getCoordinatorCommandPriorityReason } from '../../lib/coordinatorCommandPriorityReason';
@@ -50,7 +45,6 @@ import { shouldResetCoordinatorManualOverride } from '../../lib/coordinatorManua
 import { getCoordinatorRealignmentLabel } from '../../lib/coordinatorRealignmentLabel';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
-import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
 import { getCoordinatorAlertOverrideLabel } from '../../lib/coordinatorAlertOverrideLabel';
 import { getCoordinatorAlertOverrideTargetLabel } from '../../lib/coordinatorAlertOverrideTargetLabel';
 import { getCoordinatorAlertOverrideCurrentLabel } from '../../lib/coordinatorAlertOverrideCurrentLabel';
@@ -73,7 +67,6 @@ import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordina
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
 import { setCoordinatorEventTimelineState } from '../../lib/coordinatorTimelineState';
 import { getCoordinatorLiveEventId, getCoordinatorUpNextEventId } from '../../lib/coordinatorTimelineFocus';
-import { getCoordinatorPrimaryTimelineAction } from '../../lib/coordinatorTimelineActions';
 import { resolveCoordinatorTimelineAlertIntent } from '../../lib/coordinatorTimelineAlertIntent';
 import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor, validateCoordinatorAlertForm } from '../../lib/coordinatorAlertFlow';
 import { resetCoordinatorAlertFormAfterSend } from '../../lib/coordinatorAlertReset';
@@ -119,54 +112,22 @@ import {
   sortCoordinatorGuests,
 } from './coordinator/coordinatorDashboardUtils';
 import {
-  readStoredCoordinatorActiveWorkState,
-  readStoredCoordinatorAlertIntentState,
-  readStoredCoordinatorAlertLog,
-  readStoredCoordinatorCommandState,
-  readStoredCoordinatorDraftState,
-  readStoredCoordinatorGuestWorkState,
   readStoredCoordinatorQnaItems,
-  readStoredCoordinatorSessionState,
-  readStoredCoordinatorTimelineState,
-  readStoredCoordinatorTimelineWorkState,
-  writeStoredCoordinatorActiveWorkState,
-  writeStoredCoordinatorAlertIntentState,
-  writeStoredCoordinatorAlertLog,
-  writeStoredCoordinatorCommandState,
-  writeStoredCoordinatorDraftState,
-  writeStoredCoordinatorGuestWorkState,
-  writeStoredCoordinatorQnaItems,
-  writeStoredCoordinatorSessionState,
-  writeStoredCoordinatorTimelineState,
-  writeStoredCoordinatorTimelineWorkState,
 } from './coordinator/coordinatorStorage';
+import {
+  createCoordinatorAlertMessage,
+  createCoordinatorQnaQuestion,
+  updateCoordinatorGuestCheckIn,
+  updateCoordinatorQnaAnswer,
+} from './coordinator/coordinatorService';
+import { CoordinatorAttentionPanel, CoordinatorCheckInQueuePanel, CoordinatorDayOfMessagePanel, CoordinatorDayOfSummaryPanel, CoordinatorHandoffPanel, CoordinatorHelperAccessPanel, CoordinatorRoleSelector, CoordinatorStatCards, CoordinatorTimelinePanel } from './coordinator/CoordinatorModePanels';
+import { useCoordinatorDashboardData } from './coordinator/useCoordinatorDashboardData';
 
 
 export const DashboardCoordinatorMode: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [guests, setGuests] = useState<GuestLiteForCoordinator[]>([]);
-  const [events, setEvents] = useState<EventLite[]>([]);
-  const [siteId, setSiteId] = useState<string | null>(null);
-  const [eventGuestIds, setEventGuestIds] = useState<Record<string, Set<string>>>({});
-  const [timelineState, setTimelineState] = useState<Record<string, TimelineState>>({});
-  const [alertLog, setAlertLog] = useState<AlertLog[]>([]);
   const [alertBusy, setAlertBusy] = useState(false);
-  const [qnaItems, setQnaItems] = useState<QnaItem[]>([]);
-  const [coordinatorRole, setCoordinatorRole] = useState<PlannerAccessRole>('owner');
-  const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
-  const [coordinatorPermissions, setCoordinatorPermissions] = useState<PlannerPermissionKey[] | null>(null);
-  const [alertChannelFilter, setAlertChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
-  const [alertTimingFilter, setAlertTimingFilter] = useState<'all' | 'now' | 'scheduled'>('all');
-  const [qnaInput, setQnaInput] = useState('');
-  const [qnaFilter, setQnaFilter] = useState<CoordinatorQnaFilter>('open');
-  const [qnaDraftAnswers, setQnaDraftAnswers] = useState<Record<string, string>>({});
-  const [activeQnaId, setActiveQnaId] = useState<string | null>(null);
-  const [activeTimelineEventId, setActiveTimelineEventId] = useState<string | null>(null);
-  const [activeGuestId, setActiveGuestId] = useState<string | null>(null);
-  const [lastAlertSuggestionKey, setLastAlertSuggestionKey] = useState<string | null>(null);
-  const [commandSource, setCommandSource] = useState<'primary-action' | 'escalation' | 'correction' | null>(null);
   const [neutralFocusReason, setNeutralFocusReason] = useState<string | null>(null);
   const [commandJumpLabel, setCommandJumpLabel] = useState<string | null>(null);
   const [commandJumpPanelFocus, setCommandJumpPanelFocus] = useState<CoordinatorPanelFocus | null>(null);
@@ -179,229 +140,60 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [summaryFeedbackShownAt, setSummaryFeedbackShownAt] = useState<number | null>(null);
   const [previousAlertAligned, setPreviousAlertAligned] = useState<boolean | null>(null);
   const [summaryFeedback, setSummaryFeedback] = useState<CoordinatorSummaryFeedback | null>(null);
-  const [checkInQuery, setCheckInQuery] = useState('');
-  const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
-  const [checkInReviewOnly, setCheckInReviewOnly] = useState(false);
   const [checkInBusyGuestId, setCheckInBusyGuestId] = useState<string | null>(null);
-  const [panelFocus, setPanelFocus] = useState<CoordinatorPanelFocus | null>(null);
-  const [alertForm, setAlertForm] = useState({
-    subject: 'Day-of update',
-    body: 'Quick update from the couple: ',
-    audience: 'all',
-    channel: 'email' as 'email' | 'sms',
-    scheduleType: 'now' as 'now' | 'later',
-    scheduleDate: '',
-    scheduleTime: '',
+  const {
+    activeGuestId,
+    activeQnaId,
+    activeSiteRole,
+    activeTimelineEventId,
+    alertChannelFilter,
+    alertForm,
+    alertLog,
+    alertTimingFilter,
+    checkInFilter,
+    checkInQuery,
+    checkInReviewOnly,
+    commandSource,
+    coordinatorPermissions,
+    coordinatorRole,
+    eventGuestIds,
+    events,
+    guests,
+    lastAlertSuggestionKey,
+    loading,
+    panelFocus,
+    qnaDraftAnswers,
+    qnaFilter,
+    qnaInput,
+    qnaItems,
+    setActiveGuestId,
+    setActiveQnaId,
+    setActiveTimelineEventId,
+    setAlertChannelFilter,
+    setAlertForm,
+    setAlertLog,
+    setAlertTimingFilter,
+    setCheckInFilter,
+    setCheckInQuery,
+    setCheckInReviewOnly,
+    setCommandSource,
+    setCoordinatorRole,
+    setEvents,
+    setGuests,
+    setLastAlertSuggestionKey,
+    setPanelFocus,
+    setQnaDraftAnswers,
+    setQnaFilter,
+    setQnaInput,
+    setQnaItems,
+    setTimelineState,
+    siteId,
+    timelineState,
+  } = useCoordinatorDashboardData({
+    isDemoMode,
+    toast,
+    userId: user?.id,
   });
-
-  useEffect(() => {
-    let mounted = true;
-    const run = async () => {
-      if (!user) return;
-      setLoading(true);
-      try {
-        if (isDemoMode) {
-          if (!mounted) return;
-          const now = new Date().toISOString();
-          setSiteId('demo-site');
-          setActiveSiteRole('owner');
-          setCoordinatorRole('owner');
-          setGuests([
-            { id: '1', first_name: 'Alex', last_name: 'Rivera', name: 'Alex Rivera', rsvp_status: 'confirmed', checked_in_at: now },
-            { id: '2', first_name: 'Sam', last_name: 'Lee', name: 'Sam Lee', rsvp_status: 'pending', checked_in_at: null },
-          ]);
-          setEvents([{ id: 'e1', event_name: 'Ceremony', start_time: now }]);
-          setEventGuestIds({ e1: new Set(['1', '2']) });
-          return;
-        }
-
-        const activeSite = await resolveActiveSiteForUser(user.id);
-        const resolvedSiteId = activeSite?.id ?? null;
-        if (!resolvedSiteId) return;
-        if (!mounted) return;
-        setSiteId(resolvedSiteId);
-        setActiveSiteRole(activeSite?.role ?? 'owner');
-        setCoordinatorRole(activeSite?.role ?? 'owner');
-        setCoordinatorPermissions(activeSite?.permissions ?? null);
-
-        const [{ data: guestsData }, { data: eventsData }] = await Promise.all([
-          supabase.from('guests').select('id, first_name, last_name, name, rsvp_status, checked_in_at').eq('wedding_site_id', resolvedSiteId),
-          supabase.from('itinerary_events').select('id, event_name, start_time').eq('wedding_site_id', resolvedSiteId).order('start_time', { ascending: true }),
-        ]);
-
-        const eventIds = ((eventsData as EventLite[]) || []).map((e) => e.id);
-        let inviteMap: Record<string, Set<string>> = {};
-        if (eventIds.length > 0) {
-          const { data: inviteRows } = await supabase
-            .from('event_invitations')
-            .select('event_id, guest_id')
-            .in('event_id', eventIds);
-          inviteMap = {};
-          eventIds.forEach((id) => { inviteMap[id] = new Set<string>(); });
-          (inviteRows ?? []).forEach((row: any) => {
-            if (!inviteMap[row.event_id]) inviteMap[row.event_id] = new Set<string>();
-            inviteMap[row.event_id].add(row.guest_id as string);
-          });
-        }
-
-        const { data: qnaData } = await supabase
-          .from('guest_qna_items')
-          .select('id, question, answer, status, created_at')
-          .eq('wedding_site_id', resolvedSiteId)
-          .order('created_at', { ascending: false })
-          .limit(30);
-
-        if (!mounted) return;
-        setGuests((guestsData as GuestLiteForCoordinator[]) || []);
-        setEvents((eventsData as EventLite[]) || []);
-        setEventGuestIds(inviteMap);
-        const cachedQna = readStoredCoordinatorQnaItems(resolvedSiteId);
-        if (qnaData && qnaData.length > 0) {
-          setQnaItems((qnaData as Array<{ id: string; question: string; status: 'new' | 'answered'; answer?: string | null }>));
-        } else if (cachedQna.length > 0) {
-          setQnaItems(cachedQna);
-        }
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-
-    void run();
-    return () => { mounted = false; };
-  }, [user, isDemoMode]);
-
-  useEffect(() => {
-    if (!siteId) return;
-    try {
-      const storedTimelineState = readStoredCoordinatorTimelineState(siteId);
-      if (Object.keys(storedTimelineState).length > 0) setTimelineState(storedTimelineState);
-      const storedAlertLog = readStoredCoordinatorAlertLog(siteId);
-      if (storedAlertLog.length > 0) setAlertLog(storedAlertLog);
-      const storedQnaItems = readStoredCoordinatorQnaItems(siteId);
-      if (storedQnaItems.length > 0) {
-        setQnaItems(storedQnaItems);
-      } else if (isDemoMode) {
-        setQnaItems([
-          { id: 'q1', question: 'What time should we arrive?', status: 'new' },
-          { id: 'q2', question: 'Is parking available at the venue?', status: 'answered' },
-        ]);
-      }
-      const storedRole = readPlannerAccessRole('coordinator', siteId);
-      if (activeSiteRole === 'owner' && storedRole) setCoordinatorRole(storedRole);
-      if (activeSiteRole !== 'owner') setCoordinatorRole(activeSiteRole);
-
-      const sessionState = readStoredCoordinatorSessionState(siteId);
-      setCheckInFilter(sessionState.checkInFilter);
-      setCheckInQuery(sessionState.checkInQuery);
-      setCheckInReviewOnly(sessionState.checkInReviewOnly);
-      setPanelFocus(sessionState.panelFocus);
-      setAlertChannelFilter(sessionState.alertChannelFilter);
-      setAlertTimingFilter(sessionState.alertTimingFilter);
-
-      const draftState = readStoredCoordinatorDraftState(siteId);
-      setAlertForm((prev) => ({ ...prev, ...draftState.alertForm }));
-      setQnaDraftAnswers(draftState.qnaDraftAnswers);
-      setQnaInput(draftState.qnaInput);
-
-      const activeWorkState = readStoredCoordinatorActiveWorkState(siteId);
-      setActiveQnaId(activeWorkState.activeQnaId);
-
-      const guestWorkState = readStoredCoordinatorGuestWorkState(siteId);
-      setActiveGuestId(guestWorkState.activeGuestId);
-
-      const timelineWorkState = readStoredCoordinatorTimelineWorkState(siteId);
-      setActiveTimelineEventId(timelineWorkState.activeTimelineEventId);
-
-      const savedCommandState = readStoredCoordinatorCommandState(siteId);
-      setCommandSource(savedCommandState.source);
-
-      const alertIntentState = readStoredCoordinatorAlertIntentState(siteId);
-      setLastAlertSuggestionKey(alertIntentState.lastSuggestionKey);
-    } catch {}
-  }, [siteId, activeSiteRole]);
-
-  useEffect(() => {
-    if (!siteId) return;
-    writeStoredCoordinatorTimelineState(siteId, timelineState);
-  }, [siteId, timelineState]);
-
-  useEffect(() => {
-    if (!siteId) return;
-    writeStoredCoordinatorAlertLog(siteId, alertLog);
-  }, [siteId, alertLog]);
-
-  useEffect(() => {
-    if (!siteId) return;
-    writeStoredCoordinatorQnaItems(siteId, qnaItems);
-  }, [siteId, qnaItems]);
-
-  useEffect(() => {
-    if (!siteId) return;
-    if (activeSiteRole !== 'owner') return;
-    try {
-      writePlannerAccessRole('coordinator', siteId, coordinatorRole);
-    } catch {
-      // noop
-    }
-  }, [siteId, coordinatorRole, activeSiteRole]);
-
-  useEffect(() => {
-    if (!siteId) return;
-    writeStoredCoordinatorSessionState(siteId, {
-      checkInFilter,
-      checkInQuery,
-      checkInReviewOnly,
-      panelFocus,
-      alertChannelFilter,
-      alertTimingFilter,
-    });
-  }, [siteId, checkInFilter, checkInQuery, checkInReviewOnly, panelFocus, alertChannelFilter, alertTimingFilter]);
-
-  useEffect(() => {
-    if (!siteId) return;
-    writeStoredCoordinatorDraftState(siteId, {
-      alertForm,
-      qnaDraftAnswers,
-      qnaInput,
-    });
-  }, [siteId, alertForm, qnaDraftAnswers, qnaInput]);
-
-  useEffect(() => {
-    if (!siteId) return;
-    writeStoredCoordinatorActiveWorkState(siteId, { activeQnaId });
-  }, [siteId, activeQnaId]);
-
-  useEffect(() => {
-    if (!siteId) return;
-    writeStoredCoordinatorGuestWorkState(siteId, { activeGuestId });
-  }, [siteId, activeGuestId]);
-
-  useEffect(() => {
-    if (!siteId) return;
-    writeStoredCoordinatorTimelineWorkState(siteId, { activeTimelineEventId });
-  }, [siteId, activeTimelineEventId]);
-
-  useEffect(() => {
-    if (!activeTimelineEventId) return;
-    if (events.some((event) => event.id === activeTimelineEventId)) return;
-    setActiveTimelineEventId(null);
-  }, [events, activeTimelineEventId]);
-
-  useEffect(() => {
-    if (!siteId) return;
-    writeStoredCoordinatorCommandState(siteId, {
-      source: commandSource,
-      panelFocus,
-      checkInFilter,
-      checkInReviewOnly,
-    });
-  }, [siteId, commandSource, panelFocus, checkInFilter, checkInReviewOnly]);
-
-  useEffect(() => {
-    if (!siteId) return;
-    writeStoredCoordinatorAlertIntentState(siteId, { lastSuggestionKey: lastAlertSuggestionKey });
-  }, [siteId, lastAlertSuggestionKey]);
-
   const stats = useMemo(() => buildCoordinatorGuestStats(guests), [guests]);
 
   const toggleCheckIn = async (guest: GuestLiteForCoordinator) => {
@@ -432,12 +224,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
       if (!siteId) return;
 
-      const { error } = await supabase
-        .from('guests')
-        .update({ checked_in_at: next })
-        .eq('id', guest.id)
-        .eq('wedding_site_id', siteId);
-      if (error) {
+      try {
+        await updateCoordinatorGuestCheckIn({ siteId, guestId: guest.id, checkedInAt: next });
+      } catch {
         toast('Couldn’t update check-in right now.', 'error');
         return;
       }
@@ -512,14 +301,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
     });
   }, [canSendAlerts, canScheduleAlerts, alertForm.scheduleType]);
 
-  const handoffCopy = {
-    title: coordinatorRole === 'viewer' ? 'Viewer handoff' : coordinatorRole === 'coordinator' ? 'Coordinator handoff' : 'Planner handoff',
-    detail: coordinatorRole === 'viewer'
-      ? 'Use this view for visibility only and pass changes to the couple or planner.'
-      : coordinatorRole === 'coordinator'
-        ? 'Keep live updates moving and flag anything sensitive back to the couple.'
-        : 'Run the room, keep communications aligned, and escalate only the decisions that need the couple.'
-  };
   const roleCapabilities = useMemo(() => buildCoordinatorRoleCapabilities(coordinatorRole), [coordinatorRole]);
 
   const liveEventId = useMemo(() => getCoordinatorLiveEventId(events, timelineState), [events, timelineState]);
@@ -875,35 +656,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
   }), [guests, events, timelineState]);
   const correctionGuestId = useMemo(() => getCoordinatorCorrectionGuestId(sortedGuests), [sortedGuests]);
   const correctionEventId = useMemo(() => getCoordinatorCorrectionEventId(events, timelineState), [events, timelineState]);
-  const activeTimelineEvent = useMemo(
-    () => events.find((event) => event.id === activeTimelineEventId) ?? null,
-    [events, activeTimelineEventId],
-  );
   const timelineBoard = useMemo(() => buildCoordinatorTimelineBoard({
     events,
     timelineState,
     liveEventId,
     upNextEventId,
   }), [events, timelineState, liveEventId, upNextEventId]);
-  const activeTimelineEventState = useMemo<TimelineState | null>(
-    () => (activeTimelineEvent ? (timelineState[activeTimelineEvent.id] || 'up-next') : null),
-    [activeTimelineEvent, timelineState],
-  );
-  const activeTimelinePrimaryAction = useMemo(
-    () => activeTimelineEvent
-      ? getCoordinatorPrimaryTimelineAction({
-          event: activeTimelineEvent,
-          liveEventId,
-          upNextEventId,
-          timelineState,
-        })
-      : null,
-    [activeTimelineEvent, liveEventId, upNextEventId, timelineState],
-  );
-  const activeTimelineCorrectionAction = useMemo(
-    () => (activeTimelineEventState ? getCoordinatorTimelineCorrectionAction(activeTimelineEventState) : null),
-    [activeTimelineEventState],
-  );
 
   useEffect(() => {
     if (commandSource !== 'primary-action') return;
@@ -1054,18 +812,16 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setAlertBusy(true);
     try {
       if (!isDemoMode) {
-        const { error } = await supabase.from('messages').insert({
-          wedding_site_id: siteId,
+        await createCoordinatorAlertMessage({
+          siteId,
           subject: alertForm.subject.trim(),
           body: alertForm.body.trim(),
           channel: alertForm.channel,
-          audience_filter: alertForm.audience,
-          recipient_filter: { audience: alertForm.audience, recipient_count: alertAudienceCount },
+          audience: alertForm.audience,
+          recipientCount: alertAudienceCount,
           status,
-          sent_at: scheduledFor ? null : new Date().toISOString(),
-          scheduled_for: scheduledFor,
+          scheduledFor,
         });
-        if (error) throw error;
       }
 
       setAlertLog((prev) => appendCoordinatorAlertLogItem(prev, {
@@ -1104,17 +860,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
     focusCoordinatorQnaLane();
 
     if (!isDemoMode && siteId) {
-      const { data, error } = await supabase
-        .from('guest_qna_items')
-        .insert({ wedding_site_id: siteId, question: q, status: 'new', source: 'manual' })
-        .select('id, question, answer, status')
-        .single();
-      if (error) {
+      try {
+        const data = await createCoordinatorQnaQuestion(siteId, q);
+        setQnaItems((prev) => [data, ...prev].slice(0, 30));
+      } catch {
         toast('Couldn’t save that guest question right now.', 'error');
         return;
-      }
-      if (data) {
-        setQnaItems((prev) => [data as QnaItem, ...prev].slice(0, 30));
       }
     } else {
       setQnaItems((prev) => [{ id: `${Date.now()}`, question: q, status: 'new' as const }, ...prev].slice(0, 30));
@@ -1507,6 +1258,28 @@ export const DashboardCoordinatorMode: React.FC = () => {
     }
   };
 
+  const runEscalationIssue = (item: (typeof liveIssues)[number]) => {
+    const focus = resolveCoordinatorQueueFocus(item.key);
+    const nextPanelFocus = resolveCoordinatorPanelFocus(item.key);
+    const timelineTarget = resolveCoordinatorEscalationTimelineTarget({ escalationKey: item.key, upNextEvent });
+    clearCoordinatorTransientState();
+    if (item.key === 'open-qna') setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
+    setCommandSource('escalation');
+    setCheckInFilter(focus.filter);
+    setCheckInReviewOnly(focus.reviewOnly);
+    setPanelFocus(nextPanelFocus);
+    if (timelineTarget && canEditTimeline) {
+      setTimelineState((prev) => setCoordinatorEventTimelineState(prev, timelineTarget, 'live'));
+    }
+  };
+
+  const focusArrivalGuest = (guest: GuestLiteForCoordinator) => {
+    focusCoordinatorCheckInLane();
+    setCheckInFilter('arrivals');
+    setCheckInReviewOnly(false);
+    setActiveGuestId(guest.id);
+  };
+
   const saveQnaAnswer = async (id: string) => {
     if (!canEditQna) {
       toast('Your collaborator role cannot edit guest questions here.', 'info');
@@ -1519,11 +1292,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
     if (!nextItem) return;
 
     if (!isDemoMode) {
-      const { error } = await supabase.from('guest_qna_items').update({
-        answer: nextItem.answer ?? null,
-        status: nextItem.status,
-      }).eq('id', id);
-      if (error) {
+      try {
+        await updateCoordinatorQnaAnswer(id, nextItem);
+      } catch {
         toast('Couldn’t save that answer right now.', 'error');
         return;
       }
@@ -1548,442 +1319,83 @@ export const DashboardCoordinatorMode: React.FC = () => {
             { label: 'Questions', value: qnaCounts.open, detail: 'open guest questions' },
           ]}
           actions={
-          <div>
-            <label className="block text-xs text-text-tertiary mb-1">Planner access view</label>
-            <select
-              value={coordinatorRole}
-              onChange={(e) => setCoordinatorRole(e.target.value as PlannerAccessRole)}
-              disabled={activeSiteRole !== 'owner'}
-              className="px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary"
-            >
-              {PLANNER_ROLE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-            {activeSiteRole !== 'owner' && (
-              <p className="mt-1 text-[11px] text-text-tertiary">Access view follows your actual collaborator role on this site.</p>
-            )}
-          </div>
+            <CoordinatorRoleSelector
+              activeSiteRole={activeSiteRole}
+              coordinatorRole={coordinatorRole}
+              onRoleChange={setCoordinatorRole}
+            />
           }
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              ['Guests', stats.total],
-              ['Confirmed', stats.confirmed],
-              ['Pending', stats.pending],
-              ['Checked In', stats.checkedIn],
-            ].map(([label, value]) => (
-              <div key={String(label)} className="rounded-xl border border-border-subtle bg-white p-4 shadow-sm">
-                <p className="text-xs text-text-tertiary">{label}</p>
-                <p className="text-2xl font-semibold text-text-primary mt-1">{loading ? '—' : value}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="rounded-xl border border-border-subtle bg-white p-4 shadow-sm">
-            <p className="text-sm font-medium text-text-primary mb-2">Attention now</p>
-            <p className="text-[11px] text-text-tertiary mb-2">This pulls together the live exceptions the coordinator should resolve first.</p>
-            <div className="space-y-2">
-              {liveIssues.length === 0 && correctionCues.length === 0 && (
-                <div className="rounded-lg border border-border-subtle bg-accent-light px-3 py-2">
-                  <p className="text-sm font-medium text-primary">Board is clear right now</p>
-                  <p className="mt-1 text-xs text-text-secondary">No active escalations or recovery cues are waiting. Use the next helpful action when you want a fast cue.</p>
-                </div>
-              )}
-              {liveIssues.map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => {
-                    const focus = resolveCoordinatorQueueFocus(item.key);
-                    const nextPanelFocus = resolveCoordinatorPanelFocus(item.key);
-                    const timelineTarget = resolveCoordinatorEscalationTimelineTarget({ escalationKey: item.key, upNextEvent });
-                    clearCoordinatorTransientState();
-                    if (item.key === 'open-qna') setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
-                    setCommandSource('escalation');
-                    setCheckInFilter(focus.filter);
-                    setCheckInReviewOnly(focus.reviewOnly);
-                    setPanelFocus(nextPanelFocus);
-                    if (timelineTarget && canEditTimeline) {
-                      setTimelineState((prev) => setCoordinatorEventTimelineState(prev, timelineTarget, 'live'));
-                    }
-                  }}
-                  className={`w-full rounded-lg border px-3 py-2 text-left ${item.tone === 'warning' ? 'border-primary/20 bg-accent-light' : item.tone === 'success' ? 'border-border-subtle bg-surface-subtle' : 'border-border/50 bg-surface-subtle/40'}`}
-                >
-                  <p className="text-sm font-medium text-text-primary">{item.title}</p>
-                  <p className="mt-1 text-xs text-text-secondary">{item.detail}</p>
-                  <p className="mt-1 text-[10px] text-text-tertiary/80">{getCoordinatorActionHint('escalation')}</p>
-                </button>
-              ))}
-              {correctionCues.map((cue) => (
-                <button
-                  key={cue.key}
-                  type="button"
-                  onClick={() => runCorrectionCue(cue)}
-                  className="w-full rounded-lg border border-primary/20 bg-accent-light px-3 py-2 text-left"
-                >
-                  <p className="text-sm font-medium text-text-primary">{cue.title}</p>
-                  <p className="mt-1 text-xs text-text-secondary">{cue.detail}</p>
-                  <p className="mt-1 text-[10px] text-text-tertiary/80">{getCoordinatorActionHint('correction')}</p>
-                </button>
-              ))}
-            </div>
-            <div className="mt-3 rounded-lg border border-border/50 bg-surface-subtle/30 px-3 py-2">
-              <p className="text-xs font-medium text-text-primary">Next arrivals</p>
-              {nextArrivals.length === 0 ? (
-                <p className="mt-1 text-xs text-text-tertiary">
-                  {sortedGuests.some((guest) => !guest.checked_in_at)
-                    ? 'No ready arrivals right now. Review-needed guests are still waiting in the queue.'
-                    : 'Everyone currently in this view is already checked in.'}
-                </p>
-              ) : (
-                <div className="mt-2 space-y-1">
-                  {nextArrivals.map((guest) => (
-                    <button
-                      key={guest.id}
-                      type="button"
-                      onClick={() => {
-                        focusCoordinatorCheckInLane();
-                        setCheckInFilter('arrivals');
-                        setCheckInReviewOnly(false);
-                        setActiveGuestId(guest.id);
-                      }}
-                      className="block w-full text-left text-xs text-text-secondary hover:text-primary"
-                    >
-                      • {guest.name} — {guest.rsvp_status}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <a href="/dashboard/rsvp-board" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open RSVP board</a>
-              <a href="/dashboard/seating-lookup" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open seating lookup</a>
-              <a href="/dashboard/planning" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open planning</a>
-            </div>
-          </div>
+          <CoordinatorStatCards loading={loading} stats={stats} />
+          <CoordinatorAttentionPanel
+            correctionCues={correctionCues}
+            liveIssues={liveIssues}
+            nextArrivals={nextArrivals}
+            hasUncheckedGuests={sortedGuests.some((guest) => !guest.checked_in_at)}
+            onArrivalClick={focusArrivalGuest}
+            onCorrectionCueClick={runCorrectionCue}
+            onEscalationClick={runEscalationIssue}
+          />
         </div>
 
-        <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
-          <p className="font-medium">{handoffCopy.title}</p>
-          <p className="mt-1 text-primary/80">{handoffCopy.detail}</p>
-          <p className="mt-2 text-primary/70">Final couple decisions stay with the couple when something needs approval.</p>
-        </div>
+        <CoordinatorHandoffPanel coordinatorRole={coordinatorRole} />
 
-        <div className="rounded-xl border border-border-subtle bg-white px-3 py-3 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-medium text-text-primary">Day-of helper access</p>
-              <p className="mt-1 text-[11px] text-text-tertiary">
-                {coordinatorRole === 'viewer'
-                  ? 'Read-only visibility for day-of coordination.'
-                  : coordinatorRole === 'coordinator'
-                    ? 'Can help with event-day updates and guest flow.'
-                    : 'Broader planner access with day-of controls.'}
-              </p>
-            </div>
-            <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${coordinatorRole === 'viewer' ? 'border-border bg-surface-subtle text-text-tertiary' : coordinatorRole === 'coordinator' ? 'border-primary/20 bg-primary/5 text-primary' : 'border-border-subtle bg-accent-light text-primary'}`}>
-              {coordinatorRole === 'viewer' ? 'Read only' : coordinatorRole === 'coordinator' ? 'Coordinator helper' : 'Planner helper'}
-            </span>
-          </div>
-          <div className="mt-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-medium text-text-primary">Helper role</p>
-                <p className="mt-1 text-[11px] text-text-secondary">Mode · {roleBoard.modeLabel}</p>
-                <p className="text-[11px] text-text-secondary">Enabled · {roleBoard.enabledLabel}</p>
-              </div>
-              <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${roleBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : roleBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
-                {roleBoard.statusLabel}
-              </span>
-            </div>
-            <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-              <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                <p className="text-[10px] text-text-tertiary">Blocked here</p>
-                <p className="mt-1 text-[11px] text-text-primary">{roleBoard.blockedLabel}</p>
-              </div>
-              <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                <p className="text-[10px] text-text-tertiary">Operating note</p>
-                <p className="mt-1 text-[11px] text-text-primary">{roleBoard.guidanceLabel}</p>
-              </div>
-            </div>
-          </div>
-          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-5">
-            {roleCapabilities.map((item) => (
-              <div
-                key={item.key}
-                className={`rounded-xl border px-3 py-3 ${item.enabled ? 'border-primary/20 bg-primary/[0.03]' : 'border-border/50 bg-surface-subtle/25'}`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[11px] font-medium text-text-primary">{item.label}</p>
-                  <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${item.enabled ? 'border-primary/20 bg-white text-primary' : 'border-border bg-white text-text-tertiary'}`}>
-                    {item.enabled ? 'Enabled' : 'Blocked'}
-                  </span>
-                </div>
-                <p className="mt-2 text-[11px] text-text-secondary">{item.detail}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        <CoordinatorHelperAccessPanel
+          coordinatorRole={coordinatorRole}
+          roleBoard={roleBoard}
+          roleCapabilities={roleCapabilities}
+        />
 
-        <div className="rounded-xl border border-border-subtle bg-white px-3 py-2 shadow-sm">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <p className="text-xs font-medium text-text-primary">Day-of summary</p>
-            <p className="text-[11px] text-text-tertiary">What needs attention right now</p>
-          </div>
-
-          {summaryDisplayCue ? (
-            <div className="mb-3 space-y-2">
-              <div>
-                <p className="text-[10px] font-medium text-text-tertiary">Current signal</p>
-                {summaryDisplayCue.kind === 'feedback' && summaryFeedbackTone && (
-                  <div className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-lg border px-2.5 text-[11px] ${summaryFeedbackTone.containerClassName} ${summaryFeedbackLayout === 'prominent' ? 'py-1.5 shadow-sm' : summaryFeedbackLayout === 'standard' ? 'py-1' : 'py-0.5 opacity-90'}`}>
-                    <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${summaryFeedbackBadgeToneClassName}`}>{summaryFeedbackBadge ?? summaryFeedbackTone.badge}</span>
-                    <span>{summaryFeedbackCopy ?? summaryDisplayCue.feedback.label}</span>
-                  </div>
-                )}
-                {summaryDisplayCue.kind === 'alert-override' && (
-                  <div className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-accent-light px-2.5 py-1 text-[11px] text-primary">
-                    <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${overrideBadgeToneClassName}`}>{alertOverrideBadge}</span>
-                    <span>{summaryDisplayCue.label}</span>
-                    {alertOverrideTargetLabel && <span className="text-primary/80">{alertOverrideTargetLabel}</span>}
-                    {alertOverrideCurrentLabel && <span className="text-text-secondary">{alertOverrideCurrentLabel}</span>}
-                  </div>
-                )}
-                {summaryDisplayCue.kind === 'manual-override' && (
-                  <div className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-accent-light px-2.5 py-1 text-[11px] text-primary">
-                    <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${overrideBadgeToneClassName}`}>{manualOverrideBadge}</span>
-                    <span>{summaryDisplayCue.label}</span>
-                    {manualOverrideTargetLabel && <span className="text-primary/80">{manualOverrideTargetLabel}</span>}
-                    {manualOverrideCurrentTargetLabel && <span className="text-text-secondary">{manualOverrideCurrentTargetLabel}</span>}
-                    {manualOverrideActionLabel && (
-                      <button
-                        type="button"
-                        onClick={returnToBoardTarget}
-                        className="rounded-lg border border-border-subtle bg-white px-2 py-0.5 text-primary"
-                      >
-                        {manualOverrideActionLabel}
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <p className="text-[10px] font-medium text-text-tertiary">{standingPromptMode === 'secondary' ? 'Next up' : 'Standing prompt'}</p>
-                <button
-                  type="button"
-                  onClick={jumpToStablePrompt}
-                  className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-lg border px-2.5 py-1 text-[11px] hover:border-primary/35 hover:bg-primary/[0.04] ${standingPromptMode === 'secondary' ? 'border-border/35 bg-surface-subtle/20 text-text-tertiary' : 'border-border/50 bg-surface-subtle/40 text-text-secondary'}`}
-                >
-                  <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptBadgeToneClassName}`}>{standingPromptBadge}</span>
-                  <span>{standingPromptMode === 'secondary' ? stablePrompt.badge : stablePrompt.label}</span>
-                  {standingPromptMode === 'full' && stablePromptTargetLabel && <span className="text-text-tertiary">{stablePromptTargetLabel}</span>}
-                  <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptStateToneClassName}`}>{standingPromptStateLabel}</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="mb-3">
-              <p className="text-[10px] font-medium text-text-tertiary">{standingPromptMode === 'secondary' ? 'Next up' : 'Standing prompt'}</p>
-              <button
-                type="button"
-                onClick={jumpToStablePrompt}
-                className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-lg border px-2.5 py-1 text-[11px] hover:border-primary/35 hover:bg-primary/[0.04] ${standingPromptMode === 'secondary' ? 'border-border/35 bg-surface-subtle/20 text-text-tertiary' : 'border-border/50 bg-surface-subtle/40 text-text-secondary'}`}
-              >
-                <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptBadgeToneClassName}`}>{standingPromptBadge}</span>
-                <span>{standingPromptCopy}</span>
-                {stablePromptTargetLabel && <span className="text-text-tertiary">{stablePromptTargetLabel}</span>}
-                <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptStateToneClassName}`}>{standingPromptStateLabel}</span>
-              </button>
-            </div>
-          )}
-
-          <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/30 px-3 py-2">
-            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-[11px] font-medium text-text-primary">{commandModeLabel}</p>
-                <p className="mt-1 text-[11px] text-text-secondary">{commandModeGuidance}</p>
-                {!commandSource && neutralFocusReason && (
-                  <p className="mt-1 text-[10px] text-text-tertiary">{neutralFocusReason}</p>
-                )}
-                <p className="mt-1 text-[10px] text-text-tertiary">{primaryAction.title} — {primaryAction.detail}</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={runPrimaryAction}
-                  className="rounded-lg border border-primary/25 bg-primary/5 px-3 py-1 text-[11px] font-medium text-primary hover:bg-primary/10"
-                >
-                  {primaryAction.key === 'all-clear' ? 'Review next best action' : 'Open suggested action'}
-                </button>
-                {commandSource && (
-                  <button
-                    type="button"
-                    onClick={returnToBoard}
-                    className="rounded-lg border border-border bg-white px-3 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:text-primary"
-                  >
-                    Return to summary
-                  </button>
-                )}
-                {!commandSource && panelFocus && (
-                  <button
-                    type="button"
-                    onClick={revisitNeutralFocus}
-                    className="rounded-lg border border-border bg-white px-3 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:text-primary"
-                  >
-                    Revisit focus
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-medium text-text-primary">Suggested action</p>
-                <p className="mt-1 text-[11px] text-text-secondary">Destination · {primaryActionBoard.destinationLabel}</p>
-                <p className="text-[11px] text-text-secondary">Follow-through · {primaryActionBoard.followThroughLabel}</p>
-              </div>
-              <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${primaryActionBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : primaryActionBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
-                {primaryActionBoard.statusLabel}
-              </span>
-            </div>
-            <div className="mt-3 rounded-md border border-border/50 bg-white px-2.5 py-2">
-              <p className="text-[10px] text-text-tertiary">Action detail</p>
-              <p className="mt-1 text-[11px] text-text-primary">{primaryActionBoard.detailLabel}</p>
-            </div>
-          </div>
-          <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-medium text-text-primary">Progress status</p>
-                <p className="mt-1 text-[11px] text-text-secondary">Focus · {executionBoard.laneLabel}</p>
-                <p className="text-[11px] text-text-secondary">Latest update · {executionBoard.lastMoveLabel}</p>
-              </div>
-              <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${executionBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : executionBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
-                {executionBoard.statusLabel}
-              </span>
-            </div>
-            <div className="mt-3 rounded-md border border-border/50 bg-white px-2.5 py-2">
-              <p className="text-[10px] text-text-tertiary">What it changes</p>
-              <p className="mt-1 text-[11px] text-text-primary">{executionBoard.effectLabel}</p>
-            </div>
-          </div>
-          <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-medium text-text-primary">Navigation path</p>
-                <p className="mt-1 text-[11px] text-text-secondary">Destination · {navigationBoard.destinationLabel}</p>
-                <p className="text-[11px] text-text-secondary">Next stop · {navigationBoard.boardTargetLabel}</p>
-              </div>
-              <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${navigationBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : navigationBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
-                {navigationBoard.statusLabel}
-              </span>
-            </div>
-            <div className="mt-3 rounded-md border border-border/50 bg-white px-2.5 py-2">
-              <p className="text-[10px] text-text-tertiary">Route mode</p>
-              <p className="mt-1 text-[11px] text-text-primary">{navigationBoard.modeLabel}</p>
-            </div>
-          </div>
-          <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-medium text-text-primary">Next steps</p>
-                <p className="mt-1 text-[11px] text-text-secondary">First · {commandBoard.firstActionLabel}</p>
-                <p className="text-[11px] text-text-secondary">Then · {commandBoard.secondActionLabel}</p>
-              </div>
-              <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${commandBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : commandBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
-                {commandBoard.statusLabel}
-              </span>
-            </div>
-            <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-              <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                <p className="text-[10px] text-text-tertiary">Primary target</p>
-                <p className="mt-1 text-[11px] text-text-primary">{commandBoard.firstTargetLabel}</p>
-              </div>
-              <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                <p className="text-[10px] text-text-tertiary">Why now</p>
-                <p className="mt-1 text-[11px] text-text-primary">{commandBoard.reasonLabel}</p>
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
-            {commandSummaryItems.map((item) => (
-              <button
-                key={item.label}
-                type="button"
-                onClick={() => jumpToCommandSummaryItem(item.label)}
-                className={`rounded-xl border px-3 py-2.5 text-left transition hover:border-primary/35 hover:bg-primary/[0.04] ${item.tone === 'priority' ? 'border-primary/30 bg-primary/[0.06]' : item.tone === 'ready' ? 'border-border-subtle bg-surface-subtle' : 'border-border/50 bg-surface-subtle/35'}`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-[11px] font-medium text-text-primary">{item.label}</p>
-                  <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${item.tone === 'priority' ? 'border-primary/20 bg-white text-primary' : item.tone === 'ready' ? 'border-border-subtle bg-white text-primary' : 'border-border bg-white text-text-tertiary'}`}>
-                    {item.statusLabel}
-                  </span>
-                </div>
-                <p className="mt-2 text-[10px] text-text-tertiary">Target</p>
-                <p className="mt-1 text-[11px] text-text-primary">{item.targetLabel}</p>
-                <p className="mt-2 text-[10px] text-text-secondary">{item.detail}</p>
-                <div className="mt-2 inline-flex items-center gap-1 rounded-lg border border-border/60 bg-white/80 px-2 py-1 text-[9px] font-medium text-text-secondary">
-                  <span className="text-text-tertiary">Next</span>
-                  <span>{item.actionLabel}</span>
-                </div>
-                {priorityCommandLabel === item.label && (
-                  <div className="mt-2 inline-flex flex-wrap items-center gap-1 rounded-lg border border-primary/20 bg-white/80 px-2 py-1 text-[9px] font-medium text-primary">
-                    <span>Now — {priorityCommandReason}{priorityCommandTargetReason ? ` ${priorityCommandTargetReason}` : ''}</span>
-                    <span className="rounded-lg border border-primary/15 bg-primary/[0.05] px-1.5 py-0.5">{priorityCommandCta}</span>
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
-            {commandDeckItems.map((item) => (
-              <button
-                key={item.label}
-                type="button"
-                onClick={() => jumpToCommandSummaryItem(item.label)}
-                className={`rounded-xl border px-3 py-3 text-left transition hover:border-primary/35 hover:bg-primary/[0.04] ${item.priority ? 'border-primary/30 bg-primary/[0.06]' : 'border-border/50 bg-surface-subtle/25'}`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-[11px] font-medium text-text-primary">{item.label}</p>
-                  <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${item.priority ? 'border-primary/20 bg-white text-primary' : 'border-border bg-white text-text-tertiary'}`}>
-                    {item.status}
-                  </span>
-                </div>
-                <p className="mt-2 text-[11px] text-text-secondary">{item.detail}</p>
-                {item.target && <p className="mt-2 text-[10px] text-text-tertiary">Target · {item.target}</p>}
-                <p className="mt-3 text-[10px] font-medium text-text-tertiary">{item.cta}</p>
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
-            {opsSnapshotItems.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => jumpToOpsSnapshotLane(item.key)}
-                className={`rounded-xl border px-3 py-3 text-left transition hover:border-primary/35 hover:bg-primary/[0.04] ${item.tone === 'warning' ? 'border-primary/20 bg-accent-light' : item.tone === 'success' ? 'border-border-subtle bg-surface-subtle' : 'border-border/50 bg-surface-subtle/30'}`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-[11px] font-medium text-text-primary">{item.title}</p>
-                    <p className="mt-1 text-[11px] text-text-secondary">{item.detail}</p>
-                  </div>
-                  <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${item.locked ? 'border-border bg-white text-text-tertiary' : item.tone === 'warning' ? 'border-border-subtle bg-white text-primary' : item.tone === 'success' ? 'border-border-subtle bg-white text-primary' : 'border-primary/20 bg-white text-primary'}`}>
-                    {item.locked ? 'Read only' : item.tone === 'warning' ? 'Needs action' : item.tone === 'success' ? 'On track' : 'Ready'}
-                  </span>
-                </div>
-                <p className="mt-3 text-[10px] font-medium text-text-tertiary">{item.cta}</p>
-              </button>
-            ))}
-          </div>
-        </div>
+        <CoordinatorDayOfSummaryPanel
+          alertOverrideBadge={alertOverrideBadge}
+          alertOverrideCurrentLabel={alertOverrideCurrentLabel}
+          alertOverrideTargetLabel={alertOverrideTargetLabel}
+          commandBoard={commandBoard}
+          commandDeckItems={commandDeckItems}
+          commandModeGuidance={commandModeGuidance}
+          commandModeLabel={commandModeLabel}
+          commandSource={commandSource}
+          commandSummaryItems={commandSummaryItems}
+          executionBoard={executionBoard}
+          manualOverrideActionLabel={manualOverrideActionLabel}
+          manualOverrideBadge={manualOverrideBadge}
+          manualOverrideCurrentTargetLabel={manualOverrideCurrentTargetLabel}
+          manualOverrideTargetLabel={manualOverrideTargetLabel}
+          navigationBoard={navigationBoard}
+          neutralFocusReason={neutralFocusReason}
+          onCommandClick={jumpToCommandSummaryItem}
+          onOpsSnapshotClick={jumpToOpsSnapshotLane}
+          onPrimaryAction={runPrimaryAction}
+          onReturnToBoard={returnToBoard}
+          onReturnToBoardTarget={returnToBoardTarget}
+          onRevisitNeutralFocus={revisitNeutralFocus}
+          onStablePromptClick={jumpToStablePrompt}
+          opsSnapshotItems={opsSnapshotItems}
+          overrideBadgeToneClassName={overrideBadgeToneClassName}
+          hasPanelFocus={Boolean(panelFocus)}
+          primaryAction={primaryAction}
+          primaryActionBoard={primaryActionBoard}
+          priorityCommandCta={priorityCommandCta}
+          priorityCommandLabel={priorityCommandLabel}
+          priorityCommandReason={priorityCommandReason}
+          priorityCommandTargetReason={priorityCommandTargetReason}
+          stablePrompt={stablePrompt}
+          stablePromptBadgeToneClassName={stablePromptBadgeToneClassName}
+          stablePromptStateToneClassName={stablePromptStateToneClassName}
+          stablePromptTargetLabel={stablePromptTargetLabel}
+          standingPromptBadge={standingPromptBadge}
+          standingPromptCopy={standingPromptCopy}
+          standingPromptMode={standingPromptMode}
+          standingPromptStateLabel={standingPromptStateLabel}
+          summaryDisplayCue={summaryDisplayCue}
+          summaryFeedbackBadge={summaryFeedbackBadge}
+          summaryFeedbackBadgeToneClassName={summaryFeedbackBadgeToneClassName}
+          summaryFeedbackCopy={summaryFeedbackCopy}
+          summaryFeedbackLayout={summaryFeedbackLayout}
+          summaryFeedbackTone={summaryFeedbackTone}
+        />
 
         {coordinatorRole === 'planner' && (
           <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
@@ -1997,597 +1409,100 @@ export const DashboardCoordinatorMode: React.FC = () => {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className={`lg:col-span-2 overflow-hidden rounded-xl border bg-white shadow-sm ${panelFocus === 'check-in' ? 'border-primary/40 ring-2 ring-primary/10' : 'border-border-subtle'}`}>
-            <div className="px-4 py-3 border-b border-border/60 space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-text-primary">Check-in queue</p>
-                  <p className="text-[11px] text-text-tertiary">Search arrivals fast and keep the live line moving.</p>
-                </div>
-                <p className="text-[11px] text-text-tertiary">{checkInQueue.length} shown · {checkInWatchCount} need review{checkInReviewOnly ? ' · review mode' : ''}{activeGuestId ? ` · ${getCoordinatorActiveTargetLabel('guest')}` : ''}{checkInTargetState.label ? ` · ${checkInTargetState.label}` : ''}</p>
-              </div>
-              <div className="rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-medium text-text-primary">Door board</p>
-                    <p className="mt-1 text-[11px] text-text-secondary">Active · {checkInBoard.activeLabel}</p>
-                    <p className="text-[11px] text-text-secondary">Next ready · {checkInBoard.nextReadyLabel}</p>
-                  </div>
-                  <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${checkInBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : checkInBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
-                    {checkInBoard.statusLabel}
-                  </span>
-                </div>
-                <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-                  <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                    <p className="text-[10px] text-text-tertiary">Queue mix</p>
-                    <p className="mt-1 text-[11px] text-text-primary">{checkInBoard.queueLabel}</p>
-                  </div>
-                  <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                    <p className="text-[10px] text-text-tertiary">Review pressure</p>
-                    <p className="mt-1 text-[11px] text-text-primary">{checkInBoard.reviewLabel}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Input
-                  value={checkInQuery}
-                  onChange={(e) => { focusCoordinatorCheckInLane(); setCheckInQuery(e.target.value); }}
-                  onKeyDown={(e) => {
-                    if (e.key !== 'Enter') return;
-                    e.preventDefault();
-                    const activeGuest = checkInQueue.find((guest) => guest.id === activeGuestId) ?? checkInQueue[0];
-                    if (activeGuest && canCheckIn && !activeGuest.checked_in_at && getCoordinatorDoorStatus(activeGuest) !== 'watch') {
-                      focusCoordinatorCheckInLane();
-                      setActiveGuestId(activeGuest.id);
-                      void toggleCheckIn(activeGuest);
-                      return;
-                    }
-                    focusFirstCoordinatorQueueGuest();
-                  }}
-                  placeholder="Search guest name or RSVP status · Enter checks in the active ready guest"
-                />
-                <select
-                  value={checkInFilter}
-                  onChange={(e) => { focusCoordinatorCheckInLane(); setCheckInFilter(e.target.value as CoordinatorCheckInFilter); setCheckInReviewOnly(false); }}
-                  className="sm:w-40 text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
-                >
-                  <option value="arrivals">Arrivals</option>
-                  <option value="checked-in">Checked in</option>
-                  <option value="all">All guests</option>
-                </select>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    focusCoordinatorCheckInLane();
-                    setCheckInFilter('arrivals');
-                    setCheckInReviewOnly(false);
-                    setActiveGuestId(nextArrivals[0]?.id ?? null);
-                  }}
-                  className={`rounded-lg border px-2.5 py-1 text-[11px] ${!checkInReviewOnly && checkInFilter === 'arrivals' ? 'border-primary/35 bg-primary/5 text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
-                >
-                  Ready now{nextArrivals.length ? ` · ${nextArrivals.length}` : ''}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    focusCoordinatorCheckInLane();
-                    setCheckInFilter('arrivals');
-                    setCheckInReviewOnly((prev) => !prev);
-                    setActiveGuestId(checkInBoardTargetId);
-                  }}
-                  className={`rounded-lg border px-2.5 py-1 text-[11px] ${checkInReviewOnly ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
-                >
-                  Review only{checkInWatchCount ? ` · ${checkInWatchCount}` : ''}
-                </button>
-                {activeGuestId && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const activeGuest = checkInQueue.find((guest) => guest.id === activeGuestId);
-                      if (!activeGuest) return;
-                      focusCoordinatorCheckInLane();
-                      void toggleCheckIn(activeGuest);
-                    }}
-                    disabled={!canCheckIn || checkInBusyGuestId === activeGuestId || !(checkInQueue.find((guest) => guest.id === activeGuestId))}
-                    className="rounded-lg border border-primary/25 bg-primary/5 px-2.5 py-1 text-[11px] text-primary disabled:opacity-40"
-                  >
-                    {checkInBusyGuestId === activeGuestId ? 'Updating…' : 'Check in active guest'}
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="max-h-[60vh] overflow-auto divide-y divide-border-subtle/70">
-              {checkInQueue.length === 0 && (
-                <div className="px-4 py-4 text-xs text-text-tertiary">
-                  No guests match this queue right now. Try a different filter or search to keep the door moving.
-                </div>
-              )}
-              {checkInQueue.map((g) => {
-                const doorStatus = getCoordinatorDoorStatus(g);
-                return (
-                  <div
-                    key={g.id}
-                    className={`flex items-center justify-between gap-3 px-4 py-2.5 cursor-pointer ${activeGuestId === g.id ? 'bg-primary/5' : ''}`}
-                    onClick={() => {
-                      focusCoordinatorCheckInLane();
-                      setActiveGuestId(g.id);
-                    }}
-                  >
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-medium text-text-primary">{g.name}</p>
-                        <span className={`px-2 py-0.5 rounded-lg text-[10px] border ${doorStatus === 'ready' ? 'border-border-subtle bg-accent-light text-primary' : doorStatus === 'watch' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-surface-subtle text-text-tertiary'}`}>
-                          {getCoordinatorDoorStatusLabel(doorStatus)}
-                        </span>
-                        {checkInBoardTargetId === g.id && (
-                          <span className={`px-2 py-0.5 rounded-lg text-[10px] border ${checkInTargetState.isBoardTargetActive ? 'border-primary/25 bg-primary/10 text-primary' : 'border-primary/20 bg-accent-light text-primary'}`}>
-                            {checkInTargetState.isBoardTargetActive ? 'Suggested guest in progress' : 'Suggested guest'}
-                          </span>
-                        )}
-                        {activeGuestId === g.id && checkInBoardTargetId !== g.id && (
-                          <span className="px-2 py-0.5 rounded-lg text-[10px] border border-primary/20 bg-primary/5 text-primary">
-                            Selected guest
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-text-tertiary">{g.rsvp_status}{doorStatus === 'watch' ? ' · Flag before check-in' : ''}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {doorStatus === 'watch' && canEditQna && (
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); escalateDoorReview(g); }}
-                          className="rounded-md border border-primary/20 bg-accent-light px-3 py-1.5 text-xs text-primary"
-                        >
-                          Escalate
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            focusCoordinatorCheckInLane();
-                            setActiveGuestId(g.id);
-                            if (canCheckIn) {
-                              void toggleCheckIn(g);
-                            }
-                          }}
-                        disabled={!canCheckIn || doorStatus === 'watch' || checkInBusyGuestId === g.id}
-                        className={`rounded-md border px-3 py-1.5 text-xs disabled:opacity-40 ${g.checked_in_at ? 'border-primary/20 bg-accent-light text-primary' : doorStatus === 'watch' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-secondary'}`}
-                      >
-                        {checkInBusyGuestId === g.id ? 'Updating…' : g.checked_in_at ? getCoordinatorCheckInActionLabel(g) : doorStatus === 'watch' ? 'Review first' : getCoordinatorCheckInActionLabel(g)}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <CoordinatorCheckInQueuePanel
+            activeGuestId={activeGuestId}
+            canCheckIn={canCheckIn}
+            canEditQna={canEditQna}
+            checkInBoard={checkInBoard}
+            checkInBoardTargetId={checkInBoardTargetId}
+            checkInBusyGuestId={checkInBusyGuestId}
+            checkInFilter={checkInFilter}
+            checkInQuery={checkInQuery}
+            checkInQueue={checkInQueue}
+            checkInReviewOnly={checkInReviewOnly}
+            checkInTargetState={checkInTargetState}
+            checkInWatchCount={checkInWatchCount}
+            isFocused={panelFocus === 'check-in'}
+            nextArrivals={nextArrivals}
+            onActiveGuestCheckIn={() => {
+              const activeGuest = checkInQueue.find((guest) => guest.id === activeGuestId);
+              if (!activeGuest) return;
+              focusCoordinatorCheckInLane();
+              void toggleCheckIn(activeGuest);
+            }}
+            onCheckInGuest={(guest) => { void toggleCheckIn(guest); }}
+            onEscalateDoorReview={escalateDoorReview}
+            onFocusFirstQueueGuest={focusFirstCoordinatorQueueGuest}
+            onFocusLane={focusCoordinatorCheckInLane}
+            onReadyNowClick={() => {
+              focusCoordinatorCheckInLane();
+              setCheckInFilter('arrivals');
+              setCheckInReviewOnly(false);
+              setActiveGuestId(nextArrivals[0]?.id ?? null);
+            }}
+            onReviewOnlyClick={() => {
+              focusCoordinatorCheckInLane();
+              setCheckInFilter('arrivals');
+              setCheckInReviewOnly((prev) => !prev);
+              setActiveGuestId(checkInBoardTargetId);
+            }}
+            onSelectGuest={setActiveGuestId}
+            onSetFilter={(filter) => {
+              setCheckInFilter(filter);
+              setCheckInReviewOnly(false);
+            }}
+            onSetQuery={setCheckInQuery}
+          />
 
           <div className="space-y-4 rounded-xl border border-border-subtle bg-white p-4 shadow-sm">
-            <div>
-              <p className="text-sm font-medium text-text-primary mb-2">Run-of-show timeline{panelFocus === 'timeline' ? ' · focus' : ''}{activeTimelineEventId ? ` · ${getCoordinatorActiveTargetLabel('timeline')}` : ''}{timelineTargetState.label ? ` · ${timelineTargetState.label}` : ''}</p>
-              <div className="mb-2 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-medium text-text-primary">Timeline board</p>
-                    <p className="mt-1 text-[11px] text-text-secondary">Live · {timelineBoard.liveLabel}</p>
-                    <p className="text-[11px] text-text-secondary">Up next · {timelineBoard.upNextLabel}</p>
-                  </div>
-                  <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${timelineBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : timelineBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
-                    {timelineBoard.stateLabel}
-                  </span>
-                </div>
-                <p className="mt-3 text-[11px] text-text-tertiary">Progress · {timelineBoard.progressLabel}</p>
-              </div>
-              {activeTimelineEvent && (
-                <div className="mb-2 rounded-lg border border-border/50 bg-surface-subtle/30 px-3 py-2">
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <p className="text-xs font-medium text-text-primary">Focused event</p>
-                      <p className="text-sm text-text-primary">{activeTimelineEvent.event_name}</p>
-                      <p className="text-[11px] text-text-tertiary">
-                        {formatCoordinatorEventDateTime(activeTimelineEvent.start_time)}
-                        {activeTimelineEventState ? ` · ${activeTimelineEventState === 'live' ? 'Live now' : activeTimelineEventState === 'done' ? 'Completed' : 'Up next'}` : ''}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {activeTimelineCorrectionAction && (
-                        <button
-                          type="button"
-                          disabled={!canEditTimeline}
-                          onClick={() => runTimelineAction(activeTimelineEvent.id, activeTimelineCorrectionAction.nextState)}
-                          className="rounded border border-primary/20 bg-accent-light px-2.5 py-1 text-[11px] text-primary disabled:opacity-40"
-                        >
-                          {activeTimelineCorrectionAction.label}
-                        </button>
-                      )}
-                      {activeTimelinePrimaryAction?.nextState && (
-                        <button
-                          type="button"
-                          disabled={!canEditTimeline}
-                          onClick={() => runTimelineAction(activeTimelineEvent.id, activeTimelinePrimaryAction.nextState)}
-                          className="text-[11px] px-2.5 py-1 rounded border border-primary/25 bg-primary/5 text-primary disabled:opacity-40"
-                        >
-                          {activeTimelinePrimaryAction.label}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-              {(liveEventId || upNextEventId || timelineBoardTargetId) && (
-                <div className="mb-2 flex flex-wrap gap-1.5">
-                  {liveEventId && (
-                    <button
-                      type="button"
-                      onClick={() => jumpToTimelineEvent(liveEventId)}
-                      className={`text-[11px] px-2 py-1 rounded-lg border ${activeTimelineEventId === liveEventId ? 'border-primary/30 bg-primary/10 text-primary' : 'border-primary/20 bg-primary/5 text-primary hover:bg-primary/10'}`}
-                    >
-                      Jump to live event
-                    </button>
-                  )}
-                  {upNextEventId && (
-                    <button
-                      type="button"
-                      onClick={() => jumpToTimelineEvent(upNextEventId)}
-                      className={`rounded-lg border px-2 py-1 text-[11px] ${activeTimelineEventId === upNextEventId ? 'border-primary/20 bg-accent-light text-primary' : 'border-border-subtle bg-surface-subtle text-text-secondary hover:border-primary/35 hover:text-primary'}`}
-                    >
-                      Jump to up next
-                    </button>
-                  )}
-                  {timelineBoardTargetId && timelineBoardTargetId !== liveEventId && timelineBoardTargetId !== upNextEventId && (
-                    <button
-                      type="button"
-                      onClick={() => jumpToTimelineEvent(timelineBoardTargetId)}
-                      className={`text-[11px] px-2 py-1 rounded-lg border ${activeTimelineEventId === timelineBoardTargetId ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
-                    >
-                      Jump to suggested event
-                    </button>
-                  )}
-                </div>
-              )}
-              <div className="space-y-2">
-                {events.length === 0 ? (
-                  <p className="text-xs text-text-tertiary">No itinerary events yet.</p>
-                ) : (
-                  events.map((e) => {
-                    const state = timelineState[e.id] || 'up-next';
-                    const isLive = e.id === liveEventId;
-                    const isUpNext = e.id === upNextEventId;
-                    const primaryAction = getCoordinatorPrimaryTimelineAction({
-                      event: e,
-                      liveEventId,
-                      upNextEventId,
-                      timelineState,
-                    });
-                    const correctionAction = getCoordinatorTimelineCorrectionAction(state);
-                    return (
-                      <div
-                        key={e.id}
-                        className={`cursor-pointer rounded-lg border px-3 py-2 ${activeTimelineEventId === e.id ? 'ring-2 ring-primary/10 ' : ''}${isLive ? 'border-primary/35 bg-primary/5' : isUpNext ? 'border-primary/20 bg-accent-light' : 'border-border/50 bg-surface-subtle/40'}`}
-                        onClick={() => {
-                          focusCoordinatorTimelineLane();
-                          setActiveTimelineEventId(e.id);
-                        }}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="text-sm text-text-primary">{e.event_name}</p>
-                              {timelineBoardTargetId === e.id && (
-                                <span className={`px-2 py-0.5 rounded-lg text-[10px] border ${timelineTargetState.isBoardTargetActive ? 'border-primary/25 bg-primary/10 text-primary' : 'border-primary/20 bg-accent-light text-primary'}`}>
-                                  {timelineTargetState.isBoardTargetActive ? 'Suggested event in progress' : isLive ? 'Suggested live event' : 'Suggested up-next event'}
-                                </span>
-                              )}
-                              {activeTimelineEventId === e.id && timelineBoardTargetId !== e.id && (
-                                <span className="px-2 py-0.5 rounded-lg text-[10px] border border-primary/20 bg-primary/5 text-primary">
-                                  Selected event
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[11px] text-text-tertiary">{isLive ? 'Live now' : isUpNext ? 'Up next' : state === 'done' ? 'Completed' : 'Queued'}</p>
-                          </div>
-                          <select
-                            value={state}
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(ev) => { if (canEditTimeline) selectTimelineState(e.id, ev.target.value as TimelineState); }}
-                            disabled={!canEditTimeline}
-                            className="text-[11px] rounded-md border border-border bg-white px-2 py-1 text-text-secondary disabled:opacity-40"
-                          >
-                            <option value="up-next">Up next</option>
-                            <option value="live">Live</option>
-                            <option value="done">Done</option>
-                          </select>
-                        </div>
-                        <div className="mt-2 flex items-center justify-between gap-3">
-                          <p className="text-xs text-text-tertiary">{formatCoordinatorEventDateTime(e.start_time)}</p>
-                          <div className="flex items-center gap-2">
-                            {correctionAction && (
-                              <button
-                                type="button"
-                                disabled={!canEditTimeline}
-                                onClick={(ev) => { ev.stopPropagation(); runTimelineAction(e.id, correctionAction.nextState); }}
-                                className="rounded border border-primary/20 bg-accent-light px-2.5 py-1 text-[11px] text-primary disabled:opacity-40"
-                              >
-                                {correctionAction.label}
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              disabled={!canEditTimeline || !primaryAction.nextState}
-                              onClick={(ev) => { ev.stopPropagation(); runTimelineAction(e.id, primaryAction.nextState); }}
-                              className="text-[11px] px-2.5 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-40"
-                            >
-                              {primaryAction.label}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
+            <CoordinatorTimelinePanel
+              activeTimelineEventId={activeTimelineEventId}
+              canEditTimeline={canEditTimeline}
+              events={events}
+              liveEventId={liveEventId}
+              panelFocus={panelFocus}
+              timelineBoard={timelineBoard}
+              timelineBoardTargetId={timelineBoardTargetId}
+              timelineState={timelineState}
+              timelineTargetState={timelineTargetState}
+              upNextEventId={upNextEventId}
+              onFocusLane={focusCoordinatorTimelineLane}
+              onJumpToEvent={jumpToTimelineEvent}
+              onRunAction={runTimelineAction}
+              onSelectEvent={setActiveTimelineEventId}
+              onSelectState={selectTimelineState}
+            />
 
-            <div className="border-t border-border/60 pt-3">
-              <p className="text-sm font-medium text-text-primary mb-1">Day-of message</p>
-              <p className="text-[11px] text-text-tertiary mb-2">Use quick actions and filters to send updates to the right guests fast.</p>
-
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
-                {[
-                  ['Queued', alertStats.total],
-                  ['Send now', alertStats.immediate],
-                  ['Scheduled', alertStats.scheduled],
-                  ['Text', alertStats.sms],
-                  ['Email', alertStats.email],
-                ].map(([label, value]) => (
-                  <div key={String(label)} className="rounded-lg border border-border-subtle bg-white px-2.5 py-2 shadow-sm">
-                    <p className="text-[10px] text-text-tertiary">{label}</p>
-                    <p className="text-xs font-semibold text-text-primary">{value}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-medium text-text-primary">Alert board</p>
-                    <p className="mt-1 text-[11px] text-text-secondary">{alertBoard.targetLabel}</p>
-                  </div>
-                  <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${alertBoard.statusTone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : alertBoard.statusTone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
-                    {alertBoard.statusLabel}
-                  </span>
-                </div>
-                <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-                  <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                    <p className="text-[10px] text-text-tertiary">Delivery</p>
-                    <p className="mt-1 text-[11px] text-text-primary">{alertBoard.deliveryLabel}</p>
-                  </div>
-                  <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                    <p className="text-[10px] text-text-tertiary">Latest activity</p>
-                    <p className="mt-1 text-[11px] text-text-primary">{alertBoard.latestActivityLabel}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-medium text-text-primary">Alert activity</p>
-                    <p className="mt-1 text-[11px] text-text-secondary">Latest live · {alertActivityBoard.latestLiveLabel}</p>
-                    <p className="text-[11px] text-text-secondary">Next scheduled · {alertActivityBoard.nextScheduledLabel}</p>
-                  </div>
-                  <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${alertActivityBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : alertActivityBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
-                    {alertActivityBoard.statusLabel}
-                  </span>
-                </div>
-                <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-                  <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                    <p className="text-[10px] text-text-tertiary">Channel mix</p>
-                    <p className="mt-1 text-[11px] text-text-primary">{alertActivityBoard.channelLabel}</p>
-                  </div>
-                  <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                    <p className="text-[10px] text-text-tertiary">Pacing</p>
-                    <p className="mt-1 text-[11px] text-text-primary">{alertActivityBoard.pacingLabel}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {alertSuggestions.map((suggestion) => {
-                  const suggestionState = getCoordinatorAlertSuggestionState({
-                    suggestion,
-                    preferredSuggestion: preferredAlertSuggestion,
-                    subject: alertForm.subject,
-                    body: alertForm.body,
-                    audience: alertForm.audience,
-                  });
-
-                  return (
-                    <button
-                      key={suggestion.key}
-                      type="button"
-                      disabled={!canSendAlerts}
-                      onClick={() => {
-                        focusCoordinatorAlertLane();
-                        setAlertForm((prev) => ({
-                          ...prev,
-                          subject: suggestion.subject,
-                          body: suggestion.body,
-                          audience: suggestion.audience,
-                        }));
-                        setLastAlertSuggestionKey(suggestion.key);
-                      }}
-                      className={`text-[11px] px-2 py-1 rounded-lg border inline-flex items-center gap-1.5 disabled:opacity-40 ${suggestionState.isDraftMatch ? 'border-primary/35 bg-primary/10 text-primary' : suggestionState.isBoardTarget ? 'border-primary/25 bg-primary/5 text-primary hover:bg-primary/10' : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary'}`}
-                    >
-                      <span>{suggestion.label}</span>
-                      {suggestionState.badge && (
-                        <span className={`px-1.5 py-0.5 rounded-lg border text-[9px] font-medium ${suggestionState.isDraftMatch ? 'border-primary/25 bg-white/80 text-primary' : 'border-primary/15 bg-primary/[0.04] text-primary/80'}`}>
-                          {suggestionState.badge}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-                <button
-                  type="button"
-                  disabled={!canSendAlerts}
-                  onClick={() => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, channel: 'sms', scheduleType: 'now' })); }}
-                  className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-40"
-                >
-                  Text now
-                </button>
-                <button
-                  type="button"
-                  disabled={!canSendAlerts || !canScheduleAlerts}
-                  onClick={() => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, channel: 'email', scheduleType: 'later' })); }}
-                  className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-40"
-                >
-                  Schedule email
-                </button>
-                {alertStats.byAudience.map(([audience, count]) => (
-                  <button
-                    key={audience}
-                    type="button"
-                    disabled={!canSendAlerts}
-                    onClick={() => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, audience })); }}
-                    className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-40"
-                  >
-                    {audience} ({count})
-                  </button>
-                ))}
-              </div>
-
-              <fieldset disabled={!canSendAlerts} className="space-y-2.5">
-                <Input
-                  value={alertForm.subject}
-                  onChange={(e) => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, subject: e.target.value })); }}
-                  placeholder="Message subject"
-                />
-                <Textarea
-                  value={alertForm.body}
-                  onChange={(e) => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, body: e.target.value })); }}
-                  rows={3}
-                  placeholder="Write the update you want guests to receive"
-                />
-                <div className="grid grid-cols-2 gap-2">
-                  <select
-                    value={alertForm.audience}
-                    onChange={(e) => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, audience: e.target.value })); }}
-                    className="text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
-                  >
-                    <option value="all">All guests</option>
-                    <option value="checked-in">Checked-in guests</option>
-                    <option value="pending">Pending RSVP</option>
-                    {eventAudienceOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label} ({opt.count})</option>
-                    ))}
-                  </select>
-                  <select
-                    value={alertForm.channel}
-                    onChange={(e) => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, channel: e.target.value as 'email' | 'sms' })); }}
-                    className="text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
-                  >
-                    <option value="email">Email</option>
-                    <option value="sms">Text</option>
-                  </select>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <select
-                    value={alertForm.scheduleType}
-                    onChange={(e) => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, scheduleType: (canScheduleAlerts ? e.target.value : 'now') as 'now' | 'later' })); }}
-                    className="text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
-                  >
-                    <option value="now">Send now</option>
-                    <option value="later" disabled={!canScheduleAlerts}>Schedule</option>
-                  </select>
-                  {alertForm.scheduleType === 'later' && canScheduleAlerts ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      <input
-                        type="date"
-                        value={alertForm.scheduleDate}
-                        onChange={(e) => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, scheduleDate: e.target.value })); }}
-                        className="text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
-                      />
-                      <input
-                        type="time"
-                        value={alertForm.scheduleTime}
-                        onChange={(e) => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, scheduleTime: e.target.value })); }}
-                        className="text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
-                      />
-                    </div>
-                  ) : <div />}
-                </div>
-                <div className={`space-y-2 rounded-md border px-3 py-2 ${alertTargetCue.aligned ? 'border-primary/20 bg-primary/[0.03]' : 'border-primary/20 bg-accent-light'}`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <p className="text-[11px] font-medium text-text-primary">Ready to send</p>
-                      <p className="text-[10px] text-text-tertiary/80">{getCoordinatorActiveTargetLabel('alert')}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 rounded-lg border text-[10px] font-medium ${alertTargetCue.aligned ? 'border-primary/20 bg-primary/5 text-primary' : 'border-border-subtle bg-white text-primary'}`}>{alertTargetCue.aligned ? 'Board-aligned' : 'Customized'}</span>
-                      <span className="px-2 py-0.5 rounded-lg border border-primary/20 bg-primary/5 text-[10px] font-medium text-primary">{alertLaneLabel}</span>
-                    </div>
-                  </div>
-                  <p className="text-[11px] font-medium text-text-primary">{alertTargetCue.title}</p>
-                  <p className="text-[11px] text-text-secondary">{alertTargetCue.detail}</p>
-                  {!alertTargetCue.aligned && (
-                    <div className="space-y-2">
-                      {alertOverrideLabel && <p className="text-[11px] text-primary">{alertOverrideLabel}</p>}
-                      <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                        {alertOverrideTargetLabel && <p className="text-primary/80">{alertOverrideTargetLabel}</p>}
-                        {alertOverrideCurrentLabel && <p className="text-text-secondary">{alertOverrideCurrentLabel}</p>}
-                        {preferredAlertSuggestion && (
-                          <button
-                            type="button"
-                            onClick={() => { focusCoordinatorAlertLane(); setAlertForm((prev) => applyCoordinatorAlertSuggestion({ form: prev, suggestion: preferredAlertSuggestion })); }}
-                            className="inline-flex w-fit rounded-md border border-border-subtle bg-white px-2.5 py-1 text-[11px] font-medium text-primary"
-                          >
-                            Re-align to {preferredAlertSuggestion.label.toLowerCase()}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  <p className="text-[11px] text-text-secondary">{alertSummary.intentLabel} · {alertSummary.audienceLabel} · {alertSummary.recipientLabel}</p>
-                  <p className="text-[11px] text-text-tertiary">{alertSummary.deliveryLabel}</p>
-                </div>
-                {!canScheduleAlerts && canSendAlerts && <p className="text-[11px] text-text-tertiary">Coordinators can send updates now; scheduled sends stay with planners and the couple.</p>}
-                {alertValidationError && <p className="text-[11px] text-error">{alertValidationError}</p>}
-                <button
-                  type="button"
-                  onClick={() => void sendDayOfAlert()}
-                  disabled={alertBusy || !!alertValidationError || !canSendAlerts}
-                  className="w-full px-3 py-2 text-sm rounded-md border border-primary/30 bg-primary/10 text-primary disabled:opacity-50"
-                >
-                  {alertBusy ? 'Saving...' : alertForm.scheduleType === 'later' ? 'Schedule message' : 'Send message'}
-                </button>
-                {alertLog.length > 0 && (
-                  <div className="pt-1 space-y-1.5">
-                    <div className="flex flex-wrap gap-1.5">
-                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertChannelFilter('all'); }} className={`text-[11px] px-2 py-0.5 rounded-lg border ${alertChannelFilter === 'all' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>All</button>
-                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertChannelFilter('email'); }} className={`text-[11px] px-2 py-0.5 rounded-lg border ${alertChannelFilter === 'email' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Email</button>
-                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertChannelFilter('sms'); }} className={`text-[11px] px-2 py-0.5 rounded-lg border ${alertChannelFilter === 'sms' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Text</button>
-                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertTimingFilter('all'); }} className={`text-[11px] px-2 py-0.5 rounded-lg border ${alertTimingFilter === 'all' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Any time</button>
-                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertTimingFilter('now'); }} className={`text-[11px] px-2 py-0.5 rounded-lg border ${alertTimingFilter === 'now' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Send now</button>
-                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertTimingFilter('scheduled'); }} className={`text-[11px] px-2 py-0.5 rounded-lg border ${alertTimingFilter === 'scheduled' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Scheduled</button>
-                    </div>
-                    {filteredAlertLogView.slice(0, 4).map((item) => (
-                      <div key={item.id} className={`rounded-md border px-2.5 py-2 ${item.tone === 'ready' ? 'border-primary/20 bg-primary/[0.03]' : 'border-primary/20 bg-accent-light'}`}>
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-[11px] font-medium text-text-primary">{item.title}</p>
-                          <p className="text-[10px] text-text-tertiary">{item.meta}</p>
-                        </div>
-                        <p className="mt-1 text-[11px] text-text-secondary">{item.detail}</p>
-                      </div>
-                    ))}
-                    {filteredAlertLog.length === 0 && (
-                      <p className="text-[11px] text-text-tertiary">No messages match the current alert filters.</p>
-                    )}
-                  </div>
-                )}
-              </fieldset>
-            </div>
+            <CoordinatorDayOfMessagePanel
+              alertActivityBoard={alertActivityBoard}
+              alertBoard={alertBoard}
+              alertBusy={alertBusy}
+              alertChannelFilter={alertChannelFilter}
+              alertForm={alertForm}
+              alertLaneLabel={alertLaneLabel}
+              alertLog={alertLog}
+              alertOverrideCurrentLabel={alertOverrideCurrentLabel}
+              alertOverrideLabel={alertOverrideLabel}
+              alertOverrideTargetLabel={alertOverrideTargetLabel}
+              alertStats={alertStats}
+              alertSuggestions={alertSuggestions}
+              alertSummary={alertSummary}
+              alertTargetCue={alertTargetCue}
+              alertTimingFilter={alertTimingFilter}
+              alertValidationError={alertValidationError}
+              canScheduleAlerts={canScheduleAlerts}
+              canSendAlerts={canSendAlerts}
+              eventAudienceOptions={eventAudienceOptions}
+              filteredAlertLogCount={filteredAlertLog.length}
+              filteredAlertLogView={filteredAlertLogView}
+              preferredAlertSuggestion={preferredAlertSuggestion}
+              onFocusLane={focusCoordinatorAlertLane}
+              onSendAlert={() => void sendDayOfAlert()}
+              onSetAlertChannelFilter={setAlertChannelFilter}
+              onSetAlertForm={setAlertForm}
+              onSetAlertTimingFilter={setAlertTimingFilter}
+              onSetLastAlertSuggestionKey={setLastAlertSuggestionKey}
+            />
 
             <div className="border-t border-border/60 pt-3">
               <div className="mb-2 flex items-center justify-between gap-3">

@@ -5853,3 +5853,18 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 05:25 AM PT No-Deploy Coordinator Dashboard Data-Hook Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/CoordinatorMode.tsx` now routes the coordinator dashboard bootstrap, persisted state hydration, and storage writeback lane through `src/pages/dashboard/coordinator/useCoordinatorDashboardData.ts`.
+  - That hook now owns demo bootstrap, live bootstrap via `loadCoordinatorBootstrapData(args.userId)`, guests/events/site hydration, coordinator role and permission state, timeline state, alert log, Q&A state, active work selection state, command/session state, alert intent state, and their corresponding coordinator storage restore/writeback flows while the page keeps the large derived-state, action, and render composition layers.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useCoordinatorDashboardData({ ... })`, checks that `useCoordinatorDashboardData.ts` owns the coordinator bootstrap/storage seam, and rejects regaining the old inline `loadCoordinatorBootstrapData(...)` and `readStoredCoordinatorTimelineState(siteId)` lifecycle in `CoordinatorMode.tsx`.
+  - `src/pages/dashboard/CoordinatorMode.tsx` dropped from 1867 lines to 1688 lines in this batch, while `src/pages/dashboard/coordinator/useCoordinatorDashboardData.ts` came in at 303 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
