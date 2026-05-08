@@ -82,6 +82,7 @@ describe('settings site data boundary', () => {
     expect(page).toContain('createSettingsCollaboratorInvite({');
     expect(page).toContain('revokeSettingsCollaboratorInvite(inviteId)');
     expect(page).toContain('<SettingsIdentityExportsPanel');
+    expect(page).toContain('<SettingsPrivacyPanel');
     expect(page).toContain('<SettingsTeamAccessPanel');
     expect(page).toContain('<SettingsSiteUrlPanel');
     expect(page).toContain('findSettingsSiteBySlug(cleaned)');
@@ -101,6 +102,7 @@ describe('settings site data boundary', () => {
     expect(page).not.toContain('Public site QR');
     expect(page).not.toContain('Wedding identity exports');
     expect(page).not.toContain('Copy manifest');
+    expect(page).not.toContain('Control who can view your site');
 
     expect(service).toContain('.select(SETTINGS_SITE_SELECT)');
     expect(service).toContain('.select(SETTINGS_COLLABORATOR_INVITE_SELECT)');

@@ -71,6 +71,7 @@ import { SettingsBillingPanel } from './settings/SettingsBillingPanel';
 import { SettingsIdentityExportsPanel } from './settings/SettingsIdentityExportsPanel';
 import { getSettingsTabs, SettingsNavigation, type SettingsTabId } from './settings/SettingsNavigation';
 import { SettingsNotificationsPanel } from './settings/SettingsNotificationsPanel';
+import { SettingsPrivacyPanel } from './settings/SettingsPrivacyPanel';
 import { SettingsSiteUrlPanel } from './settings/SettingsSiteUrlPanel';
 import { SettingsTeamAccessPanel } from './settings/SettingsTeamAccessPanel';
 
@@ -1096,229 +1097,41 @@ export const DashboardSettings: React.FC = () => {
                   weddingIdentityPrintAssets={weddingIdentityPrintAssets}
                 />
 
-                <Card variant="bordered" padding="lg">
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <CardTitle>Privacy Settings</CardTitle>
-                        <CardDescription>Control who can view your site</CardDescription>
-                      </div>
-                      <Button type="button" variant="outline" size="sm" onClick={() => setShowPrivacySettings((v) => !v)}>
-                        {showPrivacySettings ? 'Hide' : 'Show'}
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {!showPrivacySettings ? (
-                      <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
-                        Hidden by default to keep things simple. Open it when you want to choose who can see your site.
-                      </div>
-                    ) : (
-                    <form onSubmit={handleSavePrivacy} className="space-y-5">
-                      {visibilitySuccess && (
-                        <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{visibilitySuccess}</div>
-                      )}
-                      {visibilityError && (
-                        <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">{visibilityError}</div>
-                      )}
-
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-text-primary">Default site language</label>
-                        <p className="text-xs text-text-secondary">Sets the default language for your public wedding site and RSVP page.</p>
-                        <div className="flex gap-3">
-                          {SITE_LANGUAGE_OPTIONS.map(opt => (
-                            <label
-                              key={opt.value}
-                              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 cursor-pointer transition-colors ${
-                                defaultLanguage === opt.value
-                                  ? 'border-primary bg-primary/5'
-                                  : 'border-border hover:border-primary/40'
-                              }`}
-                            >
-                              <input
-                                type="radio"
-                                name="default_language"
-                                value={opt.value}
-                                checked={defaultLanguage === opt.value}
-                                onChange={() => { void handleDefaultLanguageChange(opt.value); }}
-                                className="text-primary focus:ring-primary"
-                              />
-                              <span className="text-sm font-medium text-text-primary">{opt.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                        <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                              <p className="text-sm font-semibold text-text-primary">Auto-translate public site</p>
-                              <p className="text-xs text-text-secondary">Generate stored translated versions of guest-facing site copy. Review the public site after generation.</p>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {TRANSLATION_LANGUAGE_OPTIONS.map((language) => (
-                                <Button
-                                  key={language.value}
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => void handleAutoTranslateLanguage(language.value)}
-                                  disabled={translatingLanguage === language.value}
-                                >
-                                  {translatingLanguage === language.value ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                                  {translatingLanguage === language.value ? 'Translating…' : language.label}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-                            {TRANSLATION_LANGUAGE_OPTIONS.map((language) => {
-                              const status = translationStatusByLanguage.get(language.value);
-                              const ready = status?.status === 'ready';
-                              const failed = status?.status === 'failed';
-                              return (
-                                <div key={language.value} className="rounded-lg border border-border bg-white px-3 py-3">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <p className="text-xs font-semibold text-text-primary">{language.label}</p>
-                                    <span className={`rounded-lg px-2 py-0.5 text-[11px] font-medium ${
-                                      ready
-                                        ? 'bg-success/10 text-success'
-                                        : failed
-                                          ? 'bg-surface-subtle text-text-secondary'
-                                          : 'bg-surface-subtle text-text-tertiary'
-                                    }`}>
-                                      {ready ? 'Ready' : failed ? 'Try again' : 'Not yet'}
-                                    </span>
-                                  </div>
-                                  <p className="mt-1 text-[11px] leading-4 text-text-tertiary">
-                                    {formatTranslationStatusDate(status?.translated_at ?? null)}
-                                  </p>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 space-y-2">
-                        <p className="text-sm font-medium text-text-primary">Visibility states</p>
-                        <ul className="space-y-1 text-xs text-text-secondary">
-                          <li>• <span className="font-medium text-text-primary">Draft</span> means only you can see the site while editing.</li>
-                          <li>• <span className="font-medium text-text-primary">Protected live access</span> lets you limit who can open the guest-facing site once it is live.</li>
-                          <li>• <span className="font-medium text-text-primary">Share with guests</span> makes the site live at your dayof URL.</li>
-                        </ul>
-                      </div>
-
-                      <div className="space-y-3">
-                        {getVisibilityModeOptions().map(opt => (
-                          <label
-                            key={opt.value}
-                            className={`flex items-start gap-3 p-3.5 rounded-lg border-2 cursor-pointer transition-colors ${
-                              privacyMode === opt.value
-                                ? 'border-primary bg-primary/5'
-                                : 'border-border hover:border-primary/40'
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="privacy_mode"
-                              value={opt.value}
-                              checked={privacyMode === opt.value}
-                              onChange={() => {
-                                visibilityDraftGuard.markDirty();
-                                setPrivacyMode(opt.value);
-                              }}
-                              className="mt-0.5 text-primary focus:ring-primary"
-                            />
-                            <div>
-                              <p className="font-medium text-text-primary text-sm">{opt.label}</p>
-                              <p className="text-xs text-text-secondary mt-0.5">{opt.description}</p>
-                            </div>
-                          </label>
-                        ))}
-                      </div>
-
-                      {privacyMode === 'password_protected' && (
-                        <div className="p-4 bg-surface-subtle border border-border rounded-lg space-y-3">
-                          <p className="text-sm font-medium text-text-primary">Site password</p>
-                          <p className="text-xs text-text-secondary">Guests will be prompted to enter this before viewing the site.</p>
-                          <div className="relative">
-                            <input
-                              type={showSitePassword ? 'text' : 'password'}
-                              value={sitePassword}
-                              onChange={e => {
-                                visibilityDraftGuard.markDirty();
-                                setSitePassword(e.target.value);
-                              }}
-                              placeholder="Set new password…"
-                              className="w-full px-3 py-2 pr-10 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary/40"
-                              autoComplete="new-password"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowSitePassword(v => !v)}
-                              className="absolute right-3 top-2.5 text-text-tertiary hover:text-text-primary"
-                              aria-label={showSitePassword ? 'Hide' : 'Show'}
-                            >
-                              {showSitePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                          </div>
-                          <p className="text-xs text-text-tertiary">Leave blank to keep the existing password.</p>
-                        </div>
-                      )}
-
-                      {privacyMode === 'invite_only' && (
-                        <div className="p-4 bg-surface-subtle border border-border rounded-lg space-y-3">
-                          <p className="text-sm font-medium text-text-primary">Invite-only guest access link</p>
-                          <p className="text-xs text-text-secondary">Share this link with guests you want to allow through your invite-only access setting. This is a guest access control, not a separate unpublished preview product, and it is separate from search visibility.</p>
-                          {guestAccessToken && siteSlug ? (
-                            <div className="flex items-center gap-2">
-                              <code className="flex-1 text-xs bg-background border border-border rounded-lg px-3 py-2 text-text-secondary truncate">
-                                {`${window.location.origin}/site/${siteSlug}?token=${guestAccessToken.slice(0, 12)}…`}
-                              </code>
-                              <Button type="button" variant="outline" size="sm" onClick={copyInviteLink}>
-                                {privacyCopied ? <CheckCheck className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
-                              </Button>
-                            </div>
-                          ) : (
-                            <p className="text-xs text-text-secondary">Save settings to generate the link.</p>
-                          )}
-                          {guestAccessToken && (
-                            <button
-                              type="button"
-                              onClick={handleRegenerateToken}
-                              className="text-xs text-text-tertiary hover:text-text-secondary hover:underline"
-                            >
-                              Regenerate access link (old link stops working)
-                            </button>
-                          )}
-                        </div>
-                      )}
-
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={hideFromSearch}
-                          onChange={e => {
-                            visibilityDraftGuard.markDirty();
-                            setHideFromSearch(e.target.checked);
-                          }}
-                          className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-                        />
-                        <div>
-                          <p className="text-sm font-medium text-text-primary">Hide from search engines</p>
-                          <p className="text-xs text-text-secondary">Adds a noindex tag so search engines should not list your site. Search visibility is separate from invite-only access links and separate from whether you have fully gone live for guests.</p>
-                        </div>
-                      </label>
-
-                      <div className="flex justify-end pt-2">
-                        <Button variant="primary" size="md" type="submit" disabled={visibilitySaving}>
-                          {visibilitySaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                          Save Privacy Settings
-                        </Button>
-                      </div>
-                    </form>
-                    )}
-                  </CardContent>
-                </Card>
+                <SettingsPrivacyPanel
+                  defaultLanguage={defaultLanguage}
+                  guestAccessToken={guestAccessToken}
+                  hideFromSearch={hideFromSearch}
+                  onAutoTranslateLanguage={(language) => { void handleAutoTranslateLanguage(language); }}
+                  onCopyInviteLink={copyInviteLink}
+                  onDefaultLanguageChange={(language) => { void handleDefaultLanguageChange(language); }}
+                  onHideFromSearchChange={(checked) => {
+                    visibilityDraftGuard.markDirty();
+                    setHideFromSearch(checked);
+                  }}
+                  onRegenerateToken={() => { void handleRegenerateToken(); }}
+                  onSavePrivacy={handleSavePrivacy}
+                  onSitePasswordChange={(value) => {
+                    visibilityDraftGuard.markDirty();
+                    setSitePassword(value);
+                  }}
+                  onToggleShowPrivacySettings={() => setShowPrivacySettings((value) => !value)}
+                  onToggleShowSitePassword={() => setShowSitePassword((value) => !value)}
+                  onVisibilityModeChange={(mode) => {
+                    visibilityDraftGuard.markDirty();
+                    setPrivacyMode(mode);
+                  }}
+                  privacyCopied={privacyCopied}
+                  privacyMode={privacyMode}
+                  showPrivacySettings={showPrivacySettings}
+                  showSitePassword={showSitePassword}
+                  sitePassword={sitePassword}
+                  siteSlug={siteSlug}
+                  translatingLanguage={translatingLanguage}
+                  translationStatuses={translationStatuses}
+                  visibilityError={visibilityError}
+                  visibilitySaving={visibilitySaving}
+                  visibilitySuccess={visibilitySuccess}
+                />
 
                 <Card variant="bordered" padding="lg">
                   <CardHeader>

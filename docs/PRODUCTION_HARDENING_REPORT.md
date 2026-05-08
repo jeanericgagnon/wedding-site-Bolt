@@ -19,6 +19,23 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 6:41 PM PT - No-Deploy Settings Privacy Panel Extraction
+
+What changed:
+- `src/pages/dashboard/Settings.tsx` no longer carries the full privacy/access card inline.
+- New `src/pages/dashboard/settings/SettingsPrivacyPanel.tsx` now owns the privacy-mode chooser, default language selector, translation status grid, invite-only access-link card, password-protected input, and search-visibility toggle UI.
+- `src/pages/dashboard/settings/settingsSiteData.test.ts` now pins that seam and rejects regaining the old inline privacy-copy block directly inside the page.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts`: PASS, 1 file and 6 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This trims another large owner-facing card out of `Settings.tsx` and keeps the page more focused on state and handlers instead of a long privacy/access form block. No deploy was run.
+
 ### 2026-05-07 6:36 PM PT - No-Deploy Settings Identity Exports Panel Extraction
 
 What changed:
