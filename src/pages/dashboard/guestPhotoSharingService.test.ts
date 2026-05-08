@@ -5,9 +5,11 @@ import {
   getGuestPhotoCurrentUserId,
   invokeGuestPhotoOwnerFunction,
   loadGuestPhotoDashboardSnapshot,
+  moderateGuestbookEntry,
   queueGuestPhotoFollowups,
   refreshGuestPhotoSession,
   resolveGuestPhotoDashboardUserId,
+  saveGuestPhotoHubSettings,
 } from './guestPhotoSharingService';
 
 const { getSessionMock, getUserMock, refreshSessionMock, invokeFunctionOrThrowMock, fromMock, resolveActiveSiteForUserMock } = vi.hoisted(() => ({
@@ -246,5 +248,41 @@ describe('guestPhotoSharingService', () => {
       aiBucketCorrections: [{ id: 'correction-1' }],
       hubSettings: expect.objectContaining({ photos_enabled: true, language_default: 'en' }),
     });
+  });
+
+  it('saves guest hub settings through the service', async () => {
+    getUserMock.mockResolvedValueOnce({ data: { user: { id: 'user-1' } } });
+    const eqMock = vi.fn().mockResolvedValue({ error: null });
+    fromMock.mockReturnValueOnce({
+      upsert: vi.fn(() => ({
+        eq: eqMock,
+      })),
+    });
+
+    await expect(saveGuestPhotoHubSettings('site-1', {
+      rsvp_enabled: true,
+      photos_enabled: true,
+      guestbook_enabled: true,
+      registry_enabled: true,
+      schedule_enabled: true,
+      travel_enabled: true,
+      recap_status: 'draft',
+      recap_published_at: null,
+      recap_closed_at: null,
+      custom_message: '',
+      language_default: 'en',
+    })).resolves.toBeUndefined();
+  });
+
+  it('moderates guestbook entries through the service', async () => {
+    const eqMock = vi.fn().mockResolvedValue({ error: null });
+    fromMock.mockReturnValueOnce({
+      update: vi.fn(() => ({
+        eq: eqMock,
+      })),
+    });
+
+    await expect(moderateGuestbookEntry('entry-1', { is_hidden: true })).resolves.toBeUndefined();
+    expect(eqMock).toHaveBeenCalledWith('id', 'entry-1');
   });
 });

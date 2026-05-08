@@ -3568,3 +3568,23 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the guest photo dashboard page-to-service migration without changing owner-facing photo dashboard hydration or moderation workflows. No deploy was run.
+
+### 2026-05-07 5:23 PM PT - Guest Photo Moderation Service Extraction
+
+- Moved guest photo guest-hub settings persistence and guestbook moderation writes out of `src/pages/dashboard/GuestPhotoSharing.tsx` and into `src/pages/dashboard/guestPhotoSharingService.ts`.
+- `GuestPhotoSharing.tsx` now calls:
+  - `saveGuestPhotoHubSettings(siteId, hubSettings)`
+  - `moderateGuestbookEntry(entryId, patch)`
+- The service now owns the `guest_hub_settings` upsert details, including recap publish/close timestamps, trimmed custom message handling, default language fallback, and `updated_by` / `updated_at` metadata.
+- The service also owns `guestbook_entries` moderation updates, including the shared `moderated_at` timestamp write.
+- Expanded `src/pages/dashboard/guestPhotoSharingService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the page no longer silently regains those `guest_hub_settings` and `guestbook_entries` writes.
+
+Validation:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 37/37.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the guest photo dashboard page-to-service migration without changing owner-facing hub settings or guestbook moderation behavior. No deploy was run.

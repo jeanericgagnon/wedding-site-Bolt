@@ -36,10 +36,12 @@ import {
   MAX_GUEST_PHOTO_METADATA_ROWS,
   MAX_GUEST_PHOTO_PROSPECTS,
   MAX_GUEST_PHOTO_UPLOADS,
+  moderateGuestbookEntry as moderateGuestbookEntryFromService,
   persistGuestPhotoBuckets,
   queueGuestPhotoFollowups as queueGuestPhotoFollowupsFromService,
   refreshGuestPhotoSession,
   resolveGuestPhotoDashboardUserId,
+  saveGuestPhotoHubSettings,
 } from './guestPhotoSharingService';
 import { buildGuestHubActions, summarizeGuestHubActions } from '../../lib/guestHubActions';
 import { buildMemoryFlowReadiness } from '../../lib/memoryFlowReadiness';
@@ -1028,21 +1030,7 @@ export const GuestPhotoSharing: React.FC = () => {
     try {
       setSavingHubSettings(true);
       setError(null);
-      const userId = await getGuestPhotoCurrentUserId();
-      const now = new Date().toISOString();
-      const { error: upsertError } = await supabase
-        .from('guest_hub_settings')
-        .upsert({
-          wedding_site_id: siteId,
-          ...hubSettings,
-          recap_published_at: hubSettings.recap_status === 'published' ? (hubSettings.recap_published_at ?? now) : hubSettings.recap_published_at,
-          recap_closed_at: hubSettings.recap_status === 'closed' ? (hubSettings.recap_closed_at ?? now) : null,
-          custom_message: hubSettings.custom_message.trim() || null,
-          language_default: hubSettings.language_default.trim() || 'en',
-          updated_by: userId,
-          updated_at: now,
-        }, { onConflict: 'wedding_site_id' });
-      if (upsertError) throw upsertError;
+      await saveGuestPhotoHubSettings(siteId, hubSettings);
       logPhotoAction('guest_hub_settings_saved', 'Guest hub settings were updated.', {
         photosEnabled: hubSettings.photos_enabled,
         guestbookEnabled: hubSettings.guestbook_enabled,
@@ -1076,11 +1064,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const updateGuestbookEntry = async (entryId: string, patch: Partial<Pick<GuestbookEntryRow, 'is_hidden' | 'is_flagged'>>) => {
     try {
       setModeratingGuestbookId(entryId);
-      const { error: updateError } = await supabase
-        .from('guestbook_entries')
-        .update({ ...patch, moderated_at: new Date().toISOString() })
-        .eq('id', entryId);
-      if (updateError) throw updateError;
+      await moderateGuestbookEntryFromService(entryId, patch);
       setGuestbookEntries((prev) => prev.map((entry) => entry.id === entryId ? { ...entry, ...patch } : entry));
       logPhotoAction('guestbook_entry_moderated', 'Guestbook entry moderation was updated.', patch, entryId, 'Guestbook entry');
     } catch (err: unknown) {

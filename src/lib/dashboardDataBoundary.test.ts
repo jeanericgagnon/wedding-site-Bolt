@@ -428,6 +428,8 @@ describe('dashboard data boundary guards', () => {
 
     expect(source).toContain('loadGuestPhotoDashboardSnapshot(userId)');
     expect(source).toContain('persistGuestPhotoBuckets(siteId, nextBuckets)');
+    expect(source).toContain('await saveGuestPhotoHubSettings(siteId, hubSettings)');
+    expect(source).toContain('await moderateGuestbookEntryFromService(entryId, patch)');
     expect(source).toContain('resolveGuestPhotoDashboardUserId()');
     expect(source).toContain('refreshGuestPhotoSession()');
     expect(source).toContain('getGuestPhotoCurrentUserId()');
@@ -446,6 +448,8 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain("supabase.from('photo_upload_metadata')");
     expect(source).not.toContain("supabase.from('photo_ai_bucket_corrections')");
     expect(source).not.toContain("supabase.from('guest_hub_settings')");
+    expect(source).not.toContain(".from('guest_hub_settings')\n        .upsert({");
+    expect(source).not.toContain(".from('guestbook_entries')\n        .update({ ...patch, moderated_at: new Date().toISOString() })");
     expect(source).not.toContain('resolveActiveSiteForUser(userId)');
     expect(source).not.toContain("invokeFunctionOrThrow(supabase, fnName, body)");
     expect(source).not.toContain("invokeFunctionOrThrow(supabase, 'queue-guest-followups'");
@@ -456,6 +460,8 @@ describe('dashboard data boundary guards', () => {
     expect(service).toContain("const GUEST_PHOTO_ALBUM_SELECT = 'id,name,slug,parent_album_id,hierarchy_label,drive_folder_url,is_active,created_at,itinerary_event_id,opens_at,closes_at' as const;");
     expect(service).toContain("const GUEST_PHOTO_UPLOAD_SELECT = 'id,photo_album_id,original_filename,guest_name,guest_email,note,mime_type,size_bytes,drive_web_view_link,is_hidden,is_flagged,recap_hidden,recap_featured,recap_story,uploaded_at' as const;");
     expect(service).toContain('export async function loadGuestPhotoDashboardSnapshot(userId: string): Promise<GuestPhotoDashboardSnapshot>');
+    expect(service).toContain('export async function saveGuestPhotoHubSettings(');
+    expect(service).toContain('export async function moderateGuestbookEntry(');
     expect(service).toContain('export async function refreshGuestPhotoSession(): Promise<boolean>');
     expect(service).toContain('export async function getGuestPhotoCurrentUserId(): Promise<string | null>');
     expect(service).toContain('export async function resolveGuestPhotoDashboardUserId(): Promise<string | null>');

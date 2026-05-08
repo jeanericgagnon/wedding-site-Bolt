@@ -59,6 +59,38 @@ export interface GuestPhotoDashboardSnapshot {
   hubSettings: GuestHubSettings;
 }
 
+export async function saveGuestPhotoHubSettings(
+  siteId: string,
+  hubSettings: GuestHubSettings,
+): Promise<void> {
+  const userId = await getGuestPhotoCurrentUserId();
+  const now = new Date().toISOString();
+  const { error: upsertError } = await supabase
+    .from('guest_hub_settings')
+    .upsert({
+      wedding_site_id: siteId,
+      ...hubSettings,
+      recap_published_at: hubSettings.recap_status === 'published' ? (hubSettings.recap_published_at ?? now) : hubSettings.recap_published_at,
+      recap_closed_at: hubSettings.recap_status === 'closed' ? (hubSettings.recap_closed_at ?? now) : null,
+      custom_message: hubSettings.custom_message.trim() || null,
+      language_default: hubSettings.language_default.trim() || 'en',
+      updated_by: userId,
+      updated_at: now,
+    }, { onConflict: 'wedding_site_id' });
+  if (upsertError) throw upsertError;
+}
+
+export async function moderateGuestbookEntry(
+  entryId: string,
+  patch: Partial<Pick<GuestbookEntryRow, 'is_hidden' | 'is_flagged'>>,
+): Promise<void> {
+  const { error: updateError } = await supabase
+    .from('guestbook_entries')
+    .update({ ...patch, moderated_at: new Date().toISOString() })
+    .eq('id', entryId);
+  if (updateError) throw updateError;
+}
+
 export async function refreshGuestPhotoSession(): Promise<boolean> {
   const { data } = await supabase.auth.refreshSession();
   return Boolean(data.session);
