@@ -19,6 +19,22 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+## 2026-05-08 10:09 AM PT No-Deploy Guest Photo Route-Support Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now routes the remaining continuation, archive-mode, quick-start path, and photo action-audit seam through `src/pages/dashboard/guestPhotos/useGuestPhotoDashboardRouteSupport.ts`.
+  - That new hook now owns `readQuickStartDashboardContinuation(searchParams)`, archive mode derivation, the quick-start overview path, and `logPhotoAction(...)` while the route keeps dashboard UI state, data loading, media shaping, album/AI/moderation/export/hub actions, and content-prop assembly.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useGuestPhotoDashboardRouteSupport({ ... })`, checks that `useGuestPhotoDashboardRouteSupport.ts` owns the continuation/archive/logging seam, and rejects regaining the old inline continuation, archive-mode, quick-start path, and `logPhotoAction(...)` block in `GuestPhotoSharing.tsx`.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 631 lines to 625 lines in this batch, while `src/pages/dashboard/guestPhotos/useGuestPhotoDashboardRouteSupport.ts` came in at 46 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 10:05 AM PT No-Deploy Settings Route-Support Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

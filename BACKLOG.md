@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 10:09 AM PT - No-Deploy Guest Photo Route-Support Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` no longer owns the inline quick-start continuation read, archive-mode derivation, quick-start overview path, or photo action-audit helper block.
+  - Added `src/pages/dashboard/guestPhotos/useGuestPhotoDashboardRouteSupport.ts` so the new hook now owns the continuation/archive/logging seam while the route keeps dashboard UI state, data loading, media shaping, and action families.
+  - Guest-photo boundary tests now pin `useGuestPhotoDashboardRouteSupport({ ... })`, check that the new hook owns the continuation/archive/logging seam, and reject regaining the old inline route-support block in `GuestPhotoSharing.tsx`.
+- Acceptance/proof target:
+  - Focused dashboard boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 10:05 AM PT - No-Deploy Settings Route-Support Extraction
 
 - Status: `PARTIAL`

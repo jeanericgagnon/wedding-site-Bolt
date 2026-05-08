@@ -1230,6 +1230,7 @@ describe('dashboard data boundary guards', () => {
     const hubActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoHubActions.ts'), 'utf8');
     const mediaState = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardMediaState.ts'), 'utf8');
     const moderationActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoModerationActions.ts'), 'utf8');
+    const routeSupport = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoDashboardRouteSupport.ts'), 'utf8');
     const uiState = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoDashboardUiState.ts'), 'utf8');
     const presentation = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/guestPhotoDashboardPresentation.ts'), 'utf8');
     const liveContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/GuestPhotoDashboardLiveContent.tsx'), 'utf8');
@@ -1246,9 +1247,14 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('<GuestPhotoDashboardLiveContent');
     expect(source).toContain('useGuestPhotoBucketWorkspace({');
     expect(source).toContain('useGuestPhotoDashboardData({');
+    expect(source).toContain('useGuestPhotoDashboardRouteSupport({');
     expect(source).toContain('useGuestPhotoDashboardUiState({ search })');
     expect(source).toContain('getGuestPhotoBucketTone');
     expect(source).toContain('getGuestPhotoBucketQrUrl');
+    expect(source).not.toContain('readQuickStartDashboardContinuation(searchParams)');
+    expect(source).not.toContain("getArchiveModeDescriptor({ weddingDate: events[0]?.event_date ?? null })");
+    expect(source).not.toContain('const logPhotoAction = (type: string, summary: string');
+    expect(source).not.toContain('navigate(buildQuickStartOverviewPath())');
     expect(liveContent).toContain('<GuestPhotoHeroCard');
     expect(liveContent).toContain('<GuestPhotoMemoryVaultsCard');
     expect(liveContent).toContain('<GuestPhotoMemoryFlowCard');
@@ -1287,6 +1293,11 @@ describe('dashboard data boundary guards', () => {
     expect(dashboardData).toContain('loadGuestPhotoDashboardSnapshot(userId)');
     expect(dashboardData).toContain('refreshGuestPhotoSession()');
     expect(dashboardData).toContain("safePhotoOwnerError(err, 'Couldn’t load the photo space. Please refresh and try again.')");
+    expect(routeSupport).toContain('export function useGuestPhotoDashboardRouteSupport({');
+    expect(routeSupport).toContain('readQuickStartDashboardContinuation(searchParams)');
+    expect(routeSupport).toContain('getArchiveModeDescriptor({ weddingDate: eventDate })');
+    expect(routeSupport).toContain('const logPhotoAction = (');
+    expect(routeSupport).toContain('quickStartOverviewPath: buildQuickStartOverviewPath()');
     expect(uiState).toContain('export function useGuestPhotoDashboardUiState({ search }: Args)');
     expect(uiState).toContain("const [bucketUploadLinks, setBucketUploadLinks] = useState<Record<string, string>>(() => readStoredBucketLinks());");
     expect(uiState).toContain("const [slideshowTheme, setSlideshowTheme] = useState<SlideshowTheme>('classic');");

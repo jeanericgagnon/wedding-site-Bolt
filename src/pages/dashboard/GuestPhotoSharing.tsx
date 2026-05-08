@@ -1,11 +1,8 @@
 import React, { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { getArchiveModeDescriptor } from '../../lib/archiveMode';
-import { buildQuickStartOverviewPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
 import { formatGuestPhotoDateTime } from './guestPhotoUploadTime';
 import { formatGuestPhotoEventDate } from './guestPhotoEventDate';
-import { logAppAction } from '../../lib/actionAudit';
 import { useAuth } from '../../contexts/AuthContext';
 import { writeStoredBucketLinks } from './guestPhotoSharingUtils';
 import { GuestPhotoDashboardLiveContent } from './guestPhotos/GuestPhotoDashboardLiveContent';
@@ -26,13 +23,13 @@ import { useGuestPhotoExportActions } from './guestPhotos/useGuestPhotoExportAct
 import { useGuestPhotoDashboardData } from './guestPhotos/useGuestPhotoDashboardData';
 import { useGuestPhotoDashboardUiState } from './guestPhotos/useGuestPhotoDashboardUiState';
 import { type GuestPhotoBucketsState, useGuestPhotoBucketWorkspace } from './guestPhotos/useGuestPhotoBucketWorkspace';
+import { useGuestPhotoDashboardRouteSupport } from './guestPhotos/useGuestPhotoDashboardRouteSupport';
 
 export const GuestPhotoSharing: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isDemoMode } = useAuth();
-  const { fromQuickStart, nextStep } = readQuickStartDashboardContinuation(searchParams);
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
   const {
@@ -103,7 +100,17 @@ export const GuestPhotoSharing: React.FC = () => {
     setWindowDrafts,
     setWorkingBucketId,
   } = useGuestPhotoDashboardUiState({ search });
-  const archiveMode = useMemo(() => getArchiveModeDescriptor({ weddingDate: events[0]?.event_date ?? null }), [events]);
+  const {
+    archiveMode,
+    fromQuickStart,
+    logPhotoAction,
+    nextStep,
+    quickStartOverviewPath,
+  } = useGuestPhotoDashboardRouteSupport({
+    eventDate: events[0]?.event_date ?? null,
+    searchParams,
+    siteId,
+  });
   const {
     bucketFileInputRef,
     handleBucketFilesSelected,
@@ -144,19 +151,6 @@ export const GuestPhotoSharing: React.FC = () => {
   useEffect(() => {
     writeStoredBucketLinks(bucketUploadLinks);
   }, [bucketUploadLinks]);
-
-  const logPhotoAction = (type: string, summary: string, metadata?: Record<string, unknown>, targetId?: string | null, targetLabel?: string | null) => {
-    if (!siteId) return;
-    void logAppAction({
-      weddingSiteId: siteId,
-      area: 'photos',
-      type,
-      summary,
-      targetId,
-      targetLabel,
-      metadata,
-    });
-  };
 
   const {
     analysisByUploadId,
@@ -555,7 +549,7 @@ export const GuestPhotoSharing: React.FC = () => {
     onParentChange: (bucketId, parentBucketId) => void setBucketParent(bucketId, parentBucketId),
     onPreviewOpenChange: setSlideshowPreviewOpen,
     onQueueGuestFollowups: (kind) => void queueGuestFollowups(kind),
-    onQuickStartContinue: () => navigate(buildQuickStartOverviewPath()),
+    onQuickStartContinue: () => navigate(quickStartOverviewPath),
     onRegenerateAllKnownBucketLinks: () => void regenerateAllKnownBucketLinks(),
     onRegenerateLink: (bucketId) => void regenerateLink(bucketId),
     onRejectVisionSuggestion: (analysis) => void rejectVisionSuggestion(analysis),
