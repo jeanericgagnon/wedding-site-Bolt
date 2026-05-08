@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 9:08 AM PT - No-Deploy Settings UI-State Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Settings.tsx` no longer owns the inline settings UI-state slab for tab selection, account/password fields, slug/music/privacy/RSVP state, collaborator invite state, notifications state, template state, billing state, owner-only tab fallback, billing fetch, and planner-invite restore.
+  - Added `src/pages/dashboard/settings/useSettingsDashboardUiState.ts` so the new hook now owns the settings dashboard local UI state plus the billing fetch, owner-only tab fallback, and planner-invite hydration seams while the route keeps support hooks, action families, snapshot hydration, and render composition.
+  - Settings boundary tests now pin `useSettingsDashboardUiState({ userId: user?.id })`, check that `useSettingsDashboardUiState.ts` owns the `fetchBillingInfo(userId)` and `readPlannerInvite(siteSlug || userId || null)` seams, and reject regaining the old inline `useState(...)` and route-owned hydration helpers in `Settings.tsx`.
+- Acceptance/proof target:
+  - Focused settings tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 8:02 AM PT - No-Deploy Settings Support-Hook Extraction
 
 - Status: `PARTIAL`

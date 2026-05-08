@@ -104,6 +104,10 @@ describe('settings site data boundary', () => {
       join(process.cwd(), 'src/pages/dashboard/settings/useSettingsDashboardSupport.ts'),
       'utf8',
     );
+    const uiStateHook = readFileSync(
+      join(process.cwd(), 'src/pages/dashboard/settings/useSettingsDashboardUiState.ts'),
+      'utf8',
+    );
     const hydrationHook = readFileSync(
       join(process.cwd(), 'src/pages/dashboard/settings/useSettingsDashboardSnapshotHydration.ts'),
       'utf8',
@@ -123,6 +127,7 @@ describe('settings site data boundary', () => {
     expect(page).toContain('useSettingsExperienceActions({');
     expect(page).toContain('useSettingsAccountActions({');
     expect(page).toContain('useSettingsDashboardSupport({');
+    expect(page).toContain('useSettingsDashboardUiState({ userId: user?.id })');
     expect(page).toContain('<SettingsDashboardShell');
     expect(page).toContain('<SettingsTabContent');
     expect(page).toContain('<SettingsSiteTabContent');
@@ -155,6 +160,11 @@ describe('settings site data boundary', () => {
     expect(page).not.toContain('const loadTranslationStatuses = async (siteId: string) => {');
     expect(page).not.toContain("const downloadTextFile = (filename: string, content: string, type = 'text/plain;charset=utf-8') => {");
     expect(page).not.toContain('const loadSiteData = async () => {');
+    expect(page).not.toContain("const [activeTab, setActiveTab] = useState<SettingsTabId>('account');");
+    expect(page).not.toContain("const [siteSlug, setSiteSlug] = useState('');");
+    expect(page).not.toContain('const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);');
+    expect(page).not.toContain('if (activeTab === \'billing\' && settingsRole === \'owner\' && user && !billingInfo) {');
+    expect(page).not.toContain('const invite = readPlannerInvite(siteSlug || user?.id || null);');
     expect(page).not.toContain('supabase.auth.getUser');
     expect(page).not.toContain('supabase.auth.signInWithPassword');
     expect(page).not.toContain('supabase.auth.updateUser');
@@ -223,6 +233,14 @@ describe('settings site data boundary', () => {
     expect(supportHook).toContain('void logAppAction({');
     expect(supportHook).toContain('const rows = await loadSettingsTranslationStatuses(');
     expect(supportHook).toContain('const blob = new Blob([content], { type });');
+
+    expect(uiStateHook).toContain('export function useSettingsDashboardUiState({ userId }: Args)');
+    expect(uiStateHook).toContain("const [activeTab, setActiveTab] = useState<SettingsTabId>('account');");
+    expect(uiStateHook).toContain("const [siteSlug, setSiteSlug] = useState('');");
+    expect(uiStateHook).toContain('const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);');
+    expect(uiStateHook).toContain('fetchBillingInfo(userId)');
+    expect(uiStateHook).toContain("setBillingError(safeSettingsError(err, 'Couldn’t load billing right now.'))");
+    expect(uiStateHook).toContain('const invite = readPlannerInvite(siteSlug || userId || null);');
 
     expect(hydrationHook).toContain('export function useSettingsDashboardSnapshotHydration({');
     expect(hydrationHook).toContain('loadSettingsDashboardSnapshot({');

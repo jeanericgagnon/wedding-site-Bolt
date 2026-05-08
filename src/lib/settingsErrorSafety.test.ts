@@ -23,6 +23,10 @@ const settingsDashboardSnapshotHydrationSource = () => readFileSync(
   join(process.cwd(), 'src/pages/dashboard/settings/useSettingsDashboardSnapshotHydration.ts'),
   'utf8',
 );
+const settingsDashboardUiStateSource = () => readFileSync(
+  join(process.cwd(), 'src/pages/dashboard/settings/useSettingsDashboardUiState.ts'),
+  'utf8',
+);
 const settingsTabContentSource = () => readFileSync(
   join(process.cwd(), 'src/pages/dashboard/settings/SettingsTabContent.tsx'),
   'utf8',
@@ -52,8 +56,9 @@ describe('settings error safety', () => {
     const actionsSource = settingsSiteAccessActionsSource();
     const experienceSource = settingsExperienceActionsSource();
     const accountActionsSource = settingsAccountActionsSource();
+    const uiStateSource = settingsDashboardUiStateSource();
 
-    expect(source).toContain("setBillingError(safeSettingsError(err, 'Couldn’t load billing right now.'))");
+    expect(uiStateSource).toContain("setBillingError(safeSettingsError(err, 'Couldn’t load billing right now.'))");
     expect(experienceSource).toContain("setSubscribeError(safeSettingsError(err, 'Couldn’t start checkout right now.'))");
     expect(experienceSource).toContain("setTemplateError(safeSettingsError(err, 'Couldn’t change design.'))");
     expect(experienceSource).toContain("setRsvpQuestionsError(safeSettingsError(err, 'Couldn’t save RSVP questions.'))");
@@ -62,7 +67,7 @@ describe('settings error safety', () => {
     expect(actionsSource).toContain("setPlannerInviteError(safeSettingsError(err, 'Couldn’t remove planner invite.'))");
     expect(accountActionsSource).toContain("setAccountError(safeSettingsError(err, 'Couldn’t save changes.'))");
     expect(accountActionsSource).toContain("setPasswordError(safeSettingsError(err, 'Couldn’t update password.'))");
-    expect(source).not.toContain('.catch(err => setBillingError(err.message))');
+    expect(uiStateSource).not.toContain('.catch(err => setBillingError(err.message))');
     expect(experienceSource).not.toContain("setSubscribeError(err instanceof Error ? err.message : 'Couldn’t start checkout right now.')");
     expect(actionsSource).not.toContain("setPlannerInviteError(err instanceof Error ? err.message : 'Couldn’t save planner invite.')");
     expect(actionsSource).not.toContain("setPlannerInviteError(err instanceof Error ? err.message : 'Couldn’t remove planner invite.')");
@@ -93,6 +98,7 @@ describe('settings error safety', () => {
     const viewModelSource = settingsDashboardViewModelSource();
     const supportSource = settingsDashboardSupportSource();
     const hydrationSource = settingsDashboardSnapshotHydrationSource();
+    const uiStateSource = settingsDashboardUiStateSource();
     const selectMatch = source.match(/export const SETTINGS_SITE_SELECT = \[([\s\S]*?)\]\.join/);
     expect(selectMatch?.[1]).toBeTruthy();
     const selectedColumns = new Set(
@@ -119,6 +125,7 @@ describe('settings error safety', () => {
     expect(source).not.toContain(".select('*')");
     expect(pageSource).toContain('useSettingsDashboardSnapshotHydration({');
     expect(pageSource).toContain('buildSettingsDashboardViewModel({');
+    expect(pageSource).toContain('useSettingsDashboardUiState({ userId: user?.id })');
     expect(snapshotSource).toContain('loadSettingsSite(activeSite.id)');
     expect(snapshotSource).toContain('loadSettingsCollaboratorInvites(siteId)');
     expect(snapshotSource).toContain('loadSettingsTranslationStatuses(');
@@ -141,6 +148,10 @@ describe('settings error safety', () => {
     expect(hydrationSource).toContain('if (visibilityDraftGuard.shouldHydrate())');
     expect(hydrationSource).toContain('if (notifDraftGuard.shouldHydrate())');
     expect(hydrationSource).toContain('if (rsvpDraftGuard.shouldHydrate())');
+    expect(uiStateSource).toContain('export function useSettingsDashboardUiState({ userId }: Args)');
+    expect(uiStateSource).toContain("const [activeTab, setActiveTab] = useState<SettingsTabId>('account');");
+    expect(uiStateSource).toContain("const [siteSlug, setSiteSlug] = useState('');");
+    expect(uiStateSource).toContain('const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);');
     expect(pageSource).toContain('useSettingsExperienceActions({');
     expect(experienceSource).toContain('updateSettingsSite(targetSiteId');
     expect(experienceSource).toContain('rsvp_custom_questions: cleanedQuestions');

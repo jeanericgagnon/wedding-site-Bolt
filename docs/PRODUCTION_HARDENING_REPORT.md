@@ -19,6 +19,22 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 9:08 AM PT - No-Deploy Settings UI-State Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Settings.tsx` now routes its local settings dashboard state, billing fetch, owner-only tab fallback, and planner-invite restore through `src/pages/dashboard/settings/useSettingsDashboardUiState.ts` instead of owning that slab inline.
+  - That new hook now owns tab selection, account/password field state, slug/music/privacy/RSVP state, collaborator invite state, notifications state, template state, billing state, `fetchBillingInfo(userId)`, the owner-only `team`/`billing` tab guard, and planner-invite hydration via `readPlannerInvite(siteSlug || userId || null)`.
+  - Settings boundary tests now pin `useSettingsDashboardUiState({ userId: user?.id })`, check that `useSettingsDashboardUiState.ts` owns the billing and planner-invite seams, and reject regaining the old inline `useState(...)` / route-owned hydration helper slab in `Settings.tsx`.
+  - `src/pages/dashboard/Settings.tsx` moved from 662 lines to 661 lines in this batch, while `src/pages/dashboard/settings/useSettingsDashboardUiState.ts` came in at 318 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts`: PASS, 18/18.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ### 2026-05-08 8:02 AM PT - No-Deploy Settings Support-Hook Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:
