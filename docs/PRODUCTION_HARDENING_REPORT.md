@@ -4249,3 +4249,19 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the oversized-file and page-boundary cleanup in the messages dashboard without changing message delivery behavior. No deploy was run.
+
+## 2026-05-07 9:14 PM PT No-Deploy Message Dashboard Route View Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Messages.tsx` now routes its loading-vs-live message dashboard branch through `src/pages/dashboard/messages/MessageDashboardRouteView.tsx`.
+  - That higher-level route shell now owns the `DashboardLayout` plus `DashboardStateBlock` loading branch and hands the live branch through to `MessageDashboardView`.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `MessageDashboardRouteView` and rejects regaining the old inline loading shell, dashboard cards, modal, and toast composition in `Messages.tsx`.
+  - `src/pages/dashboard/Messages.tsx` dropped from 1689 lines to 1665 lines in this batch, while `src/pages/dashboard/messages/MessageDashboardRouteView.tsx` came in at 26 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the oversized-file and page-boundary cleanup in the messages dashboard without changing message loading or delivery behavior. No deploy was run.

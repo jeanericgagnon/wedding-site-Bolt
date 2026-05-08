@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
-import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
-import { Button, Input } from '../../components/ui';
-import { Clock, Loader2 } from 'lucide-react';
+import { Input } from '../../components/ui';
 import { useAuth } from '../../hooks/useAuth';
 import { demoEvents, demoGuests, demoWeddingSite } from '../../lib/demoData';
 import { createSmsCreditsSession } from '../../lib/stripeService';
@@ -95,18 +91,8 @@ import {
 // Start unknown, then permanently disable after one confirmed missing-table miss.
 let hasMessageDeliveriesTable: boolean | null = null;
 
-import {
-  MessageComposerCard,
-  MessageGuestFlowCard,
-  MessageHistoryCard,
-  MessageReachSnapshotCard,
-  MessageSavedTemplatesCard,
-  MessageSendingDetailsPanel,
-  MessageStartingPointsCard,
-  ToastList,
-} from './messages/MessageDashboardComponents';
+import { MessageDashboardRouteView } from './messages/MessageDashboardRouteView';
 import { MessageDashboardView } from './messages/MessageDashboardView';
-import { MessageDetailModal } from './messages/MessageDetailModal';
 
 export const DashboardMessages: React.FC = () => {
   const { user, isDemoMode } = useAuth();
@@ -1525,16 +1511,6 @@ export const DashboardMessages: React.FC = () => {
 
   const providerTelemetry = useMemo(() => buildProviderTelemetry(messages, deliveries), [messages, deliveries]);
 
-  if (loading) {
-    return (
-      <DashboardLayout currentPage="messages">
-        <div className="max-w-[1100px] mx-auto">
-          <DashboardStateBlock title="Loading messages…" description="Preparing your campaigns and activity." />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
   const messageComposerProps = {
     activeRecipients,
     applyComposerTemplate,
@@ -1663,27 +1639,27 @@ export const DashboardMessages: React.FC = () => {
       }
     : null;
 
-  return (
-    <MessageDashboardView
-      activeSiteRole={activeSiteRole}
-      composerProps={messageComposerProps}
-      deliveryRate={deliveryStats.rate}
-      detailModalProps={messageDetailModalProps}
-      guestsReached={deliveryStats.targeted}
-      historyProps={messageHistoryProps}
-      messagesRole={messagesRole}
-      onRunDueScheduledMessages={handleRunDueScheduledMessages}
-      onSetMessagesRole={setMessagesRole}
-      overdueScheduled={deliveryHealth.overdueScheduled}
-      processingScheduled={processingScheduled}
-      reachSnapshotProps={messageReachSnapshotProps}
-      savedTemplatesProps={messageSavedTemplatesProps}
-      scheduledCount={deliveryStats.scheduled}
-      sendingDetailsProps={messageSendingDetailsProps}
-      showSendingDetails={showSendingDetails}
-      startingPointsProps={messageStartingPointsProps}
-      toasts={toasts}
-      toggleSendingDetails={() => setShowSendingDetails((value) => !value)}
-    />
-  );
+  const messageDashboardViewProps = {
+    activeSiteRole,
+    composerProps: messageComposerProps,
+    deliveryRate: deliveryStats.rate,
+    detailModalProps: messageDetailModalProps,
+    guestsReached: deliveryStats.targeted,
+    historyProps: messageHistoryProps,
+    messagesRole,
+    onRunDueScheduledMessages: handleRunDueScheduledMessages,
+    onSetMessagesRole: setMessagesRole,
+    overdueScheduled: deliveryHealth.overdueScheduled,
+    processingScheduled,
+    reachSnapshotProps: messageReachSnapshotProps,
+    savedTemplatesProps: messageSavedTemplatesProps,
+    scheduledCount: deliveryStats.scheduled,
+    sendingDetailsProps: messageSendingDetailsProps,
+    showSendingDetails,
+    startingPointsProps: messageStartingPointsProps,
+    toasts,
+    toggleSendingDetails: () => setShowSendingDetails((value) => !value),
+  };
+
+  return <MessageDashboardRouteView dashboardProps={messageDashboardViewProps} loading={loading} />;
 };
