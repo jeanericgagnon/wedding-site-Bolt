@@ -7318,6 +7318,19 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 6:33 PM PT No-Deploy Settings Site URL Panel Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/settings/SettingsSiteUrlPanel.tsx` now owns the owner-facing site-url card UI, including the public link preview and QR/share panel.
+  - `src/pages/dashboard/Settings.tsx` now routes the site-url section through that extracted panel instead of carrying the full card inline.
+  - `src/pages/dashboard/settings/settingsSiteData.test.ts` now pins the `SettingsSiteUrlPanel` seam and rejects reintroducing the old inline site-url copy directly inside the page.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts`: PASS, 6/6.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 6:29 PM PT No-Deploy Settings Team Access Panel Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

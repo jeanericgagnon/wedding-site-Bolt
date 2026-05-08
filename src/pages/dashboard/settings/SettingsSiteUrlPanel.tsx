@@ -1,0 +1,86 @@
+import { ExternalLink, Loader2 } from 'lucide-react';
+import type { FormEvent } from 'react';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '../../../components/ui';
+import { ShareQrPanel } from '../../../components/ui/ShareQrPanel';
+
+type SettingsSiteUrlPanelProps = {
+  onSiteSlugChange: (value: string) => void;
+  onSubmit: (event: FormEvent) => void;
+  publicSiteUrl: string;
+  siteSlug: string;
+  slugError: string | null;
+  slugSaving: boolean;
+  slugSuccess: string | null;
+};
+
+export function SettingsSiteUrlPanel({
+  onSiteSlugChange,
+  onSubmit,
+  publicSiteUrl,
+  siteSlug,
+  slugError,
+  slugSaving,
+  slugSuccess,
+}: SettingsSiteUrlPanelProps) {
+  return (
+    <Card variant="bordered" padding="lg">
+      <CardHeader>
+        <CardTitle>Site URL</CardTitle>
+        <CardDescription>Your wedding site address</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={onSubmit} className="space-y-4">
+          {slugSuccess && (
+            <div className="rounded-lg border border-success/20 bg-success-light p-3 text-sm text-success">{slugSuccess}</div>
+          )}
+          {slugError && (
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{slugError}</div>
+          )}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-text-primary">
+              Current URL
+            </label>
+            <div className="flex items-center gap-3">
+              <Input
+                value={siteSlug}
+                onChange={(e) => onSiteSlugChange(e.target.value)}
+                className="flex-1"
+                placeholder="yournames"
+              />
+              <span className="shrink-0 text-text-secondary">.dayof.love</span>
+            </div>
+            {siteSlug && (
+              <div className="mt-2 space-y-2">
+                <p className="text-sm text-text-secondary">
+                  Your site is accessible at{' '}
+                  <a
+                    href={publicSiteUrl}
+                    className="text-primary hover:text-primary-hover"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {siteSlug}.dayof.love
+                    <ExternalLink className="ml-1 inline h-3 w-3" aria-hidden="true" />
+                  </a>
+                </p>
+                <ShareQrPanel
+                  title="Public site QR"
+                  description="Print this or add it to signage so guests can open the wedding site quickly."
+                  url={publicSiteUrl}
+                  copyLabel="Copy site link"
+                  className="mt-3"
+                />
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end pt-2">
+            <Button variant="primary" size="md" type="submit" disabled={slugSaving}>
+              {slugSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Update URL
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}

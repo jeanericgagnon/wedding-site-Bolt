@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
-import { Save, ExternalLink, Layout, Sparkles, Loader2, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown } from 'lucide-react';
+import { Save, Layout, Sparkles, Loader2, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown } from 'lucide-react';
 import { getSiteVisibilityState, getVisibilityModeOptions } from '../../lib/siteVisibilityState';
 import { getAllTemplates } from '../../templates/registry';
 import { WeddingDataV1 } from '../../types/weddingData';
@@ -16,7 +16,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { PLANNER_ROLE_OPTIONS, getPlannerPermissionPreset, readPlannerInvite, writePlannerInvite, type PlannerAccessRole, type PlannerInviteRecord, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useToast } from '../../components/ui/Toast';
-import { ShareQrPanel } from '../../components/ui/ShareQrPanel';
 import { copyTextOrDownload } from '../../lib/copyText';
 import { logAppAction } from '../../lib/actionAudit';
 import { demoWeddingSite } from '../../lib/demoData';
@@ -71,6 +70,7 @@ import { SettingsAccountPanel } from './settings/SettingsAccountPanel';
 import { SettingsBillingPanel } from './settings/SettingsBillingPanel';
 import { getSettingsTabs, SettingsNavigation, type SettingsTabId } from './settings/SettingsNavigation';
 import { SettingsNotificationsPanel } from './settings/SettingsNotificationsPanel';
+import { SettingsSiteUrlPanel } from './settings/SettingsSiteUrlPanel';
 import { SettingsTeamAccessPanel } from './settings/SettingsTeamAccessPanel';
 
 const useDraftHydrationGuard = (clearStatus: () => void) => {
@@ -1078,65 +1078,15 @@ export const DashboardSettings: React.FC = () => {
 
             {activeTab === 'site' && (
               <>
-                <Card variant="bordered" padding="lg">
-                  <CardHeader>
-                    <CardTitle>Site URL</CardTitle>
-                    <CardDescription>Your wedding site address</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={handleUpdateSlug} className="space-y-4">
-                      {slugSuccess && (
-                        <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{slugSuccess}</div>
-                      )}
-                      {slugError && (
-                        <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">{slugError}</div>
-                      )}
-                      <div>
-                        <label className="block text-sm font-medium text-text-primary mb-2">
-                          Current URL
-                        </label>
-                        <div className="flex items-center gap-3">
-                          <Input
-                            value={siteSlug}
-                            onChange={e => setSiteSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                            className="flex-1"
-                            placeholder="yournames"
-                          />
-                          <span className="text-text-secondary flex-shrink-0">.dayof.love</span>
-                        </div>
-                        {siteSlug && (
-                          <div className="mt-2 space-y-2">
-                            <p className="text-sm text-text-secondary">
-                              Your site is accessible at{' '}
-                              <a
-                                href={publicSiteUrl}
-                                className="text-primary hover:text-primary-hover"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                {siteSlug}.dayof.love
-                                <ExternalLink className="inline w-3 h-3 ml-1" aria-hidden="true" />
-                              </a>
-                            </p>
-                            <ShareQrPanel
-                              title="Public site QR"
-                              description="Print this or add it to signage so guests can open the wedding site quickly."
-                              url={publicSiteUrl}
-                              copyLabel="Copy site link"
-                              className="mt-3"
-                            />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex justify-end pt-2">
-                        <Button variant="primary" size="md" type="submit" disabled={slugSaving}>
-                          {slugSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                          Update URL
-                        </Button>
-                      </div>
-                    </form>
-                  </CardContent>
-                </Card>
+                <SettingsSiteUrlPanel
+                  onSiteSlugChange={(value) => setSiteSlug(value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                  onSubmit={handleUpdateSlug}
+                  publicSiteUrl={publicSiteUrl}
+                  siteSlug={siteSlug}
+                  slugError={slugError}
+                  slugSaving={slugSaving}
+                  slugSuccess={slugSuccess}
+                />
 
                 <Card variant="bordered" padding="lg">
                   <CardHeader>

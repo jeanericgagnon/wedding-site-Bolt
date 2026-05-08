@@ -3783,3 +3783,18 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the oversized-file and page-boundary lanes for settings without changing owner/team access behavior. No deploy was run.
+
+### 2026-05-07 6:33 PM PT - Settings Site URL Panel Extraction
+
+- Moved the full site-url settings card out of `src/pages/dashboard/Settings.tsx` and into `src/pages/dashboard/settings/SettingsSiteUrlPanel.tsx`.
+- `Settings.tsx` now keeps the slug state, submit handler, and normalized slug write behavior, while the extracted panel owns the owner-facing URL card, public link preview, and QR/share UI shell.
+- Tightened `src/pages/dashboard/settings/settingsSiteData.test.ts` so the settings boundary now expects `SettingsSiteUrlPanel` and rejects silently regaining the old inline site-url copy inside the page.
+
+Validation:
+- `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts`: PASS, 6/6.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+
+Status:
+- PARTIAL. This materially advances the oversized-file and page-boundary lanes for settings without changing public site link behavior. No deploy was run.
