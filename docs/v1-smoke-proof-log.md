@@ -7492,6 +7492,20 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 06:04 AM PT No-Deploy Coordinator Dashboard Actions-Hook Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/CoordinatorMode.tsx` now routes the remaining coordinator transport handlers through `src/pages/dashboard/coordinator/useCoordinatorDashboardActions.ts`.
+  - That hook now owns guest check-in updates, coordinator day-of alert sends, and add-question persistence while the page keeps data hydration, derived state, focus actions, board actions, and route composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useCoordinatorDashboardActions({ ... })`, checks that `useCoordinatorDashboardActions.ts` owns the check-in / alert-send / add-question seam, and rejects regaining the old inline `toggleCheckIn`, `sendDayOfAlert`, and `addQnaItem` handlers in `CoordinatorMode.tsx`.
+  - `src/pages/dashboard/CoordinatorMode.tsx` dropped from 876 lines to 771 lines in this batch, while `src/pages/dashboard/coordinator/useCoordinatorDashboardActions.ts` came in at 179 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 
 ## 2026-05-08 01:15 AM PT No-Deploy Settings Site/Team Action Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.

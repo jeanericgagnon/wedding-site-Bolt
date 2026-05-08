@@ -4,11 +4,7 @@ import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero'
 import { useAuth } from '../../hooks/useAuth';
 import { type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { useToast } from '../../components/ui/Toast';
-import { getNextCoordinatorCheckInFocusId } from '../../lib/coordinatorCheckInAdvance';
-import { getCoordinatorDoorStatus } from '../../lib/coordinatorCheckInStatus';
-import { buildCoordinatorDoorEscalationPrompt } from '../../lib/coordinatorDoorEscalation';
 import { resolveCoordinatorCorrectionCueTarget } from '../../lib/coordinatorCorrectionCueTarget';
-import { resolveCoordinatorQueueFocus } from '../../lib/coordinatorQueueFocus';
 import { resolveCoordinatorPanelFocus, type CoordinatorPanelFocus } from '../../lib/coordinatorPanelFocus';
 import { resolveCoordinatorEscalationTimelineTarget } from '../../lib/coordinatorEscalationAction';
 import { resolveCoordinatorReturnToBoardState } from '../../lib/coordinatorReturnToBoard';
@@ -17,30 +13,22 @@ import { resolveCoordinatorNeutralFocusTarget } from '../../lib/coordinatorNeutr
 import { getCoordinatorTimelineTransitionLabel, syncCoordinatorAlertDraftForTimelineTransition } from '../../lib/coordinatorTimelineTransition';
 import { getCoordinatorCommandSummaryTarget } from '../../lib/coordinatorCommandSummaryTarget';
 import { getCoordinatorCommandJumpLabel } from '../../lib/coordinatorCommandJumpLabel';
-import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { shouldResetCoordinatorAlertOverride } from '../../lib/coordinatorAlertOverrideReset';
 import { createCoordinatorSummaryFeedback, type CoordinatorSummaryFeedback } from '../../lib/coordinatorSummaryFeedback';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
-import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
 import { setCoordinatorEventTimelineState } from '../../lib/coordinatorTimelineState';
 import { resolveCoordinatorTimelineAlertIntent } from '../../lib/coordinatorTimelineAlertIntent';
-import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor, validateCoordinatorAlertForm } from '../../lib/coordinatorAlertFlow';
-import { resetCoordinatorAlertFormAfterSend } from '../../lib/coordinatorAlertReset';
+import { validateCoordinatorAlertForm } from '../../lib/coordinatorAlertFlow';
 import { updateCoordinatorQnaItem } from '../../lib/coordinatorQnaFlow';
 import { type CoordinatorQnaFilter } from '../../lib/coordinatorQnaTriage';
 import { resolveCoordinatorQnaFocusAfterItemsChange, resolveCoordinatorTimelineFocusAfterStateChange } from '../../lib/coordinatorResolvedFocus';
 import { getCoordinatorStablePromptTarget } from '../../lib/coordinatorStablePromptTarget';
 import { getCoordinatorStandingPromptReason } from '../../lib/coordinatorStandingPromptReason';
 import { getCoordinatorStandingPromptReasonTightened } from '../../lib/coordinatorStandingPromptReasonTighten';
-import type { AlertLog, EventLite, QnaItem, TimelineState } from './coordinator/coordinatorDashboardTypes';
-import {
-  createCoordinatorAlertMessage,
-  createCoordinatorQnaQuestion,
-  updateCoordinatorGuestCheckIn,
-  updateCoordinatorQnaAnswer,
-} from './coordinator/coordinatorService';
+import { updateCoordinatorQnaAnswer } from './coordinator/coordinatorService';
 import { buildCoordinatorDashboardBoardActions } from './coordinator/buildCoordinatorDashboardBoardActions';
 import { CoordinatorAttentionPanel, CoordinatorCheckInQueuePanel, CoordinatorDayOfMessagePanel, CoordinatorDayOfSummaryPanel, CoordinatorHandoffPanel, CoordinatorHelperAccessPanel, CoordinatorQnaPanel, CoordinatorRoleSelector, CoordinatorStatCards, CoordinatorTimelinePanel } from './coordinator/CoordinatorModePanels';
+import { useCoordinatorDashboardActions } from './coordinator/useCoordinatorDashboardActions';
 import { buildCoordinatorDashboardFocusActions } from './coordinator/buildCoordinatorDashboardFocusActions';
 import { buildCoordinatorDashboardDerivedState } from './coordinator/buildCoordinatorDashboardDerivedState';
 import { useCoordinatorDashboardData } from './coordinator/useCoordinatorDashboardData';
@@ -50,7 +38,6 @@ import { useCoordinatorDashboardCueLifecycle } from './coordinator/useCoordinato
 export const DashboardCoordinatorMode: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const { toast } = useToast();
-  const [alertBusy, setAlertBusy] = useState(false);
   const [neutralFocusReason, setNeutralFocusReason] = useState<string | null>(null);
   const [commandJumpLabel, setCommandJumpLabel] = useState<string | null>(null);
   const [commandJumpPanelFocus, setCommandJumpPanelFocus] = useState<CoordinatorPanelFocus | null>(null);
@@ -63,7 +50,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [summaryFeedbackShownAt, setSummaryFeedbackShownAt] = useState<number | null>(null);
   const [previousAlertAligned, setPreviousAlertAligned] = useState<boolean | null>(null);
   const [summaryFeedback, setSummaryFeedback] = useState<CoordinatorSummaryFeedback | null>(null);
-  const [checkInBusyGuestId, setCheckInBusyGuestId] = useState<string | null>(null);
   const {
     activeGuestId,
     activeQnaId,
@@ -122,50 +108,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const canEditTimeline = canManageCoordinatorTimeline(coordinatorRole, coordinatorPermissions);
   const canSendAlerts = canSendImmediateCoordinatorAlerts(coordinatorRole, coordinatorPermissions);
   const canScheduleAlerts = canScheduleCoordinatorAlerts(coordinatorRole, coordinatorPermissions);
-
-  const toggleCheckIn = async (guest: GuestLiteForCoordinator) => {
-    if (!canCheckIn) {
-      toast('Your collaborator role cannot update coordinator check-in.', 'info');
-      return;
-    }
-
-    if (checkInBusyGuestId === guest.id) return;
-
-    const next = guest.checked_in_at ? null : new Date().toISOString();
-    const removesFromCurrentQueue = !guest.checked_in_at && (checkInFilter !== 'checked-in');
-    const nextFocusGuestId = getNextCoordinatorCheckInFocusId({
-      queue: checkInQueue,
-      activeGuestId: guest.id,
-      removeActiveGuest: removesFromCurrentQueue,
-    });
-
-    setCheckInBusyGuestId(guest.id);
-
-    try {
-      if (isDemoMode) {
-        setGuests((prev) => prev.map((g) => (g.id === guest.id ? { ...g, checked_in_at: next } : g)));
-        setActiveGuestId(nextFocusGuestId);
-        toast(next ? 'Guest checked in. Door focus moved to the next guest.' : 'Guest moved back to arrivals.', 'success');
-        return;
-      }
-
-      if (!siteId) return;
-
-      try {
-        await updateCoordinatorGuestCheckIn({ siteId, guestId: guest.id, checkedInAt: next });
-      } catch {
-        toast('Couldn’t update check-in right now.', 'error');
-        return;
-      }
-
-      setGuests((prev) => prev.map((g) => (g.id === guest.id ? { ...g, checked_in_at: next } : g)));
-      setActiveGuestId(nextFocusGuestId);
-      toast(next ? 'Guest checked in. Door focus moved to the next guest.' : 'Guest moved back to arrivals.', 'success');
-    } finally {
-      setCheckInBusyGuestId((current) => (current === guest.id ? null : current));
-    }
-  };
-
 
   const {
     activeCheckInGuest,
@@ -434,86 +376,39 @@ export const DashboardCoordinatorMode: React.FC = () => {
     toast,
   ]);
 
-  const sendDayOfAlert = async () => {
-    if (!siteId) return;
-    if (!canSendAlerts) {
-      toast('Your collaborator role cannot send coordinator alerts.', 'info');
-      return;
-    }
-    if (alertForm.scheduleType === 'later' && !canScheduleAlerts) {
-      toast('Your collaborator role cannot schedule coordinator alerts.', 'info');
-      return;
-    }
-    if (alertValidationError) {
-      toast(alertValidationError, 'error');
-      return;
-    }
-    const scheduledFor = resolveCoordinatorScheduledFor(alertForm);
-    const status = scheduledFor ? 'scheduled' : 'queued';
-
-    setAlertBusy(true);
-    try {
-      if (!isDemoMode) {
-        await createCoordinatorAlertMessage({
-          siteId,
-          subject: alertForm.subject.trim(),
-          body: alertForm.body.trim(),
-          channel: alertForm.channel,
-          audience: alertForm.audience,
-          recipientCount: alertAudienceCount,
-          status,
-          scheduledFor,
-        });
-      }
-
-      setAlertLog((prev) => appendCoordinatorAlertLogItem(prev, {
-        id: `${Date.now()}`,
-        subject: alertForm.subject.trim(),
-        audience: alertForm.audience,
-        channel: alertForm.channel,
-        queuedAt: new Date().toISOString(),
-        sendAt: scheduledFor,
-      }));
-      setPreviousAlertAligned(alertTargetCue.aligned);
-      setAlertOverrideLabelState(alertTargetCue.aligned ? null : alertOverrideLabel);
-      setAlertForm((prev) => {
-        const reset = resetCoordinatorAlertFormAfterSend(prev);
-        return preferredAlertSuggestion
-          ? applyCoordinatorAlertSuggestion({ form: reset, suggestion: preferredAlertSuggestion })
-          : reset;
-      });
-      toast(scheduledFor ? 'Coordinator alert scheduled.' : 'Coordinator alert queued.', 'success');
-    } catch {
-      toast('Couldn’t prepare that update right now.', 'error');
-    } finally {
-      setAlertBusy(false);
-    }
-  };
-
-  const addQnaItem = async () => {
-    if (!canEditQna) {
-      toast('Your collaborator role cannot add guest questions here.', 'info');
-      return;
-    }
-
-    const q = qnaInput.trim();
-    if (!q) return;
-
-    focusCoordinatorQnaLane();
-
-    if (!isDemoMode && siteId) {
-      try {
-        const data = await createCoordinatorQnaQuestion(siteId, q);
-        setQnaItems((prev) => [data, ...prev].slice(0, 30));
-      } catch {
-        toast('Couldn’t save that guest question right now.', 'error');
-        return;
-      }
-    } else {
-      setQnaItems((prev) => [{ id: `${Date.now()}`, question: q, status: 'new' as const }, ...prev].slice(0, 30));
-    }
-    setQnaInput('');
-  };
+  const {
+    addQnaItem,
+    alertBusy,
+    checkInBusyGuestId,
+    sendDayOfAlert,
+    toggleCheckIn,
+  } = useCoordinatorDashboardActions({
+    alertAudienceCount,
+    alertForm,
+    alertOverrideLabel,
+    alertTargetCueAligned: alertTargetCue.aligned,
+    canCheckIn,
+    canEditQna,
+    canScheduleAlerts,
+    canSendAlerts,
+    checkInFilter,
+    checkInQueue,
+    focusCoordinatorQnaLane,
+    isDemoMode,
+    preferredAlertSuggestion,
+    qnaInput,
+    setActiveGuestId,
+    setAlertForm,
+    setAlertLog,
+    setAlertOverrideLabelState,
+    setGuests,
+    setPreviousAlertAligned,
+    setQnaInput,
+    setQnaItems,
+    siteId,
+    toast,
+    validationError: alertValidationError,
+  });
   useCoordinatorDashboardCueLifecycle({
     activeGuestId,
     activeQnaId,

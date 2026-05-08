@@ -705,6 +705,7 @@ describe('dashboard data boundary guards', () => {
     const cueLifecycle = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/useCoordinatorDashboardCueLifecycle.ts'), 'utf8');
     const derivedState = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/buildCoordinatorDashboardDerivedState.ts'), 'utf8');
     const panels = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/CoordinatorModePanels.tsx'), 'utf8');
+    const actionsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/useCoordinatorDashboardActions.ts'), 'utf8');
 
     expect(service).toContain('const COORDINATOR_GUEST_SELECT = ');
     expect(service).toContain('const COORDINATOR_EVENT_SELECT = ');
@@ -723,6 +724,7 @@ describe('dashboard data boundary guards', () => {
     expect(page).toContain('buildCoordinatorDashboardFocusActions({');
     expect(page).toContain('buildCoordinatorDashboardBoardActions({');
     expect(page).toContain('buildCoordinatorDashboardDerivedState({');
+    expect(page).toContain('useCoordinatorDashboardActions({');
     expect(page).toContain('useCoordinatorDashboardCueLifecycle({');
     expect(page).toContain('<CoordinatorQnaPanel');
     expect(page).not.toContain('const bootstrap = await loadCoordinatorBootstrapData(user.id);');
@@ -737,6 +739,9 @@ describe('dashboard data boundary guards', () => {
     expect(page).not.toContain('const standingPromptMode = getCoordinatorStandingPromptMode(Boolean(summaryDisplayCue));');
     expect(page).not.toContain('No guest questions match this triage view right now.');
     expect(page).not.toContain('placeholder="Add a guest question"');
+    expect(page).not.toContain('const toggleCheckIn = async (guest: GuestLiteForCoordinator) => {');
+    expect(page).not.toContain('const sendDayOfAlert = async () => {');
+    expect(page).not.toContain('const addQnaItem = async () => {');
     expect(page).not.toContain('if (shouldResetCoordinatorCommandJumpLabel({');
     expect(page).not.toContain('const timer = window.setTimeout(() => {');
     expect(dataHook).toContain('const bootstrap = await loadCoordinatorBootstrapData(args.userId);');
@@ -760,6 +765,13 @@ describe('dashboard data boundary guards', () => {
     expect(panels).toContain("placeholder=\"Add a guest question\"");
     expect(panels).toContain('No guest questions match this triage view right now.');
     expect(panels).toContain('Jump to suggested question');
+    expect(actionsHook).toContain('export function useCoordinatorDashboardActions(args: Args)');
+    expect(actionsHook).toContain('const toggleCheckIn = async (guest: GuestLiteForCoordinator) => {');
+    expect(actionsHook).toContain('await updateCoordinatorGuestCheckIn({ siteId: args.siteId, guestId: guest.id, checkedInAt: next });');
+    expect(actionsHook).toContain('const sendDayOfAlert = async () => {');
+    expect(actionsHook).toContain('await createCoordinatorAlertMessage({');
+    expect(actionsHook).toContain('const addQnaItem = async () => {');
+    expect(actionsHook).toContain('const data = await createCoordinatorQnaQuestion(args.siteId, q);');
     expect(cueLifecycle).toContain('export function useCoordinatorDashboardCueLifecycle(');
     expect(cueLifecycle).toContain('shouldResetCoordinatorCommandJumpLabel({');
     expect(cueLifecycle).toContain("const timer = window.setTimeout(() => {");
