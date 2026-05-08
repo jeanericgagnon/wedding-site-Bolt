@@ -80,6 +80,7 @@ import { useMessageDeliveryActions } from './messages/useMessageDeliveryActions'
 import { useMessageComposeActions } from './messages/useMessageComposeActions';
 import { useMessageComposerDraftActions } from './messages/useMessageComposerDraftActions';
 import { useMessageComposerHistoryActions } from './messages/useMessageComposerHistoryActions';
+import { useMessageDashboardPrefillSync } from './messages/useMessageDashboardPrefillSync';
 // Optional table: can be missing in lean deployments.
 // Start unknown, then permanently disable after one confirmed missing-table miss.
 let hasMessageDeliveriesTable: boolean | null = null;
@@ -390,66 +391,6 @@ export const DashboardMessages: React.FC = () => {
     }
   }, [weddingSite, isDemoMode]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const prefillSubject = params.get('prefillSubject');
-    const prefillBody = params.get('prefillBody');
-    const prefillAudience = params.get('prefillAudience');
-    const prefillCampaignName = params.get('prefillCampaignName');
-    const prefillChannel = params.get('prefillChannel');
-    const templateKey = params.get('template') as MessageTemplateKey | null;
-    const templateAudience = params.get('audience');
-    const smsCreditsStatus = params.get('smsCredits');
-    const requestedTemplate = templateKey && COMPOSER_TEMPLATES.some((template) => template.key === templateKey) ? templateKey : null;
-    if (!prefillSubject && !prefillBody && !prefillAudience && !prefillCampaignName && !prefillChannel && !smsCreditsStatus && !requestedTemplate) return;
-
-    if (requestedTemplate) {
-      applyComposerTemplate(requestedTemplate, {
-        audience: templateAudience === 'pending' ? 'not_responded' : templateAudience ?? undefined,
-      });
-      setShowRecipientPreview(true);
-    }
-
-    if (prefillSubject || prefillBody || prefillAudience || prefillCampaignName || prefillChannel) {
-      setEditingMessageId(null);
-      setFormData((prev) => ({
-        ...prev,
-        campaignName: prefillCampaignName ?? prev.campaignName,
-        subject: prefillSubject ?? prev.subject,
-        body: prefillBody ?? prev.body,
-        audience: prefillAudience ?? prev.audience,
-        channel: prefillChannel === 'sms' ? 'sms' : prefillChannel === 'email' ? 'email' : prev.channel,
-      }));
-      setShowRecipientPreview(true);
-    }
-
-    if (smsCreditsStatus === 'success') {
-      toast('Text credit purchase complete. Refreshing your balance now.', 'success');
-      void fetchWeddingSite();
-      void fetchSmsExpiryPreview();
-    } else if (smsCreditsStatus === 'cancel') {
-      toast('Text credit checkout was canceled.', 'info');
-    }
-
-    const cleanedParams = new URLSearchParams(location.search);
-    cleanedParams.delete('prefillSubject');
-    cleanedParams.delete('prefillBody');
-    cleanedParams.delete('prefillAudience');
-    cleanedParams.delete('prefillCampaignName');
-    cleanedParams.delete('prefillChannel');
-    cleanedParams.delete('template');
-    cleanedParams.delete('audience');
-    cleanedParams.delete('smsCredits');
-    const nextSearch = cleanedParams.toString();
-    navigate(
-      {
-        pathname: location.pathname,
-        search: nextSearch ? `?${nextSearch}` : '',
-      },
-      { replace: true },
-    );
-  }, [location.pathname, location.search, navigate, fetchWeddingSite, fetchSmsExpiryPreview]);
-
   useEffect(() => { fetchWeddingSite(); }, [fetchWeddingSite]);
   useEffect(() => {
     if (weddingSite) { fetchMessages(); fetchGuests(); fetchSmsExpiryPreview(); fetchItinerarySegments(); }
@@ -567,6 +508,17 @@ export const DashboardMessages: React.FC = () => {
     setEditingMessageId,
     setFormData,
     setSavedTemplates,
+  });
+  useMessageDashboardPrefillSync({
+    location,
+    navigate,
+    fetchWeddingSite,
+    fetchSmsExpiryPreview,
+    applyComposerTemplate,
+    toast,
+    setEditingMessageId,
+    setFormData,
+    setShowRecipientPreview,
   });
   const recipientsWithEmail = getRecipients(formData.audience).filter(g => hasReachableEmail(g.email)).length;
   const recipientsWithSmsConsent = getRecipients(formData.audience).filter(g => hasReachableSms(g)).length;

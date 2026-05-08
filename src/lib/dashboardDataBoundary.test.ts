@@ -10,6 +10,7 @@ describe('dashboard data boundary guards', () => {
     const composeHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageComposeActions.ts'), 'utf8');
     const draftHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageComposerDraftActions.ts'), 'utf8');
     const historyHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageComposerHistoryActions.ts'), 'utf8');
+    const prefillHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDashboardPrefillSync.ts'), 'utf8');
 
     expect(serviceSource).toContain('const MESSAGE_SELECT = [');
     expect(serviceSource).toContain('.select(MESSAGE_SELECT)');
@@ -25,6 +26,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('useMessageComposeActions({');
     expect(source).toContain('useMessageComposerDraftActions({');
     expect(source).toContain('useMessageComposerHistoryActions({');
+    expect(source).toContain('useMessageDashboardPrefillSync({');
     expect(source).toContain('loadDashboardMessages(weddingSite.id)');
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).not.toContain("supabase.from('messages').insert(payload)");
@@ -64,6 +66,10 @@ describe('dashboard data boundary guards', () => {
     expect(historyHookSource).toContain("applyComposerTemplate('rsvp-reminder', {");
     expect(historyHookSource).toContain('formatScheduledMessageDateTime(scheduledIso)');
     expect(historyHookSource).not.toContain("from '../../lib/supabase'");
+    expect(prefillHookSource).toContain("const requestedTemplate = templateKey && COMPOSER_TEMPLATES.some((template) => template.key === templateKey) ? templateKey : null");
+    expect(prefillHookSource).toContain("toast('Text credit purchase complete. Refreshing your balance now.', 'success')");
+    expect(prefillHookSource).toContain("cleanedParams.delete('smsCredits')");
+    expect(prefillHookSource).not.toContain("from '../../lib/supabase'");
   });
 
   it('keeps legacy public site repository reads out of private gate internals', () => {

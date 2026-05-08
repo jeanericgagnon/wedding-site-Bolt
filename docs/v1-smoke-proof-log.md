@@ -9731,3 +9731,19 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-08 01:43 AM PT No-Deploy Message Dashboard Prefill Sync Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Messages.tsx` now routes URL template prefills, composer field prefills, text-credit checkout refresh handling, and query cleanup through `src/pages/dashboard/messages/useMessageDashboardPrefillSync.ts`.
+  - That hook now owns the repeated route/session prefill parsing, checkout-status toast handling, post-refresh reload calls, and query-string cleanup while the page keeps the data loading, audience math, and high-level dashboard composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useMessageDashboardPrefillSync({ ... })` plus its requested-template detection, success toast, and `cleanedParams.delete('smsCredits')` contract.
+  - `src/pages/dashboard/Messages.tsx` dropped from 844 lines to 796 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
