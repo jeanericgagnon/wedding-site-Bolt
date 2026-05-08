@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 3:08 AM PT - No-Deploy Settings Tab Content Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Settings.tsx` now routes the owner settings tab body through `src/pages/dashboard/settings/SettingsTabContent.tsx` instead of carrying the tab switch inline.
+  - `SettingsTabContent.tsx` now owns the account/team/site/rsvp/notifications/billing tab handoff seam while preserving the existing panel composition.
+  - `src/lib/settingsErrorSafety.test.ts` and `src/pages/dashboard/settings/settingsSiteData.test.ts` now pin the shared tab-content seam and reject regaining the old inline `activeTab === ...` rendering block in `Settings.tsx`.
+- Acceptance/proof target:
+  - Focused settings tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 This backlog is organized by launch priority and is meant to drive focused production hardening work. It is intentionally implementation-oriented: each item includes the problem, risk, likely inspection areas, acceptance criteria, and a suggested approach.
 
 ## 2026-05-04 9:20 PM PT - 10/10 Production Readiness Mandate Intake

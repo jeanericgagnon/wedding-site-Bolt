@@ -19,6 +19,24 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 3:08 AM PT - No-Deploy Settings Tab Content Extraction
+
+What changed:
+- `src/pages/dashboard/Settings.tsx` no longer carries the owner settings tab switch inline.
+- New `src/pages/dashboard/settings/SettingsTabContent.tsx` now owns the shared account/team/site/rsvp/notifications/billing tab handoff seam.
+- `src/lib/settingsErrorSafety.test.ts` and `src/pages/dashboard/settings/settingsSiteData.test.ts` now pin that seam and reject regaining the old inline `activeTab === ...` render block inside `Settings.tsx`.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts`: PASS.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `npm run proof:v1:board:md`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This trims more render ownership out of `Settings.tsx` and makes the page harder to quietly regrow as an inline tab router. No deploy was run.
+
 ### 2026-05-07 6:52 PM PT - No-Deploy Settings RSVP Questions Panel Extraction
 
 What changed:

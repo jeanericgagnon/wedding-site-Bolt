@@ -76,6 +76,10 @@ describe('settings site data boundary', () => {
 
   it('keeps owner settings table access behind the settings data service', () => {
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Settings.tsx'), 'utf8');
+    const tabContent = readFileSync(
+      join(process.cwd(), 'src/pages/dashboard/settings/SettingsTabContent.tsx'),
+      'utf8',
+    );
     const actionsHook = readFileSync(
       join(process.cwd(), 'src/pages/dashboard/settings/useSettingsSiteAccessActions.ts'),
       'utf8',
@@ -90,13 +94,7 @@ describe('settings site data boundary', () => {
     expect(page).toContain('useSettingsSiteAccessActions({');
     expect(page).toContain('useSettingsExperienceActions({');
     expect(page).toContain('<SettingsDashboardShell');
-    expect(page).toContain('<SettingsIdentityExportsPanel');
-    expect(page).toContain('<SettingsPrivacyPanel');
-    expect(page).toContain('<SettingsRsvpMealPanel');
-    expect(page).toContain('<SettingsRsvpQuestionsPanel');
-    expect(page).toContain('<SettingsTeamAccessPanel');
-    expect(page).toContain('<SettingsSiteUrlPanel');
-    expect(page).toContain('<SettingsTemplatePanel');
+    expect(page).toContain('<SettingsTabContent');
     expect(page).toContain('requireSettingsAuthenticatedUser()');
     expect(page).toContain('verifySettingsCurrentPassword(authUser.email || \'\', currentPassword)');
     expect(page).toContain('updateSettingsAccountPassword(newPassword)');
@@ -132,6 +130,14 @@ describe('settings site data boundary', () => {
     expect(page).not.toContain('createSubscriptionSession(');
     expect(page).not.toContain('notification_prefs: { rsvp: notifRsvp');
     expect(page).not.toContain('rsvp_custom_questions: cleanedQuestions');
+
+    expect(tabContent).toContain('switch (activeTab)');
+    expect(tabContent).toContain('<>{accountContent}</>');
+    expect(tabContent).toContain('<>{teamContent}</>');
+    expect(tabContent).toContain('<>{siteContent}</>');
+    expect(tabContent).toContain('<>{rsvpContent}</>');
+    expect(tabContent).toContain('<>{notificationsContent}</>');
+    expect(tabContent).toContain('<>{billingContent}</>');
 
     expect(actionsHook).toContain('createSettingsCollaboratorInvite({');
     expect(actionsHook).toContain('revokeSettingsCollaboratorInvite(inviteId)');

@@ -11,6 +11,10 @@ const settingsExperienceActionsSource = () => readFileSync(
   join(process.cwd(), 'src/pages/dashboard/settings/useSettingsExperienceActions.ts'),
   'utf8',
 );
+const settingsTabContentSource = () => readFileSync(
+  join(process.cwd(), 'src/pages/dashboard/settings/SettingsTabContent.tsx'),
+  'utf8',
+);
 const customerSafeErrorSource = () => readFileSync(join(process.cwd(), 'src/lib/customerSafeError.ts'), 'utf8');
 const settingsSiteDataSource = () => readFileSync(join(process.cwd(), 'src/pages/dashboard/settings/settingsSiteData.ts'), 'utf8');
 
@@ -88,5 +92,25 @@ describe('settings error safety', () => {
     expect(experienceSource).toContain('updateSettingsSite(targetSiteId');
     expect(experienceSource).toContain('rsvp_custom_questions: cleanedQuestions');
     expect(experienceSource).toContain('notification_prefs: { rsvp: notifRsvp');
+  });
+
+  it('keeps settings tab rendering behind the shared tab-content seam', () => {
+    const pageSource = settingsSource();
+    const tabContentSource = settingsTabContentSource();
+
+    expect(pageSource).toContain('<SettingsTabContent');
+    expect(tabContentSource).toContain('switch (activeTab)');
+    expect(tabContentSource).toContain('case \'account\'');
+    expect(tabContentSource).toContain('case \'team\'');
+    expect(tabContentSource).toContain('case \'site\'');
+    expect(tabContentSource).toContain('case \'rsvp\'');
+    expect(tabContentSource).toContain('case \'notifications\'');
+    expect(tabContentSource).toContain('case \'billing\'');
+    expect(tabContentSource).toContain('accountContent');
+    expect(tabContentSource).toContain('teamContent');
+    expect(tabContentSource).toContain('siteContent');
+    expect(tabContentSource).toContain('rsvpContent');
+    expect(tabContentSource).toContain('notificationsContent');
+    expect(tabContentSource).toContain('billingContent');
   });
 });
