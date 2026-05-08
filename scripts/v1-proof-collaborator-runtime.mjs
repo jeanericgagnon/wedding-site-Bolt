@@ -120,7 +120,7 @@ function runRuntimeInviteFlow() {
   }
 }
 
-function runForbiddenActionProof() {
+function runCollaboratorRoleProof() {
   const command = 'LIVE_COLLABORATOR_PERMISSION_RLS=1 npx playwright test --workers=1 tests/e2e/collaborator-permission-rls.spec.ts';
 
   try {
@@ -144,7 +144,7 @@ function runForbiddenActionProof() {
 
     return {
       id: 'forbidden-action-permission-rls',
-      label: 'Limited collaborator allowed guest write + forbidden message write RLS proof',
+      label: 'Viewer deny + planner/coordinator allow collaborator runtime proof',
       command,
       required: true,
       ok: true,
@@ -159,7 +159,7 @@ function runForbiddenActionProof() {
 
     return {
       id: 'forbidden-action-permission-rls',
-      label: 'Limited collaborator allowed guest write + forbidden message write RLS proof',
+      label: 'Viewer deny + planner/coordinator allow collaborator runtime proof',
       command,
       required: true,
       ok: false,
@@ -186,7 +186,7 @@ const output = blocker.blocked
         'Owner invite creation in settings',
         'Collaborator accept flow',
         'Role-aware post-accept landing evidence',
-        'Limited collaborator allowed-action and forbidden-action RLS proof',
+        'Viewer deny plus planner/coordinator allowed-action runtime proof',
       ],
       stillManualProofNeeded: [],
       blockers: [blocker],
@@ -195,7 +195,7 @@ const output = blocker.blocked
   : (() => {
       const results = [
         runRuntimeInviteFlow(),
-        runForbiddenActionProof(),
+        runCollaboratorRoleProof(),
       ];
       const passed = results.filter((result) => result.ok).length;
       const failed = results.filter((result) => !result.ok).length;
@@ -210,7 +210,7 @@ const output = blocker.blocked
           'Owner invite creation in settings',
           'Collaborator accept flow',
           'Role-aware post-accept landing evidence',
-          'Limited collaborator allowed-action and forbidden-action RLS proof',
+          'Viewer deny plus planner/coordinator allowed-action runtime proof',
         ],
         stillManualProofNeeded: [],
         blockers: [],

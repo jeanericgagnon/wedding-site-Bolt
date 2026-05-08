@@ -12,7 +12,7 @@ export function toSupabasePublicMediaUrl(raw: string): string {
     parsed.hash = '';
     return parsed.toString();
   } catch {
-    return raw;
+    return '';
   }
 }
 

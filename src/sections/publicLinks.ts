@@ -1,10 +1,43 @@
 const SAFE_WEB_PROTOCOLS = new Set(['http:', 'https:']);
-const SAFE_DATA_IMAGE_PATTERN = /^data:image\/(?:png|jpe?g|gif|webp|svg\+xml);/i;
+const SAFE_DATA_IMAGE_PATTERN = /^data:image\/(?:png|jpe?g|gif|webp);/i;
 const SAFE_EMAIL_PATTERN = /^[^\s@<>"'()]+@[^\s@<>"'()]+\.[^\s@<>"'()]+$/;
 const SAFE_INSTAGRAM_HANDLE_PATTERN = /^[a-zA-Z0-9._]{1,30}$/;
 const SAFE_INSTAGRAM_HASHTAG_PATTERN = /^[a-zA-Z0-9_]{1,80}$/;
 const SAFE_FRAGMENT_PATTERN = /^#[a-zA-Z0-9_-]*$/;
 const UNSAFE_LOCAL_PATH_PATTERN = /[<>"'`\\]/;
+
+function isPrivateIpv4(hostname: string): boolean {
+  const parts = hostname.split('.').map((part) => Number(part));
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return false;
+  const [a, b] = parts;
+  return (
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 0) ||
+    (a === 192 && b === 2) ||
+    (a === 192 && b === 168) ||
+    (a === 198 && (b === 18 || b === 19)) ||
+    (a === 198 && b === 51) ||
+    (a === 203 && b === 0) ||
+    a >= 224
+  );
+}
+
+function isSafePublicHost(parsed: URL): boolean {
+  if (parsed.username || parsed.password) return false;
+  const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
+  if (!hostname) return false;
+  if (hostname === 'metadata' || hostname === 'metadata.google.internal' || hostname === '169.254.169.254') return false;
+  if (hostname === 'localhost' || hostname.endsWith('.localhost')) return false;
+  if (hostname.endsWith('.local') || hostname.endsWith('.internal') || hostname.endsWith('.test')) return false;
+  if (hostname.endsWith('.invalid') || hostname.endsWith('.example')) return false;
+  if (hostname.includes(':')) return false;
+  return !isPrivateIpv4(hostname);
+}
 
 export function getSafePublicWebUrl(value?: string | null): string {
   const trimmed = String(value ?? '').trim();
@@ -13,6 +46,7 @@ export function getSafePublicWebUrl(value?: string | null): string {
   try {
     const parsed = new URL(trimmed);
     if (!SAFE_WEB_PROTOCOLS.has(parsed.protocol)) return '';
+    if (!isSafePublicHost(parsed)) return '';
     return parsed.href;
   } catch {
     return '';
@@ -77,6 +111,7 @@ export function getSafePublicImageUrl(value?: string | null): string {
   try {
     const parsed = new URL(trimmed);
     if (!SAFE_WEB_PROTOCOLS.has(parsed.protocol)) return '';
+    if (!isSafePublicHost(parsed)) return '';
     if (parsed.hostname.toLowerCase() === 'image.thum.io') return '';
     return parsed.href;
   } catch {
@@ -113,6 +148,7 @@ export function getSafePublicInstagramUrl(value?: string | null): string {
   try {
     const parsed = new URL(trimmed);
     const hostname = parsed.hostname.toLowerCase();
+    if (parsed.username || parsed.password) return '';
     if (parsed.protocol !== 'https:' || (hostname !== 'instagram.com' && hostname !== 'www.instagram.com')) return '';
     const handle = parsed.pathname.split('/').filter(Boolean)[0] ?? '';
     return SAFE_INSTAGRAM_HANDLE_PATTERN.test(handle) ? `https://instagram.com/${handle}` : '';

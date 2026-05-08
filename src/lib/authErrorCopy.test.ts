@@ -13,6 +13,8 @@ describe('authErrorCopy', () => {
   it('hides provider and backend details from auth surfaces', () => {
     expect(safeAuthError(new Error('Supabase provider returned JWT database policy failure with token abc'), 'Couldn’t sign you in right now.')).toBe('Couldn’t sign you in right now.');
     expect(safeAuthError(new Error('fetch failed: network provider oauth unavailable'), 'Couldn’t start Google sign-in right now.')).toBe('Couldn’t start Google sign-in right now.');
+    expect(safeAuthError(new Error('Google OAuth service_role api-key refresh failed'), 'Couldn’t start Google sign-in right now.')).toBe('Couldn’t start Google sign-in right now.');
+    expect(safeAuthError(new Error('Invalid provider credentials'), 'Couldn’t sign you in right now.')).toBe('Couldn’t sign you in right now.');
   });
 
   it('preserves collaborator invite email mismatch guidance but hides internals', () => {

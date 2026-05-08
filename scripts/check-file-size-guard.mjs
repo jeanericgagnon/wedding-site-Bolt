@@ -5,9 +5,9 @@ const MAX_NEW_PAGE_LINES = 2000;
 
 const baselineLimits = new Map([
   ['src/pages/RSVP.tsx', 1962],
-  ['src/pages/dashboard/CoordinatorMode.tsx', 2773],
-  ['src/pages/dashboard/GuestPhotoSharing.tsx', 3188],
-  ['src/pages/dashboard/Guests.tsx', 4790],
+  ['src/pages/dashboard/CoordinatorMode.tsx', 2736],
+  ['src/pages/dashboard/GuestPhotoSharing.tsx', 3168],
+  ['src/pages/dashboard/Guests.tsx', 4693],
   ['src/pages/dashboard/Messages.tsx', 3386],
   ['src/pages/dashboard/Settings.tsx', 2328],
   ['src/pages/dashboard/Seating.tsx', 2169],

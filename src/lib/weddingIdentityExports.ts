@@ -51,7 +51,8 @@ const hasValue = (value: string | null | undefined) => Boolean(value?.trim());
 
 export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInput): WeddingIdentityExportKit {
   const coupleNames = input.coupleNames.trim() || 'Your wedding';
-  const hasPublicUrl = hasValue(input.publicSiteUrl);
+  const safePublicSiteUrl = isSafePublicQrAssetUrl(input.publicSiteUrl) ? input.publicSiteUrl.trim() : '';
+  const hasPublicUrl = hasValue(safePublicSiteUrl);
   const hasDate = hasValue(input.weddingDate);
   const hasVenue = hasValue(input.venueName);
   const templateName = input.templateName?.trim() || 'Current site theme';
@@ -132,7 +133,7 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
     items,
     manifest: [
       { label: 'Couple', value: coupleNames },
-      { label: 'Public site', value: input.publicSiteUrl || 'Not set' },
+      { label: 'Public site', value: safePublicSiteUrl || 'Not set' },
       { label: 'Wedding date', value: input.weddingDate || 'Not set' },
       { label: 'Venue', value: input.venueName || 'Not set' },
       { label: 'Theme', value: templateName },

@@ -1,6 +1,6 @@
 import type { ExistingRSVP, Guest, HouseholdGuest, RSVPMealConfig, RSVPQuestion } from './rsvpTypes';
 
-type ApplyRsvpSubmitSuccessArgs = {
+export type ApplyRsvpSubmitSuccessArgs = {
   applyToHousehold: boolean;
   guest: Guest;
   householdGuests: HouseholdGuest[];

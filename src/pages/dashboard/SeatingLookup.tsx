@@ -2,33 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../hooks/useAuth';
-import { supabase } from '../../lib/supabase';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { getCheckInExceptionStates } from '../../lib/checkInExceptionState';
-
-type LookupRow = {
-  guest_id: string;
-  full_name: string;
-  email: string | null;
-  table_name: string;
-  seat_index: number | null;
-  checked_in_at: string | null;
-  rsvp_status?: string | null;
-};
-
-type SeatingLookupGuest = {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  name: string | null;
-  email: string | null;
-  rsvp_status: string | null;
-};
+import { loadSeatingLookupRowsForUser, type SeatingLookupRow } from './seating/seatingService';
 
 export const DashboardSeatingLookup: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [rows, setRows] = useState<LookupRow[]>([]);
+  const [rows, setRows] = useState<SeatingLookupRow[]>([]);
   const [query, setQuery] = useState('');
 
   useEffect(() => {
@@ -46,76 +26,7 @@ export const DashboardSeatingLookup: React.FC = () => {
           return;
         }
 
-        const { data: site } = await supabase
-          .from('wedding_sites')
-          .select('id')
-          .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
-          .maybeSingle();
-        const siteId = site?.id as string | undefined;
-        if (!siteId) return;
-
-        const { data: event } = await supabase
-          .from('seating_events')
-          .select('id')
-          .eq('wedding_site_id', siteId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        const eventId = event?.id as string | undefined;
-        if (!eventId) {
-          if (mounted) setRows([]);
-          return;
-        }
-
-        const { data: assignments, error: assignmentsError } = await supabase
-          .from('seating_assignments')
-          .select('guest_id, table_id, seat_index, checked_in_at, is_valid')
-          .eq('seating_event_id', eventId)
-          .eq('is_valid', true)
-          .order('updated_at', { ascending: false });
-        if (assignmentsError) throw assignmentsError;
-
-        const assignmentRows = (assignments || []) as Array<{
-          guest_id: string;
-          table_id: string | null;
-          seat_index: number | null;
-          checked_in_at: string | null;
-        }>;
-        const tableIds = [...new Set(assignmentRows.map((row) => row.table_id).filter((id): id is string => Boolean(id)))];
-        const guestIds = [...new Set(assignmentRows.map((row) => row.guest_id).filter(Boolean))];
-
-        const [tablesResult, guestsResult] = await Promise.all([
-          tableIds.length > 0
-            ? supabase.from('seating_tables').select('id, table_name').in('id', tableIds)
-            : Promise.resolve({ data: [], error: null }),
-          guestIds.length > 0
-            ? supabase.from('guests').select('id, first_name, last_name, name, email, rsvp_status').in('id', guestIds)
-            : Promise.resolve({ data: [], error: null }),
-        ]);
-
-        if (tablesResult.error) throw tablesResult.error;
-        if (guestsResult.error) throw guestsResult.error;
-
-        const tableNameById = new Map(((tablesResult.data || []) as Array<{ id: string; table_name: string | null }>).map((table) => [table.id, table.table_name || 'Unassigned']));
-        const guestById = new Map(((guestsResult.data || []) as SeatingLookupGuest[]).map((guest) => [guest.id, guest]));
-
-        const mapped: LookupRow[] = assignmentRows.map((a) => {
-          const g = guestById.get(a.guest_id) ?? null;
-          const full_name = (g?.first_name || g?.last_name)
-            ? `${g?.first_name ?? ''} ${g?.last_name ?? ''}`.trim()
-            : (g?.name || 'Guest');
-          return {
-            guest_id: a.guest_id,
-            full_name,
-            email: g?.email || null,
-            table_name: a.table_id ? (tableNameById.get(a.table_id) || 'Unassigned') : 'Unassigned',
-            seat_index: a.seat_index ?? null,
-            checked_in_at: a.checked_in_at ?? null,
-            rsvp_status: g?.rsvp_status ?? null,
-          };
-        });
-
+        const mapped = await loadSeatingLookupRowsForUser(user.id);
         if (mounted) setRows(mapped);
       } catch {
         if (mounted) setRows([]);

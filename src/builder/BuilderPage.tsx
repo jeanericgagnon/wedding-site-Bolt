@@ -8,15 +8,12 @@ import { publishService } from './services/publishService';
 import { BuilderProject, createEmptyBuilderProject } from '../types/builder/project';
 import { WeddingDataV1, createEmptyWeddingData } from '../types/weddingData';
 import { createDefaultSectionInstance } from '../types/builder/section';
-import { supabase } from '../lib/supabase';
 import { demoWeddingSite } from '../lib/demoData';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { getTemplatePack } from './constants/builderTemplatePacks';
 import { readSetupDraft } from '../lib/setupDraft';
 import { resolveActiveSiteForUser } from '../lib/activeSite';
 import { applySetupDraftToWeddingData, hasMeaningfulSetupDraft } from './utils/setupDraftHydration';
-
-const BUILDER_ENTRY_SITE_SELECT = 'id, couple_name_1, couple_name_2, couple_first_name, couple_second_name' as const;
 
 function createDemoBuilderProject(): BuilderProject {
   const templateId = 'modern-luxe';
@@ -176,13 +173,7 @@ export const BuilderPage: React.FC = () => {
       }
 
       const activeSite = await resolveActiveSiteForUser(userId);
-      const { data: siteData, error: siteError } = await supabase
-        .from('wedding_sites')
-        .select(BUILDER_ENTRY_SITE_SELECT)
-        .eq('id', activeSite?.id ?? '')
-        .maybeSingle();
-
-      if (siteError) throw siteError;
+      const siteData = await builderProjectService.loadEntrySite(activeSite?.id ?? '');
 
       if (!siteData) {
         setError('no-site');
@@ -190,9 +181,8 @@ export const BuilderPage: React.FC = () => {
       }
 
       const siteId = siteData.id as string;
-      const row = siteData as Record<string, unknown>;
-      const name1 = ((row.couple_name_1 as string) || (row.couple_first_name as string) || '') as string;
-      const name2 = ((row.couple_name_2 as string) || (row.couple_second_name as string) || '') as string;
+      const name1 = siteData.couple_name_1 || siteData.couple_first_name || '';
+      const name2 = siteData.couple_name_2 || siteData.couple_second_name || '';
       setCoupleName(name1 && name2 ? `${name1} & ${name2}` : name1 || name2 || 'My Wedding');
 
       const [loadedProject, loadedWeddingData] = await Promise.all([

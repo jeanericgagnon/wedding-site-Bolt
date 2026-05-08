@@ -1,3 +1,5 @@
+import { customerSafeErrorMessage } from "./customerSafeError";
+
 export type PublicSiteGateStatus =
   | "unavailable"
   | "coming_soon"
@@ -32,6 +34,7 @@ export interface PublicSiteAccessResponse {
 
 const PUBLIC_SITE_ACCESS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-site-access`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const PUBLIC_SITE_ACCESS_ERROR_COPY = "Could not check this wedding site right now. Please try again.";
 
 function nullableString(value: unknown): string | null {
   return typeof value === "string" ? value : null;
@@ -66,6 +69,12 @@ export function sanitizePublicSiteSafeRow(site: unknown): PublicSiteSafeRow | nu
   };
 }
 
+export function safePublicSiteAccessError(err: unknown): string {
+  return customerSafeErrorMessage(err, PUBLIC_SITE_ACCESS_ERROR_COPY, {
+    allow: [/^Too many password attempts\. Please wait a minute and try again\.$/i],
+  });
+}
+
 async function callPublicSiteAccess(
   body: Record<string, unknown>,
 ): Promise<PublicSiteAccessResponse> {
@@ -80,7 +89,7 @@ async function callPublicSiteAccess(
 
   const json = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error((json as { error?: string }).error || `Error ${response.status}`);
+    throw new Error(safePublicSiteAccessError((json as { error?: string }).error || `Error ${response.status}`));
   }
 
   const status = (json as { status?: string }).status;

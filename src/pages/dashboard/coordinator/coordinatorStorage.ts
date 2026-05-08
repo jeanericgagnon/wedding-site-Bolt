@@ -20,23 +20,66 @@ type CoordinatorStorageKey =
   | 'command'
   | 'alertintent';
 
+export const COORDINATOR_STORAGE_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
+
+type CoordinatorStorageEnvelope = {
+  savedAtISO: string;
+  value: unknown;
+};
+
 export function getCoordinatorStorageKey(siteId: string, key: CoordinatorStorageKey): string {
   if (key === 'timeline' || key === 'alertlog' || key === 'qna') return `dayof.${key}.${siteId}`;
   return `dayof.coordinator.${key}.${siteId}`;
 }
 
+const isFreshCoordinatorStorageTimestamp = (value: unknown, now = Date.now()) => {
+  if (typeof value !== 'string') return false;
+  const savedAtMs = Date.parse(value);
+  return Number.isFinite(savedAtMs) && savedAtMs <= now && now - savedAtMs <= COORDINATOR_STORAGE_RETENTION_MS;
+};
+
+const isCoordinatorStorageEnvelope = (value: unknown): value is CoordinatorStorageEnvelope => (
+  Boolean(value)
+  && typeof value === 'object'
+  && !Array.isArray(value)
+  && typeof (value as CoordinatorStorageEnvelope).savedAtISO === 'string'
+  && 'value' in (value as Record<string, unknown>)
+);
+
 function readStoredJson(siteId: string, key: CoordinatorStorageKey): unknown {
+  const storageKey = getCoordinatorStorageKey(siteId, key);
   try {
-    const raw = localStorage.getItem(getCoordinatorStorageKey(siteId, key));
-    return raw ? JSON.parse(raw) : null;
+    const raw = localStorage.getItem(storageKey);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (isCoordinatorStorageEnvelope(parsed)) {
+      if (!isFreshCoordinatorStorageTimestamp(parsed.savedAtISO)) {
+        localStorage.removeItem(storageKey);
+        return null;
+      }
+      return parsed.value;
+    }
+
+    if (parsed !== null) {
+      localStorage.setItem(storageKey, JSON.stringify({
+        savedAtISO: new Date().toISOString(),
+        value: parsed,
+      }));
+    }
+    return parsed;
   } catch {
+    try {
+      localStorage.removeItem(storageKey);
+    } catch {}
     return null;
   }
 }
 
 function writeStoredJson(siteId: string, key: CoordinatorStorageKey, value: unknown): void {
   try {
-    localStorage.setItem(getCoordinatorStorageKey(siteId, key), JSON.stringify(value));
+    localStorage.setItem(getCoordinatorStorageKey(siteId, key), JSON.stringify({
+      savedAtISO: new Date().toISOString(),
+      value,
+    }));
   } catch {}
 }
 

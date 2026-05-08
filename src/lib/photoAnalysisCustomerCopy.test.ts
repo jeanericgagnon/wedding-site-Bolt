@@ -11,6 +11,8 @@ describe('photo analysis customer copy', () => {
     expect(isInternalPhotoAnalysisCopy('OpenAI GPT-4.1 failed because token spend limit was reached')).toBe(true);
     expect(safePhotoAnalysisText('OpenAI GPT-4.1 failed because token spend limit was reached')).toBe('Ready to review');
     expect(safeOptionalPhotoAnalysisText('OpenAI GPT-4.1 failed because token spend limit was reached')).toBeNull();
+    expect(isInternalPhotoAnalysisCopy('Google OAuth service_role api-key refresh failed')).toBe(true);
+    expect(safePhotoAnalysisText('Google OAuth service_role api-key refresh failed')).toBe('Ready to review');
   });
 
   it('hides storage and backend wording from customer-facing photo analysis copy', () => {
@@ -21,6 +23,7 @@ describe('photo analysis customer copy', () => {
 
   it('keeps normal wedding moment copy intact', () => {
     expect(safePhotoAnalysisText('Cocktail hour candids')).toBe('Cocktail hour candids');
+    expect(safePhotoAnalysisText('Head table flowers')).toBe('Head table flowers');
     expect(safePhotoAnalysisList(['ceremony', 'first dance', 'GPT model retry', 'storage permission denied'])).toEqual([
       'ceremony',
       'first dance',

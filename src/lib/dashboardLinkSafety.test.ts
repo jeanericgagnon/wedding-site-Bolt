@@ -41,17 +41,25 @@ describe('dashboard stored link safety', () => {
 
   it('sanitizes photo dashboard external opens for backup folders and QR links', () => {
     const photos = readSource('src/pages/dashboard/GuestPhotoSharing.tsx');
+    const bucketCard = readSource('src/pages/dashboard/guestPhotos/GuestPhotoBucketCard.tsx');
 
     expect(photos).toContain('getSafePublicWebUrl');
+    expect(photos).toContain('buildQrImageUrl');
+    expect(photos).toContain('isSafePublicQrAssetUrl');
     expect(photos).toContain('const openSafePublicUrl = (url: string | null | undefined)');
+    expect(photos).toContain("const getBucketQrUrl = (uploadUrl: string) => (isSafePublicQrAssetUrl(uploadUrl) ? buildQrImageUrl(uploadUrl) : '')");
+    expect(photos).not.toContain('api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(uploadUrl)}');
     expect(photos).toContain("window.open(safeUrl, '_blank', 'noopener,noreferrer')");
     expect(photos).toContain("const openAppUrl = (url: string) => window.open(url, '_blank', 'noopener,noreferrer')");
-    expect(photos).toContain('getSafePublicWebUrl(bucket.drive_folder_url)');
-    expect(photos).toContain('openSafePublicUrl(bucket.drive_folder_url)');
-    expect(photos).toContain('openSafePublicUrl(getBucketQrUrl(knownUploadLink))');
+    expect(bucketCard).toContain('getSafePublicWebUrl(bucket.drive_folder_url)');
+    expect(bucketCard).toContain('onOpenSafePublicUrl(bucket.drive_folder_url)');
+    expect(bucketCard).toContain('onOpenSafePublicUrl(getBucketQrUrl(knownUploadLink))');
     expect(photos).not.toContain("window.open(bucket.drive_folder_url!, '_blank')");
     expect(photos).not.toContain("window.open(getBucketQrUrl(knownUploadLink), '_blank')");
     expect(photos).not.toContain("window.open(latestUploadUrl, '_blank')");
+    expect(bucketCard).not.toContain("window.open(bucket.drive_folder_url!, '_blank')");
+    expect(bucketCard).not.toContain("window.open(getBucketQrUrl(knownUploadLink), '_blank')");
+    expect(bucketCard).not.toContain("window.open(latestUploadUrl, '_blank')");
   });
 
   it('sanitizes vault attachment links returned to the dashboard before rendering media or anchors', () => {

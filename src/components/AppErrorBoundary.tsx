@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { logClientError } from '../lib/errorLogger';
+import { clearChunkReloadRetryFlag, hasFreshChunkReloadRetryFlag, writeChunkReloadRetryFlag } from './chunkReloadStorage';
 
 interface Props {
   children: React.ReactNode;
@@ -22,9 +23,7 @@ export class AppErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidMount(): void {
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.removeItem('dayof_chunk_reload_once_v1');
-    }
+    clearChunkReloadRetryFlag();
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
@@ -56,10 +55,9 @@ export class AppErrorBoundary extends React.Component<Props, State> {
         msg.includes('importing a module script failed');
 
       if (isChunkLoadIssue) {
-        const key = 'dayof_chunk_reload_once_v1';
-        const alreadyRetried = window.sessionStorage.getItem(key) === '1';
+        const alreadyRetried = hasFreshChunkReloadRetryFlag();
         if (!alreadyRetried) {
-          window.sessionStorage.setItem(key, '1');
+          writeChunkReloadRetryFlag();
           window.location.reload();
           return;
         }

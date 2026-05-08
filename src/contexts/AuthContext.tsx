@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { DEMO_MODE, SUPABASE_CONFIGURED } from '../config/env';
+import { clearLocalDemoAuthFlag, readLocalDemoAuthFlag, writeLocalDemoAuthFlag } from './localDemoAuthStorage';
+import {
+  clearLocalE2EBypassFlag,
+  LOCAL_E2E_AUTH_KEY,
+  readLocalE2EBypassFlag,
+} from '../lib/localE2EBypassStorage';
 
 export interface AuthUser {
   id: string;
@@ -28,14 +34,8 @@ export function useAuth(): AuthContextType {
   return context;
 }
 
-const LOCAL_DEMO_AUTH_KEY = 'dayof_demo_local_auth';
-const LOCAL_E2E_AUTH_KEY = 'dayof_e2e_local_auth';
-
 function canUseE2EAuthBypass(): boolean {
-  if (typeof window === 'undefined') return false;
-  const host = window.location.hostname;
-  const isLocalHost = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
-  return isLocalHost && localStorage.getItem(LOCAL_E2E_AUTH_KEY) === '1';
+  return readLocalE2EBypassFlag(LOCAL_E2E_AUTH_KEY);
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const shouldUseLocalDemo = (DEMO_MODE && localStorage.getItem(LOCAL_DEMO_AUTH_KEY) === '1') || canUseE2EAuthBypass();
+    const shouldUseLocalDemo = (DEMO_MODE && readLocalDemoAuthFlag()) || canUseE2EAuthBypass();
 
     if (!SUPABASE_CONFIGURED) {
       if (shouldUseLocalDemo) {
@@ -56,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession()
       .then(({ data: { session } }) => {
         if (session?.user) {
-          localStorage.removeItem(LOCAL_DEMO_AUTH_KEY);
+          clearLocalDemoAuthFlag();
           setUser({
             id: session.user.id,
             email: session.user.email || '',
@@ -75,13 +75,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        localStorage.removeItem(LOCAL_DEMO_AUTH_KEY);
+        clearLocalDemoAuthFlag();
         setUser({
           id: session.user.id,
           email: session.user.email || '',
           name: session.user.user_metadata?.name || session.user.email || '',
         });
-      } else if ((DEMO_MODE && localStorage.getItem(LOCAL_DEMO_AUTH_KEY) === '1') || canUseE2EAuthBypass()) {
+      } else if ((DEMO_MODE && readLocalDemoAuthFlag()) || canUseE2EAuthBypass()) {
         setUser({ id: 'demo-local-user', email: DEMO_EMAIL, name: 'Alex & Jordan (Demo)' });
       } else {
         setUser(null);
@@ -92,14 +92,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const setLocalDemoUser = () => {
-    localStorage.setItem(LOCAL_DEMO_AUTH_KEY, '1');
+    writeLocalDemoAuthFlag();
     setUser({ id: 'demo-local-user', email: DEMO_EMAIL, name: 'Alex & Jordan (Demo)' });
   };
 
   const signIn = async () => {
     if (!DEMO_MODE) {
       if (!SUPABASE_CONFIGURED) {
-        throw new Error('Supabase is not configured. Please set up your environment variables.');
+        throw new Error('DayOf is still being connected. Please try again shortly.');
       }
       throw new Error('Demo mode is not enabled. Please use regular sign in.');
     }
@@ -109,8 +109,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    localStorage.removeItem(LOCAL_DEMO_AUTH_KEY);
-    localStorage.removeItem(LOCAL_E2E_AUTH_KEY);
+    clearLocalDemoAuthFlag();
+    clearLocalE2EBypassFlag(LOCAL_E2E_AUTH_KEY);
     await supabase.auth.signOut();
     setUser(null);
   };

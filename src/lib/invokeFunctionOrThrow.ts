@@ -1,9 +1,35 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { isInternalCustomerErrorMessage } from './customerSafeError';
 
 type FunctionErrorShape = {
   message?: string;
   context?: Response;
 };
+
+const FUNCTION_REQUEST_FAILED_COPY = 'Request failed. Please try again.';
+const SAFE_FUNCTION_ERROR_CODE = /^[A-Z0-9_-]{2,64}$/;
+const INTERNAL_FUNCTION_ERROR_CODE = /\b(DB|DATABASE|SQL|SUPABASE|POSTGRES|POSTGREST|AUTH|BEARER|COOKIE|JWT|PASSCODE|SESSION|TOKEN|SECRET|POLICY|RLS|STORAGE|BUCKET|STRIPE|OPENAI|PROVIDER|KEY)\b/i;
+const INTERNAL_FUNCTION_ERROR_TEXT = /\b(functions?http|non-2xx|edge\s*function|http\s*error|doctype|html|auth|bearer|cookie|passcode|session)\b/i;
+
+function safeFunctionErrorText(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const message = value.replace(/\s+/g, ' ').trim();
+  if (!message) return null;
+  if (message.length > 240) return null;
+  if (/[<>]/.test(message)) return null;
+  if (INTERNAL_FUNCTION_ERROR_TEXT.test(message)) return null;
+  if (isInternalCustomerErrorMessage(message)) return null;
+  return message;
+}
+
+function safeFunctionErrorCode(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const code = value.trim();
+  if (!SAFE_FUNCTION_ERROR_CODE.test(code)) return '';
+  if (INTERNAL_FUNCTION_ERROR_CODE.test(code)) return '';
+  if (isInternalCustomerErrorMessage(code)) return '';
+  return ` (${code})`;
+}
 
 export async function invokeFunctionOrThrow(
   supabase: SupabaseClient,
@@ -11,27 +37,22 @@ export async function invokeFunctionOrThrow(
   body: Record<string, unknown>
 ) {
   const parseError = async (error: FunctionErrorShape, data: unknown) => {
-    let msg = error.message || 'Request failed';
+    let msg = FUNCTION_REQUEST_FAILED_COPY;
     let code = '';
 
     const ctx = error.context;
     if (ctx) {
       try {
         const payload = (await ctx.clone().json()) as { error?: string; code?: string; message?: string };
-        msg = payload.error || payload.message || msg;
-        if (payload.code) code = ` (${payload.code})`;
+        msg = safeFunctionErrorText(payload.error) ?? safeFunctionErrorText(payload.message) ?? msg;
+        code = safeFunctionErrorCode(payload.code);
       } catch {
-        try {
-          const text = await ctx.clone().text();
-          if (text) msg = text;
-        } catch {
-          // ignore
-        }
+        msg = FUNCTION_REQUEST_FAILED_COPY;
       }
     } else {
       const maybe = data as { error?: string; code?: string; message?: string } | null;
-      msg = maybe?.error || maybe?.message || msg;
-      if (maybe?.code) code = ` (${maybe.code})`;
+      msg = safeFunctionErrorText(maybe?.error) ?? safeFunctionErrorText(maybe?.message) ?? safeFunctionErrorText(error.message) ?? msg;
+      code = safeFunctionErrorCode(maybe?.code);
     }
 
     return `${msg}${code}`;

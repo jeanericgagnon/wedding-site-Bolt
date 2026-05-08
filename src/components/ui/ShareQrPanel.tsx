@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Copy, ExternalLink, QrCode } from 'lucide-react';
 import { Button } from './Button';
 import { copyTextOrDownload } from '../../lib/copyText';
-import { buildQrImageUrl } from '../../lib/guestHubQrAssets';
+import { buildQrImageUrl, isSafePublicQrAssetUrl } from '../../lib/guestHubQrAssets';
 
 interface ShareQrPanelProps {
   title: string;
@@ -21,11 +21,12 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [copyFallback, setCopyFallback] = useState(false);
-  const qrUrl = useMemo(() => buildQrImageUrl(url), [url]);
+  const safeUrl = useMemo(() => (isSafePublicQrAssetUrl(url) ? url.trim() : ''), [url]);
+  const qrUrl = useMemo(() => buildQrImageUrl(safeUrl), [safeUrl]);
 
   const copyUrl = async () => {
     try {
-      const result = await copyTextOrDownload(url, `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'dayof'}-link.txt`);
+      const result = await copyTextOrDownload(safeUrl, `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'dayof'}-link.txt`);
       setCopied(true);
       setCopyFallback(result === 'downloaded');
       setTimeout(() => setCopied(false), 1500);
@@ -34,7 +35,7 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
     }
   };
 
-  if (!url) return null;
+  if (!safeUrl) return null;
 
   return (
     <div className={`rounded-lg border border-border-subtle bg-white p-4 ${className}`}>
@@ -49,14 +50,14 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
           </div>
           {description && <p className="mt-1 text-xs text-text-secondary">{description}</p>}
           <p className="mt-2 truncate rounded-lg border border-border-subtle bg-surface-subtle px-2 py-1.5 text-xs text-text-secondary">
-            {url}
+            {safeUrl}
           </p>
           {copyFallback && (
             <input
               aria-label={`${title} share link`}
               className="mt-2 w-full rounded-lg border border-border bg-white px-2 py-1.5 text-xs text-text-primary"
               readOnly
-              value={url}
+              value={safeUrl}
               onFocus={(event) => event.currentTarget.select()}
             />
           )}

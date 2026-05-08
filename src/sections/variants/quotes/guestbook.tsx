@@ -28,20 +28,96 @@ export const defaultQuotesGuestbookData: QuotesGuestbookData = {
   ],
 };
 
+export const QUOTES_GUESTBOOK_RETENTION_MS = 1000 * 60 * 60 * 24 * 30;
+const MAX_LOCAL_GUESTBOOK_ENTRIES = 50;
+const MAX_LOCAL_GUESTBOOK_TEXT_LENGTH = 500;
+const MAX_LOCAL_GUESTBOOK_AUTHOR_LENGTH = 80;
+
+type LocalGuestbookEntry = {
+  id: string;
+  text: string;
+  author: string;
+};
+
+type LocalGuestbookEnvelope = {
+  savedAtISO: string;
+  entries: LocalGuestbookEntry[];
+};
+
+function normalizeLocalGuestbookEntries(value: unknown): LocalGuestbookEntry[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') return null;
+      const raw = entry as Partial<LocalGuestbookEntry>;
+      const text = String(raw.text ?? '').replace(/\s+/g, ' ').trim().slice(0, MAX_LOCAL_GUESTBOOK_TEXT_LENGTH);
+      if (!text) return null;
+      const author = String(raw.author ?? 'Guest').replace(/\s+/g, ' ').trim().slice(0, MAX_LOCAL_GUESTBOOK_AUTHOR_LENGTH) || 'Guest';
+      const id = String(raw.id ?? `local_${Date.now()}`).replace(/\s+/g, '-').trim().slice(0, 120) || `local_${Date.now()}`;
+      return { id, text, author };
+    })
+    .filter((entry): entry is LocalGuestbookEntry => Boolean(entry))
+    .slice(0, MAX_LOCAL_GUESTBOOK_ENTRIES);
+}
+
+function buildLocalGuestbookPayload(entries: LocalGuestbookEntry[]): string {
+  return JSON.stringify({
+    savedAtISO: new Date().toISOString(),
+    entries: normalizeLocalGuestbookEntries(entries),
+  } satisfies LocalGuestbookEnvelope);
+}
+
+export function readLocalGuestbookEntries(storageKey: string): LocalGuestbookEntry[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+
+    if (Array.isArray(parsed)) {
+      const entries = normalizeLocalGuestbookEntries(parsed);
+      if (entries.length > 0) {
+        window.localStorage.setItem(storageKey, buildLocalGuestbookPayload(entries));
+      } else {
+        window.localStorage.removeItem(storageKey);
+      }
+      return entries;
+    }
+
+    if (parsed && typeof parsed === 'object' && typeof parsed.savedAtISO === 'string') {
+      const savedAt = Date.parse(parsed.savedAtISO);
+      if (!Number.isFinite(savedAt) || Date.now() - savedAt > QUOTES_GUESTBOOK_RETENTION_MS) {
+        window.localStorage.removeItem(storageKey);
+        return [];
+      }
+      return normalizeLocalGuestbookEntries((parsed as LocalGuestbookEnvelope).entries);
+    }
+
+    window.localStorage.removeItem(storageKey);
+  } catch {
+    try {
+      window.localStorage.removeItem(storageKey);
+    } catch {
+      // best effort
+    }
+  }
+  return [];
+}
+
+function writeLocalGuestbookEntries(storageKey: string, entries: LocalGuestbookEntry[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(storageKey, buildLocalGuestbookPayload(entries));
+  } catch {
+    // best effort
+  }
+}
+
 const QuotesGuestbook: React.FC<SectionComponentProps<QuotesGuestbookData>> = ({ data }) => {
   const storageKey = useMemo(() => `dayof_guestbook_${(data.headline || 'guestbook').toLowerCase().replace(/\s+/g, '_')}`, [data.headline]);
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
-  const [localEntries, setLocalEntries] = useState<Array<{ id: string; text: string; author: string }>>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const raw = window.localStorage.getItem(storageKey);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
+  const [localEntries, setLocalEntries] = useState<LocalGuestbookEntry[]>(() => readLocalGuestbookEntries(storageKey));
 
   const allEntries = [...(data.entries || []), ...localEntries];
 
@@ -56,13 +132,7 @@ const QuotesGuestbook: React.FC<SectionComponentProps<QuotesGuestbookData>> = ({
     setLocalEntries(next);
     setMessage('');
     setName('');
-    if (typeof window !== 'undefined') {
-      try {
-        window.localStorage.setItem(storageKey, JSON.stringify(next));
-      } catch {
-        // best effort
-      }
-    }
+    writeLocalGuestbookEntries(storageKey, next);
   };
 
   return (

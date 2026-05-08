@@ -3,30 +3,19 @@ import { Copy, Download, Mail, MapPin, MessageSquare, Send, Users } from 'lucide
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { useToast } from '../../../components/ui/Toast';
-import { supabase } from '../../../lib/supabase';
 import { copyTextOrDownload } from '../../../lib/copyText';
+import { loadAddressCollectionData, type PlanningAddressGuest } from './planningService';
 
 interface Props {
   siteId: string | null;
   isDemoMode?: boolean;
 }
 
-interface AddressGuest {
-  id: string;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  household_id: string | null;
-  mailing_address_line1?: string | null;
-  mailing_city?: string | null;
-  sms_consent?: boolean | null;
-}
-
 export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = false }) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [siteSlug, setSiteSlug] = useState('');
-  const [guests, setGuests] = useState<AddressGuest[]>([]);
+  const [guests, setGuests] = useState<PlanningAddressGuest[]>([]);
   const [view, setView] = useState<'missing-address' | 'missing-contact' | 'all'>('missing-address');
 
   useEffect(() => {
@@ -43,17 +32,10 @@ export const AddressCollectionTab: React.FC<Props> = ({ siteId, isDemoMode = fal
           ]);
           return;
         }
-        const [{ data: site }, { data }] = await Promise.all([
-          supabase.from('wedding_sites').select('site_slug, site_url').eq('id', siteId).maybeSingle(),
-          supabase
-            .from('guests')
-            .select('id, name, email, phone, household_id, mailing_address_line1, mailing_city, sms_consent')
-            .eq('wedding_site_id', siteId)
-            .order('name', { ascending: true }),
-        ]);
+        const { siteSlug: nextSiteSlug, guests: nextGuests } = await loadAddressCollectionData(siteId);
         if (cancelled) return;
-        setSiteSlug(String((site?.site_slug || site?.site_url || '') ?? ''));
-        setGuests((data ?? []) as AddressGuest[]);
+        setSiteSlug(nextSiteSlug);
+        setGuests(nextGuests);
       } catch {
         toast('Couldn’t load guest address status right now.', 'error');
       } finally {

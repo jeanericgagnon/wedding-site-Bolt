@@ -1,9 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
+import { customerSafeErrorMessage } from './customerSafeError';
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+
+const SAFE_FUNCTION_DENIAL_COPY = /^(Missing authorization|Unauthorized\.?|Forbidden|Authentication required|Sign in required)$/i;
+
+export function safeFunctionFailureTelemetryMessage(value: unknown, status: number): string {
+  return customerSafeErrorMessage(
+    typeof value === 'string' ? value : '',
+    `Request failed with status ${status}.`,
+    { allow: [SAFE_FUNCTION_DENIAL_COPY] }
+  );
+}
 
 const emitFunctionFailure = async (input: RequestInfo | URL, response: Response) => {
   if (typeof window === 'undefined') return;
@@ -13,13 +24,13 @@ const emitFunctionFailure = async (input: RequestInfo | URL, response: Response)
 
   const functionName = url.split('/functions/v1/')[1]?.split(/[/?#]/)[0] || 'unknown';
   let code: string | undefined;
-  let message = `Edge Function ${functionName} failed with status ${response.status}`;
+  let message = `Request failed with status ${response.status}.`;
 
   try {
     const payload = await response.clone().json() as { error?: unknown; code?: unknown; message?: unknown };
     if (typeof payload.code === 'string') code = payload.code.slice(0, 80);
     const rawMessage = typeof payload.error === 'string' ? payload.error : typeof payload.message === 'string' ? payload.message : '';
-    if (rawMessage) message = rawMessage.slice(0, 240);
+    message = safeFunctionFailureTelemetryMessage(rawMessage, response.status).slice(0, 240);
   } catch {
     // Keep sanitized status-only detail when the response body is not JSON.
   }

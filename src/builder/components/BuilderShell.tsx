@@ -18,6 +18,7 @@ import { getPublishIssue, getPublishValidationError } from '../utils/publishRead
 import { shouldAutoPublishFromSearch } from '../utils/publishUiHints';
 import { getPublishNowAction } from '../utils/publishNowFlow';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import { readBuilderCoachmarkSeen, writeBuilderCoachmarkSeen } from './builderCoachmarkStorage';
 
 interface BuilderShellProps {
   initialProject: BuilderProject;
@@ -181,8 +182,8 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
       return;
     }
     try {
-      const seen = window.localStorage.getItem(key);
-      if (!seen) window.localStorage.setItem(key, '1');
+      const seen = readBuilderCoachmarkSeen(key);
+      if (!seen) writeBuilderCoachmarkSeen(key);
     } catch {
       // Keep the editor open even if storage is blocked.
     }
@@ -448,7 +449,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
                   type="button"
                   onClick={() => {
                     setShowCoachmarks(false);
-                    try { window.localStorage.setItem('builder_coachmarks_seen_v1', '1'); } catch {}
+                    try { writeBuilderCoachmarkSeen('builder_coachmarks_seen_v1'); } catch {}
                   }}
                   className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-gray-800"
                 >

@@ -379,7 +379,7 @@ export const VendorProfilePage: React.FC = () => {
               <a
                 href={externalCredibility.profile_url}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold ${isDark ? 'bg-white/10 text-[#f8f3ec] hover:bg-white/15' : accent.softPanel}`}
               >
                 View {externalCredibility.source_label} profile
@@ -549,7 +549,7 @@ export const VendorProfilePage: React.FC = () => {
             {hasPublicLinks ? (
               <div className="space-y-3">
                 {publicLinks.map((link) => (
-                  <a key={link.label} href={link.href} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-lg border border-[#eadfce] px-4 py-3 hover:bg-[#fbf8f3]">
+                  <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between rounded-lg border border-[#eadfce] px-4 py-3 hover:bg-[#fbf8f3]">
                     <span className="flex items-center gap-3">{link.icon} {link.label}</span>
                     <ExternalLink className="h-4 w-4" />
                   </a>

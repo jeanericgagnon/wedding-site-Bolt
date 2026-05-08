@@ -9,6 +9,10 @@ const corsHeaders = {
 };
 
 const INCLUDED_SMS_CREDITS = 1000;
+const CHECKOUT_VERIFY_SIGNIN_REQUIRED_COPY = "Please sign in to confirm this checkout.";
+const CHECKOUT_VERIFY_SESSION_REQUIRED_COPY = "Choose a checkout session to confirm payment.";
+const CHECKOUT_VERIFY_SESSION_UNAVAILABLE_COPY = "This checkout session is not available.";
+const CHECKOUT_VERIFY_SESSION_NOT_READY_COPY = "This checkout session is not ready to confirm yet.";
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -74,7 +78,7 @@ Deno.serve(async (req: Request) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Missing authorization" }), {
+      return new Response(JSON.stringify({ error: CHECKOUT_VERIFY_SIGNIN_REQUIRED_COPY }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -89,7 +93,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      return new Response(JSON.stringify({ error: CHECKOUT_VERIFY_SIGNIN_REQUIRED_COPY }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -99,7 +103,7 @@ Deno.serve(async (req: Request) => {
     const sessionId = String(body?.session_id || "").trim();
 
     if (!sessionId) {
-      return new Response(JSON.stringify({ error: "Missing session_id" }), {
+      return new Response(JSON.stringify({ error: CHECKOUT_VERIFY_SESSION_REQUIRED_COPY }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -115,14 +119,14 @@ Deno.serve(async (req: Request) => {
     const supabaseUserId = session.metadata?.supabase_user_id;
 
     if (!weddingSiteId || !supabaseUserId) {
-      return new Response(JSON.stringify({ error: "Missing metadata on session" }), {
+      return new Response(JSON.stringify({ error: CHECKOUT_VERIFY_SESSION_NOT_READY_COPY }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (supabaseUserId !== user.id) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
+      return new Response(JSON.stringify({ error: CHECKOUT_VERIFY_SESSION_UNAVAILABLE_COPY }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

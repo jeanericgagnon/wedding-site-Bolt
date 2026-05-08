@@ -7,7 +7,7 @@ import './index.css';
 import './i18n/index';
 
 if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-  console.warn('[WeddingSite] VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are required. Check your .env file.');
+  console.warn('[dayof] App connection settings are missing.');
 }
 
 if (typeof window !== 'undefined') {

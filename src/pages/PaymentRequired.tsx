@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, CreditCard, Check, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
-import { supabase } from '../lib/supabase';
-import { createCheckoutSession, fetchPaymentStatus, fetchWeddingSiteId, SessionExpiredError } from '../lib/stripeService';
+import { createCheckoutSession, fetchPaymentStatus, SessionExpiredError } from '../lib/stripeService';
 import { isPaymentBypassAllowed, isPaymentGateEnabled } from '../lib/paymentGate';
 import { clearAllOnboardingContinuationState } from '../lib/onboardingContinuationCleanup';
 import { buildQuickStartEntryPath } from '../lib/quickStartContinuation';
+import { ensureMinimalPaymentWeddingSite } from './paymentRequiredService';
 
 const FEATURES = [
   'A polished wedding site you can keep editing',
@@ -18,12 +18,6 @@ const FEATURES = [
   'A visual site editor for the pieces guests will see',
 ];
 
-const makeBaseSlug = (email?: string | null) => {
-  const local = (email?.split('@')[0] || 'ourwedding').toLowerCase();
-  const cleaned = local.replace(/[^a-z0-9]/g, '').slice(0, 20);
-  return cleaned || 'ourwedding';
-};
-
 function safePaymentError(err: unknown, fallback: string): string {
   const raw = err instanceof Error ? err.message : '';
   if (raw === 'Couldn’t create your website record right now. Please refresh and try again.') {
@@ -31,38 +25,6 @@ function safePaymentError(err: unknown, fallback: string): string {
   }
   return fallback;
 }
-
-const ensureMinimalWeddingSite = async (userId: string, email?: string | null): Promise<string> => {
-  const existing = await fetchWeddingSiteId(userId);
-  if (existing) return existing;
-
-  const base = makeBaseSlug(email);
-
-  for (let i = 0; i < 6; i += 1) {
-    const suffix = i === 0 ? '' : `-${Math.floor(1000 + Math.random() * 9000)}`;
-    const siteSlug = `${base}${suffix}`;
-    const siteUrl = `${siteSlug}.dayof.love`;
-
-    const { data, error } = await supabase
-      .from('wedding_sites')
-      .insert({
-        user_id: userId,
-        couple_name_1: 'You',
-        couple_name_2: 'Partner',
-        site_slug: siteSlug,
-        site_url: siteUrl,
-      })
-      .select('id')
-      .maybeSingle();
-
-    if (!error && data?.id) return data.id;
-
-    const collision = /duplicate key|already exists|unique/i.test(error?.message || '');
-    if (!collision) throw error;
-  }
-
-  throw new Error('Couldn’t create your website record right now. Please refresh and try again.');
-};
 
 export const PaymentRequired: React.FC = () => {
   const { user, isDemoMode } = useAuth();
@@ -81,7 +43,7 @@ export const PaymentRequired: React.FC = () => {
       return;
     }
 
-    ensureMinimalWeddingSite(user.id, user.email)
+    ensureMinimalPaymentWeddingSite(user.id, user.email)
       .then(id => setWeddingSiteId(id))
       .catch((err: unknown) => {
         setError(safePaymentError(err, 'Couldn’t finish setting up your account right now.'));

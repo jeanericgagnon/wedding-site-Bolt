@@ -22,7 +22,7 @@ export const SUPABASE_CONFIGURED = !isPlaceholderSupabase;
 
 export function requireSupabase(): void {
   if (!SUPABASE_CONFIGURED && !DEMO_MODE) {
-    throw new Error('Supabase is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.');
+    throw new Error('DayOf is still being connected. Please try again shortly.');
   }
 }
 

@@ -16,6 +16,22 @@ describe('getMessageDeliveryState', () => {
     });
   });
 
+  it('hides auth/session/cookie/passcode diagnostics from delivery explanations', () => {
+    expect(getMessageDeliveryState({ status: 'failed', error: 'Auth session cookie failed for passcode refresh' })).toEqual({
+      label: 'Needs review',
+      tone: 'warning',
+      explainer: 'This message needs another look before it reaches every guest.',
+    });
+  });
+
+  it('keeps safe delivery explanations when they are not diagnostic', () => {
+    expect(getMessageDeliveryState({ status: 'failed', error: 'Guest mailbox was full.' })).toEqual({
+      label: 'Needs review',
+      tone: 'warning',
+      explainer: 'Guest mailbox was full.',
+    });
+  });
+
   it('treats queued and processing states as in-flight delivery', () => {
     expect(getMessageDeliveryState({ status: 'queued' })).toEqual({
       label: 'Getting ready',

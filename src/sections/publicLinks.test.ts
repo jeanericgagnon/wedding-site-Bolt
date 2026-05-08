@@ -20,6 +20,12 @@ describe('public link helpers', () => {
     expect(getSafePublicWebUrl('#')).toBe('');
     expect(getSafePublicWebUrl('javascript:alert(1)')).toBe('');
     expect(getSafePublicWebUrl('ftp://example.com/stay')).toBe('');
+    expect(getSafePublicWebUrl('https://user:pass@example.com/stay')).toBe('');
+    expect(getSafePublicWebUrl('http://localhost/stay')).toBe('');
+    expect(getSafePublicWebUrl('http://169.254.169.254/latest/meta-data')).toBe('');
+    expect(getSafePublicWebUrl('https://example.test/stay')).toBe('');
+    expect(getSafePublicWebUrl('https://service.invalid/stay')).toBe('');
+    expect(getSafePublicWebUrl('https://registry.example/stay')).toBe('');
     expect(getSafePublicWebUrl('not a url')).toBe('');
   });
 
@@ -67,11 +73,15 @@ describe('public link helpers', () => {
     expect(getSafePublicImageUrl('https://example.com/photo.jpg')).toBe('https://example.com/photo.jpg');
     expect(getSafePublicImageUrl('/preview-photos/header-anchor.jpg')).toBe('/preview-photos/header-anchor.jpg');
     expect(getSafePublicImageUrl(dataImage)).toBe(dataImage);
+    expect(getSafePublicImageUrl('data:image/svg+xml;utf8,<svg></svg>')).toBe('');
     expect(getSafePublicImageUrl('https://image.thum.io/get/width/900/https%3A%2F%2Fexample.com')).toBe('');
     expect(getSafePublicImageUrl('javascript:alert(1)')).toBe('');
     expect(getSafePublicImageUrl('//example.com/photo.jpg')).toBe('');
     expect(getSafePublicImageUrl('/\\evil.jpg')).toBe('');
     expect(getSafePublicImageUrl('ftp://example.com/photo.jpg')).toBe('');
+    expect(getSafePublicImageUrl('https://user:pass@example.com/photo.jpg')).toBe('');
+    expect(getSafePublicImageUrl('http://169.254.169.254/photo.jpg')).toBe('');
+    expect(getSafePublicImageUrl('https://service.invalid/photo.jpg')).toBe('');
     expect(getSafePublicImageUrl('not a url')).toBe('');
   });
 
@@ -90,6 +100,7 @@ describe('public link helpers', () => {
   it('builds safe public Instagram URLs', () => {
     expect(getSafePublicInstagramUrl('@dayof.love')).toBe('https://instagram.com/dayof.love');
     expect(getSafePublicInstagramUrl('https://www.instagram.com/dayof.love/')).toBe('https://instagram.com/dayof.love');
+    expect(getSafePublicInstagramUrl('https://user:pass@instagram.com/dayof.love')).toBe('');
     expect(getSafePublicInstagramUrl('https://example.com/dayof.love')).toBe('');
     expect(getSafePublicInstagramUrl('../bad')).toBe('');
   });

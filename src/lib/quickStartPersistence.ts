@@ -11,6 +11,7 @@ export type QuickStartDraftSnapshot = {
   showFollowUps: boolean;
   clarifyingState: ClarifyingPersistenceEnvelope | null;
   viewState: 'question' | 'thinking' | 'followups';
+  savedAtISO?: string;
 };
 
 const RESTORABLE_SETUP_STEPS: Array<{ key: keyof InitialSetupAnswers; optional?: boolean }> = [
@@ -508,5 +509,8 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     showFollowUps,
     clarifyingState: normalizedClarifyingState,
     viewState: normalizedViewState,
+    ...(typeof parsed.savedAtISO === 'string' && Number.isFinite(Date.parse(parsed.savedAtISO))
+      ? { savedAtISO: new Date(parsed.savedAtISO).toISOString() }
+      : {}),
   };
 };

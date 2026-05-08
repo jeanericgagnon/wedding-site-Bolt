@@ -1,3 +1,5 @@
+import { isInternalCustomerErrorMessage } from './customerSafeError';
+
 export interface MessageDeliveryInput {
   status?: string | null;
   sentAt?: string | null;
@@ -12,7 +14,7 @@ export interface MessageDeliveryState {
 
 function safeDeliveryExplainer(error?: string | null): string {
   if (!error) return 'This message needs another look before it reaches every guest.';
-  if (/smtp|provider|twilio|telnyx|sendgrid|resend|api|database|function|network|timeout|jwt|token|unauthorized/i.test(error)) {
+  if (isInternalCustomerErrorMessage(error)) {
     return 'This message needs another look before it reaches every guest.';
   }
   return error;

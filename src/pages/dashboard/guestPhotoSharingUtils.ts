@@ -208,21 +208,80 @@ export type PhotoMemoryCollections = {
 };
 
 export const PHOTO_ALBUM_LINKS_STORAGE_KEY = 'dayof.photoBucketLinks';
+export const PHOTO_BUCKET_LINKS_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+const MAX_STORED_BUCKET_LINKS = 24;
+const MAX_STORED_BUCKET_LINK_KEY_LENGTH = 120;
+const MAX_STORED_BUCKET_LINK_URL_LENGTH = 2048;
+
+type StoredBucketLinksEnvelope = {
+  savedAtISO: string;
+  value: Record<string, string>;
+};
+
+const isFreshBucketLinksTimestamp = (value: unknown, now = Date.now()) => {
+  if (typeof value !== 'string') return false;
+  const savedAtMs = Date.parse(value);
+  return Number.isFinite(savedAtMs) && savedAtMs <= now && now - savedAtMs <= PHOTO_BUCKET_LINKS_RETENTION_MS;
+};
+
+const isStoredBucketLinksEnvelope = (value: unknown): value is StoredBucketLinksEnvelope => (
+  Boolean(value)
+  && typeof value === 'object'
+  && !Array.isArray(value)
+  && typeof (value as StoredBucketLinksEnvelope).savedAtISO === 'string'
+  && 'value' in (value as Record<string, unknown>)
+);
+
+const normalizeStoredBucketLinks = (value: unknown): Record<string, string> => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .flatMap(([key, link]) => {
+        if (typeof link !== 'string') return [];
+        const normalizedKey = key.trim().slice(0, MAX_STORED_BUCKET_LINK_KEY_LENGTH);
+        const trimmedLink = link.trim().slice(0, MAX_STORED_BUCKET_LINK_URL_LENGTH);
+        if (!normalizedKey || !/^https?:\/\//i.test(trimmedLink)) return [];
+        return [[normalizedKey, trimmedLink]];
+      })
+      .slice(0, MAX_STORED_BUCKET_LINKS),
+  );
+};
 
 export const readStoredBucketLinks = (): Record<string, string> => {
   try {
     const raw = localStorage.getItem(PHOTO_ALBUM_LINKS_STORAGE_KEY);
     if (!raw) return {};
-    const parsed = JSON.parse(raw) as Record<string, string>;
-    return parsed && typeof parsed === 'object' ? parsed : {};
+    const parsed = JSON.parse(raw);
+    if (isStoredBucketLinksEnvelope(parsed)) {
+      if (!isFreshBucketLinksTimestamp(parsed.savedAtISO)) {
+        localStorage.removeItem(PHOTO_ALBUM_LINKS_STORAGE_KEY);
+        return {};
+      }
+      return normalizeStoredBucketLinks(parsed.value);
+    }
+
+    const normalized = normalizeStoredBucketLinks(parsed);
+    localStorage.setItem(PHOTO_ALBUM_LINKS_STORAGE_KEY, JSON.stringify({
+      savedAtISO: new Date().toISOString(),
+      value: normalized,
+    }));
+    return normalized;
   } catch {
+    try {
+      localStorage.removeItem(PHOTO_ALBUM_LINKS_STORAGE_KEY);
+    } catch {
+      // ignore cleanup failures so the dashboard remains usable in private modes.
+    }
     return {};
   }
 };
 
 export const writeStoredBucketLinks = (value: Record<string, string>) => {
   try {
-    localStorage.setItem(PHOTO_ALBUM_LINKS_STORAGE_KEY, JSON.stringify(value));
+    localStorage.setItem(PHOTO_ALBUM_LINKS_STORAGE_KEY, JSON.stringify({
+      savedAtISO: new Date().toISOString(),
+      value: normalizeStoredBucketLinks(value),
+    }));
   } catch {
     // ignore storage failures so the dashboard remains usable in private modes.
   }

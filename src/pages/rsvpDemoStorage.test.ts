@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   readDemoMealConfig,
   readDemoQuestions,
   readDemoStoredResponses,
+  RSVP_DEMO_STORAGE_RETENTION_MS,
   writeDemoStoredResponses,
 } from './rsvpDemoStorage';
 import {
@@ -14,7 +15,12 @@ import {
 
 describe('RSVP demo storage', () => {
   beforeEach(() => {
+    vi.useRealTimers();
     localStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('reads demo meal config defensively', () => {
@@ -69,6 +75,8 @@ describe('RSVP demo storage', () => {
   });
 
   it('writes and reads demo RSVP responses', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-06T12:00:00.000Z'));
     writeDemoStoredResponses({
       guest1: {
         id: 'rsvp1',
@@ -80,5 +88,86 @@ describe('RSVP demo storage', () => {
     });
 
     expect(readDemoStoredResponses().guest1?.meal_choice).toBe('Chicken');
+    expect(JSON.parse(localStorage.getItem(DEMO_RSVP_RESPONSES_KEY) ?? '{}')).toMatchObject({
+      savedAtISO: '2026-05-06T12:00:00.000Z',
+      value: {
+        guest1: {
+          id: 'rsvp1',
+          meal_choice: 'Chicken',
+        },
+      },
+    });
+  });
+
+  it('migrates active legacy demo RSVP storage into timestamped envelopes', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-06T12:00:00.000Z'));
+    localStorage.setItem(DEMO_RSVP_QUESTIONS_KEY, JSON.stringify([{
+      id: 'q1',
+      label: 'Song request',
+      type: 'single_choice',
+      options: ['Jazz', 'Pop'],
+    }]));
+    localStorage.setItem(DEMO_RSVP_RESPONSES_KEY, JSON.stringify({
+      guest1: {
+        id: 'rsvp1',
+        attending: true,
+        meal_choice: '  Chicken  ',
+        plus_one_name: '  Taylor  ',
+        notes: 'x'.repeat(260),
+        custom_answers: {
+          q1: [' Jazz ', 42, 'Pop'],
+        },
+      },
+    }));
+
+    expect(readDemoQuestions()).toHaveLength(1);
+    expect(readDemoStoredResponses().guest1).toMatchObject({
+      meal_choice: 'Chicken',
+      plus_one_name: 'Taylor',
+      notes: 'x'.repeat(240),
+      custom_answers: {
+        q1: ['Jazz', 'Pop'],
+      },
+    });
+    expect(JSON.parse(localStorage.getItem(DEMO_RSVP_QUESTIONS_KEY) ?? '{}')).toMatchObject({
+      savedAtISO: '2026-05-06T12:00:00.000Z',
+    });
+    expect(JSON.parse(localStorage.getItem(DEMO_RSVP_RESPONSES_KEY) ?? '{}')).toMatchObject({
+      savedAtISO: '2026-05-06T12:00:00.000Z',
+    });
+  });
+
+  it('removes stale demo RSVP envelopes', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-06T12:00:00.000Z'));
+    const staleSavedAtISO = new Date(Date.now() - RSVP_DEMO_STORAGE_RETENTION_MS - 1).toISOString();
+    localStorage.setItem(DEMO_RSVP_MEAL_KEY, JSON.stringify({
+      savedAtISO: staleSavedAtISO,
+      value: { enabled: false, options: ['Old'] },
+    }));
+    localStorage.setItem(DEMO_RSVP_QUESTIONS_KEY, JSON.stringify({
+      savedAtISO: staleSavedAtISO,
+      value: [{ id: 'old', label: 'Old' }],
+    }));
+    localStorage.setItem(DEMO_RSVP_RESPONSES_KEY, JSON.stringify({
+      savedAtISO: staleSavedAtISO,
+      value: {
+        guest1: {
+          id: 'rsvp1',
+          attending: true,
+          meal_choice: 'Old',
+          plus_one_name: null,
+          notes: null,
+        },
+      },
+    }));
+
+    expect(readDemoMealConfig()).toEqual(DEFAULT_MEAL_CONFIG);
+    expect(readDemoQuestions()).toEqual([]);
+    expect(readDemoStoredResponses()).toEqual({});
+    expect(localStorage.getItem(DEMO_RSVP_MEAL_KEY)).toBeNull();
+    expect(localStorage.getItem(DEMO_RSVP_QUESTIONS_KEY)).toBeNull();
+    expect(localStorage.getItem(DEMO_RSVP_RESPONSES_KEY)).toBeNull();
   });
 });

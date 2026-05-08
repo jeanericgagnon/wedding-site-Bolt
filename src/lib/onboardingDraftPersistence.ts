@@ -1,6 +1,7 @@
 import { createEmptyInitialSetupAnswers, type InitialSetupAnswers } from './initialSetupAnswers';
 import { createEmptyInitialSetupFollowUps, type InitialSetupFollowUpAnswers } from './initialSetupFollowUps';
 import { createEmptyWeddingProfile, isWeddingProfile, type WeddingProfile } from './weddingProfile';
+import { ONBOARDING_DRAFT_STORAGE_KEY } from './onboardingDraftCleanup';
 
 export type OnboardingStep = 'choice' | 'quick-1' | 'quick-2' | 'quick-3' | 'complete';
 
@@ -12,7 +13,10 @@ export type OnboardingDraftSnapshot = {
   initialSetupFollowUps: InitialSetupFollowUpAnswers;
   followUpAnswers: Record<string, string>;
   showFollowUpReview: boolean;
+  savedAtISO?: string;
 };
+
+export const ONBOARDING_DRAFT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const createEmptyOnboardingDraftSnapshot = (): OnboardingDraftSnapshot => ({
   step: 'choice',
@@ -38,6 +42,10 @@ export const normalizeOnboardingDraftSnapshot = (value: unknown): OnboardingDraf
   if (!value || typeof value !== 'object') return base;
 
   const parsed = value as Partial<OnboardingDraftSnapshot>;
+  if (typeof parsed.savedAtISO === 'string' && !isFreshOnboardingDraftTimestamp(parsed.savedAtISO)) return base;
+  const savedAtISO = typeof parsed.savedAtISO === 'string' && isFreshOnboardingDraftTimestamp(parsed.savedAtISO)
+    ? new Date(parsed.savedAtISO).toISOString()
+    : new Date().toISOString();
   const allowedInitialSetupValues: Partial<Record<keyof InitialSetupAnswers, readonly string[]>> = {
     labelPreference: ['names-only', 'bride-groom', 'bride-bride', 'groom-groom', 'custom'],
     guestCountBand: ['under-50', '50-100', '100-150', '150-250', '250-plus', ''],
@@ -90,5 +98,70 @@ export const normalizeOnboardingDraftSnapshot = (value: unknown): OnboardingDraf
     initialSetupFollowUps,
     followUpAnswers,
     showFollowUpReview: parsed.showFollowUpReview === true && hasFollowUpReviewData,
+    savedAtISO,
   };
+};
+
+const isFreshOnboardingDraftTimestamp = (value: unknown, now = Date.now()) => {
+  if (typeof value !== 'string') return false;
+  const savedAtMs = Date.parse(value);
+  return Number.isFinite(savedAtMs) && savedAtMs <= now && now - savedAtMs <= ONBOARDING_DRAFT_RETENTION_MS;
+};
+
+const withoutOnboardingSavedAt = (snapshot: OnboardingDraftSnapshot): OnboardingDraftSnapshot => {
+  const { savedAtISO: _savedAtISO, ...snapshotWithoutSavedAt } = snapshot;
+  return snapshotWithoutSavedAt;
+};
+
+const isEmptyOnboardingDraftSnapshot = (snapshot: OnboardingDraftSnapshot) => (
+  JSON.stringify(withoutOnboardingSavedAt(snapshot)) === JSON.stringify(createEmptyOnboardingDraftSnapshot())
+);
+
+export const readOnboardingDraftSnapshot = (): OnboardingDraftSnapshot | null => {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const raw = window.localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && typeof parsed.savedAtISO === 'string' && !isFreshOnboardingDraftTimestamp(parsed.savedAtISO)) {
+      window.localStorage.removeItem(ONBOARDING_DRAFT_STORAGE_KEY);
+      return null;
+    }
+
+    const normalized = normalizeOnboardingDraftSnapshot(parsed);
+    const normalizedRaw = JSON.stringify(normalized);
+    if (raw !== normalizedRaw) window.localStorage.setItem(ONBOARDING_DRAFT_STORAGE_KEY, normalizedRaw);
+    return normalized;
+  } catch {
+    window.localStorage.removeItem(ONBOARDING_DRAFT_STORAGE_KEY);
+    return null;
+  }
+};
+
+export const hasStoredOnboardingDraftPayload = (): boolean => {
+  if (typeof window === 'undefined') return false;
+
+  try {
+    return window.localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY) !== null;
+  } catch {
+    return false;
+  }
+};
+
+export const hasActiveOnboardingDraftSnapshot = (): boolean => readOnboardingDraftSnapshot() !== null;
+
+export const persistOnboardingDraftSnapshot = (value: unknown): OnboardingDraftSnapshot | null => {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const normalized = {
+      ...withoutOnboardingSavedAt(normalizeOnboardingDraftSnapshot(value)),
+      savedAtISO: new Date().toISOString(),
+    };
+    window.localStorage.setItem(ONBOARDING_DRAFT_STORAGE_KEY, JSON.stringify(normalized));
+    return isEmptyOnboardingDraftSnapshot(normalized) ? null : normalized;
+  } catch {
+    return null;
+  }
 };

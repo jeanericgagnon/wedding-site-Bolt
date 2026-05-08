@@ -1,7 +1,16 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { RegistryFundHighlight, RegistryGrid, RegistrySection, safePublicRegistryPurchaseError, sanitizePublicRegistryItems } from './RegistrySection';
+import {
+  REGISTRY_PURCHASE_MEMORY_RETENTION_MS,
+  RegistryFundHighlight,
+  RegistryGrid,
+  RegistrySection,
+  readRegistryPurchaseMemory,
+  rememberRegistryPurchase,
+  safePublicRegistryPurchaseError,
+  sanitizePublicRegistryItems,
+} from './RegistrySection';
 import type { SectionInstance } from '../../types/layoutConfig';
 import { createEmptyWeddingData } from '../../types/weddingData';
 import type { RegistryItem } from '../../pages/dashboard/registry/registryTypes';
@@ -18,6 +27,12 @@ function makeInstance(settings: SectionInstance['settings'], bindings?: SectionI
 }
 
 describe('RegistrySection', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    document.cookie = 'dayof_registry_purchases_v1=; Max-Age=0; Path=/; SameSite=Lax';
+    vi.useRealTimers();
+  });
+
   it('filters broken imported product metadata before guest-facing registry display', () => {
     const baseItem: RegistryItem = {
       id: 'item-1',
@@ -245,5 +260,41 @@ describe('RegistrySection', () => {
 
     expect(message).toBe('Could not save that purchase right now. Please try again.');
     expect(message).not.toMatch(/database|provider|storage|bucket|token|policy|service role|permission/i);
+  });
+
+  it('wraps public registry purchase memory in a timestamped bounded envelope', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-06T20:00:00.000Z'));
+
+    const ids = Array.from({ length: 90 }, (_, index) => `gift-${index}`);
+    window.localStorage.setItem('dayof_registry_purchase_memory_v1', JSON.stringify(ids));
+
+    expect(readRegistryPurchaseMemory()).toEqual(ids.slice(-80));
+    expect(JSON.parse(window.localStorage.getItem('dayof_registry_purchase_memory_v1') || '{}')).toMatchObject({
+      savedAtISO: '2026-05-06T20:00:00.000Z',
+      ids: ids.slice(-80),
+    });
+
+    const next = rememberRegistryPurchase('  gift-new  ');
+    expect(next.at(-1)).toBe('gift-new');
+    expect(JSON.parse(window.localStorage.getItem('dayof_registry_purchase_memory_v1') || '{}')).toMatchObject({
+      savedAtISO: '2026-05-06T20:00:00.000Z',
+    });
+    expect(document.cookie).toContain('dayof_registry_purchases_v1=');
+  });
+
+  it('clears stale or malformed public registry purchase memory', () => {
+    const staleDate = new Date(Date.now() - REGISTRY_PURCHASE_MEMORY_RETENTION_MS - 1000).toISOString();
+    window.localStorage.setItem('dayof_registry_purchase_memory_v1', JSON.stringify({
+      savedAtISO: staleDate,
+      ids: ['gift-1'],
+    }));
+
+    expect(readRegistryPurchaseMemory()).toEqual([]);
+    expect(window.localStorage.getItem('dayof_registry_purchase_memory_v1')).toBeNull();
+
+    window.localStorage.setItem('dayof_registry_purchase_memory_v1', '{broken');
+    expect(readRegistryPurchaseMemory()).toEqual([]);
+    expect(window.localStorage.getItem('dayof_registry_purchase_memory_v1')).toBeNull();
   });
 });

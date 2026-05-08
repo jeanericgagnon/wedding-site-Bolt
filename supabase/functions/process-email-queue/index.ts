@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { escapeHtml, safeEmailHref, sanitizeEmailSubject } from "../_shared/emailSafety.ts";
+import { escapeHtml, isSafeEmailAddress, safeEmailHref, sanitizeEmailSubject } from "../_shared/emailSafety.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +17,7 @@ const json = (data: unknown, status = 200) =>
 const BATCH_SIZE = 20;
 const MAX_ATTEMPTS = 3;
 const SAFE_DELIVERY_ERROR = "Email delivery did not complete. Please try again.";
+const EMAIL_QUEUE_ACCESS_REQUIRED_COPY = "This email queue request is not available.";
 
 function buildEmailHtml(type: string, payload: Record<string, unknown>): { subject: string; html: string } | null {
   const p = payload as Record<string, string | boolean | null>;
@@ -135,7 +136,7 @@ Deno.serve(async (req: Request) => {
     const authHeader = req.headers.get("Authorization");
     const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
     if (token !== serviceRoleKey) {
-      return json({ error: "Unauthorized" }, 401);
+      return json({ error: EMAIL_QUEUE_ACCESS_REQUIRED_COPY }, 401);
     }
 
     const adminClient = createClient(
@@ -168,7 +169,7 @@ Deno.serve(async (req: Request) => {
       const payload = item.payload_json as Record<string, unknown>;
       const to = payload.to as string | undefined;
 
-      if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+      if (!isSafeEmailAddress(to)) {
         await adminClient
           .from("email_queue")
           .update({ status: "failed", error: "Invalid recipient email", attempts: item.attempts + 1 })

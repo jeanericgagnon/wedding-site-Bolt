@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { sanitizePublicSiteSafeRow } from './publicSiteAccess';
+import { safePublicSiteAccessError, sanitizePublicSiteSafeRow } from './publicSiteAccess';
 
 describe('public site access client contract', () => {
   it('keeps only the explicit public-safe site fields from resolver payloads', () => {
@@ -63,17 +63,29 @@ describe('public site access client contract', () => {
     expect(sanitizePublicSiteSafeRow({ site_slug: 'missing-id' })).toBeNull();
   });
 
+  it('hides raw public access backend errors', () => {
+    expect(safePublicSiteAccessError('Supabase policy denied access to site_password_hash token')).toBe(
+      'Could not check this wedding site right now. Please try again.',
+    );
+    expect(safePublicSiteAccessError('Too many password attempts. Please wait a minute and try again.')).toBe(
+      'Too many password attempts. Please wait a minute and try again.',
+    );
+  });
+
   it('keeps public-site gate artifacts in session storage only', () => {
     const siteView = readFileSync('src/pages/SiteView.tsx', 'utf8');
+    const artifacts = readFileSync('src/lib/publicAccessArtifacts.ts', 'utf8');
 
-    expect(siteView).toContain('sessionStorage.getItem(INVITE_TOKEN_KEY)');
-    expect(siteView).toContain('sessionStorage.setItem(INVITE_TOKEN_KEY, urlToken)');
-    expect(siteView).toContain('sessionStorage.removeItem(INVITE_TOKEN_KEY)');
-    expect(siteView).toContain('sessionStorage.getItem(PASSWORD_SESSION_KEY)');
-    expect(siteView).toContain('sessionStorage.setItem(PASSWORD_SESSION_KEY, result.passwordSession)');
-    expect(siteView).not.toContain('localStorage.getItem(INVITE_TOKEN_KEY)');
-    expect(siteView).not.toContain('localStorage.setItem(INVITE_TOKEN_KEY');
-    expect(siteView).not.toContain('localStorage.getItem(PASSWORD_SESSION_KEY)');
-    expect(siteView).not.toContain('localStorage.setItem(PASSWORD_SESSION_KEY');
+    expect(artifacts).toContain('sessionStorage.getItem(getPublicInviteTokenStorageKey(slug))');
+    expect(artifacts).toContain('sessionStorage.getItem(getPublicPasswordSessionStorageKey(slug))');
+    expect(artifacts).toContain('sessionStorage.setItem(getPublicInviteTokenStorageKey(slug), token)');
+    expect(artifacts).toContain('sessionStorage.setItem(getPublicPasswordSessionStorageKey(slug), value)');
+    expect(siteView).toContain('clearStoredPublicInviteToken(resolvedSlug)');
+    expect(artifacts).toContain('passwordSession: readStoredPublicPasswordSession(slug)');
+    expect(siteView).toContain('writeStoredPublicPasswordSession(resolvedSlug, result.passwordSession)');
+    expect(`${siteView}\n${artifacts}`).not.toContain('localStorage.getItem(INVITE_TOKEN_KEY)');
+    expect(`${siteView}\n${artifacts}`).not.toContain('localStorage.setItem(INVITE_TOKEN_KEY');
+    expect(`${siteView}\n${artifacts}`).not.toContain('localStorage.getItem(PASSWORD_SESSION_KEY)');
+    expect(`${siteView}\n${artifacts}`).not.toContain('localStorage.setItem(PASSWORD_SESSION_KEY');
   });
 });

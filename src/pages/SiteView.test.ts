@@ -63,6 +63,7 @@ vi.mock('../lib/publicSiteProject', () => ({
 }));
 
 import { combineDateAndTime, createAlexJordanDemoWeddingData, toIsoDateOrUndefined } from './SiteView';
+import { getUrlWithoutPublicAccessToken } from '../lib/publicAccessArtifacts';
 
 describe('createAlexJordanDemoWeddingData', () => {
   it('skips invalid demo wedding dates instead of crashing public demo hydration', () => {
@@ -88,5 +89,17 @@ describe('combineDateAndTime', () => {
 
   it('drops malformed persisted itinerary times instead of producing broken schedule timestamps', () => {
     expect(combineDateAndTime('2027-02-17', '4:30 PM')).toBeUndefined();
+  });
+});
+
+describe('getUrlWithoutPublicAccessToken', () => {
+  it('strips only the public invite access token from a site URL', () => {
+    expect(getUrlWithoutPublicAccessToken('/site/maya-leo?token=secret&lang=es#schedule', 'https://dayof.love'))
+      .toBe('/site/maya-leo?lang=es#schedule');
+  });
+
+  it('preserves token-free URLs unchanged', () => {
+    expect(getUrlWithoutPublicAccessToken('/site/maya-leo?lang=es#schedule', 'https://dayof.love'))
+      .toBe('/site/maya-leo?lang=es#schedule');
   });
 });

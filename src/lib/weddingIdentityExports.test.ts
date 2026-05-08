@@ -60,6 +60,22 @@ describe('weddingIdentityExports', () => {
     expect(manifest).not.toMatch(/token|guest_access|secret|service-role/i);
   });
 
+  it('does not mark private query URLs ready or echo them into the manifest', () => {
+    const kit = buildWeddingIdentityExportKit({
+      coupleNames: 'Maya & Leo',
+      publicSiteUrl: 'https://maya-leo.dayof.love?passwordSession=secret',
+      weddingDate: '2026-09-12',
+      venueName: 'Garden House',
+    });
+
+    expect(kit.items.find((item) => item.id === 'public-qr-card')).toMatchObject({
+      status: 'needs-info',
+      blockers: ['Set a public site URL.'],
+    });
+    expect(buildWeddingIdentityManifestText(kit)).toContain('Public site: Not set');
+    expect(buildWeddingIdentityManifestText(kit)).not.toContain('passwordSession=secret');
+  });
+
   it('builds deterministic public print assets with QR URLs for site, RSVP, and photo upload', () => {
     const assets = buildWeddingIdentityPrintAssets({
       coupleNames: 'Maya & Leo',

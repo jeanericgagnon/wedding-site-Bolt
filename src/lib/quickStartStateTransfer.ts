@@ -2,6 +2,38 @@ import { normalizeQuickStartDraftSnapshot, type QuickStartDraftSnapshot } from '
 import { hasMeaningfulQuickStartAnswers } from './quickStartHydration';
 
 export const QUICK_START_STORAGE_KEY = 'dayoflove:quickstart-shell';
+export const QUICK_START_DRAFT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+
+const isFreshQuickStartDraftTimestamp = (value: unknown, now = Date.now()) => {
+  if (typeof value !== 'string') return false;
+  const savedAtMs = Date.parse(value);
+  return Number.isFinite(savedAtMs) && savedAtMs <= now && now - savedAtMs <= QUICK_START_DRAFT_RETENTION_MS;
+};
+
+const withoutQuickStartSavedAt = (snapshot: QuickStartDraftSnapshot): QuickStartDraftSnapshot => {
+  const { savedAtISO: _savedAtISO, ...snapshotWithoutSavedAt } = snapshot;
+  return snapshotWithoutSavedAt;
+};
+
+const withQuickStartSavedAt = (snapshot: QuickStartDraftSnapshot, existingRaw: string | null) => {
+  const normalizedWithoutSavedAt = withoutQuickStartSavedAt(snapshot);
+
+  if (existingRaw) {
+    try {
+      const existingSnapshot = createQuickStartDraftSnapshot(JSON.parse(existingRaw));
+      if (
+        JSON.stringify(withoutQuickStartSavedAt(existingSnapshot)) === JSON.stringify(normalizedWithoutSavedAt)
+        && isFreshQuickStartDraftTimestamp(existingSnapshot.savedAtISO)
+      ) {
+        return { ...normalizedWithoutSavedAt, savedAtISO: existingSnapshot.savedAtISO };
+      }
+    } catch {
+      // ignore broken legacy payloads and write a fresh normalized snapshot
+    }
+  }
+
+  return { ...normalizedWithoutSavedAt, savedAtISO: new Date().toISOString() };
+};
 
 export const createQuickStartDraftSnapshot = (value: unknown): QuickStartDraftSnapshot => (
   normalizeQuickStartDraftSnapshot(value)
@@ -64,10 +96,11 @@ export const persistQuickStartDraftSnapshot = (value: unknown) => {
   if (typeof window === 'undefined') return null;
   const normalized = createQuickStartDraftSnapshot(value);
   const hasMeaningfulDraft = hasMeaningfulQuickStartDraftSnapshot(normalized);
-  const normalizedRaw = hasMeaningfulDraft ? JSON.stringify(normalized) : null;
 
   try {
     const existingRaw = window.localStorage.getItem(QUICK_START_STORAGE_KEY);
+    const normalizedWithSavedAt = hasMeaningfulDraft ? withQuickStartSavedAt(normalized, existingRaw) : null;
+    const normalizedRaw = normalizedWithSavedAt ? JSON.stringify(normalizedWithSavedAt) : null;
 
     if (normalizedRaw !== null) {
       if (existingRaw !== normalizedRaw) {
@@ -95,11 +128,23 @@ export const readQuickStartDraftSnapshot = (): QuickStartDraftSnapshot | null =>
 
   if (!raw) return null;
   try {
-    const normalized = createQuickStartDraftSnapshot(JSON.parse(raw));
+    const parsed = JSON.parse(raw);
+    const normalized = createQuickStartDraftSnapshot(parsed);
     const hasMeaningfulDraft = hasMeaningfulQuickStartDraftSnapshot(normalized);
-    const normalizedRaw = JSON.stringify(normalized);
+    const hasSavedAt = typeof normalized.savedAtISO === 'string';
+    if (hasSavedAt && !isFreshQuickStartDraftTimestamp(normalized.savedAtISO)) {
+      clearQuickStartDraftSnapshot();
+      return null;
+    }
+    const normalizedWithSavedAt = hasMeaningfulDraft
+      ? {
+          ...withoutQuickStartSavedAt(normalized),
+          savedAtISO: hasSavedAt ? normalized.savedAtISO : new Date().toISOString(),
+        }
+      : null;
+    const normalizedRaw = normalizedWithSavedAt ? JSON.stringify(normalizedWithSavedAt) : null;
     try {
-      if (hasMeaningfulDraft) {
+      if (normalizedRaw) {
         if (raw !== normalizedRaw) {
           window.localStorage.setItem(QUICK_START_STORAGE_KEY, normalizedRaw);
         }

@@ -57,6 +57,14 @@ const MOOD_FILTERS: { id: TemplateMoodTag | 'all'; label: string }[] = [
 
 const RECOMMENDED_TEMPLATE_IDS = ['modern-luxe', 'editorial-romance', 'timeless-classic', 'destination-minimal'];
 const TEMPLATE_USAGE_KEY = 'dayof_template_usage_v1';
+export const TEMPLATE_USAGE_RETENTION_MS = 1000 * 60 * 60 * 24 * 180;
+const MAX_TEMPLATE_USAGE_ROWS = 80;
+const MAX_TEMPLATE_ID_LENGTH = 120;
+
+type TemplateUsageEnvelope = {
+  savedAtISO: string;
+  usage: Record<string, number>;
+};
 
 const COLOR_FILTERS = ['all', 'light', 'dark', 'neutral'] as const;
 type ColorFilter = (typeof COLOR_FILTERS)[number];
@@ -74,22 +82,58 @@ interface ApplyResult {
   preservedSections: string[];
 }
 
-const readTemplateUsage = (): Record<string, number> => {
+function normalizeTemplateUsage(value: unknown): Record<string, number> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.entries(value as Record<string, unknown>).slice(0, MAX_TEMPLATE_USAGE_ROWS).reduce<Record<string, number>>((acc, [rawTemplateId, rawCount]) => {
+    const templateId = rawTemplateId.trim().slice(0, MAX_TEMPLATE_ID_LENGTH);
+    const count = Math.min(Math.max(Math.floor(Number(rawCount) || 0), 0), 9999);
+    if (templateId && count > 0) acc[templateId] = count;
+    return acc;
+  }, {});
+}
+
+function isFreshTemplateUsage(savedAtISO: unknown): boolean {
+  if (typeof savedAtISO !== 'string') return false;
+  const savedAt = Date.parse(savedAtISO);
+  return Number.isFinite(savedAt) && Date.now() - savedAt <= TEMPLATE_USAGE_RETENTION_MS;
+}
+
+function writeTemplateUsageEnvelope(usage: Record<string, number>) {
+  localStorage.setItem(TEMPLATE_USAGE_KEY, JSON.stringify({
+    savedAtISO: new Date().toISOString(),
+    usage: normalizeTemplateUsage(usage),
+  } satisfies TemplateUsageEnvelope));
+}
+
+export const readTemplateUsage = (): Record<string, number> => {
   try {
     const raw = localStorage.getItem(TEMPLATE_USAGE_KEY);
     if (!raw) return {};
-    const parsed = JSON.parse(raw) as Record<string, number>;
-    return parsed && typeof parsed === 'object' ? parsed : {};
+    const parsed = JSON.parse(raw) as Record<string, number> | TemplateUsageEnvelope;
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && 'savedAtISO' in parsed) {
+      if (!isFreshTemplateUsage(parsed.savedAtISO)) {
+        localStorage.removeItem(TEMPLATE_USAGE_KEY);
+        return {};
+      }
+      return normalizeTemplateUsage(parsed.usage);
+    }
+    const usage = normalizeTemplateUsage(parsed);
+    if (Object.keys(usage).length > 0) writeTemplateUsageEnvelope(usage);
+    else localStorage.removeItem(TEMPLATE_USAGE_KEY);
+    return usage;
   } catch {
+    try { localStorage.removeItem(TEMPLATE_USAGE_KEY); } catch { /* non-blocking */ }
     return {};
   }
 };
 
-const bumpTemplateUsage = (templateId: string) => {
+export const bumpTemplateUsage = (templateId: string) => {
   try {
     const usage = readTemplateUsage();
-    usage[templateId] = (usage[templateId] || 0) + 1;
-    localStorage.setItem(TEMPLATE_USAGE_KEY, JSON.stringify(usage));
+    const normalizedTemplateId = templateId.trim().slice(0, MAX_TEMPLATE_ID_LENGTH);
+    if (!normalizedTemplateId) return;
+    usage[normalizedTemplateId] = Math.min((usage[normalizedTemplateId] || 0) + 1, 9999);
+    writeTemplateUsageEnvelope(usage);
   } catch {
     // non-blocking
   }

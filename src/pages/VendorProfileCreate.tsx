@@ -742,7 +742,7 @@ export const VendorProfileCreatePage: React.FC = () => {
             </div>
             <div className="flex flex-wrap gap-3">
               {draftLinks(draft).map((link) => (
-                <a key={link.label} href={link.href} target="_blank" rel="noreferrer" className="text-sm text-[#6f5843] underline">{link.label}</a>
+                <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="text-sm text-[#6f5843] underline">{link.label}</a>
               ))}
             </div>
             <p className="text-xs text-[#8b6f53]">When a website has limited detail, the page can still use Instagram, Pinterest, and other social links for images and context.</p>

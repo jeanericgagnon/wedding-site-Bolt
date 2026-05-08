@@ -5,6 +5,7 @@ import {
   canEditPlanningTasks,
   canEditPlanningVendors,
   canEditPlannerSurface,
+  canManageGuests,
   canManagePlanning,
   canSendCoordinatorUpdates,
   derivePlannerRoleFromPermissions,
@@ -24,6 +25,8 @@ describe('plannerAccess role matrix', () => {
     expect(canEditPlanningVendors('viewer')).toBe(false);
     expect(canComposeDashboardMessages('viewer')).toBe(false);
     expect(canSendCoordinatorUpdates('viewer')).toBe(false);
+    expect(canComposeDashboardMessages('viewer', ['messages'])).toBe(false);
+    expect(canManageGuests('viewer', ['guests'])).toBe(false);
   });
 
   it('lets coordinators handle live ops and selected messaging but not budget or vendors', () => {

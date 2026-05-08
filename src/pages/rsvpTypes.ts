@@ -1,3 +1,5 @@
+import { isInternalCustomerErrorMessage } from '../lib/customerSafeError';
+
 export const DEMO_RSVP_QUESTIONS_KEY = 'dayof_demo_rsvp_custom_questions_v1';
 export const DEMO_RSVP_RESPONSES_KEY = 'dayof_demo_rsvp_responses_v1';
 export const DEMO_RSVP_MEAL_KEY = 'dayof_demo_rsvp_meal_config_v1';
@@ -5,12 +7,11 @@ export const RSVP_CONTINUITY_EVENT = 'dayof:rsvp-updated';
 export const RSVP_CONTINUITY_STORAGE_KEY = 'dayof.rsvp.updatedAt';
 export const RSVP_SUBMIT_ERROR_COPY = 'Couldn’t send your RSVP. Please try again.';
 export const RSVP_LOOKUP_ERROR_COPY = 'Invitation not recognized. Please use the private RSVP link or code from your invitation.';
-export const INTERNAL_RSVP_ERROR_COPY =
-  /\b(supabase|configuration|request\s*failed|functions?\/v1|edge\s*function|function|jwt|permission(?:s)?|policy|database|provider|network|fetch|token|secret|service\s*role|storage|bucket|metadata|missing-config|status\s*code|error_message|failed\s*to\s*submit)\b/i;
+const RSVP_INTERNAL_SENTINEL_ERROR_COPY = /\b(configuration|missing-config|failed\s*to\s*submit)\b/i;
 
 export function normalizeRsvpGuestError(message?: string | null, fallback = RSVP_LOOKUP_ERROR_COPY) {
   const cleaned = String(message ?? '').replace(/\s+/g, ' ').trim();
-  if (!cleaned || INTERNAL_RSVP_ERROR_COPY.test(cleaned)) return fallback;
+  if (!cleaned || RSVP_INTERNAL_SENTINEL_ERROR_COPY.test(cleaned) || isInternalCustomerErrorMessage(cleaned)) return fallback;
   return cleaned;
 }
 

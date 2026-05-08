@@ -14,73 +14,188 @@ export type RsvpSavedSegment = { id: number; label: string; filter: string; crea
 export type RsvpCampaignLogEntry = { id: number; segment: string; count: number; sentAt: string };
 
 const STORAGE_CAP = 12;
+export const GUEST_DASHBOARD_STORAGE_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+const MAX_STORED_GUEST_TEXT_LENGTH = 240;
+const MAX_DEMO_RSVP_OPTIONS = 12;
 const DEFAULT_MEAL_OPTIONS = ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'];
+
+type GuestDashboardStorageEnvelope<T> = {
+  savedAtISO: string;
+  value: T;
+};
+
+function normalizeStoredText(value: unknown, maxLength = MAX_STORED_GUEST_TEXT_LENGTH): string {
+  return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
+}
+
+function isGuestDashboardStorageEnvelope<T = unknown>(value: unknown): value is GuestDashboardStorageEnvelope<T> {
+  if (!value || typeof value !== 'object') return false;
+  const envelope = value as Partial<GuestDashboardStorageEnvelope<T>>;
+  return typeof envelope.savedAtISO === 'string' && 'value' in envelope;
+}
+
+function isStorageFresh(savedAtISO: string): boolean {
+  const savedAt = Date.parse(savedAtISO);
+  return Number.isFinite(savedAt) && Date.now() - savedAt <= GUEST_DASHBOARD_STORAGE_RETENTION_MS;
+}
+
+function readStoredValue<T>(key: string, fallback: T): { value: T; shouldMigrate: boolean } {
+  const raw = localStorage.getItem(key);
+  if (!raw) return { value: fallback, shouldMigrate: false };
+
+  const parsed = JSON.parse(raw) as unknown;
+  if (isGuestDashboardStorageEnvelope<T>(parsed)) {
+    if (!isStorageFresh(parsed.savedAtISO)) {
+      localStorage.removeItem(key);
+      return { value: fallback, shouldMigrate: false };
+    }
+    return { value: parsed.value, shouldMigrate: false };
+  }
+
+  return { value: parsed as T, shouldMigrate: true };
+}
+
+function writeStoredValue<T>(key: string, value: T): void {
+  localStorage.setItem(key, JSON.stringify({
+    savedAtISO: new Date().toISOString(),
+    value,
+  } satisfies GuestDashboardStorageEnvelope<T>));
+}
+
+function normalizeCampaignPreset(value: unknown): RsvpCampaignPreset | null {
+  if (
+    value === 'pending'
+    || value === 'missing-meal'
+    || value === 'plusone-missing'
+    || value === 'ceremony-no'
+    || value === 'reception-no'
+    || value === 'pending-no-email'
+  ) {
+    return value;
+  }
+  return null;
+}
 
 export function readStoredCampaignPreset(): RsvpCampaignPreset | null {
   try {
-    const rawPreset = localStorage.getItem(RSVP_CAMPAIGN_PRESET_KEY);
-    if (
-      rawPreset === 'pending'
-      || rawPreset === 'missing-meal'
-      || rawPreset === 'plusone-missing'
-      || rawPreset === 'ceremony-no'
-      || rawPreset === 'reception-no'
-      || rawPreset === 'pending-no-email'
-    ) {
-      return rawPreset;
-    }
-  } catch {}
+    const stored = readStoredValue<unknown>(RSVP_CAMPAIGN_PRESET_KEY, null);
+    const normalized = normalizeCampaignPreset(stored.value);
+    if (normalized && stored.shouldMigrate) writeStoredValue(RSVP_CAMPAIGN_PRESET_KEY, normalized);
+    if (!normalized && localStorage.getItem(RSVP_CAMPAIGN_PRESET_KEY)) localStorage.removeItem(RSVP_CAMPAIGN_PRESET_KEY);
+    return normalized;
+  } catch {
+    try {
+      localStorage.removeItem(RSVP_CAMPAIGN_PRESET_KEY);
+    } catch {}
+  }
   return null;
 }
 
 export function writeStoredCampaignPreset(campaignPreset: RsvpCampaignPreset): void {
   try {
-    localStorage.setItem(RSVP_CAMPAIGN_PRESET_KEY, campaignPreset);
+    writeStoredValue(RSVP_CAMPAIGN_PRESET_KEY, campaignPreset);
   } catch {}
 }
 
-function readStoredArray<T>(key: string): T[] {
+function normalizeStoredFollowUpTask(value: unknown): RsvpFollowUpTask | null {
+  if (!value || typeof value !== 'object') return null;
+  const task = value as Partial<RsvpFollowUpTask>;
+  const text = normalizeStoredText(task.text);
+  const createdAt = normalizeStoredText(task.createdAt, 40);
+  return Number.isFinite(task.id) && text && createdAt
+    ? { id: Number(task.id), text, createdAt }
+    : null;
+}
+
+function normalizeStoredSavedSegment(value: unknown): RsvpSavedSegment | null {
+  if (!value || typeof value !== 'object') return null;
+  const segment = value as Partial<RsvpSavedSegment>;
+  const label = normalizeStoredText(segment.label, 120);
+  const filter = normalizeStoredText(segment.filter, 80);
+  const createdAt = normalizeStoredText(segment.createdAt, 40);
+  return Number.isFinite(segment.id) && label && filter && createdAt
+    ? { id: Number(segment.id), label, filter, createdAt }
+    : null;
+}
+
+function normalizeStoredCampaignLogEntry(value: unknown): RsvpCampaignLogEntry | null {
+  if (!value || typeof value !== 'object') return null;
+  const entry = value as Partial<RsvpCampaignLogEntry>;
+  const segment = normalizeStoredText(entry.segment, 120);
+  const sentAt = normalizeStoredText(entry.sentAt, 40);
+  const count = typeof entry.count === 'number' && Number.isFinite(entry.count) ? Math.max(0, Math.floor(entry.count)) : null;
+  return Number.isFinite(entry.id) && segment && sentAt && count !== null
+    ? { id: Number(entry.id), segment, count, sentAt }
+    : null;
+}
+
+function normalizeStoredArray<T>(value: unknown, normalizeItem: (item: unknown) => T | null): T[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map(normalizeItem)
+    .filter((item): item is T => item !== null)
+    .slice(0, STORAGE_CAP);
+}
+
+function readStoredArray<T>(key: string, normalizeItem: (item: unknown) => T | null): T[] {
   try {
-    const raw = localStorage.getItem(key);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.slice(0, STORAGE_CAP) : [];
+    const stored = readStoredValue<unknown>(key, []);
+    const normalized = normalizeStoredArray(stored.value, normalizeItem);
+    if (stored.shouldMigrate && normalized.length > 0) writeStoredValue(key, normalized);
+    if (stored.shouldMigrate && normalized.length === 0 && localStorage.getItem(key)) localStorage.removeItem(key);
+    return normalized;
   } catch {
+    try {
+      localStorage.removeItem(key);
+    } catch {}
     return [];
   }
 }
 
-function writeStoredArray<T>(key: string, items: T[]): void {
+function writeStoredArray<T>(key: string, items: T[], normalizeItem: (item: unknown) => T | null): void {
   try {
-    localStorage.setItem(key, JSON.stringify(items.slice(0, STORAGE_CAP)));
+    writeStoredValue(key, normalizeStoredArray(items, normalizeItem));
   } catch {}
 }
 
-export const readStoredFollowUpTasks = () => readStoredArray<RsvpFollowUpTask>(RSVP_FOLLOWUP_TASKS_KEY);
-export const writeStoredFollowUpTasks = (items: RsvpFollowUpTask[]) => writeStoredArray(RSVP_FOLLOWUP_TASKS_KEY, items);
+export const readStoredFollowUpTasks = () => readStoredArray<RsvpFollowUpTask>(RSVP_FOLLOWUP_TASKS_KEY, normalizeStoredFollowUpTask);
+export const writeStoredFollowUpTasks = (items: RsvpFollowUpTask[]) => writeStoredArray(RSVP_FOLLOWUP_TASKS_KEY, items, normalizeStoredFollowUpTask);
 
-export const readStoredSavedSegments = () => readStoredArray<RsvpSavedSegment>(RSVP_SAVED_SEGMENTS_KEY);
-export const writeStoredSavedSegments = (items: RsvpSavedSegment[]) => writeStoredArray(RSVP_SAVED_SEGMENTS_KEY, items);
+export const readStoredSavedSegments = () => readStoredArray<RsvpSavedSegment>(RSVP_SAVED_SEGMENTS_KEY, normalizeStoredSavedSegment);
+export const writeStoredSavedSegments = (items: RsvpSavedSegment[]) => writeStoredArray(RSVP_SAVED_SEGMENTS_KEY, items, normalizeStoredSavedSegment);
 
-export const readStoredCampaignLog = () => readStoredArray<RsvpCampaignLogEntry>(RSVP_CAMPAIGN_LOG_KEY);
-export const writeStoredCampaignLog = (items: RsvpCampaignLogEntry[]) => writeStoredArray(RSVP_CAMPAIGN_LOG_KEY, items);
+export const readStoredCampaignLog = () => readStoredArray<RsvpCampaignLogEntry>(RSVP_CAMPAIGN_LOG_KEY, normalizeStoredCampaignLogEntry);
+export const writeStoredCampaignLog = (items: RsvpCampaignLogEntry[]) => writeStoredArray(RSVP_CAMPAIGN_LOG_KEY, items, normalizeStoredCampaignLogEntry);
 
 function normalizeDemoRsvpQuestions(value: unknown): RSVPQuestionSetting[] {
   if (!Array.isArray(value)) return [];
   return value
     .map((question) => question as Partial<RSVPQuestionSetting>)
     .filter((question) => typeof question?.id === 'string' && typeof question?.label === 'string')
-    .map((question) => ({
-      id: question.id as string,
-      label: question.label ?? '',
-      type: question.type === 'long_text' || question.type === 'single_choice' || question.type === 'multi_choice'
+    .map((question): RSVPQuestionSetting => {
+      const type: RSVPQuestionSetting['type'] = question.type === 'long_text' || question.type === 'single_choice' || question.type === 'multi_choice'
         ? question.type
-        : 'short_text',
-      required: question.required === true,
-      appliesTo: question.appliesTo === 'ceremony' || question.appliesTo === 'reception' ? question.appliesTo : 'all',
-      options: Array.isArray(question.options)
-        ? question.options.filter((option): option is string => typeof option === 'string')
-        : [],
-    }));
+        : 'short_text';
+      const appliesTo: RSVPQuestionSetting['appliesTo'] = question.appliesTo === 'ceremony' || question.appliesTo === 'reception'
+        ? question.appliesTo
+        : 'all';
+
+      return {
+        id: normalizeStoredText(question.id, 80),
+        label: normalizeStoredText(question.label, 160),
+        type,
+        required: question.required === true,
+        appliesTo,
+        options: Array.isArray(question.options)
+          ? question.options
+            .map((option) => normalizeStoredText(option, 120))
+            .filter((option) => option.length > 0)
+            .slice(0, MAX_DEMO_RSVP_OPTIONS)
+          : [],
+      };
+    })
+    .filter((question) => question.id.length > 0 && question.label.length > 0)
+    .slice(0, STORAGE_CAP);
 }
 
 function normalizeDemoMealConfig(value: unknown): { enabled: boolean; options: string[] } {
@@ -90,7 +205,10 @@ function normalizeDemoMealConfig(value: unknown): { enabled: boolean; options: s
 
   const config = value as { enabled?: unknown; options?: unknown };
   const options = Array.isArray(config.options)
-    ? config.options.filter((option): option is string => typeof option === 'string' && option.trim().length > 0)
+    ? config.options
+      .map((option) => normalizeStoredText(option, 120))
+      .filter((option) => option.length > 0)
+      .slice(0, MAX_DEMO_RSVP_OPTIONS)
     : DEFAULT_MEAL_OPTIONS;
 
   return {
@@ -101,15 +219,25 @@ function normalizeDemoMealConfig(value: unknown): { enabled: boolean; options: s
 
 export function readStoredDemoRsvpConfig(): { questions: RSVPQuestionSetting[]; mealEnabled: boolean; mealOptions: string[] } {
   try {
-    const rawQuestions = localStorage.getItem(DEMO_RSVP_CUSTOM_QUESTIONS_KEY);
-    const rawMealConfig = localStorage.getItem(DEMO_RSVP_MEAL_CONFIG_KEY);
-    const mealConfig = normalizeDemoMealConfig(rawMealConfig ? JSON.parse(rawMealConfig) : null);
+    const storedQuestions = readStoredValue<unknown>(DEMO_RSVP_CUSTOM_QUESTIONS_KEY, []);
+    const storedMealConfig = readStoredValue<unknown>(DEMO_RSVP_MEAL_CONFIG_KEY, null);
+    const questions = normalizeDemoRsvpQuestions(storedQuestions.value);
+    const mealConfig = normalizeDemoMealConfig(storedMealConfig.value);
+    if (storedQuestions.shouldMigrate && questions.length > 0) writeStoredValue(DEMO_RSVP_CUSTOM_QUESTIONS_KEY, questions);
+    if (storedQuestions.shouldMigrate && questions.length === 0 && localStorage.getItem(DEMO_RSVP_CUSTOM_QUESTIONS_KEY)) {
+      localStorage.removeItem(DEMO_RSVP_CUSTOM_QUESTIONS_KEY);
+    }
+    if (storedMealConfig.shouldMigrate) writeStoredValue(DEMO_RSVP_MEAL_CONFIG_KEY, mealConfig);
     return {
-      questions: normalizeDemoRsvpQuestions(rawQuestions ? JSON.parse(rawQuestions) : []),
+      questions,
       mealEnabled: mealConfig.enabled,
       mealOptions: mealConfig.options,
     };
   } catch {
+    try {
+      localStorage.removeItem(DEMO_RSVP_CUSTOM_QUESTIONS_KEY);
+      localStorage.removeItem(DEMO_RSVP_MEAL_CONFIG_KEY);
+    } catch {}
     return {
       questions: [],
       mealEnabled: true,
@@ -120,10 +248,10 @@ export function readStoredDemoRsvpConfig(): { questions: RSVPQuestionSetting[]; 
 
 export function writeStoredDemoRsvpConfig(input: { questions: RSVPQuestionSetting[]; mealEnabled: boolean; mealOptions: string[] }): void {
   try {
-    localStorage.setItem(DEMO_RSVP_CUSTOM_QUESTIONS_KEY, JSON.stringify(normalizeDemoRsvpQuestions(input.questions)));
-    localStorage.setItem(DEMO_RSVP_MEAL_CONFIG_KEY, JSON.stringify({
+    writeStoredValue(DEMO_RSVP_CUSTOM_QUESTIONS_KEY, normalizeDemoRsvpQuestions(input.questions));
+    writeStoredValue(DEMO_RSVP_MEAL_CONFIG_KEY, normalizeDemoMealConfig({
       enabled: input.mealEnabled,
-      options: input.mealOptions.filter((option) => option.trim().length > 0),
+      options: input.mealOptions,
     }));
   } catch {}
 }

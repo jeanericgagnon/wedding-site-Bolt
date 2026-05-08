@@ -194,6 +194,7 @@ export const BuilderVariantGallery: React.FC = () => {
                           <Link
                             to={captureUrl}
                             target="_blank"
+                            rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 rounded-lg border border-border-subtle px-2.5 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-subtle"
                           >
                             Preview

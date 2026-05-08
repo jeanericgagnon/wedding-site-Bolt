@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 import { SectionDefinition, SectionComponentProps } from '../../types';
-import { supabase } from '../../../lib/supabase';
+import {
+  fetchInteractiveSectionSync,
+  submitInteractiveSuggestion,
+  submitInteractiveVote,
+} from '../../interactiveSectionService';
 
 const PollOptionSchema = z.object({
   id: z.string(),
@@ -63,6 +67,150 @@ export const contactInteractiveHubSchema = z.object({
 export type ContactInteractiveHubData = z.infer<typeof contactInteractiveHubSchema>;
 
 const storageKey = (siteSlug: string | undefined, key: string) => `interactive:${siteSlug || 'site'}:${key}`;
+export const INTERACTIVE_HUB_STORAGE_RETENTION_MS = 1000 * 60 * 60 * 24 * 30;
+const MAX_INTERACTIVE_COUNT_KEYS = 40;
+const MAX_INTERACTIVE_KEY_LENGTH = 120;
+const MAX_INTERACTIVE_SUGGESTIONS = 20;
+const MAX_INTERACTIVE_SUGGESTION_LENGTH = 180;
+
+type StoredCountsEnvelope = {
+  savedAtISO: string;
+  counts: Record<string, number>;
+};
+
+type StoredSuggestionsEnvelope = {
+  savedAtISO: string;
+  suggestions: string[];
+};
+
+type StoredCooldownEnvelope = {
+  savedAtISO: string;
+  value: number;
+};
+
+function isFreshStorageDate(savedAtISO: unknown): boolean {
+  if (typeof savedAtISO !== 'string') return false;
+  const savedAt = Date.parse(savedAtISO);
+  return Number.isFinite(savedAt) && Date.now() - savedAt <= INTERACTIVE_HUB_STORAGE_RETENTION_MS;
+}
+
+function normalizeCounts(value: unknown): Record<string, number> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.entries(value as Record<string, unknown>).slice(0, MAX_INTERACTIVE_COUNT_KEYS).reduce<Record<string, number>>((acc, [rawKey, rawValue]) => {
+    const key = rawKey.trim().replace(/\s+/g, '-').slice(0, MAX_INTERACTIVE_KEY_LENGTH);
+    const count = Math.min(Math.max(Math.floor(Number(rawValue) || 0), 0), 9999);
+    if (key && count > 0) acc[key] = count;
+    return acc;
+  }, {});
+}
+
+function normalizeSuggestions(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  const suggestions: string[] = [];
+  value.forEach((raw) => {
+    if (typeof raw !== 'string') return;
+    const suggestion = raw.replace(/\s+/g, ' ').trim().slice(0, MAX_INTERACTIVE_SUGGESTION_LENGTH);
+    const key = suggestion.toLowerCase();
+    if (!suggestion || seen.has(key)) return;
+    seen.add(key);
+    suggestions.push(suggestion);
+  });
+  return suggestions.slice(0, MAX_INTERACTIVE_SUGGESTIONS);
+}
+
+function writeEnvelope(key: string, value: unknown) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(key, JSON.stringify({
+    savedAtISO: new Date().toISOString(),
+    ...(value as Record<string, unknown>),
+  }));
+}
+
+export function readInteractiveCounts(key: string): Record<string, number> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && 'savedAtISO' in parsed) {
+      if (!isFreshStorageDate((parsed as StoredCountsEnvelope).savedAtISO)) {
+        window.localStorage.removeItem(key);
+        return {};
+      }
+      return normalizeCounts((parsed as StoredCountsEnvelope).counts);
+    }
+    const counts = normalizeCounts(parsed);
+    if (Object.keys(counts).length > 0) writeEnvelope(key, { counts });
+    else window.localStorage.removeItem(key);
+    return counts;
+  } catch {
+    try { window.localStorage.removeItem(key); } catch { void 0; }
+    return {};
+  }
+}
+
+function writeInteractiveCounts(key: string, counts: Record<string, number>) {
+  if (typeof window === 'undefined') return;
+  try { writeEnvelope(key, { counts: normalizeCounts(counts) }); } catch { void 0; }
+}
+
+export function readInteractiveSuggestions(key: string): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && 'savedAtISO' in parsed) {
+      if (!isFreshStorageDate((parsed as StoredSuggestionsEnvelope).savedAtISO)) {
+        window.localStorage.removeItem(key);
+        return [];
+      }
+      return normalizeSuggestions((parsed as StoredSuggestionsEnvelope).suggestions);
+    }
+    const suggestions = normalizeSuggestions(parsed);
+    if (suggestions.length > 0) writeEnvelope(key, { suggestions });
+    else window.localStorage.removeItem(key);
+    return suggestions;
+  } catch {
+    try { window.localStorage.removeItem(key); } catch { void 0; }
+    return [];
+  }
+}
+
+function writeInteractiveSuggestions(key: string, suggestions: string[]) {
+  if (typeof window === 'undefined') return;
+  try { writeEnvelope(key, { suggestions: normalizeSuggestions(suggestions) }); } catch { void 0; }
+}
+
+export function readInteractiveCooldown(key: string): number {
+  if (typeof window === 'undefined') return 0;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return 0;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed === 'number') {
+      writeEnvelope(key, { value: parsed });
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    if (parsed && typeof parsed === 'object' && 'savedAtISO' in parsed) {
+      if (!isFreshStorageDate((parsed as StoredCooldownEnvelope).savedAtISO)) {
+        window.localStorage.removeItem(key);
+        return 0;
+      }
+      const value = Number((parsed as StoredCooldownEnvelope).value);
+      return Number.isFinite(value) ? value : 0;
+    }
+  } catch {
+    try { window.localStorage.removeItem(key); } catch { void 0; }
+  }
+  return 0;
+}
+
+function writeInteractiveCooldown(key: string, value: number) {
+  if (typeof window === 'undefined') return;
+  try { writeEnvelope(key, { value }); } catch { void 0; }
+}
 
 const optionIdFromLabel = (prefix: string, label: string, index: number) => {
   const slug = label
@@ -76,26 +224,20 @@ const optionIdFromLabel = (prefix: string, label: string, index: number) => {
 
 function usePersistentCounter(siteSlug: string | undefined, key: string) {
   const fullKey = storageKey(siteSlug, key);
-  const [counts, setCounts] = useState<Record<string, number>>(() => {
-    try {
-      const raw = window.localStorage.getItem(fullKey);
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
-    }
-  });
+  const [counts, setCounts] = useState<Record<string, number>>(() => readInteractiveCounts(fullKey));
 
   const incrementLocal = (optionId: string) => {
     setCounts((prev) => {
       const next = { ...prev, [optionId]: (prev[optionId] || 0) + 1 };
-      try { window.localStorage.setItem(fullKey, JSON.stringify(next)); } catch { void 0; }
+      writeInteractiveCounts(fullKey, next);
       return next;
     });
   };
 
   const setRemoteCounts = (remote: Record<string, number>) => {
-    setCounts(remote);
-    try { window.localStorage.setItem(fullKey, JSON.stringify(remote)); } catch { void 0; }
+    const normalized = normalizeCounts(remote);
+    setCounts(normalized);
+    writeInteractiveCounts(fullKey, normalized);
   };
 
   return { counts, incrementLocal, setRemoteCounts };
@@ -134,14 +276,7 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
   const [selectedPoll, setSelectedPoll] = useState<string | null>(null);
   const [selectedPollMulti, setSelectedPollMulti] = useState<string[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<string | null>(null);
-  const [suggestions, setSuggestions] = useState<string[]>(() => {
-    try {
-      const raw = window.localStorage.getItem(storageKey(siteSlug, 'suggestions'));
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [suggestions, setSuggestions] = useState<string[]>(() => readInteractiveSuggestions(storageKey(siteSlug, 'suggestions')));
   const [suggestionInput, setSuggestionInput] = useState('');
 
   useEffect(() => {
@@ -151,54 +286,18 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
     const sync = async () => {
       setIsSyncing(true);
       try {
-        const [pollRes, quizRes, suggestionsRes] = await Promise.all([
-          supabase
-            .from('interactive_votes')
-            .select('option_id')
-            .eq('site_slug', siteSlug)
-            .eq('widget_kind', 'poll')
-            .eq('widget_id', pollQuestion.id),
-          supabase
-            .from('interactive_votes')
-            .select('option_id')
-            .eq('site_slug', siteSlug)
-            .eq('widget_kind', 'quiz')
-            .eq('widget_id', quizQuestion.id),
-          supabase
-            .from('interactive_suggestions')
-            .select('suggestion_text')
-            .eq('site_slug', siteSlug)
-            .eq('prompt_key', data.suggestionPrompt)
-            .eq('is_hidden', false)
-            .order('created_at', { ascending: false })
-            .limit(20),
-        ]);
+        const syncResult = await fetchInteractiveSectionSync({
+          siteSlug,
+          pollWidgetId: pollQuestion.id,
+          quizWidgetId: quizQuestion.id,
+          suggestionPrompt: data.suggestionPrompt,
+        });
 
         if (!mounted) return;
 
-        if (!pollRes.error) {
-          const counts = (pollRes.data ?? []).reduce<Record<string, number>>((acc, row) => {
-            const id = String((row as { option_id?: string }).option_id || '');
-            if (!id) return acc;
-            acc[id] = (acc[id] || 0) + 1;
-            return acc;
-          }, {});
-          poll.setRemoteCounts(counts);
-        }
-
-        if (!quizRes.error) {
-          const counts = (quizRes.data ?? []).reduce<Record<string, number>>((acc, row) => {
-            const id = String((row as { option_id?: string }).option_id || '');
-            if (!id) return acc;
-            acc[id] = (acc[id] || 0) + 1;
-            return acc;
-          }, {});
-          quiz.setRemoteCounts(counts);
-        }
-
-        if (!suggestionsRes.error) {
-          setSuggestions((suggestionsRes.data ?? []).map((row) => String((row as { suggestion_text?: string }).suggestion_text || '')).filter(Boolean));
-        }
+        poll.setRemoteCounts(syncResult.pollCounts);
+        quiz.setRemoteCounts(syncResult.quizCounts);
+        setSuggestions(syncResult.suggestions);
       } finally {
         if (mounted) setIsSyncing(false);
       }
@@ -219,22 +318,20 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
 
     const cooldownKey = storageKey(siteSlug, 'suggestionCooldown');
     const now = Date.now();
-    const lastSubmit = Number(window.localStorage.getItem(cooldownKey) || 0);
+    const lastSubmit = readInteractiveCooldown(cooldownKey);
     if (now - lastSubmit < 8000) return;
 
-    const next = [value, ...suggestions].slice(0, 20);
+    const next = normalizeSuggestions([value, ...suggestions]);
     setSuggestions(next);
     setSuggestionInput('');
-    try {
-      window.localStorage.setItem(storageKey(siteSlug, 'suggestions'), JSON.stringify(next));
-      window.localStorage.setItem(cooldownKey, String(now));
-    } catch { void 0; }
+    writeInteractiveSuggestions(storageKey(siteSlug, 'suggestions'), next);
+    writeInteractiveCooldown(cooldownKey, now);
 
     if (siteSlug) {
-      await supabase.from('interactive_suggestions').insert({
-        site_slug: siteSlug,
-        prompt_key: data.suggestionPrompt,
-        suggestion_text: value,
+      await submitInteractiveSuggestion({
+        siteSlug,
+        promptKey: data.suggestionPrompt,
+        suggestionText: value,
       });
     }
   };
@@ -276,18 +373,18 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
                       void (async () => {
                         const voteCooldownKey = storageKey(siteSlug, `voteCooldown:${pollQuestion.id}`);
                         const now = Date.now();
-                        const lastVote = Number(window.localStorage.getItem(voteCooldownKey) || 0);
+                        const lastVote = readInteractiveCooldown(voteCooldownKey);
                         if (now - lastVote < 3000) return;
 
                         setSelectedPoll(opt.id);
                         poll.incrementLocal(opt.id);
-                        try { window.localStorage.setItem(voteCooldownKey, String(now)); } catch { void 0; }
+                        writeInteractiveCooldown(voteCooldownKey, now);
                         if (siteSlug) {
-                          await supabase.from('interactive_votes').insert({
-                            site_slug: siteSlug,
-                            widget_kind: 'poll',
-                            widget_id: pollQuestion.id,
-                            option_id: opt.id,
+                          await submitInteractiveVote({
+                            siteSlug,
+                            widgetKind: 'poll',
+                            widgetId: pollQuestion.id,
+                            optionId: opt.id,
                           });
                         }
                       })();
@@ -317,21 +414,21 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
                     if (selectedPollMulti.length < pollQuestion.minSelections) return;
                     const voteCooldownKey = storageKey(siteSlug, `voteCooldown:${pollQuestion.id}:multi`);
                     const now = Date.now();
-                    const lastVote = Number(window.localStorage.getItem(voteCooldownKey) || 0);
+                    const lastVote = readInteractiveCooldown(voteCooldownKey);
                     if (now - lastVote < 3000) return;
 
                     for (const optionId of selectedPollMulti) {
                       poll.incrementLocal(optionId);
                       if (siteSlug) {
-                        await supabase.from('interactive_votes').insert({
-                          site_slug: siteSlug,
-                          widget_kind: 'poll',
-                          widget_id: pollQuestion.id,
-                          option_id: optionId,
+                        await submitInteractiveVote({
+                          siteSlug,
+                          widgetKind: 'poll',
+                          widgetId: pollQuestion.id,
+                          optionId,
                         });
                       }
                     }
-                    try { window.localStorage.setItem(voteCooldownKey, String(now)); } catch { void 0; }
+                    writeInteractiveCooldown(voteCooldownKey, now);
                     setSelectedPollMulti([]);
                   }}
                   disabled={selectedPollMulti.length < pollQuestion.minSelections}
@@ -353,18 +450,18 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
                   onClick={async () => {
                     const voteCooldownKey = storageKey(siteSlug, `voteCooldown:${quizQuestion.id}`);
                     const now = Date.now();
-                    const lastVote = Number(window.localStorage.getItem(voteCooldownKey) || 0);
+                    const lastVote = readInteractiveCooldown(voteCooldownKey);
                     if (now - lastVote < 3000) return;
 
                     setSelectedQuiz(opt.id);
                     quiz.incrementLocal(opt.id);
-                    try { window.localStorage.setItem(voteCooldownKey, String(now)); } catch { void 0; }
+                    writeInteractiveCooldown(voteCooldownKey, now);
                     if (siteSlug) {
-                      await supabase.from('interactive_votes').insert({
-                          site_slug: siteSlug,
-                          widget_kind: 'quiz',
-                          widget_id: quizQuestion.id,
-                          option_id: opt.id,
+                      await submitInteractiveVote({
+                          siteSlug,
+                          widgetKind: 'quiz',
+                          widgetId: quizQuestion.id,
+                          optionId: opt.id,
                       });
                     }
                   }}

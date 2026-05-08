@@ -14,6 +14,22 @@ const PREVIEW_PARAM_NAMES = [
   'previewContext',
   'previewLabel',
 ];
+const PRIVATE_ACCESS_PARAM_NAMES = new Set([
+  'apikey',
+  'authorization',
+  'auth',
+  'bearer',
+  'invitetoken',
+  'jwt',
+  'passcode',
+  'password',
+  'pw',
+  'secret',
+  'securetoken',
+  'signature',
+  'token',
+  'accesstoken',
+]);
 
 const ROLE_LABELS: Record<string, string> = {
   planner: 'planner',
@@ -28,9 +44,17 @@ function normalizeRole(value: string | null): string | null {
   return ROLE_LABELS[normalized] ?? null;
 }
 
-function buildExitHref(pathname: string, searchParams: URLSearchParams): string {
+function buildExitHref(pathname: string, searchParams: URLSearchParams, stripPrivateAccess = false): string {
   const next = new URLSearchParams(searchParams);
   PREVIEW_PARAM_NAMES.forEach((name) => next.delete(name));
+  if (stripPrivateAccess) {
+    Array.from(next.keys()).forEach((name) => {
+      const normalizedName = name.trim().toLowerCase().replace(/[-_]/g, '');
+      if (PRIVATE_ACCESS_PARAM_NAMES.has(normalizedName)) {
+        next.delete(name);
+      }
+    });
+  }
   const query = next.toString();
   return query ? `${pathname}?${query}` : pathname;
 }
@@ -50,7 +74,7 @@ export function getOwnerPreviewMode(
       targetKind: 'guest',
       title: 'Owner preview mode',
       detail: 'Viewing a guest-specific path. Private event access still follows the saved invitation and visibility settings.',
-      exitHref: buildExitHref(pathname, searchParams),
+      exitHref: buildExitHref(pathname, searchParams, true),
     };
   }
 

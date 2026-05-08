@@ -21,6 +21,8 @@ type PublicItineraryEvent = {
   is_private: boolean | null;
 };
 
+const PUBLIC_ITINERARY_SLUG_REQUIRED_COPY = "Choose a wedding link before loading the itinerary.";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -36,7 +38,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({ slug: null }));
     const { slug } = body;
     if (!slug || typeof slug !== "string") {
-      return new Response(JSON.stringify({ error: "slug required" }), {
+      return new Response(JSON.stringify({ error: PUBLIC_ITINERARY_SLUG_REQUIRED_COPY }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

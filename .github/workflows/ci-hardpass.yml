@@ -49,11 +49,17 @@ jobs:
       - name: Security regression tests
         run: npm run test:security
 
+      - name: Public access coverage proof
+        run: npm run proof:v1:public-access-coverage
+
       - name: Unit and regression tests
         run: npm test
 
       - name: Build
         run: npm run build
+
+      - name: Performance budget proof
+        run: npm run proof:v1:performance-budget
 
       - name: Registry smoke
         run: npm run smoke:registry

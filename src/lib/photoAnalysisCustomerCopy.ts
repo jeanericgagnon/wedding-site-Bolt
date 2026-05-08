@@ -1,8 +1,8 @@
 const INTERNAL_PROVIDER_COPY =
-  /\b(openai|gpt(?:[-\w.]+)?|anthropic|claude|gemini|provider|model|api\s*key|token(?:s)?|jwt|secret|service\s*role|ai\s*spend|spending|cost)\b/i;
+  /\b(openai|gpt(?:[-\w.]+)?|anthropic|claude|gemini|google\s+oauth|provider|model|api[-_\s]*key|apikey|authorization|bearer|access[-_\s]*token|refresh[-_\s]*token|token(?:s)?|jwt|secret|service[-_\s]*role|ai\s*spend|spending|cost)\b/i;
 
 const INTERNAL_INFRASTRUCTURE_COPY =
-  /\b(supabase|edge\s*function|function|database|storage|bucket|policy|permission(?:s)?|row\s*level\s*security|rls|network|fetch|request\s*failed|failed\s*to\s*fetch|timeout|timed\s*out|status\s*code|error_message)\b/i;
+  /\b(supabase|postgres|postgrest|rpc|sql|schema|relation|duplicate\s*key|foreign\s*key|violates|edge[-_\s]*function|functions?\/v1|function|database|storage|bucket|policy|permission(?:s)?|row[-_\s]*level[-_\s]*security|rls|network|fetch|request\s*failed|failed\s*to\s*fetch|timeout|timed\s*out|status\s*code|error_code|error_message|metadata)\b/i;
 
 const WHITESPACE = /\s+/g;
 

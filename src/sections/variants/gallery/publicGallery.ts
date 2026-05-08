@@ -5,7 +5,8 @@ export interface PublicGalleryImage {
   caption: string;
 }
 
-const INTERNAL_GALLERY_TEXT = /\b(provider|metadata|database|storage|bucket|token|jwt|service role|permission denied|functions\/v1|debug|diagnostic|not found|access denied|page not found)\b/i;
+const PUBLIC_GALLERY_INTERNAL_TEXT =
+  /\b(debug|diagnostic|not found|access denied|page not found|openai|gpt(?:[-\w.]+)?|anthropic|claude|gemini|google\s+oauth|provider\s+metadata|api[-_\s]*key|apikey|authorization|bearer|jwt|access[-_\s]*token|refresh[-_\s]*token|token(?:s)?|secret|service[-_\s]*role|supabase|postgres|postgrest|rpc|sql|schema|relation|duplicate\s*key|foreign\s*key|violates|row[-_\s]*level[-_\s]*security|rls|edge[-_\s]*function|functions?\/v1|database|storage\s+bucket|bucket\s+policy|request\s*failed|failed\s*to\s*fetch|timeout|timed\s*out|status\s*code|error_code|error_message|metadata)\b/i;
 
 export function getSafePublicGalleryImageUrl(value?: string | null): string {
   const trimmed = value?.trim();
@@ -28,7 +29,7 @@ export function getSafePublicGalleryImageUrl(value?: string | null): string {
 
 export function sanitizePublicGalleryText(value?: string | null): string {
   const normalized = String(value ?? '').replace(/\s+/g, ' ').trim();
-  if (!normalized || INTERNAL_GALLERY_TEXT.test(normalized)) return '';
+  if (!normalized || PUBLIC_GALLERY_INTERNAL_TEXT.test(normalized)) return '';
   return normalized;
 }
 

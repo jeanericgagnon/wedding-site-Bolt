@@ -1,4 +1,6 @@
 import React from 'react';
+import type { FormEvent } from 'react';
+import type { WeddingIdentityExportKit, WeddingIdentityPrintAsset } from '../../../lib/weddingIdentityExports';
 import type { SiteLanguageCode, TranslationLanguageCode, TranslationStatusRow } from './settingsDashboardTypes';
 import { SettingsIdentityExportsPanel } from './SettingsIdentityExportsPanel';
 import { SettingsPrivacyPanel } from './SettingsPrivacyPanel';
@@ -18,10 +20,10 @@ type SettingsSiteTabContentProps = {
   onHideFromSearchChange: (checked: boolean) => void;
   onPrivacyModeChange: (mode: 'public' | 'password_protected' | 'invite_only') => void;
   onRegenerateToken: () => void;
-  onSavePrivacy: () => void;
+  onSavePrivacy: (event: FormEvent) => void;
   onSitePasswordChange: (value: string) => void;
   onSiteSlugChange: (value: string) => void;
-  onSubmitSiteSlug: (event: React.FormEvent<HTMLFormElement>) => void;
+  onSubmitSiteSlug: (event: FormEvent) => void;
   onTemplateChange: (templateId: string) => void;
   onTogglePrivacySettings: () => void;
   onToggleShowSitePassword: () => void;
@@ -44,12 +46,8 @@ type SettingsSiteTabContentProps = {
   visibilityError: string | null;
   visibilitySaving: boolean;
   visibilitySuccess: string | null;
-  weddingIdentityExportKit: string;
-  weddingIdentityPrintAssets: {
-    cardHtml: string;
-    labelHtml: string;
-    programHtml: string;
-  };
+  weddingIdentityExportKit: WeddingIdentityExportKit;
+  weddingIdentityPrintAssets: WeddingIdentityPrintAsset[];
   changingTemplate: boolean;
 };
 

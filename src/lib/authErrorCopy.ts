@@ -1,4 +1,4 @@
-const AUTH_INTERNAL_PATTERN = /\b(supabase|jwt|postgres|database|policy|permission denied|service role|provider|oauth|fetch|network|api key|token|sql|relation|schema|function)\b/i;
+import { isInternalCustomerErrorMessage } from './customerSafeError';
 
 export function safeAuthError(err: unknown, fallback: string): string {
   const raw = err instanceof Error ? err.message : typeof err === 'string' ? err : '';
@@ -21,7 +21,7 @@ export function safeAuthError(err: unknown, fallback: string): string {
   if (lower.includes('rate limit') || lower.includes('too many')) {
     return 'Too many attempts. Please wait a moment, then try again.';
   }
-  if (AUTH_INTERNAL_PATTERN.test(message)) {
+  if (isInternalCustomerErrorMessage(message)) {
     return fallback;
   }
   return fallback;

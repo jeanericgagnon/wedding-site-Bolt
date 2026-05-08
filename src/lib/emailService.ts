@@ -1,6 +1,21 @@
 import { supabase } from './supabase';
+import { customerSafeErrorMessage } from './customerSafeError';
 
 const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-wedding-email`;
+const EMAIL_SERVICE_ERROR_COPY = 'Email service is unavailable right now. Please try again.';
+
+export const safeEmailFunctionError = (value: unknown, fallback = EMAIL_SERVICE_ERROR_COPY) => (
+  customerSafeErrorMessage(typeof value === 'string' ? value : '', fallback, {
+    allow: [
+      /^Missing authorization$/i,
+      /^Unauthorized$/i,
+      /^Wedding site is required$/i,
+      /^Missing recipient email$/i,
+      /^Invalid email address$/i,
+      /^Unsupported email type$/i,
+    ],
+  })
+);
 
 async function getAuthHeaders(): Promise<HeadersInit> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -20,10 +35,10 @@ async function callEmailFunction(payload: object): Promise<void> {
   });
 
   if (!res.ok) {
-    let message = `Email service error (${res.status})`;
+    let message = EMAIL_SERVICE_ERROR_COPY;
     try {
       const body = await res.json();
-      if (body?.error) message = body.error;
+      if (body?.error) message = safeEmailFunctionError(body.error);
     } catch {
       // ignore parse failure
     }

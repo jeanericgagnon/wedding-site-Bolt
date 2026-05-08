@@ -13,10 +13,21 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+const DRIVE_CONFIG_MISSING_ERROR = "DRIVE_HEALTH_CONFIG_MISSING";
+const DRIVE_TOKEN_REFRESH_ERROR = "DRIVE_HEALTH_TOKEN_REFRESH_FAILED";
+const STORAGE_CONNECTION_SITE_REQUIRED_COPY = "Choose a site before checking storage.";
+const STORAGE_CONNECTION_SIGNIN_REQUIRED_COPY = "Please sign in to check storage.";
+const STORAGE_CONNECTION_ACCESS_UNAVAILABLE_COPY = "This storage connection is not available.";
+const STORAGE_CONNECTION_NOT_CONNECTED_COPY = "Storage is not connected yet.";
+const STORAGE_CONNECTION_RECONNECT_COPY = "Storage needs attention. Please reconnect and try again.";
+const STORAGE_CONNECTION_REFRESHED_COPY = "Storage connection refreshed and healthy.";
+const STORAGE_CONNECTION_HEALTHY_COPY = "Storage connection healthy.";
+const STORAGE_CONNECTION_RECOVERY_COPY = "Storage needs attention. Uploads are still available here.";
+
 async function refreshAccessToken(refreshToken: string) {
   const clientId = Deno.env.get("GOOGLE_DRIVE_CLIENT_ID");
   const clientSecret = Deno.env.get("GOOGLE_DRIVE_CLIENT_SECRET");
-  if (!clientId || !clientSecret) throw new Error("Google Drive OAuth env is missing.");
+  if (!clientId || !clientSecret) throw new Error(DRIVE_CONFIG_MISSING_ERROR);
 
   const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -31,7 +42,7 @@ async function refreshAccessToken(refreshToken: string) {
 
   const tokenJson = await tokenRes.json();
   if (!tokenRes.ok || !tokenJson.access_token) {
-    throw new Error("Could not refresh Google access token.");
+    throw new Error(DRIVE_TOKEN_REFRESH_ERROR);
   }
 
   return {
@@ -48,11 +59,11 @@ Deno.serve(async (req: Request) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
+    if (!authHeader?.startsWith("Bearer ")) return json({ error: STORAGE_CONNECTION_SIGNIN_REQUIRED_COPY }, 401);
 
     const body = await req.json().catch(() => ({}));
     const siteId = typeof body.siteId === "string" ? body.siteId : null;
-    if (!siteId) return json({ error: "siteId is required" }, 400);
+    if (!siteId) return json({ error: STORAGE_CONNECTION_SITE_REQUIRED_COPY }, 400);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -63,7 +74,7 @@ Deno.serve(async (req: Request) => {
     });
 
     const { data: { user } } = await userClient.auth.getUser();
-    if (!user) return json({ error: "Unauthorized" }, 401);
+    if (!user) return json({ error: STORAGE_CONNECTION_SIGNIN_REQUIRED_COPY }, 401);
 
     const adminClient = createClient(supabaseUrl, serviceRole);
     const { data: site } = await adminClient
@@ -72,11 +83,11 @@ Deno.serve(async (req: Request) => {
       .eq("id", siteId)
       .maybeSingle();
 
-    if (!site || site.user_id !== user.id) return json({ error: "Forbidden" }, 403);
+    if (!site || site.user_id !== user.id) return json({ error: STORAGE_CONNECTION_ACCESS_UNAVAILABLE_COPY }, 403);
 
     const connected = !!site.vault_google_drive_connected;
     if (!connected) {
-      return json({ connected: false, healthy: false, needsReconnect: true, message: "Drive is not connected yet." });
+      return json({ connected: false, healthy: false, needsReconnect: true, message: STORAGE_CONNECTION_NOT_CONNECTED_COPY });
     }
 
     let accessToken = site.vault_google_drive_access_token as string | null;
@@ -86,7 +97,7 @@ Deno.serve(async (req: Request) => {
     let refreshed = false;
     if (!accessToken || !tokenExpiresAt || tokenExpiresAt < Date.now() + 30_000) {
       if (!refreshToken) {
-        return json({ connected: true, healthy: false, needsReconnect: true, message: "Refresh token missing. Reconnect Google Drive." });
+        return json({ connected: true, healthy: false, needsReconnect: true, message: STORAGE_CONNECTION_RECONNECT_COPY });
       }
       const next = await refreshAccessToken(refreshToken);
       accessToken = next.accessToken;
@@ -105,7 +116,7 @@ Deno.serve(async (req: Request) => {
     });
 
     if (!aboutRes.ok) {
-      return json({ connected: true, healthy: false, needsReconnect: true, message: "Drive token invalid. Reconnect required." });
+      return json({ connected: true, healthy: false, needsReconnect: true, message: STORAGE_CONNECTION_RECONNECT_COPY });
     }
 
     return json({
@@ -113,7 +124,7 @@ Deno.serve(async (req: Request) => {
       healthy: true,
       needsReconnect: false,
       refreshed,
-      message: refreshed ? "Drive token refreshed and healthy." : "Drive connection healthy.",
+      message: refreshed ? STORAGE_CONNECTION_REFRESHED_COPY : STORAGE_CONNECTION_HEALTHY_COPY,
     });
   } catch (err) {
     console.error("GOOGLE_DRIVE_HEALTH_CHECK_FAILED", { reason: "DRIVE_HEALTH_CHECK_FAILED" });
@@ -121,7 +132,7 @@ Deno.serve(async (req: Request) => {
       connected: true,
       healthy: false,
       needsReconnect: true,
-      message: "Drive backup needs to be reconnected. dayof hosted storage is active.",
+      message: STORAGE_CONNECTION_RECOVERY_COPY,
     });
   }
 });

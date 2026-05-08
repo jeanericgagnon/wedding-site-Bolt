@@ -1,4 +1,5 @@
 import React from 'react';
+import type { FormEvent } from 'react';
 import type { RSVPQuestionSetting } from './settingsDashboardTypes';
 import { SettingsRsvpMealPanel } from './SettingsRsvpMealPanel';
 import { SettingsRsvpQuestionsPanel } from './SettingsRsvpQuestionsPanel';
@@ -10,7 +11,7 @@ type SettingsRsvpTabContentProps = {
   onAddChoice: (questionId: string) => void;
   onAddMealOption: () => void;
   onAddQuestion: () => void;
-  onAppliesToChange: (questionId: string, value: 'primary' | 'all') => void;
+  onAppliesToChange: (questionId: string, value: RSVPQuestionSetting['appliesTo']) => void;
   onMealChoiceEnabledChange: (enabled: boolean) => void;
   onMealOptionChange: (index: number, value: string) => void;
   onMusicPlaylistUrlChange: (value: string) => void;
@@ -22,7 +23,7 @@ type SettingsRsvpTabContentProps = {
   onRequiredChange: (questionId: string, checked: boolean) => void;
   onSaveMealSettings: () => void;
   onSaveMusicPlaylist: () => void;
-  onSaveQuestions: () => void;
+  onSaveQuestions: (event: FormEvent) => void;
   onToggleAdvancedVisibility: () => void;
   onToggleCollapse: (questionId: string) => void;
   onToggleMealVisibility: () => void;

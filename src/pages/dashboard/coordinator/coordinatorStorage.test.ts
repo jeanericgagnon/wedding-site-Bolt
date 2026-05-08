@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  COORDINATOR_STORAGE_RETENTION_MS,
   getCoordinatorStorageKey,
   readStoredCoordinatorActiveWorkState,
   readStoredCoordinatorAlertIntentState,
@@ -19,6 +20,7 @@ import {
 
 describe('coordinator storage helpers', () => {
   beforeEach(() => {
+    vi.useRealTimers();
     localStorage.clear();
   });
 
@@ -45,6 +47,8 @@ describe('coordinator storage helpers', () => {
   });
 
   it('round-trips normalized session, draft, command, and intent state', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-06T12:00:00.000Z'));
     writeStoredCoordinatorSessionState('site-1', {
       checkInFilter: 'all',
       checkInQuery: 'alex',
@@ -78,6 +82,43 @@ describe('coordinator storage helpers', () => {
     expect(readStoredCoordinatorDraftState('site-1').alertForm.channel).toBe('email');
     expect(readStoredCoordinatorCommandState('site-1').source).toBe('primary-action');
     expect(readStoredCoordinatorAlertIntentState('site-1').lastSuggestionKey).toBe('suggestion-1');
+    expect(JSON.parse(localStorage.getItem(getCoordinatorStorageKey('site-1', 'draft')) || '{}').savedAtISO).toBe('2026-05-06T12:00:00.000Z');
+  });
+
+  it('migrates legacy coordinator storage values into timestamped envelopes', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-06T12:30:00.000Z'));
+    localStorage.setItem(getCoordinatorStorageKey('site-1', 'qna'), JSON.stringify([
+      { id: 'q1', question: 'Parking?', status: 'answered', answer: 'Yes' },
+    ]));
+
+    expect(readStoredCoordinatorQnaItems('site-1')).toEqual([
+      { id: 'q1', question: 'Parking?', status: 'answered', answer: 'Yes' },
+    ]);
+    const stored = JSON.parse(localStorage.getItem(getCoordinatorStorageKey('site-1', 'qna')) || '{}');
+    expect(stored.savedAtISO).toBe('2026-05-06T12:30:00.000Z');
+    expect(stored.value).toEqual([
+      { id: 'q1', question: 'Parking?', status: 'answered', answer: 'Yes' },
+    ]);
+  });
+
+  it('clears expired coordinator storage envelopes on read', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-06T12:00:00.000Z'));
+    localStorage.setItem(getCoordinatorStorageKey('site-1', 'draft'), JSON.stringify({
+      savedAtISO: new Date(Date.now() - COORDINATOR_STORAGE_RETENTION_MS - 1).toISOString(),
+      value: {
+        alertForm: {
+          subject: 'Old update',
+          body: 'Old body',
+          audience: 'all',
+          channel: 'email',
+        },
+      },
+    }));
+
+    expect(readStoredCoordinatorDraftState('site-1').alertForm.subject).toBe('');
+    expect(localStorage.getItem(getCoordinatorStorageKey('site-1', 'draft'))).toBeNull();
   });
 
   it('round-trips active work ids defensively', () => {

@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Heart, ArrowRight, Check } from 'lucide-react';
 import { Button, Input, Textarea, Select, Card } from '../components/ui';
 import { useToast } from '../components/ui/Toast';
-import { supabase } from '../lib/supabase';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { SITE_VISIBILITY_COPY } from '../lib/siteVisibilityCopy';
 import { useAuth } from '../hooks/useAuth';
@@ -15,16 +14,21 @@ import { createEmptyInitialSetupFollowUps } from '../lib/initialSetupFollowUps';
 import { buildInitialSetupSnapshot } from '../lib/initialSetupSnapshot';
 import { buildInitialSetupDerivedOutputs } from '../lib/initialSetupDerivedOutputs';
 import { buildOnboardingUpdateWithClarifying } from '../lib/buildOnboardingUpdateWithClarifying';
-import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
-import { normalizeOnboardingDraftSnapshot, type OnboardingStep } from '../lib/onboardingDraftPersistence';
+import { hasActiveOnboardingDraftSnapshot, hasStoredOnboardingDraftPayload, persistOnboardingDraftSnapshot, readOnboardingDraftSnapshot, type OnboardingStep } from '../lib/onboardingDraftPersistence';
 import { mergeOnboardingFollowUpAnswers } from '../lib/onboardingFollowUpMerge';
 import { resolveOnboardingResumeIndex } from '../lib/onboardingResumeIndex';
 import { clearOnboardingResumeStorage, readOnboardingResumeState } from '../lib/onboardingResumeStorage';
 import { writeSignupReturnPath } from '../lib/signupContinuation';
-import { clearAllOnboardingDraftStorage, ONBOARDING_DRAFT_STORAGE_KEY as ONBOARDING_STORAGE_KEY } from '../lib/onboardingDraftCleanup';
+import { clearAllOnboardingDraftStorage } from '../lib/onboardingDraftCleanup';
 import { clearAllOnboardingContinuationState } from '../lib/onboardingContinuationCleanup';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
-import { resolveActiveSiteForUser } from '../lib/activeSite';
+import {
+  createOnboardingWeddingSite,
+  fetchExistingOnboardingSite,
+  mergeOnboardingSeedsIntoWeddingData,
+  syncOnboardingEventSeeds,
+  updateExistingOnboardingSite,
+} from './onboarding/onboardingService';
 
 type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'childrenAllowed' | 'rsvpDeadline' | 'mealChoice' | 'story';
 
@@ -67,6 +71,7 @@ export const Onboarding: React.FC = () => {
   const [conversationIndex, setConversationIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [hasHydratedDraft, setHasHydratedDraft] = useState(false);
+  const [hasSavedDraftNotice, setHasSavedDraftNotice] = useState(false);
   const [weddingProfile, setWeddingProfile] = useState(createEmptyWeddingProfile());
   const [initialSetupAnswers, setInitialSetupAnswers] = useState<InitialSetupAnswers>(createEmptyInitialSetupAnswers());
   const [showFollowUpReview, setShowFollowUpReview] = useState(false);
@@ -236,19 +241,22 @@ export const Onboarding: React.FC = () => {
       return;
     }
 
-    const saved = window.localStorage.getItem(ONBOARDING_STORAGE_KEY);
-    if (!saved) {
+    const hadSavedDraft = hasStoredOnboardingDraftPayload();
+    const parsed = readOnboardingDraftSnapshot();
+    if (!parsed) {
+      setHasSavedDraftNotice(false);
+      if (hadSavedDraft) clearAllOnboardingContinuationState();
       setHasHydratedDraft(true);
       return;
     }
 
     try {
-      const parsed = normalizeOnboardingDraftSnapshot(JSON.parse(saved));
       const hydratedAnswers = parsed.initialSetupAnswers;
       setInitialSetupAnswers(hydratedAnswers);
       setInitialSetupFollowUps(parsed.initialSetupFollowUps);
       setFollowUpAnswers(parsed.followUpAnswers);
       setShowFollowUpReview(parsed.showFollowUpReview);
+      setHasSavedDraftNotice(true);
       setWeddingProfile(isWeddingProfile(parsed.weddingProfile) ? parsed.weddingProfile : applyInitialSetupAnswersToWeddingProfile(hydratedAnswers));
       const { hint: resumeHint, index: resumeIndex } = readOnboardingResumeState();
       if (forceShowChooser) {
@@ -302,22 +310,21 @@ export const Onboarding: React.FC = () => {
   useEffect(() => {
     if (typeof window === 'undefined' || isDemoMode || step === 'complete' || !hasHydratedDraft) return;
 
-    window.localStorage.setItem(
-      ONBOARDING_STORAGE_KEY,
-      JSON.stringify({
-        step,
-        conversationIndex,
-        weddingProfile,
-        initialSetupAnswers,
-        initialSetupFollowUps,
-        followUpAnswers,
-        showFollowUpReview,
-      })
-    );
+    const persisted = persistOnboardingDraftSnapshot({
+      step,
+      conversationIndex,
+      weddingProfile,
+      initialSetupAnswers,
+      initialSetupFollowUps,
+      followUpAnswers,
+      showFollowUpReview,
+    });
+    setHasSavedDraftNotice(Boolean(persisted));
   }, [conversationIndex, followUpAnswers, hasHydratedDraft, initialSetupAnswers, initialSetupFollowUps, isDemoMode, showFollowUpReview, step, weddingProfile]);
 
   const clearSavedOnboardingDraft = () => {
     clearAllOnboardingContinuationState();
+    setHasSavedDraftNotice(false);
   };
 
   const hydrateProfile = useCallback((partial: Partial<ReturnType<typeof initialSetupAnswersToOnboardingFormShape>>) => {
@@ -357,19 +364,12 @@ export const Onboarding: React.FC = () => {
   const fetchExistingSite = useCallback(async () => {
     if (!user || isDemoMode) return null;
 
-    const activeSite = await resolveActiveSiteForUser(user.id);
-    const { data } = await supabase
-      .from('wedding_sites')
-      .select('id, onboarding_answers, wedding_data')
-      .eq('id', activeSite?.id ?? '')
-      .maybeSingle();
-
-    return data;
+    return fetchExistingOnboardingSite(user.id);
   }, [isDemoMode, user]);
 
   useEffect(() => {
     void (async () => {
-      const hasLocalDraft = typeof window !== 'undefined' && Boolean(window.localStorage.getItem(ONBOARDING_STORAGE_KEY));
+      const hasLocalDraft = hasActiveOnboardingDraftSnapshot();
       if (hasLocalDraft) return;
 
       const data = await fetchExistingSite();
@@ -463,35 +463,6 @@ export const Onboarding: React.FC = () => {
     }
   };
 
-  const syncOnboardingEventSeeds = async (siteId: string, seeds: ReturnType<typeof buildItinerarySeedFromStructuredEvents>) => {
-    if (!seeds.length) return;
-    const { data: existingRows, error: existingError } = await supabase
-      .from('itinerary_events')
-      .select('event_name')
-      .eq('wedding_site_id', siteId);
-    if (existingError) throw existingError;
-
-    const missingRows = filterMissingOnboardingEventSeeds(((existingRows ?? []) as Array<{ event_name?: string | null }>), seeds)
-      .map((seed) => ({ ...seed, wedding_site_id: siteId }));
-
-    if (!missingRows.length) return;
-    const driftFields = ['display_order', 'description', 'dress_code', 'location_address', 'notes', 'onboarding_seeded', 'rsvp_enabled', 'is_visible'];
-    const insertRows = missingRows.map((row) => ({ ...row }));
-    let insertError: { message?: string } | null = null;
-
-    for (let i = 0; i <= driftFields.length; i += 1) {
-      const result = await supabase.from('itinerary_events').insert(insertRows);
-      insertError = result.error;
-      if (!insertError) break;
-
-      const field = driftFields.find((candidate) => insertError?.message?.includes(candidate));
-      if (!field) break;
-      insertRows.forEach((row) => { delete (row as Record<string, unknown>)[field]; });
-    }
-
-    if (insertError) throw insertError;
-  };
-
   const saveWeddingProfileToExistingSite = async (
     answersOverride: InitialSetupAnswers = initialSetupAnswers,
     followUpsOverride = initialSetupFollowUps,
@@ -502,22 +473,16 @@ export const Onboarding: React.FC = () => {
     if (!existingSite?.id) return false;
 
     const { itinerarySeeds, rsvpEventSeeds, weddingProfile: derivedProfile } = buildInitialSetupDerivedOutputs(answersOverride, followUpsOverride);
-    const existingWeddingData = (existingSite as { wedding_data?: Record<string, unknown> }).wedding_data || {};
-    const nextWeddingData = {
-      ...existingWeddingData,
-      meta: {
-        ...(((existingWeddingData as Record<string, unknown>).meta as Record<string, unknown>) || {}),
-        onboardingEventSeeds: itinerarySeeds,
-        rsvpEventSeeds,
-      },
-    };
-    const { error } = await supabase
-      .from('wedding_sites')
-      .update({ onboarding_answers: derivedProfile, wedding_data: nextWeddingData })
-      .eq('id', existingSite.id)
-      .eq('user_id', user.id);
+    const nextWeddingData = mergeOnboardingSeedsIntoWeddingData(existingSite.wedding_data, itinerarySeeds, rsvpEventSeeds);
 
-    if (error) {
+    try {
+      await updateExistingOnboardingSite({
+        siteId: existingSite.id,
+        userId: user.id,
+        onboardingAnswers: derivedProfile,
+        weddingData: nextWeddingData,
+      });
+    } catch {
       toast('Couldn’t update your setup brief. Please try again.', 'error');
       return false;
     }
@@ -561,9 +526,9 @@ export const Onboarding: React.FC = () => {
         },
       };
 
-      const { data: createdSite, error } = await supabase
-        .from('wedding_sites')
-        .insert({
+      await createOnboardingWeddingSite({
+        userId: user.id,
+        insertRow: {
           user_id: user.id,
           couple_name_1: onboardingUpdate.couple_name_1 || data.couple_name_1 || '',
           couple_name_2: onboardingUpdate.couple_name_2 || data.couple_name_2 || '',
@@ -581,32 +546,21 @@ export const Onboarding: React.FC = () => {
           rsvp_deadline: getCreateSiteRsvpDeadline(onboardingUpdate, data),
           onboarding_answers: profile,
           wedding_data: nextWeddingData,
-        })
-        .select('id')
-        .single();
-
-      if (error && error.message?.includes('onboarding_answers')) {
-        const { error: fallbackError } = await supabase
-          .from('wedding_sites')
-          .insert({
-            user_id: user.id,
-            couple_name_1: data.couple_name_1 || '',
-            couple_name_2: data.couple_name_2 || '',
-            couple_first_name: data.couple_first_name || null,
-            couple_second_name: data.couple_second_name || null,
-            wedding_date: data.wedding_date || null,
-            venue_name: data.venue_name || null,
-            venue_location: data.venue_location || null,
-            site_url: data.site_url || null,
-            rsvp_deadline: getCreateSiteRsvpDeadline(onboardingUpdate, data),
-          });
-
-        if (fallbackError) throw fallbackError;
-        return true;
-      }
-
-      if (error) throw error;
-      if (createdSite?.id) await syncOnboardingEventSeeds(createdSite.id, itinerarySeeds);
+        },
+        fallbackRow: {
+          user_id: user.id,
+          couple_name_1: data.couple_name_1 || '',
+          couple_name_2: data.couple_name_2 || '',
+          couple_first_name: data.couple_first_name || null,
+          couple_second_name: data.couple_second_name || null,
+          wedding_date: data.wedding_date || null,
+          venue_name: data.venue_name || null,
+          venue_location: data.venue_location || null,
+          site_url: data.site_url || null,
+          rsvp_deadline: getCreateSiteRsvpDeadline(onboardingUpdate, data),
+        },
+        itinerarySeeds,
+      });
       return true;
     } catch {
       toast('Couldn’t create your wedding site. Please try again.', 'error');
@@ -733,7 +687,7 @@ export const Onboarding: React.FC = () => {
         <p className="text-lg text-text-secondary">
           Choose the setup path that gets you to a solid first draft fastest
         </p>
-        {typeof window !== 'undefined' && window.localStorage.getItem(ONBOARDING_STORAGE_KEY) && (
+        {hasSavedDraftNotice && (
           <p className="mt-3 text-sm text-primary">You have a saved draft here, so you can pick up where you left off.</p>
         )}
       </div>

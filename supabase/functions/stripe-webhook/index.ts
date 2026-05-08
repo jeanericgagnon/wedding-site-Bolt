@@ -9,6 +9,9 @@ const corsHeaders = {
 };
 
 const INCLUDED_SMS_CREDITS = 1000;
+const STRIPE_WEBHOOK_SIGNATURE_REQUIRED_COPY = "This payment notification could not be verified.";
+const STRIPE_WEBHOOK_SESSION_DETAILS_REQUIRED_COPY = "This checkout confirmation is missing required details.";
+const STRIPE_WEBHOOK_SMS_CREDITS_REQUIRED_COPY = "This SMS credit checkout is missing a valid credit amount.";
 
 async function grantIncludedSmsCredits(supabase: ReturnType<typeof createClient>, weddingSiteId: string) {
   const { data: existing, error: existingError } = await supabase
@@ -77,7 +80,7 @@ Deno.serve(async (req: Request) => {
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
 
     if (!sig) {
-      return new Response(JSON.stringify({ error: "Missing stripe-signature header" }), {
+      return new Response(JSON.stringify({ error: STRIPE_WEBHOOK_SIGNATURE_REQUIRED_COPY }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -114,7 +117,7 @@ Deno.serve(async (req: Request) => {
       const purchaseType = session.metadata?.purchase_type;
 
       if (!weddingSiteId || !supabaseUserId) {
-        return new Response(JSON.stringify({ error: "Missing metadata on session" }), {
+        return new Response(JSON.stringify({ error: STRIPE_WEBHOOK_SESSION_DETAILS_REQUIRED_COPY }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -125,7 +128,7 @@ Deno.serve(async (req: Request) => {
         const amountCents = session.amount_total ?? null;
 
         if (credits <= 0) {
-          return new Response(JSON.stringify({ error: "Invalid sms credit amount" }), {
+          return new Response(JSON.stringify({ error: STRIPE_WEBHOOK_SMS_CREDITS_REQUIRED_COPY }), {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });

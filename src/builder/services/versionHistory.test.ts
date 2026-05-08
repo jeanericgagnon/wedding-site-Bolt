@@ -1,11 +1,12 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createEmptyBuilderProject } from '../../types/builder/project';
 import { createEmptyWeddingData } from '../../types/weddingData';
-import { getBuilderRevision, listBuilderRevisions, recordBuilderRevision } from './versionHistory';
+import { BUILDER_REVISION_RETENTION_MS, getBuilderRevision, listBuilderRevisions, recordBuilderRevision } from './versionHistory';
 
 describe('versionHistory', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    vi.useRealTimers();
   });
 
   it('records and lists revisions in reverse chronological order', () => {
@@ -196,5 +197,71 @@ describe('versionHistory', () => {
 
     expect(getBuilderRevision(weddingId, oldest.id)?.id).toBe(oldest.id);
     expect(listBuilderRevisions(weddingId).map((revision) => revision.id)).not.toContain(oldest.id);
+  });
+
+  it('stores builder revisions in a timestamped bounded envelope', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-06T21:10:00.000Z'));
+    const weddingId = `w_${Date.now()}_envelope`;
+    const project = createEmptyBuilderProject(weddingId, 'modern-luxe');
+
+    recordBuilderRevision({ weddingId, project, action: 'save', actor: '  tester  ' });
+
+    const stored = JSON.parse(window.localStorage.getItem(`builder:revisions:${weddingId}`) || '{}');
+    expect(stored).toMatchObject({
+      savedAtISO: '2026-05-06T21:10:00.000Z',
+      revisions: [{
+        weddingId,
+        action: 'save',
+        actor: 'tester',
+        createdAtISO: '2026-05-06T21:10:00.000Z',
+      }],
+    });
+  });
+
+  it('migrates active legacy builder revision arrays on read', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-06T21:11:00.000Z'));
+    const weddingId = `w_${Date.now()}_legacy`;
+    const project = createEmptyBuilderProject(weddingId, 'modern-luxe');
+    const legacy = [{
+      id: 'legacy-rev',
+      weddingId,
+      action: 'publish',
+      actor: 'tester',
+      createdAtISO: '2026-05-06T21:10:00.000Z',
+      project,
+    }];
+    window.localStorage.setItem(`builder:revisions:${weddingId}`, JSON.stringify(legacy));
+
+    expect(listBuilderRevisions(weddingId).map((revision) => revision.id)).toEqual(['legacy-rev']);
+    expect(JSON.parse(window.localStorage.getItem(`builder:revisions:${weddingId}`) || '{}')).toMatchObject({
+      savedAtISO: '2026-05-06T21:11:00.000Z',
+      revisions: legacy,
+    });
+  });
+
+  it('drops stale or malformed builder revision storage', () => {
+    const weddingId = `w_${Date.now()}_stale`;
+    const project = createEmptyBuilderProject(weddingId, 'modern-luxe');
+    const staleDate = new Date(Date.now() - BUILDER_REVISION_RETENTION_MS - 1000).toISOString();
+    window.localStorage.setItem(`builder:revisions:${weddingId}`, JSON.stringify({
+      savedAtISO: new Date().toISOString(),
+      revisions: [{
+        id: 'stale-rev',
+        weddingId,
+        action: 'save',
+        actor: 'tester',
+        createdAtISO: staleDate,
+        project,
+      }],
+    }));
+
+    expect(listBuilderRevisions(weddingId)).toEqual([]);
+    expect(window.localStorage.getItem(`builder:revisions:${weddingId}`)).toBeNull();
+
+    window.localStorage.setItem(`builder:revisions:${weddingId}`, '{broken');
+    expect(listBuilderRevisions(weddingId)).toEqual([]);
+    expect(window.localStorage.getItem(`builder:revisions:${weddingId}`)).toBeNull();
   });
 });

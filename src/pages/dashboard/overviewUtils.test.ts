@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildPublishReadinessItems,
   buildSetupChecklist,
@@ -6,6 +6,8 @@ import {
   getFirstIncompleteChecklistItem,
   getIncompleteChecklistItems,
   getPublishBuilderRoute,
+  readOverviewDismissalIds,
+  writeOverviewDismissalIds,
   type OverviewChecklistStats,
 } from './overviewUtils';
 
@@ -23,6 +25,16 @@ const base: OverviewChecklistStats = {
 };
 
 describe('overviewUtils', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-06T12:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('uses publishNow route when draft', () => {
     expect(getPublishBuilderRoute(false)).toBe('/dashboard/builder?publishNow=1');
   });
@@ -94,5 +106,35 @@ describe('overviewUtils', () => {
     const livePublishedItem = buildPublishReadinessItems({ ...base, isPublished: true }).find((i) => i.id === 'published');
     expect(livePublishedItem?.actionLabel).toBe('Open site editor');
     expect(livePublishedItem?.route).toBe('/dashboard/builder');
+  });
+
+  it('stores overview intelligence dismissals as bounded timestamped envelopes', () => {
+    const key = 'overview-dismissals-test';
+    const ids = writeOverviewDismissalIds(key, [' suggestion-a ', 'suggestion-a', 'x'.repeat(200)]);
+
+    expect(ids).toEqual(['suggestion-a', 'x'.repeat(120)]);
+    expect(JSON.parse(window.localStorage.getItem(key) || '{}')).toMatchObject({
+      savedAtISO: '2026-05-06T12:00:00.000Z',
+      ids,
+    });
+    expect(readOverviewDismissalIds(key)).toEqual(ids);
+  });
+
+  it('migrates legacy overview intelligence dismissals and clears stale or malformed values', () => {
+    const key = 'overview-dismissals-test';
+    window.localStorage.setItem(key, JSON.stringify(['legacy-a', 'legacy-a', 'legacy-b']));
+    expect(readOverviewDismissalIds(key)).toEqual(['legacy-a', 'legacy-b']);
+    expect(JSON.parse(window.localStorage.getItem(key) || '{}')).toHaveProperty('savedAtISO');
+
+    window.localStorage.setItem(key, JSON.stringify({
+      savedAtISO: '2025-01-01T00:00:00.000Z',
+      ids: ['old-a'],
+    }));
+    expect(readOverviewDismissalIds(key)).toEqual([]);
+    expect(window.localStorage.getItem(key)).toBeNull();
+
+    window.localStorage.setItem(key, '{broken');
+    expect(readOverviewDismissalIds(key)).toEqual([]);
+    expect(window.localStorage.getItem(key)).toBeNull();
   });
 });

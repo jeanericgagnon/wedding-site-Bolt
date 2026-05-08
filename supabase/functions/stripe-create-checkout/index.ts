@@ -8,6 +8,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+const CHECKOUT_SIGNIN_REQUIRED_COPY = "Please sign in to continue checkout.";
+const CHECKOUT_DETAILS_REQUIRED_COPY = "Choose a site and return links before continuing checkout.";
+const CHECKOUT_SITE_UNAVAILABLE_COPY = "This site is not available for checkout.";
+const CHECKOUT_ALREADY_PAID_COPY = "This site is already paid.";
+
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -19,10 +24,14 @@ function isAllowedCheckoutRedirect(url: string): boolean {
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return false;
-    const appOrigin = new URL(Deno.env.get("APP_PUBLIC_URL") || "https://dayof.love").origin;
+    if (parsed.username || parsed.password) return false;
+    const hostname = parsed.hostname.toLowerCase().replace(/\.$/, "");
+    const appUrl = new URL(Deno.env.get("APP_PUBLIC_URL") || "https://dayof.love");
+    const appOrigin = appUrl.origin;
+    const appHost = appUrl.hostname.toLowerCase().replace(/\.$/, "");
     if (parsed.origin === appOrigin) return true;
-    if (parsed.hostname === "dayof.love" || parsed.hostname.endsWith(".dayof.love")) return true;
-    if (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") return true;
+    if (hostname === "dayof.love" || hostname.endsWith(".dayof.love")) return true;
+    if ((hostname === "localhost" || hostname === "127.0.0.1") && (appHost === "localhost" || appHost === "127.0.0.1")) return true;
     return false;
   } catch {
     return false;
@@ -40,7 +49,7 @@ Deno.serve(async (req: Request) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return json({ error: "Missing authorization" }, 401);
+      return json({ error: CHECKOUT_SIGNIN_REQUIRED_COPY }, 401);
     }
 
     const token = authHeader.replace(/^Bearer\s+/i, "").trim();
@@ -52,7 +61,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !user) {
-      return json({ error: "Unauthorized" }, 401);
+      return json({ error: CHECKOUT_SIGNIN_REQUIRED_COPY }, 401);
     }
 
     const body = await req.json().catch(() => ({}));
@@ -63,7 +72,7 @@ Deno.serve(async (req: Request) => {
     };
 
     if (!wedding_site_id || !success_url || !cancel_url) {
-      return json({ error: "Missing required fields: wedding_site_id, success_url, cancel_url" }, 400);
+      return json({ error: CHECKOUT_DETAILS_REQUIRED_COPY }, 400);
     }
 
     if (!isAllowedCheckoutRedirect(success_url) || !isAllowedCheckoutRedirect(cancel_url)) {
@@ -78,11 +87,11 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (siteError || !site) {
-      return json({ error: "Wedding site not found" }, 404);
+      return json({ error: CHECKOUT_SITE_UNAVAILABLE_COPY }, 404);
     }
 
     if (site.payment_status === "active") {
-      return json({ error: "Already paid" }, 409);
+      return json({ error: CHECKOUT_ALREADY_PAID_COPY }, 409);
     }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {

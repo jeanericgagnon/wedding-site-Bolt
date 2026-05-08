@@ -1,20 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card } from '../../components/ui/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { formatAuditLogDateTime } from './auditLogTime';
-import { listAppActionAuditLogs, type AppActionAuditRow } from '../../lib/actionAudit';
-
-interface GuestAuditRow {
-  id: string;
-  action: 'insert' | 'update' | 'delete';
-  changed_at: string;
-  changed_by: string | null;
-  guest_id: string;
-  guest_name?: string;
-}
+import type { AppActionAuditRow } from '../../lib/actionAudit';
+import { loadDashboardAuditLogs, type GuestAuditRow } from './auditLogService';
 
 const actionLabelMap: Record<GuestAuditRow['action'], string> = {
   insert: 'Guest added',
@@ -56,53 +46,10 @@ export const DashboardAuditLogs: React.FC = () => {
         return;
       }
       try {
-        const { data: site } = await supabase
-          .from('wedding_sites')
-          .select('id')
-          .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
-          .maybeSingle();
-
-        const siteId = (site as { id?: string } | null)?.id;
-        if (!siteId) {
-          if (mounted) setLogsLoading(false);
-          return;
-        }
-
-        const [{ data, error }, actionLogs] = await Promise.all([
-          supabase
-          .from('guest_audit_logs')
-          .select('id, action, changed_at, changed_by, guest_id')
-          .eq('wedding_site_id', siteId)
-          .order('changed_at', { ascending: false })
-            .limit(50),
-          listAppActionAuditLogs(siteId, 50),
-        ]);
-
-        if (error) throw error;
-        const guestIds = Array.from(new Set((data ?? []).map((row: any) => row.guest_id).filter(Boolean)));
-        const guestNames = new Map<string, string>();
-        if (guestIds.length > 0) {
-          const { data: guestRows } = await supabase
-            .from('guests')
-            .select('id, name, first_name, last_name')
-            .in('id', guestIds);
-
-          (guestRows ?? []).forEach((guest: any) => {
-            const name = guest.name || [guest.first_name, guest.last_name].filter(Boolean).join(' ');
-            if (name) guestNames.set(guest.id, name);
-          });
-        }
+        const { guestRows, actionRows: loadedActionRows } = await loadDashboardAuditLogs(user.id);
         if (mounted) {
-          const normalized = (data ?? []).map((row: any) => ({
-            id: row.id,
-            action: row.action,
-            changed_at: row.changed_at,
-            changed_by: row.changed_by,
-            guest_id: row.guest_id,
-            guest_name: guestNames.get(row.guest_id),
-          })) as GuestAuditRow[];
-          setRows(normalized);
-          setActionRows(actionLogs);
+          setRows(guestRows);
+          setActionRows(loadedActionRows);
         }
       } catch {
         if (mounted) setError('Couldn’t load activity history right now.');

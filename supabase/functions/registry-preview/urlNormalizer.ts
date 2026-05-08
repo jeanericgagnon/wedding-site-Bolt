@@ -68,7 +68,10 @@ function isBlockedHostname(hostname: string): boolean {
     normalized.endsWith('.localhost') ||
     normalized.endsWith('.local') ||
     normalized.endsWith('.internal') ||
+    normalized.endsWith('.invalid') ||
+    normalized.endsWith('.example') ||
     normalized.endsWith('.test') ||
+    normalized === 'metadata' ||
     normalized === 'metadata.google.internal'
   ) {
     return true;
@@ -105,6 +108,31 @@ function detectRetailer(hostname: string): string | null {
     }
   }
   return null;
+}
+
+export function isPublicPreviewResourceUrl(url: string, depth = 0): boolean {
+  try {
+    const parsed = new URL(url);
+    const publicTarget = (parsed.protocol === 'http:' || parsed.protocol === 'https:')
+      && !parsed.username
+      && !parsed.password
+      && !isBlockedHostname(parsed.hostname);
+    if (!publicTarget) return false;
+
+    if (parsed.hostname.toLowerCase() === 'images.weserv.nl') {
+      const proxiedTarget = parsed.searchParams.get('url');
+      if (!proxiedTarget) return true;
+      if (depth >= 2) return false;
+      const normalizedTarget = /^https?:\/\//i.test(proxiedTarget)
+        ? proxiedTarget
+        : `https://${proxiedTarget.replace(/^\/+/, '')}`;
+      return isPublicPreviewResourceUrl(normalizedTarget, depth + 1);
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**

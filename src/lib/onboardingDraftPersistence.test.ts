@@ -1,7 +1,13 @@
-import { describe, expect, it } from 'vitest';
-import { normalizeOnboardingDraftSnapshot } from './onboardingDraftPersistence';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ONBOARDING_DRAFT_STORAGE_KEY } from './onboardingDraftCleanup';
+import { ONBOARDING_DRAFT_RETENTION_MS, hasActiveOnboardingDraftSnapshot, hasStoredOnboardingDraftPayload, normalizeOnboardingDraftSnapshot, persistOnboardingDraftSnapshot, readOnboardingDraftSnapshot } from './onboardingDraftPersistence';
 
 describe('onboardingDraftPersistence', () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+    window.localStorage.clear();
+  });
+
   it('preserves follow-up review state across a saved draft round-trip', () => {
     const normalized = normalizeOnboardingDraftSnapshot({
       step: 'quick-3',
@@ -34,6 +40,67 @@ describe('onboardingDraftPersistence', () => {
     expect(normalized.initialSetupFollowUps.venueClarification).toBe('Ocean bluff ceremony');
     expect(normalized.initialSetupFollowUps.eventLocations.friday).toBe('Pool terrace');
     expect(normalized.initialSetupFollowUps.eventTimes.friday).toBe('6:00 PM');
+  });
+
+  it('timestamps persisted onboarding drafts for bounded local storage retention', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-02-14T12:00:00.000Z'));
+
+    persistOnboardingDraftSnapshot({
+      step: 'quick-1',
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+      },
+    });
+
+    expect(JSON.parse(window.localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY) || '{}').savedAtISO).toBe('2026-02-14T12:00:00.000Z');
+  });
+
+  it('clears expired onboarding drafts on restore', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-01T12:00:00.000Z'));
+    window.localStorage.setItem(ONBOARDING_DRAFT_STORAGE_KEY, JSON.stringify({
+      step: 'quick-2',
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+      },
+      savedAtISO: new Date(Date.now() - ONBOARDING_DRAFT_RETENTION_MS - 1).toISOString(),
+    }));
+
+    expect(readOnboardingDraftSnapshot()).toBeNull();
+    expect(window.localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY)).toBeNull();
+  });
+
+  it('separates raw draft payload presence from active retained drafts', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-01T12:00:00.000Z'));
+    window.localStorage.setItem(ONBOARDING_DRAFT_STORAGE_KEY, JSON.stringify({
+      step: 'quick-2',
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+      },
+      savedAtISO: new Date(Date.now() - ONBOARDING_DRAFT_RETENTION_MS - 1).toISOString(),
+    }));
+
+    expect(hasStoredOnboardingDraftPayload()).toBe(true);
+    expect(hasActiveOnboardingDraftSnapshot()).toBe(false);
+    expect(window.localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY)).toBeNull();
+  });
+
+  it('migrates legacy onboarding drafts without a timestamp on restore', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-01T15:30:00.000Z'));
+    window.localStorage.setItem(ONBOARDING_DRAFT_STORAGE_KEY, JSON.stringify({
+      step: 'quick-1',
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+      },
+    }));
+
+    const restored = readOnboardingDraftSnapshot();
+
+    expect(restored?.initialSetupAnswers.names).toBe('Alex & Jordan');
+    expect(JSON.parse(window.localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY) || '{}').savedAtISO).toBe('2026-03-01T15:30:00.000Z');
   });
 
   it('drops malformed records instead of crashing hydration', () => {

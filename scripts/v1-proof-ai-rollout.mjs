@@ -33,6 +33,7 @@ const sensitiveTables = [
 
 const browserSourceFiles = [
   { filePath: 'src/pages/dashboard/GuestPhotoSharing.tsx', requireProductReads: true },
+  { filePath: 'src/pages/dashboard/guestPhotoSharingService.ts' },
   { filePath: 'tests/e2e/photo-upload-write-read.spec.ts' },
   { filePath: 'supabase/functions/guest-recap-config/index.ts' },
 ];
@@ -75,8 +76,21 @@ function builtGuestPhotoSharingFiles() {
 }
 
 function extractSelectListsForTable(source, tableName) {
-  const tablePattern = String.raw`\.from\((['"])${tableName}\1\)[\s\S]{0,900}?\.select\((['"\`])([\s\S]*?)\2\)`;
-  return Array.from(source.matchAll(new RegExp(tablePattern, 'g')), (match) => match[3]);
+  const tablePattern = String.raw`\.from\((['"])${tableName}\1\)[\s\S]{0,900}?\.select\(([^)]*)\)`;
+  return Array.from(source.matchAll(new RegExp(tablePattern, 'g')), (match) => resolveSelectArgument(source, match[2]));
+}
+
+function resolveSelectArgument(source, rawArgument) {
+  const argument = rawArgument.trim();
+  const quoted = argument.match(/^(['"`])([\s\S]*?)\1/);
+  if (quoted) return quoted[2];
+
+  const identifier = argument.match(/^([A-Za-z_$][\w$]*)/);
+  if (!identifier) return argument;
+
+  const constPattern = String.raw`const\s+${identifier[1]}\s*=\s*(['"\`])([\s\S]*?)\1`;
+  const match = source.match(new RegExp(constPattern));
+  return match?.[2] ?? argument;
 }
 
 function normalizeSelectList(selectList) {

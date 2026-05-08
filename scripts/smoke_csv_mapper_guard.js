@@ -2,8 +2,14 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const file = resolve(process.cwd(), 'src/pages/dashboard/Guests.tsx');
-const src = readFileSync(file, 'utf8');
+function readSource(path) {
+  return readFileSync(resolve(process.cwd(), path), 'utf8');
+}
+
+const guestsSrc = readSource('src/pages/dashboard/Guests.tsx');
+const toolbarSrc = readSource('src/pages/dashboard/guests/GuestOpsToolbar.tsx');
+const modalSrc = readSource('src/pages/dashboard/guests/GuestCsvImportModals.tsx');
+const src = [guestsSrc, toolbarSrc, modalSrc].join('\n');
 
 const checks = [
   {
@@ -12,11 +18,11 @@ const checks = [
   },
   {
     name: 'csv input uses onChange import handler',
-    ok: src.includes('onChange={importCSV}'),
+    ok: guestsSrc.includes('onChange={importCSV}') || (guestsSrc.includes('onFileChange={importCSV}') && toolbarSrc.includes('onChange={onFileChange}')),
   },
   {
     name: 'csv input does not use onInput duplicate trigger',
-    ok: !src.includes('onInput={(e) => importCSV'),
+    ok: !src.includes('onInput={(e) => importCSV') && !src.includes('onInput={onFileChange}'),
   },
   {
     name: 'map columns modal present',

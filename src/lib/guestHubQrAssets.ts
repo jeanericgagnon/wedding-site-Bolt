@@ -1,3 +1,5 @@
+import { getSafePublicWebUrl } from '../sections/publicLinks';
+
 export type GuestHubQrAssetKind = 'welcome-sign' | 'table-card' | 'invite-insert' | 'photo-prompt';
 
 export interface GuestHubQrAsset {
@@ -15,7 +17,7 @@ export interface GuestHubQrAssetInput {
   includePhotoPrompt?: boolean;
 }
 
-const TOKENISH_PARAM = /(token|invite|secret|secure|signature|signed|jwt|key|access)/i;
+const TOKENISH_PARAM = /(token|invite|secret|secure|signature|signed|jwt|key|access|auth|bearer|cookie|passcode|password|session)/i;
 
 export const buildQrImageUrl = (url: string, size = 512) =>
   `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}`;
@@ -27,8 +29,9 @@ function cleanText(value: string, fallback: string): string {
 
 export function isSafePublicQrAssetUrl(value: string): boolean {
   try {
-    const url = new URL(value);
-    if (url.protocol !== 'https:' && url.protocol !== 'http:') return false;
+    const safeUrl = getSafePublicWebUrl(value);
+    if (!safeUrl) return false;
+    const url = new URL(safeUrl);
     for (const key of url.searchParams.keys()) {
       if (TOKENISH_PARAM.test(key)) return false;
     }

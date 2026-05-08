@@ -1,5 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  PHOTO_BUCKET_LINKS_RETENTION_MS,
   analysisDisplayStatus,
   analysisSourceLabel,
   buildBucketUploadsCsv,
@@ -29,6 +30,10 @@ import {
 } from './guestPhotoSharingUtils';
 
 describe('guestPhotoSharingUtils', () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+  });
+
   it('formats guest photo tags for display without changing stored slugs', () => {
     expect(tagLabel('dance_floor')).toBe('Dance Floor');
     expect(tagLabel('family-photos')).toBe('Family Photos');
@@ -51,12 +56,36 @@ describe('guestPhotoSharingUtils', () => {
   });
 
   it('reads and writes bucket links defensively', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-06T12:00:00.000Z'));
     localStorage.clear();
     writeStoredBucketLinks({ ceremony: 'https://example.com/ceremony' });
     expect(readStoredBucketLinks()).toEqual({ ceremony: 'https://example.com/ceremony' });
+    expect(JSON.parse(localStorage.getItem('dayof.photoBucketLinks') || '{}').savedAtISO).toBe('2026-05-06T12:00:00.000Z');
 
     localStorage.setItem('dayof.photoBucketLinks', 'not json');
     expect(readStoredBucketLinks()).toEqual({});
+  });
+
+  it('migrates and expires stored bucket links', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-06T12:00:00.000Z'));
+    localStorage.clear();
+    localStorage.setItem('dayof.photoBucketLinks', JSON.stringify({
+      ceremony: ' https://example.com/ceremony ',
+      bad: 'javascript:alert(1)',
+    }));
+
+    expect(readStoredBucketLinks()).toEqual({ ceremony: 'https://example.com/ceremony' });
+    expect(JSON.parse(localStorage.getItem('dayof.photoBucketLinks') || '{}').savedAtISO).toBe('2026-05-06T12:00:00.000Z');
+
+    localStorage.setItem('dayof.photoBucketLinks', JSON.stringify({
+      savedAtISO: new Date(Date.now() - PHOTO_BUCKET_LINKS_RETENTION_MS - 1).toISOString(),
+      value: { ceremony: 'https://example.com/ceremony' },
+    }));
+
+    expect(readStoredBucketLinks()).toEqual({});
+    expect(localStorage.getItem('dayof.photoBucketLinks')).toBeNull();
   });
 
   it('ignores unavailable storage so the dashboard can keep rendering', () => {

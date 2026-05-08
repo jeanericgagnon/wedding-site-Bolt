@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GUIDED_SETUP_STORAGE_KEY } from '../../lib/guidedSetupPersistence';
 import { supabase } from '../../lib/supabase';
 import { resolvePrimaryWeddingSiteId } from '../../lib/guidedSetupSiteResolver';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 
 const navigateMock = vi.fn();
 
@@ -43,6 +44,7 @@ vi.mock('../../lib/welcomeNoteHelper', () => ({ buildWelcomeNoteDraft: vi.fn(() 
 vi.mock('../../lib/csvHeaderMatcher', () => ({ findCsvHeaderIndex: vi.fn(() => -1), normalizeCsvHeader: vi.fn((v: string) => v) }));
 vi.mock('../../lib/onboardingContinuationCleanup', () => ({ clearAllOnboardingContinuationState: vi.fn() }));
 vi.mock('../../lib/guidedSetupSiteResolver', () => ({ resolvePrimaryWeddingSiteId: vi.fn(async () => null) }));
+vi.mock('../../lib/activeSite', () => ({ resolveActiveSiteForUser: vi.fn(async () => null) }));
 vi.mock('../../lib/signupContinuation', () => ({ writeSignupReturnPath: vi.fn() }));
 vi.mock('../../lib/onboardingEntryCleanup', () => ({ clearOnboardingEntryReturnPath: vi.fn() }));
 vi.mock('../../lib/guidedSetupErrorCopy', () => ({
@@ -57,6 +59,7 @@ describe('GuidedSetup starter draft wording truth', () => {
     window.localStorage.clear();
     vi.mocked(supabase.auth.getUser).mockResolvedValue({ data: { user: null } } as any);
     vi.mocked(resolvePrimaryWeddingSiteId).mockResolvedValue(null);
+    vi.mocked(resolveActiveSiteForUser).mockResolvedValue(null);
   });
 
   it('keeps the completion state framed as a starter draft that still needs review before publish', async () => {
@@ -96,6 +99,7 @@ describe('GuidedSetup starter draft wording truth', () => {
   it('ignores invalid persisted wedding dates when hydrating from the saved site record', async () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({ data: { user: { id: 'user-1' } } } as any);
     vi.mocked(resolvePrimaryWeddingSiteId).mockResolvedValue('site-1');
+    vi.mocked(resolveActiveSiteForUser).mockResolvedValue({ id: 'site-1', role: 'owner', permissions: null });
 
     const maybeSingle = vi.fn(async () => ({
       data: {

@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, QUICK_START_STORAGE_KEY, readQuickStartDraftSnapshot } from './quickStartStateTransfer';
+import { clearQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, QUICK_START_DRAFT_RETENTION_MS, QUICK_START_STORAGE_KEY, readQuickStartDraftSnapshot } from './quickStartStateTransfer';
 
 describe('quickStartStateTransfer', () => {
   beforeEach(() => {
+    vi.useRealTimers();
     window.localStorage.clear();
   });
 
@@ -17,6 +18,42 @@ describe('quickStartStateTransfer', () => {
     expect(persisted?.initialSetupAnswers.names).toBe('Alex & Jordan');
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').showFollowUps).toBe(false);
     expect(readQuickStartDraftSnapshot()?.followUpAnswers).toEqual({});
+  });
+
+  it('timestamps meaningful quick start drafts for bounded local storage retention', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-02-14T12:00:00.000Z'));
+
+    persistQuickStartDraftSnapshot({
+      initialSetupAnswers: { names: 'Alex & Jordan' },
+    });
+
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').savedAtISO).toBe('2026-02-14T12:00:00.000Z');
+  });
+
+  it('clears expired quick start drafts on restore', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-01T12:00:00.000Z'));
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      initialSetupAnswers: { names: 'Alex & Jordan' },
+      savedAtISO: new Date(Date.now() - QUICK_START_DRAFT_RETENTION_MS - 1).toISOString(),
+    }));
+
+    expect(readQuickStartDraftSnapshot()).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
+  });
+
+  it('migrates legacy quick start drafts without a timestamp on restore', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-01T15:30:00.000Z'));
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      initialSetupAnswers: { names: 'Alex & Jordan' },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored?.initialSetupAnswers.names).toBe('Alex & Jordan');
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').savedAtISO).toBe('2026-03-01T15:30:00.000Z');
   });
 
   it('survives malformed existing storage by normalizing on read', () => {
@@ -52,6 +89,7 @@ describe('quickStartStateTransfer', () => {
       showFollowUps: false,
       clarifyingState: null,
       viewState: 'question',
+      savedAtISO: '2026-05-06T12:00:00.000Z',
     });
 
     expect(persisted).toBeNull();
@@ -67,6 +105,7 @@ describe('quickStartStateTransfer', () => {
       showFollowUps: false,
       clarifyingState: null,
       viewState: 'question',
+      savedAtISO: '2026-05-06T12:00:00.000Z',
     });
 
     expect(persisted).toBeNull();
@@ -296,6 +335,7 @@ describe('quickStartStateTransfer', () => {
       showFollowUps: false,
       clarifyingState: null,
       viewState: 'question',
+      savedAtISO: '2026-05-06T12:00:00.000Z',
     });
 
     expect(persisted?.currentIndex).toBe(2);
@@ -566,6 +606,7 @@ describe('quickStartStateTransfer', () => {
       showFollowUps: false,
       clarifyingState: null,
       viewState: 'question',
+      savedAtISO: '2026-05-06T12:00:00.000Z',
     });
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, normalizedRaw);
     const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');

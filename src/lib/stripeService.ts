@@ -1,5 +1,38 @@
 import { supabase } from './supabase';
 import { resolveActiveSiteForUser } from './activeSite';
+import { customerSafeErrorMessage } from './customerSafeError';
+
+const CHECKOUT_ERROR_COPY = 'Could not start checkout. Please try again.';
+const SUBSCRIPTION_CHECKOUT_ERROR_COPY = 'Could not start subscription checkout. Please try again.';
+const SMS_CREDITS_CHECKOUT_ERROR_COPY = 'Could not start SMS credits checkout. Please try again.';
+const VERIFY_CHECKOUT_ERROR_COPY = 'Could not confirm payment yet. Please try again.';
+
+const PAYMENT_SAFE_ERROR_ALLOWLIST = [
+  /^Missing required fields(?:: wedding_site_id, success_url, cancel_url)?$/i,
+  /^Checkout return URL is not allowed\.$/i,
+  /^Wedding site not found$/i,
+  /^Already paid$/i,
+  /^Already on recurring billing$/i,
+  /^SMS credit purchases will open after texting setup is complete\.$/i,
+  /^Missing required fields$/i,
+  /^Invalid pack$/i,
+  /^SMS credit checkout is not ready yet\.$/i,
+  /^Could not start checkout\. Please try again\.$/i,
+  /^Could not start subscription checkout\. Please try again\.$/i,
+  /^Could not start SMS credit checkout\. Please try again\.$/i,
+  /^Could not confirm payment yet\. Please try again\.$/i,
+];
+
+export function safePaymentFunctionError(value: unknown, fallback: string): string {
+  return customerSafeErrorMessage(typeof value === 'string' ? value : '', fallback, {
+    allow: PAYMENT_SAFE_ERROR_ALLOWLIST,
+  });
+}
+
+function isSessionAuthFunctionError(error: any): boolean {
+  const status = error?.context?.status ?? error?.status;
+  return status === 401 || /401|unauthorized|jwt|token|expired/i.test(error?.message || '');
+}
 
 async function getFunctionErrorMessage(error: any, fallback: string): Promise<string> {
   const base = error?.message || '';
@@ -12,18 +45,18 @@ async function getFunctionErrorMessage(error: any, fallback: string): Promise<st
       if (text) {
         try {
           const parsed = JSON.parse(text);
-          if (parsed?.error) return String(parsed.error);
+          if (parsed?.error) return safePaymentFunctionError(parsed.error, fallback);
         } catch {
           // not json
         }
-        return text;
+        return fallback;
       }
     } catch {
       // ignore context parsing errors
     }
   }
 
-  return base || fallback;
+  return safePaymentFunctionError(base, fallback);
 }
 
 export class SessionExpiredError extends Error {
@@ -93,10 +126,10 @@ export async function createCheckoutSession(
 
   if (!out.res.ok) {
     if (out.res.status === 401) throw new SessionExpiredError();
-    throw new Error(out.json.error || out.raw || `Server error (${out.res.status})`);
+    throw new Error(safePaymentFunctionError(out.json.error, CHECKOUT_ERROR_COPY));
   }
 
-  if (out.json.error) throw new Error(out.json.error);
+  if (out.json.error) throw new Error(safePaymentFunctionError(out.json.error, CHECKOUT_ERROR_COPY));
   if (!out.json.url) throw new Error('No checkout URL returned. Please try again.');
 
   return out.json.url;
@@ -120,7 +153,7 @@ export async function createSubscriptionSession(
     },
   });
 
-  if (error && /401|unauthorized|jwt|token|expired/i.test((error as any)?.message || '')) {
+  if (error && isSessionAuthFunctionError(error)) {
     const { error: refreshError } = await supabase.auth.refreshSession();
     if (!refreshError) {
       const { data: { session: refreshedSession } } = await supabase.auth.getSession();
@@ -140,15 +173,13 @@ export async function createSubscriptionSession(
   }
 
   if (error) {
-    const message = await getFunctionErrorMessage(error, 'Could not start subscription checkout. Please try again.');
-    if (/401|unauthorized|jwt|token|expired/i.test(message)) {
-      throw new SessionExpiredError();
-    }
+    if (isSessionAuthFunctionError(error)) throw new SessionExpiredError();
+    const message = await getFunctionErrorMessage(error, SUBSCRIPTION_CHECKOUT_ERROR_COPY);
     throw new Error(message);
   }
 
   const json = (data ?? {}) as { url?: string; error?: string };
-  if (json.error) throw new Error(json.error);
+  if (json.error) throw new Error(safePaymentFunctionError(json.error, SUBSCRIPTION_CHECKOUT_ERROR_COPY));
   if (!json.url) throw new Error('No subscription checkout URL returned. Please try again.');
 
   return json.url;
@@ -212,7 +243,7 @@ export async function verifyCheckoutSession(sessionId: string): Promise<{ paid: 
 
   if (!res.ok) {
     if (res.status === 401) throw new SessionExpiredError();
-    throw new Error(json.error || raw || `Server error (${res.status})`);
+    throw new Error(safePaymentFunctionError(json.error, VERIFY_CHECKOUT_ERROR_COPY));
   }
 
   return { paid: !!json.paid, error: json.error };
@@ -278,7 +309,7 @@ export async function createSmsCreditsSession(
     },
   });
 
-  if (error && /401|unauthorized|jwt|token|expired/i.test((error as any)?.message || '')) {
+  if (error && isSessionAuthFunctionError(error)) {
     const { error: refreshError } = await supabase.auth.refreshSession();
     if (!refreshError) {
       const { data: { session: refreshedSession } } = await supabase.auth.getSession();
@@ -299,15 +330,13 @@ export async function createSmsCreditsSession(
   }
 
   if (error) {
-    const message = await getFunctionErrorMessage(error, 'Could not start SMS credits checkout. Please try again.');
-    if (/401|unauthorized|jwt|token|expired/i.test(message)) {
-      throw new SessionExpiredError();
-    }
+    if (isSessionAuthFunctionError(error)) throw new SessionExpiredError();
+    const message = await getFunctionErrorMessage(error, SMS_CREDITS_CHECKOUT_ERROR_COPY);
     throw new Error(message);
   }
 
   const json = (data ?? {}) as { url?: string; error?: string };
-  if (json.error) throw new Error(json.error);
+  if (json.error) throw new Error(safePaymentFunctionError(json.error, SMS_CREDITS_CHECKOUT_ERROR_COPY));
   if (!json.url) throw new Error('No checkout URL returned. Please try again.');
 
   return json.url;

@@ -16,7 +16,10 @@ interface Props {
 
 const REGISTRY_PURCHASE_MEMORY_KEY = 'dayof_registry_purchase_memory_v1';
 const REGISTRY_PURCHASE_COOKIE = 'dayof_registry_purchases_v1';
-const REGISTRY_PURCHASE_COOKIE_MAX_AGE = 60 * 60 * 24 * 180;
+export const REGISTRY_PURCHASE_MEMORY_RETENTION_MS = 1000 * 60 * 60 * 24 * 30;
+const REGISTRY_PURCHASE_COOKIE_MAX_AGE = Math.floor(REGISTRY_PURCHASE_MEMORY_RETENTION_MS / 1000);
+const MAX_REGISTRY_PURCHASE_MEMORY_IDS = 80;
+const MAX_REGISTRY_PURCHASE_MEMORY_ID_LENGTH = 120;
 
 const BROKEN_REGISTRY_TITLE_PATTERNS = [
   /^page not found$/i,
@@ -70,18 +73,74 @@ function normalizePublicRegistryLinks(links: Array<{ id: string; label?: string;
     .filter((link): link is { id: string; label?: string; url: string } => Boolean(link));
 }
 
-function readRegistryPurchaseMemory(): string[] {
+type RegistryPurchaseMemoryEnvelope = {
+  savedAtISO: string;
+  ids: string[];
+};
+
+function normalizeRegistryPurchaseMemoryIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const ids = new Set<string>();
+  value.forEach((raw) => {
+    if (typeof raw !== 'string') return;
+    const id = raw.replace(/\s+/g, ' ').trim().slice(0, MAX_REGISTRY_PURCHASE_MEMORY_ID_LENGTH);
+    if (id) ids.add(id);
+  });
+  return Array.from(ids).slice(-MAX_REGISTRY_PURCHASE_MEMORY_IDS);
+}
+
+function parseRegistryPurchaseMemory(raw: string | null): { ids: string[]; shouldPersist: boolean; isStale: boolean } {
+  if (!raw) return { ids: [], shouldPersist: false, isStale: false };
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return { ids: normalizeRegistryPurchaseMemoryIds(parsed), shouldPersist: true, isStale: false };
+    }
+
+    if (parsed && typeof parsed === 'object' && typeof parsed.savedAtISO === 'string') {
+      const savedAt = Date.parse(parsed.savedAtISO);
+      if (!Number.isFinite(savedAt) || Date.now() - savedAt > REGISTRY_PURCHASE_MEMORY_RETENTION_MS) {
+        return { ids: [], shouldPersist: false, isStale: true };
+      }
+      return {
+        ids: normalizeRegistryPurchaseMemoryIds((parsed as RegistryPurchaseMemoryEnvelope).ids),
+        shouldPersist: false,
+        isStale: false,
+      };
+    }
+  } catch {
+    return { ids: [], shouldPersist: false, isStale: true };
+  }
+
+  return { ids: [], shouldPersist: false, isStale: true };
+}
+
+function buildRegistryPurchaseMemoryPayload(ids: string[]): string {
+  return JSON.stringify({
+    savedAtISO: new Date().toISOString(),
+    ids: normalizeRegistryPurchaseMemoryIds(ids),
+  } satisfies RegistryPurchaseMemoryEnvelope);
+}
+
+function clearRegistryPurchaseCookie() {
+  try {
+    document.cookie = `${REGISTRY_PURCHASE_COOKIE}=; Max-Age=0; Path=/; SameSite=Lax`;
+  } catch {
+    // Non-critical continuity only.
+  }
+}
+
+export function readRegistryPurchaseMemory(): string[] {
   if (typeof window === 'undefined') return [];
   const ids = new Set<string>();
+  let shouldPersist = false;
 
   try {
     const raw = window.localStorage.getItem(REGISTRY_PURCHASE_MEMORY_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    if (Array.isArray(parsed)) {
-      parsed.forEach((value) => {
-        if (typeof value === 'string' && value.trim()) ids.add(value);
-      });
-    }
+    const parsed = parseRegistryPurchaseMemory(raw);
+    parsed.ids.forEach((id) => ids.add(id));
+    shouldPersist = shouldPersist || parsed.shouldPersist;
+    if (parsed.isStale) window.localStorage.removeItem(REGISTRY_PURCHASE_MEMORY_KEY);
   } catch {
     // Ignore corrupt client memory.
   }
@@ -92,23 +151,35 @@ function readRegistryPurchaseMemory(): string[] {
       .map((part) => part.trim())
       .find((part) => part.startsWith(`${REGISTRY_PURCHASE_COOKIE}=`));
     const raw = cookie ? decodeURIComponent(cookie.slice(REGISTRY_PURCHASE_COOKIE.length + 1)) : '';
-    const parsed = raw ? JSON.parse(raw) : [];
-    if (Array.isArray(parsed)) {
-      parsed.forEach((value) => {
-        if (typeof value === 'string' && value.trim()) ids.add(value);
-      });
-    }
+    const parsed = parseRegistryPurchaseMemory(raw);
+    parsed.ids.forEach((id) => ids.add(id));
+    shouldPersist = shouldPersist || parsed.shouldPersist;
+    if (parsed.isStale) clearRegistryPurchaseCookie();
   } catch {
     // Ignore corrupt cookie memory.
   }
 
-  return Array.from(ids);
+  const normalized = normalizeRegistryPurchaseMemoryIds(Array.from(ids));
+  if (shouldPersist && normalized.length > 0) {
+    const payload = buildRegistryPurchaseMemoryPayload(normalized);
+    try {
+      window.localStorage.setItem(REGISTRY_PURCHASE_MEMORY_KEY, payload);
+    } catch {
+      // Non-critical continuity only.
+    }
+    try {
+      document.cookie = `${REGISTRY_PURCHASE_COOKIE}=${encodeURIComponent(payload)}; Max-Age=${REGISTRY_PURCHASE_COOKIE_MAX_AGE}; Path=/; SameSite=Lax`;
+    } catch {
+      // Non-critical continuity only.
+    }
+  }
+  return normalized;
 }
 
-function rememberRegistryPurchase(itemId: string): string[] {
+export function rememberRegistryPurchase(itemId: string): string[] {
   if (typeof window === 'undefined' || !itemId) return [];
-  const next = Array.from(new Set([...readRegistryPurchaseMemory(), itemId])).slice(-80);
-  const payload = JSON.stringify(next);
+  const next = normalizeRegistryPurchaseMemoryIds([...readRegistryPurchaseMemory(), itemId]);
+  const payload = buildRegistryPurchaseMemoryPayload(next);
   try {
     window.localStorage.setItem(REGISTRY_PURCHASE_MEMORY_KEY, payload);
   } catch {
@@ -382,9 +453,9 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase, remembere
           </div>
         )}
         <div className="flex flex-wrap gap-2">
-          {venmoUrl && <a href={venmoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">Venmo</a>}
-          {paypalUrl && <a href={paypalUrl} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">PayPal</a>}
-          {customFundUrl && <a href={customFundUrl} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">{item.fund_custom_label || 'Contribute'}</a>}
+          {venmoUrl && <a href={venmoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">Venmo</a>}
+          {paypalUrl && <a href={paypalUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">PayPal</a>}
+          {customFundUrl && <a href={customFundUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">{item.fund_custom_label || 'Contribute'}</a>}
           {item.fund_zelle_handle && (
             <button
               onClick={async () => {

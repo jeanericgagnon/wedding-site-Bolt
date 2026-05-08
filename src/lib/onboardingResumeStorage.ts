@@ -1,16 +1,92 @@
 export const ONBOARDING_RESUME_HINT_STORAGE_KEY = 'dayoflove:onboarding-resume-hint';
 export const ONBOARDING_RESUME_INDEX_STORAGE_KEY = 'dayoflove:onboarding-resume-index';
 
+const ONBOARDING_RESUME_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+const MAX_ONBOARDING_RESUME_HINT_LENGTH = 80;
+
+interface OnboardingResumeHintEnvelope {
+  savedAtISO: string;
+  hint: string;
+}
+
+interface OnboardingResumeIndexEnvelope {
+  savedAtISO: string;
+  index: number;
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const buildHintEnvelope = (hint: string): OnboardingResumeHintEnvelope => ({
+  savedAtISO: new Date().toISOString(),
+  hint: normalizeResumeHint(hint) ?? '',
+});
+
+const buildIndexEnvelope = (index: number): OnboardingResumeIndexEnvelope => ({
+  savedAtISO: new Date().toISOString(),
+  index,
+});
+
+const isStaleResumeEnvelope = (savedAtISO: unknown): boolean => {
+  if (typeof savedAtISO !== 'string') return true;
+  const savedAt = new Date(savedAtISO).getTime();
+  return !Number.isFinite(savedAt) || Date.now() - savedAt > ONBOARDING_RESUME_RETENTION_MS;
+};
+
+const normalizeResumeHint = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim().slice(0, MAX_ONBOARDING_RESUME_HINT_LENGTH);
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const normalizeResumeIndex = (value: unknown): number | null => {
+  const parsedIndex = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsedIndex)
+    && Number.isInteger(parsedIndex)
+    && Number.isSafeInteger(parsedIndex)
+    && parsedIndex >= 0
+      ? parsedIndex
+      : null;
+};
+
+const readStoredHint = (raw: string): { hint: string | null; shouldMigrate: boolean } => {
+  if (raw.trim().startsWith('{')) {
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (!isRecord(parsed) || isStaleResumeEnvelope(parsed.savedAtISO)) return { hint: null, shouldMigrate: false };
+      return { hint: normalizeResumeHint(parsed.hint), shouldMigrate: false };
+    } catch {
+      return { hint: null, shouldMigrate: false };
+    }
+  }
+  const legacy = normalizeResumeHint(raw);
+  if (legacy) return { hint: legacy, shouldMigrate: true };
+  return { hint: null, shouldMigrate: false };
+};
+
+const readStoredIndex = (raw: string): { index: number | null; shouldMigrate: boolean } => {
+  const legacy = normalizeResumeIndex(raw);
+  if (legacy !== null) return { index: legacy, shouldMigrate: true };
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!isRecord(parsed) || isStaleResumeEnvelope(parsed.savedAtISO)) return { index: null, shouldMigrate: false };
+    return { index: normalizeResumeIndex(parsed.index), shouldMigrate: false };
+  } catch {
+    return { index: null, shouldMigrate: false };
+  }
+};
+
 export const writeOnboardingResumeHint = (value: string | null | undefined) => {
   if (typeof window === 'undefined') return;
 
   try {
-    const trimmed = value?.trim() ?? '';
+    const trimmed = normalizeResumeHint(value) ?? '';
     const existingValue = window.localStorage.getItem(ONBOARDING_RESUME_HINT_STORAGE_KEY);
 
     if (trimmed.length > 0) {
-      if (existingValue !== trimmed) {
-        window.localStorage.setItem(ONBOARDING_RESUME_HINT_STORAGE_KEY, trimmed);
+      const existingHint = existingValue ? readStoredHint(existingValue).hint : null;
+      if (existingHint !== trimmed) {
+        window.localStorage.setItem(ONBOARDING_RESUME_HINT_STORAGE_KEY, JSON.stringify(buildHintEnvelope(trimmed)));
       }
       return;
     }
@@ -32,33 +108,28 @@ export const readOnboardingResumeState = (): { hint: string | null; index: numbe
   try {
     const rawHint = window.localStorage.getItem(ONBOARDING_RESUME_HINT_STORAGE_KEY);
     const rawIndex = window.localStorage.getItem(ONBOARDING_RESUME_INDEX_STORAGE_KEY);
-    const hint = rawHint?.trim() ?? '';
-    const parsedIndex = rawIndex === null ? null : Number(rawIndex);
-    const index = parsedIndex !== null
-      && Number.isFinite(parsedIndex)
-      && Number.isInteger(parsedIndex)
-      && Number.isSafeInteger(parsedIndex)
-      && parsedIndex >= 0
-        ? parsedIndex
-        : null;
+    const storedHint = rawHint ? readStoredHint(rawHint) : { hint: null, shouldMigrate: false };
+    const storedIndex = rawIndex ? readStoredIndex(rawIndex) : { index: null, shouldMigrate: false };
 
-    if (hint !== rawHint) {
-      if (hint.length > 0) {
-        window.localStorage.setItem(ONBOARDING_RESUME_HINT_STORAGE_KEY, hint);
-      } else if (rawHint !== null) {
+    if (rawHint !== null) {
+      if (storedHint.hint) {
+        const nextHint = JSON.stringify(buildHintEnvelope(storedHint.hint));
+        if (storedHint.shouldMigrate || rawHint !== nextHint) window.localStorage.setItem(ONBOARDING_RESUME_HINT_STORAGE_KEY, nextHint);
+      } else {
         window.localStorage.removeItem(ONBOARDING_RESUME_HINT_STORAGE_KEY);
       }
     }
 
     if (rawIndex !== null) {
-      if (index === null) {
+      if (storedIndex.index === null) {
         window.localStorage.removeItem(ONBOARDING_RESUME_INDEX_STORAGE_KEY);
-      } else if (String(index) !== rawIndex) {
-        window.localStorage.setItem(ONBOARDING_RESUME_INDEX_STORAGE_KEY, String(index));
+      } else {
+        const nextIndex = JSON.stringify(buildIndexEnvelope(storedIndex.index));
+        if (storedIndex.shouldMigrate || rawIndex !== nextIndex) window.localStorage.setItem(ONBOARDING_RESUME_INDEX_STORAGE_KEY, nextIndex);
       }
     }
 
-    return { hint: hint.length > 0 ? hint : null, index };
+    return { hint: storedHint.hint, index: storedIndex.index };
   } catch {
     return { hint: null, index: null };
   }

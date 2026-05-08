@@ -16,7 +16,10 @@ describe('public gallery sanitizers', () => {
 
   it('hides internal-looking alt and caption text before public rendering', () => {
     expect(sanitizePublicGalleryText('Provider metadata token failed')).toBe('');
+    expect(sanitizePublicGalleryText('Google OAuth service_role api-key refresh failed')).toBe('');
     expect(sanitizePublicGalleryText('first dance')).toBe('first dance');
+    expect(sanitizePublicGalleryText('Head table flowers')).toBe('Head table flowers');
+    expect(sanitizePublicGalleryText('Editorial model pose')).toBe('Editorial model pose');
   });
 
   it('drops unsafe photos and preserves safe guest-facing image details', () => {
