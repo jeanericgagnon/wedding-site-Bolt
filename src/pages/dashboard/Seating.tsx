@@ -14,8 +14,6 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
-import { demoWeddingSite, demoGuests } from '../../lib/demoData';
-import { isAttendingRsvpStatus } from '../../lib/rsvpStatus';
 import { buildSeatingCateringHandoffReview, buildSeatingCateringPacket, cateringRowsToCsv } from '../../lib/seatingCateringExportReadiness';
 import { formatSeatingEventLabel } from './seatingEventDate';
 import { Card } from '../../components/ui/Card';
@@ -24,14 +22,11 @@ import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
 import { ConfirmDialog, type ConfirmDialogProps } from '../../components/ui/ConfirmDialog';
 import {
-  ItineraryEvent, SeatingEvent, SeatingTable, SeatingAssignment, EligibleGuest,
-  EventCounters, getWeddingSiteId, loadItineraryEvents, getOrCreateSeatingEvent,
-  loadTables, createTable, updateTable, deleteTable, loadAssignments,
-  assignGuestToTable, unassignGuest, resetSeating, getEligibleGuests,
-  getEventCounters, autoCreateTables, autoSeatGuests, exportSeatingCSV,
+  SeatingTable, SeatingAssignment, EligibleGuest,
+  createTable, updateTable, deleteTable,
+  assignGuestToTable, unassignGuest, resetSeating, autoCreateTables, autoSeatGuests, exportSeatingCSV,
   exportPlaceCardsCSV, downloadCSV, invalidateDriftedAssignments, refreshSeatingSession, setGuestCheckedIn,
-  SeatingLayoutVersion, loadSeatingVersions, createSeatingVersion, markSeatingVersionRestored,
-  deriveEventCountersFromGuests,
+  SeatingLayoutVersion, createSeatingVersion, markSeatingVersionRestored,
 } from './seating/seatingService';
 import {
   UNASSIGNED_DROPPABLE,
@@ -54,13 +49,11 @@ import {
   type TableShape,
 } from './seating/seatingDashboardUtils';
 import {
-  DEMO_ITINERARY_STORAGE_KEY,
-  loadDemoItineraryEventsFromStorage,
-  readDemoSeatingState,
   readSeatingVersions,
   writeDemoSeatingState,
   writeSeatingVersions,
 } from './seating/seatingDemoStorage';
+import { useSeatingDashboardData } from './seating/useSeatingDashboardData';
 import {
   GuestChip,
   TableCard,
@@ -68,21 +61,8 @@ import {
   UnassignedPool,
 } from './seating/SeatingDashboardComponents';
 
-const DEMO_EVENT_ID = 'demo-event-reception';
-const DEMO_SEATING_EVENT_ID = 'demo-seating-event';
-
 export const DashboardSeating: React.FC = () => {
   const { isDemoMode } = useAuth();
-  const [siteId, setSiteId] = useState<string | null>(null);
-  const [itineraryEvents, setItineraryEvents] = useState<ItineraryEvent[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [seatingEvent, setSeatingEvent] = useState<SeatingEvent | null>(null);
-  const [tables, setTables] = useState<SeatingTable[]>([]);
-  const [assignments, setAssignments] = useState<SeatingAssignment[]>([]);
-  const [allGuests, setAllGuests] = useState<EligibleGuest[]>([]);
-  const [counters, setCounters] = useState<EventCounters | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadingSeating, setLoadingSeating] = useState(false);
   const [addingTable, setAddingTable] = useState(false);
   const [editingTable, setEditingTable] = useState<SeatingTable | null>(null);
   const [activeGuest, setActiveGuest] = useState<EligibleGuest | null>(null);
@@ -90,7 +70,6 @@ export const DashboardSeating: React.FC = () => {
   const [showAutoTablesModal, setShowAutoTablesModal] = useState(false);
   const [autoCapacity, setAutoCapacity] = useState(8);
   const [seatingBusyAction, setSeatingBusyAction] = useState<'auto-create' | 'auto-seat' | 'reset' | null>(null);
-  const [invalidCount, setInvalidCount] = useState(0);
   const [checkInMode, setCheckInMode] = useState(false);
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<SeatingCheckInFilter>('not_arrived');
@@ -99,6 +78,29 @@ export const DashboardSeating: React.FC = () => {
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [seatPicker, setSeatPicker] = useState<{ tableId: string; seatIndex: number } | null>(null);
   const [seatPickerQuery, setSeatPickerQuery] = useState('');
+  const [canvasZoom, setCanvasZoom] = useState(1);
+  const [canvasFullscreen, setCanvasFullscreen] = useState(false);
+  const tableDragRef = useRef<{ id: string; startX: number; startY: number; originX: number; originY: number } | null>(null);
+  const { toast } = useToast();
+  const {
+    allGuests,
+    assignments,
+    counters,
+    invalidCount,
+    itineraryEvents,
+    loading,
+    loadingSeating,
+    loadSeatingData,
+    seatingEvent,
+    selectedEventId,
+    setAssignments,
+    setSelectedEventId,
+    setTables,
+    setVersions,
+    siteId,
+    tables,
+    versions,
+  } = useSeatingDashboardData({ isDemoMode, toast });
   const activeSeatAssignment = seatPicker ? assignments.find((assignment) => assignment.table_id === seatPicker.tableId && assignment.seat_index === seatPicker.seatIndex) ?? null : null;
   const activeSeatGuest = activeSeatAssignment ? allGuests.find((guest) => guest.id === activeSeatAssignment.guest_id) ?? null : null;
   const seatPickerOptions = seatPicker
@@ -110,11 +112,6 @@ export const DashboardSeating: React.FC = () => {
         query: seatPickerQuery,
       })
     : [];
-  const [canvasZoom, setCanvasZoom] = useState(1);
-  const [canvasFullscreen, setCanvasFullscreen] = useState(false);
-  const [versions, setVersions] = useState<SeatingLayoutVersion[]>([]);
-  const tableDragRef = useRef<{ id: string; startX: number; startY: number; originX: number; originY: number } | null>(null);
-  const { toast } = useToast();
   const [confirmDialog, setConfirmDialog] = useState<null | Omit<ConfirmDialogProps, 'open'>>(null);
   const requestConfirmation = (options: Pick<ConfirmDialogProps, 'title' | 'description' | 'confirmLabel' | 'tone'>) =>
     new Promise<boolean>((resolve) => {
@@ -134,159 +131,6 @@ export const DashboardSeating: React.FC = () => {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
-
-  useEffect(() => {
-    loadInitial();
-  }, []);
-
-  useEffect(() => {
-    if (!isDemoMode) return;
-
-    const syncDemoItinerary = () => {
-      const events = loadDemoItineraryEventsFromStorage();
-      setItineraryEvents(events);
-      setSelectedEventId((prev) => (prev && events.some((e) => e.id === prev) ? prev : events[0]?.id ?? null));
-    };
-
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === DEMO_ITINERARY_STORAGE_KEY) syncDemoItinerary();
-    };
-
-    const onFocus = () => syncDemoItinerary();
-
-    window.addEventListener('storage', onStorage);
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onFocus);
-
-    return () => {
-      window.removeEventListener('storage', onStorage);
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onFocus);
-    };
-  }, [isDemoMode]);
-
-  async function loadInitial() {
-    try {
-      if (isDemoMode) {
-        setSiteId(demoWeddingSite.id);
-
-        const usableEvents = loadDemoItineraryEventsFromStorage();
-        setItineraryEvents(usableEvents);
-        setSelectedEventId(usableEvents[0].id);
-        return;
-      }
-
-      const id = await getWeddingSiteId();
-      if (!id) return;
-      setSiteId(id);
-      const events = await loadItineraryEvents(id);
-      setItineraryEvents(events);
-      if (events.length > 0) {
-        const best = events.find(e =>
-          /reception|dinner|ceremony/i.test(e.event_name)
-        ) ?? events[0];
-        setSelectedEventId(best.id);
-      }
-    } catch {
-      toast('Couldn’t load events right now. Please try again.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!itineraryEvents.length) return;
-    if (!selectedEventId || !itineraryEvents.some(e => e.id === selectedEventId)) {
-      const fallback = itineraryEvents.find(e => /reception|dinner|ceremony/i.test(e.event_name)) ?? itineraryEvents[0];
-      setSelectedEventId(fallback.id);
-    }
-  }, [itineraryEvents, selectedEventId]);
-
-  useEffect(() => {
-    if (siteId && selectedEventId) {
-      loadSeatingData();
-    }
-  }, [siteId, selectedEventId]);
-
-  async function loadSeatingData() {
-    if (!siteId || !selectedEventId) return;
-    setLoadingSeating(true);
-    try {
-      if (isDemoMode) {
-        const se: SeatingEvent = {
-          id: DEMO_SEATING_EVENT_ID,
-          wedding_site_id: siteId,
-          itinerary_event_id: selectedEventId,
-          default_table_capacity: 8,
-          notes: '',
-          created_at: new Date().toISOString(),
-        };
-        setSeatingEvent(se);
-
-        const guestsData: EligibleGuest[] = demoGuests.map((g, idx) => {
-          const fullName = g.name || [g.first_name, g.last_name].filter(Boolean).join(' ') || `Guest ${idx + 1}`;
-          return {
-            id: g.id,
-            full_name: fullName,
-            email: g.email ?? null,
-            rsvp_status: g.rsvp_status,
-            household_id: null,
-            group_name: null,
-            is_attending: isAttendingRsvpStatus(g.rsvp_status),
-            is_invited_to_event: true,
-          };
-        });
-
-        const saved = readDemoSeatingState(selectedEventId);
-        setTables(saved.tables);
-        setAssignments(saved.assignments);
-        setAllGuests(guestsData);
-        setCounters(deriveEventCountersFromGuests(guestsData, saved.assignments));
-        setInvalidCount(0);
-        return;
-      }
-
-      const se = await getOrCreateSeatingEvent(siteId, selectedEventId);
-      setSeatingEvent(se);
-      const [tablesData, assignmentsData, guestsData] = await Promise.all([
-        loadTables(se.id),
-        loadAssignments(se.id),
-        getEligibleGuests(siteId, selectedEventId),
-      ]);
-      setTables(tablesData);
-      setAssignments(assignmentsData);
-      setAllGuests(guestsData);
-      const ctrs = await getEventCounters(siteId, selectedEventId, se.id);
-      setCounters(ctrs);
-      const invalid = assignmentsData.filter(a => !a.is_valid).length;
-      setInvalidCount(invalid);
-      try {
-        setVersions(await loadSeatingVersions(se.id));
-      } catch {
-        setVersions([]);
-      }
-    } catch {
-      toast('Couldn’t load seating data right now. Please try again.', 'error');
-    } finally {
-      setLoadingSeating(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!isDemoMode || !selectedEventId) return;
-    writeDemoSeatingState(selectedEventId, tables, assignments);
-  }, [isDemoMode, selectedEventId, tables, assignments]);
-
-  useEffect(() => {
-    if (!selectedEventId) {
-      setVersions([]);
-      return;
-    }
-    if (isDemoMode) {
-      setVersions(readSeatingVersions().filter((version) => version.itinerary_event_id === selectedEventId));
-    }
-  }, [selectedEventId]);
-
   const unassignedGuests = getUnassignedAttendingGuests(allGuests, assignments);
 
   function handleDragStart(event: DragStartEvent) {

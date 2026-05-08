@@ -612,6 +612,7 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/seating/seatingService.ts'), 'utf8');
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Seating.tsx'), 'utf8');
     const lookupPage = readFileSync(join(process.cwd(), 'src/pages/dashboard/SeatingLookup.tsx'), 'utf8');
+    const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/seating/useSeatingDashboardData.ts'), 'utf8');
 
     expect(source).toContain('const SEATING_EVENT_SELECT = ');
     expect(source).toContain('const SEATING_TABLE_SELECT = ');
@@ -640,9 +641,22 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain(".from('seating_assignments')\n    .upsert(assignments, { onConflict: 'seating_event_id,guest_id' })\n    .select()");
     expect(source).not.toContain(".from('guests')\n    .select('*')");
     expect(source).not.toContain(".from('seating_layout_versions')\n    .select('*')");
+    expect(page).toContain('useSeatingDashboardData({ isDemoMode, toast })');
     expect(page).toContain('refreshSeatingSession()');
     expect(page).not.toContain("from '../../lib/supabase'");
     expect(page).not.toContain('supabase.auth.refreshSession()');
+    expect(page).not.toContain('async function loadInitial()');
+    expect(page).not.toContain('async function loadSeatingData()');
+    expect(dataHook).toContain('const id = await getWeddingSiteId();');
+    expect(dataHook).toContain('const events = await loadItineraryEvents(id);');
+    expect(dataHook).toContain('const se = await getOrCreateSeatingEvent(siteId, selectedEventId);');
+    expect(dataHook).toContain('loadTables(se.id)');
+    expect(dataHook).toContain('loadAssignments(se.id)');
+    expect(dataHook).toContain('getEligibleGuests(siteId, selectedEventId)');
+    expect(dataHook).toContain('await getEventCounters(siteId, selectedEventId, se.id)');
+    expect(dataHook).toContain('loadSeatingVersions(se.id)');
+    expect(dataHook).toContain('writeDemoSeatingState(selectedEventId, tables, assignments);');
+    expect(dataHook).not.toContain("from '../../../lib/supabase'");
     expect(lookupPage).not.toContain("from '../../lib/supabase'");
     expect(lookupPage).not.toContain("from '../../lib/activeSite'");
     expect(lookupPage).not.toContain("supabase.from(");

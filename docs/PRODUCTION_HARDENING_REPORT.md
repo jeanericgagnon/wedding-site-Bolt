@@ -5793,3 +5793,18 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 05:07 AM PT No-Deploy Seating Dashboard Data-Hook Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Seating.tsx` now routes the seating dashboard bootstrap and hydration lane through `src/pages/dashboard/seating/useSeatingDashboardData.ts`.
+  - That hook now owns signed-in and demo seating bootstrap, itinerary event hydration, event fallback selection, seating event load, tables/assignments/eligible guest load, counters load, invalid-assignment count derivation, seating version hydration, and demo seating writeback while the page keeps drag-and-drop behavior, table editing, exports, layout interactions, and seating actions.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useSeatingDashboardData({ isDemoMode, toast })`, checks that `useSeatingDashboardData.ts` owns the seating dashboard bootstrap/load seam, and rejects regaining the old inline `loadInitial()` / `loadSeatingData()` lifecycle in `Seating.tsx`.
+  - `src/pages/dashboard/Seating.tsx` dropped from 1609 lines to 1453 lines in this batch, while `src/pages/dashboard/seating/useSeatingDashboardData.ts` came in at 221 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
