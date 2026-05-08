@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { PLANNER_ROLE_OPTIONS, canManageGuests, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { formatGuestOpsDate, formatGuestOpsDateTime, formatGuestOpsRelativeTime, getGuestOpsTimestamp } from './guestOpsTime';
 import { formatGuestEventDate } from './guestEventDate';
@@ -22,7 +21,6 @@ import {
 import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { extractDietaryNote } from '../../lib/dietaryNotes';
 import { GUEST_IMPORT_MAX_FILE_BYTES, GUEST_IMPORT_MAX_ROWS, buildDefaultCsvFieldMap, buildGuestImportPreview, isCsvNameMappingValid, readGuestImportRows, type CsvFieldMap } from '../../lib/guestImportParser';
-import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Button, Badge, Input, Select, Textarea } from '../../components/ui';
 import { Download, UserPlus, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, CalendarDays, ChevronRight, Loader2, ChevronDown, Trash2, ExternalLink, Eye } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -43,15 +41,9 @@ import {
   parseRsvpEventSelections,
   summarizeAuditEntry,
 } from './guests/guestDisplayUtils';
-import { GuestDashboardHeader } from './guests/GuestDashboardHeader';
-import { GuestDashboardContent } from './guests/GuestDashboardContent';
 import { GuestDashboardOverlays } from './guests/GuestDashboardOverlays';
 import { GuestDashboardOpsView } from './guests/GuestDashboardOpsView';
-import { GuestDashboardWorkspace } from './guests/GuestDashboardWorkspace';
-import { GuestOpsSummaryPanel } from './guests/GuestOpsSummaryPanel';
-import { GuestRsvpConflictPanels } from './guests/GuestRsvpConflictPanels';
-import { GuestRsvpSettingsView } from './guests/GuestRsvpSettingsView';
-import { GuestSnapshotInsightsPanel } from './guests/GuestSnapshotInsightsPanel';
+import { GuestDashboardRouteView } from './guests/GuestDashboardRouteView';
 import {
   type Guest,
   type GuestAuditEntry,
@@ -2152,44 +2144,6 @@ const handleSendBulkInvitations = async () => {
 
   const dryRunRecipientPreview = reminderCandidates.slice(0, 8).map((g) => (g.first_name || g.last_name) ? `${g.first_name ?? ""} ${g.last_name ?? ""}`.trim() : g.name);
 
-
-  if (loading) {
-    return (
-      <DashboardLayout currentPage="guests">
-        <div className="max-w-[1100px] mx-auto">
-          <DashboardStateBlock title="Loading guests…" description="Preparing your guest list and RSVP status." />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (guestsTab === 'rsvp-config') {
-    return (
-      <GuestRsvpSettingsView
-        recommendedRsvpAccessMode={recommendedRsvpAccessMode}
-        rsvpAccessModePlan={rsvpAccessModePlan}
-        rsvpAuditFeed={rsvpAuditFeed}
-        rsvpAuditLoading={rsvpAuditLoading}
-        rsvpAutoSaveState={rsvpAutoSaveState}
-        rsvpConfigSaving={rsvpConfigSaving}
-        rsvpMealEnabled={rsvpMealEnabled}
-        rsvpMealOptions={rsvpMealOptions}
-        rsvpQuestionTemplateCoverage={rsvpQuestionTemplateCoverage}
-        rsvpQuestions={rsvpQuestions}
-        rsvpSetupChecklist={rsvpSetupChecklist}
-        stats={stats}
-        onAddRsvpQuestionTemplate={addRsvpQuestionTemplate}
-        onSaveRsvpConfig={handleSaveRsvpConfig}
-        onSetConfirmDialog={setConfirmDialog}
-        onSetGuestsTab={setGuestsTab}
-        onSetRsvpConfigDirty={setRsvpConfigDirty}
-        onSetRsvpMealEnabled={setRsvpMealEnabled}
-        onSetRsvpMealOptions={setRsvpMealOptions}
-        onSetRsvpQuestions={setRsvpQuestions}
-      />
-    );
-  }
-
   const canEditGuests = !isGuestsReadOnly;
   const guestEngagementProps = {
     activeSegmentLabel: segmentLabelMap[filterStatus] || filterStatus,
@@ -2451,11 +2405,39 @@ const handleSendBulkInvitations = async () => {
     opsSummaryProps: guestOpsSummaryProps,
     workspaceProps: guestWorkspaceProps,
   };
+  const guestDashboardOpsViewProps = {
+    contentProps: guestDashboardContentProps,
+    headerProps: guestHeaderProps,
+  };
+  const guestRsvpConfigViewProps = {
+    recommendedRsvpAccessMode,
+    rsvpAccessModePlan,
+    rsvpAuditFeed,
+    rsvpAuditLoading,
+    rsvpAutoSaveState,
+    rsvpConfigSaving,
+    rsvpMealEnabled,
+    rsvpMealOptions,
+    rsvpQuestionTemplateCoverage,
+    rsvpQuestions,
+    rsvpSetupChecklist,
+    stats,
+    onAddRsvpQuestionTemplate: addRsvpQuestionTemplate,
+    onSaveRsvpConfig: handleSaveRsvpConfig,
+    onSetConfirmDialog: setConfirmDialog,
+    onSetGuestsTab: setGuestsTab,
+    onSetRsvpConfigDirty: setRsvpConfigDirty,
+    onSetRsvpMealEnabled: setRsvpMealEnabled,
+    onSetRsvpMealOptions: setRsvpMealOptions,
+    onSetRsvpQuestions: setRsvpQuestions,
+  };
 
   return (
-    <GuestDashboardOpsView
-      contentProps={guestDashboardContentProps}
-      headerProps={guestHeaderProps}
+    <GuestDashboardRouteView
+      loading={loading}
+      opsViewProps={guestDashboardOpsViewProps}
+      rsvpConfigViewProps={guestRsvpConfigViewProps}
+      showRsvpConfig={guestsTab === 'rsvp-config'}
     >
       <GuestDashboardOverlays
         assistedRsvpGuest={assistedRsvpGuest}
@@ -2537,6 +2519,6 @@ const handleSendBulkInvitations = async () => {
         onToast={toast}
         onToggleEventInvite={handleToggleEventInvite}
       />
-    </GuestDashboardOpsView>
+    </GuestDashboardRouteView>
   );
 };

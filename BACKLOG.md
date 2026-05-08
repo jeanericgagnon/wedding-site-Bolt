@@ -1953,3 +1953,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins `GuestDashboardOpsView` and rejects regaining the old inline guest ops-page shell in `Guests.tsx`.
   - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts` (46/46), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest dashboard without changing guest operations behavior. No deploy was run.
+- 2026-05-07 8:55 PM PT - No-deploy Guest dashboard route-view extraction:
+  - Resolved in this batch: moved the guest dashboard route/branch shell out of `src/pages/dashboard/Guests.tsx` and behind `src/pages/dashboard/guests/GuestDashboardRouteView.tsx`.
+  - Data-boundary hardening: `Guests.tsx` now routes the loading view, RSVP-settings branch, and ops-mode branch through one higher-level route shell instead of directly switching among `DashboardLayout`, `DashboardStateBlock`, `GuestRsvpSettingsView`, and `GuestDashboardOpsView`.
+  - File-size movement: `Guests.tsx` dropped from 2542 lines to 2524 lines in this continuation batch.
+  - No feature loss: guest loading state, RSVP settings editing, ops-mode dashboard content, and overlays preserve the current behavior while shrinking page-owned route composition.
+  - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins `GuestDashboardRouteView` and rejects regaining the old inline loading/RSVP/ops branch seam in `Guests.tsx`.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts` (46/46), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest dashboard without changing guest operations behavior. No deploy was run.
