@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 9:19 AM PT - No-Deploy Itinerary Dashboard Derived-State Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Itinerary.tsx` no longer owns the inline timeline math, time-formatting, map-link, conflict detection, and shift-preview derived-state slab.
+  - Added `src/pages/dashboard/buildItineraryDashboardDerivedState.ts` so the new helper now owns `analyzeTimeline(...)`, sorted shift preview shaping, event conflict detection, map URL generation, and itinerary time formatting while the route keeps data loading, action hooks, form state, and render composition.
+  - Itinerary boundary tests now pin `buildItineraryDashboardDerivedState({ ... })`, check that the new helper owns the timeline/conflict formatting seam, and reject regaining the old inline `findConflicts(...)`, `formatTime(...)`, `getMapUrl(...)`, and timeline insight derivation block in `Itinerary.tsx`.
+- Acceptance/proof target:
+  - Focused itinerary/dashboard boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 9:13 AM PT - No-Deploy Itinerary Dashboard Data-Hook Extraction
 
 - Status: `PARTIAL`

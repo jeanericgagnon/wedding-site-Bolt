@@ -7,6 +7,22 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-08 09:19 AM PT No-Deploy Itinerary Dashboard Derived-State Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Itinerary.tsx` now routes its timeline math, event conflict detection, map-link generation, time formatting, and shift-preview derivation through `src/pages/dashboard/buildItineraryDashboardDerivedState.ts`.
+  - That new helper now owns `analyzeTimeline(...)`, sorted shift preview shaping, event conflict detection, itinerary time formatting, and map URL generation while the route keeps data loading, action hooks, form state, and render composition.
+  - Itinerary boundary tests now pin `buildItineraryDashboardDerivedState({ ... })`, check that `buildItineraryDashboardDerivedState.ts` owns the timeline/conflict formatting seam, and reject regaining the old inline `findConflicts(...)`, `formatTime(...)`, `getMapUrl(...)`, and timeline insight block in `Itinerary.tsx`.
+  - `src/pages/dashboard/Itinerary.tsx` dropped from 624 lines to 571 lines in this batch, while `src/pages/dashboard/buildItineraryDashboardDerivedState.ts` came in at 87 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 09:13 AM PT No-Deploy Itinerary Dashboard Data-Hook Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:
