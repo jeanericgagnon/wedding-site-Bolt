@@ -4233,3 +4233,19 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the oversized-file and page-boundary cleanup in the guest dashboard without changing guest overlay behavior. No deploy was run.
+
+## 2026-05-07 9:09 PM PT No-Deploy Message Dashboard View Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Messages.tsx` now routes its non-loading dashboard body through `src/pages/dashboard/messages/MessageDashboardView.tsx`.
+  - That higher-level shell now owns the `DashboardLayout` composition seam for the page hero, planner banner, sending-details toggle, composer/saved-template grid, reach snapshot, starting points, history panel, detail modal, and toast stack.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `MessageDashboardView` and rejects regaining the old inline message dashboard card/modal/toast composition in `Messages.tsx`.
+  - `src/pages/dashboard/Messages.tsx` dropped from 1755 lines to 1689 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the oversized-file and page-boundary cleanup in the messages dashboard without changing message delivery behavior. No deploy was run.

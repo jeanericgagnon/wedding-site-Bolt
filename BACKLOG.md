@@ -1977,3 +1977,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins the `buildGuestDashboardOverlayProps({` helper seam so the page does not quietly regrow the old inline overlay prop block.
   - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts` (46/46), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest dashboard without changing guest operations behavior. No deploy was run.
+- 2026-05-07 9:09 PM PT - No-deploy Message dashboard-view extraction:
+  - Resolved in this batch: moved the non-loading message dashboard body out of `src/pages/dashboard/Messages.tsx` and behind `src/pages/dashboard/messages/MessageDashboardView.tsx`.
+  - Data-boundary hardening: `Messages.tsx` now routes the hero, planner banner, sending-details toggle, composer/saved-template grid, reach snapshot, starting points, history panel, detail modal, and toast stack through one higher-level messages shell instead of owning that large JSX slab inline.
+  - File-size movement: `Messages.tsx` dropped from 1755 lines to 1689 lines in this continuation batch.
+  - No feature loss: scheduled-send controls, role switching, composer actions, history filters, retry/reschedule actions, detail modal behavior, and toast rendering preserve the current behavior while shrinking page-owned composition.
+  - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins `MessageDashboardView` and rejects regaining the old inline message dashboard card/modal/toast composition in `Messages.tsx`.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageService.boundary.test.ts` (24/24), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the messages dashboard without changing message delivery behavior. No deploy was run.

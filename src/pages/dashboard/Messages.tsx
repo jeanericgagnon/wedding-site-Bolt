@@ -105,6 +105,7 @@ import {
   MessageStartingPointsCard,
   ToastList,
 } from './messages/MessageDashboardComponents';
+import { MessageDashboardView } from './messages/MessageDashboardView';
 import { MessageDetailModal } from './messages/MessageDetailModal';
 
 export const DashboardMessages: React.FC = () => {
@@ -1534,222 +1535,155 @@ export const DashboardMessages: React.FC = () => {
     );
   }
 
+  const messageComposerProps = {
+    activeRecipients,
+    applyComposerTemplate,
+    audienceOptions,
+    audienceReachability,
+    buyingPack,
+    canCompose,
+    emailCapacityAfterSend,
+    emailCapacityEnough,
+    formData,
+    languagePreviews,
+    onBuySmsPack: (pack: 'sms_100' | 'sms_500' | 'sms_1000') => { void handleBuySmsPack(pack); },
+    onSaveCurrentComposerAsTemplate: saveCurrentComposerAsTemplate,
+    onSetFormData: setFormData,
+    onSubmit: (e: React.FormEvent) => { void handleSendMessage(e, false); },
+    onSubmitDraft: (e: React.FormEvent) => { void handleSendMessage(e, true); },
+    onToggleRecipientPreview: () => setShowRecipientPreview(!showRecipientPreview),
+    previewRecipients,
+    recipientsWithEmail,
+    recipientsWithSmsConsent,
+    remainingEmailRecipients,
+    selectedAudienceCount: selectedAudience?.count || 0,
+    selectedAudienceDetail,
+    selectedScheduleIsPast,
+    selectedTemplateDetail: selectedTemplate.detail,
+    sending,
+    showRecipientPreview,
+    smsCredits,
+    smsCreditsNeeded,
+    smsCreditsSufficient,
+    smsProviderEnabled,
+    smsSegmentCount,
+    unreachableRecipients,
+  };
+  const messageSendingDetailsProps = {
+    buyingPack,
+    coupleEmail: weddingSite?.couple_email,
+    hardEmailCap: HARD_EMAIL_CAP,
+    onBuySmsPack: (pack: 'sms_100' | 'sms_500' | 'sms_1000') => { void handleBuySmsPack(pack); },
+    remainingEmailRecipients,
+    smsCredits,
+    smsExpiringSoon,
+    smsProviderEnabled,
+    smsTransactions,
+    usedEmailRecipients,
+  };
+  const messageSavedTemplatesProps = {
+    audienceOptions,
+    savedTemplates,
+    onApplySavedTemplate: applySavedTemplate,
+    onDeleteSavedTemplate: deleteSavedTemplate,
+  };
+  const messageReachSnapshotProps = {
+    canCompose,
+    guests,
+    knownPhotoLinksCount,
+    messages,
+    onApplyComposerTemplate: applyComposerTemplate,
+    onApplyDayOfAlertPreset: applyDayOfAlertPreset,
+    onApplySaveTheDatePreset: applySaveTheDatePreset,
+    onNavigatePhotos: () => navigate('/dashboard/photos'),
+    onQuickCreateSaveTheDateCampaign: () => { void quickCreateSaveTheDateCampaign(); },
+  };
+  const messageStartingPointsProps = {
+    canCompose,
+    onApplyComposerTemplate: applyComposerTemplate,
+  };
+  const messageHistoryProps = {
+    activeCampaignLatestMessage,
+    activeCampaignThread,
+    audienceBreakdown,
+    campaignStatusSummary,
+    campaignThreads,
+    canCompose,
+    channelBreakdown,
+    deliveries,
+    deliveryHealth,
+    filteredHistory,
+    historyAudienceFilter,
+    historyCampaignFilter,
+    historyChannelFilter,
+    historyDeliveryFilter,
+    historySearch,
+    historyStatusCounts,
+    historyStatusFilter,
+    messages,
+    providerTelemetry,
+    retryCandidates,
+    retryingMessageId,
+    reviewCandidates,
+    onCancelSchedule: (message: Message) => { void handleCancelSchedule(message); },
+    onClearThreadFilter: () => { setHistoryCampaignFilter(''); setHistorySearch(''); },
+    onDuplicateLatest: (message: Message) => loadMessageIntoComposer(message, 'duplicate'),
+    onEditLatest: (message: Message) => loadMessageIntoComposer(message, 'edit'),
+    onRescheduleMessage: (message: Message) => {
+      loadMessageIntoComposer(message, 'edit');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    onRetry: (message: Message) => { void handleRetry(message); },
+    onScheduleFollowUp: startScheduledFollowUpFromCampaignThread,
+    onSelectThread: (threadName: string) => {
+      setHistoryCampaignFilter(threadName);
+      setHistorySearch('');
+    },
+    onSendScheduledNow: (message: Message) => { void handleSendScheduledNow(message); },
+    onSetHistoryAudienceFilter: setHistoryAudienceFilter,
+    onSetHistoryCampaignFilter: setHistoryCampaignFilter,
+    onSetHistoryChannelFilter: setHistoryChannelFilter,
+    onSetHistoryDeliveryFilter: setHistoryDeliveryFilter,
+    onSetHistorySearch: setHistorySearch,
+    onSetHistoryStatusFilter: setHistoryStatusFilter,
+    onStartFollowUp: startFollowUpFromCampaignThread,
+    onViewMessage: setViewingMessage,
+  };
+  const messageDetailModalProps = viewingMessage
+    ? {
+        message: viewingMessage,
+        deliveries,
+        canManageCampaigns: canCompose,
+        onClose: () => setViewingMessage(null),
+        onRetry: handleRetry,
+        onSendScheduledNow: handleSendScheduledNow,
+        onReschedule: handleRescheduleMessage,
+        onCancelSchedule: handleCancelSchedule,
+        onLoadIntoComposer: loadMessageIntoComposer,
+      }
+    : null;
+
   return (
-    <DashboardLayout currentPage="messages">
-      <div className="max-w-[1100px] mx-auto space-y-5">
-        <DashboardPageHero
-          eyebrow="Messages"
-          title="Send guest updates without making them feel automated."
-          description="Pick the moment, confirm the audience, edit the words, and choose when it should go out. Text sending stays locked until setup is ready."
-          stats={[
-            { label: 'Scheduled', value: deliveryStats.scheduled, detail: 'waiting to send' },
-            { label: 'Guests reached', value: deliveryStats.targeted, detail: 'across sent updates' },
-            { label: 'Delivery', value: `${deliveryStats.rate}%`, detail: 'latest delivery health' },
-          ]}
-          actions={
-            <div className="flex flex-col gap-3 md:items-end">
-              <Button
-                variant={deliveryHealth.overdueScheduled > 0 ? 'primary' : 'outline'}
-                size="sm"
-                onClick={handleRunDueScheduledMessages}
-                disabled={processingScheduled || !canCompose}
-              >
-                {processingScheduled
-                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Running due sends…</>
-                  : <><Clock className="w-4 h-4 mr-2" />{deliveryHealth.overdueScheduled > 0 ? `Run ${deliveryHealth.overdueScheduled} due scheduled send${deliveryHealth.overdueScheduled !== 1 ? 's' : ''}` : 'Run due scheduled sends'}</>}
-              </Button>
-              <div>
-                <label className="block text-xs text-text-tertiary mb-1">View as</label>
-                <select
-                  value={messagesRole}
-                  onChange={(e) => setMessagesRole(e.target.value as PlannerAccessRole)}
-                  disabled={activeSiteRole !== 'owner'}
-                  className="px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary"
-                >
-                  <option value="owner">Couple owner</option>
-                  <option value="planner">Planner</option>
-                  <option value="coordinator">Coordinator</option>
-                  <option value="viewer">Read only</option>
-                </select>
-                {activeSiteRole !== 'owner' && (
-                  <p className="mt-1 text-[11px] text-text-tertiary">Access view follows your actual collaborator role on this site.</p>
-                )}
-              </div>
-            </div>
-          }
-        >
-          <div className="inline-flex flex-wrap items-center gap-2 text-xs text-text-tertiary">
-            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Email drafts</span>
-            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Text drafts locked until setup</span>
-            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Editable before send</span>
-          </div>
-        </DashboardPageHero>
-
-        {messagesRole === 'planner' && (
-          <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
-            Planner view is on. This view stays focused on guest communications, reminders, and day-of updates.
-          </div>
-        )}
-
-        <MessageGuestFlowCard />
-
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={() => setShowSendingDetails((value) => !value)}
-            className="inline-flex items-center rounded-lg border border-border-subtle bg-white px-4 py-2 text-sm font-medium text-text-secondary transition hover:border-primary/30 hover:text-primary"
-          >
-            {showSendingDetails ? 'Hide sending details' : 'Show sending details'}
-          </button>
-        </div>
-
-        {showSendingDetails && (
-          <MessageSendingDetailsPanel
-            buyingPack={buyingPack}
-            coupleEmail={weddingSite?.couple_email}
-            hardEmailCap={HARD_EMAIL_CAP}
-            onBuySmsPack={(pack) => { void handleBuySmsPack(pack); }}
-            remainingEmailRecipients={remainingEmailRecipients}
-            smsCredits={smsCredits}
-            smsExpiringSoon={smsExpiringSoon}
-            smsProviderEnabled={smsProviderEnabled}
-            smsTransactions={smsTransactions}
-            usedEmailRecipients={usedEmailRecipients}
-          />
-        )}
-
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <MessageComposerCard
-              activeRecipients={activeRecipients}
-              applyComposerTemplate={applyComposerTemplate}
-              audienceOptions={audienceOptions}
-              audienceReachability={audienceReachability}
-              buyingPack={buyingPack}
-              canCompose={canCompose}
-              emailCapacityAfterSend={emailCapacityAfterSend}
-              emailCapacityEnough={emailCapacityEnough}
-              formData={formData}
-              languagePreviews={languagePreviews}
-              onBuySmsPack={(pack) => { void handleBuySmsPack(pack); }}
-              onSaveCurrentComposerAsTemplate={saveCurrentComposerAsTemplate}
-              onSetFormData={setFormData}
-              onSubmit={(e) => { void handleSendMessage(e, false); }}
-              onSubmitDraft={(e) => { void handleSendMessage(e, true); }}
-              onToggleRecipientPreview={() => setShowRecipientPreview(!showRecipientPreview)}
-              previewRecipients={previewRecipients}
-              recipientsWithEmail={recipientsWithEmail}
-              recipientsWithSmsConsent={recipientsWithSmsConsent}
-              remainingEmailRecipients={remainingEmailRecipients}
-              selectedAudienceCount={selectedAudience?.count || 0}
-              selectedAudienceDetail={selectedAudienceDetail}
-              selectedScheduleIsPast={selectedScheduleIsPast}
-              selectedTemplateDetail={selectedTemplate.detail}
-              sending={sending}
-              showRecipientPreview={showRecipientPreview}
-              smsCredits={smsCredits}
-              smsCreditsNeeded={smsCreditsNeeded}
-              smsCreditsSufficient={smsCreditsSufficient}
-              smsProviderEnabled={smsProviderEnabled}
-              smsSegmentCount={smsSegmentCount}
-              unreachableRecipients={unreachableRecipients}
-            />
-
-            <MessageSavedTemplatesCard
-              audienceOptions={audienceOptions}
-              savedTemplates={savedTemplates}
-              onApplySavedTemplate={applySavedTemplate}
-              onDeleteSavedTemplate={deleteSavedTemplate}
-            />
-          </div>
-
-          <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24 self-start">
-            {showSendingDetails && (
-              <MessageReachSnapshotCard
-                canCompose={canCompose}
-                guests={guests}
-                knownPhotoLinksCount={knownPhotoLinksCount}
-                messages={messages}
-                onApplyComposerTemplate={applyComposerTemplate}
-                onApplyDayOfAlertPreset={applyDayOfAlertPreset}
-                onApplySaveTheDatePreset={applySaveTheDatePreset}
-                onNavigatePhotos={() => navigate('/dashboard/photos')}
-                onQuickCreateSaveTheDateCampaign={() => { void quickCreateSaveTheDateCampaign(); }}
-              />
-            )}
-
-            <MessageStartingPointsCard
-              canCompose={canCompose}
-              onApplyComposerTemplate={applyComposerTemplate}
-            />
-          </div>
-        </div>
-
-        <MessageHistoryCard
-          activeCampaignLatestMessage={activeCampaignLatestMessage}
-          activeCampaignThread={activeCampaignThread}
-          audienceBreakdown={audienceBreakdown}
-          campaignStatusSummary={campaignStatusSummary}
-          campaignThreads={campaignThreads}
-          canCompose={canCompose}
-          channelBreakdown={channelBreakdown}
-          deliveries={deliveries}
-          deliveryHealth={deliveryHealth}
-          filteredHistory={filteredHistory}
-          historyAudienceFilter={historyAudienceFilter}
-          historyCampaignFilter={historyCampaignFilter}
-          historyChannelFilter={historyChannelFilter}
-          historyDeliveryFilter={historyDeliveryFilter}
-          historySearch={historySearch}
-          historyStatusCounts={historyStatusCounts}
-          historyStatusFilter={historyStatusFilter}
-          messages={messages}
-          providerTelemetry={providerTelemetry}
-          retryCandidates={retryCandidates}
-          retryingMessageId={retryingMessageId}
-          reviewCandidates={reviewCandidates}
-          onCancelSchedule={(message) => { void handleCancelSchedule(message); }}
-          onClearThreadFilter={() => { setHistoryCampaignFilter(''); setHistorySearch(''); }}
-          onDuplicateLatest={(message) => loadMessageIntoComposer(message, 'duplicate')}
-          onEditLatest={(message) => loadMessageIntoComposer(message, 'edit')}
-          onRescheduleMessage={(message) => {
-            loadMessageIntoComposer(message, 'edit');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          onRetry={(message) => { void handleRetry(message); }}
-          onScheduleFollowUp={startScheduledFollowUpFromCampaignThread}
-          onSelectThread={(threadName) => {
-            setHistoryCampaignFilter(threadName);
-            setHistorySearch('');
-          }}
-          onSendScheduledNow={(message) => { void handleSendScheduledNow(message); }}
-          onSetHistoryAudienceFilter={setHistoryAudienceFilter}
-          onSetHistoryCampaignFilter={setHistoryCampaignFilter}
-          onSetHistoryChannelFilter={setHistoryChannelFilter}
-          onSetHistoryDeliveryFilter={setHistoryDeliveryFilter}
-          onSetHistorySearch={setHistorySearch}
-          onSetHistoryStatusFilter={setHistoryStatusFilter}
-          onStartFollowUp={startFollowUpFromCampaignThread}
-          onViewMessage={setViewingMessage}
-        />
-      </div>
-
-      {viewingMessage && (
-        <MessageDetailModal
-          message={viewingMessage}
-          deliveries={deliveries}
-          canManageCampaigns={canCompose}
-          onClose={() => setViewingMessage(null)}
-          onRetry={handleRetry}
-          onSendScheduledNow={handleSendScheduledNow}
-          onReschedule={handleRescheduleMessage}
-          onCancelSchedule={handleCancelSchedule}
-          onLoadIntoComposer={loadMessageIntoComposer}
-        />
-      )}
-
-      <ToastList toasts={toasts} />
-    </DashboardLayout>
+    <MessageDashboardView
+      activeSiteRole={activeSiteRole}
+      composerProps={messageComposerProps}
+      deliveryRate={deliveryStats.rate}
+      detailModalProps={messageDetailModalProps}
+      guestsReached={deliveryStats.targeted}
+      historyProps={messageHistoryProps}
+      messagesRole={messagesRole}
+      onRunDueScheduledMessages={handleRunDueScheduledMessages}
+      onSetMessagesRole={setMessagesRole}
+      overdueScheduled={deliveryHealth.overdueScheduled}
+      processingScheduled={processingScheduled}
+      reachSnapshotProps={messageReachSnapshotProps}
+      savedTemplatesProps={messageSavedTemplatesProps}
+      scheduledCount={deliveryStats.scheduled}
+      sendingDetailsProps={messageSendingDetailsProps}
+      showSendingDetails={showSendingDetails}
+      startingPointsProps={messageStartingPointsProps}
+      toasts={toasts}
+      toggleSendingDetails={() => setShowSendingDetails((value) => !value)}
+    />
   );
 };
