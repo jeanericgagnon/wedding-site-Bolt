@@ -9763,3 +9763,19 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-08 01:50 AM PT No-Deploy Message Dashboard Data Hook Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Messages.tsx` now routes active-site resolution, message history loading, guest loading, delivery loading, itinerary audience loading, and SMS credit preview loading through `src/pages/dashboard/messages/useMessageDashboardData.ts`.
+  - That hook now owns the repeated demo/live fetch choreography, missing-table fallback handling, itinerary segment hydration, and customer-safe load error behavior while the page keeps the compose state, derived audience math, and high-level dashboard composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useMessageDashboardData({ ... })` plus its `loadMessagesActiveSite(userId)`, `loadDashboardMessages(weddingSite.id)`, `loadMessageDeliveries(messageIds)`, `loadMessageItineraryAudience(weddingSite.id)`, and `loadSmsCreditPreview(weddingSite.id, cutoff)` contract.
+  - `src/pages/dashboard/Messages.tsx` dropped from 765 lines to 565 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

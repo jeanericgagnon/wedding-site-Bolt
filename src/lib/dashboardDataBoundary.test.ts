@@ -6,6 +6,7 @@ describe('dashboard data boundary guards', () => {
   it('does not load message dashboard rows with select star', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Messages.tsx'), 'utf8');
     const serviceSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/messageService.ts'), 'utf8');
+    const dataHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDashboardData.ts'), 'utf8');
     const deliveryHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDeliveryActions.ts'), 'utf8');
     const composeHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageComposeActions.ts'), 'utf8');
     const continuityHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDashboardContinuitySync.ts'), 'utf8');
@@ -23,13 +24,13 @@ describe('dashboard data boundary guards', () => {
     expect(deliveryHookSource).toContain('await triggerDashboardBulkSend(message.id)');
     expect(deliveryHookSource).toContain('const result = await triggerScheduledMessageDispatch(10)');
     expect(source).toContain('<MessageDashboardRouteView');
+    expect(source).toContain('useMessageDashboardData({');
     expect(source).toContain('useMessageDeliveryActions({');
     expect(source).toContain('useMessageComposeActions({');
     expect(source).toContain('useMessageDashboardContinuitySync({');
     expect(source).toContain('useMessageComposerDraftActions({');
     expect(source).toContain('useMessageComposerHistoryActions({');
     expect(source).toContain('useMessageDashboardPrefillSync({');
-    expect(source).toContain('loadDashboardMessages(weddingSite.id)');
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).not.toContain("supabase.from('messages').insert(payload)");
     expect(source).not.toContain('supabase.auth.getSession()');
@@ -56,6 +57,12 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('MessageComposerSchedulePanel');
     expect(source).not.toContain('MessageComposerRecipientPreviewPanel');
     expect(source).not.toContain('MessageComposerPreflightPanel');
+    expect(dataHookSource).toContain('const { activeSite, weddingSite: loadedWeddingSite } = await loadMessagesActiveSite(userId);');
+    expect(dataHookSource).toContain('setMessages(await loadDashboardMessages(weddingSite.id));');
+    expect(dataHookSource).toContain('const data = await loadMessageDeliveries(messageIds);');
+    expect(dataHookSource).toContain('const { options, guestIdsByEvent } = await loadMessageItineraryAudience(weddingSite.id);');
+    expect(dataHookSource).toContain('const { expiringSoon, transactions } = await loadSmsCreditPreview(weddingSite.id, cutoff);');
+    expect(dataHookSource).not.toContain("from '../../lib/supabase'");
     expect(composeHookSource).toContain('insertDashboardMessageMinimal({');
     expect(composeHookSource).toContain('await updateDashboardMessage(editingMessageId, {');
     expect(composeHookSource).toContain('const result = await triggerDashboardBulkSend(inserted.id)');
