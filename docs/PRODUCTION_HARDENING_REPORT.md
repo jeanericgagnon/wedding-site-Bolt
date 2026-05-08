@@ -4345,3 +4345,19 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the oversized-file and page-boundary cleanup in the planning dashboard without changing planning behavior. No deploy was run.
+
+## 2026-05-07 9:13 PM PT No-Deploy Site View Route Shell Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/SiteView.tsx` now routes its loading/privacy/error/readiness branch selection through `src/pages/SiteViewRouteView.tsx`.
+  - That higher-level route shell now owns the loading spinner, coming-soon view, password gate, invite-only gate, error state, fallback-not-ready state, and live-content handoff.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` now pins `SiteViewRouteView` and rejects regaining the old inline loading/error copy in `SiteView.tsx`.
+  - `src/pages/SiteView.tsx` dropped from 1055 lines to 1028 lines in this batch, while `src/pages/SiteViewRouteView.tsx` came in at 57 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/publicGuestSurfaceBoundary.test.ts src/pages/siteViewService.test.ts src/pages/SiteView.test.ts src/lib/publicSiteAccess.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the oversized-file and public-surface route cleanup in `SiteView` without changing guest-facing behavior. No deploy was run.

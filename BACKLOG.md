@@ -2033,3 +2033,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins `PlanningDashboardShell` and rejects regaining the old inline planning layout and hero shell in `Planning.tsx`.
   - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/planning/planningService.test.ts` (21/21), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the planning dashboard without changing planning behavior. No deploy was run.
+- 2026-05-07 9:13 PM PT - No-deploy Site view route-shell extraction:
+  - Resolved in this batch: moved the public site view loading/privacy/error/readiness branch selection out of `src/pages/SiteView.tsx` and behind `src/pages/SiteViewRouteView.tsx`.
+  - Data-boundary hardening: `SiteView.tsx` now routes the loading spinner, coming-soon view, password gate, invite-only gate, error state, fallback-not-ready state, and final live content handoff through one higher-level route shell instead of owning that branch ladder inline.
+  - File-size movement: `SiteView.tsx` dropped from 1055 lines to 1028 lines in this continuation batch; the new route shell is 57 lines.
+  - No feature loss: builder renderer, DB page renderer, owner preview banner, privacy unlock flow, and guest-facing fallback states preserve the current behavior while shrinking page-owned route composition.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` now pins `SiteViewRouteView` and rejects regaining the old inline loading/error copy in `SiteView.tsx`.
+  - Validation passed: `npm test -- --run src/lib/publicGuestSurfaceBoundary.test.ts src/pages/siteViewService.test.ts src/pages/SiteView.test.ts src/lib/publicSiteAccess.test.ts` (15/15), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 oversized-file and public-surface route risk in `SiteView` without changing guest-facing behavior. No deploy was run.

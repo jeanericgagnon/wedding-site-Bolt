@@ -34,6 +34,7 @@ import {
 } from '../lib/publicAccessArtifacts';
 import { hasStoredGuestLanguagePreference } from '../lib/guestLanguagePreference';
 import { fetchPublicItineraryRows, hasLiveRegistryItems, type PublicItineraryRow } from './siteViewService';
+import { SiteViewRouteView } from './SiteViewRouteView';
 
 export function toIsoDateOrUndefined(value?: string | null): string | undefined {
   const trimmed = value?.trim();
@@ -934,51 +935,27 @@ export const SiteView: React.FC = () => {
     return () => { document.getElementById('dayof-noindex')?.remove(); };
   }, [hideFromSearch]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-text-secondary">Loading wedding site...</p>
-        </div>
+  const passwordGate = (
+    <PasswordGate
+      onSubmit={handlePasswordSubmit}
+      error={passwordGateError}
+      checking={passwordGateChecking}
+    />
+  );
+  const fallback = (
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="max-w-md w-full bg-surface border border-border-subtle rounded-lg p-6 text-center">
+        <p className="text-text-secondary">This wedding site is not ready to view yet.</p>
       </div>
-    );
-  }
+    </div>
+  );
 
-  if (isComingSoon) {
-    return (
-      <ComingSoonScreen />
-    );
-  }
-
-  if (privacyGate === 'password_required') {
-    return (
-      <PasswordGate
-        onSubmit={handlePasswordSubmit}
-        error={passwordGateError}
-        checking={passwordGateChecking}
-      />
-    );
-  }
-
-  if (privacyGate === 'invite_only') {
-    return <InviteOnlyGate />;
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="max-w-md w-full bg-surface border border-border-subtle rounded-lg p-6 text-center">
-          <AlertCircle className="w-14 h-14 text-error mx-auto mb-3" />
-          <h1 className="text-xl font-semibold text-text-primary mb-2">Something went wrong</h1>
-          <p className="text-text-secondary">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  let liveContent: React.ReactNode = fallback;
+  let ready = false;
 
   if (useNewRenderer && weddingSiteId) {
-    return (
+    ready = true;
+    liveContent = (
       <SiteViewContext.Provider value={{ weddingSiteId, ...publicSubresourceAccess }}>
         <div onErrorCapture={handleImageErrorCapture}>
           <OwnerPreviewBanner />
@@ -986,10 +963,9 @@ export const SiteView: React.FC = () => {
         </div>
       </SiteViewContext.Provider>
     );
-  }
-
-  if (builderSections && builderSections.length > 0 && weddingData) {
-    return (
+  } else if (builderSections && builderSections.length > 0 && weddingData) {
+    ready = true;
+    liveContent = (
       <SiteViewContext.Provider value={{ weddingSiteId, ...publicSubresourceAccess }}>
         <div className="builder-themed-canvas min-h-screen bg-background" onErrorCapture={handleImageErrorCapture}>
           <OwnerPreviewBanner />
@@ -999,57 +975,54 @@ export const SiteView: React.FC = () => {
         </div>
       </SiteViewContext.Provider>
     );
+  } else if (weddingData && layoutConfig) {
+    const homePage = layoutConfig.pages.find(p => p.id === 'home') || layoutConfig.pages[0];
+    if (homePage) {
+      ready = true;
+      const enabledSections = homePage.sections.filter(section => section.enabled);
+      liveContent = (
+        <SiteViewContext.Provider value={{ weddingSiteId, ...publicSubresourceAccess }}>
+          <div className="min-h-screen bg-background" onErrorCapture={handleImageErrorCapture}>
+            <OwnerPreviewBanner />
+            {enabledSections.map((sectionInstance) => {
+              try {
+                const SectionComponent = getSectionComponent(
+                  sectionInstance.type,
+                  sectionInstance.variant
+                );
+                return (
+                  <SectionComponent
+                    key={sectionInstance.id}
+                    data={weddingData}
+                    instance={sectionInstance}
+                  />
+                );
+              } catch {
+                return (
+                  <div key={sectionInstance.id} className="py-8 px-4 bg-surface-subtle text-text-secondary text-center">
+                    <p>This part of the wedding site is taking a moment to load.</p>
+                  </div>
+                );
+              }
+            })}
+          </div>
+        </SiteViewContext.Provider>
+      );
+    }
   }
-
-  if (!weddingData || !layoutConfig) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="max-w-md w-full bg-surface border border-border-subtle rounded-lg p-6 text-center">
-          <p className="text-text-secondary">This wedding site is not ready to view yet.</p>
-        </div>
-      </div>
-    );
-  }
-
-  const homePage = layoutConfig.pages.find(p => p.id === 'home') || layoutConfig.pages[0];
-  if (!homePage) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="max-w-md w-full bg-surface border border-border-subtle rounded-lg p-6 text-center">
-          <p className="text-text-secondary">This wedding site is not ready to view yet.</p>
-        </div>
-      </div>
-    );
-  }
-
-  const enabledSections = homePage.sections.filter(section => section.enabled);
 
   return (
-    <SiteViewContext.Provider value={{ weddingSiteId, ...publicSubresourceAccess }}>
-      <div className="min-h-screen bg-background" onErrorCapture={handleImageErrorCapture}>
-        <OwnerPreviewBanner />
-        {enabledSections.map((sectionInstance) => {
-          try {
-            const SectionComponent = getSectionComponent(
-              sectionInstance.type,
-              sectionInstance.variant
-            );
-            return (
-              <SectionComponent
-                key={sectionInstance.id}
-                data={weddingData}
-                instance={sectionInstance}
-              />
-            );
-          } catch {
-            return (
-              <div key={sectionInstance.id} className="py-8 px-4 bg-surface-subtle text-text-secondary text-center">
-                <p>This part of the wedding site is taking a moment to load.</p>
-              </div>
-            );
-          }
-        })}
-      </div>
-    </SiteViewContext.Provider>
+    <SiteViewRouteView
+      comingSoon={<ComingSoonScreen />}
+      error={error}
+      fallback={fallback}
+      inviteOnlyGate={<InviteOnlyGate />}
+      liveContent={liveContent}
+      loading={loading}
+      passwordGate={passwordGate}
+      privacyGate={privacyGate}
+      ready={ready}
+      useComingSoon={isComingSoon}
+    />
   );
 };

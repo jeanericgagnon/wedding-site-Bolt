@@ -35,10 +35,14 @@ describe('public guest surface boundary', () => {
     const siteView = readSource('src/pages/SiteView.tsx');
     const siteViewService = readSource('src/pages/siteViewService.ts');
     expect(siteView).not.toContain("from '../lib/supabase'");
+    expect(siteView).toContain("from './SiteViewRouteView'");
     expect(siteView).toContain("from './siteViewService'");
+    expect(siteView).toContain('<SiteViewRouteView');
     expect(siteView).toContain('fetchPublicItineraryRows(siteSlug, access)');
     expect(siteView).toContain('hasLiveRegistryItems(siteId, access)');
     expect(siteView).toContain('hasLiveRegistryItems(data.id as string, subresourceAccess)');
+    expect(siteView).not.toContain('Loading wedding site...');
+    expect(siteView).not.toContain('Something went wrong');
     expect(siteViewService).toContain("supabase.functions.invoke('public-itinerary-by-slug'");
     expect(siteViewService).toContain("supabase.functions.invoke('public-registry-items'");
 
