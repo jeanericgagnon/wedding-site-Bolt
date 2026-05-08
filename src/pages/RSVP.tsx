@@ -40,6 +40,7 @@ import { buildRsvpPageViewModel } from './buildRsvpPageViewModel';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { buildRsvpLiveContentViewProps } from './buildRsvpLiveContentViewProps';
 import { lookupRsvpGuest } from './lookupRsvpGuest';
+import { lookupRsvpToken } from './lookupRsvpToken';
 import { callValidateRsvpToken } from './rsvpFunctionService';
 import { prepareRsvpTokenLookupState } from './prepareRsvpTokenLookupState';
 import { resetRsvpLookupFlow } from './resetRsvpLookupFlow';
@@ -588,14 +589,12 @@ export default function RSVP() {
       return;
     }
     const { requestId, shouldPreserveVisibleState } = lookupState;
-    (
-      USE_DEMO_RSVP
-        ? Promise.resolve<{ data?: unknown; error?: string; status?: number }>({
-            data: demoLookup(token) as unknown,
-            error: undefined,
-          })
-        : callValidateRsvpToken({ action: 'lookup', searchValue: token })
-    )
+    lookupRsvpToken({
+      callValidateRsvpToken,
+      demoLookup,
+      token,
+      useDemoRsvp: USE_DEMO_RSVP,
+    })
       .then(({ data, error: err }) => {
         if (activeLookupRequestRef.current !== requestId) return;
         applyTokenRsvpLookupResult({

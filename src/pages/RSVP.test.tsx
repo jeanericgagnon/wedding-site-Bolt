@@ -55,6 +55,7 @@ describe('RSVP stale submit protection', () => {
     const resolvedGuest = readFileSync(join(process.cwd(), 'src/pages/applyResolvedRsvpGuest.ts'), 'utf8');
     const guestSelection = readFileSync(join(process.cwd(), 'src/pages/applyRsvpGuestSelection.ts'), 'utf8');
     const lookupGuest = readFileSync(join(process.cwd(), 'src/pages/lookupRsvpGuest.ts'), 'utf8');
+    const lookupToken = readFileSync(join(process.cwd(), 'src/pages/lookupRsvpToken.ts'), 'utf8');
     const submitSuccess = readFileSync(join(process.cwd(), 'src/pages/applyRsvpSubmitSuccess.ts'), 'utf8');
     const tokenLookupResult = readFileSync(join(process.cwd(), 'src/pages/applyTokenRsvpLookupResult.ts'), 'utf8');
     const submitPayload = readFileSync(join(process.cwd(), 'src/pages/buildRsvpSubmitPayload.ts'), 'utf8');
@@ -88,6 +89,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain("from './applyRsvpSubmitSuccess'");
     expect(rsvpPage).toContain("from './applyTokenRsvpLookupResult'");
     expect(rsvpPage).toContain("from './lookupRsvpGuest'");
+    expect(rsvpPage).toContain("from './lookupRsvpToken'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitPayload'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitSuccessArgs'");
     expect(rsvpPage).toContain("from './prepareRsvpTokenLookupState'");
@@ -108,6 +110,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain('applyResolvedRsvpGuest({');
     expect(rsvpPage).toContain('applyTokenRsvpLookupResult({');
     expect(rsvpPage).toContain('lookupRsvpGuest({');
+    expect(rsvpPage).toContain('lookupRsvpToken({');
     expect(rsvpPage).toContain('buildRsvpSubmitPayload({');
     expect(rsvpPage).toContain('applyRsvpSubmitSuccess(buildRsvpSubmitSuccessArgs({');
     expect(rsvpPage).toContain('prepareRsvpTokenLookupState({');
@@ -138,6 +141,8 @@ describe('RSVP stale submit protection', () => {
     expect(lookupGuest).toContain("action: 'lookup_guest'");
     expect(lookupGuest).toContain("action: 'lookup'");
     expect(lookupGuest).toContain("data: demoLookup(guestId ?? searchValue?.trim() ?? '')");
+    expect(lookupToken).toContain("action: 'lookup'");
+    expect(lookupToken).toContain("data: demoLookup(token) as unknown");
     expect(guestSelection).toContain('existingFormData');
     expect(guestSelection).toContain('setRsvpSessionToken(sessionToken)');
     expect(guestSelection).toContain("setStep('form')");

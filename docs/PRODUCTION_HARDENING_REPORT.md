@@ -4579,6 +4579,23 @@ Status:
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
 
+## 2026-05-08 12:09 AM PT No-Deploy RSVP Token-Lookup Transport Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes token invitation lookup through `src/pages/lookupRsvpToken.ts`.
+  - That shared helper now owns the demo `demoLookup(token)` path plus the live `callValidateRsvpToken({ action: 'lookup', searchValue: token })` transport split while the page keeps token preflight, result classification, continuity refresh behavior, and guest hydration local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `lookupRsvpToken(...)` so the main RSVP page keeps routing token lookup transport through the dedicated helper.
+  - `src/pages/RSVP.tsx` dropped from 1162 lines to 1161 lines in this batch, while `src/pages/lookupRsvpToken.ts` came in at 23 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+
 ## 2026-05-08 12:02 AM PT No-Deploy RSVP Resolved-Guest Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
