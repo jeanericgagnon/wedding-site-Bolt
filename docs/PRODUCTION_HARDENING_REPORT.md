@@ -19,6 +19,24 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 3:15 AM PT - No-Deploy Settings RSVP Tab Content Extraction
+
+What changed:
+- `src/pages/dashboard/Settings.tsx` no longer composes the full owner-facing RSVP tab body inline.
+- New `src/pages/dashboard/settings/SettingsRsvpTabContent.tsx` now owns the shared meal-choice and advanced-question panel cluster for the RSVP tab.
+- `src/lib/settingsErrorSafety.test.ts` and `src/pages/dashboard/settings/settingsSiteData.test.ts` now pin that seam and reject regaining the old inline RSVP-tab panel block inside `Settings.tsx`.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts`: PASS.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `npm run proof:v1:board:md`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This pulls another dense owner-facing panel cluster out of `Settings.tsx` and keeps the page more focused on lifecycle and orchestration instead of RSVP-tab composition. No deploy was run.
+
 ### 2026-05-08 3:12 AM PT - No-Deploy Settings Site Tab Content Extraction
 
 What changed:

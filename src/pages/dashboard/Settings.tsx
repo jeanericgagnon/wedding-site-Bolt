@@ -48,8 +48,7 @@ import { SettingsAccountPanel } from './settings/SettingsAccountPanel';
 import { SettingsBillingPanel } from './settings/SettingsBillingPanel';
 import { getSettingsTabs, SettingsNavigation, type SettingsTabId } from './settings/SettingsNavigation';
 import { SettingsNotificationsPanel } from './settings/SettingsNotificationsPanel';
-import { SettingsRsvpMealPanel } from './settings/SettingsRsvpMealPanel';
-import { SettingsRsvpQuestionsPanel } from './settings/SettingsRsvpQuestionsPanel';
+import { SettingsRsvpTabContent } from './settings/SettingsRsvpTabContent';
 import { SettingsSiteTabContent } from './settings/SettingsSiteTabContent';
 import { SettingsTeamAccessPanel } from './settings/SettingsTeamAccessPanel';
 import { SettingsDashboardShell } from './settings/SettingsDashboardShell';
@@ -704,131 +703,122 @@ export const DashboardSettings: React.FC = () => {
           />
         )}
         rsvpContent={(
-          <>
-            <SettingsRsvpMealPanel
-              mealOptions={rsvpMealOptions}
-              onAddMealOption={() => {
-                rsvpDraftGuard.markDirty();
-                setRsvpMealOptions((prev) => [...prev, '']);
-              }}
-              onMealChoiceEnabledChange={(enabled) => {
-                rsvpDraftGuard.markDirty();
-                setRsvpMealEnabled(enabled);
-              }}
-              onMealOptionChange={(index, value) => {
-                rsvpDraftGuard.markDirty();
-                setRsvpMealOptions((prev) => {
-                  const next = [...prev];
-                  next[index] = value;
-                  return next;
-                });
-              }}
-              onRemoveMealOption={(index) => {
-                rsvpDraftGuard.markDirty();
-                setRsvpMealOptions((prev) => prev.filter((_, optionIndex) => optionIndex !== index));
-              }}
-              onSave={() => { void saveRsvpSettings(); }}
-              onToggleVisibility={() => setShowMealChoiceSettings((value) => !value)}
-              rsvpMealEnabled={rsvpMealEnabled}
-              rsvpQuestionsError={rsvpQuestionsError}
-              rsvpQuestionsSaving={rsvpQuestionsSaving}
-              rsvpQuestionsSuccess={rsvpQuestionsSuccess}
-              showAdvancedRsvp={showAdvancedRsvp}
-              showMealChoiceSettings={showMealChoiceSettings}
-            />
-
-            <SettingsRsvpQuestionsPanel
-              collapsedQuestionIds={collapsedQuestionIds}
-              musicPlaylistUrl={musicPlaylistUrl}
-              onAddChoice={(questionId) => {
-                rsvpDraftGuard.markDirty();
-                setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, options: [...(item.options ?? []), ''] } : item));
-              }}
-              onAddQuestion={() => {
-                rsvpDraftGuard.markDirty();
-                const question = makeQuestion();
-                setRsvpQuestions((prev) => [...prev, question]);
-                setCollapsedQuestionIds((prev) => {
-                  const next = new Set(prev);
-                  next.delete(question.id);
-                  return next;
-                });
-              }}
-              onAppliesToChange={(questionId, value) => {
-                rsvpDraftGuard.markDirty();
-                setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, appliesTo: value } : item));
-              }}
-              onMusicPlaylistUrlChange={setMusicPlaylistUrl}
-              onOpenPlaylist={() => {
-                if (safeMusicPlaylistUrl) {
-                  window.open(safeMusicPlaylistUrl, '_blank', 'noopener,noreferrer');
+          <SettingsRsvpTabContent
+            collapsedQuestionIds={collapsedQuestionIds}
+            mealOptions={rsvpMealOptions}
+            musicPlaylistUrl={musicPlaylistUrl}
+            onAddChoice={(questionId) => {
+              rsvpDraftGuard.markDirty();
+              setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, options: [...(item.options ?? []), ''] } : item));
+            }}
+            onAddMealOption={() => {
+              rsvpDraftGuard.markDirty();
+              setRsvpMealOptions((prev) => [...prev, '']);
+            }}
+            onAddQuestion={() => {
+              rsvpDraftGuard.markDirty();
+              const question = makeQuestion();
+              setRsvpQuestions((prev) => [...prev, question]);
+              setCollapsedQuestionIds((prev) => {
+                const next = new Set(prev);
+                next.delete(question.id);
+                return next;
+              });
+            }}
+            onAppliesToChange={(questionId, value) => {
+              rsvpDraftGuard.markDirty();
+              setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, appliesTo: value } : item));
+            }}
+            onMealChoiceEnabledChange={(enabled) => {
+              rsvpDraftGuard.markDirty();
+              setRsvpMealEnabled(enabled);
+            }}
+            onMealOptionChange={(index, value) => {
+              rsvpDraftGuard.markDirty();
+              setRsvpMealOptions((prev) => {
+                const next = [...prev];
+                next[index] = value;
+                return next;
+              });
+            }}
+            onMusicPlaylistUrlChange={setMusicPlaylistUrl}
+            onOpenPlaylist={() => {
+              if (safeMusicPlaylistUrl) {
+                window.open(safeMusicPlaylistUrl, '_blank', 'noopener,noreferrer');
+              }
+            }}
+            onPromptChange={(questionId, value) => {
+              rsvpDraftGuard.markDirty();
+              setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, label: value } : item));
+            }}
+            onRemoveChoice={(questionId, optionIndex) => {
+              rsvpDraftGuard.markDirty();
+              setRsvpQuestions((prev) => prev.map((item) => {
+                if (item.id !== questionId) return item;
+                const next = [...(item.options ?? [])];
+                next.splice(optionIndex, 1);
+                return { ...item, options: next };
+              }));
+            }}
+            onRemoveMealOption={(index) => {
+              rsvpDraftGuard.markDirty();
+              setRsvpMealOptions((prev) => prev.filter((_, optionIndex) => optionIndex !== index));
+            }}
+            onRemoveQuestion={(questionId) => {
+              rsvpDraftGuard.markDirty();
+              setRsvpQuestions((prev) => prev.filter((item) => item.id !== questionId));
+              setCollapsedQuestionIds((prev) => {
+                const next = new Set(prev);
+                next.delete(questionId);
+                return next;
+              });
+            }}
+            onRequiredChange={(questionId, checked) => {
+              rsvpDraftGuard.markDirty();
+              setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, required: checked } : item));
+            }}
+            onSaveMealSettings={() => { void saveRsvpSettings(); }}
+            onSaveMusicPlaylist={() => { void handleSaveMusicPlaylist(); }}
+            onSaveQuestions={handleSaveRsvpQuestions}
+            onToggleAdvancedVisibility={() => setShowAdvancedRsvp((value) => !value)}
+            onToggleCollapse={(questionId) => {
+              setCollapsedQuestionIds((prev) => {
+                const next = new Set(prev);
+                if (next.has(questionId)) next.delete(questionId);
+                else next.add(questionId);
+                return next;
+              });
+            }}
+            onToggleMealVisibility={() => setShowMealChoiceSettings((value) => !value)}
+            onTypeChange={(questionId, value) => {
+              rsvpDraftGuard.markDirty();
+              setRsvpQuestions((prev) => prev.map((item) => {
+                if (item.id !== questionId) return item;
+                if (value === 'single_choice' || value === 'multi_choice') {
+                  const current = item.options ?? [];
+                  return { ...item, type: value, options: current.length > 0 ? current : ['', ''] };
                 }
-              }}
-              onPromptChange={(questionId, value) => {
-                rsvpDraftGuard.markDirty();
-                setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, label: value } : item));
-              }}
-              onRemoveChoice={(questionId, optionIndex) => {
-                rsvpDraftGuard.markDirty();
-                setRsvpQuestions((prev) => prev.map((item) => {
-                  if (item.id !== questionId) return item;
-                  const next = [...(item.options ?? [])];
-                  next.splice(optionIndex, 1);
-                  return { ...item, options: next };
-                }));
-              }}
-              onRemoveQuestion={(questionId) => {
-                rsvpDraftGuard.markDirty();
-                setRsvpQuestions((prev) => prev.filter((item) => item.id !== questionId));
-                setCollapsedQuestionIds((prev) => {
-                  const next = new Set(prev);
-                  next.delete(questionId);
-                  return next;
-                });
-              }}
-              onRequiredChange={(questionId, checked) => {
-                rsvpDraftGuard.markDirty();
-                setRsvpQuestions((prev) => prev.map((item) => item.id === questionId ? { ...item, required: checked } : item));
-              }}
-              onSave={handleSaveRsvpQuestions}
-              onSaveMusicPlaylist={() => { void handleSaveMusicPlaylist(); }}
-              onToggleCollapse={(questionId) => {
-                setCollapsedQuestionIds((prev) => {
-                  const next = new Set(prev);
-                  if (next.has(questionId)) next.delete(questionId);
-                  else next.add(questionId);
-                  return next;
-                });
-              }}
-              onToggleVisibility={() => setShowAdvancedRsvp((value) => !value)}
-              onTypeChange={(questionId, value) => {
-                rsvpDraftGuard.markDirty();
-                setRsvpQuestions((prev) => prev.map((item) => {
-                  if (item.id !== questionId) return item;
-                  if (value === 'single_choice' || value === 'multi_choice') {
-                    const current = item.options ?? [];
-                    return { ...item, type: value, options: current.length > 0 ? current : ['', ''] };
-                  }
-                  return { ...item, type: value, options: [] };
-                }));
-              }}
-              onUpdateChoice={(questionId, optionIndex, value) => {
-                rsvpDraftGuard.markDirty();
-                setRsvpQuestions((prev) => prev.map((item) => {
-                  if (item.id !== questionId) return item;
-                  const next = [...(item.options ?? [])];
-                  next[optionIndex] = value;
-                  return { ...item, options: next };
-                }));
-              }}
-              questions={rsvpQuestions}
-              rsvpQuestionsError={rsvpQuestionsError}
-              rsvpQuestionsSaving={rsvpQuestionsSaving}
-              rsvpQuestionsSuccess={rsvpQuestionsSuccess}
-              safeMusicPlaylistUrl={safeMusicPlaylistUrl}
-              showAdvancedRsvp={showAdvancedRsvp}
-            />
-          </>
+                return { ...item, type: value, options: [] };
+              }));
+            }}
+            onUpdateChoice={(questionId, optionIndex, value) => {
+              rsvpDraftGuard.markDirty();
+              setRsvpQuestions((prev) => prev.map((item) => {
+                if (item.id !== questionId) return item;
+                const next = [...(item.options ?? [])];
+                next[optionIndex] = value;
+                return { ...item, options: next };
+              }));
+            }}
+            questions={rsvpQuestions}
+            rsvpMealEnabled={rsvpMealEnabled}
+            rsvpQuestionsError={rsvpQuestionsError}
+            rsvpQuestionsSaving={rsvpQuestionsSaving}
+            rsvpQuestionsSuccess={rsvpQuestionsSuccess}
+            safeMusicPlaylistUrl={safeMusicPlaylistUrl}
+            showAdvancedRsvp={showAdvancedRsvp}
+            showMealChoiceSettings={showMealChoiceSettings}
+          />
         )}
         notificationsContent={(
           <SettingsNotificationsPanel

@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 3:15 AM PT - No-Deploy Settings RSVP Tab Content Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Settings.tsx` now routes the owner-facing RSVP tab body through `src/pages/dashboard/settings/SettingsRsvpTabContent.tsx` instead of composing the meal-choice and advanced-question panels inline.
+  - `SettingsRsvpTabContent.tsx` now owns that RSVP settings surface seam while preserving the existing panel composition and action wiring.
+  - `src/lib/settingsErrorSafety.test.ts` and `src/pages/dashboard/settings/settingsSiteData.test.ts` now pin the `SettingsRsvpTabContent` seam and reject regaining the old inline RSVP tab panel cluster in `Settings.tsx`.
+- Acceptance/proof target:
+  - Focused settings tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 3:12 AM PT - No-Deploy Settings Site Tab Content Extraction
 
 - Status: `PARTIAL`

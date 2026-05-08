@@ -19,6 +19,10 @@ const settingsSiteTabContentSource = () => readFileSync(
   join(process.cwd(), 'src/pages/dashboard/settings/SettingsSiteTabContent.tsx'),
   'utf8',
 );
+const settingsRsvpTabContentSource = () => readFileSync(
+  join(process.cwd(), 'src/pages/dashboard/settings/SettingsRsvpTabContent.tsx'),
+  'utf8',
+);
 const customerSafeErrorSource = () => readFileSync(join(process.cwd(), 'src/lib/customerSafeError.ts'), 'utf8');
 const settingsSiteDataSource = () => readFileSync(join(process.cwd(), 'src/pages/dashboard/settings/settingsSiteData.ts'), 'utf8');
 
@@ -102,9 +106,11 @@ describe('settings error safety', () => {
     const pageSource = settingsSource();
     const tabContentSource = settingsTabContentSource();
     const siteTabContentSource = settingsSiteTabContentSource();
+    const rsvpTabContentSource = settingsRsvpTabContentSource();
 
     expect(pageSource).toContain('<SettingsTabContent');
     expect(pageSource).toContain('<SettingsSiteTabContent');
+    expect(pageSource).toContain('<SettingsRsvpTabContent');
     expect(tabContentSource).toContain('switch (activeTab)');
     expect(tabContentSource).toContain('case \'account\'');
     expect(tabContentSource).toContain('case \'team\'');
@@ -122,5 +128,7 @@ describe('settings error safety', () => {
     expect(siteTabContentSource).toContain('<SettingsIdentityExportsPanel');
     expect(siteTabContentSource).toContain('<SettingsPrivacyPanel');
     expect(siteTabContentSource).toContain('<SettingsTemplatePanel');
+    expect(rsvpTabContentSource).toContain('<SettingsRsvpMealPanel');
+    expect(rsvpTabContentSource).toContain('<SettingsRsvpQuestionsPanel');
   });
 });

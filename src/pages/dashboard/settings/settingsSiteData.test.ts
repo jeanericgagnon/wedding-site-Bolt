@@ -84,6 +84,10 @@ describe('settings site data boundary', () => {
       join(process.cwd(), 'src/pages/dashboard/settings/SettingsSiteTabContent.tsx'),
       'utf8',
     );
+    const rsvpTabContent = readFileSync(
+      join(process.cwd(), 'src/pages/dashboard/settings/SettingsRsvpTabContent.tsx'),
+      'utf8',
+    );
     const actionsHook = readFileSync(
       join(process.cwd(), 'src/pages/dashboard/settings/useSettingsSiteAccessActions.ts'),
       'utf8',
@@ -100,6 +104,7 @@ describe('settings site data boundary', () => {
     expect(page).toContain('<SettingsDashboardShell');
     expect(page).toContain('<SettingsTabContent');
     expect(page).toContain('<SettingsSiteTabContent');
+    expect(page).toContain('<SettingsRsvpTabContent');
     expect(page).toContain('requireSettingsAuthenticatedUser()');
     expect(page).toContain('verifySettingsCurrentPassword(authUser.email || \'\', currentPassword)');
     expect(page).toContain('updateSettingsAccountPassword(newPassword)');
@@ -110,6 +115,8 @@ describe('settings site data boundary', () => {
     expect(page).not.toContain('<SettingsIdentityExportsPanel');
     expect(page).not.toContain('<SettingsPrivacyPanel');
     expect(page).not.toContain('<SettingsTemplatePanel');
+    expect(page).not.toContain('<SettingsRsvpMealPanel');
+    expect(page).not.toContain('<SettingsRsvpQuestionsPanel');
     expect(page).not.toContain("from('wedding_site_collaborator_invites')");
     expect(page).not.toContain("from('site_translations')");
     expect(page).not.toMatch(/supabase\s*\n\s*\.from\('wedding_sites'\)/);
@@ -154,6 +161,10 @@ describe('settings site data boundary', () => {
     expect(siteTabContent).toContain('<SettingsTemplatePanel');
     expect(siteTabContent).toContain('onSubmitSiteSlug');
     expect(siteTabContent).toContain('onToggleTemplateSettings');
+    expect(rsvpTabContent).toContain('<SettingsRsvpMealPanel');
+    expect(rsvpTabContent).toContain('<SettingsRsvpQuestionsPanel');
+    expect(rsvpTabContent).toContain('onSaveMealSettings');
+    expect(rsvpTabContent).toContain('onToggleAdvancedVisibility');
 
     expect(actionsHook).toContain('createSettingsCollaboratorInvite({');
     expect(actionsHook).toContain('revokeSettingsCollaboratorInvite(inviteId)');
