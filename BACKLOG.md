@@ -1875,6 +1875,13 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins those additional guest photo seams and rejects regaining the old inline album-management copy.
   - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts` (45/45), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the guest photo dashboard without changing guest photo behavior. No deploy was run.
+- 2026-05-07 8:09 PM PT - No-deploy Guest photo duplicate review cleanup:
+  - Resolved in this batch: removed a duplicate `GuestPhotoReviewCard` mount from `src/pages/dashboard/GuestPhotoSharing.tsx`, so the owner review surface now renders once instead of twice.
+  - Data-boundary hardening: `src/lib/dashboardDataBoundary.test.ts` now counts `GuestPhotoReviewCard` occurrences and requires a single mount, preventing quiet regression back to a duplicated review panel.
+  - File-size movement: `GuestPhotoSharing.tsx` dropped from 2038 lines to 2012 lines in this continuation batch.
+  - No feature loss: highlight review, duplicate triage, recap moderation, organizer notes, and slideshow planning preserve the current behavior while removing redundant dashboard UI.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts` (45/45), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This removes a local owner-dashboard duplication bug without changing guest photo data or transport behavior. No deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

@@ -1818,32 +1818,6 @@ export const GuestPhotoSharing: React.FC = () => {
           formatDateTime={formatGuestPhotoDateTime}
         />
 
-        <GuestPhotoReviewCard
-          highlightUploads={highlightUploads}
-          chronologicalUploads={chronologicalUploads}
-          similarPhotoGroups={similarPhotoGroups}
-          reviewUploads={reviewUploads}
-          memoryChapters={memoryChapters}
-          hiddenUploadCount={hiddenUploadCount}
-          flaggedUploadCount={flaggedUploadCount}
-          recapFeaturedCount={recapFeaturedCount}
-          recapStoryCount={recapStoryCount}
-          recapHiddenCount={recapHiddenCount}
-          uploadCount={uploads.length}
-          bulkModerating={bulkModerating}
-          duplicateExtraCount={duplicateExtraCount}
-          onUseHighlightsInSlideshow={() => setSlideshowOrder('highlights')}
-          onUseSavedPhotoTimes={() => setSlideshowOrder('capture')}
-          onExportCurationCsv={exportCurationCsv}
-          onExportMemoryChapters={exportMemoryChaptersJson}
-          onExportCuratedRecap={exportCuratedRecapJson}
-          onHideReviewUploads={() => void hideReviewUploads()}
-          onHideDuplicateExtras={() => void hideDuplicateExtras()}
-          onRestoreHiddenUploads={() => void restoreHiddenUploads()}
-          onModerateUpload={(uploadId, patch) => void moderateUpload(uploadId, patch)}
-          formatDateTime={formatGuestPhotoDateTime}
-        />
-
         <GuestPhotoAlbumCreateCard
           name={name}
           parentAlbumId={parentAlbumId}

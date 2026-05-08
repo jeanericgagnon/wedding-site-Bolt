@@ -4024,3 +4024,19 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the oversized-file and page-boundary lanes for the guest photo dashboard without changing album creation, event-album bootstrap, sharing-link actions, upload-window editing, or per-upload moderation behavior. No deploy was run.
+
+### 2026-05-07 8:09 PM PT - Guest Photo Duplicate Review Cleanup
+
+- Removed a duplicate `GuestPhotoReviewCard` mount from `src/pages/dashboard/GuestPhotoSharing.tsx`, so the owner review surface now renders once instead of twice.
+- Tightened `src/lib/dashboardDataBoundary.test.ts` so the guest photo dashboard now counts `GuestPhotoReviewCard` mounts and requires a single instance instead of merely checking that the component appears somewhere in the page.
+- `GuestPhotoSharing.tsx` dropped from 2038 lines to 2012 lines in this cleanup batch.
+
+Validation:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts`: PASS, 45/45.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This corrects a real duplicated owner-dashboard review surface without changing highlight review, duplicate triage, recap moderation, organizer notes, or slideshow planning behavior. No deploy was run.

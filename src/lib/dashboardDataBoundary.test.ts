@@ -461,6 +461,7 @@ describe('dashboard data boundary guards', () => {
   it('keeps guest photo bucket persistence behind its service', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/GuestPhotoSharing.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotoSharingService.ts'), 'utf8');
+    const reviewCardCount = source.match(/<GuestPhotoReviewCard/g)?.length ?? 0;
 
     expect(source).toContain('loadGuestPhotoDashboardSnapshot(userId)');
     expect(source).toContain('persistGuestPhotoBuckets(siteId, nextBuckets)');
@@ -497,6 +498,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('<GuestPhotoMomentAlbumsCard');
     expect(source).toContain('<GuestPhotoOrganizerCard');
     expect(source).toContain('<GuestPhotoReviewCard');
+    expect(reviewCardCount).toBe(1);
     expect(source).not.toContain('supabase.auth.getUser()');
     expect(source).not.toContain('supabase.auth.getSession()');
     expect(source).not.toContain('supabase.auth.refreshSession()');

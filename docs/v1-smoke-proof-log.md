@@ -8534,3 +8534,17 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 8:09 PM PT No-Deploy Guest Photo Duplicate Review Cleanup
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Removed a duplicate `GuestPhotoReviewCard` mount from `src/pages/dashboard/GuestPhotoSharing.tsx`, so the owner photo review surface now renders once instead of twice.
+  - `src/lib/dashboardDataBoundary.test.ts` now counts `GuestPhotoReviewCard` mounts and requires a single instance.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 2038 lines to 2012 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
