@@ -1,12 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
-import { createEmptyPhotoBuckets } from '../../lib/aiPhotoBuckets';
 import { PhotoBucketCards } from '../../components/dashboard/PhotoBucketCards';
-import { mediaRepository } from '../../builder/services/mediaRepository';
-import { PhotoBucketKind } from '../../lib/aiPhotoBuckets';
-import { buildPhotoPlacementPlan } from '../../lib/aiPhotoPlacement';
 import { buildQuickStartOverviewPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
 import { toDatetimeLocalOrEmpty } from './guestPhotoDateTime';
 import { formatGuestPhotoDate, formatGuestPhotoDateTime, getGuestPhotoSortTime, toGuestPhotoCsvTimestamp } from './guestPhotoUploadTime';
@@ -37,7 +33,6 @@ import {
   moveGuestPhotoUploadToBucket,
   moderateGuestPhotoUploads,
   moderateGuestbookEntry as moderateGuestbookEntryFromService,
-  persistGuestPhotoBuckets,
   persistGuestPhotoAiOpsPlan,
   queueGuestPhotoFollowups as queueGuestPhotoFollowupsFromService,
   refreshGuestPhotoSession,
@@ -87,6 +82,7 @@ import {
 import { GuestPhotoDashboardLiveContent } from './guestPhotos/GuestPhotoDashboardLiveContent';
 import { buildGuestPhotoDashboardLiveContentProps } from './guestPhotos/buildGuestPhotoDashboardLiveContentProps';
 import { useGuestPhotoAlbumActions } from './guestPhotos/useGuestPhotoAlbumActions';
+import { type GuestPhotoBucketsState, useGuestPhotoBucketWorkspace } from './guestPhotos/useGuestPhotoBucketWorkspace';
 
 export const GuestPhotoSharing: React.FC = () => {
   const location = useLocation();
@@ -136,7 +132,6 @@ export const GuestPhotoSharing: React.FC = () => {
   const [bulkUpdatingStatus, setBulkUpdatingStatus] = useState(false);
   const [bulkRegenerating, setBulkRegenerating] = useState(false);
   const [bulkModerating, setBulkModerating] = useState(false);
-  const [photoBuckets, setPhotoBuckets] = useState(() => createEmptyPhotoBuckets());
   const [slideshowOrder, setSlideshowOrder] = useState<SlideshowOrderMode>('newest');
   const [slideshowBucketFilter, setSlideshowBucketFilter] = useState<string>('all');
   const [slideshowTheme, setSlideshowTheme] = useState<SlideshowTheme>('classic');
@@ -146,10 +141,20 @@ export const GuestPhotoSharing: React.FC = () => {
   const [aiPhotoMovesBusy, setAiPhotoMovesBusy] = useState(false);
   const [visionAiBusy, setVisionAiBusy] = useState(false);
   const [visionMovesBusy, setVisionMovesBusy] = useState(false);
-  const bucketFileInputRef = useRef<HTMLInputElement | null>(null);
-  const pendingBucketRef = useRef<PhotoBucketKind | null>(null);
-  const [pendingBucket, setPendingBucket] = useState<PhotoBucketKind | null>(null);
   const archiveMode = useMemo(() => getArchiveModeDescriptor({ weddingDate: events[0]?.event_date ?? null }), [events]);
+  const {
+    bucketFileInputRef,
+    handleBucketFilesSelected,
+    handleBucketRemoveClick,
+    handleBucketUploadClick,
+    photoBuckets,
+    setPhotoBuckets,
+  } = useGuestPhotoBucketWorkspace({
+    setError,
+    setSubmitting,
+    setSuccess,
+    siteId,
+  });
 
   const loadDemoPhotoSpace = () => {
     const now = '2026-05-02T12:00:00.000Z';
@@ -236,78 +241,6 @@ export const GuestPhotoSharing: React.FC = () => {
     });
   };
 
-  const persistPhotoBuckets = async (nextBuckets: ReturnType<typeof createEmptyPhotoBuckets>) => {
-    if (!siteId) return;
-    await persistGuestPhotoBuckets(siteId, nextBuckets);
-  };
-
-  const handleBucketUploadClick = (bucket: PhotoBucketKind) => {
-    pendingBucketRef.current = bucket;
-    setPendingBucket(bucket);
-    bucketFileInputRef.current?.click();
-  };
-
-  const handleBucketRemoveClick = async (bucket: PhotoBucketKind, itemId: string) => {
-    const previousBuckets = photoBuckets;
-    try {
-      setSubmitting(true);
-      const nextBuckets = {
-        ...photoBuckets,
-        [bucket]: photoBuckets[bucket].filter((item) => item.id !== itemId),
-      };
-      setPhotoBuckets(nextBuckets);
-      await persistPhotoBuckets(nextBuckets);
-      setSuccess('Photo removed from album.');
-    } catch (err) {
-      setPhotoBuckets(previousBuckets);
-      setError(safePhotoOwnerError(err, 'Couldn’t remove that photo from the album.'));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleBucketFilesSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    const targetBucket = pendingBucketRef.current ?? pendingBucket;
-    if (!files || !targetBucket || !siteId) return;
-    const previousBuckets = photoBuckets;
-    try {
-      setSubmitting(true);
-      const nextBuckets = { ...photoBuckets };
-      for (const file of Array.from(files)) {
-        const uploaded = await mediaRepository.upload(siteId, file);
-        nextBuckets[targetBucket] = [
-          ...nextBuckets[targetBucket],
-          {
-            id: uploaded.path,
-            url: uploaded.url,
-            bucket: targetBucket,
-            label: file.name,
-            uploadedAt: new Date().toISOString(),
-          },
-        ];
-      }
-      setPhotoBuckets(nextBuckets);
-      await persistPhotoBuckets(nextBuckets);
-      const placement = buildPhotoPlacementPlan(nextBuckets);
-      const placementSummary = [
-        placement.heroImage ? 'hero' : null,
-        placement.storyImage ? 'story' : null,
-        placement.travelImage ? 'travel' : null,
-        placement.galleryImages.length ? `gallery (${placement.galleryImages.length})` : null,
-      ].filter(Boolean).join(', ');
-      setSuccess(placementSummary ? `Photo album updated. Current suggested placement: ${placementSummary}.` : 'Photo album updated.');
-    } catch (err) {
-      setPhotoBuckets(previousBuckets);
-      setError(safePhotoOwnerError(err, 'Couldn’t add those photos to the album.'));
-    } finally {
-      setSubmitting(false);
-      pendingBucketRef.current = null;
-      setPendingBucket(null);
-      if (event.target) event.target.value = '';
-    }
-  };
-
   async function load(retried = false) {
     try {
       setLoading(true);
@@ -336,7 +269,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setSiteId(snapshot.siteId);
       setSiteSlug(snapshot.siteSlug);
       const weddingMeta = snapshot.weddingMeta;
-      const savedBuckets = ((weddingMeta.photoBuckets as ReturnType<typeof createEmptyPhotoBuckets> | undefined) ?? null);
+      const savedBuckets = ((weddingMeta.photoBuckets as GuestPhotoBucketsState | undefined) ?? null);
       if (savedBuckets) setPhotoBuckets(savedBuckets);
       const savedAiPhotoOps = ((weddingMeta.aiPhotoOps as AiPhotoOpsPlan | undefined) ?? null);
       if (savedAiPhotoOps) setAiPhotoOpsPlan(savedAiPhotoOps);

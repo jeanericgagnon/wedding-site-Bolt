@@ -6172,6 +6172,21 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 08:15 AM PT No-Deploy Guest Photo Bucket-Workspace Hook Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now routes the couple-photo bucket workspace lane through `src/pages/dashboard/guestPhotos/useGuestPhotoBucketWorkspace.ts`.
+  - That hook now owns local couple-photo bucket state, upload-input refs, bucket upload intent state, bucket persistence via `persistGuestPhotoBuckets(siteId, nextBuckets)`, media uploads through `mediaRepository.upload(siteId, file)`, remove rollback behavior, and placement-summary success/error handling while the route keeps dashboard bootstrap, guest-upload moderation, AI organization, follow-ups, hub controls, and live-content prop composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useGuestPhotoBucketWorkspace({ ... })`, checks that `useGuestPhotoBucketWorkspace.ts` owns the bucket persistence/upload seam, and rejects regaining the old inline `persistPhotoBuckets`, `handleBucketRemoveClick`, and `handleBucketFilesSelected` blocks in `GuestPhotoSharing.tsx`.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 1623 lines to 1556 lines in this batch, while `src/pages/dashboard/guestPhotos/useGuestPhotoBucketWorkspace.ts` came in at 109 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 08:11 AM PT No-Deploy Planning Name-Change Workspace Hook Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

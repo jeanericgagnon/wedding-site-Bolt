@@ -1127,11 +1127,11 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/GuestPhotoSharing.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotoSharingService.ts'), 'utf8');
     const albumActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoAlbumActions.ts'), 'utf8');
+    const bucketWorkspace = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoBucketWorkspace.ts'), 'utf8');
     const liveContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/GuestPhotoDashboardLiveContent.tsx'), 'utf8');
     const liveContentProps = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardLiveContentProps.ts'), 'utf8');
 
     expect(source).toContain('loadGuestPhotoDashboardSnapshot(userId)');
-    expect(source).toContain('persistGuestPhotoBuckets(siteId, nextBuckets)');
     expect(source).toContain('await saveGuestPhotoHubSettings(siteId, hubSettings)');
     expect(source).toContain('await moderateGuestbookEntryFromService(entryId, patch)');
     expect(source).toContain('await persistGuestPhotoAiOpsPlan(siteId, plan)');
@@ -1146,6 +1146,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('queueGuestPhotoFollowupsFromService(siteId, kind)');
     expect(source).toContain('buildGuestPhotoDashboardLiveContentProps({');
     expect(source).toContain('<GuestPhotoDashboardLiveContent');
+    expect(source).toContain('useGuestPhotoBucketWorkspace({');
     expect(liveContent).toContain('<GuestPhotoHeroCard');
     expect(liveContent).toContain('<GuestPhotoMemoryVaultsCard');
     expect(liveContent).toContain('<GuestPhotoMemoryFlowCard');
@@ -1175,6 +1176,10 @@ describe('dashboard data boundary guards', () => {
     expect(albumActions).toContain('await createGuestPhotoAlbum({');
     expect(albumActions).toContain("await manageGuestPhotoAlbum({ action: 'regenerate_link', albumId: bucketId })");
     expect(albumActions).toContain("await manageGuestPhotoAlbum({ action: 'set_window', albumId: bucketId, opensAt, closesAt })");
+    expect(bucketWorkspace).toContain('export function useGuestPhotoBucketWorkspace({');
+    expect(bucketWorkspace).toContain('await persistGuestPhotoBuckets(siteId, nextBuckets)');
+    expect(bucketWorkspace).toContain('const handleBucketFilesSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {');
+    expect(bucketWorkspace).toContain('const uploaded = await mediaRepository.upload(siteId, file);');
     expect(source).not.toContain('supabase.auth.getUser()');
     expect(source).not.toContain('supabase.auth.getSession()');
     expect(source).not.toContain('supabase.auth.refreshSession()');
@@ -1200,6 +1205,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain("invokeOrThrow('photo-album-manage'");
     expect(source).not.toContain("invokeGuestPhotoOwnerFunction<PhotoAlbumCreateResponse>('photo-album-create'");
     expect(source).not.toContain("supabase.from('wedding_sites').update({ wedding_data: nextWeddingData, site_json: nextSiteJson })");
+    expect(source).not.toContain('const persistPhotoBuckets = async (nextBuckets:');
+    expect(source).not.toContain('const handleBucketRemoveClick = async (bucket: PhotoBucketKind, itemId: string) => {');
+    expect(source).not.toContain('const handleBucketFilesSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {');
     expect(source).not.toContain('<GuestPhotoHeroCard');
     expect(source).not.toContain('<GuestPhotoQuickStartBanner');
     expect(source).not.toContain('<GuestPhotoAlbumListState');
