@@ -5619,3 +5619,18 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 04:00 AM PT No-Deploy Guest Dashboard View-Props Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the owner-facing guest dashboard ops/settings prop-bundle assembly through `src/pages/dashboard/guests/buildGuestDashboardViewProps.ts`.
+  - That helper now owns engagement, household/list, insight, conflict, ops-summary, workspace, header, ops-view, and RSVP-settings prop assembly while the page keeps state, mutations, exports, overlay composition, and route-level mode decisions.
+  - `src/lib/dashboardDataBoundary.test.ts` and `src/pages/dashboard/guests/guestService.test.ts` now pin `buildGuestDashboardViewProps({ ... })`, check that `buildGuestDashboardViewProps.ts` owns the guest dashboard prop-assembly seam, and reject regaining the old inline `guestEngagementProps` / `guestDashboardOpsViewProps` / `guestRsvpConfigViewProps` slabs in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` dropped from 1685 lines to 1618 lines in this batch, while `src/pages/dashboard/guests/buildGuestDashboardViewProps.ts` came in at 248 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

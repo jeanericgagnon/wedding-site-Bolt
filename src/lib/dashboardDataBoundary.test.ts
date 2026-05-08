@@ -137,6 +137,7 @@ describe('dashboard data boundary guards', () => {
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/guestService.ts'), 'utf8');
     const campaignHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCampaignActions.ts'), 'utf8');
     const csvImportHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCsvImport.ts'), 'utf8');
+    const viewPropsHelper = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/buildGuestDashboardViewProps.ts'), 'utf8');
     const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardData.ts'), 'utf8');
     const detailHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts'), 'utf8');
 
@@ -144,6 +145,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('useGuestDashboardData({');
     expect(source).toContain('useGuestDashboardCsvImport({');
     expect(source).toContain('useGuestDashboardGuestDetailActions({');
+    expect(source).toContain('buildGuestDashboardViewProps({');
     expect(source).toContain('loadPublicSlug: loadGuestDashboardPublicSlug');
     expect(source).toContain('loadSiteSlug: loadGuestDashboardSiteSlug');
     expect(source).toContain('updateGuestCheckInForSite(weddingSiteId, lastCheckIn.guestId, null)');
@@ -164,6 +166,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('<GuestOpsSummaryPanel');
     expect(source).not.toContain('<GuestEngagementControlsPanel');
     expect(source).not.toContain('<GuestListDisplaySwitcher');
+    expect(source).not.toContain('const guestEngagementProps = {');
+    expect(source).not.toContain('const guestDashboardOpsViewProps = {');
+    expect(source).not.toContain('const guestRsvpConfigViewProps = {');
     expect(source).not.toContain('loadGuestDashboardSiteSettings(user.id)');
     expect(source).not.toContain('loadGuestDashboardSnapshot(weddingSiteId)');
     expect(source).not.toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
@@ -217,6 +222,11 @@ describe('dashboard data boundary guards', () => {
     expect(csvImportHook).toContain('toast(safeGuestImportReadError(err), \'error\')');
     expect(csvImportHook).toContain('resolvedSiteId = userId ? await resolveGuestDashboardSiteId(userId) : null;');
     expect(csvImportHook).not.toContain("from '../../../lib/supabase'");
+    expect(viewPropsHelper).toContain('const guestEngagementProps = {');
+    expect(viewPropsHelper).toContain('const guestDashboardOpsViewProps = {');
+    expect(viewPropsHelper).toContain('const guestRsvpConfigViewProps = {');
+    expect(viewPropsHelper).toContain('return {');
+    expect(viewPropsHelper).not.toContain("from '../../../lib/supabase'");
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardSiteSettings(userId);');
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardSnapshot(weddingSiteId);');
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardItineraryFilters(weddingSiteId);');

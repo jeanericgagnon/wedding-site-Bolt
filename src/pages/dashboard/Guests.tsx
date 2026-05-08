@@ -40,6 +40,7 @@ import {
   summarizeAuditEntry,
 } from './guests/guestDisplayUtils';
 import { buildGuestDashboardOverlayProps } from './guests/buildGuestDashboardOverlayProps';
+import { buildGuestDashboardViewProps } from './guests/buildGuestDashboardViewProps';
 import { GuestDashboardRouteView } from './guests/GuestDashboardRouteView';
 import {
   type Guest,
@@ -1311,62 +1312,90 @@ export const DashboardGuests: React.FC = () => {
   const dryRunRecipientPreview = reminderCandidates.slice(0, 8).map((g) => (g.first_name || g.last_name) ? `${g.first_name ?? ""} ${g.last_name ?? ""}`.trim() : g.name);
 
   const canEditGuests = !isGuestsReadOnly;
-  const guestEngagementProps = {
-    activeSegmentLabel: segmentLabelMap[filterStatus] || filterStatus,
+  const { guestDashboardOpsViewProps, guestRsvpConfigViewProps } = buildGuestDashboardViewProps({
     autoRemindersEnabled,
     bulkSending,
-    canEditGuests,
     campaignPreset,
     campaignReadiness,
+    canEditGuests,
     checkInMode,
-    checkedInCount: guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at).length,
     cleanGuestsView,
-    contactNoContactCount: contactStats.withNoContact,
+    conflictFilter,
+    confirmDeleteId,
+    contactStats,
     csvFileInputRef,
+    csvImportSummary,
     csvImporting,
     csvMaxFileMb: Math.round(GUEST_IMPORT_MAX_FILE_BYTES / 1024 / 1024),
     csvMaxRows: GUEST_IMPORT_MAX_ROWS,
     csvSelectedFilename,
+    customAnswerRollup,
     daysToWedding,
-    dueReminderCount: dueReminderCandidatesGlobal.length,
-    extraFilterCount: extraFilters.length,
+    deleteAllBusy,
+    deleteAllConfirmInput,
+    deletingGuestId,
+    displayedGuests,
+    dueReminderCandidatesGlobal,
+    effectiveItineraryEvents,
+    eventReport,
+    exceptionStateByGuest,
+    extraFilters,
+    fallbackByGuest,
     filterStatus,
-    guestCount: guests.length,
-    hasNextUnresolvedGuest: Boolean(nextUnresolvedGuest),
+    filteredGuests,
+    formRsvpStats: stats,
+    fromQuickStart,
+    getStatusBadge,
+    guests,
+    guestsRole,
+    householdBusy,
+    households,
     isDemoMode,
-    lastCheckInGuestName: lastCheckIn?.guestName ?? null,
-    manualFollowUpCount: filteredGuests.filter((guest) => fallbackByGuest.get(guest.id)?.state === 'manual-follow-up').length,
-    manualHandledCount: filteredGuests.filter((guest) => fallbackByGuest.get(guest.id)?.state === 'manual-handled').length,
-    reminderCandidateCount: reminderCandidates.length,
-    reminderCandidates: reminderCandidates.map((guest) => ({
-      email: guest.email ?? null,
-      id: guest.id,
-      name: (guest.first_name || guest.last_name)
-        ? `${guest.first_name ?? ''} ${guest.last_name ?? ''}`.trim()
-        : guest.name,
-    })),
+    isGuestsReadOnly,
+    lastCheckIn,
+    loadingDrawer,
+    mealChoiceRollup,
+    mealSummary,
+    nextStep,
+    nextUnresolvedGuest,
+    opsQueue,
+    plannerHandoff,
+    recommendedAction,
+    reminderCandidates,
+    resolvingConflictId,
+    rsvpAccessModePlan,
+    rsvpAuditFeed,
+    rsvpAuditLoading,
+    rsvpAutoSaveState,
+    rsvpConfigSaving,
+    rsvpConflictStats,
+    rsvpConflicts,
+    rsvpMealEnabled,
+    rsvpMealOptions,
     rsvpOps,
+    rsvpQuestionTemplateCoverage,
+    rsvpQuestions,
+    rsvpSetupChecklist,
     searchQuery,
-    segmentOptions: [
-      { value: 'all', label: `All (${stats.total})` },
-      { value: 'confirmed', label: `Confirmed (${stats.confirmed})` },
-      { value: 'declined', label: `Declined (${stats.declined})` },
-      { value: 'pending', label: `Pending (${stats.pending})` },
-    ],
-    selectedGuestCount: selectedGuestIds.size,
+    segmentLabelMap,
+    selectedGuestIds,
+    sendingInviteId,
     showCampaignModal,
-    showExceptionBanner: filteredGuests.some((guest) => (exceptionStateByGuest.get(guest.id) || []).length > 0) && filterStatus === 'all',
-    showMissingMealBanner: filterStatus === 'missing-meal',
-    showNoContactBanner: filterStatus === 'no-contact',
+    showConflictDetails,
+    showInsights,
     showOpsMenu,
     showRecipientPreview,
     skipRecentlyInvited,
+    songRequestEntries,
+    stats,
     viewMode,
-    visibleSelectedCount: filteredGuests.filter((g) => selectedGuestIds.has(g.id)).length,
+    visibleRsvpConflicts,
+    onAddFollowUpTask: addFollowUpTask,
     onAddGuest: () => {
       resetForm();
       setShowAddModal(true);
     },
+    onAddRsvpQuestionTemplate: addRsvpQuestionTemplate,
     onApplyCampaignPreset: applyCampaignPreset,
     onClearAllCheckIns: () => { void handleClearAllCheckIns(); },
     onClearFilters: () => {
@@ -1394,6 +1423,7 @@ export const DashboardGuests: React.FC = () => {
       setDeleteAllConfirmInput('');
       setShowDeleteAllModal(true);
     },
+    onDeleteGuest: handleDeleteGuest,
     onDryRun: () => {
       toast(`Dry run ready for ${reminderCandidates.length} ${reminderCandidates.length === 1 ? 'recipient' : 'recipients'}.`);
       void copyTextOrDownload(
@@ -1414,21 +1444,45 @@ export const DashboardGuests: React.FC = () => {
     onExportRsvpResponders: exportRsvpRespondersCSV,
     onExportThankYouDue: exportThankYouDueCSV,
     onFileChange: importCSV,
+    onFocusCeremonyNo: () => { setSearchQuery(''); setFilterStatus('ceremony-no'); },
     onFocusHandledPersonally: () => { setFilterStatus('manual-handled'); setViewMode('list'); setShowCampaignModal(false); },
     onFocusHighRiskFirst: () => { setFilterStatus('all'); setViewMode('list'); setSearchQuery(''); setSortByPriority(true); setShowCampaignModal(false); },
     onFocusMissingContact: () => { setSearchQuery(''); setFilterStatus('no-contact'); setViewMode('list'); setShowCampaignModal(false); },
-    onFocusMissingMeal: () => { setFilterStatus('missing-meal'); setViewMode('list'); setShowCampaignModal(false); },
+    onFocusMissingMeal: () => { setSearchQuery(''); setFilterStatus('missing-meal'); setViewMode('list'); setShowCampaignModal(false); },
+    onFocusNoResponse: () => { setSearchQuery(''); setFilterStatus('pending'); },
     onFocusPending: () => { setFilterStatus('pending'); setViewMode('list'); setShowCampaignModal(false); },
-    onFocusPendingNoEmail: () => { setFilterStatus('pending-no-email'); setViewMode('list'); setShowCampaignModal(false); },
+    onFocusPendingNoEmail: () => { setSearchQuery(''); setFilterStatus('pending-no-email'); setViewMode('list'); setShowCampaignModal(false); },
+    onFocusPlusOneMissing: () => { setSearchQuery(''); setFilterStatus('plusone-missing'); setViewMode('list'); },
     onFocusPlusOneNames: () => { setFilterStatus('plusone-missing'); setViewMode('list'); setShowCampaignModal(false); },
+    onFocusQueueItem: (filter: string, guestName: string) => {
+      setFilterStatus(filter as typeof filterStatus);
+      setViewMode('list');
+      setSearchQuery(guestName);
+    },
+    onFocusRecommendedAction: (filter: string) => {
+      setFilterStatus(filter as typeof filterStatus);
+      setViewMode('list');
+      setSearchQuery('');
+    },
+    onFocusReceptionNo: () => { setSearchQuery(''); setFilterStatus('reception-no'); },
+    onKeepOnlyVisibleSelection: keepOnlyVisibleSelection,
     onMarkAllDueThankYous: () => { void handleMarkAllDueThankYous(); },
+    onMarkThankYouSent: handleMarkThankYouSent,
+    onMergeIntoHousehold: () => handleMergeIntoHousehold(selectedGuestIds, () => setSelectedGuestIds(new Set())),
     onNextUnresolved: () => {
       if (nextUnresolvedGuest) {
         setSearchQuery((nextUnresolvedGuest.first_name || nextUnresolvedGuest.last_name) ? `${nextUnresolvedGuest.first_name ?? ''} ${nextUnresolvedGuest.last_name ?? ''}`.trim() : nextUnresolvedGuest.name);
         setViewMode('list');
       }
     },
+    onOpenAssistedRsvpModal: openAssistedRsvpModal,
     onOpenCampaignModal: () => setShowCampaignModal(true),
+    onOpenEditModal: openEditModal,
+    onOpenItineraryDrawer: openItineraryDrawer,
+    onResolveAllVisibleConflicts: resolveAllVisibleConflicts,
+    onResolveConflict: resolveConflict,
+    onReviewPending: () => { setFilterStatus('pending'); setViewMode('list'); },
+    onSaveRsvpConfig: handleSaveRsvpConfig,
     onSearchQueryChange: setSearchQuery,
     onSelectCheckedInFilter: () => setFilterStatus('checked-in'),
     onSelectFiltered: selectFilteredGuests,
@@ -1453,150 +1507,29 @@ export const DashboardGuests: React.FC = () => {
       })();
     },
     onSendFilteredInvitations: () => { void handleSendBulkInvitations(); },
-    onSendSelectedInvitations: () => { void handleSendSelectedInvitations(); },
-    onSetShowCampaignModal: setShowCampaignModal,
-    onSetShowOpsMenu: setShowOpsMenu,
-    onSetShowRecipientPreview: setShowRecipientPreview,
-    onSetSkipRecentlyInvited: setSkipRecentlyInvited,
-    onToggleCheckInMode: () => { setCheckInMode(v => !v); setViewMode('list'); },
-    onToggleHouseholdsView: () => { setCheckInMode(false); setViewMode(v => v === 'households' ? 'list' : 'households'); },
-    onUndoLastCheckIn: () => { void handleUndoLastCheckIn(); },
-    onKeepOnlyVisibleSelection: keepOnlyVisibleSelection,
-  };
-  const guestHouseholdProps = {
-    householdBusy,
-    households,
-    isDemoMode,
-    selectedGuestIds,
-    getStatusBadge,
-    onMergeIntoHousehold: () => handleMergeIntoHousehold(selectedGuestIds, () => setSelectedGuestIds(new Set())),
-    onSetSelectedGuestIds: setSelectedGuestIds,
-  };
-  const guestListProps = {
-    checkInMode,
-    confirmDeleteId,
-    deletingGuestId,
-    displayedGuests,
-    filteredGuestCount: filteredGuests.length,
-    isGuestsReadOnly,
-    searchQuery,
-    sendingInviteId,
-    getStatusBadge,
-    onDeleteGuest: handleDeleteGuest,
-    onOpenAssistedRsvpModal: openAssistedRsvpModal,
-    onOpenEditModal: openEditModal,
-    onOpenItineraryDrawer: openItineraryDrawer,
     onSendInvitation: handleSendInvitation,
-    onToggleCheckIn: handleToggleCheckIn,
-    onMarkThankYouSent: handleMarkThankYouSent,
-  };
-  const guestInsightsProps = {
-    contactStats,
-    customAnswerRollup,
-    eventReport,
-    mealChoiceRollup,
-    mealSummary,
-    rsvpOps,
-    songRequestEntries,
-    stats,
-    onFocusCeremonyNo: () => { setSearchQuery(''); setFilterStatus('ceremony-no'); },
-    onFocusMissingMeal: () => { setSearchQuery(''); setFilterStatus('missing-meal'); setViewMode('list'); },
-    onFocusNoResponse: () => { setSearchQuery(''); setFilterStatus('pending'); },
-    onFocusPendingNoEmail: () => { setSearchQuery(''); setFilterStatus('pending-no-email'); setViewMode('list'); },
-    onFocusPlusOneMissing: () => { setSearchQuery(''); setFilterStatus('plusone-missing'); setViewMode('list'); },
-    onFocusReceptionNo: () => { setSearchQuery(''); setFilterStatus('reception-no'); },
-  };
-  const guestConflictProps = {
-    conflictFilter,
-    guests,
-    resolvingConflictId,
-    rsvpConflicts,
-    rsvpConflictStats,
-    showConflictDetails,
-    visibleRsvpConflicts,
-    onResolveAllVisibleConflicts: resolveAllVisibleConflicts,
-    onResolveConflict: resolveConflict,
-    onReviewPending: () => { setFilterStatus('pending'); setViewMode('list'); },
-    onSetConflictFilter: setConflictFilter,
-    onToggleConflictDetails: () => setShowConflictDetails((value) => !value),
-  };
-  const guestOpsSummaryProps = {
-    cleanGuestsView,
-    fromQuickStart,
-    nextStep,
-    opsQueue,
-    plannerHandoff,
-    recommendedAction,
-    onAddFollowUpTask: addFollowUpTask,
-    onFocusQueueItem: (filter: string, guestName: string) => {
-      setFilterStatus(filter as typeof filterStatus);
-      setViewMode('list');
-      setSearchQuery(guestName);
-    },
-    onFocusRecommendedAction: (filter: string) => {
-      setFilterStatus(filter as typeof filterStatus);
-      setViewMode('list');
-      setSearchQuery('');
-    },
-    onSkipToPhotos: () => navigate(buildQuickStartPhotosPath()),
-  };
-  const guestWorkspaceProps = {
-    engagementProps: guestEngagementProps,
-    filteredGuestCount: filteredGuests.length,
-    householdProps: guestHouseholdProps,
-    listProps: guestListProps,
-    viewMode,
-    onClearFilters: () => {
-      setFilterStatus('all');
-      setExtraFilters([]);
-      setSearchQuery('');
-    },
-  };
-  const guestHeaderProps = {
-    canEditGuests,
-    contactCoverage: contactStats.contactCoverage,
-    csvImportSummary,
-    guestsRole,
-    rsvpNoResponseCount: rsvpOps.noResponse,
-    showInsights,
-    stats,
-    onAddGuest: () => setShowAddModal(true),
-    onSetGuestsTab: setGuestsTab,
-    onToggleInsights: () => setShowInsights((value) => !value),
-  };
-  const guestDashboardContentProps = {
-    cleanGuestsView,
-    conflictProps: guestConflictProps,
-    insightsProps: guestInsightsProps,
-    opsSummaryProps: guestOpsSummaryProps,
-    workspaceProps: guestWorkspaceProps,
-  };
-  const guestDashboardOpsViewProps = {
-    contentProps: guestDashboardContentProps,
-    headerProps: guestHeaderProps,
-  };
-  const guestRsvpConfigViewProps = {
-    recommendedRsvpAccessMode,
-    rsvpAccessModePlan,
-    rsvpAuditFeed,
-    rsvpAuditLoading,
-    rsvpAutoSaveState,
-    rsvpConfigSaving,
-    rsvpMealEnabled,
-    rsvpMealOptions,
-    rsvpQuestionTemplateCoverage,
-    rsvpQuestions,
-    rsvpSetupChecklist,
-    stats,
-    onAddRsvpQuestionTemplate: addRsvpQuestionTemplate,
-    onSaveRsvpConfig: handleSaveRsvpConfig,
+    onSendSelectedInvitations: () => { void handleSendSelectedInvitations(); },
     onSetConfirmDialog: setConfirmDialog,
+    onSetConflictFilter: setConflictFilter,
     onSetGuestsTab: setGuestsTab,
     onSetRsvpConfigDirty: setRsvpConfigDirty,
     onSetRsvpMealEnabled: setRsvpMealEnabled,
     onSetRsvpMealOptions: setRsvpMealOptions,
     onSetRsvpQuestions: setRsvpQuestions,
-  };
+    onSetSelectedGuestIds: setSelectedGuestIds,
+    onSetShowCampaignModal: setShowCampaignModal,
+    onSetShowOpsMenu: setShowOpsMenu,
+    onSetShowRecipientPreview: setShowRecipientPreview,
+    onSetSkipRecentlyInvited: setSkipRecentlyInvited,
+    onSkipToPhotos: () => navigate(buildQuickStartPhotosPath()),
+    onToggleCheckIn: handleToggleCheckIn,
+    onToggleCheckInMode: () => { setCheckInMode(v => !v); setViewMode('list'); },
+    onToggleConflictDetails: () => setShowConflictDetails((value) => !value),
+    onToggleHouseholdsView: () => { setCheckInMode(false); setViewMode(v => v === 'households' ? 'list' : 'households'); },
+    onToggleInsights: () => setShowInsights((value) => !value),
+    onUndoLastCheckIn: () => { void handleUndoLastCheckIn(); },
+    onHeaderAddGuest: () => setShowAddModal(true),
+  });
   const guestOverlayProps = buildGuestDashboardOverlayProps({
     assistedRsvpGuest,
     assistedRsvpNotes,

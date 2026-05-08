@@ -132,6 +132,7 @@ describe('guestService', () => {
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/guestService.ts'), 'utf8');
     const campaignHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCampaignActions.ts'), 'utf8');
     const csvImportHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCsvImport.ts'), 'utf8');
+    const viewPropsHelper = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/buildGuestDashboardViewProps.ts'), 'utf8');
     const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardData.ts'), 'utf8');
     const detailHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts'), 'utf8');
 
@@ -139,6 +140,7 @@ describe('guestService', () => {
     expect(page).toContain('useGuestDashboardData({');
     expect(page).toContain('useGuestDashboardCsvImport({');
     expect(page).toContain('useGuestDashboardGuestDetailActions({');
+    expect(page).toContain('buildGuestDashboardViewProps({');
     expect(page).toContain('resolveGuestDashboardConflict(conflictId, resolvedAt)');
     expect(page).toContain('resolveGuestDashboardConflicts(ids, resolvedAt)');
     expect(page).toContain('loadPublicSlug: loadGuestDashboardPublicSlug');
@@ -155,6 +157,9 @@ describe('guestService', () => {
     expect(page).not.toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
     expect(page).not.toContain('loadGuestDashboardRsvpAuditFeed(weddingSiteId)');
     expect(page).not.toContain('refreshGuestDashboardSession()');
+    expect(page).not.toContain('const guestEngagementProps = {');
+    expect(page).not.toContain('const guestDashboardOpsViewProps = {');
+    expect(page).not.toContain('const guestRsvpConfigViewProps = {');
     expect(page).not.toContain('buildGuestImportPreview({');
     expect(page).not.toContain('readGuestImportRows(file)');
     expect(page).not.toContain('insertImportedGuests(guestRows)');
@@ -176,6 +181,11 @@ describe('guestService', () => {
     expect(csvImportHook).toContain('toast(safeGuestImportReadError(err), \'error\')');
     expect(csvImportHook).toContain('resolvedSiteId = userId ? await resolveGuestDashboardSiteId(userId) : null;');
     expect(csvImportHook).not.toContain("from '../../../lib/supabase'");
+    expect(viewPropsHelper).toContain('const guestEngagementProps = {');
+    expect(viewPropsHelper).toContain('const guestDashboardOpsViewProps = {');
+    expect(viewPropsHelper).toContain('const guestRsvpConfigViewProps = {');
+    expect(viewPropsHelper).toContain('return {');
+    expect(viewPropsHelper).not.toContain("from '../../../lib/supabase'");
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardSiteSettings(userId);');
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardSnapshot(weddingSiteId);');
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardItineraryFilters(weddingSiteId);');
