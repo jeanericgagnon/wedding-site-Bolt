@@ -7463,6 +7463,21 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 05:53 AM PT No-Deploy Coordinator Dashboard Derived-State Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/CoordinatorMode.tsx` now routes the coordinator dashboard derived-state, board math, and alert-log view shaping through `src/pages/dashboard/coordinator/buildCoordinatorDashboardDerivedState.ts`.
+  - That helper now owns guest stats, guest sorting, event audience options, alert audience counts, Q&A triage/board state, role capability state, live/up-next event targeting, alert suggestion and summary derivation, filtered alert log view shaping, check-in queue targeting, command deck and stable-prompt derivation, summary feedback presentation state, escalation rollups, and navigation/timeline board derivation while the page keeps transport hooks, action hooks, and route composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildCoordinatorDashboardDerivedState({ ... })`, checks that `buildCoordinatorDashboardDerivedState.ts` owns the coordinator derived-state seam, and rejects regaining the old inline sorted-guest, alert-stats, and standing-prompt derivation blocks in `CoordinatorMode.tsx`.
+  - `src/pages/dashboard/CoordinatorMode.tsx` dropped from 1365 lines to 1028 lines in this batch, while `src/pages/dashboard/coordinator/buildCoordinatorDashboardDerivedState.ts` came in at 512 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 
 ## 2026-05-08 01:15 AM PT No-Deploy Settings Site/Team Action Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.

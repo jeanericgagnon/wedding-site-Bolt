@@ -5,107 +5,37 @@ import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero'
 import { useAuth } from '../../hooks/useAuth';
 import { type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { useToast } from '../../components/ui/Toast';
-import { filterCoordinatorCheckInQueue, type CoordinatorCheckInFilter } from '../../lib/coordinatorCheckInQueue';
 import { getNextCoordinatorCheckInFocusId } from '../../lib/coordinatorCheckInAdvance';
 import { getCoordinatorDoorStatus } from '../../lib/coordinatorCheckInStatus';
 import { buildCoordinatorDoorEscalationPrompt } from '../../lib/coordinatorDoorEscalation';
-import { buildCoordinatorEscalations } from '../../lib/coordinatorEscalations';
-import { buildCoordinatorPrimaryAction } from '../../lib/coordinatorPrimaryAction';
-import { buildCoordinatorCorrectionCues } from '../../lib/coordinatorCorrectionsSummary';
 import { resolveCoordinatorCorrectionCueTarget } from '../../lib/coordinatorCorrectionCueTarget';
-import { getCoordinatorCorrectionEventId, getCoordinatorCorrectionGuestId } from '../../lib/coordinatorCorrectionTarget';
-import { resolveCoordinatorPrimaryActionTarget } from '../../lib/coordinatorPrimaryActionTarget';
 import { resolveCoordinatorQueueFocus } from '../../lib/coordinatorQueueFocus';
 import { resolveCoordinatorPanelFocus, type CoordinatorPanelFocus } from '../../lib/coordinatorPanelFocus';
 import { resolveCoordinatorEscalationTimelineTarget } from '../../lib/coordinatorEscalationAction';
-import { getCoordinatorCommandModeLabel } from '../../lib/coordinatorCommandModeLabel';
-import { getCoordinatorCommandModeGuidance } from '../../lib/coordinatorCommandModeGuidance';
 import { resolveCoordinatorReturnToBoardState } from '../../lib/coordinatorReturnToBoard';
 import { getCoordinatorNeutralFocusReason } from '../../lib/coordinatorNeutralFocusReason';
 import { resolveCoordinatorNeutralFocusTarget } from '../../lib/coordinatorNeutralFocusTarget';
 import { getCoordinatorActiveTargetLabel } from '../../lib/coordinatorActiveTargetLabel';
-import { getCoordinatorCheckInBoardTargetId, getCoordinatorCheckInTargetState } from '../../lib/coordinatorCheckInTargetState';
-import { getCoordinatorTimelineBoardTargetId, getCoordinatorTimelineTargetState } from '../../lib/coordinatorTimelineTargetState';
-import { getCoordinatorQnaTargetState } from '../../lib/coordinatorQnaTargetState';
 import { getCoordinatorTimelineTransitionLabel, syncCoordinatorAlertDraftForTimelineTransition } from '../../lib/coordinatorTimelineTransition';
-import { buildCoordinatorCommandSummary } from '../../lib/coordinatorCommandSummary';
 import { getCoordinatorCommandSummaryTarget } from '../../lib/coordinatorCommandSummaryTarget';
-import { getCoordinatorCommandPriority } from '../../lib/coordinatorCommandPriority';
-import { getCoordinatorCommandPriorityReason } from '../../lib/coordinatorCommandPriorityReason';
-import { getCoordinatorCommandPriorityTargetReason } from '../../lib/coordinatorCommandPriorityTargetReason';
-import { getCoordinatorCommandPriorityCta } from '../../lib/coordinatorCommandPriorityCta';
 import { getCoordinatorCommandJumpLabel } from '../../lib/coordinatorCommandJumpLabel';
-import { getCoordinatorManualOverrideActionLabel } from '../../lib/coordinatorManualOverrideAction';
-import { getCoordinatorManualOverrideTargetLabel } from '../../lib/coordinatorManualOverrideTargetLabel';
-import { getCoordinatorManualOverrideCurrentTargetLabel } from '../../lib/coordinatorManualOverrideCurrentTargetLabel';
-import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
-import { getCoordinatorAlertOverrideLabel } from '../../lib/coordinatorAlertOverrideLabel';
-import { getCoordinatorAlertOverrideTargetLabel } from '../../lib/coordinatorAlertOverrideTargetLabel';
-import { getCoordinatorAlertOverrideCurrentLabel } from '../../lib/coordinatorAlertOverrideCurrentLabel';
 import { shouldResetCoordinatorAlertOverride } from '../../lib/coordinatorAlertOverrideReset';
-import { getCoordinatorAlertSummaryStateLabel } from '../../lib/coordinatorAlertSummaryStateLabel';
-import { getCoordinatorAlertSummaryTransitionLabel } from '../../lib/coordinatorAlertSummaryTransitionLabel';
 import { createCoordinatorSummaryFeedback, type CoordinatorSummaryFeedback } from '../../lib/coordinatorSummaryFeedback';
-import { getCoordinatorSummaryFeedbackTone } from '../../lib/coordinatorSummaryFeedbackTone';
-import { getCoordinatorSummaryFeedbackEmphasis } from '../../lib/coordinatorSummaryFeedbackEmphasis';
-import { getCoordinatorSummaryFeedbackLayout } from '../../lib/coordinatorSummaryFeedbackLayout';
-import { getCoordinatorSummaryFeedbackCopy } from '../../lib/coordinatorSummaryFeedbackCopy';
-import { getCoordinatorSummaryFeedbackBadge } from '../../lib/coordinatorSummaryFeedbackBadge';
-import { getCoordinatorOverrideSupportBadge } from '../../lib/coordinatorOverrideSupportBadge';
-import { resolveCoordinatorSummaryDisplayCue } from '../../lib/coordinatorSummaryDisplayCue';
-import { resolveCoordinatorOverrideDisplayCue } from '../../lib/coordinatorOverrideDisplayCue';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
 import { setCoordinatorEventTimelineState } from '../../lib/coordinatorTimelineState';
-import { getCoordinatorLiveEventId, getCoordinatorUpNextEventId } from '../../lib/coordinatorTimelineFocus';
 import { resolveCoordinatorTimelineAlertIntent } from '../../lib/coordinatorTimelineAlertIntent';
 import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor, validateCoordinatorAlertForm } from '../../lib/coordinatorAlertFlow';
 import { resetCoordinatorAlertFormAfterSend } from '../../lib/coordinatorAlertReset';
-import { buildCoordinatorAlertSuggestions } from '../../lib/coordinatorAlertSuggestions';
-import { buildCoordinatorAlertSummary } from '../../lib/coordinatorAlertSummary';
-import { getCoordinatorAlertLaneLabel } from '../../lib/coordinatorAlertLane';
-import { resolveCoordinatorPreferredAlertSuggestion } from '../../lib/coordinatorAlertIntent';
-import { getCoordinatorQnaCounts, updateCoordinatorQnaItem } from '../../lib/coordinatorQnaFlow';
+import { updateCoordinatorQnaItem } from '../../lib/coordinatorQnaFlow';
 import { getFirstOpenCoordinatorQnaId, getNextCoordinatorQnaFocusId } from '../../lib/coordinatorQnaFocus';
-import { filterCoordinatorQnaItems, getCoordinatorQnaDraftStateLabel, type CoordinatorQnaFilter } from '../../lib/coordinatorQnaTriage';
+import { getCoordinatorQnaDraftStateLabel, type CoordinatorQnaFilter } from '../../lib/coordinatorQnaTriage';
 import { resolveCoordinatorQnaFocusAfterItemsChange, resolveCoordinatorTimelineFocusAfterStateChange } from '../../lib/coordinatorResolvedFocus';
-import { buildCoordinatorStablePrompt } from '../../lib/coordinatorStablePrompt';
-import { getCoordinatorStablePromptState } from '../../lib/coordinatorStablePromptState';
 import { getCoordinatorStablePromptTarget } from '../../lib/coordinatorStablePromptTarget';
-import { getCoordinatorStablePromptTargetLabel } from '../../lib/coordinatorStablePromptTargetLabel';
-import { getCoordinatorStandingPromptBadge } from '../../lib/coordinatorStandingPromptBadge';
 import { getCoordinatorStandingPromptReason } from '../../lib/coordinatorStandingPromptReason';
 import { getCoordinatorStandingPromptReasonTightened } from '../../lib/coordinatorStandingPromptReasonTighten';
-import { getCoordinatorStandingPromptCopy } from '../../lib/coordinatorStandingPromptCopy';
-import { getCoordinatorStandingPromptMode } from '../../lib/coordinatorStandingPromptMode';
-import { getCoordinatorStandingPromptSecondaryState } from '../../lib/coordinatorStandingPromptSecondaryState';
-import { getCoordinatorCommandBadgeTone } from '../../lib/coordinatorCommandBadgeTone';
-import { buildCoordinatorOpsSnapshot } from '../../lib/coordinatorOpsSnapshot';
-import { buildCoordinatorRoleCapabilities } from '../../lib/coordinatorRoleCapabilities';
-import { buildCoordinatorCommandDeck } from '../../lib/coordinatorCommandDeck';
-import { buildCoordinatorAlertBoard } from '../../lib/coordinatorAlertBoard';
-import { buildCoordinatorTimelineBoard } from '../../lib/coordinatorTimelineBoard';
-import { buildCoordinatorQnaBoard } from '../../lib/coordinatorQnaBoard';
-import { buildCoordinatorCheckInBoard } from '../../lib/coordinatorCheckInBoard';
-import { buildCoordinatorCommandBoard } from '../../lib/coordinatorCommandBoard';
-import { buildCoordinatorRoleBoard } from '../../lib/coordinatorRoleBoard';
-import { buildCoordinatorAlertActivityBoard } from '../../lib/coordinatorAlertActivityBoard';
-import { buildCoordinatorPrimaryActionBoard } from '../../lib/coordinatorPrimaryActionBoard';
-import { buildCoordinatorExecutionBoard } from '../../lib/coordinatorExecutionBoard';
-import { buildCoordinatorAlertLogView } from '../../lib/coordinatorAlertLogView';
-import { buildCoordinatorNavigationBoard } from '../../lib/coordinatorNavigationBoard';
-import type { AlertLog, AudienceOption, EventLite, QnaItem, TimelineState } from './coordinator/coordinatorDashboardTypes';
-import {
-  buildCoordinatorEventAudienceOptions,
-  buildCoordinatorGuestStats,
-  filterCoordinatorAlertLog,
-  getCoordinatorAlertAudienceCount,
-  sortCoordinatorGuests,
-} from './coordinator/coordinatorDashboardUtils';
-import {
-  readStoredCoordinatorQnaItems,
-} from './coordinator/coordinatorStorage';
+import type { AlertLog, EventLite, QnaItem, TimelineState } from './coordinator/coordinatorDashboardTypes';
 import {
   createCoordinatorAlertMessage,
   createCoordinatorQnaQuestion,
@@ -115,6 +45,7 @@ import {
 import { buildCoordinatorDashboardBoardActions } from './coordinator/buildCoordinatorDashboardBoardActions';
 import { CoordinatorAttentionPanel, CoordinatorCheckInQueuePanel, CoordinatorDayOfMessagePanel, CoordinatorDayOfSummaryPanel, CoordinatorHandoffPanel, CoordinatorHelperAccessPanel, CoordinatorRoleSelector, CoordinatorStatCards, CoordinatorTimelinePanel } from './coordinator/CoordinatorModePanels';
 import { buildCoordinatorDashboardFocusActions } from './coordinator/buildCoordinatorDashboardFocusActions';
+import { buildCoordinatorDashboardDerivedState } from './coordinator/buildCoordinatorDashboardDerivedState';
 import { useCoordinatorDashboardData } from './coordinator/useCoordinatorDashboardData';
 import { useCoordinatorDashboardCueLifecycle } from './coordinator/useCoordinatorDashboardCueLifecycle';
 
@@ -189,7 +120,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
     toast,
     userId: user?.id,
   });
-  const stats = useMemo(() => buildCoordinatorGuestStats(guests), [guests]);
+  const canCheckIn = canManageCoordinatorCheckIn(coordinatorRole, coordinatorPermissions);
+  const canEditQna = canManageCoordinatorQna(coordinatorRole, coordinatorPermissions);
+  const canEditTimeline = canManageCoordinatorTimeline(coordinatorRole, coordinatorPermissions);
+  const canSendAlerts = canSendImmediateCoordinatorAlerts(coordinatorRole, coordinatorPermissions);
+  const canScheduleAlerts = canScheduleCoordinatorAlerts(coordinatorRole, coordinatorPermissions);
 
   const toggleCheckIn = async (guest: GuestLiteForCoordinator) => {
     if (!canCheckIn) {
@@ -234,429 +169,163 @@ export const DashboardCoordinatorMode: React.FC = () => {
     }
   };
 
-  const sortedGuests = useMemo(() => sortCoordinatorGuests(guests), [guests]);
-  const eventAudienceOptions: AudienceOption[] = useMemo(
-    () => buildCoordinatorEventAudienceOptions(events, eventGuestIds),
-    [events, eventGuestIds],
-  );
-  const alertAudienceCount = useMemo(
-    () => getCoordinatorAlertAudienceCount({ audience: alertForm.audience, guests, eventGuestIds }),
-    [alertForm.audience, guests, eventGuestIds],
-  );
 
-  const canCheckIn = canManageCoordinatorCheckIn(coordinatorRole, coordinatorPermissions);
-  const canEditTimeline = canManageCoordinatorTimeline(coordinatorRole, coordinatorPermissions);
-  const canEditQna = canManageCoordinatorQna(coordinatorRole, coordinatorPermissions);
-  const canSendAlerts = canSendImmediateCoordinatorAlerts(coordinatorRole, coordinatorPermissions);
-  const canScheduleAlerts = canScheduleCoordinatorAlerts(coordinatorRole, coordinatorPermissions);
-
-  const qnaCounts = useMemo(() => getCoordinatorQnaCounts(qnaItems), [qnaItems]);
-  const filteredQnaItems = useMemo(() => filterCoordinatorQnaItems(qnaItems, qnaFilter), [qnaItems, qnaFilter]);
-  const activeQnaItem = useMemo(() => qnaItems.find((item) => item.id === activeQnaId) ?? null, [qnaItems, activeQnaId]);
-  const activeQnaDraftValue = useMemo(
-    () => (activeQnaId ? (qnaDraftAnswers[activeQnaId] ?? activeQnaItem?.answer ?? '') : ''),
-    [activeQnaId, qnaDraftAnswers, activeQnaItem?.answer],
-  );
-  const activeQnaDraftStateLabel = useMemo(
-    () => getCoordinatorQnaDraftStateLabel({ draftAnswer: activeQnaDraftValue, savedAnswer: activeQnaItem?.answer }),
-    [activeQnaDraftValue, activeQnaItem?.answer],
-  );
-  const qnaBoard = useMemo(() => buildCoordinatorQnaBoard({
-    items: qnaItems,
-    activeItem: activeQnaItem,
-    activeDraftStateLabel: activeQnaDraftStateLabel,
-  }), [qnaItems, activeQnaItem, activeQnaDraftStateLabel]);
-
-  useEffect(() => {
-    setActiveQnaId((prev) => resolveCoordinatorQnaFocusAfterItemsChange(qnaItems, prev));
-  }, [qnaItems]);
-
-  useEffect(() => {
-    setActiveTimelineEventId((prev) => resolveCoordinatorTimelineFocusAfterStateChange({
-      events,
-      timelineState,
-      activeTimelineEventId: prev,
-    }));
-  }, [events, timelineState]);
-
-  const alertValidationError = useMemo(() => validateCoordinatorAlertForm(alertForm, alertAudienceCount), [alertForm, alertAudienceCount]);
-
-  useEffect(() => {
-    if (canSendAlerts && (canScheduleAlerts || alertForm.scheduleType !== 'later')) return;
-
-    setAlertForm((prev) => {
-      if (!canSendAlerts && prev.scheduleType === 'now') return prev;
-      if (canSendAlerts && prev.scheduleType !== 'later') return prev;
-      return {
-        ...prev,
-        scheduleType: 'now',
-        scheduleDate: '',
-        scheduleTime: '',
-      };
-    });
-  }, [canSendAlerts, canScheduleAlerts, alertForm.scheduleType]);
-
-  const roleCapabilities = useMemo(() => buildCoordinatorRoleCapabilities(coordinatorRole), [coordinatorRole]);
-
-  const liveEventId = useMemo(() => getCoordinatorLiveEventId(events, timelineState), [events, timelineState]);
-  const upNextEventId = useMemo(() => getCoordinatorUpNextEventId(events, timelineState), [events, timelineState]);
-
-  const liveEventAudience = useMemo(() => {
-    const live = events.find((e) => e.id === liveEventId);
-    return live ? `event:${live.id}` : null;
-  }, [events, liveEventId]);
-
-  const liveEvent = useMemo(() => events.find((event) => event.id === liveEventId) ?? null, [events, liveEventId]);
-  const upNextEvent = useMemo(() => events.find((event) => event.id === upNextEventId) ?? null, [events, upNextEventId]);
-  const alertSuggestions = useMemo(() => buildCoordinatorAlertSuggestions({ liveEvent, upNextEvent }), [liveEvent, upNextEvent]);
-  const preferredAlertSuggestion = useMemo(() => resolveCoordinatorPreferredAlertSuggestion(alertSuggestions, lastAlertSuggestionKey), [alertSuggestions, lastAlertSuggestionKey]);
-  const alertSummary = useMemo(() => buildCoordinatorAlertSummary({
-    form: alertForm,
-    audienceOptions: [
-      { value: 'all', label: 'All guests' },
-      ...eventAudienceOptions.map((opt) => ({ value: opt.value, label: opt.label })),
-    ],
-    preferredSuggestion: preferredAlertSuggestion,
-    recipientCount: alertAudienceCount,
-  }), [alertForm, eventAudienceOptions, preferredAlertSuggestion, alertAudienceCount]);
-  const alertLaneLabel = useMemo(() => getCoordinatorAlertLaneLabel(preferredAlertSuggestion), [preferredAlertSuggestion]);
-  const alertTargetCue = useMemo(() => buildCoordinatorAlertTargetCue({
-    preferredSuggestion: preferredAlertSuggestion,
-    subject: alertForm.subject,
-    body: alertForm.body,
-    audience: alertForm.audience,
-  }), [preferredAlertSuggestion, alertForm.subject, alertForm.body, alertForm.audience]);
-  const alertOverrideLabel = useMemo(() => getCoordinatorAlertOverrideLabel({
-    aligned: alertTargetCue.aligned,
-    laneLabel: alertLaneLabel,
-  }), [alertTargetCue.aligned, alertLaneLabel]);
-  const alertOverrideTargetLabel = useMemo(() => getCoordinatorAlertOverrideTargetLabel(preferredAlertSuggestion), [preferredAlertSuggestion]);
-  const alertOverrideCurrentLabel = useMemo(() => getCoordinatorAlertOverrideCurrentLabel({
-    subject: alertForm.subject,
-    audienceLabel: alertSummary.audienceLabel,
-  }), [alertForm.subject, alertSummary.audienceLabel]);
-  const alertSummaryStateLabel = useMemo(() => getCoordinatorAlertSummaryStateLabel({
-    aligned: alertTargetCue.aligned,
-    laneLabel: alertLaneLabel,
-  }), [alertTargetCue.aligned, alertLaneLabel]);
-  const alertSummaryTransitionLabel = useMemo(() => getCoordinatorAlertSummaryTransitionLabel({
-    previousAligned: previousAlertAligned,
-    currentAligned: alertTargetCue.aligned,
-  }), [previousAlertAligned, alertTargetCue.aligned]);
-  const summaryFeedbackTone = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackTone(summaryFeedback.kind) : null, [summaryFeedback]);
-  const summaryFeedbackBadge = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackBadge({ kind: summaryFeedback.kind, panelFocus: summaryFeedback.panelFocus }) : null, [summaryFeedback]);
-  const summaryFeedbackEmphasis = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackEmphasis(summaryFeedback.kind) : null, [summaryFeedback]);
-  const summaryFeedbackLayout = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackLayout(summaryFeedback.kind) : null, [summaryFeedback]);
-  const summaryFeedbackCopy = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackCopy({ kind: summaryFeedback.kind, label: summaryFeedback.label }) : null, [summaryFeedback]);
-  const executionBoard = useMemo(() => buildCoordinatorExecutionBoard(summaryFeedback), [summaryFeedback]);
-  const manualOverrideBadge = useMemo(() => getCoordinatorOverrideSupportBadge({ panelFocus, kind: 'manual' }), [panelFocus]);
-  const alertOverrideBadge = useMemo(() => getCoordinatorOverrideSupportBadge({ panelFocus: null, kind: 'alert' }), []);
-  const overrideDisplayCue = useMemo(() => resolveCoordinatorOverrideDisplayCue({
-    alertOverrideLabel: alertOverrideLabelState,
-    alertOverrideUpdatedAt,
-    manualOverrideLabel,
-    manualOverrideUpdatedAt,
-  }), [alertOverrideLabelState, alertOverrideUpdatedAt, manualOverrideLabel, manualOverrideUpdatedAt]);
-  const summaryDisplayCue = useMemo(() => resolveCoordinatorSummaryDisplayCue({
-    summaryFeedback,
-    alertOverrideLabel: overrideDisplayCue?.kind === 'alert-override' ? overrideDisplayCue.label : null,
-    manualOverrideLabel: overrideDisplayCue?.kind === 'manual-override' ? overrideDisplayCue.label : null,
-  }), [summaryFeedback, overrideDisplayCue]);
-  const summaryFeedbackBadgeToneClassName = useMemo(() => {
-    if (!summaryFeedback) return getCoordinatorCommandBadgeTone({ tone: 'neutral' });
-    return getCoordinatorCommandBadgeTone({
-      tone: summaryFeedback.kind === 'transition'
-        ? 'warning'
-        : summaryFeedback.kind === 'realignment'
-          ? 'success'
-          : 'primary',
-    });
-  }, [summaryFeedback]);
-  const overrideBadgeToneClassName = useMemo(() => getCoordinatorCommandBadgeTone({ tone: 'warning' }), []);
-
-  useEffect(() => {
-    if (shouldResetCoordinatorAlertOverride({
-      overrideLabel: alertOverrideLabelState,
-      aligned: alertTargetCue.aligned,
-    })) {
-      setAlertOverrideLabelState(null);
-      setAlertOverrideUpdatedAt(null);
-      setOverrideCueShownAt(null);
-    }
-  }, [alertOverrideLabelState, alertTargetCue.aligned]);
-
-  useEffect(() => {
-    if (!preferredAlertSuggestion) return;
-    setAlertForm((prev) => {
-      if (prev.subject.trim() || prev.body.trim()) return prev;
-      return {
-        ...prev,
-        audience: prev.audience || liveEventAudience || preferredAlertSuggestion.audience,
-        subject: preferredAlertSuggestion.subject,
-        body: preferredAlertSuggestion.body,
-      };
-    });
-  }, [preferredAlertSuggestion, liveEventAudience]);
-
-  const alertStats = useMemo(() => {
-    const total = alertLog.length;
-    const scheduled = alertLog.filter((a) => !!a.sendAt).length;
-    const immediate = total - scheduled;
-    const sms = alertLog.filter((a) => a.channel === 'sms').length;
-    const email = alertLog.filter((a) => a.channel === 'email').length;
-    const byAudience = Array.from(alertLog.reduce((map, item) => {
-      map.set(item.audience, (map.get(item.audience) ?? 0) + 1);
-      return map;
-    }, new Map<string, number>()).entries()).slice(0, 3);
-    return { total, scheduled, immediate, sms, email, byAudience };
-  }, [alertLog]);
-  const alertBoard = useMemo(() => buildCoordinatorAlertBoard({
-    aligned: alertTargetCue.aligned,
-    laneLabel: alertLaneLabel,
-    audienceLabel: alertSummary.audienceLabel,
-    recipientLabel: alertSummary.recipientLabel,
-    deliveryLabel: alertSummary.deliveryLabel,
-    hasDraftContent: Boolean(alertForm.subject.trim() || alertForm.body.trim()),
-    latestAlert: alertLog[0] ?? null,
-  }), [
-    alertTargetCue.aligned,
+  const {
+    activeCheckInGuest,
+    activeQnaDraftStateLabel,
+    activeQnaDraftValue,
+    activeQnaItem,
+    alertActivityBoard,
+    alertAudienceCount,
+    alertBoard,
     alertLaneLabel,
-    alertSummary.audienceLabel,
-    alertSummary.recipientLabel,
-    alertSummary.deliveryLabel,
-    alertForm.subject,
-    alertForm.body,
-    alertLog,
-  ]);
-  const alertActivityBoard = useMemo(() => buildCoordinatorAlertActivityBoard(alertLog), [alertLog]);
-
-
-  const nextArrivals = useMemo(
-    () => sortedGuests.filter((g) => !g.checked_in_at && getCoordinatorDoorStatus(g) === 'ready').slice(0, 5),
-    [sortedGuests],
-  );
-  const checkInWatchCount = useMemo(() => guests.filter((guest) => getCoordinatorDoorStatus(guest) === 'watch').length, [guests]);
-  const opsSnapshotItems = useMemo(() => buildCoordinatorOpsSnapshot({
-    role: coordinatorRole,
-    reviewCount: checkInWatchCount,
-    nextArrivalName: nextArrivals[0]?.name ?? null,
-    liveEventName: liveEvent?.event_name ?? null,
-    upNextEventName: upNextEvent?.event_name ?? null,
-    openQnaCount: qnaCounts.open,
-    preferredAlertLabel: preferredAlertSuggestion?.label ?? null,
-    alertAligned: alertTargetCue.aligned,
-    canScheduleAlerts,
-  }), [
-    coordinatorRole,
-    checkInWatchCount,
-    nextArrivals,
-    liveEvent?.event_name,
-    upNextEvent?.event_name,
-    qnaCounts.open,
-    preferredAlertSuggestion?.label,
-    alertTargetCue.aligned,
-    canScheduleAlerts,
-  ]);
-  const roleBoard = useMemo(() => buildCoordinatorRoleBoard({
-    role: coordinatorRole,
-    capabilities: roleCapabilities,
-  }), [coordinatorRole, roleCapabilities]);
-
-  const checkInQueue = useMemo(() => {
-    const base = filterCoordinatorCheckInQueue(sortedGuests, checkInQuery, checkInFilter);
-    return checkInReviewOnly ? base.filter((guest) => getCoordinatorDoorStatus(guest) === 'watch') : base;
-  }, [sortedGuests, checkInQuery, checkInFilter, checkInReviewOnly]);
-  const checkInBoardTargetId = useMemo(() => getCoordinatorCheckInBoardTargetId(sortedGuests), [sortedGuests]);
-  const checkInTargetState = useMemo(() => getCoordinatorCheckInTargetState({ boardTargetId: checkInBoardTargetId, activeGuestId }), [checkInBoardTargetId, activeGuestId]);
-  const timelineBoardTargetId = useMemo(() => getCoordinatorTimelineBoardTargetId({ liveEventId, upNextEventId }), [liveEventId, upNextEventId]);
-  const timelineTargetState = useMemo(() => getCoordinatorTimelineTargetState({ boardTargetId: timelineBoardTargetId, activeTimelineEventId }), [timelineBoardTargetId, activeTimelineEventId]);
-  const qnaBoardTargetId = useMemo(() => getFirstOpenCoordinatorQnaId(qnaItems), [qnaItems]);
-  const qnaTargetState = useMemo(() => getCoordinatorQnaTargetState({ boardTargetId: qnaBoardTargetId, activeQnaId }), [qnaBoardTargetId, activeQnaId]);
-  const checkInTargetGuest = useMemo(() => sortedGuests.find((guest) => guest.id === checkInBoardTargetId) ?? null, [sortedGuests, checkInBoardTargetId]);
-  const activeCheckInGuest = useMemo(() => sortedGuests.find((guest) => guest.id === activeGuestId) ?? null, [sortedGuests, activeGuestId]);
-  const checkInBoard = useMemo(() => buildCoordinatorCheckInBoard({
-    guests: sortedGuests,
-    activeGuest: activeCheckInGuest,
-  }), [sortedGuests, activeCheckInGuest]);
-  const timelineTargetEvent = useMemo(() => events.find((event) => event.id === timelineBoardTargetId) ?? null, [events, timelineBoardTargetId]);
-  const qnaTargetItem = useMemo(() => qnaItems.find((item) => item.id === qnaBoardTargetId) ?? null, [qnaItems, qnaBoardTargetId]);
-  const priorityCommandLabel = useMemo(() => getCoordinatorCommandPriority({
-    checkInLabel: checkInTargetState.label,
-    timelineLabel: timelineTargetState.label,
-    qnaLabel: qnaTargetState.label,
-    alertAligned: alertTargetCue.aligned,
-  }), [checkInTargetState.label, timelineTargetState.label, qnaTargetState.label, alertTargetCue.aligned]);
-  const priorityCommandReason = useMemo(() => getCoordinatorCommandPriorityReason({
-    priority: priorityCommandLabel,
-    checkInLabel: checkInTargetState.label,
-    timelineLabel: timelineTargetState.label,
-    qnaLabel: qnaTargetState.label,
-    alertAligned: alertTargetCue.aligned,
-    alertLaneLabel,
-  }), [priorityCommandLabel, checkInTargetState.label, timelineTargetState.label, qnaTargetState.label, alertTargetCue.aligned, alertLaneLabel]);
-  const priorityCommandTargetReason = useMemo(() => getCoordinatorCommandPriorityTargetReason({
-    priority: priorityCommandLabel,
-    checkInTargetName: checkInTargetGuest?.name ?? null,
-    timelineTargetName: timelineTargetEvent?.event_name ?? null,
-    qnaTargetQuestion: qnaTargetItem?.question ?? null,
-  }), [priorityCommandLabel, checkInTargetGuest?.name, timelineTargetEvent?.event_name, qnaTargetItem?.question]);
-  const priorityCommandCta = useMemo(() => getCoordinatorCommandPriorityCta(priorityCommandLabel), [priorityCommandLabel]);
-  const commandSummaryItems = useMemo(() => buildCoordinatorCommandSummary({
-    checkInLabel: checkInTargetState.label,
-    timelineLabel: timelineTargetState.label,
-    qnaLabel: qnaTargetState.label,
-    alertLabel: alertSummaryStateLabel,
-    priorityLabel: priorityCommandLabel,
-    checkInTargetName: checkInTargetGuest?.name ?? null,
-    timelineTargetName: timelineTargetEvent?.event_name ?? null,
-    qnaTargetQuestion: qnaTargetItem?.question ?? null,
-    alertLaneLabel,
-  }), [
-    checkInTargetState.label,
-    timelineTargetState.label,
-    qnaTargetState.label,
+    alertOverrideBadge,
+    alertOverrideCurrentLabel,
+    alertOverrideLabel,
+    alertOverrideTargetLabel,
+    alertStats,
+    alertSuggestions,
+    alertSummary,
     alertSummaryStateLabel,
-    priorityCommandLabel,
-    checkInTargetGuest?.name,
-    timelineTargetEvent?.event_name,
-    qnaTargetItem?.question,
-    alertLaneLabel,
-  ]);
-  const commandDeckItems = useMemo(() => buildCoordinatorCommandDeck({
-    items: commandSummaryItems,
-    priorityLabel: priorityCommandLabel,
-    priorityReason: priorityCommandReason,
-    priorityCta: priorityCommandCta,
-    checkInTargetName: checkInTargetGuest?.name ?? null,
-    timelineTargetName: timelineTargetEvent?.event_name ?? null,
-    qnaTargetQuestion: qnaTargetItem?.question ?? null,
-    alertLaneLabel,
-  }), [
+    alertSummaryTransitionLabel,
+    alertTargetCue,
+    checkInBoard,
+    checkInBoardTargetId,
+    checkInQueue,
+    checkInTargetGuest,
+    checkInTargetState,
+    checkInWatchCount,
+    commandBoard,
+    commandDeckItems,
+    commandModeGuidance,
+    commandModeLabel,
     commandSummaryItems,
+    correctionCues,
+    correctionEventId,
+    correctionGuestId,
+    eventAudienceOptions,
+    executionBoard,
+    filteredAlertLog,
+    filteredAlertLogView,
+    filteredQnaItems,
+    liveEvent,
+    liveEventAudience,
+    liveEventId,
+    liveIssues,
+    manualOverrideActionLabel,
+    manualOverrideBadge,
+    manualOverrideCurrentTargetLabel,
+    manualOverrideTargetLabel,
+    navigationBoard,
+    nextArrivals,
+    opsSnapshotItems,
+    overrideBadgeToneClassName,
+    overrideDisplayCue,
+    preferredAlertSuggestion,
+    primaryAction,
+    primaryActionBoard,
+    primaryActionTarget,
+    priorityCommandCta,
     priorityCommandLabel,
     priorityCommandReason,
-    priorityCommandCta,
-    checkInTargetGuest?.name,
-    timelineTargetEvent?.event_name,
-    qnaTargetItem?.question,
-    alertLaneLabel,
-  ]);
-  const stablePrompt = useMemo(() => buildCoordinatorStablePrompt({
-    priority: priorityCommandLabel,
-    reason: priorityCommandReason,
-    cta: priorityCommandCta,
-  }), [priorityCommandLabel, priorityCommandReason, priorityCommandCta]);
-  const standingPromptMode = useMemo(() => getCoordinatorStandingPromptMode(Boolean(summaryDisplayCue)), [summaryDisplayCue]);
-  const standingPromptBadge = useMemo(() => getCoordinatorStandingPromptBadge({
-    mode: standingPromptMode,
-    badge: stablePrompt.badge,
-  }), [standingPromptMode, stablePrompt.badge]);
-  const standingPromptCopy = useMemo(() => getCoordinatorStandingPromptCopy({
-    mode: standingPromptMode,
-    label: stablePrompt.label,
-  }), [standingPromptMode, stablePrompt.label]);
-  const stablePromptTargetLabel = useMemo(() => getCoordinatorStablePromptTargetLabel({
-    priority: priorityCommandLabel,
-    targetName: priorityCommandLabel === 'Check-in'
-      ? checkInTargetGuest?.name ?? null
-      : priorityCommandLabel === 'Timeline'
-        ? timelineTargetEvent?.event_name ?? null
-        : priorityCommandLabel === 'Q&A'
-          ? qnaTargetItem?.question ?? null
-          : alertLaneLabel,
-  }), [priorityCommandLabel, checkInTargetGuest?.name, timelineTargetEvent?.event_name, qnaTargetItem?.question, alertLaneLabel]);
-  const stablePromptState = useMemo(() => getCoordinatorStablePromptState({
-    priority: priorityCommandLabel,
-    panelFocus,
-  }), [priorityCommandLabel, panelFocus]);
-  const standingPromptStateLabel = useMemo(() => getCoordinatorStandingPromptSecondaryState({
-    mode: standingPromptMode,
-    state: stablePromptState,
-  }), [standingPromptMode, stablePromptState]);
-  const stablePromptBadgeToneClassName = useMemo(() => getCoordinatorCommandBadgeTone({
-    tone: standingPromptMode === 'secondary' ? 'neutral' : 'primary',
-  }), [standingPromptMode]);
-  const stablePromptStateToneClassName = useMemo(() => getCoordinatorCommandBadgeTone({
-    tone: standingPromptStateLabel ? 'success' : 'neutral',
-  }), [standingPromptStateLabel]);
-  const manualOverrideActionLabel = useMemo(() => getCoordinatorManualOverrideActionLabel(panelFocus), [panelFocus]);
-  const manualOverrideTargetLabel = useMemo(() => getCoordinatorManualOverrideTargetLabel({
-    panelFocus,
-    boardTargetName: panelFocus === 'check-in'
-      ? checkInTargetGuest?.name ?? null
-      : panelFocus === 'timeline'
-        ? timelineTargetEvent?.event_name ?? null
-        : panelFocus === 'qna'
-          ? qnaTargetItem?.question ?? null
-          : null,
-  }), [panelFocus, checkInTargetGuest?.name, timelineTargetEvent?.event_name, qnaTargetItem?.question]);
-  const manualOverrideCurrentTargetLabel = useMemo(() => getCoordinatorManualOverrideCurrentTargetLabel({
-    panelFocus,
-    currentTargetName: panelFocus === 'check-in'
-      ? sortedGuests.find((guest) => guest.id === activeGuestId)?.name ?? null
-      : panelFocus === 'timeline'
-        ? events.find((event) => event.id === activeTimelineEventId)?.event_name ?? null
-        : panelFocus === 'qna'
-          ? qnaItems.find((item) => item.id === activeQnaId)?.question ?? null
-          : null,
-  }), [panelFocus, sortedGuests, activeGuestId, events, activeTimelineEventId, qnaItems, activeQnaId]);
-
-  const liveIssues = useMemo(() => buildCoordinatorEscalations({
-    guests,
-    qnaItems,
-    events,
-    timelineState,
-  }), [guests, qnaItems, events, timelineState]);
-  const primaryAction = useMemo(() => buildCoordinatorPrimaryAction({
-    guests,
-    qnaItems,
-    events,
-    timelineState,
-  }), [guests, qnaItems, events, timelineState]);
-  const primaryActionTarget = useMemo(() => resolveCoordinatorPrimaryActionTarget(primaryAction), [primaryAction]);
-  const primaryActionBoard = useMemo(() => buildCoordinatorPrimaryActionBoard({
-    action: primaryAction,
-    target: primaryActionTarget,
-    canAutoRunTimeline: Boolean(upNextEventId && canEditTimeline),
-  }), [primaryAction, primaryActionTarget, upNextEventId, canEditTimeline]);
-  const navigationBoard = useMemo(() => buildCoordinatorNavigationBoard({
-    panelFocus,
-    boardTargetName: panelFocus === 'check-in'
-      ? checkInTargetGuest?.name ?? null
-      : panelFocus === 'timeline'
-        ? timelineTargetEvent?.event_name ?? null
-        : panelFocus === 'qna'
-          ? qnaTargetItem?.question ?? null
-          : null,
-    reviewOnly: panelFocus === 'check-in' ? checkInReviewOnly : false,
-  }), [panelFocus, checkInTargetGuest?.name, timelineTargetEvent?.event_name, qnaTargetItem?.question, checkInReviewOnly]);
-  const secondaryCommandLabel = useMemo(
-    () => commandSummaryItems.find((item) => item.label !== priorityCommandLabel)?.label ?? null,
-    [commandSummaryItems, priorityCommandLabel],
-  );
-  const commandBoard = useMemo(() => buildCoordinatorCommandBoard({
-    priority: priorityCommandLabel,
-    reason: priorityCommandReason,
-    targetReason: priorityCommandTargetReason,
-    cta: priorityCommandCta,
-    secondary: secondaryCommandLabel,
-    primaryActionTitle: primaryAction.title,
-  }), [priorityCommandLabel, priorityCommandReason, priorityCommandTargetReason, priorityCommandCta, secondaryCommandLabel, primaryAction.title]);
-  const commandModeLabel = useMemo(() => getCoordinatorCommandModeLabel(commandSource), [commandSource]);
-  const commandModeGuidance = useMemo(() => getCoordinatorCommandModeGuidance(commandSource), [commandSource]);
-  const correctionCues = useMemo(() => buildCoordinatorCorrectionCues({
-    guests,
-    events,
-    timelineState,
-  }), [guests, events, timelineState]);
-  const correctionGuestId = useMemo(() => getCoordinatorCorrectionGuestId(sortedGuests), [sortedGuests]);
-  const correctionEventId = useMemo(() => getCoordinatorCorrectionEventId(events, timelineState), [events, timelineState]);
-  const timelineBoard = useMemo(() => buildCoordinatorTimelineBoard({
-    events,
-    timelineState,
-    liveEventId,
+    priorityCommandTargetReason,
+    qnaBoard,
+    qnaBoardTargetId,
+    qnaCounts,
+    qnaTargetItem,
+    qnaTargetState,
+    roleBoard,
+    roleCapabilities,
+    secondaryCommandLabel,
+    sortedGuests,
+    stablePrompt,
+    stablePromptBadgeToneClassName,
+    stablePromptState,
+    stablePromptStateToneClassName,
+    stablePromptTargetLabel,
+    standingPromptBadge,
+    standingPromptCopy,
+    standingPromptMode,
+    standingPromptStateLabel,
+    stats,
+    summaryDisplayCue,
+    summaryFeedbackBadge,
+    summaryFeedbackBadgeToneClassName,
+    summaryFeedbackCopy,
+    summaryFeedbackEmphasis,
+    summaryFeedbackLayout,
+    summaryFeedbackTone,
+    timelineBoard,
+    timelineBoardTargetId,
+    timelineTargetEvent,
+    timelineTargetState,
+    upNextEvent,
     upNextEventId,
-  }), [events, timelineState, liveEventId, upNextEventId]);
+  } = useMemo(() => buildCoordinatorDashboardDerivedState({
+    activeGuestId,
+    activeQnaId,
+    activeTimelineEventId,
+    alertChannelFilter,
+    alertForm,
+    alertLog,
+    alertOverrideLabelState,
+    alertOverrideUpdatedAt,
+    alertTimingFilter,
+    checkInFilter,
+    checkInQuery,
+    checkInReviewOnly,
+    commandSource,
+    coordinatorPermissions,
+    coordinatorRole,
+    eventGuestIds,
+    events,
+    guests,
+    lastAlertSuggestionKey,
+    manualOverrideLabel,
+    manualOverrideUpdatedAt,
+    panelFocus,
+    previousAlertAligned,
+    qnaDraftAnswers,
+    qnaFilter,
+    qnaItems,
+    summaryFeedback,
+    timelineState,
+    canEditTimeline,
+    canScheduleAlerts,
+  }), [
+    activeGuestId,
+    activeQnaId,
+    activeTimelineEventId,
+    alertChannelFilter,
+    alertForm,
+    alertLog,
+    alertOverrideLabelState,
+    alertOverrideUpdatedAt,
+    alertTimingFilter,
+    checkInFilter,
+    checkInQuery,
+    checkInReviewOnly,
+    commandSource,
+    coordinatorPermissions,
+    coordinatorRole,
+    eventGuestIds,
+    events,
+    guests,
+    lastAlertSuggestionKey,
+    manualOverrideLabel,
+    manualOverrideUpdatedAt,
+    panelFocus,
+    previousAlertAligned,
+    qnaDraftAnswers,
+    qnaFilter,
+    qnaItems,
+    summaryFeedback,
+    timelineState,
+    canEditTimeline,
+    canScheduleAlerts,
+  ]);
+  const alertValidationError = validateCoordinatorAlertForm(alertForm, alertAudienceCount);
+
 
   useEffect(() => {
     if (commandSource !== 'primary-action') return;
@@ -678,12 +347,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setCommandSource(null);
     setNeutralFocusReason(getCoordinatorNeutralFocusReason(panelFocus));
   }, [commandSource, correctionCues.length, panelFocus]);
-
-  const filteredAlertLog = useMemo(
-    () => filterCoordinatorAlertLog({ alertLog, channelFilter: alertChannelFilter, timingFilter: alertTimingFilter }),
-    [alertLog, alertChannelFilter, alertTimingFilter],
-  );
-  const filteredAlertLogView = useMemo(() => buildCoordinatorAlertLogView(filteredAlertLog), [filteredAlertLog]);
   const {
     clearCoordinatorTransientState,
     escalateDoorReview,
