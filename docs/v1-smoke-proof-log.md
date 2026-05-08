@@ -7,6 +7,20 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-07 6:47 PM PT No-Deploy Settings RSVP Meal Panel Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Settings.tsx` no longer carries the RSVP meal-choice card inline.
+  - Added `src/pages/dashboard/settings/SettingsRsvpMealPanel.tsx` so the meal-choice toggle, meal-option editor, save action, and collapsed success/error state live behind a dedicated panel seam.
+  - `src/pages/dashboard/settings/settingsSiteData.test.ts` now pins the `SettingsRsvpMealPanel` seam and rejects reintroducing the old inline meal-choice copy directly inside the page.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts`: PASS, 6/6.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is another maintainability and oversized-file cleanup step, and no deploy was run.
+
 ## 2026-05-07 6:44 PM PT No-Deploy Settings Template Panel Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:

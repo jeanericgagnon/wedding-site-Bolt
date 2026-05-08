@@ -19,6 +19,23 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 6:47 PM PT - No-Deploy Settings RSVP Meal Panel Extraction
+
+What changed:
+- `src/pages/dashboard/Settings.tsx` no longer carries the RSVP meal-choice card inline.
+- New `src/pages/dashboard/settings/SettingsRsvpMealPanel.tsx` now owns the meal-choice toggle, meal-option list/editor, save action, and collapsed success/error state for the simpler RSVP settings lane.
+- `src/pages/dashboard/settings/settingsSiteData.test.ts` now pins that seam and rejects regaining the old inline meal-choice copy directly inside the page.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts`: PASS, 1 file and 6 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This trims another self-contained owner-facing card out of `Settings.tsx` and keeps the page more focused on state and handlers instead of RSVP meal-choice markup. No deploy was run.
+
 ### 2026-05-07 6:44 PM PT - No-Deploy Settings Template Panel Extraction
 
 What changed:

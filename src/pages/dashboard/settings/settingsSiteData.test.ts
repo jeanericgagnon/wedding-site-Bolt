@@ -83,6 +83,7 @@ describe('settings site data boundary', () => {
     expect(page).toContain('revokeSettingsCollaboratorInvite(inviteId)');
     expect(page).toContain('<SettingsIdentityExportsPanel');
     expect(page).toContain('<SettingsPrivacyPanel');
+    expect(page).toContain('<SettingsRsvpMealPanel');
     expect(page).toContain('<SettingsTeamAccessPanel');
     expect(page).toContain('<SettingsSiteUrlPanel');
     expect(page).toContain('<SettingsTemplatePanel');
@@ -106,6 +107,8 @@ describe('settings site data boundary', () => {
     expect(page).not.toContain('Control who can view your site');
     expect(page).not.toContain('Choose a different design');
     expect(page).not.toContain('Your names, details, and content stay in place when you switch designs.');
+    expect(page).not.toContain('Toggle meal collection and customize options shown on RSVP');
+    expect(page).not.toContain('Collect meal choice on RSVP form');
 
     expect(service).toContain('.select(SETTINGS_SITE_SELECT)');
     expect(service).toContain('.select(SETTINGS_COLLABORATOR_INVITE_SELECT)');

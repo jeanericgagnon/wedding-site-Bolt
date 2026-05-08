@@ -72,6 +72,7 @@ import { SettingsIdentityExportsPanel } from './settings/SettingsIdentityExports
 import { getSettingsTabs, SettingsNavigation, type SettingsTabId } from './settings/SettingsNavigation';
 import { SettingsNotificationsPanel } from './settings/SettingsNotificationsPanel';
 import { SettingsPrivacyPanel } from './settings/SettingsPrivacyPanel';
+import { SettingsRsvpMealPanel } from './settings/SettingsRsvpMealPanel';
 import { SettingsSiteUrlPanel } from './settings/SettingsSiteUrlPanel';
 import { SettingsTemplatePanel } from './settings/SettingsTemplatePanel';
 import { SettingsTeamAccessPanel } from './settings/SettingsTeamAccessPanel';
@@ -1148,57 +1149,37 @@ export const DashboardSettings: React.FC = () => {
 
             {activeTab === 'rsvp' && (
               <>
-                <Card variant="bordered" padding="lg">
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <CardTitle>Meal Choice</CardTitle>
-                        <CardDescription>Toggle meal collection and customize options shown on RSVP</CardDescription>
-                      </div>
-                      <Button type="button" variant="outline" size="sm" onClick={() => setShowMealChoiceSettings((v) => !v)}>
-                        {showMealChoiceSettings ? 'Hide' : 'Show'}
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {!showMealChoiceSettings ? (
-                      <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
-                        Hidden by default to keep RSVP setup lighter. Open this section only if you want guests to choose a meal.
-                      </div>
-                    ) : (
-                      <>
-                        <label className="flex items-center gap-2 text-sm text-text-primary">
-                          <input type="checkbox" checked={rsvpMealEnabled} onChange={(e) => { rsvpDraftGuard.markDirty(); setRsvpMealEnabled(e.target.checked); }} className="w-4 h-4 rounded border-border text-primary" />
-                          Collect meal choice on RSVP form
-                        </label>
-                        {rsvpMealEnabled && (
-                          <div className="space-y-2">
-                            <label className="block text-sm font-medium text-text-primary">Meal options</label>
-                            {rsvpMealOptions.map((opt, idx) => (
-                              <div key={`meal-opt-${idx}`} className="flex items-center gap-2">
-                                <Input value={opt} onChange={(e) => { rsvpDraftGuard.markDirty(); setRsvpMealOptions((prev) => { const n=[...prev]; n[idx]=e.target.value; return n; }); }} placeholder={`Meal option ${idx+1}`} />
-                                <Button type="button" variant="ghost" size="sm" onClick={() => { rsvpDraftGuard.markDirty(); setRsvpMealOptions((prev) => prev.filter((_, i) => i !== idx)); }}><Trash2 className="w-4 h-4" /></Button>
-                              </div>
-                            ))}
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Button type="button" variant="outline" size="sm" onClick={() => { rsvpDraftGuard.markDirty(); setRsvpMealOptions((prev) => [...prev, '']); }}><Plus className="w-4 h-4 mr-1" />Add meal option</Button>
-                              <Button type="button" variant="primary" size="sm" onClick={() => void saveRsvpSettings()} disabled={rsvpQuestionsSaving}>
-                                {rsvpQuestionsSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                                Save meal choices
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    )}
-                    {!showAdvancedRsvp && rsvpQuestionsSuccess && (
-                      <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{rsvpQuestionsSuccess}</div>
-                    )}
-                    {!showAdvancedRsvp && rsvpQuestionsError && (
-                      <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">{rsvpQuestionsError}</div>
-                    )}
-                  </CardContent>
-                </Card>
+                <SettingsRsvpMealPanel
+                  mealOptions={rsvpMealOptions}
+                  onAddMealOption={() => {
+                    rsvpDraftGuard.markDirty();
+                    setRsvpMealOptions((prev) => [...prev, '']);
+                  }}
+                  onMealChoiceEnabledChange={(enabled) => {
+                    rsvpDraftGuard.markDirty();
+                    setRsvpMealEnabled(enabled);
+                  }}
+                  onMealOptionChange={(index, value) => {
+                    rsvpDraftGuard.markDirty();
+                    setRsvpMealOptions((prev) => {
+                      const next = [...prev];
+                      next[index] = value;
+                      return next;
+                    });
+                  }}
+                  onRemoveMealOption={(index) => {
+                    rsvpDraftGuard.markDirty();
+                    setRsvpMealOptions((prev) => prev.filter((_, optionIndex) => optionIndex !== index));
+                  }}
+                  onSave={() => { void saveRsvpSettings(); }}
+                  onToggleVisibility={() => setShowMealChoiceSettings((value) => !value)}
+                  rsvpMealEnabled={rsvpMealEnabled}
+                  rsvpQuestionsError={rsvpQuestionsError}
+                  rsvpQuestionsSaving={rsvpQuestionsSaving}
+                  rsvpQuestionsSuccess={rsvpQuestionsSuccess}
+                  showAdvancedRsvp={showAdvancedRsvp}
+                  showMealChoiceSettings={showMealChoiceSettings}
+                />
 
                 <Card variant="bordered" padding="lg">
                   <CardHeader>
