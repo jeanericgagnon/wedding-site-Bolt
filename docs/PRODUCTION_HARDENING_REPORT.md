@@ -6305,3 +6305,18 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 08:29 AM PT No-Deploy Guest Photo Moderation-Actions Hook Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now routes the guest photo moderation and guestbook mutation lane through `src/pages/dashboard/guestPhotos/useGuestPhotoModerationActions.ts`.
+  - That hook now owns guestbook moderation, filtered hide/unhide, filtered flag/unflag, review-photo hide, duplicate-extra hide, hidden-photo restore, bulk album active-state updates, and single-upload moderation while the page keeps dashboard data hydration, bucket workspace, AI action lanes, album action lanes, exports, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useGuestPhotoModerationActions({ ... })`, checks that `useGuestPhotoModerationActions.ts` owns the guestbook / moderation service seam, and rejects regaining the old inline moderation handlers in `GuestPhotoSharing.tsx`.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 1248 lines to 1106 lines in this batch, while `src/pages/dashboard/guestPhotos/useGuestPhotoModerationActions.ts` came in at 238 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

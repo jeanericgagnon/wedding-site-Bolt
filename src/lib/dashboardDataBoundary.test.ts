@@ -1130,15 +1130,15 @@ describe('dashboard data boundary guards', () => {
     const aiActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoAiActions.ts'), 'utf8');
     const bucketWorkspace = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoBucketWorkspace.ts'), 'utf8');
     const dashboardData = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoDashboardData.ts'), 'utf8');
+    const moderationActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoModerationActions.ts'), 'utf8');
     const liveContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/GuestPhotoDashboardLiveContent.tsx'), 'utf8');
     const liveContentProps = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardLiveContentProps.ts'), 'utf8');
 
     expect(source).toContain('await saveGuestPhotoHubSettings(siteId, hubSettings)');
-    expect(source).toContain('await moderateGuestbookEntryFromService(entryId, patch)');
     expect(source).toContain('await exportGuestPhotoManifest(siteId, showHidden)');
-    expect(source).toContain("await moderateGuestPhotoUploads(ids, { is_hidden: hide })");
     expect(source).toContain('useGuestPhotoAlbumActions({');
     expect(source).toContain('useGuestPhotoAiActions({');
+    expect(source).toContain('useGuestPhotoModerationActions({');
     expect(source).toContain('queueGuestPhotoFollowupsFromService(siteId, kind)');
     expect(source).toContain('buildGuestPhotoDashboardLiveContentProps({');
     expect(source).toContain('<GuestPhotoDashboardLiveContent');
@@ -1187,6 +1187,10 @@ describe('dashboard data boundary guards', () => {
     expect(aiActions).toContain('await moveGuestPhotoUploadToBucket(siteId, move.uploadId, move.targetBucketId)');
     expect(aiActions).toContain('await createGuestPhotoBucketCorrection(siteId, analysis, action, chosenBucketId, reason)');
     expect(aiActions).toContain("await analyzeGuestPhotoUploads(siteId, uploadIds, force, force ? 'vision' : 'auto')");
+    expect(moderationActions).toContain('export function useGuestPhotoModerationActions({');
+    expect(moderationActions).toContain('await moderateGuestbookEntryFromService(entryId, patch)');
+    expect(moderationActions).toContain("await moderateGuestPhotoUploads(ids, { is_hidden: hide })");
+    expect(moderationActions).toContain("await manageGuestPhotoAlbum({ action: 'set_active', albumId: bucket.id, isActive })");
     expect(source).not.toContain('supabase.auth.getUser()');
     expect(source).not.toContain('supabase.auth.getSession()');
     expect(source).not.toContain('supabase.auth.refreshSession()');
@@ -1217,6 +1221,14 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('const generateAiPhotoOpsPlan = async () => {');
     expect(source).not.toContain('const applyVisionSuggestion = async (analysis: PhotoUploadAiAnalysisRow) => {');
     expect(source).not.toContain('const analyzeUploadsWithVision = async (force = false) => {');
+    expect(source).not.toContain('const updateGuestbookEntry = async (entryId: string, patch: Partial<Pick<GuestbookEntryRow,');
+    expect(source).not.toContain('const setUploadsHiddenByFilter = async (hide: boolean) => {');
+    expect(source).not.toContain('const hideReviewUploads = async () => {');
+    expect(source).not.toContain('const hideDuplicateExtras = async () => {');
+    expect(source).not.toContain('const restoreHiddenUploads = async () => {');
+    expect(source).not.toContain('const setUploadsFlaggedByFilter = async (flagged: boolean) => {');
+    expect(source).not.toContain('const setAllBucketsActive = async (isActive: boolean) => {');
+    expect(source).not.toContain("await moderateGuestPhotoUploads([uploadId], patch)");
     expect(source).not.toContain('const persistPhotoBuckets = async (nextBuckets:');
     expect(source).not.toContain('const handleBucketRemoveClick = async (bucket: PhotoBucketKind, itemId: string) => {');
     expect(source).not.toContain('const handleBucketFilesSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {');
