@@ -7388,6 +7388,21 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 9:05 PM PT No-Deploy Settings Dashboard Shell Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Settings.tsx` now routes its outer layout, hero stats, and settings navigation through `src/pages/dashboard/settings/SettingsDashboardShell.tsx`.
+  - That higher-level shell now owns the `DashboardLayout`, `DashboardPageHero`, and `SettingsNavigation` chrome while the page stays focused on tab-specific panel state and handlers.
+  - `src/pages/dashboard/settings/settingsSiteData.test.ts` now pins `SettingsDashboardShell` and rejects regaining the old inline settings layout, hero, and nav shell in `Settings.tsx`.
+  - `src/pages/dashboard/Settings.tsx` dropped from 1313 lines to 1298 lines in this batch, while `src/pages/dashboard/settings/SettingsDashboardShell.tsx` came in at 49 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts`: PASS, 17/17.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 9:02 PM PT No-Deploy Overview Dashboard Route View Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

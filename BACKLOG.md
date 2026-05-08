@@ -2009,3 +2009,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now pins `OverviewDashboardRouteView` and rejects regaining the old inline overview layout and state shell in `Overview.tsx`.
   - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/overviewQueryBounds.test.ts src/pages/dashboard/overviewService.test.ts src/pages/dashboard/overviewUtils.test.ts src/pages/dashboard/overviewDate.test.ts` (30/30), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the overview dashboard without changing overview behavior. No deploy was run.
+- 2026-05-07 9:05 PM PT - No-deploy Settings dashboard-shell extraction:
+  - Resolved in this batch: moved the settings page chrome out of `src/pages/dashboard/Settings.tsx` and behind `src/pages/dashboard/settings/SettingsDashboardShell.tsx`.
+  - Data-boundary hardening: `Settings.tsx` now routes the outer layout, hero stats, and settings navigation through one higher-level shell instead of directly composing `DashboardLayout`, `DashboardPageHero`, and `SettingsNavigation` inline.
+  - File-size movement: `Settings.tsx` dropped from 1313 lines to 1298 lines in this continuation batch; the new dashboard shell is 49 lines.
+  - No feature loss: account settings, team access, site settings, RSVP controls, notifications, and billing preserve the current behavior while shrinking page-owned chrome composition.
+  - Proof added/updated: `src/pages/dashboard/settings/settingsSiteData.test.ts` now pins `SettingsDashboardShell` and rejects regaining the old inline settings layout, hero, and nav shell in `Settings.tsx`.
+  - Validation passed: `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts` (17/17), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 oversized-file and page-boundary risk in the settings dashboard without changing settings behavior. No deploy was run.

@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
 import { Loader2 } from 'lucide-react';
 import { getSiteVisibilityState, getVisibilityModeOptions } from '../../lib/siteVisibilityState';
@@ -77,6 +75,7 @@ import { SettingsRsvpQuestionsPanel } from './settings/SettingsRsvpQuestionsPane
 import { SettingsSiteUrlPanel } from './settings/SettingsSiteUrlPanel';
 import { SettingsTemplatePanel } from './settings/SettingsTemplatePanel';
 import { SettingsTeamAccessPanel } from './settings/SettingsTeamAccessPanel';
+import { SettingsDashboardShell } from './settings/SettingsDashboardShell';
 
 const useDraftHydrationGuard = (clearStatus: () => void) => {
   const dirtyRef = useRef(false);
@@ -1000,26 +999,15 @@ export const DashboardSettings: React.FC = () => {
   };
 
   const tabs = getSettingsTabs(settingsRole);
-  const translationStatusByLanguage = new Map(translationStatuses.map((row) => [row.language, row]));
-
   return (
-    <DashboardLayout currentPage="settings">
-      <div className="max-w-5xl mx-auto space-y-8">
-        <DashboardPageHero
-          eyebrow="Settings"
-          title="The quiet controls behind your wedding site."
-          description="Update access, language, RSVP behavior, notifications, and billing when you need to. The everyday planning tools stay out front."
-          stats={[
-            { label: 'Language', value: getSiteLanguageLabel(defaultLanguage), detail: 'public site default' },
-            { label: 'Access', value: tabs.some((tab) => tab.id === 'team') ? 'Team ready' : 'Owner only', detail: settingsRole === 'owner' ? 'invite links available' : 'limited by role' },
-            { label: 'RSVP', value: rsvpQuestions.length, detail: 'custom questions' },
-          ]}
-        />
-
-        <div className="flex flex-col md:flex-row gap-8">
-          <SettingsNavigation activeTab={activeTab} tabs={tabs} onTabChange={setActiveTab} />
-
-          <div className="flex-1 space-y-6">
+    <SettingsDashboardShell
+      activeTab={activeTab}
+      defaultLanguage={defaultLanguage}
+      onTabChange={setActiveTab}
+      rsvpQuestionCount={rsvpQuestions.length}
+      settingsRole={settingsRole}
+      tabs={tabs}
+    >
             {activeTab === 'account' && (
               <SettingsAccountPanel
                 coupleNames={coupleNames}
@@ -1305,9 +1293,6 @@ export const DashboardSettings: React.FC = () => {
                 onSubscribe={handleSubscribe}
               />
             )}
-          </div>
-        </div>
-      </div>
-    </DashboardLayout>
+    </SettingsDashboardShell>
   );
 };

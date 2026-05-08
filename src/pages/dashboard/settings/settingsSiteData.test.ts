@@ -81,6 +81,7 @@ describe('settings site data boundary', () => {
     expect(page).toContain('loadSettingsCollaboratorInvites(siteId)');
     expect(page).toContain('createSettingsCollaboratorInvite({');
     expect(page).toContain('revokeSettingsCollaboratorInvite(inviteId)');
+    expect(page).toContain('<SettingsDashboardShell');
     expect(page).toContain('<SettingsIdentityExportsPanel');
     expect(page).toContain('<SettingsPrivacyPanel');
     expect(page).toContain('<SettingsRsvpMealPanel');
@@ -93,6 +94,9 @@ describe('settings site data boundary', () => {
     expect(page).toContain('requireSettingsAuthenticatedUser()');
     expect(page).toContain('verifySettingsCurrentPassword(authUser.email || \'\', currentPassword)');
     expect(page).toContain('updateSettingsAccountPassword(newPassword)');
+    expect(page).not.toContain('<DashboardLayout');
+    expect(page).not.toContain('<DashboardPageHero');
+    expect(page).not.toContain('<SettingsNavigation');
     expect(page).not.toContain("from('wedding_site_collaborator_invites')");
     expect(page).not.toContain("from('site_translations')");
     expect(page).not.toMatch(/supabase\s*\n\s*\.from\('wedding_sites'\)/);
