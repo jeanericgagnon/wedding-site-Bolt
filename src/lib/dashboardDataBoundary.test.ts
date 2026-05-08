@@ -925,6 +925,7 @@ describe('dashboard data boundary guards', () => {
     const boardActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/buildCoordinatorDashboardBoardActions.ts'), 'utf8');
     const cueLifecycle = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/useCoordinatorDashboardCueLifecycle.ts'), 'utf8');
     const derivedState = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/buildCoordinatorDashboardDerivedState.ts'), 'utf8');
+    const routeContentProps = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/buildCoordinatorDashboardRouteContentProps.ts'), 'utf8');
     const uiState = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/useCoordinatorDashboardUiState.ts'), 'utf8');
     const routeContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/CoordinatorDashboardRouteContent.tsx'), 'utf8');
     const panels = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/CoordinatorModePanels.tsx'), 'utf8');
@@ -951,6 +952,7 @@ describe('dashboard data boundary guards', () => {
     expect(page).toContain('useCoordinatorDashboardCueLifecycle({');
     expect(page).toContain('useCoordinatorDashboardUiState()');
     expect(page).toContain('useCoordinatorDashboardUiStateSync({');
+    expect(page).toContain('buildCoordinatorDashboardRouteContentProps({');
     expect(page).toContain('<CoordinatorDashboardRouteContent');
     expect(page).not.toContain('const bootstrap = await loadCoordinatorBootstrapData(user.id);');
     expect(page).not.toContain('const storedTimelineState = readStoredCoordinatorTimelineState(siteId);');
@@ -960,6 +962,12 @@ describe('dashboard data boundary guards', () => {
     expect(page).not.toContain('const runTimelineAction = (eventId: string, nextState: TimelineState | null) => {');
     expect(page).not.toContain('const runEscalationIssue = (item: (typeof liveIssues)[number]) => {');
     expect(page).not.toContain('const sortedGuests = sortCoordinatorGuests(args.guests);');
+    expect(page).not.toContain('attentionPanelProps={{');
+    expect(page).not.toContain('checkInQueuePanelProps={{');
+    expect(page).not.toContain('dayOfMessagePanelProps={{');
+    expect(page).not.toContain('dayOfSummaryPanelProps={{');
+    expect(page).not.toContain('qnaPanelProps={{');
+    expect(page).not.toContain('timelinePanelProps={{');
     expect(page).not.toContain('const alertStats = {');
     expect(page).not.toContain('const standingPromptMode = getCoordinatorStandingPromptMode(Boolean(summaryDisplayCue));');
     expect(page).not.toContain('No guest questions match this triage view right now.');
@@ -988,6 +996,7 @@ describe('dashboard data boundary guards', () => {
     expect(boardActions).toContain('const runPrimaryAction = () => {');
     expect(boardActions).toContain("args.setTimelineState((prev) => setCoordinatorEventTimelineState(prev, eventId, nextState));");
     expect(boardActions).toContain("await args.updateCoordinatorQnaAnswer(id, nextItem);");
+    expect(routeContentProps).toContain('export function buildCoordinatorDashboardRouteContentProps(props: Props): Props {');
     expect(derivedState).toContain('export function buildCoordinatorDashboardDerivedState(args: Args)');
     expect(derivedState).toContain('const sortedGuests = sortCoordinatorGuests(args.guests);');
     expect(derivedState).toContain('const alertStats = {');

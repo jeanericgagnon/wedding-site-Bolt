@@ -26,6 +26,7 @@ import { getCoordinatorStandingPromptReason } from '../../lib/coordinatorStandin
 import { getCoordinatorStandingPromptReasonTightened } from '../../lib/coordinatorStandingPromptReasonTighten';
 import { updateCoordinatorQnaAnswer } from './coordinator/coordinatorService';
 import { buildCoordinatorDashboardBoardActions } from './coordinator/buildCoordinatorDashboardBoardActions';
+import { buildCoordinatorDashboardRouteContentProps } from './coordinator/buildCoordinatorDashboardRouteContentProps';
 import { CoordinatorDashboardRouteContent } from './coordinator/CoordinatorDashboardRouteContent';
 import { useCoordinatorDashboardActions } from './coordinator/useCoordinatorDashboardActions';
 import { buildCoordinatorDashboardFocusActions } from './coordinator/buildCoordinatorDashboardFocusActions';
@@ -539,18 +540,16 @@ export const DashboardCoordinatorMode: React.FC = () => {
     updateCoordinatorQnaAnswer,
   ]);
 
-  return (
-    <DashboardLayout currentPage="coordinator">
-      <CoordinatorDashboardRouteContent
-        attentionPanelProps={{
+  const coordinatorDashboardRouteContentProps = buildCoordinatorDashboardRouteContentProps({
+    attentionPanelProps: {
           correctionCues,
           liveIssues,
           nextArrivals,
           onArrivalClick: focusArrivalGuest,
           onCorrectionCueClick: runCorrectionCue,
           onEscalationClick: runEscalationIssue,
-        }}
-        checkInQueuePanelProps={{
+        },
+    checkInQueuePanelProps: {
           activeGuestId,
           canCheckIn,
           canEditQna,
@@ -575,9 +574,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
             setCheckInReviewOnly(false);
           },
           onSetQuery: setCheckInQuery,
-        }}
-        coordinatorRole={coordinatorRole}
-        dayOfMessagePanelProps={{
+        },
+    coordinatorRole,
+    dayOfMessagePanelProps: {
           alertActivityBoard,
           alertBoard,
           alertBusy,
@@ -606,8 +605,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
           onSetAlertTimingFilter: setAlertTimingFilter,
           onSetLastAlertSuggestionKey: setLastAlertSuggestionKey,
           preferredAlertSuggestion,
-        }}
-        dayOfSummaryPanelProps={{
+        },
+    dayOfSummaryPanelProps: {
           alertOverrideBadge,
           alertOverrideCurrentLabel,
           alertOverrideTargetLabel,
@@ -654,32 +653,32 @@ export const DashboardCoordinatorMode: React.FC = () => {
           summaryFeedbackCopy,
           summaryFeedbackLayout,
           summaryFeedbackTone,
-        }}
-        hasUncheckedGuests={sortedGuests.some((guest) => !guest.checked_in_at)}
-        helperAccessPanelProps={{
+        },
+    hasUncheckedGuests: sortedGuests.some((guest) => !guest.checked_in_at),
+    helperAccessPanelProps: {
           coordinatorRole,
           roleBoard,
           roleCapabilities,
-        }}
-        onActiveGuestCheckIn={() => {
+        },
+    onActiveGuestCheckIn: () => {
           const activeGuest = checkInQueue.find((guest) => guest.id === activeGuestId);
           if (!activeGuest) return;
           focusCoordinatorCheckInLane();
           void toggleCheckIn(activeGuest);
-        }}
-        onReadyNowClick={() => {
+        },
+    onReadyNowClick: () => {
           focusCoordinatorCheckInLane();
           setCheckInFilter('arrivals');
           setCheckInReviewOnly(false);
           setActiveGuestId(nextArrivals[0]?.id ?? null);
-        }}
-        onReviewOnlyClick={() => {
+        },
+    onReviewOnlyClick: () => {
           focusCoordinatorCheckInLane();
           setCheckInFilter('arrivals');
           setCheckInReviewOnly((prev) => !prev);
           setActiveGuestId(checkInBoardTargetId);
-        }}
-        qnaPanelProps={{
+        },
+    qnaPanelProps: {
           activeQnaDraftStateLabel,
           activeQnaId,
           activeQnaItem,
@@ -703,17 +702,17 @@ export const DashboardCoordinatorMode: React.FC = () => {
           qnaInput,
           qnaItemsCount: qnaItems.length,
           qnaTargetState,
-        }}
-        roleSelectorProps={{
+        },
+    roleSelectorProps: {
           activeSiteRole,
           coordinatorRole,
           onRoleChange: setCoordinatorRole,
-        }}
-        statsCardProps={{
+        },
+    statsCardProps: {
           loading,
           stats,
-        }}
-        timelinePanelProps={{
+        },
+    timelinePanelProps: {
           activeTimelineEventId,
           canEditTimeline,
           events,
@@ -729,7 +728,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
           timelineState,
           timelineTargetState,
           upNextEventId,
-        }}
+        },
+  });
+
+  return (
+    <DashboardLayout currentPage="coordinator">
+      <CoordinatorDashboardRouteContent
+        {...coordinatorDashboardRouteContentProps}
       />
     </DashboardLayout>
   );

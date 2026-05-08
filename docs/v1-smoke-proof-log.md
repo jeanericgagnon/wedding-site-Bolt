@@ -7,6 +7,22 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-08 10:11 AM PT No-Deploy Coordinator Route-Content Props Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/CoordinatorMode.tsx` now routes the owner-facing coordinator content prop assembly through `src/pages/dashboard/coordinator/buildCoordinatorDashboardRouteContentProps.ts` instead of hand-building the full `CoordinatorDashboardRouteContent` prop bundle inline.
+  - That new helper now owns the route-content prop handoff seam while the page keeps bootstrap/data hooks, derived state, focus actions, cue lifecycle, board actions, and async mutation hooks.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildCoordinatorDashboardRouteContentProps({ ... })`, checks that `buildCoordinatorDashboardRouteContentProps.ts` owns the coordinator route-content prop seam, and rejects regaining the old inline `attentionPanelProps={{ ... }}` / `checkInQueuePanelProps={{ ... }}` / `dayOfMessagePanelProps={{ ... }}` slab in `CoordinatorMode.tsx`.
+  - `src/pages/dashboard/CoordinatorMode.tsx` moved from 738 lines to 743 lines in this batch, while `src/pages/dashboard/coordinator/buildCoordinatorDashboardRouteContentProps.ts` came in at 8 lines. This batch was about route ownership and regression guardrails more than raw shrinkage.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 10:09 AM PT No-Deploy Guest Photo Route-Support Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

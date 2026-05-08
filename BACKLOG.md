@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 10:11 AM PT - No-Deploy Coordinator Route-Content Props Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/CoordinatorMode.tsx` no longer owns the inline coordinator route-content prop assembly slab for the attention, check-in, summary, alerts, Q&A, timeline, and role-selector prop bundles.
+  - Added `src/pages/dashboard/coordinator/buildCoordinatorDashboardRouteContentProps.ts` so the new helper now owns the coordinator route-content prop seam while the page keeps bootstrap, derived state, focus/board actions, cue lifecycle, and async mutation hooks.
+  - Coordinator boundary tests now pin `buildCoordinatorDashboardRouteContentProps({ ... })`, check that the new helper owns the route-content prop seam, and reject regaining the old inline route-content prop block in `CoordinatorMode.tsx`.
+- Acceptance/proof target:
+  - Focused dashboard boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 10:09 AM PT - No-Deploy Guest Photo Route-Support Extraction
 
 - Status: `PARTIAL`
