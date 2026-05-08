@@ -10,6 +10,8 @@ import {
   MAX_MESSAGE_ITINERARY_EVENTS,
   MAX_MESSAGE_ITINERARY_EVENT_INVITATIONS,
   MAX_SMS_CREDIT_TRANSACTIONS,
+  triggerDashboardBulkSend,
+  triggerScheduledMessageDispatch,
 } from './messageService';
 
 const { getSessionMock } = vi.hoisted(() => ({
@@ -28,6 +30,7 @@ vi.mock('../../../lib/supabase', () => ({
 describe('message service query bounds', () => {
   beforeEach(() => {
     getSessionMock.mockReset();
+    vi.unstubAllGlobals();
   });
 
   it('exports stable delivery query caps', () => {
@@ -73,5 +76,39 @@ describe('message service query bounds', () => {
     getSessionMock.mockResolvedValue({ data: { session: { access_token: 'token-123' } } });
 
     await expect(getMessageAccessToken()).resolves.toBe('token-123');
+  });
+
+  it('routes dashboard bulk send through the message service', async () => {
+    getSessionMock.mockResolvedValue({ data: { session: { access_token: 'token-123' } } });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({ delivered: 3, failed: 0, total: 3, status: 'sent' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(triggerDashboardBulkSend('message-1')).resolves.toEqual({
+      delivered: 3,
+      failed: 0,
+      total: 3,
+      status: 'sent',
+    });
+  });
+
+  it('routes scheduled dispatch through the message service', async () => {
+    getSessionMock.mockResolvedValue({ data: { session: { access_token: 'token-123' } } });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({ processed: 2, sent: 1, failed: 0, partial: 0, skippedMessages: 0, skippedRecipients: 1 }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(triggerScheduledMessageDispatch(12)).resolves.toEqual({
+      processed: 2,
+      sent: 1,
+      failed: 0,
+      partial: 0,
+      skippedMessages: 0,
+      skippedRecipients: 1,
+    });
   });
 });

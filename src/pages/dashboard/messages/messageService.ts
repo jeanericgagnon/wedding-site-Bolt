@@ -1,5 +1,6 @@
 import { resolveActiveSiteForUser, type ActiveSiteSummary } from '../../../lib/activeSite';
 import { supabase } from '../../../lib/supabase';
+import { safeMessagesError } from './messageDashboardUtils';
 import type {
   AudienceOption,
   DeliveryRow,
@@ -94,10 +95,58 @@ export const MAX_MESSAGE_ITINERARY_EVENT_INVITATIONS = 10000;
 export const MAX_DASHBOARD_MESSAGES = 1000;
 export const MAX_MESSAGE_GUESTS = 5000;
 export const MAX_SMS_CREDIT_TRANSACTIONS = 20;
+const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 
 export async function getMessageAccessToken(): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession();
   return session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
+}
+
+export async function triggerDashboardBulkSend(messageId: string): Promise<{
+  delivered: number;
+  failed: number;
+  skipped?: number;
+  total: number;
+  status: string;
+}> {
+  const token = await getMessageAccessToken();
+  const res = await fetch(BULK_SEND_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ messageId }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(safeMessagesError((body as { error?: unknown })?.error, 'Delivery needs review. Check message history.'));
+  }
+  return res.json();
+}
+
+export async function triggerScheduledMessageDispatch(limit = 10): Promise<{
+  processed: number;
+  sent: number;
+  failed: number;
+  partial: number;
+  skippedMessages: number;
+  skippedRecipients: number;
+}> {
+  const token = await getMessageAccessToken();
+  const res = await fetch(BULK_SEND_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ processScheduled: true, limit }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(safeMessagesError((body as { error?: unknown })?.error, 'Couldn’t process scheduled messages right now.'));
+  }
+  return res.json();
 }
 
 export async function createDashboardMessage(payload: MessageInsertPayload): Promise<void> {

@@ -78,7 +78,6 @@ import {
 } from './messages/messageDemoStorage';
 import {
   createDashboardMessage,
-  getMessageAccessToken,
   insertDashboardMessageMinimal,
   isMissingMessageDeliveriesTable,
   loadDashboardMessages,
@@ -87,47 +86,14 @@ import {
   loadMessageItineraryAudience,
   loadMessagesActiveSite,
   loadSmsCreditPreview,
+  triggerDashboardBulkSend,
+  triggerScheduledMessageDispatch,
   updateDashboardMessage,
   type MessageInsertPayload,
 } from './messages/messageService';
-const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 // Optional table: can be missing in lean deployments.
 // Start unknown, then permanently disable after one confirmed missing-table miss.
 let hasMessageDeliveriesTable: boolean | null = null;
-
-async function triggerBulkSend(messageId: string): Promise<{ delivered: number; failed: number; skipped?: number; total: number; status: string }> {
-  const token = await getMessageAccessToken();
-  const res = await fetch(BULK_SEND_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ messageId }),
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(safeMessagesError((body as { error?: unknown })?.error, 'Delivery needs review. Check message history.'));
-  }
-  return res.json();
-}
-
-async function triggerScheduledDispatch(limit = 10): Promise<{ processed: number; sent: number; failed: number; partial: number; skippedMessages: number; skippedRecipients: number }> {
-  const token = await getMessageAccessToken();
-  const res = await fetch(BULK_SEND_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ processScheduled: true, limit }),
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(safeMessagesError((body as { error?: unknown })?.error, 'Couldn’t process scheduled messages right now.'));
-  }
-  return res.json();
-}
 
 import {
   MessageComposerLanguagePreviewPanel,
@@ -763,7 +729,7 @@ export const DashboardMessages: React.FC = () => {
         toast(`Sending to ${recipientCount} guest${recipientCount !== 1 ? 's' : ''}…`, 'info');
         await fetchMessages();
         try {
-          const result = await triggerBulkSend(inserted.id);
+          const result = await triggerDashboardBulkSend(inserted.id);
           const skipped = result.skipped ?? 0;
           if (result.failed === 0 && skipped === 0) {
             toast(`Delivered to ${result.delivered} guest${result.delivered !== 1 ? 's' : ''}`, 'success');
@@ -995,7 +961,7 @@ export const DashboardMessages: React.FC = () => {
       toast('Sending again…', 'info');
       await fetchMessages();
       try {
-        const result = await triggerBulkSend(message.id);
+        const result = await triggerDashboardBulkSend(message.id);
         const skipped = result.skipped ?? 0;
         if (result.failed === 0 && skipped === 0) {
           toast(`Delivered to ${result.delivered} guest${result.delivered !== 1 ? 's' : ''}`, 'success');
@@ -1069,7 +1035,7 @@ export const DashboardMessages: React.FC = () => {
       await updateDashboardMessage(message.id, { scheduled_for: new Date().toISOString() });
 
       toast('Sending scheduled message now…', 'info');
-      const result = await triggerBulkSend(message.id);
+      const result = await triggerDashboardBulkSend(message.id);
       const skipped = result.skipped ?? 0;
       if (result.failed === 0 && skipped === 0) {
         toast(`Delivered to ${result.delivered} guest${result.delivered !== 1 ? 's' : ''}`, 'success');
@@ -1260,7 +1226,7 @@ export const DashboardMessages: React.FC = () => {
 
     setProcessingScheduled(true);
     try {
-      const result = await triggerScheduledDispatch(10);
+      const result = await triggerScheduledMessageDispatch(10);
       if (result.processed === 0) {
         toast('No scheduled messages are due right now.', 'info');
       } else if (result.failed === 0 && result.partial === 0) {

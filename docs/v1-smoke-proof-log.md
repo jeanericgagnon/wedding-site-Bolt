@@ -7273,6 +7273,20 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 5:53 PM PT No-Deploy Message bulk send transport extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Messages.tsx` no longer owns the direct `send-bulk-message` fetch transport for immediate send or scheduled dispatch.
+  - `src/pages/dashboard/messages/messageService.ts` now owns `triggerDashboardBulkSend(...)` and `triggerScheduledMessageDispatch(...)`.
+  - `src/pages/dashboard/messages/messageService.boundary.test.ts` and `src/lib/dashboardDataBoundary.test.ts` now pin that moved message transport seam.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 5:45 PM PT No-Deploy Guest conflict service boundary cleanup
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

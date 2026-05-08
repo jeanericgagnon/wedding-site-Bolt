@@ -19,6 +19,23 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-07 5:53 PM PT - No-Deploy Message Bulk Send Transport Extraction
+
+What changed:
+- `src/pages/dashboard/Messages.tsx` no longer owns the direct `send-bulk-message` fetch transport for immediate send or scheduled dispatch.
+- `src/pages/dashboard/messages/messageService.ts` now owns `triggerDashboardBulkSend(...)` and `triggerScheduledMessageDispatch(...)` alongside the existing message auth token helper.
+- Expanded `src/pages/dashboard/messages/messageService.boundary.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the messaging dashboard boundary now pins the moved transport seam.
+
+Commands run:
+- `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 2 files and 24 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- IMPROVED. This removes the last direct bulk-send fetch cluster from `Messages.tsx` and keeps the page focused on composer flow rather than delivery transport. No deploy was run.
+
 ### 2026-05-07 5:45 PM PT - No-Deploy Guest Conflict Service Boundary Cleanup
 
 What changed:
