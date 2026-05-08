@@ -3485,3 +3485,23 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the itinerary dashboard page-to-service migration without changing event guest search, invite toggles, invite-all/remove-all behavior, or RSVP rollback safety. No deploy was run.
+
+### 2026-05-07 5:03 PM PT - Itinerary Event Mutation Service Extraction
+
+- Moved itinerary event save/delete transport plus best-effort photo album creation out of `src/pages/dashboard/Itinerary.tsx` and into `src/pages/dashboard/itineraryService.ts`.
+- `Itinerary.tsx` now calls:
+  - `saveItineraryEvent(...)`
+  - `deleteItineraryEvent(...)`
+  instead of directly mutating `wedding_sites`, `itinerary_events`, or invoking `photo-album-create` inline for the live event CRUD path.
+- The service preserves the current field-drift fallback loop, site lookup, and best-effort album creation behavior while keeping page-owned validation, demo behavior, and save notices intact.
+- Expanded `src/pages/dashboard/itineraryService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the itinerary page no longer silently regains those event mutation and album-creation transport calls.
+
+Validation:
+- `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts`: PASS, 35/35.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the itinerary dashboard page-to-service migration without changing live event save/delete behavior or the best-effort photo album sidecar flow. No deploy was run.

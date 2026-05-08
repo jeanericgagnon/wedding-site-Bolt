@@ -8085,6 +8085,20 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 5:03 PM PT No-Deploy Itinerary Event Mutation Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/itineraryService.ts` now owns itinerary event save/delete transport plus best-effort `photo-album-create` invocation.
+  - `src/pages/dashboard/Itinerary.tsx` now calls `saveItineraryEvent(...)` and `deleteItineraryEvent(...)` instead of directly mutating `itinerary_events`, rechecking `wedding_sites`, or invoking `photo-album-create` inline for the live CRUD path.
+  - `src/pages/dashboard/itineraryService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` now pin that service boundary.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts`: PASS, 35/35.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 3:31 PM PT No-Deploy Seating Session Refresh Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

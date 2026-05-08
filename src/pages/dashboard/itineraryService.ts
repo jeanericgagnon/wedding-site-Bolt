@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase';
+import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import {
   deleteEventRsvpByInvitationId,
@@ -46,9 +47,11 @@ export interface ItineraryScheduleMirrorEvent {
 const ITINERARY_SCHEDULE_MIRROR_SITE_SELECT = 'wedding_data';
 const ITINERARY_SCHEDULE_SECTION_SELECT = 'id,data';
 const ITINERARY_EVENT_MANAGER_SITE_SELECT = 'id';
+const ITINERARY_EVENT_MUTATION_SITE_SELECT = 'id';
 export const ITINERARY_EVENT_GUEST_PICKER_SELECT = 'id, name, first_name, last_name, email' as const;
 export const MAX_ITINERARY_EVENT_INVITATIONS = 10000;
 export const MAX_ITINERARY_EVENT_GUESTS = 5000;
+const ITINERARY_EVENT_DRIFT_FIELDS = ['event_name', 'is_visible', 'dress_code', 'notes', 'location_address', 'end_time'] as const;
 
 export interface ItineraryGuestPickerRow {
   id: string;
@@ -61,6 +64,25 @@ export interface ItineraryGuestPickerRow {
 export interface ItineraryEventGuestManagerSnapshot {
   guests: ItineraryGuestPickerRow[];
   invitedGuestIds: Set<string>;
+}
+
+export interface SaveItineraryEventFormData {
+  event_name: string;
+  description: string;
+  event_date: string;
+  start_time: string;
+  end_time: string;
+  location_name: string;
+  location_address: string;
+  dress_code: string;
+  notes: string;
+  is_visible: boolean;
+}
+
+export interface SaveItineraryEventInput {
+  editingEventId?: string | null;
+  autoCreateAlbum: boolean;
+  formData: SaveItineraryEventFormData;
 }
 
 export async function resolveItinerarySiteId(): Promise<string | null> {
@@ -137,6 +159,107 @@ export async function createItineraryTemplateEvents(
   const { error } = await supabase
     .from('itinerary_events')
     .insert(buildItineraryTemplateInsertRows(weddingSiteId, events));
+  if (error) throw error;
+}
+
+export async function saveItineraryEvent(input: SaveItineraryEventInput): Promise<void> {
+  const siteId = await resolveItinerarySiteId();
+  if (!siteId) {
+    throw new Error('Please log in again and retry.');
+  }
+
+  const { data: site, error: siteError } = await supabase
+    .from('wedding_sites')
+    .select(ITINERARY_EVENT_MUTATION_SITE_SELECT)
+    .eq('id', siteId)
+    .single();
+  if (siteError) throw siteError;
+
+  if (!site) {
+    throw new Error('Couldn’t find your website right now. Please refresh and try again.');
+  }
+
+  const payload: Record<string, unknown> = {
+    ...input.formData,
+    event_name: input.formData.event_name,
+    title: input.formData.event_name,
+    event_date: input.formData.event_date || null,
+    start_time: input.formData.start_time || null,
+    end_time: input.formData.end_time || null,
+    dress_code: input.formData.dress_code || null,
+    notes: input.formData.notes || null,
+    location_address: input.formData.location_address || null,
+  };
+
+  let createdEvent: { id: string; event_name?: string } | null = null;
+
+  if (input.editingEventId) {
+    const updatePayload: Record<string, unknown> = { ...payload };
+    let error: { message?: string } | null = null;
+
+    for (let i = 0; i <= ITINERARY_EVENT_DRIFT_FIELDS.length; i += 1) {
+      const result = await supabase
+        .from('itinerary_events')
+        .update(updatePayload)
+        .eq('id', input.editingEventId);
+      error = result.error;
+      if (!error) break;
+
+      const field = ITINERARY_EVENT_DRIFT_FIELDS.find((candidate) => error?.message?.includes(candidate));
+      if (!field || !(field in updatePayload)) break;
+      delete updatePayload[field];
+    }
+
+    if (error) throw error;
+    return;
+  }
+
+  const insertPayload: Record<string, unknown> = { ...payload };
+  let error: { message?: string } | null = null;
+
+  for (let i = 0; i <= ITINERARY_EVENT_DRIFT_FIELDS.length; i += 1) {
+    const result = await supabase
+      .from('itinerary_events')
+      .insert([
+        {
+          ...insertPayload,
+          wedding_site_id: site.id,
+        },
+      ])
+      .select('id,event_name')
+      .single();
+    error = result.error;
+    if (!error && result.data) {
+      createdEvent = result.data as { id: string; event_name?: string };
+    }
+    if (!error) break;
+
+    const field = ITINERARY_EVENT_DRIFT_FIELDS.find((candidate) => error?.message?.includes(candidate));
+    if (!field || !(field in insertPayload)) break;
+    delete insertPayload[field];
+  }
+
+  if (error) throw error;
+
+  if (input.autoCreateAlbum && createdEvent?.id) {
+    try {
+      await invokeFunctionOrThrow(supabase, 'photo-album-create', {
+        siteId: site.id,
+        name: createdEvent.event_name || input.formData.event_name,
+        itineraryEventId: createdEvent.id,
+      });
+    } catch {
+      // best-effort connector; itinerary save should still succeed
+    }
+  }
+}
+
+export async function deleteItineraryEvent(eventId: string): Promise<void> {
+  const { error } = await supabase
+    .from('itinerary_events')
+    .delete()
+    .eq('id', eventId);
+
   if (error) throw error;
 }
 

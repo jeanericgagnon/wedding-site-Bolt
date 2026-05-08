@@ -3,6 +3,7 @@ import {
   addItineraryEventGuestInvitation,
   buildItineraryTemplateInsertRows,
   buildScheduleSectionEvents,
+  deleteItineraryEvent,
   inviteAllGuestsToItineraryEvent,
   ITINERARY_EVENT_GUEST_PICKER_SELECT,
   loadItineraryEventGuestManagerSnapshot,
@@ -11,6 +12,7 @@ import {
   removeAllGuestsFromItineraryEvent,
   removeItineraryEventGuestInvitation,
   resolveItinerarySiteId,
+  saveItineraryEvent,
   buildWeddingSchedule,
 } from './itineraryService';
 import { combineDateAndTimeISO } from './itineraryDateTime';
@@ -23,6 +25,7 @@ const {
   deleteEventRsvpByInvitationIdMock,
   deleteEventRsvpsByInvitationIdsMock,
   restoreEventRsvpSnapshotsMock,
+  invokeFunctionOrThrowMock,
 } = vi.hoisted(() => ({
   getUserMock: vi.fn(),
   fromMock: vi.fn(),
@@ -31,6 +34,7 @@ const {
   deleteEventRsvpByInvitationIdMock: vi.fn(),
   deleteEventRsvpsByInvitationIdsMock: vi.fn(),
   restoreEventRsvpSnapshotsMock: vi.fn(),
+  invokeFunctionOrThrowMock: vi.fn(),
 }));
 
 vi.mock('../../lib/supabase', () => ({
@@ -53,6 +57,10 @@ vi.mock('../../lib/eventRsvpCleanup', () => ({
   restoreEventRsvpSnapshots: restoreEventRsvpSnapshotsMock,
 }));
 
+vi.mock('../../lib/invokeFunctionOrThrow', () => ({
+  invokeFunctionOrThrow: invokeFunctionOrThrowMock,
+}));
+
 describe('buildItineraryTemplateInsertRows', () => {
   beforeEach(() => {
     getUserMock.mockReset();
@@ -62,6 +70,7 @@ describe('buildItineraryTemplateInsertRows', () => {
     deleteEventRsvpByInvitationIdMock.mockReset();
     deleteEventRsvpsByInvitationIdsMock.mockReset();
     restoreEventRsvpSnapshotsMock.mockReset();
+    invokeFunctionOrThrowMock.mockReset();
   });
 
   it('scopes template event inserts to one site and preserves public schedule fields', () => {
@@ -217,6 +226,91 @@ describe('buildItineraryTemplateInsertRows', () => {
     expect(MAX_ITINERARY_EVENT_INVITATIONS).toBe(10000);
   });
 
+  it('saves a new itinerary event through the service and triggers best-effort album creation', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
+    resolveActiveSiteForUserMock.mockResolvedValue({ id: 'site-1', role: 'owner', permissions: null });
+
+    fromMock
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            single: vi.fn().mockResolvedValue({ data: { id: 'site-1' }, error: null }),
+          })),
+        })),
+      })
+      .mockReturnValueOnce({
+        insert: vi.fn(() => ({
+          select: vi.fn(() => ({
+            single: vi.fn().mockResolvedValue({ data: { id: 'event-1', event_name: 'Ceremony' }, error: null }),
+          })),
+        })),
+      });
+    invokeFunctionOrThrowMock.mockResolvedValue({ data: null, error: null });
+
+    await expect(saveItineraryEvent({
+      editingEventId: null,
+      autoCreateAlbum: true,
+      formData: {
+        event_name: 'Ceremony',
+        description: 'Guests gather',
+        event_date: '2026-06-20',
+        start_time: '16:00',
+        end_time: '16:30',
+        location_name: 'Rose Garden',
+        location_address: '10 Sunset Way',
+        dress_code: 'Cocktail',
+        notes: 'Arrive early',
+        is_visible: true,
+      },
+    })).resolves.toBeUndefined();
+
+    expect(invokeFunctionOrThrowMock).toHaveBeenCalledWith(expect.anything(), 'photo-album-create', {
+      siteId: 'site-1',
+      name: 'Ceremony',
+      itineraryEventId: 'event-1',
+    });
+  });
+
+  it('updates an existing itinerary event through the service', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
+    resolveActiveSiteForUserMock.mockResolvedValue({ id: 'site-1', role: 'owner', permissions: null });
+
+    const updateMock = vi.fn().mockResolvedValue({ error: null });
+    fromMock
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            single: vi.fn().mockResolvedValue({ data: { id: 'site-1' }, error: null }),
+          })),
+        })),
+      })
+      .mockReturnValueOnce({
+        update: vi.fn(() => ({
+          eq: updateMock,
+        })),
+      });
+
+    await expect(saveItineraryEvent({
+      editingEventId: 'event-1',
+      autoCreateAlbum: false,
+      formData: {
+        event_name: 'Reception',
+        description: '',
+        event_date: '2026-06-20',
+        start_time: '18:00',
+        end_time: '22:00',
+        location_name: 'Grand Hall',
+        location_address: '',
+        dress_code: '',
+        notes: '',
+        is_visible: true,
+      },
+    })).resolves.toBeUndefined();
+
+    expect(updateMock).toHaveBeenCalledWith('id', 'event-1');
+    expect(invokeFunctionOrThrowMock).not.toHaveBeenCalled();
+  });
+
   it('adds an itinerary event guest invitation through the service', async () => {
     const upsertMock = vi.fn().mockResolvedValue({ error: null });
     fromMock.mockReturnValueOnce({
@@ -275,5 +369,17 @@ describe('buildItineraryTemplateInsertRows', () => {
     deleteEventRsvpsByInvitationIdsMock.mockResolvedValue(undefined);
 
     await expect(removeAllGuestsFromItineraryEvent('event-1')).resolves.toBeUndefined();
+  });
+
+  it('deletes an itinerary event through the service', async () => {
+    const eqMock = vi.fn().mockResolvedValue({ error: null });
+    fromMock.mockReturnValueOnce({
+      delete: vi.fn(() => ({
+        eq: eqMock,
+      })),
+    });
+
+    await expect(deleteItineraryEvent('event-1')).resolves.toBeUndefined();
+    expect(eqMock).toHaveBeenCalledWith('id', 'event-1');
   });
 });

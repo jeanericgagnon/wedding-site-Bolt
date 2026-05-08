@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink, AlertTriangle, Check, X, HelpCircle, Camera, Wand2, MoveRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { Button } from '../../components/ui/Button';
@@ -20,11 +19,13 @@ import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import {
   addItineraryEventGuestInvitation,
   createItineraryTemplateEvents,
+  deleteItineraryEvent,
   inviteAllGuestsToItineraryEvent,
   loadItineraryEventGuestManagerSnapshot,
   removeAllGuestsFromItineraryEvent,
   removeItineraryEventGuestInvitation,
   resolveItinerarySiteId,
+  saveItineraryEvent,
   syncItineraryScheduleMirror,
   type ItineraryGuestPickerRow,
 } from './itineraryService';
@@ -354,96 +355,11 @@ export const DashboardItinerary: React.FC = () => {
         return;
       }
 
-      const siteId = await resolveItinerarySiteId();
-      if (!siteId) {
-        setSaveError('Please log in again and retry.');
-        return;
-      }
-
-      const { data: site } = await supabase
-        .from('wedding_sites')
-        .select('id')
-        .eq('id', siteId)
-        .single();
-
-      if (!site) {
-        setSaveError('Couldn’t find your website right now. Please refresh and try again.');
-        return;
-      }
-
-      const payload: Record<string, unknown> = {
-        ...formData,
-        event_name: formData.event_name,
-        title: formData.event_name,
-        event_date: formData.event_date || null,
-        start_time: formData.start_time || null,
-        end_time: formData.end_time || null,
-        dress_code: formData.dress_code || null,
-        notes: formData.notes || null,
-        location_address: formData.location_address || null,
-      };
-
-      const driftFields = ['event_name', 'is_visible', 'dress_code', 'notes', 'location_address', 'end_time'];
-      let createdEvent: { id: string; event_name?: string } | null = null;
-
-      if (editingEvent) {
-        const updatePayload: Record<string, unknown> = { ...payload };
-        let error: { message?: string } | null = null;
-
-        for (let i = 0; i <= driftFields.length; i += 1) {
-          const result = await supabase
-            .from('itinerary_events')
-            .update(updatePayload)
-            .eq('id', editingEvent.id);
-          error = result.error;
-          if (!error) break;
-
-          const field = driftFields.find((candidate) => error?.message?.includes(candidate));
-          if (!field || !(field in updatePayload)) break;
-          delete updatePayload[field];
-        }
-
-        if (error) throw error;
-      } else {
-        const insertPayload: Record<string, unknown> = { ...payload };
-        let error: { message?: string } | null = null;
-
-        for (let i = 0; i <= driftFields.length; i += 1) {
-          const result = await supabase
-            .from('itinerary_events')
-            .insert([
-              {
-                ...insertPayload,
-                wedding_site_id: site.id,
-              },
-            ])
-            .select('id,event_name')
-            .single();
-          error = result.error;
-          if (!error && result.data) {
-            createdEvent = result.data as { id: string; event_name?: string };
-          }
-          if (!error) break;
-
-          const field = driftFields.find((candidate) => error?.message?.includes(candidate));
-          if (!field || !(field in insertPayload)) break;
-          delete insertPayload[field];
-        }
-
-        if (error) throw error;
-      }
-
-      if (!editingEvent && autoCreateAlbum && createdEvent?.id) {
-        try {
-          await invokeFunctionOrThrow(supabase, 'photo-album-create', {
-            siteId: site.id,
-            name: createdEvent.event_name || formData.event_name,
-            itineraryEventId: createdEvent.id,
-          });
-        } catch {
-          // best-effort connector; itinerary save should still succeed
-        }
-      }
+      await saveItineraryEvent({
+        editingEventId: editingEvent?.id ?? null,
+        autoCreateAlbum,
+        formData,
+      });
 
       setShowEventForm(false);
       setSaveNotice(editingEvent ? 'Event updated.' : 'Event created.');
@@ -469,12 +385,7 @@ export const DashboardItinerary: React.FC = () => {
         setEvents(prev => prev.filter(e => e.id !== eventId));
         return;
       }
-      const { error } = await supabase
-        .from('itinerary_events')
-        .delete()
-        .eq('id', eventId);
-
-      if (error) throw error;
+      await deleteItineraryEvent(eventId);
 
       loadEvents();
     } catch {
