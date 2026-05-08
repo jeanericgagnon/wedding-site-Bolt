@@ -27,6 +27,7 @@ import {
   readDemoStoredResponses,
   writeDemoStoredResponses,
 } from './rsvpDemoStorage';
+import { applyAmbiguousRsvpLookupState } from './applyAmbiguousRsvpLookupState';
 import { applyRsvpGuestSelection } from './applyRsvpGuestSelection';
 import { buildRsvpDerivedViewState } from './buildRsvpDerivedViewState';
 import { buildRsvpLiveContentActions } from './buildRsvpLiveContentActions';
@@ -632,16 +633,23 @@ export default function RSVP() {
             return;
           }
           tokenLinkedSessionRef.current = false;
-          setAmbiguousGuests(result.guests);
-          setRsvpDeadline(result.rsvpDeadline);
-          setRsvpQuestions(result.rsvpQuestions ?? []);
-          setMealConfig(result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
-          setMusicPlaylistUrl(result.musicPlaylistUrl ?? null);
-          const hh = result.householdGuests ?? [];
-          setHouseholdGuests(hh);
-          setApplyToHousehold(hh.length > 0);
-          setSelectedHouseholdGuestIds(hh.map((h) => h.id));
-          setStep('pick');
+          applyAmbiguousRsvpLookupState({
+            guests: result.guests,
+            householdGuests: result.householdGuests ?? [],
+            mealConfig: result.rsvpMealConfig ?? DEFAULT_MEAL_CONFIG,
+            musicPlaylistUrl: result.musicPlaylistUrl ?? null,
+            rsvpDeadline: result.rsvpDeadline,
+            rsvpQuestions: result.rsvpQuestions ?? [],
+            setAmbiguousGuests,
+            setApplyToHousehold,
+            setHouseholdGuests,
+            setMealConfig,
+            setMusicPlaylistUrl,
+            setRsvpDeadline,
+            setRsvpQuestions,
+            setSelectedHouseholdGuestIds,
+            setStep,
+          });
         } else {
           if (shouldPreserveVisibleState) {
             tokenLinkedSessionRef.current = true;
@@ -776,16 +784,23 @@ export default function RSVP() {
 
       if (result.guests && result.guests.length > 1) {
         if (activeLookupRequestRef.current !== requestId) return;
-        setAmbiguousGuests(result.guests);
-        setRsvpDeadline(result.rsvpDeadline);
-        setRsvpQuestions(result.rsvpQuestions ?? []);
-        setMealConfig(result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
-        setMusicPlaylistUrl(result.musicPlaylistUrl ?? null);
-        const hh = result.householdGuests ?? [];
-        setHouseholdGuests(hh);
-        setApplyToHousehold(hh.length > 0);
-        setSelectedHouseholdGuestIds(hh.map((h) => h.id));
-        setStep('pick');
+        applyAmbiguousRsvpLookupState({
+          guests: result.guests,
+          householdGuests: result.householdGuests ?? [],
+          mealConfig: result.rsvpMealConfig ?? DEFAULT_MEAL_CONFIG,
+          musicPlaylistUrl: result.musicPlaylistUrl ?? null,
+          rsvpDeadline: result.rsvpDeadline,
+          rsvpQuestions: result.rsvpQuestions ?? [],
+          setAmbiguousGuests,
+          setApplyToHousehold,
+          setHouseholdGuests,
+          setMealConfig,
+          setMusicPlaylistUrl,
+          setRsvpDeadline,
+          setRsvpQuestions,
+          setSelectedHouseholdGuestIds,
+          setStep,
+        });
         return;
       }
 

@@ -2249,3 +2249,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `applyRsvpGuestSelection(...)` so the main RSVP page keeps routing guest-selection hydration through the shared helper.
   - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
   - Launch status: unchanged. This continues local public-surface ownership cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 11:07 PM PT - No-deploy RSVP ambiguous-lookup extraction:
+  - Resolved in this batch: moved the ambiguous guest-picker hydration branch out of `src/pages/RSVP.tsx` and behind `src/pages/applyAmbiguousRsvpLookupState.ts`.
+  - Data-boundary hardening: `RSVP.tsx` now routes the repeated “multiple guests matched” UI-state setup through one helper instead of duplicating guest list, deadline, question, meal config, playlist, household, and selected-household hydration across token lookup and manual search branches.
+  - File-size movement: `src/pages/RSVP.tsx` moved from 1197 lines to 1212 lines in this continuation batch while `src/pages/applyAmbiguousRsvpLookupState.ts` came in at 49 lines.
+  - No feature loss: manual guest search and token-linked lookup still land on the same ambiguous guest-picker state with the same household defaults and event/meal context.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `applyAmbiguousRsvpLookupState(...)` so the main RSVP page keeps routing repeated ambiguous-match hydration through the shared helper.
+  - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
+  - Launch status: unchanged. This continues local public-surface ownership cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.

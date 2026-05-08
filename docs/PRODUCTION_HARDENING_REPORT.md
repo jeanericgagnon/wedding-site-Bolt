@@ -4793,3 +4793,20 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+
+## 2026-05-07 11:07 PM PT No-Deploy RSVP Ambiguous-Lookup Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes the ambiguous guest-picker hydration branch through `src/pages/applyAmbiguousRsvpLookupState.ts`.
+  - That shared helper now owns the repeated guest list, deadline, question, meal config, playlist, household, and selected-household hydration for multiple-match lookup results while the page keeps the actual lookup branching and guest-selection decisions local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `applyAmbiguousRsvpLookupState(...)` so the main RSVP page keeps routing repeated ambiguous-match hydration through the dedicated helper.
+  - `src/pages/RSVP.tsx` moved from 1197 lines to 1212 lines in this batch, while `src/pages/applyAmbiguousRsvpLookupState.ts` came in at 49 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.

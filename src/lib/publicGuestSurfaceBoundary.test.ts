@@ -140,6 +140,7 @@ describe('public guest surface boundary', () => {
 
     const rsvpPage = readSource('src/pages/RSVP.tsx');
     const rsvpDerivedViewState = readSource('src/pages/buildRsvpDerivedViewState.ts');
+    const rsvpAmbiguousLookupState = readSource('src/pages/applyAmbiguousRsvpLookupState.ts');
     const rsvpGuestSelection = readSource('src/pages/applyRsvpGuestSelection.ts');
     const rsvpLiveContentActions = readSource('src/pages/buildRsvpLiveContentActions.ts');
     const rsvpPageViewModel = readSource('src/pages/buildRsvpPageViewModel.ts');
@@ -159,6 +160,7 @@ describe('public guest surface boundary', () => {
     const rsvpFunctionService = readSource('src/pages/rsvpFunctionService.ts');
     const rsvpRouteView = readSource('src/pages/RsvpRouteView.tsx');
     expect(rsvpPage).toContain("from './buildRsvpDerivedViewState'");
+    expect(rsvpPage).toContain("from './applyAmbiguousRsvpLookupState'");
     expect(rsvpPage).toContain("from './applyRsvpGuestSelection'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentActions'");
     expect(rsvpPage).toContain("from './buildRsvpPageViewModel'");
@@ -168,6 +170,7 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain("from './validateRsvpFormAdvance'");
     expect(rsvpPage).toContain('<RsvpPageRouteView');
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
+    expect(rsvpPage).toContain('applyAmbiguousRsvpLookupState({');
     expect(rsvpPage).toContain('applyRsvpGuestSelection({');
     expect(rsvpPage).toContain('buildRsvpLiveContentActions({');
     expect(rsvpPage).toContain('buildRsvpPageViewModel({');
@@ -177,6 +180,9 @@ describe('public guest surface boundary', () => {
     expect(rsvpDerivedViewState).toContain('guestPredictions');
     expect(rsvpDerivedViewState).toContain('childCountOptions');
     expect(rsvpDerivedViewState).toContain('inheritedHouseholdMembers');
+    expect(rsvpAmbiguousLookupState).toContain('setAmbiguousGuests(guests)');
+    expect(rsvpAmbiguousLookupState).toContain('setSelectedHouseholdGuestIds(householdGuests.map((guest) => guest.id))');
+    expect(rsvpAmbiguousLookupState).toContain("setStep('pick')");
     expect(rsvpGuestSelection).toContain('existingFormData');
     expect(rsvpGuestSelection).toContain('setRsvpSessionToken(sessionToken)');
     expect(rsvpGuestSelection).toContain("setStep('form')");

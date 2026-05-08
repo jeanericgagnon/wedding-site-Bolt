@@ -50,6 +50,7 @@ describe('RSVP stale submit protection', () => {
   it('routes token auto-loading through the shared RSVP route view', () => {
     const rsvpPage = readFileSync(join(process.cwd(), 'src/pages/RSVP.tsx'), 'utf8');
     const derivedViewState = readFileSync(join(process.cwd(), 'src/pages/buildRsvpDerivedViewState.ts'), 'utf8');
+    const ambiguousLookupState = readFileSync(join(process.cwd(), 'src/pages/applyAmbiguousRsvpLookupState.ts'), 'utf8');
     const guestSelection = readFileSync(join(process.cwd(), 'src/pages/applyRsvpGuestSelection.ts'), 'utf8');
     const liveContentActions = readFileSync(join(process.cwd(), 'src/pages/buildRsvpLiveContentActions.ts'), 'utf8');
     const pageViewModel = readFileSync(join(process.cwd(), 'src/pages/buildRsvpPageViewModel.ts'), 'utf8');
@@ -67,6 +68,7 @@ describe('RSVP stale submit protection', () => {
     const successView = readFileSync(join(process.cwd(), 'src/pages/RsvpSuccessView.tsx'), 'utf8');
 
     expect(rsvpPage).toContain("from './buildRsvpDerivedViewState'");
+    expect(rsvpPage).toContain("from './applyAmbiguousRsvpLookupState'");
     expect(rsvpPage).toContain("from './applyRsvpGuestSelection'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentActions'");
     expect(rsvpPage).toContain("from './buildRsvpPageViewModel'");
@@ -76,6 +78,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain("from './validateRsvpFormAdvance'");
     expect(rsvpPage).toContain('<RsvpPageRouteView');
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
+    expect(rsvpPage).toContain('applyAmbiguousRsvpLookupState({');
     expect(rsvpPage).toContain('applyRsvpGuestSelection({');
     expect(rsvpPage).toContain('buildRsvpLiveContentActions({');
     expect(rsvpPage).toContain('buildRsvpPageViewModel({');
@@ -85,6 +88,9 @@ describe('RSVP stale submit protection', () => {
     expect(derivedViewState).toContain('guestPredictions');
     expect(derivedViewState).toContain('childCountOptions');
     expect(derivedViewState).toContain('inheritedHouseholdMembers');
+    expect(ambiguousLookupState).toContain('setAmbiguousGuests(guests)');
+    expect(ambiguousLookupState).toContain('setSelectedHouseholdGuestIds(householdGuests.map((guest) => guest.id))');
+    expect(ambiguousLookupState).toContain("setStep('pick')");
     expect(guestSelection).toContain('existingFormData');
     expect(guestSelection).toContain('setRsvpSessionToken(sessionToken)');
     expect(guestSelection).toContain("setStep('form')");
