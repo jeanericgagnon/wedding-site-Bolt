@@ -8172,6 +8172,23 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 5:37 PM PT No-Deploy Guest Photo Function Transport Service Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/guestPhotoSharingService.ts` now owns upload analysis requests through `analyzeGuestPhotoUploads(...)`.
+  - `src/pages/dashboard/guestPhotoSharingService.ts` now owns media manifest export requests through `exportGuestPhotoManifest(...)`.
+  - `src/pages/dashboard/guestPhotoSharingService.ts` now owns upload moderation requests through `moderateGuestPhotoUploads(...)`.
+  - `src/pages/dashboard/guestPhotoSharingService.ts` now owns album management requests through `manageGuestPhotoAlbum(...)`.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now calls those helpers instead of directly invoking the remaining `photo-analyze-batch`, `photo-export-manifest`, `photo-upload-moderate`, and `photo-album-manage` owner function paths inline.
+  - `src/pages/dashboard/guestPhotoSharingService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` now pin that function-transport service boundary.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 44/44.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 3:31 PM PT No-Deploy Seating Session Refresh Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

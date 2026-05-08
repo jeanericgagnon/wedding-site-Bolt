@@ -216,6 +216,49 @@ export async function queueGuestPhotoFollowups(
   return await invokeGuestPhotoOwnerFunction<{ queued?: number }>('queue-guest-followups', { siteId, kind });
 }
 
+export async function analyzeGuestPhotoUploads(
+  siteId: string,
+  uploadIds: string[],
+  force: boolean,
+  mode: 'vision' | 'auto',
+): Promise<{ analyzed?: number; skipped?: number; results?: PhotoUploadAiAnalysisRow[] }> {
+  return await invokeGuestPhotoOwnerFunction<{ analyzed?: number; skipped?: number; results?: PhotoUploadAiAnalysisRow[] }>('photo-analyze-batch', {
+    siteId,
+    uploadIds,
+    limit: uploadIds.length,
+    force,
+    mode,
+  });
+}
+
+export async function exportGuestPhotoManifest(
+  siteId: string,
+  includeHidden: boolean,
+): Promise<{ rows?: Array<Record<string, unknown>> }> {
+  return await invokeGuestPhotoOwnerFunction<{ rows?: Array<Record<string, unknown>> }>('photo-export-manifest', {
+    siteId,
+    includeHidden,
+  });
+}
+
+export async function moderateGuestPhotoUploads(
+  uploadIds: string[],
+  patch: Partial<Pick<PhotoUploadRow, 'is_hidden' | 'is_flagged' | 'recap_hidden' | 'recap_featured' | 'recap_story'>>,
+): Promise<void> {
+  await invokeGuestPhotoOwnerFunction('photo-upload-moderate', { uploadIds, patch });
+}
+
+export async function manageGuestPhotoAlbum(body: {
+  action: 'regenerate_link' | 'set_active' | 'set_parent' | 'set_window';
+  albumId: string;
+  isActive?: boolean;
+  parentAlbumId?: string | null;
+  opensAt?: string | null;
+  closesAt?: string | null;
+}): Promise<Record<string, unknown>> {
+  return await invokeGuestPhotoOwnerFunction<Record<string, unknown>>('photo-album-manage', body);
+}
+
 export async function loadGuestPhotoDashboardSnapshot(userId: string): Promise<GuestPhotoDashboardSnapshot> {
   const activeSite = await resolveActiveSiteForUser(userId);
   if (!activeSite?.id) throw new Error(GUEST_PHOTO_SITE_LOAD_ERROR_COPY);

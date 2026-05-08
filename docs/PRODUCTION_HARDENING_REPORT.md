@@ -3608,3 +3608,24 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the guest photo dashboard page-to-service migration without changing owner-facing AI sort, album move, or correction behavior. No deploy was run.
+
+### 2026-05-07 5:37 PM PT - Guest Photo Function Transport Service Extraction
+
+- Moved the remaining guest photo owner Edge Function transport out of `src/pages/dashboard/GuestPhotoSharing.tsx` and into `src/pages/dashboard/guestPhotoSharingService.ts`.
+- `GuestPhotoSharing.tsx` now routes:
+  - upload analysis requests through `analyzeGuestPhotoUploads(...)`
+  - manifest export requests through `exportGuestPhotoManifest(...)`
+  - upload moderation requests through `moderateGuestPhotoUploads(...)`
+  - album management requests through `manageGuestPhotoAlbum(...)`
+- The page still owns owner-facing notices, optimistic state updates, and flow-specific branching, while the service now owns those remaining function payload contracts and auth-retry transport details.
+- Expanded `src/pages/dashboard/guestPhotoSharingService.test.ts` and `src/lib/dashboardDataBoundary.test.ts` so the page no longer silently regains those function-invoke paths.
+
+Validation:
+- `npm test -- --run src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts src/lib/dashboardDataBoundary.test.ts`: PASS, 44/44.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the guest photo dashboard page-to-service migration without changing owner-facing moderation, album-link, or export behavior. No deploy was run.

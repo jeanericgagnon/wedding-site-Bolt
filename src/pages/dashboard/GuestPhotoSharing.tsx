@@ -6,7 +6,6 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { ShareQrPanel } from '../../components/ui/ShareQrPanel';
-import { supabase } from '../../lib/supabase';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { createEmptyPhotoBuckets } from '../../lib/aiPhotoBuckets';
 import { PhotoBucketCards } from '../../components/dashboard/PhotoBucketCards';
@@ -36,8 +35,12 @@ import {
   MAX_GUEST_PHOTO_METADATA_ROWS,
   MAX_GUEST_PHOTO_PROSPECTS,
   MAX_GUEST_PHOTO_UPLOADS,
+  analyzeGuestPhotoUploads,
   createGuestPhotoBucketCorrection,
+  exportGuestPhotoManifest,
+  manageGuestPhotoAlbum,
   moveGuestPhotoUploadToBucket,
+  moderateGuestPhotoUploads,
   moderateGuestbookEntry as moderateGuestbookEntryFromService,
   persistGuestPhotoBuckets,
   persistGuestPhotoAiOpsPlan,
@@ -221,10 +224,6 @@ export const GuestPhotoSharing: React.FC = () => {
   useEffect(() => {
     writeStoredBucketLinks(bucketUploadLinks);
   }, [bucketUploadLinks]);
-
-  const invokeOrThrow = async <T extends Record<string, unknown> = Record<string, unknown>>(fnName: string, body: Record<string, unknown>) => {
-    return await invokeGuestPhotoOwnerFunction<T>(fnName, body);
-  };
 
   type PhotoAlbumCreateResponse = {
     album?: { id?: string | null; name?: string | null } | null;
@@ -766,13 +765,7 @@ export const GuestPhotoSharing: React.FC = () => {
         return;
       }
 
-      const data = await invokeOrThrow('photo-analyze-batch', {
-        siteId,
-        uploadIds,
-        limit: uploadIds.length,
-        force,
-        mode: force ? 'vision' : 'auto',
-      }) as { analyzed?: number; skipped?: number; results?: PhotoUploadAiAnalysisRow[] };
+      const data = await analyzeGuestPhotoUploads(siteId, uploadIds, force, force ? 'vision' : 'auto');
 
       const nextResults = data.results ?? [];
       setUploadAnalyses((prev) => {
@@ -869,7 +862,7 @@ export const GuestPhotoSharing: React.FC = () => {
     const esc = (value: string | number | null | undefined) => `"${String(value ?? '').replace(/"/g, '""')}"`;
     try {
       if (!siteId) throw new Error('Choose a wedding site before exporting photos.');
-      const data = await invokeOrThrow('photo-export-manifest', { siteId, includeHidden: showHidden });
+      const data = await exportGuestPhotoManifest(siteId, showHidden);
       const rows = Array.isArray(data?.rows) ? data.rows as Array<Record<string, unknown>> : [];
       const lines = [
         ['album', 'filename', 'guest_name', 'guest_email', 'note', 'mime_type', 'size_bytes', 'uploaded_at', 'download_url', 'hidden', 'flagged'].join(','),
@@ -1230,7 +1223,7 @@ export const GuestPhotoSharing: React.FC = () => {
       const updated: Record<string, string> = {};
 
       for (const bucket of targetBuckets) {
-        const data = await invokeOrThrow('photo-album-manage', { action: 'regenerate_link', albumId: bucket.id });
+        const data = await manageGuestPhotoAlbum({ action: 'regenerate_link', albumId: bucket.id });
         const link = typeof data?.uploadUrl === 'string' ? data.uploadUrl : '';
         if (link) updated[bucket.id] = link;
       }
@@ -1274,7 +1267,7 @@ export const GuestPhotoSharing: React.FC = () => {
       const links: Record<string, string> = {};
 
       for (const event of missingItineraryEvents) {
-        const data = await invokeOrThrow<PhotoAlbumCreateResponse>('photo-album-create', {
+        const data = await invokeGuestPhotoOwnerFunction<PhotoAlbumCreateResponse>('photo-album-create', {
           siteId,
           name: event.event_name,
           itineraryEventId: event.id,
@@ -1313,7 +1306,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setSubmitting(true);
       setError(null);
       setSuccess(null);
-      const data = await invokeOrThrow<PhotoAlbumCreateResponse>('photo-album-create', {
+      const data = await invokeGuestPhotoOwnerFunction<PhotoAlbumCreateResponse>('photo-album-create', {
         siteId,
         name: suggestion.label,
         itineraryEventId: suggestion.eventId,
@@ -1343,7 +1336,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setBulkModerating(true);
       setError(null);
       const ids = target.map((u) => u.id);
-      await invokeOrThrow('photo-upload-moderate', { uploadIds: ids, patch: { is_hidden: hide } });
+      await moderateGuestPhotoUploads(ids, { is_hidden: hide });
       await load();
       logPhotoAction(hide ? 'uploads_hidden_bulk' : 'uploads_unhidden_bulk', `${hide ? 'Hidden' : 'Unhidden'} uploads from the filtered photo view.`, {
         uploadCount: ids.length,
@@ -1368,7 +1361,7 @@ export const GuestPhotoSharing: React.FC = () => {
     try {
       setBulkModerating(true);
       setError(null);
-      await invokeOrThrow('photo-upload-moderate', { uploadIds: targetIds, patch: { is_hidden: true } });
+      await moderateGuestPhotoUploads(targetIds, { is_hidden: true });
       await load();
       logPhotoAction('review_uploads_hidden_bulk', 'Review uploads were hidden in bulk.', { uploadCount: targetIds.length });
       setSuccess(`Hidden ${targetIds.length} review upload${targetIds.length === 1 ? '' : 's'}.`);
@@ -1389,7 +1382,7 @@ export const GuestPhotoSharing: React.FC = () => {
     try {
       setBulkModerating(true);
       setError(null);
-      await invokeOrThrow('photo-upload-moderate', { uploadIds: targetIds, patch: { is_hidden: true } });
+      await moderateGuestPhotoUploads(targetIds, { is_hidden: true });
       await load();
       logPhotoAction('duplicate_uploads_hidden_bulk', 'Duplicate extra uploads were hidden in bulk.', { uploadCount: targetIds.length });
       setSuccess(`Kept the best shot in each set and hid ${targetIds.length} extra similar photo${targetIds.length === 1 ? '' : 's'}.`);
@@ -1410,7 +1403,7 @@ export const GuestPhotoSharing: React.FC = () => {
     try {
       setBulkModerating(true);
       setError(null);
-      await invokeOrThrow('photo-upload-moderate', { uploadIds: targetIds, patch: { is_hidden: false } });
+      await moderateGuestPhotoUploads(targetIds, { is_hidden: false });
       await load();
       logPhotoAction('hidden_uploads_restored_bulk', 'Hidden uploads were restored in bulk.', { uploadCount: targetIds.length });
       setSuccess(`Restored ${targetIds.length} hidden upload${targetIds.length === 1 ? '' : 's'}.`);
@@ -1432,7 +1425,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setBulkModerating(true);
       setError(null);
       const ids = target.map((u) => u.id);
-      await invokeOrThrow('photo-upload-moderate', { uploadIds: ids, patch: { is_flagged: flagged } });
+      await moderateGuestPhotoUploads(ids, { is_flagged: flagged });
       await load();
       logPhotoAction(flagged ? 'uploads_flagged_bulk' : 'uploads_unflagged_bulk', `${flagged ? 'Flagged' : 'Unflagged'} uploads from the filtered photo view.`, {
         uploadCount: ids.length,
@@ -1459,7 +1452,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setSuccess(null);
 
       for (const bucket of targetBuckets) {
-        await invokeOrThrow('photo-album-manage', { action: 'set_active', albumId: bucket.id, isActive });
+        await manageGuestPhotoAlbum({ action: 'set_active', albumId: bucket.id, isActive });
       }
 
       await load();
@@ -1477,7 +1470,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const moderateUpload = async (uploadId: string, patch: Partial<Pick<PhotoUploadRow, 'is_hidden' | 'is_flagged' | 'recap_hidden' | 'recap_featured' | 'recap_story'>>) => {
     try {
       setError(null);
-      await invokeOrThrow('photo-upload-moderate', { uploadIds: [uploadId], patch });
+      await moderateGuestPhotoUploads([uploadId], patch);
       await load();
       logPhotoAction('upload_moderated', 'Photo upload moderation was updated.', patch, uploadId, 'Photo upload');
     } catch (err: unknown) {
@@ -1489,7 +1482,7 @@ export const GuestPhotoSharing: React.FC = () => {
     try {
       setWorkingBucketId(bucketId);
       setError(null);
-      await invokeOrThrow('photo-album-manage', { action: 'set_active', albumId: bucketId, isActive });
+      await manageGuestPhotoAlbum({ action: 'set_active', albumId: bucketId, isActive });
       await load();
       logPhotoAction(isActive ? 'bucket_activated' : 'bucket_paused', `${isActive ? 'Opened' : 'Paused'} a photo album.`, { isActive }, bucketId, bucketDisplayName(bucketById.get(bucketId)));
     } catch (err: unknown) {
@@ -1503,7 +1496,7 @@ export const GuestPhotoSharing: React.FC = () => {
     try {
       setWorkingBucketId(bucketId);
       setError(null);
-      await invokeOrThrow('photo-album-manage', { action: 'set_parent', albumId: bucketId, parentAlbumId: nextParentAlbumId || null });
+      await manageGuestPhotoAlbum({ action: 'set_parent', albumId: bucketId, parentAlbumId: nextParentAlbumId || null });
       await load();
       setSuccess(nextParentAlbumId ? 'Sub-album relationship saved.' : 'Album moved back to top level.');
     } catch (err: unknown) {
@@ -1518,7 +1511,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setWorkingBucketId(bucketId);
       setError(null);
       setSuccess(null);
-      const data = await invokeOrThrow('photo-album-manage', { action: 'regenerate_link', albumId: bucketId });
+      const data = await manageGuestPhotoAlbum({ action: 'regenerate_link', albumId: bucketId });
       const uploadUrl = (data?.uploadUrl as string) ?? '';
       setLatestUploadUrl(uploadUrl);
       if (uploadUrl) {
@@ -1567,7 +1560,7 @@ export const GuestPhotoSharing: React.FC = () => {
       if (opensAt && closesAt && new Date(closesAt) <= new Date(opensAt)) {
         throw new Error('Close time must be after open time.');
       }
-      await invokeOrThrow('photo-album-manage', { action: 'set_window', albumId: bucketId, opensAt, closesAt });
+      await manageGuestPhotoAlbum({ action: 'set_window', albumId: bucketId, opensAt, closesAt });
       setSuccess('Upload window saved.');
       await load();
     } catch (err: unknown) {
@@ -1596,7 +1589,7 @@ export const GuestPhotoSharing: React.FC = () => {
       setError(null);
       setSuccess(null);
 
-      const data = await invokeOrThrow<PhotoAlbumCreateResponse>('photo-album-create', {
+      const data = await invokeGuestPhotoOwnerFunction<PhotoAlbumCreateResponse>('photo-album-create', {
         siteId,
         name: name.trim(),
         itineraryEventId: itineraryEventId || null,

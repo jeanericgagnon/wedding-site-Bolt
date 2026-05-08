@@ -1,12 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createEmptyPhotoBuckets } from '../../lib/aiPhotoBuckets';
 import {
+  analyzeGuestPhotoUploads,
   buildGuestPhotoBucketSiteUpdate,
   createGuestPhotoBucketCorrection,
+  exportGuestPhotoManifest,
   getGuestPhotoCurrentUserId,
   invokeGuestPhotoOwnerFunction,
   loadGuestPhotoDashboardSnapshot,
+  manageGuestPhotoAlbum,
   moveGuestPhotoUploadToBucket,
+  moderateGuestPhotoUploads,
   moderateGuestbookEntry,
   persistGuestPhotoAiOpsPlan,
   queueGuestPhotoFollowups,
@@ -141,6 +145,50 @@ describe('guestPhotoSharingService', () => {
       expect.anything(),
       'queue-guest-followups',
       { siteId: 'site-1', kind: 'recap' },
+    );
+  });
+
+  it('runs guest photo upload analysis through the service helper', async () => {
+    invokeFunctionOrThrowMock.mockResolvedValueOnce({ analyzed: 2, results: [] });
+
+    await expect(analyzeGuestPhotoUploads('site-1', ['upload-1', 'upload-2'], true, 'vision')).resolves.toEqual({ analyzed: 2, results: [] });
+    expect(invokeFunctionOrThrowMock).toHaveBeenCalledWith(
+      expect.anything(),
+      'photo-analyze-batch',
+      { siteId: 'site-1', uploadIds: ['upload-1', 'upload-2'], limit: 2, force: true, mode: 'vision' },
+    );
+  });
+
+  it('exports the guest photo manifest through the service helper', async () => {
+    invokeFunctionOrThrowMock.mockResolvedValueOnce({ rows: [{ id: 'row-1' }] });
+
+    await expect(exportGuestPhotoManifest('site-1', true)).resolves.toEqual({ rows: [{ id: 'row-1' }] });
+    expect(invokeFunctionOrThrowMock).toHaveBeenCalledWith(
+      expect.anything(),
+      'photo-export-manifest',
+      { siteId: 'site-1', includeHidden: true },
+    );
+  });
+
+  it('moderates guest photo uploads through the service helper', async () => {
+    invokeFunctionOrThrowMock.mockResolvedValueOnce({ ok: true });
+
+    await expect(moderateGuestPhotoUploads(['upload-1'], { is_hidden: true })).resolves.toBeUndefined();
+    expect(invokeFunctionOrThrowMock).toHaveBeenCalledWith(
+      expect.anything(),
+      'photo-upload-moderate',
+      { uploadIds: ['upload-1'], patch: { is_hidden: true } },
+    );
+  });
+
+  it('manages guest photo albums through the service helper', async () => {
+    invokeFunctionOrThrowMock.mockResolvedValueOnce({ uploadUrl: 'https://example.com/upload' });
+
+    await expect(manageGuestPhotoAlbum({ action: 'regenerate_link', albumId: 'album-1' })).resolves.toEqual({ uploadUrl: 'https://example.com/upload' });
+    expect(invokeFunctionOrThrowMock).toHaveBeenCalledWith(
+      expect.anything(),
+      'photo-album-manage',
+      { action: 'regenerate_link', albumId: 'album-1' },
     );
   });
 
