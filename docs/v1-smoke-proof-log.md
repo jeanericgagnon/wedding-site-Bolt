@@ -9859,3 +9859,19 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-08 02:18 AM PT No-Deploy Overview Snapshot-State Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Overview.tsx` now routes demo overview state, site draft fallback shaping, persisted intelligence-dismissal hydration, name-change workspace snapshot mapping, and final overview stats assembly through `src/pages/dashboard/buildOverviewSnapshotState.ts`.
+  - That helper now owns the remaining mixed snapshot/state shaping for demo stats, wedding-date fallback resolution, draft brief/refine-target fallback construction, name-change lifecycle snapshot assembly, and final overview stat composition while the page keeps the route shell, intelligence actions, and high-level dashboard composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildOverviewSiteDraftState(site)`, `buildNameChangeOverviewSnapshotState(workspace)`, and `buildOverviewStatsFromSnapshot({ ... })`, and also checks that `src/pages/dashboard/buildOverviewSnapshotState.ts` exports `buildDemoOverviewSnapshotState()`, `buildOverviewSiteDraftState(site: { ... })`, `buildNameChangeOverviewSnapshotState(workspace: ...)`, and `buildOverviewStatsFromSnapshot({ ... })`.
+  - `src/pages/dashboard/Overview.tsx` dropped from 1500 lines to 1372 lines in this batch, while `src/pages/dashboard/buildOverviewSnapshotState.ts` came in at 325 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/overviewQueryBounds.test.ts src/pages/dashboard/overviewService.test.ts src/pages/dashboard/overviewUtils.test.ts src/pages/dashboard/overviewDate.test.ts`: PASS, 30/30.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

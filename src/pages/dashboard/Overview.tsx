@@ -6,10 +6,8 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
 import { Eye, Users, ExternalLink, Edit, EyeOff, Palette, Radio } from 'lucide-react';
-import { getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
-import { useAuth } from '../../hooks/useAuth';
-import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
+import { useAuth } from '../../hooks/useAuth';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { getPublishStateDescriptor } from '../../lib/publishState';
 import { listBuilderRevisions, type BuilderRevision } from '../../builder/services/versionHistory';
@@ -18,12 +16,10 @@ import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, is
 import { writeOnboardingResumeTarget } from '../../lib/onboardingResumeStorage';
 import { useToast } from '../../components/ui/Toast';
 import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddingDate } from './overviewDate';
-import { getOverviewFallbackCoupleValue } from './overviewDraftBrief';
 import { buildNameChangeOverviewCardModel } from './nameChangeOverviewCard';
-import { buildNameChangeOverviewInsights, type NameChangeOverviewInsights } from './nameChangeOverviewInsights';
+import { type NameChangeOverviewInsights } from './nameChangeOverviewInsights';
 import { NAME_CHANGE_LIFECYCLE_LABELS } from './nameChangeLifecycleLabels';
-import { deriveNameChangeLifecycleStatus } from './nameChangeLifecycleStatus';
-import { hydrateNameChangeWorkspace, loadNameChangeWorkspace } from './planning/nameChangeService';
+import { loadNameChangeWorkspace } from './planning/nameChangeService';
 import { type CalmDigestPriority } from '../../lib/calmOwnerDigest';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../lib/plannerAccess';
 import {
@@ -35,20 +31,15 @@ import {
 import { OverviewDashboardRouteView } from './OverviewDashboardRouteView';
 import { useOverviewIntelligenceActions } from './useOverviewIntelligenceActions';
 import { buildOverviewDashboardModel } from './buildOverviewDashboardModel';
+import {
+  buildDemoOverviewSnapshotState,
+  buildNameChangeOverviewSnapshotState,
+  buildOverviewSiteDraftState,
+  buildOverviewStatsFromSnapshot,
+  DEFAULT_NAME_CHANGE_INSIGHTS,
+} from './buildOverviewSnapshotState';
 
 const INTELLIGENCE_DISMISSALS_STORAGE_KEY = 'dayof_intelligence_dismissed_v1';
-
-const DEFAULT_NAME_CHANGE_INSIGHTS: NameChangeOverviewInsights = {
-  coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
-  followOnLabel: 'Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.',
-  downstreamLabel: 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
-  downstreamHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
-  concreteResumeLabel: null,
-  milestoneSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
-  milestoneSummaryLabel: 'Milestones ready to confirm',
-  reminderSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
-  reminderSummaryLabel: 'No open reminders',
-};
 
 const CALM_DIGEST_PRIORITY_LABELS: Record<CalmDigestPriority, string> = {
   now: 'Now',
@@ -100,16 +91,6 @@ function formatInteractiveVoteLabel(value: string): string {
     .replace(/^(poll|quiz)[-_:]/i, '')
     .replace(/[-_:]+/g, ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function resolveWeddingDateFromData(
-  weddingData: Record<string, unknown> | null,
-  site: { wedding_date?: string | null; venue_date?: string | null } | null
-): string | null {
-  const event = (weddingData?.event as Record<string, unknown> | undefined) ?? undefined;
-  const eventWeddingDateISO = typeof event?.weddingDateISO === 'string' ? event.weddingDateISO : null;
-  const legacyWeddingDate = typeof weddingData?.weddingDate === 'string' ? (weddingData.weddingDate as string) : null;
-  return eventWeddingDateISO ?? legacyWeddingDate ?? site?.wedding_date ?? site?.venue_date ?? null;
 }
 
 export const DashboardOverview: React.FC = () => {
@@ -193,136 +174,33 @@ export const DashboardOverview: React.FC = () => {
 
     try {
       if (isDemoMode) {
-        const confirmed = demoGuests.filter((g) => isAttendingRsvpStatus(g.rsvp_status));
-        const declined = demoGuests.filter((g) => isDeclinedRsvpStatus(g.rsvp_status));
-        const pending = demoGuests.filter((g) => isPendingRsvpStatus(g.rsvp_status));
-
-        const recentRsvps: RecentRsvp[] = [...confirmed, ...declined]
-          .slice(0, 5)
-          .map((g, i) => ({
-            id: g.id,
-            guestName: g.name || `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() || 'Guest',
-            status: g.rsvp_status as RecentRsvp['status'],
-            receivedAt: new Date(Date.now() - i * 60 * 60 * 1000).toISOString(),
-          }));
-
-        const weddingDate = demoWeddingSite.wedding_date ?? null;
-
-        setStats({
-          siteId: demoWeddingSite.id,
-          publishedVersion: 1,
-          lastPublishedAt: new Date().toISOString(),
-          totalGuests: demoGuests.length,
-          confirmedGuests: confirmed.length,
-          declinedGuests: declined.length,
-          pendingGuests: pending.length,
-              daysUntilWedding: calcOverviewDaysUntil(weddingDate),
-          weddingDate,
-          siteSlug: resolvePublicSiteSlugFromRow(demoWeddingSite as unknown as Record<string, unknown>),
-          isPublished: true,
-          privacyMode: 'public',
-          hideFromSearch: false,
-          siteUpdatedAt: new Date().toISOString(),
-          templateName: 'classic',
-          coupleName1: demoWeddingSite.couple_name_1,
-          coupleName2: demoWeddingSite.couple_name_2,
-          venueName: demoWeddingSite.venue_name,
-          venueLocation: demoWeddingSite.venue_location,
-          registryItemCount: 2,
-          photoAlbumCount: 3,
-          activePhotoAlbumCount: 2,
-          vaultCount: 3,
-          enabledVaultCount: 3,
-          contactableGuestCount: demoGuests.filter((g) => Boolean(g.email)).length,
-          recentRsvps,
-          activeSiteRole: 'owner',
-          activeSitePermissions: null,
-        });
-        setNameChangeOverviewState({ hasWorkspace: true, workflowStatus: 'in_progress', hasExecutionActivity: true });
-        setNameChangeInsights({
-          coreChainLabel: '1 complete · 1 in progress across the legal identity chain.',
-          followOnLabel: '1 milestone confirmed so passport, payroll, and tax follow-ons can stay in sync.',
-          downstreamLabel: '2 reminders still open for the long-tail bank, insurance, travel, and loyalty cleanup.',
-          downstreamHref: '/dashboard/planning?tab=nameChange#target-status-tracking',
-          concreteResumeLabel: 'Review the next milestone',
-          milestoneSummaryHref: '/dashboard/planning?tab=nameChange#target-status-tracking',
-          milestoneSummaryLabel: '1 milestone confirmed',
-          reminderSummaryHref: '/dashboard/planning?tab=nameChange#target-status-tracking',
-          reminderSummaryLabel: '2 reminders open',
-        });
+        const demoState = buildDemoOverviewSnapshotState();
+        setStats(demoState.stats);
+        setNameChangeOverviewState(demoState.nameChangeOverviewState);
+        setNameChangeInsights(demoState.nameChangeInsights);
         return;
       }
 
       const overviewSnapshot = await loadOverviewDashboardSnapshot(user.id);
       const { activeSite, site } = overviewSnapshot;
-
-      let weddingDate: string | null = null;
-      let templateName: string | null = null;
-
-      if (site) {
-        const weddingData = site.wedding_data as Record<string, unknown> | null;
-        const meta = (weddingData?.meta as Record<string, unknown> | undefined) ?? {};
-        const persistedDismissals = Array.isArray(meta.intelligenceDismissals)
-          ? meta.intelligenceDismissals.filter((id): id is string => typeof id === 'string')
-          : [];
-        if (persistedDismissals.length > 0) {
-          setDismissedIntelligenceIds((current) => {
-            const next = Array.from(new Set([...current, ...persistedDismissals]));
-            try {
-              localStorage.setItem(INTELLIGENCE_DISMISSALS_STORAGE_KEY, JSON.stringify(next));
-            } catch {}
-            return next;
-          });
-        }
-        weddingDate = resolveWeddingDateFromData(weddingData, {
-          wedding_date: site.wedding_date,
-          venue_date: site.venue_date,
-        });
-        templateName = site.template_id ?? null;
-        if (isWeddingProfile(site.onboarding_answers)) {
-          const summary = getWeddingProfileSummary(site.onboarding_answers);
-          setDraftBrief(summary);
-          setDraftRefineTargets(getWeddingProfileRefineTargets(site.onboarding_answers));
-          setDraftBriefDebug(`valid:${summary.length}`);
-        } else {
-          const weddingData = (site.wedding_data as Record<string, unknown> | null) ?? null;
-          const fallbackCoupleValue = getOverviewFallbackCoupleValue(site.couple_name_1, site.couple_name_2);
-          const fallbackSummary = [
-            fallbackCoupleValue ? { id: 'couple', label: 'Couple', value: fallbackCoupleValue, questionKey: 'partnerNames' } : null,
-            site.wedding_date ? { id: 'date', label: 'Date', value: site.wedding_date, questionKey: 'weddingDate' } : null,
-            site.venue_name ? { id: 'venue', label: 'Venue', value: site.venue_name, questionKey: 'venueName' } : null,
-            site.wedding_location ? { id: 'location', label: 'Location', value: site.wedding_location, questionKey: 'venueLocation' } : null,
-            typeof (weddingData?.couple as Record<string, unknown> | undefined)?.story === 'string' ? { id: 'story', label: 'Story', value: (weddingData?.couple as Record<string, unknown>).story as string, questionKey: 'story' } : null,
-          ].filter(Boolean) as Array<{ id: string; label: string; value: string; questionKey: string }>;
-          setDraftBrief(fallbackSummary);
-          setDraftRefineTargets([]);
-          setDraftBriefDebug(`fallback:${fallbackSummary.length}`);
-        }
-      }
-
-      if (site?.id) {
-        const workspace = await loadNameChangeWorkspace(site.id);
-        if (workspace.caseRecord) {
-          const hydratedWorkspace = hydrateNameChangeWorkspace(workspace);
-          const executionCounts = hydratedWorkspace.plan.summary.executionCounts ?? { todo: hydratedWorkspace.plan.steps.length, in_progress: 0, complete: 0 };
-          setNameChangeOverviewState({
-            hasWorkspace: true,
-            workflowStatus: deriveNameChangeLifecycleStatus(hydratedWorkspace.plan),
-            hasExecutionActivity: executionCounts.in_progress > 0 || executionCounts.complete > 0,
-          });
-          setNameChangeInsights(buildNameChangeOverviewInsights(hydratedWorkspace));
-        } else {
-          setNameChangeOverviewState({ hasWorkspace: false, workflowStatus: null, hasExecutionActivity: false });
-          setNameChangeInsights({
-            ...DEFAULT_NAME_CHANGE_INSIGHTS,
-          });
-        }
-      } else {
-        setNameChangeOverviewState({ hasWorkspace: false, workflowStatus: null, hasExecutionActivity: false });
-        setNameChangeInsights({
-          ...DEFAULT_NAME_CHANGE_INSIGHTS,
+      const siteDraftState = buildOverviewSiteDraftState(site);
+      if (siteDraftState.persistedDismissals.length > 0) {
+        setDismissedIntelligenceIds((current) => {
+          const next = Array.from(new Set([...current, ...siteDraftState.persistedDismissals]));
+          try {
+            localStorage.setItem(INTELLIGENCE_DISMISSALS_STORAGE_KEY, JSON.stringify(next));
+          } catch {}
+          return next;
         });
       }
+      setDraftBrief(siteDraftState.draftBrief);
+      setDraftRefineTargets(siteDraftState.draftRefineTargets);
+      setDraftBriefDebug(siteDraftState.draftBriefDebug);
+
+      const workspace = site?.id ? await loadNameChangeWorkspace(site.id) : null;
+      const nameChangeSnapshot = buildNameChangeOverviewSnapshotState(workspace);
+      setNameChangeOverviewState(nameChangeSnapshot.nameChangeOverviewState);
+      setNameChangeInsights(nameChangeSnapshot.nameChangeInsights);
 
       const siteJson = (site?.site_json as Record<string, unknown> | null) ?? null;
       const privacyMode = 'public';
@@ -332,37 +210,31 @@ export const DashboardOverview: React.FC = () => {
           siteJson?.publishStatus === 'published' ||
           (typeof siteJson?.publishedVersion === 'number' && (siteJson.publishedVersion as number) > 0)
       );
-
-      setStats({
-        siteId: site?.id ?? null,
-        publishedVersion: typeof siteJson?.publishedVersion === 'number' ? (siteJson.publishedVersion as number) : null,
-        lastPublishedAt: typeof siteJson?.lastPublishedAt === 'string' ? (siteJson.lastPublishedAt as string) : null,
-        totalGuests: overviewSnapshot.totalGuests,
+      setStats(buildOverviewStatsFromSnapshot({
+        activeSitePermissions: activeSite?.permissions ?? null,
+        activeSiteRole: activeSite?.role ?? 'owner',
+        activePhotoAlbumCount: overviewSnapshot.activePhotoAlbumCount,
+        contactableGuestCount: overviewSnapshot.contactableGuestCount,
         confirmedGuests: overviewSnapshot.confirmedGuests,
         declinedGuests: overviewSnapshot.declinedGuests,
-        pendingGuests: overviewSnapshot.pendingGuests,
-        daysUntilWedding: calcOverviewDaysUntil(weddingDate),
-        weddingDate,
-        siteSlug: resolvePublicSiteSlugFromRow((site as unknown as Record<string, unknown> | null) ?? null),
-        isPublished,
-        privacyMode,
-        hideFromSearch,
-        siteUpdatedAt: site?.updated_at ?? null,
-        templateName,
-        coupleName1: site?.couple_name_1 ?? null,
-        coupleName2: site?.couple_name_2 ?? null,
-        venueName: site?.venue_name ?? null,
-        venueLocation: site?.wedding_location ?? null,
-        registryItemCount: overviewSnapshot.registryItemCount,
-        photoAlbumCount: overviewSnapshot.photoAlbumCount,
-        activePhotoAlbumCount: overviewSnapshot.activePhotoAlbumCount,
-        vaultCount: overviewSnapshot.vaultCount,
         enabledVaultCount: overviewSnapshot.enabledVaultCount,
-        contactableGuestCount: overviewSnapshot.contactableGuestCount,
+        hideFromSearch,
+        isPublished,
+        lastPublishedAt: typeof siteJson?.lastPublishedAt === 'string' ? (siteJson.lastPublishedAt as string) : null,
+        pendingGuests: overviewSnapshot.pendingGuests,
+        photoAlbumCount: overviewSnapshot.photoAlbumCount,
+        publishedVersion: typeof siteJson?.publishedVersion === 'number' ? (siteJson.publishedVersion as number) : null,
         recentRsvps: overviewSnapshot.recentRsvps,
-        activeSiteRole: activeSite?.role ?? 'owner',
-        activeSitePermissions: activeSite?.permissions ?? null,
-      });
+        registryItemCount: overviewSnapshot.registryItemCount,
+        site,
+        siteId: site?.id ?? null,
+        siteSlug: resolvePublicSiteSlugFromRow((site as unknown as Record<string, unknown> | null) ?? null),
+        siteUpdatedAt: site?.updated_at ?? null,
+        templateName: siteDraftState.templateName,
+        totalGuests: overviewSnapshot.totalGuests,
+        vaultCount: overviewSnapshot.vaultCount,
+        weddingDate: siteDraftState.weddingDate,
+      }));
     } catch {
       setError('Couldn’t load your overview right now.');
     } finally {
