@@ -4578,6 +4578,22 @@ Status:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-08 01:00 AM PT No-Deploy Overview Intelligence Action Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Overview.tsx` now routes builder-field dirty marking, AI draft refresh from the saved brief, invisible-intelligence dismissal persistence, and interactive-suggestion hiding through `src/pages/dashboard/useOverviewIntelligenceActions.ts`.
+  - That hook now owns the repeated overview intelligence transport, local-storage persistence, AI draft refresh orchestration, and success/error choreography while the page keeps the stats loading, planning signals, and overall dashboard composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useOverviewIntelligenceActions({ ... })` plus its `markOverviewBuilderFieldAsUserEdited(...)`, `loadOverviewDraftRefreshSeed(...)`, `updateOverviewDraftRefresh(...)`, `persistOverviewIntelligenceDismissals(...)`, and `hideInteractiveSuggestion(...)` contract.
+  - `src/pages/dashboard/Overview.tsx` dropped from 1644 lines to 1577 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/overviewQueryBounds.test.ts src/pages/dashboard/overviewService.test.ts src/pages/dashboard/overviewUtils.test.ts src/pages/dashboard/overviewDate.test.ts`: PASS, 30/30.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 12:34 AM PT No-Deploy Guest Dashboard Campaign Action Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

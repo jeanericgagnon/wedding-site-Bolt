@@ -11,10 +11,7 @@ import { buildAnalyticsBaseline } from './analyticsBaseline';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
 import { Eye, Users, ExternalLink, Edit, EyeOff, Palette, Radio } from 'lucide-react';
-import { buildDraftSitePatchFromProfile, getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
-import { generateDraftFromWeddingProfile, mergeGeneratedDraftIntoWeddingData } from '../../lib/aiDraftGenerator';
-import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
-import { createCanonicalContentFromDraft } from '../../lib/aiCanonicalContent';
+import { getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
@@ -29,7 +26,6 @@ import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddin
 import { getOverviewFallbackCoupleValue } from './overviewDraftBrief';
 import { buildNameChangeOverviewCardModel } from './nameChangeOverviewCard';
 import { buildNameChangeOverviewInsights, type NameChangeOverviewInsights } from './nameChangeOverviewInsights';
-import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import { NAME_CHANGE_LIFECYCLE_LABELS } from './nameChangeLifecycleLabels';
 import { deriveNameChangeLifecycleStatus } from './nameChangeLifecycleStatus';
 import { hydrateNameChangeWorkspace, loadNameChangeWorkspace } from './planning/nameChangeService';
@@ -40,17 +36,13 @@ import { buildCalmDigestDeliveryPreview, buildCalmOwnerDigest, type CalmDigestPr
 import { buildWebsiteInviteAnalyticsFunnelReview, buildWebsiteInviteAnalyticsReadiness } from '../../lib/websiteInviteAnalyticsReadiness';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../lib/plannerAccess';
 import {
-  hideInteractiveSuggestion,
   loadOverviewDashboardSnapshot,
-  loadOverviewDraftRefreshSeed,
   loadOverviewInteractiveData,
-  markOverviewBuilderFieldAsUserEdited,
-  persistOverviewIntelligenceDismissals,
-  updateOverviewDraftRefresh,
   type OverviewInteractiveSuggestion as OverviewInteractiveSuggestionRow,
   type OverviewInteractiveVoteSummary,
 } from './overviewService';
 import { OverviewDashboardRouteView } from './OverviewDashboardRouteView';
+import { useOverviewIntelligenceActions } from './useOverviewIntelligenceActions';
 
 const INTELLIGENCE_DISMISSALS_STORAGE_KEY = 'dayof_intelligence_dismissed_v1';
 
@@ -130,62 +122,6 @@ function resolveWeddingDateFromData(
 
 export const DashboardOverview: React.FC = () => {
   const { toast } = useToast();
-
-
-  async function markBuilderFieldAsUserEdited(fieldPath: string) {
-    if (!stats?.siteId) return;
-    await markOverviewBuilderFieldAsUserEdited(stats.siteId, fieldPath);
-    await loadStats();
-  }
-
-  async function refreshDraftFromBrief() {
-    if (!stats?.siteId || draftBrief.length === 0 || refreshingBrief) return;
-
-    setRefreshingBrief(true);
-    try {
-      const seed = await loadOverviewDraftRefreshSeed(stats.siteId);
-      if (!isWeddingProfile(seed.onboardingAnswers)) throw new Error('No saved brief found');
-
-      const patch = buildDraftSitePatchFromProfile(seed.onboardingAnswers);
-      const generatedDraft = await generateDraftFromWeddingProfile(seed.onboardingAnswers);
-      const canonicalAiContent = createCanonicalContentFromDraft(generatedDraft);
-      const mergedWeddingData = await mergeGeneratedDraftIntoWeddingData(
-        seed.weddingData,
-        seed.onboardingAnswers
-      ) as Record<string, unknown>;
-      const existingSiteJson = seed.siteJson ?? {};
-      const cleanedSiteJson = { ...existingSiteJson };
-      if ('home' in cleanedSiteJson) {
-        delete cleanedSiteJson.home;
-      }
-      const existingAiContent = ((((seed.weddingData?.meta as Record<string, unknown> | undefined)?.aiContent as Record<string, unknown> | undefined) ?? null));
-      const patchedBuilderProject = mergeGeneratedDraftIntoBuilderProject(
-        cleanedSiteJson,
-        generatedDraft,
-        (existingAiContent as unknown as import('../../lib/aiCanonicalContent').AiCanonicalSectionContent | null) ?? canonicalAiContent
-      );
-
-      await updateOverviewDraftRefresh(stats.siteId, {
-        ...patch,
-        wedding_data: {
-          ...mergedWeddingData,
-          meta: {
-            ...((((mergedWeddingData.meta as Record<string, unknown> | undefined) ?? {}))),
-            aiDraft: generatedDraft,
-            aiContent: canonicalAiContent,
-            photoBuckets: ((((mergedWeddingData.meta as Record<string, unknown> | undefined) ?? {}).photoBuckets as Record<string, unknown> | undefined) ?? null),
-          },
-        },
-        site_json: patchedBuilderProject,
-      });
-      await loadStats();
-    } catch (err) {
-      const message = customerSafeErrorMessage(err, 'Failed to refresh draft from brief');
-      toast(message, 'error');
-    } finally {
-      setRefreshingBrief(false);
-    }
-  }
 
   const { user, isDemoMode } = useAuth();
   const navigate = useNavigate();
@@ -490,27 +426,24 @@ export const DashboardOverview: React.FC = () => {
     ? buildInvisibleIntelligenceSuggestions(stats).filter((suggestion) => !dismissedIntelligenceIds.includes(suggestion.id))
     : [];
   const showInternalProof = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('proof') === '1';
-
-  const dismissInvisibleSuggestion = (id: string) => {
-    const next = Array.from(new Set([...dismissedIntelligenceIds, id]));
-    setDismissedIntelligenceIds(next);
-    try {
-      localStorage.setItem(INTELLIGENCE_DISMISSALS_STORAGE_KEY, JSON.stringify(next));
-    } catch {}
-    if (!stats?.siteId || isDemoMode) return;
-
-    void persistOverviewIntelligenceDismissals(stats.siteId, next).catch(() => {});
-  };
-
-  const hideSuggestion = async (id: string) => {
-    try {
-      await hideInteractiveSuggestion(id);
-    } catch {
-      toast('Couldn’t hide that suggestion right now.', 'error');
-      return;
-    }
-    setInteractiveSuggestions((prev) => prev.filter((s) => s.id !== id));
-  };
+  const {
+    dismissInvisibleSuggestion,
+    hideSuggestion,
+    markBuilderFieldAsUserEdited,
+    refreshDraftFromBrief,
+  } = useOverviewIntelligenceActions({
+    dismissedIntelligenceIds,
+    draftBrief,
+    isDemoMode,
+    loadStats,
+    refreshingBrief,
+    setDismissedIntelligenceIds,
+    setInteractiveSuggestions,
+    setRefreshingBrief,
+    stats,
+    storageKey: INTELLIGENCE_DISMISSALS_STORAGE_KEY,
+    toast,
+  });
 
   const setupChecklist = stats
     ? buildSetupChecklist({

@@ -500,13 +500,12 @@ describe('dashboard data boundary guards', () => {
   it('keeps overview intelligence persistence behind its service', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Overview.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/overviewService.ts'), 'utf8');
+    const actions = readFileSync(join(process.cwd(), 'src/pages/dashboard/useOverviewIntelligenceActions.ts'), 'utf8');
 
     expect(source).toContain('<OverviewDashboardRouteView');
-    expect(source).toContain('persistOverviewIntelligenceDismissals(stats.siteId, next)');
-    expect(source).toContain('hideInteractiveSuggestion(id)');
+    expect(source).toContain('useOverviewIntelligenceActions({');
     expect(source).toContain('loadOverviewDashboardSnapshot(user.id)');
     expect(source).toContain('loadOverviewInteractiveData(slug)');
-    expect(source).toContain('markOverviewBuilderFieldAsUserEdited(stats.siteId, fieldPath)');
     expect(source).not.toContain('<DashboardLayout');
     expect(source).not.toContain('<DashboardStateBlock');
     expect(source).not.toContain("supabase.from('interactive_suggestions').update({ is_hidden: true })");
@@ -515,12 +514,22 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain("supabase.from('guests')");
     expect(source).not.toContain("supabase.from('interactive_suggestions')");
     expect(source).not.toContain("supabase.from('interactive_votes')");
+    expect(actions).toContain('await markOverviewBuilderFieldAsUserEdited(stats.siteId, fieldPath)');
+    expect(actions).toContain('const seed = await loadOverviewDraftRefreshSeed(stats.siteId)');
+    expect(actions).toContain('await updateOverviewDraftRefresh(stats.siteId, {');
+    expect(actions).toContain('void persistOverviewIntelligenceDismissals(stats.siteId, next).catch(() => {})');
+    expect(actions).toContain('await hideInteractiveSuggestion(id)');
     expect(service).toContain("const OVERVIEW_DISMISSALS_SITE_SELECT = 'wedding_data'");
     expect(service).toContain("const OVERVIEW_SITE_SELECT = 'id, site_slug, site_url, is_published, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location'");
     expect(service).toContain('.select(OVERVIEW_DISMISSALS_SITE_SELECT)');
     expect(service).toContain('.select(OVERVIEW_SITE_SELECT)');
     expect(service).toContain('.select(OVERVIEW_GUEST_SELECT)');
     expect(service).not.toContain(".from('wedding_sites')\n    .select('*')");
+    expect(source).not.toContain('await markOverviewBuilderFieldAsUserEdited(stats.siteId, fieldPath)');
+    expect(source).not.toContain('const seed = await loadOverviewDraftRefreshSeed(stats.siteId)');
+    expect(source).not.toContain('await updateOverviewDraftRefresh(stats.siteId, {');
+    expect(source).not.toContain('void persistOverviewIntelligenceDismissals(stats.siteId, next).catch(() => {})');
+    expect(source).not.toContain('await hideInteractiveSuggestion(id)');
   });
 
   it('keeps guest photo bucket persistence behind its service', () => {
