@@ -24,7 +24,7 @@ import { extractDietaryNote } from '../../lib/dietaryNotes';
 import { GUEST_IMPORT_MAX_FILE_BYTES, GUEST_IMPORT_MAX_ROWS, buildDefaultCsvFieldMap, buildGuestImportPreview, isCsvNameMappingValid, readGuestImportRows, type CsvFieldMap } from '../../lib/guestImportParser';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
-import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, ChevronDown, Trash2, ExternalLink, Eye } from 'lucide-react';
+import { Download, UserPlus, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, CalendarDays, ChevronRight, Loader2, ChevronDown, Trash2, ExternalLink, Eye } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
 import type { ConfirmDialogProps } from '../../components/ui/ConfirmDialog';
@@ -51,6 +51,7 @@ import { GuestOpsToolbar } from './guests/GuestOpsToolbar';
 import { GuestOpsSummaryPanel } from './guests/GuestOpsSummaryPanel';
 import { GuestRsvpConflictPanels } from './guests/GuestRsvpConflictPanels';
 import { GuestRsvpSettingsView } from './guests/GuestRsvpSettingsView';
+import { GuestSegmentControlsPanel } from './guests/GuestSegmentControlsPanel';
 import { GuestSnapshotInsightsPanel } from './guests/GuestSnapshotInsightsPanel';
 import {
   type Guest,
@@ -2391,133 +2392,48 @@ const handleSendBulkInvitations = async () => {
               />
             )}
 
-            <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-border-subtle bg-surface-subtle">
-              <p className="text-xs text-text-secondary">
-                Active segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span>
-                {extraFilters.length > 0 ? <> · +<span className="font-semibold text-text-primary">{extraFilters.length}</span> filters</> : null}
-                {searchQuery ? <> · Search: <span className="font-semibold text-text-primary">“{searchQuery}”</span></> : null}
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => { setFilterStatus('all'); setExtraFilters([]); setSearchQuery(''); setViewMode('list'); }}
-                  className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
-                >
-                  Clear filters
-                </button>
-              </div>
-            </div>
-
-            {filteredGuests.some((guest) => (exceptionStateByGuest.get(guest.id) || []).length > 0) && filterStatus === 'all' && (
-              <div className="p-2.5 rounded-lg border border-border-subtle bg-surface-subtle/60 text-text-secondary text-xs space-y-2">
-                <p>Some guests have RSVP details that are worth reviewing personally.</p>
-                <div className="flex flex-wrap gap-2">
-                  <button onClick={() => handleCopyExceptionChecklist()} className="px-2 py-1 rounded-md border border-border-subtle bg-white text-text-secondary hover:bg-surface-subtle">Copy exception checklist</button>
-                </div>
-              </div>
-            )}
-
-            {filterStatus === 'missing-meal' && (
-              <div className="p-2.5 rounded-lg border border-border-subtle bg-surface-subtle/60 text-text-secondary text-xs space-y-2">
-                <p>These guests are attending but still need a meal choice.</p>
-                <div className="flex flex-wrap gap-2">
-                  <button onClick={() => handleCopyMissingMealChecklist()} className="px-2 py-1 rounded-md border border-border-subtle bg-white text-text-secondary hover:bg-surface-subtle">Copy meal follow-up checklist</button>
-                  <button onClick={() => setShowCampaignModal(true)} className="px-2 py-1 rounded-md border border-border-subtle bg-white text-text-secondary hover:bg-surface-subtle">Send follow-up</button>
-                </div>
-              </div>
-            )}
-
-            {filterStatus === 'no-contact' && (
-              <div className="p-2.5 rounded-lg border border-border-subtle bg-surface-subtle/60 text-text-secondary text-xs space-y-2">
-                <p>These guests have no email or phone. Add contact info before reminder campaigns.</p>
-                <div className="flex flex-wrap gap-2">
-                  <button onClick={() => handleCopyNoContactChecklist()} className="px-2 py-1 rounded-md border border-border-subtle bg-white text-text-secondary hover:bg-surface-subtle">Copy follow-up checklist</button>
-                  <button onClick={() => copyContactRequestLink()} className="px-2 py-1 rounded-md border border-border-subtle bg-white text-text-secondary hover:bg-surface-subtle">Copy guest update link</button>
-                </div>
-              </div>
-            )}
-
-            <div className="sticky top-2 z-10 flex gap-2 flex-wrap items-start justify-between bg-white/95 backdrop-blur p-2.5 rounded-lg border border-border/50">
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  {([
-                    ['all', `All (${stats.total})`],
-                    ['confirmed', `Confirmed (${stats.confirmed})`],
-                    ['declined', `Declined (${stats.declined})`],
-                    ['pending', `Pending (${stats.pending})`],
-                  ] as const).map(([value, label]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => { setFilterStatus(value); setExtraFilters([]); }}
-                      className={`text-xs px-3.5 py-1.5 rounded-lg border transition-colors whitespace-nowrap ${
-                        filterStatus === value
-                          ? 'bg-primary text-white border-primary'
-                          : 'bg-white text-text-secondary border-border/70 hover:border-primary/35 hover:text-primary'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button
-                onClick={() => { setCheckInMode(false); setViewMode(v => v === 'households' ? 'list' : 'households'); }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors border whitespace-nowrap shrink-0 ${
-                  viewMode === 'households' && !checkInMode
-                    ? 'bg-primary text-text-inverse border-primary'
-                    : 'text-text-secondary border-border hover:border-primary hover:text-primary'
-                }`}
-              >
-                <Home className="w-3.5 h-3.5" />
-                Households
-              </button>
-              <button
-                onClick={() => { setCheckInMode(v => !v); setViewMode('list'); }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors border whitespace-nowrap shrink-0 ${
-                  checkInMode
-                    ? 'bg-success text-white border-success'
-                    : 'text-text-secondary border-border hover:border-success/60 hover:text-success'
-                }`}
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Check-in mode
-              </button>
-            </div>
-
-
-            {checkInMode && (
-              <div className="mb-3 flex items-center justify-between px-4 py-2.5 bg-success/10 border border-success/25 rounded-lg">
-                <span className="text-sm font-medium text-success">Check-in mode active · {guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at).length} checked in</span>
-                <button
-                  onClick={() => setFilterStatus('checked-in')}
-                  className="text-xs px-2 py-1 rounded-md border border-success/30 bg-white text-success hover:bg-success/5"
-                >
-                  View checked-in
-                </button>
-              </div>
-            )}
-
-            {checkInMode && lastCheckIn && (
-              <div className="mb-3 flex items-center justify-between px-4 py-2 bg-surface-subtle border border-border rounded-lg">
-                <span className="text-xs text-text-secondary">Last check-in: <span className="font-medium text-text-primary">{lastCheckIn.guestName}</span></span>
-                <button
-                  onClick={handleUndoLastCheckIn}
-                  className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
-                >
-                  Undo
-                </button>
-              </div>
-            )}
-
-            {selectedGuestIds.size > 0 && viewMode === 'list' && (
-              <div className="mb-3 flex items-center justify-between px-4 py-2 bg-primary/8 border border-primary/20 rounded-lg">
-                <span className="text-sm font-medium text-primary">{selectedGuestIds.size} selected · {filteredGuests.filter((g) => selectedGuestIds.has(g.id)).length} visible</span>
-                <div className="flex items-center gap-2">
-                  <button onClick={keepOnlyVisibleSelection} className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Keep visible only</button>
-                  <button onClick={clearGuestSelection} className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Clear</button>
-                </div>
-              </div>
-            )}
+            <GuestSegmentControlsPanel
+              activeSegmentLabel={segmentLabelMap[filterStatus] || filterStatus}
+              checkInMode={checkInMode}
+              checkedInCount={guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at).length}
+              extraFilterCount={extraFilters.length}
+              filterStatus={filterStatus}
+              lastCheckInGuestName={lastCheckIn?.guestName ?? null}
+              searchQuery={searchQuery}
+              segmentOptions={[
+                { value: 'all', label: `All (${stats.total})` },
+                { value: 'confirmed', label: `Confirmed (${stats.confirmed})` },
+                { value: 'declined', label: `Declined (${stats.declined})` },
+                { value: 'pending', label: `Pending (${stats.pending})` },
+              ]}
+              selectedGuestCount={selectedGuestIds.size}
+              showExceptionBanner={filteredGuests.some((guest) => (exceptionStateByGuest.get(guest.id) || []).length > 0) && filterStatus === 'all'}
+              showMissingMealBanner={filterStatus === 'missing-meal'}
+              showNoContactBanner={filterStatus === 'no-contact'}
+              viewMode={viewMode}
+              visibleSelectedCount={filteredGuests.filter((g) => selectedGuestIds.has(g.id)).length}
+              onClearFilters={() => {
+                setFilterStatus('all');
+                setExtraFilters([]);
+                setSearchQuery('');
+                setViewMode('list');
+              }}
+              onClearSelection={clearGuestSelection}
+              onCopyContactRequestLink={() => { void copyContactRequestLink(); }}
+              onCopyExceptionChecklist={() => { void handleCopyExceptionChecklist(); }}
+              onCopyMissingMealChecklist={() => { void handleCopyMissingMealChecklist(); }}
+              onCopyNoContactChecklist={() => { void handleCopyNoContactChecklist(); }}
+              onKeepOnlyVisibleSelection={keepOnlyVisibleSelection}
+              onOpenCampaignModal={() => setShowCampaignModal(true)}
+              onSelectCheckedInFilter={() => setFilterStatus('checked-in')}
+              onSelectPrimaryFilter={(value) => {
+                setFilterStatus(value as typeof filterStatus);
+                setExtraFilters([]);
+              }}
+              onToggleCheckInMode={() => { setCheckInMode(v => !v); setViewMode('list'); }}
+              onToggleHouseholdsView={() => { setCheckInMode(false); setViewMode(v => v === 'households' ? 'list' : 'households'); }}
+              onUndoLastCheckIn={() => { void handleUndoLastCheckIn(); }}
+            />
 
             <GuestListDisplaySwitcher
               filteredGuestCount={filteredGuests.length}

@@ -4105,3 +4105,19 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the oversized-file and page-boundary cleanup in the guest dashboard without changing guest export behavior. No deploy was run.
+
+## 2026-05-07 8:31 PM PT No-Deploy Guest Dashboard Segment Controls Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes its segment summary, RSVP follow-up alerts, filter chips, check-in status banners, and selected-guest status bar through `src/pages/dashboard/guests/GuestSegmentControlsPanel.tsx`.
+  - The guest dashboard page no longer owns that inline `Active segment`, exception banner, missing-meal banner, no-contact banner, check-in mode banner, and selected-guest summary composition block.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `GuestSegmentControlsPanel` and rejects regaining the old inline segment/banner copy.
+  - `src/pages/dashboard/Guests.tsx` dropped from 2644 lines to 2560 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/guestQueryBounds.test.ts`: PASS, 46/46.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the oversized-file and page-boundary cleanup in the guest dashboard without changing segment/filter behavior. No deploy was run.
