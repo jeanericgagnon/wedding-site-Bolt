@@ -2097,3 +2097,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/GuestContactUpdate.test.ts` now pin `GuestContactLookupPanel` so the guest contact page keeps routing through the shared lookup shell.
   - Validation passed: `npm test -- --run src/pages/GuestContactUpdate.test.ts src/lib/publicGuestSurfaceBoundary.test.ts` (7/7), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 public-surface oversized-file risk in `GuestContactUpdate` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 9:45 PM PT - No-deploy guestbook form-panel extraction:
+  - Resolved in this batch: moved the guestbook form shell out of `src/pages/GuestbookSubmit.tsx` and behind `src/pages/GuestbookSubmitFormPanel.tsx`.
+  - Data-boundary hardening: `GuestbookSubmit.tsx` now routes its name/email/note inputs, honeypot field, guest-safe status copy, submit CTA, and return-to-hub link through one higher-level form panel instead of owning that guest-facing form slab inline.
+  - File-size movement: `GuestbookSubmit.tsx` dropped from 144 lines to 97 lines in this continuation batch while `src/pages/GuestbookSubmitFormPanel.tsx` came in at 74 lines.
+  - No feature loss: gated guestbook submit runtime, invite-token capture, safe validation copy, note character count, and return-to-hub behavior preserve the current guest behavior while shrinking page-owned public-surface composition.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/GuestbookSubmit.test.ts` now pin `GuestbookSubmitFormPanel` so the guestbook page keeps routing through the shared form shell.
+  - Validation passed: `npm test -- --run src/pages/GuestbookSubmit.test.ts src/lib/publicGuestSurfaceBoundary.test.ts` (8/8), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 public-surface oversized-file risk in `GuestbookSubmit` without changing guest-facing behavior. No deploy was run.

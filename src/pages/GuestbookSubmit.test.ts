@@ -1,8 +1,9 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it } from 'vitest';
-import { buildGuestbookAccessPayload, friendlyGuestbookError, GuestbookSubmit } from './GuestbookSubmit';
+import { buildGuestbookAccessPayload, friendlyGuestbookError, GuestbookSubmit, safeGuestbookFunctionError } from './GuestbookSubmit';
 
 afterEach(() => {
   sessionStorage.clear();
@@ -17,10 +18,14 @@ describe('friendlyGuestbookError', () => {
     expect(friendlyGuestbookError(new Error('request failed at functions/v1/guestbook-submit'))).toBe(
       'Couldn’t send your note right now. Please try again in a moment.',
     );
+    expect(safeGuestbookFunctionError('Supabase storage bucket policy denied token')).toBe(
+      'Couldn’t send your note right now. Please try again in a moment.',
+    );
   });
 
   it('keeps plain validation copy when it is already guest safe', () => {
     expect(friendlyGuestbookError(new Error('Write a note before sending.'))).toBe('Write a note before sending.');
+    expect(safeGuestbookFunctionError('Write a note before sending.')).toBe('Write a note before sending.');
   });
 
   it('labels optional guest fields and connects the note to its character count', () => {
@@ -50,6 +55,16 @@ describe('friendlyGuestbookError', () => {
 
     expect(screen.getByText('19/2000 characters')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to wedding hub' })).toHaveAttribute('href', '/event/ericandkaras');
+  });
+
+  it('routes the guestbook form shell through the shared form panel', () => {
+    const pageSource = readFileSync('src/pages/GuestbookSubmit.tsx', 'utf8');
+    const panelSource = readFileSync('src/pages/GuestbookSubmitFormPanel.tsx', 'utf8');
+
+    expect(pageSource).toContain("from './GuestbookSubmitFormPanel'");
+    expect(pageSource).toContain('<GuestbookSubmitFormPanel');
+    expect(panelSource).toContain('id="guestbook-message"');
+    expect(panelSource).toContain('Back to wedding hub');
   });
 });
 

@@ -110,9 +110,14 @@ describe('public guest surface boundary', () => {
     expect(vaultContributionService).toContain("supabase.functions.invoke('vault-entry-submit'");
 
     const guestbook = readSource('src/pages/GuestbookSubmit.tsx');
+    const guestbookFormPanel = readSource('src/pages/GuestbookSubmitFormPanel.tsx');
+    expect(guestbook).toContain("from './GuestbookSubmitFormPanel'");
+    expect(guestbook).toContain('<GuestbookSubmitFormPanel');
     expect(guestbook).toContain("from './guestPublicSubmissionService'");
     expect(guestbook).toContain('submitGuestbookEntry({');
     expect(guestbook).toContain('buildGuestbookAccessPayload(siteSlug)');
+    expect(guestbookFormPanel).toContain('id="guestbook-message"');
+    expect(guestbookFormPanel).toContain('Back to wedding hub');
     expect(guestSubmissionService).toContain('/functions/v1/guestbook-submit');
 
     const guestContact = readSource('src/pages/GuestContactUpdate.tsx');

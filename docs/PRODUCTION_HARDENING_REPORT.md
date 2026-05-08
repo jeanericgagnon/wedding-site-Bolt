@@ -4473,3 +4473,19 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `GuestContactUpdate` without changing guest-facing behavior. No deploy was run.
+
+## 2026-05-07 9:45 PM PT No-Deploy Guestbook Form Panel Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/GuestbookSubmit.tsx` now routes its guestbook form shell through `src/pages/GuestbookSubmitFormPanel.tsx`.
+  - That shared guest-facing form panel now owns the optional guest name/email fields, note editor, honeypot field, safe status/error copy, submit CTA, and back-to-hub link while the page keeps runtime gating, invite-token capture, and submit transport local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/GuestbookSubmit.test.ts` now pin `GuestbookSubmitFormPanel` so the guestbook submit page keeps routing through the dedicated form shell.
+  - `src/pages/GuestbookSubmit.tsx` dropped from 144 lines to 97 lines in this batch, while `src/pages/GuestbookSubmitFormPanel.tsx` came in at 74 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/GuestbookSubmit.test.ts src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 8/8.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `GuestbookSubmit` without changing guest-facing behavior. No deploy was run.
