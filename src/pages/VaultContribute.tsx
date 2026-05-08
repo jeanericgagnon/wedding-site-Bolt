@@ -17,6 +17,7 @@ import {
   uploadVaultContributionToGoogleDrive,
   type VaultContributionConfigInfo,
 } from './vaultContributionService';
+import { VaultContributeRouteView } from './VaultContributeRouteView';
 import {
   appendDemoVaultEntries,
   getVaultSubmittedYearsStorageKey,
@@ -626,115 +627,104 @@ export const VaultContribute: React.FC = () => {
     : 'Choose a vault and leave a message for a future anniversary.';
   const contributionWindow = getContributionWindow(site?.wedding_date ?? null, qaOpen);
 
-  if (step === 'loading') {
-    return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.08),transparent_38%),linear-gradient(135deg,#f8fafc,#ffffff)] flex items-center justify-center">
-        <Loader2 className="w-7 h-7 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const loadingView = (
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.08),transparent_38%),linear-gradient(135deg,#f8fafc,#ffffff)] flex items-center justify-center">
+      <Loader2 className="w-7 h-7 animate-spin text-primary" />
+    </div>
+  );
 
-  if (step === 'invalid') {
-    return (
-      <div className="min-h-screen bg-app flex items-center justify-center px-4">
-        <div className="text-center max-w-sm">
-          <div className="w-14 h-14 bg-stone-100 rounded-lg flex items-center justify-center mx-auto mb-4 border border-stone-200">
-            <Lock className="w-6 h-6 text-stone-400" />
-          </div>
-          <h1 className="text-xl font-semibold text-stone-800 mb-2">This vault is not available right now</h1>
-          <p className="text-stone-500 text-sm">Please check the link from the couple or come back a little later.</p>
+  const invalidView = (
+    <div className="min-h-screen bg-app flex items-center justify-center px-4">
+      <div className="text-center max-w-sm">
+        <div className="w-14 h-14 bg-stone-100 rounded-lg flex items-center justify-center mx-auto mb-4 border border-stone-200">
+          <Lock className="w-6 h-6 text-stone-400" />
         </div>
+        <h1 className="text-xl font-semibold text-stone-800 mb-2">This vault is not available right now</h1>
+        <p className="text-stone-500 text-sm">Please check the link from the couple or come back a little later.</p>
       </div>
-    );
-  }
+    </div>
+  );
 
-
-  if (step === 'hub') {
-    return (
-      <div className="min-h-screen bg-app flex flex-col">
-        <div className="flex-1 flex items-center justify-center px-4 py-12">
-          <div className="w-full max-w-3xl">
-            <div className="text-center mb-8">
-              <div className="w-14 h-14 bg-white border border-border-subtle rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Lock className="w-6 h-6 text-primary" />
-              </div>
-              {coupleName && <p className="text-sm text-stone-500 mb-1 font-medium">{coupleName}</p>}
-              <h1 className="text-[30px] leading-tight font-bold text-text-primary">Choose an anniversary vault</h1>
-              <p className="text-text-secondary text-sm mt-2">Pick a future anniversary and leave something meaningful for them to open later.</p>
+  const hubView = (
+    <div className="min-h-screen bg-app flex flex-col">
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-3xl">
+          <div className="text-center mb-8">
+            <div className="w-14 h-14 bg-white border border-border-subtle rounded-lg flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-6 h-6 text-primary" />
             </div>
+            {coupleName && <p className="text-sm text-stone-500 mb-1 font-medium">{coupleName}</p>}
+            <h1 className="text-[30px] leading-tight font-bold text-text-primary">Choose an anniversary vault</h1>
+            <p className="text-text-secondary text-sm mt-2">Pick a future anniversary and leave something meaningful for them to open later.</p>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-              {vaultOptions.map((v) => {
-                const done = submittedYears.includes(v.duration_years);
-                return (
-                  <Link
-                    key={v.id}
-                    to={`/vault/${siteSlug}/${v.duration_years}`}
-                    className="group bg-white/95 rounded-lg border border-border-subtle p-5 hover:border-primary/40 transition-colors duration-200 relative overflow-hidden"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-stone-800">{v.label || `${v.duration_years}-Year Anniversary Vault`}</p>
-                      {done && <CheckCircle className="w-5 h-5 text-primary" />}
-                    </div>
-                    <p className="text-xs text-stone-500 mt-2">Opens on their {ordinalLabel(v.duration_years)} anniversary.</p>
-                    <p className={`text-xs mt-3 font-semibold ${done ? 'text-text-secondary' : 'text-primary'}`}>{done ? 'Added' : 'Add a note'}</p>
-                  </Link>
-                );
-              })}
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+            {vaultOptions.map((v) => {
+              const done = submittedYears.includes(v.duration_years);
+              return (
+                <Link
+                  key={v.id}
+                  to={`/vault/${siteSlug}/${v.duration_years}`}
+                  className="group bg-white/95 rounded-lg border border-border-subtle p-5 hover:border-primary/40 transition-colors duration-200 relative overflow-hidden"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-stone-800">{v.label || `${v.duration_years}-Year Anniversary Vault`}</p>
+                    {done && <CheckCircle className="w-5 h-5 text-primary" />}
+                  </div>
+                  <p className="text-xs text-stone-500 mt-2">Opens on their {ordinalLabel(v.duration_years)} anniversary.</p>
+                  <p className={`text-xs mt-3 font-semibold ${done ? 'text-text-secondary' : 'text-primary'}`}>{done ? 'Added' : 'Add a note'}</p>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 
-  if (step === 'success') {
-    return (
-      <div className="min-h-screen bg-app flex items-center justify-center px-4">
-        <div className="text-center max-w-sm">
-          <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center mx-auto mb-5 border border-border-subtle">
-            <CheckCircle className="w-8 h-8 text-primary" />
-          </div>
-          <h1 className="text-[26px] leading-tight font-bold text-stone-800 mb-2">Saved for later</h1>
-          <p className="text-text-secondary mb-1">
-            Your note has been saved in {coupleName ? <strong>{coupleName}'s</strong> : 'the'} {ordinal} anniversary vault.
+  const successView = (
+    <div className="min-h-screen bg-app flex items-center justify-center px-4">
+      <div className="text-center max-w-sm">
+        <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center mx-auto mb-5 border border-border-subtle">
+          <CheckCircle className="w-8 h-8 text-primary" />
+        </div>
+        <h1 className="text-[26px] leading-tight font-bold text-stone-800 mb-2">Saved for later</h1>
+        <p className="text-text-secondary mb-1">
+          Your note has been saved in {coupleName ? <strong>{coupleName}'s</strong> : 'the'} {ordinal} anniversary vault.
+        </p>
+        {unlockYear && (
+          <p className="text-stone-400 text-sm mt-2">
+            It will be opened in {unlockYear}.
           </p>
-          {unlockYear && (
-            <p className="text-stone-400 text-sm mt-2">
-              It will be opened in {unlockYear}.
-            </p>
-          )}
-          <div className="mt-8 p-4 bg-primary/5 border border-primary/20 rounded-lg text-sm text-primary">
-            <Heart className="w-4 h-4 inline-block mr-1.5 mb-0.5" />
-            Thank you for adding to this part of their story.
-            {hasYearParam && <p className="mt-2 text-xs text-primary">Returning to vault list…</p>}
-          </div>
+        )}
+        <div className="mt-8 p-4 bg-primary/5 border border-primary/20 rounded-lg text-sm text-primary">
+          <Heart className="w-4 h-4 inline-block mr-1.5 mb-0.5" />
+          Thank you for adding to this part of their story.
+          {hasYearParam && <p className="mt-2 text-xs text-primary">Returning to vault list…</p>}
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 
-  if (step === 'error') {
-    return (
-      <div className="min-h-screen bg-app flex items-center justify-center px-4">
-        <div className="text-center max-w-sm">
-          <div className="w-14 h-14 bg-white rounded-lg flex items-center justify-center mx-auto mb-4 border border-border-subtle">
-            <AlertCircle className="w-6 h-6 text-text-tertiary" />
-          </div>
-          <h1 className="text-xl font-semibold text-stone-800 mb-2">Something went wrong</h1>
-          <p className="text-stone-500 text-sm mb-6">Your message couldn't be saved. Please try again.</p>
-          <button
-            onClick={() => setStep('form')}
-            className="px-5 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary-hover transition-colors"
-          >
-            Try again
-          </button>
+  const errorView = (
+    <div className="min-h-screen bg-app flex items-center justify-center px-4">
+      <div className="text-center max-w-sm">
+        <div className="w-14 h-14 bg-white rounded-lg flex items-center justify-center mx-auto mb-4 border border-border-subtle">
+          <AlertCircle className="w-6 h-6 text-text-tertiary" />
         </div>
+        <h1 className="text-xl font-semibold text-stone-800 mb-2">Something went wrong</h1>
+        <p className="text-stone-500 text-sm mb-6">Your message couldn't be saved. Please try again.</p>
+        <button
+          onClick={() => setStep('form')}
+          className="px-5 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary-hover transition-colors"
+        >
+          Try again
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
 
-  return (
+  const formView = (
     <div className="min-h-screen bg-app flex flex-col">
       <div className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-lg">
@@ -1015,6 +1005,18 @@ export const VaultContribute: React.FC = () => {
         </div>
       </div>
     </div>
+  );
+
+  return (
+    <VaultContributeRouteView
+      step={step}
+      loadingView={loadingView}
+      invalidView={invalidView}
+      hubView={hubView}
+      successView={successView}
+      errorView={errorView}
+      formView={formView}
+    />
   );
 };
 

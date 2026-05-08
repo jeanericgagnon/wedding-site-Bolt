@@ -106,16 +106,29 @@ describe('safeVaultUploadError', () => {
 describe('vault contribution data boundary', () => {
   it('loads vault configs through the public contribution service', () => {
     const page = readFileSync(join(process.cwd(), 'src/pages/VaultContribute.tsx'), 'utf8');
+    const routeView = readFileSync(join(process.cwd(), 'src/pages/VaultContributeRouteView.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/vaultContributionService.ts'), 'utf8');
     const fn = readFileSync(join(process.cwd(), 'supabase/functions/vault-contribution-public/index.ts'), 'utf8');
 
+    expect(page).toContain("from './VaultContributeRouteView'");
+    expect(page).toContain('<VaultContributeRouteView');
     expect(page).toContain('loadEnabledVaultContributionConfig(siteSlug, vaultYear, buildVaultAccessPayload(siteSlug))');
     expect(page).toContain('listEnabledVaultContributionConfigs(siteSlug, buildVaultAccessPayload(siteSlug))');
     expect(page).toContain('uploadVaultContributionToGoogleDrive({');
     expect(page).toContain('uploadVaultContributionAttachment({');
     expect(page).toContain('submitVaultContributionRows(rows, buildVaultAccessPayload(siteSlug ?? \'\'), qaOpen)');
+    expect(page).not.toContain("if (step === 'loading')");
+    expect(page).not.toContain("if (step === 'invalid')");
+    expect(page).not.toContain("if (step === 'hub')");
+    expect(page).not.toContain("if (step === 'success')");
+    expect(page).not.toContain("if (step === 'error')");
     expect(page).not.toContain("supabase.functions.invoke('vault-upload-google-drive'");
     expect(page).not.toContain("supabase.functions.invoke('vault-entry-submit'");
+    expect(routeView).toContain("if (step === 'loading') return <>{loadingView}</>;");
+    expect(routeView).toContain("if (step === 'invalid') return <>{invalidView}</>;");
+    expect(routeView).toContain("if (step === 'hub') return <>{hubView}</>;");
+    expect(routeView).toContain("if (step === 'success') return <>{successView}</>;");
+    expect(routeView).toContain("if (step === 'error') return <>{errorView}</>;");
     expect(service).toContain('export const VAULT_CONTRIBUTION_CONFIG_SELECT = ');
     expect(service).toContain("supabase.functions.invoke('vault-contribution-public'");
     expect(service).toContain("supabase.functions.invoke('vault-upload-google-drive'");

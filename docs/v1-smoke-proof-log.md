@@ -7403,6 +7403,21 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 9:17 PM PT No-Deploy Vault Contribution Route Shell Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/VaultContribute.tsx` now routes its loading, invalid-link, vault-picker, success, error, and form branches through `src/pages/VaultContributeRouteView.tsx`.
+  - That higher-level route shell now owns the guest-facing `step` ladder while the page stays focused on vault contribution state, uploads, and form handlers.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/VaultContribute.test.ts` now pin `VaultContributeRouteView` and reject regaining the old inline `if (step === ...)` ladder in `VaultContribute.tsx`.
+  - `src/pages/VaultContribute.tsx` dropped from 1053 lines to 1023 lines in this batch, while `src/pages/VaultContributeRouteView.tsx` came in at 30 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/publicGuestSurfaceBoundary.test.ts src/pages/VaultContribute.test.ts`: PASS, 16/16.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 9:10 PM PT No-Deploy Planning Dashboard Shell Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

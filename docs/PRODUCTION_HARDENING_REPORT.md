@@ -4361,3 +4361,19 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the oversized-file and public-surface route cleanup in `SiteView` without changing guest-facing behavior. No deploy was run.
+
+## 2026-05-07 9:17 PM PT No-Deploy Vault Contribution Route Shell Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/VaultContribute.tsx` now routes its loading, invalid-link, vault-picker, success, error, and form branches through `src/pages/VaultContributeRouteView.tsx`.
+  - That higher-level route shell now owns the guest-facing `step` ladder while the page stays focused on vault contribution state, uploads, and form handlers.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/VaultContribute.test.ts` now pin `VaultContributeRouteView` and reject regaining the old inline `if (step === ...)` ladder in `VaultContribute.tsx`.
+  - `src/pages/VaultContribute.tsx` dropped from 1053 lines to 1023 lines in this batch, while `src/pages/VaultContributeRouteView.tsx` came in at 30 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/publicGuestSurfaceBoundary.test.ts src/pages/VaultContribute.test.ts`: PASS, 16/16.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the oversized-file and public-surface route cleanup in `VaultContribute` without changing guest-facing behavior. No deploy was run.

@@ -8,7 +8,7 @@ interface SiteViewRouteViewProps {
   liveContent: ReactNode;
   loading: boolean;
   passwordGate: ReactNode;
-  privacyGate: 'open' | 'password_required' | 'invite_only';
+  privacyGate: 'loading' | 'open' | 'password_required' | 'invite_only' | 'unlocked';
   ready: boolean;
   useComingSoon: boolean;
 }

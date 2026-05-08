@@ -77,7 +77,9 @@ describe('public guest surface boundary', () => {
     const vaultContribute = readSource('src/pages/VaultContribute.tsx');
     const vaultContributionService = readSource('src/pages/vaultContributionService.ts');
     expect(vaultContribute).not.toContain("from '../lib/supabase'");
+    expect(vaultContribute).toContain("from './VaultContributeRouteView'");
     expect(vaultContribute).toContain("from './vaultContributionService'");
+    expect(vaultContribute).toContain('<VaultContributeRouteView');
     expect(vaultContribute).toContain('loadEnabledVaultContributionConfig(siteSlug, vaultYear, buildVaultAccessPayload(siteSlug))');
     expect(vaultContribute).toContain('listEnabledVaultContributionConfigs(siteSlug, buildVaultAccessPayload(siteSlug))');
     expect(vaultContribute).toContain('uploadVaultContributionToGoogleDrive({');
@@ -85,6 +87,11 @@ describe('public guest surface boundary', () => {
     expect(vaultContribute).toContain("submitVaultContributionRows(rows, buildVaultAccessPayload(siteSlug ?? ''), qaOpen)");
     expect(vaultContribute).toContain('fetchPublicSiteAccess({');
     expect(vaultContribute).toContain('buildVaultAccessPayload(siteSlug)');
+    expect(vaultContribute).not.toContain("if (step === 'loading')");
+    expect(vaultContribute).not.toContain("if (step === 'invalid')");
+    expect(vaultContribute).not.toContain("if (step === 'hub')");
+    expect(vaultContribute).not.toContain("if (step === 'success')");
+    expect(vaultContribute).not.toContain("if (step === 'error')");
     expect(vaultContributionService).toContain("supabase.functions.invoke('vault-contribution-public'");
     expect(vaultContributionService).toContain("supabase.functions.invoke('vault-upload-google-drive'");
     expect(vaultContributionService).toContain("supabase.functions.invoke('vault-entry-submit'");

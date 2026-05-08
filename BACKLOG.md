@@ -2041,3 +2041,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` now pins `SiteViewRouteView` and rejects regaining the old inline loading/error copy in `SiteView.tsx`.
   - Validation passed: `npm test -- --run src/lib/publicGuestSurfaceBoundary.test.ts src/pages/siteViewService.test.ts src/pages/SiteView.test.ts src/lib/publicSiteAccess.test.ts` (15/15), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 oversized-file and public-surface route risk in `SiteView` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 9:17 PM PT - No-deploy Vault contribution route-shell extraction:
+  - Resolved in this batch: moved the public vault contribution loading/invalid/hub/success/error branch selection out of `src/pages/VaultContribute.tsx` and behind `src/pages/VaultContributeRouteView.tsx`.
+  - Data-boundary hardening: `VaultContribute.tsx` now routes its guest-facing state ladder through one higher-level route shell instead of owning the `step` branch ladder inline.
+  - File-size movement: `VaultContribute.tsx` dropped from 1053 lines to 1023 lines in this continuation batch; the new route shell is 30 lines.
+  - No feature loss: vault picker, gated loading flow, success return-to-list handoff, error retry path, and the main guest contribution form preserve the current behavior while shrinking page-owned route composition.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/VaultContribute.test.ts` now pin `VaultContributeRouteView` and reject regaining the old inline `step` branch ladder in `VaultContribute.tsx`.
+  - Validation passed: `npm test -- --run src/lib/publicGuestSurfaceBoundary.test.ts src/pages/VaultContribute.test.ts` (16/16), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 oversized-file and public-surface route risk in `VaultContribute` without changing guest-facing behavior. No deploy was run.
