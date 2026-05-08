@@ -107,6 +107,10 @@ describe('settings error safety', () => {
       join(process.cwd(), 'src/pages/dashboard/settings/useSettingsDashboardRouteSupport.ts'),
       'utf8',
     );
+    const routeContentPropsSource = readFileSync(
+      join(process.cwd(), 'src/pages/dashboard/settings/buildSettingsDashboardRouteContentProps.ts'),
+      'utf8',
+    );
     const selectMatch = source.match(/export const SETTINGS_SITE_SELECT = \[([\s\S]*?)\]\.join/);
     expect(selectMatch?.[1]).toBeTruthy();
     const selectedColumns = new Set(
@@ -164,6 +168,7 @@ describe('settings error safety', () => {
     expect(routeSupportSource).toContain('const safeMusicPlaylistUrl = getSafePublicWebUrl(musicPlaylistUrl);');
     expect(routeSupportSource).toContain('buildSettingsDashboardViewModel({');
     expect(routeSupportSource).toContain('const handleLogout = async () => {');
+    expect(routeContentPropsSource).toContain('export function buildSettingsDashboardRouteContentProps(props: Props): Props {');
     expect(pageSource).toContain('useSettingsExperienceActions({');
     expect(experienceSource).toContain('updateSettingsSite(targetSiteId');
     expect(experienceSource).toContain('rsvp_custom_questions: cleanedQuestions');
@@ -173,12 +178,20 @@ describe('settings error safety', () => {
   it('keeps settings tab rendering behind the shared tab-content seam', () => {
     const pageSource = settingsSource();
     const routeContentSource = settingsRouteContentSource();
+    const routeContentPropsSource = readFileSync(
+      join(process.cwd(), 'src/pages/dashboard/settings/buildSettingsDashboardRouteContentProps.ts'),
+      'utf8',
+    );
     const tabContentSource = settingsTabContentSource();
     const siteTabContentSource = settingsSiteTabContentSource();
     const rsvpTabContentSource = settingsRsvpTabContentSource();
 
     expect(pageSource).toContain('<SettingsDashboardRouteContent');
+    expect(pageSource).toContain('buildSettingsDashboardRouteContentProps({');
+    expect(pageSource).not.toContain('accountEmail={accountEmail}');
+    expect(pageSource).not.toContain('handleLogout={handleLogout}');
     expect(routeContentSource).toContain('<SettingsTabContent');
+    expect(routeContentPropsSource).toContain('type Props = ComponentProps<typeof SettingsDashboardRouteContent>;');
     expect(routeContentSource).toContain('<SettingsSiteTabContent');
     expect(routeContentSource).toContain('<SettingsRsvpTabContent');
     expect(tabContentSource).toContain('switch (activeTab)');

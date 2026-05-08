@@ -22,6 +22,21 @@ _Launch call right now:_ Not production-ready under the stricter P0/P1 standard.
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 10:21 AM PT No-Deploy Settings Route-Content Props Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Settings.tsx` now routes the owner-facing `SettingsDashboardRouteContent` prop assembly through `src/pages/dashboard/settings/buildSettingsDashboardRouteContentProps.ts`.
+  - That helper now owns the route-content prop handoff seam for account, team access, site/privacy, RSVP, notifications, billing, planner invite, translation, and identity-export actions while the page keeps auth, snapshot hydration, UI state, support hooks, route support, and action hooks.
+  - `src/pages/dashboard/settings/settingsSiteData.test.ts` and `src/lib/settingsErrorSafety.test.ts` now pin `buildSettingsDashboardRouteContentProps({ ... })`, check that `buildSettingsDashboardRouteContentProps.ts` owns the route-content prop seam, and reject regaining the old inline prop slab in `Settings.tsx`.
+  - This batch prioritized route ownership more than raw shrinkage. `src/pages/dashboard/Settings.tsx` moved from 513 lines to 516 lines while `src/pages/dashboard/settings/buildSettingsDashboardRouteContentProps.ts` came in at 8 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts`: PASS, 18/18.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 
 ## 2026-05-08 10:11 AM PT No-Deploy Coordinator Route-Content Props Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.

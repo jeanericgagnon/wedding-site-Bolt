@@ -34,6 +34,15 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+- 2026-05-08 10:21 AM PT - No-deploy settings route-content props extraction:
+  - Resolved in this batch: moved the large owner-facing `SettingsDashboardRouteContent` prop handoff out of `src/pages/dashboard/Settings.tsx` and behind `src/pages/dashboard/settings/buildSettingsDashboardRouteContentProps.ts`.
+  - Data-boundary hardening: `Settings.tsx` now keeps route-level auth, hydration, UI-state, support, and action orchestration while the new helper owns the render-handoff seam into `SettingsDashboardRouteContent`.
+  - Prop-handoff ownership: `buildSettingsDashboardRouteContentProps.ts` now owns the account, team access, site/privacy, RSVP, notifications, billing, planner invite, translation, and identity-export prop assembly for the settings content shell.
+  - File-size movement: this batch prioritized route ownership more than shrinkage. `src/pages/dashboard/Settings.tsx` moved from 513 lines to 516 lines while `src/pages/dashboard/settings/buildSettingsDashboardRouteContentProps.ts` came in at 8 lines.
+  - No feature loss: account/password flows, collaborator invite actions, planner invite setup, privacy and translation controls, RSVP builder state, notification preferences, billing entry, and identity export actions all preserve the current owner workflow while reducing route-level prop assembly clutter.
+  - Proof added/updated: `src/pages/dashboard/settings/settingsSiteData.test.ts` and `src/lib/settingsErrorSafety.test.ts` now pin `buildSettingsDashboardRouteContentProps({ ... })`, check that `buildSettingsDashboardRouteContentProps.ts` owns the route-content prop seam, and reject regaining the old inline `SettingsDashboardRouteContent` prop slab in `Settings.tsx`.
+  - Validation passed: `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts`, `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
+  - Launch status: unchanged. This continues local dashboard ownership cleanup in `Settings` without changing couple-facing or planner-facing behavior. No deploy was run.
 
 ## 2026-05-08 10:11 AM PT No-Deploy Coordinator Route-Content Props Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
