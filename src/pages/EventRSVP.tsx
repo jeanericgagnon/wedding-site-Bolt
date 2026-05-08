@@ -10,6 +10,7 @@ import { formatEventRsvpDate } from './eventRsvpDate';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { isInternalCustomerErrorMessage } from '../lib/customerSafeError';
 import { callValidateRsvpToken, hasRsvpFunctionRuntime } from './rsvpFunctionService';
+import { EventRsvpRouteView } from './EventRsvpRouteView';
 
 const CAN_USE_EVENT_RSVP_FUNCTION = hasRsvpFunctionRuntime();
 
@@ -546,35 +547,31 @@ export default function EventRSVP() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-        </div>
-        <Footer />
+  const loadingView = (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
-    );
-  }
+      <Footer />
+    </div>
+  );
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-lg border border-border-subtle bg-surface-secondary">
-            <AlertCircle className="w-8 h-8 text-text-tertiary" />
-          </div>
-          <h1 className="text-2xl font-bold text-neutral-900 mb-3">Link Not Recognized</h1>
-          <p className="text-neutral-600 max-w-md mx-auto">{error}</p>
+  const errorView = (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <div className="max-w-2xl mx-auto px-4 py-20 text-center">
+        <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-lg border border-border-subtle bg-surface-secondary">
+          <AlertCircle className="w-8 h-8 text-text-tertiary" />
         </div>
-        <Footer />
+        <h1 className="text-2xl font-bold text-neutral-900 mb-3">Link Not Recognized</h1>
+        <p className="text-neutral-600 max-w-md mx-auto">{error}</p>
       </div>
-    );
-  }
+      <Footer />
+    </div>
+  );
 
-  return (
+  const liveContent = (
     <div className="min-h-screen bg-background">
       <Header />
 
@@ -696,6 +693,19 @@ export default function EventRSVP() {
           </div>
         )}
       </main>
+      <Footer />
+    </div>
+  );
+
+  return (
+    <>
+      <EventRsvpRouteView
+        loading={loading}
+        error={error}
+        loadingView={loadingView}
+        errorView={errorView}
+        liveContent={liveContent}
+      />
 
       {selectedEvent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -830,8 +840,6 @@ export default function EventRSVP() {
           </Card>
         </div>
       )}
-
-      <Footer />
-    </div>
+    </>
   );
 }

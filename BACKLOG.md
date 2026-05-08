@@ -2065,3 +2065,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/EventRecap.test.tsx` now pin `EventRecapRouteView` and reject regaining the old inline loading/error blocks in `EventRecap.tsx`.
   - Validation passed: `npm test -- --run src/pages/EventRecap.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts src/pages/guestHubPublicService.test.ts` (18/18), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 public-surface route risk in `EventRecap` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 9:30 PM PT - No-deploy Event RSVP route-shell extraction:
+  - Resolved in this batch: moved the guest event RSVP loading/invalid-link/live branch selection out of `src/pages/EventRSVP.tsx` and behind `src/pages/EventRsvpRouteView.tsx`.
+  - Data-boundary hardening: `EventRSVP.tsx` now routes its loading spinner plus invalid-link error shell through one higher-level route view while keeping the modal RSVP editor explicit and local.
+  - File-size movement: `EventRSVP.tsx` grew from 837 lines to 845 lines in this continuation batch while `src/pages/EventRsvpRouteView.tsx` came in at 21 lines; the page got slightly longer because the live page shell is now named explicitly before the route handoff.
+  - No feature loss: invitation lookup, map links, existing RSVP badges, modal RSVP editing, short-lived RSVP session submit flow, and continuity refresh behavior preserve the current guest behavior while shrinking page-owned route branching.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/EventRSVP.test.tsx` now pin `EventRsvpRouteView` so the event RSVP page keeps routing through the shared route shell instead of hand-owning the loading/error split.
+  - Validation passed: `npm test -- --run src/pages/EventRSVP.test.tsx src/pages/rsvpFunctionService.test.ts src/lib/publicGuestSurfaceBoundary.test.ts` (10/10), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 public-surface route risk in `EventRSVP` without changing guest-facing behavior. No deploy was run.

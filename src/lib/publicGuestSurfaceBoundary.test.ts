@@ -126,7 +126,9 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain("callValidateRsvpToken({ action: 'lookup_guest', guestId: picked.id, rsvpSession: rsvpSessionToken })");
     expect(rsvpPage).toContain("callValidateRsvpToken({");
     expect(eventRsvpPage).toContain("from './rsvpFunctionService'");
+    expect(eventRsvpPage).toContain("from './EventRsvpRouteView'");
     expect(eventRsvpPage).toContain('const CAN_USE_EVENT_RSVP_FUNCTION = hasRsvpFunctionRuntime()');
+    expect(eventRsvpPage).toContain('<EventRsvpRouteView');
     expect(eventRsvpPage).toContain("callValidateRsvpToken<Record<string, unknown>>({");
     expect(rsvpFunctionService).toContain('/functions/v1/validate-rsvp-token');
 

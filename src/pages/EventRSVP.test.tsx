@@ -1,4 +1,6 @@
 import React from 'react';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -54,6 +56,9 @@ describe('EventRSVP secure flow', () => {
     );
     expect(
       safeEventRsvpGuestError('permission denied for table event_rsvps', 'Couldn’t save your RSVP. Please try again.'),
+    ).toBe('Couldn’t save your RSVP. Please try again.');
+    expect(
+      safeEventRsvpGuestError('Google OAuth service_role api-key refresh failed', 'Couldn’t save your RSVP. Please try again.'),
     ).toBe('Couldn’t save your RSVP. Please try again.');
     expect(safeEventRsvpGuestError('That event is closed now.')).toBe('That event is closed now.');
   });
@@ -225,4 +230,14 @@ describe('EventRSVP secure flow', () => {
     }, { timeout: 4000 });
     expect(fetch).toHaveBeenCalledTimes(2);
   }, 10000);
+
+  it('routes loading and invalid-link shells through a dedicated route view', async () => {
+    const page = readFileSync(join(process.cwd(), 'src/pages/EventRSVP.tsx'), 'utf8');
+    const routeView = readFileSync(join(process.cwd(), 'src/pages/EventRsvpRouteView.tsx'), 'utf8');
+
+    expect(page).toContain("from './EventRsvpRouteView'");
+    expect(page).toContain('<EventRsvpRouteView');
+    expect(routeView).toContain('if (loading) return <>{loadingView}</>;');
+    expect(routeView).toContain('if (error) return <>{errorView}</>;');
+  });
 });

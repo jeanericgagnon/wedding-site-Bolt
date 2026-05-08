@@ -7448,6 +7448,21 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 9:30 PM PT No-Deploy Event RSVP Route Shell Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/EventRSVP.tsx` now routes its loading spinner plus invalid-link guest error shell through `src/pages/EventRsvpRouteView.tsx`.
+  - That higher-level route shell now owns the loading-vs-error-vs-live split while the page keeps the event invitation workspace and RSVP modal editor local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/EventRSVP.test.tsx` now pin `EventRsvpRouteView` so the event RSVP page keeps routing through the dedicated route shell.
+  - `src/pages/EventRSVP.tsx` moved from 837 lines to 845 lines in this batch, while `src/pages/EventRsvpRouteView.tsx` came in at 21 lines; the page grew slightly because the live page shell is now named explicitly before the route handoff.
+- Proof passed:
+  - `npm test -- --run src/pages/EventRSVP.test.tsx src/pages/rsvpFunctionService.test.ts src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 10/10.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 9:10 PM PT No-Deploy Planning Dashboard Shell Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
