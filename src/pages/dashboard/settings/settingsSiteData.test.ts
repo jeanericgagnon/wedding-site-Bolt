@@ -85,6 +85,7 @@ describe('settings site data boundary', () => {
     expect(page).toContain('<SettingsPrivacyPanel');
     expect(page).toContain('<SettingsTeamAccessPanel');
     expect(page).toContain('<SettingsSiteUrlPanel');
+    expect(page).toContain('<SettingsTemplatePanel');
     expect(page).toContain('findSettingsSiteBySlug(cleaned)');
     expect(page).toContain('loadSettingsTemplateChangeSite(weddingSiteId)');
     expect(page).toContain('requireSettingsAuthenticatedUser()');
@@ -103,6 +104,8 @@ describe('settings site data boundary', () => {
     expect(page).not.toContain('Wedding identity exports');
     expect(page).not.toContain('Copy manifest');
     expect(page).not.toContain('Control who can view your site');
+    expect(page).not.toContain('Choose a different design');
+    expect(page).not.toContain('Your names, details, and content stay in place when you switch designs.');
 
     expect(service).toContain('.select(SETTINGS_SITE_SELECT)');
     expect(service).toContain('.select(SETTINGS_COLLABORATOR_INVITE_SELECT)');

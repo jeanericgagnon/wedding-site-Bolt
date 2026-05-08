@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
-import { Save, Layout, Sparkles, Loader2, Eye, EyeOff, CheckCheck, Copy, Plus, Trash2, ChevronDown } from 'lucide-react';
+import { Save, Loader2, Plus, Trash2, ChevronDown } from 'lucide-react';
 import { getSiteVisibilityState, getVisibilityModeOptions } from '../../lib/siteVisibilityState';
 import { getAllTemplates } from '../../templates/registry';
 import { WeddingDataV1 } from '../../types/weddingData';
@@ -73,6 +73,7 @@ import { getSettingsTabs, SettingsNavigation, type SettingsTabId } from './setti
 import { SettingsNotificationsPanel } from './settings/SettingsNotificationsPanel';
 import { SettingsPrivacyPanel } from './settings/SettingsPrivacyPanel';
 import { SettingsSiteUrlPanel } from './settings/SettingsSiteUrlPanel';
+import { SettingsTemplatePanel } from './settings/SettingsTemplatePanel';
 import { SettingsTeamAccessPanel } from './settings/SettingsTeamAccessPanel';
 
 const useDraftHydrationGuard = (clearStatus: () => void) => {
@@ -1133,74 +1134,15 @@ export const DashboardSettings: React.FC = () => {
                   visibilitySuccess={visibilitySuccess}
                 />
 
-                <Card variant="bordered" padding="lg">
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <CardTitle className="flex items-center gap-2">
-                          <Layout className="w-5 h-5" />
-                          Template
-                        </CardTitle>
-                        <CardDescription>Try a different look for your website without losing your content</CardDescription>
-                      </div>
-                      <Button type="button" variant="outline" size="sm" onClick={() => setShowTemplateSettings((v) => !v)}>
-                        {showTemplateSettings ? 'Hide' : 'Show'}
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {!showTemplateSettings ? (
-                      <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
-                        Hidden by default to keep things calm. Open it when you want to change how your site looks.
-                      </div>
-                    ) : (
-                      <>
-                        {templateSuccess && (
-                          <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg text-primary text-sm">
-                            {templateSuccess}
-                          </div>
-                        )}
-                        {templateError && (
-                          <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">
-                            {templateError}
-                          </div>
-                        )}
-                        <div>
-                          <label className="block text-sm font-medium text-text-primary mb-3">
-                            Choose a different design
-                          </label>
-                          <div className="grid md:grid-cols-3 gap-4">
-                            {getAllTemplates().map((template) => (
-                              <button
-                                key={template.id}
-                                onClick={() => handleTemplateChange(template.id)}
-                                disabled={changingTemplate || currentTemplate === template.id}
-                                className={`p-4 rounded-lg border-2 transition-all text-left ${
-                                  currentTemplate === template.id
-                                    ? 'border-primary bg-primary/10'
-                                    : 'border-border hover:border-primary/50 hover:bg-surface-subtle'
-                                } ${changingTemplate ? 'opacity-50 cursor-not-allowed' : ''}`}
-                              >
-                                <h3 className="font-semibold text-text-primary mb-1">
-                                  {template.name}
-                                  {currentTemplate === template.id && (
-                                    <Badge variant="primary" className="ml-2">Current</Badge>
-                                  )}
-                                </h3>
-                                <p className="text-sm text-text-secondary">
-                                  {template.description}
-                                </p>
-                              </button>
-                            ))}
-                          </div>
-                          <p className="text-xs text-text-secondary mt-3">
-                            Your names, details, and content stay in place when you switch designs.
-                          </p>
-                        </div>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
+                <SettingsTemplatePanel
+                  changingTemplate={changingTemplate}
+                  currentTemplate={currentTemplate}
+                  onTemplateChange={(templateId) => { void handleTemplateChange(templateId); }}
+                  onToggleVisibility={() => setShowTemplateSettings((value) => !value)}
+                  showTemplateSettings={showTemplateSettings}
+                  templateError={templateError}
+                  templateSuccess={templateSuccess}
+                />
               </>
             )}
 
