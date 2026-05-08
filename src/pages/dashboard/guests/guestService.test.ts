@@ -136,13 +136,14 @@ describe('guestService', () => {
     const viewPropsHelper = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/buildGuestDashboardViewProps.ts'), 'utf8');
     const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardData.ts'), 'utf8');
     const followUpHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardFollowUpActions.ts'), 'utf8');
+    const crudHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCrudActions.ts'), 'utf8');
     const detailHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts'), 'utf8');
 
-    expect(page).toContain('generateSecureGuestInviteToken()');
     expect(page).toContain('useGuestDashboardData({');
     expect(page).toContain('useGuestDashboardClipboardActions({');
     expect(page).toContain('useGuestDashboardCsvImport({');
     expect(page).toContain('useGuestDashboardFollowUpActions({');
+    expect(page).toContain('useGuestDashboardCrudActions({');
     expect(page).toContain('useGuestDashboardGuestDetailActions({');
     expect(page).toContain('buildGuestDashboardViewProps({');
     expect(page).toContain('resolveGuestDashboardConflict(conflictId, resolvedAt)');
@@ -156,6 +157,7 @@ describe('guestService', () => {
     expect(page).toContain('useGuestDashboardCampaignActions({');
     expect(page).toContain('clearGuestCheckInsForSite(weddingSiteId)');
     expect(page).toContain('persistGuestReminderSettings(weddingSiteId, patch)');
+    expect(page).not.toContain('generateSecureGuestInviteToken()');
     expect(page).not.toContain('loadGuestDashboardSiteSettings(user.id)');
     expect(page).not.toContain('loadGuestDashboardSnapshot(weddingSiteId)');
     expect(page).not.toContain('loadGuestDashboardItineraryFilters(weddingSiteId)');
@@ -201,6 +203,13 @@ describe('guestService', () => {
     expect(followUpHook).toContain('buildFollowUpTask({ now: new Date(), text })');
     expect(followUpHook).toContain('buildGeneratedFollowUpTasks({ now: new Date(), rsvpOps, contactStats })');
     expect(followUpHook).not.toContain("from '../../../lib/supabase'");
+    expect(crudHook).toContain('await generateSecureGuestInviteToken()');
+    expect(crudHook).toContain('await createGuest({');
+    expect(crudHook).toContain('await insertEventInvitations(toEventInvitationRows(createdGuestId, realEventIds));');
+    expect(crudHook).toContain('await replaceGuestEventInvitations(editingGuest.id, realEventIds);');
+    expect(crudHook).toContain('await restoreGuestEventInvitations(editingGuest.id, eventInvitationRollback);');
+    expect(crudHook).toContain('const { invitationCount } = await deleteGuestWithDependencies(guestId);');
+    expect(crudHook).not.toContain("from '../../../lib/supabase'");
     expect(csvImportHook).toContain('const result = buildGuestImportPreview({');
     expect(csvImportHook).toContain('const { headers, dataRows, samples } = await readGuestImportRows(file);');
     expect(csvImportHook).toContain('const inserted = await insertImportedGuests(guestRows);');

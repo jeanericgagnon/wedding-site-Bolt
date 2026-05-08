@@ -141,6 +141,7 @@ describe('dashboard data boundary guards', () => {
     const viewPropsHelper = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/buildGuestDashboardViewProps.ts'), 'utf8');
     const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardData.ts'), 'utf8');
     const followUpHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardFollowUpActions.ts'), 'utf8');
+    const crudHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCrudActions.ts'), 'utf8');
     const detailHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts'), 'utf8');
 
     expect(source).not.toContain("from '../../lib/supabase'");
@@ -148,6 +149,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('useGuestDashboardClipboardActions({');
     expect(source).toContain('useGuestDashboardCsvImport({');
     expect(source).toContain('useGuestDashboardFollowUpActions({');
+    expect(source).toContain('useGuestDashboardCrudActions({');
     expect(source).toContain('useGuestDashboardGuestDetailActions({');
     expect(source).toContain('buildGuestDashboardViewProps({');
     expect(source).toContain('loadPublicSlug: loadGuestDashboardPublicSlug');
@@ -195,7 +197,6 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('useGuestDashboardExports({');
     expect(source).toContain('clearGuestCheckInsForSite(weddingSiteId)');
     expect(source).toContain('persistGuestReminderSettings(weddingSiteId, patch)');
-    expect(source).toContain('deleteGuestWithDependencies(guestId)');
     expect(source).toContain('deleteAllGuestsForSite(weddingSiteId)');
     expect(service).toContain('export const GUEST_SITE_SETTINGS_SELECT = ');
     expect(service).toContain('export const GUEST_DASHBOARD_RSVP_SELECT = ');
@@ -242,6 +243,16 @@ describe('dashboard data boundary guards', () => {
     expect(followUpHook).toContain('buildFollowUpTask({ now: new Date(), text })');
     expect(followUpHook).toContain('buildGeneratedFollowUpTasks({ now: new Date(), rsvpOps, contactStats })');
     expect(followUpHook).not.toContain("from '../../../lib/supabase'");
+    expect(crudHook).toContain('const resetForm = () => {');
+    expect(crudHook).toContain('const openEditModal = (guest: GuestWithRSVP) => {');
+    expect(crudHook).toContain('const handleAddGuest = async (event: FormEvent) => {');
+    expect(crudHook).toContain('const handleEditGuest = async (event: FormEvent, editingGuest: GuestWithRSVP | null) => {');
+    expect(crudHook).toContain('const handleDeleteGuest = async (guestId: string, confirmDeleteId: string | null) => {');
+    expect(crudHook).toContain('await generateSecureGuestInviteToken()');
+    expect(crudHook).toContain('await createGuest({');
+    expect(crudHook).toContain('await insertEventInvitations(toEventInvitationRows(createdGuestId, realEventIds));');
+    expect(crudHook).toContain('const { invitationCount } = await deleteGuestWithDependencies(guestId);');
+    expect(crudHook).not.toContain("from '../../../lib/supabase'");
     expect(csvImportHook).toContain('const result = buildGuestImportPreview({');
     expect(csvImportHook).toContain('const { headers, dataRows, samples } = await readGuestImportRows(file);');
     expect(csvImportHook).toContain('const inserted = await insertImportedGuests(guestRows);');

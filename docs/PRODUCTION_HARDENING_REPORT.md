@@ -5634,6 +5634,21 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 04:17 AM PT No-Deploy Guest Dashboard CRUD-Actions Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the guest dashboard add/edit/delete and guest-form lifecycle through `src/pages/dashboard/guests/useGuestDashboardCrudActions.ts`.
+  - That hook now owns guest creation, guest edit persistence, guest delete rollback, form reset, and edit-form hydration while the page keeps state, campaigns, exports, overlays, and route-level dashboard orchestration.
+  - `src/lib/dashboardDataBoundary.test.ts` and `src/pages/dashboard/guests/guestService.test.ts` now pin `useGuestDashboardCrudActions({ ... })`, check that `useGuestDashboardCrudActions.ts` owns the guest CRUD seam, and reject regaining the old inline CRUD handlers in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` dropped from 1521 lines to 1301 lines in this batch, while `src/pages/dashboard/guests/useGuestDashboardCrudActions.ts` came in at 319 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 04:10 AM PT No-Deploy Guest Dashboard Follow-Up-Actions Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

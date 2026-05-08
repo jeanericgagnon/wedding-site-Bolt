@@ -88,13 +88,9 @@ import {
 } from './guests/guestDashboardStorage';
 import {
   clearGuestCheckInsForSite,
-  createGuest,
   deleteAllGuestsForSite,
-  deleteGuestById,
-  deleteGuestWithDependencies,
   fetchGuestRsvps,
   generateSecureGuestInviteToken,
-  insertEventInvitations,
   loadGuestDashboardPublicSlug,
   loadGuestDashboardSiteSlug,
   markGuestsThankYouSentForSite,
@@ -102,19 +98,15 @@ import {
   persistGuestReminderSettings,
   resolveGuestDashboardConflict,
   resolveGuestDashboardConflicts,
-  replaceGuestEventInvitations,
-  restoreGuestEventInvitations,
-  toEventInvitationRows,
-  updateGuest,
   updateGuestCheckInForSite,
   updateGuestThankYouSentForSite,
-  type GuestEventInvitationRollback,
 } from './guests/guestService';
 import { useGuestDashboardCampaignActions } from './guests/useGuestDashboardCampaignActions';
 import { useGuestDashboardClipboardActions } from './guests/useGuestDashboardClipboardActions';
 import { useGuestDashboardCsvImport } from './guests/useGuestDashboardCsvImport';
 import { useGuestDashboardData } from './guests/useGuestDashboardData';
 import { useGuestDashboardFollowUpActions } from './guests/useGuestDashboardFollowUpActions';
+import { useGuestDashboardCrudActions } from './guests/useGuestDashboardCrudActions';
 import { useGuestDashboardGuestDetailActions } from './guests/useGuestDashboardGuestDetailActions';
 import { useGuestDashboardExports } from './guests/useGuestDashboardExports';
 
@@ -362,7 +354,6 @@ export const DashboardGuests: React.FC = () => {
     toast,
     weddingSiteId,
   });
-  const generateSecureToken = async (): Promise<string> => generateSecureGuestInviteToken();
   const generateLocalInviteToken = () => `demo_${Math.random().toString(36).slice(2, 14)}`;
   const {
     csvColumnSamples,
@@ -393,7 +384,7 @@ export const DashboardGuests: React.FC = () => {
     fetchGuests,
     fromQuickStart,
     generateLocalInviteToken,
-    generateSecureToken,
+    generateSecureToken: generateSecureGuestInviteToken,
     isDemoMode,
     isGuestsReadOnly,
     navigate,
@@ -554,206 +545,8 @@ export const DashboardGuests: React.FC = () => {
     };
   }, [guestsTab, rsvpConfigDirty, rsvpQuestions, rsvpMealEnabled, rsvpMealOptions]);
 
-  const handleAddGuest = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isGuestsReadOnly) {
-      toast('Viewer mode is read-only.', 'info');
-      return;
-    }
-    if (!weddingSiteId) return;
-
-    let createdGuestId: string | null = null;
-
-    try {
-      if (isDemoMode) {
-        const newGuest: GuestWithRSVP = {
-          id: `demo-${Date.now()}`,
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          name: `${formData.first_name} ${formData.last_name}`.trim(),
-          email: formData.email || null,
-          phone: formData.phone || null,
-          plus_one_allowed: formData.plus_one_allowed,
-          plus_one_name: null,
-          invited_to_ceremony: formData.invited_to_ceremony,
-          invited_to_reception: formData.invited_to_reception,
-          invite_token: generateLocalInviteToken(),
-          rsvp_status: 'pending',
-          rsvp_received_at: null,
-          household_id: null,
-        };
-
-        setGuests(prev => [newGuest, ...prev]);
-        setShowAddModal(false);
-        resetForm();
-        toast(`${formData.first_name} ${formData.last_name} added`, 'success');
-        return;
-      }
-
-      const inviteToken = await generateSecureToken();
-      const selectedEventIds = Array.from(formEventInviteIds);
-      const invitedToCeremony = selectedEventIds.includes('legacy-ceremony');
-      const invitedToReception = selectedEventIds.includes('legacy-reception');
-      const realEventIds = selectedEventIds.filter((id) => !id.startsWith('legacy-'));
-
-      createdGuestId = await createGuest({
-        weddingSiteId,
-        firstName: formData.first_name,
-        lastName: formData.last_name,
-        email: formData.email || null,
-        phone: formData.phone || null,
-        plusOneAllowed: formData.plus_one_allowed,
-        invitedToCeremony,
-        invitedToReception,
-        inviteToken,
-      });
-      await insertEventInvitations(toEventInvitationRows(createdGuestId, realEventIds));
-
-      await fetchGuests();
-      setShowAddModal(false);
-      resetForm();
-      toast(`${formData.first_name} ${formData.last_name} added`, 'success');
-    } catch (err) {
-      if (createdGuestId) {
-        await deleteGuestById(createdGuestId);
-      }
-      toast(safeGuestsDashboardError(err, 'Couldn’t add guest. Please try again.'), 'error');
-    }
-  };
-
-  const handleEditGuest = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isGuestsReadOnly) {
-      toast('Viewer mode is read-only.', 'info');
-      return;
-    }
-    if (!editingGuest) return;
-
-    const previousGuestValues = {
-      first_name: editingGuest.first_name ?? null,
-      last_name: editingGuest.last_name ?? null,
-      name: editingGuest.name ?? null,
-      email: editingGuest.email ?? null,
-      phone: editingGuest.phone ?? null,
-      plus_one_allowed: editingGuest.plus_one_allowed,
-      invited_to_ceremony: editingGuest.invited_to_ceremony,
-      invited_to_reception: editingGuest.invited_to_reception,
-    };
-    let eventInvitationRollback: GuestEventInvitationRollback | null = null;
-    let guestUpdated = false;
-    let invitesCleared = false;
-
-    try {
-      if (isDemoMode) {
-        setGuests(prev => prev.map(guest => (
-          guest.id === editingGuest.id
-            ? {
-                ...guest,
-                first_name: formData.first_name,
-                last_name: formData.last_name,
-                name: `${formData.first_name} ${formData.last_name}`.trim(),
-                email: formData.email || null,
-                phone: formData.phone || null,
-                plus_one_allowed: formData.plus_one_allowed,
-                invited_to_ceremony: formData.invited_to_ceremony,
-                invited_to_reception: formData.invited_to_reception,
-              }
-            : guest
-        )));
-        setEditingGuest(null);
-        resetForm();
-        toast('Guest updated', 'success');
-        return;
-      }
-
-      const selectedEventIds = Array.from(formEventInviteIds);
-      const invitedToCeremony = selectedEventIds.includes('legacy-ceremony');
-      const invitedToReception = selectedEventIds.includes('legacy-reception');
-      const realEventIds = selectedEventIds.filter((id) => !id.startsWith('legacy-'));
-
-      await updateGuest({
-        guestId: editingGuest.id,
-        firstName: formData.first_name,
-        lastName: formData.last_name,
-        name: `${formData.first_name} ${formData.last_name}`,
-        email: formData.email || null,
-        phone: formData.phone || null,
-        plusOneAllowed: formData.plus_one_allowed,
-        invitedToCeremony,
-        invitedToReception,
-      });
-      guestUpdated = true;
-
-      eventInvitationRollback = await replaceGuestEventInvitations(editingGuest.id, realEventIds);
-      invitesCleared = true;
-
-      await fetchGuests();
-      setEditingGuest(null);
-      resetForm();
-      toast('Guest updated', 'success');
-    } catch {
-      if (!isDemoMode) {
-        if (invitesCleared && eventInvitationRollback) {
-          await restoreGuestEventInvitations(editingGuest.id, eventInvitationRollback);
-        }
-        if (guestUpdated) {
-          await updateGuest({
-            guestId: editingGuest.id,
-            firstName: previousGuestValues.first_name,
-            lastName: previousGuestValues.last_name,
-            name: previousGuestValues.name,
-            email: previousGuestValues.email,
-            phone: previousGuestValues.phone,
-            plusOneAllowed: previousGuestValues.plus_one_allowed,
-            invitedToCeremony: previousGuestValues.invited_to_ceremony,
-            invitedToReception: previousGuestValues.invited_to_reception,
-          });
-        }
-      }
-      toast('Couldn’t update guest. Please try again.', 'error');
-    }
-  };
-
   const [deletingGuestId, setDeletingGuestId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-
-  const handleDeleteGuest = async (guestId: string) => {
-    if (isGuestsReadOnly) {
-      toast('Viewer mode is read-only.', 'info');
-      return;
-    }
-    if (confirmDeleteId !== guestId) {
-      setConfirmDeleteId(guestId);
-      setTimeout(() => setConfirmDeleteId(null), 3000);
-      return;
-    }
-
-    setDeletingGuestId(guestId);
-    setConfirmDeleteId(null);
-    const guest = guests.find((candidate) => candidate.id === guestId);
-    try {
-      if (isDemoMode) {
-        setGuests(prev => prev.filter(guest => guest.id !== guestId));
-        toast('Guest removed', 'success');
-        return;
-      }
-
-      const { invitationCount } = await deleteGuestWithDependencies(guestId);
-
-      await fetchGuests();
-      logGuestAction('guest_deleted', 'Guest was deleted from the guest list.', {
-        hadRsvp: Boolean(guest?.rsvp),
-        hadEmail: Boolean(guest?.email),
-        hadPhone: Boolean(guest?.phone),
-        invitationCount,
-      }, guestId, guest?.name || 'Guest');
-      toast('Guest removed', 'success');
-    } catch {
-      toast('Couldn’t remove guest. Please try again.', 'error');
-    } finally {
-      setDeletingGuestId(null);
-    }
-  };
 
   const handleUndoLastCheckIn = async () => {
     if (isGuestsReadOnly) {
@@ -856,45 +649,32 @@ export const DashboardGuests: React.FC = () => {
 
   const households = useMemo(() => buildGuestHouseholdGroups(guests), [guests]);
 
-  const resetForm = () => {
-    setFormData({
-      first_name: '',
-      last_name: '',
-      email: '',
-      phone: '',
-      plus_one_allowed: false,
-      require_plus_one_name: false,
-      invited_to_ceremony: true,
-      invited_to_reception: true,
-    });
-    setFormEventInviteIds(new Set(effectiveItineraryEvents.map((e) => e.id)));
-  };
-
-  const openEditModal = (guest: GuestWithRSVP) => {
-    if (isGuestsReadOnly) {
-      toast('Viewer mode is read-only.', 'info');
-      return;
-    }
-    setEditingGuest(guest);
-    setFormData({
-      first_name: guest.first_name || '',
-      last_name: guest.last_name || '',
-      email: guest.email || '',
-      phone: guest.phone || '',
-      plus_one_allowed: guest.plus_one_allowed,
-      require_plus_one_name: false,
-      invited_to_ceremony: guest.invited_to_ceremony,
-      invited_to_reception: guest.invited_to_reception,
-    });
-    const invitedIds = effectiveItineraryEvents
-      .filter((event) => {
-        if (event.id === 'legacy-ceremony') return guest.invited_to_ceremony;
-        if (event.id === 'legacy-reception') return guest.invited_to_reception;
-        return eventInviteGuestMap.get(event.id)?.has(guest.id);
-      })
-      .map((event) => event.id);
-    setFormEventInviteIds(new Set(invitedIds));
-  };
+  const {
+    handleAddGuest,
+    handleDeleteGuest,
+    handleEditGuest,
+    openEditModal,
+    resetForm,
+  } = useGuestDashboardCrudActions({
+    effectiveItineraryEvents,
+    eventInviteGuestMap,
+    fetchGuests,
+    formData,
+    formEventInviteIds,
+    guests,
+    isDemoMode,
+    isGuestsReadOnly,
+    logGuestAction,
+    setConfirmDeleteId,
+    setDeletingGuestId,
+    setEditingGuest,
+    setFormData,
+    setFormEventInviteIds,
+    setGuests,
+    setShowAddModal,
+    toast,
+    weddingSiteId,
+  });
 
   const handleDeleteAllGuests = async () => {
     if (!weddingSiteId || isDemoMode) {
@@ -1332,7 +1112,7 @@ export const DashboardGuests: React.FC = () => {
       setDeleteAllConfirmInput('');
       setShowDeleteAllModal(true);
     },
-    onDeleteGuest: handleDeleteGuest,
+    onDeleteGuest: (guestId) => { void handleDeleteGuest(guestId, confirmDeleteId); },
     onDryRun: () => { void handleCopyCampaignDryRun(); },
     onExportAddressCollection: exportAddressCollectionCSV,
     onExportAllGuests: exportCSV,
@@ -1503,8 +1283,8 @@ export const DashboardGuests: React.FC = () => {
     onSetDeleteAllConfirmInput: setDeleteAllConfirmInput,
     onSetFormData: setFormData,
     onSetFormEventInviteIds: setFormEventInviteIds,
-    onSubmitAddGuest: handleAddGuest,
-    onSubmitEditGuest: handleEditGuest,
+    onSubmitAddGuest: (event) => { void handleAddGuest(event); },
+    onSubmitEditGuest: (event) => { void handleEditGuest(event, editingGuest); },
     onToast: toast,
     onToggleEventInvite: handleToggleEventInvite,
   });
