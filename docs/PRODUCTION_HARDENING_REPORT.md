@@ -4562,6 +4562,23 @@ Status:
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
 
+## 2026-05-08 12:34 AM PT No-Deploy Guest Dashboard Campaign Action Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the guest invitation and reminder send lifecycle through `src/pages/dashboard/guests/useGuestDashboardCampaignActions.ts`.
+  - That hook now owns single invite sends, selected reminder sends, filtered campaign sends, and due-reminder sends, including the repeated email transport, sent-timestamp persistence, campaign log, and post-send refresh choreography.
+  - `src/lib/dashboardDataBoundary.test.ts` and `src/pages/dashboard/guests/guestService.test.ts` now pin `useGuestDashboardCampaignActions({ ... })` plus its `sendGuestInvitationEmail(...)`, `markGuestInvitationSentForSite(...)`, `markGuestInvitationAndReminderSentForSite(...)`, and `markGuestReminderSentForSite(...)` contract.
+  - `src/pages/dashboard/Guests.tsx` dropped from 2523 lines to 2262 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues guest dashboard ownership cleanup without changing collaborator or guest-facing behavior. No deploy was run.
+
 ## 2026-05-08 12:05 AM PT No-Deploy RSVP Guest-Lookup Transport Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

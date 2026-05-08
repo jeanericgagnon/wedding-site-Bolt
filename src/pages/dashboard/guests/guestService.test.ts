@@ -130,6 +130,7 @@ describe('guestService', () => {
   it('keeps guest invite token generation behind the guest service', () => {
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Guests.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/guestService.ts'), 'utf8');
+    const campaignHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCampaignActions.ts'), 'utf8');
 
     expect(page).toContain('generateSecureGuestInviteToken()');
     expect(page).toContain('refreshGuestDashboardSession()');
@@ -150,13 +151,15 @@ describe('guestService', () => {
     expect(page).toContain('updateGuestThankYouSentForSite(weddingSiteId, guest.id, nextValue)');
     expect(page).toContain('markGuestsThankYouSentForSite(weddingSiteId, ids, new Date().toISOString())');
     expect(page).toContain('persistGuestDashboardRsvpConfig({');
-    expect(page).toContain('markGuestInvitationSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString())');
-    expect(page).toContain('markGuestInvitationAndReminderSentForSite(currentWeddingSiteId, guest.id, sentAtIso)');
-    expect(page).toContain('markGuestReminderSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString())');
+    expect(page).toContain('useGuestDashboardCampaignActions({');
     expect(page).toContain('clearGuestCheckInsForSite(weddingSiteId)');
     expect(page).toContain('assignGuestsToHouseholdForSite(weddingSiteId, ids, householdId)');
     expect(page).toContain('updateGuestHouseholdForSite(weddingSiteId, guestId, null)');
     expect(page).toContain('persistGuestReminderSettings(weddingSiteId, patch)');
+    expect(campaignHook).toContain('await sendGuestInvitationEmail({ guest, weddingSiteId, weddingSiteInfo })');
+    expect(campaignHook).toContain('await markGuestInvitationSentForSite(weddingSiteId, guest.id, new Date().toISOString())');
+    expect(campaignHook).toContain('await markGuestInvitationAndReminderSentForSite(weddingSiteId, guest.id, sentAtIso)');
+    expect(campaignHook).toContain('await markGuestReminderSentForSite(weddingSiteId, guest.id, new Date().toISOString())');
     expect(page).not.toContain("supabase.rpc('generate_secure_token'");
     expect(page).not.toContain('supabase.auth.refreshSession()');
     expect(page).not.toContain(".from('wedding_sites')\n        .select('id, couple_name_1, couple_name_2");
@@ -173,6 +176,7 @@ describe('guestService', () => {
     expect(page).not.toContain(".from('wedding_sites')\n      .select('site_slug')");
     expect(page).not.toContain(".from('wedding_sites')\n      .select('id, site_slug, site_url')");
     expect(page).not.toContain(".from('wedding_sites')\n        .update({ rsvp_custom_questions: cleanedQuestions, rsvp_meal_config: { enabled: rsvpMealEnabled, options: mealOptions } })");
+    expect(page).not.toContain('await sendWeddingInvitation({');
     expect(page).not.toContain(".from('guests')\n        .update({ checked_in_at: null })");
     expect(page).not.toContain(".from('guests')\n        .update({ thank_you_sent_at: nextValue })");
     expect(page).not.toContain(".from('guests')\n        .update({ thank_you_sent_at: new Date().toISOString() })");

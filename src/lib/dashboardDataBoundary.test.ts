@@ -66,6 +66,7 @@ describe('dashboard data boundary guards', () => {
   it('loads guest dashboard guest and RSVP rows with explicit projections', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Guests.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/guestService.ts'), 'utf8');
+    const campaignHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCampaignActions.ts'), 'utf8');
 
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).toContain('loadGuestDashboardSiteSettings(user.id)');
@@ -83,9 +84,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('updateGuestThankYouSentForSite(weddingSiteId, guest.id, nextValue)');
     expect(source).toContain('markGuestsThankYouSentForSite(weddingSiteId, ids, new Date().toISOString())');
     expect(source).toContain('persistGuestDashboardRsvpConfig({');
-    expect(source).toContain('markGuestInvitationSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString())');
-    expect(source).toContain('markGuestInvitationAndReminderSentForSite(currentWeddingSiteId, guest.id, sentAtIso)');
-    expect(source).toContain('markGuestReminderSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString())');
+    expect(source).toContain('useGuestDashboardCampaignActions({');
     expect(source).toContain('buildGuestDashboardOverlayProps({');
     expect(source).toContain('<GuestDashboardRouteView');
     expect(source).not.toContain('<GuestDashboardOpsView');
@@ -132,6 +131,10 @@ describe('dashboard data boundary guards', () => {
     expect(service).toContain('export async function markGuestInvitationSentForSite(');
     expect(service).toContain('export async function markGuestInvitationAndReminderSentForSite(');
     expect(service).toContain('export async function markGuestReminderSentForSite(');
+    expect(campaignHook).toContain('await sendGuestInvitationEmail({ guest, weddingSiteId, weddingSiteInfo })');
+    expect(campaignHook).toContain('await markGuestInvitationSentForSite(weddingSiteId, guest.id, new Date().toISOString())');
+    expect(campaignHook).toContain('await markGuestInvitationAndReminderSentForSite(weddingSiteId, guest.id, sentAtIso)');
+    expect(campaignHook).toContain('await markGuestReminderSentForSite(weddingSiteId, guest.id, new Date().toISOString())');
     expect(service).toContain('export async function assignGuestsToHouseholdForSite(');
     expect(service).toContain('export async function updateGuestHouseholdForSite(');
     expect(service).toContain('export async function persistGuestReminderSettings(');
@@ -187,6 +190,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('const exportEventAttendanceCSV = () => {');
     expect(source).not.toContain('async function copyContactRequestLink() {');
     expect(source).not.toContain('const copySmsRsvpLinksForFiltered = async () => {');
+    expect(source).not.toContain('await sendWeddingInvitation({');
     expect(source).not.toContain('<GuestOpsToolbar');
     expect(source).not.toContain('<GuestCampaignReminderPanel');
     expect(source).not.toContain('<GuestSegmentControlsPanel');

@@ -28,7 +28,6 @@ import { useToast } from '../../components/ui/Toast';
 import type { ConfirmDialogProps } from '../../components/ui/ConfirmDialog';
 import { demoWeddingSite, demoGuests, demoRSVPs } from '../../lib/demoData';
 import { buildQuickStartPhotosPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
-import { sendWeddingInvitation } from '../../lib/emailService';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { copyTextOrDownload } from '../../lib/copyText';
 import { logAppAction } from '../../lib/actionAudit';
@@ -120,9 +119,6 @@ import {
   loadGuestDashboardItineraryFilters,
   loadGuestDashboardRsvpAuditFeed,
   loadGuestDashboardSiteSlug,
-  markGuestInvitationAndReminderSentForSite,
-  markGuestInvitationSentForSite,
-  markGuestReminderSentForSite,
   markGuestsThankYouSentForSite,
   persistGuestDashboardRsvpConfig,
   persistGuestReminderSettings,
@@ -146,6 +142,7 @@ import {
   type AssistedRsvpStatus,
   type GuestEventInvitationRollback,
 } from './guests/guestService';
+import { useGuestDashboardCampaignActions } from './guests/useGuestDashboardCampaignActions';
 import { useGuestDashboardExports } from './guests/useGuestDashboardExports';
 
 export const DashboardGuests: React.FC = () => {
@@ -189,8 +186,6 @@ export const DashboardGuests: React.FC = () => {
   }, [itineraryFilterEvents]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingGuest, setEditingGuest] = useState<GuestWithRSVP | null>(null);
-  const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
-  const [bulkSending, setBulkSending] = useState(false);
   const [campaignLog, setCampaignLog] = useState<RsvpCampaignLogEntry[]>([]);
   const [showRecipientPreview, setShowRecipientPreview] = useState(false);
   const [campaignPreset, setCampaignPreset] = useState<RsvpCampaignPreset>('pending');
@@ -1018,56 +1013,6 @@ export const DashboardGuests: React.FC = () => {
     }
   };
 
-  const handleSendInvitation = async (guest: GuestWithRSVP) => {
-    if (isGuestsReadOnly) {
-      toast('Your collaborator role cannot send guest invitations.', 'info');
-      return;
-    }
-    if (!guest.email) {
-      toast('This guest has no email address', 'error');
-      return;
-    }
-    if (isDemoMode) {
-      toast('Demo: invitation send simulated (no real email sent)', 'success');
-      return;
-    }
-    if (!weddingSiteId) {
-      toast('Missing wedding site context', 'error');
-      return;
-    }
-    const currentWeddingSiteId = weddingSiteId;
-
-    setSendingInviteId(guest.id);
-    try {
-      const guestName = guest.first_name && guest.last_name
-        ? `${guest.first_name} ${guest.last_name}`
-        : guest.name;
-
-      await sendWeddingInvitation({
-        weddingSiteId: weddingSiteInfo?.id ?? weddingSiteId ?? '',
-        guestEmail: guest.email,
-        guestName,
-        coupleName1: weddingSiteInfo?.couple_name_1 ?? '',
-        coupleName2: weddingSiteInfo?.couple_name_2 ?? '',
-        weddingDate: weddingSiteInfo?.wedding_date ?? null,
-        venueName: weddingSiteInfo?.venue_name ?? null,
-        venueAddress: weddingSiteInfo?.venue_address ?? null,
-        siteUrl: weddingSiteInfo?.site_url ?? null,
-        inviteToken: guest.invite_token ?? null,
-      });
-
-      await markGuestInvitationSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString());
-
-      toast(`Invitation sent to ${guestName}`, 'success');
-    } catch {
-      toast('Couldn’t send invitation. Please try again.', 'error');
-    } finally {
-      setSendingInviteId(null);
-    }
-  };
-
-
-
   const handleCopyOpsSummary = async () => {
     const summary = buildRsvpFollowUpSummary({
       generatedAt: new Date(),
@@ -1179,238 +1124,6 @@ export const DashboardGuests: React.FC = () => {
     }
     setFollowUpTasks((prev) => [...tasks, ...prev].slice(0, 12));
     toast(`Created ${tasks.length} follow-up task${tasks.length === 1 ? '' : 's'}`, 'success');
-  };
-
-  const handleSendSelectedInvitations = async () => {
-    if (!weddingSiteId) {
-      toast('Missing wedding site context', 'error');
-      return;
-    }
-    const selectedRecipients = guests.filter(g => selectedGuestIds.has(g.id) && !!g.email && !!g.invite_token);
-    if (selectedRecipients.length === 0) {
-      toast('No selected guests with email and RSVP link.', 'error');
-      return;
-    }
-
-    const confirmed = await requestConfirmation({
-      title: 'Send selected reminders?',
-      description: `This will email RSVP reminders to ${selectedRecipients.length} selected ${selectedRecipients.length === 1 ? 'guest' : 'guests'}. You can review and edit the message before sending.`,
-      confirmLabel: 'Send reminders',
-    });
-    if (!confirmed) return;
-
-    if (isDemoMode) {
-      toast(`Demo: simulated reminders for ${selectedRecipients.length} selected guests`, 'success');
-      return;
-    }
-    const currentWeddingSiteId = weddingSiteId;
-
-    setBulkSending(true);
-    let successCount = 0;
-    let failedCount = 0;
-    try {
-      for (const guest of selectedRecipients) {
-        if (!guest.email) continue;
-        const guestName = (guest.first_name || guest.last_name)
-          ? `${guest.first_name ?? ''} ${guest.last_name ?? ''}`.trim()
-          : guest.name;
-        try {
-          await sendWeddingInvitation({
-            weddingSiteId: weddingSiteInfo?.id ?? weddingSiteId ?? '',
-            guestEmail: guest.email,
-            guestName,
-            coupleName1: weddingSiteInfo?.couple_name_1 ?? '',
-            coupleName2: weddingSiteInfo?.couple_name_2 ?? '',
-            weddingDate: weddingSiteInfo?.wedding_date ?? null,
-            venueName: weddingSiteInfo?.venue_name ?? null,
-            venueAddress: weddingSiteInfo?.venue_address ?? null,
-            siteUrl: weddingSiteInfo?.site_url ?? null,
-            inviteToken: guest.invite_token ?? null,
-          });
-          const sentAtIso = new Date().toISOString();
-          await markGuestInvitationAndReminderSentForSite(currentWeddingSiteId, guest.id, sentAtIso);
-          successCount += 1;
-        } catch {
-          failedCount += 1;
-          // continue
-        }
-      }
-      if (successCount > 0) {
-        await fetchGuests();
-      }
-      toast(
-        successCount > 0
-          ? (failedCount > 0
-              ? `Sent ${successCount} selected reminder${successCount === 1 ? '' : 's'}. ${failedCount} need review.`
-              : `Sent ${successCount} selected reminder${successCount === 1 ? '' : 's'}`)
-          : (failedCount > 0
-              ? `${failedCount} selected reminder${failedCount === 1 ? '' : 's'} need review.`
-              : 'No selected reminders were sent.'),
-        successCount > 0 ? (failedCount > 0 ? 'info' : 'success') : 'error',
-      );
-    } finally {
-      setBulkSending(false);
-    }
-  };
-
-const handleSendBulkInvitations = async () => {
-    if (isGuestsReadOnly) {
-      toast('Your collaborator role cannot send guest reminders from this view.', 'info');
-      return;
-    }
-    if (reminderCandidates.length === 0) {
-      toast('No reminder recipients in this filtered view.', 'error');
-      return;
-    }
-    if (!weddingSiteId) {
-      toast('Missing wedding site context', 'error');
-      return;
-    }
-
-    const previewNames = reminderCandidates.slice(0, 3).map((g) => (g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name);
-    const previewText = previewNames.length ? `\n\nFirst recipients: ${previewNames.join(', ')}${reminderCandidates.length > 3 ? ` +${reminderCandidates.length - 3} more` : ''}` : '';
-    const noContactWarning = contactStats.withNoContact > 0 ? `\nGuests without contact info: ${contactStats.withNoContact} (not included)` : '';
-    const confirmed = await requestConfirmation({
-      title: 'Send RSVP reminder campaign?',
-      description: `Group: ${segmentLabelMap[filterStatus] || filterStatus}. Recipients: ${reminderCandidates.length}. Skip recent reminders: ${skipRecentlyInvited ? 'On' : 'Off'}.${noContactWarning ? ` ${noContactWarning.trim()}` : ''}${previewText ? ` ${previewText.trim()}` : ''}`,
-      confirmLabel: 'Send campaign',
-    });
-    if (!confirmed) return;
-
-    if (isDemoMode) {
-      const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      setCampaignLog(prev => [{ id: Date.now(), segment: segmentLabelMap[filterStatus] || filterStatus, count: reminderCandidates.length, sentAt }, ...prev].slice(0, 6));
-      toast(`Demo: simulated reminders for ${reminderCandidates.length} guests`, 'success');
-      return;
-    }
-    const currentWeddingSiteId = weddingSiteId;
-
-    setBulkSending(true);
-    let successCount = 0;
-    let failedCount = 0;
-
-    try {
-      for (const guest of reminderCandidates) {
-        if (!guest.email) continue;
-        const guestName = guest.first_name && guest.last_name
-          ? `${guest.first_name} ${guest.last_name}`
-          : guest.name;
-
-        try {
-          await sendWeddingInvitation({
-            weddingSiteId: weddingSiteInfo?.id ?? weddingSiteId ?? '',
-            guestEmail: guest.email,
-            guestName,
-            coupleName1: weddingSiteInfo?.couple_name_1 ?? '',
-            coupleName2: weddingSiteInfo?.couple_name_2 ?? '',
-            weddingDate: weddingSiteInfo?.wedding_date ?? null,
-            venueName: weddingSiteInfo?.venue_name ?? null,
-            venueAddress: weddingSiteInfo?.venue_address ?? null,
-            siteUrl: weddingSiteInfo?.site_url ?? null,
-            inviteToken: guest.invite_token ?? null,
-          });
-
-          const sentAtIso = new Date().toISOString();
-          await markGuestInvitationAndReminderSentForSite(currentWeddingSiteId, guest.id, sentAtIso);
-
-          successCount += 1;
-        } catch {
-          failedCount += 1;
-          // continue sending others
-        }
-      }
-
-      if (successCount > 0) {
-        const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        setCampaignLog(prev => [{ id: Date.now(), segment: segmentLabelMap[filterStatus] || filterStatus, count: successCount, sentAt }, ...prev].slice(0, 6));
-        toast(
-          failedCount > 0
-            ? `Sent ${successCount} reminder${successCount === 1 ? '' : 's'}. ${failedCount} need review.`
-            : `Sent ${successCount} reminder${successCount === 1 ? '' : 's'}`,
-          failedCount > 0 ? 'info' : 'success',
-        );
-        await fetchGuests();
-      } else {
-        toast(failedCount > 0 ? `${failedCount} reminder${failedCount === 1 ? '' : 's'} need review.` : 'No reminders were sent. Please try again.', 'error');
-      }
-    } finally {
-      setBulkSending(false);
-    }
-  };
-
-  const handleSendDueRemindersNow = async () => {
-    if (isGuestsReadOnly) {
-      toast('Your collaborator role cannot send due reminders.', 'info');
-      return;
-    }
-    if (dueReminderCandidatesGlobal.length === 0) {
-      toast('No guests are currently due for reminders.', 'error');
-      return;
-    }
-    if (!weddingSiteId) {
-      toast('Missing wedding site context', 'error');
-      return;
-    }
-
-    const confirmed = await requestConfirmation({
-      title: 'Send due reminders now?',
-      description: `This will email ${dueReminderCandidatesGlobal.length} ${dueReminderCandidatesGlobal.length === 1 ? 'guest' : 'guests'} who are ready for another reminder after ${reminderCadenceDays} days.`,
-      confirmLabel: 'Send due reminders',
-    });
-    if (!confirmed) return;
-
-    if (isDemoMode) {
-      const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      setCampaignLog(prev => [{ id: Date.now(), segment: 'Due Reminder', count: dueReminderCandidatesGlobal.length, sentAt }, ...prev].slice(0, 6));
-      toast(`Demo: simulated reminders for ${dueReminderCandidatesGlobal.length} due guests`, 'success');
-      return;
-    }
-    const currentWeddingSiteId = weddingSiteId;
-
-    setBulkSending(true);
-    let successCount = 0;
-    let failedCount = 0;
-    try {
-      for (const guest of dueReminderCandidatesGlobal) {
-        if (!guest.email) continue;
-        const guestName = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
-        try {
-          await sendWeddingInvitation({
-            weddingSiteId: weddingSiteInfo?.id ?? weddingSiteId ?? '',
-            guestEmail: guest.email,
-            guestName,
-            coupleName1: weddingSiteInfo?.couple_name_1 ?? '',
-            coupleName2: weddingSiteInfo?.couple_name_2 ?? '',
-            weddingDate: weddingSiteInfo?.wedding_date ?? null,
-            venueName: weddingSiteInfo?.venue_name ?? null,
-            venueAddress: weddingSiteInfo?.venue_address ?? null,
-            siteUrl: weddingSiteInfo?.site_url ?? null,
-            inviteToken: guest.invite_token ?? null,
-          });
-          await markGuestReminderSentForSite(currentWeddingSiteId, guest.id, new Date().toISOString());
-          successCount += 1;
-        } catch {
-          failedCount += 1;
-          // continue
-        }
-      }
-
-      if (successCount > 0) {
-        const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        setCampaignLog(prev => [{ id: Date.now(), segment: 'Due Reminder', count: successCount, sentAt }, ...prev].slice(0, 6));
-        toast(
-          failedCount > 0
-            ? `Sent ${successCount} due reminder${successCount === 1 ? '' : 's'}. ${failedCount} need review.`
-            : `Sent ${successCount} due reminder${successCount === 1 ? '' : 's'}`,
-          failedCount > 0 ? 'info' : 'success',
-        );
-        await fetchGuests();
-      } else {
-        toast(failedCount > 0 ? `${failedCount} due reminder${failedCount === 1 ? '' : 's'} need review.` : 'No due reminders were sent. Please try again.', 'error');
-      }
-    } finally {
-      setBulkSending(false);
-    }
   };
 
   async function handleMergeIntoHousehold() {
@@ -2109,6 +1822,32 @@ const handleSendBulkInvitations = async () => {
   const reminderCandidates = emailableFilteredGuests.filter((g: any) => {
     if (!skipRecentlyInvited) return true;
     return dueReminderGuestIds.has(g.id);
+  });
+
+  const {
+    bulkSending,
+    handleSendBulkInvitations,
+    handleSendDueRemindersNow,
+    handleSendInvitation,
+    handleSendSelectedInvitations,
+    sendingInviteId,
+  } = useGuestDashboardCampaignActions({
+    contactStats,
+    dueReminderCandidatesGlobal,
+    fetchGuests,
+    filterLabel: segmentLabelMap[filterStatus] || filterStatus,
+    guests,
+    isDemoMode,
+    isGuestsReadOnly,
+    reminderCadenceDays,
+    reminderCandidates,
+    requestConfirmation,
+    selectedGuestIds,
+    setCampaignLog,
+    skipRecentlyInvited,
+    toast,
+    weddingSiteId,
+    weddingSiteInfo,
   });
 
   const {
