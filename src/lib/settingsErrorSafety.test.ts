@@ -103,6 +103,10 @@ describe('settings error safety', () => {
     const supportSource = settingsDashboardSupportSource();
     const hydrationSource = settingsDashboardSnapshotHydrationSource();
     const uiStateSource = settingsDashboardUiStateSource();
+    const routeSupportSource = readFileSync(
+      join(process.cwd(), 'src/pages/dashboard/settings/useSettingsDashboardRouteSupport.ts'),
+      'utf8',
+    );
     const selectMatch = source.match(/export const SETTINGS_SITE_SELECT = \[([\s\S]*?)\]\.join/);
     expect(selectMatch?.[1]).toBeTruthy();
     const selectedColumns = new Set(
@@ -128,7 +132,7 @@ describe('settings error safety', () => {
     expect(source).toContain('.select(SETTINGS_SITE_SELECT)');
     expect(source).not.toContain(".select('*')");
     expect(pageSource).toContain('useSettingsDashboardSnapshotHydration({');
-    expect(pageSource).toContain('buildSettingsDashboardViewModel({');
+    expect(pageSource).toContain('useSettingsDashboardRouteSupport({');
     expect(pageSource).toContain('useSettingsDashboardUiState({ userId: user?.id })');
     expect(snapshotSource).toContain('loadSettingsSite(activeSite.id)');
     expect(snapshotSource).toContain('loadSettingsCollaboratorInvites(siteId)');
@@ -156,6 +160,10 @@ describe('settings error safety', () => {
     expect(uiStateSource).toContain("const [activeTab, setActiveTab] = useState<SettingsTabId>('account');");
     expect(uiStateSource).toContain("const [siteSlug, setSiteSlug] = useState('');");
     expect(uiStateSource).toContain('const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);');
+    expect(routeSupportSource).toContain('export function useSettingsDashboardRouteSupport({');
+    expect(routeSupportSource).toContain('const safeMusicPlaylistUrl = getSafePublicWebUrl(musicPlaylistUrl);');
+    expect(routeSupportSource).toContain('buildSettingsDashboardViewModel({');
+    expect(routeSupportSource).toContain('const handleLogout = async () => {');
     expect(pageSource).toContain('useSettingsExperienceActions({');
     expect(experienceSource).toContain('updateSettingsSite(targetSiteId');
     expect(experienceSource).toContain('rsvp_custom_questions: cleanedQuestions');

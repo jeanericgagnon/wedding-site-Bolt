@@ -1,9 +1,7 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { getPlannerPermissionPreset } from '../../lib/plannerAccess';
 import { useToast } from '../../components/ui/Toast';
-import { getSafePublicWebUrl } from '../../sections/publicLinks';
 import {
   type SettingsCollaboratorInviteRow,
 } from './settings/settingsSiteData';
@@ -13,7 +11,6 @@ import {
 import {
   safeSettingsError,
 } from './settings/settingsDashboardUtils';
-import { buildSettingsDashboardViewModel } from './settings/buildSettingsDashboardViewModel';
 import { SettingsDashboardRouteContent } from './settings/SettingsDashboardRouteContent';
 import { useSettingsAccountActions } from './settings/useSettingsAccountActions';
 import { useSettingsDashboardSupport } from './settings/useSettingsDashboardSupport';
@@ -21,6 +18,7 @@ import { useSettingsSiteAccessActions } from './settings/useSettingsSiteAccessAc
 import { useSettingsExperienceActions } from './settings/useSettingsExperienceActions';
 import { useSettingsDashboardSnapshotHydration } from './settings/useSettingsDashboardSnapshotHydration';
 import { useSettingsDashboardUiState } from './settings/useSettingsDashboardUiState';
+import { useSettingsDashboardRouteSupport } from './settings/useSettingsDashboardRouteSupport';
 
 export const DashboardSettings: React.FC = () => {
   const { toast } = useToast();
@@ -179,12 +177,6 @@ export const DashboardSettings: React.FC = () => {
     setWeddingDate,
     setWeddingSiteId,
   } = useSettingsDashboardUiState({ userId: user?.id });
-  const safeMusicPlaylistUrl = getSafePublicWebUrl(musicPlaylistUrl);
-
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/', { replace: true });
-  };
 
   const {
     downloadTextFile,
@@ -254,20 +246,25 @@ export const DashboardSettings: React.FC = () => {
   });
 
   const {
+    handleLogout,
     plannerRoleOptions,
     publicSiteUrl,
+    safeMusicPlaylistUrl,
     tabs,
     weddingIdentityExportKit,
     weddingIdentityPrintAssets,
-  } = useMemo(() => buildSettingsDashboardViewModel({
+  } = useSettingsDashboardRouteSupport({
     coupleNames,
     currentTemplate,
     defaultLanguage,
+    musicPlaylistUrl,
+    navigate,
     settingsRole,
+    signOut,
     siteSlug,
     venueName,
     weddingDate,
-  }), [coupleNames, currentTemplate, defaultLanguage, settingsRole, siteSlug, venueName, weddingDate]);
+  });
 
   const {
     copyIdentityManifest,

@@ -108,6 +108,10 @@ describe('settings site data boundary', () => {
       join(process.cwd(), 'src/pages/dashboard/settings/useSettingsDashboardUiState.ts'),
       'utf8',
     );
+    const routeSupportHook = readFileSync(
+      join(process.cwd(), 'src/pages/dashboard/settings/useSettingsDashboardRouteSupport.ts'),
+      'utf8',
+    );
     const routeContent = readFileSync(
       join(process.cwd(), 'src/pages/dashboard/settings/SettingsDashboardRouteContent.tsx'),
       'utf8',
@@ -132,8 +136,8 @@ describe('settings site data boundary', () => {
     expect(page).toContain('useSettingsAccountActions({');
     expect(page).toContain('useSettingsDashboardSupport({');
     expect(page).toContain('useSettingsDashboardUiState({ userId: user?.id })');
+    expect(page).toContain('useSettingsDashboardRouteSupport({');
     expect(page).toContain('<SettingsDashboardRouteContent');
-    expect(page).toContain('buildSettingsDashboardViewModel({');
     expect(page).not.toContain('requireSettingsAuthenticatedUser()');
     expect(page).not.toContain('verifySettingsCurrentPassword(authUser.email || \'\', currentPassword)');
     expect(page).not.toContain('updateSettingsAccountPassword(newPassword)');
@@ -169,6 +173,8 @@ describe('settings site data boundary', () => {
     expect(page).not.toContain('const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);');
     expect(page).not.toContain('if (activeTab === \'billing\' && settingsRole === \'owner\' && user && !billingInfo) {');
     expect(page).not.toContain('const invite = readPlannerInvite(siteSlug || user?.id || null);');
+    expect(page).not.toContain('const safeMusicPlaylistUrl = getSafePublicWebUrl(musicPlaylistUrl);');
+    expect(page).not.toContain('const handleLogout = async () => {');
     expect(page).not.toContain('supabase.auth.getUser');
     expect(page).not.toContain('supabase.auth.signInWithPassword');
     expect(page).not.toContain('supabase.auth.updateUser');
@@ -192,6 +198,10 @@ describe('settings site data boundary', () => {
     expect(page).not.toContain('buildWeddingIdentityManifestText(weddingIdentityExportKit)');
     expect(page).not.toContain('renderWeddingIdentityPrintHtml(weddingIdentityPrintAssets)');
     expect(page).not.toContain('loadSettingsTemplateChangeSite(weddingSiteId)');
+    expect(routeSupportHook).toContain('export function useSettingsDashboardRouteSupport({');
+    expect(routeSupportHook).toContain('const safeMusicPlaylistUrl = getSafePublicWebUrl(musicPlaylistUrl);');
+    expect(routeSupportHook).toContain('buildSettingsDashboardViewModel({');
+    expect(routeSupportHook).toContain('const handleLogout = async () => {');
     expect(routeContent).toContain('export function SettingsDashboardRouteContent(props: Props)');
     expect(routeContent).toContain('<SettingsDashboardShell');
     expect(routeContent).toContain('<SettingsTabContent');

@@ -19,6 +19,22 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+## 2026-05-08 10:05 AM PT No-Deploy Settings Route-Support Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Settings.tsx` now routes the remaining sign-out/navigation and route-view-model seam through `src/pages/dashboard/settings/useSettingsDashboardRouteSupport.ts`.
+  - That new hook now owns the safe playlist preview URL, the settings view-model memo around `buildSettingsDashboardViewModel({ ... })`, and the route-level logout/navigation callback while the page keeps state hydration, support hooks, and action families.
+  - `src/lib/settingsErrorSafety.test.ts` and `src/pages/dashboard/settings/settingsSiteData.test.ts` now pin `useSettingsDashboardRouteSupport({ ... })`, check that `useSettingsDashboardRouteSupport.ts` owns the safe-link/view-model/logout seam, and reject regaining the old inline route-support block in `Settings.tsx`.
+  - `src/pages/dashboard/Settings.tsx` moved from 516 lines to 513 lines in this batch, while `src/pages/dashboard/settings/useSettingsDashboardRouteSupport.ts` came in at 68 lines. This batch was about route ownership and guardrails more than raw shrinkage.
+- Proof passed:
+  - `npm test -- --run src/pages/dashboard/settings/settingsSiteData.test.ts src/lib/settingsErrorSafety.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts`: PASS, 18/18.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 10:01 AM PT No-Deploy Overview Route-Support Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

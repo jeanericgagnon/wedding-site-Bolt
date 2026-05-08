@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 10:05 AM PT - No-Deploy Settings Route-Support Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Settings.tsx` no longer owns the inline safe playlist preview URL, settings view-model memo, or route-level logout/navigation helper block.
+  - Added `src/pages/dashboard/settings/useSettingsDashboardRouteSupport.ts` so the new hook now owns the safe-link/view-model/logout seam while the route keeps snapshot hydration, support hooks, and site/account/experience action families.
+  - Settings boundary tests now pin `useSettingsDashboardRouteSupport({ ... })`, check that the new hook owns the safe-link/view-model/logout seam, and reject regaining the old inline route-support block in `Settings.tsx`.
+- Acceptance/proof target:
+  - Focused settings tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 10:01 AM PT - No-Deploy Overview Route-Support Extraction
 
 - Status: `PARTIAL`
