@@ -61,6 +61,7 @@ import { useGuestPhotoAiActions } from './guestPhotos/useGuestPhotoAiActions';
 import { buildGuestPhotoDashboardLiveContentProps } from './guestPhotos/buildGuestPhotoDashboardLiveContentProps';
 import { useGuestPhotoAlbumActions } from './guestPhotos/useGuestPhotoAlbumActions';
 import { buildGuestPhotoDashboardDerivedState } from './guestPhotos/buildGuestPhotoDashboardDerivedState';
+import { buildGuestPhotoDashboardMediaState } from './guestPhotos/buildGuestPhotoDashboardMediaState';
 import { useGuestPhotoHubActions } from './guestPhotos/useGuestPhotoHubActions';
 import { useGuestPhotoModerationActions } from './guestPhotos/useGuestPhotoModerationActions';
 import { useGuestPhotoExportActions } from './guestPhotos/useGuestPhotoExportActions';
@@ -165,140 +166,31 @@ export const GuestPhotoSharing: React.FC = () => {
     });
   };
 
-  const countsByBucket = useMemo(() => {
-    const m = new Map<string, number>();
-    uploads.forEach((u) => m.set(u.photo_album_id, (m.get(u.photo_album_id) ?? 0) + 1));
-    return m;
-  }, [uploads]);
-
-  const bucketById = useMemo(() => new Map(buckets.map((bucket) => [bucket.id, bucket])), [buckets]);
-
-  const childBucketsByParent = useMemo(() => {
-    const m = new Map<string, PhotoBucketRow[]>();
-    buckets.forEach((bucket) => {
-      if (!bucket.parent_album_id) return;
-      const children = m.get(bucket.parent_album_id) ?? [];
-      children.push(bucket);
-      m.set(bucket.parent_album_id, children);
-    });
-    m.forEach((children) => children.sort((a, b) => a.name.localeCompare(b.name)));
-    return m;
-  }, [buckets]);
-
-  const bucketDepthById = useMemo(() => {
-    const depthFor = (bucket: PhotoBucketRow, seen = new Set<string>()): number => {
-      if (!bucket.parent_album_id || seen.has(bucket.id)) return 0;
-      const parent = bucketById.get(bucket.parent_album_id);
-      if (!parent) return 0;
-      return 1 + depthFor(parent, new Set([...seen, bucket.id]));
-    };
-    return new Map(buckets.map((bucket) => [bucket.id, Math.min(2, depthFor(bucket))]));
-  }, [buckets, bucketById]);
-
-  const bucketDisplayName = (bucket: PhotoBucketRow | undefined | null) => {
-    if (!bucket) return 'Album';
-    const parent = bucket.parent_album_id ? bucketById.get(bucket.parent_album_id) : null;
-    return parent ? `${parent.name} / ${bucket.name}` : bucket.hierarchy_label || bucket.name;
-  };
-
-  const descendantBucketIdsByParent = useMemo(() => {
-    const collect = (bucketId: string, seen = new Set<string>()): string[] => {
-      if (seen.has(bucketId)) return [];
-      const nextSeen = new Set([...seen, bucketId]);
-      const children = childBucketsByParent.get(bucketId) ?? [];
-      return children.flatMap((child) => [child.id, ...collect(child.id, nextSeen)]);
-    };
-    return new Map(buckets.map((bucket) => [bucket.id, collect(bucket.id)]));
-  }, [buckets, childBucketsByParent]);
-
-  const uploadCountWithChildren = (bucketId: string) => {
-    const ids = [bucketId, ...(descendantBucketIdsByParent.get(bucketId) ?? [])];
-    return ids.reduce((sum, id) => sum + (countsByBucket.get(id) ?? 0), 0);
-  };
-
-  const hiddenCountsByBucket = useMemo(() => {
-    const m = new Map<string, number>();
-    uploads.filter((u) => u.is_hidden).forEach((u) => m.set(u.photo_album_id, (m.get(u.photo_album_id) ?? 0) + 1));
-    return m;
-  }, [uploads]);
-
-  const flaggedCountsByBucket = useMemo(() => {
-    const m = new Map<string, number>();
-    uploads.filter((u) => u.is_flagged).forEach((u) => m.set(u.photo_album_id, (m.get(u.photo_album_id) ?? 0) + 1));
-    return m;
-  }, [uploads]);
-
-  const analysisByUploadId = useMemo(() => new Map(uploadAnalyses.map((analysis) => [analysis.upload_id, analysis])), [uploadAnalyses]);
-  const metadataByUploadId = useMemo(() => new Map(uploadMetadata.map((metadata) => [metadata.upload_id, metadata])), [uploadMetadata]);
-  const availableAiTagCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    uploadAnalyses.forEach((analysis) => {
-      safePhotoAnalysisList(analysis.tags).forEach((rawTag) => {
-        const tag = rawTag.trim().toLowerCase();
-        if (!tag) return;
-        counts.set(tag, (counts.get(tag) ?? 0) + 1);
-      });
-    });
-    return counts;
-  }, [uploadAnalyses]);
-  const availableAiTags = useMemo(() => {
-    return Array.from(availableAiTagCounts.entries())
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-      .slice(0, 24);
-  }, [availableAiTagCounts]);
-
-  const uploadMatchesTagFilter = (upload: PhotoUploadRow) => {
-    if (tagFilter === 'all') return true;
-    const analysis = analysisByUploadId.get(upload.id);
-    return safePhotoAnalysisList(analysis?.tags).some((rawTag) => rawTag.trim().toLowerCase() === tagFilter);
-  };
-
-  const slideshowReadyBucketCount = useMemo(
-    () => buckets.filter((bucket) => (countsByBucket.get(bucket.id) ?? 0) >= 3).length,
-    [buckets, countsByBucket]
-  );
-
-  const slideshowFrames = useMemo<SlideshowFrame[]>(() => {
-    const sourceBuckets = buckets.filter((bucket) => {
-      if (!bucket.is_active) return false;
-      if ((countsByBucket.get(bucket.id) ?? 0) < 3) return false;
-      if (slideshowBucketFilter === 'all') return true;
-      return bucket.id === slideshowBucketFilter;
-    });
-
-    const sourceBucketIds = new Set(sourceBuckets.map((bucket) => bucket.id));
-    let selectedUploads = uploads
-      .filter((upload) => !upload.is_hidden && !upload.is_flagged && sourceBucketIds.has(upload.photo_album_id))
-      .filter(uploadMatchesTagFilter)
-      .map((upload) => {
-        const bucket = buckets.find((entry) => entry.id === upload.photo_album_id);
-        const analysis = analysisByUploadId.get(upload.id);
-        const metadata = metadataByUploadId.get(upload.id);
-        return {
-          uploadId: upload.id,
-          bucketId: upload.photo_album_id,
-          bucketName: bucketDisplayName(bucket),
-          title: upload.original_filename,
-          caption: safePhotoAnalysisText(analysis?.caption, `${upload.guest_name || 'Guest'} · ${formatGuestPhotoDate(metadata?.taken_at || upload.uploaded_at)}`),
-          priority: analysis?.slideshow_priority ?? 50,
-          quality: analysis?.quality_score ?? 0.5,
-          uploadedAt: upload.uploaded_at,
-          takenAt: metadata?.taken_at ?? null,
-        };
-      });
-
-    if (slideshowOrder === 'newest') {
-      selectedUploads = selectedUploads.sort((a, b) => getGuestPhotoSortTime(b.uploadedAt) - getGuestPhotoSortTime(a.uploadedAt));
-    } else if (slideshowOrder === 'oldest') {
-      selectedUploads = selectedUploads.sort((a, b) => getGuestPhotoSortTime(a.uploadedAt) - getGuestPhotoSortTime(b.uploadedAt));
-    } else if (slideshowOrder === 'capture') {
-      selectedUploads = selectedUploads.sort((a, b) => getGuestPhotoSortTime(a.takenAt || a.uploadedAt) - getGuestPhotoSortTime(b.takenAt || b.uploadedAt));
-    } else {
-      selectedUploads = [...selectedUploads].sort((a, b) => b.priority - a.priority || b.quality - a.quality || a.uploadId.localeCompare(b.uploadId));
-    }
-
-    return selectedUploads.slice(0, 24).map(({ uploadedAt: _uploadedAt, priority: _priority, quality: _quality, ...frame }) => frame);
-  }, [buckets, uploads, countsByBucket, slideshowBucketFilter, slideshowOrder, analysisByUploadId, metadataByUploadId, tagFilter]);
+  const {
+    analysisByUploadId,
+    availableAiTagCounts,
+    availableAiTags,
+    bucketById,
+    bucketDepthById,
+    bucketDisplayName,
+    childBucketsByParent,
+    countsByBucket,
+    descendantBucketIdsByParent,
+    flaggedCountsByBucket,
+    hiddenCountsByBucket,
+    metadataByUploadId,
+    slideshowFrames,
+    slideshowReadyBucketCount,
+    uploadCountWithChildren,
+  } = useMemo(() => buildGuestPhotoDashboardMediaState({
+    buckets,
+    slideshowBucketFilter,
+    slideshowOrder,
+    tagFilter,
+    uploadAnalyses,
+    uploadMetadata,
+    uploads,
+  }), [buckets, slideshowBucketFilter, slideshowOrder, tagFilter, uploadAnalyses, uploadMetadata, uploads]);
 
   const slideshowThemeMeta: Record<SlideshowTheme, { label: string; cardClass: string; chipClass: string; helper: string }> = {
     classic: {

@@ -10799,3 +10799,18 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 08:50 AM PT No-Deploy Guest Photo Media-State Helper Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now routes the bucket-tree, count-rollup, AI-tag, and slideshow-frame shaping slab through `src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardMediaState.ts`.
+  - That helper now owns nested album hierarchy assembly, child/descendant rollups, hidden/flagged upload counts, AI tag counts, slideshow-ready album detection, and slideshow frame ordering while the page keeps dashboard hydration, route-level action hooks, dashboard derived-state shaping, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildGuestPhotoDashboardMediaState({ ... })`, checks that `buildGuestPhotoDashboardMediaState.ts` owns the bucket-tree/count/slideshow seam, and rejects regaining the old inline media-state block in `GuestPhotoSharing.tsx`.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 783 lines to 675 lines in this batch, while `src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardMediaState.ts` came in at 172 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
