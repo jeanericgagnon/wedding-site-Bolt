@@ -974,6 +974,7 @@ describe('dashboard data boundary guards', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Vault.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/vaultService.ts'), 'utf8');
     const actions = readFileSync(join(process.cwd(), 'src/pages/dashboard/useVaultDashboardActions.ts'), 'utf8');
+    const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/useVaultDashboardData.ts'), 'utf8');
     const editModal = readFileSync(join(process.cwd(), 'src/pages/dashboard/VaultEditModal.tsx'), 'utf8');
     const liveContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/VaultDashboardLiveContent.tsx'), 'utf8');
     const vaultCard = readFileSync(join(process.cwd(), 'src/pages/dashboard/VaultCard.tsx'), 'utf8');
@@ -984,6 +985,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('<EditVaultModal');
     expect(source).toContain('<VaultCard');
     expect(source).toContain('useVaultDashboardActions({');
+    expect(source).toContain('useVaultDashboardData({');
     expect(service).toContain('export const VAULT_CONFIG_SELECT = ');
     expect(service).toContain('export const VAULT_ENTRY_SELECT = ');
     expect(service).toContain('const VAULT_SITE_SELECT = ');
@@ -1002,9 +1004,6 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain("supabase.functions.invoke('google-drive-auth-start'");
     expect(source).not.toContain("supabase.functions.invoke('google-drive-auth-callback'");
     expect(source).toContain('resolveVaultEntryLink={resolveVaultEntryLinkFromService}');
-    expect(source).toContain('checkVaultGoogleDriveHealth(weddingSiteId)');
-    expect(source).toContain('startVaultGoogleDriveAuth(weddingSiteId)');
-    expect(source).toContain('finishVaultGoogleDriveAuth(googleCode, googleState)');
     expect(actions).toContain('await sendAnniversaryReminder({');
     expect(actions).toContain('const created = await createVaultConfig({');
     expect(actions).toContain('const configs = await seedStarterVaultConfigs(weddingSiteId)');
@@ -1013,6 +1012,12 @@ describe('dashboard data boundary guards', () => {
     expect(actions).toContain('created = await createVaultEntry(weddingSiteId, entry)');
     expect(actions).toContain('await deleteVaultEntry(id)');
     expect(actions).toContain('await deleteVaultConfigWithEntryRollback(configId, deletedEntries)');
+    expect(dataHook).toContain('export function useVaultDashboardData({ isDemoMode, toast, user }: VaultDashboardDataArgs)');
+    expect(dataHook).toContain("const { site: demoSite, configs, entries: demoEntries } = await loadDemoVaultDashboardData('alex-jordan-demo');");
+    expect(dataHook).toContain('const { site, configs, entries: loadedEntries } = await loadVaultDashboardData(user.id);');
+    expect(dataHook).toContain('await checkVaultGoogleDriveHealth(weddingSiteId);');
+    expect(dataHook).toContain('const authUrl = await startVaultGoogleDriveAuth(weddingSiteId);');
+    expect(dataHook).toContain('finishVaultGoogleDriveAuth(googleCode, googleState).then((data) => {');
     expect(liveContent).toContain('export function VaultDashboardLiveContent({');
     expect(liveContent).toContain('<DashboardPageHero');
     expect(liveContent).toContain('Create 1, 5, and 10 year vaults');
@@ -1032,6 +1037,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('const VaultCard: React.FC<VaultCardProps>');
     expect(source).not.toContain('const EntryForm: React.FC<EntryFormProps>');
     expect(source).not.toContain('function defaultVaultLabel(index: number, years: number): string');
+    expect(source).not.toContain('const VAULT_RELEASE_NOTICE_KEY =');
+    expect(source).not.toContain('async function checkGoogleDriveHealth() {');
+    expect(source).not.toContain('async function handleConnectGoogleDrive() {');
+    expect(source).not.toContain('const loadData = useCallback(async () => {');
     expect(service).toContain('export async function resolveVaultEntryLink(entryId: string): Promise<string | null>');
     expect(service).toContain('export async function checkVaultGoogleDriveHealth(siteId: string): Promise<{');
     expect(service).toContain('export async function startVaultGoogleDriveAuth(siteId: string): Promise<string>');

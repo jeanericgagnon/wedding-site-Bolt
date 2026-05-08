@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 7:54 AM PT - No-Deploy Vault Dashboard Data Hook Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Vault.tsx` no longer owns the inline vault bootstrap, demo-state hydration, Drive health/connect, OAuth callback, and unlock-notice lifecycle glue.
+  - Added `src/pages/dashboard/useVaultDashboardData.ts` so the new hook now owns demo/live vault loading, hosted-storage sync, Google Drive health/connect flows, OAuth completion cleanup, unlock notice state, and the shared vault dashboard state setters while the route keeps action wiring, modal state, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useVaultDashboardData({ ... })`, checks that the new hook owns the demo/live vault load plus Drive/OAuth seams, and rejects regaining the old inline `checkGoogleDriveHealth`, `handleConnectGoogleDrive`, and `loadData` slabs in `Vault.tsx`.
+- Acceptance/proof target:
+  - Focused dashboard boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 7:49 AM PT - No-Deploy Planning Dashboard Actions Hook Extraction
 
 - Status: `PARTIAL`

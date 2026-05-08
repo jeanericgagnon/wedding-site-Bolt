@@ -19,6 +19,22 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 7:54 AM PT - No-Deploy Vault Dashboard Data Hook Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Vault.tsx` now routes its vault bootstrap, demo-state hydration, Drive health/connect, OAuth callback, and unlock-notice lifecycle glue through `src/pages/dashboard/useVaultDashboardData.ts` instead of hand-owning that data and continuity lane inline.
+  - That new hook now owns demo/live vault loading, hosted-storage sync, Google Drive health/connect flows, OAuth completion cleanup, unlock notice state, and the shared vault dashboard state setters while the route keeps action wiring, modal state, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useVaultDashboardData({ ... })`, checks that `useVaultDashboardData.ts` owns the demo/live vault load plus Drive/OAuth seams, and rejects regaining the old inline `checkGoogleDriveHealth`, `handleConnectGoogleDrive`, and `loadData` slabs in `Vault.tsx`.
+  - `src/pages/dashboard/Vault.tsx` dropped from 498 lines to 200 lines in this batch, while `src/pages/dashboard/useVaultDashboardData.ts` came in at 361 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ### 2026-05-08 7:49 AM PT - No-Deploy Planning Dashboard Actions Hook Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:

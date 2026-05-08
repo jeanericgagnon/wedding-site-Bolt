@@ -7,6 +7,22 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-08 7:54 AM PT No-Deploy Vault Dashboard Data Hook Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Vault.tsx` now routes its vault bootstrap, demo-state hydration, Drive health/connect, OAuth callback, and unlock-notice lifecycle glue through `src/pages/dashboard/useVaultDashboardData.ts`.
+  - That new hook now owns demo/live vault loading, hosted-storage sync, Google Drive health/connect flows, OAuth completion cleanup, unlock notice state, and the shared vault dashboard state setters while the route keeps action wiring, modal state, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useVaultDashboardData({ ... })`, checks that `useVaultDashboardData.ts` owns the demo/live vault load plus Drive/OAuth seams, and rejects regaining the old inline `checkGoogleDriveHealth`, `handleConnectGoogleDrive`, and `loadData` slabs in `Vault.tsx`.
+  - `src/pages/dashboard/Vault.tsx` dropped from 498 lines to 200 lines in this batch, while `src/pages/dashboard/useVaultDashboardData.ts` came in at 361 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 7:49 AM PT No-Deploy Planning Dashboard Actions Hook Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:
