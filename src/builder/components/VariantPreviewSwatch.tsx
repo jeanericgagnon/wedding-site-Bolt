@@ -1,0 +1,1574 @@
+import React from 'react';
+
+export const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; isHovered: boolean }> = ({ variantId, sectionType, isHovered }) => {
+  const h = isHovered;
+  const c = h ? 'bg-rose-200' : 'bg-gray-200';
+  const cd = h ? 'bg-rose-300' : 'bg-gray-300';
+  const cl = h ? 'bg-rose-100' : 'bg-gray-100';
+
+  const swatches: Record<string, React.ReactNode> = {
+
+    /* ── HERO ── */
+    hero_default: (
+      <div className={`w-full h-20 relative flex flex-col items-center justify-center gap-1.5 transition-colors ${h ? 'bg-rose-900' : 'bg-slate-700'}`}>
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="relative flex flex-col items-center gap-1.5 w-full px-4">
+          <div className="w-28 h-2.5 bg-white/90 rounded-sm" />
+          <div className="w-20 h-1.5 bg-white/60 rounded-sm" />
+          <div className="w-14 h-5 mt-1 bg-white/20 border border-white/40 rounded text-[8px] text-white/80 flex items-center justify-center font-medium">Reply</div>
+        </div>
+      </div>
+    ),
+    hero_minimal: (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 transition-colors bg-white`}>
+        <div className="w-4 h-4 rounded-full border-2 border-rose-300 flex items-center justify-center mb-0.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-rose-300" />
+        </div>
+        <div className={`w-28 h-2.5 rounded-sm ${h ? 'bg-rose-400' : 'bg-gray-800'}`} />
+        <div className={`w-20 h-1.5 rounded-sm ${h ? 'bg-rose-200' : 'bg-gray-300'}`} />
+        <div className={`w-16 h-1 rounded-sm ${h ? 'bg-rose-100' : 'bg-gray-200'}`} />
+      </div>
+    ),
+    hero_fullbleed: (
+      <div className={`w-full h-20 relative flex items-end transition-colors ${h ? 'bg-rose-900' : 'bg-gray-800'}`}>
+        <div className={`absolute inset-0 ${h ? 'bg-rose-950/50' : 'bg-black/50'}`} />
+        <div className="relative w-full px-3 pb-3">
+          <div className="w-24 h-3 bg-white rounded-sm mb-1.5" />
+          <div className="w-16 h-1.5 bg-white/60 rounded-sm" />
+        </div>
+      </div>
+    ),
+
+    /* ── STORY ── */
+    story_default: (
+      <div className={`w-full h-20 flex transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className="flex-1 flex flex-col justify-center gap-1.5 px-3">
+          <div className={`w-16 h-1.5 rounded-sm ${cd}`} />
+          <div className={`h-1 rounded-sm ${c}`} />
+          <div className={`h-1 rounded-sm w-4/5 ${c}`} />
+          <div className={`h-1 rounded-sm w-3/5 ${c}`} />
+        </div>
+        <div className={`w-2/5 h-full ${h ? 'bg-rose-200' : 'bg-gray-200'}`} />
+      </div>
+    ),
+    story_centered: (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 px-4 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`w-10 h-10 rounded-full ${c}`} />
+        <div className={`w-20 h-1.5 rounded-sm ${cd}`} />
+        <div className={`w-full h-1 rounded-sm ${c}`} />
+        <div className={`w-4/5 h-1 rounded-sm ${c}`} />
+      </div>
+    ),
+    story_split: (
+      <div className={`w-full h-20 flex transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`w-1/2 h-full ${h ? 'bg-rose-200' : 'bg-gray-300'}`} />
+        <div className="w-1/2 flex flex-col justify-center gap-1.5 px-2.5">
+          <div className={`w-3 h-3 rounded-full ${h ? 'bg-rose-300' : 'bg-gray-300'} mb-0.5`} />
+          <div className={`h-1.5 rounded-sm ${cd}`} />
+          <div className={`h-1 rounded-sm ${c}`} />
+          <div className={`h-1 rounded-sm w-4/5 ${c}`} />
+          <div className={`h-1 rounded-sm w-3/5 ${c}`} />
+        </div>
+      </div>
+    ),
+
+    /* ── VENUE ── */
+    venue_card: (
+      <div className={`w-full h-20 flex items-center gap-1.5 px-2 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        {[0, 1].map(i => (
+          <div key={i} className={`flex-1 h-16 rounded-lg overflow-hidden flex flex-col ${h ? 'bg-white shadow-sm ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
+            <div className={`h-7 w-full ${i === 0 ? (h ? 'bg-rose-200' : 'bg-gray-200') : (h ? 'bg-rose-100' : 'bg-gray-100')}`} />
+            <div className="px-1.5 pt-1 flex flex-col gap-0.5">
+              <div className={`h-1.5 rounded-sm w-4/5 ${cd}`} />
+              <div className="flex items-center gap-0.5">
+                <div className={`w-1.5 h-1.5 rounded-full ${c}`} />
+                <div className={`flex-1 h-1 rounded-sm ${cl}`} />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    ),
+    venue_mapFirst: (
+      <div className={`w-full h-20 flex flex-col transition-colors`}>
+        <div className={`h-12 w-full relative ${h ? 'bg-rose-100' : 'bg-slate-200'}`}>
+          <div className={`absolute inset-0 opacity-30 ${h ? 'bg-rose-300' : 'bg-slate-400'}`} style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.07) 4px, rgba(0,0,0,0.07) 5px), repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(0,0,0,0.07) 4px, rgba(0,0,0,0.07) 5px)' }} />
+          <div className={`absolute top-3 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full border-2 ${h ? 'border-rose-500 bg-rose-400' : 'border-red-500 bg-red-400'}`} />
+        </div>
+        <div className={`flex-1 flex items-center gap-2 px-2 ${h ? 'bg-rose-50' : 'bg-white'}`}>
+          <div className={`h-1.5 rounded-sm flex-1 ${c}`} />
+          <div className={`h-1.5 rounded-sm w-10 ${cd}`} />
+        </div>
+      </div>
+    ),
+    venue_splitMap: (
+      <div className={`w-full h-20 flex transition-colors`}>
+        <div className="flex-1 flex flex-col justify-center gap-1.5 px-2.5 bg-white">
+          <div className={`w-3 h-3 rounded-full ${h ? 'bg-rose-400' : 'bg-gray-400'} mb-0.5`} />
+          <div className={`h-1.5 rounded-sm ${cd}`} />
+          <div className={`h-1 rounded-sm ${c}`} />
+          <div className={`h-1 rounded-sm w-3/4 ${c}`} />
+        </div>
+        <div className={`w-2/5 h-full relative ${h ? 'bg-rose-100' : 'bg-slate-200'}`}>
+          <div className={`absolute inset-0 opacity-25`} style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 5px, rgba(0,0,0,0.1) 5px, rgba(0,0,0,0.1) 6px), repeating-linear-gradient(90deg, transparent, transparent 5px, rgba(0,0,0,0.1) 5px, rgba(0,0,0,0.1) 6px)' }} />
+          <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 ${h ? 'border-rose-500 bg-rose-400' : 'border-red-400 bg-red-300'}`} />
+        </div>
+      </div>
+    ),
+    venue_detailsFirst: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1.5 px-3 transition-colors bg-white`}>
+        <div className={`h-1.5 rounded-sm w-20 ${cd}`} />
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-0.5">
+          {[0,1,2,3].map(i => (
+            <div key={i} className="flex items-center gap-1">
+              <div className={`w-2 h-2 rounded-sm flex-shrink-0 ${c}`} />
+              <div className={`flex-1 h-1 rounded-sm ${cl}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+
+    /* ── SCHEDULE ── */
+    schedule_timeline: (
+      <div className={`w-full h-20 flex flex-col justify-center px-3 gap-0 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        {[0,1,2].map(i => (
+          <div key={i} className="flex items-start gap-2 py-1">
+            <div className="flex flex-col items-center flex-shrink-0">
+              <div className={`w-2.5 h-2.5 rounded-full ${i === 0 ? (h ? 'bg-rose-500' : 'bg-gray-600') : c}`} />
+              {i < 2 && <div className={`w-0.5 h-3 ${h ? 'bg-rose-200' : 'bg-gray-200'}`} />}
+            </div>
+            <div className="flex-1 space-y-0.5 pt-0.5">
+              <div className={`h-1.5 rounded-sm w-10 ${cd}`} />
+              <div className={`h-1 rounded-sm w-16 ${cl}`} />
+            </div>
+            <div className={`text-[8px] font-mono ${h ? 'text-rose-400' : 'text-gray-400'} pt-0.5 flex-shrink-0`}>4:00</div>
+          </div>
+        ))}
+      </div>
+    ),
+    schedule_dayTabs: (
+      <div className={`w-full h-20 flex flex-col transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className="flex border-b border-gray-200 px-2 pt-1.5 gap-1">
+          {['Fri','Sat','Sun'].map((d, i) => (
+            <div key={d} className={`text-[8px] font-semibold px-1.5 py-0.5 rounded-t-sm ${i === 1 ? (h ? 'bg-rose-500 text-white' : 'bg-gray-700 text-white') : (h ? 'text-rose-400' : 'text-gray-400')}`}>{d}</div>
+          ))}
+        </div>
+        <div className="flex-1 px-3 py-2 space-y-1">
+          {[0,1].map(i => (
+            <div key={i} className="flex items-center gap-1.5">
+              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${c}`} />
+              <div className={`flex-1 h-1 rounded-sm ${cl}`} />
+              <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>2pm</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    schedule_agendaCards: (
+      <div className={`w-full h-20 flex items-center gap-1 px-2 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        {[0,1,2].map(i => (
+          <div key={i} className={`flex-1 h-14 rounded-lg flex flex-col justify-between p-1.5 ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
+            <div>
+              <div className={`text-[7px] font-semibold mb-0.5 ${h ? 'text-rose-400' : 'text-gray-400'}`}>3:00 PM</div>
+              <div className={`h-1.5 rounded-sm ${cd}`} />
+            </div>
+            <div className={`h-1 rounded-sm w-2/3 ${c}`} />
+          </div>
+        ))}
+      </div>
+    ),
+
+    /* ── TRAVEL ── */
+    travel_list: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1.5 px-3 transition-colors bg-white`}>
+        <div className={`h-1.5 rounded-sm w-16 ${cd}`} />
+        {[0,1,2].map(i => (
+          <div key={i} className="flex items-center gap-1.5">
+            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${h ? 'bg-rose-300' : 'bg-gray-300'}`} />
+            <div className={`flex-1 h-1 rounded-sm ${c}`} />
+            <div className={`w-8 h-1 rounded-sm ${cl}`} />
+          </div>
+        ))}
+      </div>
+    ),
+    travel_hotelBlock: (
+      <div className={`w-full h-20 flex items-center gap-1.5 px-2 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        {[0,1].map(i => (
+          <div key={i} className={`flex-1 h-16 rounded-lg overflow-hidden flex flex-col ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
+            <div className={`h-6 ${h ? 'bg-rose-100' : 'bg-slate-100'}`} />
+            <div className="p-1.5 flex flex-col gap-0.5">
+              <div className={`h-1.5 rounded-sm ${cd}`} />
+              <div className="flex items-center gap-0.5 mt-0.5">
+            <div className={`w-7 h-3.5 rounded text-[6px] flex items-center justify-center font-bold ${h ? 'bg-rose-100 text-rose-600 border border-rose-200' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>Stay</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    ),
+
+    /* ── REGISTRY ── */
+    registry_cards: (
+      <div className={`w-full h-20 flex flex-col justify-center px-3 gap-1.5 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`h-1.5 rounded-sm w-14 ${cd}`} />
+        {[0,1].map(i => (
+          <div key={i} className={`h-6 rounded-lg flex items-center px-2 gap-2 ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
+            <div className={`w-3 h-3 rounded-sm flex-shrink-0 ${c}`} />
+            <div className={`flex-1 h-1 rounded-sm ${c}`} />
+            <div className={`w-10 h-3 rounded text-[7px] flex items-center justify-center font-semibold ${h ? 'bg-rose-500 text-white' : 'bg-gray-700 text-white'}`}>Open</div>
+          </div>
+        ))}
+      </div>
+    ),
+    registry_featured: (
+      <div className={`w-full h-20 flex items-center gap-1 px-2 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        {[0,1,2].map((i) => (
+          <div key={i} className={`flex-1 h-16 rounded-lg overflow-hidden flex flex-col ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'} ${i === 1 ? 'scale-105' : ''}`}>
+            <div className={`h-8 ${h ? 'bg-rose-100' : 'bg-gray-100'} flex items-center justify-center`}>
+              <div className={`w-3 h-3 rounded-sm ${c}`} />
+            </div>
+            <div className="p-1 flex flex-col gap-0.5">
+              <div className={`h-1 rounded-sm ${cd}`} />
+              <div className={`h-1 rounded-sm w-2/3 ${cl}`} />
+            </div>
+          </div>
+        ))}
+      </div>
+    ),
+
+    /* ── FAQ ── */
+    faq_default: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-2 px-3 transition-colors bg-white`}>
+        <div className={`h-1.5 rounded-sm w-12 ${cd}`} />
+        {[0,1].map(i => (
+          <div key={i} className="space-y-0.5">
+            <div className={`h-1.5 rounded-sm w-24 ${cd}`} />
+            <div className={`h-1 rounded-sm w-full ${cl}`} />
+            <div className={`h-1 rounded-sm w-4/5 ${cl}`} />
+          </div>
+        ))}
+      </div>
+    ),
+    faq_accordion: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1.5 px-3 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`h-1.5 rounded-sm w-10 ${cd}`} />
+        {[0,1,2].map((i) => (
+          <div key={i} className={`flex items-center justify-between px-2 py-1 rounded-md border transition-colors ${i === 0 ? (h ? 'border-rose-300 bg-rose-100' : 'border-gray-300 bg-white') : (h ? 'border-rose-100 bg-rose-50' : 'border-gray-100 bg-white')}`}>
+            <div className={`h-1.5 w-20 rounded-sm ${i === 0 ? cd : c}`} />
+            <div className={`text-[10px] font-bold ${h ? 'text-rose-400' : 'text-gray-400'}`}>{i === 0 ? '−' : '+'}</div>
+          </div>
+        ))}
+      </div>
+    ),
+
+    /* ── RSVP ── */
+    rsvp_default: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1.5 px-3 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`h-1.5 rounded-sm w-10 ${cd}`} />
+        <div className={`h-5 rounded-md border ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'} flex items-center px-2`}>
+          <div className={`flex-1 h-1 rounded-sm ${cl}`} />
+        </div>
+        <div className="flex gap-1">
+          <div className={`flex-1 h-5 rounded-md border flex items-center px-1.5 gap-1 ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
+            <div className={`w-1.5 h-1.5 rounded-full ${h ? 'bg-rose-300' : 'bg-gray-300'}`} />
+            <div className={`text-[7px] ${h ? 'text-rose-500' : 'text-gray-500'} font-medium`}>Yes</div>
+          </div>
+          <div className={`flex-1 h-5 rounded-md border flex items-center px-1.5 gap-1 ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
+            <div className={`w-1.5 h-1.5 rounded-full ${c}`} />
+            <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'} font-medium`}>No</div>
+          </div>
+        </div>
+        <div className={`h-5 rounded-md flex items-center justify-center ${h ? 'bg-rose-500' : 'bg-gray-700'}`}>
+          <div className="text-[8px] text-white font-semibold">SEND RSVP</div>
+        </div>
+      </div>
+    ),
+    rsvp_inline: (
+      <div className={`w-full h-20 flex items-center px-2 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`w-full h-11 rounded-xl border flex items-center px-2.5 gap-2 ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
+          <div className="flex-1 flex flex-col gap-0.5">
+            <div className={`h-1.5 rounded-sm w-16 ${cd}`} />
+            <div className={`h-4 rounded-md border w-full ${h ? 'border-rose-100' : 'border-gray-100'}`} />
+          </div>
+          <div className={`w-14 h-7 rounded-lg flex items-center justify-center ${h ? 'bg-rose-500' : 'bg-gray-700'}`}>
+            <div className="text-[7px] text-white font-bold">Reply</div>
+          </div>
+        </div>
+      </div>
+    ),
+
+    /* ── GALLERY ── */
+    gallery_masonry: (
+      <div className={`w-full h-20 flex items-start gap-0.5 px-1.5 pt-1.5 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className="flex-1 flex flex-col gap-0.5">
+          <div className={`h-8 rounded-sm ${h ? 'bg-rose-200' : 'bg-gray-200'}`} />
+          <div className={`h-5 rounded-sm ${h ? 'bg-rose-300' : 'bg-gray-300'}`} />
+        </div>
+        <div className="flex-1 flex flex-col gap-0.5">
+          <div className={`h-5 rounded-sm ${h ? 'bg-rose-300' : 'bg-gray-300'}`} />
+          <div className={`h-7 rounded-sm ${h ? 'bg-rose-100' : 'bg-gray-100'}`} />
+        </div>
+        <div className="flex-1 flex flex-col gap-0.5">
+          <div className={`h-6 rounded-sm ${h ? 'bg-rose-200' : 'bg-gray-200'}`} />
+          <div className={`h-6 rounded-sm ${h ? 'bg-rose-300' : 'bg-gray-300'}`} />
+        </div>
+      </div>
+    ),
+    gallery_grid: (
+      <div className={`w-full h-20 flex flex-col items-center justify-center transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className="grid grid-cols-3 gap-0.5 w-full px-1.5">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className={`aspect-square rounded-sm ${i % 2 === 0 ? (h ? 'bg-rose-200' : 'bg-gray-200') : (h ? 'bg-rose-300' : 'bg-gray-300')}`} />
+          ))}
+        </div>
+      </div>
+    ),
+    gallery_filmStrip: (
+      <div className={`w-full h-20 flex flex-col gap-0.5 p-1.5 transition-colors ${h ? 'bg-gray-900' : 'bg-gray-800'}`}>
+        <div className={`flex-1 rounded-sm ${h ? 'bg-rose-300/70' : 'bg-gray-500'}`} />
+        <div className="flex gap-0.5">
+          {[0,1,2,3,4].map(i => (
+            <div key={i} className={`flex-1 h-4 rounded-sm ${i === 2 ? (h ? 'bg-rose-300/80 ring-1 ring-rose-400' : 'bg-gray-400 ring-1 ring-white/20') : (h ? 'bg-gray-600' : 'bg-gray-600')}`} />
+          ))}
+        </div>
+      </div>
+    ),
+    gallery_polaroid: (
+      <div className={`w-full h-20 flex items-center justify-center gap-1 transition-colors ${h ? 'bg-amber-50' : 'bg-stone-100'}`}>
+        {[{r:-6,w:22},{r:3,w:26},{r:-3,w:22}].map(({r,w}, i) => (
+          <div
+            key={i}
+            className="bg-white shadow-md flex-shrink-0"
+            style={{ transform: `rotate(${r}deg)`, padding: '3px 3px 9px 3px', width: `${w}px` }}
+          >
+            <div className={`w-full aspect-square ${h ? 'bg-rose-200' : 'bg-gray-200'}`} />
+          </div>
+        ))}
+      </div>
+    ),
+
+    /* ── COUNTDOWN ── */
+    countdown_default: (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`text-[8px] font-medium ${h ? 'text-rose-400' : 'text-gray-400'}st`}>Counting down</div>
+        <div className="flex items-end gap-1.5">
+          {[{n:'047',l:'Days'},{n:'12',l:'Hrs'},{n:'38',l:'Min'}].map(({n,l}) => (
+            <div key={l} className="flex flex-col items-center">
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold ${h ? 'bg-rose-500 text-white' : 'bg-gray-800 text-white'}`}>{n.slice(-2)}</div>
+              <div className={`text-[6px] mt-0.5 ${h ? 'text-rose-400' : 'text-gray-400'} font-medium`}>{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    countdown_banner: (
+      <div className={`w-full h-20 flex items-center justify-center transition-colors ${h ? 'bg-rose-500' : 'bg-gray-800'}`}>
+        <div className="flex items-center gap-3">
+          <div className="text-[8px] text-white/70 font-medium">Until the big day</div>
+          <div className="flex items-center gap-1">
+            {['47d','12h','38m'].map(t => (
+              <div key={t} className="bg-white/20 rounded px-1 py-0.5">
+                <span className="text-[9px] text-white font-bold">{t}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    ),
+
+    /* ── WEDDING PARTY ── */
+    'wedding-party_default': (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1.5 px-2 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`h-1.5 rounded-sm w-16 mx-auto ${cd}`} />
+        <div className="flex justify-center gap-1">
+          {[0,1,2,3].map(i => (
+            <div key={i} className="flex flex-col items-center gap-0.5">
+              <div className={`w-7 h-7 rounded-full ${i < 2 ? (h ? 'bg-rose-200' : 'bg-gray-200') : (h ? 'bg-rose-300' : 'bg-gray-300')}`} />
+              <div className={`w-6 h-1 rounded-sm ${c}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    'wedding-party_grid': (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1.5 px-2 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`h-1.5 rounded-sm w-16 mx-auto ${cd}`} />
+        <div className="grid grid-cols-5 gap-1 px-1">
+          {[0,1,2,3,4].map(i => (
+            <div key={i} className="flex flex-col items-center gap-0.5">
+              <div className={`w-full aspect-square rounded-full ${i % 3 === 0 ? (h ? 'bg-rose-300' : 'bg-gray-300') : (h ? 'bg-rose-200' : 'bg-gray-200')}`} />
+              <div className={`w-full h-1 rounded-sm ${cl}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+
+    /* ── DRESS CODE ── */
+    'dress-code_default': (
+      <div className={`w-full h-20 flex transition-colors ${h ? 'bg-stone-50' : 'bg-gray-50'}`}>
+        <div className={`w-1.5 h-full ${h ? 'bg-rose-400' : 'bg-gray-400'}`} />
+        <div className="flex-1 flex flex-col justify-center gap-1.5 px-3">
+          <div className={`text-[7px] font-semibold ${h ? 'text-rose-400' : 'text-gray-400'}`}>What to wear</div>
+          <div className={`text-[10px] font-bold ${h ? 'text-rose-700' : 'text-gray-700'}`}>Black Tie</div>
+          <div className={`h-1 rounded-sm w-full ${c}`} />
+          <div className={`h-1 rounded-sm w-4/5 ${c}`} />
+        </div>
+        <div className="w-12 flex flex-col items-center justify-center gap-1 pr-2">
+          <div className={`w-8 h-10 rounded-sm ${h ? 'bg-rose-100 border border-rose-200' : 'bg-gray-100 border border-gray-200'} flex items-end justify-center pb-1`}>
+            <div className={`w-4 h-6 rounded-t-full border-b-0 ${h ? 'bg-rose-200' : 'bg-gray-200'}`} />
+          </div>
+        </div>
+      </div>
+    ),
+    'dress-code_banner': (
+      <div className={`w-full h-20 flex items-center justify-between px-4 transition-colors ${h ? 'bg-rose-900' : 'bg-gray-900'}`}>
+        <div className="flex flex-col gap-1">
+          <div className={`text-[7px] ${h ? 'text-rose-300' : 'text-gray-400'}`}>Dress code</div>
+          <div className="text-[11px] font-bold text-white">Black Tie</div>
+        </div>
+        <div className={`w-px h-8 ${h ? 'bg-rose-700' : 'bg-gray-700'}`} />
+        <div className={`text-[8px] text-right ${h ? 'text-rose-300' : 'text-gray-400'} max-w-16 leading-tight`}>Formal attire required</div>
+      </div>
+    ),
+
+    /* ── ACCOMMODATIONS ── */
+    accommodations_default: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1.5 px-3 transition-colors bg-white`}>
+        <div className={`h-1.5 rounded-sm w-20 ${cd}`} />
+        {[0,1].map(i => (
+          <div key={i} className="flex items-start gap-1.5">
+            <div className={`w-2 h-2 rounded-sm flex-shrink-0 mt-0.5 ${c}`} />
+            <div className="flex-1 space-y-0.5">
+              <div className={`h-1.5 rounded-sm ${cd}`} />
+              <div className={`h-1 rounded-sm w-3/4 ${cl}`} />
+            </div>
+          <div className={`w-10 h-4 rounded text-[7px] flex items-center justify-center font-semibold flex-shrink-0 ${h ? 'bg-rose-100 text-rose-600 border border-rose-200' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>Stay</div>
+          </div>
+        ))}
+      </div>
+    ),
+    accommodations_cards: (
+      <div className={`w-full h-20 flex items-center gap-1.5 px-2 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        {[0,1].map(i => (
+          <div key={i} className={`flex-1 h-16 rounded-lg overflow-hidden flex flex-col ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
+            <div className={`h-5 ${h ? 'bg-rose-100' : 'bg-slate-100'}`} />
+            <div className="p-1.5 flex flex-col gap-0.5">
+              <div className={`h-1.5 rounded-sm ${cd}`} />
+              <div className={`h-1 rounded-sm w-2/3 ${cl}`} />
+              <div className={`mt-0.5 h-3 rounded text-[6px] flex items-center justify-center font-bold w-full ${h ? 'bg-rose-100 text-rose-600 border border-rose-200' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>VIEW STAY</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    ),
+
+    /* ── CONTACT ── */
+    contact_default: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1.5 px-3 transition-colors bg-white`}>
+        <div className={`h-1.5 rounded-sm w-14 ${cd}`} />
+        <div className="flex gap-2">
+          {[0,1].map(i => (
+            <div key={i} className={`flex-1 h-10 rounded-lg p-1.5 flex flex-col gap-0.5 ${h ? 'bg-rose-50 border border-rose-100' : 'bg-gray-50 border border-gray-100'}`}>
+              <div className={`w-4 h-4 rounded-full ${c}`} />
+              <div className={`h-1 rounded-sm ${cd}`} />
+              <div className={`h-1 rounded-sm w-3/4 ${cl}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    contact_minimal: (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`h-1.5 rounded-sm w-16 ${cd}`} />
+        <div className={`h-1 rounded-sm w-24 ${c}`} />
+        <div className={`flex items-center gap-3 mt-1`}>
+          {[0,1,2].map(i => (
+            <div key={i} className={`flex items-center gap-0.5`}>
+              <div className={`w-2 h-2 rounded-full ${c}`} />
+              <div className={`h-1 rounded-sm w-8 ${cl}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+
+    /* ── FOOTER CTA ── */
+    'footer-cta_default': (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 transition-colors ${h ? 'bg-rose-600' : 'bg-gray-800'}`}>
+        <div className="text-[8px] text-white/60 font-medium">We hope to celebrate with you</div>
+        <div className="text-[11px] text-white font-bold">Sarah & James</div>
+        <div className={`mt-0.5 px-4 py-1 rounded-full border border-white/40 text-[8px] text-white font-semibold`}>Send RSVP</div>
+      </div>
+    ),
+    'footer-cta_minimal': (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 transition-colors bg-white`}>
+        <div className={`h-px w-12 ${h ? 'bg-rose-200' : 'bg-gray-200'} mb-1`} />
+        <div className={`text-[9px] font-semibold ${h ? 'text-rose-600' : 'text-gray-700'}`}>Join us on our big day</div>
+        <div className={`px-4 py-1 rounded-full text-[8px] font-semibold ${h ? 'bg-rose-100 text-rose-600 border border-rose-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>Reply</div>
+        <div className={`h-px w-12 ${h ? 'bg-rose-200' : 'bg-gray-200'} mt-1`} />
+      </div>
+    ),
+
+    /* ── CUSTOM ── */
+    custom_default: (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 transition-colors ${h ? 'bg-amber-50' : 'bg-gray-50'}`}>
+        <div className="flex gap-1 mb-0.5">
+          {['H','P','B'].map(t => (
+            <div key={t} className={`text-[7px] font-bold px-1.5 py-0.5 rounded ${h ? 'bg-amber-200 text-amber-700' : 'bg-gray-200 text-gray-500'}`}>{t}</div>
+          ))}
+        </div>
+        <div className={`h-1.5 rounded-sm w-20 ${h ? 'bg-amber-300' : 'bg-gray-300'}`} />
+        <div className={`h-1 rounded-sm w-full mx-4 ${h ? 'bg-amber-200' : 'bg-gray-200'}`} />
+        <div className={`h-5 rounded-md w-12 ${h ? 'bg-amber-400' : 'bg-gray-400'} mt-0.5`} />
+      </div>
+    ),
+
+    /* ── HERO new variants ── */
+    hero_split: (
+      <div className={`w-full h-20 flex transition-colors`}>
+        <div className={`w-1/2 h-full ${h ? 'bg-rose-200' : 'bg-gray-300'}`} />
+        <div className={`w-1/2 flex flex-col justify-center gap-1.5 px-3 ${h ? 'bg-rose-50' : 'bg-white'}`}>
+          <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>We're Getting Married</div>
+          <div className={`w-20 h-2.5 rounded-sm ${cd}`} />
+          <div className={`w-14 h-1.5 rounded-sm ${c}`} />
+          <div className={`mt-1 w-12 h-4 rounded border ${h ? 'border-rose-400 text-rose-500' : 'border-gray-400 text-gray-500'} text-[7px] flex items-center justify-center font-semibold`}>Reply</div>
+        </div>
+      </div>
+    ),
+    hero_botanical: (
+      <div className={`w-full h-20 relative flex flex-col items-center justify-center transition-colors ${h ? 'bg-rose-100' : 'bg-stone-100'}`}>
+        <div className={`absolute top-0 left-0 w-8 h-8 rounded-br-full opacity-40 ${h ? 'bg-rose-300' : 'bg-green-200'}`} />
+        <div className={`absolute bottom-0 right-0 w-10 h-10 rounded-tl-full opacity-40 ${h ? 'bg-rose-200' : 'bg-green-100'}`} />
+        <div className="relative flex flex-col items-center gap-1">
+          <div className={`text-[7px] italic ${h ? 'text-rose-400' : 'text-gray-400'}`}>with love</div>
+          <div className={`w-22 h-2.5 rounded-sm ${h ? 'bg-rose-500' : 'bg-gray-700'}`} style={{ width: '5.5rem' }} />
+          <div className={`w-16 h-1.5 rounded-sm ${c}`} />
+        </div>
+      </div>
+    ),
+    hero_video: (
+      <div className={`w-full h-20 relative flex flex-col items-center justify-center ${h ? 'bg-rose-950' : 'bg-gray-900'}`}>
+        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)' }} />
+        <div className="relative flex flex-col items-center gap-1.5">
+          <div className={`w-5 h-5 rounded-full border-2 ${h ? 'border-rose-400' : 'border-white/50'} flex items-center justify-center mb-0.5`}>
+            <div className={`w-0 h-0 border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent border-l-[6px] ${h ? 'border-l-rose-400' : 'border-l-white/60'} ml-0.5`} />
+          </div>
+          <div className="w-24 h-2 bg-white/80 rounded-sm" />
+          <div className="w-16 h-1.5 bg-white/50 rounded-sm" />
+        </div>
+      </div>
+    ),
+    hero_invitation: (
+      <div className={`w-full h-20 flex items-center justify-center transition-colors ${h ? 'bg-rose-50' : 'bg-amber-50'}`}>
+        <div className={`w-28 h-16 flex flex-col items-center justify-center gap-0.5 border-2 ${h ? 'border-rose-200' : 'border-amber-200'} rounded-sm`}>
+          <div className={`text-[5px] ${h ? 'text-rose-400' : 'text-amber-600'}`}>Together with their families</div>
+          <div className={`w-16 h-2 rounded-sm ${cd}`} />
+          <div className={`w-px h-2 ${h ? 'bg-rose-200' : 'bg-amber-200'}`} />
+          <div className={`text-[5px] ${h ? 'text-rose-400' : 'text-amber-600'}`}>request the honour of your</div>
+          <div className={`w-10 h-1.5 rounded-sm ${c}`} />
+        </div>
+      </div>
+    ),
+    hero_countdown: (
+      <div className={`w-full h-20 relative flex flex-col transition-colors ${h ? 'bg-rose-900' : 'bg-slate-700'}`}>
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="relative flex-1 flex flex-col items-center justify-center gap-0.5 pt-1">
+          <div className="text-[8px] font-bold text-white">Sarah & James</div>
+          <div className="text-[6px] text-white/60">June 14 · New York</div>
+        </div>
+        <div className={`relative flex justify-center gap-1.5 pb-2`}>
+          {['47d','12h','38m'].map(t => (
+            <div key={t} className={`${h ? 'bg-rose-500/80' : 'bg-black/40'} border border-white/20 rounded px-1.5 py-0.5`}>
+              <span className="text-[8px] text-white font-bold">{t}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+
+    /* ── STORY new variants ── */
+    story_timeline: (
+      <div className={`w-full h-20 flex flex-col justify-center px-3 gap-0 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`text-[7px] mb-1 ${h ? 'text-rose-400' : 'text-gray-400'}`}>Our Journey</div>
+        {['2019','2021','2023'].map((yr, i) => (
+          <div key={yr} className="flex items-center gap-1.5 py-0.5">
+            <div className={`text-[6px] font-bold w-6 flex-shrink-0 ${h ? 'text-rose-400' : 'text-gray-500'}`}>{yr}</div>
+            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${i === 2 ? (h ? 'bg-rose-500' : 'bg-gray-600') : (h ? 'bg-rose-200' : 'bg-gray-300')}`} />
+            <div className={`flex-1 h-1 rounded-sm ${i === 2 ? cd : cl}`} />
+          </div>
+        ))}
+      </div>
+    ),
+    story_chapters: (
+      <div className={`w-full h-20 flex transition-colors`}>
+        <div className={`w-2/5 h-full ${h ? 'bg-rose-200' : 'bg-gray-200'} flex items-start p-1.5`}>
+          <div className={`text-[9px] font-bold ${h ? 'text-rose-600' : 'text-gray-600'}`}>I.</div>
+        </div>
+        <div className="flex-1 flex flex-col justify-center gap-1 px-2.5 bg-white">
+          <div className={`text-[6px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Chapter One</div>
+          <div className={`h-1.5 rounded-sm w-4/5 ${cd}`} />
+          <div className={`h-1 rounded-sm ${c}`} />
+          <div className={`h-1 rounded-sm w-3/4 ${c}`} />
+          <div className={`h-1 rounded-sm w-2/3 ${c}`} />
+        </div>
+      </div>
+    ),
+    story_duoColumn: (
+      <div className={`w-full h-20 flex transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        {[0,1].map(i => (
+          <div key={i} className={`flex-1 flex flex-col justify-center gap-1 px-2 ${i === 0 ? (h ? 'bg-rose-100/40' : 'bg-pink-50') : (h ? 'bg-sky-100/40' : 'bg-sky-50')}`}>
+            <div className={`w-3 h-3 rounded-full mx-auto ${h ? (i === 0 ? 'bg-rose-300' : 'bg-sky-300') : 'bg-gray-300'}`} />
+            <div className={`h-1.5 rounded-sm w-full mx-auto ${cd}`} />
+            <div className={`h-1 rounded-sm ${c}`} />
+            <div className={`h-1 rounded-sm w-3/4 ${cl}`} />
+          </div>
+        ))}
+      </div>
+    ),
+    story_milestones: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1 px-2 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`h-1.5 rounded-sm w-16 mx-auto ${cd}`} />
+        <div className="flex justify-between gap-1 mt-1">
+          {['✈','♥','💍','🎉'].map((icon, i) => (
+            <div key={i} className={`flex-1 flex flex-col items-center gap-0.5 rounded-md p-1 ${h ? 'bg-rose-100' : 'bg-white border border-gray-100'}`}>
+              <div className={`text-[9px]`}>{icon}</div>
+              <div className={`h-1 rounded-sm w-full ${cl}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+
+    /* ── VENUE new variants ── */
+    venue_banner: (
+      <div className={`w-full h-20 relative flex items-end transition-colors ${h ? 'bg-rose-900' : 'bg-slate-600'}`}>
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="relative w-full px-3 pb-3 flex items-end justify-between">
+          <div>
+            <div className={`text-[6px] ${h ? 'text-rose-300' : 'text-white/50'}`}>Ceremony</div>
+            <div className="text-[10px] font-bold text-white">The Grand Estate</div>
+            <div className="text-[7px] text-white/60">123 Venue Lane</div>
+          </div>
+          <div className={`w-10 h-3 rounded text-[6px] flex items-center justify-center font-bold ${h ? 'bg-rose-500 text-white' : 'bg-white/20 text-white border border-white/30'}`}>Map</div>
+        </div>
+      </div>
+    ),
+    venue_stacked: (
+      <div className={`w-full h-20 flex flex-col gap-0.5 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        {[{label:'Ceremony',color:h?'bg-rose-200':'bg-gray-200'},{label:'Reception',color:h?'bg-rose-300':'bg-gray-300'}].map(({label,color},i) => (
+          <div key={i} className="flex-1 flex overflow-hidden rounded-sm">
+            <div className={`w-2/5 h-full ${color}`} />
+            <div className={`flex-1 flex flex-col justify-center gap-0.5 px-1.5 bg-white`}>
+              <div className={`text-[5px] font-bold ${h ? 'text-rose-400' : 'text-gray-400'}`}>{label}</div>
+              <div className={`h-1.5 rounded-sm w-4/5 ${cd}`} />
+              <div className={`h-1 rounded-sm w-full ${cl}`} />
+            </div>
+          </div>
+        ))}
+      </div>
+    ),
+    venue_minimal: (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 transition-colors bg-white`}>
+        <div className={`h-2 rounded-sm w-24 ${cd}`} />
+        <div className={`h-1 rounded-sm w-20 ${c}`} />
+        <div className={`h-px w-12 ${h ? 'bg-rose-200' : 'bg-gray-200'}`} />
+        <div className="flex gap-1 items-center">
+          <div className={`w-3 h-3 rounded ${h ? 'bg-rose-100' : 'bg-gray-100'} border ${h ? 'border-rose-200' : 'border-gray-200'}`} />
+          <div className={`h-1 rounded-sm w-16 ${cl}`} />
+        </div>
+      </div>
+    ),
+
+    /* ── SCHEDULE new variants ── */
+    schedule_bands: (
+      <div className={`w-full h-20 flex flex-col justify-center transition-colors`}>
+        {[{bg:h?'bg-rose-50':'bg-white',w:'w-16'},{bg:h?'bg-rose-100/50':'bg-gray-50',w:'w-20'},{bg:h?'bg-rose-50':'bg-white',w:'w-14'}].map(({bg,w},i) => (
+          <div key={i} className={`flex-1 flex items-center px-3 gap-2 ${bg}`}>
+            <div className={`text-[7px] font-mono ${h ? 'text-rose-400' : 'text-gray-400'} w-7 flex-shrink-0`}>{['4pm','5pm','7pm'][i]}</div>
+            <div className={`h-1.5 rounded-sm flex-1 ${cd}`} />
+          </div>
+        ))}
+      </div>
+    ),
+    schedule_horizontal: (
+      <div className={`w-full h-20 flex flex-col justify-center transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`w-full h-px ${h ? 'bg-rose-200' : 'bg-gray-300'} relative mx-0`}>
+          <div className="flex items-center justify-around absolute -top-2 left-0 right-0">
+            {[0,1,2,3].map(i => (
+              <div key={i} className="flex flex-col items-center gap-0.5">
+                <div className={`w-3 h-3 rounded-full ${i === 0 ? (h ? 'bg-rose-500' : 'bg-gray-700') : (h ? 'bg-rose-200' : 'bg-gray-300')}`} />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-start justify-around mt-2">
+          {['Arr','Cer','Cock','Rec'].map((l,i) => (
+            <div key={l} className="flex flex-col items-center gap-0.5">
+              <div className={`text-[6px] ${h ? 'text-rose-400' : 'text-gray-400'} font-medium`}>{l}</div>
+              <div className={`h-1 rounded-sm ${i === 0 ? (h ? 'w-6 bg-rose-300' : 'w-6 bg-gray-400') : (h ? 'w-4 bg-rose-200' : 'w-4 bg-gray-200')}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    schedule_program: (
+      <div className={`w-full h-20 flex transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        {[{label:'Ceremony'},{label:'Reception'}].map(({label},i) => (
+          <div key={i} className={`flex-1 flex flex-col px-2 pt-1.5 gap-1 ${i === 0 ? 'border-r border-gray-200' : ''}`}>
+            <div className={`text-[5px] font-bold ${h ? 'text-rose-400' : 'text-gray-400'}`}>{label}</div>
+            {[0,1,2].map(j => (
+              <div key={j} className="flex items-center gap-0.5">
+                <div className={`w-3 h-0.5 rounded-sm ${h ? 'bg-rose-200' : 'bg-gray-300'} flex-shrink-0`} />
+                <div className={`flex-1 h-0.5 rounded-sm ${cl}`} />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    ),
+
+    /* ── TRAVEL new variants ── */
+    travel_tiers: (
+      <div className={`w-full h-20 flex items-stretch gap-0.5 px-1.5 py-1.5 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        {['Closest','Best Value','Budget'].map((tier, i) => (
+          <div key={tier} className={`flex-1 flex flex-col rounded-md overflow-hidden border ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
+            <div className={`h-3 flex items-center justify-center text-[5px] font-bold ${i === 0 ? (h ? 'bg-rose-500 text-white' : 'bg-gray-700 text-white') : (h ? 'bg-rose-100 text-rose-600' : 'bg-gray-100 text-gray-500')}`}>{tier}</div>
+            <div className="p-1 flex flex-col gap-0.5">
+              <div className={`h-1 rounded-sm ${cd}`} />
+              <div className={`h-0.5 rounded-sm ${cl}`} />
+            </div>
+          </div>
+        ))}
+      </div>
+    ),
+    travel_mapPins: (
+      <div className={`w-full h-20 flex flex-col transition-colors`}>
+        <div className={`h-10 w-full relative ${h ? 'bg-rose-100' : 'bg-slate-200'}`}>
+          <div className={`absolute inset-0 opacity-20`} style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.07) 4px, rgba(0,0,0,0.07) 5px), repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(0,0,0,0.07) 4px, rgba(0,0,0,0.07) 5px)' }} />
+          {[[30,40],[55,25],[70,50]].map(([x,y],i) => (
+            <div key={i} className={`absolute w-2 h-2 rounded-full border ${h ? 'border-rose-500' : 'border-gray-600'} ${h ? ['bg-rose-500','bg-blue-400','bg-green-400'][i] : ['bg-red-500','bg-blue-400','bg-green-400'][i]}`} style={{left:`${x}%`,top:`${y}%`}} />
+          ))}
+        </div>
+        <div className={`flex-1 flex items-center gap-2 px-2 ${h ? 'bg-white' : 'bg-white'}`}>
+          {['Hotel A','Hotel B','Venue'].map((name,i) => (
+            <div key={name} className="flex items-center gap-0.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${h ? ['bg-rose-500','bg-blue-400','bg-green-400'][i] : ['bg-red-500','bg-blue-400','bg-green-400'][i]}`} />
+              <div className={`text-[6px] ${h ? 'text-rose-600' : 'text-gray-600'}`}>{name}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    travel_splitAirHotel: (
+      <div className={`w-full h-20 flex transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`flex-1 flex flex-col justify-center gap-1 px-2 border-r ${h ? 'border-rose-200' : 'border-gray-200'}`}>
+          <div className={`text-[6px] font-bold ${h ? 'text-rose-400' : 'text-gray-400'}`}>By Air</div>
+          <div className={`h-1 rounded-sm ${cd}`} />
+          <div className={`text-[6px] ${h ? 'text-rose-300' : 'text-gray-300'}`}>✈ JFK · 45 min</div>
+        </div>
+        <div className="flex-1 flex flex-col justify-center gap-1 px-2">
+          <div className={`text-[6px] font-bold ${h ? 'text-rose-400' : 'text-gray-400'}`}>Hotels</div>
+          {[0,1].map(i => (
+            <div key={i} className="flex items-center gap-1">
+              <div className={`w-1 h-1 rounded-full ${c}`} />
+              <div className={`flex-1 h-1 rounded-sm ${cl}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    travel_compact: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1.5 px-3 bg-white transition-colors`}>
+        <div className={`h-1.5 rounded-sm w-16 ${cd}`} />
+        {[0,1,2].map(i => (
+          <div key={i} className="flex items-center gap-2">
+            <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>·</div>
+            <div className={`flex-1 h-1 rounded-sm ${c}`} />
+            <div className={`h-1 rounded-sm w-6 ${cl}`} />
+            <div className={`text-[7px] underline ${h ? 'text-rose-400' : 'text-blue-400'}`}>↗</div>
+          </div>
+        ))}
+      </div>
+    ),
+
+    /* ── REGISTRY new variants ── */
+    registry_minimal: (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 transition-colors bg-white`}>
+        <div className={`text-[7px] italic ${h ? 'text-rose-400' : 'text-gray-400'} px-4 text-center leading-tight`}>Your presence is our greatest gift</div>
+        <div className={`h-px w-16 ${h ? 'bg-rose-200' : 'bg-gray-200'}`} />
+        <div className="flex gap-2">
+          {['Zola','Target'].map(s => (
+            <div key={s} className={`text-[7px] underline ${h ? 'text-rose-500' : 'text-blue-500'}`}>{s}</div>
+          ))}
+        </div>
+      </div>
+    ),
+    registry_honeymoon: (
+      <div className={`w-full h-20 flex flex-col transition-colors overflow-hidden`}>
+        <div className={`h-10 relative ${h ? 'bg-sky-200' : 'bg-blue-100'} flex items-center justify-center`}>
+          <div className={`text-[8px] font-bold ${h ? 'text-sky-700' : 'text-blue-700'}`}>🌴 Honeymoon Fund</div>
+        </div>
+        <div className={`flex-1 flex flex-col justify-center px-3 gap-1 ${h ? 'bg-rose-50' : 'bg-white'}`}>
+          <div className="w-full h-1.5 rounded-full bg-gray-200 overflow-hidden">
+            <div className={`h-full rounded-full ${h ? 'bg-rose-400' : 'bg-gray-500'}`} style={{ width: '62%' }} />
+          </div>
+          <div className="flex justify-between">
+            <div className={`text-[6px] ${h ? 'text-rose-500' : 'text-gray-500'}`}>62% funded</div>
+            <div className={`text-[6px] font-bold ${h ? 'text-rose-600' : 'text-gray-600'}`}>Contribute</div>
+          </div>
+        </div>
+      </div>
+    ),
+    registry_tabs: (
+      <div className={`w-full h-20 flex flex-col transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className="flex border-b border-gray-200 px-2 pt-1.5 gap-1">
+          {['Home','Exp.','Cash'].map((t,i) => (
+            <div key={t} className={`text-[7px] font-semibold px-1.5 py-0.5 rounded-t ${i === 0 ? (h ? 'bg-rose-500 text-white' : 'bg-gray-700 text-white') : (h ? 'text-rose-400' : 'text-gray-400')}`}>{t}</div>
+          ))}
+        </div>
+        <div className="flex-1 p-2 space-y-1">
+          {[0,1].map(i => (
+            <div key={i} className={`h-5 rounded-lg flex items-center px-2 gap-2 ${h ? 'bg-white ring-1 ring-rose-100' : 'bg-white border border-gray-100'}`}>
+              <div className={`w-2.5 h-2.5 rounded-sm ${c}`} />
+              <div className={`flex-1 h-1 rounded-sm ${c}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    registry_illustrated: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1.5 px-3 transition-colors ${h ? 'bg-rose-50' : 'bg-amber-50'}`}>
+        <div className="flex justify-center gap-3 mb-0.5">
+          {['🎁','🏠','✈️'].map(e => <span key={e} className="text-[11px]">{e}</span>)}
+        </div>
+        <div className={`h-1.5 rounded-sm w-20 mx-auto ${cd}`} />
+        <div className="flex gap-2 justify-center">
+          {['Shop','Fund'].map(l => (
+            <div key={l} className={`px-2 py-0.5 rounded text-[7px] font-semibold border ${h ? 'border-rose-300 text-rose-500' : 'border-gray-300 text-gray-500'}`}>{l}</div>
+          ))}
+        </div>
+      </div>
+    ),
+
+    /* ── FAQ new variants ── */
+    faq_twoColumn: (
+      <div className={`w-full h-20 flex gap-2 px-2 py-1.5 transition-colors bg-white`}>
+        {[0,1].map(col => (
+          <div key={col} className="flex-1 flex flex-col gap-1.5">
+            {[0,1].map(i => (
+              <div key={i} className="space-y-0.5">
+                <div className={`h-1.5 rounded-sm w-full ${cd}`} />
+                <div className={`h-1 rounded-sm w-full ${cl}`} />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    ),
+    faq_tabbed: (
+      <div className={`w-full h-20 flex flex-col transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className="flex gap-0.5 px-2 pt-1.5">
+          {['Logistics','Attire','Food'].map((t,i) => (
+            <div key={t} className={`text-[6px] font-semibold px-1.5 py-0.5 rounded ${i === 0 ? (h ? 'bg-rose-500 text-white' : 'bg-gray-700 text-white') : (h ? 'text-rose-400 bg-rose-100' : 'text-gray-400 bg-white border border-gray-100')}`}>{t}</div>
+          ))}
+        </div>
+        <div className="flex-1 px-2 py-1.5 space-y-1">
+          {[0,1,2].map(i => (
+            <div key={i} className={`flex items-center justify-between px-1.5 py-0.5 rounded border ${h ? 'border-rose-100 bg-white' : 'border-gray-100 bg-white'}`}>
+              <div className={`h-1.5 w-16 rounded-sm ${i === 0 ? cd : c}`} />
+              <div className={`text-[8px] ${h ? 'text-rose-300' : 'text-gray-300'}`}>+</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    faq_chat: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1 px-2 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className="flex justify-start">
+          <div className={`max-w-3/4 px-2 py-1 rounded-xl rounded-tl-none text-[6px] ${h ? 'bg-rose-200 text-rose-700' : 'bg-gray-200 text-gray-600'}`}>Is parking available?</div>
+        </div>
+        <div className="flex justify-end">
+          <div className={`max-w-3/4 px-2 py-1 rounded-xl rounded-tr-none text-[6px] ${h ? 'bg-rose-500 text-white' : 'bg-gray-700 text-white'}`}>Yes! Free valet for all guests.</div>
+        </div>
+        <div className="flex justify-start">
+          <div className={`max-w-3/4 px-2 py-1 rounded-xl rounded-tl-none text-[6px] ${h ? 'bg-rose-200 text-rose-700' : 'bg-gray-200 text-gray-600'}`}>Kids welcome?</div>
+        </div>
+      </div>
+    ),
+    faq_numbered: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1.5 px-3 bg-white transition-colors`}>
+        {[0,1,2].map(i => (
+          <div key={i} className="flex items-start gap-1.5">
+            <div className={`text-[8px] font-bold w-3 flex-shrink-0 ${h ? 'text-rose-400' : 'text-gray-400'}`}>{i+1}.</div>
+            <div className="flex-1 space-y-0.5">
+              <div className={`h-1.5 rounded-sm ${i === 0 ? cd : c}`} />
+              <div className={`h-1 rounded-sm w-4/5 ${cl}`} />
+            </div>
+          </div>
+        ))}
+      </div>
+    ),
+
+    /* ── RSVP new variants ── */
+    rsvp_card: (
+      <div className={`w-full h-20 flex items-center justify-center transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`w-32 h-14 rounded-xl shadow-sm border flex flex-col overflow-hidden ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
+          <div className={`flex gap-1 p-1 border-b ${h ? 'border-rose-100' : 'border-gray-100'}`}>
+            {['1','2','3'].map((s,i) => (
+              <div key={s} className={`w-4 h-1.5 rounded-full text-[5px] flex items-center justify-center ${i === 0 ? (h ? 'bg-rose-500' : 'bg-gray-700') : (h ? 'bg-rose-100' : 'bg-gray-200')}`} />
+            ))}
+          </div>
+          <div className="flex-1 p-1.5 space-y-1">
+            <div className={`h-1.5 rounded-sm ${cd}`} />
+            <div className="flex gap-1">
+              <div className={`flex-1 h-3 rounded border ${h ? 'border-rose-200' : 'border-gray-200'}`} />
+              <div className={`flex-1 h-3 rounded border ${h ? 'border-rose-200' : 'border-gray-200'}`} />
+            </div>
+          </div>
+        </div>
+      </div>
+    ),
+    rsvp_illustrated: (
+      <div className={`w-full h-20 relative flex items-center justify-center transition-colors`}>
+        <div className={`absolute inset-0 ${h ? 'bg-rose-50' : 'bg-amber-50'}`} />
+        <div className="absolute top-0 left-0 w-6 h-6 rounded-br-full opacity-30 bg-green-200" />
+        <div className="absolute bottom-0 right-0 w-8 h-8 rounded-tl-full opacity-30 bg-green-300" />
+        <div className={`relative w-28 h-14 rounded-xl shadow-sm border flex flex-col gap-1 p-2 ${h ? 'border-rose-200 bg-white' : 'border-amber-200 bg-white'}`}>
+          <div className={`h-1.5 rounded-sm w-16 mx-auto ${cd}`} />
+          <div className={`h-3 rounded-md border w-full ${h ? 'border-rose-100' : 'border-gray-100'}`} />
+          <div className={`h-3 rounded-md ${h ? 'bg-rose-500' : 'bg-gray-700'} flex items-center justify-center`}>
+            <div className="text-[6px] text-white font-bold">SEND RSVP</div>
+          </div>
+        </div>
+      </div>
+    ),
+    rsvp_formal: (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 transition-colors bg-white`}>
+        <div className={`text-[7px] italic ${h ? 'text-rose-500' : 'text-gray-600'}`}>kindly respond by June 1</div>
+        <div className="flex gap-2 mt-1">
+          <div className={`px-3 py-1 border rounded text-[7px] font-medium ${h ? 'border-rose-400 text-rose-500 bg-rose-50' : 'border-gray-400 text-gray-600'}`}>Joyfully Accepts</div>
+          <div className={`px-3 py-1 border rounded text-[7px] font-medium ${h ? 'border-rose-200 text-rose-300' : 'border-gray-200 text-gray-400'}`}>Declines</div>
+        </div>
+      </div>
+    ),
+    rsvp_multiEvent: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1 px-3 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`h-1.5 rounded-sm w-16 ${cd}`} />
+        {['Rehearsal Dinner','Ceremony','Reception'].map((ev,i) => (
+          <div key={ev} className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded ${h ? 'bg-white' : 'bg-white border border-gray-100'}`}>
+            <div className={`w-2 h-2 rounded-full border ${i === 0 ? (h ? 'border-rose-500 bg-rose-500' : 'border-gray-600 bg-gray-600') : (h ? 'border-rose-300' : 'border-gray-300')}`} />
+            <div className={`text-[6px] flex-1 ${h ? 'text-rose-600' : 'text-gray-600'}`}>{ev}</div>
+          </div>
+        ))}
+      </div>
+    ),
+
+    /* ── GALLERY new variants ── */
+    gallery_spotlight: (
+      <div className={`w-full h-20 flex gap-0.5 p-1 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`flex-1 h-full rounded-sm ${h ? 'bg-rose-200' : 'bg-gray-300'}`} />
+        <div className="w-8 flex flex-col gap-0.5">
+          {[0,1,2,3].map(i => (
+            <div key={i} className={`flex-1 rounded-sm ${i === 0 ? (h ? 'ring-1 ring-rose-400 bg-rose-300' : 'ring-1 ring-gray-500 bg-gray-400') : (h ? 'bg-rose-100' : 'bg-gray-200')}`} />
+          ))}
+        </div>
+      </div>
+    ),
+    gallery_carousel: (
+      <div className={`w-full h-20 flex flex-col transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`flex-1 relative ${h ? 'bg-rose-200' : 'bg-gray-300'} mx-1 mt-1 rounded-sm`}>
+          <div className={`absolute left-1 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full flex items-center justify-center ${h ? 'bg-rose-500' : 'bg-black/40'}`}>
+            <div className="text-[7px] text-white">‹</div>
+          </div>
+          <div className={`absolute right-1 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full flex items-center justify-center ${h ? 'bg-rose-500' : 'bg-black/40'}`}>
+            <div className="text-[7px] text-white">›</div>
+          </div>
+        </div>
+        <div className="flex justify-center gap-0.5 py-1">
+          {[0,1,2,3,4].map(i => (
+            <div key={i} className={`w-1 h-1 rounded-full ${i === 2 ? (h ? 'bg-rose-500' : 'bg-gray-600') : (h ? 'bg-rose-200' : 'bg-gray-300')}`} />
+          ))}
+        </div>
+      </div>
+    ),
+    gallery_mosaic: (
+      <div className={`w-full h-20 p-1 grid grid-cols-3 grid-rows-2 gap-0.5 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`col-span-2 row-span-2 rounded-sm ${h ? 'bg-rose-300' : 'bg-gray-300'}`} />
+        <div className={`rounded-sm ${h ? 'bg-rose-200' : 'bg-gray-200'}`} />
+        <div className={`rounded-sm ${h ? 'bg-rose-100' : 'bg-gray-100'}`} />
+      </div>
+    ),
+    gallery_categorized: (
+      <div className={`w-full h-20 flex flex-col transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className="flex gap-0.5 px-1.5 pt-1.5">
+          {['Ceremony','Rec.','Portraits'].map((t,i) => (
+            <div key={t} className={`text-[6px] font-semibold px-1 py-0.5 rounded ${i === 0 ? (h ? 'bg-rose-500 text-white' : 'bg-gray-700 text-white') : (h ? 'text-rose-400 bg-rose-100' : 'text-gray-400 bg-white border border-gray-100')}`}>{t}</div>
+          ))}
+        </div>
+        <div className="flex-1 p-1 grid grid-cols-3 gap-0.5">
+          {[0,1,2,3,4,5].map(i => (
+            <div key={i} className={`rounded-sm ${i % 3 === 0 ? (h ? 'bg-rose-200' : 'bg-gray-300') : (h ? 'bg-rose-100' : 'bg-gray-200')}`} />
+          ))}
+        </div>
+      </div>
+    ),
+
+    /* ── COUNTDOWN new variants ── */
+    countdown_rings: (
+      <div className={`w-full h-20 flex items-center justify-center gap-2 transition-colors ${h ? 'bg-rose-50' : 'bg-white'}`}>
+        {['47','12','38','52'].map((n,i) => (
+          <div key={i} className="flex flex-col items-center">
+            <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-[9px] font-bold ${h ? 'border-rose-400 text-rose-500' : 'border-gray-400 text-gray-600'}`}>{n}</div>
+            <div className={`text-[5px] mt-0.5 ${h ? 'text-rose-400' : 'text-gray-400'}`}>{['D','H','M','S'][i]}</div>
+          </div>
+        ))}
+      </div>
+    ),
+    countdown_minimal: (
+      <div className={`w-full h-20 flex flex-col items-center justify-center transition-colors bg-white`}>
+        <div className={`text-[28px] font-black leading-none ${h ? 'text-rose-500' : 'text-gray-800'}`}>47</div>
+        <div className={`text-[8px] font-mediumst mt-0.5 ${h ? 'text-rose-400' : 'text-gray-400'}`}>days to go</div>
+      </div>
+    ),
+    countdown_dark: (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 ${h ? 'bg-rose-950' : 'bg-gray-900'}`}>
+        <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Until we say I do</div>
+        <div className="flex items-end gap-2">
+          {['47','12','38'].map((n,i) => (
+            <div key={i} className="flex flex-col items-center">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold ${h ? 'bg-rose-500 text-white' : 'bg-white/10 text-white border border-white/20'}`}>{n}</div>
+              <div className={`text-[5px] mt-0.5 ${h ? 'text-rose-400' : 'text-gray-500'}`}>{['Days','Hrs','Min'][i]}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    countdown_photo: (
+      <div className={`w-full h-20 relative flex items-end transition-colors ${h ? 'bg-rose-800' : 'bg-slate-600'}`}>
+        <div className="absolute inset-0 bg-black/50" />
+        <div className={`relative w-full mx-auto mb-1.5 flex justify-center gap-1.5`}>
+          {['47d','12h','38m'].map(t => (
+            <div key={t} className={`px-1.5 py-0.5 rounded backdrop-blur-sm ${h ? 'bg-rose-500/50 border border-rose-400/40' : 'bg-white/20 border border-white/20'}`}>
+              <span className="text-[8px] text-white font-bold">{t}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+
+    /* ── WEDDING PARTY new variants ── */
+    'wedding-party_scroll': (
+      <div className={`w-full h-20 flex items-center gap-1 px-1 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        {[0,1,2,3].map(i => (
+          <div key={i} className={`flex-shrink-0 w-10 h-16 rounded-lg flex flex-col overflow-hidden ${h ? 'bg-white ring-1 ring-rose-200' : 'bg-white border border-gray-200'}`}>
+            <div className={`flex-1 ${h ? 'bg-rose-200' : 'bg-gray-200'}`} />
+            <div className="p-1">
+              <div className={`h-1 rounded-sm ${cd}`} />
+              <div className={`h-0.5 rounded-sm mt-0.5 ${cl}`} />
+            </div>
+          </div>
+        ))}
+        <div className={`flex-shrink-0 text-[8px] ${h ? 'text-rose-300' : 'text-gray-300'}`}>›</div>
+      </div>
+    ),
+    'wedding-party_storyBios': (
+      <div className={`w-full h-20 flex gap-0 transition-colors`}>
+        <div className={`w-2/5 h-full ${h ? 'bg-rose-200' : 'bg-gray-200'}`} />
+        <div className="flex-1 flex flex-col justify-center gap-1 px-2 bg-white">
+          <div className={`text-[6px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Maid of Honor</div>
+          <div className={`h-1.5 rounded-sm w-4/5 ${cd}`} />
+          <div className={`h-1 rounded-sm ${c}`} />
+          <div className={`h-1 rounded-sm w-3/4 ${c}`} />
+          <div className={`h-1 rounded-sm w-1/2 ${cl}`} />
+        </div>
+      </div>
+    ),
+    'wedding-party_minimal': (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-1 transition-colors bg-white`}>
+        <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Maid of Honor</div>
+        <div className={`h-1.5 rounded-sm w-24 ${cd}`} />
+        <div className={`h-px w-20 ${h ? 'bg-rose-100' : 'bg-gray-100'}`} />
+        <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Bridesmaids</div>
+        <div className="flex gap-1.5">
+          {[0,1,2].map(i => (
+            <div key={i} className={`h-1.5 w-10 rounded-sm ${c}`} />
+          ))}
+        </div>
+      </div>
+    ),
+    'wedding-party_splitSides': (
+      <div className={`w-full h-20 flex transition-colors`}>
+        <div className={`flex-1 flex flex-col justify-center gap-1 px-2 ${h ? 'bg-rose-100/40' : 'bg-pink-50'}`}>
+          <div className={`text-[6px] font-bold text-center ${h ? 'text-rose-400' : 'text-pink-400'}`}>Her Side</div>
+          <div className="flex justify-center gap-0.5">
+            {[0,1,2].map(i => (
+              <div key={i} className={`w-4 h-4 rounded-full ${h ? 'bg-rose-300' : 'bg-pink-200'}`} />
+            ))}
+          </div>
+        </div>
+        <div className={`flex-1 flex flex-col justify-center gap-1 px-2 ${h ? 'bg-sky-100/40' : 'bg-sky-50'}`}>
+          <div className={`text-[6px] font-bold text-center ${h ? 'text-sky-500' : 'text-sky-400'}`}>His Side</div>
+          <div className="flex justify-center gap-0.5">
+            {[0,1,2].map(i => (
+              <div key={i} className={`w-4 h-4 rounded-full ${h ? 'bg-sky-300' : 'bg-sky-200'}`} />
+            ))}
+          </div>
+        </div>
+      </div>
+    ),
+
+    /* ── DRESS CODE new variants ── */
+    'dress-code_palette': (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1 px-3 bg-white transition-colors`}>
+        <div className={`text-[6px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Encouraged Colors</div>
+        <div className="flex gap-1">
+          {[h?'bg-rose-300':'bg-slate-300', h?'bg-rose-200':'bg-gray-200', h?'bg-amber-200':'bg-stone-300', h?'bg-green-200':'bg-gray-100'].map((color,i) => (
+            <div key={i} className={`w-5 h-5 rounded-sm ${color} ring-1 ring-white shadow-sm`} />
+          ))}
+          <div className="flex-1" />
+          <div className="w-5 h-5 rounded-sm bg-red-100 ring-1 ring-red-200 relative">
+            <div className="absolute inset-0 flex items-center justify-center text-[8px] text-red-500">×</div>
+          </div>
+        </div>
+        <div className={`text-[5px] ${h ? 'text-rose-300' : 'text-gray-300'}`}>Avoid white & cream</div>
+      </div>
+    ),
+    'dress-code_illustrated': (
+      <div className={`w-full h-20 flex items-center justify-center gap-4 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        {[['👗','Women'],['🤵','Men']].map(([icon,label]) => (
+          <div key={label} className="flex flex-col items-center gap-0.5">
+            <div className="text-[16px] leading-none">{icon}</div>
+            <div className={`text-[6px] font-medium ${h ? 'text-rose-500' : 'text-gray-500'}`}>{label}</div>
+            <div className={`h-0.5 rounded-sm w-10 ${c}`} />
+            <div className={`h-0.5 rounded-sm w-8 ${cl}`} />
+          </div>
+        ))}
+      </div>
+    ),
+    'dress-code_card': (
+      <div className={`w-full h-20 flex items-center px-1.5 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`w-full h-14 rounded-xl border flex divide-x overflow-hidden ${h ? 'border-rose-200 divide-rose-200 bg-white' : 'border-gray-200 divide-gray-200 bg-white'}`}>
+          {['✓ Wear','✗ Avoid','ℹ Note'].map((col,i) => (
+            <div key={col} className="flex-1 flex flex-col px-1 pt-1 gap-0.5">
+              <div className={`text-[6px] font-bold ${i === 0 ? 'text-green-500' : i === 1 ? 'text-red-400' : (h ? 'text-rose-400' : 'text-gray-400')}`}>{col}</div>
+              {[0,1].map(j => (
+                <div key={j} className={`h-0.5 rounded-sm ${i === 0 ? 'bg-green-100' : i === 1 ? 'bg-red-100' : cl}`} />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    'dress-code_scale': (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-2 transition-colors bg-white`}>
+        <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Dress code</div>
+        <div className="w-full px-4">
+          <div className="flex justify-between text-[5px] text-gray-400 mb-0.5">
+            <span>Casual</span><span>Black Tie</span>
+          </div>
+          <div className={`w-full h-1.5 rounded-full ${h ? 'bg-rose-100' : 'bg-gray-100'} relative`}>
+            <div className={`absolute h-1.5 rounded-full left-0 ${h ? 'bg-rose-400' : 'bg-gray-500'}`} style={{ width: '62%' }} />
+            <div className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 bg-white ${h ? 'border-rose-500' : 'border-gray-600'}`} style={{ left: 'calc(62% - 6px)' }} />
+          </div>
+          <div className={`text-[6px] font-bold mt-1 ${h ? 'text-rose-500' : 'text-gray-600'}`}>Cocktail Attire</div>
+        </div>
+      </div>
+    ),
+
+    /* ── ACCOMMODATIONS new variants ── */
+    accommodations_featured: (
+      <div className={`w-full h-20 flex flex-col transition-colors overflow-hidden ${h ? 'bg-rose-50' : 'bg-white'}`}>
+        <div className={`h-7 w-full ${h ? 'bg-rose-100' : 'bg-slate-100'} flex items-center px-2 gap-2`}>
+          <div className={`text-[8px] font-bold ${h ? 'text-rose-600' : 'text-gray-700'}`}>The Grand Hotel</div>
+          <div className={`text-[6px] px-1 rounded ${h ? 'bg-rose-500 text-white' : 'bg-gray-700 text-white'}`}>Block</div>
+        </div>
+        <div className="flex-1 px-2 pt-1 flex flex-col gap-0.5">
+          <div className={`flex items-center gap-1`}>
+            <div className={`text-[7px] font-mono px-1 rounded ${h ? 'bg-rose-100 text-rose-600 border border-rose-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>SMITH2025</div>
+            <div className={`text-[6px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Room code</div>
+          </div>
+          <div className={`flex items-center gap-1`}>
+            <div className={`text-[6px] ${h ? 'text-amber-500' : 'text-red-500'} font-semibold`}>⚠ Book by May 15</div>
+          </div>
+        </div>
+      </div>
+    ),
+    accommodations_mapList: (
+      <div className={`w-full h-20 flex flex-col transition-colors`}>
+        <div className={`h-10 w-full relative ${h ? 'bg-rose-100' : 'bg-slate-200'}`}>
+          <div className={`absolute inset-0 opacity-20`} style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.07) 4px, rgba(0,0,0,0.07) 5px), repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(0,0,0,0.07) 4px, rgba(0,0,0,0.07) 5px)' }} />
+          {[[40,40],[60,30],[75,55]].map(([x,y],i) => (
+            <div key={i} className={`absolute w-2 h-2 rounded-full ${h ? ['bg-rose-500','bg-blue-400','bg-green-400'][i] : ['bg-red-500','bg-blue-400','bg-green-400'][i]}`} style={{left:`${x}%`,top:`${y}%`}} />
+          ))}
+        </div>
+        <div className={`flex-1 flex items-center gap-2 px-2 ${h ? 'bg-white' : 'bg-white'}`}>
+          {[0,1,2].map(i => (
+            <div key={i} className="flex items-center gap-0.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${h ? ['bg-rose-500','bg-blue-400','bg-green-400'][i] : ['bg-red-500','bg-blue-400','bg-green-400'][i]}`} />
+              <div className={`h-1 rounded-sm w-8 ${cl}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    accommodations_faqStyle: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1 px-3 transition-colors ${h ? 'bg-rose-50' : 'bg-white'}`}>
+        <div className={`h-1.5 rounded-sm w-20 ${cd}`} />
+        <div className={`h-1 rounded-sm w-full ${c}`} />
+        {['Parking?','Shuttle?','Deadline?'].map((q,i) => (
+          <div key={q} className={`flex items-center justify-between px-1.5 py-0.5 rounded border ${h ? 'border-rose-100 bg-white' : 'border-gray-100 bg-gray-50'}`}>
+            <div className={`text-[6px] ${h ? 'text-rose-600' : 'text-gray-600'}`}>{q}</div>
+            <div className={`text-[8px] ${h ? 'text-rose-300' : 'text-gray-400'}`}>+</div>
+          </div>
+        ))}
+      </div>
+    ),
+    accommodations_onSite: (
+      <div className={`w-full h-20 flex transition-colors`}>
+        <div className={`w-2/5 h-full ${h ? 'bg-rose-200' : 'bg-stone-200'}`} />
+        <div className="flex-1 flex flex-col justify-center gap-1 px-2 bg-white">
+          <div className={`text-[6px] ${h ? 'text-rose-400' : 'text-amber-600'}`}>On-Site Lodging</div>
+          <div className={`h-1.5 rounded-sm w-4/5 ${cd}`} />
+          <div className={`h-1 rounded-sm ${c}`} />
+          <div className={`h-1 rounded-sm w-3/4 ${cl}`} />
+          <div className={`mt-0.5 w-12 h-3 rounded text-[5px] flex items-center justify-center font-bold ${h ? 'bg-rose-500 text-white' : 'bg-gray-700 text-white'}`}>Reserve</div>
+        </div>
+      </div>
+    ),
+
+    /* ── CONTACT new variants ── */
+    contact_form: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1 px-3 transition-colors bg-white`}>
+        <div className={`h-1.5 rounded-sm w-16 ${cd}`} />
+        {['Name','Email','Message'].map((f,i) => (
+          <div key={f} className={`h-3 rounded border ${h ? 'border-rose-200' : 'border-gray-200'} flex items-center px-1`}>
+            <div className={`text-[6px] ${h ? 'text-rose-300' : 'text-gray-400'}`}>{f}</div>
+          </div>
+        ))}
+        <div className={`h-3 rounded flex items-center justify-center ${h ? 'bg-rose-500' : 'bg-gray-700'}`}>
+          <div className="text-[6px] text-white font-bold">Send</div>
+        </div>
+      </div>
+    ),
+    contact_split: (
+      <div className={`w-full h-20 flex transition-colors bg-white`}>
+        <div className="flex-1 flex flex-col justify-center gap-1 px-2 border-r border-gray-100">
+          <div className={`h-1 rounded-sm ${cd}`} />
+          {[0,1,2].map(i => (
+            <div key={i} className={`h-2.5 rounded border ${h ? 'border-rose-100' : 'border-gray-100'}`} />
+          ))}
+          <div className={`h-2.5 rounded ${h ? 'bg-rose-500' : 'bg-gray-700'}`} />
+        </div>
+        <div className="flex-1 flex flex-col justify-center gap-1.5 px-2">
+          {[0,1,2].map(i => (
+            <div key={i} className="flex items-center gap-1">
+              <div className={`w-2 h-2 rounded-full ${c}`} />
+              <div className={`flex-1 h-1 rounded-sm ${cl}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    contact_casual: (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`w-6 h-6 rounded-full ${h ? 'bg-rose-200' : 'bg-gray-200'}`} />
+        <div className={`h-1.5 rounded-sm w-24 ${cd}`} />
+        <div className={`h-1 rounded-sm w-20 ${c}`} />
+        <div className={`flex gap-1 items-center w-28 h-5 rounded-xl border ${h ? 'border-rose-200' : 'border-gray-200'} px-2`}>
+          <div className={`flex-1 h-1 rounded-sm ${cl}`} />
+          <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-blue-400'}`}>→</div>
+        </div>
+      </div>
+    ),
+    contact_coordinator: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1 px-3 transition-colors bg-white`}>
+        <div className={`h-1.5 rounded-sm w-20 ${cd}`} />
+        <div className="flex gap-1.5">
+          {[0,1].map(i => (
+            <div key={i} className={`flex-1 h-10 rounded-lg p-1 flex flex-col gap-0.5 ${h ? 'bg-rose-50 border border-rose-100' : 'bg-gray-50 border border-gray-100'}`}>
+              <div className={`w-3.5 h-3.5 rounded-full ${c}`} />
+              <div className={`h-1 rounded-sm ${cd}`} />
+              <div className={`text-[5px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>{i === 0 ? 'Couple' : 'Coordinator'}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+
+    /* ── FOOTER CTA new variants ── */
+    'footer-cta_monogram': (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-1 transition-colors ${h ? 'bg-rose-50' : 'bg-stone-50'}`}>
+        <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-[11px] font-bold ${h ? 'border-rose-300 text-rose-400' : 'border-gray-300 text-gray-500'}`}>SJ</div>
+        <div className={`h-1.5 rounded-sm w-20 ${cd}`} />
+        <div className={`h-1 rounded-sm w-14 ${c}`} />
+        <div className={`h-px w-12 ${h ? 'bg-rose-200' : 'bg-gray-200'} mt-0.5`} />
+      </div>
+    ),
+    'footer-cta_hashtag': (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-1 transition-colors ${h ? 'bg-rose-900' : 'bg-gray-900'}`}>
+        <div className={`text-[18px] font-black ${h ? 'text-rose-400' : 'text-white/50'}`}>#</div>
+        <div className={`h-2 rounded-sm w-20 ${h ? 'bg-rose-300' : 'bg-white/70'}`} />
+        <div className={`text-[6px] mt-1 ${h ? 'text-rose-300' : 'text-white/40'}`}>Tag your photos</div>
+      </div>
+    ),
+    'footer-cta_photo': (
+      <div className={`w-full h-20 relative flex items-end transition-colors ${h ? 'bg-rose-800' : 'bg-gray-600'}`}>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+        <div className="relative w-full px-3 pb-2 flex items-end justify-between">
+          <div>
+            <div className="text-[8px] font-bold text-white">Sarah & James</div>
+            <div className="text-[6px] text-white/60">June 14, 2025</div>
+          </div>
+          <div className={`text-[6px] text-white/40`}>© 2025</div>
+        </div>
+      </div>
+    ),
+    'footer-cta_countdown': (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 transition-colors ${h ? 'bg-rose-600' : 'bg-gray-800'}`}>
+        <div className="text-[7px] text-white/70">RSVP deadline in</div>
+        <div className="flex gap-1.5">
+          {['14d','06h','22m'].map(t => (
+            <div key={t} className="bg-white/20 rounded px-1 py-0.5">
+              <span className="text-[8px] text-white font-bold">{t}</span>
+            </div>
+          ))}
+        </div>
+        <div className={`px-4 py-1 rounded-full text-[7px] font-bold text-white border border-white/40 mt-0.5`}>Send RSVP</div>
+      </div>
+    ),
+
+    /* ── QUOTES new variants ── */
+    quotes_pullQuote: (
+      <div className={`w-full h-20 flex flex-col items-center justify-center gap-1 px-4 transition-colors bg-white`}>
+        <div className={`text-[20px] font-black leading-none ${h ? 'text-rose-200' : 'text-gray-200'}`}>"</div>
+        <div className={`h-1 rounded-sm w-full ${cd}`} />
+        <div className={`h-1 rounded-sm w-4/5 ${c}`} />
+        <div className={`h-1 rounded-sm w-3/5 ${c}`} />
+        <div className={`h-px w-8 ${h ? 'bg-rose-200' : 'bg-gray-200'} mt-0.5`} />
+        <div className={`h-1 rounded-sm w-12 ${cl}`} />
+      </div>
+    ),
+    quotes_guestbook: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1 px-3 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`h-6 rounded-xl border flex items-center px-2 gap-1 ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
+          <div className={`flex-1 h-1 rounded-sm ${cl}`} />
+          <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Send ✨</div>
+        </div>
+        {[0,1].map(i => (
+          <div key={i} className={`px-2 py-1 rounded-lg text-[6px] leading-tight ${h ? 'bg-white border border-rose-100 text-rose-700' : 'bg-white border border-gray-100 text-gray-600'}`}>
+            <div className={`h-0.5 rounded-sm mb-0.5 ${cd}`} />
+            <div className={`h-0.5 rounded-sm w-3/4 ${c}`} />
+          </div>
+        ))}
+      </div>
+    ),
+    quotes_letter: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1 px-3 transition-colors ${h ? 'bg-amber-50' : 'bg-stone-50'}`}>
+        <div className={`text-[7px] italic ${h ? 'text-amber-700' : 'text-stone-500'}`}>Dear Friends & Family,</div>
+        <div className={`h-1 rounded-sm w-full ${c}`} />
+        <div className={`h-1 rounded-sm w-4/5 ${cl}`} />
+        <div className={`h-1 rounded-sm w-2/3 ${cl}`} />
+        <div className={`text-[7px] italic mt-1 ${h ? 'text-amber-700' : 'text-stone-500'}`}>With love, Sarah & James</div>
+      </div>
+    ),
+
+    /* ── MENU new variants ── */
+    menu_printed: (
+      <div className={`w-full h-20 flex items-center justify-center transition-colors ${h ? 'bg-rose-50' : 'bg-amber-50'}`}>
+        <div className={`w-24 h-15 flex flex-col items-center py-1.5 px-2 border ${h ? 'border-rose-200' : 'border-amber-200'} rounded-sm`} style={{height:'3.75rem'}}>
+          <div className={`text-[7px] font-bold ${h ? 'text-rose-600' : 'text-amber-700'}`}>Dinner</div>
+          <div className={`h-px w-12 ${h ? 'bg-rose-200' : 'bg-amber-200'} my-0.5`} />
+          {['Starter','— Main —','Dessert'].map((c2,i) => (
+            <div key={c2} className={`text-[5px] text-center ${i === 1 ? (h ? 'text-rose-500 font-bold' : 'text-amber-600 font-bold') : (h ? 'text-rose-400' : 'text-amber-500')}`}>{c2}</div>
+          ))}
+        </div>
+      </div>
+    ),
+    menu_cocktailDinner: (
+      <div className={`w-full h-20 flex transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        {[{label:'Cocktail Hour',icon:'🥂'},{label:'Dinner',icon:'🍽'}].map(({label,icon},i) => (
+          <div key={label} className={`flex-1 flex flex-col px-1.5 py-1 ${i === 0 ? (h ? 'bg-rose-100/60' : 'bg-amber-50 border-r border-amber-100') : 'bg-white'}`}>
+            <div className="text-[9px] mb-0.5">{icon}</div>
+            <div className={`text-[5px] font-bold mb-0.5 ${h ? 'text-rose-500' : 'text-gray-500'}`}>{label}</div>
+            {[0,1,2].map(j => (
+              <div key={j} className={`h-0.5 rounded-sm mb-0.5 ${j === 0 ? cd : cl}`} />
+            ))}
+          </div>
+        ))}
+      </div>
+    ),
+    menu_illustrated: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1.5 px-3 transition-colors ${h ? 'bg-rose-50' : 'bg-stone-50'}`}>
+        <div className="flex gap-2">
+          {['🥗','🍗','🎂'].map((icon,i) => (
+            <div key={icon} className={`flex-1 flex flex-col items-center rounded-lg p-1 ${h ? 'bg-white border border-rose-100' : 'bg-white border border-stone-100'}`}>
+              <div className="text-[11px]">{icon}</div>
+              <div className={`h-0.5 rounded-sm w-full mt-0.5 ${cd}`} />
+              <div className={`h-0.5 rounded-sm w-3/4 ${cl}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+
+    /* ── MUSIC new variants ── */
+    music_vinyl: (
+      <div className={`w-full h-20 flex items-center gap-2 px-2 transition-colors ${h ? 'bg-rose-950' : 'bg-gray-900'}`}>
+        <div className="flex-shrink-0">
+          <div className={`w-10 h-10 rounded-full border-4 ${h ? 'border-rose-600' : 'border-gray-700'} flex items-center justify-center`}>
+            <div className={`w-2.5 h-2.5 rounded-full ${h ? 'bg-rose-400' : 'bg-gray-600'}`} />
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col gap-1">
+          <div className={`h-1.5 rounded-sm w-full ${h ? 'bg-rose-300' : 'bg-gray-300'}`} />
+          <div className={`h-1 rounded-sm w-4/5 ${h ? 'bg-rose-500' : 'bg-gray-500'}`} />
+          <div className={`h-1 rounded-sm w-3/5 ${h ? 'bg-rose-600' : 'bg-gray-600'}`} />
+          <div className="flex items-center gap-1 mt-0.5">
+            {['◀','⏸','▶'].map(icon => (
+              <div key={icon} className={`text-[8px] ${h ? 'text-rose-300' : 'text-gray-400'}`}>{icon}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+    ),
+    music_requestForm: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1 px-3 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`text-[7px] font-bold ${h ? 'text-rose-600' : 'text-gray-700'}`}>What song gets you dancing?</div>
+        <div className={`h-5 rounded-lg border flex items-center px-2 gap-1 ${h ? 'border-rose-200 bg-white' : 'border-gray-200 bg-white'}`}>
+          <div className={`flex-1 h-1 rounded-sm ${cl}`} />
+          <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>🎵</div>
+        </div>
+        <div className={`h-4 rounded-lg flex items-center justify-center ${h ? 'bg-rose-500' : 'bg-gray-700'}`}>
+          <div className="text-[7px] text-white font-bold">Request a Song</div>
+        </div>
+      </div>
+    ),
+    music_journey: (
+      <div className={`w-full h-20 flex flex-col justify-center px-2 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`h-1 rounded-full w-full ${h ? 'bg-rose-100' : 'bg-gray-200'} relative overflow-hidden mb-1`}>
+          <div className={`h-full rounded-full ${h ? 'bg-rose-400' : 'bg-gray-500'}`} style={{ width: '100%' }} />
+        </div>
+        {['🎻 Ceremony','🥂 Cocktail','🎶 Reception'].map((phase,i) => (
+          <div key={phase} className="flex items-center gap-1.5 py-0.5">
+            <div className={`text-[8px] w-3`}>{phase.split(' ')[0]}</div>
+            <div className={`text-[6px] ${h ? 'text-rose-500' : 'text-gray-500'}`}>{phase.split(' ').slice(1).join(' ')}</div>
+            <div className={`flex-1 h-0.5 rounded-sm ${h ? 'bg-rose-200' : 'bg-gray-200'}`} />
+          </div>
+        ))}
+      </div>
+    ),
+
+    /* ── DIRECTIONS new variants ── */
+    directions_illustrated: (
+      <div className={`w-full h-20 flex flex-col transition-colors`}>
+        <div className={`flex-1 relative ${h ? 'bg-amber-50' : 'bg-stone-50'} flex items-center justify-center`}>
+          <div className={`absolute inset-1 rounded border-2 border-dashed ${h ? 'border-amber-200' : 'border-stone-200'}`} />
+          {[[30,50],[60,35],[70,65]].map(([x,y],i) => (
+            <div key={i} className={`absolute w-2.5 h-2.5 rounded-full border-2 ${h ? ['border-rose-500 bg-rose-400','border-blue-400 bg-blue-300','border-green-400 bg-green-300'][i] : ['border-red-500 bg-red-400','border-blue-400 bg-blue-300','border-green-400 bg-green-300'][i]}`} style={{left:`${x}%`,top:`${y}%`}} />
+          ))}
+        </div>
+        <div className={`h-5 flex items-center gap-2 px-2 bg-white border-t border-gray-100`}>
+          {['Venue','Hotel','Airport'].map((name,i) => (
+            <div key={name} className="flex items-center gap-0.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${h ? ['bg-rose-400','bg-blue-300','bg-green-300'][i] : ['bg-red-400','bg-blue-300','bg-green-300'][i]}`} />
+              <div className={`text-[5px] ${h ? 'text-rose-500' : 'text-gray-500'}`}>{name}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    directions_multiVenue: (
+      <div className={`w-full h-20 flex flex-col transition-colors`}>
+        <div className={`h-11 w-full relative ${h ? 'bg-rose-100' : 'bg-slate-200'}`}>
+          <div className={`absolute inset-0 opacity-20`} style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.07) 4px, rgba(0,0,0,0.07) 5px), repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(0,0,0,0.07) 4px, rgba(0,0,0,0.07) 5px)' }} />
+          <div className={`absolute w-2.5 h-2.5 rounded-full border-2 border-rose-500 bg-rose-400`} style={{left:'30%',top:'40%'}} />
+          <div className={`absolute w-2.5 h-2.5 rounded-full border-2 border-amber-500 bg-amber-400`} style={{left:'60%',top:'30%'}} />
+          <div className={`absolute w-2 h-2 rounded-full border-2 border-blue-500 bg-blue-400`} style={{left:'70%',top:'60%'}} />
+        </div>
+        <div className={`flex-1 flex items-center gap-2 px-2 bg-white`}>
+          {[{c:'bg-rose-400',l:'Ceremony'},{c:'bg-amber-400',l:'Reception'},{c:'bg-blue-400',l:'Hotel'}].map(({c:bgc,l}) => (
+            <div key={l} className="flex items-center gap-0.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${bgc}`} />
+              <div className={`text-[5px] text-gray-500`}>{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    directions_transport: (
+      <div className={`w-full h-20 flex transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        {[{icon:'🚗',label:'Car'},{icon:'✈️',label:'Air'},{icon:'🚆',label:'Train'}].map(({icon,label},i) => (
+          <div key={label} className={`flex-1 flex flex-col items-center justify-center gap-0.5 ${i < 2 ? 'border-r border-gray-200' : ''}`}>
+            <div className="text-[11px]">{icon}</div>
+            <div className={`text-[6px] font-bold ${h ? 'text-rose-500' : 'text-gray-600'}`}>{label}</div>
+            <div className={`h-0.5 rounded-sm w-6 ${cl}`} />
+            <div className={`h-0.5 rounded-sm w-5 ${cl}`} />
+          </div>
+        ))}
+      </div>
+    ),
+    directions_fromHotel: (
+      <div className={`w-full h-20 flex flex-col justify-center gap-1 px-3 transition-colors bg-white`}>
+        <div className={`text-[6px] font-bold ${h ? 'text-rose-400' : 'text-gray-400'}`}>From The Grand Hotel</div>
+        {[0,1,2].map(i => (
+          <div key={i} className="flex items-center gap-1.5">
+            <div className={`text-[6px] font-bold ${h ? 'text-rose-400' : 'text-gray-400'} w-3`}>{i+1}.</div>
+            <div className={`flex-1 h-1 rounded-sm ${i === 0 ? cd : cl}`} />
+          </div>
+        ))}
+        <div className="flex gap-1 mt-0.5">
+          <div className={`text-[6px] font-medium ${h ? 'text-rose-500' : 'text-blue-500'} underline`}>Google Maps</div>
+          <div className={`text-[6px] font-medium ${h ? 'text-rose-400' : 'text-gray-400'} underline`}>Apple Maps</div>
+        </div>
+      </div>
+    ),
+
+    /* ── VIDEO new variants ── */
+    video_background: (
+      <div className={`w-full h-20 relative flex flex-col items-center justify-center transition-colors ${h ? 'bg-rose-900' : 'bg-gray-800'}`}>
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.05) 3px, rgba(255,255,255,0.05) 6px)' }} />
+        <div className="relative flex flex-col items-center gap-1.5">
+          <div className="text-[8px] text-white font-bold">Our Venue</div>
+          <div className="text-[6px] text-white/60">The Grand Estate • 2025</div>
+          <div className={`mt-1 text-[7px] px-2 py-0.5 border border-white/30 rounded-full text-white/70`}>Explore</div>
+        </div>
+        <div className={`absolute bottom-1 right-1 text-[7px] ${h ? 'text-rose-400' : 'text-white/30'}`}>⏸</div>
+      </div>
+    ),
+    video_lightbox: (
+      <div className={`w-full h-20 relative flex items-center justify-center transition-colors ${h ? 'bg-rose-200' : 'bg-gray-300'}`}>
+        <div className={`absolute inset-0 ${h ? 'bg-rose-900/20' : 'bg-black/20'}`} />
+        <div className={`relative w-10 h-10 rounded-full border-4 border-white/80 flex items-center justify-center shadow-lg ${h ? 'bg-rose-500/80' : 'bg-black/50'}`}>
+          <div className="w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[10px] border-l-white/90 ml-1" />
+        </div>
+        <div className="absolute bottom-2 left-0 right-0 text-center">
+          <div className={`text-[6px] text-white/70`}>Click to watch our story</div>
+        </div>
+      </div>
+    ),
+    video_reel: (
+      <div className={`w-full h-20 flex items-center justify-center transition-colors ${h ? 'bg-rose-950' : 'bg-gray-900'}`}>
+        <div className={`w-9 h-16 rounded-xl border-4 ${h ? 'border-rose-500' : 'border-gray-600'} overflow-hidden relative flex items-center justify-center ${h ? 'bg-rose-800' : 'bg-gray-700'}`}>
+          <div className="w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-l-[8px] border-l-white/70" />
+          <div className={`absolute top-1 left-1/2 -translate-x-1/2 w-3 h-0.5 rounded-full ${h ? 'bg-rose-400' : 'bg-gray-500'}`} />
+          <div className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full ${h ? 'bg-rose-400' : 'bg-gray-500'}`} />
+        </div>
+      </div>
+    ),
+
+    /* ── LEGACY FALLBACKS (single-word ids without type prefix) ── */
+    default: (
+      <div className={`w-full h-20 flex items-center gap-2 px-3 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
+        <div className={`flex-1 h-2 rounded ${cd}`} />
+        <div className={`w-10 h-2 rounded ${c}`} />
+      </div>
+    ),
+  };
+
+  const key = `${sectionType ?? ''}_${variantId}`;
+  const swatch = swatches[key] ?? swatches[variantId];
+  if (swatch) return <>{swatch}</>;
+  return <div className={`w-full h-20 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-100'}`} />;
+};
