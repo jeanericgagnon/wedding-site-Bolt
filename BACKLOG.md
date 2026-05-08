@@ -2113,3 +2113,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/EventHub.test.tsx` now pin `EventHubLiveContent` so the event hub page keeps routing through the shared live-content shell.
   - Validation passed: `npm test -- --run src/pages/EventHub.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts src/pages/guestHubPublicService.test.ts` (19/19), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This reduces local P1/P2 public-surface oversized-file risk in `EventHub` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 9:54 PM PT - No-deploy event recap live-content extraction:
+  - Resolved in this batch: moved the event recap’s full live-content shell out of `src/pages/EventRecap.tsx` and behind `src/pages/EventRecapLiveContent.tsx`.
+  - Data-boundary hardening: `EventRecap.tsx` now hands off the recap header, share CTA, stats strip, and nested route-view shell through one higher-level live-content component instead of owning that guest-facing recap frame inline.
+  - File-size movement: `EventRecap.tsx` dropped from 558 lines to 468 lines in this continuation batch while `src/pages/EventRecapLiveContent.tsx` came in at 94 lines.
+  - No feature loss: gated recap config loading, invite-token capture, share/download/caption helpers, opt-in form behavior, and top-moments / chapter / story rendering preserve the current guest behavior while shrinking page-owned public-surface composition.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/EventRecap.test.tsx` now pin `EventRecapLiveContent` so the recap page keeps routing through the shared live-content shell.
+  - Validation passed: `npm test -- --run src/pages/EventRecap.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts src/pages/guestHubPublicService.test.ts` (18/18), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P1/P2 public-surface oversized-file risk in `EventRecap` without changing guest-facing behavior. No deploy was run.

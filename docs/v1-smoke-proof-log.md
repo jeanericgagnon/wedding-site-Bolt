@@ -7388,6 +7388,21 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 9:54 PM PT No-Deploy Event Recap Live Content Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/EventRecap.tsx` now routes its full recap live-content shell through `src/pages/EventRecapLiveContent.tsx`.
+  - That shared guest-facing live-content component now owns the recap header, share CTA, stats strip, and nested route-view shell while the page keeps slug normalization, config loading, tracking, share/download helpers, and opt-in transport local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/EventRecap.test.tsx` now pin `EventRecapLiveContent` so the event recap page keeps routing through the dedicated live-content shell.
+  - `src/pages/EventRecap.tsx` dropped from 558 lines to 468 lines in this batch, while `src/pages/EventRecapLiveContent.tsx` came in at 94 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/EventRecap.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts src/pages/guestHubPublicService.test.ts`: PASS, 18/18.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 9:50 PM PT No-Deploy Event Hub Live Content Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

@@ -188,14 +188,18 @@ describe('EventRecap opt-in form', () => {
 });
 
 describe('event recap page boundary', () => {
-  it('routes loading, error, and content shells through a dedicated route view', () => {
+  it('routes the recap live shell and state split through dedicated components', () => {
     const page = readFileSync(join(process.cwd(), 'src/pages/EventRecap.tsx'), 'utf8');
+    const liveContent = readFileSync(join(process.cwd(), 'src/pages/EventRecapLiveContent.tsx'), 'utf8');
     const routeView = readFileSync(join(process.cwd(), 'src/pages/EventRecapRouteView.tsx'), 'utf8');
 
-    expect(page).toContain("from './EventRecapRouteView'");
-    expect(page).toContain('<EventRecapRouteView');
+    expect(page).toContain("from './EventRecapLiveContent'");
+    expect(page).toContain('<EventRecapLiveContent');
     expect(page).not.toContain("{loading && <div className=\"mt-6 rounded-lg border border-neutral-200 bg-white p-6 text-neutral-600\">");
     expect(page).not.toContain("{error && <div className=\"mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-6 text-neutral-700\">");
+    expect(liveContent).toContain("from './EventRecapRouteView'");
+    expect(liveContent).toContain('<EventRecapRouteView');
+    expect(liveContent).toContain('{t(\'event_recap.back_hub\')}');
     expect(routeView).toContain('if (loadingState) return <>{loading}</>;');
     expect(routeView).toContain('if (!hasData) return <>{error}</>;');
   });
