@@ -9907,3 +9907,18 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 02:44 AM PT No-Deploy Guest Photo Live-Content Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now routes the owner-facing photo dashboard body through `src/pages/dashboard/guestPhotos/GuestPhotoDashboardLiveContent.tsx`.
+  - That component now owns the quick-start banner, hero, memory/vault cards, guest hub QR and recap controls, follow-up and guestbook surfaces, slideshow/review surfaces, album create card, and album controls/list shell while the page keeps loading, service orchestration, derived state, and the extracted album action transport.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<GuestPhotoDashboardLiveContent`, checks that `GuestPhotoDashboardLiveContent.tsx` owns the photo dashboard card surface, and rejects regaining the old inline hero/quick-start/album-list shell in `GuestPhotoSharing.tsx`.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 1750 lines to 1699 lines in this batch, while `src/pages/dashboard/guestPhotos/GuestPhotoDashboardLiveContent.tsx` came in at 123 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Clapperboard, Sparkles } from 'lucide-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { Button } from '../../components/ui/Button';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { createEmptyPhotoBuckets } from '../../lib/aiPhotoBuckets';
 import { PhotoBucketCards } from '../../components/dashboard/PhotoBucketCards';
@@ -86,27 +84,7 @@ import {
   type SlideshowOrderMode,
   type SlideshowTheme,
 } from './guestPhotoSharingUtils';
-import { GuestPhotoCoupleAlbumsCard } from './guestPhotos/GuestPhotoCoupleAlbumsCard';
-import { GuestPhotoAlbumControls } from './guestPhotos/GuestPhotoAlbumControls';
-import { GuestPhotoAlbumCreateCard } from './guestPhotos/GuestPhotoAlbumCreateCard';
-import { GuestPhotoAlbumListState } from './guestPhotos/GuestPhotoAlbumListState';
-import { GuestPhotoBucketList } from './guestPhotos/GuestPhotoBucketList';
-import { GuestPhotoFollowupCard } from './guestPhotos/GuestPhotoFollowupCard';
-import { GuestPhotoGuestbookCard } from './guestPhotos/GuestPhotoGuestbookCard';
-import { GuestPhotoHeroCard } from './guestPhotos/GuestPhotoHeroCard';
-import { GuestPhotoHubControlsCard } from './guestPhotos/GuestPhotoHubControlsCard';
-import { GuestPhotoHubQrCard } from './guestPhotos/GuestPhotoHubQrCard';
-import { GuestPhotoMemoryFlowCard } from './guestPhotos/GuestPhotoMemoryFlowCard';
-import { GuestPhotoMemoryVaultsCard } from './guestPhotos/GuestPhotoMemoryVaultsCard';
-import { GuestPhotoMomentAlbumsCard } from './guestPhotos/GuestPhotoMomentAlbumsCard';
-import { GuestPhotoMomentsCard } from './guestPhotos/GuestPhotoMomentsCard';
-import { GuestPhotoOrganizerCard } from './guestPhotos/GuestPhotoOrganizerCard';
-import { GuestPhotoQuickStartBanner } from './guestPhotos/GuestPhotoQuickStartBanner';
-import { GuestPhotoRecapSharingCard } from './guestPhotos/GuestPhotoRecapSharingCard';
-import { GuestPhotoReviewCard } from './guestPhotos/GuestPhotoReviewCard';
-import { GuestPhotoSlideshowCard } from './guestPhotos/GuestPhotoSlideshowCard';
-import { GuestPhotoSlideshowDraftCard } from './guestPhotos/GuestPhotoSlideshowDraftCard';
-import { GuestPhotoStatsCards } from './guestPhotos/GuestPhotoStatsCards';
+import { GuestPhotoDashboardLiveContent } from './guestPhotos/GuestPhotoDashboardLiveContent';
 import { useGuestPhotoAlbumActions } from './guestPhotos/useGuestPhotoAlbumActions';
 
 export const GuestPhotoSharing: React.FC = () => {
@@ -1461,288 +1439,259 @@ export const GuestPhotoSharing: React.FC = () => {
 
   return (
     <DashboardLayout currentPage="photos">
-      <div className="space-y-6">
-        {fromQuickStart && nextStep === 'review' && (
-          <GuestPhotoQuickStartBanner onContinue={() => navigate(buildQuickStartOverviewPath())} />
-        )}
-        <GuestPhotoHeroCard albumCount={buckets.length} uploadCount={totalUploads} />
-
-        <GuestPhotoMemoryVaultsCard onOpenVaults={() => navigate('/dashboard/vault')} />
-
-        <GuestPhotoMemoryFlowCard memoryFlowReadiness={memoryFlowReadiness} />
-
-        {guestHubUrl && (
-          <GuestPhotoHubQrCard
-            guestHubUrl={guestHubUrl}
-            guestRecapUrl={guestRecapUrl || ''}
-            guestHubActionSummary={guestHubActionSummary}
-            guestHubActions={guestHubActions}
-            copied={copied}
-            guestHubQrAssetCount={guestHubQrAssets.length}
-            getBucketQrUrl={getBucketQrUrl}
-            onCopyText={(text, key) => void copyText(text, key)}
-            onOpenAppUrl={openAppUrl}
-            onOpenSafePublicUrl={openSafePublicUrl}
-            onDownloadGuestHubPrintPack={downloadGuestHubPrintPack}
-          />
-        )}
-
-        {guestRecapUrl && (
-          <GuestPhotoRecapSharingCard
-            guestRecapUrl={guestRecapUrl}
-            hubSettings={hubSettings}
-            savingHubSettings={savingHubSettings}
-            uploadCount={uploads.length}
-            recapFeaturedCount={recapFeaturedCount}
-            recapStoryCount={recapStoryCount}
-            recapHiddenCount={recapHiddenCount}
-            recapPublishWarnings={recapPublishWarnings}
-            onOpenAppUrl={openAppUrl}
-            onSaveHubSettings={() => void saveHubSettings()}
-            onHubSettingsChange={setHubSettings}
-          />
-        )}
-
-        {guestHubUrl && (
-          <GuestPhotoHubControlsCard
-            hubSettings={hubSettings}
-            savingHubSettings={savingHubSettings}
-            onSaveHubSettings={() => void saveHubSettings()}
-            onHubSettingsChange={setHubSettings}
-          />
-        )}
-
-        {guestProspects.length > 0 && (
-          <GuestPhotoFollowupCard
-            guestProspects={guestProspects}
-            queueingFollowups={queueingFollowups}
-            onExportProspectsCsv={exportProspectsCsv}
-            onQueueGuestFollowups={(kind) => void queueGuestFollowups(kind)}
-          />
-        )}
-
-        {guestbookEntries.length > 0 && (
-          <GuestPhotoGuestbookCard
-            guestbookEntries={guestbookEntries}
-            moderatingGuestbookId={moderatingGuestbookId || null}
-            onExportGuestbookCsv={exportGuestbookCsv}
-            onUpdateGuestbookEntry={(entryId, patch) => void updateGuestbookEntry(entryId, patch)}
-            formatDateTime={formatGuestPhotoDateTime}
-          />
-        )}
-
-        <GuestPhotoCoupleAlbumsCard
-          photoBuckets={photoBuckets}
-          uploadDisabled={!siteId || submitting}
-          bucketFileInputRef={bucketFileInputRef}
-          onBucketUploadClick={handleBucketUploadClick}
-          onBucketRemoveClick={handleBucketRemoveClick}
-          onBucketFilesSelected={handleBucketFilesSelected}
-        />
-
-        <GuestPhotoStatsCards
-          albumCount={buckets.length}
-          activeAlbumCount={activeBucketsCount}
-          pausedAlbumCount={pausedBucketsCount}
-          uploadCount={totalUploads}
-        />
-
-        <GuestPhotoSlideshowDraftCard
-          slideshowReadyBucketCount={slideshowReadyBucketCount}
-          aiPhotoOpsBusy={aiPhotoOpsBusy}
-          uploadCount={uploads.length}
-          bucketCount={buckets.length}
-          onGenerateAiPhotoOpsPlan={() => void generateAiPhotoOpsPlan()}
-        />
-
-        <GuestPhotoMomentsCard
-          uploadAnalyses={uploadAnalyses}
-          uploads={uploads}
-          metadataByUploadId={metadataByUploadId}
-          visionReadyCount={visionReadyCount}
-          visionFallbackCount={visionFallbackCount}
-          unanalyzedUploadCount={unanalyzedUploads.length}
-          metadataExifCount={metadataExifCount}
-          metadataGpsCount={metadataGpsCount}
-          metadataEventMatchCount={metadataEventMatchCount}
-          aiAcceptedCorrectionCount={aiAcceptedCorrectionCount}
-          aiRejectedCorrectionCount={aiRejectedCorrectionCount}
-          visionAiBusy={visionAiBusy}
-          visionMovesBusy={visionMovesBusy}
-          visionHighConfidenceMoveCount={visionHighConfidenceMoves.length}
-          onAnalyzeNewPhotos={() => void analyzeUploadsWithVision(false)}
-          onAnalyzeVisiblePhotos={() => void analyzeUploadsWithVision(true)}
-          onApplyHighConfidenceMoves={() => void applyHighConfidenceVisionMoves()}
-          onApplyVisionSuggestion={(analysis) => void applyVisionSuggestion(analysis)}
-          onRejectVisionSuggestion={(analysis) => void rejectVisionSuggestion(analysis)}
-          formatDateTime={formatGuestPhotoDateTime}
-        />
-
-        <GuestPhotoMomentAlbumsCard
-          suggestions={momentBucketSuggestions}
-          submitting={submitting}
-          onCreateMomentBucket={(suggestion) => void createMomentBucketFromSuggestion(suggestion)}
-        />
-
-        <GuestPhotoReviewCard
-          highlightUploads={highlightUploads}
-          chronologicalUploads={chronologicalUploads}
-          similarPhotoGroups={similarPhotoGroups}
-          reviewUploads={reviewUploads}
-          memoryChapters={memoryChapters}
-          hiddenUploadCount={hiddenUploadCount}
-          flaggedUploadCount={flaggedUploadCount}
-          recapFeaturedCount={recapFeaturedCount}
-          recapStoryCount={recapStoryCount}
-          recapHiddenCount={recapHiddenCount}
-          uploadCount={uploads.length}
-          bulkModerating={bulkModerating}
-          duplicateExtraCount={duplicateExtraCount}
-          onUseHighlightsInSlideshow={() => setSlideshowOrder('highlights')}
-          onUseSavedPhotoTimes={() => setSlideshowOrder('capture')}
-          onExportCurationCsv={exportCurationCsv}
-          onExportMemoryChapters={exportMemoryChaptersJson}
-          onExportCuratedRecap={exportCuratedRecapJson}
-          onHideReviewUploads={() => void hideReviewUploads()}
-          onHideDuplicateExtras={() => void hideDuplicateExtras()}
-          onRestoreHiddenUploads={() => void restoreHiddenUploads()}
-          onModerateUpload={(uploadId, patch) => void moderateUpload(uploadId, patch)}
-          formatDateTime={formatGuestPhotoDateTime}
-        />
-
-        {aiPhotoOpsPlan && (
-          <GuestPhotoOrganizerCard
-            aiPhotoOpsPlan={aiPhotoOpsPlan}
-            aiSlideshowFrameCount={aiSlideshowFrameCount}
-            aiPhotoMovesBusy={aiPhotoMovesBusy}
-            aiHighConfidenceMoveCount={aiHighConfidenceMoves.length}
-            copied={copied}
-            onApplyHighConfidencePhotoMoves={() => void applyHighConfidencePhotoMoves()}
-            onCopyOrganizerNotes={() => void copyText(JSON.stringify(aiPhotoOpsPlan, null, 2), 'ai-photo-plan')}
-          />
-        )}
-
-        <GuestPhotoSlideshowCard
-          buckets={buckets}
-          countsByBucket={countsByBucket}
-          slideshowBucketFilter={slideshowBucketFilter}
-          slideshowOrder={slideshowOrder}
-          slideshowTheme={slideshowTheme}
-          slideshowFrames={slideshowFrames}
-          slideshowReadyBucketCount={slideshowReadyBucketCount}
-          slideshowPreviewOpen={slideshowPreviewOpen}
-          copied={copied}
-          onBucketFilterChange={setSlideshowBucketFilter}
-          onOrderChange={setSlideshowOrder}
-          onThemeChange={setSlideshowTheme}
-          onPreviewOpenChange={setSlideshowPreviewOpen}
-          onExportSlideshowPlan={() => void exportSlideshowPlan()}
-          formatDateTime={formatGuestPhotoDateTime}
-        />
-
-        <GuestPhotoAlbumCreateCard
-          name={name}
-          parentAlbumId={parentAlbumId}
-          itineraryEventId={itineraryEventId}
-          buckets={buckets}
-          events={events}
-          submitting={submitting}
-          loading={loading}
-          latestUploadUrl={latestUploadUrl}
-          copied={copied}
-          missingItineraryEventCount={missingItineraryEvents.length}
-          bulkCreating={bulkCreating}
-          error={error}
-          success={success}
-          copyFallbackValue={copyFallbackValue}
-          onNameChange={setName}
-          onParentAlbumChange={setParentAlbumId}
-          onItineraryEventChange={setItineraryEventId}
-          onCreateBucket={() => void createBucket()}
-          onCreateMissingBuckets={() => void createMissingBucketsFromItinerary()}
-          onCopyText={(value, key) => void copyText(value, key)}
-          onOpenSafePublicUrl={openSafePublicUrl}
-          onOpenAppUrl={openAppUrl}
-          getBucketQrUrl={getBucketQrUrl}
-          bucketDisplayName={bucketDisplayName}
-          formatEventDate={formatGuestPhotoEventDate}
-        />
-
-        <div className="rounded-lg border border-border-subtle bg-white p-6">
-          <GuestPhotoAlbumControls
-            visibleAlbumCount={filteredBuckets.length}
-            totalUploadCount={uploads.length}
-            copied={copied}
-            bulkRegenerating={bulkRegenerating}
-            bulkModerating={bulkModerating}
-            showFlaggedOnly={showFlaggedOnly}
-            showHidden={showHidden}
-            tagFilter={tagFilter}
-            availableAiTags={availableAiTags}
-            bucketSearch={bucketSearch}
-            statusFilter={statusFilter}
-            onCopyAllKnownLinks={() => void copyAllKnownLinks()}
-            onCopyAllShareMessages={() => void copyAllShareMessages()}
-            onSendAllActiveBucketRequests={sendAllActiveBucketRequests}
-            onRegenerateAllKnownBucketLinks={() => void regenerateAllKnownBucketLinks()}
-            onExportBucketLinksCsv={exportBucketLinksCsv}
-            onExportSharePackCsv={exportSharePackCsv}
-            onExportMediaManifestCsv={() => void exportMediaManifestCsv()}
-            onShowFlaggedOnlyChange={setShowFlaggedOnly}
-            onTagFilterChange={setTagFilter}
-            onShowHiddenChange={setShowHidden}
-            onSetUploadsFlaggedByFilter={(isFlagged) => void setUploadsFlaggedByFilter(isFlagged)}
-            onSetUploadsHiddenByFilter={(isHidden) => void setUploadsHiddenByFilter(isHidden)}
-            onBucketSearchChange={setBucketSearch}
-            onStatusFilterChange={setStatusFilter}
-          />
-
-          {loading || buckets.length === 0 || filteredBuckets.length === 0 ? (
-            <GuestPhotoAlbumListState
-              loading={loading}
-              bucketCount={buckets.length}
-              filteredBucketCount={filteredBuckets.length}
-              onSuggestionSelect={setName}
-            />
-          ) : (
-            <GuestPhotoBucketList
-              filteredBuckets={filteredBuckets}
-              buckets={buckets}
-              countsByBucket={countsByBucket}
-              hiddenCountsByBucket={hiddenCountsByBucket}
-              flaggedCountsByBucket={flaggedCountsByBucket}
-              recentByBucket={recentByBucket}
-              windowDrafts={windowDrafts}
-              bucketUploadLinks={bucketUploadLinks}
-              bucketById={bucketById}
-              childBucketsByParent={childBucketsByParent}
-              bucketDepthById={bucketDepthById}
-              descendantBucketIdsByParent={descendantBucketIdsByParent}
-              analysisByUploadId={analysisByUploadId}
-              latestUploadUrl={latestUploadUrl}
-              workingBucketId={workingBucketId}
-              copied={copied}
-              uploadCountWithChildren={uploadCountWithChildren}
-              bucketTone={bucketCardTone}
-              bucketDisplayName={bucketDisplayName}
-              formatDateTime={formatGuestPhotoDateTime}
-              getBucketQrUrl={getBucketQrUrl}
-              onOpenSafePublicUrl={openSafePublicUrl}
-              onRegenerateLink={(bucketId) => void regenerateLink(bucketId)}
-              onCopyText={(text, key) => void copyText(text, key)}
-              onSetBucketActive={(bucketId, isActive) => void setBucketActive(bucketId, isActive)}
-              onExportBucketCsv={exportBucketCsv}
-              onBucketSearchChange={setBucketSearch}
-              onParentChange={(bucketId, parentBucketId) => void setBucketParent(bucketId, parentBucketId)}
-              onDraftChange={(bucketId, draft) => setWindowDrafts((prev) => ({ ...prev, [bucketId]: draft }))}
-              onApplySuggestedWindow={applySuggestedWindow}
-              onSaveWindow={(bucketId) => void saveWindow(bucketId)}
-              onTagFilterChange={setTagFilter}
-              onModerateUpload={(uploadId, patch) => void moderateUpload(uploadId, patch)}
-            />
-          )}
-        </div>
-      </div>
+      <GuestPhotoDashboardLiveContent
+        albumControlsProps={{
+          visibleAlbumCount: filteredBuckets.length,
+          totalUploadCount: uploads.length,
+          copied,
+          bulkRegenerating,
+          bulkModerating,
+          showFlaggedOnly,
+          showHidden,
+          tagFilter,
+          availableAiTags,
+          bucketSearch,
+          statusFilter,
+          onCopyAllKnownLinks: () => void copyAllKnownLinks(),
+          onCopyAllShareMessages: () => void copyAllShareMessages(),
+          onSendAllActiveBucketRequests: sendAllActiveBucketRequests,
+          onRegenerateAllKnownBucketLinks: () => void regenerateAllKnownBucketLinks(),
+          onExportBucketLinksCsv: exportBucketLinksCsv,
+          onExportSharePackCsv: exportSharePackCsv,
+          onExportMediaManifestCsv: () => void exportMediaManifestCsv(),
+          onShowFlaggedOnlyChange: setShowFlaggedOnly,
+          onTagFilterChange: setTagFilter,
+          onShowHiddenChange: setShowHidden,
+          onSetUploadsFlaggedByFilter: (isFlagged) => void setUploadsFlaggedByFilter(isFlagged),
+          onSetUploadsHiddenByFilter: (isHidden) => void setUploadsHiddenByFilter(isHidden),
+          onBucketSearchChange: setBucketSearch,
+          onStatusFilterChange: setStatusFilter,
+        }}
+        albumCreateCardProps={{
+          name,
+          parentAlbumId,
+          itineraryEventId,
+          buckets,
+          events,
+          submitting,
+          loading,
+          latestUploadUrl,
+          copied,
+          missingItineraryEventCount: missingItineraryEvents.length,
+          bulkCreating,
+          error,
+          success,
+          copyFallbackValue,
+          onNameChange: setName,
+          onParentAlbumChange: setParentAlbumId,
+          onItineraryEventChange: setItineraryEventId,
+          onCreateBucket: () => void createBucket(),
+          onCreateMissingBuckets: () => void createMissingBucketsFromItinerary(),
+          onCopyText: (value, key) => void copyText(value, key),
+          onOpenSafePublicUrl: openSafePublicUrl,
+          onOpenAppUrl: openAppUrl,
+          getBucketQrUrl,
+          bucketDisplayName,
+          formatEventDate: formatGuestPhotoEventDate,
+        }}
+        albumListStateProps={{
+          loading,
+          bucketCount: buckets.length,
+          filteredBucketCount: filteredBuckets.length,
+          onSuggestionSelect: setName,
+        }}
+        bucketListProps={{
+          filteredBuckets,
+          buckets,
+          countsByBucket,
+          hiddenCountsByBucket,
+          flaggedCountsByBucket,
+          recentByBucket,
+          windowDrafts,
+          bucketUploadLinks,
+          bucketById,
+          childBucketsByParent,
+          bucketDepthById,
+          descendantBucketIdsByParent,
+          analysisByUploadId,
+          latestUploadUrl,
+          workingBucketId,
+          copied,
+          uploadCountWithChildren,
+          bucketTone: bucketCardTone,
+          bucketDisplayName,
+          formatDateTime: formatGuestPhotoDateTime,
+          getBucketQrUrl,
+          onOpenSafePublicUrl: openSafePublicUrl,
+          onRegenerateLink: (bucketId) => void regenerateLink(bucketId),
+          onCopyText: (text, key) => void copyText(text, key),
+          onSetBucketActive: (bucketId, isActive) => void setBucketActive(bucketId, isActive),
+          onExportBucketCsv: exportBucketCsv,
+          onBucketSearchChange: setBucketSearch,
+          onParentChange: (bucketId, parentBucketId) => void setBucketParent(bucketId, parentBucketId),
+          onDraftChange: (bucketId, draft) => setWindowDrafts((prev) => ({ ...prev, [bucketId]: draft })),
+          onApplySuggestedWindow: applySuggestedWindow,
+          onSaveWindow: (bucketId) => void saveWindow(bucketId),
+          onTagFilterChange: setTagFilter,
+          onModerateUpload: (uploadId, patch) => void moderateUpload(uploadId, patch),
+        }}
+        coupleAlbumsCardProps={{
+          photoBuckets,
+          uploadDisabled: !siteId || submitting,
+          bucketFileInputRef,
+          onBucketUploadClick: handleBucketUploadClick,
+          onBucketRemoveClick: handleBucketRemoveClick,
+          onBucketFilesSelected: handleBucketFilesSelected,
+        }}
+        followupCardProps={{
+          guestProspects,
+          queueingFollowups,
+          onExportProspectsCsv: exportProspectsCsv,
+          onQueueGuestFollowups: (kind) => void queueGuestFollowups(kind),
+        }}
+        guestbookCardProps={{
+          guestbookEntries,
+          moderatingGuestbookId: moderatingGuestbookId || null,
+          onExportGuestbookCsv: exportGuestbookCsv,
+          onUpdateGuestbookEntry: (entryId, patch) => void updateGuestbookEntry(entryId, patch),
+          formatDateTime: formatGuestPhotoDateTime,
+        }}
+        heroCardProps={{ albumCount: buckets.length, uploadCount: totalUploads }}
+        hubControlsCardProps={{
+          hubSettings,
+          savingHubSettings,
+          onSaveHubSettings: () => void saveHubSettings(),
+          onHubSettingsChange: setHubSettings,
+        }}
+        hubQrCardProps={{
+          guestHubUrl: guestHubUrl || '',
+          guestRecapUrl: guestRecapUrl || '',
+          guestHubActionSummary,
+          guestHubActions,
+          copied,
+          guestHubQrAssetCount: guestHubQrAssets.length,
+          getBucketQrUrl,
+          onCopyText: (text, key) => void copyText(text, key),
+          onOpenAppUrl: openAppUrl,
+          onOpenSafePublicUrl: openSafePublicUrl,
+          onDownloadGuestHubPrintPack: downloadGuestHubPrintPack,
+        }}
+        memoryFlowCardProps={{ memoryFlowReadiness }}
+        memoryVaultsCardProps={{ onOpenVaults: () => navigate('/dashboard/vault') }}
+        momentAlbumsCardProps={{
+          suggestions: momentBucketSuggestions,
+          submitting,
+          onCreateMomentBucket: (suggestion) => void createMomentBucketFromSuggestion(suggestion),
+        }}
+        momentsCardProps={{
+          uploadAnalyses,
+          uploads,
+          metadataByUploadId,
+          visionReadyCount,
+          visionFallbackCount,
+          unanalyzedUploadCount: unanalyzedUploads.length,
+          metadataExifCount,
+          metadataGpsCount,
+          metadataEventMatchCount,
+          aiAcceptedCorrectionCount,
+          aiRejectedCorrectionCount,
+          visionAiBusy,
+          visionMovesBusy,
+          visionHighConfidenceMoveCount: visionHighConfidenceMoves.length,
+          onAnalyzeNewPhotos: () => void analyzeUploadsWithVision(false),
+          onAnalyzeVisiblePhotos: () => void analyzeUploadsWithVision(true),
+          onApplyHighConfidenceMoves: () => void applyHighConfidenceVisionMoves(),
+          onApplyVisionSuggestion: (analysis) => void applyVisionSuggestion(analysis),
+          onRejectVisionSuggestion: (analysis) => void rejectVisionSuggestion(analysis),
+          formatDateTime: formatGuestPhotoDateTime,
+        }}
+        onQuickStartContinue={() => navigate(buildQuickStartOverviewPath())}
+        organizerCardProps={{
+          aiPhotoOpsPlan: aiPhotoOpsPlan!,
+          aiSlideshowFrameCount,
+          aiPhotoMovesBusy,
+          aiHighConfidenceMoveCount: aiHighConfidenceMoves.length,
+          copied,
+          onApplyHighConfidencePhotoMoves: () => void applyHighConfidencePhotoMoves(),
+          onCopyOrganizerNotes: () => void copyText(JSON.stringify(aiPhotoOpsPlan, null, 2), 'ai-photo-plan'),
+        }}
+        recapSharingCardProps={{
+          guestRecapUrl: guestRecapUrl || '',
+          hubSettings,
+          savingHubSettings,
+          uploadCount: uploads.length,
+          recapFeaturedCount,
+          recapStoryCount,
+          recapHiddenCount,
+          recapPublishWarnings,
+          onOpenAppUrl: openAppUrl,
+          onSaveHubSettings: () => void saveHubSettings(),
+          onHubSettingsChange: setHubSettings,
+        }}
+        reviewCardProps={{
+          highlightUploads,
+          chronologicalUploads,
+          similarPhotoGroups,
+          reviewUploads,
+          memoryChapters,
+          hiddenUploadCount,
+          flaggedUploadCount,
+          recapFeaturedCount,
+          recapStoryCount,
+          recapHiddenCount,
+          uploadCount: uploads.length,
+          bulkModerating,
+          duplicateExtraCount,
+          onUseHighlightsInSlideshow: () => setSlideshowOrder('highlights'),
+          onUseSavedPhotoTimes: () => setSlideshowOrder('capture'),
+          onExportCurationCsv: exportCurationCsv,
+          onExportMemoryChapters: exportMemoryChaptersJson,
+          onExportCuratedRecap: exportCuratedRecapJson,
+          onHideReviewUploads: () => void hideReviewUploads(),
+          onHideDuplicateExtras: () => void hideDuplicateExtras(),
+          onRestoreHiddenUploads: () => void restoreHiddenUploads(),
+          onModerateUpload: (uploadId, patch) => void moderateUpload(uploadId, patch),
+          formatDateTime: formatGuestPhotoDateTime,
+        }}
+        shouldRenderAlbumListState={loading || buckets.length === 0 || filteredBuckets.length === 0}
+        shouldRenderFollowupCard={guestProspects.length > 0}
+        shouldRenderGuestHubControlsCard={Boolean(guestHubUrl)}
+        shouldRenderGuestHubQrCard={Boolean(guestHubUrl)}
+        shouldRenderGuestPhotoRecapSharingCard={Boolean(guestRecapUrl)}
+        shouldRenderGuestbookCard={guestbookEntries.length > 0}
+        shouldRenderOrganizerCard={Boolean(aiPhotoOpsPlan)}
+        shouldRenderQuickStartBanner={fromQuickStart && nextStep === 'review'}
+        slideshowCardProps={{
+          buckets,
+          countsByBucket,
+          slideshowBucketFilter,
+          slideshowOrder,
+          slideshowTheme,
+          slideshowFrames,
+          slideshowReadyBucketCount,
+          slideshowPreviewOpen,
+          copied,
+          onBucketFilterChange: setSlideshowBucketFilter,
+          onOrderChange: setSlideshowOrder,
+          onThemeChange: setSlideshowTheme,
+          onPreviewOpenChange: setSlideshowPreviewOpen,
+          onExportSlideshowPlan: () => void exportSlideshowPlan(),
+          formatDateTime: formatGuestPhotoDateTime,
+        }}
+        slideshowDraftCardProps={{
+          slideshowReadyBucketCount,
+          aiPhotoOpsBusy,
+          uploadCount: uploads.length,
+          bucketCount: buckets.length,
+          onGenerateAiPhotoOpsPlan: () => void generateAiPhotoOpsPlan(),
+        }}
+        statsCardsProps={{
+          albumCount: buckets.length,
+          activeAlbumCount: activeBucketsCount,
+          pausedAlbumCount: pausedBucketsCount,
+          uploadCount: totalUploads,
+        }}
+      />
     </DashboardLayout>
   );
 };
