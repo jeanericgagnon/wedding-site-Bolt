@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 7:24 AM PT - No-Deploy Guest Photo Dashboard Props-Helper Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` no longer hand-assembles the full owner-facing live-content prop bundle inline.
+  - Added `src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardLiveContentProps.ts` so the route now hands off the album controls, album create/list state, bucket list, follow-up, guestbook, slideshow, review, organizer, and stats prop composition through one dedicated helper while the page keeps the photo data, service calls, AI/photo actions, moderation flows, and route-level state.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildGuestPhotoDashboardLiveContentProps({ ... })`, checks that the new helper owns the live-content prop composition seam, and rejects regaining the old inline `albumControlsProps={{`, `bucketListProps={{`, `reviewCardProps={{`, and `slideshowCardProps={{` slabs in `GuestPhotoSharing.tsx`.
+- Acceptance/proof target:
+  - Focused dashboard boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 7:13 AM PT - No-Deploy Vault Edit-Modal Extraction
 
 - Status: `PARTIAL`

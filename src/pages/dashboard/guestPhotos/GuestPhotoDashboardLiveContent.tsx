@@ -21,7 +21,7 @@ import { GuestPhotoSlideshowCard } from './GuestPhotoSlideshowCard';
 import { GuestPhotoSlideshowDraftCard } from './GuestPhotoSlideshowDraftCard';
 import { GuestPhotoStatsCards } from './GuestPhotoStatsCards';
 
-type GuestPhotoDashboardLiveContentProps = {
+export type GuestPhotoDashboardLiveContentProps = {
   albumControlsProps: ComponentProps<typeof GuestPhotoAlbumControls>;
   albumCreateCardProps: ComponentProps<typeof GuestPhotoAlbumCreateCard>;
   albumListStateProps: ComponentProps<typeof GuestPhotoAlbumListState>;

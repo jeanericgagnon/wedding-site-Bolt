@@ -1078,6 +1078,7 @@ describe('dashboard data boundary guards', () => {
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotoSharingService.ts'), 'utf8');
     const albumActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoAlbumActions.ts'), 'utf8');
     const liveContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/GuestPhotoDashboardLiveContent.tsx'), 'utf8');
+    const liveContentProps = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardLiveContentProps.ts'), 'utf8');
 
     expect(source).toContain('loadGuestPhotoDashboardSnapshot(userId)');
     expect(source).toContain('persistGuestPhotoBuckets(siteId, nextBuckets)');
@@ -1093,6 +1094,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('resolveGuestPhotoDashboardUserId()');
     expect(source).toContain('refreshGuestPhotoSession()');
     expect(source).toContain('queueGuestPhotoFollowupsFromService(siteId, kind)');
+    expect(source).toContain('buildGuestPhotoDashboardLiveContentProps({');
     expect(source).toContain('<GuestPhotoDashboardLiveContent');
     expect(liveContent).toContain('<GuestPhotoHeroCard');
     expect(liveContent).toContain('<GuestPhotoMemoryVaultsCard');
@@ -1115,6 +1117,11 @@ describe('dashboard data boundary guards', () => {
     expect(liveContent).toContain('<GuestPhotoMomentAlbumsCard');
     expect(liveContent).toContain('<GuestPhotoOrganizerCard');
     expect(liveContent).toContain('<GuestPhotoReviewCard');
+    expect(liveContentProps).toContain('export function buildGuestPhotoDashboardLiveContentProps({');
+    expect(liveContentProps).toContain('albumControlsProps: {');
+    expect(liveContentProps).toContain('bucketListProps: {');
+    expect(liveContentProps).toContain('reviewCardProps: {');
+    expect(liveContentProps).toContain('slideshowCardProps: {');
     expect(albumActions).toContain('await createGuestPhotoAlbum({');
     expect(albumActions).toContain("await manageGuestPhotoAlbum({ action: 'regenerate_link', albumId: bucketId })");
     expect(albumActions).toContain("await manageGuestPhotoAlbum({ action: 'set_window', albumId: bucketId, opensAt, closesAt })");
@@ -1170,6 +1177,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('Created an organization and slideshow plan for review.');
     expect(source).not.toContain('Photo review');
     expect(source).not.toContain('Add at least three visible uploads to an active album to start a slideshow draft.');
+    expect(source).not.toContain('albumControlsProps={{');
+    expect(source).not.toContain('bucketListProps={{');
+    expect(source).not.toContain('reviewCardProps={{');
+    expect(source).not.toContain('slideshowCardProps={{');
     expect(service).toContain("const GUEST_PHOTO_BUCKET_SITE_SELECT = 'wedding_data, site_json'");
     expect(service).toContain("const GUEST_PHOTO_DASHBOARD_SITE_SELECT = 'id, site_slug, wedding_data'");
     expect(service).toContain("const GUEST_PHOTO_EVENT_SELECT = 'id,event_name,event_date,start_time,end_time' as const;");

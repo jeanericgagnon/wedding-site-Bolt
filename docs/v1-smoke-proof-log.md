@@ -7,6 +7,22 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. The remaining active strict P0 item is secure service-role queue/storage proof. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-08 7:24 AM PT No-Deploy Guest Photo Dashboard Props-Helper Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now routes the full owner-facing live-content prop assembly through `src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardLiveContentProps.ts`.
+  - That helper now owns the album controls, album create/list state, bucket list, follow-up, guestbook, organizer, review, slideshow, and stats prop-composition seam while the route keeps photo data loading, AI/photo mutations, moderation flows, and route state.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildGuestPhotoDashboardLiveContentProps({ ... })` and rejects regaining the old inline `albumControlsProps={{`, `bucketListProps={{`, `reviewCardProps={{`, and `slideshowCardProps={{` slabs in `GuestPhotoSharing.tsx`.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 1699 lines to 1623 lines in this batch, while `src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardLiveContentProps.ts` came in at 609 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 7:13 AM PT No-Deploy Vault Edit-Modal Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:

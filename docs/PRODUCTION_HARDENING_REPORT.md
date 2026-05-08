@@ -19,6 +19,22 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 7:24 AM PT - No-Deploy Guest Photo Dashboard Props-Helper Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now routes the full owner-facing live-content prop assembly through `src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardLiveContentProps.ts` instead of hand-building that whole prop slab inline.
+  - That helper now owns the `albumControlsProps`, `albumCreateCardProps`, `bucketListProps`, `followupCardProps`, `guestbookCardProps`, `reviewCardProps`, `slideshowCardProps`, `slideshowDraftCardProps`, `statsCardsProps`, and related live-content visibility booleans while the route keeps the actual photo data, service calls, AI/photo mutations, moderation flows, and route state.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildGuestPhotoDashboardLiveContentProps({ ... })`, checks that `buildGuestPhotoDashboardLiveContentProps.ts` owns the live-content prop composition seam, and rejects regaining the old inline `albumControlsProps={{`, `bucketListProps={{`, `reviewCardProps={{`, and `slideshowCardProps={{` slabs in `GuestPhotoSharing.tsx`.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 1699 lines to 1623 lines in this batch, while `src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardLiveContentProps.ts` came in at 609 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ### 2026-05-08 7:13 AM PT - No-Deploy Vault Edit-Modal Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:
