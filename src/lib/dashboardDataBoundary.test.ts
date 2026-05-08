@@ -574,6 +574,26 @@ describe('dashboard data boundary guards', () => {
     expect(helperSource).not.toContain("from '../../../lib/supabase'");
   });
 
+  it('routes registry maintenance actions through a dedicated hook', () => {
+    const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Registry.tsx'), 'utf8');
+    const hookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/registry/useRegistryMaintenanceActions.ts'), 'utf8');
+
+    expect(source).toContain('useRegistryMaintenanceActions({');
+    expect(source).not.toContain('async function handleRefetchMetadata(item: RegistryItem, silent = false, replaceExisting = false) {');
+    expect(source).not.toContain('async function handleRefreshImageIssues() {');
+    expect(source).not.toContain('async function handleCopyDuplicateReviewList() {');
+    expect(source).not.toContain('async function handleRepairBadImports() {');
+    expect(source).not.toContain('async function handleAutoRefreshStale(silent = false, alertsOnly = false) {');
+    expect(source).not.toContain('async function handleBulkImport() {');
+    expect(hookSource).toContain('async function handleRefetchMetadata(item: RegistryItem, silent = false, replaceExisting = false) {');
+    expect(hookSource).toContain('async function handleRefreshImageIssues() {');
+    expect(hookSource).toContain('async function handleCopyDuplicateReviewList() {');
+    expect(hookSource).toContain('async function handleRepairBadImports() {');
+    expect(hookSource).toContain('async function handleAutoRefreshStale(silent = false, alertsOnly = false) {');
+    expect(hookSource).toContain('async function handleBulkImport(bulkUrls: string) {');
+    expect(hookSource).not.toContain("from '../../../lib/supabase'");
+  });
+
   it('loads planning service rows with explicit projections', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/planningService.ts'), 'utf8');
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Planning.tsx'), 'utf8');

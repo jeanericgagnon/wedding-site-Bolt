@@ -5896,6 +5896,18 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 06:18 AM PT No-Deploy Registry Maintenance-Actions Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Registry.tsx` now routes the registry metadata refresh, image issue cleanup, duplicate review copy, stale auto-refresh, and bulk URL import lane through `src/pages/dashboard/registry/useRegistryMaintenanceActions.ts`.
+  - That hook now owns metadata reimport, image refresh repair, duplicate review export, bad-import cleanup, stale auto-refresh with monthly budget tracking, and bulk-link import review messaging while the page keeps bootstrap, CRUD, refresh-policy saves, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useRegistryMaintenanceActions({ ... })`, checks that `useRegistryMaintenanceActions.ts` owns the registry maintenance seam, and rejects regaining the old inline maintenance handlers in `Registry.tsx`.
+  - `src/pages/dashboard/Registry.tsx` dropped from 1302 lines to 1021 lines in this batch, while `src/pages/dashboard/registry/useRegistryMaintenanceActions.ts` came in at 380 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 18/18.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 06:13 AM PT No-Deploy Registry Dashboard Derived-State Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

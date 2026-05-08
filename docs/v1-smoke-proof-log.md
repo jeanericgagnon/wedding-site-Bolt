@@ -10335,6 +10335,17 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 06:18 AM PT - Local registry maintenance-actions extraction
+- Scope: `src/pages/dashboard/Registry.tsx`, `src/pages/dashboard/registry/useRegistryMaintenanceActions.ts`, `src/lib/dashboardDataBoundary.test.ts`.
+- What changed:
+  - moved registry metadata refresh, image issue cleanup, duplicate review copy, stale auto-refresh, and bulk URL import out of `Registry.tsx` and into `useRegistryMaintenanceActions.ts`
+  - kept metadata reimport, stale refresh budget tracking, image repair, duplicate review export, and bulk-link import review messaging intact
+  - added boundary coverage that pins `useRegistryMaintenanceActions({ ... })` and rejects regaining the old inline maintenance-action handlers in `Registry.tsx`
+- Validation:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts` PASS (`18/18`)
+  - `npm run typecheck -- --pretty false` PASS
+  - `git diff --check` PASS
+- Outcome: `Registry.tsx` dropped from `1302` lines to `1021` lines; `useRegistryMaintenanceActions.ts` came in at `380` lines. No deploy was run.
 ## 2026-05-08 06:13 AM PT - Local registry dashboard derived-state extraction
 - Scope: `src/pages/dashboard/Registry.tsx`, `src/pages/dashboard/registry/buildRegistryDashboardDerivedState.ts`, `src/lib/dashboardDataBoundary.test.ts`.
 - What changed:
