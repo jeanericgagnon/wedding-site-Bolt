@@ -1,7 +1,4 @@
-import React, { useState } from 'react';
-import {
-  buildSetupChecklist,
-} from './overviewUtils';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
@@ -15,21 +12,22 @@ import { OverviewDashboardLiveContent } from './OverviewDashboardLiveContent';
 import {
 } from './buildOverviewSnapshotState';
 import { useOverviewDashboardData } from './useOverviewDashboardData';
-
-const INTELLIGENCE_DISMISSALS_STORAGE_KEY = 'dayof_intelligence_dismissed_v1';
+import {
+  buildOverviewDashboardRouteSupport,
+  useOverviewDashboardRouteSupport,
+} from './useOverviewDashboardRouteSupport';
 
 export const DashboardOverview: React.FC = () => {
   const { toast } = useToast();
 
   const { user, isDemoMode } = useAuth();
   const navigate = useNavigate();
-  const [dismissedIntelligenceIds, setDismissedIntelligenceIds] = useState<string[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(INTELLIGENCE_DISMISSALS_STORAGE_KEY) ?? '[]') as string[];
-    } catch {
-      return [];
-    }
-  });
+  const {
+    dismissedIntelligenceIds,
+    setDismissedIntelligenceIds,
+    showInternalProof,
+    storageKey,
+  } = useOverviewDashboardRouteSupport();
   const {
     draftBrief,
     draftBriefDebug,
@@ -54,7 +52,7 @@ export const DashboardOverview: React.FC = () => {
     dismissedIntelligenceIds,
     isDemoMode,
     setDismissedIntelligenceIds,
-    storageKey: INTELLIGENCE_DISMISSALS_STORAGE_KEY,
+    storageKey,
     userId: user?.id ?? null,
   });
 
@@ -86,7 +84,6 @@ export const DashboardOverview: React.FC = () => {
     interactiveVoteSummaries,
     stats,
   });
-  const showInternalProof = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('proof') === '1';
   const {
     dismissInvisibleSuggestion,
     hideSuggestion,
@@ -101,49 +98,20 @@ export const DashboardOverview: React.FC = () => {
     setInteractiveSuggestions,
     setRefreshingBrief,
     stats,
-    storageKey: INTELLIGENCE_DISMISSALS_STORAGE_KEY,
+    storageKey,
     toast,
   });
-
-  const setupChecklist = stats
-    ? buildSetupChecklist({
-        coupleName1: stats.coupleName1 ?? '',
-        coupleName2: stats.coupleName2 ?? '',
-        weddingDate: stats.weddingDate ?? '',
-        venueName: stats.venueName ?? '',
-        venueLocation: stats.venueLocation ?? '',
-        registryItemCount: stats.registryItemCount,
-        photoAlbumCount: stats.photoAlbumCount,
-        isPublished: stats.isPublished,
-        siteSlug: stats.siteSlug ?? '',
-        templateName: stats.templateName ?? '',
-      }).map((item) => ({ ...item, action: () => navigate(item.route) }))
-    : [];
-
-  const setupCompletedCount = setupChecklist.filter((item) => item.done).length;
-  const setupProgressRatio = setupChecklist.length > 0 ? setupCompletedCount / setupChecklist.length : 0;
   const publishReadinessItemsWithActions = publishReadinessItems.map((item) => ({ ...item, action: () => navigate(item.route) }));
-  const coupleLabel = [stats?.coupleName1, stats?.coupleName2].filter(Boolean).join(' & ') || 'your wedding';
-  const heroVenueLine = [stats?.venueName, stats?.venueLocation].filter(Boolean).join(' · ');
-  const nextStepLabel = firstPublishBlocker?.label
-    ?? ((stats?.pendingGuests ?? 0) > 0
-      ? 'Follow up with guests still awaiting RSVP'
-      : stats?.isPublished
-        ? 'Review recent activity before the next guest update'
-        : 'Review your draft website before sharing');
-  const nextStepActionLabel = firstPublishBlocker
-    ? 'Fix next setup item'
-    : stats?.isPublished
-      ? 'Open guests'
-      : 'Open site builder';
-  const nextStepAction = firstPublishBlocker
-    ? () => navigate(firstPublishBlocker.route)
-    : () => navigate(stats?.isPublished ? '/dashboard/guests' : '/dashboard/builder?publishNow=1');
+  const routeSupport = buildOverviewDashboardRouteSupport({
+    firstPublishBlocker,
+    navigate,
+    stats,
+  });
 
   return (
     <OverviewDashboardRouteView error={error} loading={loading}>
       <OverviewDashboardLiveContent
-        coupleLabel={coupleLabel}
+        coupleLabel={routeSupport.coupleLabel}
         dashboardModel={{
           analyticsBaseline,
           archiveMode,
@@ -166,26 +134,26 @@ export const DashboardOverview: React.FC = () => {
           websiteInviteAnalyticsFunnel,
         }}
         draftBrief={draftBrief}
-        heroVenueLine={heroVenueLine}
+        heroVenueLine={routeSupport.heroVenueLine}
         interactiveLoading={interactiveLoading}
         interactiveSuggestions={interactiveSuggestions}
         interactiveVoteSummaries={interactiveVoteSummaries}
         nameChangeCard={nameChangeCard}
         nameChangeInsights={nameChangeInsights}
         navigate={navigate}
-        nextStepAction={nextStepAction}
-        nextStepActionLabel={nextStepActionLabel}
-        nextStepLabel={nextStepLabel}
+        nextStepAction={routeSupport.nextStepAction}
+        nextStepActionLabel={routeSupport.nextStepActionLabel}
+        nextStepLabel={routeSupport.nextStepLabel}
         onDismissInvisibleSuggestion={dismissInvisibleSuggestion}
         onHideSuggestion={hideSuggestion}
         onRefreshDraftFromBrief={refreshDraftFromBrief}
         recentSiteActivity={recentSiteActivity}
         refreshingBrief={refreshingBrief}
         setShowMoreDetail={setShowMoreDetail}
-        setupChecklistLength={setupChecklist.length}
-        setupCompletedCount={setupCompletedCount}
+        setupChecklistLength={routeSupport.setupChecklistLength}
+        setupCompletedCount={routeSupport.setupCompletedCount}
         setupDraftProgressPercent={setupDraftProgressPercent}
-        setupProgressRatio={setupProgressRatio}
+        setupProgressRatio={routeSupport.setupProgressRatio}
         showInternalProof={showInternalProof}
         showMoreDetail={showMoreDetail}
         stats={stats}

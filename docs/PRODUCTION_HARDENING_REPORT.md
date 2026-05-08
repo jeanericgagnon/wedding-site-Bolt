@@ -19,6 +19,22 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+## 2026-05-08 10:01 AM PT No-Deploy Overview Route-Support Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Overview.tsx` now routes the remaining dismissal-state and route-presentation seam through `src/pages/dashboard/useOverviewDashboardRouteSupport.ts`.
+  - That new file now owns the dismissed-intelligence localStorage bootstrapping plus proof-flag detection in `useOverviewDashboardRouteSupport()`, and the setup checklist, couple label, venue line, and next-step shaping in `buildOverviewDashboardRouteSupport({ ... })`.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useOverviewDashboardRouteSupport()` and `buildOverviewDashboardRouteSupport({ ... })`, checks that `useOverviewDashboardRouteSupport.ts` owns the dismissal/proof/setup seam, and rejects regaining the old inline localStorage, proof-flag, checklist, and next-step shaping block in `Overview.tsx`.
+  - `src/pages/dashboard/Overview.tsx` dropped from 195 lines to 163 lines in this batch, while `src/pages/dashboard/useOverviewDashboardRouteSupport.ts` came in at 88 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 09:55 AM PT No-Deploy Guest Dashboard Route-Support Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

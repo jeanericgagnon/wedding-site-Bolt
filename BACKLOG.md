@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 10:01 AM PT - No-Deploy Overview Route-Support Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Overview.tsx` no longer owns the inline dismissed-intelligence localStorage bootstrapping, proof-flag detection, setup checklist shaping, couple/venue label shaping, or next-step copy/action block.
+  - Added `src/pages/dashboard/useOverviewDashboardRouteSupport.ts` so the new route-support file now owns dismissal/proof state in `useOverviewDashboardRouteSupport()` plus the setup checklist and next-step presentation seam in `buildOverviewDashboardRouteSupport({ ... })` while the route keeps dashboard data loading, intelligence actions, dashboard modeling, and render composition.
+  - Overview boundary tests now pin `useOverviewDashboardRouteSupport()` and `buildOverviewDashboardRouteSupport({ ... })`, check that the new file owns the dismissal/proof/setup seam, and reject regaining the old inline localStorage, proof-flag, checklist, and next-step shaping block in `Overview.tsx`.
+- Acceptance/proof target:
+  - Focused overview/dashboard boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 09:55 AM PT - No-Deploy Guest Dashboard Route-Support Extraction
 
 - Status: `PARTIAL`
