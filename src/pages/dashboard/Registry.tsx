@@ -1,35 +1,34 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, ActionsMenu } from '../../components/ui';
-import { Gift, Plus, CheckCircle2, DollarSign, Search, Package, AlertCircle, Sparkles } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
+import { Gift, Plus, CheckCircle2, DollarSign, Search, Package, Sparkles } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import {
-  fetchRegistryItems,
   createRegistryItem,
   updateRegistryItem,
   deleteRegistryItem,
   ownerMarkPurchased,
   fetchUrlPreview,
+  saveRegistryRefreshPolicy,
+  updateRegistryRefreshBudget,
 } from './registry/registryService';
 import { RegistryItemCard } from './registry/RegistryItemCard';
 import { RegistryItemForm } from './registry/RegistryItemForm';
 import type { RegistryItem, RegistryFilter, RegistryItemDraft } from './registry/registryTypes';
-import { getRegistryItemMetadataState, itemNeedsAttention, sanitizeRegistryQuantityState } from './registry/registryTypes';
-import { demoWeddingSite, demoRegistryItems } from '../../lib/demoData';
+import { getRegistryItemMetadataState, sanitizeRegistryQuantityState } from './registry/registryTypes';
 import { getRegistryRepairStates } from './registry/repairState';
 import { findDuplicateRegistryGroups } from './registry/duplicateRegistryItems';
 import { getCurrentMonthKey, resolveRegistryRefreshBudgetState } from './registry/refreshBudget';
 import { ageExceedsMs, formatRegistryItemDate, getRegistryItemTimestamp, isRegistryItemDue } from './registryItemTime';
-import { getWeddingRefreshWindowDate, parseRefreshWindowEndIso, toDateInputValueOrEmpty, toValidDateOrNull } from './registryRefreshWindow';
+import { getWeddingRefreshWindowDate, parseRefreshWindowEndIso, toValidDateOrNull } from './registryRefreshWindow';
 import { copyTextOrDownload } from '../../lib/copyText';
 import { buildRegistryInsights } from '../../lib/invisibleIntelligence';
 import { logAppAction } from '../../lib/actionAudit';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import { buildRegistryLaunchReadiness, buildRegistryThankYouPlan } from '../../lib/registryLaunchReadiness';
+import { normalizeOwnerDashboardRegistryItem, useRegistryDashboardData } from './registry/useRegistryDashboardData';
 
 interface Toast {
   id: number;
@@ -39,17 +38,6 @@ interface Toast {
 
 function safeRegistryDashboardError(err: unknown, fallback: string): string {
   return customerSafeErrorMessage(err, fallback);
-}
-
-function normalizeOwnerDashboardRegistryItem(item: RegistryItem): RegistryItem {
-  const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased ?? 0, item.quantity_needed ?? 1);
-  return {
-    ...item,
-    quantity_needed: quantityState.quantityNeeded,
-    quantity_purchased: quantityState.quantityPurchased,
-    purchase_status: quantityState.purchaseStatus,
-    purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,
-  };
 }
 
 const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
@@ -99,22 +87,6 @@ function normalizeRegistryImageUrl(raw: string): string | null {
 
 export const DashboardRegistry: React.FC = () => {
   const { isDemoMode, user } = useAuth();
-  const [items, setItems] = useState<RegistryItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
-  const [weddingDate, setWeddingDate] = useState<string | null>(null);
-  const [refreshEnabledUntil, setRefreshEnabledUntil] = useState<string | null>(null);
-  const [monthlyRefreshCap, setMonthlyRefreshCap] = useState(100);
-  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
-  const [monthlyRefreshCount, setMonthlyRefreshCount] = useState(0);
-  const [monthlyRefreshMonth, setMonthlyRefreshMonth] = useState<string | null>(null);
-  const [refreshCapDraft, setRefreshCapDraft] = useState(100);
-  const [refreshWindowDraft, setRefreshWindowDraft] = useState('');
-  const [savingRefreshPolicy, setSavingRefreshPolicy] = useState(false);
-  const [refreshPreset, setRefreshPreset] = useState<'lean' | 'balanced' | 'aggressive'>('balanced');
-  const [refreshIncludePurchased, setRefreshIncludePurchased] = useState(false);
-  const [policyUpdatedAt, setPolicyUpdatedAt] = useState<string | null>(null);
-  const [policyUpdatedBy, setPolicyUpdatedBy] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<RegistryFilter>('all');
   const [showForm, setShowForm] = useState(false);
@@ -129,6 +101,40 @@ export const DashboardRegistry: React.FC = () => {
   const [repairingBadImports, setRepairingBadImports] = useState(false);
   const [autoRefreshing, setAutoRefreshing] = useState(false);
   const [registryActionsOpen, setRegistryActionsOpen] = useState(false);
+  const [savingRefreshPolicy, setSavingRefreshPolicy] = useState(false);
+
+  const {
+    autoRefreshEnabled,
+    items,
+    loading,
+    monthlyRefreshCap,
+    monthlyRefreshCount,
+    monthlyRefreshMonth,
+    refreshCapDraft,
+    refreshEnabledUntil,
+    refreshIncludePurchased,
+    refreshPreset,
+    refreshWindowDraft,
+    setAutoRefreshEnabled,
+    setItems,
+    setMonthlyRefreshCap,
+    setMonthlyRefreshCount,
+    setMonthlyRefreshMonth,
+    setPolicyUpdatedAt,
+    setPolicyUpdatedBy,
+    setRefreshCapDraft,
+    setRefreshEnabledUntil,
+    setRefreshIncludePurchased,
+    setRefreshPreset,
+    setRefreshWindowDraft,
+    weddingDate,
+    weddingSiteId,
+  } = useRegistryDashboardData({
+    isDemoMode,
+    userId: user?.id,
+    toast,
+  });
+
   const normalizedItems = items.map(normalizeOwnerDashboardRegistryItem);
   const duplicateGroups = findDuplicateRegistryGroups(normalizedItems);
   const actionableBadImportCount = normalizedItems.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length;
@@ -173,102 +179,6 @@ export const DashboardRegistry: React.FC = () => {
       metadata,
     });
   }
-
-  function toDemoRegistryItem(item: typeof demoRegistryItems[number], index: number): RegistryItem {
-    const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased ?? 0, item.quantity_needed ?? 1);
-
-    return {
-      id: item.id,
-      wedding_site_id: demoWeddingSite.id,
-      item_name: item.item_name,
-      price_label: null,
-      price_amount: item.price ?? null,
-      store_name: item.store_name ?? null,
-      merchant: item.store_name ?? null,
-      item_url: null,
-      canonical_url: null,
-      image_url: null,
-      description: null,
-      notes: null,
-      quantity_needed: quantityState.quantityNeeded,
-      quantity_purchased: quantityState.quantityPurchased,
-      purchaser_name: null,
-      purchase_status: quantityState.purchaseStatus,
-      hide_when_purchased: false,
-      sort_order: index,
-      priority: item.priority,
-      availability: null,
-      metadata_last_checked_at: null,
-      metadata_fetch_status: null,
-      metadata_confidence_score: null,
-      metadata_source_method: null,
-      metadata_retailer: null,
-      previous_price_amount: null,
-      price_last_changed_at: null,
-      next_refresh_at: null,
-      last_auto_refreshed_at: null,
-      refresh_fail_count: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-  }
-
-  const loadItems = useCallback(async (siteId: string) => {
-    try {
-      const data = await fetchRegistryItems(siteId);
-      setItems(data.map(normalizeOwnerDashboardRegistryItem));
-    } catch {
-      toast('Couldn’t load registry items right now. Please try again.', 'error');
-    }
-  }, []);
-
-  useEffect(() => {
-    async function init() {
-      setLoading(true);
-      try {
-        if (isDemoMode) {
-          setWeddingSiteId(demoWeddingSite.id);
-          setItems(demoRegistryItems.map(toDemoRegistryItem));
-          return;
-        }
-
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const { data: site } = await supabase
-          .from('wedding_sites')
-          .select('id, wedding_date, registry_refresh_enabled_until, registry_monthly_refresh_cap, registry_monthly_refresh_count, registry_monthly_refresh_month, registry_auto_refresh_enabled, registry_refresh_include_purchased, registry_refresh_policy_updated_at, registry_refresh_policy_updated_by')
-          .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
-          .maybeSingle();
-        if (site?.id) {
-          setWeddingSiteId(site.id);
-          setWeddingDate((site as { wedding_date?: string | null }).wedding_date ?? null);
-          const typedSite = site as { registry_refresh_enabled_until?: string | null; registry_monthly_refresh_cap?: number | null; registry_monthly_refresh_count?: number | null; registry_monthly_refresh_month?: string | null; registry_auto_refresh_enabled?: boolean | null; registry_refresh_include_purchased?: boolean | null; registry_refresh_policy_updated_at?: string | null; registry_refresh_policy_updated_by?: string | null; wedding_date?: string | null };
-          const budgetState = resolveRegistryRefreshBudgetState({
-            storedMonthKey: typedSite.registry_monthly_refresh_month ?? null,
-            storedCount: typedSite.registry_monthly_refresh_count ?? 0,
-          });
-          setMonthlyRefreshMonth(budgetState.monthKey);
-          setRefreshEnabledUntil(typedSite.registry_refresh_enabled_until ?? null);
-          setAutoRefreshEnabled(typedSite.registry_auto_refresh_enabled ?? true);
-          setRefreshIncludePurchased(typedSite.registry_refresh_include_purchased ?? false);
-          setPolicyUpdatedAt(typedSite.registry_refresh_policy_updated_at ?? null);
-          setPolicyUpdatedBy(typedSite.registry_refresh_policy_updated_by ?? null);
-          setRefreshWindowDraft(toDateInputValueOrEmpty(typedSite.registry_refresh_enabled_until));
-          const loadedCap = typedSite.registry_monthly_refresh_cap ?? 100;
-          setMonthlyRefreshCap(loadedCap);
-          setRefreshCapDraft(loadedCap);
-          setRefreshPreset(loadedCap <= 60 ? 'lean' : loadedCap <= 160 ? 'balanced' : 'aggressive');
-          setMonthlyRefreshCount(budgetState.count);
-          await loadItems(site.id);
-        }
-      } catch {
-        toast('Couldn’t finish setup right now. Please try again.', 'error');
-      } finally {
-        setLoading(false);
-      }
-    }
-    init();
-  }, [isDemoMode, loadItems]);
 
   async function handleSave(draft: RegistryItemDraft) {
     if (!weddingSiteId) throw new Error('No wedding site found');
@@ -670,10 +580,10 @@ export const DashboardRegistry: React.FC = () => {
       setMonthlyRefreshCount(nextCount);
       setMonthlyRefreshMonth(budgetState.monthKey);
       if (weddingSiteId && !isDemoMode) {
-        await supabase
-          .from('wedding_sites')
-          .update({ registry_monthly_refresh_count: nextCount, registry_monthly_refresh_month: budgetState.monthKey })
-          .eq('id', weddingSiteId);
+        await updateRegistryRefreshBudget(weddingSiteId, {
+          registry_monthly_refresh_count: nextCount,
+          registry_monthly_refresh_month: budgetState.monthKey,
+        });
       }
     }
     if (updatedCount > 0) {
@@ -778,22 +688,19 @@ export const DashboardRegistry: React.FC = () => {
 
     setSavingRefreshPolicy(true);
     try {
-      const { error } = await supabase
-        .from('wedding_sites')
-        .update({
-          registry_monthly_refresh_cap: cap,
-          registry_refresh_enabled_until: untilIso,
-          registry_auto_refresh_enabled: autoRefreshEnabled,
-          registry_refresh_include_purchased: refreshIncludePurchased,
-          registry_refresh_policy_updated_at: new Date().toISOString(),
-          registry_refresh_policy_updated_by: user?.id ?? null,
-        })
-        .eq('id', weddingSiteId);
-      if (error) throw error;
+      const updatedAt = new Date().toISOString();
+      await saveRegistryRefreshPolicy(weddingSiteId, {
+        registry_monthly_refresh_cap: cap,
+        registry_refresh_enabled_until: untilIso,
+        registry_auto_refresh_enabled: autoRefreshEnabled,
+        registry_refresh_include_purchased: refreshIncludePurchased,
+        registry_refresh_policy_updated_at: updatedAt,
+        registry_refresh_policy_updated_by: user?.id ?? null,
+      });
 
       setMonthlyRefreshCap(cap);
       setRefreshEnabledUntil(untilIso);
-      setPolicyUpdatedAt(new Date().toISOString());
+      setPolicyUpdatedAt(updatedAt);
       setPolicyUpdatedBy(user?.id ?? null);
       logRegistryAction('registry_refresh_policy_saved', 'Registry refresh policy was updated.', {
         monthlyRefreshCap: cap,
@@ -826,13 +733,16 @@ export const DashboardRegistry: React.FC = () => {
   async function handleResetMonthlyBudgetCounter() {
     if (!weddingSiteId || isDemoMode) return;
     const monthKey = new Date().toISOString().slice(0, 7);
-    await supabase
-      .from('wedding_sites')
-      .update({ registry_monthly_refresh_count: 0, registry_monthly_refresh_month: monthKey, registry_refresh_policy_updated_at: new Date().toISOString(), registry_refresh_policy_updated_by: user?.id ?? null })
-      .eq('id', weddingSiteId);
+    const updatedAt = new Date().toISOString();
+    await saveRegistryRefreshPolicy(weddingSiteId, {
+      registry_monthly_refresh_count: 0,
+      registry_monthly_refresh_month: monthKey,
+      registry_refresh_policy_updated_at: updatedAt,
+      registry_refresh_policy_updated_by: user?.id ?? null,
+    });
     setMonthlyRefreshCount(0);
     setMonthlyRefreshMonth(monthKey);
-    setPolicyUpdatedAt(new Date().toISOString());
+    setPolicyUpdatedAt(updatedAt);
     setPolicyUpdatedBy(user?.id ?? null);
     logRegistryAction('registry_refresh_counter_reset', 'Registry monthly refresh counter was reset.', { monthKey }, weddingSiteId, 'Registry refresh policy');
     toast('Monthly refresh counter reset.');
@@ -901,10 +811,10 @@ export const DashboardRegistry: React.FC = () => {
 
     setMonthlyRefreshCount(0);
     setMonthlyRefreshMonth(budgetState.monthKey);
-    await supabase
-      .from('wedding_sites')
-      .update({ registry_monthly_refresh_count: 0, registry_monthly_refresh_month: budgetState.monthKey })
-      .eq('id', weddingSiteId);
+    await updateRegistryRefreshBudget(weddingSiteId, {
+      registry_monthly_refresh_count: 0,
+      registry_monthly_refresh_month: budgetState.monthKey,
+    });
     return { monthKey: budgetState.monthKey, count: 0 };
   }
 

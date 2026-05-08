@@ -5896,6 +5896,21 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 06:10 AM PT No-Deploy Registry Dashboard Data-Hook Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Registry.tsx` now routes the registry dashboard bootstrap, registry item hydration, and refresh-policy snapshot lane through `src/pages/dashboard/registry/useRegistryDashboardData.ts`.
+  - That hook now owns demo bootstrap, live bootstrap via `loadRegistryDashboardSite(userId)`, registry item loading via `fetchRegistryItems(siteId)`, wedding-date and refresh-window hydration, monthly refresh budget-state restore, refresh-cap preset derivation, and the corresponding registry page state initialization while the page keeps registry actions, derived analytics, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useRegistryDashboardData({ ... })`, checks that `useRegistryDashboardData.ts` owns the registry bootstrap seam, and rejects regaining the old inline `loadRegistryDashboardSite(...)` and `loadItems(...)` lifecycle in `Registry.tsx`.
+  - `src/pages/dashboard/Registry.tsx` dropped from 1443 lines to 1358 lines in this batch, while `src/pages/dashboard/registry/useRegistryDashboardData.ts` came in at 178 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 16/16.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 05:25 AM PT No-Deploy Coordinator Dashboard Data-Hook Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

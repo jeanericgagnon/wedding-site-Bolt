@@ -535,6 +535,25 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain(".from('registry_items')\n    .select('*')");
   });
 
+  it('routes registry dashboard bootstrap through a dedicated data hook', () => {
+    const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Registry.tsx'), 'utf8');
+    const hookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/registry/useRegistryDashboardData.ts'), 'utf8');
+
+    expect(source).toContain('useRegistryDashboardData({');
+    expect(source).not.toContain('const loadItems = useCallback(async (siteId: string) => {');
+    expect(source).not.toContain('const site = await loadRegistryDashboardSite(user.id);');
+    expect(source).not.toContain('setWeddingSiteId(demoWeddingSite.id);');
+    expect(source).not.toContain('setItems(demoRegistryItems.map(toDemoRegistryItem));');
+    expect(source).not.toContain('const loadedCap = site.registry_monthly_refresh_cap ?? 100;');
+    expect(hookSource).toContain('const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);');
+    expect(hookSource).toContain('const loadItems = useCallback(async (siteId: string) => {');
+    expect(hookSource).toContain('const site = await loadRegistryDashboardSite(userId);');
+    expect(hookSource).toContain('setWeddingSiteId(demoWeddingSite.id);');
+    expect(hookSource).toContain('setItems(demoRegistryItems.map(toDemoRegistryItem));');
+    expect(hookSource).toContain('const loadedCap = site.registry_monthly_refresh_cap ?? 100;');
+    expect(hookSource).not.toContain("from '../../../lib/supabase'");
+  });
+
   it('loads planning service rows with explicit projections', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/planningService.ts'), 'utf8');
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Planning.tsx'), 'utf8');

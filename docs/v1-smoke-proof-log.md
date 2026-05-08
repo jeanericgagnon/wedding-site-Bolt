@@ -10335,6 +10335,20 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 06:10 AM PT - Local registry dashboard data-hook extraction
+- Scope: `src/pages/dashboard/Registry.tsx`, `src/pages/dashboard/registry/useRegistryDashboardData.ts`, `src/lib/dashboardDataBoundary.test.ts`.
+- What changed:
+  - moved registry dashboard bootstrap, item hydration, and refresh-policy snapshot state out of `Registry.tsx` and into `useRegistryDashboardData.ts`
+  - kept demo bootstrap, live site lookup, item normalization, refresh-cap preset derivation, refresh window hydration, and monthly budget restore behavior intact
+  - added boundary coverage that pins `useRegistryDashboardData({ ... })` and rejects regaining the old inline `loadRegistryDashboardSite(...)` plus `loadItems(...)` lane in `Registry.tsx`
+- Validation:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts` PASS (`16/16`)
+  - `npm run typecheck -- --pretty false` PASS
+  - `npm run lint -- --quiet` PASS
+  - `npm run build` PASS
+  - `npm run proof:v1:board:md` PASS
+  - `git diff --check` PASS
+- Outcome: `Registry.tsx` dropped from `1443` lines to `1358` lines; `useRegistryDashboardData.ts` came in at `178` lines. No deploy was run.
 ## 2026-05-08 05:25 AM PT No-Deploy Coordinator Dashboard Data-Hook Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
