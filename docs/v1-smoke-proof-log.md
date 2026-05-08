@@ -9241,6 +9241,22 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-08 02:05 AM PT No-Deploy Message Dashboard UI-State Hook Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Messages.tsx` now routes its remaining local state, persistence, and UI-state lifecycle glue through `src/pages/dashboard/messages/useMessageDashboardUiState.ts` instead of hand-owning that scaffolding inline.
+  - That hook now owns saved-template bootstrapping, persisted role restore/save, toast state, composer/delivery modal state, history filter state, and sending-details URL bootstrap for the messages dashboard.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useMessageDashboardUiState()` plus the hook-owned saved-template state, sending-details URL bootstrap, and persisted `readPlannerAccessRole(...)` / `writePlannerAccessRole(...)` seams.
+  - `src/pages/dashboard/Messages.tsx` dropped from 501 lines to 478 lines in this batch while `src/pages/dashboard/messages/useMessageDashboardUiState.ts` came in at 147 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/messages/messageService.boundary.test.ts`: PASS, 24/24.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 4:28 PM PT No-Deploy Guest Itinerary Drawer Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

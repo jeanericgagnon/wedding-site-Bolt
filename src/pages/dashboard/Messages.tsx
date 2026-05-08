@@ -1,36 +1,23 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { createSmsCreditsSession } from '../../lib/stripeService';
-import { canComposeDashboardMessages, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
+import { canComposeDashboardMessages } from '../../lib/plannerAccess';
 import { getMessageTemplateCoupleLabel } from './messageTemplateVariables';
 import { isSmsProviderEnabled } from '../../lib/smsProvider';
 import { logAppAction } from '../../lib/actionAudit';
 import { buildMessageAudienceOptions, filterMessageAudienceGuests, getMessageAudienceDetail } from '../../lib/messageAudienceSegments';
 import { buildGuestMessageLanguagePreviews } from '../../lib/guestMessageLanguagePreview';
 import {
-  type AudienceOption,
-  type ChannelType,
-  type DeliveryRow,
   type Guest,
   type Message,
-  type MessageTemplateKey,
-  type SavedComposerTemplate,
-  type SmsCreditTransaction,
-  type Toast,
-  type WeddingSite,
 } from './messages/messageDashboardTypes';
 import {
   COMPOSER_TEMPLATES,
   buildCampaignStatusSummary,
   countStoredPhotoAlbumLinks,
   getPreferredStoredPhotoAlbumLink,
-  migrateSavedComposerTemplatesStorage,
-  readSavedComposerTemplates,
   safeMessagesError,
-  type MessageHistoryChannelFilter,
-  type MessageHistoryDeliveryFilter,
-  type MessageHistoryStatusFilter,
 } from './messages/messageDashboardUtils';
 import {
   writeDemoMessages,
@@ -45,79 +32,69 @@ import { useMessageComposerHistoryActions } from './messages/useMessageComposerH
 import { useMessageDashboardPrefillSync } from './messages/useMessageDashboardPrefillSync';
 import { buildMessageDashboardViewProps } from './messages/buildMessageDashboardViewProps';
 import { buildMessageDashboardDerivedState } from './messages/buildMessageDashboardDerivedState';
+import { useMessageDashboardUiState } from './messages/useMessageDashboardUiState';
 import { MessageDashboardRouteView } from './messages/MessageDashboardRouteView';
 
 export const DashboardMessages: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [weddingSite, setWeddingSite] = useState<WeddingSite | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [deliveries, setDeliveries] = useState<DeliveryRow[]>([]);
-  const [guests, setGuests] = useState<Guest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [savedTemplates, setSavedTemplates] = useState<SavedComposerTemplate[]>([]);
-  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
-  const [showRecipientPreview, setShowRecipientPreview] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const [viewingMessage, setViewingMessage] = useState<Message | null>(null);
-  const [buyingPack, setBuyingPack] = useState<'sms_100' | 'sms_500' | 'sms_1000' | null>(null);
-  const [smsExpiringSoon, setSmsExpiringSoon] = useState<number>(0);
-  const [smsTransactions, setSmsTransactions] = useState<SmsCreditTransaction[]>([]);
-  const [itineraryAudienceOptions, setItineraryAudienceOptions] = useState<AudienceOption[]>([]);
-  const [eventGuestIds, setEventGuestIds] = useState<Record<string, Set<string>>>({});
-  const [messagesRole, setMessagesRole] = useState<PlannerAccessRole>('owner');
-  const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
-  const [messagesPermissions, setMessagesPermissions] = useState<PlannerPermissionKey[] | null>(null);
-  const [historyStatusFilter, setHistoryStatusFilter] = useState<MessageHistoryStatusFilter>('all');
-  const [historyChannelFilter, setHistoryChannelFilter] = useState<MessageHistoryChannelFilter>('all');
-  const [historyAudienceFilter, setHistoryAudienceFilter] = useState<string>('all');
-  const [historyDeliveryFilter, setHistoryDeliveryFilter] = useState<MessageHistoryDeliveryFilter>('all');
-  const [historyCampaignFilter, setHistoryCampaignFilter] = useState<string>('');
-  const [historySearch, setHistorySearch] = useState('');
-  const [showSendingDetails, setShowSendingDetails] = useState(() => new URLSearchParams(window.location.search).get('details') === '1');
-
-  const [formData, setFormData] = useState({
-    campaignName: '',
-    templateKey: 'blank' as MessageTemplateKey,
-    subject: '',
-    body: '',
-    audience: 'all',
-    channel: 'email' as 'email' | 'sms',
-    scheduleType: 'now',
-    scheduleDate: '',
-    scheduleTime: '',
-  });
-
-  useEffect(() => {
-    const loaded = readSavedComposerTemplates();
-    setSavedTemplates(loaded);
-    migrateSavedComposerTemplatesStorage();
-  }, []);
-
-  useEffect(() => {
-    if (!weddingSite?.id) return;
-    try {
-      const raw = readPlannerAccessRole('messages', weddingSite.id);
-      if (raw) setMessagesRole(raw);
-    } catch {}
-  }, [weddingSite?.id]);
-
-  useEffect(() => {
-    if (!weddingSite?.id) return;
-    try {
-      writePlannerAccessRole('messages', weddingSite?.id ?? null, messagesRole);
-    } catch {
-      // noop
-    }
-  }, [weddingSite?.id, messagesRole]);
-
-  function toast(message: string, type: Toast['type'] = 'success') {
-    const id = Date.now();
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
-  }
+  const {
+    activeSiteRole,
+    buyingPack,
+    deliveries,
+    editingMessageId,
+    eventGuestIds,
+    formData,
+    guests,
+    historyAudienceFilter,
+    historyCampaignFilter,
+    historyChannelFilter,
+    historyDeliveryFilter,
+    historySearch,
+    historyStatusFilter,
+    itineraryAudienceOptions,
+    loading,
+    messages,
+    messagesPermissions,
+    messagesRole,
+    savedTemplates,
+    sending,
+    setActiveSiteRole,
+    setBuyingPack,
+    setDeliveries,
+    setEditingMessageId,
+    setEventGuestIds,
+    setFormData,
+    setGuests,
+    setHistoryAudienceFilter,
+    setHistoryCampaignFilter,
+    setHistoryChannelFilter,
+    setHistoryDeliveryFilter,
+    setHistorySearch,
+    setHistoryStatusFilter,
+    setItineraryAudienceOptions,
+    setLoading,
+    setMessages,
+    setMessagesPermissions,
+    setMessagesRole,
+    setSavedTemplates,
+    setSending,
+    setShowRecipientPreview,
+    setShowSendingDetails,
+    setSmsExpiringSoon,
+    setSmsTransactions,
+    setViewingMessage,
+    setWeddingSite,
+    showRecipientPreview,
+    showSendingDetails,
+    smsExpiringSoon,
+    smsTransactions,
+    toast,
+    toasts,
+    viewingMessage,
+    weddingSite,
+  } = useMessageDashboardUiState();
 
   async function handleBuySmsPack(pack: 'sms_100' | 'sms_500' | 'sms_1000') {
     if (!weddingSite) return;

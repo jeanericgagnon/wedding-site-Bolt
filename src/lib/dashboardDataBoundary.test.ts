@@ -8,6 +8,7 @@ describe('dashboard data boundary guards', () => {
     const serviceSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/messageService.ts'), 'utf8');
     const viewPropsSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/buildMessageDashboardViewProps.ts'), 'utf8');
     const derivedStateSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/buildMessageDashboardDerivedState.ts'), 'utf8');
+    const uiStateSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDashboardUiState.ts'), 'utf8');
     const dataHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDashboardData.ts'), 'utf8');
     const deliveryHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageDeliveryActions.ts'), 'utf8');
     const composeHookSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/useMessageComposeActions.ts'), 'utf8');
@@ -35,6 +36,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('useMessageDashboardPrefillSync({');
     expect(source).toContain('buildMessageDashboardDerivedState({');
     expect(source).toContain('buildMessageDashboardViewProps({');
+    expect(source).toContain('useMessageDashboardUiState()');
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).not.toContain("supabase.from('messages').insert(payload)");
     expect(source).not.toContain('supabase.auth.getSession()');
@@ -77,6 +79,11 @@ describe('dashboard data boundary guards', () => {
     expect(derivedStateSource).toContain('const activeCampaignThread = getActiveCampaignThread({ campaignThreads, historyCampaignFilter, historySearch });');
     expect(derivedStateSource).toContain('const providerTelemetry = buildProviderTelemetry(messages, deliveries);');
     expect(derivedStateSource).not.toContain("from '../../lib/supabase'");
+    expect(uiStateSource).toContain('const [savedTemplates, setSavedTemplates] = useState<SavedComposerTemplate[]>([]);');
+    expect(uiStateSource).toContain("const [showSendingDetails, setShowSendingDetails] = useState(() => new URLSearchParams(window.location.search).get('details') === '1');");
+    expect(uiStateSource).toContain("const raw = readPlannerAccessRole('messages', weddingSite.id);");
+    expect(uiStateSource).toContain("writePlannerAccessRole('messages', weddingSite.id, messagesRole);");
+    expect(uiStateSource).not.toContain("from '../../lib/supabase'");
     expect(composeHookSource).toContain('insertDashboardMessageMinimal({');
     expect(composeHookSource).toContain('await updateDashboardMessage(editingMessageId, {');
     expect(composeHookSource).toContain('const result = await triggerDashboardBulkSend(inserted.id)');
