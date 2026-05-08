@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { useAuth } from '../../hooks/useAuth';
 import { type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { useToast } from '../../components/ui/Toast';
@@ -27,7 +26,7 @@ import { getCoordinatorStandingPromptReason } from '../../lib/coordinatorStandin
 import { getCoordinatorStandingPromptReasonTightened } from '../../lib/coordinatorStandingPromptReasonTighten';
 import { updateCoordinatorQnaAnswer } from './coordinator/coordinatorService';
 import { buildCoordinatorDashboardBoardActions } from './coordinator/buildCoordinatorDashboardBoardActions';
-import { CoordinatorAttentionPanel, CoordinatorCheckInQueuePanel, CoordinatorDayOfMessagePanel, CoordinatorDayOfSummaryPanel, CoordinatorHandoffPanel, CoordinatorHelperAccessPanel, CoordinatorQnaPanel, CoordinatorRoleSelector, CoordinatorStatCards, CoordinatorTimelinePanel } from './coordinator/CoordinatorModePanels';
+import { CoordinatorDashboardRouteContent } from './coordinator/CoordinatorDashboardRouteContent';
 import { useCoordinatorDashboardActions } from './coordinator/useCoordinatorDashboardActions';
 import { buildCoordinatorDashboardFocusActions } from './coordinator/buildCoordinatorDashboardFocusActions';
 import { buildCoordinatorDashboardDerivedState } from './coordinator/buildCoordinatorDashboardDerivedState';
@@ -540,230 +539,196 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   return (
     <DashboardLayout currentPage="coordinator">
-      <div className="max-w-6xl mx-auto space-y-5">
-        <DashboardPageHero
-          eyebrow="Day-of view"
-          title="Give helpers the next useful thing, not every planning detail."
-          description="Check-in, schedule updates, guest questions, and day-of messages stay focused so a planner or coordinator can act quickly."
-          stats={[
-            { label: 'Guests', value: stats.total, detail: `${stats.confirmed} attending` },
-            { label: 'Checked in', value: stats.checkedIn, detail: 'arrivals marked' },
-            { label: 'Questions', value: qnaCounts.open, detail: 'open guest questions' },
-          ]}
-          actions={
-            <CoordinatorRoleSelector
-              activeSiteRole={activeSiteRole}
-              coordinatorRole={coordinatorRole}
-              onRoleChange={setCoordinatorRole}
-            />
-          }
-        />
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <CoordinatorStatCards loading={loading} stats={stats} />
-          <CoordinatorAttentionPanel
-            correctionCues={correctionCues}
-            liveIssues={liveIssues}
-            nextArrivals={nextArrivals}
-            hasUncheckedGuests={sortedGuests.some((guest) => !guest.checked_in_at)}
-            onArrivalClick={focusArrivalGuest}
-            onCorrectionCueClick={runCorrectionCue}
-            onEscalationClick={runEscalationIssue}
-          />
-        </div>
-
-        <CoordinatorHandoffPanel coordinatorRole={coordinatorRole} />
-
-        <CoordinatorHelperAccessPanel
-          coordinatorRole={coordinatorRole}
-          roleBoard={roleBoard}
-          roleCapabilities={roleCapabilities}
-        />
-
-        <CoordinatorDayOfSummaryPanel
-          alertOverrideBadge={alertOverrideBadge}
-          alertOverrideCurrentLabel={alertOverrideCurrentLabel}
-          alertOverrideTargetLabel={alertOverrideTargetLabel}
-          commandBoard={commandBoard}
-          commandDeckItems={commandDeckItems}
-          commandModeGuidance={commandModeGuidance}
-          commandModeLabel={commandModeLabel}
-          commandSource={commandSource}
-          commandSummaryItems={commandSummaryItems}
-          executionBoard={executionBoard}
-          manualOverrideActionLabel={manualOverrideActionLabel}
-          manualOverrideBadge={manualOverrideBadge}
-          manualOverrideCurrentTargetLabel={manualOverrideCurrentTargetLabel}
-          manualOverrideTargetLabel={manualOverrideTargetLabel}
-          navigationBoard={navigationBoard}
-          neutralFocusReason={neutralFocusReason}
-          onCommandClick={jumpToCommandSummaryItem}
-          onOpsSnapshotClick={jumpToOpsSnapshotLane}
-          onPrimaryAction={runPrimaryAction}
-          onReturnToBoard={returnToBoard}
-          onReturnToBoardTarget={returnToBoardTarget}
-          onRevisitNeutralFocus={revisitNeutralFocus}
-          onStablePromptClick={jumpToStablePrompt}
-          opsSnapshotItems={opsSnapshotItems}
-          overrideBadgeToneClassName={overrideBadgeToneClassName}
-          hasPanelFocus={Boolean(panelFocus)}
-          primaryAction={primaryAction}
-          primaryActionBoard={primaryActionBoard}
-          priorityCommandCta={priorityCommandCta}
-          priorityCommandLabel={priorityCommandLabel}
-          priorityCommandReason={priorityCommandReason}
-          priorityCommandTargetReason={priorityCommandTargetReason}
-          stablePrompt={stablePrompt}
-          stablePromptBadgeToneClassName={stablePromptBadgeToneClassName}
-          stablePromptStateToneClassName={stablePromptStateToneClassName}
-          stablePromptTargetLabel={stablePromptTargetLabel}
-          standingPromptBadge={standingPromptBadge}
-          standingPromptCopy={standingPromptCopy}
-          standingPromptMode={standingPromptMode}
-          standingPromptStateLabel={standingPromptStateLabel}
-          summaryDisplayCue={summaryDisplayCue}
-          summaryFeedbackBadge={summaryFeedbackBadge}
-          summaryFeedbackBadgeToneClassName={summaryFeedbackBadgeToneClassName}
-          summaryFeedbackCopy={summaryFeedbackCopy}
-          summaryFeedbackLayout={summaryFeedbackLayout}
-          summaryFeedbackTone={summaryFeedbackTone}
-        />
-
-        {coordinatorRole === 'planner' && (
-          <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
-            Planner view is on. This view stays focused on guest movement, timeline decisions, and day-of updates.
-          </div>
-        )}
-        {coordinatorRole === 'viewer' && (
-          <div className="rounded-lg border border-border/40 bg-surface-subtle px-3 py-2 text-xs text-text-tertiary">
-            Viewer mode is on — timeline, check-in, alerts, and Q&A edits are turned off here.
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <CoordinatorCheckInQueuePanel
-            activeGuestId={activeGuestId}
-            canCheckIn={canCheckIn}
-            canEditQna={canEditQna}
-            checkInBoard={checkInBoard}
-            checkInBoardTargetId={checkInBoardTargetId}
-            checkInBusyGuestId={checkInBusyGuestId}
-            checkInFilter={checkInFilter}
-            checkInQuery={checkInQuery}
-            checkInQueue={checkInQueue}
-            checkInReviewOnly={checkInReviewOnly}
-            checkInTargetState={checkInTargetState}
-            checkInWatchCount={checkInWatchCount}
-            isFocused={panelFocus === 'check-in'}
-            nextArrivals={nextArrivals}
-            onActiveGuestCheckIn={() => {
-              const activeGuest = checkInQueue.find((guest) => guest.id === activeGuestId);
-              if (!activeGuest) return;
-              focusCoordinatorCheckInLane();
-              void toggleCheckIn(activeGuest);
-            }}
-            onCheckInGuest={(guest) => { void toggleCheckIn(guest); }}
-            onEscalateDoorReview={escalateDoorReview}
-            onFocusFirstQueueGuest={focusFirstCoordinatorQueueGuest}
-            onFocusLane={focusCoordinatorCheckInLane}
-            onReadyNowClick={() => {
-              focusCoordinatorCheckInLane();
-              setCheckInFilter('arrivals');
-              setCheckInReviewOnly(false);
-              setActiveGuestId(nextArrivals[0]?.id ?? null);
-            }}
-            onReviewOnlyClick={() => {
-              focusCoordinatorCheckInLane();
-              setCheckInFilter('arrivals');
-              setCheckInReviewOnly((prev) => !prev);
-              setActiveGuestId(checkInBoardTargetId);
-            }}
-            onSelectGuest={setActiveGuestId}
-            onSetFilter={(filter) => {
-              setCheckInFilter(filter);
-              setCheckInReviewOnly(false);
-            }}
-            onSetQuery={setCheckInQuery}
-          />
-
-          <div className="space-y-4 rounded-xl border border-border-subtle bg-white p-4 shadow-sm">
-            <CoordinatorTimelinePanel
-              activeTimelineEventId={activeTimelineEventId}
-              canEditTimeline={canEditTimeline}
-              events={events}
-              liveEventId={liveEventId}
-              panelFocus={panelFocus}
-              timelineBoard={timelineBoard}
-              timelineBoardTargetId={timelineBoardTargetId}
-              timelineState={timelineState}
-              timelineTargetState={timelineTargetState}
-              upNextEventId={upNextEventId}
-              onFocusLane={focusCoordinatorTimelineLane}
-              onJumpToEvent={jumpToTimelineEvent}
-              onRunAction={runTimelineAction}
-              onSelectEvent={setActiveTimelineEventId}
-              onSelectState={selectTimelineState}
-            />
-
-            <CoordinatorDayOfMessagePanel
-              alertActivityBoard={alertActivityBoard}
-              alertBoard={alertBoard}
-              alertBusy={alertBusy}
-              alertChannelFilter={alertChannelFilter}
-              alertForm={alertForm}
-              alertLaneLabel={alertLaneLabel}
-              alertLog={alertLog}
-              alertOverrideCurrentLabel={alertOverrideCurrentLabel}
-              alertOverrideLabel={alertOverrideLabel}
-              alertOverrideTargetLabel={alertOverrideTargetLabel}
-              alertStats={alertStats}
-              alertSuggestions={alertSuggestions}
-              alertSummary={alertSummary}
-              alertTargetCue={alertTargetCue}
-              alertTimingFilter={alertTimingFilter}
-              alertValidationError={alertValidationError}
-              canScheduleAlerts={canScheduleAlerts}
-              canSendAlerts={canSendAlerts}
-              eventAudienceOptions={eventAudienceOptions}
-              filteredAlertLogCount={filteredAlertLog.length}
-              filteredAlertLogView={filteredAlertLogView}
-              preferredAlertSuggestion={preferredAlertSuggestion}
-              onFocusLane={focusCoordinatorAlertLane}
-              onSendAlert={() => void sendDayOfAlert()}
-              onSetAlertChannelFilter={setAlertChannelFilter}
-              onSetAlertForm={setAlertForm}
-              onSetAlertTimingFilter={setAlertTimingFilter}
-              onSetLastAlertSuggestionKey={setLastAlertSuggestionKey}
-            />
-
-            <CoordinatorQnaPanel
-              activeQnaDraftStateLabel={activeQnaDraftStateLabel}
-              activeQnaId={activeQnaId}
-              activeQnaItem={activeQnaItem}
-              canEditQna={canEditQna}
-              filteredQnaItems={filteredQnaItems}
-              focusCoordinatorQnaLane={focusCoordinatorQnaLane}
-              focusFirstCoordinatorOpenQna={focusFirstCoordinatorOpenQna}
-              focusNextCoordinatorQna={focusNextCoordinatorQna}
-              onAddQnaItem={() => { void addQnaItem(); }}
-              onChangeDraftAnswer={(id, value) => setQnaDraftAnswers((prev) => ({ ...prev, [id]: value }))}
-              onChangeQnaInput={setQnaInput}
-              onSaveQnaAnswer={(id) => { void saveQnaAnswer(id); }}
-              onSelectQna={setActiveQnaId}
-              onSetQnaFilter={setQnaFilter}
-              panelFocus={panelFocus}
-              qnaBoard={qnaBoard}
-              qnaBoardTargetId={qnaBoardTargetId}
-              qnaCounts={qnaCounts}
-              qnaDraftAnswers={qnaDraftAnswers}
-              qnaFilter={qnaFilter}
-              qnaInput={qnaInput}
-              qnaItemsCount={qnaItems.length}
-              qnaTargetState={qnaTargetState}
-            />
-          </div>
-        </div>
-      </div>
+      <CoordinatorDashboardRouteContent
+        attentionPanelProps={{
+          correctionCues,
+          liveIssues,
+          nextArrivals,
+          onArrivalClick: focusArrivalGuest,
+          onCorrectionCueClick: runCorrectionCue,
+          onEscalationClick: runEscalationIssue,
+        }}
+        checkInQueuePanelProps={{
+          activeGuestId,
+          canCheckIn,
+          canEditQna,
+          checkInBoard,
+          checkInBoardTargetId,
+          checkInBusyGuestId,
+          checkInFilter,
+          checkInQuery,
+          checkInQueue,
+          checkInReviewOnly,
+          checkInTargetState,
+          checkInWatchCount,
+          isFocused: panelFocus === 'check-in',
+          nextArrivals,
+          onCheckInGuest: (guest) => { void toggleCheckIn(guest); },
+          onEscalateDoorReview: escalateDoorReview,
+          onFocusFirstQueueGuest: focusFirstCoordinatorQueueGuest,
+          onFocusLane: focusCoordinatorCheckInLane,
+          onSelectGuest: setActiveGuestId,
+          onSetFilter: (filter) => {
+            setCheckInFilter(filter);
+            setCheckInReviewOnly(false);
+          },
+          onSetQuery: setCheckInQuery,
+        }}
+        coordinatorRole={coordinatorRole}
+        dayOfMessagePanelProps={{
+          alertActivityBoard,
+          alertBoard,
+          alertBusy,
+          alertChannelFilter,
+          alertForm,
+          alertLaneLabel,
+          alertLog,
+          alertOverrideCurrentLabel,
+          alertOverrideLabel,
+          alertOverrideTargetLabel,
+          alertStats,
+          alertSuggestions,
+          alertSummary,
+          alertTargetCue,
+          alertTimingFilter,
+          alertValidationError,
+          canScheduleAlerts,
+          canSendAlerts,
+          eventAudienceOptions,
+          filteredAlertLogCount: filteredAlertLog.length,
+          filteredAlertLogView,
+          onFocusLane: focusCoordinatorAlertLane,
+          onSendAlert: () => void sendDayOfAlert(),
+          onSetAlertChannelFilter: setAlertChannelFilter,
+          onSetAlertForm: setAlertForm,
+          onSetAlertTimingFilter: setAlertTimingFilter,
+          onSetLastAlertSuggestionKey: setLastAlertSuggestionKey,
+          preferredAlertSuggestion,
+        }}
+        dayOfSummaryPanelProps={{
+          alertOverrideBadge,
+          alertOverrideCurrentLabel,
+          alertOverrideTargetLabel,
+          commandBoard,
+          commandDeckItems,
+          commandModeGuidance,
+          commandModeLabel,
+          commandSource,
+          commandSummaryItems,
+          executionBoard,
+          hasPanelFocus: Boolean(panelFocus),
+          manualOverrideActionLabel,
+          manualOverrideBadge,
+          manualOverrideCurrentTargetLabel,
+          manualOverrideTargetLabel,
+          navigationBoard,
+          neutralFocusReason,
+          onCommandClick: jumpToCommandSummaryItem,
+          onOpsSnapshotClick: jumpToOpsSnapshotLane,
+          onPrimaryAction: runPrimaryAction,
+          onReturnToBoard: returnToBoard,
+          onReturnToBoardTarget: returnToBoardTarget,
+          onRevisitNeutralFocus: revisitNeutralFocus,
+          onStablePromptClick: jumpToStablePrompt,
+          opsSnapshotItems,
+          overrideBadgeToneClassName,
+          primaryAction,
+          primaryActionBoard,
+          priorityCommandCta,
+          priorityCommandLabel,
+          priorityCommandReason,
+          priorityCommandTargetReason,
+          stablePrompt,
+          stablePromptBadgeToneClassName,
+          stablePromptStateToneClassName,
+          stablePromptTargetLabel,
+          standingPromptBadge,
+          standingPromptCopy,
+          standingPromptMode,
+          standingPromptStateLabel,
+          summaryDisplayCue,
+          summaryFeedbackBadge,
+          summaryFeedbackBadgeToneClassName,
+          summaryFeedbackCopy,
+          summaryFeedbackLayout,
+          summaryFeedbackTone,
+        }}
+        hasUncheckedGuests={sortedGuests.some((guest) => !guest.checked_in_at)}
+        helperAccessPanelProps={{
+          coordinatorRole,
+          roleBoard,
+          roleCapabilities,
+        }}
+        onActiveGuestCheckIn={() => {
+          const activeGuest = checkInQueue.find((guest) => guest.id === activeGuestId);
+          if (!activeGuest) return;
+          focusCoordinatorCheckInLane();
+          void toggleCheckIn(activeGuest);
+        }}
+        onReadyNowClick={() => {
+          focusCoordinatorCheckInLane();
+          setCheckInFilter('arrivals');
+          setCheckInReviewOnly(false);
+          setActiveGuestId(nextArrivals[0]?.id ?? null);
+        }}
+        onReviewOnlyClick={() => {
+          focusCoordinatorCheckInLane();
+          setCheckInFilter('arrivals');
+          setCheckInReviewOnly((prev) => !prev);
+          setActiveGuestId(checkInBoardTargetId);
+        }}
+        qnaPanelProps={{
+          activeQnaDraftStateLabel,
+          activeQnaId,
+          activeQnaItem,
+          canEditQna,
+          filteredQnaItems,
+          focusCoordinatorQnaLane,
+          focusFirstCoordinatorOpenQna,
+          focusNextCoordinatorQna,
+          onAddQnaItem: () => { void addQnaItem(); },
+          onChangeDraftAnswer: (id, value) => setQnaDraftAnswers((prev) => ({ ...prev, [id]: value })),
+          onChangeQnaInput: setQnaInput,
+          onSaveQnaAnswer: (id) => { void saveQnaAnswer(id); },
+          onSelectQna: setActiveQnaId,
+          onSetQnaFilter: setQnaFilter,
+          panelFocus,
+          qnaBoard,
+          qnaBoardTargetId,
+          qnaCounts,
+          qnaDraftAnswers,
+          qnaFilter,
+          qnaInput,
+          qnaItemsCount: qnaItems.length,
+          qnaTargetState,
+        }}
+        roleSelectorProps={{
+          activeSiteRole,
+          coordinatorRole,
+          onRoleChange: setCoordinatorRole,
+        }}
+        statsCardProps={{
+          loading,
+          stats,
+        }}
+        timelinePanelProps={{
+          activeTimelineEventId,
+          canEditTimeline,
+          events,
+          liveEventId,
+          onFocusLane: focusCoordinatorTimelineLane,
+          onJumpToEvent: jumpToTimelineEvent,
+          onRunAction: runTimelineAction,
+          onSelectEvent: setActiveTimelineEventId,
+          onSelectState: selectTimelineState,
+          panelFocus,
+          timelineBoard,
+          timelineBoardTargetId,
+          timelineState,
+          timelineTargetState,
+          upNextEventId,
+        }}
+      />
     </DashboardLayout>
   );
 };

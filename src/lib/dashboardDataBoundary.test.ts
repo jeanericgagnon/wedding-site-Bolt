@@ -827,6 +827,7 @@ describe('dashboard data boundary guards', () => {
     const boardActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/buildCoordinatorDashboardBoardActions.ts'), 'utf8');
     const cueLifecycle = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/useCoordinatorDashboardCueLifecycle.ts'), 'utf8');
     const derivedState = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/buildCoordinatorDashboardDerivedState.ts'), 'utf8');
+    const routeContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/CoordinatorDashboardRouteContent.tsx'), 'utf8');
     const panels = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/CoordinatorModePanels.tsx'), 'utf8');
     const actionsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/useCoordinatorDashboardActions.ts'), 'utf8');
 
@@ -849,7 +850,7 @@ describe('dashboard data boundary guards', () => {
     expect(page).toContain('buildCoordinatorDashboardDerivedState({');
     expect(page).toContain('useCoordinatorDashboardActions({');
     expect(page).toContain('useCoordinatorDashboardCueLifecycle({');
-    expect(page).toContain('<CoordinatorQnaPanel');
+    expect(page).toContain('<CoordinatorDashboardRouteContent');
     expect(page).not.toContain('const bootstrap = await loadCoordinatorBootstrapData(user.id);');
     expect(page).not.toContain('const storedTimelineState = readStoredCoordinatorTimelineState(siteId);');
     expect(page).not.toContain("const jumpToOpsSnapshotLane = (key: 'check-in' | 'timeline' | 'qna' | 'alerting') => {");
@@ -867,6 +868,9 @@ describe('dashboard data boundary guards', () => {
     expect(page).not.toContain('const addQnaItem = async () => {');
     expect(page).not.toContain('if (shouldResetCoordinatorCommandJumpLabel({');
     expect(page).not.toContain('const timer = window.setTimeout(() => {');
+    expect(page).not.toContain('<DashboardPageHero');
+    expect(page).not.toContain('<CoordinatorCheckInQueuePanel');
+    expect(page).not.toContain('<CoordinatorDayOfSummaryPanel');
     expect(dataHook).toContain('const bootstrap = await loadCoordinatorBootstrapData(args.userId);');
     expect(dataHook).toContain('const storedTimelineState = readStoredCoordinatorTimelineState(siteId);');
     expect(dataHook).toContain("writeStoredCoordinatorSessionState(siteId, {");
@@ -884,6 +888,10 @@ describe('dashboard data boundary guards', () => {
     expect(derivedState).toContain('const alertStats = {');
     expect(derivedState).toContain('const standingPromptMode: \'full\' | \'secondary\' = getCoordinatorStandingPromptMode(Boolean(summaryDisplayCue));');
     expect(derivedState).toContain('const filteredAlertLogView = buildCoordinatorAlertLogView(filteredAlertLog);');
+    expect(routeContent).toContain('export function CoordinatorDashboardRouteContent(');
+    expect(routeContent).toContain('<DashboardPageHero');
+    expect(routeContent).toContain('<CoordinatorCheckInQueuePanel');
+    expect(routeContent).toContain('<CoordinatorDayOfSummaryPanel');
     expect(panels).toContain('export function CoordinatorQnaPanel(');
     expect(panels).toContain("placeholder=\"Add a guest question\"");
     expect(panels).toContain('No guest questions match this triage view right now.');

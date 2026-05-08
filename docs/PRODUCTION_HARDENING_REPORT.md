@@ -19,6 +19,22 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 7:00 AM PT - No-Deploy Coordinator Dashboard Route-Content Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/CoordinatorMode.tsx` no longer hand-renders the remaining owner-facing coordinator dashboard shell inline.
+  - Added `src/pages/dashboard/coordinator/CoordinatorDashboardRouteContent.tsx` so the route-content component now owns the coordinator hero, attention panel, handoff/helper access panels, day-of summary surface, planner/viewer banners, check-in queue shell, timeline shell, alerting shell, and Q&A shell while the page keeps orchestration, hooks, and callback wiring.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<CoordinatorDashboardRouteContent`, checks that the new file owns the hero plus core coordinator panels, and rejects regaining the old inline `DashboardPageHero` / `CoordinatorCheckInQueuePanel` / `CoordinatorDayOfSummaryPanel` slab in `CoordinatorMode.tsx`.
+  - `src/pages/dashboard/CoordinatorMode.tsx` dropped from 771 lines to 736 lines in this batch, while `src/pages/dashboard/coordinator/CoordinatorDashboardRouteContent.tsx` came in at 118 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ### 2026-05-08 6:56 AM PT - No-Deploy Registry Dashboard Route-Content Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:

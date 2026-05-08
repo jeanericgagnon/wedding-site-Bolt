@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 7:00 AM PT - No-Deploy Coordinator Dashboard Route-Content Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/CoordinatorMode.tsx` now routes the remaining owner-facing coordinator shell through `src/pages/dashboard/coordinator/CoordinatorDashboardRouteContent.tsx` instead of hand-rendering the hero, summary, queue, timeline, alert, and Q&A surfaces inline.
+  - `CoordinatorDashboardRouteContent.tsx` now owns the coordinator hero, attention panel, handoff/helper access panels, day-of summary surface, planner/viewer banners, check-in queue shell, timeline shell, alerting shell, and Q&A shell while the route keeps orchestration, hooks, and callback wiring.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `<CoordinatorDashboardRouteContent`, checks that the new file owns the hero plus core coordinator panels, and rejects regaining the old inline `DashboardPageHero` / `CoordinatorCheckInQueuePanel` / `CoordinatorDayOfSummaryPanel` slab in `CoordinatorMode.tsx`.
+- Acceptance/proof target:
+  - Focused coordinator boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 6:56 AM PT - No-Deploy Registry Dashboard Route-Content Extraction
 
 - Status: `PARTIAL`
