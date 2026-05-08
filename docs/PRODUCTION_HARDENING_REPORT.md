@@ -4646,6 +4646,20 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its shared loaded-form restore flow through `src/pages/restoreLoadedRsvpState.ts`.
+  - That shared restore helper now owns selected guest-id assembly, normalized RSVP rebuilding, household-selection normalization, token-linked-session restoration, and form-step reset that used to sit inline in `returnToLoadedRsvp(...)`.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `restoreLoadedRsvpState(...)` and its form-step / loaded-RSVP / token-linked-session handoff so the main RSVP page keeps routing loaded-state restore through the dedicated helper.
+  - `src/pages/RSVP.tsx` moved from 1234 lines to 1242 lines in this batch, while `src/pages/restoreLoadedRsvpState.ts` came in at 95 lines, so this was an ownership cleanup rather than a size reduction.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
 - Proof passed:
   - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
   - `npm run typecheck -- --pretty false`: PASS.

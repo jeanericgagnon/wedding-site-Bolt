@@ -40,6 +40,7 @@ import { buildRsvpLiveContentViewProps } from './buildRsvpLiveContentViewProps';
 import { callValidateRsvpToken } from './rsvpFunctionService';
 import { resetRsvpLookupFlow } from './resetRsvpLookupFlow';
 import { resetRsvpPageState } from './resetRsvpPageState';
+import { restoreLoadedRsvpState } from './restoreLoadedRsvpState';
 import { RsvpPageRouteView } from './RsvpPageRouteView';
 import { submitRsvpResponse } from './submitRsvpResponse';
 import { validateRsvpFormAdvance } from './validateRsvpFormAdvance';
@@ -513,22 +514,29 @@ export default function RSVP() {
       return;
     }
 
-    const selectedGuestIds = applyToHousehold
-      ? dedupeGuestIds([guest.id, ...selectedHouseholdGuestIds])
-      : [guest.id];
-    const normalizedExistingRsvp = buildNormalizedExistingRsvp(formData, customAnswers, 'local-rsvp-confirmation', selectedGuestIds);
-    const normalizedSelectedHouseholdGuestIds = normalizeSelectedHouseholdGuestIds(selectedHouseholdGuestIds, householdGuests);
-    const shouldKeepHouseholdSelection = applyToHousehold && normalizedSelectedHouseholdGuestIds.length > 0;
-
-    tokenLinkedSessionRef.current = !!activeToken;
-    setError('');
-    setFormData(buildNormalizedRsvpFormData(guest, normalizedExistingRsvp, mealConfig));
-    setCustomAnswers(normalizedExistingRsvp.custom_answers || {});
-    setApplyToHousehold(shouldKeepHouseholdSelection);
-    setSelectedHouseholdGuestIds(shouldKeepHouseholdSelection ? normalizedSelectedHouseholdGuestIds : []);
-    setStep('form');
-    setFormStep(1);
-    setExistingRsvp(normalizedExistingRsvp);
+    restoreLoadedRsvpState({
+      activeToken,
+      applyToHousehold,
+      buildNormalizedExistingRsvp,
+      buildNormalizedRsvpFormData,
+      customAnswers,
+      dedupeGuestIds,
+      formData,
+      guest,
+      householdGuests,
+      mealConfig,
+      normalizeSelectedHouseholdGuestIds,
+      selectedHouseholdGuestIds,
+      setApplyToHousehold,
+      setCustomAnswers,
+      setError,
+      setExistingRsvp,
+      setFormData,
+      setFormStep,
+      setSelectedHouseholdGuestIds,
+      setStep,
+      tokenLinkedSessionRef,
+    });
   }, [activeToken, applyToHousehold, customAnswers, formData, guest, householdGuests, invalidateActiveSubmit, mealConfig, resetToSearch, selectedHouseholdGuestIds]);
 
   useEffect(() => {

@@ -150,6 +150,7 @@ describe('public guest surface boundary', () => {
     const rsvpLiveContentProps = readSource('src/pages/buildRsvpLiveContentViewProps.ts');
     const rsvpResetLookupFlow = readSource('src/pages/resetRsvpLookupFlow.ts');
     const rsvpResetPageState = readSource('src/pages/resetRsvpPageState.ts');
+    const rsvpRestoreLoadedState = readSource('src/pages/restoreLoadedRsvpState.ts');
     const rsvpPageRouteView = readSource('src/pages/RsvpPageRouteView.tsx');
     const rsvpValidateAdvance = readSource('src/pages/validateRsvpFormAdvance.ts');
     const rsvpValidateSubmitReadiness = readSource('src/pages/validateRsvpSubmitReadiness.ts');
@@ -177,6 +178,7 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain("from './buildRsvpLiveContentViewProps'");
     expect(rsvpPage).toContain("from './resetRsvpLookupFlow'");
     expect(rsvpPage).toContain("from './resetRsvpPageState'");
+    expect(rsvpPage).toContain("from './restoreLoadedRsvpState'");
     expect(rsvpPage).toContain("from './RsvpPageRouteView'");
     expect(rsvpPage).toContain("from './validateRsvpFormAdvance'");
     expect(rsvpPage).toContain("from './validateRsvpSubmitReadiness'");
@@ -195,6 +197,7 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain('buildRsvpPageViewModel({');
     expect(rsvpPage).toContain('resetRsvpLookupFlow({');
     expect(rsvpPage).toContain('resetRsvpPageState({');
+    expect(rsvpPage).toContain('restoreLoadedRsvpState({');
     expect(rsvpPage).toContain('validateRsvpSubmitReadiness({');
     expect(rsvpPage).toContain('const liveContentProps = buildRsvpLiveContentViewProps({');
     expect(rsvpPage).toContain('validateRsvpFormAdvance({');
@@ -228,6 +231,9 @@ describe('public guest surface boundary', () => {
     expect(rsvpResetPageState).toContain('setTokenAutoLoading?.(false)');
     expect(rsvpResetPageState).toContain("setStep('search')");
     expect(rsvpResetPageState).toContain('setSearchValue(searchValue)');
+    expect(rsvpRestoreLoadedState).toContain("setStep('form')");
+    expect(rsvpRestoreLoadedState).toContain('setExistingRsvp(normalizedExistingRsvp)');
+    expect(rsvpRestoreLoadedState).toContain('tokenLinkedSessionRef.current = !!activeToken');
     expect(rsvpValidateSubmitReadiness).toContain('The RSVP deadline has passed.');
     expect(rsvpValidateSubmitReadiness).toContain('Please use the RSVP button from your invitation email');
     expect(rsvpValidateSubmitReadiness).toContain('Please choose at least one event from your invitation');
