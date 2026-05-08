@@ -10187,3 +10187,18 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 04:51 AM PT No-Deploy Guest Dashboard Route-Actions Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the remaining guest dashboard route-level callback and interaction wiring through `src/pages/dashboard/guests/buildGuestDashboardRouteActions.tsx`.
+  - That helper now owns unresolved-guest selection, status-badge rendering, focus/filter pivots, delete-all/add-guest route entrypoints, due-reminder toggle persistence, bulk send entrypoints, and households/list/insights mode toggles while the page keeps state, data hooks, service hooks, overlays, and final route composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `buildGuestDashboardRouteActions({ ... })`, checks that `buildGuestDashboardRouteActions.tsx` owns the unresolved/status-badge/reminder-toggle route seam, and rejects regaining the old inline route handlers in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` dropped from 910 lines to 845 lines in this batch, while `src/pages/dashboard/guests/buildGuestDashboardRouteActions.tsx` came in at 168 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

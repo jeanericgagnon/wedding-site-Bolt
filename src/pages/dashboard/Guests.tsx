@@ -17,7 +17,7 @@ import {
 } from '../../lib/rsvpAccessPlanner';
 import { extractDietaryNote } from '../../lib/dietaryNotes';
 import { GUEST_IMPORT_MAX_FILE_BYTES, GUEST_IMPORT_MAX_ROWS } from '../../lib/guestImportParser';
-import { Button, Badge, Input, Select, Textarea } from '../../components/ui';
+import { Button, Input, Select, Textarea } from '../../components/ui';
 import { Download, UserPlus, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, CalendarDays, ChevronRight, Loader2, ChevronDown, Trash2, ExternalLink, Eye } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
@@ -35,6 +35,7 @@ import {
 } from './guests/guestDisplayUtils';
 import { buildGuestDashboardDerivedState } from './guests/buildGuestDashboardDerivedState';
 import { buildGuestDashboardOverlayProps } from './guests/buildGuestDashboardOverlayProps';
+import { buildGuestDashboardRouteActions } from './guests/buildGuestDashboardRouteActions';
 import { buildGuestDashboardViewProps } from './guests/buildGuestDashboardViewProps';
 import { GuestDashboardRouteView } from './guests/GuestDashboardRouteView';
 import {
@@ -44,12 +45,10 @@ import {
 } from './guests/guestDashboardTypes';
 import {
   buildGuestHouseholdGroups,
-  getGuestIssueCount,
   makeRsvpQuestion,
   toTitleCase,
   csvColumnLetter,
   GUEST_SEGMENT_LABELS,
-  getGuestSegmentLabel,
 } from './guests/guestDashboardUtils';
 import {
   readStoredCampaignLog,
@@ -453,32 +452,7 @@ export const DashboardGuests: React.FC = () => {
     weddingDate: weddingSiteInfo?.wedding_date,
   });
 
-  const selectUnresolvedGuests = () => {
-    const ids = displayedGuests.filter((g) => getGuestIssueCount(g) > 0).map((g) => g.id);
-    setSelectedGuestIds(new Set(ids));
-    toast(ids.length > 0 ? `Selected ${ids.length} unresolved guest${ids.length === 1 ? '' : 's'}` : 'No unresolved guests in current view', ids.length > 0 ? 'success' : 'error');
-  };
-
-
   const segmentLabelMap = GUEST_SEGMENT_LABELS;
-
-  const labelForFilter = (filter: string) => {
-    return getGuestSegmentLabel(filter, effectiveItineraryEvents);
-  };
-
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, 'success' | 'error' | 'warning'> = {
-      confirmed: 'success',
-      declined: 'error',
-      pending: 'warning',
-    };
-    const labels: Record<string, string> = {
-      confirmed: 'Confirmed',
-      declined: 'Declined',
-      pending: 'Pending',
-    };
-    return <Badge variant={variants[status] || 'warning'}>{labels[status] || status}</Badge>;
-  };
 
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showOpsMenu, setShowOpsMenu] = useState(false);
@@ -620,6 +594,46 @@ export const DashboardGuests: React.FC = () => {
   });
 
   const canEditGuests = !isGuestsReadOnly;
+  const guestDashboardRouteActions = buildGuestDashboardRouteActions({
+    autoRemindersEnabled,
+    confirmDeleteId,
+    copyContactRequestLink,
+    copySmsRsvpLinksForFiltered,
+    displayedGuests,
+    focusHighRiskFirst,
+    handleClearAllCheckIns,
+    handleCopyCampaignDryRun,
+    handleCopyChecklist,
+    handleCopyExceptionChecklist,
+    handleCopyFilteredEmails,
+    handleCopyMissingMealChecklist,
+    handleCopyNoContactChecklist,
+    handleDeleteGuest,
+    handleMarkAllDueThankYous,
+    handleMergeIntoHousehold,
+    handleSendBulkInvitations,
+    handleSendDueRemindersNow,
+    handleSendSelectedInvitations,
+    handleUndoLastCheckIn,
+    nextUnresolvedGuest,
+    persistReminderSettingsForSite,
+    resetForm,
+    selectedGuestIds,
+    setAutoRemindersEnabled,
+    setCheckInMode,
+    setDeleteAllConfirmInput,
+    setExtraFilters,
+    setFilterStatus,
+    setSearchQuery,
+    setSelectedGuestIds,
+    setShowAddModal,
+    setShowCampaignModal,
+    setShowConflictDetails,
+    setShowDeleteAllModal,
+    setShowInsights,
+    setViewMode,
+    toast,
+  });
   const { guestDashboardOpsViewProps, guestRsvpConfigViewProps } = buildGuestDashboardViewProps({
     autoRemindersEnabled,
     bulkSending,
@@ -653,7 +667,6 @@ export const DashboardGuests: React.FC = () => {
     filteredGuests,
     formRsvpStats: stats,
     fromQuickStart,
-    getStatusBadge,
     guests,
     guestsRole,
     householdBusy,
@@ -699,30 +712,11 @@ export const DashboardGuests: React.FC = () => {
     viewMode,
     visibleRsvpConflicts,
     onAddFollowUpTask: addFollowUpTask,
-    onAddGuest: () => {
-      resetForm();
-      setShowAddModal(true);
-    },
     onAddRsvpQuestionTemplate: addRsvpQuestionTemplate,
     onApplyCampaignPreset: applyCampaignPreset,
-    onClearAllCheckIns: () => { void handleClearAllCheckIns(); },
     onClearFilters: clearFilters,
     onClearSelection: clearGuestSelection,
-    onCopyAddressCollectionLink: () => { void copyContactRequestLink(); },
-    onCopyChecklist: () => { void handleCopyChecklist(); },
-    onCopyContactRequestLink: () => { void copyContactRequestLink(); },
-    onCopyExceptionChecklist: () => { void handleCopyExceptionChecklist(); },
-    onCopyFilteredEmails: () => { void handleCopyFilteredEmails(); },
-    onCopyMissingContactList: () => { void handleCopyNoContactChecklist(); },
-    onCopyMissingMealChecklist: () => { void handleCopyMissingMealChecklist(); },
-    onCopyTextRsvpLinks: () => { void copySmsRsvpLinksForFiltered(); },
     onCreateChecklist: generateChecklistTasks,
-    onDeleteAllGuests: () => {
-      setDeleteAllConfirmInput('');
-      setShowDeleteAllModal(true);
-    },
-    onDeleteGuest: (guestId) => { void handleDeleteGuest(guestId, confirmDeleteId); },
-    onDryRun: () => { void handleCopyCampaignDryRun(); },
     onExportAddressCollection: exportAddressCollectionCSV,
     onExportAllGuests: exportCSV,
     onExportAttendingGuests: exportAttendingGuestsCSV,
@@ -736,71 +730,17 @@ export const DashboardGuests: React.FC = () => {
     onExportRsvpResponders: exportRsvpRespondersCSV,
     onExportThankYouDue: exportThankYouDueCSV,
     onFileChange: importCSV,
-    onFocusCeremonyNo: () => { setSearchQuery(''); setFilterStatus('ceremony-no'); },
-    onFocusHandledPersonally: () => { setFilterStatus('manual-handled'); setViewMode('list'); setShowCampaignModal(false); },
-    onFocusHighRiskFirst: () => { focusHighRiskFirst(); setShowCampaignModal(false); },
-    onFocusMissingContact: () => { setSearchQuery(''); setFilterStatus('no-contact'); setViewMode('list'); setShowCampaignModal(false); },
-    onFocusMissingMeal: () => { setSearchQuery(''); setFilterStatus('missing-meal'); setViewMode('list'); setShowCampaignModal(false); },
-    onFocusNoResponse: () => { setSearchQuery(''); setFilterStatus('pending'); },
-    onFocusPending: () => { setFilterStatus('pending'); setViewMode('list'); setShowCampaignModal(false); },
-    onFocusPendingNoEmail: () => { setSearchQuery(''); setFilterStatus('pending-no-email'); setViewMode('list'); setShowCampaignModal(false); },
-    onFocusPlusOneMissing: () => { setSearchQuery(''); setFilterStatus('plusone-missing'); setViewMode('list'); },
-    onFocusPlusOneNames: () => { setFilterStatus('plusone-missing'); setViewMode('list'); setShowCampaignModal(false); },
-    onFocusQueueItem: (filter: string, guestName: string) => {
-      setFilterStatus(filter as typeof filterStatus);
-      setViewMode('list');
-      setSearchQuery(guestName);
-    },
-    onFocusRecommendedAction: (filter: string) => {
-      setFilterStatus(filter as typeof filterStatus);
-      setViewMode('list');
-      setSearchQuery('');
-    },
-    onFocusReceptionNo: () => { setSearchQuery(''); setFilterStatus('reception-no'); },
     onKeepOnlyVisibleSelection: keepOnlyVisibleSelection,
-    onMarkAllDueThankYous: () => { void handleMarkAllDueThankYous(); },
     onMarkThankYouSent: handleMarkThankYouSent,
-    onMergeIntoHousehold: () => handleMergeIntoHousehold(selectedGuestIds, () => setSelectedGuestIds(new Set())),
-    onNextUnresolved: () => {
-      if (nextUnresolvedGuest) {
-        setSearchQuery((nextUnresolvedGuest.first_name || nextUnresolvedGuest.last_name) ? `${nextUnresolvedGuest.first_name ?? ''} ${nextUnresolvedGuest.last_name ?? ''}`.trim() : nextUnresolvedGuest.name);
-        setViewMode('list');
-      }
-    },
     onOpenAssistedRsvpModal: openAssistedRsvpModal,
-    onOpenCampaignModal: () => setShowCampaignModal(true),
     onOpenEditModal: openEditModal,
     onOpenItineraryDrawer: openItineraryDrawer,
     onResolveAllVisibleConflicts: resolveAllVisibleConflicts,
     onResolveConflict: resolveConflict,
-    onReviewPending: () => { setFilterStatus('pending'); setViewMode('list'); },
     onSaveRsvpConfig: handleSaveRsvpConfig,
     onSearchQueryChange: setSearchQuery,
-    onSelectCheckedInFilter: () => setFilterStatus('checked-in'),
     onSelectFiltered: selectFilteredGuests,
-    onSelectPrimaryFilter: (value: string) => {
-      setFilterStatus(value as typeof filterStatus);
-      setExtraFilters([]);
-    },
-    onSelectUnresolved: selectUnresolvedGuests,
-    onSendDueReminders: () => { void handleSendDueRemindersNow(); },
-    onSendDueRemindersToggle: () => {
-      void (async () => {
-        const previous = autoRemindersEnabled;
-        const next = !previous;
-        try {
-          setAutoRemindersEnabled(next);
-          await persistReminderSettingsForSite({ auto_reminders_enabled: next });
-          toast(next ? 'Auto reminders enabled' : 'Auto reminders paused', 'success');
-        } catch {
-          setAutoRemindersEnabled(previous);
-          toast('Couldn’t save auto reminder setting.', 'error');
-        }
-      })();
-    },
-    onSendFilteredInvitations: () => { void handleSendBulkInvitations(); },
     onSendInvitation: handleSendInvitation,
-    onSendSelectedInvitations: () => { void handleSendSelectedInvitations(); },
     onSetConfirmDialog: setConfirmDialog,
     onSetConflictFilter: setConflictFilter,
     onSetGuestsTab: setGuestsTab,
@@ -815,12 +755,7 @@ export const DashboardGuests: React.FC = () => {
     onSetSkipRecentlyInvited: setSkipRecentlyInvited,
     onSkipToPhotos: () => navigate(buildQuickStartPhotosPath()),
     onToggleCheckIn: handleToggleCheckIn,
-    onToggleCheckInMode: () => { setCheckInMode(v => !v); setViewMode('list'); },
-    onToggleConflictDetails: () => setShowConflictDetails((value) => !value),
-    onToggleHouseholdsView: () => { setCheckInMode(false); setViewMode(v => v === 'households' ? 'list' : 'households'); },
-    onToggleInsights: () => setShowInsights((value) => !value),
-    onUndoLastCheckIn: () => { void handleUndoLastCheckIn(); },
-    onHeaderAddGuest: () => setShowAddModal(true),
+    ...guestDashboardRouteActions,
   });
   const guestOverlayProps = buildGuestDashboardOverlayProps({
     assistedRsvpGuest,

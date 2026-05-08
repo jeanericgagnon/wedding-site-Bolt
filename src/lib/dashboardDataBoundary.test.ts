@@ -147,6 +147,7 @@ describe('dashboard data boundary guards', () => {
     const derivedStateHelper = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/buildGuestDashboardDerivedState.ts'), 'utf8');
     const detailHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardGuestDetailActions.ts'), 'utf8');
     const opsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardOpsActions.ts'), 'utf8');
+    const routeActionsHelper = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/buildGuestDashboardRouteActions.tsx'), 'utf8');
     const rsvpConfigHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardRsvpConfigActions.ts'), 'utf8');
 
     expect(source).not.toContain("from '../../lib/supabase'");
@@ -161,6 +162,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('useGuestDashboardOpsActions({');
     expect(source).toContain('useGuestDashboardRsvpConfigActions({');
     expect(source).toContain('buildGuestDashboardDerivedState({');
+    expect(source).toContain('buildGuestDashboardRouteActions({');
     expect(source).toContain('buildGuestDashboardViewProps({');
     expect(source).toContain('loadPublicSlug: loadGuestDashboardPublicSlug');
     expect(source).toContain('loadSiteSlug: loadGuestDashboardSiteSlug');
@@ -202,6 +204,8 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('const selectFilteredGuests = () => {');
     expect(source).not.toContain('const clearGuestSelection = () => {');
     expect(source).not.toContain('const keepOnlyVisibleSelection = () => {');
+    expect(source).not.toContain('const selectUnresolvedGuests = () => {');
+    expect(source).not.toContain('const getStatusBadge = (status: string) => {');
     expect(source).not.toContain('const filteredGuests = guests.filter((guest) => {');
     expect(source).not.toContain('const stats = {');
     expect(source).not.toContain('const eventReport = effectiveItineraryEvents.map((event) => {');
@@ -288,6 +292,12 @@ describe('dashboard data boundary guards', () => {
     expect(derivedStateHelper).toContain('const dueReminderCandidatesGlobal = guests.filter((guest) => !!guest.email && !!guest.invite_token && isDueReminder(guest));');
     expect(derivedStateHelper).toContain('const reminderCandidates = emailableFilteredGuests.filter((guest) => {');
     expect(derivedStateHelper).not.toContain("from '../../../lib/supabase'");
+    expect(routeActionsHelper).toContain('const selectUnresolvedGuests = () => {');
+    expect(routeActionsHelper).toContain('const getStatusBadge = (status: string) => {');
+    expect(routeActionsHelper).toContain("await args.persistReminderSettingsForSite({ auto_reminders_enabled: next });");
+    expect(routeActionsHelper).toContain("args.setFilterStatus('no-contact');");
+    expect(routeActionsHelper).toContain('onSendSelectedInvitations: () => { void args.handleSendSelectedInvitations(); },');
+    expect(routeActionsHelper).not.toContain("from '../../../lib/supabase'");
     expect(opsHook).toContain('const applyCampaignPreset = useCallback((preset:');
     expect(opsHook).toContain('await persistGuestReminderSettings(weddingSiteId, patch);');
     expect(opsHook).toContain('const handleDeleteAllGuests = useCallback(async () => {');
