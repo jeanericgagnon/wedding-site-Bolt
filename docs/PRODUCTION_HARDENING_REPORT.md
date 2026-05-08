@@ -19,6 +19,22 @@ The approved production deploy and current non-SMS postdeploy proof are green, a
 
 ## Batch Log
 
+### 2026-05-08 7:49 AM PT - No-Deploy Planning Dashboard Actions Hook Extraction
+- Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
+- Fixed/proved:
+  - `src/pages/dashboard/Planning.tsx` now routes its task, budget, vendor, milestone, total-budget, and vendor-to-budget prompt mutation lane through `src/pages/dashboard/planning/usePlanningDashboardActions.ts` instead of hand-owning that callback slab inline.
+  - That new hook now owns task add/update/delete, milestone generation, budget add/update/delete, vendor add/update/delete, total-budget save, and pending vendor-to-budget prompt state while the route keeps dashboard bootstrap, starter-suite orchestration, tab routing, and name-change flows.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `usePlanningDashboardActions({ ... })`, checks that `usePlanningDashboardActions.ts` owns the task/budget/vendor action seams, and rejects regaining the old inline add-task, add-budget-item, add-vendor, and vendor-to-budget handlers in `Planning.tsx`.
+  - `src/pages/dashboard/Planning.tsx` dropped from 676 lines to 468 lines in this batch, while `src/pages/dashboard/planning/usePlanningDashboardActions.ts` came in at 333 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ### 2026-05-08 7:42 AM PT - No-Deploy Planning Starter-Suite Hook Extraction
 - Continued from `BACKLOG.md` in the no-deploy oversized-file and page-boundary cleanup lane.
 - Fixed/proved:

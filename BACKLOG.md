@@ -1,5 +1,18 @@
 # Production Hardening Backlog
 
+## 2026-05-08 7:49 AM PT - No-Deploy Planning Dashboard Actions Hook Extraction
+
+- Status: `PARTIAL`
+- What changed:
+  - `src/pages/dashboard/Planning.tsx` no longer owns the inline task, budget, vendor, milestone, total-budget, and vendor-to-budget prompt mutation lane.
+  - Added `src/pages/dashboard/planning/usePlanningDashboardActions.ts` so the new hook now owns task add/update/delete, milestone generation, budget add/update/delete, vendor add/update/delete, total-budget save, and pending vendor-to-budget prompt state while the route keeps dashboard bootstrap, starter-suite orchestration, tab routing, and name-change flows.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `usePlanningDashboardActions({ ... })`, checks that the new hook owns the task/budget/vendor action seams, and rejects regaining the old inline add-task, add-budget-item, add-vendor, and vendor-to-budget handlers in `Planning.tsx`.
+- Acceptance/proof target:
+  - Focused dashboard boundary tests stay green.
+  - Standard local gate stays green.
+  - Proof board updated.
+  - No deploy was run.
+
 ## 2026-05-08 7:42 AM PT - No-Deploy Planning Starter-Suite Hook Extraction
 
 - Status: `PARTIAL`
