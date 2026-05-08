@@ -10337,3 +10337,18 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 05:43 AM PT No-Deploy Coordinator Dashboard Cue-Lifecycle Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/CoordinatorMode.tsx` now routes the coordinator dashboard cue, override, command-jump, summary-feedback, and expiry lifecycle through `src/pages/dashboard/coordinator/useCoordinatorDashboardCueLifecycle.ts`.
+  - That hook now owns command-jump reset, target-change cleanup, manual override reset/set behavior, summary-feedback reset, override expiry, and summary-feedback expiry while the page keeps data hydration, derived boards, transport actions, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useCoordinatorDashboardCueLifecycle({ ... })`, checks that `useCoordinatorDashboardCueLifecycle.ts` owns the coordinator cue-lifecycle seam, and rejects regaining the old inline command-jump reset plus timer-based expiry blocks in `CoordinatorMode.tsx`.
+  - `src/pages/dashboard/CoordinatorMode.tsx` dropped from 1510 lines to 1365 lines in this batch, while `src/pages/dashboard/coordinator/useCoordinatorDashboardCueLifecycle.ts` came in at 183 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

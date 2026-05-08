@@ -35,14 +35,9 @@ import { getCoordinatorCommandPriorityReason } from '../../lib/coordinatorComman
 import { getCoordinatorCommandPriorityTargetReason } from '../../lib/coordinatorCommandPriorityTargetReason';
 import { getCoordinatorCommandPriorityCta } from '../../lib/coordinatorCommandPriorityCta';
 import { getCoordinatorCommandJumpLabel } from '../../lib/coordinatorCommandJumpLabel';
-import { shouldResetCoordinatorCommandJumpLabel } from '../../lib/coordinatorCommandJumpReset';
-import { shouldResetCoordinatorCommandJumpLabelForTargetChange } from '../../lib/coordinatorCommandJumpTargetReset';
-import { getCoordinatorManualOverrideLabel } from '../../lib/coordinatorManualOverrideLabel';
 import { getCoordinatorManualOverrideActionLabel } from '../../lib/coordinatorManualOverrideAction';
 import { getCoordinatorManualOverrideTargetLabel } from '../../lib/coordinatorManualOverrideTargetLabel';
 import { getCoordinatorManualOverrideCurrentTargetLabel } from '../../lib/coordinatorManualOverrideCurrentTargetLabel';
-import { shouldResetCoordinatorManualOverride } from '../../lib/coordinatorManualOverrideReset';
-import { getCoordinatorRealignmentLabel } from '../../lib/coordinatorRealignmentLabel';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertOverrideLabel } from '../../lib/coordinatorAlertOverrideLabel';
@@ -51,7 +46,6 @@ import { getCoordinatorAlertOverrideCurrentLabel } from '../../lib/coordinatorAl
 import { shouldResetCoordinatorAlertOverride } from '../../lib/coordinatorAlertOverrideReset';
 import { getCoordinatorAlertSummaryStateLabel } from '../../lib/coordinatorAlertSummaryStateLabel';
 import { getCoordinatorAlertSummaryTransitionLabel } from '../../lib/coordinatorAlertSummaryTransitionLabel';
-import { shouldResetCoordinatorSummaryFeedback } from '../../lib/coordinatorSummaryFeedbackReset';
 import { createCoordinatorSummaryFeedback, type CoordinatorSummaryFeedback } from '../../lib/coordinatorSummaryFeedback';
 import { getCoordinatorSummaryFeedbackTone } from '../../lib/coordinatorSummaryFeedbackTone';
 import { getCoordinatorSummaryFeedbackEmphasis } from '../../lib/coordinatorSummaryFeedbackEmphasis';
@@ -61,8 +55,6 @@ import { getCoordinatorSummaryFeedbackBadge } from '../../lib/coordinatorSummary
 import { getCoordinatorOverrideSupportBadge } from '../../lib/coordinatorOverrideSupportBadge';
 import { resolveCoordinatorSummaryDisplayCue } from '../../lib/coordinatorSummaryDisplayCue';
 import { resolveCoordinatorOverrideDisplayCue } from '../../lib/coordinatorOverrideDisplayCue';
-import { shouldExpireCoordinatorCue } from '../../lib/coordinatorCueExpiry';
-import { shouldExpireCoordinatorOverrideCue } from '../../lib/coordinatorOverrideCueExpiry';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
 import { setCoordinatorEventTimelineState } from '../../lib/coordinatorTimelineState';
@@ -124,6 +116,7 @@ import { buildCoordinatorDashboardBoardActions } from './coordinator/buildCoordi
 import { CoordinatorAttentionPanel, CoordinatorCheckInQueuePanel, CoordinatorDayOfMessagePanel, CoordinatorDayOfSummaryPanel, CoordinatorHandoffPanel, CoordinatorHelperAccessPanel, CoordinatorRoleSelector, CoordinatorStatCards, CoordinatorTimelinePanel } from './coordinator/CoordinatorModePanels';
 import { buildCoordinatorDashboardFocusActions } from './coordinator/buildCoordinatorDashboardFocusActions';
 import { useCoordinatorDashboardData } from './coordinator/useCoordinatorDashboardData';
+import { useCoordinatorDashboardCueLifecycle } from './coordinator/useCoordinatorDashboardCueLifecycle';
 
 
 export const DashboardCoordinatorMode: React.FC = () => {
@@ -861,171 +854,33 @@ export const DashboardCoordinatorMode: React.FC = () => {
     }
     setQnaInput('');
   };
-
-
-
-
-  useEffect(() => {
-    if (shouldResetCoordinatorCommandJumpLabel({
-      jumpLabel: commandJumpLabel,
-      panelFocus,
-      expectedPanelFocus: commandJumpPanelFocus,
-    })) {
-      setCommandJumpLabel(null);
-      setCommandJumpPanelFocus(null);
-      setCommandJumpTargetId(null);
-    }
-  }, [commandJumpLabel, commandJumpPanelFocus, panelFocus]);
-
-
-  useEffect(() => {
-    const currentTargetId = panelFocus === 'check-in'
-      ? activeGuestId
-      : panelFocus === 'timeline'
-        ? activeTimelineEventId
-        : panelFocus === 'qna'
-          ? activeQnaId
-          : null;
-
-    if (shouldResetCoordinatorCommandJumpLabelForTargetChange({
-      jumpLabel: commandJumpLabel,
-      panelFocus,
-      expectedPanelFocus: commandJumpPanelFocus,
-      currentTargetId,
-      expectedTargetId: commandJumpTargetId,
-    })) {
-      setCommandJumpLabel(null);
-      setCommandJumpPanelFocus(null);
-      setCommandJumpTargetId(null);
-      setCommandJumpTargetId(null);
-    }
-  }, [commandJumpLabel, commandJumpPanelFocus, commandJumpTargetId, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId]);
-
-
-  useEffect(() => {
-    const currentTargetId = panelFocus === 'check-in'
-      ? activeGuestId
-      : panelFocus === 'timeline'
-        ? activeTimelineEventId
-        : panelFocus === 'qna'
-          ? activeQnaId
-          : null;
-
-    const boardTargetId = panelFocus === 'check-in'
-      ? checkInBoardTargetId
-      : panelFocus === 'timeline'
-        ? timelineBoardTargetId
-        : panelFocus === 'qna'
-          ? qnaBoardTargetId
-          : null;
-
-    if (shouldResetCoordinatorManualOverride({
-      manualOverrideLabel,
-      panelFocus,
-      boardTargetId,
-      currentTargetId,
-    })) {
-      setManualOverrideLabel(null);
-      setManualOverrideUpdatedAt(null);
-      setOverrideCueShownAt(null);
-      const realignment = getCoordinatorRealignmentLabel(panelFocus);
-      if (realignment) {
-        setSummaryFeedback(createCoordinatorSummaryFeedback({
-          label: realignment,
-          panelFocus,
-          targetId: currentTargetId,
-          kind: 'realignment',
-        }));
-        setSummaryFeedbackShownAt(Date.now());
-      }
-    }
-  }, [manualOverrideLabel, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId, checkInBoardTargetId, timelineBoardTargetId, qnaBoardTargetId]);
-
-  useEffect(() => {
-    const currentTargetId = panelFocus === 'check-in'
-      ? activeGuestId
-      : panelFocus === 'timeline'
-        ? activeTimelineEventId
-        : panelFocus === 'qna'
-          ? activeQnaId
-          : null;
-
-    const boardTargetId = panelFocus === 'check-in'
-      ? checkInBoardTargetId
-      : panelFocus === 'timeline'
-        ? timelineBoardTargetId
-        : panelFocus === 'qna'
-          ? qnaBoardTargetId
-          : null;
-
-    if (!panelFocus || !currentTargetId || !boardTargetId || currentTargetId === boardTargetId) return;
-
-    const nextManualOverrideLabel = getCoordinatorManualOverrideLabel(panelFocus);
-    if (!nextManualOverrideLabel || manualOverrideLabel === nextManualOverrideLabel) return;
-
-    const nextManualOverrideTime = Date.now();
-    setManualOverrideLabel(nextManualOverrideLabel);
-    setManualOverrideUpdatedAt(nextManualOverrideTime);
-    setOverrideCueShownAt(nextManualOverrideTime);
-  }, [manualOverrideLabel, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId, checkInBoardTargetId, timelineBoardTargetId, qnaBoardTargetId]);
-
-
-  useEffect(() => {
-    const currentTargetId = panelFocus === 'check-in'
-      ? activeGuestId
-      : panelFocus === 'timeline'
-        ? activeTimelineEventId
-        : panelFocus === 'qna'
-          ? activeQnaId
-          : null;
-
-    if (shouldResetCoordinatorSummaryFeedback({
-      feedbackLabel: summaryFeedback?.label ?? null,
-      panelFocus,
-      expectedPanelFocus: summaryFeedback?.panelFocus ?? null,
-      currentTargetId,
-      expectedTargetId: summaryFeedback?.targetId ?? null,
-    })) {
-      setSummaryFeedback(null);
-      setSummaryFeedbackShownAt(null);
-    }
-  }, [summaryFeedback, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId]);
-
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      if (shouldExpireCoordinatorOverrideCue({
-        shownAt: overrideCueShownAt,
-        now: Date.now(),
-        maxAgeMs: 5000,
-        hasSummaryFeedback: !!summaryFeedback,
-      })) {
-        setAlertOverrideLabelState(null);
-        setAlertOverrideUpdatedAt(null);
-        setManualOverrideLabel(null);
-        setManualOverrideUpdatedAt(null);
-        setOverrideCueShownAt(null);
-      }
-    }, 5000);
-
-    return () => window.clearTimeout(timer);
-  }, [overrideCueShownAt, summaryFeedback]);
-
-  useEffect(() => {
-    if (!summaryFeedback) return;
-    const timer = window.setTimeout(() => {
-      if (shouldExpireCoordinatorCue({
-        shownAt: summaryFeedbackShownAt,
-        now: Date.now(),
-        maxAgeMs: 5000,
-      })) {
-        setSummaryFeedback(null);
-        setSummaryFeedbackShownAt(null);
-      }
-    }, 5000);
-
-    return () => window.clearTimeout(timer);
-  }, [summaryFeedback, summaryFeedbackShownAt]);
+  useCoordinatorDashboardCueLifecycle({
+    activeGuestId,
+    activeQnaId,
+    activeTimelineEventId,
+    alertOverrideLabelState,
+    checkInBoardTargetId,
+    commandJumpLabel,
+    commandJumpPanelFocus,
+    commandJumpTargetId,
+    manualOverrideLabel,
+    overrideCueShownAt,
+    panelFocus,
+    qnaBoardTargetId,
+    summaryFeedback,
+    summaryFeedbackShownAt,
+    timelineBoardTargetId,
+    setAlertOverrideLabelState,
+    setAlertOverrideUpdatedAt,
+    setCommandJumpLabel,
+    setCommandJumpPanelFocus,
+    setCommandJumpTargetId,
+    setManualOverrideLabel,
+    setManualOverrideUpdatedAt,
+    setOverrideCueShownAt,
+    setSummaryFeedback,
+    setSummaryFeedbackShownAt,
+  });
 
   const {
     focusArrivalGuest,
