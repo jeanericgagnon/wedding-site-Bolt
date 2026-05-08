@@ -50,6 +50,7 @@ describe('RSVP stale submit protection', () => {
   it('routes token auto-loading through the shared RSVP route view', () => {
     const rsvpPage = readFileSync(join(process.cwd(), 'src/pages/RSVP.tsx'), 'utf8');
     const derivedViewState = readFileSync(join(process.cwd(), 'src/pages/buildRsvpDerivedViewState.ts'), 'utf8');
+    const guestSelection = readFileSync(join(process.cwd(), 'src/pages/applyRsvpGuestSelection.ts'), 'utf8');
     const liveContentActions = readFileSync(join(process.cwd(), 'src/pages/buildRsvpLiveContentActions.ts'), 'utf8');
     const pageViewModel = readFileSync(join(process.cwd(), 'src/pages/buildRsvpPageViewModel.ts'), 'utf8');
     const liveContentProps = readFileSync(join(process.cwd(), 'src/pages/buildRsvpLiveContentViewProps.ts'), 'utf8');
@@ -66,6 +67,7 @@ describe('RSVP stale submit protection', () => {
     const successView = readFileSync(join(process.cwd(), 'src/pages/RsvpSuccessView.tsx'), 'utf8');
 
     expect(rsvpPage).toContain("from './buildRsvpDerivedViewState'");
+    expect(rsvpPage).toContain("from './applyRsvpGuestSelection'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentActions'");
     expect(rsvpPage).toContain("from './buildRsvpPageViewModel'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentViewProps'");
@@ -74,6 +76,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain("from './validateRsvpFormAdvance'");
     expect(rsvpPage).toContain('<RsvpPageRouteView');
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
+    expect(rsvpPage).toContain('applyRsvpGuestSelection({');
     expect(rsvpPage).toContain('buildRsvpLiveContentActions({');
     expect(rsvpPage).toContain('buildRsvpPageViewModel({');
     expect(rsvpPage).toContain('resetRsvpLookupFlow({');
@@ -82,6 +85,9 @@ describe('RSVP stale submit protection', () => {
     expect(derivedViewState).toContain('guestPredictions');
     expect(derivedViewState).toContain('childCountOptions');
     expect(derivedViewState).toContain('inheritedHouseholdMembers');
+    expect(guestSelection).toContain('existingFormData');
+    expect(guestSelection).toContain('setRsvpSessionToken(sessionToken)');
+    expect(guestSelection).toContain("setStep('form')");
     expect(liveContentActions).toContain('onCancelLoading');
     expect(liveContentActions).toContain('onDone');
     expect(liveContentActions).toContain('onSubmitAnother');

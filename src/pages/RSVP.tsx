@@ -27,6 +27,7 @@ import {
   readDemoStoredResponses,
   writeDemoStoredResponses,
 } from './rsvpDemoStorage';
+import { applyRsvpGuestSelection } from './applyRsvpGuestSelection';
 import { buildRsvpDerivedViewState } from './buildRsvpDerivedViewState';
 import { buildRsvpLiveContentActions } from './buildRsvpLiveContentActions';
 import { buildRsvpPageViewModel } from './buildRsvpPageViewModel';
@@ -826,45 +827,41 @@ export default function RSVP() {
   ) {
     const normalizedRsvp = foundRsvp ? normalizeExistingRsvp(foundRsvp) : null;
     tokenLinkedSessionRef.current = source === 'token';
-    setGuest(foundGuest);
-    setRsvpSessionToken(sessionToken ?? getLegacyTestRsvpSessionToken(foundGuest));
-    setFormStep(1);
-    setActivePredictionIndex(-1);
-    setRsvpDeadline(deadline);
-    setRsvpQuestions(questions);
-    setMealConfig(meal);
-    setMusicPlaylistUrl(playlistUrl);
     const selectedGuestIds = deriveSelectedHouseholdGuestIds(normalizedRsvp, household);
     const applyToSelectedHousehold = normalizedRsvp
       ? shouldApplyToHousehold(normalizedRsvp, household, foundGuest.id)
       : household.length > 0;
-    setHouseholdGuests(household);
-    setApplyToHousehold(applyToSelectedHousehold);
-    setSelectedHouseholdGuestIds(applyToSelectedHousehold ? selectedGuestIds : []);
-    if (normalizedRsvp) {
-      setExistingRsvp(normalizedRsvp);
-      setFormData(buildNormalizedRsvpFormData(foundGuest, normalizedRsvp, meal));
-      setCustomAnswers(
-        normalizedRsvp.custom_answers && typeof normalizedRsvp.custom_answers === 'object'
-          ? normalizeCustomAnswers(normalizedRsvp.custom_answers as Record<string, string | string[]>)
-          : {},
-      );
-    }
-    if (!normalizedRsvp) {
-      setExistingRsvp(null);
-      setFormData({
-        attending: true,
-        attendCeremony: !!foundGuest.invited_to_ceremony,
-        attendReception: !!foundGuest.invited_to_reception,
-        meal_choice: '',
-        plus_one_name: '',
-        children_count: 0,
-        notes: '',
-      });
-      setCustomAnswers({});
-    }
-    setFormStep(1);
-    setStep('form');
+    applyRsvpGuestSelection({
+      customAnswers: normalizedRsvp?.custom_answers && typeof normalizedRsvp.custom_answers === 'object'
+        ? normalizeCustomAnswers(normalizedRsvp.custom_answers as Record<string, string | string[]>)
+        : {},
+      deadline,
+      existingFormData: normalizedRsvp ? buildNormalizedRsvpFormData(foundGuest, normalizedRsvp, meal) : null,
+      foundGuest,
+      household,
+      meal,
+      musicPlaylistUrl: playlistUrl,
+      normalizedRsvp,
+      questions,
+      selectedGuestIds,
+      sessionToken: sessionToken ?? getLegacyTestRsvpSessionToken(foundGuest),
+      setActivePredictionIndex,
+      setApplyToHousehold,
+      setCustomAnswers,
+      setExistingRsvp,
+      setFormData,
+      setFormStep,
+      setGuest,
+      setHouseholdGuests,
+      setMealConfig,
+      setMusicPlaylistUrl,
+      setRsvpDeadline,
+      setRsvpQuestions,
+      setRsvpSessionToken,
+      setSelectedHouseholdGuestIds,
+      setStep,
+      useHouseholdSelection: applyToSelectedHousehold,
+    });
   }
 
   const handlePickGuest = async (picked: Guest) => {

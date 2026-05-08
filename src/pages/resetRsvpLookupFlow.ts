@@ -1,16 +1,16 @@
 import type React from 'react';
 
-import { DEFAULT_MEAL_CONFIG } from './rsvpTypes';
+import { DEFAULT_MEAL_CONFIG, type ExistingRSVP, type Guest, type HouseholdGuest, type RSVPMealConfig, type RSVPQuestion } from './rsvpTypes';
 
 interface ResetRsvpLookupFlowOptions {
   invalidateActiveSubmit: () => void;
   searchValue?: string;
   setActivePredictionIndex: React.Dispatch<React.SetStateAction<number>>;
-  setAmbiguousGuests: React.Dispatch<React.SetStateAction<unknown[]>>;
+  setAmbiguousGuests: React.Dispatch<React.SetStateAction<Guest[]>>;
   setApplyToHousehold: React.Dispatch<React.SetStateAction<boolean>>;
   setCustomAnswers: React.Dispatch<React.SetStateAction<Record<string, string | string[]>>>;
   setError: React.Dispatch<React.SetStateAction<string>>;
-  setExistingRsvp: React.Dispatch<React.SetStateAction<unknown>>;
+  setExistingRsvp: React.Dispatch<React.SetStateAction<ExistingRSVP | null>>;
   setFormData: React.Dispatch<React.SetStateAction<{
     attending: boolean;
     attendCeremony: boolean;
@@ -21,13 +21,13 @@ interface ResetRsvpLookupFlowOptions {
     notes: string;
   }>>;
   setFormStep: React.Dispatch<React.SetStateAction<1 | 2 | 3>>;
-  setGuest: React.Dispatch<React.SetStateAction<unknown>>;
-  setHouseholdGuests: React.Dispatch<React.SetStateAction<unknown[]>>;
+  setGuest: React.Dispatch<React.SetStateAction<Guest | null>>;
+  setHouseholdGuests: React.Dispatch<React.SetStateAction<HouseholdGuest[]>>;
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  setMealConfig: React.Dispatch<React.SetStateAction<{ enabled: boolean; options: string[] }>>;
+  setMealConfig: React.Dispatch<React.SetStateAction<RSVPMealConfig>>;
   setMusicPlaylistUrl: React.Dispatch<React.SetStateAction<string | null>>;
   setRsvpDeadline: React.Dispatch<React.SetStateAction<string | null>>;
-  setRsvpQuestions: React.Dispatch<React.SetStateAction<unknown[]>>;
+  setRsvpQuestions: React.Dispatch<React.SetStateAction<RSVPQuestion[]>>;
   setRsvpSessionToken?: React.Dispatch<React.SetStateAction<string | null>>;
   setSearchValue?: React.Dispatch<React.SetStateAction<string>>;
   setSelectedHouseholdGuestIds: React.Dispatch<React.SetStateAction<string[]>>;
