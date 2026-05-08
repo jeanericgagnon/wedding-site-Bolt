@@ -8504,3 +8504,18 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-07 7:59 PM PT No-Deploy Guest Photo Review And Slideshow Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now routes its guest photo review surface through `GuestPhotoReviewCard`, with organizer and slideshow seams still routed through `GuestPhotoOrganizerCard` and `GuestPhotoSlideshowCard`.
+  - The guest photo dashboard page no longer owns the old inline review composition block.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins those additional higher-level guest photo seams and rejects regaining the old inline review/slideshow copy.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 2625 lines to 2389 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

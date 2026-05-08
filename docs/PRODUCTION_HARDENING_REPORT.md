@@ -3989,3 +3989,20 @@ Validation:
 
 Status:
 - PARTIAL. This materially advances the oversized-file and page-boundary lanes for the guest photo dashboard without changing vault handoff, guest hub sharing, recap visibility control, guest hub toggles, or moment-album suggestion behavior. No deploy was run.
+
+### 2026-05-07 7:59 PM PT - Guest Photo Review And Slideshow Extraction
+
+- Moved the guest photo review card behind `GuestPhotoReviewCard`, while keeping the earlier `GuestPhotoOrganizerCard` and `GuestPhotoSlideshowCard` routing pinned in the same guest-photo seam lane.
+- `src/pages/dashboard/GuestPhotoSharing.tsx` now treats organizer, slideshow, and review as higher-level guest-photo composition seams instead of carrying the old inline review block.
+- `GuestPhotoSharing.tsx` dropped from 2625 lines to 2389 lines in this continuation batch.
+- Tightened `src/lib/dashboardDataBoundary.test.ts` so the guest photo dashboard now pins those additional higher-level seams and rejects regaining the old inline review/slideshow copy.
+
+Validation:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guestPhotoQueryBounds.test.ts src/pages/dashboard/guestPhotoSharingUtils.test.ts`: PASS, 45/45.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS.
+- `git diff --check`: PASS.
+
+Status:
+- PARTIAL. This materially advances the oversized-file and page-boundary lanes for the guest photo dashboard without changing organizer notes, slideshow preview/export, highlight review, duplicate triage, or hidden-photo recovery behavior. No deploy was run.

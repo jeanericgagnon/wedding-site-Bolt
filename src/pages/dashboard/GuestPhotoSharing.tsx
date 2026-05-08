@@ -99,7 +99,10 @@ import { GuestPhotoMemoryFlowCard } from './guestPhotos/GuestPhotoMemoryFlowCard
 import { GuestPhotoMemoryVaultsCard } from './guestPhotos/GuestPhotoMemoryVaultsCard';
 import { GuestPhotoMomentAlbumsCard } from './guestPhotos/GuestPhotoMomentAlbumsCard';
 import { GuestPhotoMomentsCard } from './guestPhotos/GuestPhotoMomentsCard';
+import { GuestPhotoOrganizerCard } from './guestPhotos/GuestPhotoOrganizerCard';
 import { GuestPhotoRecapSharingCard } from './guestPhotos/GuestPhotoRecapSharingCard';
+import { GuestPhotoReviewCard } from './guestPhotos/GuestPhotoReviewCard';
+import { GuestPhotoSlideshowCard } from './guestPhotos/GuestPhotoSlideshowCard';
 import { GuestPhotoSlideshowDraftCard } from './guestPhotos/GuestPhotoSlideshowDraftCard';
 import { GuestPhotoStatsCards } from './guestPhotos/GuestPhotoStatsCards';
 
@@ -1756,327 +1759,87 @@ export const GuestPhotoSharing: React.FC = () => {
           onCreateMomentBucket={(suggestion) => void createMomentBucketFromSuggestion(suggestion)}
         />
 
-        <Card className="p-6 border border-border-subtle bg-white">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold text-text-primary">Photo review</h2>
-              </div>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-text-secondary">
-                Uses saved time details and previous review work to surface highlights, the day in order, possible duplicates, and photos worth checking.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-xs text-text-secondary sm:grid-cols-4">
-              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{highlightUploads.length} highlights</span>
-              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{chronologicalUploads.length} with times</span>
-              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{similarPhotoGroups.length} similar sets</span>
-              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{reviewUploads.length} to check</span>
-              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{hiddenUploadCount} hidden</span>
-              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{flaggedUploadCount} flagged</span>
-              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{recapFeaturedCount} featured</span>
-              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{recapStoryCount} in recap story</span>
-              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{recapHiddenCount} recap hidden</span>
-            </div>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={() => setSlideshowOrder('highlights')} disabled={highlightUploads.length === 0}>
-              Use highlights in slideshow
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setSlideshowOrder('capture')} disabled={chronologicalUploads.length === 0}>
-              Use saved photo times
-            </Button>
-            <Button size="sm" variant="outline" onClick={exportCurationCsv} disabled={uploads.length === 0}>
-              Export review sheet
-            </Button>
-            <Button size="sm" variant="outline" onClick={exportMemoryChaptersJson} disabled={memoryChapters.length === 0}>
-              Copy chapter notes
-            </Button>
-            <Button size="sm" variant="outline" onClick={exportCuratedRecapJson} disabled={uploads.length === 0}>
-              Copy recap notes
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => void hideReviewUploads()} disabled={bulkModerating || reviewUploads.length === 0}>
-              Hide review items
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => void hideDuplicateExtras()} disabled={bulkModerating || duplicateExtraCount === 0}>
-              Tuck away similar extras
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => void restoreHiddenUploads()} disabled={bulkModerating || hiddenUploadCount === 0}>
-              Restore hidden
-            </Button>
-          </div>
-          <div className="mt-5 grid gap-3 lg:grid-cols-4">
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-4">
-              <p className="text-sm font-semibold text-text-primary">Highlights</p>
-              <div className="mt-3 space-y-2">
-                {highlightUploads.slice(0, 3).map(({ upload, analysis }) => (
-                  <div key={upload.id} className="rounded-lg bg-neutral-50 px-3 py-2">
-                    <p className="truncate text-sm font-medium text-neutral-900">{safePhotoAnalysisText(analysis?.caption, upload.original_filename)}</p>
-                    <p className="mt-1 text-xs text-neutral-500">{safePhotoAnalysisText(analysis?.suggested_bucket_name, 'Reviewed')} · {analysis ? Math.round(analysis.slideshow_priority) : 0}/100</p>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      <Button size="sm" variant="outline" onClick={() => void moderateUpload(upload.id, { recap_featured: !upload.recap_featured })}>
-                        {upload.recap_featured ? 'Unfeature' : 'Feature'}
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => void moderateUpload(upload.id, { recap_story: !upload.recap_story })}>
-                        {upload.recap_story ? 'Remove from story' : 'Add to story'}
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => void moderateUpload(upload.id, { recap_hidden: !upload.recap_hidden })}>
-                        {upload.recap_hidden ? 'Show recap' : 'Hide recap'}
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                {highlightUploads.length === 0 && <p className="text-xs text-neutral-500">Review a few photos to fill this.</p>}
-              </div>
-            </div>
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-4">
-              <p className="text-sm font-semibold text-text-primary">Timeline</p>
-              <div className="mt-3 space-y-2">
-                {chronologicalUploads.slice(0, 3).map(({ upload, metadata }) => (
-                  <div key={upload.id} className="rounded-lg bg-neutral-50 px-3 py-2">
-                    <p className="truncate text-sm font-medium text-neutral-900">{upload.original_filename}</p>
-                    <p className="mt-1 text-xs text-neutral-500">{metadata?.taken_at ? formatGuestPhotoDateTime(metadata.taken_at) : 'Time not available'}</p>
-                  </div>
-                ))}
-                {chronologicalUploads.length === 0 && <p className="text-xs text-neutral-500">Capture times appear when photos include saved time details.</p>}
-              </div>
-            </div>
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-4">
-              <p className="text-sm font-semibold text-text-primary">Similar sets</p>
-              <div className="mt-3 space-y-2">
-                {similarPhotoGroups.slice(0, 3).map((group) => (
-                  <div key={group.key} className="rounded-lg bg-neutral-50 px-3 py-2">
-                    <p className="text-sm font-medium text-neutral-900">{group.entries.length} matching uploads · keep 1</p>
-                    <p className="mt-1 truncate text-xs text-neutral-500">{group.entries.map((entry) => entry.upload.original_filename).join(', ')}</p>
-                  </div>
-                ))}
-                {similarPhotoGroups.length === 0 && <p className="text-xs text-neutral-500">No exact or similar matches yet.</p>}
-                {duplicateExtraCount > 0 && <p className="text-xs text-primary">{duplicateExtraCount} similar photo{duplicateExtraCount === 1 ? '' : 's'} can be tucked away.</p>}
-              </div>
-            </div>
-            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-4 py-4">
-              <p className="text-sm font-semibold text-text-primary">Worth checking</p>
-              <div className="mt-3 space-y-2">
-                {reviewUploads.slice(0, 3).map(({ upload, analysis }) => (
-                  <div key={upload.id} className="rounded-lg bg-neutral-50 px-3 py-2">
-                    <p className="truncate text-sm font-medium text-neutral-900">{upload.original_filename}</p>
-                    <p className="mt-1 text-xs text-neutral-500">{analysisDisplayStatus(analysis)}{analysis?.bucket_confidence ? ` · ${Math.round(analysis.bucket_confidence * 100)}%` : ''}</p>
-                  </div>
-                ))}
-                {reviewUploads.length === 0 && <p className="text-xs text-neutral-500">Everything visible looks clean.</p>}
-              </div>
-            </div>
-          </div>
-          {memoryChapters.length > 0 && (
-            <div className="mt-5 rounded-lg border border-border-subtle bg-surface-subtle px-4 py-4">
-              <p className="text-sm font-semibold text-text-primary">Memory chapters</p>
-              <div className="mt-3 grid gap-2 md:grid-cols-3">
-                {memoryChapters.map((chapter) => (
-                  <div key={chapter.date} className="rounded-lg bg-neutral-50 px-3 py-2">
-                    <p className="text-sm font-medium text-neutral-900">{formatGuestPhotoDate(chapter.date)}</p>
-                    <p className="mt-1 text-xs text-neutral-500">{chapter.entries.length} timed upload{chapter.entries.length === 1 ? '' : 's'} · {chapter.highlights} highlight{chapter.highlights === 1 ? '' : 's'}</p>
-                    {chapter.bucketNames.length > 0 && <p className="mt-1 truncate text-xs text-neutral-500">{chapter.bucketNames.join(' · ')}</p>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </Card>
+        <GuestPhotoReviewCard
+          highlightUploads={highlightUploads}
+          chronologicalUploads={chronologicalUploads}
+          similarPhotoGroups={similarPhotoGroups}
+          reviewUploads={reviewUploads}
+          memoryChapters={memoryChapters}
+          hiddenUploadCount={hiddenUploadCount}
+          flaggedUploadCount={flaggedUploadCount}
+          recapFeaturedCount={recapFeaturedCount}
+          recapStoryCount={recapStoryCount}
+          recapHiddenCount={recapHiddenCount}
+          uploadCount={uploads.length}
+          bulkModerating={bulkModerating}
+          duplicateExtraCount={duplicateExtraCount}
+          onUseHighlightsInSlideshow={() => setSlideshowOrder('highlights')}
+          onUseSavedPhotoTimes={() => setSlideshowOrder('capture')}
+          onExportCurationCsv={exportCurationCsv}
+          onExportMemoryChapters={exportMemoryChaptersJson}
+          onExportCuratedRecap={exportCuratedRecapJson}
+          onHideReviewUploads={() => void hideReviewUploads()}
+          onHideDuplicateExtras={() => void hideDuplicateExtras()}
+          onRestoreHiddenUploads={() => void restoreHiddenUploads()}
+          onModerateUpload={(uploadId, patch) => void moderateUpload(uploadId, patch)}
+          formatDateTime={formatGuestPhotoDateTime}
+        />
 
         {aiPhotoOpsPlan && (
-          <Card className="p-6 border border-border-subtle bg-white">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                  <h2 className="text-xl font-semibold text-text-primary">Photo organizer</h2>
-                </div>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-text-secondary">
-                  {safePhotoAnalysisText(aiPhotoOpsPlan.summary, 'Created an organization and slideshow plan for review.')}
-                </p>
-                <p className="mt-2 text-xs text-text-tertiary">
-                  {aiPhotoOpsPlan.bucketSuggestions.length} photos reviewed · {aiSlideshowFrameCount} slideshow frames drafted
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button
-                  variant="outline"
-                  className="border-border-subtle text-text-primary hover:bg-surface-subtle"
-                  disabled={aiPhotoMovesBusy || aiHighConfidenceMoves.length === 0}
-                  onClick={() => void applyHighConfidencePhotoMoves()}
-                >
-                  {aiPhotoMovesBusy ? 'Applying...' : `Apply ${aiHighConfidenceMoves.length} suggested move${aiHighConfidenceMoves.length === 1 ? '' : 's'}`}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-border-subtle text-text-primary hover:bg-surface-subtle"
-                  onClick={() => void copyText(JSON.stringify(aiPhotoOpsPlan, null, 2), 'ai-photo-plan')}
-                >
-                  {copied === 'ai-photo-plan' ? 'Copied notes' : 'Copy organizer notes'}
-                </Button>
-              </div>
-            </div>
-
-            <div className="mt-5 grid gap-3 lg:grid-cols-2">
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 px-4 py-4">
-                <p className="text-sm font-semibold text-text-primary">Suggested album moves</p>
-                <div className="mt-3 space-y-2">
-                  {aiPhotoOpsPlan.bucketSuggestions.slice(0, 6).map((suggestion) => (
-                    <div key={suggestion.uploadId} className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-medium text-neutral-900">{suggestion.targetBucketName}</p>
-                        <span className="rounded-lg bg-white px-2 py-0.5 text-xs font-medium text-text-secondary ring-1 ring-border-subtle">{Math.round(suggestion.confidence * 100)}%</span>
-                      </div>
-                      <p className="mt-1 text-xs text-neutral-600">
-                        {safePhotoAnalysisText(suggestion.reason, 'This looks like the best fit for the album.')}
-                      </p>
-                      {(suggestion.detectedMoment || (suggestion.tags?.length ?? 0) > 0) && (
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {suggestion.detectedMoment && (
-                            <span className="rounded-lg bg-white px-2 py-0.5 text-[11px] font-medium text-text-secondary ring-1 ring-border-subtle">
-                              {suggestion.detectedMoment}
-                            </span>
-                          )}
-                          {suggestion.tags?.slice(0, 5).map((tag) => (
-                            <span key={`${suggestion.uploadId}-${tag}`} className="rounded-lg bg-white px-2 py-0.5 text-[11px] font-medium text-neutral-600 ring-1 ring-neutral-200">
-                              {tagLabel(tag)}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 px-4 py-4">
-                <p className="text-sm font-semibold text-text-primary">{aiPhotoOpsPlan.slideshow.title}</p>
-                <p className="mt-1 text-xs text-text-tertiary">{aiPhotoOpsPlan.slideshow.mood}</p>
-                <div className="mt-3 space-y-2">
-                  {aiPhotoOpsPlan.slideshow.frames.slice(0, 5).map((frame, index) => (
-                    <div key={`${frame.uploadId}-${index}`} className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
-                      <p className="text-xs font-semibold text-neutral-500">Frame {index + 1} · {frame.bucketName}</p>
-                      <p className="mt-1 text-sm text-neutral-800">
-                        {safePhotoAnalysisText(frame.caption, 'A warm wedding moment.')}
-                      </p>
-                      {(frame.tags?.length ?? 0) > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {frame.tags?.slice(0, 4).map((tag) => (
-                            <span key={`${frame.uploadId}-${tag}`} className="rounded-lg bg-white px-2 py-0.5 text-[11px] font-medium text-neutral-600 ring-1 ring-neutral-200">
-                              {tagLabel(tag)}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </Card>
+          <GuestPhotoOrganizerCard
+            aiPhotoOpsPlan={aiPhotoOpsPlan}
+            aiSlideshowFrameCount={aiSlideshowFrameCount}
+            aiPhotoMovesBusy={aiPhotoMovesBusy}
+            aiHighConfidenceMoveCount={aiHighConfidenceMoves.length}
+            copied={copied}
+            onApplyHighConfidencePhotoMoves={() => void applyHighConfidencePhotoMoves()}
+            onCopyOrganizerNotes={() => void copyText(JSON.stringify(aiPhotoOpsPlan, null, 2), 'ai-photo-plan')}
+          />
         )}
 
-        <Card className="p-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
-            <div>
-              <h2 className="text-xl font-semibold text-neutral-900">Slideshow draft</h2>
-              <p className="mt-1 text-sm text-neutral-600">Turn uploaded guest photos into a simple sequence you can preview, adjust, and share.</p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <select
-                value={slideshowBucketFilter}
-                onChange={(e) => setSlideshowBucketFilter(e.target.value)}
-                className="rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-              >
-                <option value="all">All slideshow-ready albums</option>
-                {buckets
-                  .filter((bucket) => bucket.is_active && (countsByBucket.get(bucket.id) ?? 0) >= 3)
-                  .map((bucket) => (
-                    <option key={bucket.id} value={bucket.id}>{bucket.name}</option>
-                  ))}
-              </select>
-              <select
-                value={slideshowOrder}
-                onChange={(e) => setSlideshowOrder(e.target.value as SlideshowOrderMode)}
-                className="rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-              >
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-                <option value="capture">Capture time</option>
-                <option value="highlights">Best highlights</option>
-              </select>
-              <select
-                value={slideshowTheme}
-                onChange={(e) => setSlideshowTheme(e.target.value as SlideshowTheme)}
-                className="rounded-lg border border-neutral-300 px-3 py-2 text-sm"
-              >
-                <option value="classic">Classic</option>
-                <option value="editorial">Editorial</option>
-                <option value="party">Party</option>
-              </select>
-              <Button variant="outline" onClick={() => setSlideshowPreviewOpen(true)} disabled={slideshowFrames.length === 0}>
-                Preview
-              </Button>
-              <Button variant="outline" onClick={() => void exportSlideshowPlan()} disabled={slideshowFrames.length === 0}>
-                {copied === 'slideshow-plan' ? 'Copied notes' : 'Copy slideshow notes'}
-              </Button>
-            </div>
-          </div>
+        <GuestPhotoSlideshowCard
+          buckets={buckets}
+          countsByBucket={countsByBucket}
+          slideshowBucketFilter={slideshowBucketFilter}
+          slideshowOrder={slideshowOrder}
+          slideshowTheme={slideshowTheme}
+          slideshowFrames={slideshowFrames}
+          slideshowReadyBucketCount={slideshowReadyBucketCount}
+          slideshowPreviewOpen={slideshowPreviewOpen}
+          copied={copied}
+          onBucketFilterChange={setSlideshowBucketFilter}
+          onOrderChange={setSlideshowOrder}
+          onThemeChange={setSlideshowTheme}
+          onPreviewOpenChange={setSlideshowPreviewOpen}
+          onExportSlideshowPlan={() => void exportSlideshowPlan()}
+          formatDateTime={formatGuestPhotoDateTime}
+        />
 
-          {slideshowFrames.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-neutral-300 bg-surface-subtle/20 px-4 py-6 text-sm text-neutral-600">
-              Add at least three visible uploads to an active album to start a slideshow draft.
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-4 py-3 text-sm text-neutral-700">
-                Ready with <span className="font-semibold text-neutral-900">{slideshowFrames.length}</span> slides from <span className="font-semibold text-neutral-900">{slideshowBucketFilter === 'all' ? slideshowReadyBucketCount : 1}</span> album{slideshowBucketFilter === 'all' ? 's' : ''}.
-              </div>
-              <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-4 py-3 text-sm text-neutral-700">
-                <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-medium ${slideshowThemeMeta[slideshowTheme].chipClass}`}>
-                  {slideshowThemeMeta[slideshowTheme].label}
-                </span>
-                <span className="ml-2">{slideshowThemeMeta[slideshowTheme].helper}</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                {slideshowFrames.map((frame, index) => (
-                  <div key={frame.uploadId} className={`rounded-lg border px-4 py-3 ${slideshowThemeMeta[slideshowTheme].cardClass}`}>
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-neutral-900">Frame {index + 1}</p>
-                      <span className={`text-xs rounded-lg px-2 py-0.5 ${slideshowThemeMeta[slideshowTheme].chipClass}`}>{frame.bucketName}</span>
-                    </div>
-                    <p className="mt-2 text-sm text-neutral-800 truncate">{frame.title}</p>
-                    <p className="mt-1 text-xs text-neutral-500">{frame.caption}</p>
-                    {frame.takenAt && <p className="mt-1 text-xs text-neutral-400">Taken {formatGuestPhotoDateTime(frame.takenAt)}</p>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </Card>
-
-        {slideshowPreviewOpen && slideshowFrames.length > 0 && (
-          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="w-full max-w-4xl bg-white rounded-lg border border-border p-5 space-y-4 max-h-[90vh] overflow-auto">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-lg font-semibold text-neutral-900">Slideshow preview</h3>
-                  <p className="text-sm text-neutral-600">{slideshowThemeMeta[slideshowTheme].label} · {slideshowFrames.length} frames · {slideshowOrder}</p>
-                </div>
-                <Button variant="outline" onClick={() => setSlideshowPreviewOpen(false)}>Close</Button>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {slideshowFrames.map((frame, index) => (
-                  <div key={frame.uploadId} className={`rounded-lg border px-4 py-4 ${slideshowThemeMeta[slideshowTheme].cardClass}`}>
-                    <p className="text-xs text-neutral-500">Slide {index + 1}</p>
-                    <p className="mt-2 text-base font-semibold text-neutral-900 truncate">{frame.title}</p>
-                    <p className="mt-1 text-sm text-neutral-700">{frame.bucketName}</p>
-                    <p className="mt-2 text-xs text-neutral-500">{frame.caption}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        <GuestPhotoReviewCard
+          highlightUploads={highlightUploads}
+          chronologicalUploads={chronologicalUploads}
+          similarPhotoGroups={similarPhotoGroups}
+          reviewUploads={reviewUploads}
+          memoryChapters={memoryChapters}
+          hiddenUploadCount={hiddenUploadCount}
+          flaggedUploadCount={flaggedUploadCount}
+          recapFeaturedCount={recapFeaturedCount}
+          recapStoryCount={recapStoryCount}
+          recapHiddenCount={recapHiddenCount}
+          uploadCount={uploads.length}
+          bulkModerating={bulkModerating}
+          duplicateExtraCount={duplicateExtraCount}
+          onUseHighlightsInSlideshow={() => setSlideshowOrder('highlights')}
+          onUseSavedPhotoTimes={() => setSlideshowOrder('capture')}
+          onExportCurationCsv={exportCurationCsv}
+          onExportMemoryChapters={exportMemoryChaptersJson}
+          onExportCuratedRecap={exportCuratedRecapJson}
+          onHideReviewUploads={() => void hideReviewUploads()}
+          onHideDuplicateExtras={() => void hideDuplicateExtras()}
+          onRestoreHiddenUploads={() => void restoreHiddenUploads()}
+          onModerateUpload={(uploadId, patch) => void moderateUpload(uploadId, patch)}
+          formatDateTime={formatGuestPhotoDateTime}
+        />
 
         <Card className="overflow-hidden border border-border-subtle bg-white">
           <div className="border-b border-neutral-100 bg-neutral-50/80 px-6 py-5">

@@ -488,8 +488,11 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('<GuestPhotoCoupleAlbumsCard');
     expect(source).toContain('<GuestPhotoStatsCards');
     expect(source).toContain('<GuestPhotoSlideshowDraftCard');
+    expect(source).toContain('<GuestPhotoSlideshowCard');
     expect(source).toContain('<GuestPhotoMomentsCard');
     expect(source).toContain('<GuestPhotoMomentAlbumsCard');
+    expect(source).toContain('<GuestPhotoOrganizerCard');
+    expect(source).toContain('<GuestPhotoReviewCard');
     expect(source).not.toContain('supabase.auth.getUser()');
     expect(source).not.toContain('supabase.auth.getSession()');
     expect(source).not.toContain('supabase.auth.refreshSession()');
@@ -527,6 +530,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('Turn uploaded guest photos into a simple slideshow. Start with your strongest moments, preview the sequence, then polish later.');
     expect(source).not.toContain('Sort new guest photos into the moments they belong to, then reuse that work for albums, slideshow order, captions, and quality checks.');
     expect(source).not.toContain('Moment albums from the schedule');
+    expect(source).not.toContain('Created an organization and slideshow plan for review.');
+    expect(source).not.toContain('Photo review');
+    expect(source).not.toContain('Add at least three visible uploads to an active album to start a slideshow draft.');
     expect(service).toContain("const GUEST_PHOTO_BUCKET_SITE_SELECT = 'wedding_data, site_json'");
     expect(service).toContain("const GUEST_PHOTO_DASHBOARD_SITE_SELECT = 'id, site_slug, wedding_data'");
     expect(service).toContain("const GUEST_PHOTO_EVENT_SELECT = 'id,event_name,event_date,start_time,end_time' as const;");
