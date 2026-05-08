@@ -29,7 +29,7 @@ import {
 import { applyDemoRsvpSubmit } from './applyDemoRsvpSubmit';
 import { applyAmbiguousRsvpLookupState } from './applyAmbiguousRsvpLookupState';
 import { applyManualRsvpLookupResult } from './applyManualRsvpLookupResult';
-import { applyRsvpGuestSelection } from './applyRsvpGuestSelection';
+import { applyResolvedRsvpGuest } from './applyResolvedRsvpGuest';
 import { applyRsvpSubmitSuccess } from './applyRsvpSubmitSuccess';
 import { applyTokenRsvpLookupResult } from './applyTokenRsvpLookupResult';
 import { buildRsvpSubmitPayload } from './buildRsvpSubmitPayload';
@@ -37,7 +37,6 @@ import { buildRsvpSubmitSuccessArgs } from './buildRsvpSubmitSuccessArgs';
 import { buildRsvpDerivedViewState } from './buildRsvpDerivedViewState';
 import { buildRsvpLiveContentActions } from './buildRsvpLiveContentActions';
 import { buildRsvpPageViewModel } from './buildRsvpPageViewModel';
-import { classifyRsvpLookupResponse } from './classifyRsvpLookupResponse';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { buildRsvpLiveContentViewProps } from './buildRsvpLiveContentViewProps';
 import { callValidateRsvpToken } from './rsvpFunctionService';
@@ -763,26 +762,20 @@ export default function RSVP() {
     source: 'manual' | 'token' = 'manual',
     sessionToken: string | null = null,
   ) {
-    const normalizedRsvp = foundRsvp ? normalizeExistingRsvp(foundRsvp) : null;
-    tokenLinkedSessionRef.current = source === 'token';
-    const selectedGuestIds = deriveSelectedHouseholdGuestIds(normalizedRsvp, household);
-    const applyToSelectedHousehold = normalizedRsvp
-      ? shouldApplyToHousehold(normalizedRsvp, household, foundGuest.id)
-      : household.length > 0;
-    applyRsvpGuestSelection({
-      customAnswers: normalizedRsvp?.custom_answers && typeof normalizedRsvp.custom_answers === 'object'
-        ? normalizeCustomAnswers(normalizedRsvp.custom_answers as Record<string, string | string[]>)
-        : {},
+    applyResolvedRsvpGuest({
+      buildNormalizedRsvpFormData,
       deadline,
-      existingFormData: normalizedRsvp ? buildNormalizedRsvpFormData(foundGuest, normalizedRsvp, meal) : null,
+      deriveSelectedHouseholdGuestIds,
       foundGuest,
+      foundRsvp,
+      getLegacyTestRsvpSessionToken,
       household,
       meal,
       musicPlaylistUrl: playlistUrl,
-      normalizedRsvp,
+      normalizeCustomAnswers,
+      normalizeExistingRsvp,
       questions,
-      selectedGuestIds,
-      sessionToken: sessionToken ?? getLegacyTestRsvpSessionToken(foundGuest),
+      sessionToken,
       setActivePredictionIndex,
       setApplyToHousehold,
       setCustomAnswers,
@@ -798,7 +791,9 @@ export default function RSVP() {
       setRsvpSessionToken,
       setSelectedHouseholdGuestIds,
       setStep,
-      useHouseholdSelection: applyToSelectedHousehold,
+      shouldApplyToHousehold,
+      source,
+      tokenLinkedSessionRef,
     });
   }
 

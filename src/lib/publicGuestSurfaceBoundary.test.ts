@@ -142,6 +142,7 @@ describe('public guest surface boundary', () => {
     const rsvpDerivedViewState = readSource('src/pages/buildRsvpDerivedViewState.ts');
     const rsvpAmbiguousLookupState = readSource('src/pages/applyAmbiguousRsvpLookupState.ts');
     const rsvpManualLookupResult = readSource('src/pages/applyManualRsvpLookupResult.ts');
+    const rsvpResolvedGuest = readSource('src/pages/applyResolvedRsvpGuest.ts');
     const rsvpGuestSelection = readSource('src/pages/applyRsvpGuestSelection.ts');
     const rsvpSubmitSuccess = readSource('src/pages/applyRsvpSubmitSuccess.ts');
     const rsvpTokenLookupResult = readSource('src/pages/applyTokenRsvpLookupResult.ts');
@@ -174,13 +175,12 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain("from './buildRsvpDerivedViewState'");
     expect(rsvpPage).toContain("from './applyAmbiguousRsvpLookupState'");
     expect(rsvpPage).toContain("from './applyManualRsvpLookupResult'");
-    expect(rsvpPage).toContain("from './applyRsvpGuestSelection'");
+    expect(rsvpPage).toContain("from './applyResolvedRsvpGuest'");
     expect(rsvpPage).toContain("from './applyRsvpSubmitSuccess'");
     expect(rsvpPage).toContain("from './applyTokenRsvpLookupResult'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitPayload'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitSuccessArgs'");
     expect(rsvpPage).toContain("from './prepareRsvpTokenLookupState'");
-    expect(rsvpPage).toContain("from './classifyRsvpLookupResponse'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentActions'");
     expect(rsvpPage).toContain("from './buildRsvpPageViewModel'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentViewProps'");
@@ -195,7 +195,7 @@ describe('public guest surface boundary', () => {
     expect(rsvpPage).toContain('<RsvpPageRouteView');
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
     expect(rsvpPage).toContain('applyManualRsvpLookupResult({');
-    expect(rsvpPage).toContain('applyRsvpGuestSelection({');
+    expect(rsvpPage).toContain('applyResolvedRsvpGuest({');
     expect(rsvpPage).toContain('applyTokenRsvpLookupResult({');
     expect(rsvpPage).toContain('buildRsvpSubmitPayload({');
     expect(rsvpPage).toContain('applyRsvpSubmitSuccess(buildRsvpSubmitSuccessArgs({');
@@ -221,6 +221,9 @@ describe('public guest surface boundary', () => {
     expect(rsvpManualLookupResult).toContain('applyAmbiguousRsvpLookupState({');
     expect(rsvpManualLookupResult).toContain('setError(normalizeRsvpGuestError(error))');
     expect(rsvpManualLookupResult).toContain('setError(RSVP_LOOKUP_ERROR_COPY)');
+    expect(rsvpResolvedGuest).toContain("tokenLinkedSessionRef.current = source === 'token'");
+    expect(rsvpResolvedGuest).toContain('deriveSelectedHouseholdGuestIds(normalizedRsvp, household)');
+    expect(rsvpResolvedGuest).toContain('applyRsvpGuestSelection({');
     expect(rsvpGuestSelection).toContain('existingFormData');
     expect(rsvpGuestSelection).toContain('setRsvpSessionToken(sessionToken)');
     expect(rsvpGuestSelection).toContain("setStep('form')");

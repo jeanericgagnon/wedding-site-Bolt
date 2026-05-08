@@ -52,6 +52,7 @@ describe('RSVP stale submit protection', () => {
     const derivedViewState = readFileSync(join(process.cwd(), 'src/pages/buildRsvpDerivedViewState.ts'), 'utf8');
     const ambiguousLookupState = readFileSync(join(process.cwd(), 'src/pages/applyAmbiguousRsvpLookupState.ts'), 'utf8');
     const manualLookupResult = readFileSync(join(process.cwd(), 'src/pages/applyManualRsvpLookupResult.ts'), 'utf8');
+    const resolvedGuest = readFileSync(join(process.cwd(), 'src/pages/applyResolvedRsvpGuest.ts'), 'utf8');
     const guestSelection = readFileSync(join(process.cwd(), 'src/pages/applyRsvpGuestSelection.ts'), 'utf8');
     const submitSuccess = readFileSync(join(process.cwd(), 'src/pages/applyRsvpSubmitSuccess.ts'), 'utf8');
     const tokenLookupResult = readFileSync(join(process.cwd(), 'src/pages/applyTokenRsvpLookupResult.ts'), 'utf8');
@@ -82,13 +83,12 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain("from './buildRsvpDerivedViewState'");
     expect(rsvpPage).toContain("from './applyAmbiguousRsvpLookupState'");
     expect(rsvpPage).toContain("from './applyManualRsvpLookupResult'");
-    expect(rsvpPage).toContain("from './applyRsvpGuestSelection'");
+    expect(rsvpPage).toContain("from './applyResolvedRsvpGuest'");
     expect(rsvpPage).toContain("from './applyRsvpSubmitSuccess'");
     expect(rsvpPage).toContain("from './applyTokenRsvpLookupResult'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitPayload'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitSuccessArgs'");
     expect(rsvpPage).toContain("from './prepareRsvpTokenLookupState'");
-    expect(rsvpPage).toContain("from './classifyRsvpLookupResponse'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentActions'");
     expect(rsvpPage).toContain("from './buildRsvpPageViewModel'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentViewProps'");
@@ -103,7 +103,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain('<RsvpPageRouteView');
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
     expect(rsvpPage).toContain('applyManualRsvpLookupResult({');
-    expect(rsvpPage).toContain('applyRsvpGuestSelection({');
+    expect(rsvpPage).toContain('applyResolvedRsvpGuest({');
     expect(rsvpPage).toContain('applyTokenRsvpLookupResult({');
     expect(rsvpPage).toContain('buildRsvpSubmitPayload({');
     expect(rsvpPage).toContain('applyRsvpSubmitSuccess(buildRsvpSubmitSuccessArgs({');
@@ -129,6 +129,9 @@ describe('RSVP stale submit protection', () => {
     expect(manualLookupResult).toContain('applyAmbiguousRsvpLookupState({');
     expect(manualLookupResult).toContain('setError(normalizeRsvpGuestError(error))');
     expect(manualLookupResult).toContain('setError(RSVP_LOOKUP_ERROR_COPY)');
+    expect(resolvedGuest).toContain("tokenLinkedSessionRef.current = source === 'token'");
+    expect(resolvedGuest).toContain('deriveSelectedHouseholdGuestIds(normalizedRsvp, household)');
+    expect(resolvedGuest).toContain('applyRsvpGuestSelection({');
     expect(guestSelection).toContain('existingFormData');
     expect(guestSelection).toContain('setRsvpSessionToken(sessionToken)');
     expect(guestSelection).toContain("setStep('form')");

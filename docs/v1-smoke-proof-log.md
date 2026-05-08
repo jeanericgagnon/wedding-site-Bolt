@@ -7405,6 +7405,23 @@ A slice does **not** count as passed because:
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
 
+## 2026-05-08 12:02 AM PT No-Deploy RSVP Resolved-Guest Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its shared resolved guest handoff through `src/pages/applyResolvedRsvpGuest.ts`.
+  - That shared helper now owns token-session updates, normalized RSVP prep, selected household guest derivation, household-selection defaults, and `applyRsvpGuestSelection(...)` arg assembly while the page keeps lookup transport and higher-level route orchestration local.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `applyResolvedRsvpGuest(...)` plus its token-session branch, selected-household derivation, and `applyRsvpGuestSelection(...)` handoff so the main RSVP page keeps routing through the dedicated helper.
+  - `src/pages/RSVP.tsx` dropped from 1159 lines to 1154 lines in this batch, while `src/pages/applyResolvedRsvpGuest.ts` came in at 131 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+
 ## 2026-05-07 11:58 PM PT No-Deploy RSVP Manual-Lookup Result Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
