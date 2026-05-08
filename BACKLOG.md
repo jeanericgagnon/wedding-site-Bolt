@@ -2297,3 +2297,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `buildRsvpSubmitPayload(...)` and its target-guest / normalized-RSVP / plus-one-count assembly so the main RSVP page keeps routing submit-payload prep through the shared helper.
   - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
   - Launch status: unchanged. This continues local public-surface ownership cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 11:28 PM PT - No-deploy RSVP demo-submit extraction:
+  - Resolved in this batch: moved the shared demo RSVP response write out of `src/pages/RSVP.tsx` and behind `src/pages/applyDemoRsvpSubmit.ts`.
+  - Data-boundary hardening: `RSVP.tsx` now routes demo stored-response persistence through one helper instead of directly reading demo storage, mutating rows, and writing them back inline inside the submit path.
+  - File-size movement: `src/pages/RSVP.tsx` dropped from 1238 lines to 1236 lines in this continuation batch while `src/pages/applyDemoRsvpSubmit.ts` came in at 15 lines.
+  - No feature loss: demo RSVP submit still writes one normalized RSVP row per selected guest id and still hands off to the shared post-submit success helper immediately after persistence.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `applyDemoRsvpSubmit(...)` plus its demo storage read/write contract so the main RSVP page keeps routing demo submit persistence through the shared helper.
+  - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This continues local public-surface ownership cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.

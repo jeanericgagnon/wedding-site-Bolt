@@ -62,6 +62,7 @@ describe('RSVP stale submit protection', () => {
     const resetPageState = readFileSync(join(process.cwd(), 'src/pages/resetRsvpPageState.ts'), 'utf8');
     const validateAdvance = readFileSync(join(process.cwd(), 'src/pages/validateRsvpFormAdvance.ts'), 'utf8');
     const validateSubmitReadiness = readFileSync(join(process.cwd(), 'src/pages/validateRsvpSubmitReadiness.ts'), 'utf8');
+    const demoSubmit = readFileSync(join(process.cwd(), 'src/pages/applyDemoRsvpSubmit.ts'), 'utf8');
     const pageRouteView = readFileSync(join(process.cwd(), 'src/pages/RsvpPageRouteView.tsx'), 'utf8');
     const flowView = readFileSync(join(process.cwd(), 'src/pages/RsvpFlowView.tsx'), 'utf8');
     const formView = readFileSync(join(process.cwd(), 'src/pages/RsvpFormView.tsx'), 'utf8');
@@ -86,6 +87,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain("from './RsvpPageRouteView'");
     expect(rsvpPage).toContain("from './validateRsvpFormAdvance'");
     expect(rsvpPage).toContain("from './validateRsvpSubmitReadiness'");
+    expect(rsvpPage).toContain("from './applyDemoRsvpSubmit'");
     expect(rsvpPage).toContain('<RsvpPageRouteView');
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
     expect(rsvpPage).toContain('applyAmbiguousRsvpLookupState({');
@@ -93,6 +95,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain('applyRsvpSubmitSuccess({');
     expect(rsvpPage).toContain('buildRsvpSubmitPayload({');
     expect(rsvpPage).toContain('classifyRsvpLookupResponse(');
+    expect(rsvpPage).toContain('applyDemoRsvpSubmit({ payload, targetGuestIds: targetIds })');
     expect(rsvpPage).toContain('buildRsvpLiveContentActions({');
     expect(rsvpPage).toContain('buildRsvpPageViewModel({');
     expect(rsvpPage).toContain('resetRsvpLookupFlow({');
@@ -134,6 +137,9 @@ describe('RSVP stale submit protection', () => {
     expect(validateSubmitReadiness).toContain('Please use the RSVP button from your invitation email');
     expect(validateSubmitReadiness).toContain('Please choose at least one event from your invitation');
     expect(validateSubmitReadiness).toContain('Pick at least one household guest to share this RSVP with');
+    expect(demoSubmit).toContain('readDemoStoredResponses()');
+    expect(demoSubmit).toContain('writeDemoStoredResponses(stored)');
+    expect(demoSubmit).toContain("id: `demo-rsvp-${id}`");
     expect(pageRouteView).toContain("from './RsvpRouteView'");
     expect(pageRouteView).toContain("from './RsvpLiveContentView'");
     expect(pageRouteView).toContain("from './RsvpTokenLoadingView'");

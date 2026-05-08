@@ -25,8 +25,8 @@ import {
   readDemoMealConfig,
   readDemoQuestions,
   readDemoStoredResponses,
-  writeDemoStoredResponses,
 } from './rsvpDemoStorage';
+import { applyDemoRsvpSubmit } from './applyDemoRsvpSubmit';
 import { applyAmbiguousRsvpLookupState } from './applyAmbiguousRsvpLookupState';
 import { applyRsvpGuestSelection } from './applyRsvpGuestSelection';
 import { applyRsvpSubmitSuccess } from './applyRsvpSubmitSuccess';
@@ -974,12 +974,10 @@ export default function RSVP() {
       });
 
       if (USE_DEMO_RSVP) {
-        const stored = readDemoStoredResponses();
         const targetIds = submitPayload.targetGuestIds;
         const payload = buildNormalizedExistingRsvp(formData, customAnswers, `demo-rsvp-${guest.id}`, targetIds);
         const submitSource = tokenLinkedSessionRef.current ? 'token' : 'manual';
-        targetIds.forEach((id) => { stored[id] = { ...payload, id: `demo-rsvp-${id}` }; });
-        writeDemoStoredResponses(stored);
+        applyDemoRsvpSubmit({ payload, targetGuestIds: targetIds });
         if (activeSubmitRequestRef.current !== requestId) return;
         applyRsvpSubmitSuccess({
           applyToHousehold,

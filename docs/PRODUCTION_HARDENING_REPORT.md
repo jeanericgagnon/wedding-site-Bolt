@@ -4618,6 +4618,20 @@ Status:
   - `git diff --check`: PASS.
 - Status:
   - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its shared demo RSVP response write through `src/pages/applyDemoRsvpSubmit.ts`.
+  - That shared demo-submit helper now owns demo storage readback, per-guest row mutation, and demo storage writeback that used to sit inline in the `USE_DEMO_RSVP` submit branch.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `applyDemoRsvpSubmit(...)` plus its demo storage read/write contract so the main RSVP page keeps routing demo submit persistence through the dedicated helper.
+  - `src/pages/RSVP.tsx` dropped from 1238 lines to 1236 lines in this batch, while `src/pages/applyDemoRsvpSubmit.ts` came in at 15 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Status:
+  - PARTIAL. This continues the public-surface cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
 - Proof passed:
   - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
   - `npm run typecheck -- --pretty false`: PASS.
