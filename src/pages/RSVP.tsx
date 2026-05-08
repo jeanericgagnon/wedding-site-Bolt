@@ -28,6 +28,7 @@ import {
 } from './rsvpDemoStorage';
 import { applyDemoRsvpSubmit } from './applyDemoRsvpSubmit';
 import { applyAmbiguousRsvpLookupState } from './applyAmbiguousRsvpLookupState';
+import { applyManualRsvpLookupResult } from './applyManualRsvpLookupResult';
 import { applyRsvpGuestSelection } from './applyRsvpGuestSelection';
 import { applyRsvpSubmitSuccess } from './applyRsvpSubmitSuccess';
 import { applyTokenRsvpLookupResult } from './applyTokenRsvpLookupResult';
@@ -724,54 +725,23 @@ export default function RSVP() {
       const lookupResp: { data?: unknown; error?: string } = USE_DEMO_RSVP
         ? { data: demoLookup(searchValue.trim()) as unknown }
         : await callValidateRsvpToken({ action: 'lookup', searchValue: searchValue.trim() });
-      const data = lookupResp.data;
-      const err = lookupResp.error;
-      if (err) {
-        if (activeLookupRequestRef.current !== requestId) return;
-        setError(normalizeRsvpGuestError(err));
-        return;
-      }
-      if (!data) {
-        if (activeLookupRequestRef.current !== requestId) return;
-        setError(RSVP_LOOKUP_ERROR_COPY);
-        return;
-      }
-
-      const resolution = classifyRsvpLookupResponse(data as LookupResponse);
-
-      if (resolution.kind === 'ambiguous') {
-        if (activeLookupRequestRef.current !== requestId) return;
-        applyAmbiguousRsvpLookupState({
-          guests: resolution.guests,
-          householdGuests: resolution.householdGuests,
-          mealConfig: resolution.mealConfig,
-          musicPlaylistUrl: resolution.musicPlaylistUrl,
-          rsvpDeadline: resolution.rsvpDeadline,
-          rsvpQuestions: resolution.rsvpQuestions,
-          setAmbiguousGuests,
-          setApplyToHousehold,
-          setHouseholdGuests,
-          setMealConfig,
-          setMusicPlaylistUrl,
-          setRsvpDeadline,
-          setRsvpQuestions,
-          setSelectedHouseholdGuestIds,
-          setStep,
-        });
-        return;
-      }
-
-      if (resolution.kind === 'guest') {
-        if (activeLookupRequestRef.current !== requestId) return;
-        selectGuest(resolution.guest, resolution.existingRsvp, resolution.rsvpDeadline, resolution.rsvpQuestions, resolution.mealConfig, resolution.householdGuests, resolution.musicPlaylistUrl, 'manual', resolution.rsvpSession);
-        return;
-      }
-
-      if (resolution.kind === 'not_found') {
-        if (activeLookupRequestRef.current !== requestId) return;
-        setError(RSVP_LOOKUP_ERROR_COPY);
-        return;
-      }
+      if (activeLookupRequestRef.current !== requestId) return;
+      applyManualRsvpLookupResult({
+        data: lookupResp.data,
+        error: lookupResp.error,
+        normalizeRsvpGuestError,
+        selectGuest,
+        setAmbiguousGuests,
+        setApplyToHousehold,
+        setError,
+        setHouseholdGuests,
+        setMealConfig,
+        setMusicPlaylistUrl,
+        setRsvpDeadline,
+        setRsvpQuestions,
+        setSelectedHouseholdGuestIds,
+        setStep,
+      });
     } catch {
       if (activeLookupRequestRef.current !== requestId) return;
       setError('Something interrupted the search. Please try again.');
@@ -863,20 +833,24 @@ export default function RSVP() {
       const lookupResp: { data?: unknown; error?: string } = USE_DEMO_RSVP
         ? { data: demoLookup(picked.id) as unknown }
         : await callValidateRsvpToken({ action: 'lookup_guest', guestId: picked.id, rsvpSession: rsvpSessionToken });
-      const data = lookupResp.data;
-      const err = lookupResp.error;
-      if (err || !data) {
-        if (activeLookupRequestRef.current !== requestId) return;
-        selectGuest(picked, null, null, [], DEFAULT_MEAL_CONFIG, [], null);
-        return;
-      }
-      const resolution = classifyRsvpLookupResponse(data as LookupResponse);
       if (activeLookupRequestRef.current !== requestId) return;
-      if (resolution.kind === 'guest') {
-        selectGuest(resolution.guest, resolution.existingRsvp, resolution.rsvpDeadline, resolution.rsvpQuestions, resolution.mealConfig, resolution.householdGuests, resolution.musicPlaylistUrl, 'manual', resolution.rsvpSession);
-        return;
-      }
-      selectGuest(picked, null, null, [], DEFAULT_MEAL_CONFIG, [], null);
+      applyManualRsvpLookupResult({
+        data: lookupResp.data,
+        error: lookupResp.error,
+        fallbackGuest: picked,
+        normalizeRsvpGuestError,
+        selectGuest,
+        setAmbiguousGuests,
+        setApplyToHousehold,
+        setError,
+        setHouseholdGuests,
+        setMealConfig,
+        setMusicPlaylistUrl,
+        setRsvpDeadline,
+        setRsvpQuestions,
+        setSelectedHouseholdGuestIds,
+        setStep,
+      });
     } catch {
       if (activeLookupRequestRef.current !== requestId) return;
       selectGuest(picked, null, null, [], DEFAULT_MEAL_CONFIG, [], null);

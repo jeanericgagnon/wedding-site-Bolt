@@ -51,6 +51,7 @@ describe('RSVP stale submit protection', () => {
     const rsvpPage = readFileSync(join(process.cwd(), 'src/pages/RSVP.tsx'), 'utf8');
     const derivedViewState = readFileSync(join(process.cwd(), 'src/pages/buildRsvpDerivedViewState.ts'), 'utf8');
     const ambiguousLookupState = readFileSync(join(process.cwd(), 'src/pages/applyAmbiguousRsvpLookupState.ts'), 'utf8');
+    const manualLookupResult = readFileSync(join(process.cwd(), 'src/pages/applyManualRsvpLookupResult.ts'), 'utf8');
     const guestSelection = readFileSync(join(process.cwd(), 'src/pages/applyRsvpGuestSelection.ts'), 'utf8');
     const submitSuccess = readFileSync(join(process.cwd(), 'src/pages/applyRsvpSubmitSuccess.ts'), 'utf8');
     const tokenLookupResult = readFileSync(join(process.cwd(), 'src/pages/applyTokenRsvpLookupResult.ts'), 'utf8');
@@ -80,6 +81,7 @@ describe('RSVP stale submit protection', () => {
 
     expect(rsvpPage).toContain("from './buildRsvpDerivedViewState'");
     expect(rsvpPage).toContain("from './applyAmbiguousRsvpLookupState'");
+    expect(rsvpPage).toContain("from './applyManualRsvpLookupResult'");
     expect(rsvpPage).toContain("from './applyRsvpGuestSelection'");
     expect(rsvpPage).toContain("from './applyRsvpSubmitSuccess'");
     expect(rsvpPage).toContain("from './applyTokenRsvpLookupResult'");
@@ -100,13 +102,12 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain("from './submitRsvpResponse'");
     expect(rsvpPage).toContain('<RsvpPageRouteView');
     expect(rsvpPage).toContain('buildRsvpDerivedViewState({');
-    expect(rsvpPage).toContain('applyAmbiguousRsvpLookupState({');
+    expect(rsvpPage).toContain('applyManualRsvpLookupResult({');
     expect(rsvpPage).toContain('applyRsvpGuestSelection({');
     expect(rsvpPage).toContain('applyTokenRsvpLookupResult({');
     expect(rsvpPage).toContain('buildRsvpSubmitPayload({');
     expect(rsvpPage).toContain('applyRsvpSubmitSuccess(buildRsvpSubmitSuccessArgs({');
     expect(rsvpPage).toContain('prepareRsvpTokenLookupState({');
-    expect(rsvpPage).toContain('classifyRsvpLookupResponse(');
     expect(rsvpPage).toContain('applyDemoRsvpSubmit({ payload, targetGuestIds: targetIds })');
     expect(rsvpPage).toContain('submitRsvpResponse({');
     expect(rsvpPage).toContain('buildRsvpLiveContentActions({');
@@ -123,6 +124,11 @@ describe('RSVP stale submit protection', () => {
     expect(ambiguousLookupState).toContain('setAmbiguousGuests(guests)');
     expect(ambiguousLookupState).toContain('setSelectedHouseholdGuestIds(householdGuests.map((guest) => guest.id))');
     expect(ambiguousLookupState).toContain("setStep('pick')");
+    expect(manualLookupResult).toContain('fallbackGuest');
+    expect(manualLookupResult).toContain('classifyRsvpLookupResponse(data as LookupResponse)');
+    expect(manualLookupResult).toContain('applyAmbiguousRsvpLookupState({');
+    expect(manualLookupResult).toContain('setError(normalizeRsvpGuestError(error))');
+    expect(manualLookupResult).toContain('setError(RSVP_LOOKUP_ERROR_COPY)');
     expect(guestSelection).toContain('existingFormData');
     expect(guestSelection).toContain('setRsvpSessionToken(sessionToken)');
     expect(guestSelection).toContain("setStep('form')");
