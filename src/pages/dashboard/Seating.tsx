@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -45,6 +45,7 @@ import {
 import { useSeatingDashboardData } from './seating/useSeatingDashboardData';
 import { buildSeatingDashboardDerivedState } from './seating/buildSeatingDashboardDerivedState';
 import { useSeatingDashboardArtifacts } from './seating/useSeatingDashboardArtifacts';
+import { useSeatingDashboardActions } from './seating/useSeatingDashboardActions';
 import {
   GuestChip,
   TableCard,
@@ -128,89 +129,6 @@ export const DashboardSeating: React.FC = () => {
     if (guest) setActiveGuest(guest);
   }
 
-  async function clearSeatAssignment(tableId: string, seatIndex: number) {
-    const assignment = assignments.find((item) => item.table_id === tableId && item.seat_index === seatIndex);
-    if (!assignment) return;
-    try {
-      if (!isDemoMode && seatingEvent) {
-        await unassignGuest(seatingEvent.id, assignment.guest_id);
-      }
-      setAssignments((prev) => prev.filter((item) => item.id !== assignment.id));
-      setSeatPicker(null);
-    } catch {
-      toast('Couldn’t clear that seat. Please try again.', 'error');
-    }
-  }
-
-  async function assignGuestToSeatDirect(guestId: string, targetTableId: string, targetSeatIndex?: number) {
-    if (!seatingEvent) return;
-    const targetTable = tables.find(t => t.id === targetTableId);
-    if (!targetTable) return;
-
-    const shape = targetTable.table_shape ?? 'round';
-    if (shape === 'bar' || shape === 'dj_booth' || shape === 'dance_floor') {
-      toast('This floor item can’t take seating assignments.', 'warning');
-      return;
-    }
-
-    const existingForGuest = assignments.find(a => a.guest_id === guestId);
-    const targetAssignments = assignments.filter(a => a.table_id === targetTable.id && a.guest_id !== guestId);
-    const currentOccupants = targetAssignments.length;
-    let occupiedAssignment: SeatingAssignment | null = null;
-    const sourceSeatValue: number | null = existingForGuest?.seat_index ?? null;
-    const sourceSeatIndex = sourceSeatValue ?? undefined;
-
-    if (targetSeatIndex != null) {
-      occupiedAssignment = assignments.find(a => a.table_id === targetTable.id && a.seat_index === targetSeatIndex && a.guest_id !== guestId) ?? null;
-    }
-
-    if (currentOccupants >= targetTable.capacity && !(targetSeatIndex != null && occupiedAssignment)) {
-      toast(`${targetTable.table_name} is full`, 'error');
-      return;
-    }
-
-    if (targetSeatIndex == null) {
-      const usedSeats = new Set(
-        targetAssignments.map(a => a.seat_index).filter((v): v is number => typeof v === 'number' && v > 0)
-      );
-      for (let i = 1; i <= targetTable.capacity; i++) {
-        if (!usedSeats.has(i)) {
-          targetSeatIndex = i;
-          break;
-        }
-      }
-    }
-
-    try {
-      const assignment = isDemoMode
-        ? {
-            id: `demo-assignment-${guestId}`,
-            seating_event_id: seatingEvent.id,
-            table_id: targetTable.id,
-            guest_id: guestId,
-            seat_index: targetSeatIndex ?? sourceSeatValue,
-            is_valid: true,
-            checked_in_at: null,
-          }
-        : await assignGuestToTable(seatingEvent.id, targetTable.id, guestId, targetSeatIndex);
-
-      if (!isDemoMode && occupiedAssignment) {
-        await assignGuestToTable(seatingEvent.id, occupiedAssignment.table_id, occupiedAssignment.guest_id, sourceSeatIndex);
-      }
-
-      setAssignments(prev => {
-        let next = prev.filter(a => a.guest_id !== guestId);
-        if (occupiedAssignment) {
-          next = next.map(a => (a.guest_id === occupiedAssignment!.guest_id ? { ...a, seat_index: sourceSeatValue } : a));
-        }
-        return [...next, assignment];
-      });
-      setSeatPicker(null);
-    } catch {
-      toast('Couldn’t assign that guest. Please try again.', 'error');
-    }
-  }
-
   async function handleDragEnd(event: DragEndEvent) {
     setActiveGuest(null);
     const { active, over } = event;
@@ -244,319 +162,6 @@ export const DashboardSeating: React.FC = () => {
 
     await assignGuestToSeatDirect(guestId, targetTableId, targetSeatIndex);
   }
-
-  const handleRemoveGuest = useCallback(async (guestId: string) => {
-    if (!seatingEvent) return;
-    try {
-      if (!isDemoMode) {
-        await unassignGuest(seatingEvent.id, guestId);
-      }
-      setAssignments(prev => prev.filter(a => a.guest_id !== guestId));
-    } catch {
-      toast('Couldn’t unassign that guest. Please try again.', 'error');
-    }
-  }, [seatingEvent, toast, isDemoMode]);
-
-  async function handleAddTable(tableData: Partial<SeatingTable>) {
-    if (!seatingEvent) {
-      toast('Seating is still loading. Please try again in a moment.', 'warning');
-      return;
-    }
-    try {
-      const sortOrder = tables.length;
-      const created = isDemoMode
-        ? {
-            id: `demo-table-${Date.now()}`,
-            seating_event_id: seatingEvent.id,
-            table_name: tableData.table_name || (((tableData.table_shape as TableShape) === 'round' || (tableData.table_shape as TableShape) === 'rectangle') ? `Table ${sortOrder + 1}` : ''),
-            capacity: tableData.capacity || 8,
-            sort_order: sortOrder,
-            notes: tableData.notes || '',
-            table_shape: (tableData.table_shape as TableShape) || 'round',
-            layout_width: Number(tableData.layout_width) || 260,
-            layout_height: Number(tableData.layout_height) || 150,
-            layout_x: 24 + (sortOrder % 3) * 360,
-            layout_y: 24 + Math.floor(sortOrder / 3) * 330,
-            rotation_deg: Number(tableData.rotation_deg) || 0,
-          }
-        : await createTable({ ...tableData, seating_event_id: seatingEvent.id, sort_order: sortOrder });
-      setTables(prev => [...prev, created]);
-      setAddingTable(false);
-      toast('Table added', 'success');
-    } catch {
-      toast('Couldn’t add that table. Please try again.', 'error');
-    }
-  }
-
-  async function handleUpdateTable(id: string, tableData: Partial<SeatingTable>) {
-    try {
-      if (!isDemoMode) {
-        await updateTable(id, tableData);
-      }
-      setTables(prev => prev.map(t => t.id === id ? { ...t, ...tableData } : t));
-    } catch {
-      toast('Couldn’t update that table. Please try again.', 'error');
-    }
-  }
-
-  async function handleResizeTable(id: string, width: number, height: number) {
-    const patch = { layout_width: width, layout_height: height };
-    try {
-      if (!isDemoMode) {
-        await updateTable(id, patch);
-      }
-      setTables(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t));
-    } catch {
-      toast('Couldn’t resize that table. Please try again.', 'error');
-    }
-  }
-
-
-  async function handleRotateTable(id: string, deltaDeg: number) {
-    let next = 0;
-
-    setTables(prev => prev.map(t => {
-      if (t.id !== id) return t;
-      const current = t.rotation_deg ?? 0;
-      next = current + deltaDeg; // unbounded so users can spin freely
-      return { ...t, rotation_deg: next };
-    }));
-
-    try {
-      if (!isDemoMode) {
-        await updateTable(id, { rotation_deg: next });
-      }
-    } catch {
-      toast('Couldn’t rotate this layout item. Please try again.', 'error');
-    }
-  }
-
-  function getDefaultTablePosition(index: number) {
-    return {
-      x: 24 + (index % 3) * 360,
-      y: 24 + Math.floor(index / 3) * 330,
-    };
-  }
-
-  function startMoveTable(table: SeatingTable, index: number, e: React.MouseEvent) {
-    if (layoutMode !== 'visual') return;
-    e.preventDefault();
-    e.stopPropagation();
-
-    const fallback = getDefaultTablePosition(index);
-    const originX = table.layout_x ?? fallback.x;
-    const originY = table.layout_y ?? fallback.y;
-    tableDragRef.current = { id: table.id, startX: e.clientX, startY: e.clientY, originX, originY };
-    setMovingTableId(table.id);
-
-    const onMove = (ev: MouseEvent) => {
-      const ctx = tableDragRef.current;
-      if (!ctx) return;
-      const x = Math.max(8, Math.round(ctx.originX + (ev.clientX - ctx.startX)));
-      const y = Math.max(8, Math.round(ctx.originY + (ev.clientY - ctx.startY)));
-      setTables(prev => prev.map(t => t.id === ctx.id ? { ...t, layout_x: x, layout_y: y } : t));
-    };
-
-    const onUp = async () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-      const ctx = tableDragRef.current;
-      tableDragRef.current = null;
-      setMovingTableId(null);
-      if (!ctx || isDemoMode) return;
-      const moved = tables.find(t => t.id === ctx.id);
-      try {
-        await updateTable(ctx.id, {
-          layout_x: moved?.layout_x ?? ctx.originX,
-          layout_y: moved?.layout_y ?? ctx.originY,
-        });
-      } catch {
-        toast('Couldn’t save that table position. Please try again.', 'error');
-      }
-    };
-
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  }
-
-  async function handleDeleteTable(id: string) {
-    try {
-      if (!isDemoMode) {
-        await deleteTable(id);
-      }
-      setTables(prev => prev.filter(t => t.id !== id));
-      setAssignments(prev => prev.filter(a => a.table_id !== id));
-      toast('Table deleted', 'success');
-    } catch {
-      toast('Couldn’t remove that table. Please try again.', 'error');
-    }
-  }
-
-  async function handleReset() {
-    if (!seatingEvent) return;
-    setSeatingBusyAction('reset');
-    try {
-      if (!isDemoMode) {
-        await resetSeating(seatingEvent.id);
-      }
-      setAssignments([]);
-      setShowResetConfirm(false);
-      toast('Seating reset', 'success');
-    } catch {
-      toast('Couldn’t reset seating right now. Please try again.', 'error');
-    } finally {
-      setSeatingBusyAction(null);
-    }
-  }
-
-  async function handleAutoCreateTables() {
-    if (!seatingEvent || !counters) return;
-    setSeatingBusyAction('auto-create');
-    try {
-      const created = isDemoMode
-        ? buildDemoAutoTables({
-            seatingEventId: seatingEvent.id,
-            attendingCount: counters.attending,
-            capacity: autoCapacity,
-            existingTableCount: tables.length,
-          })
-        : await autoCreateTables(seatingEvent.id, counters.attending, autoCapacity);
-      setTables(prev => [...prev, ...created]);
-      setShowAutoTablesModal(false);
-      toast(`Created ${created.length} tables`, 'success');
-    } catch {
-      toast('Couldn’t auto-create tables right now. Please try again.', 'error');
-    } finally {
-      setSeatingBusyAction(null);
-    }
-  }
-
-  async function handleAutoSeat() {
-    if (!seatingEvent) return;
-    if (tables.length === 0) {
-      toast('Add tables first before auto-seating', 'error');
-      return;
-    }
-    setSeatingBusyAction('auto-seat');
-    try {
-      const newAssignments = isDemoMode
-        ? buildDemoAutoSeatAssignments({
-            seatingEventId: seatingEvent.id,
-            guests: allGuests,
-            tables,
-            existingAssignments: assignments,
-          })
-        : await autoSeatGuests(seatingEvent.id, tables, allGuests);
-      setAssignments(prev => {
-        const existingMap = new Map(prev.map(a => [a.guest_id, a]));
-        newAssignments.forEach(a => existingMap.set(a.guest_id, a));
-        return Array.from(existingMap.values());
-      });
-      if (newAssignments.length === 0) {
-        toast('No unassigned attending guests were available to auto-seat.', 'info');
-      } else {
-        toast(`Seated ${newAssignments.length} guest${newAssignments.length !== 1 ? 's' : ''}`, 'success');
-      }
-    } catch {
-      toast('Couldn’t auto-seat guests right now. Please try again.', 'error');
-    } finally {
-      setSeatingBusyAction(null);
-    }
-  }
-
-  async function handleCheckDrift() {
-    if (!seatingEvent || !selectedEventId || !siteId) return;
-    if (isDemoMode) {
-      toast('All assignments are valid', 'success');
-      return;
-    }
-    try {
-      const count = await invalidateDriftedAssignments(seatingEvent.id, selectedEventId, siteId);
-      if (count > 0) {
-        await loadSeatingData();
-        toast(`${count} assignment(s) flagged as invalid due to RSVP changes`, 'warning');
-      } else {
-        toast('All assignments are valid', 'success');
-      }
-    } catch {
-      toast('Couldn’t run the seating check right now. Please try again.', 'error');
-    }
-  }
-
-  async function handleToggleCheckIn(guestId: string, checkedIn: boolean) {
-    if (!seatingEvent) return;
-    try {
-      if (isDemoMode) {
-        setAssignments(prev => prev.map(a => (
-          a.guest_id === guestId ? { ...a, checked_in_at: checkedIn ? new Date().toISOString() : null } : a
-        )));
-      } else {
-        await setGuestCheckedIn(seatingEvent.id, guestId, checkedIn);
-        await loadSeatingData();
-      }
-      toast(checkedIn ? 'Guest marked arrived' : 'Arrival removed', 'success');
-    } catch (err) {
-      const msg = err instanceof Error ? err.message.toLowerCase() : '';
-      const authish = msg.includes('invalid jwt') || msg.includes('jwt') || msg.includes('401') || msg.includes('auth');
-      if (!isDemoMode && authish) {
-        try {
-          await refreshSeatingSession();
-          await setGuestCheckedIn(seatingEvent.id, guestId, checkedIn);
-          await loadSeatingData();
-          toast(checkedIn ? 'Guest marked arrived' : 'Arrival removed', 'success');
-          return;
-        } catch {
-          // fall through
-        }
-      }
-      toast('Couldn’t update check-in right now. Please try again.', 'error');
-    }
-  }
-
-  async function handleBulkCheckIn(guestIds: string[], checkedIn: boolean) {
-    if (!seatingEvent || guestIds.length === 0) return;
-    try {
-      if (isDemoMode) {
-        const stamp = checkedIn ? new Date().toISOString() : null;
-        const guestIdSet = new Set(guestIds);
-        setAssignments(prev => prev.map((assignment) => (
-          guestIdSet.has(assignment.guest_id)
-            ? { ...assignment, checked_in_at: stamp }
-            : assignment
-        )));
-      } else {
-        await Promise.all(guestIds.map((guestId) => setGuestCheckedIn(seatingEvent.id, guestId, checkedIn)));
-        await loadSeatingData();
-      }
-      toast(
-        checkedIn
-          ? `Marked ${guestIds.length} guest${guestIds.length !== 1 ? 's' : ''} arrived`
-          : `Cleared arrival for ${guestIds.length} guest${guestIds.length !== 1 ? 's' : ''}`,
-        'success',
-      );
-    } catch (err) {
-      const msg = err instanceof Error ? err.message.toLowerCase() : '';
-      const authish = msg.includes('invalid jwt') || msg.includes('jwt') || msg.includes('401') || msg.includes('auth');
-      if (!isDemoMode && authish) {
-        try {
-          await refreshSeatingSession();
-          await Promise.all(guestIds.map((guestId) => setGuestCheckedIn(seatingEvent.id, guestId, checkedIn)));
-          await loadSeatingData();
-          toast(
-            checkedIn
-              ? `Marked ${guestIds.length} guest${guestIds.length !== 1 ? 's' : ''} arrived`
-              : `Cleared arrival for ${guestIds.length} guest${guestIds.length !== 1 ? 's' : ''}`,
-            'success',
-          );
-          return;
-        } catch {
-          // fall through
-        }
-      }
-      toast('Couldn’t update those arrivals right now. Please try again.', 'error');
-    }
-  }
-
   function handleCanvasWheelZoom(e: React.WheelEvent<HTMLDivElement>) {
     // Trackpad pinch on desktop browsers commonly reports wheel + ctrlKey
     if (layoutMode !== 'visual') return;
@@ -587,6 +192,45 @@ export const DashboardSeating: React.FC = () => {
     itineraryEvents,
     selectedEventId,
     tables,
+  });
+  const {
+    assignGuestToSeatDirect,
+    clearSeatAssignment,
+    getDefaultTablePosition,
+    handleAddTable,
+    handleAutoCreateTables,
+    handleAutoSeat,
+    handleBulkCheckIn,
+    handleCheckDrift,
+    handleDeleteTable,
+    handleRemoveGuest,
+    handleReset,
+    handleResizeTable,
+    handleRotateTable,
+    handleToggleCheckIn,
+    handleUpdateTable,
+    startMoveTable,
+  } = useSeatingDashboardActions({
+    allGuests,
+    assignments,
+    autoCapacity,
+    counters,
+    isDemoMode,
+    loadSeatingData,
+    seatingEvent,
+    selectedEventId,
+    setAddingTable,
+    setAssignments,
+    setMovingTableId,
+    setSeatPicker,
+    setSeatingBusyAction,
+    setShowAutoTablesModal,
+    setShowResetConfirm,
+    setTables,
+    siteId,
+    tableDragRef,
+    tables,
+    toast,
   });
   const {
     handleExportCSV,
@@ -1260,7 +904,7 @@ export const DashboardSeating: React.FC = () => {
                                 layoutMode={layoutMode}
                                 onResizeTable={handleResizeTable}
                                 isCanvas
-                                onStartMove={(e) => startMoveTable(table, idx, e)}
+                                onStartMove={(e) => startMoveTable(table, idx, e, layoutMode)}
                                 isSelected={selectedTableId === table.id}
                                 onSelect={() => setSelectedTableId(table.id)}
                                 onRotate={(delta) => handleRotateTable(table.id, delta)}
@@ -1290,7 +934,7 @@ export const DashboardSeating: React.FC = () => {
                             layoutMode={layoutMode}
                             onResizeTable={handleResizeTable}
                             isCanvas={false}
-                            onStartMove={(e) => startMoveTable(table, idx, e)}
+                            onStartMove={(e) => startMoveTable(table, idx, e, layoutMode)}
                             isSelected={selectedTableId === table.id}
                             onSelect={() => setSelectedTableId(table.id)}
                             onRotate={(delta) => handleRotateTable(table.id, delta)}

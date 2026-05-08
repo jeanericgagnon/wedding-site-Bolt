@@ -615,6 +615,7 @@ describe('dashboard data boundary guards', () => {
     const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/seating/useSeatingDashboardData.ts'), 'utf8');
     const derivedState = readFileSync(join(process.cwd(), 'src/pages/dashboard/seating/buildSeatingDashboardDerivedState.ts'), 'utf8');
     const artifactsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/seating/useSeatingDashboardArtifacts.ts'), 'utf8');
+    const actionsHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/seating/useSeatingDashboardActions.ts'), 'utf8');
 
     expect(source).toContain('const SEATING_EVENT_SELECT = ');
     expect(source).toContain('const SEATING_TABLE_SELECT = ');
@@ -646,7 +647,7 @@ describe('dashboard data boundary guards', () => {
     expect(page).toContain('useSeatingDashboardData({ isDemoMode, toast })');
     expect(page).toContain('buildSeatingDashboardDerivedState({');
     expect(page).toContain('useSeatingDashboardArtifacts({');
-    expect(page).toContain('refreshSeatingSession()');
+    expect(page).toContain('useSeatingDashboardActions({');
     expect(page).not.toContain("from '../../lib/supabase'");
     expect(page).not.toContain('supabase.auth.refreshSession()');
     expect(page).not.toContain('async function loadInitial()');
@@ -657,6 +658,12 @@ describe('dashboard data boundary guards', () => {
     expect(page).not.toContain('async function handleRestoreVersion(version: SeatingLayoutVersion)');
     expect(page).not.toContain('function handleExportPDF()');
     expect(page).not.toContain('function handleExportImage()');
+    expect(page).not.toContain('async function handleCheckDrift()');
+    expect(page).not.toContain('async function handleToggleCheckIn(guestId: string, checkedIn: boolean)');
+    expect(page).not.toContain('async function handleBulkCheckIn(guestIds: string[], checkedIn: boolean)');
+    expect(page).not.toContain('async function handleAutoSeat()');
+    expect(page).not.toContain('async function handleAutoCreateTables()');
+    expect(page).not.toContain('async function handleReset()');
     expect(dataHook).toContain('const id = await getWeddingSiteId();');
     expect(dataHook).toContain('const events = await loadItineraryEvents(id);');
     expect(dataHook).toContain('const se = await getOrCreateSeatingEvent(siteId, selectedEventId);');
@@ -678,6 +685,12 @@ describe('dashboard data boundary guards', () => {
     expect(artifactsHook).toContain('function handleExportImage()');
     expect(artifactsHook).toContain('writeSeatingVersions(allVersions);');
     expect(artifactsHook).toContain('await markSeatingVersionRestored(version.id);');
+    expect(actionsHook).toContain('const clearSeatAssignment = useCallback(async (tableId: string, seatIndex: number) => {');
+    expect(actionsHook).toContain('const assignGuestToSeatDirect = useCallback(async (guestId: string, targetTableId: string, targetSeatIndex?: number) => {');
+    expect(actionsHook).toContain('async function handleCheckDrift()');
+    expect(actionsHook).toContain('await invalidateDriftedAssignments(args.seatingEvent.id, args.selectedEventId, args.siteId);');
+    expect(actionsHook).toContain('await refreshSeatingSession();');
+    expect(actionsHook).toContain('async function handleBulkCheckIn(guestIds: string[], checkedIn: boolean)');
     expect(lookupPage).not.toContain("from '../../lib/supabase'");
     expect(lookupPage).not.toContain("from '../../lib/activeSite'");
     expect(lookupPage).not.toContain("supabase.from(");

@@ -5838,3 +5838,18 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 05:20 AM PT No-Deploy Seating Dashboard Actions Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Seating.tsx` now routes the seating dashboard mutation and interaction lane through `src/pages/dashboard/seating/useSeatingDashboardActions.ts`.
+  - That hook now owns seat clearing, direct seat assignment, guest removal, add/update/resize/rotate/delete table flows, table drag-position persistence, reset, auto-create tables, auto-seat, drift checks, and check-in toggle/bulk check-in flows while the page keeps loading, derived state, artifact actions, and render composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useSeatingDashboardActions({ ... })`, checks that `useSeatingDashboardActions.ts` owns the seating mutation seam, and rejects regaining the old inline reset/auto-seat/check-in/action handlers in `Seating.tsx`.
+  - `src/pages/dashboard/Seating.tsx` dropped from 1343 lines to 987 lines in this batch, while `src/pages/dashboard/seating/useSeatingDashboardActions.ts` came in at 450 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 15/15.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
