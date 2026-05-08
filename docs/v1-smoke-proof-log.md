@@ -9603,3 +9603,19 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+## 2026-05-08 12:55 AM PT No-Deploy Vault Dashboard Action Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Vault.tsx` now routes anniversary reminder sends, vault creation, starter vault seeding, enable/disable toggles, vault edits, entry saves, entry deletes, and vault deletes through `src/pages/dashboard/useVaultDashboardActions.ts`.
+  - That hook now owns the repeated owner vault transport, demo/live persistence, duplicate-anniversary guardrails, and success/error choreography while the page keeps the presentation, Google Drive state, release notices, and per-card interaction shell.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useVaultDashboardActions({ ... })` plus its `sendAnniversaryReminder(...)`, `createVaultConfig(...)`, `seedStarterVaultConfigs(...)`, `updateVaultEnabled(...)`, `updateVaultConfig(...)`, `createVaultEntry(...)`, `deleteVaultEntry(...)`, and `deleteVaultConfigWithEntryRollback(...)` contract.
+  - `src/pages/dashboard/Vault.tsx` dropped from 1618 lines to 1387 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/vaultService.test.ts`: PASS, 22/22.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

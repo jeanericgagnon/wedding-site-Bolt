@@ -443,9 +443,11 @@ describe('dashboard data boundary guards', () => {
   it('loads vault dashboard rows with explicit projections', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Vault.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/vaultService.ts'), 'utf8');
+    const actions = readFileSync(join(process.cwd(), 'src/pages/dashboard/useVaultDashboardActions.ts'), 'utf8');
 
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).toContain('<VaultDashboardRouteView');
+    expect(source).toContain('useVaultDashboardActions({');
     expect(service).toContain('export const VAULT_CONFIG_SELECT = ');
     expect(service).toContain('export const VAULT_ENTRY_SELECT = ');
     expect(service).toContain('const VAULT_SITE_SELECT = ');
@@ -467,6 +469,14 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('checkVaultGoogleDriveHealth(weddingSiteId)');
     expect(source).toContain('startVaultGoogleDriveAuth(weddingSiteId)');
     expect(source).toContain('finishVaultGoogleDriveAuth(googleCode, googleState)');
+    expect(actions).toContain('await sendAnniversaryReminder({');
+    expect(actions).toContain('const created = await createVaultConfig({');
+    expect(actions).toContain('const configs = await seedStarterVaultConfigs(weddingSiteId)');
+    expect(actions).toContain('await updateVaultEnabled(configId, enabled)');
+    expect(actions).toContain('await updateVaultConfig({ id, label, durationYears })');
+    expect(actions).toContain('created = await createVaultEntry(weddingSiteId, entry)');
+    expect(actions).toContain('await deleteVaultEntry(id)');
+    expect(actions).toContain('await deleteVaultConfigWithEntryRollback(configId, deletedEntries)');
     expect(source).not.toContain('<DashboardLayout');
     expect(source).not.toContain('<DashboardStateBlock');
     expect(service).toContain('export async function resolveVaultEntryLink(entryId: string): Promise<string | null>');
@@ -477,6 +487,14 @@ describe('dashboard data boundary guards', () => {
     expect(service).not.toContain(".from('vault_entries')\n    .select('*')");
     expect(service).not.toContain(".from('wedding_sites')\n    .select('*')");
     expect(source).not.toContain(".select('*');");
+    expect(source).not.toContain('await sendAnniversaryReminder({');
+    expect(source).not.toContain('const created = await createVaultConfig({');
+    expect(source).not.toContain('const configs = await seedStarterVaultConfigs(weddingSiteId)');
+    expect(source).not.toContain('await updateVaultEnabled(configId, enabled)');
+    expect(source).not.toContain('await updateVaultConfig({ id, label, durationYears })');
+    expect(source).not.toContain('created = await createVaultEntry(weddingSiteId, entry)');
+    expect(source).not.toContain('await deleteVaultEntry(id)');
+    expect(source).not.toContain('await deleteVaultConfigWithEntryRollback(configId, deletedEntries)');
   });
 
   it('keeps overview intelligence persistence behind its service', () => {

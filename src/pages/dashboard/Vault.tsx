@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
-import { sendAnniversaryReminder } from '../../lib/emailService';
 import { formatVaultUnlockDate, getVaultUnlockDate, toValidDateOrNull } from './vaultDate';
 import { formatVaultEntryDate, getVaultEntryTimestamp } from './vaultEntryTime';
 import { copyTextOrDownload } from '../../lib/copyText';
@@ -16,22 +15,15 @@ import { getSafePublicWebUrl } from '../../sections/publicLinks';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import { LOCAL_E2E_VAULT_FORCE_UNLOCK_KEY, readLocalE2EBypassFlag } from '../../lib/localE2EBypassStorage';
 import { readDemoVaultState, writeDemoVaultState } from '../vaultDemoStorage';
+import { useVaultDashboardActions } from './useVaultDashboardActions';
 import {
   checkVaultGoogleDriveHealth,
-  createVaultConfig,
-  createVaultEntry,
-  deleteVaultConfigWithEntryRollback,
-  deleteVaultEntry,
   ensureHostedVaultProvider as persistHostedVaultProvider,
   finishVaultGoogleDriveAuth,
   loadDemoVaultDashboardData,
-  loadVaultConfigsAndEntries,
   loadVaultDashboardData,
   resolveVaultEntryLink as resolveVaultEntryLinkFromService,
-  seedStarterVaultConfigs,
   startVaultGoogleDriveAuth,
-  updateVaultConfig,
-  updateVaultEnabled,
   updateVaultRecapDraft,
   type VaultConfig,
   type VaultEntry,
@@ -51,7 +43,7 @@ function shouldForceUnlockForE2E(): boolean {
   return readLocalE2EBypassFlag(LOCAL_E2E_VAULT_FORCE_UNLOCK_KEY);
 }
 
-interface Toast {
+export interface Toast {
   id: number;
   message: string;
   type: 'success' | 'error';
@@ -830,11 +822,6 @@ function defaultVaultLabel(index: number, years: number): string {
   return `${ordinal} Anniversary Vault`;
 }
 
-function nextAvailableYears(existingYears: number[]): number {
-  const options = [1, 2, 3, 5, 10, 15, 20, 25, 50];
-  return options.find(y => !existingYears.includes(y)) ?? (Math.max(...existingYears, 0) + 5);
-}
-
 export const DashboardVault: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
@@ -845,7 +832,6 @@ export const DashboardVault: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeFormConfigId, setActiveFormConfigId] = useState<string | null>(null);
   const [editingConfig, setEditingConfig] = useState<VaultConfig | null>(null);
-  const [addingVault, setAddingVault] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [vaultStorageProvider, setVaultStorageProvider] = useState<'supabase' | 'google_drive'>('supabase');
   const [googleDriveConnected, setGoogleDriveConnected] = useState(false);
@@ -856,7 +842,6 @@ export const DashboardVault: React.FC = () => {
   const [coupleEmail, setCoupleEmail] = useState<string | null>(null);
   const [coupleName1, setCoupleName1] = useState<string>('Partner');
   const [coupleName2, setCoupleName2] = useState<string>('Partner');
-  const [sendingReminderFor, setSendingReminderFor] = useState<string | null>(null);
 
   function toast(message: string, type: Toast['type'] = 'success') {
     const id = Date.now();
@@ -1159,246 +1144,36 @@ export const DashboardVault: React.FC = () => {
     localStorage.setItem(VAULT_RELEASE_NOTICE_KEY, JSON.stringify(Array.from(new Set(next))));
   }, [vaultConfigs, weddingDate]);
 
-  async function handleSendAnniversaryReminder(config: VaultConfig, reminderKind: 'upcoming' | 'unlock' | 'nudge' = 'upcoming') {
-    if (!coupleEmail) {
-      toast('No couple email available for anniversary reminder.', 'error');
-      return;
-    }
-
-    setSendingReminderFor(config.id);
-    try {
-      const unlockDate = getVaultUnlockDate(weddingDate, config.duration_years);
-
-      const vaultUrl = siteSlug ? `${window.location.origin}/vault/${siteSlug}/${config.duration_years}` : null;
-
-      await sendAnniversaryReminder({
-        weddingSiteId,
-        to: coupleEmail,
-        coupleName1,
-        coupleName2,
-        vaultLabel: config.label || `${config.duration_years}-Year Anniversary Vault`,
-        anniversaryYear: config.duration_years,
-        unlockDate: unlockDate ? formatVaultUnlockDate(unlockDate, '') : null,
-        vaultUrl,
-        reminderKind,
-      });
-
-      toast(`Anniversary ${reminderKind} email sent.`);
-    } catch (err) {
-      toast(safeVaultDashboardError(err, 'Couldn’t send the anniversary reminder right now.'), 'error');
-    } finally {
-      setSendingReminderFor(null);
-    }
-  }
-
-  async function handleAddVault() {
-    if (!weddingSiteId || vaultConfigs.length >= MAX_VAULTS || addingVault) return;
-    setAddingVault(true);
-    try {
-      if (isDemoMode) {
-        const usedIndexes = vaultConfigs.map(c => c.vault_index);
-        const nextIndex = [1, 2, 3, 4, 5].find(i => !usedIndexes.includes(i)) ?? (vaultConfigs.length + 1);
-        const existingYears = vaultConfigs.map(c => c.duration_years);
-        const years = nextAvailableYears(existingYears);
-        const demoConfig: VaultConfig = {
-          id: `demo-vault-${Date.now()}`,
-          vault_index: nextIndex,
-          label: defaultVaultLabel(nextIndex, years),
-          duration_years: years,
-          is_enabled: true,
-        };
-        const nextConfigs = [...vaultConfigs, demoConfig];
-        setVaultConfigs(nextConfigs);
-        saveDemoState(nextConfigs, entries);
-        toast('Vault added');
-        return;
-      }
-      const usedIndexes = vaultConfigs.map(c => c.vault_index);
-      const nextIndex = [1, 2, 3, 4, 5].find(i => !usedIndexes.includes(i)) ?? (vaultConfigs.length + 1);
-      const existingYears = vaultConfigs.map(c => c.duration_years);
-      const years = nextAvailableYears(existingYears);
-      const label = defaultVaultLabel(nextIndex, years);
-
-      const created = await createVaultConfig({
-        weddingSiteId,
-        vaultIndex: nextIndex,
-        label,
-        durationYears: years,
-      });
-      setVaultConfigs(prev => [...prev, created].sort((a, b) => a.duration_years - b.duration_years));
-      toast('Vault added');
-    } catch {
-      toast('Couldn’t add that vault right now. Please try again.', 'error');
-    } finally {
-      setAddingVault(false);
-    }
-  }
-
-
-  async function handleSeedStarterVaults() {
-    if (isDemoMode && weddingSiteId === 'demo-site-id') {
-      handleSeedDemoVaults();
-      return;
-    }
-    if (!weddingSiteId || addingVault) return;
-
-    setAddingVault(true);
-    try {
-      const configs = await seedStarterVaultConfigs(weddingSiteId);
-      setVaultConfigs(configs);
-      toast('Starter vault set loaded (1/5/10)');
-      await loadData();
-    } catch {
-      toast('Couldn’t load starter vaults right now. Please try again.', 'error');
-    } finally {
-      setAddingVault(false);
-    }
-  }
-
-  function handleSeedDemoVaults() {
-    if (!isDemoMode) return;
-    const seeded = createSeedDemoState();
-    setVaultConfigs(seeded.vaultConfigs);
-    setEntries(seeded.entries);
-    saveDemoState(seeded.vaultConfigs, seeded.entries);
-    toast('Demo vault set loaded (1/5/10)');
-  }
-
-  async function handleToggleEnabled(configId: string, enabled: boolean) {
-    if (isDemoMode && weddingSiteId === 'demo-site-id') {
-      const nextConfigs = vaultConfigs.map(c => c.id === configId ? { ...c, is_enabled: enabled } : c);
-      setVaultConfigs(nextConfigs);
-      saveDemoState(nextConfigs, entries);
-      toast(enabled ? 'Vault enabled' : 'Vault disabled');
-      return;
-    }
-    try {
-      await updateVaultEnabled(configId, enabled);
-    } catch {
-      toast('Couldn’t update this vault. Please try again.', 'error');
-      return;
-    }
-    setVaultConfigs(prev => prev.map(c => c.id === configId ? { ...c, is_enabled: enabled } : c));
-    toast(enabled ? 'Vault enabled' : 'Vault disabled');
-  }
-
-  async function handleEditSave(id: string, label: string, durationYears: number) {
-    const current = vaultConfigs.find(c => c.id === id);
-    const hasEntriesForVault = entries.some(e => e.vault_config_id === id);
-    if (hasEntriesForVault && current && current.duration_years !== durationYears) {
-      toast('This vault already has submissions, so you cannot change its anniversary year.', 'error');
-      throw new Error('Anniversary year is locked after submissions start.');
-    }
-
-    const hasDuplicateYear = vaultConfigs.some(c => c.id !== id && c.duration_years === durationYears);
-    if (hasDuplicateYear) {
-      toast(`You already have a ${durationYears}-year vault. Choose a different anniversary.`, 'error');
-      throw new Error(`You already have a ${durationYears}-year vault.`);
-    }
-
-    if (isDemoMode && weddingSiteId === 'demo-site-id') {
-      const nextConfigs = vaultConfigs
-        .map(c => c.id === id ? { ...c, label, duration_years: durationYears } : c)
-        .sort((a, b) => a.duration_years - b.duration_years);
-      setVaultConfigs(nextConfigs);
-      saveDemoState(nextConfigs, entries);
-      toast('Vault updated');
-      return;
-    }
-
-    try {
-      await updateVaultConfig({ id, label, durationYears });
-    } catch (error) {
-      if (error instanceof Error && (error.message?.toLowerCase().includes('duplicate') || error.message?.toLowerCase().includes('unique'))) {
-        toast(`You already have a ${durationYears}-year vault.`, 'error');
-        throw new Error('A vault for that anniversary already exists.');
-      }
-      throw new Error('Couldn’t update this vault. Please try again.');
-    }
-
-    setVaultConfigs(prev => prev
-      .map(c => c.id === id ? { ...c, label, duration_years: durationYears } : c)
-      .sort((a, b) => a.duration_years - b.duration_years));
-    toast('Vault updated');
-  }
-
-  async function handleSaveEntry(entry: { vault_config_id: string; vault_year: number; title: string; content: string; author_name: string; attachment_url: string | null; attachment_name: string | null }) {
-    if (!weddingSiteId) throw new Error('No wedding site found');
-
-    if (isDemoMode && weddingSiteId === 'demo-site-id') {
-      const demoEntry: VaultEntry = {
-        id: `demo-entry-${Date.now()}`,
-        vault_config_id: entry.vault_config_id,
-        vault_year: entry.vault_year,
-        title: entry.title,
-        content: entry.content,
-        author_name: entry.author_name,
-        attachment_url: entry.attachment_url,
-        attachment_name: entry.attachment_name,
-        media_type: entry.attachment_url ? 'photo' : 'text',
-        created_at: new Date().toISOString(),
-      };
-      const nextEntries = [...entries, demoEntry];
-      setEntries(nextEntries);
-      setActiveFormConfigId(null);
-      saveDemoState(vaultConfigs, nextEntries);
-      toast('Entry added to vault');
-      return;
-    }
-
-    let created: VaultEntry;
-    try {
-      created = await createVaultEntry(weddingSiteId, entry);
-    } catch {
-      throw new Error('Couldn’t save this vault entry. Please try again.');
-    }
-    setEntries(prev => [...prev, created]);
-    setActiveFormConfigId(null);
-    toast('Entry added to vault');
-  }
-
-  async function handleDeleteEntry(id: string) {
-    if (isDemoMode && weddingSiteId === 'demo-site-id') {
-      const nextEntries = entries.filter(e => e.id !== id);
-      setEntries(nextEntries);
-      saveDemoState(vaultConfigs, nextEntries);
-      toast('Entry removed');
-      return;
-    }
-    try {
-      await deleteVaultEntry(id);
-    } catch {
-      toast('Couldn’t remove that entry. Please try again.', 'error');
-      return;
-    }
-    setEntries(prev => prev.filter(e => e.id !== id));
-    toast('Entry removed');
-  }
-
-  async function handleDeleteVault(configId: string) {
-    if (isDemoMode && weddingSiteId === 'demo-site-id') {
-      const remaining = vaultConfigs.filter(c => c.id !== configId).map((c, i) => ({ ...c, vault_index: i + 1 }));
-      const nextEntries = entries.filter(e => e.vault_config_id !== configId);
-      setVaultConfigs(remaining);
-      setEntries(nextEntries);
-      saveDemoState(remaining, nextEntries);
-      toast('Vault removed');
-      return;
-    }
-    const deletedEntries = entries.filter((entry) => entry.vault_config_id === configId);
-    try {
-      await deleteVaultConfigWithEntryRollback(configId, deletedEntries);
-    } catch {
-      toast('Couldn’t remove this vault. Please try again.', 'error');
-      return;
-    }
-    setVaultConfigs(prev => {
-      const remaining = prev.filter(c => c.id !== configId);
-      return remaining.map((c, i) => ({ ...c, vault_index: i + 1 }));
-    });
-    setEntries(prev => prev.filter(e => e.vault_config_id !== configId));
-    toast('Vault removed');
-  }
+  const {
+    addingVault,
+    handleAddVault,
+    handleDeleteEntry,
+    handleDeleteVault,
+    handleEditSave,
+    handleSaveEntry,
+    handleSeedStarterVaults,
+    handleSendAnniversaryReminder,
+    handleToggleEnabled,
+    sendingReminderFor,
+  } = useVaultDashboardActions({
+    coupleEmail,
+    coupleName1,
+    coupleName2,
+    createSeedDemoState,
+    entries,
+    isDemoMode,
+    loadData,
+    safeVaultDashboardError,
+    saveDemoState,
+    setActiveFormConfigId,
+    setEntries,
+    setVaultConfigs,
+    siteSlug,
+    toast,
+    vaultConfigs,
+    weddingDate,
+    weddingSiteId,
+  });
 
   const totalEntries = entries.length;
   const orderedVaultConfigs = [...vaultConfigs].sort((a, b) => a.duration_years - b.duration_years);
