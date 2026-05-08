@@ -4594,6 +4594,22 @@ Status:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-08 01:07 AM PT No-Deploy Itinerary Timeline Action Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Itinerary.tsx` now routes event save/delete, bulk timeline shifts, undo, and smart-template creation through `src/pages/dashboard/useItineraryTimelineActions.ts`.
+  - That hook now owns the repeated itinerary mutation transport, demo/live persistence, timeline-shift choreography, and success/error handling while the page keeps the schedule UI, guest picker flow, and high-level dashboard composition.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useItineraryTimelineActions({ ... })` plus its `saveItineraryEvent(...)`, `deleteItineraryEvent(...)`, `persistItineraryTimeline(...)`, `resolveItinerarySiteId(...)`, and `createItineraryTemplateEvents(...)` contract.
+  - `src/pages/dashboard/Itinerary.tsx` dropped from 1109 lines to 928 lines in this batch.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/itineraryEventDate.test.ts src/pages/dashboard/itineraryEventRsvpCounts.test.ts`: PASS, 37/37.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-08 12:34 AM PT No-Deploy Guest Dashboard Campaign Action Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

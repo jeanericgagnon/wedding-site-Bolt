@@ -213,16 +213,13 @@ describe('dashboard data boundary guards', () => {
   it('loads itinerary events and event guest picker rows with explicit projections', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Itinerary.tsx'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/itineraryService.ts'), 'utf8');
+    const actions = readFileSync(join(process.cwd(), 'src/pages/dashboard/useItineraryTimelineActions.ts'), 'utf8');
 
     expect(source).toContain('<ItineraryDashboardRouteView');
+    expect(source).toContain('useItineraryTimelineActions({');
     expect(source).not.toContain("from '../../lib/supabase'");
     expect(source).toContain('loadItineraryDashboardEvents(hasEventRsvpsTable)');
-    expect(source).toContain('resolveItinerarySiteId()');
-    expect(source).toContain('createItineraryTemplateEvents(siteId, newEvents)');
     expect(source).toContain('syncItineraryScheduleMirror(siteId, eventList)');
-    expect(source).toContain('saveItineraryEvent({');
-    expect(source).toContain('await deleteItineraryEvent(eventId)');
-    expect(source).toContain('await persistItineraryTimeline(nextEvents)');
     expect(source).toContain('loadItineraryEventGuestManagerSnapshot(eventId)');
     expect(source).toContain('removeItineraryEventGuestInvitation(eventId, guestId)');
     expect(source).toContain('addItineraryEventGuestInvitation(eventId, guestId)');
@@ -248,6 +245,16 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain(".from('itinerary_events')\n        .delete()");
     expect(source).not.toContain(".from('itinerary_events')\n        .update({\n          event_date: event.event_date,");
     expect(source).not.toContain('<DashboardLayout');
+    expect(actions).toContain('await saveItineraryEvent({');
+    expect(actions).toContain('await deleteItineraryEvent(eventId)');
+    expect(actions).toContain('await persistItineraryTimeline(nextEvents)');
+    expect(actions).toContain('const siteId = await resolveItinerarySiteId()');
+    expect(actions).toContain('await createItineraryTemplateEvents(siteId, newEvents)');
+    expect(source).not.toContain('await saveItineraryEvent({');
+    expect(source).not.toContain('await deleteItineraryEvent(eventId)');
+    expect(source).not.toContain('await persistItineraryTimeline(nextEvents)');
+    expect(source).not.toContain('const siteId = await resolveItinerarySiteId()');
+    expect(source).not.toContain('await createItineraryTemplateEvents(siteId, newEvents)');
     expect(service).toContain('buildItineraryTemplateInsertRows(weddingSiteId, events)');
     expect(service).toContain('export async function resolveItinerarySiteId()');
     expect(service).toContain("const ITINERARY_EVENT_MANAGER_SITE_SELECT = 'id'");
