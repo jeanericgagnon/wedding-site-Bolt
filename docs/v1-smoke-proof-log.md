@@ -10073,3 +10073,18 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 04:05 AM PT No-Deploy Guest Dashboard Clipboard-Actions Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/Guests.tsx` now routes the guest dashboard copy/download follow-up artifact actions through `src/pages/dashboard/guests/useGuestDashboardClipboardActions.ts`.
+  - That hook now owns RSVP follow-up summary copy, exception checklist copy, meal follow-up copy, missing-contact copy, filtered-email copy, checklist markdown copy, and campaign dry-run export while the page keeps state, campaigns, exports, overlays, and route-level dashboard orchestration.
+  - `src/lib/dashboardDataBoundary.test.ts` and `src/pages/dashboard/guests/guestService.test.ts` now pin `useGuestDashboardClipboardActions({ ... })`, check that `useGuestDashboardClipboardActions.ts` owns the guest dashboard copy/download seam, and reject regaining the old inline copy handlers in `Guests.tsx`.
+  - `src/pages/dashboard/Guests.tsx` dropped from 1618 lines to 1543 lines in this batch, while `src/pages/dashboard/guests/useGuestDashboardClipboardActions.ts` came in at 145 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guests/guestService.test.ts`: PASS, 45/45.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

@@ -28,7 +28,6 @@ import { useToast } from '../../components/ui/Toast';
 import type { ConfirmDialogProps } from '../../components/ui/ConfirmDialog';
 import { buildQuickStartPhotosPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
-import { copyTextOrDownload } from '../../lib/copyText';
 import { logAppAction } from '../../lib/actionAudit';
 import {
   formatCustomAnswers,
@@ -51,13 +50,8 @@ import {
 import {
   buildGuestHouseholdGroups,
   buildGuestOpsQueue,
-  buildFilteredEmailList,
   buildFollowUpTask,
   buildGeneratedFollowUpTasks,
-  buildMissingMealChecklistLines,
-  buildNoContactChecklistLines,
-  buildRsvpExceptionChecklistLines,
-  buildRsvpFollowUpSummary,
   buildSavedSegment,
   getGuestCustomAnswerRollup,
   getGuestCampaignReadiness,
@@ -120,6 +114,7 @@ import {
   type GuestEventInvitationRollback,
 } from './guests/guestService';
 import { useGuestDashboardCampaignActions } from './guests/useGuestDashboardCampaignActions';
+import { useGuestDashboardClipboardActions } from './guests/useGuestDashboardClipboardActions';
 import { useGuestDashboardCsvImport } from './guests/useGuestDashboardCsvImport';
 import { useGuestDashboardData } from './guests/useGuestDashboardData';
 import { useGuestDashboardGuestDetailActions } from './guests/useGuestDashboardGuestDetailActions';
@@ -849,82 +844,6 @@ export const DashboardGuests: React.FC = () => {
     }
   };
 
-  const handleCopyOpsSummary = async () => {
-    const summary = buildRsvpFollowUpSummary({
-      generatedAt: new Date(),
-      segmentLabel: segmentLabelMap[filterStatus] || filterStatus,
-      eligibleReminderCount: reminderCandidates.length,
-      rsvpOps,
-      contactStats,
-    });
-    const result = await copyTextOrDownload(summary, 'dayof-rsvp-follow-up-summary.txt');
-    if (result === 'copied') {
-      toast('Copied RSVP follow-up summary', 'success');
-    } else {
-      toast('Clipboard was blocked, so the RSVP follow-up summary downloaded.', 'success');
-    }
-  };
-
-  const handleCopyExceptionChecklist = async () => {
-    const lines = buildRsvpExceptionChecklistLines({ guests: filteredGuests, exceptionStateByGuest });
-    if (lines.length === 0) {
-      toast('No RSVP exceptions in this segment.', 'error');
-      return;
-    }
-    const payload = lines.join('\n');
-    const result = await copyTextOrDownload(payload, 'dayof-rsvp-exception-checklist.txt');
-    if (result === 'copied') {
-      toast(`Copied RSVP exception checklist for ${lines.length} guest${lines.length === 1 ? '' : 's'}`, 'success');
-    } else {
-      toast('Clipboard was blocked, so the exception checklist downloaded.', 'success');
-    }
-  };
-
-  const handleCopyMissingMealChecklist = async () => {
-    const lines = buildMissingMealChecklistLines(filteredGuests);
-    if (lines.length === 0) {
-      toast('No missing meal choices in this segment.', 'error');
-      return;
-    }
-    const payload = lines.join('\n');
-    const result = await copyTextOrDownload(payload, 'dayof-meal-follow-up-checklist.txt');
-    if (result === 'copied') {
-      toast(`Copied meal follow-up checklist for ${lines.length} guest${lines.length === 1 ? '' : 's'}`, 'success');
-    } else {
-      toast('Clipboard was blocked, so the meal checklist downloaded.', 'success');
-    }
-  };
-
-  const handleCopyNoContactChecklist = async () => {
-    const lines = buildNoContactChecklistLines(filteredGuests);
-    if (lines.length === 0) {
-      toast('Everyone in this group has a contact path.', 'error');
-      return;
-    }
-    const payload = lines.join('\n');
-    const result = await copyTextOrDownload(payload, 'dayof-missing-contact-list.txt');
-    if (result === 'copied') {
-      toast(`Copied missing-contact list for ${lines.length} guest${lines.length === 1 ? '' : 's'}`, 'success');
-    } else {
-      toast('Clipboard was blocked, so the missing-contact list downloaded.', 'success');
-    }
-  };
-
-  const handleCopyFilteredEmails = async () => {
-    const emails = buildFilteredEmailList(reminderCandidates);
-    if (emails.length === 0) {
-      toast('No emails available in this filtered segment.', 'error');
-      return;
-    }
-    const payload = emails.join(', ');
-    const result = await copyTextOrDownload(payload, 'dayof-filtered-guest-emails.txt');
-    if (result === 'copied') {
-      toast(`Copied ${emails.length} email${emails.length === 1 ? '' : 's'}`, 'success');
-    } else {
-      toast('Clipboard was blocked, so the filtered emails downloaded.', 'success');
-    }
-  };
-
   const applyCampaignPreset = (preset: 'pending' | 'missing-meal' | 'plusone-missing' | 'ceremony-no' | 'reception-no' | 'pending-no-email') => {
     setCampaignPreset(preset);
     setFilterStatus(preset);
@@ -1252,6 +1171,25 @@ export const DashboardGuests: React.FC = () => {
     if (!skipRecentlyInvited) return true;
     return dueReminderGuestIds.has(g.id);
   });
+  const {
+    handleCopyCampaignDryRun,
+    handleCopyChecklist,
+    handleCopyExceptionChecklist,
+    handleCopyFilteredEmails,
+    handleCopyMissingMealChecklist,
+    handleCopyNoContactChecklist,
+    handleCopyOpsSummary,
+  } = useGuestDashboardClipboardActions({
+    contactStats,
+    exceptionStateByGuest,
+    filteredGuests,
+    filterStatus,
+    followUpTasks,
+    reminderCandidates,
+    rsvpOps,
+    segmentLabel: segmentLabelMap[filterStatus] || filterStatus,
+    toast,
+  });
 
   const {
     bulkSending,
@@ -1308,8 +1246,6 @@ export const DashboardGuests: React.FC = () => {
     weddingSiteId,
     weddingSiteInfo,
   });
-
-  const dryRunRecipientPreview = reminderCandidates.slice(0, 8).map((g) => (g.first_name || g.last_name) ? `${g.first_name ?? ""} ${g.last_name ?? ""}`.trim() : g.name);
 
   const canEditGuests = !isGuestsReadOnly;
   const { guestDashboardOpsViewProps, guestRsvpConfigViewProps } = buildGuestDashboardViewProps({
@@ -1406,12 +1342,7 @@ export const DashboardGuests: React.FC = () => {
     },
     onClearSelection: clearGuestSelection,
     onCopyAddressCollectionLink: () => { void copyContactRequestLink(); },
-    onCopyChecklist: () => {
-      const lines = followUpTasks.map((task) => `- [ ] ${task.text}`);
-      const text = lines.length ? lines.join('\n') : '- [ ] No follow-up tasks yet';
-      void copyTextOrDownload(text, 'dayof-guest-checklist.md', 'text/markdown;charset=utf-8')
-        .then((result) => toast(result === 'copied' ? 'Copied checklist markdown' : 'Clipboard was blocked, so the checklist downloaded.', 'success'));
-    },
+    onCopyChecklist: () => { void handleCopyChecklist(); },
     onCopyContactRequestLink: () => { void copyContactRequestLink(); },
     onCopyExceptionChecklist: () => { void handleCopyExceptionChecklist(); },
     onCopyFilteredEmails: () => { void handleCopyFilteredEmails(); },
@@ -1424,13 +1355,7 @@ export const DashboardGuests: React.FC = () => {
       setShowDeleteAllModal(true);
     },
     onDeleteGuest: handleDeleteGuest,
-    onDryRun: () => {
-      toast(`Dry run ready for ${reminderCandidates.length} ${reminderCandidates.length === 1 ? 'recipient' : 'recipients'}.`);
-      void copyTextOrDownload(
-        `Campaign dry run (${segmentLabelMap[filterStatus] || filterStatus})\nRecipients: ${reminderCandidates.length}\n\n${dryRunRecipientPreview.join('\n')}${reminderCandidates.length > dryRunRecipientPreview.length ? `\n+${reminderCandidates.length - dryRunRecipientPreview.length} more` : ''}`,
-        'dayof-campaign-dry-run.txt',
-      );
-    },
+    onDryRun: () => { void handleCopyCampaignDryRun(); },
     onExportAddressCollection: exportAddressCollectionCSV,
     onExportAllGuests: exportCSV,
     onExportAttendingGuests: exportAttendingGuestsCSV,
