@@ -2265,3 +2265,11 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `classifyRsvpLookupResponse(...)` and its explicit `guest` / `ambiguous` / `not_found` outcomes so the main RSVP page keeps routing lookup-result branching through the shared classifier.
   - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check`.
   - Launch status: unchanged. This continues local public-surface ownership cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.
+- 2026-05-07 11:16 PM PT - No-deploy RSVP page-reset extraction:
+  - Resolved in this batch: moved the shared RSVP page reset bundle out of `src/pages/RSVP.tsx` and behind `src/pages/resetRsvpPageState.ts`.
+  - Data-boundary hardening: `RSVP.tsx` now routes both the top-level `resetToSearch(...)` path and the empty-token reset path in `loadInvitationForToken(...)` through one helper instead of hand-resetting loading, guest, RSVP, household, form, and search state inline in multiple places.
+  - File-size movement: `src/pages/RSVP.tsx` dropped from 1208 lines to 1205 lines in this continuation batch while `src/pages/resetRsvpPageState.ts` came in at 95 lines.
+  - No feature loss: token-autoload fallback, invitation-code reset, and back-to-search behavior preserve the current guest RSVP flow while reducing repeated full-page reset choreography.
+  - Proof added/updated: `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `resetRsvpPageState(...)` and its search-step/token-loading reset behavior so the main RSVP page keeps routing full-page resets through the shared helper.
+  - Validation passed: `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts` (113/113), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This continues local public-surface ownership cleanup in `RSVP` without changing guest-facing behavior. No deploy was run.

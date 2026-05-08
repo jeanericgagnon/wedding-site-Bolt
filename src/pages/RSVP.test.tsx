@@ -57,6 +57,7 @@ describe('RSVP stale submit protection', () => {
     const pageViewModel = readFileSync(join(process.cwd(), 'src/pages/buildRsvpPageViewModel.ts'), 'utf8');
     const liveContentProps = readFileSync(join(process.cwd(), 'src/pages/buildRsvpLiveContentViewProps.ts'), 'utf8');
     const resetLookupFlow = readFileSync(join(process.cwd(), 'src/pages/resetRsvpLookupFlow.ts'), 'utf8');
+    const resetPageState = readFileSync(join(process.cwd(), 'src/pages/resetRsvpPageState.ts'), 'utf8');
     const validateAdvance = readFileSync(join(process.cwd(), 'src/pages/validateRsvpFormAdvance.ts'), 'utf8');
     const pageRouteView = readFileSync(join(process.cwd(), 'src/pages/RsvpPageRouteView.tsx'), 'utf8');
     const flowView = readFileSync(join(process.cwd(), 'src/pages/RsvpFlowView.tsx'), 'utf8');
@@ -76,6 +77,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain("from './buildRsvpPageViewModel'");
     expect(rsvpPage).toContain("from './buildRsvpLiveContentViewProps'");
     expect(rsvpPage).toContain("from './resetRsvpLookupFlow'");
+    expect(rsvpPage).toContain("from './resetRsvpPageState'");
     expect(rsvpPage).toContain("from './RsvpPageRouteView'");
     expect(rsvpPage).toContain("from './validateRsvpFormAdvance'");
     expect(rsvpPage).toContain('<RsvpPageRouteView');
@@ -86,6 +88,7 @@ describe('RSVP stale submit protection', () => {
     expect(rsvpPage).toContain('buildRsvpLiveContentActions({');
     expect(rsvpPage).toContain('buildRsvpPageViewModel({');
     expect(rsvpPage).toContain('resetRsvpLookupFlow({');
+    expect(rsvpPage).toContain('resetRsvpPageState({');
     expect(rsvpPage).toContain('const liveContentProps = buildRsvpLiveContentViewProps({');
     expect(rsvpPage).toContain('validateRsvpFormAdvance({');
     expect(derivedViewState).toContain('guestPredictions');
@@ -109,6 +112,9 @@ describe('RSVP stale submit protection', () => {
     expect(resetLookupFlow).toContain('setFormData({');
     expect(resetLookupFlow).toContain('setMealConfig(DEFAULT_MEAL_CONFIG)');
     expect(resetLookupFlow).toContain('setSelectedHouseholdGuestIds([])');
+    expect(resetPageState).toContain('setTokenAutoLoading?.(false)');
+    expect(resetPageState).toContain("setStep('search')");
+    expect(resetPageState).toContain('setSearchValue(searchValue)');
     expect(pageRouteView).toContain("from './RsvpRouteView'");
     expect(pageRouteView).toContain("from './RsvpLiveContentView'");
     expect(pageRouteView).toContain("from './RsvpTokenLoadingView'");

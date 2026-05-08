@@ -7660,6 +7660,21 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-07 11:16 PM PT No-Deploy RSVP Page Reset Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/RSVP.tsx` now routes its full page-reset bundle through `src/pages/resetRsvpPageState.ts`.
+  - That shared reset helper now owns the common loading, guest, RSVP session, ambiguous guest, deadline, playlist, question, meal, household, form, and search reset choreography used by both `resetToSearch(...)` and the empty-token branch in `loadInvitationForToken(...)`.
+  - `src/lib/publicGuestSurfaceBoundary.test.ts` and `src/pages/RSVP.test.tsx` now pin `resetRsvpPageState(...)` and its search-step/token-loading reset behavior so the main RSVP page keeps routing full-page resets through the dedicated helper.
+  - `src/pages/RSVP.tsx` dropped from 1208 lines to 1205 lines in this batch, while `src/pages/resetRsvpPageState.ts` came in at 95 lines.
+- Proof passed:
+  - `npm test -- --run src/pages/RSVP.test.tsx src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 113/113.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+
 ## 2026-05-07 10:43 PM PT No-Deploy RSVP Step Validation Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

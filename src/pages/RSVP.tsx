@@ -37,6 +37,7 @@ import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } fro
 import { buildRsvpLiveContentViewProps } from './buildRsvpLiveContentViewProps';
 import { callValidateRsvpToken } from './rsvpFunctionService';
 import { resetRsvpLookupFlow } from './resetRsvpLookupFlow';
+import { resetRsvpPageState } from './resetRsvpPageState';
 import { RsvpPageRouteView } from './RsvpPageRouteView';
 import { validateRsvpFormAdvance } from './validateRsvpFormAdvance';
 
@@ -416,29 +417,31 @@ export default function RSVP() {
     pendingContinuityRefreshRef.current = false;
     ignoreNextLocalContinuityEventRef.current = false;
     loadInFlightRef.current = false;
-    setLoading(false);
-    setSubmitting(false);
-    setTokenAutoLoading(false);
-    setStep('search');
-    setActivePredictionIndex(-1);
-    setError('');
-    setGuest(null);
-    setRsvpSessionToken(null);
-    setExistingRsvp(null);
-    setAmbiguousGuests([]);
-    setRsvpDeadline(null);
-    setMusicPlaylistUrl(null);
-    setFormData({ attending: true, attendCeremony: false, attendReception: false, meal_choice: '', plus_one_name: '', children_count: 0, notes: '' });
-    setCustomAnswers({});
-    setRsvpQuestions([]);
-    setMealConfig(DEFAULT_MEAL_CONFIG);
-    setHouseholdGuests([]);
-    setApplyToHousehold(true);
-    setSelectedHouseholdGuestIds([]);
-    setFormStep(1);
-    setActivePredictionIndex(-1);
+    resetRsvpPageState({
+      setActivePredictionIndex,
+      setAmbiguousGuests,
+      setApplyToHousehold,
+      setCustomAnswers,
+      setError,
+      setExistingRsvp,
+      setFormData,
+      setFormStep,
+      setGuest,
+      setHouseholdGuests,
+      setLoading,
+      setMealConfig,
+      setMusicPlaylistUrl,
+      setRsvpDeadline,
+      setRsvpQuestions,
+      setRsvpSessionToken,
+      setSearchValue,
+      setSelectedHouseholdGuestIds,
+      setStep,
+      setSubmitting,
+      setTokenAutoLoading,
+      searchValue: preserveToken ? (activeToken ?? '') : '',
+    });
     tokenLinkedSessionRef.current = false;
-    setSearchValue(preserveToken ? (activeToken ?? '') : '');
     if (!preserveToken && activeToken) {
       navigate('/rsvp', { replace: true });
     }
@@ -541,35 +544,29 @@ export default function RSVP() {
       ignoreNextLocalContinuityEventRef.current = false;
       tokenLinkedSessionRef.current = false;
       loadInFlightRef.current = false;
-      setLoading(false);
-      setTokenAutoLoading(false);
-      setSubmitting(false);
-      setSearchValue('');
-      setStep('search');
-      setGuest(null);
-      setRsvpSessionToken(null);
-      setExistingRsvp(null);
-      setAmbiguousGuests([]);
-      setRsvpDeadline(null);
-      setMusicPlaylistUrl(null);
-      setRsvpQuestions([]);
-      setMealConfig(DEFAULT_MEAL_CONFIG);
-      setHouseholdGuests([]);
-      setApplyToHousehold(true);
-      setSelectedHouseholdGuestIds([]);
-      setFormData({
-        attending: true,
-        attendCeremony: false,
-        attendReception: false,
-        meal_choice: '',
-        plus_one_name: '',
-        children_count: 0,
-        notes: '',
+      resetRsvpPageState({
+        setActivePredictionIndex,
+        setAmbiguousGuests,
+        setApplyToHousehold,
+        setCustomAnswers,
+        setError,
+        setExistingRsvp,
+        setFormData,
+        setFormStep,
+        setGuest,
+        setHouseholdGuests,
+        setLoading,
+        setMealConfig,
+        setMusicPlaylistUrl,
+        setRsvpDeadline,
+        setRsvpQuestions,
+        setRsvpSessionToken,
+        setSearchValue,
+        setSelectedHouseholdGuestIds,
+        setStep,
+        setSubmitting,
+        setTokenAutoLoading,
       });
-      setCustomAnswers({});
-      setFormStep(1);
-      setActivePredictionIndex(-1);
-      setError('');
       return;
     }
     const requestId = activeLookupRequestRef.current + 1;
