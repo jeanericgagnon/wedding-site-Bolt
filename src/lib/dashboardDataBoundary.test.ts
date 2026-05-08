@@ -1135,6 +1135,8 @@ describe('dashboard data boundary guards', () => {
     const hubActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoHubActions.ts'), 'utf8');
     const mediaState = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardMediaState.ts'), 'utf8');
     const moderationActions = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoModerationActions.ts'), 'utf8');
+    const uiState = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoDashboardUiState.ts'), 'utf8');
+    const presentation = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/guestPhotoDashboardPresentation.ts'), 'utf8');
     const liveContent = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/GuestPhotoDashboardLiveContent.tsx'), 'utf8');
     const liveContentProps = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/buildGuestPhotoDashboardLiveContentProps.ts'), 'utf8');
 
@@ -1149,6 +1151,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('<GuestPhotoDashboardLiveContent');
     expect(source).toContain('useGuestPhotoBucketWorkspace({');
     expect(source).toContain('useGuestPhotoDashboardData({');
+    expect(source).toContain('useGuestPhotoDashboardUiState({ search })');
+    expect(source).toContain('getGuestPhotoBucketTone');
+    expect(source).toContain('getGuestPhotoBucketQrUrl');
     expect(liveContent).toContain('<GuestPhotoHeroCard');
     expect(liveContent).toContain('<GuestPhotoMemoryVaultsCard');
     expect(liveContent).toContain('<GuestPhotoMemoryFlowCard');
@@ -1187,6 +1192,12 @@ describe('dashboard data boundary guards', () => {
     expect(dashboardData).toContain('loadGuestPhotoDashboardSnapshot(userId)');
     expect(dashboardData).toContain('refreshGuestPhotoSession()');
     expect(dashboardData).toContain("safePhotoOwnerError(err, 'Couldn’t load the photo space. Please refresh and try again.')");
+    expect(uiState).toContain('export function useGuestPhotoDashboardUiState({ search }: Args)');
+    expect(uiState).toContain("const [bucketUploadLinks, setBucketUploadLinks] = useState<Record<string, string>>(() => readStoredBucketLinks());");
+    expect(uiState).toContain("const [slideshowTheme, setSlideshowTheme] = useState<SlideshowTheme>('classic');");
+    expect(presentation).toContain('export const GUEST_PHOTO_SLIDESHOW_THEME_META');
+    expect(presentation).toContain('export function getGuestPhotoBucketTone(bucketName: string)');
+    expect(presentation).toContain('export function getGuestPhotoBucketQrUrl(uploadUrl: string)');
     expect(aiActions).toContain('export function useGuestPhotoAiActions({');
     expect(aiActions).toContain('await persistGuestPhotoAiOpsPlan(siteId, plan)');
     expect(aiActions).toContain('await moveGuestPhotoUploadToBucket(siteId, move.uploadId, move.targetBucketId)');
@@ -1244,6 +1255,13 @@ describe('dashboard data boundary guards', () => {
     expect(source).not.toContain('const analyzeUploadsWithVision = async (force = false) => {');
     expect(source).not.toContain('const saveHubSettings = async () => {');
     expect(source).not.toContain("const queueGuestFollowups = async (kind: 'recap' | 'future_event') => {");
+    expect(source).not.toContain('const [loading, setLoading] = useState(true);');
+    expect(source).not.toContain("const [bucketUploadLinks, setBucketUploadLinks] = useState<Record<string, string>>(() => readStoredBucketLinks());");
+    expect(source).not.toContain("const [slideshowTheme, setSlideshowTheme] = useState<SlideshowTheme>('classic');");
+    expect(source).not.toContain('const getBucketQrUrl = (uploadUrl: string) =>');
+    expect(source).not.toContain('const openSafePublicUrl = (url: string | null | undefined) => {');
+    expect(source).not.toContain('const openAppUrl = (url: string) => window.open(url,');
+    expect(source).not.toContain('const bucketCardTone = (bucketName: string) => {');
     expect(source).not.toContain('const photoDashboardCounts = useMemo(() => buildPhotoDashboardCounts({');
     expect(source).not.toContain('const photoMemoryCollections = useMemo(() => buildPhotoMemoryCollections({');
     expect(source).not.toContain('const guestHubActions = useMemo(() => siteSlug ? buildGuestHubActions(siteSlug, hubSettings) : [], [hubSettings, siteSlug]);');

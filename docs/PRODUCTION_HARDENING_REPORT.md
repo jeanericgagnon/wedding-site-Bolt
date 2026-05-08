@@ -6380,3 +6380,19 @@ Status:
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-08 08:58 AM PT No-Deploy Guest Photo UI-State And Presentation Extraction
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` now routes the dashboard local state slab through `src/pages/dashboard/guestPhotos/useGuestPhotoDashboardUiState.ts` and the remaining bucket tone / QR / link helper cluster through `src/pages/dashboard/guestPhotos/guestPhotoDashboardPresentation.ts`.
+  - The UI-state hook now owns search-seeded dashboard state, bucket-link initializer state, slideshow defaults, and the owner-facing local state/setter lane while the route keeps orchestration across hydration, derived state, hooks, and render composition.
+  - The presentation helper now owns the bucket tone copy, QR URL formatter, and safe public/app link openers, which keeps owner-facing helper copy out of the route.
+  - `src/lib/dashboardDataBoundary.test.ts` now pins `useGuestPhotoDashboardUiState({ search })`, checks that `useGuestPhotoDashboardUiState.ts` owns the dashboard state seam, checks that `guestPhotoDashboardPresentation.ts` owns the bucket tone / QR / public-link helper seam, and rejects regaining the old inline `useState(...)` slab plus helper block in `GuestPhotoSharing.tsx`.
+  - `src/pages/dashboard/GuestPhotoSharing.tsx` dropped from 675 lines to 631 lines in this batch, while `src/pages/dashboard/guestPhotos/useGuestPhotoDashboardUiState.ts` came in at 132 lines and `src/pages/dashboard/guestPhotos/guestPhotoDashboardPresentation.ts` came in at 48 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.

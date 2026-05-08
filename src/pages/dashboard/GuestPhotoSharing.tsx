@@ -1,71 +1,30 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
-import { PhotoBucketCards } from '../../components/dashboard/PhotoBucketCards';
 import { buildQuickStartOverviewPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
-import { toDatetimeLocalOrEmpty } from './guestPhotoDateTime';
-import { formatGuestPhotoDate, formatGuestPhotoDateTime, getGuestPhotoSortTime, toGuestPhotoCsvTimestamp } from './guestPhotoUploadTime';
+import { formatGuestPhotoDateTime } from './guestPhotoUploadTime';
 import { formatGuestPhotoEventDate } from './guestPhotoEventDate';
-import { type AiPhotoOpsPlan } from '../../lib/aiPhotoOps';
-import { safeOptionalPhotoAnalysisText, safePhotoAnalysisList, safePhotoAnalysisText } from '../../lib/photoAnalysisCustomerCopy';
 import { logAppAction } from '../../lib/actionAudit';
 import { useAuth } from '../../contexts/AuthContext';
-import { demoEvents, demoWeddingSite } from '../../lib/demoData';
-import { getSafePublicWebUrl } from '../../sections/publicLinks';
-import {
-  getGuestPhotoCurrentUserId,
-  loadGuestPhotoDashboardSnapshot,
-  MAX_GUEST_PHOTO_ALBUMS,
-  MAX_GUEST_PHOTO_ANALYSES,
-  MAX_GUEST_PHOTO_BUCKET_CORRECTIONS,
-  MAX_GUEST_PHOTO_EVENTS,
-  MAX_GUEST_PHOTO_GUESTBOOK_ENTRIES,
-  MAX_GUEST_PHOTO_METADATA_ROWS,
-  MAX_GUEST_PHOTO_PROSPECTS,
-  MAX_GUEST_PHOTO_UPLOADS,
-  analyzeGuestPhotoUploads,
-  createGuestPhotoAlbum,
-  createGuestPhotoBucketCorrection,
-  manageGuestPhotoAlbum,
-  moveGuestPhotoUploadToBucket,
-  persistGuestPhotoAiOpsPlan,
-  queueGuestPhotoFollowups as queueGuestPhotoFollowupsFromService,
-  refreshGuestPhotoSession,
-  resolveGuestPhotoDashboardUserId,
-  saveGuestPhotoHubSettings,
-} from './guestPhotoSharingService';
-import {
-  DEFAULT_HUB_SETTINGS,
-  analysisDisplayStatus,
-  analysisSourceLabel,
-  makePhotoShareMessage,
-  readStoredBucketLinks,
-  safePhotoOwnerError,
-  writeStoredBucketLinks,
-  type GuestHubSettings,
-  type GuestProspectOptinRow,
-  type GuestbookEntryRow,
-  type ItineraryEvent,
-  type PhotoAiBucketCorrectionRow,
-  type PhotoBucketRow,
-  type PhotoUploadAiAnalysisRow,
-  type PhotoUploadMetadataRow,
-  type PhotoUploadRow,
-  type SlideshowFrame,
-  type SlideshowOrderMode,
-  type SlideshowTheme,
-} from './guestPhotoSharingUtils';
+import { writeStoredBucketLinks } from './guestPhotoSharingUtils';
 import { GuestPhotoDashboardLiveContent } from './guestPhotos/GuestPhotoDashboardLiveContent';
 import { useGuestPhotoAiActions } from './guestPhotos/useGuestPhotoAiActions';
 import { buildGuestPhotoDashboardLiveContentProps } from './guestPhotos/buildGuestPhotoDashboardLiveContentProps';
 import { useGuestPhotoAlbumActions } from './guestPhotos/useGuestPhotoAlbumActions';
 import { buildGuestPhotoDashboardDerivedState } from './guestPhotos/buildGuestPhotoDashboardDerivedState';
 import { buildGuestPhotoDashboardMediaState } from './guestPhotos/buildGuestPhotoDashboardMediaState';
+import {
+  getGuestPhotoBucketQrUrl,
+  getGuestPhotoBucketTone,
+  openGuestPhotoAppUrl,
+  openGuestPhotoSafePublicUrl,
+} from './guestPhotos/guestPhotoDashboardPresentation';
 import { useGuestPhotoHubActions } from './guestPhotos/useGuestPhotoHubActions';
 import { useGuestPhotoModerationActions } from './guestPhotos/useGuestPhotoModerationActions';
 import { useGuestPhotoExportActions } from './guestPhotos/useGuestPhotoExportActions';
 import { useGuestPhotoDashboardData } from './guestPhotos/useGuestPhotoDashboardData';
+import { useGuestPhotoDashboardUiState } from './guestPhotos/useGuestPhotoDashboardUiState';
 import { type GuestPhotoBucketsState, useGuestPhotoBucketWorkspace } from './guestPhotos/useGuestPhotoBucketWorkspace';
 
 export const GuestPhotoSharing: React.FC = () => {
@@ -76,43 +35,74 @@ export const GuestPhotoSharing: React.FC = () => {
   const { fromQuickStart, nextStep } = readQuickStartDashboardContinuation(searchParams);
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
-  const [siteId, setSiteId] = useState<string | null>(null);
-  const [siteSlug, setSiteSlug] = useState<string | null>(null);
-  const [events, setEvents] = useState<ItineraryEvent[]>([]);
-  const [buckets, setBuckets] = useState<PhotoBucketRow[]>([]);
-  const [uploads, setUploads] = useState<PhotoUploadRow[]>([]);
-  const [uploadAnalyses, setUploadAnalyses] = useState<PhotoUploadAiAnalysisRow[]>([]);
-  const [uploadMetadata, setUploadMetadata] = useState<PhotoUploadMetadataRow[]>([]);
-  const [aiBucketCorrections, setAiBucketCorrections] = useState<PhotoAiBucketCorrectionRow[]>([]);
-  const [guestbookEntries, setGuestbookEntries] = useState<GuestbookEntryRow[]>([]);
-  const [guestProspects, setGuestProspects] = useState<GuestProspectOptinRow[]>([]);
-  const [hubSettings, setHubSettings] = useState<GuestHubSettings>(DEFAULT_HUB_SETTINGS);
-  const [showHidden, setShowHidden] = useState(false);
-  const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
-  const [tagFilter, setTagFilter] = useState('all');
-
-  const [name, setName] = useState(search.get('eventName') ?? '');
-  const [itineraryEventId, setItineraryEventId] = useState(search.get('eventId') ?? '');
-  const [parentAlbumId, setParentAlbumId] = useState(search.get('parentBucket') ?? '');
-  const [bucketSearch, setBucketSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'paused'>('all');
-
-  const [latestUploadUrl, setLatestUploadUrl] = useState<string>('');
-  const [bucketUploadLinks, setBucketUploadLinks] = useState<Record<string, string>>(() => readStoredBucketLinks());
-  const [workingBucketId, setWorkingBucketId] = useState<string>('');
-
-  const [windowDrafts, setWindowDrafts] = useState<Record<string, { opensAt: string; closesAt: string }>>({});
-  const [bulkCreating, setBulkCreating] = useState(false);
-  const [slideshowOrder, setSlideshowOrder] = useState<SlideshowOrderMode>('newest');
-  const [slideshowBucketFilter, setSlideshowBucketFilter] = useState<string>('all');
-  const [slideshowTheme, setSlideshowTheme] = useState<SlideshowTheme>('classic');
-  const [slideshowPreviewOpen, setSlideshowPreviewOpen] = useState(false);
-  const [aiPhotoOpsPlan, setAiPhotoOpsPlan] = useState<AiPhotoOpsPlan | null>(null);
+  const {
+    aiBucketCorrections,
+    aiPhotoOpsPlan,
+    bucketSearch,
+    bucketUploadLinks,
+    buckets,
+    bulkCreating,
+    error,
+    events,
+    guestProspects,
+    guestbookEntries,
+    hubSettings,
+    itineraryEventId,
+    latestUploadUrl,
+    loading,
+    name,
+    parentAlbumId,
+    showFlaggedOnly,
+    showHidden,
+    siteId,
+    siteSlug,
+    slideshowBucketFilter,
+    slideshowOrder,
+    slideshowPreviewOpen,
+    slideshowTheme,
+    statusFilter,
+    submitting,
+    success,
+    tagFilter,
+    uploadAnalyses,
+    uploadMetadata,
+    uploads,
+    windowDrafts,
+    workingBucketId,
+    setAiBucketCorrections,
+    setAiPhotoOpsPlan,
+    setBucketSearch,
+    setBucketUploadLinks,
+    setBuckets,
+    setBulkCreating,
+    setError,
+    setEvents,
+    setGuestProspects,
+    setGuestbookEntries,
+    setHubSettings,
+    setItineraryEventId,
+    setLatestUploadUrl,
+    setLoading,
+    setName,
+    setParentAlbumId,
+    setShowFlaggedOnly,
+    setShowHidden,
+    setSiteId,
+    setSiteSlug,
+    setSlideshowBucketFilter,
+    setSlideshowOrder,
+    setSlideshowPreviewOpen,
+    setSlideshowTheme,
+    setStatusFilter,
+    setSubmitting,
+    setSuccess,
+    setTagFilter,
+    setUploadAnalyses,
+    setUploadMetadata,
+    setUploads,
+    setWindowDrafts,
+    setWorkingBucketId,
+  } = useGuestPhotoDashboardUiState({ search });
   const archiveMode = useMemo(() => getArchiveModeDescriptor({ weddingDate: events[0]?.event_date ?? null }), [events]);
   const {
     bucketFileInputRef,
@@ -130,23 +120,25 @@ export const GuestPhotoSharing: React.FC = () => {
 
   const { load } = useGuestPhotoDashboardData({
     isDemoMode,
-    setAiBucketCorrections,
-    setAiPhotoOpsPlan,
-    setBucketUploadLinks,
-    setBuckets,
-    setError,
-    setEvents,
-    setGuestProspects,
-    setGuestbookEntries,
-    setHubSettings,
-    setLoading,
     setPhotoBuckets,
-    setSiteId,
-    setSiteSlug,
-    setUploadAnalyses,
-    setUploadMetadata,
-    setUploads,
-    setWindowDrafts,
+    uiState: {
+      setAiBucketCorrections,
+      setAiPhotoOpsPlan,
+      setBucketUploadLinks,
+      setBuckets,
+      setError,
+      setEvents,
+      setGuestProspects,
+      setGuestbookEntries,
+      setHubSettings,
+      setLoading,
+      setSiteId,
+      setSiteSlug,
+      setUploadAnalyses,
+      setUploadMetadata,
+      setUploads,
+      setWindowDrafts,
+    },
   });
 
   useEffect(() => {
@@ -191,27 +183,6 @@ export const GuestPhotoSharing: React.FC = () => {
     uploadMetadata,
     uploads,
   }), [buckets, slideshowBucketFilter, slideshowOrder, tagFilter, uploadAnalyses, uploadMetadata, uploads]);
-
-  const slideshowThemeMeta: Record<SlideshowTheme, { label: string; cardClass: string; chipClass: string; helper: string }> = {
-    classic: {
-      label: 'Classic',
-      cardClass: 'bg-white border-border-subtle',
-      chipClass: 'bg-neutral-100 text-neutral-700',
-      helper: 'Clean, neutral presentation focused on the photos.',
-    },
-    editorial: {
-      label: 'Editorial',
-      cardClass: 'bg-stone-50 border-stone-200',
-      chipClass: 'bg-stone-200 text-stone-800',
-      helper: 'Softer gallery feel with a more polished keepsake vibe.',
-    },
-    party: {
-      label: 'Party',
-      cardClass: 'bg-surface-subtle border-border-subtle',
-      chipClass: 'bg-surface-subtle text-text-primary border border-border-subtle',
-      helper: 'More energetic framing for reception and dance-floor moments.',
-    },
-  };
 
   const aiHighConfidenceMoves = useMemo(
     () => aiPhotoOpsPlan?.bucketSuggestions.filter((suggestion) => suggestion.confidence >= 0.74 && suggestion.targetBucketId !== suggestion.currentBucketId) ?? [],
@@ -317,15 +288,6 @@ export const GuestPhotoSharing: React.FC = () => {
     similarPhotoGroups,
     duplicateExtraCount,
   } = photoMemoryCollections;
-
-  const bucketCardTone = (bucketName: string) => {
-    const name = bucketName.toLowerCase();
-    if (/ceremony|vows|aisle/.test(name)) return 'Save the quiet, meaningful moments.';
-    if (/welcome|party|cocktail/.test(name)) return 'Capture the energy before everyone settles in.';
-    if (/dance|after party|after-party/.test(name)) return 'This is for the blurry, loud, great stuff.';
-    if (/brunch|recovery|farewell/.test(name)) return 'Keep the softer next-day memories here.';
-    return 'A clean album for one specific moment guests can easily understand.';
-  };
 
   const {
     aiPhotoMovesBusy,
@@ -483,12 +445,6 @@ export const GuestPhotoSharing: React.FC = () => {
     windowDrafts,
   });
 
-  const getBucketQrUrl = (uploadUrl: string) => `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(uploadUrl)}`;
-  const openSafePublicUrl = (url: string | null | undefined) => {
-    const safeUrl = getSafePublicWebUrl(url);
-    if (safeUrl) window.open(safeUrl, '_blank', 'noopener,noreferrer');
-  };
-  const openAppUrl = (url: string) => window.open(url, '_blank', 'noopener,noreferrer');
   const guestPhotoDashboardLiveContentProps = buildGuestPhotoDashboardLiveContentProps({
     activeAlbumCount: activeBucketsCount,
     aiAcceptedCorrectionCount,
@@ -502,7 +458,7 @@ export const GuestPhotoSharing: React.FC = () => {
     analysisByUploadId,
     availableAiTags,
     bucketById,
-    bucketCardTone,
+    bucketCardTone: getGuestPhotoBucketTone,
     bucketDepthById,
     bucketDisplayName,
     bucketFileInputRef,
@@ -529,7 +485,7 @@ export const GuestPhotoSharing: React.FC = () => {
     formatDateTime: formatGuestPhotoDateTime,
     formatEventDate: formatGuestPhotoEventDate,
     fromQuickStart,
-    getBucketQrUrl,
+    getBucketQrUrl: getGuestPhotoBucketQrUrl,
     guestHubActionSummary,
     guestHubActions,
     guestHubQrAssetCount: guestHubQrAssets.length,
@@ -591,8 +547,8 @@ export const GuestPhotoSharing: React.FC = () => {
     onItineraryEventChange: setItineraryEventId,
     onModerateUpload: (uploadId, patch) => void moderateUpload(uploadId, patch),
     onNameChange: setName,
-    onOpenAppUrl: openAppUrl,
-    onOpenSafePublicUrl: openSafePublicUrl,
+    onOpenAppUrl: openGuestPhotoAppUrl,
+    onOpenSafePublicUrl: openGuestPhotoSafePublicUrl,
     onOpenVaults: () => navigate('/dashboard/vault'),
     onOrderChange: setSlideshowOrder,
     onParentAlbumChange: setParentAlbumId,

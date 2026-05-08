@@ -10,60 +10,61 @@ import {
 import {
   DEFAULT_HUB_SETTINGS,
   safePhotoOwnerError,
-  type GuestHubSettings,
-  type GuestProspectOptinRow,
-  type GuestbookEntryRow,
   type ItineraryEvent,
-  type PhotoAiBucketCorrectionRow,
   type PhotoBucketRow,
-  type PhotoUploadAiAnalysisRow,
-  type PhotoUploadMetadataRow,
-  type PhotoUploadRow,
 } from '../guestPhotoSharingUtils';
 import { toDatetimeLocalOrEmpty } from '../guestPhotoDateTime';
 import type { GuestPhotoBucketsState } from './useGuestPhotoBucketWorkspace';
+import type { GuestPhotoDashboardUiState } from './useGuestPhotoDashboardUiState';
 
 interface UseGuestPhotoDashboardDataArgs {
   isDemoMode: boolean;
-  setAiBucketCorrections: React.Dispatch<React.SetStateAction<PhotoAiBucketCorrectionRow[]>>;
-  setAiPhotoOpsPlan: React.Dispatch<React.SetStateAction<AiPhotoOpsPlan | null>>;
-  setBucketUploadLinks: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-  setBuckets: React.Dispatch<React.SetStateAction<PhotoBucketRow[]>>;
-  setError: React.Dispatch<React.SetStateAction<string | null>>;
-  setEvents: React.Dispatch<React.SetStateAction<ItineraryEvent[]>>;
-  setGuestProspects: React.Dispatch<React.SetStateAction<GuestProspectOptinRow[]>>;
-  setGuestbookEntries: React.Dispatch<React.SetStateAction<GuestbookEntryRow[]>>;
-  setHubSettings: React.Dispatch<React.SetStateAction<GuestHubSettings>>;
-  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setPhotoBuckets: React.Dispatch<React.SetStateAction<GuestPhotoBucketsState>>;
-  setSiteId: React.Dispatch<React.SetStateAction<string | null>>;
-  setSiteSlug: React.Dispatch<React.SetStateAction<string | null>>;
-  setUploadAnalyses: React.Dispatch<React.SetStateAction<PhotoUploadAiAnalysisRow[]>>;
-  setUploadMetadata: React.Dispatch<React.SetStateAction<PhotoUploadMetadataRow[]>>;
-  setUploads: React.Dispatch<React.SetStateAction<PhotoUploadRow[]>>;
-  setWindowDrafts: React.Dispatch<React.SetStateAction<Record<string, { opensAt: string; closesAt: string }>>>;
+  uiState: Pick<
+    GuestPhotoDashboardUiState,
+    | 'setAiBucketCorrections'
+    | 'setAiPhotoOpsPlan'
+    | 'setBucketUploadLinks'
+    | 'setBuckets'
+    | 'setError'
+    | 'setEvents'
+    | 'setGuestProspects'
+    | 'setGuestbookEntries'
+    | 'setHubSettings'
+    | 'setLoading'
+    | 'setSiteId'
+    | 'setSiteSlug'
+    | 'setUploadAnalyses'
+    | 'setUploadMetadata'
+    | 'setUploads'
+    | 'setWindowDrafts'
+  >;
 }
 
 export function useGuestPhotoDashboardData({
   isDemoMode,
-  setAiBucketCorrections,
-  setAiPhotoOpsPlan,
-  setBucketUploadLinks,
-  setBuckets,
-  setError,
-  setEvents,
-  setGuestProspects,
-  setGuestbookEntries,
-  setHubSettings,
-  setLoading,
   setPhotoBuckets,
-  setSiteId,
-  setSiteSlug,
-  setUploadAnalyses,
-  setUploadMetadata,
-  setUploads,
-  setWindowDrafts,
+  uiState,
 }: UseGuestPhotoDashboardDataArgs) {
+  const {
+    setAiBucketCorrections,
+    setAiPhotoOpsPlan,
+    setBucketUploadLinks,
+    setBuckets,
+    setError,
+    setEvents,
+    setGuestProspects,
+    setGuestbookEntries,
+    setHubSettings,
+    setLoading,
+    setSiteId,
+    setSiteSlug,
+    setUploadAnalyses,
+    setUploadMetadata,
+    setUploads,
+    setWindowDrafts,
+  } = uiState;
+
   const loadDemoPhotoSpace = useCallback(() => {
     const now = '2026-05-02T12:00:00.000Z';
     const demoAlbums: PhotoBucketRow[] = [
