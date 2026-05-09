@@ -11,7 +11,6 @@ import { BuilderProject } from '../types/builder/project';
 import { BuilderSectionInstance, createDefaultSectionInstance } from '../types/builder/section';
 import { SectionRenderer } from '../builder/components/SectionRenderer';
 import { PageRenderer } from '../render/PageRenderer';
-import { safeJsonParse } from '../lib/jsonUtils';
 import { SiteViewContext } from '../contexts/SiteViewContext';
 import { RegistryGrid } from '../sections/components/RegistrySection';
 import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
@@ -23,7 +22,6 @@ import { demoWeddingSite } from '../lib/demoData';
 import { rewriteSignedMediaUrlsToPublicDeep } from '../lib/mediaUrl';
 import { getArchiveModeDescriptor } from '../lib/archiveMode';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
-import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicWeddingData } from '../lib/publicSiteProject';
 import { fetchPublicSiteAccess, requestPublicSitePasswordUnlock } from '../lib/publicSiteAccess';
 import {
   buildPublicAccessArtifacts,
@@ -707,6 +705,7 @@ export const SiteView: React.FC = () => {
           slug: resolvedSlug,
           inviteToken,
           passwordSession,
+          language: i18n.language?.split('-')[0] || 'en',
         });
 
         if (access.status === 'coming_soon') {
@@ -738,7 +737,7 @@ export const SiteView: React.FC = () => {
         if (urlToken) capturePublicInviteTokenFromSearch(resolvedSlug, searchParams);
         setPublicSubresourceAccess(subresourceAccess);
 
-        const data = access.site as unknown as Record<string, unknown>;
+        const data = access.site;
         setWeddingSiteId(data.id as string);
 
         const siteLang = (data.default_language as string) ?? 'en';
@@ -746,30 +745,15 @@ export const SiteView: React.FC = () => {
           i18n.changeLanguage(siteLang);
         }
 
-        const row = data as Record<string, unknown>;
-        const isPublished = getIsPublishedFromSiteRow(row);
+        const isPublished = data.is_published === true;
         const hideSearch = data.allow_search_indexing === false;
 
         setHideFromSearch(hideSearch);
 
         setPrivacyGate('open');
 
-        const activeLanguage = i18n.language?.split('-')[0] || 'en';
-        let renderRow = row;
-        if (activeLanguage !== 'en') {
-          const translation = await siteRepository.fetchPublicSiteTranslation(data.id as string, activeLanguage).catch(() => null);
-          if (translation) {
-            renderRow = {
-              ...row,
-              site_json: translation.translated_site_json ?? row.site_json,
-              published_json: translation.translated_published_json ?? row.published_json,
-              wedding_data: translation.translated_wedding_data ?? row.wedding_data,
-              layout_config: translation.translated_layout_config ?? row.layout_config,
-            };
-          }
-        }
-
-        const rawSiteJson = getPublicBuilderProject(renderRow);
+        const renderModel = data.render_model;
+        const rawSiteJson = renderModel.builderProject;
         const siteJson = rawSiteJson
           ? rewriteSignedMediaUrlsToPublicDeep({
               ...rawSiteJson,
@@ -790,7 +774,7 @@ export const SiteView: React.FC = () => {
         if (isPublished && persistedSections.length > 0 && !(siteJson && siteJson.pages?.length > 0)) {
           const rawWData = normalizeWeddingData(
             rewriteSignedMediaUrlsToPublicDeep(
-              getPublicWeddingData(renderRow) ?? createEmptyWeddingData()
+              renderModel.weddingData ?? createEmptyWeddingData()
             )
           );
           const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData, subresourceAccess), resolvedSlug);
@@ -824,7 +808,7 @@ export const SiteView: React.FC = () => {
           const publicSections = appendRegistrySectionWhenNeeded(sections, shouldAppendRegistry);
           const rawWData = normalizeWeddingData(
             rewriteSignedMediaUrlsToPublicDeep(
-              getPublicWeddingData(renderRow) ?? createEmptyWeddingData()
+              renderModel.weddingData ?? createEmptyWeddingData()
             )
           );
           const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData, subresourceAccess), resolvedSlug);
@@ -866,11 +850,11 @@ export const SiteView: React.FC = () => {
           setBuilderSections(filterGuestReadyBuilderSections(publicSections, wData));
           setWeddingData(wData);
         } else {
-          const parsedWData = getPublicWeddingData(renderRow);
+          const parsedWData = renderModel.weddingData;
           const rawWData = parsedWData
             ? normalizeWeddingData(rewriteSignedMediaUrlsToPublicDeep(parsedWData))
             : null;
-          const lConfig = safeJsonParse<LayoutConfigV1 | null>(renderRow.layout_config, null);
+          const lConfig = renderModel.layoutConfig;
 
           if (!rawWData || !lConfig) {
             setError('This wedding site is still being set up. Check back soon!');

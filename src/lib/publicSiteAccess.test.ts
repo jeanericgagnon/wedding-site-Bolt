@@ -9,18 +9,19 @@ describe('public site access client contract', () => {
       site_slug: 'maya-leo',
       site_url: 'maya-leo',
       is_published: true,
-      site_json: { theme: 'classic' },
-      published_json: { sections: [] },
       couple_name_1: 'Maya',
       couple_name_2: 'Leo',
       wedding_date: '2026-09-12',
       venue_name: 'Garden Hall',
       wedding_location: 'Portland',
       template_id: 'modern-luxe',
-      wedding_data: { story: 'Safe public story' },
-      layout_config: { sections: [] },
       default_language: 'en',
       allow_search_indexing: false,
+      render_model: {
+        builderProject: { pages: [{ id: 'home', sections: [] }] },
+        weddingData: { couple: { displayName: 'Maya & Leo' } },
+        layoutConfig: { pages: [{ id: 'home', sections: [] }] },
+      },
       site_password_hash: 'never-send-this',
       guest_access_token: 'never-send-this-either',
       user_id: 'owner-id',
@@ -35,19 +36,23 @@ describe('public site access client contract', () => {
       site_slug: 'maya-leo',
       site_url: 'maya-leo',
       is_published: true,
-      site_json: { theme: 'classic' },
-      published_json: { sections: [] },
       couple_name_1: 'Maya',
       couple_name_2: 'Leo',
       wedding_date: '2026-09-12',
       venue_name: 'Garden Hall',
       wedding_location: 'Portland',
       template_id: 'modern-luxe',
-      wedding_data: { story: 'Safe public story' },
-      layout_config: { sections: [] },
       default_language: 'en',
       allow_search_indexing: false,
+      render_model: {
+        builderProject: { pages: [{ id: 'home', sections: [] }] },
+        weddingData: { couple: { displayName: 'Maya & Leo' } },
+        layoutConfig: { pages: [{ id: 'home', sections: [] }] },
+      },
     });
+    expect(site?.render_model.builderProject).toEqual({ pages: [{ id: 'home', sections: [] }] });
+    expect(site?.render_model.weddingData).toEqual({ couple: { displayName: 'Maya & Leo' } });
+    expect(site?.render_model.layoutConfig).toEqual({ pages: [{ id: 'home', sections: [] }] });
     expect(site).not.toHaveProperty('site_password_hash');
     expect(site).not.toHaveProperty('guest_access_token');
     expect(site).not.toHaveProperty('user_id');
@@ -55,6 +60,10 @@ describe('public site access client contract', () => {
     expect(site).not.toHaveProperty('billing_customer_id');
     expect(site).not.toHaveProperty('privacy_mode');
     expect(site).not.toHaveProperty('hide_from_search');
+    expect(site).not.toHaveProperty('site_json');
+    expect(site).not.toHaveProperty('published_json');
+    expect(site).not.toHaveProperty('wedding_data');
+    expect(site).not.toHaveProperty('layout_config');
   });
 
   it('rejects malformed public site payloads instead of passing them through', () => {

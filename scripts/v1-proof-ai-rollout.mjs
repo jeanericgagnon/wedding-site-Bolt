@@ -32,8 +32,8 @@ const sensitiveTables = [
 ];
 
 const browserSourceFiles = [
-  { filePath: 'src/pages/dashboard/GuestPhotoSharing.tsx', requireProductReads: true },
-  { filePath: 'src/pages/dashboard/guestPhotoSharingService.ts' },
+  { filePath: 'src/pages/dashboard/GuestPhotoSharing.tsx' },
+  { filePath: 'src/pages/dashboard/guestPhotoSharingService.ts', requireProductReads: true },
   { filePath: 'tests/e2e/photo-upload-write-read.spec.ts' },
   { filePath: 'supabase/functions/guest-recap-config/index.ts' },
 ];

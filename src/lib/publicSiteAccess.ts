@@ -1,3 +1,6 @@
+import type { BuilderProject } from '../types/builder/project';
+import type { LayoutConfigV1 } from '../types/layoutConfig';
+import type { WeddingDataV1 } from '../types/weddingData';
 import { customerSafeErrorMessage } from "./customerSafeError";
 
 export type PublicSiteGateStatus =
@@ -11,19 +14,20 @@ export interface PublicSiteSafeRow {
   id: string;
   site_slug: string | null;
   site_url: string | null;
-  is_published: boolean | null;
-  site_json: unknown;
-  published_json?: unknown;
+  is_published: boolean;
   couple_name_1: string | null;
   couple_name_2: string | null;
   wedding_date: string | null;
   venue_name: string | null;
   wedding_location: string | null;
   template_id: string | null;
-  wedding_data: unknown;
-  layout_config: unknown;
   default_language: string | null;
-  allow_search_indexing: boolean | null;
+  allow_search_indexing: boolean;
+  render_model: {
+    builderProject: BuilderProject | null;
+    weddingData: WeddingDataV1 | null;
+    layoutConfig: LayoutConfigV1 | null;
+  };
 }
 
 export interface PublicSiteAccessResponse {
@@ -40,32 +44,34 @@ function nullableString(value: unknown): string | null {
   return typeof value === "string" ? value : null;
 }
 
-function nullableBoolean(value: unknown): boolean | null {
-  return typeof value === "boolean" ? value : null;
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 }
 
 export function sanitizePublicSiteSafeRow(site: unknown): PublicSiteSafeRow | null {
   if (!site || typeof site !== "object" || Array.isArray(site)) return null;
   const row = site as Record<string, unknown>;
   if (typeof row.id !== "string") return null;
+  const renderModel = asRecord(row.render_model);
 
   return {
     id: row.id,
     site_slug: nullableString(row.site_slug),
     site_url: nullableString(row.site_url),
-    is_published: nullableBoolean(row.is_published),
-    site_json: row.site_json ?? null,
-    published_json: row.published_json ?? null,
+    is_published: row.is_published === true,
     couple_name_1: nullableString(row.couple_name_1),
     couple_name_2: nullableString(row.couple_name_2),
     wedding_date: nullableString(row.wedding_date),
     venue_name: nullableString(row.venue_name),
     wedding_location: nullableString(row.wedding_location),
     template_id: nullableString(row.template_id),
-    wedding_data: row.wedding_data ?? null,
-    layout_config: row.layout_config ?? null,
     default_language: nullableString(row.default_language),
-    allow_search_indexing: nullableBoolean(row.allow_search_indexing),
+    allow_search_indexing: row.allow_search_indexing !== false,
+    render_model: {
+      builderProject: (renderModel?.builderProject ?? null) as BuilderProject | null,
+      weddingData: (renderModel?.weddingData ?? null) as WeddingDataV1 | null,
+      layoutConfig: (renderModel?.layoutConfig ?? null) as LayoutConfigV1 | null,
+    },
   };
 }
 
@@ -114,12 +120,14 @@ export async function fetchPublicSiteAccess(input: {
   slug: string;
   inviteToken?: string | null;
   passwordSession?: string | null;
+  language?: string | null;
 }): Promise<PublicSiteAccessResponse> {
   return callPublicSiteAccess({
     action: "resolve",
     slug: input.slug,
     inviteToken: input.inviteToken ?? null,
     passwordSession: input.passwordSession ?? null,
+    language: input.language ?? null,
   });
 }
 

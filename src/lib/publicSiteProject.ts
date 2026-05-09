@@ -1,10 +1,10 @@
-import type { BuilderProject } from '../types/builder/project';
-import type { BuilderSectionInstance } from '../types/builder/section';
-import type { WeddingDataV1 } from '../types/weddingData';
-import { normalizeWeddingData } from '../types/weddingData';
-import { buildCoupleDisplayName } from './coupleDisplayName';
-import { safeJsonParse } from './jsonUtils';
-import { rewriteSignedMediaUrlsToPublicDeep } from './mediaUrl';
+import type { BuilderProject } from '../types/builder/project.ts';
+import type { BuilderSectionInstance } from '../types/builder/section.ts';
+import type { WeddingDataV1 } from '../types/weddingData.ts';
+import { normalizeWeddingData } from '../types/weddingData.ts';
+import { buildCoupleDisplayName } from './coupleDisplayName.ts';
+import { safeJsonParse } from './jsonUtils.ts';
+import { rewriteSignedMediaUrlsToPublicDeep } from './mediaUrl.ts';
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (value && typeof value === 'object') return value as Record<string, unknown>;

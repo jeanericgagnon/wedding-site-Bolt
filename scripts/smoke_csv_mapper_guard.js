@@ -9,7 +9,10 @@ function readSource(path) {
 const guestsSrc = readSource('src/pages/dashboard/Guests.tsx');
 const toolbarSrc = readSource('src/pages/dashboard/guests/GuestOpsToolbar.tsx');
 const modalSrc = readSource('src/pages/dashboard/guests/GuestCsvImportModals.tsx');
-const src = [guestsSrc, toolbarSrc, modalSrc].join('\n');
+const routeViewSrc = readSource('src/pages/dashboard/guests/GuestDashboardRouteView.tsx');
+const overlaysSrc = readSource('src/pages/dashboard/guests/GuestDashboardOverlays.tsx');
+const viewPropsSrc = readSource('src/pages/dashboard/guests/buildGuestDashboardViewProps.ts');
+const src = [guestsSrc, toolbarSrc, modalSrc, routeViewSrc, overlaysSrc, viewPropsSrc].join('\n');
 
 const checks = [
   {
@@ -18,7 +21,12 @@ const checks = [
   },
   {
     name: 'csv input uses onChange import handler',
-    ok: guestsSrc.includes('onChange={importCSV}') || (guestsSrc.includes('onFileChange={importCSV}') && toolbarSrc.includes('onChange={onFileChange}')),
+    ok:
+      (guestsSrc.includes('onChange={importCSV}'))
+      || (
+        (guestsSrc.includes('onFileChange: importCSV') || guestsSrc.includes('onFileChange={importCSV}'))
+        && toolbarSrc.includes('onChange={onFileChange}')
+      ),
   },
   {
     name: 'csv input does not use onInput duplicate trigger',
@@ -30,7 +38,12 @@ const checks = [
   },
   {
     name: 'name mapping guard present',
-    ok: src.includes('Please map First Name + Last Name, or use Full Name instead.') && src.includes('csvNameMappingValid'),
+    ok:
+      (
+        src.includes('Please map First Name + Last Name, or use Full Name instead.')
+        || src.includes('Map First Name + Last Name, or use Full Name instead.')
+      )
+      && src.includes('csvNameMappingValid'),
   },
 ];
 

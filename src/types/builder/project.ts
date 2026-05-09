@@ -1,5 +1,5 @@
-import { BuilderSectionInstance } from './section';
-import { ThemeTokens } from '../../lib/themePresets';
+import { BuilderSectionInstance } from './section.ts';
+import { ThemeTokens } from '../../lib/themePresets.ts';
 
 export type PublishStatus = 'draft' | 'publishing' | 'published' | 'failed';
 

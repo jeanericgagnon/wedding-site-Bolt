@@ -557,7 +557,9 @@ describe('launch edge function guards', () => {
     expect(rsvp).not.toContain('const message = err instanceof Error ? err.message');
 
     const rsvpPage = readFileSync(join(process.cwd(), 'src', 'pages', 'RSVP.tsx'), 'utf8');
-    expect(rsvpPage).toContain("action: 'lookup_guest', guestId: picked.id, rsvpSession: rsvpSessionToken");
+    expect(rsvpPage).toContain('await runRsvpGuestLookup({');
+    expect(rsvpPage).toContain('guestId: picked.id,');
+    expect(rsvpPage).toContain('rsvpSessionToken,');
 
     expect(email).toContain('SEND_WEDDING_EMAIL_UNEXPECTED_FAILED');
     expect(email).toContain('Could not send this email. Please try again.');
@@ -608,7 +610,9 @@ describe('launch edge function guards', () => {
     expect(publicSiteAccess).toContain('password_unlock');
     expect(publicSiteAccess).toContain('passwordSession');
     expect(publicSiteAccess).toContain('buildSafePublicSite');
-    expect(publicSiteAccess).toContain('allow_search_indexing');
+    expect(publicSiteAccess).toContain('buildPublicSiteRenderSite');
+    expect(publicSiteAccess).toContain('applyPublicSiteTranslation');
+    expect(readFileSync(join(process.cwd(), 'src', 'lib', 'publicSiteRenderModel.ts'), 'utf8')).toContain('allow_search_indexing');
     expect(publicSiteAccess).toContain('enforcePasswordAttemptRateLimit');
     expect(publicSiteAccess).toContain('public-site-access:${slug}');
     expect(publicSiteAccess).toContain('guest_token: safeSubjectMarker');
@@ -623,9 +627,13 @@ describe('launch edge function guards', () => {
     expect(publicSiteAccess).toContain('"hide_from_search"');
     expect(publicSiteAccess).not.toContain('site: row');
     expect(publicSiteAccess).not.toContain('site: buildSafePublicSite(row), guest_access_token');
+    expect(publicSiteAccess).not.toContain('site_json: row.site_json');
+    expect(publicSiteAccess).not.toContain('published_json: row.published_json');
+    expect(publicSiteAccess).not.toContain('wedding_data: row.wedding_data');
+    expect(publicSiteAccess).not.toContain('layout_config: row.layout_config');
     expect(publicSiteAccess).not.toContain('ilike("site_url"');
     expect(publicSiteAccess).not.toContain('row.privacy_mode : "public"');
-    const safeColumns = publicSiteAccess.match(/const SAFE_PUBLIC_SITE_COLUMNS = \[([\s\S]*?)\];/)?.[1] ?? '';
+    const safeColumns = publicSiteAccess.match(/const PUBLIC_SITE_RENDER_COLUMNS = \[([\s\S]*?)\];/)?.[1] ?? '';
     expect(safeColumns).not.toContain('privacy_mode');
     expect(safeColumns).not.toContain('hide_from_search');
   });
@@ -894,7 +902,7 @@ describe('launch edge function guards', () => {
     expect(contactPage).toContain('contact_session: string');
     expect(contactPage).toContain('buildGuestContactAccessPayload');
     expect(contactPage).toContain("Enter your full name as it appears on the invitation.");
-    expect(contactPage).toContain("placeholder=\"Search your full name\"");
+    expect(readFileSync(join(process.cwd(), 'src', 'pages', 'GuestContactLookupPanel.tsx'), 'utf8')).toContain('placeholder="Search your full name"');
     expect(contactPage).toContain('...buildGuestContactAccessPayload(siteRef)');
     expect(contactPage).toContain("contact_session: selectedContactSession");
     expect(contactPage).not.toContain('guest_id: selectedGuestId');

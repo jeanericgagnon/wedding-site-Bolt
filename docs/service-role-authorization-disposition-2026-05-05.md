@@ -39,6 +39,7 @@ Every Edge Function that reads `SUPABASE_SERVICE_ROLE_KEY` is intentionally clas
 - `guest-prospect-submit`
 - `guest-recap-config`
 - `guestbook-submit`
+- `interactive-section-public`
 - `photo-upload`
 - `public-itinerary-by-slug`
 - `public-registry-items`
@@ -47,6 +48,7 @@ Every Edge Function that reads `SUPABASE_SERVICE_ROLE_KEY` is intentionally clas
 - `submit-contact-request`
 - `submit-rsvp`
 - `validate-rsvp-token`
+- `vault-contribution-public`
 - `vault-entry-submit`
 - `vault-upload-google-drive`
 - `vendor-profile-inquiry-submit`

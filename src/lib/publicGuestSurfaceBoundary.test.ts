@@ -7,6 +7,21 @@ function readSource(relativePath: string) {
 }
 
 describe('public guest surface boundary', () => {
+  it('keeps public site access limited to the approved browser readers', () => {
+    const siteView = readSource('src/pages/SiteView.tsx');
+    const vaultContribute = readSource('src/pages/VaultContribute.tsx');
+    const publicSiteAccess = readSource('src/lib/publicSiteAccess.ts');
+    const rsvpSection = readSource('src/sections/components/RsvpSection.tsx');
+    const interactiveService = readSource('src/sections/interactiveSectionService.ts');
+
+    expect(siteView).toContain('fetchPublicSiteAccess({');
+    expect(vaultContribute).toContain('fetchPublicSiteAccess({');
+    expect(rsvpSection).toContain("supabase.functions.invoke('public-site-access'");
+    expect(interactiveService).not.toContain("supabase.functions.invoke('public-site-access'");
+    expect(publicSiteAccess).not.toContain(".from('wedding_sites')");
+    expect(publicSiteAccess).not.toContain('fetchPublicSiteTranslation');
+  });
+
   it('keeps guest-facing pages and helpers off direct browser table reads', () => {
     const auditedFiles = [
       'src/pages/SiteView.tsx',

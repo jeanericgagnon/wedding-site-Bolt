@@ -84,23 +84,6 @@ export const siteRepository = {
 
     return null;
   },
-
-  async fetchPublicSiteTranslation(siteId: string, language: string): Promise<Record<string, unknown> | null> {
-    if (!siteId || language === 'en') return null;
-
-    const { data, error } = await supabase
-      .from('site_translations')
-      .select('translated_site_json,translated_published_json,translated_wedding_data,translated_layout_config')
-      .eq('wedding_site_id', siteId)
-      .eq('language', language)
-      .eq('status', 'ready')
-      .maybeSingle();
-
-    if (error?.code === '42P01' || error?.code === '42703') return null;
-    if (error) throw error;
-    return (data as unknown as Record<string, unknown> | null) ?? null;
-  },
-
   async fetchSections(siteId: string): Promise<PersistedSection[]> {
     const { data, error } = await supabase
       .from('sections')

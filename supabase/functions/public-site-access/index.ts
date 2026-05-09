@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { signSessionToken } from "../_shared/signedSession.ts";
 import { normalizePublicPrivacyMode, resolvePublicAccessStatus } from "../_shared/publicAccessGate.ts";
+import { applyPublicSiteTranslation, buildPublicSiteRenderSite } from "../../../src/lib/publicSiteRenderModel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,6 +15,7 @@ interface ResolvePayload {
   slug: string;
   inviteToken?: string | null;
   passwordSession?: string | null;
+  language?: string | null;
 }
 
 interface PasswordUnlockPayload {
@@ -27,7 +29,7 @@ type Payload = ResolvePayload | PasswordUnlockPayload;
 const PUBLIC_SITE_PASSWORD_RATE_LIMIT_WINDOW_MINUTES = 15;
 const PUBLIC_SITE_PASSWORD_RATE_LIMIT_MAX_ATTEMPTS = 8;
 
-const SAFE_PUBLIC_SITE_COLUMNS = [
+const PUBLIC_SITE_RENDER_COLUMNS = [
   "id",
   "site_slug",
   "site_url",
@@ -46,7 +48,7 @@ const SAFE_PUBLIC_SITE_COLUMNS = [
 ];
 
 const PRIVATE_PUBLIC_SITE_COLUMNS = [
-  ...SAFE_PUBLIC_SITE_COLUMNS,
+  ...PUBLIC_SITE_RENDER_COLUMNS,
   "privacy_mode",
   "hide_from_search",
   "site_password_hash",
@@ -143,12 +145,34 @@ function json(data: Record<string, unknown>, status = 200) {
   });
 }
 
-function buildSafePublicSite(row: Record<string, unknown>): Record<string, unknown> {
-  const site = Object.fromEntries(
-    SAFE_PUBLIC_SITE_COLUMNS.map((key) => [key, row[key] ?? null]),
-  );
-  site.allow_search_indexing = row.hide_from_search !== true;
-  return site;
+async function loadPublicSiteTranslation(
+  adminClient: ReturnType<typeof createClient>,
+  siteId: string,
+  language: string | null | undefined,
+): Promise<Record<string, unknown> | null> {
+  const normalizedLanguage = typeof language === "string" ? language.trim().toLowerCase() : "";
+  if (!siteId || !normalizedLanguage || normalizedLanguage === "en") return null;
+
+  const { data, error } = await adminClient
+    .from("site_translations")
+    .select("translated_site_json,translated_published_json,translated_wedding_data,translated_layout_config")
+    .eq("wedding_site_id", siteId)
+    .eq("language", normalizedLanguage)
+    .eq("status", "ready")
+    .maybeSingle();
+
+  if (error?.code === "42P01" || error?.code === "42703") return null;
+  if (error) throw error;
+  return (data as Record<string, unknown> | null) ?? null;
+}
+
+async function buildSafePublicSite(
+  adminClient: ReturnType<typeof createClient>,
+  row: Record<string, unknown>,
+  language: string | null | undefined,
+): Promise<Record<string, unknown>> {
+  const translation = await loadPublicSiteTranslation(adminClient, String(row.id), language);
+  return buildPublicSiteRenderSite(applyPublicSiteTranslation(row, translation));
 }
 
 async function issuePasswordSessionToken(slug: string, secret: string): Promise<string> {
@@ -261,7 +285,7 @@ Deno.serve(async (req: Request) => {
 
     if (payload.action === "password_unlock") {
       if (privacyMode === "public") {
-        return json({ status: "open", site: buildSafePublicSite(row) }, 200);
+        return json({ status: "open", site: await buildSafePublicSite(adminClient, row, null) }, 200);
       }
       if (privacyMode === "invite_only") {
         return json({ status: "invite_required", site: null }, 200);
@@ -290,7 +314,7 @@ Deno.serve(async (req: Request) => {
       const passwordSession = await issuePasswordSessionToken(slug, sessionSecret);
       return json({
         status: "open",
-        site: buildSafePublicSite(row),
+        site: await buildSafePublicSite(adminClient, row, null),
         passwordSession,
       }, 200);
     }
@@ -309,7 +333,7 @@ Deno.serve(async (req: Request) => {
       return json({ status: accessStatus, site: null }, 200);
     }
 
-    return json({ status: "open", site: buildSafePublicSite(row) }, 200);
+    return json({ status: "open", site: await buildSafePublicSite(adminClient, row, payload.language ?? null) }, 200);
   } catch (error) {
     console.error("PUBLIC_SITE_ACCESS_FAILED", { reason: "UNEXPECTED_PUBLIC_SITE_ACCESS_FAILURE" });
     return json({ error: "Could not load this site right now." }, 500);

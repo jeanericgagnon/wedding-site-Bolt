@@ -1,5 +1,42 @@
 # V1 Smoke Proof Log
 
+## 2026-05-08 11:18 AM PT Lean Launch-Hardening Wave: Public Payload Minimization And Proof Alignment
+- Scope:
+  - Public payload minimization first
+  - Service-role and email authorization proof next
+  - Single deploy/proof alignment pass for the changed public site function
+- Fixed/proved:
+  - `public-site-access` no longer returns raw `site_json`, `published_json`, `wedding_data`, or `layout_config` blobs to the browser contract in the current implementation.
+  - The public site path now returns a server-built `render_model` consumed directly by `SiteView`.
+  - Nested fake sensitive-field leak tests were added for the main public render lane and passed locally.
+  - Public-access static coverage proof now enforces the safer `public-site-access` contract and the current public gate inventory, including `interactive-section-public` and `vault-contribution-public`.
+  - `public-site-access` was deployed to Supabase on `2026-05-08`.
+  - Canonical production smoke was rerun after that deploy and stayed green.
+- Proof passed:
+  - `npm test -- --run src/lib/publicSiteRenderModel.test.ts src/lib/publicSiteAccess.test.ts src/lib/publicAccessCoverageProofScript.test.ts src/lib/publicGuestSurfaceBoundary.test.ts src/pages/SiteView.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 42/42.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run proof:v1:public-access-coverage`: PASS.
+  - `npm run proof:v1:service-role-authorization`: PASS for unauthenticated denial lane; secure queue/storage sub-proof still blocked by missing `SUPABASE_SERVICE_ROLE_KEY`.
+  - `npm run proof:v1:email-messaging-authorization`: PASS for unauthenticated denial lane; secure queue-processing sub-proof still blocked by missing `SUPABASE_SERVICE_ROLE_KEY`.
+  - `supabase functions deploy public-site-access`: PASS.
+  - `supabase functions deploy interactive-section-public`: PASS.
+  - `supabase functions deploy vault-contribution-public`: PASS.
+  - `supabase functions deploy process-email-queue`: PASS.
+  - `supabase functions deploy public-itinerary-by-slug`: PASS.
+  - `supabase functions deploy photo-upload`: PASS.
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`: LIVE PASS after `public-site-access` deploy.
+  - `npm run proof:v1:guests-rsvp-ops`: LIVE PASS after refreshing the CSV/check-in guard scripts to match the current guest dashboard route ownership.
+  - `npm run proof:v1:email-messaging-authorization`: LIVE PASS for unauthenticated denial after deploying `process-email-queue`; secure queue-processing proof still blocked by missing `SUPABASE_SERVICE_ROLE_KEY`.
+  - `npm run proof:v1:service-role-authorization`: LIVE PASS for unauthenticated denial after deploying `photo-upload`; secure queue/storage proof still blocked by missing `SUPABASE_SERVICE_ROLE_KEY`.
+  - `vercel env ls production --format json`: PASS for env-name inventory; confirmed connected Vercel production env does not contain a `SUPABASE_SERVICE_ROLE_KEY`-style secret.
+  - `supabase secrets list --project-ref atuzuobpprjstfmdnwso`: FAIL from this workspace because `SUPABASE_ACCESS_TOKEN` / authenticated CLI access is unavailable.
+- Launch status:
+  - Production-ready remains `NO`.
+  - The highest-risk public payload lane is materially improved and deployed, and deploy/proof alignment for this wave is complete.
+  - Launch is still blocked only by the secure service-role proof and secure email queue-processing proof, both of which require a secure environment with `SUPABASE_SERVICE_ROLE_KEY`.
+
 _Date:_ 2026-04-30
 _Owner:_ Product finish lane
 _Production:_ `https://dayof.love`

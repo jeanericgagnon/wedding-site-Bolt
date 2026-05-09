@@ -73,13 +73,17 @@ const resolverChecks = functionEntrypoints
       && source.includes('"site_password_hash"')
       && source.includes('"guest_access_token"');
     const buildsSafePublicSite = source.includes('function buildSafePublicSite')
-      && source.includes('SAFE_PUBLIC_SITE_COLUMNS.map((key) => [key, row[key] ?? null])')
-      && source.includes('site.allow_search_indexing = row.hide_from_search !== true;');
+      && source.includes('buildPublicSiteRenderSite(applyPublicSiteTranslation(row, translation))')
+      && source.includes('translated_site_json,translated_published_json,translated_wedding_data,translated_layout_config');
     const normalizesPrivacyMode = source.includes('normalizePublicPrivacyMode(row.privacy_mode)');
     const passesStoredInviteToken = source.includes('storedInviteToken: typeof row.guest_access_token === "string" ? row.guest_access_token : null');
     const avoidsUnsafePayload = !source.includes('site: row')
       && !source.includes('site_password_hash:')
-      && !source.includes('guest_access_token: row.guest_access_token');
+      && !source.includes('guest_access_token: row.guest_access_token')
+      && !source.includes('site_json: row.site_json')
+      && !source.includes('published_json: row.published_json')
+      && !source.includes('wedding_data: row.wedding_data')
+      && !source.includes('layout_config: row.layout_config');
 
     return {
       name,
