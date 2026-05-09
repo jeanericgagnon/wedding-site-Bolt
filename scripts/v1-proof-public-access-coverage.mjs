@@ -83,7 +83,10 @@ const resolverChecks = functionEntrypoints
       && !source.includes('site_json: row.site_json')
       && !source.includes('published_json: row.published_json')
       && !source.includes('wedding_data: row.wedding_data')
-      && !source.includes('layout_config: row.layout_config');
+      && !source.includes('layout_config: row.layout_config')
+      && !source.includes('builderProject:')
+      && !source.includes('weddingData:')
+      && !source.includes('layoutConfig:');
 
     return {
       name,

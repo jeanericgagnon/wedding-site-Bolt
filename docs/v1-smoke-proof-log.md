@@ -1,5 +1,26 @@
 # V1 Smoke Proof Log
 
+## 2026-05-09 10:24 AM PT Local Strict Public DTO Hardening
+- Scope:
+  - Batch 1 strict public render DTO
+  - Batch 2 local proof and public-surface canonicalization
+- Fixed/proved:
+  - `src/lib/publicSiteRenderModel.ts` now emits a stricter public browser contract shaped as `pages`, `wedding`, and `theme`.
+  - `src/lib/publicSiteAccess.ts` now accepts and sanitizes that stricter DTO instead of the older `builderProject` / `weddingData` / `layoutConfig` shape.
+  - `src/pages/SiteView.tsx` now hydrates public rendering from the reduced DTO and no longer branches over `builderProject` or legacy `layoutConfig` hydration.
+  - `src/data/siteRepository.ts` legacy `fetchPublicSiteBySlug(...)` helper is quarantined to metadata-only columns.
+  - Nested fake sensitive-field leak tests now prove fake `internal`, `draft`, `queue`, `token`, and `password` fields injected into `site_json`, `published_json`, `wedding_data`, and `layout_config` do not reach the browser contract.
+- Proof passed:
+  - `npm test -- --run src/lib/publicSiteRenderModel.test.ts src/lib/publicSiteAccess.test.ts src/lib/publicAccessCoverageProofScript.test.ts src/lib/publicGuestSurfaceBoundary.test.ts src/pages/SiteView.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 44/44.
+  - `npm run proof:v1:public-access-coverage`: PASS.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `git diff --check`: PASS.
+- Launch status:
+  - This closes the strict public DTO lane locally.
+  - No deploy was run in this batch, so production still needs one aligned postdeploy live rerun before this blocker can be considered fully cleared.
+
 ## 2026-05-08 11:18 AM PT Lean Launch-Hardening Wave: Public Payload Minimization And Proof Alignment
 - Scope:
   - Public payload minimization first

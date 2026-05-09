@@ -35,36 +35,22 @@ export const siteRepository = {
       'site_slug',
       'site_url',
       'is_published',
-      'site_json',
       'couple_name_1',
       'couple_name_2',
       'wedding_date',
       'venue_name',
       'wedding_location',
       'template_id',
-      'wedding_data',
-      'layout_config',
       'default_language',
     ];
-    const publicSiteSelect = [...basePublicSiteColumns, 'published_json'].join(',');
-    const legacyPublicSiteSelect = [
-      ...basePublicSiteColumns,
-    ].join(',');
+    const publicSiteSelect = basePublicSiteColumns.join(',');
 
-    const queryPublicSite = async (column: 'site_slug' | 'site_url', value: string, select = publicSiteSelect) => {
+    const queryPublicSite = async (column: 'site_slug' | 'site_url', value: string) => {
       const result = await supabase
         .from('wedding_sites')
-        .select(select)
+        .select(publicSiteSelect)
         .eq(column, value)
         .maybeSingle();
-
-      if (result.error?.code === '42703' && select === publicSiteSelect) {
-        return supabase
-          .from('wedding_sites')
-          .select(legacyPublicSiteSelect)
-          .eq(column, value)
-          .maybeSingle();
-      }
 
       return result;
     };

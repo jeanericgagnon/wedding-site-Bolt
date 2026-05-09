@@ -4,10 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { AlertCircle, Lock, Eye, EyeOff } from 'lucide-react';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { WeddingDataV1, createEmptyWeddingData, normalizeWeddingData } from '../types/weddingData';
-import { LayoutConfigV1, SectionInstance } from '../types/layoutConfig';
-import { getSectionComponent } from '../sections/sectionRegistry';
+import { SectionInstance } from '../types/layoutConfig';
 import { applyThemePreset, applyThemeTokens } from '../lib/themePresets';
-import { BuilderProject } from '../types/builder/project';
 import { BuilderSectionInstance, createDefaultSectionInstance } from '../types/builder/section';
 import { SectionRenderer } from '../builder/components/SectionRenderer';
 import { PageRenderer } from '../render/PageRenderer';
@@ -19,7 +17,6 @@ import { normalizePublicSiteSlug } from '../lib/publicSiteSlug';
 import { getTemplatePack } from '../builder/constants/builderTemplatePacks';
 import { getSectionVariants } from '../sections/sectionRegistry';
 import { demoWeddingSite } from '../lib/demoData';
-import { rewriteSignedMediaUrlsToPublicDeep } from '../lib/mediaUrl';
 import { getArchiveModeDescriptor } from '../lib/archiveMode';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { fetchPublicSiteAccess, requestPublicSitePasswordUnlock } from '../lib/publicSiteAccess';
@@ -616,7 +613,6 @@ export const SiteView: React.FC = () => {
   const { i18n } = useTranslation();
   const [weddingData, setWeddingData] = useState<WeddingDataV1 | null>(null);
   const [builderSections, setBuilderSections] = useState<BuilderSectionInstance[] | null>(null);
-  const [layoutConfig, setLayoutConfig] = useState<LayoutConfigV1 | null>(null);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
   const [useNewRenderer, setUseNewRenderer] = useState(false);
   const [isComingSoon, setIsComingSoon] = useState(false);
@@ -678,7 +674,6 @@ export const SiteView: React.FC = () => {
       const clearSiteState = () => {
         setWeddingSiteId(null);
         setWeddingData(null);
-        setLayoutConfig(null);
         setBuilderSections(null);
         setUseNewRenderer(false);
         setHideFromSearch(false);
@@ -753,37 +748,26 @@ export const SiteView: React.FC = () => {
         setPrivacyGate('open');
 
         const renderModel = data.render_model;
-        const rawSiteJson = renderModel.builderProject;
-        const siteJson = rawSiteJson
-          ? rewriteSignedMediaUrlsToPublicDeep({
-              ...rawSiteJson,
-              pages: (rawSiteJson.pages ?? []).map((page) => ({
-                ...page,
-                sections: (page.sections ?? []).map((section) =>
-                  section.type === 'hero' && section.variant === 'video'
-                    ? { ...section, variant: 'default' }
-                    : section
-                ),
-              })),
-            })
-          : null;
+        const renderPages = (renderModel.pages ?? []).map((page) => ({
+          ...page,
+          sections: (page.sections ?? []).map((section) =>
+            section.type === 'hero' && section.variant === 'video'
+              ? { ...section, variant: 'default' }
+              : section
+          ),
+        }));
 
         const persistedSections = await siteRepository.fetchPublishedSections(data.id as string).catch(() => []);
         const isDemoSite = resolvedSlug === 'alex-jordan-demo';
 
-        if (isPublished && persistedSections.length > 0 && !(siteJson && siteJson.pages?.length > 0)) {
-          const rawWData = normalizeWeddingData(
-            rewriteSignedMediaUrlsToPublicDeep(
-              renderModel.weddingData ?? createEmptyWeddingData()
-            )
-          );
+        if (isPublished && persistedSections.length > 0 && renderPages.length === 0) {
+          const rawWData = normalizeWeddingData(renderModel.wedding ?? createEmptyWeddingData());
           const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData, subresourceAccess), resolvedSlug);
           if (isDemoSite && isPublicWeddingDataSparse(wData)) {
             const demoSections = createDemoFallbackSections('modern-luxe');
             if (demoSections.length > 0) {
               setUseNewRenderer(false);
               setBuilderSections(filterGuestReadyBuilderSections(demoSections, createAlexJordanDemoWeddingData()));
-              setLayoutConfig(null);
               setWeddingData(createAlexJordanDemoWeddingData());
               applyThemePreset('elegant');
               return;
@@ -795,34 +779,29 @@ export const SiteView: React.FC = () => {
           }
           setUseNewRenderer(true);
           setBuilderSections(null);
-          setLayoutConfig(null);
           setWeddingData(wData);
           setWeddingSiteId(data.id as string);
           return;
         }
 
-        if (siteJson && siteJson.pages?.length > 0) {
-          const homePage = siteJson.pages.find(p => p.id === 'home') ?? siteJson.pages[0];
+        if (renderPages.length > 0) {
+          const homePage = renderPages.find((page) => page.meta?.isHome || page.id === 'home' || page.slug === 'home') ?? renderPages[0];
           const sections = normalizeSectionVariants(homePage.sections.filter(s => s.enabled));
           const shouldAppendRegistry = await hasLiveRegistryItems(data.id as string, subresourceAccess);
           const publicSections = appendRegistrySectionWhenNeeded(sections, shouldAppendRegistry);
-          const rawWData = normalizeWeddingData(
-            rewriteSignedMediaUrlsToPublicDeep(
-              renderModel.weddingData ?? createEmptyWeddingData()
-            )
-          );
+          const rawWData = normalizeWeddingData(renderModel.wedding ?? createEmptyWeddingData());
           const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData, subresourceAccess), resolvedSlug);
           const sparsePublicData = isPublicWeddingDataSparse(wData);
 
           if (publicSections.length === 0 || (isDemoSite && sparsePublicData)) {
             if (isDemoSite) {
               const demoData = createAlexJordanDemoWeddingData();
-              const demoSections = createDemoFallbackSections(siteJson.templateId || 'modern-luxe');
+              const demoSections = createDemoFallbackSections(data.template_id || 'modern-luxe');
               if (demoSections.length > 0) {
                 setBuilderSections(filterGuestReadyBuilderSections(demoSections, demoData));
                 setWeddingData(demoData);
-                if (siteJson.themeId) {
-                  applyThemePreset(siteJson.themeId);
+                if (renderModel.theme.preset) {
+                  applyThemePreset(renderModel.theme.preset);
                 } else {
                   applyThemePreset('elegant');
                 }
@@ -839,10 +818,10 @@ export const SiteView: React.FC = () => {
             return;
           }
 
-          if (siteJson.themeTokens) {
-            applyThemeTokens(siteJson.themeTokens);
-          } else if (siteJson.themeId) {
-            applyThemePreset(siteJson.themeId);
+          if (renderModel.theme.tokens) {
+            applyThemeTokens(renderModel.theme.tokens as unknown as Parameters<typeof applyThemeTokens>[0]);
+          } else if (renderModel.theme.preset) {
+            applyThemePreset(renderModel.theme.preset);
           } else if (wData.theme?.preset) {
             applyThemePreset(wData.theme.preset);
           }
@@ -850,13 +829,11 @@ export const SiteView: React.FC = () => {
           setBuilderSections(filterGuestReadyBuilderSections(publicSections, wData));
           setWeddingData(wData);
         } else {
-          const parsedWData = renderModel.weddingData;
-          const rawWData = parsedWData
-            ? normalizeWeddingData(rewriteSignedMediaUrlsToPublicDeep(parsedWData))
+          const rawWData = renderModel.wedding
+            ? normalizeWeddingData(renderModel.wedding)
             : null;
-          const lConfig = renderModel.layoutConfig;
 
-          if (!rawWData || !lConfig) {
+          if (!rawWData) {
             setError('This wedding site is still being set up. Check back soon!');
             setLoading(false);
             return;
@@ -869,7 +846,6 @@ export const SiteView: React.FC = () => {
             if (demoSections.length > 0) {
               setBuilderSections(filterGuestReadyBuilderSections(demoSections, demoData));
               setWeddingData(demoData);
-              setLayoutConfig(null);
               applyThemePreset('elegant');
               return;
             }
@@ -884,7 +860,7 @@ export const SiteView: React.FC = () => {
           }
 
           setWeddingData(wData);
-          setLayoutConfig(lConfig);
+          setBuilderSections(null);
         }
       } catch {
         clearSiteState();
@@ -959,40 +935,6 @@ export const SiteView: React.FC = () => {
         </div>
       </SiteViewContext.Provider>
     );
-  } else if (weddingData && layoutConfig) {
-    const homePage = layoutConfig.pages.find(p => p.id === 'home') || layoutConfig.pages[0];
-    if (homePage) {
-      ready = true;
-      const enabledSections = homePage.sections.filter(section => section.enabled);
-      liveContent = (
-        <SiteViewContext.Provider value={{ weddingSiteId, ...publicSubresourceAccess }}>
-          <div className="min-h-screen bg-background" onErrorCapture={handleImageErrorCapture}>
-            <OwnerPreviewBanner />
-            {enabledSections.map((sectionInstance) => {
-              try {
-                const SectionComponent = getSectionComponent(
-                  sectionInstance.type,
-                  sectionInstance.variant
-                );
-                return (
-                  <SectionComponent
-                    key={sectionInstance.id}
-                    data={weddingData}
-                    instance={sectionInstance}
-                  />
-                );
-              } catch {
-                return (
-                  <div key={sectionInstance.id} className="py-8 px-4 bg-surface-subtle text-text-secondary text-center">
-                    <p>This part of the wedding site is taking a moment to load.</p>
-                  </div>
-                );
-              }
-            })}
-          </div>
-        </SiteViewContext.Provider>
-      );
-    }
   }
 
   return (

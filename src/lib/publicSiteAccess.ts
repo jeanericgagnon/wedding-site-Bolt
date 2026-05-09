@@ -1,6 +1,4 @@
-import type { BuilderProject } from '../types/builder/project';
-import type { LayoutConfigV1 } from '../types/layoutConfig';
-import type { WeddingDataV1 } from '../types/weddingData';
+import type { PublicSiteRenderModel } from './publicSiteRenderModel';
 import { customerSafeErrorMessage } from "./customerSafeError";
 
 export type PublicSiteGateStatus =
@@ -23,11 +21,7 @@ export interface PublicSiteSafeRow {
   template_id: string | null;
   default_language: string | null;
   allow_search_indexing: boolean;
-  render_model: {
-    builderProject: BuilderProject | null;
-    weddingData: WeddingDataV1 | null;
-    layoutConfig: LayoutConfigV1 | null;
-  };
+  render_model: PublicSiteRenderModel;
 }
 
 export interface PublicSiteAccessResponse {
@@ -48,12 +42,22 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 }
 
+function sanitizePublicRenderModel(value: unknown): PublicSiteRenderModel {
+  const renderModel = asRecord(value);
+  return {
+    pages: Array.isArray(renderModel?.pages) ? (renderModel.pages as PublicSiteRenderModel['pages']) : [],
+    wedding: (renderModel?.wedding ?? null) as PublicSiteRenderModel['wedding'],
+    theme: {
+      preset: typeof asRecord(renderModel?.theme)?.preset === 'string' ? String(asRecord(renderModel?.theme)?.preset) : null,
+      tokens: asRecord(asRecord(renderModel?.theme)?.tokens) ?? null,
+    },
+  };
+}
+
 export function sanitizePublicSiteSafeRow(site: unknown): PublicSiteSafeRow | null {
   if (!site || typeof site !== "object" || Array.isArray(site)) return null;
   const row = site as Record<string, unknown>;
   if (typeof row.id !== "string") return null;
-  const renderModel = asRecord(row.render_model);
-
   return {
     id: row.id,
     site_slug: nullableString(row.site_slug),
@@ -67,11 +71,7 @@ export function sanitizePublicSiteSafeRow(site: unknown): PublicSiteSafeRow | nu
     template_id: nullableString(row.template_id),
     default_language: nullableString(row.default_language),
     allow_search_indexing: row.allow_search_indexing !== false,
-    render_model: {
-      builderProject: (renderModel?.builderProject ?? null) as BuilderProject | null,
-      weddingData: (renderModel?.weddingData ?? null) as WeddingDataV1 | null,
-      layoutConfig: (renderModel?.layoutConfig ?? null) as LayoutConfigV1 | null,
-    },
+    render_model: sanitizePublicRenderModel(row.render_model),
   };
 }
 

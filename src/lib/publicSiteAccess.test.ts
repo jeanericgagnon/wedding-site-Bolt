@@ -18,9 +18,9 @@ describe('public site access client contract', () => {
       default_language: 'en',
       allow_search_indexing: false,
       render_model: {
-        builderProject: { pages: [{ id: 'home', sections: [] }] },
-        weddingData: { couple: { displayName: 'Maya & Leo' } },
-        layoutConfig: { pages: [{ id: 'home', sections: [] }] },
+        pages: [{ id: 'home', slug: 'home', title: 'Home', orderIndex: 0, sections: [], meta: { isHome: true, isHidden: false } }],
+        wedding: { couple: { displayName: 'Maya & Leo' } },
+        theme: { preset: 'romantic', tokens: { '--color-primary': '#123456' } },
       },
       site_password_hash: 'never-send-this',
       guest_access_token: 'never-send-this-either',
@@ -45,14 +45,14 @@ describe('public site access client contract', () => {
       default_language: 'en',
       allow_search_indexing: false,
       render_model: {
-        builderProject: { pages: [{ id: 'home', sections: [] }] },
-        weddingData: { couple: { displayName: 'Maya & Leo' } },
-        layoutConfig: { pages: [{ id: 'home', sections: [] }] },
+        pages: [{ id: 'home', slug: 'home', title: 'Home', orderIndex: 0, sections: [], meta: { isHome: true, isHidden: false } }],
+        wedding: { couple: { displayName: 'Maya & Leo' } },
+        theme: { preset: 'romantic', tokens: { '--color-primary': '#123456' } },
       },
     });
-    expect(site?.render_model.builderProject).toEqual({ pages: [{ id: 'home', sections: [] }] });
-    expect(site?.render_model.weddingData).toEqual({ couple: { displayName: 'Maya & Leo' } });
-    expect(site?.render_model.layoutConfig).toEqual({ pages: [{ id: 'home', sections: [] }] });
+    expect(site?.render_model.pages).toEqual([{ id: 'home', slug: 'home', title: 'Home', orderIndex: 0, sections: [], meta: { isHome: true, isHidden: false } }]);
+    expect(site?.render_model.wedding).toEqual({ couple: { displayName: 'Maya & Leo' } });
+    expect(site?.render_model.theme).toEqual({ preset: 'romantic', tokens: { '--color-primary': '#123456' } });
     expect(site).not.toHaveProperty('site_password_hash');
     expect(site).not.toHaveProperty('guest_access_token');
     expect(site).not.toHaveProperty('user_id');

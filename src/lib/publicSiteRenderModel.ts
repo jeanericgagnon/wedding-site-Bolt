@@ -1,4 +1,4 @@
-import type { BuilderProject, BuilderPage } from '../types/builder/project.ts';
+import type { BuilderPage } from '../types/builder/project.ts';
 import type { BuilderSectionInstance } from '../types/builder/section.ts';
 import type { LayoutConfigV1, PageConfig, SectionInstance } from '../types/layoutConfig.ts';
 import type { WeddingDataV1 } from '../types/weddingData.ts';
@@ -6,12 +6,17 @@ import { normalizeWeddingData } from '../types/weddingData.ts';
 import { buildCoupleDisplayName } from './coupleDisplayName.ts';
 import { safeJsonParse } from './jsonUtils.ts';
 import { rewriteSignedMediaUrlsToPublicDeep } from './mediaUrl.ts';
-import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicWeddingData } from './publicSiteProject.ts';
+import { getIsPublishedFromSiteRow } from './publicSiteProject.ts';
+
+export interface PublicSiteThemeModel {
+  preset: string | null;
+  tokens: Record<string, unknown> | null;
+}
 
 export interface PublicSiteRenderModel {
-  builderProject: BuilderProject | null;
-  weddingData: WeddingDataV1 | null;
-  layoutConfig: LayoutConfigV1 | null;
+  pages: BuilderPage[];
+  wedding: WeddingDataV1 | null;
+  theme: PublicSiteThemeModel;
 }
 
 export interface PublicSiteRenderSite {
@@ -31,10 +36,16 @@ export interface PublicSiteRenderSite {
 }
 
 const PUBLIC_SENSITIVE_KEY_PATTERN =
-  /(token|password|secret|api[_-]?key|service[_-]?role|private|internal|draft|billing|notification|owner|invite[_-]?hash|password[_-]?hash)/i;
+  /(token|password|secret|api[_-]?key|service[_-]?role|private|internal|draft|billing|notification|owner|invite[_-]?hash|password[_-]?hash|provider|moderation|debug|queue)/i;
 
 function asString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (value && typeof value === 'object' && !Array.isArray(value)) return value as Record<string, unknown>;
+  if (typeof value !== 'string') return null;
+  return safeJsonParse<Record<string, unknown> | null>(value, null);
 }
 
 function sanitizeDeepPublicValue<T>(value: T): T {
@@ -55,8 +66,8 @@ function sanitizeDeepPublicValue<T>(value: T): T {
   return value;
 }
 
-function sanitizeBuilderSectionInstance(section: BuilderSectionInstance): BuilderSectionInstance {
-  return {
+function sanitizeBuilderSection(section: BuilderSectionInstance): BuilderSectionInstance {
+  return sanitizeDeepPublicValue({
     id: section.id,
     type: section.type,
     displayName: asString(section.displayName),
@@ -64,87 +75,67 @@ function sanitizeBuilderSectionInstance(section: BuilderSectionInstance): Builde
     enabled: section.enabled === true,
     locked: section.locked === true,
     orderIndex: typeof section.orderIndex === 'number' ? section.orderIndex : 0,
-    settings: sanitizeDeepPublicValue(section.settings ?? {}) as Record<string, unknown>,
-    bindings: sanitizeDeepPublicValue(section.bindings ?? {}) as BuilderSectionInstance['bindings'],
-    styleOverrides: sanitizeDeepPublicValue(section.styleOverrides ?? {}) as BuilderSectionInstance['styleOverrides'],
+    settings: section.settings ?? {},
+    bindings: section.bindings ?? {},
+    styleOverrides: section.styleOverrides ?? {},
     meta: {
       createdAtISO: asString(section.meta?.createdAtISO) ?? new Date().toISOString(),
       updatedAtISO: asString(section.meta?.updatedAtISO) ?? new Date().toISOString(),
     },
-  };
+  } satisfies BuilderSectionInstance);
 }
 
 function sanitizeBuilderPage(page: BuilderPage): BuilderPage {
-  return {
+  return sanitizeDeepPublicValue({
     id: page.id,
     title: page.title,
     slug: page.slug,
     orderIndex: typeof page.orderIndex === 'number' ? page.orderIndex : 0,
-    sections: Array.isArray(page.sections) ? page.sections.map(sanitizeBuilderSectionInstance) : [],
+    sections: Array.isArray(page.sections) ? page.sections.map(sanitizeBuilderSection) : [],
     meta: {
       isHome: page.meta?.isHome === true,
       isHidden: page.meta?.isHidden === true,
     },
-  };
+  } satisfies BuilderPage);
 }
 
-function sanitizeBuilderProject(project: BuilderProject | null): BuilderProject | null {
-  if (!project) return null;
-  return sanitizeDeepPublicValue({
-    id: project.id,
-    weddingId: project.weddingId,
-    templateId: project.templateId,
-    themeId: project.themeId,
-    ...(project.themeTokens ? { themeTokens: project.themeTokens } : {}),
-    ...(project.globalAnimationPreset ? { globalAnimationPreset: project.globalAnimationPreset } : {}),
-    pages: Array.isArray(project.pages) ? project.pages.map(sanitizeBuilderPage) : [],
-    draftVersion: typeof project.draftVersion === 'number' ? project.draftVersion : 1,
-    publishedVersion: typeof project.publishedVersion === 'number' ? project.publishedVersion : null,
-    publishStatus: project.publishStatus,
-    lastPublishedAt: project.lastPublishedAt ?? null,
-    meta: {
-      createdAtISO: asString(project.meta?.createdAtISO) ?? new Date().toISOString(),
-      updatedAtISO: asString(project.meta?.updatedAtISO) ?? new Date().toISOString(),
-    },
-  } satisfies BuilderProject);
-}
-
-function sanitizeLegacySection(section: SectionInstance): SectionInstance {
+function toLegacyBuilderSection(section: SectionInstance, index: number): BuilderSectionInstance {
   return sanitizeDeepPublicValue({
     id: section.id,
     type: section.type,
     variant: section.variant,
     enabled: section.enabled === true,
-    ...(section.bindings ? { bindings: section.bindings } : {}),
+    locked: section.locked === true,
+    orderIndex: index,
     settings: section.settings ?? {},
-    ...(section.overrides ? { overrides: section.overrides } : {}),
-    ...(typeof section.locked === 'boolean' ? { locked: section.locked } : {}),
-  } satisfies SectionInstance);
+    bindings: section.bindings ?? {},
+    styleOverrides: section.overrides ?? {},
+    meta: {
+      createdAtISO: new Date().toISOString(),
+      updatedAtISO: new Date().toISOString(),
+    },
+  } satisfies BuilderSectionInstance);
 }
 
-function sanitizeLayoutPage(page: PageConfig): PageConfig {
-  return {
+function toLegacyBuilderPage(page: PageConfig, index: number): BuilderPage {
+  return sanitizeDeepPublicValue({
     id: page.id,
     title: page.title,
-    sections: Array.isArray(page.sections) ? page.sections.map(sanitizeLegacySection) : [],
-  };
-}
-
-function sanitizeLayoutConfig(layoutConfig: LayoutConfigV1 | null): LayoutConfigV1 | null {
-  if (!layoutConfig) return null;
-  return sanitizeDeepPublicValue({
-    version: layoutConfig.version,
-    templateId: layoutConfig.templateId,
-    pages: Array.isArray(layoutConfig.pages) ? layoutConfig.pages.map(sanitizeLayoutPage) : [],
+    slug: page.id === 'home'
+      ? 'home'
+      : String(page.title || page.id || `page-${index}`).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+    orderIndex: index,
+    sections: Array.isArray(page.sections) ? page.sections.map(toLegacyBuilderSection) : [],
     meta: {
-      createdAtISO: asString(layoutConfig.meta?.createdAtISO) ?? new Date().toISOString(),
-      updatedAtISO: asString(layoutConfig.meta?.updatedAtISO) ?? new Date().toISOString(),
+      isHome: page.id === 'home' || index === 0,
+      isHidden: false,
     },
-  } satisfies LayoutConfigV1);
+  } satisfies BuilderPage);
 }
 
 function sanitizeWeddingData(data: WeddingDataV1 | null): WeddingDataV1 | null {
   if (!data) return null;
+
   const normalized = normalizeWeddingData(data);
   const partner1Name = asString(normalized.couple?.partner1Name) ?? '';
   const partner2Name = asString(normalized.couple?.partner2Name) ?? '';
@@ -196,6 +187,74 @@ function sanitizeWeddingData(data: WeddingDataV1 | null): WeddingDataV1 | null {
   } satisfies WeddingDataV1);
 }
 
+function getPublishedProjectPages(row: Record<string, unknown>, isPublished: boolean): BuilderPage[] {
+  const preferredProject = safeJsonParse<Record<string, unknown> | null>(
+    isPublished ? row.published_json : row.site_json,
+    null,
+  );
+  const pages = Array.isArray(preferredProject?.pages) ? preferredProject.pages : [];
+  if (pages.length === 0) return [];
+  return pages.map((page) => sanitizeBuilderPage(page as BuilderPage));
+}
+
+function getLegacyLayoutPages(row: Record<string, unknown>): BuilderPage[] {
+  const layoutConfig = rewriteSignedMediaUrlsToPublicDeep(
+    safeJsonParse<LayoutConfigV1 | null>(row.layout_config, null),
+  );
+  if (!layoutConfig || !Array.isArray(layoutConfig.pages)) return [];
+  return layoutConfig.pages.map(toLegacyBuilderPage);
+}
+
+function getPublicWeddingRenderData(row: Record<string, unknown>, isPublished: boolean): WeddingDataV1 | null {
+  const publishedSource = asRecord(row.published_json);
+  const draftSource = asRecord(row.site_json);
+
+  const candidates = isPublished
+    ? [
+        row.wedding_data,
+        publishedSource?.weddingDataSnapshot,
+        publishedSource?.weddingData,
+      ]
+    : [
+        draftSource?.weddingDataSnapshot,
+        row.wedding_data,
+        draftSource?.weddingData,
+      ];
+
+  for (const candidate of candidates) {
+    const parsed = safeJsonParse<WeddingDataV1 | null>(candidate, null);
+    if (parsed) {
+      return sanitizeWeddingData(rewriteSignedMediaUrlsToPublicDeep(parsed));
+    }
+  }
+
+  return null;
+}
+
+function getPublicThemeModel(
+  row: Record<string, unknown>,
+  pagesExist: boolean,
+  wedding: WeddingDataV1 | null,
+  isPublished: boolean,
+): PublicSiteThemeModel {
+  const preferredProject = safeJsonParse<Record<string, unknown> | null>(
+    isPublished ? row.published_json : row.site_json,
+    null,
+  );
+
+  const preset = pagesExist
+    ? (asString(preferredProject?.themeId) ?? asString(wedding?.theme?.preset) ?? null)
+    : (asString(wedding?.theme?.preset) ?? null);
+  const rawTokens = preferredProject?.themeTokens;
+
+  return {
+    preset,
+    tokens: rawTokens && typeof rawTokens === 'object' && !Array.isArray(rawTokens)
+      ? sanitizeDeepPublicValue(rawTokens as Record<string, unknown>)
+      : null,
+  };
+}
+
 export function applyPublicSiteTranslation(
   row: Record<string, unknown>,
   translation: Record<string, unknown> | null,
@@ -211,35 +270,17 @@ export function applyPublicSiteTranslation(
 }
 
 export function buildPublicSiteRenderSite(row: Record<string, unknown>): PublicSiteRenderSite {
-  const builderProject = (() => {
-    try {
-      return sanitizeBuilderProject(
-        rewriteSignedMediaUrlsToPublicDeep(getPublicBuilderProject(row)),
-      );
-    } catch {
-      return null;
-    }
-  })();
-  const weddingData = (() => {
-    try {
-      return sanitizeWeddingData(
-        rewriteSignedMediaUrlsToPublicDeep(getPublicWeddingData(row)),
-      );
-    } catch {
-      return null;
-    }
-  })();
-  const layoutConfig = sanitizeLayoutConfig(
-    rewriteSignedMediaUrlsToPublicDeep(
-      safeJsonParse<LayoutConfigV1 | null>(row.layout_config, null),
-    ),
-  );
+  const isPublished = getIsPublishedFromSiteRow(row);
+  const builderPages = getPublishedProjectPages(row, isPublished);
+  const pages = builderPages.length > 0 ? builderPages : getLegacyLayoutPages(row);
+  const wedding = getPublicWeddingRenderData(row, isPublished);
+  const theme = getPublicThemeModel(row, pages.length > 0, wedding, isPublished);
 
   return {
     id: String(row.id),
     site_slug: asString(row.site_slug) ?? null,
     site_url: asString(row.site_url) ?? null,
-    is_published: getIsPublishedFromSiteRow(row),
+    is_published: isPublished,
     couple_name_1: asString(row.couple_name_1) ?? null,
     couple_name_2: asString(row.couple_name_2) ?? null,
     wedding_date: asString(row.wedding_date) ?? null,
@@ -249,9 +290,9 @@ export function buildPublicSiteRenderSite(row: Record<string, unknown>): PublicS
     default_language: asString(row.default_language) ?? null,
     allow_search_indexing: row.hide_from_search !== true,
     render_model: {
-      builderProject,
-      weddingData,
-      layoutConfig,
+      pages,
+      wedding,
+      theme,
     },
   };
 }

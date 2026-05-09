@@ -1,49 +1,68 @@
 # Production Hardening Report
 
-_Updated:_ 2026-05-08 11:28 AM PT
+_Updated:_ 2026-05-09
 _Branch carrying latest pushed work:_ `codex/v1-finish-hard-gates-2`
-_Latest commit:_ `71cd556c` `Land launch hardening worktree`
+_Latest commit:_ `96abd2e5` `Update live smoke public copy expectations`
+_Latest runtime deploy commit:_ `debfed68` `Harden public access and launch control`
 
 ## Current Verdict
 
-- **Readiness score:** `8.2 / 10`
+- **Readiness score:** `8.5 / 10`
 - **Launch verdict:** `HOLD`
 - **Production-ready:** `NO`
 
-This pass moved the launch program forward in a real way: the highest-risk public payload lane is now minimized in code, covered by leak-focused tests, and deployed for `public-site-access`; the live guests/RSVP lane is green again; the remaining public/runtime functions touched in this wave are now deployed; and the asset budget proof passes. We still cannot call production ready because the secure service-role proof and secure email queue proof remain open, and the secure proof secret is not present in the connected Vercel production env.
+This is a stronger production posture than the repo had before the final hardening push, but it is not a true `10 / 10` launch state yet. The production deploy is live, the public-function alignment work landed, canonical smoke is green, public-quality is green, and guests / RSVP ops is green. The strict public render DTO is now implemented and proven locally, but it has not yet been redeployed or live-validated. Secure deep proof for service-role containment and email queue-processing also remains open because the secure proof environment is unavailable from this workspace.
 
-## What Changed In This Hardening Wave
+## What Changed In The Final Hardening Phase
 
-### Wave 1: public payload minimization
+### 1. Public/runtime hardening moved from theory to live runtime
 
-- `public-site-access` was refactored to return a minimal server-built public render model instead of raw `site_json`, `published_json`, `wedding_data`, and `layout_config` blobs.
-- `SiteView` was moved to consume that server-built render model directly.
-- Browser-side public translation fetch fallback was removed from the public site path.
-- Nested fake sensitive-field leak tests were added for the main public render lane.
-- Public-access static proof was updated to enforce the safer contract.
+- The production web app is live at [dayof.love](https://dayof.love).
+- `public-site-access`, `interactive-section-public`, and `vault-contribution-public` were deployed and aligned with the live web runtime.
+- `process-email-queue`, `public-itinerary-by-slug`, and `photo-upload` were also deployed in the same hardening wave.
+- Canonical smoke and public-quality were rerun after deploy alignment and both passed.
 
-### Wave 2: service-role and email authorization proof
+### 2. Public payload handling improved again and is code-complete locally
 
-- `npm run proof:v1:service-role-authorization` is green for the unauthenticated denial lane.
-- `npm run proof:v1:email-messaging-authorization` is green for the unauthenticated denial lane.
-- The remaining open work is the secure-env sub-proof for queue/storage and queue-processing integrity, which still requires `SUPABASE_SERVICE_ROLE_KEY`.
-- Vercel production env inventory confirms that no secure proof secret is available there.
-- Supabase secret inventory remains blocked from this workspace because `SUPABASE_ACCESS_TOKEN` or an authenticated Supabase CLI session is not available.
+- The main public site lane no longer returns raw top-level `site_json`, `published_json`, `wedding_data`, or `layout_config` blobs directly.
+- The browser now consumes a stricter server-built public DTO shaped as public `pages`, `wedding`, and `theme`.
+- `SiteView` no longer hydrates from `builderProject`, `weddingData`, or `layoutConfig`.
+- Legacy client-side public site reads are quarantined to metadata-only columns.
+- Existing leak-focused tests, `SiteView` regression tests, and public-access static proof are green locally.
+- This is still not fully closed because the stricter DTO is local-only until it is redeployed and rerun through live proof.
 
-### Wave 3: deploy/proof alignment
+### 3. Authorization proof improved, but deep secure proof remains open
 
-- `public-site-access` was deployed to Supabase on `2026-05-08`.
-- `interactive-section-public`, `vault-contribution-public`, `process-email-queue`, `public-itinerary-by-slug`, and `photo-upload` were also deployed on `2026-05-08`.
-- Canonical production smoke was rerun after that deploy and stayed green.
-- Guests / RSVP ops proof was rerun after refreshing the guard scripts and is green on the live runtime.
-- Email authorization and service-role authorization live unauthenticated-denial lanes are green after the deploys.
+- `npm run proof:v1:service-role-authorization` is green for the unauthenticated denial lane, including live runtime proof.
+- `npm run proof:v1:email-messaging-authorization` is green for the unauthenticated denial lane, including live runtime proof.
+- Historical hardening records indicate earlier secure proof coverage, but the current launch-signoff bar still needs a fresh secure-env rerun for:
+  - queue/storage containment
+  - cross-site mutation resistance
+  - queue-processing integrity
+  - recipient scoping and collaborator restrictions
 
 ## Current Blocking Risks
 
-1. Secure service-role queue/storage proof remains open because the secure proof environment has not yet been run.
-2. Email queue-processing proof remains open for the same secure-env reason.
+1. **Strict public render DTO is not yet live-validated**
+   - The stricter render-only DTO is implemented locally, but production still runs the older deployed public contract until the next approved deploy.
+   - Remaining work:
+     - deploy the stricter public DTO changes
+     - rerun live smoke/public-quality
+     - only reopen code trimming if live proof exposes remaining broad payload risk
 
-## Proof And Deployment Summary
+2. **Secure service-role queue/storage proof is not freshly rerun**
+   - Runtime deep proof still requires `SUPABASE_SERVICE_ROLE_KEY`.
+   - This workspace does not have that secret.
+
+3. **Secure email queue-processing proof is not freshly rerun**
+   - Runtime deep proof still requires `SUPABASE_SERVICE_ROLE_KEY`.
+   - This workspace does not have that secret.
+
+4. **Deployment / validation / asset closeout is improved but not final**
+   - Production deploy state is far clearer than before.
+   - The board still needs the remaining launch-critical proof and public-payload closeout before we can claim full launch confidence.
+
+## Current Proof And Deployment Summary
 
 ### Local proof status
 
@@ -51,62 +70,52 @@ This pass moved the launch program forward in a real way: the highest-risk publi
 - `npm run lint -- --quiet`: `PASS`
 - `npm run build`: `PASS`
 - `npm run proof:v1:public-access-coverage`: `PASS`
-- Public render-model / leak / SiteView regression tests: `PASS`
-- `npm run proof:v1:service-role-authorization`: `PASS` with secure-env sub-proof still pending
-- `npm run proof:v1:email-messaging-authorization`: `PASS` with secure-env sub-proof still pending
-- `npm test -- --run src/lib/publicGuestSurfaceBoundary.test.ts`: `PASS`
+- public render-model / leak / SiteView regression tests: `PASS`
+- `npm run proof:v1:performance-budget`: `PASS`
+- `npm run proof:v1:board:md`: current-board guard, rerun after every board update
 
 ### Live proof status
 
-- Preview web deploy for `71cd556c`: `LIVE PASS`
-- `public-site-access` deploy: `LIVE PASS`
-- `interactive-section-public` deploy: `LIVE PASS`
-- `vault-contribution-public` deploy: `LIVE PASS`
-- `process-email-queue` deploy: `LIVE PASS`
-- `public-itinerary-by-slug` deploy: `LIVE PASS`
-- `photo-upload` deploy: `LIVE PASS`
-- `npm run proof:v1:canonical-smoke`: `LIVE PASS` after `public-site-access` deploy
+- production web deploy at [dayof.love](https://dayof.love): `LIVE`
+- `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`: `LIVE PASS`
+- `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`: `LIVE PASS`
 - `npm run proof:v1:guests-rsvp-ops`: `LIVE PASS`
-- `npm run proof:v1:email-messaging-authorization`: `LIVE PASS` for unauthenticated denial, with secure-env blocker still open
-- `npm run proof:v1:service-role-authorization`: `LIVE PASS` for unauthenticated denial, with secure-env blocker still open
-- `vercel env ls production --format json`: `PASS` for env-name inventory; confirmed no `SUPABASE_SERVICE_ROLE_KEY`-style secret is present in connected Vercel production env
-- `supabase secrets list --project-ref atuzuobpprjstfmdnwso`: `FAIL` from this workspace because `SUPABASE_ACCESS_TOKEN` / authenticated CLI access is unavailable
+- `npm run proof:v1:service-role-authorization`: `LIVE PASS` for unauthenticated denial; deep secure proof still open
+- `npm run proof:v1:email-messaging-authorization`: `LIVE PASS` for unauthenticated denial; deep secure proof still open
 
-### Still not complete
+### Secure-env blockers
 
-- Secure service-role queue/storage deep proof in a secure proof environment
-- Secure email queue-processing deep proof in a secure proof environment
-- The remaining final launch decision depends on the two secure-env proof lanes only
+- `SUPABASE_SERVICE_ROLE_KEY` is not present in the local workspace env.
+- Connected Vercel env inventories did not expose a service-role-style secret.
+- Supabase control-plane secret inspection remains blocked because `SUPABASE_ACCESS_TOKEN` or an authenticated Supabase CLI session is not available from this workspace.
 
-## Active Control Position
+## Launch-Control Position
 
-The hardening mandate is still:
+The hardening mandate is now intentionally narrower and tougher:
 
-1. Finish secure service-role queue/storage proof.
-2. Finish secure email queue-processing proof.
-3. Keep the current validation matrix fresh as code changes.
-4. Keep the asset budget green as code changes.
+1. Deploy and live-validate strict public payload minimization.
+2. Finish secure service-role queue/storage proof.
+3. Finish secure email queue-processing proof.
+4. Keep deployment state canonical.
+5. Keep validation state canonical.
+6. Close asset/CDN launch questions.
 
-Additional dashboard extraction work stays de-prioritized unless it directly removes one of those blockers.
+Broad dashboard extraction, route decomposition, and cosmetic cleanup stay out of the launch lane unless they directly remove one of those blockers.
 
 ## Document Map
 
 - Active control board: [BACKLOG.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG.md)
-- Historical hardening diary / extraction log archive: [docs/PRODUCTION_HARDENING_CHANGELOG.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/PRODUCTION_HARDENING_CHANGELOG.md)
+- Historical hardening diary / extraction archive: [docs/PRODUCTION_HARDENING_CHANGELOG.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/PRODUCTION_HARDENING_CHANGELOG.md)
 - Smoke and proof history: [docs/v1-smoke-proof-log.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/v1-smoke-proof-log.md)
+- Residual public-access inventory: [docs/PUBLIC_ACCESS_RESIDUAL_AUDIT_2026-05-08.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/PUBLIC_ACCESS_RESIDUAL_AUDIT_2026-05-08.md)
 
-## Results Recorded For This Wave
+## Bottom Line
 
-- `npm run proof:v1:public-access-coverage`: `PASS`
-- `npm run proof:v1:service-role-authorization`: `PASS` with secure-env blocker still open
-- `npm run proof:v1:email-messaging-authorization`: `PASS` with secure-env blocker still open
-- `public-site-access` deploy: `PASS`
-- `npm run proof:v1:canonical-smoke`: `LIVE PASS`
-- `npm run proof:v1:guests-rsvp-ops`: `LIVE PASS`
-- `interactive-section-public` deploy: `PASS`
-- `vault-contribution-public` deploy: `PASS`
-- `process-email-queue` deploy: `PASS`
-- `public-itinerary-by-slug` deploy: `PASS`
-- `photo-upload` deploy: `PASS`
+We are no longer in the vague middle. The remaining launch work is specific:
 
-This report stays focused on launch truth. Historical extraction detail belongs in the changelog, not here.
+- finish the final strict public render-model reduction
+- rerun secure service-role deep proof
+- rerun secure email deep proof
+- close deployment / validation / asset sign-off
+
+Until those are done, this stays a strong `8.3 / 10` system with real production progress, not a `10 / 10` launch-safe finish.
