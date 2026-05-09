@@ -224,14 +224,14 @@ test.describe('public route smoke basics', () => {
 
   test('rsvp entry page exposes the secure lookup guidance', async ({ page }) => {
     await gotoDom(page, '/rsvp');
-    await expect(page.getByText(/you can use the code from your invitation email/i)).toBeVisible();
+    await expect(page.getByText(/use the code from your invitation email/i)).toBeVisible();
     await expect(page.getByText(/make sure you're using the invitation link from your email/i)).not.toBeVisible();
   });
 
   test('guest contact update page stays publicly reachable', async ({ page }) => {
     await gotoDom(page, '/guest-contact/ericandkaras');
     await expect(page.getByRole('heading', { name: /update contact & rsvp/i })).toBeVisible();
-    await expect(page.getByPlaceholder(/search your first or last name/i)).toBeVisible();
+    await expect(page.getByPlaceholder(/search your full name/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /^find$/i })).toBeDisabled();
   });
 
