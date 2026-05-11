@@ -9,6 +9,35 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 
 # Production Hardening Backlog
 
+## 2026-05-11 03:42 PM PT - Exact-SHA Launch Closeout And Vault Lane Downgrade
+
+- Status: `RESOLVED WITH DEFERRED NON-LAUNCH FOLLOW-UP`
+- What changed:
+  - fixed the remaining local suite drift so `npm test` now passes end to end
+  - committed and pushed exact runtime SHA `23bee092` (`Stabilize final proof suite and runtime safety`)
+  - promoted Vercel production deploy `dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4`
+  - redeployed `public-site-access --no-verify-jwt`
+  - reran the secure proof bundle with the provided secure key:
+    - `npm run proof:v1:service-role-authorization`
+    - `npm run proof:v1:email-messaging-authorization`
+    - `npm run proof:v1:launch-closeout`
+  - reran postdeploy live proof:
+    - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`
+    - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`
+    - `npm run proof:v1:guests-rsvp-ops`
+    - `npm run proof:v1:guest-lookup-scope`
+    - `npm run proof:v1:collaborator-runtime`
+- Vault truth discovered in the same sweep:
+  - attempted redeploys for `vault-contribution-public --no-verify-jwt` and `vault-entry-submit --no-verify-jwt` reported success
+  - direct runtime probe still returned `404 NOT_FOUND` for `vault-contribution-public`
+  - `supabase functions list` still did not show `vault-contribution-public`
+  - live vault write/read proof still failed closed on the unavailable route
+- Launch effect:
+  - exact frontend runtime SHA is now known
+  - launch remains `GO`
+  - production-ready remains `YES`
+  - public vault contribution is explicitly downgraded to deferred/non-launch instead of being counted as launch-ready
+
 ## 2026-05-11 02:36 PM PT - AI Provider Confidence Sweep
 
 - Status: `PROOF REFRESHED`

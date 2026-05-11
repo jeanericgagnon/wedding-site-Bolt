@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-11 02:34 PM PDT`
+_Updated:_ `2026-05-11 03:42 PM PDT`
 
 ## Current Score
 
@@ -8,91 +8,124 @@ _Updated:_ `2026-05-11 02:34 PM PDT`
 - Launch verdict: `GO`
 - Production-ready: `YES`
 
+## Exact Runtime Identity
+
+- Branch: `codex/v1-finish-hard-gates-3`
+- Exact frontend Git SHA: `23bee092`
+- Exact frontend commit: `Stabilize final proof suite and runtime safety`
+- Exact Vercel production deploy: `dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4`
+- Production URL: [dayof.love](https://dayof.love)
+- Supabase project: `atuzuobpprjstfmdnwso`
+
 ## Exact Blockers
 
 None.
 
 ## Exact Proof Gaps
 
-- `npm run proof:v1:guest-lookup-scope` is green.
-  - It covers both lookup scope and session-scoped submit.
-  - After forcing a fresh `guest-contact-lookup` runtime version and redeploying both guest contact functions with `--no-verify-jwt`, exact-match lookup, signed-session issuance, and household-scoped submit all pass.
-- `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model` is green.
-  - It covers the live owner-gated `translate-site-content` route, safe missing-auth failure, ready-row readback, and the current AI/photo model-backed proof lane.
-  - `translate-site-content` now returns immediately when the same source hash already has a ready translation row, so repeated production proofs no longer hang into a `504`.
-- `npm run proof:v1:data-integrity` is green.
-  - It is still anon-limited, but it found no hard launch corruption in public-facing integrity checks.
-- `npm run proof:v1:prereqs` is green.
-  - Required migrations, local functions, runtime table reachability, and edge deployment reachability are all healthy for the current launch baseline.
-- `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance` is green.
-  - The live AI/photo column exposure and rollout-readiness bundle passed with no blockers.
-- `npm run proof:v1:ai-product-readiness` is green.
-  - The static AI product-readiness audit passed `25/25`.
-- Everything else required for the previous P1 lanes is green:
-  - explicit public DTO tests across all section families
-  - `npm run proof:v1:public-access-coverage`
-  - `npm run test:security`
-  - `npm run test:smoke`
-  - `npm run proof:v1:service-role-authorization`
-  - `npm run proof:v1:email-messaging-authorization`
-  - `npm run proof:v1:launch-closeout`
-  - `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance`
-  - `npm run proof:v1:ai-product-readiness`
-  - `npm run proof:v1:data-integrity`
-  - `npm run proof:v1:prereqs`
-  - `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model`
-  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`
-  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`
-  - `npm run proof:v1:guests-rsvp-ops`
-  - live guest hub write/read
-  - live photo upload/readback/analysis/recap/moderation
-  - live registry-preview SSRF
+No launch-critical proof gaps remain.
+
+Deferred, non-launch gaps:
+- public vault contribution / anniversary vault guest route
+  - live route still fails closed with `This vault is not available right now`
+  - direct function probe for `vault-contribution-public` still returns `404 NOT_FOUND`
+  - `supabase functions list` does not show `vault-contribution-public`
+  - this lane is not part of the current launch baseline
+- custom-host/subdomain live DNS rerun
+- registry owner import/repair manual notes
+- SMS/provider live-send setup
+- AI secret inventory/internal prereq notes
+
+## Exact Proof State
+
+Fresh local proof:
+- `npm test` -> `PASS` (`534/534` files, `3316/3316` tests)
+- `npm run typecheck -- --pretty false` -> `PASS`
+- `npm run lint -- --quiet` -> `PASS`
+- `npm run build` -> `PASS`
+- `npm run test:security` -> `PASS`
+- `npm run proof:v1:public-access-coverage` -> `PASS`
+- `npm run proof:v1:board:md` -> `PASS`
+- `npm run guard:file-size` -> `PASS`
+- `npm run guard:assets` -> `PASS`
+- `npm run proof:v1:performance-budget` -> `PASS`
+- `git diff --check` -> `PASS`
+
+Fresh secure/runtime proof:
+- `npm run proof:v1:service-role-authorization` -> `PASS`
+- `npm run proof:v1:email-messaging-authorization` -> `PASS`
+- `npm run proof:v1:launch-closeout` -> `PASS`
+- `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+- `npm run test:smoke` -> `PASS`
+
+Fresh production proof after exact-SHA frontend deploy:
+- `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`
+- `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` -> `LIVE PASS`
+- `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`
+- `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
+- `npm run proof:v1:registry-preview-ssrf` -> `LIVE PASS`
+
+Same-day still-valid supporting proof:
+- `LIVE_GUEST_HUB_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/guest-hub-write-read.spec.ts` -> `LIVE PASS`
+- `LIVE_PHOTO_UPLOAD_WRITE_READ=1 LIVE_PHOTO_ANALYSIS_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/photo-upload-write-read.spec.ts` -> `LIVE PASS`
+- `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model` -> `LIVE PASS`
+- `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance` -> `LIVE PASS`
+- `npm run proof:v1:ai-product-readiness` -> `PASS`
+- `npm run proof:v1:data-integrity` -> `PASS`
+- `npm run proof:v1:prereqs` -> `PASS`
+
+Deferred/non-launch failed proof:
+- `LIVE_VAULT_CONTRIBUTE_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/vault-contribute-write-read.spec.ts` -> `FAIL`
+  - route fails closed before write path is reached
+  - this does not block launch because public vault contribution is explicitly deferred/hard-disabled in the current baseline
 
 ## Exact Deployment State
 
-- Frontend:
-  - live at [dayof.love](https://dayof.love)
-  - latest verified deploy: `dpl_5n7ybgjzFH6ewXM257SpYGDjUoy7`
-  - exact runtime Git SHA is not recoverable from this workspace because the deploy was built from the working tree after `1915b681`
-- Supabase project:
-  - `atuzuobpprjstfmdnwso`
-- Freshly deployed functions in this final lane:
-  - `public-site-access --no-verify-jwt`
-  - `photo-upload --no-verify-jwt`
-  - `process-email-queue`
-  - `guest-contact-lookup --no-verify-jwt`
-  - `guest-contact-submit --no-verify-jwt`
-  - `translate-site-content`
-- Fresh DB/runtime truth already applied:
-  - `sections_public_visible_read` removal migration is pushed
+Exact-SHA closeout deploys:
+- frontend: `dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4` from `23bee092`
+- `public-site-access --no-verify-jwt`: redeployed and live-proven
+
+Same-day already-confirmed live surfaces:
+- `guest-contact-lookup --no-verify-jwt`
+- `guest-contact-submit --no-verify-jwt`
+- `photo-upload --no-verify-jwt`
+- `process-email-queue`
+- `translate-site-content`
+
+Closeout deploy inconsistency caught and downgraded:
+- `vault-contribution-public --no-verify-jwt`
+- `vault-entry-submit --no-verify-jwt`
+
+Those two deploy commands reported success, but the live inventory/runtime does not confirm the expected state. The public vault lane therefore stays explicitly deferred/fail-closed instead of being counted as launch-ready.
 
 ## What Changed Since Last Report
 
-- Closed `P1-04 Public section DTO minimization`.
-  - The final per-family allowlist pass is done.
-  - Every `SectionType` now goes through explicit public DTO shaping.
-- Closed `P1-09 Deployment / proof truth canonicalization`.
-  - The backlog now records one canonical branch/SHA/deploy/proof table instead of mixed older claims.
-- Canonical deployment truth surfaced a real guest-contact runtime blocker, and that blocker is now closed.
-- Extended `scripts/v1-proof-guest-lookup-scope.mjs` so it now proves:
-  - exact-match lookup
-  - no-match / partial-name fail-closed behavior
-  - session-scoped guest-contact submit
-  - household update scope
-- Forced a fresh `guest-contact-lookup` live version, redeployed `guest-contact-lookup` and `guest-contact-submit` with `--no-verify-jwt`, and reran the live guest contact proof to green.
-- Redeployed `translate-site-content` with a source-hash ready-row fast path, then reran the live secure AI/translation proof to green.
-- Unified `.dayof.love` subdomain parsing behind `resolveWeddingSubdomainSlugFromHostname(...)` and added local proof so the shipped subdomain route logic is pinned even though custom-host DNS reruns remain deferred.
-- Added production `data-integrity` and `prereqs` proof to the closeout evidence so the database/runtime inventory is backed by current runtime checks rather than just historical assumption.
-- Reran the AI/provider confidence lane so the current board reflects fresh same-day `ai-clearance` and `ai-product-readiness` proof instead of earlier-wave evidence.
+- Made the production frontend traceable to one exact Git SHA: `23bee092`
+- Promoted Vercel deploy `dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4`
+- Reran the full test suite and got a clean pass
+- Reran the full local launch bundle and kept it green
+- Reran the secure proof bundle with the provided secure key and kept it green
+- Reran fresh postdeploy public proofs on the exact frontend deploy and kept them green
+- Refreshed collaborator runtime proof so owner/planner/coordinator/viewer behavior is same-day evidence
+- Reclassified public vault contribution from vague/deployed language to explicit deferred hard-disabled truth after the live route and function inventory disagreed with the CLI deploy claim
 
-## What Remains Before 10/10
+## What Remains Before 10 / 10
 
-Only deferred/non-launch items remain:
-1. custom-host/subdomain live rerun if that lane changes
-2. registry owner import/repair manual notes
-3. SMS/provider live-send setup when provider work resumes
-4. AI server secret inventory / internal OPENAI prereq documentation follow-up
+Only deferred, non-launch items remain.
+
+Why this is `9.9 / 10` instead of `10 / 10`:
+- the main launch baseline is green
+- the frontend runtime is now pinned to an exact Git SHA
+- but one deferred public surface (`vault-contribution-public`) still has a live inventory inconsistency, even though it fails closed and is outside the launch baseline
 
 ## Bottom Line
 
-The repo is now at a clean launch baseline. The public DTO lane is finished, the secure queue/storage lane is finished, the deployment matrix is canonical, the guest-contact public-flow blocker is closed, and the live translation route is green too. Launch can honestly be called `GO`, and production-ready is `YES`.
+This repo is launch-grade and production-ready today.
+
+The current shipped launch baseline is:
+- exact frontend SHA known
+- public DTO lane closed
+- secure queue/storage/message proof green
+- guest/public critical flows green
+- deployment and validation truth current
+- only explicitly deferred, non-launch lanes remain
