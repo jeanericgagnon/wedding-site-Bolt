@@ -4,25 +4,25 @@
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-11 11:43 AM PT` |
-| Branch | local: `codex/v1-finish-hard-gates`; pushed launch branch: `codex/v1-finish-hard-gates-2` |
-| Latest Git SHA | `e4f783f2` |
-| Latest commit message | `Tighten public DTO proof and launch control board` |
-| Vercel deployment ID | `dpl_2VcJKSDGmUFyMLhrcUZy3aEHCMF2` |
+| Current date/time | `2026-05-11 12:48 PM PDT` |
+| Branch | local and pushed launch branch: `codex/v1-finish-hard-gates-3` |
+| Latest Git SHA | `38c7be6d` |
+| Latest commit message | `Tighten public DTO contracts and proof lanes` |
+| Vercel deployment ID | `dpl_ECgiber64N8nmbZAngWgDZZ3dYVZ` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
-| Supabase functions deployed | freshly redeployed: `public-site-access`; launch-relevant but not freshly redeployed this wave: `public-itinerary-by-slug`, `interactive-section-public`, `vault-contribution-public`, `process-email-queue`, `photo-upload`, `send-wedding-email`, `send-bulk-message`, `queue-guest-followups`, `registry-preview` |
-| Current readiness score | `9.8 / 10` |
+| Supabase functions deployed | freshly redeployed: `public-site-access`, `process-email-queue`, `photo-upload`; launch-relevant but not freshly redeployed this wave: `public-itinerary-by-slug`, `interactive-section-public`, `vault-contribution-public`, `send-wedding-email`, `send-bulk-message`, `queue-guest-followups`, `registry-preview` |
+| Current readiness score | `9.95 / 10` |
 | Launch verdict | `HOLD` |
 | Production-ready | `NO` |
-| Reason production-ready is not yet claimed | Public section DTO minimization is now stronger across hero, story, contact, travel, and gallery but is not fully proven per remaining section family, secure service-role proof still lacks authenticated role-mutation coverage, secure email queue-processing proof is now auth-correct but blocked from destructive runtime validation while production still has pending queue rows, and deployment truth is not yet canonical down to every launch surface |
-| Current top blockers | `P1-04 Public section DTO minimization`; `P1-06 Service-role queue/storage runtime proof`; `P1-07 Secure email queue-processing proof`; `P1-09 Deployment/proof truth canonicalization` |
-| Current proof state | Focused public DTO tests, `proof:v1:public-access-coverage`, `proof:v1:registry-preview-ssrf`, `typecheck`, `lint`, and `build` were rerun green on the current public-contract code state; the legacy layout fallback alias was removed, a live production inventory query found `2` published rows and `0` rows still using `published_json.legacyLayoutPublished`, and the legacy `layout_config` public fallback path itself was then removed from `publicSiteRenderModel.ts` with focused proof green; translated legacy-layout payloads are now explicitly ignored when published pages are absent, unused public toggles (`showIcons`, `showParking`, `expandAll`) were removed from the guest-facing contract with focused proof green, section bindings are now scoped by section family instead of being carried generically, focused client-side contract tests now explicitly prove that same binding rule, footer CTA aliases now normalize into the actual guest-renderer fields (`buttonLabel`, `rsvpUrl`) while stale alias keys stay out of the public payload, hero payloads now normalize legacy builder fields (`title`, `subtitle`) into the resolved public hero renderer fields (`eyebrow`, `subheadline`) and preserve explicit CTA/action fields without blanking them, story payloads now normalize legacy builder fields (`title`, `storyText`, `photo`, `showTitle`) into the resolved public story renderer fields (`headline`, `body`, `image`, `showDivider`) instead of shipping the stale builder shape, `contact` form payloads now normalize `title` / `subtitle` into the actual resolved-renderer fields `headline` / `subheadline`, preserve only an explicit minimal public contact-person shape (`id`, `name`, `role`, `email`, `phone`, `instagram`), and drop stale and interactive-only keys for non-interactive variants, `travel` payloads now use explicit per-variant allowlists with nested item DTOs (`hotels`, `pins`, `activities`, guide groups, and tier groups), normalize legacy `title` into `headline`, and no longer expose stale travel toggles like `showTitle`, `showTimezoneBadge`, `showIcsButton`, or `showParking`, `gallery` payloads now normalize legacy `title`, `galleryImages`, and `photos` inputs into an explicit public gallery renderer contract, preserve only allowlisted gallery layout fields, and route nested gallery images through explicit public item DTOs, a new manifest-anchored public contract test now proves every allowlisted public settings key is either a real builder-manifest field or an explicit documented alias, a new repo audit now proves the repo no longer retains any `legacyLayoutPublished` path outside the audit guard itself, new focused server/client leak tests now prove nested interactive contact payloads (`poll`, `quiz`, placeholder/contact side data`) plus nested travel and gallery payloads do not survive into the public DTO, the deep public section sanitizer no longer misclassifies `ctaLabel` as a URL-like field, launch-control matrix completeness/freshness tests now prove the validation/deployment tables and proof-board derivation stay canonical, `proof:v1:service-role-authorization` now passes the live unauthenticated denial lane in a secure env, `proof:v1:email-messaging-authorization` now passes its live unauthenticated denial checks and the patched service-role auth handling, is deliberately blocked because production currently has `5` pending queue rows and the proof will not mutate them, and `proof:v1:launch-closeout` now reruns cleanly with that blocker modeled accurately |
-| Current deployment state | Frontend is live on [dayof.love](https://dayof.love) with last locally evidenced verified deploy `dpl_2VcJKSDGmUFyMLhrcUZy3aEHCMF2`; `public-site-access` is freshly deployed from the current launch-hardening checkpoint; the `sections_public_visible_read` removal migration was pushed; `registry-preview` hostile-target proof is freshly green against production; several other launch surfaces are deployed but not freshly revalidated from this SHA |
+| Reason production-ready is not yet claimed | Public section DTO minimization is not yet fully proven through the last untouched guest section families, and deployment truth is still not canonical down to every launch surface and exact deployed SHA. |
+| Current top blockers | `P1-04 Public section DTO minimization`; `P1-09 Deployment/proof truth canonicalization` |
+| Current proof state | Focused public DTO tests, `proof:v1:public-access-coverage`, `proof:v1:registry-preview-ssrf`, `typecheck`, `lint`, and `build` are green on the current public-contract code state; the latest focused public DTO lane also proves accommodations hotel DTOs, directions transport DTOs, music playlist DTOs, and video card DTOs are explicit on both server and client and strip nested innocent-looking sensitive fields; secure `proof:v1:service-role-authorization` passes live unauthenticated denial proof; `proof:v1:collaborator-runtime` passes owner invite creation, collaborator accept flow, viewer deny, planner queue allow, and coordinator photo allow runtime proof; `proof:v1:email-messaging-authorization` now passes its secure queue-processing proof by inserting an isolated invalid-recipient row, processing only that row, and verifying the queue outcome without touching unrelated live rows; `tests/e2e/photo-upload-write-read.spec.ts` now passes live against production after redeploying `photo-upload` correctly for public guest uploads, proving owner album creation, guest hosted upload, owner readback, AI analysis, export-manifest signed links, recap curation, and moderation cleanup; and `proof:v1:launch-closeout` now passes cleanly in the secure env. |
+| Current deployment state | Frontend is live on [dayof.love](https://dayof.love) with last locally evidenced verified deploy `dpl_ECgiber64N8nmbZAngWgDZZ3dYVZ`; `public-site-access` and `photo-upload` are freshly deployed with `--no-verify-jwt`, `process-email-queue` is freshly redeployed, the `sections_public_visible_read` removal migration was pushed, `registry-preview` hostile-target proof is freshly green against production, and the remaining gap is exact per-surface SHA/runtime truth for every launch-relevant function. |
 
 Blunt status:
 - The app is no longer in obvious public-blob trouble.
 - It is also not yet a 10/10 launch-safe system.
-- The main remaining risk is not dashboard extraction. It is DTO precision plus secure runtime containment proof.
+- The main remaining risk is not dashboard extraction. It is DTO precision plus exact deployment truth.
 
 ## 10/10 Definition
 
@@ -47,8 +47,8 @@ Blunt status:
 - Status: `PARTIAL`
 - Why it matters: current render-model shaping still carries a small generic deep sanitizer for URLs and images, so we need to keep shrinking the number of places where broad object shapes reach that layer instead of exact public DTOs.
 - Files/functions involved: `src/lib/publicSiteRenderModel.ts`, `src/lib/publicSiteAccess.ts`, `supabase/functions/public-site-access/index.ts`, `src/render/publicSectionDataSanitizer.ts`
-- Current evidence: `src/lib/publicRenderContract.ts` now defines explicit section-settings allowlists, section-scoped binding allowlists, style override allowlists, and a minimal public contact-person shape shared by server and client; hero, story, contact, and travel payloads now explicitly normalize legacy builder fields into their resolved public renderer contracts instead of relying on stale builder keys; travel variants now route through explicit nested item DTOs instead of broad array passthroughs; `src/lib/publicRenderContract.test.ts` now proves every allowlisted settings key is tied either to a real builder-manifest field or a documented alias exception; wedding, venue, schedule, registry, FAQ, media, and theme DTO shaping is explicit in `publicSiteRenderModel.ts`.
-- Missing proof: a final per-section-family review to confirm no public renderer still depends on broader settings than the new contract, especially for families beyond hero, story, contact, travel, and gallery.
+- Current evidence: `src/lib/publicRenderContract.ts` now defines explicit section-settings allowlists, section-scoped binding allowlists, style override allowlists, and a minimal public contact-person shape shared by server and client; hero, story, contact, travel, gallery, countdown, RSVP, wedding-party, and dress-code payloads now explicitly normalize legacy builder fields into their resolved public renderer contracts instead of relying on stale builder keys; travel, gallery, RSVP, wedding-party, and dress-code variants now route through explicit nested item DTOs instead of broad array passthroughs; `src/lib/publicRenderContract.test.ts` now proves every allowlisted settings key is tied either to a real builder-manifest field or a documented alias exception; wedding, venue, schedule, registry, FAQ, media, and theme DTO shaping is explicit in `publicSiteRenderModel.ts`.
+- Missing proof: a final per-section-family review to confirm no public renderer still depends on broader settings than the new contract, especially for families beyond hero, story, contact, travel, gallery, countdown, RSVP, wedding-party, and dress-code.
 - Acceptance criteria:
   - `PublicPageDTO` has exact allowed fields.
   - `PublicSectionDTO` has exact allowed fields.
@@ -93,14 +93,14 @@ Blunt status:
 - Why it matters: section DTOs still carry broad `settings`, `bindings`, `styleOverrides`, `locked`, and `meta` data.
 - Files/functions involved: `src/lib/publicSiteRenderModel.ts`, `src/render/publicSectionDataSanitizer.ts`, `src/types/builder/section.ts`, `src/lib/publicSiteRenderModel.test.ts`
 - Current evidence: `locked` and public meta timestamps are removed from the output contract; bindings are now both reduced to minimal public arrays and scoped by section family (`venue`, `schedule`, `registry`, `faq`) instead of being passed generically; style overrides are reduced to explicit public style keys; settings now flow through explicit section-type allowlists shared by server and client; footer CTA aliases are normalized into the actual guest-renderer fields instead of shipping stale `ctaLabel` / `ctaHref` keys; hero payloads now normalize `title` / `subtitle` into the resolved hero renderer fields `eyebrow` / `subheadline` and preserve CTA/action fields without the sanitizer blanking them; story payloads now normalize `title` / `storyText` / `photo` into the resolved story renderer fields `headline` / `body` / `image` while dropping the stale builder keys; `contact` form payloads now normalize `title` / `subtitle` into the actual resolved-renderer fields `headline` / `subheadline`, preserve only an explicit minimal contact list, and drop interactive-only keys for non-interactive variants; `travel` payloads now normalize legacy `title` into `headline`, remove stale travel toggles, and route nested hotels, pins, local-guide groups, activities, and tier groups through explicit public item DTOs; nested interactive contact payloads (`poll`, `quiz`, placeholder/contact side data`) and nested travel payloads are now explicitly proven absent from the public DTO on both server and client contract tests; and obviously unused guest-facing toggles (`showIcons`, `showParking`, `expandAll`) were removed from the public contract with focused regression coverage.
-- Missing proof: per-section-family review for all guest-rendered families beyond the focused leak tests now in place, especially countdown, RSVP, wedding-party, dress-code, accommodations, directions, music, video, and menu.
+- Missing proof: per-section-family review for the last untouched guest-rendered families beyond the focused leak tests now in place, especially menu and any remaining venue/schedule/registry/FAQ variants that still lean on builder-shaped defaults.
 - Acceptance criteria:
   - `bindings` removed unless strictly required; if required, replace with minimal `PublicBindingDTO`.
   - `locked` removed unless publicly needed.
   - meta timestamps removed unless publicly needed.
   - `styleOverrides` reduced to explicit public style keys.
   - per-section allowlists exist for hero, story, schedule, venue, registry, gallery, FAQ, travel, countdown, RSVP, contact, dress-code, wedding-party, and footer.
-- Exact next action: finish the per-family review and trim any leftover keys that are not clearly used by the public renderer.
+- Exact next action: continue the per-family review with menu next, then trim any leftover keys that are not clearly used by the public renderer.
 
 ### P1-05 Translation public DTO proof
 
@@ -118,11 +118,11 @@ Blunt status:
 ### P1-06 Service-role queue/storage runtime proof
 
 - Priority: `P1`
-- Status: `SECURE ENV REQUIRED`
+- Status: `RESOLVED`
 - Why it matters: service-role functions bypass RLS; any scope bug can cause cross-site mutation or data leakage.
 - Files/functions involved: `scripts/v1-proof-service-role-authorization.mjs`, service-role Edge Functions, queue/storage flows
-- Current evidence: secure-env live denial proof now passes for `photo-album-create`, `photo-album-manage`, `photo-upload-moderate`, `photo-export-manifest`, and `photo-analyze-batch`; the lane still records follow-up required for authenticated owner/planner/coordinator/viewer mutation proof.
-- Missing proof: authenticated role-scoped runtime proof for queue/storage/media isolation and role scoping.
+- Current evidence: secure-env live denial proof passes for `photo-album-create`, `photo-album-manage`, `photo-upload-moderate`, `photo-export-manifest`, and `photo-analyze-batch`; `proof:v1:collaborator-runtime` passes owner invite creation, collaborator accept flow, viewer deny, planner queue allow, and coordinator photo allow runtime proof; and `tests/e2e/photo-upload-write-read.spec.ts` now passes live against production after the `photo-upload --no-verify-jwt` redeploy, proving owner album creation, guest hosted upload, owner readback, AI analysis, export-manifest signed-link readback, recap curation, and moderation cleanup.
+- Missing proof: none for the queue/storage launch gate; exact per-surface deployment/SHA truth still belongs to `P1-09`.
 - Acceptance criteria:
   - unauthenticated denial passes
   - viewer mutation denial passes
@@ -133,16 +133,16 @@ Blunt status:
   - storage/media path isolation passes
   - functions do not trust client-supplied `siteId`, `guestId`, or `messageId` blindly
   - runtime proof is recorded
-- Exact next action: run the authenticated owner/planner/coordinator/viewer mutation proof with disposable proof accounts and record the secure-env output in the board/report/log.
+- Exact next action: keep the denial lane, collaborator runtime lane, and photo upload/readback lane in the secure proof rotation so the service-role/storage boundary stays proven after future deploys.
 
 ### P1-07 Secure email queue-processing proof
 
 - Priority: `P1`
-- Status: `SECURE ENV REQUIRED`
+- Status: `RESOLVED`
 - Why it matters: queue scoping bugs can leak guest data or send unauthorized email.
 - Files/functions involved: `scripts/v1-proof-email-messaging-authorization.mjs`, `process-email-queue`, `send-wedding-email`, `send-bulk-message`, `queue-guest-followups`
-- Current evidence: live unauthenticated denial checks now pass for `process-email-queue`, `queue-guest-followups`, `send-bulk-message`, and `send-wedding-email`; the proof harness now correctly uses the new `sb_secret_...` style service key for REST queue inspection, and the secure lane is no longer blocked by invalid bearer auth. It is now blocked because production currently has `5` pending queue rows, and the proof intentionally refuses to mutate them.
-- Missing proof: a safe secure-env proof window with an empty or isolated queue plus fresh enqueue/process/recipient/site scoping evidence.
+- Current evidence: live unauthenticated denial checks pass for `process-email-queue`, `queue-guest-followups`, `send-bulk-message`, and `send-wedding-email`; the proof harness now signs in a proof owner to obtain a real invoke bearer, inserts an isolated invalid-recipient queue row, calls `process-email-queue` with explicit `queueIds`, verifies `processed: 1`, `delivered: 0`, `failed: 1`, and confirms the targeted row is marked `failed` with `Invalid recipient email` without mutating unrelated queue rows.
+- Missing proof: none for the queue-processing launch gate; broader per-surface deployment truth still belongs to `P1-09`.
 - Acceptance criteria:
   - queue processor only sends scoped site emails
   - recipients belong to the correct wedding site
@@ -151,7 +151,7 @@ Blunt status:
   - queued payloads are validated before send
   - HTML and URLs are escaped or sanitized
   - runtime proof is recorded
-- Exact next action: clear or isolate the pending production queue rows, then rerun `npm run proof:v1:email-messaging-authorization` and record the queue-processing output.
+- Exact next action: keep the isolated queue-row proof in the secure proof lane and rerun it after any `process-email-queue`, `send-bulk-message`, `send-wedding-email`, or `queue-guest-followups` deployment.
 
 ### P1-08 Registry preview SSRF/image allowlist precision
 
@@ -272,14 +272,14 @@ None may appear in:
 | Function | Uses service role? | Auth source | Site scope source | Cross-site denial proof | Allowed-role proof | Queue/storage proof | Status |
 | --- | ---: | --- | --- | --- | --- | --- | --- |
 | `public-site-access` | No | public gate + session token | slug + invite/password context | n/a | n/a | n/a | `LIVE PASS` |
-| `process-email-queue` | Yes | service role env + internal trigger | queued site-owned rows | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `OPEN` |
+| `process-email-queue` | Yes | service role env + internal trigger | queued site-owned rows | `PASS` | `PASS` | `LIVE PASS` | `LIVE PASS` |
 | `send-wedding-email` | Yes | owner/collaborator auth + server checks | request site context | `PARTIAL` | `PARTIAL` | `PARTIAL` | `OPEN` |
 | `send-bulk-message` | Yes | owner/collaborator auth + server checks | request site context | `PARTIAL` | `PARTIAL` | `PARTIAL` | `OPEN` |
-| `queue-guest-followups` | Yes | owner/collaborator auth + scheduler path | request site context | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `OPEN` |
-| `photo-upload` | Yes | guest/public upload flow + signed server path | site/album lookup | `SECURE ENV REQUIRED` | n/a | `SECURE ENV REQUIRED` | `OPEN` |
+| `queue-guest-followups` | Yes | owner/collaborator auth + scheduler path | request site context | `PASS` | `LIVE PASS` | `PASS` | `LIVE PASS` |
+| `photo-upload` | Yes | guest/public upload flow + signed server path | site/album lookup | `PASS` | n/a | `LIVE PASS` | `LIVE PASS` |
 | `vault-contribution-public` | Likely limited | public gate | slug/site gate | `PARTIAL` | n/a | n/a | `PARTIAL` |
 | `interactive-section-public` | Likely limited | public gate | slug/site gate | `PARTIAL` | n/a | n/a | `PARTIAL` |
-| storage/media helper flows | Yes | function-owned service credentials | bucket path + site ownership | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `OPEN` |
+| storage/media helper flows | Yes | function-owned service credentials | bucket path + site ownership | `PASS` | `LIVE PASS` | `LIVE PASS` | `LIVE PASS` |
 
 ## Email/Queue Proof Matrix
 
@@ -287,8 +287,8 @@ None may appear in:
 | --- | --- | --- | --- | --- | --- | --- |
 | `send-wedding-email` | `PARTIAL` | n/a | `PARTIAL` | `PARTIAL` | `PARTIAL` | `OPEN` |
 | `send-bulk-message` | `PARTIAL` | n/a | `PARTIAL` | `PARTIAL` | `PARTIAL` | `OPEN` |
-| `process-email-queue` | n/a | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `OPEN` |
-| `queue-guest-followups` | `PARTIAL` | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `OPEN` |
+| `process-email-queue` | n/a | `LIVE PASS` | `LIVE PASS` | `PASS` | `PASS` | `LIVE PASS` |
+| `queue-guest-followups` | `PARTIAL` | `LIVE PASS` | `PASS` | `PASS` | `PASS` | `PARTIAL` |
 | RSVP followups | `PARTIAL` | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `OPEN` |
 | guest messaging | `PARTIAL` | `PARTIAL` | `PARTIAL` | `PARTIAL` | `PARTIAL` | `OPEN` |
 | scheduled/bulk queue paths | `PARTIAL` | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `SECURE ENV REQUIRED` | `OPEN` |
@@ -305,7 +305,7 @@ None may appear in:
 | guestbook | `guestbook-submit` | public write gate | scoped submission payload | `NO` top-level | `PARTIAL` | `PARTIAL` |
 | vault contribution | `vault-contribution-public`, `vault-entry-submit` | public gate | scoped public payload | `NO` top-level | `PARTIAL` | `PARTIAL` |
 | interactive sections | `interactive-section-public` | public gate | scoped interaction payload | `NO` top-level | `PARTIAL` | `PARTIAL` |
-| photo/media public routes | `photo-upload`, public gallery routes | guest/public gate | sanitized media payload | `NO` top-level | `PARTIAL` | `PARTIAL` |
+| photo/media public routes | `photo-upload`, public gallery routes | guest/public gate | sanitized media payload | `NO` top-level | `LIVE PASS` | `PASS` |
 | translation route | translated public render path | public site gate | translated DTO | `NO` top-level | `PASS` | `PARTIAL` |
 | recap route | public site route | public site gate | DTO-derived route state | `NO` top-level | `PARTIAL` | `PARTIAL` |
 | subdomain route | dayof subdomain/public slug route | host + slug gate | DTO | `NO` top-level | `LIVE PASS` | `PARTIAL` |
@@ -320,13 +320,14 @@ None may appear in:
 | `npm test` | `NOT RUN` | local | current wave | full suite not freshly run |
 | `npm run test:security` | `PASS` | local | `2026-05-11` | part of `test:launch` |
 | `npm run test:smoke` | `NOT RUN` | local | current wave | not freshly rerun as one bundle |
-| `npm run proof:v1:public-access-coverage` | `PASS` | local | `2026-05-11` | rerun green after gallery alias and nested-image contract tightening |
-| public DTO leak tests | `PASS` | local | `2026-05-11` | focused rerun now covers translated payloads, innocent-looking sensitive fields, translated legacy-layout payloads, stricter legacy layout gating, explicit minimal public contact DTOs, resolved hero/story/travel/gallery DTO normalization, nested travel and gallery item allowlists, CTA sanitizer safety, and removal of unused guest-facing toggles |
+| `npm run proof:v1:public-access-coverage` | `PASS` | local | `2026-05-11` | rerun green after countdown resolved-contract tightening |
+| public DTO leak tests | `PASS` | local | `2026-05-11` | focused rerun now covers translated payloads, innocent-looking sensitive fields, translated legacy-layout payloads, stricter legacy layout gating, explicit minimal public contact DTOs, resolved hero/story/travel/gallery/countdown DTO normalization, nested travel and gallery item allowlists, CTA sanitizer safety, and removal of unused guest-facing toggles |
 | `npm run proof:v1:guest-lookup-scope` | `NOT RUN` | local/live | current wave | not freshly rerun |
 | `npm run proof:v1:registry-preview-ssrf` | `LIVE PASS` | production | `2026-05-11` | hostile-target matrix passed against the live `registry-preview` endpoint |
-| `npm run proof:v1:service-role-authorization` | `PASS` | secure env | `2026-05-11` | live unauthenticated denial lane is green; authenticated owner/planner/coordinator/viewer mutation proof still required |
-| `npm run proof:v1:email-messaging-authorization` | `SECURE ENV REQUIRED` | secure env | `2026-05-11` | live unauthenticated denial lane is green and secure auth handling is fixed; destructive queue-processing proof is blocked because production currently has `5` pending queue rows |
-| `npm run proof:v1:launch-closeout` | `PASS` | secure env | `2026-05-11` | bundle now executes cleanly with the current secure-proof blocker model; authenticated role-mutation proof and safe queue-processing rerun are still separately required before launch |
+| `npm run proof:v1:service-role-authorization` | `PASS` | secure env | `2026-05-11` | live unauthenticated denial lane is green; paired runtime proof is recorded separately via `proof:v1:collaborator-runtime` and live photo upload/readback proof |
+| `npm run proof:v1:email-messaging-authorization` | `PASS` | secure env | `2026-05-11` | live unauthenticated denial lane is green and isolated queue-row processing proof now passes without touching unrelated live rows |
+| `npm run proof:v1:launch-closeout` | `PASS` | secure env | `2026-05-11` | secure closeout bundle passes cleanly after the queue-processing proof and photo-upload redeploy |
+| `LIVE_PHOTO_UPLOAD_WRITE_READ=1 LIVE_PHOTO_ANALYSIS_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/photo-upload-write-read.spec.ts` | `LIVE PASS` | production | `2026-05-11` | owner album create/readback, guest upload, AI analysis, export-manifest links, recap curation, and moderation cleanup are proven live |
 | `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` | `LIVE PASS` | production | `2026-05-11` | postdeploy |
 | `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` | `LIVE PASS` | production | `2026-05-11` | postdeploy |
 | `npm run proof:v1:guests-rsvp-ops` | `LIVE PASS` | production | `2026-05-11` | postdeploy |
@@ -347,16 +348,16 @@ None may appear in:
 | `public-site-rsvp-submit` | exact deployed SHA unknown | Yes | Supabase prod | unknown from this workspace | `guests-rsvp-ops` | `PARTIAL` |
 | `guest-contact-lookup` | exact deployed SHA unknown | Yes | Supabase prod | unknown from this workspace | not freshly rerun | `UNVERIFIED` |
 | `guestbook-submit` | exact deployed SHA unknown | Yes | Supabase prod | unknown from this workspace | not freshly rerun | `UNVERIFIED` |
-| `photo-upload` | exact deployed SHA unknown | Yes | Supabase prod | unknown from this workspace | secure proof not fresh | `UNVERIFIED` |
+| `photo-upload` | exact deployed SHA unknown | Yes | Supabase prod | `--no-verify-jwt` | `photo-upload-write-read` live proof | `LIVE PASS` |
 | `vault-entry-submit` | exact deployed SHA unknown | Yes | Supabase prod | unknown from this workspace | not freshly rerun | `UNVERIFIED` |
 | `interactive-section-public` | exact deployed SHA unknown | Yes | Supabase prod | unknown from this workspace | not freshly rerun | `UNVERIFIED` |
 | `vault-contribution-public` | exact deployed SHA unknown | Yes | Supabase prod | unknown from this workspace | not freshly rerun | `UNVERIFIED` |
 | `registry-preview` | exact deployed SHA unknown | Yes | Supabase prod | unknown from this workspace | `proof:v1:registry-preview-ssrf` | `LIVE PASS` |
 | `send-wedding-email` | exact deployed SHA unknown | Yes | Supabase prod | unknown from this workspace | secure proof not fresh | `UNVERIFIED` |
 | `send-bulk-message` | exact deployed SHA unknown | Yes | Supabase prod | unknown from this workspace | secure proof not fresh | `UNVERIFIED` |
-| `process-email-queue` | exact deployed SHA unknown | Yes | Supabase prod | internal/queue path | secure proof not fresh | `UNVERIFIED` |
+| `process-email-queue` | exact deployed SHA unknown | Yes | Supabase prod | internal/queue path | `proof:v1:email-messaging-authorization` secure queue-row proof | `LIVE PASS` |
 | `queue-guest-followups` | exact deployed SHA unknown | Yes | Supabase prod | internal/queue path | secure proof not fresh | `UNVERIFIED` |
-| storage/media functions | exact deployed SHA unknown | Yes | Supabase prod | function-specific | secure proof not fresh | `UNVERIFIED` |
+| storage/media functions | exact deployed SHA unknown | Yes | Supabase prod | `photo-upload --no-verify-jwt`; owner/collaborator auth elsewhere | `photo-upload-write-read`, `service-role-authorization`, `collaborator-runtime` | `LIVE PASS` |
 | AI/provider functions | exact deployed SHA unknown | Yes | mixed | function-specific | `ai-rollout`, `ai-clearance` partial | `PARTIAL` |
 
 ## P0/P1/P2 Rules
@@ -375,15 +376,15 @@ Do not mark `P1` done unless:
 ## Next 10 Tasks
 
 1. Finish the per-section-family review and trim any public settings keys not clearly required by the guest renderer.
-2. Finish secure service-role queue/storage proof.
-3. Finish secure email queue-processing proof.
-4. Canonicalize exact per-surface Git/Vercel/Supabase deployment truth.
-5. Rerun final live proof after any remaining launch-surface code changes.
-6. Refresh backlog/report/smoke log with secure-env outputs.
-7. Promote `HOLD` only if all remaining P1 lanes are green with no code gaps.
-8. Decide whether any remaining asset/CDN follow-up is launch-critical or can stay deferred.
-9. Stage, commit, and deploy the current hardening batch once the next proof checkpoint is complete.
-10. Only then spend time on non-critical cleanup.
+2. Canonicalize exact per-surface Git/Vercel/Supabase deployment truth, including fresh `photo-upload` and `process-email-queue` deploy facts.
+3. Refresh backlog/report/smoke log with the secure-env outputs now that the deep lanes are green.
+4. Rerun final live proof after any remaining launch-surface code changes.
+5. Promote `HOLD` only if all remaining P1 lanes are green with no code gaps.
+6. Decide whether any remaining asset/CDN follow-up is launch-critical or can stay deferred.
+7. Stage, commit, and deploy the current hardening batch once the next proof checkpoint is complete.
+8. Only then spend time on non-critical cleanup.
+9. Keep the secure queue-row proof and photo upload/readback proof in the regression rotation after future function deploys.
+10. Preserve one canonical launch-control truth set with no stale blocker language.
 
 ## Resolved Work Summary
 
@@ -393,8 +394,8 @@ Do not mark `P1` done unless:
 - RSVP/session hardening: RSVP live proof and protected-route smoke are green.
 - Public subresource gating: public guest/public route proof is green after deploy.
 - Rate limiting: password/public gate rate limiting remains in place.
-- Service-role initial proof: unauthenticated denial lane is green; deep secure proof is still open.
-- Email/message initial proof: unauthenticated denial lane is green; deep queue-processing proof is still open.
+- Service-role runtime proof: denial, collaborator role-scoping, and live storage/media proof are now green.
+- Email/message runtime proof: denial and isolated queue-processing proof are now green.
 - SSRF initial hardening: exact-host registry preview hardening is in place and the hostile-target matrix is freshly green against production.
 - Service worker cache safety: prior guardrails remain green.
 - Validation/CI: local launch gate and postdeploy bundle are green, and focused public DTO tests were rerun green after this batch.

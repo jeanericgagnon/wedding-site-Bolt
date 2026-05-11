@@ -799,7 +799,10 @@ describe('launch edge function guards', () => {
 
     const queue = readFunction('process-email-queue');
     expect(queue).toContain('const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!');
-    expect(queue).toContain('token !== serviceRoleKey');
+    expect(queue).toContain('const apiKey = req.headers.get("apikey")');
+    expect(queue).toContain('bearerToken !== serviceRoleKey && apiKey !== serviceRoleKey');
+    expect(queue).toContain('const queueIds = Array.isArray(body?.queueIds)');
+    expect(queue).toContain('fetchQuery = fetchQuery.in("id", queueIds)');
     expect(queue).toContain('Could not process email queue. Please try again.');
 
     const queueFollowups = readFunction('queue-guest-followups');

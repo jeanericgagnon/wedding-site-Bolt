@@ -318,6 +318,269 @@ describe('public site access client contract', () => {
     expect(JSON.stringify(site)).not.toContain('internalQueueConfig');
   });
 
+  it('normalizes accommodations settings into the client-safe public contract', () => {
+    const site = sanitizePublicSiteSafeRow({
+      id: 'site-accommodations',
+      site_slug: 'kara-eric',
+      site_url: 'kara-eric',
+      is_published: true,
+      couple_name_1: 'Kara',
+      couple_name_2: 'Eric',
+      wedding_date: '2026-06-14',
+      venue_name: 'Grand Pavilion',
+      wedding_location: 'New York',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      allow_search_indexing: false,
+      render_model: {
+        pages: [{
+          id: 'home',
+          slug: 'home',
+          title: 'Home',
+          orderIndex: 0,
+          sections: [{
+            id: 'accommodations-1',
+            type: 'accommodations',
+            variant: 'featured',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'Accommodations',
+              headline: 'Places to stay',
+              layoutStyle: 'featured',
+              hotels: [{
+                id: 'hotel-1',
+                name: 'Harbor Hotel',
+                stars: 4,
+                distance: '0.3 miles',
+                bookingCode: 'MAYALEO',
+                bookingDeadline: 'May 20',
+                image: 'https://example.com/stay.jpg',
+                hiddenGallery: true,
+              }],
+              providerSecret: 'hide-me',
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+        wedding: null,
+        theme: { preset: null, tokens: null },
+      },
+    });
+
+    expect(site?.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      showTitle: true,
+      title: 'Accommodations',
+      headline: 'Places to stay',
+      eyebrow: 'Where to stay',
+      layoutStyle: 'featured',
+      hotels: [{
+        id: 'hotel-1',
+        name: 'Harbor Hotel',
+        stars: 4,
+        distance: '0.3 miles',
+        bookingCode: 'MAYALEO',
+        bookingDeadline: 'May 20',
+        image: 'https://example.com/stay.jpg',
+      }],
+    });
+    expect(JSON.stringify(site)).not.toContain('hiddenGallery');
+    expect(JSON.stringify(site)).not.toContain('providerSecret');
+  });
+
+  it('normalizes directions settings into the client-safe public contract', () => {
+    const site = sanitizePublicSiteSafeRow({
+      id: 'site-directions',
+      site_slug: 'kara-eric',
+      site_url: 'kara-eric',
+      is_published: true,
+      couple_name_1: 'Kara',
+      couple_name_2: 'Eric',
+      wedding_date: '2026-06-14',
+      venue_name: 'Grand Pavilion',
+      wedding_location: 'New York',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      allow_search_indexing: false,
+      render_model: {
+        pages: [{
+          id: 'home',
+          slug: 'home',
+          title: 'Home',
+          orderIndex: 0,
+          sections: [{
+            id: 'directions-1',
+            type: 'directions',
+            variant: 'pin',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              headline: 'Directions & Parking',
+              showTransport: true,
+              transport: [{
+                id: 'transport-1',
+                icon: 'train',
+                label: 'By train',
+                description: 'Red line to Oak Station.',
+                internalSchema: { secret: true },
+              }],
+              ownerPreview: true,
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+        wedding: null,
+        theme: { preset: null, tokens: null },
+      },
+    });
+
+    expect(site?.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      eyebrow: 'Travel details',
+      headline: 'Directions & Parking',
+      drivingTimeFrom: 'downtown',
+      showTransport: true,
+      transport: [{
+        id: 'transport-1',
+        icon: 'train',
+        label: 'By train',
+        description: 'Red line to Oak Station.',
+      }],
+    });
+    expect(JSON.stringify(site)).not.toContain('internalSchema');
+    expect(JSON.stringify(site)).not.toContain('ownerPreview');
+  });
+
+  it('normalizes music playlist settings into the client-safe public contract', () => {
+    const site = sanitizePublicSiteSafeRow({
+      id: 'site-music',
+      site_slug: 'kara-eric',
+      site_url: 'kara-eric',
+      is_published: true,
+      couple_name_1: 'Kara',
+      couple_name_2: 'Eric',
+      wedding_date: '2026-06-14',
+      venue_name: 'Grand Pavilion',
+      wedding_location: 'New York',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      allow_search_indexing: false,
+      render_model: {
+        pages: [{
+          id: 'home',
+          slug: 'home',
+          title: 'Home',
+          orderIndex: 0,
+          sections: [{
+            id: 'music-1',
+            type: 'music',
+            variant: 'playlist',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              headline: 'Music for our day',
+              playlists: [{
+                id: 'playlist-1',
+                label: 'Reception',
+                spotifyUrl: 'https://open.spotify.com/playlist/dayof',
+                tracks: [{
+                  id: 'track-1',
+                  title: 'September',
+                  artist: 'Earth, Wind & Fire',
+                  moment: 'Reception',
+                  ownerPreview: true,
+                }],
+              }],
+              queueTargets: ['hide-me'],
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+        wedding: null,
+        theme: { preset: null, tokens: null },
+      },
+    });
+
+    expect(site?.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      eyebrow: 'The Soundtrack',
+      headline: 'Music for our day',
+      showRequestNote: true,
+      playlists: [{
+        id: 'playlist-1',
+        label: 'Reception',
+        spotifyUrl: 'https://open.spotify.com/playlist/dayof',
+        tracks: [{
+          id: 'track-1',
+          title: 'September',
+          artist: 'Earth, Wind & Fire',
+          moment: 'Reception',
+        }],
+      }],
+    });
+    expect(JSON.stringify(site)).not.toContain('ownerPreview');
+    expect(JSON.stringify(site)).not.toContain('queueTargets');
+  });
+
+  it('normalizes video card settings into the client-safe public contract', () => {
+    const site = sanitizePublicSiteSafeRow({
+      id: 'site-video',
+      site_slug: 'kara-eric',
+      site_url: 'kara-eric',
+      is_published: true,
+      couple_name_1: 'Kara',
+      couple_name_2: 'Eric',
+      wedding_date: '2026-06-14',
+      venue_name: 'Grand Pavilion',
+      wedding_location: 'New York',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      allow_search_indexing: false,
+      render_model: {
+        pages: [{
+          id: 'home',
+          slug: 'home',
+          title: 'Home',
+          orderIndex: 0,
+          sections: [{
+            id: 'video-1',
+            type: 'video',
+            variant: 'card',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              headline: 'Our videos',
+              background: 'soft',
+              videos: [{
+                id: 'video-1',
+                title: 'Save the date',
+                description: 'A little sneak peek.',
+                videoUrl: 'https://vimeo.com/123456789',
+                thumbnailUrl: 'https://example.com/poster.jpg',
+                videoType: 'vimeo',
+                providerSecret: 'hide-me',
+              }],
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+        wedding: null,
+        theme: { preset: null, tokens: null },
+      },
+    });
+
+    expect(site?.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      headline: 'Our videos',
+      background: 'soft',
+      videos: [{
+        id: 'video-1',
+        title: 'Save the date',
+        description: 'A little sneak peek.',
+        videoUrl: 'https://vimeo.com/123456789',
+        thumbnailUrl: 'https://example.com/poster.jpg',
+      }],
+    });
+    expect(JSON.stringify(site)).not.toContain('providerSecret');
+  });
+
   it('normalizes gallery settings into the client-safe resolved public gallery contract', () => {
     const site = sanitizePublicSiteSafeRow({
       id: 'site-gallery',
@@ -382,6 +645,325 @@ describe('public site access client contract', () => {
     expect(JSON.stringify(site)).not.toContain('galleryImages');
     expect(JSON.stringify(site)).not.toContain('hiddenGallery');
     expect(JSON.stringify(site)).not.toContain('providerSecret');
+  });
+
+  it('normalizes countdown settings into the client-safe resolved public countdown contract', () => {
+    const site = sanitizePublicSiteSafeRow({
+      id: 'site-countdown',
+      site_slug: 'kara-eric',
+      site_url: 'kara-eric',
+      is_published: true,
+      couple_name_1: 'Kara',
+      couple_name_2: 'Eric',
+      wedding_date: '2026-06-14',
+      venue_name: 'Grand Pavilion',
+      wedding_location: 'New York',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      allow_search_indexing: false,
+      render_model: {
+        pages: [{
+          id: 'home',
+          slug: 'home',
+          title: 'Home',
+          orderIndex: 0,
+          sections: [{
+            id: 'countdown-1',
+            type: 'countdown',
+            variant: 'photo',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'Kara & Eric',
+              showTitle: true,
+              eyebrow: 'Counting down to',
+              targetDate: '2026-06-14',
+              message: 'See you there.',
+              messageAfter: 'Today is the day!',
+              showSeconds: false,
+              background: 'dark',
+              layoutStyle: 'photo',
+              imageUrl: 'https://example.com/countdown.jpg',
+              privateToken: 'hide-me',
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+        wedding: null,
+        theme: { preset: null, tokens: null },
+      },
+    });
+
+    expect(site?.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      eyebrow: 'Counting down to',
+      headline: 'Kara & Eric',
+      targetDate: '2026-06-14',
+      message: 'See you there.',
+      messageAfter: 'Today is the day!',
+      showSeconds: false,
+      background: 'dark',
+      layoutStyle: 'photo',
+      imageUrl: 'https://example.com/countdown.jpg',
+    });
+    const serializedSettings = JSON.stringify(site?.render_model.pages[0]?.sections[0]?.settings);
+    expect(serializedSettings).not.toContain('title');
+    expect(serializedSettings).not.toContain('showTitle');
+    expect(serializedSettings).not.toContain('privateToken');
+  });
+
+  it('normalizes RSVP settings into the client-safe resolved public RSVP contract', () => {
+    const site = sanitizePublicSiteSafeRow({
+      id: 'site-rsvp',
+      site_slug: 'kara-eric',
+      site_url: 'kara-eric',
+      is_published: true,
+      couple_name_1: 'Kara',
+      couple_name_2: 'Eric',
+      wedding_date: '2026-06-14',
+      venue_name: 'Grand Pavilion',
+      wedding_location: 'New York',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      allow_search_indexing: false,
+      render_model: {
+        pages: [{
+          id: 'home',
+          slug: 'home',
+          title: 'Home',
+          orderIndex: 0,
+          sections: [{
+            id: 'rsvp-1',
+            type: 'rsvp',
+            variant: 'multiEvent',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'Please reply',
+              showTitle: true,
+              eyebrow: 'Kindly reply by',
+              deadlineText: 'August 1, 2026',
+              deadline: '2026-08-01',
+              events: [{
+                id: 'event-1',
+                label: 'Ceremony',
+                description: 'Main celebration',
+                date: '2026-09-12',
+                location: 'Garden Hall',
+                hiddenTimeline: true,
+              }],
+              confirmationMessage: 'Thanks for celebrating with us.',
+              declineMessage: 'We will miss you.',
+              guestNote: 'Please share any dietary needs.',
+              mode: 'embed',
+              embedUrl: 'https://example.com/rsvp',
+              embedHeight: 820,
+              layoutStyle: 'illustrated',
+              imageUrl: 'https://example.com/rsvp-hero.jpg',
+              visibilityRules: ['staff-only'],
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+        wedding: null,
+        theme: { preset: null, tokens: null },
+      },
+    });
+
+    expect(site?.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      eyebrow: 'Kindly reply by',
+      headline: 'Please reply',
+      deadlineText: 'August 1, 2026',
+      deadline: '2026-08-01',
+      events: [{
+        id: 'event-1',
+        label: 'Ceremony',
+        description: 'Main celebration',
+        date: '2026-09-12',
+        location: 'Garden Hall',
+      }],
+      confirmationMessage: 'Thanks for celebrating with us.',
+      declineMessage: 'We will miss you.',
+      guestNote: 'Please share any dietary needs.',
+      mode: 'embed',
+      embedUrl: 'https://example.com/rsvp',
+      embedHeight: 820,
+      layoutStyle: 'illustrated',
+      imageUrl: 'https://example.com/rsvp-hero.jpg',
+    });
+    const serializedSettings = JSON.stringify(site?.render_model.pages[0]?.sections[0]?.settings);
+    expect(serializedSettings).not.toContain('title');
+    expect(serializedSettings).not.toContain('showTitle');
+    expect(serializedSettings).not.toContain('hiddenTimeline');
+    expect(serializedSettings).not.toContain('visibilityRules');
+  });
+
+  it('normalizes wedding-party settings into the client-safe resolved public contract', () => {
+    const site = sanitizePublicSiteSafeRow({
+      id: 'site-party',
+      site_slug: 'kara-eric',
+      site_url: 'kara-eric',
+      is_published: true,
+      couple_name_1: 'Kara',
+      couple_name_2: 'Eric',
+      wedding_date: '2026-06-14',
+      venue_name: 'Grand Pavilion',
+      wedding_location: 'New York',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      allow_search_indexing: false,
+      render_model: {
+        pages: [{
+          id: 'home',
+          slug: 'home',
+          title: 'Home',
+          orderIndex: 0,
+          sections: [{
+            id: 'party-1',
+            type: 'wedding-party',
+            variant: 'storyBios',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'Meet our people',
+              subtitle: 'The friends and family who mean the world to us.',
+              bridalTitle: 'Team Kara',
+              groomTitle: 'Team Eric',
+              eyebrow: 'Our people',
+              groupBySide: true,
+              members: [{
+                id: 'member-1',
+                name: 'Avery Planner',
+                role: 'Maid of Honor',
+                photo: 'https://example.com/avery.jpg',
+                note: 'Always first on the dance floor.',
+                side: 'partner1',
+                staffNotes: 'hide-me',
+              }],
+              hiddenGallery: true,
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+        wedding: null,
+        theme: { preset: null, tokens: null },
+      },
+    });
+
+    expect(site?.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      eyebrow: 'Our people',
+      headline: 'Meet our people',
+      subheadline: 'The friends and family who mean the world to us.',
+      groupBySide: true,
+      partner1Label: 'Team Kara',
+      partner2Label: 'Team Eric',
+      members: [{
+        id: 'member-1',
+        name: 'Avery Planner',
+        role: 'Maid of Honor',
+        photo: 'https://example.com/avery.jpg',
+        note: 'Always first on the dance floor.',
+        side: 'partner1',
+      }],
+    });
+    const serializedSettings = JSON.stringify(site?.render_model.pages[0]?.sections[0]?.settings);
+    expect(serializedSettings).not.toContain('title');
+    expect(serializedSettings).not.toContain('subtitle');
+    expect(serializedSettings).not.toContain('bridalTitle');
+    expect(serializedSettings).not.toContain('groomTitle');
+    expect(serializedSettings).not.toContain('staffNotes');
+    expect(serializedSettings).not.toContain('hiddenGallery');
+  });
+
+  it('normalizes dress-code settings into the client-safe resolved public contract', () => {
+    const site = sanitizePublicSiteSafeRow({
+      id: 'site-dress-code',
+      site_slug: 'kara-eric',
+      site_url: 'kara-eric',
+      is_published: true,
+      couple_name_1: 'Kara',
+      couple_name_2: 'Eric',
+      wedding_date: '2026-06-14',
+      venue_name: 'Grand Pavilion',
+      wedding_location: 'New York',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      allow_search_indexing: false,
+      render_model: {
+        pages: [{
+          id: 'home',
+          slug: 'home',
+          title: 'Home',
+          orderIndex: 0,
+          sections: [{
+            id: 'dress-1',
+            type: 'dress-code',
+            variant: 'moodBoard',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'What to wear',
+              showTitle: true,
+              eyebrow: 'Dress your best',
+              presetCode: 'cocktail',
+              dressCodeLabel: 'Cocktail Attire',
+              dressCode: 'Cocktail',
+              description: 'Elegant and comfortable.',
+              colorPalette: [{
+                id: 'swatch-1',
+                color: '#d4c5a9',
+                label: 'Sand',
+                providerSecret: 'hide-me',
+              }],
+              moodImages: [{
+                id: 'img-1',
+                url: 'https://example.com/look.jpg',
+                alt: 'Style inspiration',
+                adminEmail: 'hide@example.com',
+              }],
+              colorNote: 'Avoid white.',
+              additionalNote: 'Grass lawn ceremony.',
+              avoidNote: 'No denim.',
+              layoutStyle: 'moodBoard',
+              formalityLevel: 3,
+              plannerNotes: 'private',
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+        wedding: null,
+        theme: { preset: null, tokens: null },
+      },
+    });
+
+    expect(site?.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      eyebrow: 'Dress your best',
+      headline: 'What to wear',
+      presetCode: 'cocktail',
+      dressCodeLabel: 'Cocktail Attire',
+      dressCode: 'Cocktail',
+      description: 'Elegant and comfortable.',
+      colorPalette: [{
+        id: 'swatch-1',
+        color: '#d4c5a9',
+        label: 'Sand',
+      }],
+      moodImages: [{
+        id: 'img-1',
+        url: 'https://example.com/look.jpg',
+        alt: 'Style inspiration',
+      }],
+      colorNote: 'Avoid white.',
+      additionalNote: 'Grass lawn ceremony.',
+      avoidNote: 'No denim.',
+      layoutStyle: 'moodBoard',
+      formalityLevel: 3,
+    });
+    const serializedSettings = JSON.stringify(site?.render_model.pages[0]?.sections[0]?.settings);
+    expect(serializedSettings).not.toContain('title');
+    expect(serializedSettings).not.toContain('showTitle');
+    expect(serializedSettings).not.toContain('providerSecret');
+    expect(serializedSettings).not.toContain('adminEmail');
+    expect(serializedSettings).not.toContain('plannerNotes');
   });
 
   it('rejects malformed public site payloads instead of passing them through', () => {

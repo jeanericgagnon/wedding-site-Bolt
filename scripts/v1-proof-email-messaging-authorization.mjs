@@ -31,6 +31,8 @@ const getEnv = (key) => {
 const supabaseUrl = getEnv('VITE_SUPABASE_URL').trim();
 const anonKey = getEnv('VITE_SUPABASE_ANON_KEY').trim();
 const serviceRoleKey = getEnv('SUPABASE_SERVICE_ROLE_KEY').trim() || getEnv('V1_SUPABASE_SERVICE_ROLE_KEY').trim();
+const ownerEmail = getEnv('V1_OWNER_EMAIL').trim();
+const ownerPassword = getEnv('V1_OWNER_PASSWORD').trim();
 
 function isJwtLike(value) {
   return typeof value === 'string' && value.split('.').length === 3;
@@ -69,6 +71,8 @@ if (!/^https:\/\/.+\.supabase\.co$/.test(supabaseUrl)) {
 }
 
 const functionsBaseUrl = `${supabaseUrl.replace(/\/$/, '')}/functions/v1`;
+const authUrl = new URL('/auth/v1/token', supabaseUrl);
+authUrl.searchParams.set('grant_type', 'password');
 const internalErrorPattern = /\b(service\s*role|supabase|postgres|postgrest|database|schema|relation|table|column|policy|rls|jwt|bearer|token|secret|storage|bucket|provider|stripe|telnyx|twilio|sql|function|functions?\/v1)\b/i;
 const allowedDenialCopy = /^(Missing authorization|Unauthorized|Forbidden|Authentication required|Sign in required)$/i;
 
@@ -150,6 +154,46 @@ async function postWithoutAuthorization(proofCase) {
   };
 }
 
+async function signInOwnerAccessToken() {
+  if (!anonKey || !ownerEmail || !ownerPassword) {
+    return {
+      ok: false,
+      blocked: true,
+      blockerType: 'owner_sign_in_env_missing',
+      message: 'Set VITE_SUPABASE_ANON_KEY, V1_OWNER_EMAIL, and V1_OWNER_PASSWORD to run secure queue-processing proof.',
+    };
+  }
+
+  const response = await fetch(authUrl, {
+    method: 'POST',
+    headers: {
+      apikey: anonKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email: ownerEmail, password: ownerPassword }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  const payload = await response.json().catch(() => ({}));
+  const accessToken = typeof payload?.access_token === 'string' ? payload.access_token : '';
+
+  if (!response.ok || !accessToken) {
+    return {
+      ok: false,
+      blocked: false,
+      blockerType: 'owner_sign_in_failed',
+      status: response.status,
+      message: typeof payload?.msg === 'string'
+        ? payload.msg
+        : `Owner proof sign-in failed with status ${response.status}.`,
+    };
+  }
+
+  return {
+    ok: true,
+    accessToken,
+  };
+}
+
 async function secureQueueProcessingProof() {
   if (!serviceRoleKey) {
     return {
@@ -163,34 +207,19 @@ async function secureQueueProcessingProof() {
   }
 
   const restHeaders = buildRestHeaders();
+  const invokeAuthorization = isJwtLike(serviceRoleKey)
+    ? { ok: true, accessToken: serviceRoleKey }
+    : await signInOwnerAccessToken();
 
-  const pendingResponse = await fetch(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/email_queue?select=id,status&type,payload_json&status=eq.pending&limit=5`, {
-    headers: restHeaders,
-    signal: AbortSignal.timeout(15_000),
-  });
-  const pendingText = await pendingResponse.text();
-  if (!pendingResponse.ok) {
+  if (!invokeAuthorization.ok) {
     return {
       id: 'secure-queue-processing-proof',
       label: 'Secure service-role queue-processing proof',
       ok: false,
-      blocked: false,
-      blockerType: 'queue_read_failed',
-      status: pendingResponse.status,
-      message: pendingText.slice(0, 240) || 'Could not inspect pending email queue rows.',
-    };
-  }
-
-  const pendingRows = JSON.parse(pendingText);
-  if (pendingRows.length > 0) {
-    return {
-      id: 'secure-queue-processing-proof',
-      label: 'Secure service-role queue-processing proof',
-      ok: false,
-      blocked: true,
-      blockerType: 'pending_live_queue_not_empty',
-      message: `Pending live email queue has ${pendingRows.length} row(s); proof will not process them.`,
-      sampleIds: pendingRows.map((row) => row.id).slice(0, 5),
+      blocked: Boolean(invokeAuthorization.blocked),
+      blockerType: invokeAuthorization.blockerType,
+      status: invokeAuthorization.status,
+      message: invokeAuthorization.message,
     };
   }
 
@@ -250,10 +279,10 @@ async function secureQueueProcessingProof() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        apikey: anonKey || serviceRoleKey,
-        Authorization: `Bearer ${serviceRoleKey}`,
+        apikey: serviceRoleKey || anonKey,
+        Authorization: `Bearer ${invokeAuthorization.accessToken}`,
       },
-      body: JSON.stringify({}),
+      body: JSON.stringify({ queueIds: [insertedId] }),
       signal: AbortSignal.timeout(15_000),
     });
     const processText = await processResponse.text();

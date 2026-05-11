@@ -1067,6 +1067,282 @@ describe('publicSiteRenderModel', () => {
     expect(serialized).not.toContain('collaboratorAccess');
   });
 
+  it('allowlists accommodations hotel entries before they reach the public render model', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-accommodations',
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo.dayof.love',
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-09-12',
+      venue_name: 'Garden Hall',
+      wedding_location: 'Portland',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      hide_from_search: false,
+      site_json: null,
+      published_json: {
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [{
+            id: 'accommodations-1',
+            type: 'accommodations',
+            variant: 'featured',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'Accommodations',
+              headline: 'Places to stay',
+              layoutStyle: 'featured',
+              hotels: [{
+                id: 'hotel-1',
+                name: 'Harbor Hotel',
+                stars: 4,
+                distance: '0.3 miles',
+                bookingCode: 'MAYALEO',
+                bookingDeadline: 'May 20',
+                image: 'https://example.com/stay.jpg',
+                recommended: true,
+                adminEmail: 'hide@example.com',
+                hiddenGallery: true,
+              }],
+              internalQueueConfig: { id: 'hide-me' },
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      showTitle: true,
+      title: 'Accommodations',
+      headline: 'Places to stay',
+      eyebrow: 'Where to stay',
+      layoutStyle: 'featured',
+      hotels: [{
+        id: 'hotel-1',
+        name: 'Harbor Hotel',
+        stars: 4,
+        distance: '0.3 miles',
+        bookingCode: 'MAYALEO',
+        bookingDeadline: 'May 20',
+        image: 'https://example.com/stay.jpg',
+        recommended: true,
+      }],
+    });
+
+    const serialized = JSON.stringify(site.render_model.pages[0]?.sections[0]?.settings);
+    expect(serialized).not.toContain('adminEmail');
+    expect(serialized).not.toContain('hiddenGallery');
+    expect(serialized).not.toContain('internalQueueConfig');
+  });
+
+  it('allowlists directions transport entries before they reach the public render model', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-directions',
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo.dayof.love',
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-09-12',
+      venue_name: 'Garden Hall',
+      wedding_location: 'Portland',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      hide_from_search: false,
+      site_json: null,
+      published_json: {
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [{
+            id: 'directions-1',
+            type: 'directions',
+            variant: 'pin',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              headline: 'Directions & Parking',
+              showTransport: true,
+              transport: [{
+                id: 'transport-1',
+                icon: 'train',
+                label: 'By train',
+                description: 'Red line to Oak Station.',
+                collaboratorAccess: ['hide-me'],
+              }],
+              providerSecret: 'hide-me',
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      eyebrow: 'Travel details',
+      headline: 'Directions & Parking',
+      drivingTimeFrom: 'downtown',
+      showTransport: true,
+      transport: [{
+        id: 'transport-1',
+        icon: 'train',
+        label: 'By train',
+        description: 'Red line to Oak Station.',
+      }],
+    });
+
+    const serialized = JSON.stringify(site.render_model.pages[0]?.sections[0]?.settings);
+    expect(serialized).not.toContain('collaboratorAccess');
+    expect(serialized).not.toContain('providerSecret');
+  });
+
+  it('allowlists music playlist entries before they reach the public render model', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-music',
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo.dayof.love',
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-09-12',
+      venue_name: 'Garden Hall',
+      wedding_location: 'Portland',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      hide_from_search: false,
+      site_json: null,
+      published_json: {
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [{
+            id: 'music-1',
+            type: 'music',
+            variant: 'playlist',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              headline: 'Music for our day',
+              playlists: [{
+                id: 'playlist-1',
+                label: 'Reception',
+                spotifyUrl: 'https://open.spotify.com/playlist/dayof',
+                tracks: [{
+                  id: 'track-1',
+                  title: 'September',
+                  artist: 'Earth, Wind & Fire',
+                  moment: 'Reception',
+                  staffNotes: 'hide-me',
+                }],
+                adminEmail: 'hide@example.com',
+              }],
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      eyebrow: 'The Soundtrack',
+      headline: 'Music for our day',
+      showRequestNote: true,
+      playlists: [{
+        id: 'playlist-1',
+        label: 'Reception',
+        spotifyUrl: 'https://open.spotify.com/playlist/dayof',
+        tracks: [{
+          id: 'track-1',
+          title: 'September',
+          artist: 'Earth, Wind & Fire',
+          moment: 'Reception',
+        }],
+      }],
+    });
+    const serialized = JSON.stringify(site.render_model.pages[0]?.sections[0]?.settings);
+    expect(serialized).not.toContain('staffNotes');
+    expect(serialized).not.toContain('adminEmail');
+  });
+
+  it('allowlists video card entries before they reach the public render model', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-video',
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo.dayof.love',
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-09-12',
+      venue_name: 'Garden Hall',
+      wedding_location: 'Portland',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      hide_from_search: false,
+      site_json: null,
+      published_json: {
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [{
+            id: 'video-1',
+            type: 'video',
+            variant: 'card',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              headline: 'Our videos',
+              background: 'soft',
+              videos: [{
+                id: 'video-1',
+                title: 'Save the date',
+                description: 'A little sneak peek.',
+                videoUrl: 'https://vimeo.com/123456789',
+                thumbnailUrl: 'https://example.com/poster.jpg',
+                videoType: 'vimeo',
+                moderationQueue: 'hide-me',
+              }],
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      headline: 'Our videos',
+      background: 'soft',
+      videos: [{
+        id: 'video-1',
+        title: 'Save the date',
+        description: 'A little sneak peek.',
+        videoUrl: 'https://vimeo.com/123456789',
+        thumbnailUrl: 'https://example.com/poster.jpg',
+      }],
+    });
+    expect(JSON.stringify(site.render_model.pages[0]?.sections[0]?.settings)).not.toContain('moderationQueue');
+  });
+
   it('allowlists nested gallery settings before they reach the public render model', () => {
     const site = buildPublicSiteRenderSite({
       id: 'site-gallery',
@@ -1138,6 +1414,329 @@ describe('publicSiteRenderModel', () => {
     expect(serialized).not.toContain('galleryImages');
     expect(serialized).not.toContain('hiddenGallery');
     expect(serialized).not.toContain('ownerPreview');
+  });
+
+  it('normalizes countdown settings into the resolved public countdown contract', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-countdown',
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo.dayof.love',
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-09-12',
+      venue_name: 'Garden Hall',
+      wedding_location: 'Portland',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      hide_from_search: false,
+      site_json: null,
+      published_json: {
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [{
+            id: 'countdown-1',
+            type: 'countdown',
+            variant: 'photo',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'Maya & Leo',
+              showTitle: true,
+              eyebrow: 'Counting down to',
+              targetDate: '2026-09-12',
+              message: 'See you there.',
+              messageAfter: 'Today is the day!',
+              showSeconds: false,
+              background: 'dark',
+              layoutStyle: 'photo',
+              imageUrl: 'https://example.com/countdown.jpg',
+              providerSecret: 'hide-me',
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      eyebrow: 'Counting down to',
+      headline: 'Maya & Leo',
+      targetDate: '2026-09-12',
+      message: 'See you there.',
+      messageAfter: 'Today is the day!',
+      showSeconds: false,
+      background: 'dark',
+      layoutStyle: 'photo',
+      imageUrl: 'https://example.com/countdown.jpg',
+    });
+    const serialized = JSON.stringify(site.render_model.pages[0]?.sections[0]?.settings);
+    expect(serialized).not.toContain('title');
+    expect(serialized).not.toContain('showTitle');
+    expect(serialized).not.toContain('providerSecret');
+  });
+
+  it('normalizes RSVP settings into the resolved public RSVP contract and drops stale title keys', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-rsvp',
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo.dayof.love',
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-09-12',
+      venue_name: 'Garden Hall',
+      wedding_location: 'Portland',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      hide_from_search: false,
+      site_json: null,
+      published_json: {
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [{
+            id: 'rsvp-1',
+            type: 'rsvp',
+            variant: 'multiEvent',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'Please reply',
+              showTitle: true,
+              eyebrow: 'Kindly reply by',
+              deadlineText: 'August 1, 2026',
+              deadline: '2026-08-01',
+              events: [{
+                id: 'event-1',
+                label: 'Ceremony',
+                description: 'Main celebration',
+                date: '2026-09-12',
+                location: 'Garden Hall',
+                hiddenTimeline: true,
+              }],
+              confirmationMessage: 'Thanks for celebrating with us.',
+              declineMessage: 'We will miss you.',
+              guestNote: 'Please share any dietary needs.',
+              mode: 'embed',
+              embedUrl: 'https://example.com/rsvp',
+              embedHeight: 820,
+              layoutStyle: 'illustrated',
+              imageUrl: 'https://example.com/rsvp-hero.jpg',
+              ownerPreview: true,
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      eyebrow: 'Kindly reply by',
+      headline: 'Please reply',
+      deadlineText: 'August 1, 2026',
+      deadline: '2026-08-01',
+      events: [{
+        id: 'event-1',
+        label: 'Ceremony',
+        description: 'Main celebration',
+        date: '2026-09-12',
+        location: 'Garden Hall',
+      }],
+      confirmationMessage: 'Thanks for celebrating with us.',
+      declineMessage: 'We will miss you.',
+      guestNote: 'Please share any dietary needs.',
+      mode: 'embed',
+      embedUrl: 'https://example.com/rsvp',
+      embedHeight: 820,
+      layoutStyle: 'illustrated',
+      imageUrl: 'https://example.com/rsvp-hero.jpg',
+    });
+    const serialized = JSON.stringify(site.render_model.pages[0]?.sections[0]?.settings);
+    expect(serialized).not.toContain('title');
+    expect(serialized).not.toContain('showTitle');
+    expect(serialized).not.toContain('hiddenTimeline');
+    expect(serialized).not.toContain('ownerPreview');
+  });
+
+  it('normalizes wedding-party settings into the resolved public contract and drops stale builder keys', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-party',
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo.dayof.love',
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-09-12',
+      venue_name: 'Garden Hall',
+      wedding_location: 'Portland',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      hide_from_search: false,
+      site_json: null,
+      published_json: {
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [{
+            id: 'party-1',
+            type: 'wedding-party',
+            variant: 'storyBios',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'Meet our people',
+              subtitle: 'The friends and family who mean the world to us.',
+              bridalTitle: 'Team Maya',
+              groomTitle: 'Team Leo',
+              eyebrow: 'Our people',
+              groupBySide: true,
+              members: [{
+                id: 'member-1',
+                name: 'Avery Planner',
+                role: 'Maid of Honor',
+                photo: 'https://example.com/avery.jpg',
+                note: 'Always first on the dance floor.',
+                side: 'partner1',
+                staffNotes: 'hide-me',
+              }],
+              hiddenGallery: true,
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      eyebrow: 'Our people',
+      headline: 'Meet our people',
+      subheadline: 'The friends and family who mean the world to us.',
+      groupBySide: true,
+      partner1Label: 'Team Maya',
+      partner2Label: 'Team Leo',
+      members: [{
+        id: 'member-1',
+        name: 'Avery Planner',
+        role: 'Maid of Honor',
+        photo: 'https://example.com/avery.jpg',
+        note: 'Always first on the dance floor.',
+        side: 'partner1',
+      }],
+    });
+    const serialized = JSON.stringify(site.render_model.pages[0]?.sections[0]?.settings);
+    expect(serialized).not.toContain('title');
+    expect(serialized).not.toContain('subtitle');
+    expect(serialized).not.toContain('bridalTitle');
+    expect(serialized).not.toContain('groomTitle');
+    expect(serialized).not.toContain('staffNotes');
+    expect(serialized).not.toContain('hiddenGallery');
+  });
+
+  it('normalizes dress-code settings into the resolved public contract and drops stale builder keys', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-dress-code',
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo.dayof.love',
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-09-12',
+      venue_name: 'Garden Hall',
+      wedding_location: 'Portland',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      hide_from_search: false,
+      site_json: null,
+      published_json: {
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [{
+            id: 'dress-1',
+            type: 'dress-code',
+            variant: 'moodBoard',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'What to wear',
+              showTitle: true,
+              eyebrow: 'Dress your best',
+              presetCode: 'cocktail',
+              dressCodeLabel: 'Cocktail Attire',
+              dressCode: 'Cocktail',
+              description: 'Elegant and comfortable.',
+              colorPalette: [{
+                id: 'swatch-1',
+                color: '#d4c5a9',
+                label: 'Sand',
+                providerSecret: 'hide-me',
+              }],
+              moodImages: [{
+                id: 'img-1',
+                url: 'https://example.com/look.jpg',
+                alt: 'Style inspiration',
+                adminEmail: 'hide@example.com',
+              }],
+              colorNote: 'Avoid white.',
+              additionalNote: 'Grass lawn ceremony.',
+              avoidNote: 'No denim.',
+              layoutStyle: 'moodBoard',
+              formalityLevel: 3,
+              plannerNotes: 'private',
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      eyebrow: 'Dress your best',
+      headline: 'What to wear',
+      presetCode: 'cocktail',
+      dressCodeLabel: 'Cocktail Attire',
+      dressCode: 'Cocktail',
+      description: 'Elegant and comfortable.',
+      colorPalette: [{
+        id: 'swatch-1',
+        color: '#d4c5a9',
+        label: 'Sand',
+      }],
+      moodImages: [{
+        id: 'img-1',
+        url: 'https://example.com/look.jpg',
+        alt: 'Style inspiration',
+      }],
+      colorNote: 'Avoid white.',
+      additionalNote: 'Grass lawn ceremony.',
+      avoidNote: 'No denim.',
+      layoutStyle: 'moodBoard',
+      formalityLevel: 3,
+    });
+    const serialized = JSON.stringify(site.render_model.pages[0]?.sections[0]?.settings);
+    expect(serialized).not.toContain('title');
+    expect(serialized).not.toContain('showTitle');
+    expect(serialized).not.toContain('providerSecret');
+    expect(serialized).not.toContain('adminEmail');
+    expect(serialized).not.toContain('plannerNotes');
   });
 
   it('normalizes footer cta aliases into the public renderer fields and drops stale footer keys', () => {

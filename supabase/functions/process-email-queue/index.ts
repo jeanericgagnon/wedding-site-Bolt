@@ -18,6 +18,11 @@ const BATCH_SIZE = 20;
 const MAX_ATTEMPTS = 3;
 const SAFE_DELIVERY_ERROR = "Email delivery did not complete. Please try again.";
 const EMAIL_QUEUE_ACCESS_REQUIRED_COPY = "This email queue request is not available.";
+const EMAIL_QUEUE_REQUEST_INVALID_COPY = "This email queue request is not available.";
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
 
 function buildEmailHtml(type: string, payload: Record<string, unknown>): { subject: string; html: string } | null {
   const p = payload as Record<string, string | boolean | null>;
@@ -134,9 +139,21 @@ Deno.serve(async (req: Request) => {
   try {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const authHeader = req.headers.get("Authorization");
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-    if (token !== serviceRoleKey) {
+    const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    const apiKey = req.headers.get("apikey");
+    if (bearerToken !== serviceRoleKey && apiKey !== serviceRoleKey) {
       return json({ error: EMAIL_QUEUE_ACCESS_REQUIRED_COPY }, 401);
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const queueIds = Array.isArray(body?.queueIds)
+      ? Array.from(new Set(body.queueIds.filter((value: unknown): value is string => typeof value === "string" && isUuid(value))))
+      : [];
+    if (Array.isArray(body?.queueIds) && queueIds.length !== body.queueIds.length) {
+      return json({ error: EMAIL_QUEUE_REQUEST_INVALID_COPY }, 400);
+    }
+    if (queueIds.length > BATCH_SIZE) {
+      return json({ error: EMAIL_QUEUE_REQUEST_INVALID_COPY }, 400);
     }
 
     const adminClient = createClient(
@@ -149,13 +166,19 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Could not process email queue. Please try again." }, 500);
     }
 
-    const { data: items, error: fetchErr } = await adminClient
+    let fetchQuery = adminClient
       .from("email_queue")
       .select("id, type, payload_json, attempts")
       .eq("status", "pending")
-      .lt("attempts", MAX_ATTEMPTS)
-      .order("created_at", { ascending: true })
-      .limit(BATCH_SIZE);
+      .lt("attempts", MAX_ATTEMPTS);
+
+    if (queueIds.length > 0) {
+      fetchQuery = fetchQuery.in("id", queueIds);
+    } else {
+      fetchQuery = fetchQuery.order("created_at", { ascending: true }).limit(BATCH_SIZE);
+    }
+
+    const { data: items, error: fetchErr } = await fetchQuery;
 
     if (fetchErr) throw fetchErr;
     if (!items || items.length === 0) {

@@ -65,20 +65,20 @@ export const PUBLIC_SECTION_SETTINGS_ALLOWLIST: Record<SectionType, readonly str
   travel: ['eyebrow', 'headline', 'intro', 'flightInfo', 'drivingInfo', 'parkingInfo', 'shuttleInfo', 'generalNote', 'hotels', 'subheadline', 'deadlineNote', 'showAmenities', 'showShuttle', 'airport', 'venueAddress', 'coffee', 'food', 'sights', 'nightlife', 'pins', 'airportTips', 'activities', 'closest', 'value', 'budget'],
   registry: ['showTitle', 'title', 'message'],
   faq: ['showTitle', 'title'],
-  rsvp: ['showTitle', 'title', 'deadlineText', 'confirmationMessage', 'mode', 'embedUrl', 'embedHeight'],
+  rsvp: ['eyebrow', 'headline', 'deadlineText', 'deadline', 'events', 'confirmationMessage', 'declineMessage', 'guestNote', 'mode', 'embedUrl', 'embedHeight', 'layoutStyle', 'imageUrl'],
   gallery: ['eyebrow', 'headline', 'images', 'animation', 'showCaptions', 'enableLightbox', 'autoScroll', 'continuousGlide', 'glideSpeed', 'columns', 'aspectRatio', 'backgroundColor', 'autoplay'],
-  countdown: ['showTitle', 'title', 'eyebrow', 'targetDate', 'message', 'showSeconds', 'imageUrl'],
-  'wedding-party': ['showTitle', 'title', 'eyebrow', 'subtitle', 'bridalTitle', 'groomTitle'],
-  'dress-code': ['showTitle', 'eyebrow', 'presetCode', 'dressCodeLabel', 'description', 'colorNote', 'additionalNote', 'avoidNote', 'formalityLevel'],
-  accommodations: ['showTitle', 'title', 'eyebrow', 'generalNote', 'blockNote', 'shuttleNote', 'mapImage'],
+  countdown: ['eyebrow', 'headline', 'targetDate', 'message', 'messageAfter', 'showSeconds', 'background', 'layoutStyle', 'imageUrl'],
+  'wedding-party': ['eyebrow', 'headline', 'subheadline', 'members', 'groupBySide', 'partner1Label', 'partner2Label'],
+  'dress-code': ['eyebrow', 'headline', 'presetCode', 'dressCodeLabel', 'dressCode', 'description', 'colorPalette', 'moodImages', 'colorNote', 'additionalNote', 'avoidNote', 'layoutStyle', 'formalityLevel'],
+  accommodations: ['showTitle', 'title', 'headline', 'eyebrow', 'generalNote', 'blockNote', 'shuttleNote', 'mapImage', 'layoutStyle', 'hotels'],
   contact: ['showTitle', 'title', 'headline', 'eyebrow', 'subtitle', 'subheadline', 'introText', 'contacts', 'emailSubject', 'closingNote', 'pollPrompt', 'pollOptions', 'quizPrompt', 'quizOptions', 'correctQuizOption', 'suggestionPrompt', 'allowPublicResults'],
   'footer-cta': ['headline', 'subtext', 'buttonLabel', 'rsvpUrl', 'footerNote'],
   custom: ['backgroundColor', 'paddingSize'],
   quotes: ['eyebrow', 'headline', 'background', 'autoplay'],
   menu: ['eyebrow', 'headline', 'subtitle', 'note', 'backgroundImage', 'showDietaryIcons', 'showDietaryKey'],
-  music: ['eyebrow', 'headline', 'subtitle', 'djBandName', 'djBandLabel', 'requestNote', 'showRequestNote', 'playlistUrl', 'promptLabel', 'placeholder', 'buttonLabel', 'showRecentRequests', 'background'],
-  directions: ['eyebrow', 'headline', 'venueName', 'address', 'city', 'mapUrl', 'parkingNote', 'shuttleNote', 'publicTransitNote', 'drivingTime', 'drivingTimeFrom'],
-  video: ['eyebrow', 'headline', 'subtitle', 'videoUrl', 'thumbnailUrl', 'videoType', 'background'],
+  music: ['eyebrow', 'headline', 'subtitle', 'djBandName', 'djBandLabel', 'requestNote', 'showRequestNote', 'playlistUrl', 'promptLabel', 'placeholder', 'buttonLabel', 'showRecentRequests', 'showPlaylistLink', 'showMoments', 'note', 'songs', 'playlists', 'background'],
+  directions: ['eyebrow', 'headline', 'venueName', 'address', 'city', 'phone', 'mapUrl', 'parkingNote', 'rideshareNote', 'shuttleNote', 'showTransport', 'transport', 'publicTransitNote', 'drivingTime', 'drivingTimeFrom', 'background'],
+  video: ['eyebrow', 'headline', 'subtitle', 'videoUrl', 'thumbnailUrl', 'videoType', 'background', 'autoplay', 'layoutStyle', 'videos'],
 };
 
 export const PUBLIC_BINDINGS_BY_SECTION_TYPE: Partial<Record<SectionType, readonly (keyof PublicBindingDTO)[]>> = {
@@ -105,8 +105,16 @@ export const PUBLIC_SECTION_SETTING_ALIAS_EXCEPTIONS: Partial<Record<SectionType
   story: ['headline', 'body', 'image', 'showDivider'],
   travel: ['eyebrow', 'headline', 'intro', 'flightInfo', 'drivingInfo', 'parkingInfo', 'shuttleInfo', 'generalNote', 'hotels', 'subheadline', 'deadlineNote', 'showAmenities', 'showShuttle', 'airport', 'venueAddress', 'coffee', 'food', 'sights', 'nightlife', 'pins', 'airportTips', 'activities', 'closest', 'value', 'budget'],
   gallery: ['headline', 'images', 'columns', 'aspectRatio', 'backgroundColor', 'autoplay'],
+  countdown: ['headline', 'messageAfter', 'background', 'layoutStyle'],
   contact: ['headline', 'subheadline', 'contacts'],
   'footer-cta': ['buttonLabel', 'rsvpUrl'],
+  rsvp: ['eyebrow', 'headline', 'deadline', 'events', 'declineMessage', 'guestNote', 'layoutStyle', 'imageUrl'],
+  'wedding-party': ['headline', 'subheadline', 'members', 'groupBySide', 'partner1Label', 'partner2Label'],
+  'dress-code': ['headline', 'dressCode', 'colorPalette', 'moodImages', 'layoutStyle'],
+  accommodations: ['headline', 'layoutStyle', 'hotels'],
+  directions: ['phone', 'rideshareNote', 'showTransport', 'transport', 'background'],
+  music: ['showPlaylistLink', 'showMoments', 'note', 'songs', 'playlists', 'background'],
+  video: ['autoplay', 'layoutStyle', 'videos', 'background'],
 };
 
 function asString(value: unknown): string | undefined {
@@ -258,6 +266,58 @@ function sanitizeGalleryImages(value: unknown): Array<Record<string, unknown>> |
   });
 }
 
+function sanitizeRsvpEvents(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (event, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(event.id) ? event.id : `event-${index + 1}`,
+    };
+    for (const key of ['label', 'description', 'date', 'location'] as const) {
+      const picked = pickOptionalString(event, key);
+      if (picked) out[key] = picked;
+    }
+    return Object.keys(out).length > 1 ? out : null;
+  });
+}
+
+function sanitizeWeddingPartyMembers(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (member, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(member.id) ? member.id : `member-${index + 1}`,
+    };
+    for (const key of ['name', 'role', 'photo', 'note', 'side'] as const) {
+      const picked = pickOptionalString(member, key);
+      if (picked) out[key] = picked;
+    }
+    return Object.keys(out).length > 1 ? out : null;
+  });
+}
+
+function sanitizeDressCodeColorPalette(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (swatch, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(swatch.id) ? swatch.id : `swatch-${index + 1}`,
+    };
+    for (const key of ['color', 'label'] as const) {
+      const picked = pickOptionalString(swatch, key);
+      if (picked) out[key] = picked;
+    }
+    return hasNonEmptyString(out.color) ? out : null;
+  });
+}
+
+function sanitizeDressCodeMoodImages(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (image, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(image.id) ? image.id : `image-${index + 1}`,
+    };
+    for (const key of ['url', 'alt'] as const) {
+      const picked = pickOptionalString(image, key);
+      if (picked) out[key] = picked;
+    }
+    return hasNonEmptyString(out.url) ? out : null;
+  });
+}
+
 function sanitizePublicContactPeople(value: unknown): PublicContactPersonDTO[] | undefined {
   if (!Array.isArray(value)) return undefined;
 
@@ -278,6 +338,103 @@ function sanitizePublicContactPeople(value: unknown): PublicContactPersonDTO[] |
   });
 
   return picked.length > 0 ? picked : undefined;
+}
+
+function sanitizeAccommodationsDefaultHotels(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (hotel, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(hotel.id) ? hotel.id : `hotel-${index + 1}`,
+    };
+    for (const key of ['name', 'address', 'phone', 'url', 'priceRange', 'distance', 'notes'] as const) {
+      const picked = pickOptionalString(hotel, key);
+      if (picked) out[key] = picked;
+    }
+    const blockCode = pickOptionalString(hotel, 'blockCode') ?? pickOptionalString(hotel, 'bookingCode');
+    if (blockCode) out.blockCode = blockCode;
+    const blockDeadline = pickOptionalString(hotel, 'blockDeadline') ?? pickOptionalString(hotel, 'bookingDeadline');
+    if (blockDeadline) out.blockDeadline = blockDeadline;
+    return hasNonEmptyString(out.name) ? out : null;
+  });
+}
+
+function sanitizeAccommodationsVariantHotels(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (hotel, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(hotel.id) ? hotel.id : `hotel-${index + 1}`,
+    };
+    for (const key of ['name', 'distance', 'priceRange', 'bookingCode', 'bookingDeadline', 'phone', 'url', 'image', 'notes'] as const) {
+      const picked = pickOptionalString(hotel, key);
+      if (picked) out[key] = picked;
+    }
+    if (typeof hotel.stars === 'number' && Number.isFinite(hotel.stars)) out.stars = hotel.stars;
+    if (typeof hotel.recommended === 'boolean') out.recommended = hotel.recommended;
+    return hasNonEmptyString(out.name) ? out : null;
+  });
+}
+
+function sanitizeDirectionsTransportOptions(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (option, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(option.id) ? option.id : `transport-${index + 1}`,
+    };
+    for (const key of ['icon', 'label', 'description'] as const) {
+      const picked = pickOptionalString(option, key);
+      if (picked) out[key] = picked;
+    }
+    return hasNonEmptyString(out.label) ? out : null;
+  });
+}
+
+function sanitizeMusicSongs(
+  value: unknown,
+  options: { includeNote?: boolean; includeIcon?: boolean } = {},
+): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (song, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(song.id) ? song.id : `song-${index + 1}`,
+    };
+    for (const key of ['title', 'artist', 'moment'] as const) {
+      const picked = pickOptionalString(song, key);
+      if (picked) out[key] = picked;
+    }
+    if (options.includeNote) {
+      const note = pickOptionalString(song, 'note');
+      if (note) out.note = note;
+    }
+    if (options.includeIcon) {
+      const icon = pickOptionalString(song, 'icon');
+      if (icon) out.icon = icon;
+    }
+    return hasNonEmptyString(out.title) ? out : null;
+  });
+}
+
+function sanitizeMusicPlaylists(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (playlist, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(playlist.id) ? playlist.id : `playlist-${index + 1}`,
+    };
+    for (const key of ['label', 'spotifyUrl', 'appleMusicUrl'] as const) {
+      const picked = pickOptionalString(playlist, key);
+      if (picked) out[key] = picked;
+    }
+    const tracks = sanitizeMusicSongs(playlist.tracks);
+    if (tracks) out.tracks = tracks;
+    return hasNonEmptyString(out.label) ? out : null;
+  });
+}
+
+function sanitizeVideoItems(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (video, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(video.id) ? video.id : `video-${index + 1}`,
+    };
+    for (const key of ['title', 'description', 'videoUrl', 'thumbnailUrl', 'videoType'] as const) {
+      const picked = pickOptionalString(video, key);
+      if (picked) out[key] = picked;
+    }
+    return hasNonEmptyString(out.title) || hasNonEmptyString(out.videoUrl) ? out : null;
+  });
 }
 
 export function sanitizePublicSectionSettings(
@@ -388,6 +545,50 @@ export function sanitizePublicSectionSettings(
     delete normalizedSource.photos;
   }
 
+  if (type === 'countdown') {
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
+      normalizedSource.headline = rawSource.title;
+    }
+    delete normalizedSource.title;
+    delete normalizedSource.showTitle;
+  }
+
+  if (type === 'rsvp') {
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
+      normalizedSource.headline = rawSource.title;
+    }
+    delete normalizedSource.title;
+    delete normalizedSource.showTitle;
+  }
+
+  if (type === 'wedding-party') {
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
+      normalizedSource.headline = rawSource.title;
+    }
+    if (!hasNonEmptyString(normalizedSource.subheadline) && hasNonEmptyString(rawSource.subtitle)) {
+      normalizedSource.subheadline = rawSource.subtitle;
+    }
+    if (!hasNonEmptyString(normalizedSource.partner1Label) && hasNonEmptyString(rawSource.bridalTitle)) {
+      normalizedSource.partner1Label = rawSource.bridalTitle;
+    }
+    if (!hasNonEmptyString(normalizedSource.partner2Label) && hasNonEmptyString(rawSource.groomTitle)) {
+      normalizedSource.partner2Label = rawSource.groomTitle;
+    }
+    delete normalizedSource.title;
+    delete normalizedSource.subtitle;
+    delete normalizedSource.bridalTitle;
+    delete normalizedSource.groomTitle;
+    delete normalizedSource.showTitle;
+  }
+
+  if (type === 'dress-code') {
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
+      normalizedSource.headline = rawSource.title;
+    }
+    delete normalizedSource.title;
+    delete normalizedSource.showTitle;
+  }
+
   for (const [key, settingValue] of Object.entries(variantDefaults)) {
     if (allowedKeys.has(key)) out[key] = settingValue;
   }
@@ -466,6 +667,116 @@ export function sanitizePublicSectionSettings(
     delete out.photos;
     const images = sanitizeGalleryImages(normalizedSource.images);
     if (images) out.images = images;
+  }
+
+  if (type === 'countdown') {
+    delete out.title;
+    delete out.showTitle;
+  }
+
+  if (type === 'rsvp') {
+    delete out.title;
+    delete out.showTitle;
+    const events = sanitizeRsvpEvents(normalizedSource.events);
+    if (events) out.events = events;
+  }
+
+  if (type === 'wedding-party') {
+    delete out.title;
+    delete out.subtitle;
+    delete out.bridalTitle;
+    delete out.groomTitle;
+    delete out.showTitle;
+    const members = sanitizeWeddingPartyMembers(normalizedSource.members);
+    if (members) out.members = members;
+  }
+
+  if (type === 'dress-code') {
+    delete out.title;
+    delete out.showTitle;
+    const colorPalette = sanitizeDressCodeColorPalette(normalizedSource.colorPalette);
+    if (colorPalette) out.colorPalette = colorPalette;
+    const moodImages = sanitizeDressCodeMoodImages(normalizedSource.moodImages);
+    if (moodImages) out.moodImages = moodImages;
+  }
+
+  if (type === 'accommodations') {
+    const hotels = canonicalVariant === 'default'
+      ? sanitizeAccommodationsDefaultHotels(normalizedSource.hotels)
+      : sanitizeAccommodationsVariantHotels(normalizedSource.hotels);
+    if (hotels) out.hotels = hotels;
+  }
+
+  if (type === 'directions') {
+    const transport = sanitizeDirectionsTransportOptions(normalizedSource.transport);
+    if (transport) out.transport = transport;
+  }
+
+  if (type === 'music') {
+    if (canonicalVariant === 'playlist') {
+      delete out.djBandName;
+      delete out.djBandLabel;
+      delete out.playlistUrl;
+      delete out.promptLabel;
+      delete out.placeholder;
+      delete out.buttonLabel;
+      delete out.showRecentRequests;
+      delete out.showPlaylistLink;
+      delete out.showMoments;
+      delete out.note;
+      delete out.background;
+      delete out.songs;
+      const playlists = sanitizeMusicPlaylists(normalizedSource.playlists);
+      if (playlists) out.playlists = playlists;
+    } else if (canonicalVariant === 'setlist') {
+      delete out.playlistUrl;
+      delete out.promptLabel;
+      delete out.placeholder;
+      delete out.buttonLabel;
+      delete out.showRecentRequests;
+      delete out.showPlaylistLink;
+      delete out.showMoments;
+      delete out.note;
+      delete out.playlists;
+      const songs = sanitizeMusicSongs(normalizedSource.songs, { includeNote: true, includeIcon: true });
+      if (songs) out.songs = songs;
+    } else if (canonicalVariant === 'compact') {
+      delete out.djBandName;
+      delete out.djBandLabel;
+      delete out.requestNote;
+      delete out.showRequestNote;
+      delete out.playlistUrl;
+      delete out.promptLabel;
+      delete out.placeholder;
+      delete out.buttonLabel;
+      delete out.showRecentRequests;
+      delete out.showPlaylistLink;
+      delete out.background;
+      delete out.playlists;
+      const songs = sanitizeMusicSongs(normalizedSource.songs);
+      if (songs) out.songs = songs;
+    } else if (canonicalVariant === 'requestForm') {
+      delete out.djBandName;
+      delete out.djBandLabel;
+      delete out.showMoments;
+      delete out.note;
+      delete out.songs;
+      delete out.playlists;
+    }
+  }
+
+  if (type === 'video') {
+    if (canonicalVariant === 'card') {
+      delete out.videoUrl;
+      delete out.thumbnailUrl;
+      delete out.videoType;
+      delete out.autoplay;
+      delete out.layoutStyle;
+    } else {
+      delete out.videos;
+    }
+    const videos = sanitizeVideoItems(normalizedSource.videos);
+    if (videos) out.videos = videos;
   }
 
   if (type === 'hero') {
