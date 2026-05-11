@@ -7,6 +7,7 @@ const IMAGE_KEY_PATTERN = /(?:image|photo|photos|picture|thumbnail|poster|avatar
 const LINK_KEY_PATTERN = /(?:href|url|link|website|rsvp|registry|cashfund|viewall|map|embed|playlist|video)/i;
 const IMAGE_VALUE_KEY_PATTERN = /^(src|url)$/i;
 const IMAGE_METADATA_KEY_PATTERN = /(?:alt|caption)$/i;
+const LINK_METADATA_KEY_PATTERN = /(?:label|description|note|headline|title|subtitle|prompt|placeholder|calltoaction)$/i;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -25,10 +26,11 @@ function sanitizePublicSectionValue(value: unknown, key?: string, imageContext =
   const shouldSanitizeAsImage = (
     Boolean(key && isImageKey(key) && !IMAGE_METADATA_KEY_PATTERN.test(key))
   ) || (imageContext && Boolean(key && IMAGE_VALUE_KEY_PATTERN.test(key)));
+  const shouldSanitizeAsLink = Boolean(key && isLinkKey(key) && !LINK_METADATA_KEY_PATTERN.test(key));
 
   if (typeof value === 'string') {
     if (shouldSanitizeAsImage) return getSafePublicImageUrl(value);
-    if (isLinkKey(key)) return getSafePublicActionHref(value);
+    if (shouldSanitizeAsLink) return getSafePublicActionHref(value);
     return value;
   }
 

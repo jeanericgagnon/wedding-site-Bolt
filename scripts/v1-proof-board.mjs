@@ -134,10 +134,11 @@ const orderedMarkdownSections = [
   'Critical Resolved This Wave',
   'Non-Critical Before Launch',
   'Non-Critical After Launch / Deferred',
-  'Current Validation Matrix',
-  'Deployment Status',
+  'Validation Matrix',
+  'Deployment Matrix',
   'Next 10 Tasks',
   'Resolved Work Summary',
+  'What Changed In This Final Closeout',
 ];
 
 if (process.argv.includes('--markdown')) {

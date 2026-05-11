@@ -328,11 +328,17 @@ const InteractiveHub: React.FC<SectionComponentProps<ContactInteractiveHubData>>
     writeInteractiveCooldown(cooldownKey, now);
 
     if (siteSlug) {
-      await submitInteractiveSuggestion({
-        siteSlug,
-        promptKey: data.suggestionPrompt,
-        suggestionText: value,
-      });
+      try {
+        await submitInteractiveSuggestion({
+          siteSlug,
+          promptKey: data.suggestionPrompt,
+          suggestionText: value,
+        });
+      } catch {
+        const reverted = suggestions;
+        setSuggestions(reverted);
+        writeInteractiveSuggestions(storageKey(siteSlug, 'suggestions'), reverted);
+      }
     }
   };
 

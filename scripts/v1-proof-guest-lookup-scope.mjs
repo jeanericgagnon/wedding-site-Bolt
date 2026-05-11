@@ -67,7 +67,8 @@ if (!/^https:\/\/.+\.supabase\.co$/.test(supabaseUrl) || !anonKey || !ownerEmail
 const authUrl = new URL('/auth/v1/token', supabaseUrl);
 authUrl.searchParams.set('grant_type', 'password');
 const restBase = `${supabaseUrl.replace(/\/$/, '')}/rest/v1`;
-const functionUrl = `${supabaseUrl.replace(/\/$/, '')}/functions/v1/guest-contact-lookup`;
+const lookupFunctionUrl = `${supabaseUrl.replace(/\/$/, '')}/functions/v1/guest-contact-lookup`;
+const submitFunctionUrl = `${supabaseUrl.replace(/\/$/, '')}/functions/v1/guest-contact-submit`;
 
 function jsonHeaders(extra = {}) {
   return {
@@ -113,7 +114,18 @@ async function restFetch(path, accessToken, init = {}) {
 }
 
 async function lookupGuest(body) {
-  const response = await fetch(functionUrl, {
+  const response = await fetch(lookupFunctionUrl, {
+    method: 'POST',
+    headers: jsonHeaders(),
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(15_000),
+  });
+  const payload = await response.json().catch(() => ({}));
+  return { status: response.status, payload };
+}
+
+async function submitGuestContact(body) {
+  const response = await fetch(submitFunctionUrl, {
     method: 'POST',
     headers: jsonHeaders(),
     body: JSON.stringify(body),
@@ -149,6 +161,19 @@ function expectExactSingleMatch(result, expectedName, expectedHouseholdSize) {
       && !leaksForbiddenIds,
     status: result.status,
     payload: result.payload,
+  };
+}
+
+function expectScopedSubmit(result, rows, expectedPhone, expectedCity) {
+  const everyoneUpdated = Array.isArray(rows)
+    && rows.length === 2
+    && rows.every((row) => row?.phone === expectedPhone && row?.mailing_city === expectedCity && row?.sms_consent === true);
+  return {
+    id: 'contact-session-submit-household-scope',
+    ok: result.status === 200 && result.payload?.ok === true && everyoneUpdated,
+    status: result.status,
+    payload: result.payload,
+    rows,
   };
 }
 
@@ -254,12 +279,31 @@ async function main() {
       query: `Taylor ${lastName}`,
       ...accessArtifacts,
     });
+    const contactSession = exactName.payload?.matches?.[0]?.contact_session;
+    const expectedPhone = `555${runId.slice(-7)}`.slice(0, 10);
+    const expectedCity = `LookupScope${runId.slice(-4)}`;
+    const submitResult = typeof contactSession === 'string' && contactSession.length > 20
+      ? await submitGuestContact({
+        site_ref: proofSiteSlug,
+        contact_session: contactSession,
+        apply_household: true,
+        phone: expectedPhone,
+        sms_consent: true,
+        mailing_city: expectedCity,
+      })
+      : { status: 0, payload: { error: 'Missing contact session from lookup proof.' } };
+    const verifyResponse = await restFetch(
+      `guests?select=id,phone,sms_consent,mailing_city&id=in.(${insertedIds.join(',')})`,
+      auth.accessToken,
+    );
+    const verifyRows = await verifyResponse.json().catch(() => []);
 
     const checks = [
       expectNoMatches(partialName, 'last-name-only-lookup'),
       expectNoMatches(mismatchedName, 'mismatched-full-name-lookup'),
       expectNoMatches(reversedName, 'reversed-name-lookup'),
       expectExactSingleMatch(exactName, `Taylor ${lastName}`, 2),
+      expectScopedSubmit(submitResult, verifyRows, expectedPhone, expectedCity),
     ];
 
     const failures = checks.filter((check) => !check.ok);

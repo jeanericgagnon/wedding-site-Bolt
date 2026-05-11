@@ -48,10 +48,17 @@ const parseCurrentStateTable = (text: string) => {
   return state;
 };
 
+const extractCurrentLaunchBlockers = (text: string) => {
+  const match = text.match(/## Current Launch Blockers\s+([\s\S]*?)(?=\n## |\s*$)/);
+  if (!match) return [];
+  return [...match[1].matchAll(/^### (.+)$/gm)].map((entry) => entry[1].trim());
+};
+
 describe('proof board freshness', () => {
   it('derives the board from the current backlog truth', () => {
     const backlog = read('BACKLOG.md');
     const expectedState = parseCurrentStateTable(backlog);
+    const expectedBlockers = extractCurrentLaunchBlockers(backlog);
 
     const output = execFileSync('node', ['scripts/v1-proof-board.mjs'], {
       encoding: 'utf8',
@@ -60,15 +67,16 @@ describe('proof board freshness', () => {
 
     expect(board.source).toBe('BACKLOG.md');
     expect(board.currentState).toMatchObject(expectedState);
-    expect(board.activeUngatedLaunchBlockers ?? []).toEqual([]);
+    expect(board.activeUngatedLaunchBlockers ?? []).toEqual(expectedBlockers);
     expect(board.summary?.currentProofState).toContain('public-access-coverage');
     expect(board.summary?.currentProofState).toContain('launch-closeout');
-    expect(board.summary?.currentNextActions ?? '').toBe('');
-    expect(board.ruthlessNextThree?.[0]?.title).toContain('per-section-family review');
-    expect(board.ruthlessNextThree?.[2]?.title).toContain('secure email queue-processing proof');
-    expect(board.currentState?.['Reason production-ready is not yet claimed']).toContain('secure service-role proof');
-    expect(board.sections?.['Current Canonical Status']).toContain('| Launch verdict | `HOLD` |');
+    expect(board.summary?.currentProofState).toContain('guest-lookup-scope');
+    expect(board.summary?.currentNextActions ?? '').toBe('none');
+    expect(board.ruthlessNextThree?.[0]?.title).toContain('guest-contact-lookup');
+    expect(board.ruthlessNextThree?.[2]?.title).toContain('deployment matrix');
+    expect(board.currentState?.['Reason production-ready is not yet claimed']).toBe('none');
+    expect(board.sections?.['Current Canonical Status']).toContain('| Current launch verdict | `GO` |');
     expect(board.sections?.['Validation Matrix']).toContain('LIVE PASS');
-    expect(board.sections?.['Deployment Matrix']).toContain('public-site-access');
+    expect(board.sections?.['Deployment Matrix']).toContain('guest-contact-lookup');
   });
 });

@@ -28,6 +28,7 @@ test('guest hub opt-in, guestbook, and poll/quiz writes persist', async ({ page 
   const guestEmail = `dayof.hubqa.${runId}@example.com`;
   const guestName = `Hub Guest ${runId}`;
   const guestbookMessage = `Guestbook QA note ${runId}`;
+  const suggestionText = `QA signature drink ${runId}`;
   let ownerAccessToken = '';
   let siteId = '';
 
@@ -131,19 +132,20 @@ test('guest hub opt-in, guestbook, and poll/quiz writes persist', async ({ page 
       message: guestbookMessage,
     });
 
-    await page.goto(`/variant-preview-capture?sectionType=contact&variant=interactiveHub&interactiveQa=${runId}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`/variant-preview-capture?sectionType=contact&variant=interactiveHub&siteSlug=${encodeURIComponent(proofSiteSlug)}&interactiveQa=${runId}`, { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#variant-preview-root')).toHaveAttribute('data-variant-preview-ready', 'true');
+    await expect(page.locator('#variant-preview-root')).toHaveAttribute('data-variant-preview-site-slug', proofSiteSlug);
     await page.getByRole('button', { name: /Gagmann/i }).click();
     await page.getByRole('button', { name: /Both at once/i }).click();
     await expect(page.getByText('Nice one, correct!')).toBeVisible();
-    await page.getByPlaceholder('Type your idea...').fill(`QA signature drink ${runId}`);
+    await page.getByPlaceholder('Type your idea...').fill(suggestionText);
     await page.getByRole('button', { name: 'Send' }).click();
-    await expect(page.getByText(`QA signature drink ${runId}`)).toBeVisible();
+    await expect(page.getByText(suggestionText)).toBeVisible();
 
     await expect.poll(async () => {
       const response = await restFetch(restUrl('interactive_votes', {
         select: 'id,widget_kind,widget_id,option_id',
-        site_slug: 'eq.preview',
+        site_slug: `eq.${proofSiteSlug}`,
         limit: '20',
       }));
       if (!response.ok) return 0;
@@ -156,8 +158,8 @@ test('guest hub opt-in, guestbook, and poll/quiz writes persist', async ({ page 
     await expect.poll(async () => {
       const response = await restFetch(restUrl('interactive_suggestions', {
         select: 'id,suggestion_text',
-        site_slug: 'eq.preview',
-        suggestion_text: `eq.QA signature drink ${runId}`,
+        site_slug: `eq.${proofSiteSlug}`,
+        suggestion_text: `eq.${suggestionText}`,
       }));
       if (!response.ok) return [];
       return await response.json() as Array<{ id: string; suggestion_text: string }>;
@@ -166,7 +168,7 @@ test('guest hub opt-in, guestbook, and poll/quiz writes persist', async ({ page 
     if (siteId) {
       await restFetch(restUrl('guest_prospect_optins', { email: `eq.${guestEmail}` }), { method: 'DELETE' });
       await restFetch(restUrl('guestbook_entries', { message: `eq.${guestbookMessage}` }), { method: 'DELETE' });
-      await restFetch(restUrl('interactive_suggestions', { suggestion_text: `eq.QA signature drink ${runId}` }), { method: 'DELETE' });
+      await restFetch(restUrl('interactive_suggestions', { site_slug: `eq.${proofSiteSlug}`, suggestion_text: `eq.${suggestionText}` }), { method: 'DELETE' });
     }
   }
 });

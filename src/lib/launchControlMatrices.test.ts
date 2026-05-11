@@ -52,6 +52,8 @@ describe('launch control backlog matrices', () => {
       '`PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`',
       '`PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`',
       '`npm run proof:v1:guests-rsvp-ops`',
+      '`LIVE_GUEST_HUB_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/guest-hub-write-read.spec.ts`',
+      '`LIVE_PHOTO_UPLOAD_WRITE_READ=1 LIVE_PHOTO_ANALYSIS_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/photo-upload-write-read.spec.ts`',
       '`npm run guard:file-size`',
       '`npm run guard:assets`',
       '`npm run proof:v1:performance-budget`',
@@ -72,27 +74,47 @@ describe('launch control backlog matrices', () => {
     const rows = parseTable('## Deployment Matrix');
     const bySurface = new Map(rows.map((row) => [row['Surface'], row]));
     const requiredSurfaces = [
-      'Vercel frontend',
+      'Vercel frontend / `dayof.love`',
       '`public-site-access`',
       '`public-registry-items`',
       '`public-itinerary-by-slug`',
       '`validate-rsvp-token`',
       '`public-site-rsvp-submit`',
       '`guest-contact-lookup`',
+      '`guest-contact-submit`',
       '`guestbook-submit`',
-      '`photo-upload`',
       '`vault-entry-submit`',
       '`interactive-section-public`',
       '`vault-contribution-public`',
       '`registry-preview`',
+      '`photo-upload`',
+      '`photo-album-create`',
+      '`photo-album-manage`',
+      '`photo-upload-moderate`',
+      '`photo-export-manifest`',
+      '`photo-analyze-batch`',
       '`send-wedding-email`',
       '`send-bulk-message`',
       '`process-email-queue`',
       '`queue-guest-followups`',
-      'storage/media functions',
-      'AI/provider functions',
+      '`guest-recap-config` / recap route',
+      '`translate-site-content` / translation route',
+      '`photo/media public routes`',
+      '`subdomain route`',
+      '`AI/provider functions`',
+      '`sections_public_visible_read` removal migration',
+      'public/guest/service-role access migrations',
     ];
-    const allowedStatuses = new Set(['`LIVE PASS`', '`PASS`', '`PARTIAL`', '`UNVERIFIED`', '`LOCAL ONLY`', '`PUSHED ONLY`']);
+    const allowedStatuses = new Set([
+      '`LOCAL ONLY`',
+      '`PUSHED ONLY`',
+      '`DEPLOYED`',
+      '`LIVE PASS`',
+      '`PARTIAL`',
+      '`UNVERIFIED`',
+      '`SECURE ENV REQUIRED`',
+      '`DEFERRED`',
+    ]);
 
     for (const surface of requiredSurfaces) {
       expect(bySurface.has(surface), `missing deployment row for ${surface}`).toBe(true);

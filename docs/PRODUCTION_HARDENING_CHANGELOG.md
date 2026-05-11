@@ -9,6 +9,60 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 
 # Production Hardening Backlog
 
+## 2026-05-11 02:02 PM PT - Final Launch-Control Closeout And Guest Contact Runtime Reopen
+
+- Status: `PARTIAL`
+- What changed:
+  - closed `P1-04 Public section DTO minimization` after the final explicit per-family public settings/nested DTO review across the remaining guest-rendered section families
+  - closed `P1-09 Deployment / proof truth canonicalization` by rewriting the launch board/report/proof log around one canonical branch/SHA/deploy/proof matrix
+  - extended `scripts/v1-proof-guest-lookup-scope.mjs` so the live proof now covers both public lookup scope and signed-session contact submit / household update scope
+  - redeployed `guest-contact-lookup --no-verify-jwt` and `guest-contact-submit --no-verify-jwt`
+  - reran the live guest contact proof and discovered the still-open runtime blocker: production continues returning `401 UNAUTHORIZED_NO_AUTH_HEADER` on `guest-contact-lookup`
+- Acceptance/proof target:
+  - `npm run proof:v1:public-access-coverage`: PASS
+  - `npm run typecheck -- --pretty false`: PASS
+  - `npm run lint -- --quiet`: PASS
+  - `npm run build`: PASS
+  - `npm run test:security`: PASS
+  - `npm run test:smoke`: PASS
+  - `npm run proof:v1:service-role-authorization`: PASS
+  - `npm run proof:v1:email-messaging-authorization`: PASS
+  - `npm run proof:v1:launch-closeout`: PASS
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`: LIVE PASS
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`: LIVE PASS
+  - `npm run proof:v1:guests-rsvp-ops`: LIVE PASS
+  - `LIVE_GUEST_HUB_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/guest-hub-write-read.spec.ts`: LIVE PASS
+  - `LIVE_PHOTO_UPLOAD_WRITE_READ=1 LIVE_PHOTO_ANALYSIS_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/photo-upload-write-read.spec.ts`: LIVE PASS
+  - `npm run proof:v1:registry-preview-ssrf`: LIVE PASS
+  - `npm run proof:v1:guest-lookup-scope`: FAIL, `401 UNAUTHORIZED_NO_AUTH_HEADER`
+- Launch status:
+  - `HOLD`
+  - production-ready remains `NO`
+  - only active launch blocker is the live guest contact public-flow auth mismatch
+
+## 2026-05-11 02:16 PM PT - Guest Contact Public Runtime Closeout
+
+- Status: `RESOLVED`
+- What changed:
+  - confirmed the earlier `guest-contact-lookup` deploy had not actually produced a fresh runtime version
+  - forced a real lookup function version bump, redeployed `guest-contact-lookup --no-verify-jwt`, and confirmed the live version advanced
+  - redeployed `guest-contact-submit --no-verify-jwt` in the same closeout lane
+  - reran `npm run proof:v1:guest-lookup-scope` and got a full live pass:
+    - partial-name lookup blocked
+    - mismatched-name lookup blocked
+    - reversed-name lookup blocked
+    - exact-match lookup returns a signed contact session
+    - contact-session submit updates the intended household rows only
+- Acceptance/proof target:
+  - `npm run proof:v1:guest-lookup-scope`: LIVE PASS
+  - `npm run proof:v1:public-access-coverage`: PASS
+  - `npm run proof:v1:board:md`: PASS
+  - `git diff --check`: PASS
+- Launch status:
+  - `GO`
+  - production-ready is now `YES`
+  - no active `P0` or `P1` blockers remain
+
 ## 2026-05-11 08:36 AM PT - Public Sections Side Door Closeout, Deploy Alignment, And Remote Policy Removal
 
 - Status: `PARTIAL`

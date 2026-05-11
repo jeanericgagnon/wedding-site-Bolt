@@ -60,11 +60,11 @@ export interface PublicContactPersonDTO {
 export const PUBLIC_SECTION_SETTINGS_ALLOWLIST: Record<SectionType, readonly string[]> = {
   hero: ['headline', 'eyebrow', 'subheadline', 'backgroundImage', 'overlayOpacity', 'ctaLabel', 'ctaHref', 'showDivider', 'textAlign', 'layoutStyle'],
   story: ['headline', 'body', 'image', 'showDivider'],
-  venue: ['showTitle', 'title', 'showMap'],
-  schedule: ['showTitle', 'title'],
+  venue: ['eyebrow', 'headline', 'subheadline', 'showMap', 'mapHeight', 'layout', 'imagePosition', 'venues'],
+  schedule: ['eyebrow', 'headline', 'date', 'showDate', 'events', 'days', 'accentColor'],
   travel: ['eyebrow', 'headline', 'intro', 'flightInfo', 'drivingInfo', 'parkingInfo', 'shuttleInfo', 'generalNote', 'hotels', 'subheadline', 'deadlineNote', 'showAmenities', 'showShuttle', 'airport', 'venueAddress', 'coffee', 'food', 'sights', 'nightlife', 'pins', 'airportTips', 'activities', 'closest', 'value', 'budget'],
-  registry: ['showTitle', 'title', 'message'],
-  faq: ['showTitle', 'title'],
+  registry: ['eyebrow', 'headline', 'message', 'links', 'cashFundEnabled', 'cashFundLabel', 'cashFundUrl', 'cashFundDescription', 'featuredGifts', 'storeLinks', 'showAllLabel', 'viewAllUrl', 'layout'],
+  faq: ['eyebrow', 'headline', 'subheadline', 'items', 'expandFirstByDefault', 'layoutStyle'],
   rsvp: ['eyebrow', 'headline', 'deadlineText', 'deadline', 'events', 'confirmationMessage', 'declineMessage', 'guestNote', 'mode', 'embedUrl', 'embedHeight', 'layoutStyle', 'imageUrl'],
   gallery: ['eyebrow', 'headline', 'images', 'animation', 'showCaptions', 'enableLightbox', 'autoScroll', 'continuousGlide', 'glideSpeed', 'columns', 'aspectRatio', 'backgroundColor', 'autoplay'],
   countdown: ['eyebrow', 'headline', 'targetDate', 'message', 'messageAfter', 'showSeconds', 'background', 'layoutStyle', 'imageUrl'],
@@ -103,7 +103,11 @@ export const PUBLIC_STYLE_OVERRIDE_KEYS = [
 export const PUBLIC_SECTION_SETTING_ALIAS_EXCEPTIONS: Partial<Record<SectionType, readonly string[]>> = {
   hero: ['eyebrow', 'subheadline', 'ctaLabel', 'ctaHref', 'showDivider', 'textAlign', 'layoutStyle'],
   story: ['headline', 'body', 'image', 'showDivider'],
+  venue: ['eyebrow', 'headline', 'subheadline', 'venues', 'mapHeight', 'layout', 'imagePosition'],
+  schedule: ['eyebrow', 'headline', 'date', 'events', 'days', 'showDate', 'accentColor'],
   travel: ['eyebrow', 'headline', 'intro', 'flightInfo', 'drivingInfo', 'parkingInfo', 'shuttleInfo', 'generalNote', 'hotels', 'subheadline', 'deadlineNote', 'showAmenities', 'showShuttle', 'airport', 'venueAddress', 'coffee', 'food', 'sights', 'nightlife', 'pins', 'airportTips', 'activities', 'closest', 'value', 'budget'],
+  registry: ['eyebrow', 'headline', 'links', 'cashFundEnabled', 'cashFundLabel', 'cashFundUrl', 'cashFundDescription', 'featuredGifts', 'storeLinks', 'showAllLabel', 'viewAllUrl', 'layout'],
+  faq: ['eyebrow', 'headline', 'subheadline', 'items', 'expandFirstByDefault', 'layoutStyle'],
   gallery: ['headline', 'images', 'columns', 'aspectRatio', 'backgroundColor', 'autoplay'],
   countdown: ['headline', 'messageAfter', 'background', 'layoutStyle'],
   contact: ['headline', 'subheadline', 'contacts'],
@@ -341,6 +345,111 @@ function sanitizePublicContactPeople(value: unknown): PublicContactPersonDTO[] |
   });
 
   return picked.length > 0 ? picked : undefined;
+}
+
+function sanitizeVenueDetails(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (detail, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(detail.id) ? detail.id : `detail-${index + 1}`,
+    };
+    for (const key of ['icon', 'label', 'value'] as const) {
+      const picked = pickOptionalString(detail, key);
+      if (picked) out[key] = picked;
+    }
+    return hasNonEmptyString(out.label) || hasNonEmptyString(out.value) ? out : null;
+  });
+}
+
+function sanitizeVenueItems(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (venue, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(venue.id) ? venue.id : `venue-${index + 1}`,
+    };
+    for (const key of ['name', 'role', 'address', 'city', 'time', 'date', 'notes', 'description', 'image', 'mapUrl', 'mapEmbedUrl'] as const) {
+      const picked = pickOptionalString(venue, key);
+      if (picked) out[key] = picked;
+    }
+    const details = sanitizeVenueDetails(venue.details);
+    if (details) out.details = details;
+    return hasNonEmptyString(out.name) || Array.isArray(out.details) ? out : null;
+  });
+}
+
+function sanitizeScheduleEvents(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (event, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(event.id) ? event.id : `event-${index + 1}`,
+    };
+    for (const key of ['time', 'endTime', 'label', 'description', 'location', 'icon', 'category', 'image'] as const) {
+      const picked = pickOptionalString(event, key);
+      if (picked) out[key] = picked;
+    }
+    if (typeof event.highlight === 'boolean') out.highlight = event.highlight;
+    return hasNonEmptyString(out.label) ? out : null;
+  });
+}
+
+function sanitizeScheduleDays(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (day, index) => {
+    const events = sanitizeScheduleEvents(day.events);
+    if (!events) return null;
+
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(day.id) ? day.id : `day-${index + 1}`,
+      events,
+    };
+    for (const key of ['label', 'date'] as const) {
+      const picked = pickOptionalString(day, key);
+      if (picked) out[key] = picked;
+    }
+    return out;
+  });
+}
+
+function sanitizeFaqItems(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (item, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(item.id) ? item.id : `faq-${index + 1}`,
+    };
+    const question = pickOptionalString(item, 'question') ?? pickOptionalString(item, 'q');
+    const answer = pickOptionalString(item, 'answer') ?? pickOptionalString(item, 'a');
+    if (question) out.question = question;
+    if (answer) out.answer = answer;
+    return hasNonEmptyString(out.question) && hasNonEmptyString(out.answer) ? out : null;
+  });
+}
+
+function sanitizeRegistryLinks(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (link, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(link.id) ? link.id : `registry-link-${index + 1}`,
+    };
+    const store = pickOptionalString(link, 'store') ?? pickOptionalString(link, 'label');
+    const url = pickOptionalString(link, 'url');
+    if (store) out.store = store;
+    if (url) out.url = url;
+    const description = pickOptionalString(link, 'description');
+    if (description) out.description = description;
+    const logo = pickOptionalString(link, 'logo');
+    if (logo) out.logo = logo;
+    return hasNonEmptyString(out.url) ? out : null;
+  });
+}
+
+function sanitizeRegistryFeaturedGifts(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (gift, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(gift.id) ? gift.id : `featured-gift-${index + 1}`,
+    };
+    for (const key of ['name', 'store', 'price', 'description', 'image', 'url', 'category'] as const) {
+      const picked = pickOptionalString(gift, key);
+      if (picked) out[key] = picked;
+    }
+    for (const key of ['isPriority', 'isClaimed', 'isPartiallyClaimed'] as const) {
+      if (typeof gift[key] === 'boolean') out[key] = gift[key];
+    }
+    return hasNonEmptyString(out.name) ? out : null;
+  });
 }
 
 function sanitizeAccommodationsDefaultHotels(value: unknown): Array<Record<string, unknown>> | undefined {
@@ -615,6 +724,26 @@ export function sanitizePublicSectionSettings(
     delete normalizedSource.showTitle;
   }
 
+  if (type === 'venue') {
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
+      normalizedSource.headline = rawSource.title;
+    }
+    if (!hasNonEmptyString(normalizedSource.subheadline) && hasNonEmptyString(rawSource.subtitle)) {
+      normalizedSource.subheadline = rawSource.subtitle;
+    }
+    delete normalizedSource.title;
+    delete normalizedSource.subtitle;
+    delete normalizedSource.showTitle;
+  }
+
+  if (type === 'schedule') {
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
+      normalizedSource.headline = rawSource.title;
+    }
+    delete normalizedSource.title;
+    delete normalizedSource.showTitle;
+  }
+
   if (type === 'contact' && variant !== 'interactiveHub') {
     if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
       normalizedSource.headline = rawSource.title;
@@ -639,6 +768,26 @@ export function sanitizePublicSectionSettings(
     delete normalizedSource.showTimezoneBadge;
     delete normalizedSource.showIcsButton;
     delete normalizedSource.showParking;
+  }
+
+  if (type === 'registry') {
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
+      normalizedSource.headline = rawSource.title;
+    }
+    delete normalizedSource.title;
+    delete normalizedSource.showTitle;
+  }
+
+  if (type === 'faq') {
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
+      normalizedSource.headline = rawSource.title;
+    }
+    if (!hasNonEmptyString(normalizedSource.subheadline) && hasNonEmptyString(rawSource.subtitle)) {
+      normalizedSource.subheadline = rawSource.subtitle;
+    }
+    delete normalizedSource.title;
+    delete normalizedSource.subtitle;
+    delete normalizedSource.showTitle;
   }
 
   if (type === 'gallery') {
@@ -780,6 +929,23 @@ export function sanitizePublicSectionSettings(
     }
   }
 
+  if (type === 'venue') {
+    delete out.title;
+    delete out.subtitle;
+    delete out.showTitle;
+    const venues = sanitizeVenueItems(normalizedSource.venues);
+    if (venues) out.venues = venues;
+  }
+
+  if (type === 'schedule') {
+    delete out.title;
+    delete out.showTitle;
+    const events = sanitizeScheduleEvents(normalizedSource.events);
+    if (events) out.events = events;
+    const days = sanitizeScheduleDays(normalizedSource.days);
+    if (days) out.days = days;
+  }
+
   if (type === 'gallery') {
     delete out.title;
     delete out.showTitle;
@@ -830,6 +996,31 @@ export function sanitizePublicSectionSettings(
   if (type === 'directions') {
     const transport = sanitizeDirectionsTransportOptions(normalizedSource.transport);
     if (transport) out.transport = transport;
+  }
+
+  if (type === 'registry') {
+    delete out.title;
+    delete out.showTitle;
+    const links = sanitizeRegistryLinks(normalizedSource.links);
+    if (links) out.links = links;
+    const storeLinks = sanitizeRegistryLinks(normalizedSource.storeLinks);
+    if (storeLinks) out.storeLinks = storeLinks;
+    const featuredGifts = sanitizeRegistryFeaturedGifts(normalizedSource.featuredGifts);
+    if (featuredGifts) out.featuredGifts = featuredGifts;
+
+    const cashFundUrl = pickOptionalString(normalizedSource, 'cashFundUrl');
+    if (cashFundUrl) out.cashFundUrl = cashFundUrl;
+    if (typeof normalizedSource.cashFundEnabled === 'boolean') out.cashFundEnabled = normalizedSource.cashFundEnabled;
+    const viewAllUrl = pickOptionalString(normalizedSource, 'viewAllUrl');
+    if (viewAllUrl) out.viewAllUrl = viewAllUrl;
+  }
+
+  if (type === 'faq') {
+    delete out.title;
+    delete out.subtitle;
+    delete out.showTitle;
+    const items = sanitizeFaqItems(normalizedSource.items);
+    if (items) out.items = items;
   }
 
   if (type === 'music') {

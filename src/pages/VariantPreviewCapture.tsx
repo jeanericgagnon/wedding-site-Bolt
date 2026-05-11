@@ -43,6 +43,11 @@ function hash(str: string) {
   return Math.abs(h);
 }
 
+function normalizePreviewSiteSlug(value: string | null): string {
+  const normalized = (value ?? '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+  return normalized || 'preview';
+}
+
 function pickPhotos(pool: PreviewPhoto[], sectionType: BuilderSectionType, variant: string): { hero?: string; gallery: string[] } {
   const preferred = ORIENTATION_BY_SECTION[sectionType] ?? ['landscape', 'portrait'];
   const priorityBuckets = sectionType === 'hero'
@@ -80,6 +85,7 @@ export default function VariantPreviewCapture() {
   const [search] = useSearchParams();
   const sectionType = (search.get('sectionType') || 'hero') as BuilderSectionType;
   const variant = search.get('variant') || 'default';
+  const previewSiteSlug = normalizePreviewSiteSlug(search.get('siteSlug'));
   const safeType = VALID_TYPES.includes(sectionType) ? sectionType : 'hero';
 
   const [photos, setPhotos] = React.useState<PreviewPhoto[]>([]);
@@ -141,9 +147,10 @@ export default function VariantPreviewCapture() {
     <div
       id="variant-preview-root"
       data-variant-preview-ready={ready ? 'true' : 'false'}
+      data-variant-preview-site-slug={previewSiteSlug}
       style={{ width: 960, height: 540, overflow: 'hidden', background: '#fff' }}
     >
-      <SectionRenderer section={section} weddingData={weddingData} isPreview siteSlug="preview" strictVariantMatching />
+      <SectionRenderer section={section} weddingData={weddingData} isPreview siteSlug={previewSiteSlug} strictVariantMatching />
     </div>
   );
 }

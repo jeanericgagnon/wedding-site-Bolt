@@ -11,9 +11,9 @@ const placeholderFragments = [
   'Schedule details will appear',
 ];
 
-const proofSiteSlug = process.env.V1_PROOF_SITE_SLUG || 'maya-and-leo';
-const proofCouplePattern = new RegExp(process.env.V1_PROOF_COUPLE_PATTERN || 'Maya.*Leo|Maya & Leo', 'i');
-const proofDatePattern = new RegExp(process.env.V1_PROOF_DATE_PATTERN || 'June 6, 2027|Sunday, June 6, 2027', 'i');
+const proofSiteSlug = process.env.V1_PUBLIC_PROOF_SITE_SLUG || 'alex-jordan-demo';
+const proofCouplePattern = new RegExp(process.env.V1_PUBLIC_PROOF_COUPLE_PATTERN || 'Alex Thompson.*Jordan Rivera|Alex Thompson & Jordan Rivera', 'i');
+const proofDatePattern = new RegExp(process.env.V1_PUBLIC_PROOF_DATE_PATTERN || 'June 15, 2026|Monday, June 15, 2026', 'i');
 
 async function expectNoMeaningfulHorizontalOverflow(page: Page) {
   const overflow = await page.evaluate(() => {

@@ -89,6 +89,205 @@ describe('publicRenderContract', () => {
     expect(settings).not.toHaveProperty('plannerNotes');
   });
 
+  it('normalizes venue legacy fields into the resolved public venue contract and allowlists nested venue items', () => {
+    const settings = sanitizePublicSectionSettings('venue', 'detailsFirst', {
+      title: 'Where to go',
+      subtitle: 'Everything happens at one beautiful place.',
+      showTitle: true,
+      layout: 'wide',
+      venues: [{
+        id: 'venue-1',
+        name: 'Garden Hall',
+        role: 'Ceremony',
+        description: 'A restored glasshouse.',
+        image: 'https://example.com/venue.jpg',
+        mapUrl: 'https://maps.example.com/venue',
+        details: [{
+          id: 'detail-1',
+          icon: 'clock',
+          label: 'Time',
+          value: '4:00 PM',
+          adminEmail: 'hide@example.com',
+        }],
+        providerSecret: 'hide-me',
+      }],
+      queueTargets: ['hide-me'],
+    });
+
+    expect(settings).toEqual({
+      headline: 'Where to go',
+      showMap: true,
+      subheadline: 'Everything happens at one beautiful place.',
+      layout: 'wide',
+      venues: [{
+        id: 'venue-1',
+        name: 'Garden Hall',
+        role: 'Ceremony',
+        description: 'A restored glasshouse.',
+        image: 'https://example.com/venue.jpg',
+        mapUrl: 'https://maps.example.com/venue',
+        details: [{
+          id: 'detail-1',
+          icon: 'clock',
+          label: 'Time',
+          value: '4:00 PM',
+        }],
+      }],
+    });
+    expect(settings).not.toHaveProperty('title');
+    expect(settings).not.toHaveProperty('subtitle');
+    expect(settings).not.toHaveProperty('showTitle');
+    expect(JSON.stringify(settings)).not.toContain('adminEmail');
+    expect(JSON.stringify(settings)).not.toContain('providerSecret');
+    expect(JSON.stringify(settings)).not.toContain('queueTargets');
+  });
+
+  it('normalizes schedule legacy fields into the resolved public schedule contract and allowlists nested day/event items', () => {
+    const settings = sanitizePublicSectionSettings('schedule', 'dayTabs', {
+      title: 'Weekend plans',
+      showTitle: true,
+      days: [{
+        id: 'day-1',
+        label: 'Friday',
+        date: 'June 12',
+        events: [{
+          id: 'event-1',
+          time: '6:00 PM',
+          label: 'Welcome drinks',
+          description: 'Meet us at the hotel bar.',
+          location: 'Lobby',
+          highlight: true,
+          internalNotes: 'hide-me',
+        }],
+        plannerNotes: 'hide-me',
+      }],
+      accentColor: 'rose',
+      hiddenTimeline: 'private',
+    });
+
+    expect(settings).toEqual({
+      accentColor: 'rose',
+      headline: 'Weekend plans',
+      days: [{
+        id: 'day-1',
+        label: 'Friday',
+        date: 'June 12',
+        events: [{
+          id: 'event-1',
+          time: '6:00 PM',
+          label: 'Welcome drinks',
+          description: 'Meet us at the hotel bar.',
+          location: 'Lobby',
+          highlight: true,
+        }],
+      }],
+    });
+    expect(settings).not.toHaveProperty('title');
+    expect(settings).not.toHaveProperty('showTitle');
+    expect(JSON.stringify(settings)).not.toContain('internalNotes');
+    expect(JSON.stringify(settings)).not.toContain('plannerNotes');
+    expect(JSON.stringify(settings)).not.toContain('hiddenTimeline');
+  });
+
+  it('normalizes registry legacy fields into the resolved public registry contract and allowlists nested links', () => {
+    const settings = sanitizePublicSectionSettings('registry', 'featured', {
+      title: 'Registry',
+      showTitle: true,
+      message: 'A few favorites we love.',
+      storeLinks: [{
+        id: 'store-1',
+        store: 'Crate & Barrel',
+        url: 'https://example.com/store',
+        description: 'Home essentials',
+        adminEmail: 'hide@example.com',
+      }],
+      featuredGifts: [{
+        id: 'gift-1',
+        name: 'Dinner plates',
+        store: 'Crate & Barrel',
+        price: '$120',
+        description: 'A simple stoneware set.',
+        image: 'https://example.com/plates.jpg',
+        url: 'https://example.com/gift',
+        category: 'Dining',
+        isPriority: true,
+        billingStatus: 'private',
+      }],
+      cashFundEnabled: true,
+      cashFundLabel: 'Honeymoon Fund',
+      cashFundUrl: 'https://example.com/fund',
+      showAllLabel: 'See everything',
+      viewAllUrl: 'https://example.com/all',
+      providerSecret: 'hide-me',
+    });
+
+    expect(settings).toEqual({
+      headline: 'Registry',
+      message: 'A few favorites we love.',
+      storeLinks: [{
+        id: 'store-1',
+        store: 'Crate & Barrel',
+        url: 'https://example.com/store',
+        description: 'Home essentials',
+      }],
+      featuredGifts: [{
+        id: 'gift-1',
+        name: 'Dinner plates',
+        store: 'Crate & Barrel',
+        price: '$120',
+        description: 'A simple stoneware set.',
+        image: 'https://example.com/plates.jpg',
+        url: 'https://example.com/gift',
+        category: 'Dining',
+        isPriority: true,
+      }],
+      cashFundEnabled: true,
+      cashFundLabel: 'Honeymoon Fund',
+      cashFundUrl: 'https://example.com/fund',
+      showAllLabel: 'See everything',
+      viewAllUrl: 'https://example.com/all',
+    });
+    expect(settings).not.toHaveProperty('title');
+    expect(settings).not.toHaveProperty('showTitle');
+    expect(JSON.stringify(settings)).not.toContain('adminEmail');
+    expect(JSON.stringify(settings)).not.toContain('billingStatus');
+    expect(JSON.stringify(settings)).not.toContain('providerSecret');
+  });
+
+  it('normalizes FAQ legacy fields into the resolved public FAQ contract and allowlists nested items', () => {
+    const settings = sanitizePublicSectionSettings('faq', 'tabbed', {
+      title: 'Guest questions',
+      subtitle: 'A few helpful details.',
+      showTitle: true,
+      items: [{
+        id: 'faq-1',
+        question: 'Where should I stay?',
+        answer: 'We recommend the Harbor Hotel.',
+        queueTargets: ['hide-me'],
+      }],
+      expandFirstByDefault: true,
+      layoutStyle: 'tabbed',
+      providerSecret: 'hide-me',
+    });
+
+    expect(settings).toEqual({
+      headline: 'Guest questions',
+      subheadline: 'A few helpful details.',
+      items: [{
+        id: 'faq-1',
+        question: 'Where should I stay?',
+        answer: 'We recommend the Harbor Hotel.',
+      }],
+      expandFirstByDefault: true,
+      layoutStyle: 'tabbed',
+    });
+    expect(settings).not.toHaveProperty('title');
+    expect(settings).not.toHaveProperty('subtitle');
+    expect(settings).not.toHaveProperty('showTitle');
+    expect(JSON.stringify(settings)).not.toContain('queueTargets');
+    expect(JSON.stringify(settings)).not.toContain('providerSecret');
+  });
+
   it('normalizes contact form title aliases into the resolved public renderer fields', () => {
     const settings = sanitizePublicSectionSettings('contact', 'form', {
       title: 'Questions for us?',

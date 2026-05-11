@@ -1396,6 +1396,112 @@ describe('public site access client contract', () => {
     expect(serialized).not.toContain('"title":"Dinner menu"');
   });
 
+  it('allowlists venue, schedule, registry, and FAQ settings into the client-safe public contract without stale aliases or nested private fields', () => {
+    const site = sanitizePublicSiteSafeRow({
+      id: 'site-core-families',
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo',
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-09-12',
+      venue_name: 'Garden Hall',
+      wedding_location: 'Portland',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      allow_search_indexing: false,
+      render_model: {
+        pages: [{
+          id: 'home',
+          slug: 'home',
+          title: 'Home',
+          orderIndex: 0,
+          sections: [
+            {
+              id: 'venue-1',
+              type: 'venue',
+              variant: 'detailsFirst',
+              enabled: true,
+              orderIndex: 0,
+              settings: {
+                title: 'Where to go',
+                subtitle: 'One beautiful place.',
+                venues: [{ id: 'venue-card', name: 'Garden Hall', details: [{ id: 'detail-1', label: 'Time', value: '4:00 PM', adminEmail: 'hide@example.com' }] }],
+              },
+            },
+            {
+              id: 'schedule-1',
+              type: 'schedule',
+              variant: 'dayTabs',
+              enabled: true,
+              orderIndex: 1,
+              settings: {
+                title: 'Weekend plans',
+                days: [{ id: 'day-1', label: 'Friday', events: [{ id: 'event-1', label: 'Welcome drinks', time: '6:00 PM', internalNotes: 'hide-me' }] }],
+              },
+            },
+            {
+              id: 'registry-1',
+              type: 'registry',
+              variant: 'featured',
+              enabled: true,
+              orderIndex: 2,
+              settings: {
+                title: 'Registry',
+                storeLinks: [{ id: 'store-1', store: 'Crate & Barrel', url: 'https://example.com/store', adminEmail: 'hide@example.com' }],
+                featuredGifts: [{ id: 'gift-1', name: 'Dinner plates', url: 'https://example.com/gift', billingStatus: 'private' }],
+              },
+            },
+            {
+              id: 'faq-1',
+              type: 'faq',
+              variant: 'tabbed',
+              enabled: true,
+              orderIndex: 3,
+              settings: {
+                title: 'Guest questions',
+                subtitle: 'Helpful notes.',
+                items: [{ id: 'faq-1', question: 'Where should I stay?', answer: 'Harbor Hotel.', queueTargets: ['hide-me'] }],
+              },
+            },
+          ],
+          meta: { isHome: true, isHidden: false },
+        }],
+        wedding: null,
+        theme: { preset: null, tokens: null },
+      },
+    });
+
+    const sections = site?.render_model.pages[0]?.sections ?? [];
+    expect(sections[0]?.settings).toMatchObject({
+      headline: 'Where to go',
+      subheadline: 'One beautiful place.',
+      venues: [{ id: 'venue-card', name: 'Garden Hall', details: [{ id: 'detail-1', label: 'Time', value: '4:00 PM' }] }],
+    });
+    expect(sections[1]?.settings).toMatchObject({
+      headline: 'Weekend plans',
+      days: [{ id: 'day-1', label: 'Friday', events: [{ id: 'event-1', label: 'Welcome drinks', time: '6:00 PM' }] }],
+    });
+    expect(sections[2]?.settings).toMatchObject({
+      headline: 'Registry',
+      storeLinks: [{ id: 'store-1', store: 'Crate & Barrel', url: 'https://example.com/store' }],
+      featuredGifts: [{ id: 'gift-1', name: 'Dinner plates', url: 'https://example.com/gift' }],
+    });
+    expect(sections[3]?.settings).toMatchObject({
+      headline: 'Guest questions',
+      subheadline: 'Helpful notes.',
+      items: [{ id: 'faq-1', question: 'Where should I stay?', answer: 'Harbor Hotel.' }],
+    });
+
+    const serialized = JSON.stringify(site);
+    expect(serialized).not.toContain('"title":"Where to go"');
+    expect(serialized).not.toContain('"title":"Weekend plans"');
+    expect(serialized).not.toContain('adminEmail');
+    expect(serialized).not.toContain('internalNotes');
+    expect(serialized).not.toContain('billingStatus');
+    expect(serialized).not.toContain('queueTargets');
+  });
+
   it('hides raw public access backend errors', () => {
     expect(safePublicSiteAccessError('Supabase policy denied access to site_password_hash token')).toBe(
       'Could not check this wedding site right now. Please try again.',
