@@ -4,10 +4,12 @@ import { describe, expect, it } from 'vitest';
 
 describe('guest photo query bounds', () => {
   it('caps guest photo event and album hydration', () => {
-    const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/GuestPhotoSharing.tsx'), 'utf8');
+    const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotos/useGuestPhotoDashboardData.ts'), 'utf8');
+    const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/GuestPhotoSharing.tsx'), 'utf8');
     const serviceSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/guestPhotoSharingService.ts'), 'utf8');
 
-    expect(source).toContain('loadGuestPhotoDashboardSnapshot(userId)');
+    expect(source).toContain('const snapshot = await loadGuestPhotoDashboardSnapshot(userId).catch((err) => {');
+    expect(page).toContain('useGuestPhotoDashboardData({');
     expect(serviceSource).toContain('export const MAX_GUEST_PHOTO_EVENTS = 200;');
     expect(serviceSource).toContain('export const MAX_GUEST_PHOTO_ALBUMS = 500;');
     expect(serviceSource).toContain('export const MAX_GUEST_PHOTO_UPLOADS = 200;');

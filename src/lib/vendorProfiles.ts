@@ -2,6 +2,12 @@ import { supabase } from './supabase';
 import { DEMO_MODE } from '../config/env';
 import { resolveActiveSiteForUser } from './activeSite';
 import { demoWeddingSite } from './demoData';
+import {
+  getSafePublicEmailHref,
+  getSafePublicImageUrl,
+  getSafePublicInstagramUrl,
+  getSafePublicWebUrl,
+} from '../sections/publicLinks';
 
 export interface VendorProfile {
   id: string;
@@ -567,6 +573,53 @@ function normalizeVendorProfile(row: any): VendorProfile {
   };
 }
 
+function sanitizeVendorWebsiteUrl(value: unknown): string | null {
+  const safeUrl = getSafePublicWebUrl(typeof value === 'string' ? value : '');
+  if (!safeUrl) return null;
+
+  try {
+    const parsed = new URL(safeUrl);
+    parsed.hash = '';
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
+function sanitizeVendorInstagramUrl(value: unknown): string | null {
+  const safeUrl = getSafePublicInstagramUrl(typeof value === 'string' ? value : '');
+  return safeUrl || null;
+}
+
+function sanitizeVendorImageUrls(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  return value
+    .map((item) => getSafePublicImageUrl(typeof item === 'string' ? item : ''))
+    .filter((item) => {
+      if (!item || seen.has(item)) return false;
+      seen.add(item);
+      return true;
+    });
+}
+
+function sanitizeVendorContactEmail(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return getSafePublicEmailHref(trimmed) ? trimmed : null;
+}
+
+function sanitizeVendorProfileDraft(draft: VendorProfileDraft): VendorProfileDraft {
+  return {
+    ...draft,
+    hero_image_url: getSafePublicImageUrl(draft.hero_image_url) || null,
+    image_urls: sanitizeVendorImageUrls(draft.image_urls),
+    instagram_url: sanitizeVendorInstagramUrl(draft.instagram_url),
+    website_url: sanitizeVendorWebsiteUrl(draft.website_url),
+    contact_email: sanitizeVendorContactEmail(draft.contact_email),
+  };
+}
+
 function titleCaseWords(input: string): string {
   return input
     .split(/\s+/)
@@ -577,8 +630,8 @@ function titleCaseWords(input: string): string {
 
 function buildFallbackVendorProfileDraft(input: { vendorName: string; instagramUrl?: string; websiteUrl?: string }): VendorProfileDraft {
   const vendorName = titleCaseWords(input.vendorName.trim());
-  const websiteUrl = normalizeUrl(input.websiteUrl);
-  const instagramUrl = normalizeUrl(input.instagramUrl);
+  const websiteUrl = sanitizeVendorWebsiteUrl(normalizeUrl(input.websiteUrl));
+  const instagramUrl = sanitizeVendorInstagramUrl(input.instagramUrl);
   const websiteLabel = websiteUrl ? new URL(websiteUrl).hostname.replace(/^www\./, '') : null;
 
   return {
@@ -586,7 +639,7 @@ function buildFallbackVendorProfileDraft(input: { vendorName: string; instagramU
     vendor_name: vendorName,
     descriptor: websiteLabel ? `${websiteLabel} wedding vendor profile` : 'Wedding vendor profile',
     about: `${vendorName} is ready for a clean public vendor page with core links, a direct inquiry path, and room for polished images as the profile is refined.`,
-    hero_image_url: websiteUrl ? `https://image.thum.io/get/width/1200/noanimate/${websiteUrl}` : null,
+    hero_image_url: null,
     image_urls: [],
     instagram_url: instagramUrl,
     website_url: websiteUrl,
@@ -615,14 +668,15 @@ export async function generateVendorProfileDraft(input: { vendorName: string; in
 }
 
 export async function createVendorProfile(draft: VendorProfileDraft): Promise<VendorProfile> {
-  const baseSlug = normalizeSlugPart(draft.slug || draft.vendor_name) || `vendor-${Date.now()}`;
+  const sanitizedDraft = sanitizeVendorProfileDraft(draft);
+  const baseSlug = normalizeSlugPart(sanitizedDraft.slug || sanitizedDraft.vendor_name) || `vendor-${Date.now()}`;
   const { data: { user } } = await supabase.auth.getUser();
 
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const nextSlug = attempt === 0 ? baseSlug : `${baseSlug}-${attempt + 1}`.slice(0, 72);
     const { data, error } = await supabase
       .from('vendor_profiles')
-      .insert({ ...draft, slug: nextSlug, created_by: user?.id ?? null })
+      .insert({ ...sanitizedDraft, slug: nextSlug, created_by: user?.id ?? null })
       .select(VENDOR_PROFILE_SELECT)
       .single();
 

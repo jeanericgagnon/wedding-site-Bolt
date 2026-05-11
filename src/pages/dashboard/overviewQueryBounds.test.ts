@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 describe('overview query bounds', () => {
   it('uses service-level exact counts and caps recent RSVP hydration', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/overviewService.ts'), 'utf8');
+    const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/useOverviewDashboardData.ts'), 'utf8');
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Overview.tsx'), 'utf8');
 
     expect(source).toContain('export const MAX_OVERVIEW_RECENT_RSVPS = 5;');
@@ -21,8 +22,9 @@ describe('overview query bounds', () => {
     expect(source).toContain(".eq('site_slug', siteSlug)\n      .order('created_at', { ascending: false })\n      .limit(MAX_OVERVIEW_INTERACTIVE_VOTES),");
     expect(source).toContain(".eq('user_id', userId)\n      .limit(MAX_OVERVIEW_COLLABORATOR_LINK_ROWS)\n      .maybeSingle();");
     expect(source).not.toContain(".select('id, rsvp_status, rsvp_received_at, first_name, last_name, name, email, phone')");
-    expect(page).toContain('loadOverviewDashboardSnapshot(user.id)');
-    expect(page).toContain('loadOverviewInteractiveData(slug)');
+    expect(dataHook).toContain('const overviewSnapshot = await loadOverviewDashboardSnapshot(userId);');
+    expect(dataHook).toContain('const { suggestions, voteSummaries } = await loadOverviewInteractiveData(slug);');
+    expect(page).toContain('useOverviewDashboardData({');
     expect(page).not.toContain("supabase.from('interactive_suggestions')");
     expect(page).not.toContain("supabase.from('interactive_votes')");
     expect(page).not.toContain("supabase.from('wedding_sites')");

@@ -98,6 +98,9 @@ None.
   - provider setup is intentionally outside the launch-hardening gate
 - `AI server secret inventory / internal OPENAI prereq` -> `DEFERRED`
   - not required for the current public launch gate
+- `runtime operator-note checklist` -> `DEFERRED`
+  - centralized in [docs/v1-runtime-operator-notes-checklist.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/v1-runtime-operator-notes-checklist.md)
+  - rerun with `npm run proof:v1:runtime-note-checklist` when the human operator note pack changes
 
 ## Validation Matrix
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { GUEST_LANGUAGE_STORAGE_KEY } from '../../lib/guestLanguagePreference';
 
 const changeLanguage = vi.fn();
 let currentLanguage = 'en-US';
@@ -37,6 +38,6 @@ describe('LanguageSwitcher', () => {
     fireEvent.click(screen.getByRole('button', { name: 'PT' }));
 
     expect(changeLanguage).toHaveBeenCalledWith('pt');
-    expect(localStorage.getItem('dayof_language')).toBe('pt');
+    expect(JSON.parse(localStorage.getItem(GUEST_LANGUAGE_STORAGE_KEY) ?? '{}')).toMatchObject({ language: 'pt' });
   });
 });

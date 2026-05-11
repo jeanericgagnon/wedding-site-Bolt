@@ -2,21 +2,26 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const guestsSource = () => readFileSync(join(process.cwd(), 'src/pages/dashboard/Guests.tsx'), 'utf8');
+const guestsCrudSource = () => readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCrudActions.ts'), 'utf8');
+const guestsOpsSource = () => readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardOpsActions.ts'), 'utf8');
+const guestsImportSource = () => readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/useGuestDashboardCsvImport.ts'), 'utf8');
+const guestsUtilsSource = () => readFileSync(join(process.cwd(), 'src/pages/dashboard/guests/guestDashboardUtils.ts'), 'utf8');
 const customerSafeErrorSource = () => readFileSync(join(process.cwd(), 'src/lib/customerSafeError.ts'), 'utf8');
 
 describe('guest dashboard error safety', () => {
   it('does not surface raw database details or codes in guest add/delete/import toasts', () => {
-    const source = guestsSource();
+    const crud = guestsCrudSource();
+    const ops = guestsOpsSource();
+    const imports = guestsImportSource();
+    const utils = guestsUtilsSource();
 
-    expect(source).toContain('safeGuestsDashboardError');
-    expect(source).toContain("toast(safeGuestsDashboardError(err, 'Couldn’t add guest. Please try again.'), 'error')");
-    expect(source).toContain("toast(safeGuestsDashboardError(err, 'Couldn’t delete all guests. Please try again.'), 'error')");
-    expect(source).toContain("toast(safeGuestsDashboardError(err, 'Couldn’t import guests. Please try again.'), 'error')");
-    expect(source).not.toContain("errObj?.message || errObj?.details || 'Couldn’t delete all guests. Please try again.'");
-    expect(source).not.toContain("errObj?.message || errObj?.details || errObj?.hint");
-    expect(source).not.toContain('errObj?.code ? ` (${errObj.code})`');
-    expect(source).not.toContain("toast(`Couldn’t import guests: ${msg}${code}`, 'error')");
+    expect(crud).toContain('safeGuestsDashboardError');
+    expect(crud).toContain("toast(safeGuestsDashboardError(err, 'Couldn’t add guest. Please try again.'), 'error')");
+    expect(ops).toContain("toast(safeGuestsDashboardError(err, 'Couldn’t delete all guests. Please try again.'), 'error')");
+    expect(imports).toContain("toast(safeGuestsDashboardError(err, 'Couldn’t import guests. Please try again.'), 'error')");
+    expect(utils).toContain('return customerSafeErrorMessage(err, fallback);');
+    expect(crud).not.toContain("errObj?.message || errObj?.details || 'Couldn’t delete all guests. Please try again.'");
+    expect(imports).not.toContain("toast(`Couldn’t import guests: ${msg}${code}`, 'error')");
   });
 
   it('treats backend-shaped wording as unsafe for owner-visible guest errors', () => {

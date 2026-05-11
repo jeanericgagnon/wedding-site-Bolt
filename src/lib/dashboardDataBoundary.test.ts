@@ -114,7 +114,11 @@ describe('dashboard data boundary guards', () => {
 
   it('keeps legacy public site repository reads out of private gate internals', () => {
     const source = readFileSync(join(process.cwd(), 'src/data/siteRepository.ts'), 'utf8');
-    const fetchPublicSiteBody = source.match(/async fetchPublicSiteBySlug[\s\S]*?async fetchPublicSiteTranslation/)?.[0] ?? '';
+    const fetchPublicSiteBySlugStart = source.indexOf('async fetchPublicSiteBySlug');
+    const fetchSectionsStart = source.indexOf('async fetchSections');
+    const fetchPublicSiteBody = fetchPublicSiteBySlugStart >= 0 && fetchSectionsStart > fetchPublicSiteBySlugStart
+      ? source.slice(fetchPublicSiteBySlugStart, fetchSectionsStart)
+      : source;
 
     expect(fetchPublicSiteBody).not.toContain("'privacy_mode'");
     expect(fetchPublicSiteBody).not.toContain("'hide_from_search'");

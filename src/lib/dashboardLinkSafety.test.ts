@@ -29,44 +29,40 @@ describe('dashboard stored link safety', () => {
 
   it('sanitizes dashboard playlist links before rendering or opening them', () => {
     const songRequests = readSource('src/pages/dashboard/planning/SongRequestsTab.tsx');
-    const settings = readSource('src/pages/dashboard/Settings.tsx');
+    const settingsSupport = readSource('src/pages/dashboard/settings/useSettingsDashboardRouteSupport.ts');
+    const settingsContent = readSource('src/pages/dashboard/settings/SettingsDashboardRouteContent.tsx');
 
     expect(songRequests).toContain('const safePlaylistUrl = getSafePublicWebUrl(playlistUrl)');
     expect(songRequests).not.toContain('href={playlistUrl}');
 
-    expect(settings).toContain('const safeMusicPlaylistUrl = getSafePublicWebUrl(musicPlaylistUrl)');
-    expect(settings).toContain("window.open(safeMusicPlaylistUrl, '_blank', 'noopener,noreferrer')");
-    expect(settings).not.toContain("window.open(musicPlaylistUrl, '_blank')");
+    expect(settingsSupport).toContain('const safeMusicPlaylistUrl = getSafePublicWebUrl(musicPlaylistUrl)');
+    expect(settingsContent).toContain("window.open(props.safeMusicPlaylistUrl, '_blank', 'noopener,noreferrer')");
+    expect(settingsContent).not.toContain("window.open(musicPlaylistUrl, '_blank')");
   });
 
   it('sanitizes photo dashboard external opens for backup folders and QR links', () => {
-    const photos = readSource('src/pages/dashboard/GuestPhotoSharing.tsx');
+    const photos = readSource('src/pages/dashboard/guestPhotos/guestPhotoDashboardPresentation.ts');
     const bucketCard = readSource('src/pages/dashboard/guestPhotos/GuestPhotoBucketCard.tsx');
 
     expect(photos).toContain('getSafePublicWebUrl');
     expect(photos).toContain('buildQrImageUrl');
-    expect(photos).toContain('isSafePublicQrAssetUrl');
-    expect(photos).toContain('const openSafePublicUrl = (url: string | null | undefined)');
-    expect(photos).toContain("const getBucketQrUrl = (uploadUrl: string) => (isSafePublicQrAssetUrl(uploadUrl) ? buildQrImageUrl(uploadUrl) : '')");
-    expect(photos).not.toContain('api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(uploadUrl)}');
+    expect(photos).toContain('export function openGuestPhotoSafePublicUrl(url: string | null | undefined)');
+    expect(photos).toContain("return isSafePublicQrAssetUrl(uploadUrl) ? buildQrImageUrl(uploadUrl) : '';");
     expect(photos).toContain("window.open(safeUrl, '_blank', 'noopener,noreferrer')");
-    expect(photos).toContain("const openAppUrl = (url: string) => window.open(url, '_blank', 'noopener,noreferrer')");
+    expect(photos).toContain("window.open(url, '_blank', 'noopener,noreferrer')");
     expect(bucketCard).toContain('getSafePublicWebUrl(bucket.drive_folder_url)');
     expect(bucketCard).toContain('onOpenSafePublicUrl(bucket.drive_folder_url)');
     expect(bucketCard).toContain('onOpenSafePublicUrl(getBucketQrUrl(knownUploadLink))');
-    expect(photos).not.toContain("window.open(bucket.drive_folder_url!, '_blank')");
-    expect(photos).not.toContain("window.open(getBucketQrUrl(knownUploadLink), '_blank')");
-    expect(photos).not.toContain("window.open(latestUploadUrl, '_blank')");
     expect(bucketCard).not.toContain("window.open(bucket.drive_folder_url!, '_blank')");
     expect(bucketCard).not.toContain("window.open(getBucketQrUrl(knownUploadLink), '_blank')");
     expect(bucketCard).not.toContain("window.open(latestUploadUrl, '_blank')");
   });
 
   it('sanitizes vault attachment links returned to the dashboard before rendering media or anchors', () => {
-    const vault = readSource('src/pages/dashboard/Vault.tsx');
+    const vault = readSource('src/pages/dashboard/VaultCard.tsx');
 
     expect(vault).toContain('getSafePublicWebUrl');
-    expect(vault).toContain('const safeUrl = getSafePublicWebUrl(url)');
+    expect(vault).toContain('const safeUrl = getSafePublicWebUrl(await resolveVaultEntryLink(entry.id));');
     expect(vault).toContain('setResolvedEntryLinks((prev) => ({ ...prev, [entry.id]: safeUrl }))');
     expect(vault).toContain('const attachmentUrl = getSafePublicWebUrl(resolvedEntryLinks[entry.id]) || null');
     expect(vault).not.toContain('const attachmentUrl = resolvedEntryLinks[entry.id] || null');

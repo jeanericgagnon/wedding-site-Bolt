@@ -79,12 +79,15 @@ describe('vaultService', () => {
 
   it('keeps vault edge function invokes behind the vault service', () => {
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Vault.tsx'), 'utf8');
+    const card = readFileSync(join(process.cwd(), 'src/pages/dashboard/VaultCard.tsx'), 'utf8');
+    const dataHook = readFileSync(join(process.cwd(), 'src/pages/dashboard/useVaultDashboardData.ts'), 'utf8');
     const service = readFileSync(join(process.cwd(), 'src/pages/dashboard/vaultService.ts'), 'utf8');
 
-    expect(page).toContain('resolveVaultEntryLinkFromService(entry.id)');
-    expect(page).toContain('checkVaultGoogleDriveHealth(weddingSiteId)');
-    expect(page).toContain('startVaultGoogleDriveAuth(weddingSiteId)');
-    expect(page).toContain('finishVaultGoogleDriveAuth(googleCode, googleState)');
+    expect(page).toContain('resolveVaultEntryLink={resolveVaultEntryLinkFromService}');
+    expect(dataHook).toContain('checkVaultGoogleDriveHealth(weddingSiteId)');
+    expect(dataHook).toContain('startVaultGoogleDriveAuth(weddingSiteId)');
+    expect(dataHook).toContain('finishVaultGoogleDriveAuth(googleCode, googleState)');
+    expect(card).toContain('const safeUrl = getSafePublicWebUrl(await resolveVaultEntryLink(entry.id));');
     expect(page).not.toContain("supabase.functions.invoke('vault-resolve-entry-link'");
     expect(page).not.toContain("supabase.functions.invoke('google-drive-health'");
     expect(page).not.toContain("supabase.functions.invoke('google-drive-auth-start'");

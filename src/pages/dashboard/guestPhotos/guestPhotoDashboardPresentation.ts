@@ -1,4 +1,5 @@
 import { getSafePublicWebUrl } from '../../../sections/publicLinks';
+import { buildQrImageUrl, isSafePublicQrAssetUrl } from '../../../lib/guestHubQrAssets';
 import type { SlideshowTheme } from '../guestPhotoSharingUtils';
 
 export const GUEST_PHOTO_SLIDESHOW_THEME_META: Record<
@@ -35,7 +36,7 @@ export function getGuestPhotoBucketTone(bucketName: string) {
 }
 
 export function getGuestPhotoBucketQrUrl(uploadUrl: string) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(uploadUrl)}`;
+  return isSafePublicQrAssetUrl(uploadUrl) ? buildQrImageUrl(uploadUrl) : '';
 }
 
 export function openGuestPhotoSafePublicUrl(url: string | null | undefined) {
