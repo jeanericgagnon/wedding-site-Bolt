@@ -264,4 +264,47 @@ describe('publicSiteRenderModel', () => {
     expect(JSON.stringify(site)).not.toContain('Draft-only headline');
     expect(JSON.stringify(site)).not.toContain('internalQueueConfig');
   });
+
+  it('uses canonical row identity over stale embedded wedding payload values', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-3',
+      site_slug: 'maya-and-leo',
+      site_url: 'maya-and-leo.dayof.love',
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2027-06-06',
+      venue_name: 'Sunlit Orchard',
+      wedding_location: 'Sonoma, CA',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      hide_from_search: false,
+      site_json: null,
+      published_json: { pages: [] },
+      wedding_data: {
+        version: '1',
+        couple: { partner1Name: 'Eric', partner2Name: 'Kara', displayName: 'Eric & Kara' },
+        event: { weddingDateISO: '2027-01-17T12:00:00.000Z' },
+        venues: [{ id: 'venue-1', name: 'Old Venue', address: 'Old Address' }],
+        schedule: [],
+        rsvp: { enabled: true },
+        travel: {},
+        registry: { links: [] },
+        faq: [],
+        theme: {},
+        media: { gallery: [] },
+        meta: { createdAtISO: '2026-04-01T00:00:00.000Z', updatedAtISO: '2026-05-01T00:00:00.000Z' },
+      },
+      layout_config: null,
+    });
+
+    expect(site.render_model.wedding?.couple.displayName).toBe('Maya & Leo');
+    expect(site.render_model.wedding?.event.weddingDateISO).toBe('2027-06-06T12:00:00.000Z');
+    expect(site.render_model.wedding?.venues[0]).toMatchObject({
+      name: 'Sunlit Orchard',
+      address: 'Sonoma, CA',
+    });
+    expect(JSON.stringify(site)).not.toContain('Eric & Kara');
+    expect(JSON.stringify(site)).not.toContain('2027-01-17');
+  });
 });

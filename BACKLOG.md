@@ -2,36 +2,37 @@
 
 | Field | Current State |
 | --- | --- |
-| Current readiness score | `8.5 / 10` |
+| Current readiness score | `8.9 / 10` |
 | Current launch verdict | `HOLD` |
 | Production-ready | `NO` |
-| Latest branch | `codex/v1-finish-hard-gates-2` |
-| Latest commit | `96abd2e5` `Update live smoke public copy expectations` |
-| Latest deploy status | Production web deploy `LIVE` at [dayof.love](https://dayof.love) from runtime commit `debfed68`; test-only commit `96abd2e5` is not a runtime redeploy; `public-site-access`, `interactive-section-public`, and `vault-contribution-public` are deployed and live-validated |
-| Current blockers | Strict public render DTO is green locally but not yet deployed/live-validated; secure service-role queue/storage proof still lacks a fresh secure-env runtime rerun; secure email queue-processing proof still lacks a fresh secure-env runtime rerun; deployment / validation / asset controls are improved but not yet closed to launch-signoff standard |
-| Current proof state | Production canonical smoke is `LIVE PASS`; public-quality is `LIVE PASS`; guests / RSVP ops is `LIVE PASS`; unauthenticated denial lanes for email and service-role proofs are `LIVE PASS`; new strict public render DTO, nested leak tests, typecheck, lint, build, and public-access coverage are green locally; secure-env deep proofs remain blocked by missing `SUPABASE_SERVICE_ROLE_KEY` and missing Supabase control-plane auth |
-| Current next actions | Deploy and live-validate the strict public render DTO changes; rerun the final live postdeploy public proof lane once; finish secure service-role and email queue deep proofs in a secure env; keep deployment and validation tables canonical |
+| Latest branch | `codex/v1-finish-hard-gates` |
+| Latest commit | `9c976a26` `Tighten public site render boundary` |
+| Latest deploy status | Production web deploy `LIVE` at [dayof.love](https://dayof.love) via Vercel deployment `dpl_68n9YLtWy67VxmqziaVYQAACKHqL`; `public-site-access` redeployed with `--no-verify-jwt` and `LIVE PASS`; canonical smoke, public-quality, and guests / RSVP ops are green on the live runtime |
+| Current blockers | Secure service-role queue/storage deep proof still lacks a fresh secure-env runtime rerun; final launch-control closeout still needs the deployment/validation/asset tables tightened to current proof-board truth |
+| Current proof state | Strict public render DTO is now `LIVE PASS`; nested leak tests, public-access coverage, typecheck, lint, build, and focused public regression tests are green locally; production canonical smoke is `LIVE PASS`; public-quality is `LIVE PASS`; guests / RSVP ops is `LIVE PASS`; unauthenticated denial lanes for email and service-role proofs are `LIVE PASS`; the only ungated launch blocker left in the repo proof board is secure service-role queue/storage proof, while deeper email queue processing proof remains folded into that secure lane until a secret-backed rerun is available |
+| Current next actions | Finish secure service-role queue/storage proof in a secure env; tighten the launch-control docs to the final proof-board truth; close or downgrade the asset/CDN item with measured evidence |
 
 ## Current Canonical Status
 
 - The app is materially safer than it was before the production deploy, but it is not at a true `10 / 10` launch state.
 - The highest remaining product risk is public payload scope, not dashboard extraction, route decomposition, or cosmetic cleanup.
 - Raw database blobs are no longer returned directly on the main `public-site-access` lane.
-- The stricter render-only DTO is now implemented locally, with the browser contract reduced to public `pages`, `wedding`, and `theme`.
-- That stricter DTO is not yet live-validated because this batch has not been deployed.
+- The stricter render-only DTO is now deployed and live-validated, with the browser contract reduced to public `pages`, `wedding`, and `theme`.
+- `public-site-access` also required runtime policy alignment and is now deployed with `--no-verify-jwt` so the public route can actually resolve under the publishable-key browser path.
 - Production runtime proof improved meaningfully on `2026-05-09`: web is live, public-function deploy alignment is better, canonical smoke is green, public-quality is green, and guests / RSVP ops is green.
 - Secure deep proof remains incomplete because this workspace does not have `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ACCESS_TOKEN`, or an authenticated Supabase CLI session.
 
 ## Current Launch Blockers
 
 1. **Raw public-site payload minimization**
-   - Status: `PARTIAL`
-   - Why it blocks: the strict render-only DTO is implemented and proven locally, but the live runtime still reflects the previously deployed public contract until the updated function/web bundle is deployed and revalidated.
+   - Status: `LIVE PASS`
+   - Why it no longer blocks: the strict render-only DTO is now deployed, the public route resolves successfully in production, and the live public-quality suite proves the guest-visible path renders with canonical row identity instead of stale embedded snapshots.
    - Current evidence:
      - `site_json`, `published_json`, `wedding_data`, and `layout_config` are no longer returned directly by `public-site-access`.
-     - `src/lib/publicSiteAccess.ts` now accepts and emits a strict `render_model` shape containing only public `pages`, `wedding`, and `theme`.
+     - `src/lib/publicSiteAccess.ts` now invokes the resolver through the shared Supabase client instead of a raw `Authorization` header path that production rejected.
      - `src/pages/SiteView.tsx` now hydrates from the reduced DTO and no longer branches over `builderProject` / `layoutConfig`.
      - `src/data/siteRepository.ts` legacy public read helper is quarantined to metadata-only columns.
+     - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` is `LIVE PASS`.
 
 2. **Secure service-role queue/storage proof**
    - Status: `OPEN`
@@ -40,26 +41,19 @@
      - historical secure proof was logged earlier in the hardening diary
      - current workspace cannot rerun the deep secure lane because `SUPABASE_SERVICE_ROLE_KEY` is unavailable
 
-3. **Secure email queue-processing proof**
-   - Status: `OPEN`
-   - Why it blocks: messaging paths still need a fresh secure-env runtime rerun proving queue authorization, recipient scoping, collaborator restrictions, queue isolation, and abuse resistance.
-   - Current evidence:
-     - unauthenticated denial lane is green live
-     - queue-processing deep proof cannot be rerun from this workspace because `SUPABASE_SERVICE_ROLE_KEY` is unavailable
+3. **Centralized public-access residual audit**
+   - Status: `PARTIAL`
+   - Why it remains active: the main public site lane is now minimized and live-validated, but the residual audit still needs one final closeout pass across adjacent public readers and deployment-table wording.
 
-4. **Centralized public-access residual audit**
-   - Status: `OPEN`
-   - Why it blocks: the residual audit exists, but it is not closed while broad public render payloads and legacy public reads still need final quarantine or minimization.
-
-5. **Deployment/proof alignment for no-deploy and Edge Function surfaces**
-   - Status: `OPEN`
+4. **Deployment/proof alignment for no-deploy and Edge Function surfaces**
+   - Status: `PARTIAL`
    - Why it blocks: the production path is much clearer now, but final launch sign-off still needs one canonical table that makes local-only, deployed, live-validated, and unverified surfaces unambiguous across web, Supabase functions, and proof logs.
 
-6. **Canonical validation cleanup**
-   - Status: `OPEN`
+5. **Canonical validation cleanup**
+   - Status: `PARTIAL`
    - Why it blocks: the board is closer to canonical, but the launch record still needs one final aligned interpretation after the remaining public-payload and secure-proof work closes.
 
-7. **Asset footprint / CDN migration**
+6. **Asset footprint / CDN migration**
    - Status: `OPEN`
    - Why it blocks: asset guardrails improved, but the public asset strategy is still not fully closed to launch-signoff standard.
 
@@ -86,11 +80,11 @@
 ## P1
 
 ### P1-01 Raw public-site payload minimization
-- Status: `PARTIAL`
+- Status: `LIVE PASS`
 - Description:
-  `public-site-access` no longer returns raw top-level blobs directly, and the local branch now emits a strict render-only DTO. The remaining work is deploy/live validation and any follow-up trimming that live proof exposes.
+  `public-site-access` no longer returns raw top-level blobs directly, the browser consumes a strict render-only DTO, and the live public route now resolves through the intended public runtime path.
 - Risk:
-  Until the stricter DTO is deployed and live-validated, production still reflects the older deployed contract.
+  Remaining risk is residual audit drift, not the main public-site payload contract.
 - Acceptance criteria:
   - Browser receives only a minimal server-built public render payload.
   - `site_json` never reaches public guest routes directly.
@@ -100,6 +94,7 @@
   - Legacy draft-ish fallback behavior is removed or strictly sanitized.
   - Nested fake sensitive fields are injected in tests and proven not to reach browser payloads, public route state, or public API responses.
   - Public, password-protected, invite-only, translated, registry, itinerary, guest-hub, recap, and media/photo public routes still render correctly.
+  - Live public-quality proof passes after deploy alignment.
 
 ### P1-02 Centralized public-access residual audit
 - Status: `PARTIAL`
@@ -109,6 +104,7 @@
   - remaining legacy public reads are removed or quarantined
   - residual public exposures are either eliminated or explicitly proven safe under the stricter render-model contract
   - deployed/runtime truth is recorded separately from local-only hardening
+  - final audit wording reflects that the main public-site lane is already `LIVE PASS`
 
 ### P1-03 Secure service-role queue/storage proof
 - Status: `OPEN`
@@ -121,14 +117,15 @@
   - proof is rerun in a secure env and recorded canonically
 
 ### P1-04 Secure email / message proof
-- Status: `OPEN`
+- Status: `PARTIAL`
 - Acceptance criteria:
   - queue authorization proof passes
   - send authorization proof passes
   - recipient scoping proof passes
   - collaborator restrictions hold
   - queue isolation and public abuse resistance hold
-  - proof is rerun in a secure env and recorded canonically
+  - secure queue-processing proof is rerun in a secure env and recorded canonically
+  - until then, this stays folded under the open secure service-role queue/storage lane instead of being tracked as a separate ungated blocker
 
 ### P1-05 Deployment/proof alignment
 - Status: `OPEN`
@@ -178,13 +175,13 @@
 | `npm run proof:v1:public-access-coverage` | `PASS` | `LOCAL ONLY` | Guards the stricter local DTO shape and the audited public gate inventory |
 | `npm test -- --run src/lib/publicSiteRenderModel.test.ts src/lib/publicSiteAccess.test.ts src/lib/publicAccessCoverageProofScript.test.ts src/lib/publicGuestSurfaceBoundary.test.ts src/pages/SiteView.test.ts src/lib/launchEdgeFunctions.test.ts` | `PASS` | `LOCAL ONLY` | Strict DTO + nested leak tests + public route regression checks green |
 | `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` | `LIVE PASS` | `PRODUCTION` | Green after the production deploy and public-function alignment |
-| `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` | `LIVE PASS` | `PRODUCTION` | Green after public-function deploy alignment |
+| `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` | `LIVE PASS` | `PRODUCTION` | Green after `public-site-access` browser client fix and `--no-verify-jwt` redeploy |
 | `npm run proof:v1:guests-rsvp-ops` | `LIVE PASS` | `PRODUCTION` | Green on the current live runtime |
 | `npm run proof:v1:email-messaging-authorization` | `LIVE PASS` | `PRODUCTION` | Unauthenticated denial lane green; secure queue-processing deep proof still `NOT RUN` |
 | `npm run proof:v1:service-role-authorization` | `LIVE PASS` | `PRODUCTION` | Unauthenticated denial lane green; secure queue/storage deep proof still `NOT RUN` |
 | `npm run proof:v1:performance-budget` | `PASS` | `LOCAL ONLY` | Guardrail green; final asset/CDN closure still open |
 | secure service-role queue/storage deep proof | `NOT RUN` | `SECURE ENV REQUIRED` | Blocked by missing `SUPABASE_SERVICE_ROLE_KEY` |
-| secure email queue-processing deep proof | `NOT RUN` | `SECURE ENV REQUIRED` | Blocked by missing `SUPABASE_SERVICE_ROLE_KEY` |
+| secure email queue-processing deep proof | `NOT RUN` | `SECURE ENV REQUIRED` | Still not rerun; currently tracked as sub-scope of the secure service-role proof lane rather than a separate ungated blocker |
 | `npm run proof:v1:board:md` | `PASS` | `LOCAL ONLY` | Must stay green after every board update |
 | `git diff --check` | `PASS` | `LOCAL ONLY` | Must stay green after every board update |
 
@@ -194,16 +191,16 @@
 
 | Surface | Status | Current Truth |
 | --- | --- | --- |
-| Production web app | `LIVE PASS` | [dayof.love](https://dayof.love) is live from runtime commit `debfed68` |
-| Strict public DTO hardening | `LOCAL ONLY` | Current branch contains stricter public DTO changes that have not been redeployed yet |
-| Latest local commit | `PUSHED ONLY` | `96abd2e5` is a test-only smoke wording update, not a runtime redeploy |
+| Production web app | `LIVE PASS` | [dayof.love](https://dayof.love) is live from Vercel deployment `dpl_68n9YLtWy67VxmqziaVYQAACKHqL` |
+| Strict public DTO hardening | `LIVE PASS` | Deployed and live-validated through canonical smoke plus public-quality |
+| Latest local commit | `DEPLOYED EARLIER` | `9c976a26` is current `HEAD`; the production runtime also includes the newer uncommitted browser-client follow-up in this worktree, so commit/push still needs to catch up with live runtime truth |
 | Preview deploy | `LIVE PASS` | Earlier preview evidence exists, but production runtime is the canonical launch signal now |
 
 ### Supabase Edge Functions
 
 | Function / Surface | Status | Notes |
 | --- | --- | --- |
-| `public-site-access` | `PARTIAL` | Live runtime is validated on the older deployed contract; stricter DTO changes are local-only until redeploy |
+| `public-site-access` | `LIVE PASS` | Deployed with strict DTO hardening and redeployed with `--no-verify-jwt`; live public-quality is green |
 | `interactive-section-public` | `LIVE PASS` | Deployed in the same hardening wave |
 | `vault-contribution-public` | `LIVE PASS` | Deployed in the same hardening wave |
 | `process-email-queue` | `DEPLOYED` | Runtime deploy happened; deep secure proof remains open |
@@ -217,15 +214,15 @@
 
 ## Next 10 Tasks
 
-1. Deploy the stricter `public-site-access` / public DTO changes.
-2. Rerun `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`.
-3. Rerun `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`.
-4. Finish secure service-role queue/storage proof in a secure proof environment.
-5. Finish secure email queue-processing proof in a secure proof environment.
-6. Confirm canonical deployment state for every launch-relevant Edge Function.
-7. Produce the final canonical validation matrix with one launch interpretation.
-8. Reassess asset/CDN status against the current performance budget evidence.
-9. Update the board/report/log one final time from postdeploy truth.
+1. Finish secure service-role queue/storage proof in a secure proof environment.
+2. Finish secure email queue-processing proof in a secure proof environment.
+3. Confirm canonical deployment state for every launch-relevant Edge Function.
+4. Produce the final canonical validation matrix with one launch interpretation.
+5. Reassess asset/CDN status against the current performance budget evidence.
+6. Update the residual public-access audit from current live truth.
+7. Record the final deployment-policy note for `public-site-access` so `--no-verify-jwt` is explicit in launch ops.
+8. Rerun `npm run proof:v1:board:md` after each doc closeout step.
+9. Commit and push the remaining launch-control truth updates.
 10. Only then resume lower-risk extraction or maintainability work.
 
 ## Resolved Work Summary
@@ -236,4 +233,4 @@
 - Guests / RSVP ops is green on the live runtime.
 - Unauthenticated denial lanes for service-role and email authorization are green on the live runtime.
 - Launch-control docs now center public/private boundaries, deployment truth, and proof state instead of extraction history.
-- Strict public DTO hardening is implemented locally, with the public site path no longer hydrating from `builderProject` / `weddingData` / `layoutConfig`.
+- Strict public DTO hardening is live, with the public site path no longer hydrating from `builderProject` / `weddingData` / `layoutConfig`.

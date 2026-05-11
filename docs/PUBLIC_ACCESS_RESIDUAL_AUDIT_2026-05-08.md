@@ -1,6 +1,6 @@
 # Public Access Residual Audit
 
-_Updated:_ 2026-05-09 10:24 AM PT
+_Updated:_ 2026-05-09 10:38 AM PT
 
 ## Scope
 
@@ -57,13 +57,14 @@ Signed-session exception under direct audit:
 - No direct browser `supabase.from('wedding_sites')` reads remain in the audited guest/public route set covered by [src/lib/publicGuestSurfaceBoundary.test.ts](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/src/lib/publicGuestSurfaceBoundary.test.ts).
 - Browser-side public translation fallback was removed from the public site lane.
 - `public-site-access` no longer returns raw `site_json`, `published_json`, `wedding_data`, or `layout_config` blobs.
-- The current branch now emits a stricter browser contract shaped as public `pages`, `wedding`, and `theme`, not `builderProject`, `weddingData`, or `layoutConfig`.
+- The deployed browser contract is now shaped as public `pages`, `wedding`, and `theme`, not `builderProject`, `weddingData`, or `layoutConfig`.
 - [src/data/siteRepository.ts](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/src/data/siteRepository.ts) legacy `fetchPublicSiteBySlug(...)` reads are now quarantined to metadata-only columns.
+- `public-site-access` required runtime policy alignment and is now deployed with `--no-verify-jwt`, which keeps the public browser path reachable while the function itself still enforces site privacy, password sessions, and invite-token checks inside the handler.
 
 ## Remaining Open Items
 
-1. The stricter local DTO changes are not yet redeployed or live-validated on production.
-2. Remaining legacy public read paths outside the audited `public-site-access` lane should stay quarantined unless a route-specific proof requires expanding them.
+1. Remaining legacy public read paths outside the audited `public-site-access` lane should stay quarantined unless a route-specific proof requires expanding them.
+2. The launch-control docs still need one final canonical statement of which public surfaces are `LIVE PASS` versus merely `DEPLOYED`.
 3. Secure-env proof remains outside this audit and still blocks production readiness.
 
 ## Evidence
@@ -71,3 +72,5 @@ Signed-session exception under direct audit:
 - `npm run proof:v1:public-access-coverage`: PASS
 - `npm test -- --run src/lib/publicSiteRenderModel.test.ts src/lib/publicSiteAccess.test.ts src/lib/publicAccessCoverageProofScript.test.ts src/lib/publicGuestSurfaceBoundary.test.ts src/pages/SiteView.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS
 - `npm test -- --run src/lib/publicGuestSurfaceBoundary.test.ts`: PASS
+- `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`: LIVE PASS
+- `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`: LIVE PASS

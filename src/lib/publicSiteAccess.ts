@@ -1,5 +1,6 @@
 import type { PublicSiteRenderModel } from './publicSiteRenderModel';
 import { customerSafeErrorMessage } from "./customerSafeError";
+import { supabase } from './supabase';
 
 export type PublicSiteGateStatus =
   | "unavailable"
@@ -30,8 +31,6 @@ export interface PublicSiteAccessResponse {
   passwordSession?: string | null;
 }
 
-const PUBLIC_SITE_ACCESS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-site-access`;
-const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const PUBLIC_SITE_ACCESS_ERROR_COPY = "Could not check this wedding site right now. Please try again.";
 
 function nullableString(value: unknown): string | null {
@@ -84,21 +83,16 @@ export function safePublicSiteAccessError(err: unknown): string {
 async function callPublicSiteAccess(
   body: Record<string, unknown>,
 ): Promise<PublicSiteAccessResponse> {
-  const response = await fetch(PUBLIC_SITE_ACCESS_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${ANON_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
+  const { data: json, error } = await supabase.functions.invoke('public-site-access', {
+    body,
   });
 
-  const json = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(safePublicSiteAccessError((json as { error?: string }).error || `Error ${response.status}`));
+  if (error) {
+    const message = typeof error.message === 'string' ? error.message : '';
+    throw new Error(safePublicSiteAccessError(message || 'Error invoking public-site-access'));
   }
 
-  const status = (json as { status?: string }).status;
+  const status = (json as { status?: string } | null | undefined)?.status;
   if (
     status !== "unavailable" &&
     status !== "coming_soon" &&

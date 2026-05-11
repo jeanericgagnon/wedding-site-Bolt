@@ -1,5 +1,31 @@
 # V1 Smoke Proof Log
 
+## 2026-05-09 10:38 AM PT Live Public DTO Validation And Resolver Policy Alignment
+- Scope:
+  - strict public DTO live validation
+  - `public-site-access` browser resolution fix
+  - single postdeploy public proof rerun
+- Fixed/proved:
+  - `src/lib/publicSiteRenderModel.ts` now carries canonical row couple/date/venue identity into the minimized public wedding payload so live public sections do not fall back to stale embedded snapshots.
+  - `src/lib/publicSiteAccess.ts` now calls `public-site-access` through the shared Supabase client instead of a raw `Authorization` header path that production rejected for publishable-key traffic.
+  - production `public-site-access` was redeployed with `--no-verify-jwt` so the public browser route can reach the handler while site privacy and guest-token/password checks still happen inside the function.
+  - Live browser proof now confirms:
+    - demo public site desktop/mobile rendering
+    - owner preview banner continuity
+    - proof site canonical row identity over stale embedded snapshots
+- Proof passed:
+  - `npm test -- --run src/lib/publicSiteAccess.test.ts src/lib/publicSiteRenderModel.test.ts src/pages/SiteView.test.ts src/lib/publicGuestSurfaceBoundary.test.ts`: PASS, 17/17.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run build`: PASS.
+  - `vercel deploy --prod --yes`: PASS, production deployment `dpl_68n9YLtWy67VxmqziaVYQAACKHqL`.
+  - `supabase functions deploy public-site-access --no-verify-jwt`: PASS.
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`: LIVE PASS.
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`: LIVE PASS.
+  - `npm run proof:v1:guests-rsvp-ops`: LIVE PASS.
+- Launch status:
+  - The main raw public-site payload blocker is now live-validated and no longer the top open launch blocker.
+  - Remaining ungated launch blocker is secure service-role deep proof; email queue-processing deep proof stays folded into that same secure secret-backed lane, and final launch-control closeout remains after that proof.
+
 ## 2026-05-09 10:24 AM PT Local Strict Public DTO Hardening
 - Scope:
   - Batch 1 strict public render DTO

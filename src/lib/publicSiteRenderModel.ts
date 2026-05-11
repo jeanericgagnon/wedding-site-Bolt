@@ -42,6 +42,14 @@ function asString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
+function toCanonicalWeddingDateISO(value: unknown): string {
+  const raw = asString(value)?.trim() ?? '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return '';
+  const date = new Date(`${raw}T12:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toISOString().slice(0, 10) === raw ? date.toISOString() : '';
+}
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (value && typeof value === 'object' && !Array.isArray(value)) return value as Record<string, unknown>;
   if (typeof value !== 'string') return null;
@@ -187,6 +195,63 @@ function sanitizeWeddingData(data: WeddingDataV1 | null): WeddingDataV1 | null {
   } satisfies WeddingDataV1);
 }
 
+function withCanonicalRowCoupleIdentity(
+  data: WeddingDataV1,
+  row: Record<string, unknown>,
+): WeddingDataV1 {
+  const partner1Name = asString(row.couple_name_1)?.trim() ?? '';
+  const partner2Name = asString(row.couple_name_2)?.trim() ?? '';
+  if (!partner1Name && !partner2Name) return data;
+
+  return {
+    ...data,
+    couple: {
+      ...data.couple,
+      partner1Name: partner1Name || data.couple.partner1Name,
+      partner2Name: partner2Name || data.couple.partner2Name,
+      displayName: buildCoupleDisplayName(
+        partner1Name || data.couple.partner1Name,
+        partner2Name || data.couple.partner2Name,
+        data.couple.displayName || 'The couple',
+      ),
+    },
+  };
+}
+
+function withCanonicalRowEventIdentity(
+  data: WeddingDataV1,
+  row: Record<string, unknown>,
+): WeddingDataV1 {
+  const weddingDateISO = toCanonicalWeddingDateISO(row.wedding_date);
+  const venueName = asString(row.venue_name)?.trim() ?? '';
+  const venueAddress = asString(row.wedding_location)?.trim() ?? '';
+
+  const venues = venueName || venueAddress
+    ? data.venues.length > 0
+      ? data.venues.map((venue, index) => index === 0
+        ? {
+            ...venue,
+            ...(venueName ? { name: venueName } : {}),
+            ...(venueAddress ? { address: venueAddress } : {}),
+          }
+        : venue)
+      : [{
+          id: 'primary',
+          ...(venueName ? { name: venueName } : {}),
+          ...(venueAddress ? { address: venueAddress } : {}),
+        }]
+    : data.venues;
+
+  return {
+    ...data,
+    event: {
+      ...data.event,
+      ...(weddingDateISO ? { weddingDateISO } : {}),
+    },
+    venues,
+  };
+}
+
 function getPublishedProjectPages(row: Record<string, unknown>, isPublished: boolean): BuilderPage[] {
   const preferredProject = safeJsonParse<Record<string, unknown> | null>(
     isPublished ? row.published_json : row.site_json,
@@ -224,7 +289,13 @@ function getPublicWeddingRenderData(row: Record<string, unknown>, isPublished: b
   for (const candidate of candidates) {
     const parsed = safeJsonParse<WeddingDataV1 | null>(candidate, null);
     if (parsed) {
-      return sanitizeWeddingData(rewriteSignedMediaUrlsToPublicDeep(parsed));
+      return withCanonicalRowEventIdentity(
+        withCanonicalRowCoupleIdentity(
+          sanitizeWeddingData(rewriteSignedMediaUrlsToPublicDeep(parsed)) ?? parsed,
+          row,
+        ),
+        row,
+      );
     }
   }
 
