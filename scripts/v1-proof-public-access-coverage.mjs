@@ -6,6 +6,7 @@ import { join } from 'node:path';
 const functionsRoot = join(process.cwd(), 'supabase', 'functions');
 const renderModelSource = readFileSync(join(process.cwd(), 'src', 'lib', 'publicSiteRenderModel.ts'), 'utf8');
 const clientContractSource = readFileSync(join(process.cwd(), 'src', 'lib', 'publicSiteAccess.ts'), 'utf8');
+const publicRenderContractSource = readFileSync(join(process.cwd(), 'src', 'lib', 'publicRenderContract.ts'), 'utf8');
 const siteViewSource = readFileSync(join(process.cwd(), 'src', 'pages', 'SiteView.tsx'), 'utf8');
 const allowedResolverFunctions = new Set(['public-site-access']);
 const auditedAlternateGateFunctions = new Set(['guest-contact-submit']);
@@ -97,21 +98,30 @@ const resolverChecks = functionEntrypoints
       && source.includes('.eq("visible", true)')
       && source.includes('buildPersistedPublicFallbackPages(persistedSections)');
     const usesAllowlistedRenderModel = renderModelSource.includes('const ALLOWED_THEME_TOKEN_KEYS')
-      && renderModelSource.includes("const ALLOWED_BINDING_KEYS = ['venueIds', 'scheduleItemIds', 'linkIds', 'faqIds'] as const;")
-      && renderModelSource.includes("const ALLOWED_STYLE_OVERRIDE_KEYS = [")
+      && publicRenderContractSource.includes('const PUBLIC_SECTION_SETTINGS_ALLOWLIST: Record<SectionType, readonly string[]> = {')
+      && publicRenderContractSource.includes("hero: ['headline', 'subtitle', 'title', 'showTitle', 'backgroundImage', 'overlayOpacity']")
+      && publicRenderContractSource.includes('const PUBLIC_BINDINGS_BY_SECTION_TYPE: Partial<Record<SectionType, readonly (keyof PublicBindingDTO)[]>> = {')
+      && publicRenderContractSource.includes("venue: ['venueIds']")
+      && publicRenderContractSource.includes("schedule: ['scheduleItemIds']")
+      && publicRenderContractSource.includes("registry: ['linkIds']")
+      && publicRenderContractSource.includes("faq: ['faqIds']")
+      && publicRenderContractSource.includes('export const PUBLIC_STYLE_OVERRIDE_KEYS = [')
       && !renderModelSource.includes("'customClassName'")
       && !renderModelSource.includes("'customCss'")
       && !renderModelSource.includes("'styleRecipeCss'")
-      && renderModelSource.includes('function pickPublicSectionSettings(')
-      && renderModelSource.includes('SECTION_MANIFESTS[section.type as keyof typeof SECTION_MANIFESTS]')
-      && renderModelSource.includes('manifestToCanonicalSectionDefinition(manifest)')
+      && publicRenderContractSource.includes('export function sanitizePublicSectionSettings(')
+      && publicRenderContractSource.includes('manifestToCanonicalSectionDefinition(manifest)')
       && renderModelSource.includes('export function buildPersistedPublicFallbackPages(')
       && renderModelSource.includes('publishedSource?.weddingDataSnapshot')
       && renderModelSource.includes('publishedSource?.weddingData,')
+      && !renderModelSource.includes('row.wedding_data,\n      ]')
+      && !renderModelSource.includes('allowLegacyLayoutFallback')
+      && renderModelSource.includes('return isPublished ? buildCanonicalRowWeddingFallback(row) : null;')
       && !renderModelSource.includes('meta: normalized.meta')
       && !renderModelSource.includes('PUBLIC_SENSITIVE_KEY_PATTERN')
       && !renderModelSource.includes('sanitizeDeepPublicValue(');
-    const avoidsDraftFirstPublishedWeddingData = !renderModelSource.includes('row.wedding_data,\n        publishedSource?.weddingDataSnapshot');
+    const avoidsDraftFirstPublishedWeddingData = !renderModelSource.includes('publishedSource?.weddingData,\n        row.wedding_data')
+      && !renderModelSource.includes('publishedSource?.weddingDataSnapshot,\n        publishedSource?.weddingData,\n        row.wedding_data');
     const removesWeddingMetaFromNetworkPayload = !renderModelSource.includes('meta: normalized.meta')
       && !clientContractSource.includes('const meta = asRecord(wedding.meta);')
       && !clientContractSource.includes('createdAtISO')
@@ -119,7 +129,7 @@ const resolverChecks = functionEntrypoints
     const clientSanitizerMatchesDto = clientContractSource.includes('function sanitizePublicWeddingModel(')
       && clientContractSource.includes('function sanitizePublicThemeModel(')
       && clientContractSource.includes('function sanitizePublicRenderSection(')
-      && clientContractSource.includes('function sanitizePublicRenderSectionSettings(')
+      && clientContractSource.includes("import { sanitizePublicBindings, sanitizePublicSectionSettings, sanitizePublicStyleOverrides } from './publicRenderContract';")
       && !clientContractSource.includes("wedding: asRecord(renderModel?.wedding) as PublicSiteRenderModel['wedding']")
       && !clientContractSource.includes('tokens: asRecord(asRecord(renderModel?.theme)?.tokens) ?? null')
       && !clientContractSource.includes('customClassName')

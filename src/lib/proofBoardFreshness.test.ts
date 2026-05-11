@@ -60,17 +60,16 @@ describe('proof board freshness', () => {
 
     expect(board.source).toBe('BACKLOG.md');
     expect(board.currentState).toMatchObject(expectedState);
-    expect(board.activeUngatedLaunchBlockers).toEqual([
-      'Secure Service-Role Queue/Storage Deep Proof',
-      'Secure Email / Queue-Processing Deep Proof',
-    ]);
-    expect(board.summary?.currentProofState).toContain('canonical-smoke');
-    expect(board.summary?.currentProofState).toContain('public-quality');
-    expect(board.summary?.currentNextActions).toContain('secure service-role proof');
-    expect(board.ruthlessNextThree?.[0]?.title).toContain('Provide `SUPABASE_SERVICE_ROLE_KEY`');
+    expect(board.activeUngatedLaunchBlockers ?? []).toEqual([]);
+    expect(board.summary?.currentProofState).toContain('public-access-coverage');
+    expect(board.summary?.currentProofState).toContain('launch-closeout');
+    expect(board.summary?.currentNextActions ?? '').toBe('');
+    expect(board.ruthlessNextThree?.[0]?.title).toContain('legacy `layout_config` fallback');
     expect(board.ruthlessNextThree?.[0]?.status).toBe('READY_WHEN_SECURE_ENV_EXISTS');
-    expect(board.sections?.['Current Canonical Status']).toContain('single public site resolver');
-    expect(board.sections?.['Current Validation Matrix']).toContain('LIVE PASS');
-    expect(board.sections?.['Deployment Status']).toContain('public-site-access');
+    expect(board.ruthlessNextThree?.[2]?.title).toContain('secure service-role queue/storage proof');
+    expect(board.currentState?.['Reason production-ready is not yet claimed']).toContain('secure service-role proof');
+    expect(board.sections?.['Current Canonical Status']).toContain('| Launch verdict | `HOLD` |');
+    expect(board.sections?.['Validation Matrix']).toContain('LIVE PASS');
+    expect(board.sections?.['Deployment Matrix']).toContain('public-site-access');
   });
 });

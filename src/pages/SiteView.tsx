@@ -27,6 +27,9 @@ import {
 import { hasStoredGuestLanguagePreference } from '../lib/guestLanguagePreference';
 import { fetchPublicItineraryRows, hasLiveRegistryItems, type PublicItineraryRow } from './siteViewService';
 import { SiteViewRouteView } from './SiteViewRouteView';
+import type { PublicSectionDTO } from '../lib/publicRenderContract';
+
+type GuestRenderableSection = Pick<BuilderSectionInstance, 'id' | 'type' | 'variant' | 'enabled' | 'orderIndex' | 'settings' | 'bindings' | 'styleOverrides'> | PublicSectionDTO;
 
 export function toIsoDateOrUndefined(value?: string | null): string | undefined {
   const trimmed = value?.trim();
@@ -122,7 +125,7 @@ function createDemoFallbackSections(templateId = 'modern-luxe'): BuilderSectionI
   }));
 }
 
-function normalizeSectionVariants(sections: BuilderSectionInstance[]): BuilderSectionInstance[] {
+function normalizeSectionVariants(sections: GuestRenderableSection[]): GuestRenderableSection[] {
   return sections.map((section) => {
     const supported = getSectionVariants(section.type);
     if (supported.includes(section.variant)) return section;
@@ -157,11 +160,11 @@ function normalizeSectionVariants(sections: BuilderSectionInstance[]): BuilderSe
   });
 }
 
-function hasRegistryBuilderSection(sections: BuilderSectionInstance[]): boolean {
+function hasRegistryBuilderSection(sections: GuestRenderableSection[]): boolean {
   return sections.some((section) => section.type.trim().toLowerCase().replace(/[^a-z0-9-]/g, '') === 'registry');
 }
 
-function appendRegistrySectionWhenNeeded(sections: BuilderSectionInstance[], shouldAppend: boolean): BuilderSectionInstance[] {
+function appendRegistrySectionWhenNeeded(sections: GuestRenderableSection[], shouldAppend: boolean): GuestRenderableSection[] {
   if (!shouldAppend || hasRegistryBuilderSection(sections)) return sections;
   return [
     ...sections,
@@ -263,13 +266,31 @@ function hasGuestReadyContentForSection(
   }
 }
 
-function filterGuestReadyBuilderSections(sections: BuilderSectionInstance[], data: WeddingDataV1): BuilderSectionInstance[] {
+function filterGuestReadyBuilderSections(sections: GuestRenderableSection[], data: WeddingDataV1): GuestRenderableSection[] {
   return sections.filter((section) => hasGuestReadyContentForSection(
     section.type,
     data,
     section.settings as Record<string, unknown> | undefined,
     section.variant
   ));
+}
+
+function toBuilderSectionState(sections: GuestRenderableSection[]): BuilderSectionInstance[] {
+  return sections.map((section) => ({
+    id: section.id,
+    type: section.type,
+    variant: section.variant,
+    enabled: section.enabled,
+    orderIndex: section.orderIndex,
+    settings: section.settings as Record<string, unknown>,
+    bindings: (section.bindings ?? {}) as BuilderSectionInstance['bindings'],
+    styleOverrides: (section.styleOverrides ?? {}) as BuilderSectionInstance['styleOverrides'],
+    locked: false,
+    meta: {
+      createdAtISO: '',
+      updatedAtISO: '',
+    },
+  }));
 }
 
 function isPublicWeddingDataSparse(data: WeddingDataV1): boolean {
@@ -690,7 +711,7 @@ export const SiteView: React.FC = () => {
               const demoData = createAlexJordanDemoWeddingData();
               const demoSections = createDemoFallbackSections(data.template_id || 'modern-luxe');
               if (demoSections.length > 0) {
-                setBuilderSections(filterGuestReadyBuilderSections(demoSections, demoData));
+                setBuilderSections(toBuilderSectionState(filterGuestReadyBuilderSections(demoSections, demoData)));
                 setWeddingData(demoData);
                 if (renderModel.theme.preset) {
                   applyThemePreset(renderModel.theme.preset);
@@ -718,7 +739,7 @@ export const SiteView: React.FC = () => {
             applyThemePreset(wData.theme.preset);
           }
 
-          setBuilderSections(filterGuestReadyBuilderSections(publicSections, wData));
+          setBuilderSections(toBuilderSectionState(filterGuestReadyBuilderSections(publicSections, wData)));
           setWeddingData(wData);
         } else {
           const rawWData = renderModel.wedding
@@ -736,7 +757,7 @@ export const SiteView: React.FC = () => {
             const demoData = createAlexJordanDemoWeddingData();
             const demoSections = createDemoFallbackSections('modern-luxe');
             if (demoSections.length > 0) {
-              setBuilderSections(filterGuestReadyBuilderSections(demoSections, demoData));
+              setBuilderSections(toBuilderSectionState(filterGuestReadyBuilderSections(demoSections, demoData)));
               setWeddingData(demoData);
               applyThemePreset('elegant');
               return;

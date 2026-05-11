@@ -12,6 +12,7 @@ import { buildCoupleDisplayName } from './coupleDisplayName.ts';
 import { safeJsonParse } from './jsonUtils.ts';
 import { rewriteSignedMediaUrlsToPublicDeep } from './mediaUrl.ts';
 import { getIsPublishedFromSiteRow } from './publicSiteProject.ts';
+import { toPublicPageDTO, toPublicSectionDTO, type PublicPageDTO } from './publicRenderContract.ts';
 
 export interface PublicSiteThemeModel {
   preset: string | null;
@@ -23,7 +24,7 @@ export type PublicWeddingRenderModel = Omit<WeddingDataV1, 'meta'> & {
 };
 
 export interface PublicSiteRenderModel {
-  pages: BuilderPage[];
+  pages: PublicPageDTO[];
   wedding: PublicWeddingRenderModel | null;
   theme: PublicSiteThemeModel;
 }
@@ -71,20 +72,6 @@ const ALLOWED_THEME_TOKEN_KEYS: Array<keyof ThemeTokens> = [
   'colorTextSecondary',
 ];
 
-const ALLOWED_BINDING_KEYS = ['venueIds', 'scheduleItemIds', 'linkIds', 'faqIds'] as const;
-
-const ALLOWED_STYLE_OVERRIDE_KEYS = [
-  'backgroundColor',
-  'textColor',
-  'paddingTop',
-  'paddingBottom',
-  'sideImage',
-  'sideImagePosition',
-  'sideImageSize',
-  'sideImageFit',
-  'animationPreset',
-];
-
 function asString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
@@ -105,37 +92,6 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   if (value && typeof value === 'object' && !Array.isArray(value)) return value as Record<string, unknown>;
   if (typeof value !== 'string') return null;
   return safeJsonParse<Record<string, unknown> | null>(value, null);
-}
-
-function pickStringArray(value: unknown): string[] | undefined {
-  if (!Array.isArray(value)) return undefined;
-  const picked = value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
-  return picked.length > 0 ? picked : undefined;
-}
-
-function pickPublicBindings(bindings: BuilderSectionInstance['bindings'] | SectionInstance['bindings'] | undefined) {
-  if (!bindings) return {};
-  const source = bindings as Record<string, unknown>;
-  const out: Record<string, string[]> = {};
-  for (const key of ALLOWED_BINDING_KEYS) {
-    const picked = pickStringArray(source[key]);
-    if (picked) out[key] = picked;
-  }
-  return out as BuilderSectionInstance['bindings'];
-}
-
-function pickPublicStyleOverrides(overrides: BuilderSectionInstance['styleOverrides'] | SectionInstance['overrides'] | undefined) {
-  if (!overrides || typeof overrides !== 'object') return {};
-  const source = overrides as Record<string, unknown>;
-  const out: Record<string, string> = {};
-  for (const key of ALLOWED_STYLE_OVERRIDE_KEYS) {
-    const value = asString(source[key]);
-    if (!value) continue;
-    out[key] = key === 'sideImage'
-      ? sanitizePublicSectionDataDeep(rewriteSignedMediaUrlsToPublicDeep(value))
-      : value;
-  }
-  return out as BuilderSectionInstance['styleOverrides'];
 }
 
 function pickPublicSectionSettings(section: { type: string; variant: string; settings?: Record<string, unknown> }) {
@@ -172,71 +128,60 @@ function pickPublicSectionSettings(section: { type: string; variant: string; set
 }
 
 function sanitizeBuilderSection(section: BuilderSectionInstance): BuilderSectionInstance {
-  const normalized = pickPublicSectionSettings(section);
-  return {
+  return toPublicSectionDTO({
     id: section.id,
-    type: normalized.type,
-    variant: normalized.variant,
-    enabled: section.enabled === true,
-    orderIndex: typeof section.orderIndex === 'number' ? section.orderIndex : 0,
-    settings: normalized.settings,
-    bindings: pickPublicBindings(section.bindings),
-    styleOverrides: pickPublicStyleOverrides(section.styleOverrides),
-  } as BuilderSectionInstance;
+    type: section.type,
+    variant: section.variant,
+    enabled: section.enabled,
+    orderIndex: section.orderIndex,
+    settings: section.settings,
+    bindings: section.bindings as Record<string, unknown> | undefined,
+    styleOverrides: section.styleOverrides as Record<string, unknown> | undefined,
+  }) as unknown as BuilderSectionInstance;
 }
 
 function sanitizeBuilderPage(page: BuilderPage): BuilderPage {
-  return {
+  return toPublicPageDTO({
     id: page.id,
     title: page.title,
     slug: page.slug,
-    orderIndex: typeof page.orderIndex === 'number' ? page.orderIndex : 0,
+    orderIndex: page.orderIndex,
     sections: Array.isArray(page.sections) ? page.sections.map(sanitizeBuilderSection) : [],
     meta: {
       isHome: page.meta?.isHome === true,
       isHidden: false,
     },
-  } as BuilderPage;
+  }) as unknown as BuilderPage;
 }
 
 function toLegacyBuilderSection(section: SectionInstance, index: number): BuilderSectionInstance {
-  const normalized = pickPublicSectionSettings({
+  return toPublicSectionDTO({
+    id: section.id,
     type: section.type,
     variant: section.variant,
-    settings: section.settings ?? {},
-  });
-  return {
-    id: section.id,
-    type: normalized.type,
-    variant: normalized.variant,
     enabled: section.enabled === true,
     orderIndex: index,
-    settings: normalized.settings,
-    bindings: pickPublicBindings(section.bindings),
-    styleOverrides: pickPublicStyleOverrides(section.overrides),
-  } as BuilderSectionInstance;
+    settings: section.settings ?? {},
+    bindings: section.bindings as Record<string, unknown> | undefined,
+    styleOverrides: section.overrides as Record<string, unknown> | undefined,
+  }) as unknown as BuilderSectionInstance;
 }
 
 function toPersistedPublicBuilderSection(section: PersistedPublicSectionRow, index: number): BuilderSectionInstance {
-  const normalized = pickPublicSectionSettings({
-    type: section.type,
-    variant: section.variant ?? 'default',
-    settings: asRecord(section.data) ?? {},
-  });
-  return {
+  return toPublicSectionDTO({
     id: section.id,
-    type: normalized.type,
-    variant: normalized.variant,
+    type: section.type as BuilderSectionInstance['type'],
+    variant: section.variant ?? 'default',
     enabled: section.visible !== false,
     orderIndex: typeof section.order === 'number' ? section.order : index,
-    settings: normalized.settings,
-    bindings: pickPublicBindings(section.bindings as BuilderSectionInstance['bindings']),
-    styleOverrides: pickPublicStyleOverrides(section.style_overrides as BuilderSectionInstance['styleOverrides']),
-  } as BuilderSectionInstance;
+    settings: asRecord(section.data) ?? {},
+    bindings: section.bindings as Record<string, unknown> | undefined,
+    styleOverrides: section.style_overrides as Record<string, unknown> | undefined,
+  }) as unknown as BuilderSectionInstance;
 }
 
 function toLegacyBuilderPage(page: PageConfig, index: number): BuilderPage {
-  return {
+  return toPublicPageDTO({
     id: page.id,
     title: page.title,
     slug: page.id === 'home'
@@ -248,7 +193,7 @@ function toLegacyBuilderPage(page: PageConfig, index: number): BuilderPage {
       isHome: page.id === 'home' || index === 0,
       isHidden: false,
     },
-  } as BuilderPage;
+  }) as unknown as BuilderPage;
 }
 
 function pickPublicThemeTokens(value: unknown): ThemeTokens | null {
@@ -380,6 +325,50 @@ function sanitizeWeddingData(data: WeddingDataV1 | null): PublicWeddingRenderMod
   };
 }
 
+function buildCanonicalRowWeddingFallback(row: Record<string, unknown>): PublicWeddingRenderModel | null {
+  const partner1Name = asString(row.couple_name_1)?.trim() ?? '';
+  const partner2Name = asString(row.couple_name_2)?.trim() ?? '';
+  const weddingDateISO = toCanonicalWeddingDateISO(row.wedding_date);
+  const venueName = asString(row.venue_name)?.trim() ?? '';
+  const venueAddress = asString(row.wedding_location)?.trim() ?? '';
+
+  if (!partner1Name && !partner2Name && !weddingDateISO && !venueName && !venueAddress) return null;
+
+  return {
+    version: '1',
+    couple: {
+      ...(partner1Name ? { partner1Name } : {}),
+      ...(partner2Name ? { partner2Name } : {}),
+      ...(partner1Name || partner2Name
+        ? { displayName: buildCoupleDisplayName(partner1Name, partner2Name, 'The couple') }
+        : {}),
+    },
+    event: {
+      ...(weddingDateISO ? { weddingDateISO } : {}),
+    },
+    venues: venueName || venueAddress
+      ? [{
+          id: 'primary',
+          ...(venueName ? { name: venueName } : {}),
+          ...(venueAddress ? { address: venueAddress } : {}),
+        }]
+      : [],
+    schedule: [],
+    rsvp: {
+      enabled: true,
+    },
+    travel: {},
+    registry: {
+      links: [],
+    },
+    faq: [],
+    theme: {},
+    media: {
+      gallery: [],
+    },
+  };
+}
+
 function withCanonicalRowCoupleIdentity(
   data: PublicWeddingRenderModel,
   row: Record<string, unknown>,
@@ -449,6 +438,9 @@ function getPublishedProjectPages(row: Record<string, unknown>, isPublished: boo
 
 function getLegacyLayoutPages(row: Record<string, unknown>, isPublished: boolean): BuilderPage[] {
   if (!isPublished) return [];
+  const publishedSource = asRecord(row.published_json);
+  const legacyLayoutAllowed = publishedSource?.legacyLayoutPublished === true;
+  if (!legacyLayoutAllowed) return [];
   const layoutConfig = rewriteSignedMediaUrlsToPublicDeep(
     safeJsonParse<LayoutConfigV1 | null>(row.layout_config, null),
   );
@@ -464,7 +456,6 @@ function getPublicWeddingRenderData(row: Record<string, unknown>, isPublished: b
     ? [
         publishedSource?.weddingDataSnapshot,
         publishedSource?.weddingData,
-        row.wedding_data,
       ]
     : [
         draftSource?.weddingDataSnapshot,
@@ -485,7 +476,7 @@ function getPublicWeddingRenderData(row: Record<string, unknown>, isPublished: b
     }
   }
 
-  return null;
+  return isPublished ? buildCanonicalRowWeddingFallback(row) : null;
 }
 
 function getPublicThemeModel(
@@ -538,11 +529,31 @@ export function applyPublicSiteTranslation(
   translation: Record<string, unknown> | null,
 ): Record<string, unknown> {
   if (!translation) return row;
+  const translatedPublished = asRecord(translation.translated_published_json);
+  const existingPublished = asRecord(row.published_json) ?? {};
+  const translatedWeddingData = translation.translated_wedding_data ?? row.wedding_data;
+  const nextPublishedJson = translatedPublished
+    ? {
+        ...existingPublished,
+        ...translatedPublished,
+        ...(translatedWeddingData && !translatedPublished.weddingDataSnapshot && !translatedPublished.weddingData
+          ? { weddingDataSnapshot: translatedWeddingData }
+          : {}),
+      }
+    : translatedWeddingData
+      ? {
+          ...existingPublished,
+          ...(existingPublished.weddingDataSnapshot || existingPublished.weddingData
+            ? {}
+            : { weddingDataSnapshot: translatedWeddingData }),
+        }
+      : row.published_json;
+
   return {
     ...row,
     site_json: translation.translated_site_json ?? row.site_json,
-    published_json: translation.translated_published_json ?? row.published_json,
-    wedding_data: translation.translated_wedding_data ?? row.wedding_data,
+    published_json: nextPublishedJson,
+    wedding_data: translatedWeddingData,
     layout_config: translation.translated_layout_config ?? row.layout_config,
   };
 }

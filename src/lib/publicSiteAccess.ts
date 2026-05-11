@@ -1,8 +1,7 @@
 import type { PublicSiteRenderModel } from './publicSiteRenderModel';
 import { customerSafeErrorMessage } from "./customerSafeError";
 import { supabase } from './supabase';
-import { SECTION_MANIFESTS } from '../builder/registry/sectionManifests';
-import { manifestToCanonicalSectionDefinition } from './canonicalSectionRegistry';
+import { sanitizePublicBindings, sanitizePublicSectionSettings, sanitizePublicStyleOverrides } from './publicRenderContract';
 
 export type PublicSiteGateStatus =
   | "unavailable"
@@ -47,60 +46,19 @@ function nullableFiniteNumber(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
-function sanitizePublicRenderSectionSettings(
-  type: unknown,
-  variant: unknown,
-  value: unknown,
-): Record<string, unknown> {
-  if (typeof type !== 'string' || typeof variant !== 'string') return {};
-  const settings = asRecord(value) ?? {};
-  const manifest = SECTION_MANIFESTS[type as keyof typeof SECTION_MANIFESTS];
-  if (!manifest) return {};
-
-  const canonicalDefinition = manifestToCanonicalSectionDefinition(manifest);
-  const canonicalVariant = canonicalDefinition.variants[variant]
-    ? variant
-    : canonicalDefinition.defaultVariant;
-  const variantDefaults = canonicalDefinition.variants[canonicalVariant]?.defaults ?? {};
-  const allowedKeys = new Set(manifest.settingsSchema.fields.map((field) => field.key));
-  const pickedSettings = Object.fromEntries(
-    Object.entries(settings).filter(([key]) => allowedKeys.has(key)),
-  );
-
-  return {
-    ...variantDefaults,
-    ...pickedSettings,
-  };
-}
-
 function sanitizePublicRenderSection(value: unknown) {
   const section = asRecord(value);
-  const bindings = asRecord(section?.bindings);
-  const styleOverrides = asRecord(section?.styleOverrides);
+  const publicBindings = sanitizePublicBindings(section?.type, section?.bindings);
+  const publicStyleOverrides = sanitizePublicStyleOverrides(section?.styleOverrides);
   return {
     id: typeof section?.id === 'string' ? section.id : '',
     type: typeof section?.type === 'string' ? section.type : '',
     variant: typeof section?.variant === 'string' ? section.variant : 'default',
     enabled: section?.enabled === true,
     orderIndex: typeof section?.orderIndex === 'number' ? section.orderIndex : 0,
-    settings: sanitizePublicRenderSectionSettings(section?.type, section?.variant, section?.settings),
-    bindings: {
-      ...(Array.isArray(bindings?.venueIds) ? { venueIds: bindings.venueIds.filter((item): item is string => typeof item === 'string') } : {}),
-      ...(Array.isArray(bindings?.scheduleItemIds) ? { scheduleItemIds: bindings.scheduleItemIds.filter((item): item is string => typeof item === 'string') } : {}),
-      ...(Array.isArray(bindings?.linkIds) ? { linkIds: bindings.linkIds.filter((item): item is string => typeof item === 'string') } : {}),
-      ...(Array.isArray(bindings?.faqIds) ? { faqIds: bindings.faqIds.filter((item): item is string => typeof item === 'string') } : {}),
-    },
-    styleOverrides: {
-      ...(typeof styleOverrides?.backgroundColor === 'string' ? { backgroundColor: styleOverrides.backgroundColor } : {}),
-      ...(typeof styleOverrides?.textColor === 'string' ? { textColor: styleOverrides.textColor } : {}),
-      ...(typeof styleOverrides?.paddingTop === 'string' ? { paddingTop: styleOverrides.paddingTop } : {}),
-      ...(typeof styleOverrides?.paddingBottom === 'string' ? { paddingBottom: styleOverrides.paddingBottom } : {}),
-      ...(typeof styleOverrides?.sideImage === 'string' ? { sideImage: styleOverrides.sideImage } : {}),
-      ...(typeof styleOverrides?.sideImagePosition === 'string' ? { sideImagePosition: styleOverrides.sideImagePosition } : {}),
-      ...(typeof styleOverrides?.sideImageSize === 'string' ? { sideImageSize: styleOverrides.sideImageSize } : {}),
-      ...(typeof styleOverrides?.sideImageFit === 'string' ? { sideImageFit: styleOverrides.sideImageFit } : {}),
-      ...(typeof styleOverrides?.animationPreset === 'string' ? { animationPreset: styleOverrides.animationPreset } : {}),
-    },
+    settings: sanitizePublicSectionSettings(section?.type, section?.variant, section?.settings),
+    ...(publicBindings ? { bindings: publicBindings } : {}),
+    ...(publicStyleOverrides ? { styleOverrides: publicStyleOverrides } : {}),
   };
 }
 
