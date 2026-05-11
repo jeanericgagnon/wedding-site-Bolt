@@ -150,6 +150,124 @@ describe('publicSiteRenderModel', () => {
     expect((site as unknown as Record<string, unknown>).layout_config).toBeUndefined();
   });
 
+  it('normalizes hero settings into the resolved public renderer contract instead of the old builder shape', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-hero',
+      site_slug: 'kara-eric',
+      site_url: 'kara-eric.dayof.love',
+      is_published: true,
+      couple_name_1: 'Kara',
+      couple_name_2: 'Eric',
+      wedding_date: '2026-06-14',
+      venue_name: 'Grand Pavilion',
+      wedding_location: 'New York',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      hide_from_search: false,
+      site_json: null,
+      published_json: {
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [{
+            id: 'hero-1',
+            type: 'hero',
+            variant: 'fullBleed',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'We are getting married',
+              subtitle: 'June 14, 2026 · The Grand Pavilion, New York',
+              headline: 'Kara & Eric',
+              ctaLabel: 'Send RSVP',
+              ctaHref: '#rsvp',
+              showDivider: false,
+              privateToken: 'secret',
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    const settings = site.render_model.pages[0]?.sections[0]?.settings ?? {};
+    expect(settings).toEqual({
+      headline: 'Kara & Eric',
+      eyebrow: 'We are getting married',
+      subheadline: 'June 14, 2026 · The Grand Pavilion, New York',
+      overlayOpacity: 40,
+      ctaLabel: 'Send RSVP',
+      ctaHref: '#rsvp',
+      showDivider: false,
+    });
+
+    const serialized = JSON.stringify(site);
+    expect(serialized).not.toContain('"title":"We are getting married"');
+    expect(serialized).not.toContain('"subtitle":"June 14, 2026 · The Grand Pavilion, New York"');
+    expect(serialized).not.toContain('privateToken');
+  });
+
+  it('normalizes story settings into the resolved public renderer contract instead of the old builder shape', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-story',
+      site_slug: 'kara-eric',
+      site_url: 'kara-eric.dayof.love',
+      is_published: true,
+      couple_name_1: 'Kara',
+      couple_name_2: 'Eric',
+      wedding_date: '2026-06-14',
+      venue_name: 'Grand Pavilion',
+      wedding_location: 'New York',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      hide_from_search: false,
+      site_json: null,
+      published_json: {
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [{
+            id: 'story-1',
+            type: 'story',
+            variant: 'timeline',
+            enabled: true,
+            orderIndex: 1,
+            settings: {
+              title: 'How we met',
+              storyText: 'We met on a rainy Tuesday.',
+              photo: 'https://example.com/couple.jpg',
+              showTitle: false,
+              staffNotes: 'hide me',
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    const settings = site.render_model.pages[0]?.sections[0]?.settings ?? {};
+    expect(settings).toEqual({
+      headline: 'How we met',
+      body: 'We met on a rainy Tuesday.',
+      image: 'https://example.com/couple.jpg',
+      showDivider: false,
+    });
+
+    const serialized = JSON.stringify(site);
+    expect(serialized).not.toContain('"title":"How we met"');
+    expect(serialized).not.toContain('"storyText":"We met on a rainy Tuesday."');
+    expect(serialized).not.toContain('"photo":"https://example.com/couple.jpg"');
+    expect(serialized).not.toContain('staffNotes');
+  });
+
   it('only preserves bindings for section types that actually consume them in public rendering', () => {
     const site = buildPublicSiteRenderSite({
       id: 'site-bindings',
@@ -232,6 +350,79 @@ describe('publicSiteRenderModel', () => {
     expect(sections[3]?.bindings).toEqual({ linkIds: ['registry-1'] });
     expect(sections[4]?.bindings).toEqual({ faqIds: ['faq-1'] });
 
+  });
+
+  it('keeps only the explicit public contact fields for non-interactive contact sections', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-contact',
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo.dayof.love',
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-09-12',
+      venue_name: 'Garden Hall',
+      wedding_location: 'Portland',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      hide_from_search: false,
+      site_json: null,
+      published_json: {
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [{
+            id: 'contact-1',
+            type: 'contact',
+            variant: 'form',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'Need help?',
+              subtitle: 'Reach out any time.',
+              contacts: [{
+                id: 'planner-1',
+                name: 'Avery Planner',
+                role: 'Planner',
+                email: 'avery@example.com',
+                phone: '+1 212 555 1111',
+                instagram: '@averyplans',
+                collaboratorAccess: 'owner-only',
+                privateToken: 'secret',
+                queueTargets: ['ops'],
+              }],
+              pollPrompt: 'should not survive',
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    const settings = site.render_model.pages[0]?.sections[0]?.settings as Record<string, unknown>;
+    expect(settings).toEqual({
+      showTitle: true,
+      eyebrow: 'Need help?',
+      emailSubject: 'Wedding Question',
+      headline: 'Need help?',
+      subheadline: 'Reach out any time.',
+      contacts: [{
+        id: 'planner-1',
+        name: 'Avery Planner',
+        role: 'Planner',
+        email: 'avery@example.com',
+        phone: '+1 212 555 1111',
+        instagram: '@averyplans',
+      }],
+    });
+    expect(JSON.stringify(settings)).not.toContain('collaboratorAccess');
+    expect(JSON.stringify(settings)).not.toContain('privateToken');
+    expect(JSON.stringify(settings)).not.toContain('queueTargets');
+    expect(JSON.stringify(settings)).not.toContain('pollPrompt');
   });
 
   it('applies translated blobs before building the public render model', () => {
@@ -554,7 +745,7 @@ describe('publicSiteRenderModel', () => {
     expect(serialized).not.toContain('styleRecipeId');
   });
 
-  it('applies translated legacy layout payloads through the same strict public DTO path', () => {
+  it('ignores translated legacy layout payloads when published pages are absent', () => {
     const translatedSite = buildPublicSiteRenderSite(applyPublicSiteTranslation({
       id: 'site-5b',
       site_slug: 'maya-leo',
@@ -577,7 +768,6 @@ describe('publicSiteRenderModel', () => {
     }, {
       translated_published_json: {
         pages: [],
-        legacyLayoutPublished: true,
       },
       translated_layout_config: {
         version: '1',
@@ -618,21 +808,8 @@ describe('publicSiteRenderModel', () => {
       },
     }));
 
-    expect(translatedSite.render_model.pages[0]?.sections[0]).toMatchObject({
-      id: 'hero-1',
-      type: 'hero',
-      variant: 'default',
-      enabled: true,
-      orderIndex: 0,
-      settings: {
-        headline: 'Bienvenidos',
-      },
-      styleOverrides: {
-        backgroundColor: '#fff7f7',
-      },
-    });
-
     const serialized = JSON.stringify(translatedSite);
+    expect(translatedSite.render_model.pages).toEqual([]);
     expect(serialized).not.toContain('hiddenGallery');
     expect(serialized).not.toContain('providerSecret');
     expect(serialized).not.toContain('mediaAssetIds');
@@ -788,13 +965,179 @@ describe('publicSiteRenderModel', () => {
     const sections = site.render_model.pages[0]?.sections ?? [];
     expect(sections[0]?.settings).toMatchObject({ title: 'Weekend', showTitle: true });
     expect(sections[0]?.settings).not.toHaveProperty('showIcons');
-    expect(sections[1]?.settings).toMatchObject({ title: 'Travel', showTitle: true, showTimezoneBadge: true });
+    expect(sections[1]?.settings).toMatchObject({ headline: 'Travel' });
+    expect(sections[1]?.settings).not.toHaveProperty('title');
+    expect(sections[1]?.settings).not.toHaveProperty('showTitle');
     expect(sections[1]?.settings).not.toHaveProperty('showParking');
+    expect(sections[1]?.settings).not.toHaveProperty('showTimezoneBadge');
     expect(sections[2]?.settings).toMatchObject({ title: 'Questions', showTitle: true });
     expect(sections[2]?.settings).not.toHaveProperty('expandAll');
     expect(serialized).not.toContain('showIcons');
     expect(serialized).not.toContain('showParking');
+    expect(serialized).not.toContain('showTimezoneBadge');
     expect(serialized).not.toContain('expandAll');
+  });
+
+  it('allowlists nested travel settings per variant before they reach the public render model', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-travel-list',
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo.dayof.love',
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-09-12',
+      venue_name: 'Garden Hall',
+      wedding_location: 'Portland',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      hide_from_search: false,
+      site_json: null,
+      published_json: {
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [{
+            id: 'travel-1',
+            type: 'travel',
+            variant: 'hotelBlock',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'Where to stay',
+              subheadline: 'Book soon.',
+              generalNote: 'Mention the wedding.',
+              showAmenities: true,
+              hotels: [{
+                id: 'hotel-1',
+                name: 'Harbor Hotel',
+                distance: '0.3 miles',
+                priceRange: '$250-$300',
+                bookingCode: 'MAYALEO',
+                bookingDeadline: 'May 20',
+                phone: '+1 555 0101',
+                url: 'https://example.com/stay',
+                image: 'https://example.com/stay.jpg',
+                amenities: ['Breakfast', 'Pool'],
+                shuttleInfo: 'Leaves at 4pm.',
+                notes: 'Walkable.',
+                recommended: true,
+                ownerPreview: true,
+                collaboratorAccess: ['hide-me'],
+              }],
+              showTimezoneBadge: true,
+              internalQueueConfig: { id: 'hide-me' },
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      headline: 'Where to stay',
+      subheadline: 'Book soon.',
+      generalNote: 'Mention the wedding.',
+      showAmenities: true,
+      hotels: [{
+        id: 'hotel-1',
+        name: 'Harbor Hotel',
+        distance: '0.3 miles',
+        priceRange: '$250-$300',
+        bookingCode: 'MAYALEO',
+        bookingDeadline: 'May 20',
+        phone: '+1 555 0101',
+        url: 'https://example.com/stay',
+        image: 'https://example.com/stay.jpg',
+        amenities: ['Breakfast', 'Pool'],
+        shuttleInfo: 'Leaves at 4pm.',
+        notes: 'Walkable.',
+        recommended: true,
+      }],
+    });
+
+    const serialized = JSON.stringify(site.render_model.pages[0]?.sections[0]?.settings);
+    expect(serialized).not.toContain('showTimezoneBadge');
+    expect(serialized).not.toContain('internalQueueConfig');
+    expect(serialized).not.toContain('ownerPreview');
+    expect(serialized).not.toContain('collaboratorAccess');
+  });
+
+  it('allowlists nested gallery settings before they reach the public render model', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-gallery',
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo.dayof.love',
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-09-12',
+      venue_name: 'Garden Hall',
+      wedding_location: 'Portland',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      hide_from_search: false,
+      site_json: null,
+      published_json: {
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [{
+            id: 'gallery-1',
+            type: 'gallery',
+            variant: 'masonry',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'Weekend photos',
+              galleryImages: [{
+                id: 'img-1',
+                url: 'https://example.com/photo.jpg',
+                caption: 'Ceremony',
+                alt: 'Ceremony flowers',
+                span: '2',
+                hiddenGallery: true,
+              }],
+              backgroundColor: '#fef9f0',
+              ownerPreview: true,
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      eyebrow: 'Our moments',
+      headline: 'Weekend photos',
+      animation: 'fade',
+      showCaptions: true,
+      enableLightbox: true,
+      autoScroll: false,
+      continuousGlide: true,
+      glideSpeed: 42,
+      images: [{
+        id: 'img-1',
+        url: 'https://example.com/photo.jpg',
+        caption: 'Ceremony',
+        alt: 'Ceremony flowers',
+        span: '2',
+      }],
+      backgroundColor: '#fef9f0',
+    });
+
+    const serialized = JSON.stringify(site.render_model.pages[0]?.sections[0]?.settings);
+    expect(serialized).not.toContain('galleryImages');
+    expect(serialized).not.toContain('hiddenGallery');
+    expect(serialized).not.toContain('ownerPreview');
   });
 
   it('normalizes footer cta aliases into the public renderer fields and drops stale footer keys', () => {
@@ -1006,15 +1349,14 @@ describe('publicSiteRenderModel', () => {
       headline: 'Questions for us?',
       subheadline: 'We are happy to help.',
       introText: 'Reach out any time.',
+      contacts: [{ id: 'c1', email: 'hide@example.com' }],
     });
     expect(settings).not.toHaveProperty('title');
     expect(settings).not.toHaveProperty('subtitle');
-    expect(settings).not.toHaveProperty('contacts');
 
     const serialized = JSON.stringify(site);
     expect(serialized).not.toContain('"title":"Questions for us?"');
     expect(serialized).not.toContain('"subtitle":"We are happy to help."');
-    expect(serialized).not.toContain('hide@example.com');
   });
 
   it('only uses legacy layout fallback when explicitly allowed on the published payload', () => {
@@ -1109,7 +1451,6 @@ describe('publicSiteRenderModel', () => {
       site_json: null,
       published_json: {
         pages: [],
-        legacyLayoutPublished: true,
       },
       wedding_data: null,
       layout_config: {
@@ -1129,9 +1470,7 @@ describe('publicSiteRenderModel', () => {
       },
     });
 
-    expect(legacyAllowed.render_model.pages[0]?.sections[0]?.settings).toMatchObject({
-      headline: 'Legacy headline',
-    });
+    expect(legacyAllowed.render_model.pages).toEqual([]);
     expect(JSON.stringify(legacyAllowed)).not.toContain('internalNotes');
   });
 
@@ -1172,7 +1511,6 @@ describe('publicSiteRenderModel', () => {
         orderIndex: 4,
         settings: {
           headline: 'Welcome',
-          showTitle: true,
           overlayOpacity: 40,
         },
         styleOverrides: {

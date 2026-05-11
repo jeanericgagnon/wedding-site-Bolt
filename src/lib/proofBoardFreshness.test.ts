@@ -64,9 +64,8 @@ describe('proof board freshness', () => {
     expect(board.summary?.currentProofState).toContain('public-access-coverage');
     expect(board.summary?.currentProofState).toContain('launch-closeout');
     expect(board.summary?.currentNextActions ?? '').toBe('');
-    expect(board.ruthlessNextThree?.[0]?.title).toContain('legacy `layout_config` fallback');
-    expect(board.ruthlessNextThree?.[0]?.status).toBe('READY_WHEN_SECURE_ENV_EXISTS');
-    expect(board.ruthlessNextThree?.[2]?.title).toContain('secure service-role queue/storage proof');
+    expect(board.ruthlessNextThree?.[0]?.title).toContain('per-section-family review');
+    expect(board.ruthlessNextThree?.[2]?.title).toContain('secure email queue-processing proof');
     expect(board.currentState?.['Reason production-ready is not yet claimed']).toContain('secure service-role proof');
     expect(board.sections?.['Current Canonical Status']).toContain('| Launch verdict | `HOLD` |');
     expect(board.sections?.['Validation Matrix']).toContain('LIVE PASS');

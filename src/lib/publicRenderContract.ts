@@ -48,21 +48,30 @@ export interface PublicStyleOverrideDTO {
   animationPreset?: string;
 }
 
+export interface PublicContactPersonDTO {
+  id: string;
+  name?: string;
+  role?: string;
+  email?: string;
+  phone?: string;
+  instagram?: string;
+}
+
 export const PUBLIC_SECTION_SETTINGS_ALLOWLIST: Record<SectionType, readonly string[]> = {
-  hero: ['headline', 'subtitle', 'title', 'showTitle', 'backgroundImage', 'overlayOpacity'],
-  story: ['showTitle', 'title', 'storyText', 'photo'],
+  hero: ['headline', 'eyebrow', 'subheadline', 'backgroundImage', 'overlayOpacity', 'ctaLabel', 'ctaHref', 'showDivider', 'textAlign', 'layoutStyle'],
+  story: ['headline', 'body', 'image', 'showDivider'],
   venue: ['showTitle', 'title', 'showMap'],
   schedule: ['showTitle', 'title'],
-  travel: ['showTitle', 'title', 'showTimezoneBadge', 'showIcsButton'],
+  travel: ['eyebrow', 'headline', 'intro', 'flightInfo', 'drivingInfo', 'parkingInfo', 'shuttleInfo', 'generalNote', 'hotels', 'subheadline', 'deadlineNote', 'showAmenities', 'showShuttle', 'airport', 'venueAddress', 'coffee', 'food', 'sights', 'nightlife', 'pins', 'airportTips', 'activities', 'closest', 'value', 'budget'],
   registry: ['showTitle', 'title', 'message'],
   faq: ['showTitle', 'title'],
   rsvp: ['showTitle', 'title', 'deadlineText', 'confirmationMessage', 'mode', 'embedUrl', 'embedHeight'],
-  gallery: ['eyebrow', 'headline', 'animation', 'showCaptions', 'enableLightbox', 'autoScroll', 'continuousGlide', 'glideSpeed'],
+  gallery: ['eyebrow', 'headline', 'images', 'animation', 'showCaptions', 'enableLightbox', 'autoScroll', 'continuousGlide', 'glideSpeed', 'columns', 'aspectRatio', 'backgroundColor', 'autoplay'],
   countdown: ['showTitle', 'title', 'eyebrow', 'targetDate', 'message', 'showSeconds', 'imageUrl'],
   'wedding-party': ['showTitle', 'title', 'eyebrow', 'subtitle', 'bridalTitle', 'groomTitle'],
   'dress-code': ['showTitle', 'eyebrow', 'presetCode', 'dressCodeLabel', 'description', 'colorNote', 'additionalNote', 'avoidNote', 'formalityLevel'],
   accommodations: ['showTitle', 'title', 'eyebrow', 'generalNote', 'blockNote', 'shuttleNote', 'mapImage'],
-  contact: ['showTitle', 'title', 'headline', 'eyebrow', 'subtitle', 'subheadline', 'introText', 'emailSubject', 'closingNote', 'pollPrompt', 'pollOptions', 'quizPrompt', 'quizOptions', 'correctQuizOption', 'suggestionPrompt', 'allowPublicResults'],
+  contact: ['showTitle', 'title', 'headline', 'eyebrow', 'subtitle', 'subheadline', 'introText', 'contacts', 'emailSubject', 'closingNote', 'pollPrompt', 'pollOptions', 'quizPrompt', 'quizOptions', 'correctQuizOption', 'suggestionPrompt', 'allowPublicResults'],
   'footer-cta': ['headline', 'subtext', 'buttonLabel', 'rsvpUrl', 'footerNote'],
   custom: ['backgroundColor', 'paddingSize'],
   quotes: ['eyebrow', 'headline', 'background', 'autoplay'],
@@ -92,7 +101,11 @@ export const PUBLIC_STYLE_OVERRIDE_KEYS = [
 ] as const;
 
 export const PUBLIC_SECTION_SETTING_ALIAS_EXCEPTIONS: Partial<Record<SectionType, readonly string[]>> = {
-  contact: ['headline', 'subheadline'],
+  hero: ['eyebrow', 'subheadline', 'ctaLabel', 'ctaHref', 'showDivider', 'textAlign', 'layoutStyle'],
+  story: ['headline', 'body', 'image', 'showDivider'],
+  travel: ['eyebrow', 'headline', 'intro', 'flightInfo', 'drivingInfo', 'parkingInfo', 'shuttleInfo', 'generalNote', 'hotels', 'subheadline', 'deadlineNote', 'showAmenities', 'showShuttle', 'airport', 'venueAddress', 'coffee', 'food', 'sights', 'nightlife', 'pins', 'airportTips', 'activities', 'closest', 'value', 'budget'],
+  gallery: ['headline', 'images', 'columns', 'aspectRatio', 'backgroundColor', 'autoplay'],
+  contact: ['headline', 'subheadline', 'contacts'],
   'footer-cta': ['buttonLabel', 'rsvpUrl'],
 };
 
@@ -111,6 +124,159 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 function pickStringArray(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) return undefined;
   const picked = value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+  return picked.length > 0 ? picked : undefined;
+}
+
+function pickObjectArray<T>(value: unknown, mapper: (item: Record<string, unknown>, index: number) => T | null): T[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const picked = value.flatMap((item, index) => {
+    const record = asRecord(item);
+    if (!record) return [];
+    const next = mapper(record, index);
+    return next ? [next] : [];
+  });
+  return picked.length > 0 ? picked : undefined;
+}
+
+function pickOptionalString(source: Record<string, unknown>, key: string): string | undefined {
+  return hasNonEmptyString(source[key]) ? source[key] : undefined;
+}
+
+function sanitizeTravelHotelList(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (hotel, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(hotel.id) ? hotel.id : `hotel-${index + 1}`,
+    };
+    for (const key of ['name', 'distance', 'price', 'bookingCode', 'phone', 'url', 'notes'] as const) {
+      const picked = pickOptionalString(hotel, key);
+      if (picked) out[key] = picked;
+    }
+    return Object.keys(out).length > 1 ? out : null;
+  });
+}
+
+function sanitizeTravelHotelBlockList(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (hotel, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(hotel.id) ? hotel.id : `hotel-${index + 1}`,
+    };
+    for (const key of ['name', 'distance', 'priceRange', 'bookingCode', 'bookingDeadline', 'phone', 'url', 'image', 'shuttleInfo', 'notes'] as const) {
+      const picked = pickOptionalString(hotel, key);
+      if (picked) out[key] = picked;
+    }
+    if (typeof hotel.stars === 'number' && Number.isFinite(hotel.stars)) out.stars = hotel.stars;
+    if (typeof hotel.recommended === 'boolean') out.recommended = hotel.recommended;
+    const amenities = pickStringArray(hotel.amenities);
+    if (amenities) out.amenities = amenities;
+    return Object.keys(out).length > 1 ? out : null;
+  });
+}
+
+function sanitizeTravelGuideItems(value: unknown, prefix: string): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (item, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(item.id) ? item.id : `${prefix}-${index + 1}`,
+    };
+    for (const key of ['name', 'note', 'url'] as const) {
+      const picked = pickOptionalString(item, key);
+      if (picked) out[key] = picked;
+    }
+    return Object.keys(out).length > 1 ? out : null;
+  });
+}
+
+function sanitizeTravelPins(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (pin, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(pin.id) ? pin.id : `pin-${index + 1}`,
+    };
+    for (const key of ['name', 'type', 'address', 'note', 'url'] as const) {
+      const picked = pickOptionalString(pin, key);
+      if (picked) out[key] = picked;
+    }
+    return Object.keys(out).length > 1 ? out : null;
+  });
+}
+
+function sanitizeTravelSplitHotels(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (hotel, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(hotel.id) ? hotel.id : `hotel-${index + 1}`,
+    };
+    for (const key of ['name', 'distance', 'note', 'url'] as const) {
+      const picked = pickOptionalString(hotel, key);
+      if (picked) out[key] = picked;
+    }
+    return Object.keys(out).length > 1 ? out : null;
+  });
+}
+
+function sanitizeTravelActivities(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (activity, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(activity.id) ? activity.id : `activity-${index + 1}`,
+    };
+    for (const key of ['name', 'category', 'description', 'address', 'url'] as const) {
+      const picked = pickOptionalString(activity, key);
+      if (picked) out[key] = picked;
+    }
+    return Object.keys(out).length > 1 ? out : null;
+  });
+}
+
+function sanitizeTravelTierHotels(value: unknown, prefix: string): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (hotel, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(hotel.id) ? hotel.id : `${prefix}-${index + 1}`,
+    };
+    for (const key of ['name', 'distance', 'price', 'note', 'url'] as const) {
+      const picked = pickOptionalString(hotel, key);
+      if (picked) out[key] = picked;
+    }
+    return Object.keys(out).length > 1 ? out : null;
+  });
+}
+
+function sanitizeGalleryImages(value: unknown): Array<Record<string, unknown>> | undefined {
+  if (Array.isArray(value) && value.every((item) => typeof item === 'string')) {
+    const picked = value.flatMap((url, index) => {
+      if (!hasNonEmptyString(url)) return [];
+      return [{ id: `image-${index + 1}`, url }];
+    });
+    return picked.length > 0 ? picked : undefined;
+  }
+
+  return pickObjectArray(value, (image, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(image.id) ? image.id : `image-${index + 1}`,
+    };
+    for (const key of ['url', 'alt', 'caption', 'span'] as const) {
+      const picked = pickOptionalString(image, key);
+      if (picked) out[key] = picked;
+    }
+    return hasNonEmptyString(out.url) ? out : null;
+  });
+}
+
+function sanitizePublicContactPeople(value: unknown): PublicContactPersonDTO[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+
+  const picked = value.flatMap((item, index) => {
+    const contact = asRecord(item);
+    if (!contact) return [];
+
+    const id = hasNonEmptyString(contact.id) ? contact.id : `contact-${index + 1}`;
+    const out: PublicContactPersonDTO = { id };
+
+    if (hasNonEmptyString(contact.name)) out.name = contact.name;
+    if (hasNonEmptyString(contact.role)) out.role = contact.role;
+    if (hasNonEmptyString(contact.email)) out.email = contact.email;
+    if (hasNonEmptyString(contact.phone)) out.phone = contact.phone;
+    if (hasNonEmptyString(contact.instagram)) out.instagram = contact.instagram;
+
+    return [out];
+  });
+
   return picked.length > 0 ? picked : undefined;
 }
 
@@ -149,6 +315,37 @@ export function sanitizePublicSectionSettings(
     }
   }
 
+  if (type === 'hero') {
+    if (!hasNonEmptyString(normalizedSource.eyebrow) && hasNonEmptyString(rawSource.title)) {
+      normalizedSource.eyebrow = rawSource.title;
+    }
+    if (!hasNonEmptyString(normalizedSource.subheadline) && hasNonEmptyString(rawSource.subtitle)) {
+      normalizedSource.subheadline = rawSource.subtitle;
+    }
+    delete normalizedSource.title;
+    delete normalizedSource.subtitle;
+    delete normalizedSource.showTitle;
+  }
+
+  if (type === 'story') {
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
+      normalizedSource.headline = rawSource.title;
+    }
+    if (!hasNonEmptyString(normalizedSource.body) && hasNonEmptyString(rawSource.storyText)) {
+      normalizedSource.body = rawSource.storyText;
+    }
+    if (!hasNonEmptyString(normalizedSource.image) && hasNonEmptyString(rawSource.photo)) {
+      normalizedSource.image = rawSource.photo;
+    }
+    if (typeof normalizedSource.showDivider !== 'boolean' && rawSource.showTitle === false) {
+      normalizedSource.showDivider = false;
+    }
+    delete normalizedSource.title;
+    delete normalizedSource.storyText;
+    delete normalizedSource.photo;
+    delete normalizedSource.showTitle;
+  }
+
   if (type === 'contact' && variant !== 'interactiveHub') {
     if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
       normalizedSource.headline = rawSource.title;
@@ -156,8 +353,39 @@ export function sanitizePublicSectionSettings(
     if (!hasNonEmptyString(normalizedSource.subheadline) && hasNonEmptyString(rawSource.subtitle)) {
       normalizedSource.subheadline = rawSource.subtitle;
     }
+    const contacts = sanitizePublicContactPeople(rawSource.contacts);
+    if (contacts) {
+      normalizedSource.contacts = contacts;
+    }
     delete normalizedSource.title;
     delete normalizedSource.subtitle;
+  }
+
+  if (type === 'travel') {
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
+      normalizedSource.headline = rawSource.title;
+    }
+    delete normalizedSource.title;
+    delete normalizedSource.showTitle;
+    delete normalizedSource.showTimezoneBadge;
+    delete normalizedSource.showIcsButton;
+    delete normalizedSource.showParking;
+  }
+
+  if (type === 'gallery') {
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
+      normalizedSource.headline = rawSource.title;
+    }
+    if (!Array.isArray(normalizedSource.images) && Array.isArray(rawSource.galleryImages)) {
+      normalizedSource.images = rawSource.galleryImages;
+    }
+    if (!Array.isArray(normalizedSource.images) && Array.isArray(rawSource.photos)) {
+      normalizedSource.images = rawSource.photos;
+    }
+    delete normalizedSource.title;
+    delete normalizedSource.showTitle;
+    delete normalizedSource.galleryImages;
+    delete normalizedSource.photos;
   }
 
   for (const [key, settingValue] of Object.entries(variantDefaults)) {
@@ -171,6 +399,7 @@ export function sanitizePublicSectionSettings(
     if (variant === 'interactiveHub') {
       delete out.headline;
       delete out.subheadline;
+      delete out.contacts;
       delete out.emailSubject;
       delete out.closingNote;
     } else {
@@ -184,6 +413,72 @@ export function sanitizePublicSectionSettings(
       delete out.suggestionPrompt;
       delete out.allowPublicResults;
     }
+  }
+
+  if (type === 'travel') {
+    delete out.title;
+    delete out.showTitle;
+    delete out.showTimezoneBadge;
+    delete out.showIcsButton;
+    delete out.showParking;
+
+    if (canonicalVariant === 'list') {
+      const hotels = sanitizeTravelHotelList(normalizedSource.hotels);
+      if (hotels) out.hotels = hotels;
+    } else if (canonicalVariant === 'hotelBlock') {
+      const hotels = sanitizeTravelHotelBlockList(normalizedSource.hotels);
+      if (hotels) out.hotels = hotels;
+    } else if (canonicalVariant === 'compact') {
+      const hotels = sanitizeTravelSplitHotels(normalizedSource.hotels);
+      if (hotels) out.hotels = hotels;
+    } else if (canonicalVariant === 'localGuide') {
+      const coffee = sanitizeTravelGuideItems(normalizedSource.coffee, 'coffee');
+      const food = sanitizeTravelGuideItems(normalizedSource.food, 'food');
+      const sights = sanitizeTravelGuideItems(normalizedSource.sights, 'sight');
+      const nightlife = sanitizeTravelGuideItems(normalizedSource.nightlife, 'nightlife');
+      if (coffee) out.coffee = coffee;
+      if (food) out.food = food;
+      if (sights) out.sights = sights;
+      if (nightlife) out.nightlife = nightlife;
+    } else if (canonicalVariant === 'mapPins') {
+      const pins = sanitizeTravelPins(normalizedSource.pins);
+      if (pins) out.pins = pins;
+    } else if (canonicalVariant === 'splitAirHotel') {
+      const hotels = sanitizeTravelSplitHotels(normalizedSource.hotels);
+      if (hotels) out.hotels = hotels;
+    } else if (canonicalVariant === 'thingsToDo') {
+      const activities = sanitizeTravelActivities(normalizedSource.activities);
+      if (activities) out.activities = activities;
+    } else if (canonicalVariant === 'tiers') {
+      const closest = sanitizeTravelTierHotels(normalizedSource.closest, 'closest');
+      const value = sanitizeTravelTierHotels(normalizedSource.value, 'value');
+      const budget = sanitizeTravelTierHotels(normalizedSource.budget, 'budget');
+      if (closest) out.closest = closest;
+      if (value) out.value = value;
+      if (budget) out.budget = budget;
+    }
+  }
+
+  if (type === 'gallery') {
+    delete out.title;
+    delete out.showTitle;
+    delete out.galleryImages;
+    delete out.photos;
+    const images = sanitizeGalleryImages(normalizedSource.images);
+    if (images) out.images = images;
+  }
+
+  if (type === 'hero') {
+    delete out.title;
+    delete out.subtitle;
+    delete out.showTitle;
+  }
+
+  if (type === 'story') {
+    delete out.title;
+    delete out.storyText;
+    delete out.photo;
+    delete out.showTitle;
   }
 
   return out;

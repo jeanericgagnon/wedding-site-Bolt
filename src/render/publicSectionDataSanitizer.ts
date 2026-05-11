@@ -4,7 +4,7 @@ import {
 } from '../sections/publicLinks.ts';
 
 const IMAGE_KEY_PATTERN = /(?:image|photo|photos|picture|thumbnail|poster|avatar|portrait|logo)/i;
-const LINK_KEY_PATTERN = /(?:href|url|link|website|cta|rsvp|registry|cashfund|viewall|map|embed|playlist|video)/i;
+const LINK_KEY_PATTERN = /(?:href|url|link|website|rsvp|registry|cashfund|viewall|map|embed|playlist|video)/i;
 const IMAGE_VALUE_KEY_PATTERN = /^(src|url)$/i;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {

@@ -2,11 +2,18 @@
 
 _Date:_ 2026-05-11
 _Production:_ [dayof.love](https://dayof.love)
-_Latest verified deploy:_ `dpl_AjQ94iVAXhPutmegQbvjtawUUjUx`
+_Latest verified deploy:_ `dpl_2VcJKSDGmUFyMLhrcUZy3aEHCMF2`
 _Launch call right now:_ `HOLD` pending secure service-role queue/storage and secure email queue-processing deep proof in an environment with `SUPABASE_SERVICE_ROLE_KEY`
 
 _Final secure closeout command:_ `npm run proof:v1:launch-closeout`
 
+- 2026-05-11 11:27 AM PT: fixed the secure email proof harness for the new secret-key format. `v1-proof-email-messaging-authorization.mjs` now uses the service key as `apikey` for REST queue inspection while still using the raw key as the bearer for `process-email-queue`; live unauthenticated denial checks stayed green, and the secure lane now gets past auth and blocks for a more honest operational reason: production currently has `5` pending queue rows, so the proof refuses to mutate them.
+- 2026-05-11 11:20 AM PT: verified the legacy layout fallback was dead in production, then removed it. A live service-role query against `wedding_sites` found `2` published rows and `0` rows with `published_json.legacyLayoutPublished === true`; `publicSiteRenderModel.ts` no longer falls back to `layout_config` at all, `publicLegacyLayoutFlagAudit.test.ts` was rebased to prove the flag path stays gone, focused `publicSiteRenderModel` / `publicAccessCoverageProofScript` / `publicLegacyLayoutFlagAudit` tests reran green (`20/20`), `npm run proof:v1:public-access-coverage` stayed green, and `npm run build` stayed green.
+- 2026-05-11 11:07 AM PT: tightened the hero DTO contract and fixed a deep sanitizer bug. `publicRenderContract.ts` now normalizes legacy hero `title` / `subtitle` into the resolved public renderer fields `eyebrow` / `subheadline`, and `publicSectionDataSanitizer.ts` no longer treats `ctaLabel` like a URL-like field, so guest CTA copy survives correctly; focused `publicRenderContract`, `publicSiteRenderModel`, and `publicSiteAccess` tests reran green (`31/31`), and `npm run proof:v1:public-access-coverage` stayed green.
+- 2026-05-11 11:12 AM PT: tightened the story DTO contract. `publicRenderContract.ts` now normalizes legacy story `title` / `storyText` / `photo` / `showTitle` into the resolved public renderer fields `headline` / `body` / `image` / `showDivider`, drops the stale builder-facing keys from the guest payload, and kept focused `publicRenderContract`, `publicSiteRenderModel`, and `publicSiteAccess` tests green (`34/34`) alongside `npm run proof:v1:public-access-coverage`.
+- 2026-05-11 11:12 AM PT: reran the broader local gate on the current public-contract code state. `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, and `npm run build` all stayed green after the hero/story/contact DTO tightening.
+- 2026-05-11 11:02 AM PT: reran the secure proof bundle with the provided secure credential. `npm run proof:v1:service-role-authorization` now passes its live unauthenticated denial lane in a secure env, `npm run proof:v1:email-messaging-authorization` also passes its unauthenticated denial checks but still fails at the secure queue-read step with a 401 invalid-bearer response, and `npm run proof:v1:launch-closeout` now fails only because that email-messaging secure step fails while board refresh and `git diff --check` stay green inside the bundle.
+- 2026-05-11 10:57 AM PT: tightened the non-interactive contact DTO. `publicRenderContract.ts` now preserves only a minimal public contact-person shape (`id`, `name`, `role`, `email`, `phone`, `instagram`) for non-interactive contact sections while still stripping collaborator/admin side data; focused `publicRenderContract`, `publicSiteRenderModel`, and `publicSiteAccess` tests all reran green (`28/28`), and `npm run proof:v1:public-access-coverage` stayed green.
 - 2026-05-11 10:46 AM PT: added launch-control matrix guards. `launchControlMatrices.test.ts` now proves the backlog keeps the required validation/deployment rows and canonical status vocabulary, and `proofBoardFreshness.test.ts` was rebased to the current secure-gated board semantics; the narrow board-proof lane and `git diff --check` stayed green.
 - 2026-05-11 10:43 AM PT: added focused interactive-contact leak proof on both sides of the public boundary. `publicSiteRenderModel.test.ts` and `publicSiteAccess.test.ts` now prove nested `contact` interactive payloads like `poll`, `quiz`, `suggestionPlaceholder`, `contacts`, and innocent-looking sensitive side data do not survive into the public DTO; focused render-model/client-contract tests plus `npm run proof:v1:public-access-coverage` and `git diff --check` stayed green.
 - 2026-05-11 10:40 AM PT: added a legacy-layout flag audit. `publicLegacyLayoutFlagAudit.test.ts` now proves the repo does not author `legacyLayoutPublished` anywhere except the explicit public-render consumer and its focused tests, so the remaining risk on that fallback path is live data inventory rather than new app writes; focused `publicLegacyLayoutFlagAudit`, `publicRenderContract`, and `publicSiteRenderModel` tests plus `npm run proof:v1:public-access-coverage` and `git diff --check` stayed green.
@@ -250,6 +257,28 @@ _Launch call right now:_ Not production-ready under the stricter P0/P1 standard.
   - `npm run build`: PASS.
   - `npm run proof:v1:board:md`: PASS.
   - `git diff --check`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-11 11:43 AM PT No-Deploy Gallery Public DTO Tightening
+- Continued from `FinishLine.md` in the public DTO precision lane.
+- Fixed/proved:
+  - `src/lib/publicRenderContract.ts` now treats `gallery` as an explicit public renderer contract instead of relying on stale legacy builder keys and broad nested arrays.
+  - Gallery payloads now normalize legacy `title`, `galleryImages`, and `photos` inputs into `headline` plus an explicit `images` DTO, preserve only allowlisted gallery layout fields, and strip nested sensitive fields from public gallery images.
+  - `src/lib/publicRenderContract.test.ts`, `src/lib/publicSiteRenderModel.test.ts`, and `src/lib/publicSiteAccess.test.ts` now prove gallery image payloads do not leak fields such as `hiddenGallery`, `providerSecret`, or other non-render data.
+- Proof passed:
+  - `npm test -- --run src/lib/publicRenderContract.test.ts src/lib/publicSiteRenderModel.test.ts src/lib/publicSiteAccess.test.ts`: PASS, 40/40.
+  - `npm run proof:v1:public-access-coverage`: PASS.
+  - `npm run typecheck -- --pretty false`: PASS.
+- Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-11 11:37 AM PT No-Deploy Travel Public DTO Tightening
+- Continued from `FinishLine.md` in the public DTO precision lane.
+- Fixed/proved:
+  - `src/lib/publicRenderContract.ts` now treats `travel` as an explicit per-variant public contract instead of a stale legacy builder shape.
+  - Travel payloads now normalize legacy `title` into `headline`, drop stale public toggles (`showTitle`, `showTimezoneBadge`, `showIcsButton`, `showParking`), and route nested travel structures through explicit item DTOs for hotels, guide groups, map pins, activity lists, and tiered hotel groups.
+  - `src/lib/publicRenderContract.test.ts`, `src/lib/publicSiteRenderModel.test.ts`, and `src/lib/publicSiteAccess.test.ts` now prove those nested travel payloads do not leak innocent-looking sensitive fields such as `adminEmail`, `internalQueueConfig`, `ownerPreview`, or `collaboratorAccess`.
+- Proof passed:
+  - `npm test -- --run src/lib/publicRenderContract.test.ts src/lib/publicSiteRenderModel.test.ts src/lib/publicSiteAccess.test.ts src/lib/publicAccessCoverageProofScript.test.ts`: PASS, 38/38.
+  - `npm run proof:v1:public-access-coverage`: PASS.
+  - `npm run typecheck -- --pretty false`: PASS.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 ## 2026-05-08 10:21 AM PT No-Deploy Settings Route-Content Props Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.

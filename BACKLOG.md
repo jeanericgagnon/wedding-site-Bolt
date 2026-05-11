@@ -4,20 +4,20 @@
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-11 10:49 AM PT` |
+| Current date/time | `2026-05-11 11:43 AM PT` |
 | Branch | local: `codex/v1-finish-hard-gates`; pushed launch branch: `codex/v1-finish-hard-gates-2` |
-| Latest Git SHA | `1723a79f` |
-| Latest commit message | `Harden public launch boundary and close out proof board` |
-| Vercel deployment ID | `dpl_AjQ94iVAXhPutmegQbvjtawUUjUx` |
+| Latest Git SHA | `e4f783f2` |
+| Latest commit message | `Tighten public DTO proof and launch control board` |
+| Vercel deployment ID | `dpl_2VcJKSDGmUFyMLhrcUZy3aEHCMF2` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
 | Supabase functions deployed | freshly redeployed: `public-site-access`; launch-relevant but not freshly redeployed this wave: `public-itinerary-by-slug`, `interactive-section-public`, `vault-contribution-public`, `process-email-queue`, `photo-upload`, `send-wedding-email`, `send-bulk-message`, `queue-guest-followups`, `registry-preview` |
-| Current readiness score | `9.55 / 10` |
+| Current readiness score | `9.8 / 10` |
 | Launch verdict | `HOLD` |
 | Production-ready | `NO` |
-| Reason production-ready is not yet claimed | Public section DTO minimization is improved but not fully proven per section family, `layout_config` fallback is now narrowed to one explicit published flag but still needs live inventory confirmation, secure service-role proof is not freshly rerun in a secure env, secure email queue-processing proof is not freshly rerun in a secure env, and deployment truth is not yet canonical down to every launch surface |
-| Current top blockers | `P1-03 Layout config fallback removal or hard gate`; `P1-04 Public section DTO minimization`; `P1-06 Service-role queue/storage runtime proof`; `P1-07 Secure email queue-processing proof`; `P1-09 Deployment/proof truth canonicalization` |
-| Current proof state | Focused public DTO tests, `proof:v1:public-access-coverage`, `proof:v1:registry-preview-ssrf`, `typecheck`, `lint`, and `build` were rerun green after the explicit public render contract batch; the legacy layout fallback alias was removed, translated legacy-layout payloads are now explicitly covered by focused tests, unused public toggles (`showIcons`, `showParking`, `expandAll`) were removed from the guest-facing contract with focused proof green, section bindings are now scoped by section family instead of being carried generically, focused client-side contract tests now explicitly prove that same binding rule, footer CTA aliases now normalize into the actual guest-renderer fields (`buttonLabel`, `rsvpUrl`) while stale alias keys stay out of the public payload, `contact` form payloads now normalize `title` / `subtitle` into the actual resolved-renderer fields `headline` / `subheadline` while dropping stale and interactive-only keys for non-interactive variants, a new manifest-anchored public contract test now proves every allowlisted public settings key is either a real builder-manifest field or an explicit documented alias, a new repo audit now proves the app does not author `legacyLayoutPublished` outside the explicit public render consumer/tests, new focused server/client leak tests now prove nested interactive contact payloads (`poll`, `quiz`, placeholder/contact side data) do not survive into the public DTO, launch-control matrix completeness/freshness tests now prove the validation/deployment tables and proof-board derivation stay canonical, and `proof:v1:launch-closeout` confirms the only remaining blocked steps are the secure service-role and secure email queue proofs because `SUPABASE_SERVICE_ROLE_KEY` is missing |
-| Current deployment state | Frontend is live on [dayof.love](https://dayof.love) with last locally evidenced verified deploy `dpl_AjQ94iVAXhPutmegQbvjtawUUjUx`; `public-site-access` is freshly deployed; the `sections_public_visible_read` removal migration was pushed; `registry-preview` hostile-target proof is freshly green against production; several other launch surfaces are deployed but not freshly revalidated from this SHA |
+| Reason production-ready is not yet claimed | Public section DTO minimization is now stronger across hero, story, contact, travel, and gallery but is not fully proven per remaining section family, secure service-role proof still lacks authenticated role-mutation coverage, secure email queue-processing proof is now auth-correct but blocked from destructive runtime validation while production still has pending queue rows, and deployment truth is not yet canonical down to every launch surface |
+| Current top blockers | `P1-04 Public section DTO minimization`; `P1-06 Service-role queue/storage runtime proof`; `P1-07 Secure email queue-processing proof`; `P1-09 Deployment/proof truth canonicalization` |
+| Current proof state | Focused public DTO tests, `proof:v1:public-access-coverage`, `proof:v1:registry-preview-ssrf`, `typecheck`, `lint`, and `build` were rerun green on the current public-contract code state; the legacy layout fallback alias was removed, a live production inventory query found `2` published rows and `0` rows still using `published_json.legacyLayoutPublished`, and the legacy `layout_config` public fallback path itself was then removed from `publicSiteRenderModel.ts` with focused proof green; translated legacy-layout payloads are now explicitly ignored when published pages are absent, unused public toggles (`showIcons`, `showParking`, `expandAll`) were removed from the guest-facing contract with focused proof green, section bindings are now scoped by section family instead of being carried generically, focused client-side contract tests now explicitly prove that same binding rule, footer CTA aliases now normalize into the actual guest-renderer fields (`buttonLabel`, `rsvpUrl`) while stale alias keys stay out of the public payload, hero payloads now normalize legacy builder fields (`title`, `subtitle`) into the resolved public hero renderer fields (`eyebrow`, `subheadline`) and preserve explicit CTA/action fields without blanking them, story payloads now normalize legacy builder fields (`title`, `storyText`, `photo`, `showTitle`) into the resolved public story renderer fields (`headline`, `body`, `image`, `showDivider`) instead of shipping the stale builder shape, `contact` form payloads now normalize `title` / `subtitle` into the actual resolved-renderer fields `headline` / `subheadline`, preserve only an explicit minimal public contact-person shape (`id`, `name`, `role`, `email`, `phone`, `instagram`), and drop stale and interactive-only keys for non-interactive variants, `travel` payloads now use explicit per-variant allowlists with nested item DTOs (`hotels`, `pins`, `activities`, guide groups, and tier groups), normalize legacy `title` into `headline`, and no longer expose stale travel toggles like `showTitle`, `showTimezoneBadge`, `showIcsButton`, or `showParking`, `gallery` payloads now normalize legacy `title`, `galleryImages`, and `photos` inputs into an explicit public gallery renderer contract, preserve only allowlisted gallery layout fields, and route nested gallery images through explicit public item DTOs, a new manifest-anchored public contract test now proves every allowlisted public settings key is either a real builder-manifest field or an explicit documented alias, a new repo audit now proves the repo no longer retains any `legacyLayoutPublished` path outside the audit guard itself, new focused server/client leak tests now prove nested interactive contact payloads (`poll`, `quiz`, placeholder/contact side data`) plus nested travel and gallery payloads do not survive into the public DTO, the deep public section sanitizer no longer misclassifies `ctaLabel` as a URL-like field, launch-control matrix completeness/freshness tests now prove the validation/deployment tables and proof-board derivation stay canonical, `proof:v1:service-role-authorization` now passes the live unauthenticated denial lane in a secure env, `proof:v1:email-messaging-authorization` now passes its live unauthenticated denial checks and the patched service-role auth handling, is deliberately blocked because production currently has `5` pending queue rows and the proof will not mutate them, and `proof:v1:launch-closeout` now reruns cleanly with that blocker modeled accurately |
+| Current deployment state | Frontend is live on [dayof.love](https://dayof.love) with last locally evidenced verified deploy `dpl_2VcJKSDGmUFyMLhrcUZy3aEHCMF2`; `public-site-access` is freshly deployed from the current launch-hardening checkpoint; the `sections_public_visible_read` removal migration was pushed; `registry-preview` hostile-target proof is freshly green against production; several other launch surfaces are deployed but not freshly revalidated from this SHA |
 
 Blunt status:
 - The app is no longer in obvious public-blob trouble.
@@ -45,10 +45,10 @@ Blunt status:
 
 - Priority: `P1`
 - Status: `PARTIAL`
-- Why it matters: current render-model shaping still depends on blacklist-style stripping of sensitive-looking keys instead of constructing public DTOs from exact allowed fields.
+- Why it matters: current render-model shaping still carries a small generic deep sanitizer for URLs and images, so we need to keep shrinking the number of places where broad object shapes reach that layer instead of exact public DTOs.
 - Files/functions involved: `src/lib/publicSiteRenderModel.ts`, `src/lib/publicSiteAccess.ts`, `supabase/functions/public-site-access/index.ts`, `src/render/publicSectionDataSanitizer.ts`
-- Current evidence: `src/lib/publicRenderContract.ts` now defines explicit section-settings allowlists, section-scoped binding allowlists, and style override allowlists shared by server and client; `src/lib/publicRenderContract.test.ts` now proves every allowlisted settings key is tied either to a real builder-manifest field or a documented alias exception; wedding, venue, schedule, registry, FAQ, media, and theme DTO shaping is explicit in `publicSiteRenderModel.ts`.
-- Missing proof: a final per-section-family review to confirm no public renderer still depends on broader settings than the new contract.
+- Current evidence: `src/lib/publicRenderContract.ts` now defines explicit section-settings allowlists, section-scoped binding allowlists, style override allowlists, and a minimal public contact-person shape shared by server and client; hero, story, contact, and travel payloads now explicitly normalize legacy builder fields into their resolved public renderer contracts instead of relying on stale builder keys; travel variants now route through explicit nested item DTOs instead of broad array passthroughs; `src/lib/publicRenderContract.test.ts` now proves every allowlisted settings key is tied either to a real builder-manifest field or a documented alias exception; wedding, venue, schedule, registry, FAQ, media, and theme DTO shaping is explicit in `publicSiteRenderModel.ts`.
+- Missing proof: a final per-section-family review to confirm no public renderer still depends on broader settings than the new contract, especially for families beyond hero, story, contact, travel, and gallery.
 - Acceptance criteria:
   - `PublicPageDTO` has exact allowed fields.
   - `PublicSectionDTO` has exact allowed fields.
@@ -75,16 +75,16 @@ Blunt status:
 ### P1-03 Layout config fallback removal or hard gate
 
 - Priority: `P1`
-- Status: `PARTIAL`
-- Why it matters: `layout_config` is still a raw legacy blob fallback when builder pages are unavailable.
+- Status: `RESOLVED`
+- Why it matters: raw legacy layout blobs were a launch blocker while they still had any path into the public render model.
 - Files/functions involved: `src/lib/publicSiteRenderModel.ts`, `supabase/functions/public-site-access/index.ts`, `src/lib/publicSiteRenderModel.test.ts`
-- Current evidence: `layout_config` fallback now requires one explicit published payload flag (`legacyLayoutPublished`) and still flows through the strict public section/page DTO path; the looser `allowLegacyLayoutFallback` alias was removed and covered by focused tests; `publicLegacyLayoutFlagAudit.test.ts` now proves the repo does not author the explicit legacy flag outside the public render consumer/tests.
-- Missing proof: production inventory showing which live sites, if any, still rely on the explicit legacy flag path.
+- Current evidence: a live production inventory query against `wedding_sites` found `2` published rows and `0` rows with `published_json.legacyLayoutPublished === true`; `src/lib/publicSiteRenderModel.ts` no longer falls back to `layout_config` at all; focused render-model tests and `proof:v1:public-access-coverage` stayed green after the removal; `publicLegacyLayoutFlagAudit.test.ts` now proves the repo no longer retains the `legacyLayoutPublished` path outside the audit guard itself.
+- Missing proof: none for the fallback-removal lane.
 - Acceptance criteria:
   - remove `layout_config` fallback entirely, or
   - allow it only for explicitly legacy-published sites, or
   - transform it through strict section allowlists with no broad passthrough.
-- Exact next action: inventory live sites that still depend on explicit legacy layout fallback and decide whether the flag can be removed entirely.
+- Exact next action: keep the audit test and static proof in the regular launch lane so the fallback does not reappear silently.
 
 ### P1-04 Public section DTO minimization
 
@@ -92,8 +92,8 @@ Blunt status:
 - Status: `PARTIAL`
 - Why it matters: section DTOs still carry broad `settings`, `bindings`, `styleOverrides`, `locked`, and `meta` data.
 - Files/functions involved: `src/lib/publicSiteRenderModel.ts`, `src/render/publicSectionDataSanitizer.ts`, `src/types/builder/section.ts`, `src/lib/publicSiteRenderModel.test.ts`
-- Current evidence: `locked` and public meta timestamps are removed from the output contract; bindings are now both reduced to minimal public arrays and scoped by section family (`venue`, `schedule`, `registry`, `faq`) instead of being passed generically; style overrides are reduced to explicit public style keys; settings now flow through explicit section-type allowlists shared by server and client; footer CTA aliases are normalized into the actual guest-renderer fields instead of shipping stale `ctaLabel` / `ctaHref` keys; `contact` form payloads now normalize `title` / `subtitle` into the actual resolved-renderer fields `headline` / `subheadline` while dropping interactive-only keys for non-interactive variants; nested interactive contact payloads (`poll`, `quiz`, placeholder/contact side data) are now explicitly proven absent from the public DTO on both server and client contract tests; and obviously unused guest-facing toggles (`showIcons`, `showParking`, `expandAll`) were removed from the public contract with focused regression coverage.
-- Missing proof: per-section-family review for all guest-rendered families beyond the focused leak tests now in place.
+- Current evidence: `locked` and public meta timestamps are removed from the output contract; bindings are now both reduced to minimal public arrays and scoped by section family (`venue`, `schedule`, `registry`, `faq`) instead of being passed generically; style overrides are reduced to explicit public style keys; settings now flow through explicit section-type allowlists shared by server and client; footer CTA aliases are normalized into the actual guest-renderer fields instead of shipping stale `ctaLabel` / `ctaHref` keys; hero payloads now normalize `title` / `subtitle` into the resolved hero renderer fields `eyebrow` / `subheadline` and preserve CTA/action fields without the sanitizer blanking them; story payloads now normalize `title` / `storyText` / `photo` into the resolved story renderer fields `headline` / `body` / `image` while dropping the stale builder keys; `contact` form payloads now normalize `title` / `subtitle` into the actual resolved-renderer fields `headline` / `subheadline`, preserve only an explicit minimal contact list, and drop interactive-only keys for non-interactive variants; `travel` payloads now normalize legacy `title` into `headline`, remove stale travel toggles, and route nested hotels, pins, local-guide groups, activities, and tier groups through explicit public item DTOs; nested interactive contact payloads (`poll`, `quiz`, placeholder/contact side data`) and nested travel payloads are now explicitly proven absent from the public DTO on both server and client contract tests; and obviously unused guest-facing toggles (`showIcons`, `showParking`, `expandAll`) were removed from the public contract with focused regression coverage.
+- Missing proof: per-section-family review for all guest-rendered families beyond the focused leak tests now in place, especially countdown, RSVP, wedding-party, dress-code, accommodations, directions, music, video, and menu.
 - Acceptance criteria:
   - `bindings` removed unless strictly required; if required, replace with minimal `PublicBindingDTO`.
   - `locked` removed unless publicly needed.
@@ -121,8 +121,8 @@ Blunt status:
 - Status: `SECURE ENV REQUIRED`
 - Why it matters: service-role functions bypass RLS; any scope bug can cause cross-site mutation or data leakage.
 - Files/functions involved: `scripts/v1-proof-service-role-authorization.mjs`, service-role Edge Functions, queue/storage flows
-- Current evidence: unauthenticated denial lane passes; secure env rerun is still missing because `SUPABASE_SERVICE_ROLE_KEY` is absent here.
-- Missing proof: fresh secure-env runtime proof for queue/storage/media isolation and role scoping.
+- Current evidence: secure-env live denial proof now passes for `photo-album-create`, `photo-album-manage`, `photo-upload-moderate`, `photo-export-manifest`, and `photo-analyze-batch`; the lane still records follow-up required for authenticated owner/planner/coordinator/viewer mutation proof.
+- Missing proof: authenticated role-scoped runtime proof for queue/storage/media isolation and role scoping.
 - Acceptance criteria:
   - unauthenticated denial passes
   - viewer mutation denial passes
@@ -133,7 +133,7 @@ Blunt status:
   - storage/media path isolation passes
   - functions do not trust client-supplied `siteId`, `guestId`, or `messageId` blindly
   - runtime proof is recorded
-- Exact next action: set `SUPABASE_SERVICE_ROLE_KEY`, run `npm run proof:v1:service-role-authorization`, then record the output in the board/report/log.
+- Exact next action: run the authenticated owner/planner/coordinator/viewer mutation proof with disposable proof accounts and record the secure-env output in the board/report/log.
 
 ### P1-07 Secure email queue-processing proof
 
@@ -141,8 +141,8 @@ Blunt status:
 - Status: `SECURE ENV REQUIRED`
 - Why it matters: queue scoping bugs can leak guest data or send unauthorized email.
 - Files/functions involved: `scripts/v1-proof-email-messaging-authorization.mjs`, `process-email-queue`, `send-wedding-email`, `send-bulk-message`, `queue-guest-followups`
-- Current evidence: unauthenticated denial lane passes; secure queue-processing proof is not freshly rerun in a secure env.
-- Missing proof: fresh secure-env proof of enqueue/process/recipient/site scoping.
+- Current evidence: live unauthenticated denial checks now pass for `process-email-queue`, `queue-guest-followups`, `send-bulk-message`, and `send-wedding-email`; the proof harness now correctly uses the new `sb_secret_...` style service key for REST queue inspection, and the secure lane is no longer blocked by invalid bearer auth. It is now blocked because production currently has `5` pending queue rows, and the proof intentionally refuses to mutate them.
+- Missing proof: a safe secure-env proof window with an empty or isolated queue plus fresh enqueue/process/recipient/site scoping evidence.
 - Acceptance criteria:
   - queue processor only sends scoped site emails
   - recipients belong to the correct wedding site
@@ -151,7 +151,7 @@ Blunt status:
   - queued payloads are validated before send
   - HTML and URLs are escaped or sanitized
   - runtime proof is recorded
-- Exact next action: run `npm run proof:v1:email-messaging-authorization` in the same secure env and record the output.
+- Exact next action: clear or isolate the pending production queue rows, then rerun `npm run proof:v1:email-messaging-authorization` and record the queue-processing output.
 
 ### P1-08 Registry preview SSRF/image allowlist precision
 
@@ -195,9 +195,9 @@ Blunt status:
 | No top-level raw `published_json` in browser payload | `PASS` |
 | No top-level raw `wedding_data` in browser payload | `PASS` |
 | No top-level raw `layout_config` in browser payload | `PASS` |
-| No draft page fallback for published public sites | `PARTIAL` |
+| No draft page fallback for published public sites | `PASS` |
 | No current/draft `row.wedding_data` precedence for published sites | `PASS` |
-| No broad `layout_config` fallback | `PARTIAL` |
+| No broad `layout_config` fallback | `PASS` |
 | No generic settings passthrough | `PASS` |
 | No generic bindings passthrough | `PASS` |
 | No generic `styleOverrides` passthrough | `PASS` |
@@ -314,19 +314,19 @@ None may appear in:
 
 | Command | Status | Environment | Last run | Notes |
 | --- | --- | --- | --- | --- |
-| `npm run typecheck -- --pretty false` | `PASS` | local | `2026-05-11` | rerun green after legacy layout gate tightening |
-| `npm run lint -- --quiet` | `PASS` | local | `2026-05-11` | current local gate |
-| `npm run build` | `PASS` | local + deploy build | `2026-05-11` | also passed during Vercel deploy |
+| `npm run typecheck -- --pretty false` | `PASS` | local | `2026-05-11` | rerun green after removing the legacy layout fallback path |
+| `npm run lint -- --quiet` | `PASS` | local | `2026-05-11` | rerun green on the current hero/story/contact/public-contract code state |
+| `npm run build` | `PASS` | local + deploy build | `2026-05-11` | rerun green after removing the legacy layout fallback path and also passed during Vercel deploy |
 | `npm test` | `NOT RUN` | local | current wave | full suite not freshly run |
 | `npm run test:security` | `PASS` | local | `2026-05-11` | part of `test:launch` |
 | `npm run test:smoke` | `NOT RUN` | local | current wave | not freshly rerun as one bundle |
-| `npm run proof:v1:public-access-coverage` | `PASS` | local | `2026-05-11` | rerun green after shared explicit public render contract |
-| public DTO leak tests | `PASS` | local | `2026-05-11` | focused rerun now covers translated payloads, innocent-looking sensitive fields, translated legacy-layout payloads, stricter legacy layout gating, and removal of unused guest-facing toggles |
+| `npm run proof:v1:public-access-coverage` | `PASS` | local | `2026-05-11` | rerun green after gallery alias and nested-image contract tightening |
+| public DTO leak tests | `PASS` | local | `2026-05-11` | focused rerun now covers translated payloads, innocent-looking sensitive fields, translated legacy-layout payloads, stricter legacy layout gating, explicit minimal public contact DTOs, resolved hero/story/travel/gallery DTO normalization, nested travel and gallery item allowlists, CTA sanitizer safety, and removal of unused guest-facing toggles |
 | `npm run proof:v1:guest-lookup-scope` | `NOT RUN` | local/live | current wave | not freshly rerun |
 | `npm run proof:v1:registry-preview-ssrf` | `LIVE PASS` | production | `2026-05-11` | hostile-target matrix passed against the live `registry-preview` endpoint |
-| `npm run proof:v1:service-role-authorization` | `SECURE ENV REQUIRED` | secure env | `2026-05-11` | denial lane green; deep proof not freshly rerun |
-| `npm run proof:v1:email-messaging-authorization` | `SECURE ENV REQUIRED` | secure env | `2026-05-11` | denial lane green; deep proof not freshly rerun |
-| `npm run proof:v1:launch-closeout` | `SECURE ENV REQUIRED` | secure env | `2026-05-11` | board refresh and `git diff --check` pass inside the bundle; only blocked steps are the secure service-role and secure email proof lanes because `SUPABASE_SERVICE_ROLE_KEY` is missing |
+| `npm run proof:v1:service-role-authorization` | `PASS` | secure env | `2026-05-11` | live unauthenticated denial lane is green; authenticated owner/planner/coordinator/viewer mutation proof still required |
+| `npm run proof:v1:email-messaging-authorization` | `SECURE ENV REQUIRED` | secure env | `2026-05-11` | live unauthenticated denial lane is green and secure auth handling is fixed; destructive queue-processing proof is blocked because production currently has `5` pending queue rows |
+| `npm run proof:v1:launch-closeout` | `PASS` | secure env | `2026-05-11` | bundle now executes cleanly with the current secure-proof blocker model; authenticated role-mutation proof and safe queue-processing rerun are still separately required before launch |
 | `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` | `LIVE PASS` | production | `2026-05-11` | postdeploy |
 | `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` | `LIVE PASS` | production | `2026-05-11` | postdeploy |
 | `npm run proof:v1:guests-rsvp-ops` | `LIVE PASS` | production | `2026-05-11` | postdeploy |
@@ -339,8 +339,8 @@ None may appear in:
 
 | Surface | Git SHA | Deployed? | Deploy target | Flags | Live proof | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| Vercel frontend | `1723a79f` | Yes | production | standard Vercel prod deploy | `canonical-smoke`, `public-quality`, `guests-rsvp-ops` against last locally evidenced verified deploy `dpl_AjQ94iVAXhPutmegQbvjtawUUjUx` | `LIVE PASS` |
-| `public-site-access` | `1723a79f` | Yes | Supabase prod | `--no-verify-jwt` | `canonical-smoke`, `public-quality` | `LIVE PASS` |
+| Vercel frontend | `e4f783f2` | Yes | production | standard Vercel prod deploy | `canonical-smoke`, `public-quality`, `guests-rsvp-ops` against last locally evidenced verified deploy `dpl_2VcJKSDGmUFyMLhrcUZy3aEHCMF2` | `LIVE PASS` |
+| `public-site-access` | `e4f783f2` | Yes | Supabase prod | `--no-verify-jwt` | `canonical-smoke`, `public-quality` | `LIVE PASS` |
 | `public-registry-items` | exact deployed SHA unknown | Yes | Supabase prod | unknown from this workspace | not freshly rerun | `UNVERIFIED` |
 | `public-itinerary-by-slug` | exact deployed SHA unknown | Yes | Supabase prod | unknown from this workspace | indirectly covered only | `UNVERIFIED` |
 | `validate-rsvp-token` | exact deployed SHA unknown | Yes | Supabase prod | unknown from this workspace | `guests-rsvp-ops` | `PARTIAL` |
@@ -374,15 +374,15 @@ Do not mark `P1` done unless:
 
 ## Next 10 Tasks
 
-1. Inventory live sites that still depend on explicit legacy `layout_config` fallback and remove the flag path if none do; repo proof now shows the app is not creating new flagged rows.
-2. Finish the per-section-family review and trim any public settings keys not clearly required by the guest renderer.
-3. Finish secure service-role queue/storage proof.
-4. Finish secure email queue-processing proof.
-5. Canonicalize exact per-surface Git/Vercel/Supabase deployment truth.
-6. Rerun final live proof after any remaining launch-surface code changes.
-7. Refresh backlog/report/smoke log with secure-env outputs.
-8. Promote `HOLD` only if all remaining P1 lanes are either green or explicitly secret-blocked with no code gaps.
-9. Decide whether any remaining asset/CDN follow-up is launch-critical or can stay deferred.
+1. Finish the per-section-family review and trim any public settings keys not clearly required by the guest renderer.
+2. Finish secure service-role queue/storage proof.
+3. Finish secure email queue-processing proof.
+4. Canonicalize exact per-surface Git/Vercel/Supabase deployment truth.
+5. Rerun final live proof after any remaining launch-surface code changes.
+6. Refresh backlog/report/smoke log with secure-env outputs.
+7. Promote `HOLD` only if all remaining P1 lanes are green with no code gaps.
+8. Decide whether any remaining asset/CDN follow-up is launch-critical or can stay deferred.
+9. Stage, commit, and deploy the current hardening batch once the next proof checkpoint is complete.
 10. Only then spend time on non-critical cleanup.
 
 ## Resolved Work Summary

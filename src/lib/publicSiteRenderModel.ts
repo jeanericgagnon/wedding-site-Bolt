@@ -1,6 +1,5 @@
 import type { BuilderPage } from '../types/builder/project.ts';
 import type { BuilderSectionInstance } from '../types/builder/section.ts';
-import type { LayoutConfigV1, PageConfig, SectionInstance } from '../types/layoutConfig.ts';
 import type { WeddingDataV1 } from '../types/weddingData.ts';
 import { normalizeWeddingData } from '../types/weddingData.ts';
 import { SECTION_MANIFESTS } from '../builder/registry/sectionManifests.ts';
@@ -154,19 +153,6 @@ function sanitizeBuilderPage(page: BuilderPage): BuilderPage {
   }) as unknown as BuilderPage;
 }
 
-function toLegacyBuilderSection(section: SectionInstance, index: number): BuilderSectionInstance {
-  return toPublicSectionDTO({
-    id: section.id,
-    type: section.type,
-    variant: section.variant,
-    enabled: section.enabled === true,
-    orderIndex: index,
-    settings: section.settings ?? {},
-    bindings: section.bindings as Record<string, unknown> | undefined,
-    styleOverrides: section.overrides as Record<string, unknown> | undefined,
-  }) as unknown as BuilderSectionInstance;
-}
-
 function toPersistedPublicBuilderSection(section: PersistedPublicSectionRow, index: number): BuilderSectionInstance {
   return toPublicSectionDTO({
     id: section.id,
@@ -178,22 +164,6 @@ function toPersistedPublicBuilderSection(section: PersistedPublicSectionRow, ind
     bindings: section.bindings as Record<string, unknown> | undefined,
     styleOverrides: section.style_overrides as Record<string, unknown> | undefined,
   }) as unknown as BuilderSectionInstance;
-}
-
-function toLegacyBuilderPage(page: PageConfig, index: number): BuilderPage {
-  return toPublicPageDTO({
-    id: page.id,
-    title: page.title,
-    slug: page.id === 'home'
-      ? 'home'
-      : String(page.title || page.id || `page-${index}`).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
-    orderIndex: index,
-    sections: Array.isArray(page.sections) ? page.sections.map(toLegacyBuilderSection) : [],
-    meta: {
-      isHome: page.id === 'home' || index === 0,
-      isHidden: false,
-    },
-  }) as unknown as BuilderPage;
 }
 
 function pickPublicThemeTokens(value: unknown): ThemeTokens | null {
@@ -436,18 +406,6 @@ function getPublishedProjectPages(row: Record<string, unknown>, isPublished: boo
   return pages.map((page) => sanitizeBuilderPage(page as BuilderPage));
 }
 
-function getLegacyLayoutPages(row: Record<string, unknown>, isPublished: boolean): BuilderPage[] {
-  if (!isPublished) return [];
-  const publishedSource = asRecord(row.published_json);
-  const legacyLayoutAllowed = publishedSource?.legacyLayoutPublished === true;
-  if (!legacyLayoutAllowed) return [];
-  const layoutConfig = rewriteSignedMediaUrlsToPublicDeep(
-    safeJsonParse<LayoutConfigV1 | null>(row.layout_config, null),
-  );
-  if (!layoutConfig || !Array.isArray(layoutConfig.pages)) return [];
-  return layoutConfig.pages.map(toLegacyBuilderPage);
-}
-
 function getPublicWeddingRenderData(row: Record<string, unknown>, isPublished: boolean): PublicWeddingRenderModel | null {
   const publishedSource = asRecord(row.published_json);
   const draftSource = asRecord(row.site_json);
@@ -560,8 +518,7 @@ export function applyPublicSiteTranslation(
 
 export function buildPublicSiteRenderSite(row: Record<string, unknown>): PublicSiteRenderSite {
   const isPublished = getIsPublishedFromSiteRow(row);
-  const builderPages = getPublishedProjectPages(row, isPublished);
-  const pages = builderPages.length > 0 ? builderPages : getLegacyLayoutPages(row, isPublished);
+  const pages = getPublishedProjectPages(row, isPublished);
   const wedding = getPublicWeddingRenderData(row, isPublished);
   const theme = getPublicThemeModel(row, pages.length > 0, wedding, isPublished);
 

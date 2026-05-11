@@ -76,7 +76,7 @@ describe('public site access client contract', () => {
             variant: 'default',
             enabled: true,
             orderIndex: 0,
-            settings: { headline: 'Welcome', showTitle: true, overlayOpacity: 40 },
+            settings: { headline: 'Welcome', overlayOpacity: 40 },
             styleOverrides: { backgroundColor: '#ffffff' },
           }],
           meta: { isHome: true },
@@ -107,7 +107,7 @@ describe('public site access client contract', () => {
         variant: 'default',
         enabled: true,
         orderIndex: 0,
-        settings: { headline: 'Welcome', showTitle: true, overlayOpacity: 40 },
+        settings: { headline: 'Welcome', overlayOpacity: 40 },
         styleOverrides: { backgroundColor: '#ffffff' },
       }],
       meta: { isHome: true },
@@ -142,6 +142,246 @@ describe('public site access client contract', () => {
     expect(site).not.toHaveProperty('published_json');
     expect(site).not.toHaveProperty('wedding_data');
     expect(site).not.toHaveProperty('layout_config');
+  });
+
+  it('normalizes hero settings into the client-safe resolved public hero contract', () => {
+    const site = sanitizePublicSiteSafeRow({
+      id: 'site-hero',
+      site_slug: 'kara-eric',
+      site_url: 'kara-eric',
+      is_published: true,
+      couple_name_1: 'Kara',
+      couple_name_2: 'Eric',
+      wedding_date: '2026-06-14',
+      venue_name: 'Grand Pavilion',
+      wedding_location: 'New York',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      allow_search_indexing: false,
+      render_model: {
+        pages: [{
+          id: 'home',
+          slug: 'home',
+          title: 'Home',
+          orderIndex: 0,
+          sections: [{
+            id: 'hero-1',
+            type: 'hero',
+            variant: 'fullBleed',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'We are getting married',
+              subtitle: 'June 14, 2026 · The Grand Pavilion, New York',
+              headline: 'Kara & Eric',
+              ctaLabel: 'Send RSVP',
+              ctaHref: '#rsvp',
+              showDivider: false,
+              secretDraftNotes: 'hide me',
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+        wedding: null,
+        theme: { preset: null, tokens: null },
+      },
+    });
+
+    expect(site?.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      headline: 'Kara & Eric',
+      eyebrow: 'We are getting married',
+      subheadline: 'June 14, 2026 · The Grand Pavilion, New York',
+      overlayOpacity: 40,
+      ctaLabel: 'Send RSVP',
+      ctaHref: '#rsvp',
+      showDivider: false,
+    });
+    expect(JSON.stringify(site)).not.toContain('"title":"We are getting married"');
+    expect(JSON.stringify(site)).not.toContain('"subtitle":"June 14, 2026 · The Grand Pavilion, New York"');
+    expect(JSON.stringify(site)).not.toContain('secretDraftNotes');
+  });
+
+  it('normalizes story settings into the client-safe resolved public story contract', () => {
+    const site = sanitizePublicSiteSafeRow({
+      id: 'site-story',
+      site_slug: 'kara-eric',
+      site_url: 'kara-eric',
+      is_published: true,
+      couple_name_1: 'Kara',
+      couple_name_2: 'Eric',
+      wedding_date: '2026-06-14',
+      venue_name: 'Grand Pavilion',
+      wedding_location: 'New York',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      allow_search_indexing: false,
+      render_model: {
+        pages: [{
+          id: 'home',
+          slug: 'home',
+          title: 'Home',
+          orderIndex: 0,
+          sections: [{
+            id: 'story-1',
+            type: 'story',
+            variant: 'timeline',
+            enabled: true,
+            orderIndex: 1,
+            settings: {
+              title: 'How we met',
+              storyText: 'We met on a rainy Tuesday.',
+              photo: 'https://example.com/couple.jpg',
+              showTitle: false,
+              secretDraftNotes: 'hide me',
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+        wedding: null,
+        theme: { preset: null, tokens: null },
+      },
+    });
+
+    expect(site?.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      headline: 'How we met',
+      body: 'We met on a rainy Tuesday.',
+      image: 'https://example.com/couple.jpg',
+      showDivider: false,
+    });
+    expect(JSON.stringify(site)).not.toContain('"title":"How we met"');
+    expect(JSON.stringify(site)).not.toContain('"storyText":"We met on a rainy Tuesday."');
+    expect(JSON.stringify(site)).not.toContain('"photo":"https://example.com/couple.jpg"');
+    expect(JSON.stringify(site)).not.toContain('secretDraftNotes');
+  });
+
+  it('normalizes travel settings into the client-safe resolved public travel contract', () => {
+    const site = sanitizePublicSiteSafeRow({
+      id: 'site-travel',
+      site_slug: 'kara-eric',
+      site_url: 'kara-eric',
+      is_published: true,
+      couple_name_1: 'Kara',
+      couple_name_2: 'Eric',
+      wedding_date: '2026-06-14',
+      venue_name: 'Grand Pavilion',
+      wedding_location: 'New York',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      allow_search_indexing: false,
+      render_model: {
+        pages: [{
+          id: 'home',
+          slug: 'home',
+          title: 'Home',
+          orderIndex: 0,
+          sections: [{
+            id: 'travel-1',
+            type: 'travel',
+            variant: 'hotelBlock',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'Where to stay',
+              subheadline: 'Book soon.',
+              showTimezoneBadge: true,
+              hotels: [{
+                id: 'hotel-1',
+                name: 'Harbor Hotel',
+                distance: '0.3 miles',
+                bookingCode: 'MAYALEO',
+                url: 'https://example.com/stay',
+                adminEmail: 'hide@example.com',
+              }],
+              internalQueueConfig: { id: 'hide-me' },
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+        wedding: null,
+        theme: { preset: null, tokens: null },
+      },
+    });
+
+    expect(site?.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      headline: 'Where to stay',
+      subheadline: 'Book soon.',
+      hotels: [{
+        id: 'hotel-1',
+        name: 'Harbor Hotel',
+        distance: '0.3 miles',
+        bookingCode: 'MAYALEO',
+        url: 'https://example.com/stay',
+      }],
+    });
+    expect(JSON.stringify(site)).not.toContain('showTimezoneBadge');
+    expect(JSON.stringify(site)).not.toContain('adminEmail');
+    expect(JSON.stringify(site)).not.toContain('internalQueueConfig');
+  });
+
+  it('normalizes gallery settings into the client-safe resolved public gallery contract', () => {
+    const site = sanitizePublicSiteSafeRow({
+      id: 'site-gallery',
+      site_slug: 'kara-eric',
+      site_url: 'kara-eric',
+      is_published: true,
+      couple_name_1: 'Kara',
+      couple_name_2: 'Eric',
+      wedding_date: '2026-06-14',
+      venue_name: 'Grand Pavilion',
+      wedding_location: 'New York',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      allow_search_indexing: false,
+      render_model: {
+        pages: [{
+          id: 'home',
+          slug: 'home',
+          title: 'Home',
+          orderIndex: 0,
+          sections: [{
+            id: 'gallery-1',
+            type: 'gallery',
+            variant: 'masonry',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'Weekend photos',
+              galleryImages: [{
+                id: 'img-1',
+                url: 'https://example.com/photo.jpg',
+                caption: 'Ceremony',
+                alt: 'Ceremony flowers',
+                hiddenGallery: true,
+              }],
+              providerSecret: 'hide-me',
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+        wedding: null,
+        theme: { preset: null, tokens: null },
+      },
+    });
+
+    expect(site?.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      eyebrow: 'Our moments',
+      headline: 'Weekend photos',
+      animation: 'fade',
+      showCaptions: true,
+      enableLightbox: true,
+      autoScroll: false,
+      continuousGlide: true,
+      glideSpeed: 42,
+      images: [{
+        id: 'img-1',
+        url: 'https://example.com/photo.jpg',
+        caption: 'Ceremony',
+        alt: 'Ceremony flowers',
+      }],
+    });
+    expect(JSON.stringify(site)).not.toContain('galleryImages');
+    expect(JSON.stringify(site)).not.toContain('hiddenGallery');
+    expect(JSON.stringify(site)).not.toContain('providerSecret');
   });
 
   it('rejects malformed public site payloads instead of passing them through', () => {
@@ -230,6 +470,75 @@ describe('public site access client contract', () => {
     expect(sections[2]?.bindings).toEqual({ scheduleItemIds: ['schedule-1'] });
     expect(sections[3]?.bindings).toEqual({ linkIds: ['registry-1'] });
     expect(sections[4]?.bindings).toEqual({ faqIds: ['faq-1'] });
+  });
+
+  it('keeps only the explicit public contact fields in client-safe render payloads', () => {
+    const site = sanitizePublicSiteSafeRow({
+      id: 'site-contacts',
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo',
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-09-12',
+      venue_name: 'Garden Hall',
+      wedding_location: 'Portland',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      allow_search_indexing: false,
+      render_model: {
+        pages: [{
+          id: 'home',
+          slug: 'home',
+          title: 'Home',
+          orderIndex: 0,
+          sections: [{
+            id: 'contact-1',
+            type: 'contact',
+            variant: 'form',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'Need help?',
+              subtitle: 'Reach out any time.',
+              contacts: [{
+                id: 'planner-1',
+                name: 'Avery Planner',
+                role: 'Planner',
+                email: 'avery@example.com',
+                phone: '+1 212 555 1111',
+                instagram: '@averyplans',
+                collaborator_permissions: ['owner'],
+                adminEmail: 'private@example.com',
+              }],
+              quizPrompt: 'should not survive',
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+        wedding: null,
+        theme: { preset: null, tokens: null },
+      },
+    });
+
+    expect(site?.render_model.pages[0]?.sections[0]?.settings).toEqual({
+      showTitle: true,
+      eyebrow: 'Need help?',
+      emailSubject: 'Wedding Question',
+      headline: 'Need help?',
+      subheadline: 'Reach out any time.',
+      contacts: [{
+        id: 'planner-1',
+        name: 'Avery Planner',
+        role: 'Planner',
+        email: 'avery@example.com',
+        phone: '+1 212 555 1111',
+        instagram: '@averyplans',
+      }],
+    });
+    expect(JSON.stringify(site)).not.toContain('collaborator_permissions');
+    expect(JSON.stringify(site)).not.toContain('adminEmail');
+    expect(JSON.stringify(site)).not.toContain('quizPrompt');
   });
 
   it('normalizes footer cta aliases into the client-safe public footer contract', () => {
@@ -413,15 +722,14 @@ describe('public site access client contract', () => {
       headline: 'Questions for us?',
       subheadline: 'We are happy to help.',
       introText: 'Reach out any time.',
+      contacts: [{ id: 'c1', email: 'hide@example.com' }],
     });
     expect(settings).not.toHaveProperty('title');
     expect(settings).not.toHaveProperty('subtitle');
-    expect(settings).not.toHaveProperty('contacts');
 
     const serialized = JSON.stringify(site);
     expect(serialized).not.toContain('"title":"Questions for us?"');
     expect(serialized).not.toContain('"subtitle":"We are happy to help."');
-    expect(serialized).not.toContain('hide@example.com');
   });
 
   it('hides raw public access backend errors', () => {

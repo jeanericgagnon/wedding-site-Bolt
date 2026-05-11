@@ -99,7 +99,7 @@ const resolverChecks = functionEntrypoints
       && source.includes('buildPersistedPublicFallbackPages(persistedSections)');
     const usesAllowlistedRenderModel = renderModelSource.includes('const ALLOWED_THEME_TOKEN_KEYS')
       && publicRenderContractSource.includes('const PUBLIC_SECTION_SETTINGS_ALLOWLIST: Record<SectionType, readonly string[]> = {')
-      && publicRenderContractSource.includes("hero: ['headline', 'subtitle', 'title', 'showTitle', 'backgroundImage', 'overlayOpacity']")
+      && publicRenderContractSource.includes("hero: ['headline', 'eyebrow', 'subheadline', 'backgroundImage', 'overlayOpacity', 'ctaLabel', 'ctaHref', 'showDivider', 'textAlign', 'layoutStyle']")
       && publicRenderContractSource.includes('const PUBLIC_BINDINGS_BY_SECTION_TYPE: Partial<Record<SectionType, readonly (keyof PublicBindingDTO)[]>> = {')
       && publicRenderContractSource.includes("venue: ['venueIds']")
       && publicRenderContractSource.includes("schedule: ['scheduleItemIds']")
@@ -116,6 +116,7 @@ const resolverChecks = functionEntrypoints
       && renderModelSource.includes('publishedSource?.weddingData,')
       && !renderModelSource.includes('row.wedding_data,\n      ]')
       && !renderModelSource.includes('allowLegacyLayoutFallback')
+      && !renderModelSource.includes('legacyLayoutPublished')
       && renderModelSource.includes('return isPublished ? buildCanonicalRowWeddingFallback(row) : null;')
       && !renderModelSource.includes('meta: normalized.meta')
       && !renderModelSource.includes('PUBLIC_SENSITIVE_KEY_PATTERN')

@@ -9,8 +9,6 @@ const scanRoots = [
 ];
 const allowedFiles = new Set([
   path.join(repoRoot, 'src', 'lib', 'publicLegacyLayoutFlagAudit.test.ts'),
-  path.join(repoRoot, 'src', 'lib', 'publicSiteRenderModel.ts'),
-  path.join(repoRoot, 'src', 'lib', 'publicSiteRenderModel.test.ts'),
 ]);
 
 function walk(dir: string): string[] {
@@ -28,7 +26,7 @@ function walk(dir: string): string[] {
 }
 
 describe('legacy layout fallback audit', () => {
-  it('does not author the legacyLayoutPublished flag outside the explicit public render consumer and tests', () => {
+  it('does not retain the legacyLayoutPublished flag path anywhere outside this audit guard', () => {
     const matches: string[] = [];
 
     for (const root of scanRoots) {

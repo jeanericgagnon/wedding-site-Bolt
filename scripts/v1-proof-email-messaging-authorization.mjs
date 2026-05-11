@@ -32,6 +32,23 @@ const supabaseUrl = getEnv('VITE_SUPABASE_URL').trim();
 const anonKey = getEnv('VITE_SUPABASE_ANON_KEY').trim();
 const serviceRoleKey = getEnv('SUPABASE_SERVICE_ROLE_KEY').trim() || getEnv('V1_SUPABASE_SERVICE_ROLE_KEY').trim();
 
+function isJwtLike(value) {
+  return typeof value === 'string' && value.split('.').length === 3;
+}
+
+function buildRestHeaders() {
+  const headers = {
+    apikey: serviceRoleKey || anonKey,
+    'Content-Type': 'application/json',
+  };
+
+  if (isJwtLike(serviceRoleKey)) {
+    headers.Authorization = `Bearer ${serviceRoleKey}`;
+  }
+
+  return headers;
+}
+
 function blocked(reason) {
   console.log(JSON.stringify({
     ok: false,
@@ -145,11 +162,7 @@ async function secureQueueProcessingProof() {
     };
   }
 
-  const restHeaders = {
-    apikey: anonKey || serviceRoleKey,
-    Authorization: `Bearer ${serviceRoleKey}`,
-    'Content-Type': 'application/json',
-  };
+  const restHeaders = buildRestHeaders();
 
   const pendingResponse = await fetch(`${supabaseUrl.replace(/\/$/, '')}/rest/v1/email_queue?select=id,status&type,payload_json&status=eq.pending&limit=5`, {
     headers: restHeaders,
