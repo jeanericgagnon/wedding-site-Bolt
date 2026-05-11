@@ -1958,6 +1958,97 @@ describe('publicSiteRenderModel', () => {
     expect(serialized).not.toContain('"subtitle":"We are happy to help."');
   });
 
+  it('allowlists menu tab courses into the public render model without stale aliases or nested private fields', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-menu-tabs',
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo.dayof.love',
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-09-12',
+      venue_name: 'Garden Hall',
+      wedding_location: 'Portland',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      hide_from_search: false,
+      site_json: null,
+      published_json: {
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [{
+            id: 'menu-1',
+            type: 'menu',
+            variant: 'tabs',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'Dinner menu',
+              subtitle: 'What we are serving',
+              note: 'Please tell us about allergies.',
+              showDietaryIcons: true,
+              showDietaryKey: true,
+              backgroundImage: 'https://example.com/menu.jpg',
+              courses: [{
+                id: 'course-1',
+                label: 'Main course',
+                items: [{
+                  id: 'item-1',
+                  name: 'Herb-Crusted Salmon',
+                  description: 'Lemon butter and asparagus.',
+                  dietary: ['gluten-free'],
+                  adminEmail: 'hide@example.com',
+                }],
+                plannerNotes: 'private',
+              }],
+              sections: [{ id: 'section-1', label: 'Should not survive', items: [{ id: 'item-x', name: 'Nope' }] }],
+              footerNote: 'Legacy footer',
+              showPrices: true,
+              queueTargets: ['hide-me'],
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    const settings = site.render_model.pages[0]?.sections[0]?.settings ?? {};
+    expect(settings).toEqual({
+      eyebrow: 'Dining',
+      headline: 'Dinner menu',
+      subtitle: 'What we are serving',
+      note: 'Please tell us about allergies.',
+      showDietaryIcons: true,
+      courses: [{
+        id: 'course-1',
+        label: 'Main course',
+        items: [{
+          id: 'item-1',
+          name: 'Herb-Crusted Salmon',
+          description: 'Lemon butter and asparagus.',
+          dietary: ['gluten-free'],
+        }],
+      }],
+    });
+    expect(settings).not.toHaveProperty('title');
+    expect(settings).not.toHaveProperty('showDietaryKey');
+    expect(settings).not.toHaveProperty('backgroundImage');
+    expect(settings).not.toHaveProperty('sections');
+    expect(settings).not.toHaveProperty('footerNote');
+    expect(settings).not.toHaveProperty('showPrices');
+
+    const serialized = JSON.stringify(site);
+    expect(serialized).not.toContain('adminEmail');
+    expect(serialized).not.toContain('plannerNotes');
+    expect(serialized).not.toContain('queueTargets');
+    expect(serialized).not.toContain('"title":"Dinner menu"');
+  });
+
   it('only uses legacy layout fallback when explicitly allowed on the published payload', () => {
     const site = buildPublicSiteRenderSite({
       id: 'site-7',

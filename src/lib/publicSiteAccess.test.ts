@@ -1314,6 +1314,88 @@ describe('public site access client contract', () => {
     expect(serialized).not.toContain('"subtitle":"We are happy to help."');
   });
 
+  it('allowlists menu tab courses into the client-safe public contract without stale aliases or nested private fields', () => {
+    const site = sanitizePublicSiteSafeRow({
+      id: 'site-menu-tabs',
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo',
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-09-12',
+      venue_name: 'Garden Hall',
+      wedding_location: 'Portland',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      allow_search_indexing: false,
+      render_model: {
+        pages: [{
+          id: 'home',
+          slug: 'home',
+          title: 'Home',
+          orderIndex: 0,
+          sections: [{
+            id: 'menu-1',
+            type: 'menu',
+            variant: 'tabs',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              title: 'Dinner menu',
+              subtitle: 'What we are serving',
+              note: 'Please tell us about allergies.',
+              showDietaryIcons: true,
+              showDietaryKey: true,
+              courses: [{
+                id: 'course-1',
+                label: 'Main course',
+                items: [{
+                  id: 'item-1',
+                  name: 'Herb-Crusted Salmon',
+                  description: 'Lemon butter and asparagus.',
+                  dietary: ['gluten-free'],
+                  adminEmail: 'hide@example.com',
+                }],
+              }],
+              footerNote: 'Legacy footer',
+              queueTargets: ['hide-me'],
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+        wedding: null,
+        theme: { preset: null, tokens: null },
+      },
+    });
+
+    const settings = site?.render_model.pages[0]?.sections[0]?.settings ?? {};
+    expect(settings).toEqual({
+      eyebrow: 'Dining',
+      headline: 'Dinner menu',
+      subtitle: 'What we are serving',
+      note: 'Please tell us about allergies.',
+      showDietaryIcons: true,
+      courses: [{
+        id: 'course-1',
+        label: 'Main course',
+        items: [{
+          id: 'item-1',
+          name: 'Herb-Crusted Salmon',
+          description: 'Lemon butter and asparagus.',
+          dietary: ['gluten-free'],
+        }],
+      }],
+    });
+    expect(settings).not.toHaveProperty('title');
+    expect(settings).not.toHaveProperty('showDietaryKey');
+    expect(settings).not.toHaveProperty('footerNote');
+
+    const serialized = JSON.stringify(site);
+    expect(serialized).not.toContain('adminEmail');
+    expect(serialized).not.toContain('queueTargets');
+    expect(serialized).not.toContain('"title":"Dinner menu"');
+  });
+
   it('hides raw public access backend errors', () => {
     expect(safePublicSiteAccessError('Supabase policy denied access to site_password_hash token')).toBe(
       'Could not check this wedding site right now. Please try again.',

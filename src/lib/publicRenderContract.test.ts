@@ -593,4 +593,217 @@ describe('publicRenderContract', () => {
     expect(JSON.stringify(settings)).not.toContain('providerSecret');
     expect(JSON.stringify(settings)).not.toContain('moderationQueue');
   });
+
+  it('allowlists menu tab courses without leaking stale aliases or nested private fields', () => {
+    const settings = sanitizePublicSectionSettings('menu', 'tabs', {
+      title: 'Dinner menu',
+      subtitle: 'What we are serving',
+      note: 'Please tell us about allergies.',
+      showDietaryIcons: true,
+      showDietaryKey: true,
+      backgroundImage: 'https://example.com/menu.jpg',
+      courses: [{
+        id: 'course-1',
+        label: 'Main course',
+        items: [{
+          id: 'item-1',
+          name: 'Herb-Crusted Salmon',
+          description: 'Lemon butter and asparagus.',
+          dietary: ['gluten-free'],
+          adminEmail: 'hide@example.com',
+          queueTargets: ['hide-me'],
+        }],
+        plannerNotes: 'private',
+      }],
+      items: [{ id: 'legacy', name: 'Should not survive' }],
+      sections: [{ id: 'legacy-section', label: 'Should not survive', items: [{ id: 'legacy-item', name: 'Nope' }] }],
+      footerNote: 'Legacy footer',
+      showPrices: true,
+      providerSecret: 'hide-me',
+    });
+
+    expect(settings).toEqual({
+      eyebrow: 'Dining',
+      headline: 'Dinner menu',
+      subtitle: 'What we are serving',
+      note: 'Please tell us about allergies.',
+      showDietaryIcons: true,
+      courses: [{
+        id: 'course-1',
+        label: 'Main course',
+        items: [{
+          id: 'item-1',
+          name: 'Herb-Crusted Salmon',
+          description: 'Lemon butter and asparagus.',
+          dietary: ['gluten-free'],
+        }],
+      }],
+    });
+    expect(settings).not.toHaveProperty('title');
+    expect(settings).not.toHaveProperty('showDietaryKey');
+    expect(settings).not.toHaveProperty('backgroundImage');
+    expect(settings).not.toHaveProperty('items');
+    expect(settings).not.toHaveProperty('sections');
+    expect(settings).not.toHaveProperty('footerNote');
+    expect(settings).not.toHaveProperty('showPrices');
+    expect(JSON.stringify(settings)).not.toContain('adminEmail');
+    expect(JSON.stringify(settings)).not.toContain('queueTargets');
+    expect(JSON.stringify(settings)).not.toContain('plannerNotes');
+    expect(JSON.stringify(settings)).not.toContain('providerSecret');
+  });
+
+  it('allowlists printed menu items without leaking card-only or private fields', () => {
+    const settings = sanitizePublicSectionSettings('menu', 'printed', {
+      title: 'Reception dinner',
+      subtitle: 'A plated celebration.',
+      footerNote: 'Please note allergies in your RSVP.',
+      showPrices: true,
+      note: 'Card-only note',
+      showDietaryIcons: true,
+      showDietaryKey: true,
+      backgroundImage: 'https://example.com/bg.jpg',
+      items: [{
+        id: 'item-1',
+        name: 'Steak frites',
+        description: 'With roasted shallot jus.',
+        price: '$42',
+        billingStatus: 'private',
+      }],
+      hiddenTimeline: 'private',
+    });
+
+    expect(settings).toEqual({
+      eyebrow: 'Dining',
+      headline: 'Reception dinner',
+      subtitle: 'A plated celebration.',
+      footerNote: 'Please note allergies in your RSVP.',
+      items: [{
+        id: 'item-1',
+        name: 'Steak frites',
+        description: 'With roasted shallot jus.',
+      }],
+    });
+    expect(settings).not.toHaveProperty('title');
+    expect(settings).not.toHaveProperty('showPrices');
+    expect(settings).not.toHaveProperty('note');
+    expect(settings).not.toHaveProperty('showDietaryIcons');
+    expect(settings).not.toHaveProperty('showDietaryKey');
+    expect(settings).not.toHaveProperty('backgroundImage');
+    expect(JSON.stringify(settings)).not.toContain('billingStatus');
+    expect(JSON.stringify(settings)).not.toContain('hiddenTimeline');
+  });
+
+  it('allowlists featured quotes without leaking nested private fields', () => {
+    const settings = sanitizePublicSectionSettings('quotes', 'featured', {
+      eyebrow: 'From the heart',
+      headline: 'Words we love',
+      subtitle: 'Messages from our people.',
+      showPhotos: true,
+      background: 'dark',
+      autoplay: true,
+      quotes: [{
+        id: 'quote-1',
+        text: 'You two were made for each other.',
+        author: 'Aunt Carol',
+        role: 'Family',
+        photo: 'https://example.com/quote.jpg',
+        featured: true,
+        providerSecret: 'hide-me',
+      }],
+      entries: [{ id: 'entry-1', text: 'Should not survive', author: 'Guest' }],
+      internalSchema: { hide: true },
+    });
+
+    expect(settings).toEqual({
+      eyebrow: 'From the heart',
+      headline: 'Words we love',
+      subtitle: 'Messages from our people.',
+      showPhotos: true,
+      quotes: [{
+        id: 'quote-1',
+        text: 'You two were made for each other.',
+        author: 'Aunt Carol',
+        role: 'Family',
+        photo: 'https://example.com/quote.jpg',
+        featured: true,
+      }],
+    });
+    expect(settings).not.toHaveProperty('background');
+    expect(settings).not.toHaveProperty('autoplay');
+    expect(settings).not.toHaveProperty('entries');
+    expect(JSON.stringify(settings)).not.toContain('providerSecret');
+    expect(JSON.stringify(settings)).not.toContain('internalSchema');
+  });
+
+  it('allowlists custom section blocks recursively without leaking private fields', () => {
+    const settings = sanitizePublicSectionSettings('custom', 'default', {
+      backgroundColor: '#faf7f2',
+      paddingSize: 'lg',
+      skeletonId: 'full-width-message',
+      blocks: [{
+        id: 'block-1',
+        type: 'heading',
+        content: 'Welcome to our weekend',
+        plannerNotes: 'hide-me',
+      }, {
+        id: 'block-2',
+        type: 'button',
+        buttonLabel: 'Open itinerary',
+        buttonUrl: '/site/maya-leo/itinerary',
+        queueTargets: ['hide-me'],
+      }, {
+        id: 'block-3',
+        type: 'columns',
+        columns: [[{
+          id: 'nested-1',
+          type: 'image',
+          imageUrl: 'https://example.com/photo.jpg',
+          imageAlt: 'Photo',
+          adminEmail: 'hide@example.com',
+        }], [{
+          id: 'nested-2',
+          type: 'paragraph',
+          content: 'See you on the dance floor.',
+          billingStatus: 'private',
+        }]],
+        providerSecret: 'hide-me',
+      }],
+      hiddenGallery: 'private',
+    });
+
+    expect(settings).toEqual({
+      backgroundColor: '#faf7f2',
+      paddingSize: 'lg',
+      skeletonId: 'full-width-message',
+      blocks: [{
+        id: 'block-1',
+        type: 'heading',
+        content: 'Welcome to our weekend',
+      }, {
+        id: 'block-2',
+        type: 'button',
+        buttonLabel: 'Open itinerary',
+        buttonUrl: '/site/maya-leo/itinerary',
+      }, {
+        id: 'block-3',
+        type: 'columns',
+        columns: [[{
+          id: 'nested-1',
+          type: 'image',
+          imageUrl: 'https://example.com/photo.jpg',
+          imageAlt: 'Photo',
+        }], [{
+          id: 'nested-2',
+          type: 'paragraph',
+          content: 'See you on the dance floor.',
+        }]],
+      }],
+    });
+    expect(JSON.stringify(settings)).not.toContain('plannerNotes');
+    expect(JSON.stringify(settings)).not.toContain('queueTargets');
+    expect(JSON.stringify(settings)).not.toContain('adminEmail');
+    expect(JSON.stringify(settings)).not.toContain('billingStatus');
+    expect(JSON.stringify(settings)).not.toContain('providerSecret');
+    expect(JSON.stringify(settings)).not.toContain('hiddenGallery');
+  });
 });

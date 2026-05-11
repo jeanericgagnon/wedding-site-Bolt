@@ -73,9 +73,9 @@ export const PUBLIC_SECTION_SETTINGS_ALLOWLIST: Record<SectionType, readonly str
   accommodations: ['showTitle', 'title', 'headline', 'eyebrow', 'generalNote', 'blockNote', 'shuttleNote', 'mapImage', 'layoutStyle', 'hotels'],
   contact: ['showTitle', 'title', 'headline', 'eyebrow', 'subtitle', 'subheadline', 'introText', 'contacts', 'emailSubject', 'closingNote', 'pollPrompt', 'pollOptions', 'quizPrompt', 'quizOptions', 'correctQuizOption', 'suggestionPrompt', 'allowPublicResults'],
   'footer-cta': ['headline', 'subtext', 'buttonLabel', 'rsvpUrl', 'footerNote'],
-  custom: ['backgroundColor', 'paddingSize'],
-  quotes: ['eyebrow', 'headline', 'background', 'autoplay'],
-  menu: ['eyebrow', 'headline', 'subtitle', 'note', 'backgroundImage', 'showDietaryIcons', 'showDietaryKey'],
+  custom: ['backgroundColor', 'paddingSize', 'skeletonId', 'blocks'],
+  quotes: ['eyebrow', 'headline', 'background', 'autoplay', 'autoplayInterval', 'subtitle', 'showPhotos', 'columns', 'quotes', 'prompt', 'entries'],
+  menu: ['eyebrow', 'headline', 'subtitle', 'note', 'backgroundImage', 'showDietaryIcons', 'showDietaryKey', 'sections', 'items', 'courses', 'footerNote', 'showPrices'],
   music: ['eyebrow', 'headline', 'subtitle', 'djBandName', 'djBandLabel', 'requestNote', 'showRequestNote', 'playlistUrl', 'promptLabel', 'placeholder', 'buttonLabel', 'showRecentRequests', 'showPlaylistLink', 'showMoments', 'note', 'songs', 'playlists', 'background'],
   directions: ['eyebrow', 'headline', 'venueName', 'address', 'city', 'phone', 'mapUrl', 'parkingNote', 'rideshareNote', 'shuttleNote', 'showTransport', 'transport', 'publicTransitNote', 'drivingTime', 'drivingTimeFrom', 'background'],
   video: ['eyebrow', 'headline', 'subtitle', 'videoUrl', 'thumbnailUrl', 'videoType', 'background', 'autoplay', 'layoutStyle', 'videos'],
@@ -113,6 +113,9 @@ export const PUBLIC_SECTION_SETTING_ALIAS_EXCEPTIONS: Partial<Record<SectionType
   'dress-code': ['headline', 'dressCode', 'colorPalette', 'moodImages', 'layoutStyle'],
   accommodations: ['headline', 'layoutStyle', 'hotels'],
   directions: ['phone', 'rideshareNote', 'showTransport', 'transport', 'background'],
+  custom: ['skeletonId', 'blocks'],
+  quotes: ['autoplayInterval', 'subtitle', 'showPhotos', 'columns', 'quotes', 'prompt', 'entries'],
+  menu: ['headline', 'sections', 'items', 'courses', 'footerNote', 'showPrices'],
   music: ['showPlaylistLink', 'showMoments', 'note', 'songs', 'playlists', 'background'],
   video: ['autoplay', 'layoutStyle', 'videos', 'background'],
 };
@@ -437,6 +440,115 @@ function sanitizeVideoItems(value: unknown): Array<Record<string, unknown>> | un
   });
 }
 
+function sanitizeQuotesItems(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (quote, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(quote.id) ? quote.id : `quote-${index + 1}`,
+    };
+    for (const key of ['text', 'author', 'role', 'photo'] as const) {
+      const picked = pickOptionalString(quote, key);
+      if (picked) out[key] = picked;
+    }
+    if (typeof quote.featured === 'boolean') out.featured = quote.featured;
+    return hasNonEmptyString(out.text) ? out : null;
+  });
+}
+
+function sanitizeGuestbookEntries(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (entry, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(entry.id) ? entry.id : `entry-${index + 1}`,
+    };
+    for (const key of ['text', 'author'] as const) {
+      const picked = pickOptionalString(entry, key);
+      if (picked) out[key] = picked;
+    }
+    return hasNonEmptyString(out.text) ? out : null;
+  });
+}
+
+function sanitizeCustomBlocks(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (block, index) => {
+    const type = pickOptionalString(block, 'type');
+    if (!type) return null;
+
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(block.id) ? block.id : `block-${index + 1}`,
+      type,
+    };
+
+    for (const key of ['content', 'imageUrl', 'imageAlt', 'buttonLabel', 'buttonUrl', 'align', 'size', 'variant'] as const) {
+      const picked = pickOptionalString(block, key);
+      if (picked) out[key] = picked;
+    }
+
+    if (type === 'columns' && Array.isArray(block.columns)) {
+      const columns = block.columns
+        .map((column) => sanitizeCustomBlocks(column))
+        .filter((column): column is Array<Record<string, unknown>> => Array.isArray(column) && column.length > 0);
+      if (columns.length > 0) out.columns = columns;
+    }
+
+    return out;
+  });
+}
+
+function sanitizeMenuItems(
+  value: unknown,
+  options: { includeDietary?: boolean; includePrice?: boolean } = {},
+): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (item, index) => {
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(item.id) ? item.id : `item-${index + 1}`,
+    };
+    for (const key of ['name', 'description'] as const) {
+      const picked = pickOptionalString(item, key);
+      if (picked) out[key] = picked;
+    }
+    if (options.includeDietary) {
+      const dietary = pickStringArray(item.dietary);
+      if (dietary) out.dietary = dietary;
+    }
+    if (options.includePrice) {
+      const price = pickOptionalString(item, 'price');
+      if (price) out.price = price;
+    }
+    return hasNonEmptyString(out.name) ? out : null;
+  });
+}
+
+function sanitizeMenuSections(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (section, index) => {
+    const items = sanitizeMenuItems(section.items, { includeDietary: true });
+    if (!items) return null;
+
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(section.id) ? section.id : `section-${index + 1}`,
+      items,
+    };
+    for (const key of ['label', 'icon'] as const) {
+      const picked = pickOptionalString(section, key);
+      if (picked) out[key] = picked;
+    }
+    return out;
+  });
+}
+
+function sanitizeMenuCourses(value: unknown): Array<Record<string, unknown>> | undefined {
+  return pickObjectArray(value, (course, index) => {
+    const items = sanitizeMenuItems(course.items, { includeDietary: true });
+    if (!items) return null;
+
+    const out: Record<string, unknown> = {
+      id: hasNonEmptyString(course.id) ? course.id : `course-${index + 1}`,
+      items,
+    };
+    const label = pickOptionalString(course, 'label');
+    if (label) out.label = label;
+    return out;
+  });
+}
+
 export function sanitizePublicSectionSettings(
   type: unknown,
   variant: unknown,
@@ -582,6 +694,14 @@ export function sanitizePublicSectionSettings(
   }
 
   if (type === 'dress-code') {
+    if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
+      normalizedSource.headline = rawSource.title;
+    }
+    delete normalizedSource.title;
+    delete normalizedSource.showTitle;
+  }
+
+  if (type === 'menu') {
     if (!hasNonEmptyString(normalizedSource.headline) && hasNonEmptyString(rawSource.title)) {
       normalizedSource.headline = rawSource.title;
     }
@@ -777,6 +897,99 @@ export function sanitizePublicSectionSettings(
     }
     const videos = sanitizeVideoItems(normalizedSource.videos);
     if (videos) out.videos = videos;
+  }
+
+  if (type === 'quotes') {
+    if (canonicalVariant === 'guestbook') {
+      delete out.background;
+      delete out.autoplay;
+      delete out.autoplayInterval;
+      delete out.subtitle;
+      delete out.showPhotos;
+      delete out.columns;
+      delete out.quotes;
+      const entries = sanitizeGuestbookEntries(normalizedSource.entries);
+      if (entries) out.entries = entries;
+    } else {
+      delete out.prompt;
+      delete out.entries;
+      const quotes = sanitizeQuotesItems(normalizedSource.quotes);
+      if (quotes) out.quotes = quotes;
+
+      if (canonicalVariant === 'carousel') {
+        delete out.subtitle;
+        delete out.showPhotos;
+        delete out.columns;
+      } else if (canonicalVariant === 'grid') {
+        delete out.autoplay;
+        delete out.autoplayInterval;
+        delete out.subtitle;
+        delete out.showPhotos;
+      } else if (canonicalVariant === 'featured') {
+        delete out.background;
+        delete out.autoplay;
+        delete out.autoplayInterval;
+        delete out.columns;
+      }
+    }
+  }
+
+  if (type === 'custom') {
+    const blocks = sanitizeCustomBlocks(normalizedSource.blocks);
+    if (blocks) out.blocks = blocks;
+  }
+
+  if (type === 'menu') {
+    delete out.title;
+    delete out.showTitle;
+
+    if (canonicalVariant === 'tabs') {
+      delete out.backgroundImage;
+      delete out.showDietaryKey;
+      delete out.sections;
+      delete out.items;
+      delete out.footerNote;
+      delete out.showPrices;
+      const courses = sanitizeMenuCourses(normalizedSource.courses);
+      if (courses) out.courses = courses;
+    } else if (canonicalVariant === 'card' || canonicalVariant === 'cocktailDinner') {
+      delete out.items;
+      delete out.courses;
+      delete out.footerNote;
+      delete out.showPrices;
+      const sections = sanitizeMenuSections(normalizedSource.sections);
+      if (sections) out.sections = sections;
+    } else if (canonicalVariant === 'simple') {
+      delete out.note;
+      delete out.backgroundImage;
+      delete out.showDietaryIcons;
+      delete out.showDietaryKey;
+      delete out.sections;
+      delete out.courses;
+      const items = sanitizeMenuItems(normalizedSource.items, { includePrice: true });
+      if (items) out.items = items;
+    } else if (canonicalVariant === 'printed') {
+      delete out.note;
+      delete out.backgroundImage;
+      delete out.showDietaryIcons;
+      delete out.showDietaryKey;
+      delete out.sections;
+      delete out.courses;
+      delete out.showPrices;
+      const items = sanitizeMenuItems(normalizedSource.items, { includePrice: false });
+      if (items) out.items = items;
+    } else if (canonicalVariant === 'illustrated') {
+      delete out.note;
+      delete out.backgroundImage;
+      delete out.showDietaryIcons;
+      delete out.showDietaryKey;
+      delete out.sections;
+      delete out.courses;
+      delete out.footerNote;
+      delete out.showPrices;
+      const items = sanitizeMenuItems(normalizedSource.items, { includePrice: false });
+      if (items) out.items = items;
+    }
   }
 
   if (type === 'hero') {
