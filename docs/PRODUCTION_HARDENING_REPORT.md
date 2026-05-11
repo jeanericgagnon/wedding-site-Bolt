@@ -24,6 +24,10 @@ None.
   - It is still anon-limited, but it found no hard launch corruption in public-facing integrity checks.
 - `npm run proof:v1:prereqs` is green.
   - Required migrations, local functions, runtime table reachability, and edge deployment reachability are all healthy for the current launch baseline.
+- `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance` is green.
+  - The live AI/photo column exposure and rollout-readiness bundle passed with no blockers.
+- `npm run proof:v1:ai-product-readiness` is green.
+  - The static AI product-readiness audit passed `25/25`.
 - Everything else required for the previous P1 lanes is green:
   - explicit public DTO tests across all section families
   - `npm run proof:v1:public-access-coverage`
@@ -32,6 +36,8 @@ None.
   - `npm run proof:v1:service-role-authorization`
   - `npm run proof:v1:email-messaging-authorization`
   - `npm run proof:v1:launch-closeout`
+  - `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance`
+  - `npm run proof:v1:ai-product-readiness`
   - `npm run proof:v1:data-integrity`
   - `npm run proof:v1:prereqs`
   - `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model`
@@ -77,6 +83,7 @@ None.
 - Redeployed `translate-site-content` with a source-hash ready-row fast path, then reran the live secure AI/translation proof to green.
 - Unified `.dayof.love` subdomain parsing behind `resolveWeddingSubdomainSlugFromHostname(...)` and added local proof so the shipped subdomain route logic is pinned even though custom-host DNS reruns remain deferred.
 - Added production `data-integrity` and `prereqs` proof to the closeout evidence so the database/runtime inventory is backed by current runtime checks rather than just historical assumption.
+- Reran the AI/provider confidence lane so the current board reflects fresh same-day `ai-clearance` and `ai-product-readiness` proof instead of earlier-wave evidence.
 
 ## What Remains Before 10/10
 

@@ -22,7 +22,7 @@ Yes. The public DTO lane is fully minimized, the deployment/proof board is canon
 | Production-ready | `YES` |
 | Reason production-ready is not yet claimed | none |
 | Current blockers | `none` |
-| Current proof state | Public DTO allowlist tests are green across every guest-rendered section family; `proof:v1:public-access-coverage`, `typecheck`, `lint`, `build`, `test:security`, `test:smoke`, secure `service-role-authorization`, secure `email-messaging-authorization`, secure `launch-closeout`, live `guest-lookup-scope`, live `canonical-smoke`, live `public-quality`, live `guests-rsvp-ops`, live `guest-hub-write-read`, live `photo-upload-write-read`, live `registry-preview-ssrf`, live `ai-secure-model`, `proof:v1:data-integrity`, and `proof:v1:prereqs` are green. |
+| Current proof state | Public DTO allowlist tests are green across every guest-rendered section family; `proof:v1:public-access-coverage`, `typecheck`, `lint`, `build`, `test:security`, `test:smoke`, secure `service-role-authorization`, secure `email-messaging-authorization`, secure `launch-closeout`, live `guest-lookup-scope`, live `canonical-smoke`, live `public-quality`, live `guests-rsvp-ops`, live `guest-hub-write-read`, live `photo-upload-write-read`, live `registry-preview-ssrf`, live `ai-secure-model`, live `ai-clearance`, `proof:v1:ai-product-readiness`, `proof:v1:data-integrity`, and `proof:v1:prereqs` are green. |
 | Current deployment state | Frontend is live at [dayof.love](https://dayof.love) on verified deploy `dpl_5n7ybgjzFH6ewXM257SpYGDjUoy7`. Exact runtime Git SHA is not recoverable from this workspace because the production deploy was built from the working tree after `1915b681`. Public/site, queue, storage, photo, and guest contact surfaces are deployed and live-proven. |
 | Current next actions | none |
 
@@ -116,8 +116,10 @@ None.
 | `npm run proof:v1:service-role-authorization` | `PASS` | `secure env` | `2026-05-11` | Secure denial/storage containment lane green |
 | `npm run proof:v1:email-messaging-authorization` | `PASS` | `secure env` | `2026-05-11` | Isolated queue-row containment proof green |
 | `npm run proof:v1:launch-closeout` | `PASS` | `secure env` | `2026-05-11` | Closeout bundle green |
+| `npm run proof:v1:ai-product-readiness` | `PASS` | `local` | `2026-05-11` | `25/25` AI product-readiness checks passed |
 | `npm run proof:v1:data-integrity` | `PASS` | `production` | `2026-05-11` | Anon-limited integrity proof green; no hard launch corruption found |
 | `npm run proof:v1:prereqs` | `PASS` | `production + local env` | `2026-05-11` | Required migrations/functions/runtime readiness green; deferred provider/AI env notes remain non-launch |
+| `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance` | `LIVE PASS` | `production + secure env` | `2026-05-11` | Live AI/photo column exposure and rollout readiness are green |
 | `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model` | `LIVE PASS` | `production + secure env` | `2026-05-11` | Translation route plus live AI/photo model-backed lanes are green |
 | `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` | `LIVE PASS` | `production` | `2026-05-11` | Latest verified deploy `dpl_5n7ybgjzFH6ewXM257SpYGDjUoy7` |
 | `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` | `LIVE PASS` | `production` | `2026-05-11` | `4/4` passed |
@@ -211,4 +213,5 @@ None.
 - Redeployed `translate-site-content`, added a source-hash ready-row fast path, and turned the live translation proof from a deferred `504` into a green `200`.
 - Unified `.dayof.love` host parsing behind a shared helper and added explicit local proof for subdomain route resolution.
 - Added `proof:v1:data-integrity` and `proof:v1:prereqs` production checks to the closeout evidence, confirming runtime table/function inventory is healthy enough for the current launch baseline.
+- Reran live `ai-clearance` and local `ai-product-readiness`, keeping the AI/provider lane current instead of relying on earlier proof.
 - Launch is now `GO` with only deferred non-launch items left on the board.
