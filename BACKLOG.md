@@ -10,19 +10,19 @@ Yes. The public DTO lane is fully minimized, the deployment/proof board is canon
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-11 02:16 PM PDT` |
+| Current date/time | `2026-05-11 02:27 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
-| Latest Git SHA | `1915b681` |
-| Latest commit message | `Finish public section DTO minimization` |
+| Latest Git SHA | `b9201f28` |
+| Latest commit message | `Close guest contact runtime blocker and flip launch board` |
 | Vercel deployment ID | `dpl_5n7ybgjzFH6ewXM257SpYGDjUoy7` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
-| Supabase functions deployed | `public-site-access --no-verify-jwt`; `photo-upload --no-verify-jwt`; `process-email-queue`; `guest-contact-lookup --no-verify-jwt`; `guest-contact-submit --no-verify-jwt` |
+| Supabase functions deployed | `public-site-access --no-verify-jwt`; `photo-upload --no-verify-jwt`; `process-email-queue`; `guest-contact-lookup --no-verify-jwt`; `guest-contact-submit --no-verify-jwt`; `translate-site-content` |
 | Current readiness score | `9.9 / 10` |
 | Current launch verdict | `GO` |
 | Production-ready | `YES` |
 | Reason production-ready is not yet claimed | none |
 | Current blockers | `none` |
-| Current proof state | Public DTO allowlist tests are green across every guest-rendered section family; `proof:v1:public-access-coverage`, `typecheck`, `lint`, `build`, `test:security`, `test:smoke`, secure `service-role-authorization`, secure `email-messaging-authorization`, secure `launch-closeout`, live `guest-lookup-scope`, live `canonical-smoke`, live `public-quality`, live `guests-rsvp-ops`, live `guest-hub-write-read`, live `photo-upload-write-read`, and live `registry-preview-ssrf` are green. |
+| Current proof state | Public DTO allowlist tests are green across every guest-rendered section family; `proof:v1:public-access-coverage`, `typecheck`, `lint`, `build`, `test:security`, `test:smoke`, secure `service-role-authorization`, secure `email-messaging-authorization`, secure `launch-closeout`, live `guest-lookup-scope`, live `canonical-smoke`, live `public-quality`, live `guests-rsvp-ops`, live `guest-hub-write-read`, live `photo-upload-write-read`, live `registry-preview-ssrf`, and live `ai-secure-model` are green. |
 | Current deployment state | Frontend is live at [dayof.love](https://dayof.love) on verified deploy `dpl_5n7ybgjzFH6ewXM257SpYGDjUoy7`. Exact runtime Git SHA is not recoverable from this workspace because the production deploy was built from the working tree after `1915b681`. Public/site, queue, storage, photo, and guest contact surfaces are deployed and live-proven. |
 | Current next actions | none |
 
@@ -90,8 +90,6 @@ None.
 
 ## Non-Critical After Launch / Deferred
 
-- `translation route live rerun` -> `DEFERRED`
-  - translation payloads are covered by local DTO/leak tests, but there was no dedicated live translation-route rerun in this wave
 - `custom host/subdomain route live rerun` -> `DEFERRED`
   - canonical public-site resolver is live-green, but no dedicated custom-host DNS proof was rerun in this wave
 - `registry owner edit/import manual truth notes` -> `DEFERRED`
@@ -118,6 +116,7 @@ None.
 | `npm run proof:v1:service-role-authorization` | `PASS` | `secure env` | `2026-05-11` | Secure denial/storage containment lane green |
 | `npm run proof:v1:email-messaging-authorization` | `PASS` | `secure env` | `2026-05-11` | Isolated queue-row containment proof green |
 | `npm run proof:v1:launch-closeout` | `PASS` | `secure env` | `2026-05-11` | Closeout bundle green |
+| `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model` | `LIVE PASS` | `production + secure env` | `2026-05-11` | Translation route plus live AI/photo model-backed lanes are green |
 | `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` | `LIVE PASS` | `production` | `2026-05-11` | Latest verified deploy `dpl_5n7ybgjzFH6ewXM257SpYGDjUoy7` |
 | `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` | `LIVE PASS` | `production` | `2026-05-11` | `4/4` passed |
 | `npm run proof:v1:guests-rsvp-ops` | `LIVE PASS` | `production` | `2026-05-11` | Passed when rerun outside the sandbox network |
@@ -157,10 +156,10 @@ None.
 | `process-email-queue` | `UNVERIFIED (redeployed after 1915b681)` | `yes` | `Supabase Edge runtime atuzuobpprjstfmdnwso` | `default verify_jwt` | `npm run proof:v1:email-messaging-authorization`; `npm run proof:v1:launch-closeout` | green | None on queue containment lane | `LIVE PASS` |
 | `queue-guest-followups` | `UNVERIFIED (existing production deploy)` | `yes` | `Supabase Edge runtime atuzuobpprjstfmdnwso` | `unknown` | `npm run proof:v1:email-messaging-authorization`; `npm run proof:v1:collaborator-runtime` | green | None on scoped queue-creation lane | `LIVE PASS` |
 | `guest messaging` / scheduled and bulk queue paths | `UNVERIFIED (existing production deploy)` | `yes` | `Frontend + Supabase Edge runtime` | `unknown` | `npm run proof:v1:comms-center`; secure email proof lanes | green | Provider send success remains non-launch and deferred | `LIVE PASS` |
-| `translate-site-content` / translation route | `UNVERIFIED (existing production deploy)` | `yes` | `Supabase Edge runtime + frontend` | `unknown` | local DTO translation leak tests | local green | No dedicated live translation-route rerun in this wave | `DEFERRED` |
+| `translate-site-content` / translation route | `UNVERIFIED (redeployed after b9201f28)` | `yes` | `Supabase Edge runtime + frontend` | `default verify_jwt` | `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model` | green | Exact runtime Git SHA still unrecoverable; live proof is green | `LIVE PASS` |
 | `photo/media public routes` | `UNVERIFIED (existing production deploy)` | `yes` | `Frontend + Supabase storage/public guest flows` | `mixed` | photo upload/write/read proof; public-quality | green | None on current photo/media guest lanes | `LIVE PASS` |
 | `subdomain route` | `UNVERIFIED (existing production deploy)` | `yes` | `Frontend host routing` | `unknown` | canonical smoke on `dayof.love` only | not rerun on custom host | Custom-host DNS route not rerun this wave; not a current launch blocker for the shipped path-based proof fixture | `DEFERRED` |
-| `AI/provider functions` | `UNVERIFIED (existing production deploy)` | `yes` | `Frontend + Edge runtime` | `mixed` | `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance`; `npm run proof:v1:ai-product-readiness` | green earlier in this wave | None on current launch-hardening lane | `LIVE PASS` |
+| `AI/provider functions` | `UNVERIFIED (mixed production deploys)` | `yes` | `Frontend + Edge runtime` | `mixed` | `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance`; `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model`; `npm run proof:v1:ai-product-readiness` | green | None on current launch-hardening lane | `LIVE PASS` |
 | `sections_public_visible_read` removal migration | `UNVERIFIED (db push after 1915b681)` | `yes` | `Supabase database` | `supabase db push` | live public-route proofs stayed green after push | green | Exact migration ledger SHA not recovered here | `DEPLOYED` |
 | public/guest/service-role access migrations | `UNVERIFIED (existing production schema)` | `yes` | `Supabase database` | `historical migrations` | secure auth proofs; public smoke/public-quality; guest-hub/photo proof | green | Exact remote migration audit not rerun in this workspace | `DEPLOYED` |
 
@@ -173,9 +172,9 @@ None.
 5. Rerun `npm run proof:v1:board:md` after future launch-control edits.
 6. Rerun `git diff --check` after future launch-control edits.
 7. Rerun `npm run proof:v1:guest-lookup-scope` after any guest contact surface deploy.
-8. Leave translation-route live proof deferred unless that lane changes.
-9. Leave custom-host/subdomain live proof deferred unless that lane changes.
-10. Keep SMS/provider live-send work out of the launch baseline until provider setup is ready.
+8. Leave custom-host/subdomain live proof deferred unless that lane changes.
+9. Keep SMS/provider live-send work out of the launch baseline until provider setup is ready.
+10. Keep AI/provider live-model proof in the postdeploy lane after future translation or photo-analysis changes.
 
 ## Resolved Work Summary
 
@@ -207,4 +206,5 @@ None.
 - Closed `P1-09 Deployment / proof truth canonicalization` by rewriting the board into one exact launch-control source of truth.
 - Discovered a real guest-contact blocker while canonicalizing the deployment matrix, then closed it.
 - Forced a fresh `guest-contact-lookup` runtime version, redeployed both guest contact functions, and reran the live proof.
+- Redeployed `translate-site-content`, added a source-hash ready-row fast path, and turned the live translation proof from a deferred `504` into a green `200`.
 - Launch is now `GO` with only deferred non-launch items left on the board.

@@ -110,6 +110,19 @@ Deno.serve(async (req: Request) => {
     };
     const sourceHash = await sha256Hex(JSON.stringify(source));
 
+    const { data: existingTranslation } = await admin
+      .from("site_translations")
+      .select("id,language,source_hash,translated_at")
+      .eq("wedding_site_id", siteId)
+      .eq("language", language)
+      .eq("source_hash", sourceHash)
+      .eq("status", "ready")
+      .maybeSingle();
+
+    if (existingTranslation) {
+      return json({ success: true, translation: existingTranslation });
+    }
+
     const markFailed = async () => {
       await admin
         .from("site_translations")

@@ -312,6 +312,9 @@ describe('launch edge function guards', () => {
     expect(source).toContain('scope: "translate_site_content"');
     expect(source).toContain('maxSubject: 8');
     expect(source).toContain('Deno.env.get("OPENAI_API_KEY")');
+    expect(source).toContain('.eq("source_hash", sourceHash)');
+    expect(source).toContain('.eq("status", "ready")');
+    expect(source).toContain('return json({ success: true, translation: existingTranslation });');
     expect(source).toContain('safeTranslateSiteContentError("LOAD_FAILED")');
     expect(source).toContain('safeTranslateSiteContentError("SAVE_FAILED")');
     expect(source).toContain('safeTranslateSiteContentError("INTERNAL_ERROR")');

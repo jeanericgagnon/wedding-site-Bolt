@@ -30,6 +30,19 @@ _Launch call right now:_ `GO`
 
 ## Latest Changes In This Final Closeout
 
+### 2026-05-11 02:27 PM PDT - Translation Route Live Proof Closed
+
+- Redeployed `translate-site-content` with a source-hash ready-row fast path for unchanged site/language pairs.
+- `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model` now passes all `17/17` checks, including:
+  - safe missing-auth failure on `translate-site-content`
+  - live owner-gated translation success with `200`
+  - ready-row translation readback
+  - photo AI live proof lane still green
+- Result:
+  - translation route is no longer deferred
+  - launch remains `GO`
+  - production-ready remains `YES`
+
 ### 2026-05-11 02:16 PM PDT - Guest Contact Runtime Blocker Closed
 
 - Forced a fresh `guest-contact-lookup` runtime version with a real source change, then redeployed:

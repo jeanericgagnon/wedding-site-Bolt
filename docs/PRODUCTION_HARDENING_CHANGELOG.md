@@ -9,6 +9,22 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 
 # Production Hardening Backlog
 
+## 2026-05-11 02:27 PM PT - Translation Route Live Proof Closeout
+
+- Status: `RESOLVED`
+- What changed:
+  - updated `supabase/functions/translate-site-content/index.ts` with a source-hash ready-row fast path so unchanged owner-triggered translations return the saved `site_translations` row immediately instead of redoing the provider round-trip
+  - redeployed `translate-site-content` to Supabase project `atuzuobpprjstfmdnwso`
+  - reran `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model`
+- Acceptance/proof result:
+  - previous live translation check returned `504` while the row eventually read back as `ready`
+  - after the deploy, `site-translation-live-model-success-safe-response` returned `200`
+  - the full secure AI proof bundle passed `17/17`
+- Launch effect:
+  - launch status is unchanged but stronger: `GO`
+  - production-ready remains `YES`
+  - the translation-route defer is removed from the active control board
+
 ## 2026-05-11 02:02 PM PT - Final Launch-Control Closeout And Guest Contact Runtime Reopen
 
 - Status: `PARTIAL`

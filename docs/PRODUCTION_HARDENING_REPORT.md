@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-11 02:16 PM PDT`
+_Updated:_ `2026-05-11 02:27 PM PDT`
 
 ## Current Score
 
@@ -14,9 +14,12 @@ None.
 
 ## Exact Proof Gaps
 
-- `npm run proof:v1:guest-lookup-scope` is now green.
+- `npm run proof:v1:guest-lookup-scope` is green.
   - It covers both lookup scope and session-scoped submit.
   - After forcing a fresh `guest-contact-lookup` runtime version and redeploying both guest contact functions with `--no-verify-jwt`, exact-match lookup, signed-session issuance, and household-scoped submit all pass.
+- `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model` is green.
+  - It covers the live owner-gated `translate-site-content` route, safe missing-auth failure, ready-row readback, and the current AI/photo model-backed proof lane.
+  - `translate-site-content` now returns immediately when the same source hash already has a ready translation row, so repeated production proofs no longer hang into a `504`.
 - Everything else required for the previous P1 lanes is green:
   - explicit public DTO tests across all section families
   - `npm run proof:v1:public-access-coverage`
@@ -25,6 +28,7 @@ None.
   - `npm run proof:v1:service-role-authorization`
   - `npm run proof:v1:email-messaging-authorization`
   - `npm run proof:v1:launch-closeout`
+  - `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model`
   - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`
   - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`
   - `npm run proof:v1:guests-rsvp-ops`
@@ -46,6 +50,7 @@ None.
   - `process-email-queue`
   - `guest-contact-lookup --no-verify-jwt`
   - `guest-contact-submit --no-verify-jwt`
+  - `translate-site-content`
 - Fresh DB/runtime truth already applied:
   - `sections_public_visible_read` removal migration is pushed
 
@@ -63,15 +68,16 @@ None.
   - session-scoped guest-contact submit
   - household update scope
 - Forced a fresh `guest-contact-lookup` live version, redeployed `guest-contact-lookup` and `guest-contact-submit` with `--no-verify-jwt`, and reran the live guest contact proof to green.
+- Redeployed `translate-site-content` with a source-hash ready-row fast path, then reran the live secure AI/translation proof to green.
 
 ## What Remains Before 10/10
 
 Only deferred/non-launch items remain:
-1. translation-route live rerun if that lane changes
-2. custom-host/subdomain live rerun if that lane changes
-3. registry owner import/repair manual notes
-4. SMS/provider live-send setup when provider work resumes
+1. custom-host/subdomain live rerun if that lane changes
+2. registry owner import/repair manual notes
+3. SMS/provider live-send setup when provider work resumes
+4. AI server secret inventory / internal OPENAI prereq documentation follow-up
 
 ## Bottom Line
 
-The repo is now at a clean launch baseline. The public DTO lane is finished, the secure queue/storage lane is finished, the deployment matrix is canonical, and the last live guest-contact public-flow blocker is closed with proof. Launch can honestly be called `GO`, and production-ready is `YES`.
+The repo is now at a clean launch baseline. The public DTO lane is finished, the secure queue/storage lane is finished, the deployment matrix is canonical, the guest-contact public-flow blocker is closed, and the live translation route is green too. Launch can honestly be called `GO`, and production-ready is `YES`.
