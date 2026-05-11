@@ -9,7 +9,7 @@ import { BuilderSectionInstance, createDefaultSectionInstance } from '../types/b
 import { SectionRenderer } from '../builder/components/SectionRenderer';
 import { SiteViewContext } from '../contexts/SiteViewContext';
 import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
-import { normalizePublicSiteSlug } from '../lib/publicSiteSlug';
+import { normalizePublicSiteSlug, resolveWeddingSubdomainSlugFromHostname } from '../lib/publicSiteSlug';
 import { getTemplatePack } from '../builder/constants/builderTemplatePacks';
 import { getSectionVariants } from '../sections/sectionRegistry';
 import { demoWeddingSite } from '../lib/demoData';
@@ -541,13 +541,7 @@ export const SiteView: React.FC = () => {
 
   const resolvedSlug = React.useMemo(() => {
     if (slug) return normalizePublicSiteSlug(slug);
-    const host = window.location.hostname.toLowerCase();
-    if (!host.endsWith('dayof.love')) return null;
-    const parts = host.split('.');
-    if (parts.length < 3) return null; // dayof.love
-    const sub = parts[0];
-    if (!sub || sub === 'www') return null;
-    return normalizePublicSiteSlug(sub);
+    return resolveWeddingSubdomainSlugFromHostname(window.location.hostname);
   }, [slug]);
   const [searchParams] = useSearchParams();
   const { i18n } = useTranslation();

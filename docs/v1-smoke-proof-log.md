@@ -43,6 +43,34 @@ _Launch call right now:_ `GO`
   - launch remains `GO`
   - production-ready remains `YES`
 
+### 2026-05-11 02:34 PM PDT - Subdomain Route Parsing Pinned Locally
+
+- Unified `.dayof.love` host parsing behind `resolveWeddingSubdomainSlugFromHostname(...)`.
+- Updated both `src/App.tsx` and `src/pages/SiteView.tsx` to use the shared helper instead of duplicating hostname parsing.
+- Added local proof in `src/lib/publicSiteSlug.test.ts` for:
+  - normal subdomain hosts
+  - apex / `www` hosts
+  - mixed-case hosts
+  - non-DayOf hosts
+- Result:
+  - subdomain route logic is locally pinned
+  - custom-host DNS reruns remain deferred and non-launch
+
+### 2026-05-11 02:33 PM PDT - Data Integrity And Prereqs Runtime Sweep
+
+- `npm run proof:v1:data-integrity` -> `PASS`
+  - anon-limited runtime integrity proof found no hard launch corruption
+  - no invalid or duplicate site slugs
+- `npm run proof:v1:prereqs` -> `PASS`
+  - required migrations present
+  - required local functions present
+  - required live REST tables reachable/protected as expected
+  - required edge functions deployed/reachable as expected
+- Result:
+  - launch status unchanged: `GO`
+  - production-ready unchanged: `YES`
+  - runtime inventory confidence is stronger
+
 ### 2026-05-11 02:16 PM PDT - Guest Contact Runtime Blocker Closed
 
 - Forced a fresh `guest-contact-lookup` runtime version with a real source change, then redeployed:

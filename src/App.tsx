@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ToastProvider } from './components/ui/Toast';
+import { resolveWeddingSubdomainSlugFromHostname } from './lib/publicSiteSlug';
 
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
 const Product = lazy(() => import('./pages/Product').then(m => ({ default: m.Product })));
@@ -72,12 +73,7 @@ const PageLoader = () => (
 const AppContent = () => {
   const isWeddingSubdomainHost = (() => {
     if (typeof window === 'undefined') return false;
-    const host = window.location.hostname.toLowerCase();
-    if (!host.endsWith('dayof.love')) return false;
-    const parts = host.split('.');
-    if (parts.length < 3) return false;
-    const sub = parts[0];
-    return Boolean(sub) && sub !== 'www';
+    return Boolean(resolveWeddingSubdomainSlugFromHostname(window.location.hostname));
   })();
 
   return (

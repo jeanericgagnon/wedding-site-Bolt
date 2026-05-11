@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-11 02:27 PM PDT`
+_Updated:_ `2026-05-11 02:34 PM PDT`
 
 ## Current Score
 
@@ -20,6 +20,10 @@ None.
 - `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model` is green.
   - It covers the live owner-gated `translate-site-content` route, safe missing-auth failure, ready-row readback, and the current AI/photo model-backed proof lane.
   - `translate-site-content` now returns immediately when the same source hash already has a ready translation row, so repeated production proofs no longer hang into a `504`.
+- `npm run proof:v1:data-integrity` is green.
+  - It is still anon-limited, but it found no hard launch corruption in public-facing integrity checks.
+- `npm run proof:v1:prereqs` is green.
+  - Required migrations, local functions, runtime table reachability, and edge deployment reachability are all healthy for the current launch baseline.
 - Everything else required for the previous P1 lanes is green:
   - explicit public DTO tests across all section families
   - `npm run proof:v1:public-access-coverage`
@@ -28,6 +32,8 @@ None.
   - `npm run proof:v1:service-role-authorization`
   - `npm run proof:v1:email-messaging-authorization`
   - `npm run proof:v1:launch-closeout`
+  - `npm run proof:v1:data-integrity`
+  - `npm run proof:v1:prereqs`
   - `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model`
   - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`
   - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`
@@ -69,6 +75,8 @@ None.
   - household update scope
 - Forced a fresh `guest-contact-lookup` live version, redeployed `guest-contact-lookup` and `guest-contact-submit` with `--no-verify-jwt`, and reran the live guest contact proof to green.
 - Redeployed `translate-site-content` with a source-hash ready-row fast path, then reran the live secure AI/translation proof to green.
+- Unified `.dayof.love` subdomain parsing behind `resolveWeddingSubdomainSlugFromHostname(...)` and added local proof so the shipped subdomain route logic is pinned even though custom-host DNS reruns remain deferred.
+- Added production `data-integrity` and `prereqs` proof to the closeout evidence so the database/runtime inventory is backed by current runtime checks rather than just historical assumption.
 
 ## What Remains Before 10/10
 

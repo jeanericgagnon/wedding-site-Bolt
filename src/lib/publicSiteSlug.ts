@@ -19,6 +19,16 @@ export function normalizePublicSiteSlug(input: string | null | undefined): strin
   return cleanSlugToken(raw);
 }
 
+export function resolveWeddingSubdomainSlugFromHostname(hostname: string | null | undefined): string | null {
+  if (!hostname) return null;
+  const host = hostname.trim().toLowerCase().replace(/^www\./, '');
+  if (!host.endsWith('dayof.love')) return null;
+  if (host === 'dayof.love') return null;
+  const sub = host.replace(/\.dayof\.love$/, '');
+  if (!sub || sub === host) return null;
+  return cleanSlugToken(sub);
+}
+
 export function buildSiteUrlLookupCandidates(slug: string): string[] {
   const normalized = normalizePublicSiteSlug(slug);
   if (!normalized) return [];

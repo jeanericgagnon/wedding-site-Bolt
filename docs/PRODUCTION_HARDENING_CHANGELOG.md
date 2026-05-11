@@ -25,6 +25,32 @@ This file preserves timestamped historical entries, extraction batches, and no-d
   - production-ready remains `YES`
   - the translation-route defer is removed from the active control board
 
+## 2026-05-11 02:34 PM PT - Subdomain Route Parsing Hardening
+
+- Status: `LOCAL PROOF ADDED`
+- What changed:
+  - added `resolveWeddingSubdomainSlugFromHostname(...)` to `src/lib/publicSiteSlug.ts`
+  - updated `src/App.tsx` and `src/pages/SiteView.tsx` to use the shared helper for `.dayof.love` host parsing
+  - added focused coverage in `src/lib/publicSiteSlug.test.ts`
+- Proof result:
+  - local tests now pin the shipped subdomain route behavior for apex, `www`, mixed-case, and non-DayOf hosts
+- Launch effect:
+  - no launch-state change
+  - custom-host DNS reruns remain deferred and non-launch
+
+## 2026-05-11 02:33 PM PT - Runtime Inventory Proof Sweep
+
+- Status: `PROOF ADDED`
+- What changed:
+  - ran `npm run proof:v1:data-integrity`
+  - ran `npm run proof:v1:prereqs`
+- Proof result:
+  - `data-integrity` passed in anon-limited mode without any hard launch corruption
+  - `prereqs` passed with required migrations, local functions, live REST tables, and edge deployment reachability all green
+- Launch effect:
+  - no launch-state change
+  - runtime inventory confidence is stronger and now recorded in the active board/report
+
 ## 2026-05-11 02:02 PM PT - Final Launch-Control Closeout And Guest Contact Runtime Reopen
 
 - Status: `PARTIAL`

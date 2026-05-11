@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildSiteUrlLookupCandidates, normalizePublicSiteSlug, resolvePublicSiteSlugFromRow } from './publicSiteSlug';
+import { buildSiteUrlLookupCandidates, normalizePublicSiteSlug, resolvePublicSiteSlugFromRow, resolveWeddingSubdomainSlugFromHostname } from './publicSiteSlug';
 
 describe('normalizePublicSiteSlug', () => {
   it('keeps plain slugs', () => {
@@ -39,5 +39,25 @@ describe('resolvePublicSiteSlugFromRow', () => {
 
   it('falls back to site_url when site_slug missing', () => {
     expect(resolvePublicSiteSlugFromRow({ site_slug: null, site_url: 'https://alex-jordan-demo.dayof.love' })).toBe('alex-jordan-demo');
+  });
+});
+
+describe('resolveWeddingSubdomainSlugFromHostname', () => {
+  it('extracts a dayof subdomain host slug', () => {
+    expect(resolveWeddingSubdomainSlugFromHostname('alex-jordan-demo.dayof.love')).toBe('alex-jordan-demo');
+  });
+
+  it('ignores apex and www dayof hosts', () => {
+    expect(resolveWeddingSubdomainSlugFromHostname('dayof.love')).toBeNull();
+    expect(resolveWeddingSubdomainSlugFromHostname('www.dayof.love')).toBeNull();
+  });
+
+  it('normalizes mixed-case hosts', () => {
+    expect(resolveWeddingSubdomainSlugFromHostname('Alex-Jordan-Demo.DayOf.Love')).toBe('alex-jordan-demo');
+  });
+
+  it('ignores non-dayof hosts', () => {
+    expect(resolveWeddingSubdomainSlugFromHostname('example.com')).toBeNull();
+    expect(resolveWeddingSubdomainSlugFromHostname('alex-jordan-demo.example.com')).toBeNull();
   });
 });
