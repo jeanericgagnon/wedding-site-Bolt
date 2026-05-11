@@ -1,118 +1,133 @@
 # Production Hardening Report
 
-_Updated:_ 2026-05-09
+_Updated:_ 2026-05-11 08:36 AM PT
 _Branch carrying current local launch-control truth:_ `codex/v1-finish-hard-gates`
-_Latest commit:_ `9c976a26` `Tighten public site render boundary`
-_Latest runtime deploy:_ Vercel `dpl_68n9YLtWy67VxmqziaVYQAACKHqL` plus `public-site-access` redeploy with `--no-verify-jwt`
+_Latest commit on branch:_ `223cba93`
+_Latest verified web deploy:_ `dpl_AjQ94iVAXhPutmegQbvjtawUUjUx` at [dayof.love](https://dayof.love)
+_Important note:_ the current working tree includes additional launch-closeout changes that are deployed and proven but not yet committed
 
 ## Current Verdict
 
-- **Readiness score:** `8.9 / 10`
+- **Readiness score:** `9.6 / 10`
 - **Launch verdict:** `HOLD`
 - **Production-ready:** `NO`
 
-This is a meaningfully stronger production posture than the repo had before the final hardening push, but it is still not a true `10 / 10` launch state. The production deploy is live, the strict public render DTO is now live-validated, canonical smoke is green, public-quality is green, and guests / RSVP ops is green. The repo's proof board now narrows the only active ungated launch blocker to the secure service-role queue/storage lane; the remaining work after that is launch-control closeout, not the main public-site payload path.
+The public boundary work that previously blocked launch is now live, re-proved, and materially tighter. The guest/public browser no longer reads `sections` directly, persisted published-section fallback now stays server-side, and the anonymous `sections_public_visible_read` policy has been removed from the remote database. The only remaining honest launch blocker is the secure secret-backed proof lane that cannot run here because `SUPABASE_SERVICE_ROLE_KEY` is absent.
 
-## What Changed In The Final Hardening Phase
+## What Closed In This Wave
 
-### 1. Public/runtime hardening moved from theory to live runtime
+### 1. Public route is now single-source again
 
-- The production web app is live at [dayof.love](https://dayof.love).
-- `public-site-access`, `interactive-section-public`, and `vault-contribution-public` were deployed and aligned with the live web runtime.
-- `process-email-queue`, `public-itinerary-by-slug`, and `photo-upload` were also deployed in the same hardening wave.
-- `public-site-access` needed one more runtime policy correction: it was redeployed with `--no-verify-jwt` so the publishable-key browser path would resolve in production instead of failing before the handler.
-- Canonical smoke, guests / RSVP ops, and public-quality were rerun after deploy alignment and all passed.
+- `SiteView` no longer falls back to browser `sections` reads.
+- `PageRendererFromDB` was removed from the public path.
+- Persisted published-section fallback now happens inside `public-site-access`, using the same public allowlist contract as normal published pages.
 
-### 2. Public payload handling improved again and is now live-validated
+### 2. Public DTO is tighter at the network boundary
 
-- The main public site lane no longer returns raw top-level `site_json`, `published_json`, `wedding_data`, or `layout_config` blobs directly.
-- The browser now consumes a stricter server-built public DTO shaped as public `pages`, `wedding`, and `theme`.
-- `SiteView` no longer hydrates from `builderProject`, `weddingData`, or `layoutConfig`.
-- Legacy client-side public site reads are quarantined to metadata-only columns.
-- Existing leak-focused tests, `SiteView` regression tests, and public-access static proof are green locally.
-- The browser-side `publicSiteAccess` helper was switched onto the shared Supabase client path so it no longer relies on a raw `Authorization` header pattern that production rejected.
-- `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` is now green, including:
-  - demo site guest-ready desktop/mobile proof
-  - owner preview banner continuity
-  - proof site canonical row identity over stale embedded snapshots
+- `public-site-access` still returns a minimized public render model rather than raw top-level blobs.
+- The server DTO now omits `wedding.meta`.
+- Public style escape hatches `customCss`, `customClassName`, and `styleRecipeCss` were removed from the public contract.
+- Browser-side sanitization now mirrors the server contract as defense-in-depth instead of carrying the main minimization burden.
 
-### 3. Authorization proof improved, but one secure deep-proof lane remains open
+### 3. Remote policy and deploy state are aligned
 
-- `npm run proof:v1:service-role-authorization` is green for the unauthenticated denial lane, including live runtime proof.
-- `npm run proof:v1:email-messaging-authorization` is green for the unauthenticated denial lane, including live runtime proof.
-- Historical hardening records indicate earlier secure proof coverage, but the current launch-signoff bar still needs a fresh secure-env rerun for:
-  - queue/storage containment
-  - cross-site mutation resistance
-  - queue-processing integrity
-  - recipient scoping and collaborator restrictions
+- `public-site-access` was redeployed.
+- Production web app was redeployed and is live at [dayof.love](https://dayof.love).
+- `20260511113000_remove_public_sections_visible_read.sql` was pushed remotely, removing the anonymous public `sections` read path that made the old fallback unsafe.
 
-## Current Blocking Risks
+## Proof That Is Green
 
-1. **Secure service-role queue/storage proof is not freshly rerun**
-   - Runtime deep proof still requires `SUPABASE_SERVICE_ROLE_KEY`.
-   - This workspace does not have that secret.
-   - This is the only active ungated launch blocker left in the repo proof board.
+### Local / repo proof
 
-2. **Secure email queue-processing deep proof is still folded into that secure lane**
-   - The unauthenticated denial proof is already green live.
-   - The remaining queue-processing deep proof still needs the same secure secret-backed rerun, so it is not tracked separately from the open service-role lane in the canonical proof board.
-
-3. **Deployment / validation / asset closeout is improved but not final**
-   - Production deploy state is far clearer than before.
-   - The board still needs the remaining launch-critical secure proof plus final wording closeout before we can claim full launch confidence.
-
-## Current Proof And Deployment Summary
-
-### Local proof status
-
+- focused public DTO / leak / boundary tests: `PASS`
+- `npm run proof:v1:public-access-coverage`: `PASS`
 - `npm run typecheck -- --pretty false`: `PASS`
 - `npm run lint -- --quiet`: `PASS`
 - `npm run build`: `PASS`
-- `npm run proof:v1:public-access-coverage`: `PASS`
-- public render-model / leak / SiteView regression tests: `PASS`
+- `npm run guard:assets`: `PASS`
+- `npm run guard:file-size`: `PASS`
 - `npm run proof:v1:performance-budget`: `PASS`
-- `npm run proof:v1:board:md`: current-board guard, rerun after every board update
+- `npm run proof:v1:board:md`: `PASS`
+- `git diff --check`: `PASS`
 
-### Live proof status
+### Live public proof
 
-- production web deploy at [dayof.love](https://dayof.love): `LIVE`
 - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`: `LIVE PASS`
 - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`: `LIVE PASS`
 - `npm run proof:v1:guests-rsvp-ops`: `LIVE PASS`
-- `public-site-access` production browser resolution: `LIVE PASS` after redeploying with `--no-verify-jwt`
-- `npm run proof:v1:service-role-authorization`: `LIVE PASS` for unauthenticated denial; deep secure proof still open
-- `npm run proof:v1:email-messaging-authorization`: `LIVE PASS` for unauthenticated denial; deep secure proof still open
 
-### Secure-env blockers
+### Security proof already green in this workspace
 
-- `SUPABASE_SERVICE_ROLE_KEY` is not present in the local workspace env.
-- Connected Vercel env inventories did not expose a service-role-style secret.
-- Supabase control-plane secret inspection remains blocked because `SUPABASE_ACCESS_TOKEN` or an authenticated Supabase CLI session is not available from this workspace.
+- `npm run proof:v1:service-role-authorization`: `PASS` for the unauthenticated denial lane
+- `npm run proof:v1:email-messaging-authorization`: `PASS` for the unauthenticated denial lane
+- `npm run proof:v1:launch-closeout`: executed and blocked cleanly only on the expected missing `SUPABASE_SERVICE_ROLE_KEY`
 
-## Launch-Control Position
+### Additional launch-surface proof now green
 
-The hardening mandate is now intentionally narrower and tougher:
+- `npm run proof:v1:collaborator-access`: `PASS`
+- `npm run proof:v1:coordinator-dayof`: `PASS`
+- `npm run proof:v1:seating-continuity`: `PASS`
+- `npm run proof:v1:registry`: `PASS`
+- `npm run proof:v1:comms-center`: `PASS`
+- `npm run proof:v1:prereqs`: `PASS` when rerun with network access
+- `npm run proof:v1:data-integrity`: `PASS` in anon-limited mode
+- `npm run proof:v1:ai-product-readiness`: `PASS`
+- `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance`: `LIVE PASS`
 
-1. Finish secure service-role queue/storage proof.
-2. Keep deployment state canonical.
-3. Keep validation state canonical.
-4. Close asset/CDN launch questions.
-5. Commit and push the final launch-control truth updates.
+## What Still Blocks Launch
 
-Broad dashboard extraction, route decomposition, and cosmetic cleanup stay out of the launch lane unless they directly remove one of those blockers.
+### 1. Secure service-role queue/storage deep proof
 
-## Document Map
+- `SUPABASE_SERVICE_ROLE_KEY` is not available in this workspace.
+- The remaining proof still needs to show:
+  - queue/storage containment
+  - no arbitrary cross-site mutation
+  - storage/media boundary integrity
+  - no insecure fallback auth path
 
-- Active control board: [BACKLOG.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG.md)
-- Historical hardening diary / extraction archive: [docs/PRODUCTION_HARDENING_CHANGELOG.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/PRODUCTION_HARDENING_CHANGELOG.md)
-- Smoke and proof history: [docs/v1-smoke-proof-log.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/v1-smoke-proof-log.md)
-- Residual public-access inventory: [docs/PUBLIC_ACCESS_RESIDUAL_AUDIT_2026-05-08.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/PUBLIC_ACCESS_RESIDUAL_AUDIT_2026-05-08.md)
+### 2. Secure email queue-processing deep proof
+
+- The denial lane is already green.
+- The remaining proof still needs to show:
+  - queue authorization
+  - send authorization
+  - recipient scoping
+  - collaborator restrictions
+  - queue isolation
+  - public abuse resistance
+
+## Remaining Confidence Gaps That Are Not Current Code Failures
+
+- `registry`, `comms-center`, `collaborator-access`, `coordinator-dayof`, and `seating-continuity` all have green automation now.
+- Their proof outputs still recommend real runtime notes if we want literal 10/10 operator confidence for owner/collaborator/day-of usage, rather than only automated confidence.
+- `data-integrity` is green in anon-limited mode, but full cross-table integrity still naturally belongs with the secure service-role lane.
+- Those advisory runtime-note tasks are now centralized in `/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/v1-runtime-operator-notes-checklist.md`.
+
+## Deployment Status
+
+| Surface | State | Notes |
+| --- | --- | --- |
+| web app | `LIVE PASS` | Vercel deployment `dpl_AjQ94iVAXhPutmegQbvjtawUUjUx`, aliased to [dayof.love](https://dayof.love) |
+| `public-site-access` | `LIVE PASS` | redeployed; covered by live public proof |
+| public `sections` policy removal migration | `DEPLOYED` | applied remotely with `supabase db push` |
+| `process-email-queue` | `DEPLOYED` | secure deep proof still pending |
+| `photo-upload` | `DEPLOYED` | secure deep proof still pending |
+
+## Exact Finish Path
+
+1. Run `npm run proof:v1:service-role-authorization` in a secure environment that has `SUPABASE_SERVICE_ROLE_KEY`.
+2. Run `npm run proof:v1:email-messaging-authorization` in that same environment.
+3. Prefer the bundled final lane:
+   - `npm run proof:v1:launch-closeout`
+4. Record the secure proof outputs in:
+   - `/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG.md`
+   - `/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/PRODUCTION_HARDENING_REPORT.md`
+   - `/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/v1-smoke-proof-log.md`
+5. The bundle also reruns:
+   - `npm run proof:v1:board:md`
+   - `git diff --check`
+6. Only after those secure proofs are green should launch status move from `HOLD` to `GO`.
 
 ## Bottom Line
 
-We are no longer in the vague middle. The remaining launch work is specific:
-
-- rerun secure service-role deep proof
-- close deployment / validation / asset sign-off
-
-Until those are done, this stays a strong `8.9 / 10` system with real production progress, not a `10 / 10` launch-safe finish.
+We are no longer stuck on public payload architecture or deploy ambiguity. The website is now in a narrow finish state: repo-side hardening is live and proven, and the remaining launch block is the secure secret-backed authorization proof lane.

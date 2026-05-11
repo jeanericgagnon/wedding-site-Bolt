@@ -15,6 +15,9 @@ describe('public guest surface boundary', () => {
     const interactiveService = readSource('src/sections/interactiveSectionService.ts');
 
     expect(siteView).toContain('fetchPublicSiteAccess({');
+    expect(siteView).not.toContain('fetchPublishedSections(');
+    expect(siteView).not.toContain('PageRendererFromDB');
+    expect(siteView).not.toContain("from '../data/siteRepository'");
     expect(vaultContribute).toContain('fetchPublicSiteAccess({');
     expect(rsvpSection).toContain("supabase.functions.invoke('public-site-access'");
     expect(interactiveService).not.toContain("supabase.functions.invoke('public-site-access'");
@@ -54,8 +57,10 @@ describe('public guest surface boundary', () => {
     expect(siteView).toContain("from './siteViewService'");
     expect(siteView).toContain('<SiteViewRouteView');
     expect(siteView).toContain('fetchPublicItineraryRows(siteSlug, access)');
-    expect(siteView).toContain('hasLiveRegistryItems(siteId, access)');
     expect(siteView).toContain('hasLiveRegistryItems(data.id as string, subresourceAccess)');
+    expect(siteView).not.toContain('hasLiveRegistryItems(siteId, access)');
+    expect(siteView).not.toContain('fetchPublishedSections(');
+    expect(siteView).not.toContain('PageRendererFromDB');
     expect(siteView).not.toContain('Loading wedding site...');
     expect(siteView).not.toContain('Something went wrong');
     expect(siteViewService).toContain("supabase.functions.invoke('public-itinerary-by-slug'");

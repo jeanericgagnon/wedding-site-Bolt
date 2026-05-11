@@ -1,4 +1,4 @@
-import { SectionType } from '../layoutConfig';
+import { SectionType } from '../layoutConfig.ts';
 
 export type BuilderSectionType = SectionType;
 

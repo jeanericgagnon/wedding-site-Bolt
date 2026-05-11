@@ -4,15 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { AlertCircle, Lock, Eye, EyeOff } from 'lucide-react';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { WeddingDataV1, createEmptyWeddingData, normalizeWeddingData } from '../types/weddingData';
-import { SectionInstance } from '../types/layoutConfig';
 import { applyThemePreset, applyThemeTokens } from '../lib/themePresets';
 import { BuilderSectionInstance, createDefaultSectionInstance } from '../types/builder/section';
 import { SectionRenderer } from '../builder/components/SectionRenderer';
-import { PageRenderer } from '../render/PageRenderer';
 import { SiteViewContext } from '../contexts/SiteViewContext';
-import { RegistryGrid } from '../sections/components/RegistrySection';
 import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
-import { siteRepository } from '../data/siteRepository';
 import { normalizePublicSiteSlug } from '../lib/publicSiteSlug';
 import { getTemplatePack } from '../builder/constants/builderTemplatePacks';
 import { getSectionVariants } from '../sections/sectionRegistry';
@@ -20,6 +16,7 @@ import { demoWeddingSite } from '../lib/demoData';
 import { getArchiveModeDescriptor } from '../lib/archiveMode';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { fetchPublicSiteAccess, requestPublicSitePasswordUnlock } from '../lib/publicSiteAccess';
+import type { PublicWeddingRenderModel } from '../lib/publicSiteRenderModel';
 import {
   buildPublicAccessArtifacts,
   capturePublicInviteTokenFromSearch,
@@ -383,84 +380,6 @@ const FALLBACK_IMAGE_DATA_URI = `data:image/svg+xml;utf8,${encodeURIComponent(
   </svg>`
 )}`;
 
-function hasRegistryPersistedSection(sections: Array<{ type?: unknown }>): boolean {
-  return sections.some((section) => String(section.type ?? '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '') === 'registry');
-}
-
-const fallbackRegistryInstance: SectionInstance = {
-  id: 'auto-live-registry',
-  type: 'registry',
-  variant: 'cards',
-  enabled: true,
-  settings: {
-    title: 'Registry',
-    showTitle: true,
-  },
-};
-
-const PageRendererFromDB: React.FC<{
-  siteId: string;
-  siteSlug: string;
-  weddingData?: WeddingDataV1 | null;
-  access?: { inviteToken?: string | null; passwordSession?: string | null };
-}> = ({ siteId, siteSlug, weddingData, access }) => {
-  const [sections, setSections] = useState<import('../sections/schemas').PersistedSection[]>([]);
-  const [appendRegistry, setAppendRegistry] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function loadSections() {
-      setLoading(true);
-      try {
-        const loadedSections = await siteRepository.fetchPublishedSections(siteId);
-        const shouldAppendRegistry = !hasRegistryPersistedSection(loadedSections) && await hasLiveRegistryItems(siteId, access);
-        if (!cancelled) {
-          setSections(loadedSections);
-          setAppendRegistry(shouldAppendRegistry);
-        }
-      } catch {
-        const shouldAppendRegistry = await hasLiveRegistryItems(siteId, access);
-        if (!cancelled) {
-          setSections([]);
-          setAppendRegistry(shouldAppendRegistry);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    loadSections();
-    return () => { cancelled = true; };
-  }, [access, siteId]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-stone-200 border-t-stone-600 rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  const guestReadySections = weddingData
-    ? sections.filter((section) => hasGuestReadyContentForSection(
-      section.type,
-      weddingData,
-      section.data as Record<string, unknown> | undefined,
-      section.variant
-    ))
-    : sections;
-
-  return (
-    <>
-      <PageRenderer sections={guestReadySections} weddingData={weddingData} siteSlug={siteSlug} />
-      {appendRegistry && (
-        <RegistryGrid data={weddingData ?? createEmptyWeddingData()} instance={fallbackRegistryInstance} />
-      )}
-    </>
-  );
-};
-
 type PrivacyGateState = 'loading' | 'open' | 'password_required' | 'invite_only' | 'unlocked';
 
 const PasswordGate: React.FC<{
@@ -614,7 +533,6 @@ export const SiteView: React.FC = () => {
   const [weddingData, setWeddingData] = useState<WeddingDataV1 | null>(null);
   const [builderSections, setBuilderSections] = useState<BuilderSectionInstance[] | null>(null);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
-  const [useNewRenderer, setUseNewRenderer] = useState(false);
   const [isComingSoon, setIsComingSoon] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -675,7 +593,6 @@ export const SiteView: React.FC = () => {
         setWeddingSiteId(null);
         setWeddingData(null);
         setBuilderSections(null);
-        setUseNewRenderer(false);
         setHideFromSearch(false);
         setPublicSubresourceAccess({});
       };
@@ -740,7 +657,6 @@ export const SiteView: React.FC = () => {
           i18n.changeLanguage(siteLang);
         }
 
-        const isPublished = data.is_published === true;
         const hideSearch = data.allow_search_indexing === false;
 
         setHideFromSearch(hideSearch);
@@ -756,40 +672,16 @@ export const SiteView: React.FC = () => {
               : section
           ),
         }));
-
-        const persistedSections = await siteRepository.fetchPublishedSections(data.id as string).catch(() => []);
         const isDemoSite = resolvedSlug === 'alex-jordan-demo';
-
-        if (isPublished && persistedSections.length > 0 && renderPages.length === 0) {
-          const rawWData = normalizeWeddingData(renderModel.wedding ?? createEmptyWeddingData());
-          const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData, subresourceAccess), resolvedSlug);
-          if (isDemoSite && isPublicWeddingDataSparse(wData)) {
-            const demoSections = createDemoFallbackSections('modern-luxe');
-            if (demoSections.length > 0) {
-              setUseNewRenderer(false);
-              setBuilderSections(filterGuestReadyBuilderSections(demoSections, createAlexJordanDemoWeddingData()));
-              setWeddingData(createAlexJordanDemoWeddingData());
-              applyThemePreset('elegant');
-              return;
-            }
-          }
-          if (!isDemoSite && isPublicWeddingDataSparse(wData)) {
-            setIsComingSoon(true);
-            return;
-          }
-          setUseNewRenderer(true);
-          setBuilderSections(null);
-          setWeddingData(wData);
-          setWeddingSiteId(data.id as string);
-          return;
-        }
 
         if (renderPages.length > 0) {
           const homePage = renderPages.find((page) => page.meta?.isHome || page.id === 'home' || page.slug === 'home') ?? renderPages[0];
           const sections = normalizeSectionVariants(homePage.sections.filter(s => s.enabled));
           const shouldAppendRegistry = await hasLiveRegistryItems(data.id as string, subresourceAccess);
           const publicSections = appendRegistrySectionWhenNeeded(sections, shouldAppendRegistry);
-          const rawWData = normalizeWeddingData(renderModel.wedding ?? createEmptyWeddingData());
+          const rawWData = normalizeWeddingData(
+            (renderModel.wedding as PublicWeddingRenderModel | WeddingDataV1 | null) ?? createEmptyWeddingData(),
+          );
           const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData, subresourceAccess), resolvedSlug);
           const sparsePublicData = isPublicWeddingDataSparse(wData);
 
@@ -830,7 +722,7 @@ export const SiteView: React.FC = () => {
           setWeddingData(wData);
         } else {
           const rawWData = renderModel.wedding
-            ? normalizeWeddingData(renderModel.wedding)
+            ? normalizeWeddingData(renderModel.wedding as PublicWeddingRenderModel | WeddingDataV1)
             : null;
 
           if (!rawWData) {
@@ -913,17 +805,7 @@ export const SiteView: React.FC = () => {
   let liveContent: React.ReactNode = fallback;
   let ready = false;
 
-  if (useNewRenderer && weddingSiteId) {
-    ready = true;
-    liveContent = (
-      <SiteViewContext.Provider value={{ weddingSiteId, ...publicSubresourceAccess }}>
-        <div onErrorCapture={handleImageErrorCapture}>
-          <OwnerPreviewBanner />
-          <PageRendererFromDB siteId={weddingSiteId} siteSlug={resolvedSlug ?? ''} weddingData={weddingData} access={publicSubresourceAccess} />
-        </div>
-      </SiteViewContext.Provider>
-    );
-  } else if (builderSections && builderSections.length > 0 && weddingData) {
+  if (builderSections && builderSections.length > 0 && weddingData) {
     ready = true;
     liveContent = (
       <SiteViewContext.Provider value={{ weddingSiteId, ...publicSubresourceAccess }}>

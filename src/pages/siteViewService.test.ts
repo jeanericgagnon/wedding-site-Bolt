@@ -26,8 +26,8 @@ describe('siteViewService', () => {
 
     expect(page).toContain("from './siteViewService'");
     expect(page).toContain('fetchPublicItineraryRows(siteSlug, access)');
-    expect(page).toContain('hasLiveRegistryItems(siteId, access)');
     expect(page).toContain('hasLiveRegistryItems(data.id as string, subresourceAccess)');
+    expect(page).not.toContain('hasLiveRegistryItems(siteId, access)');
     expect(page).not.toContain("supabase.functions.invoke('public-itinerary-by-slug'");
     expect(page).not.toContain("supabase.functions.invoke('public-registry-items'");
     expect(service).toContain("supabase.functions.invoke('public-itinerary-by-slug'");

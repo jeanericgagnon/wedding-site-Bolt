@@ -611,8 +611,14 @@ describe('launch edge function guards', () => {
     expect(publicSiteAccess).toContain('passwordSession');
     expect(publicSiteAccess).toContain('buildSafePublicSite');
     expect(publicSiteAccess).toContain('buildPublicSiteRenderSite');
+    expect(publicSiteAccess).toContain('buildPersistedPublicFallbackPages');
     expect(publicSiteAccess).toContain('applyPublicSiteTranslation');
     expect(readFileSync(join(process.cwd(), 'src', 'lib', 'publicSiteRenderModel.ts'), 'utf8')).toContain('allow_search_indexing');
+    expect(publicSiteAccess).toContain('const PUBLIC_SECTION_FALLBACK_COLUMNS = [');
+    expect(publicSiteAccess).toContain('.from("sections")');
+    expect(publicSiteAccess).toContain('.eq("site_id", String(row.id))');
+    expect(publicSiteAccess).toContain('.eq("visible", true)');
+    expect(publicSiteAccess).toContain('buildPersistedPublicFallbackPages(persistedSections)');
     expect(publicSiteAccess).toContain('enforcePasswordAttemptRateLimit');
     expect(publicSiteAccess).toContain('public-site-access:${slug}');
     expect(publicSiteAccess).toContain('guest_token: safeSubjectMarker');
@@ -636,6 +642,15 @@ describe('launch edge function guards', () => {
     const safeColumns = publicSiteAccess.match(/const PUBLIC_SITE_RENDER_COLUMNS = \[([\s\S]*?)\];/)?.[1] ?? '';
     expect(safeColumns).not.toContain('privacy_mode');
     expect(safeColumns).not.toContain('hide_from_search');
+  });
+
+  it('removes the anonymous published-sections browser read path', () => {
+    const migration = readFileSync(
+      join(process.cwd(), 'supabase', 'migrations', '20260511113000_remove_public_sections_visible_read.sql'),
+      'utf8',
+    );
+
+    expect(migration).toContain('DROP POLICY IF EXISTS sections_public_visible_read ON public.sections;');
   });
 
   it('keeps public registry and itinerary subresources behind the public access gate', () => {

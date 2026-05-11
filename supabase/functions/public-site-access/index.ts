@@ -2,7 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { signSessionToken } from "../_shared/signedSession.ts";
 import { normalizePublicPrivacyMode, resolvePublicAccessStatus } from "../_shared/publicAccessGate.ts";
-import { applyPublicSiteTranslation, buildPublicSiteRenderSite } from "../../../src/lib/publicSiteRenderModel.ts";
+import { applyPublicSiteTranslation, buildPersistedPublicFallbackPages, buildPublicSiteRenderSite } from "../../../src/lib/publicSiteRenderModel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -53,6 +53,17 @@ const PRIVATE_PUBLIC_SITE_COLUMNS = [
   "hide_from_search",
   "site_password_hash",
   "guest_access_token",
+];
+
+const PUBLIC_SECTION_FALLBACK_COLUMNS = [
+  "id",
+  "type",
+  "variant",
+  "data",
+  "order",
+  "visible",
+  "style_overrides",
+  "bindings",
 ];
 
 function cleanSlugToken(token: string): string | null {
@@ -172,7 +183,28 @@ async function buildSafePublicSite(
   language: string | null | undefined,
 ): Promise<Record<string, unknown>> {
   const translation = await loadPublicSiteTranslation(adminClient, String(row.id), language);
-  return buildPublicSiteRenderSite(applyPublicSiteTranslation(row, translation));
+  const translatedRow = applyPublicSiteTranslation(row, translation);
+  const site = buildPublicSiteRenderSite(translatedRow);
+
+  if (site.render_model.pages.length > 0) return site;
+
+  const { data: persistedSections, error } = await adminClient
+    .from("sections")
+    .select(PUBLIC_SECTION_FALLBACK_COLUMNS.join(","))
+    .eq("site_id", String(row.id))
+    .eq("visible", true)
+    .order("order", { ascending: true });
+
+  if (error) throw error;
+  if (!Array.isArray(persistedSections) || persistedSections.length === 0) return site;
+
+  return {
+    ...site,
+    render_model: {
+      ...site.render_model,
+      pages: buildPersistedPublicFallbackPages(persistedSections),
+    },
+  };
 }
 
 async function issuePasswordSessionToken(slug: string, secret: string): Promise<string> {

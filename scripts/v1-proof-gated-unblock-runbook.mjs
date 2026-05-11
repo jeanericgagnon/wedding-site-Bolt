@@ -21,6 +21,8 @@ const requiredPhrases = [
   'Secure Service-Role Storage/Cross-Table Integrity Proof',
   'npm run proof:v1:data-integrity',
   'proofMode: "service_role_full"',
+  'Secure Service-Role And Queue Closeout Bundle',
+  'npm run proof:v1:launch-closeout',
   'External OpenAI Key Rotation',
   'V1_AI_EXPOSURE_LIVE=1 npm run proof:v1:ai-exposure',
   'npm run proof:v1:board:md',
@@ -47,4 +49,3 @@ console.log(JSON.stringify(result, null, 2));
 if (result.status !== 'pass') {
   process.exitCode = 1;
 }
-

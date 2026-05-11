@@ -1,5 +1,139 @@
 # V1 Smoke Proof Log
 
+_Date:_ 2026-05-11
+_Production:_ [dayof.love](https://dayof.love)
+_Latest verified deploy:_ `dpl_AjQ94iVAXhPutmegQbvjtawUUjUx`
+_Launch call right now:_ `HOLD` pending secure service-role queue/storage and secure email queue-processing deep proof in an environment with `SUPABASE_SERVICE_ROLE_KEY`
+
+_Final secure closeout command:_ `npm run proof:v1:launch-closeout`
+
+- 2026-05-11 08:55 AM PT: reran `npm run proof:v1:service-role-authorization`, `npm run proof:v1:email-messaging-authorization`, and the new `npm run proof:v1:launch-closeout`. Both standalone lanes still pass unauthenticated denial checks and now report explicit `missing_service_role_key` blockers. The bundled closeout command also refreshes `proof:v1:board:md` and `git diff --check`, then exits blocked only on the expected missing secure secret.
+
+## 2026-05-11 08:36 AM PT Public Sections Side Door Closed, DTO Tightened, Live Proof Green
+- Scope:
+  - finish-the-website public boundary closeout
+  - deploy alignment for the hardened public route
+  - remote policy cleanup and live proof rerun
+- Fixed/proved:
+  - `src/pages/SiteView.tsx` no longer uses browser `sections` reads in the public route.
+  - `PageRendererFromDB` was removed from the public path.
+  - persisted published-section fallback now happens server-side inside `supabase/functions/public-site-access/index.ts`.
+  - `src/lib/publicSiteRenderModel.ts` no longer returns public `wedding.meta`.
+  - public style escape hatches `customCss`, `customClassName`, and `styleRecipeCss` were removed from the public DTO.
+  - `20260511113000_remove_public_sections_visible_read.sql` was pushed remotely, removing the old anonymous/public `sections` read policy from the linked database.
+  - production `public-site-access` was redeployed and the production web app was redeployed to `dpl_AjQ94iVAXhPutmegQbvjtawUUjUx`, aliased to [dayof.love](https://dayof.love).
+- Proof passed:
+  - `npm test -- --run src/lib/publicSiteRenderModel.test.ts src/lib/publicSiteAccess.test.ts src/lib/publicGuestSurfaceBoundary.test.ts src/lib/publicAccessCoverageProofScript.test.ts src/lib/launchEdgeFunctions.test.ts src/pages/SiteView.test.ts src/pages/siteViewService.test.ts`: `PASS`, 52/52.
+  - `npm run proof:v1:public-access-coverage`: `PASS`.
+  - `npm run typecheck -- --pretty false`: `PASS`.
+  - `npm run lint -- --quiet`: `PASS`.
+  - `npm run build`: `PASS`.
+  - `npm run guard:assets`: `PASS`.
+  - `npm run guard:file-size`: `PASS`.
+  - `npm run proof:v1:performance-budget`: `PASS`.
+  - `supabase functions deploy public-site-access --no-verify-jwt`: `PASS`.
+  - `vercel deploy --prod`: `PASS`, `dpl_AjQ94iVAXhPutmegQbvjtawUUjUx`.
+  - `supabase db push`: `PASS`, applied `20260511113000_remove_public_sections_visible_read.sql`.
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`: `LIVE PASS`.
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`: `LIVE PASS`.
+  - `npm run proof:v1:guests-rsvp-ops`: `LIVE PASS`.
+  - `npm run proof:v1:service-role-authorization`: `PASS` for unauthenticated denial; secure queue/storage deep proof still blocked by missing `SUPABASE_SERVICE_ROLE_KEY`.
+  - `npm run proof:v1:email-messaging-authorization`: `PASS` for unauthenticated denial; secure queue-processing deep proof still blocked by missing `SUPABASE_SERVICE_ROLE_KEY`.
+- Launch status:
+  - Repo-side public boundary hardening is live and re-proved.
+  - Remote policy state now matches the hardened public route.
+- The only remaining launch blocker is the secure secret-backed authorization lane that cannot run here without `SUPABASE_SERVICE_ROLE_KEY`.
+
+## 2026-05-11 08:50 AM PT Broad Proof Sweep Green, Stale Registry/Comms Guards Rebased
+- Scope:
+  - broaden post-closeout launch proof beyond the public DTO lane
+  - refresh stale static guards after dashboard/message/registry ownership refactors
+  - distinguish sandbox fetch noise from real backend failures
+- Fixed/proved:
+  - `scripts/smoke_messages_guard.js` now follows the current Messaging ownership split across `Messages.tsx`, `useMessageDeliveryActions.ts`, `useMessageComposerHistoryActions.ts`, and `MessageDashboardComponents.tsx`.
+  - `scripts/smoke_registry_guard.js` now follows the current Registry ownership split across `Registry.tsx`, `buildRegistryDashboardDerivedState.ts`, `useRegistryDashboardData.ts`, `useRegistryMaintenanceActions.ts`, `useRegistryItemActions.ts`, and `RegistryDashboardRouteContent.tsx`.
+  - `collaborator-access`, `coordinator-dayof`, `seating-continuity`, `registry`, and `comms-center` all reran green after those proof updates.
+  - `prereqs` and `data-integrity` initially failed inside the sandbox because live fetches were blocked; both reran green with network access.
+  - `ai-product-readiness` is green locally and live `ai-clearance` is green with `launchCleared: true`.
+- Proof passed:
+  - `npm run proof:v1:collaborator-access`: `PASS`
+  - `npm run proof:v1:coordinator-dayof`: `PASS`
+  - `npm run proof:v1:seating-continuity`: `PASS`
+  - `npm run proof:v1:registry`: `PASS`
+  - `npm run proof:v1:comms-center`: `PASS`
+  - `npm run proof:v1:prereqs`: `PASS` with network access
+  - `npm run proof:v1:data-integrity`: `PASS` in anon-limited mode with network access
+  - `npm run proof:v1:ai-product-readiness`: `PASS`
+  - `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance`: `LIVE PASS`
+- Launch status:
+  - No new repo-side or live public blockers appeared in the broadened proof sweep.
+  - Remaining hard blocker is still the secure secret-backed service-role/email authorization lane.
+
+## 2026-05-11 08:04 AM PT Website-Finish Audit Reopened Public Sections Bypass
+- Scope:
+  - no-code launch-readiness audit against the actual public route implementation
+  - backlog/report/audit truth reset around the website finish path
+- Fixed/proved:
+  - The launch docs no longer treat the repo as blocked only on secure service-role proof.
+  - The audit reopened a real repo-side blocker:
+    - `SiteView` still falls back to direct browser reads of persisted `sections`
+    - the current public `sections` RLS policy does not enforce password/invite privacy
+    - the server DTO still sends `wedding.meta` wholesale
+- Proof passed:
+  - No new runtime proof was run in this audit-only batch.
+- Launch status:
+  - Public DTO/live proof progress remains real.
+  - The website finish path is now explicitly: close the public `sections` side door, finish strict server-side DTO minimization, rerun live public proof, then run secure service-role/email deep proof in a secure env.
+
+## 2026-05-11 07:47 AM PT Allowlist DTO Live Pass And Secure-Proof Narrowing
+- Scope:
+  - final public DTO allowlist rollout
+  - one aligned production rerun on the stricter runtime
+  - secure-proof lane refresh
+- Fixed/proved:
+  - `src/lib/publicSiteRenderModel.ts` now builds public section settings from manifest field allowlists instead of the old broad registry/sanitizer path.
+  - public wedding data now prefers published snapshots before `row.wedding_data`, with canonical row identity overlaid after that.
+  - legacy `layout_config` fallback is constrained to published legacy payloads and converted through the same allowlisted public builder.
+  - `public-site-access` was redeployed successfully after swapping the function-safe allowlist path away from the heavy section registry import chain.
+  - production web deploy was promoted again and the live public path stayed healthy on the aligned runtime.
+- Proof passed:
+  - `npm test -- --run src/lib/publicSiteRenderModel.test.ts src/lib/publicSiteAccess.test.ts src/lib/publicAccessCoverageProofScript.test.ts src/lib/publicGuestSurfaceBoundary.test.ts src/pages/SiteView.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 47/47.
+  - `npm run proof:v1:public-access-coverage`: PASS.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run build`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run proof:v1:performance-budget`: PASS.
+  - `supabase functions deploy public-site-access --no-verify-jwt`: PASS.
+  - `vercel deploy --prod --yes`: PASS, production deployment `dpl_JBor9yy1TBoXwQvRnvTjkijRBLe1`.
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`: LIVE PASS.
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`: LIVE PASS.
+  - `npm run proof:v1:guests-rsvp-ops`: LIVE PASS.
+  - `npm run proof:v1:service-role-authorization`: LIVE PASS for unauthenticated denial; secure storage/cross-table deep proof still blocked by missing `SUPABASE_SERVICE_ROLE_KEY`.
+  - `npm run proof:v1:email-messaging-authorization`: LIVE PASS for unauthenticated denial; secure queue-processing deep proof still blocked by missing `SUPABASE_SERVICE_ROLE_KEY`.
+- Launch status:
+  - The strict public DTO lane is now live and rerun green.
+  - The remaining active ungated blocker is the secure service-role queue/storage deep proof lane.
+
+## 2026-05-11 07:20 AM PT Launch-Control Truth Reset To 8.7 / 10
+- Scope:
+  - backlog/report truth reset from “major improvement” to “not yet airtight”
+  - no-code launch-control recalibration against the stricter final-hardening mandate
+- Fixed/proved:
+  - The launch docs no longer overstate the current public DTO as fully complete.
+  - Historical then-current public DTO risks were explicitly tracked before the later 07:47 AM PT allowlist rollout superseded them:
+    - blacklist-style sanitization still exists
+    - section `settings` are not yet fully allowlisted
+    - published-site wedding data precedence is not yet strict enough
+    - `layout_config` fallback is not yet fully removed or tightly constrained
+- Proof passed:
+  - `npm run proof:v1:board:md`: PASS.
+  - `git diff --check`: PASS.
+- Launch status:
+  - Public blob exposure remains materially improved and live proof remains green.
+  - Launch score is reset to `8.7 / 10` until allowlist-only DTO hardening and secure service-role deep proof are closed.
+
 ## 2026-05-09 10:38 AM PT Live Public DTO Validation And Resolver Policy Alignment
 - Scope:
   - strict public DTO live validation

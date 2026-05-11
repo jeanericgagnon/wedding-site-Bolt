@@ -18,9 +18,29 @@ describe('public site access client contract', () => {
       default_language: 'en',
       allow_search_indexing: false,
       render_model: {
-        pages: [{ id: 'home', slug: 'home', title: 'Home', orderIndex: 0, sections: [], meta: { isHome: true, isHidden: false } }],
-        wedding: { couple: { displayName: 'Maya & Leo' } },
-        theme: { preset: 'romantic', tokens: { '--color-primary': '#123456' } },
+        pages: [{
+          id: 'home',
+          slug: 'home',
+          title: 'Home',
+          orderIndex: 0,
+          sections: [{
+            id: 'hero-1',
+            type: 'hero',
+            variant: 'default',
+            enabled: true,
+            orderIndex: 0,
+            settings: { headline: 'Welcome', hiddenCopy: 'should not survive' },
+            bindings: { venueIds: ['venue-1'], mediaAssetIds: ['asset-private'] },
+            styleOverrides: { backgroundColor: '#ffffff', fontFamily: 'private-font' },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+        wedding: {
+          couple: { displayName: 'Maya & Leo', adminEmail: 'hide@example.com' },
+          registry: { links: [{ id: 'r1', label: 'Registry', url: 'https://registry.example.com', queueTargets: ['hide-me'] }] },
+          meta: { createdAtISO: '2026-01-01T00:00:00.000Z', updatedAtISO: '2026-02-01T00:00:00.000Z', staffNotes: ['hide-me'] },
+        },
+        theme: { preset: 'romantic', tokens: { colorPrimary: '#123456', providerSecrets: 'hide-me' } },
       },
       site_password_hash: 'never-send-this',
       guest_access_token: 'never-send-this-either',
@@ -45,14 +65,74 @@ describe('public site access client contract', () => {
       default_language: 'en',
       allow_search_indexing: false,
       render_model: {
-        pages: [{ id: 'home', slug: 'home', title: 'Home', orderIndex: 0, sections: [], meta: { isHome: true, isHidden: false } }],
-        wedding: { couple: { displayName: 'Maya & Leo' } },
-        theme: { preset: 'romantic', tokens: { '--color-primary': '#123456' } },
+        pages: [{
+          id: 'home',
+          slug: 'home',
+          title: 'Home',
+          orderIndex: 0,
+          sections: [{
+            id: 'hero-1',
+            type: 'hero',
+            variant: 'default',
+            enabled: true,
+            orderIndex: 0,
+            settings: { headline: 'Welcome', showTitle: true, overlayOpacity: 40 },
+            bindings: { venueIds: ['venue-1'] },
+            styleOverrides: { backgroundColor: '#ffffff' },
+          }],
+          meta: { isHome: true },
+        }],
+        wedding: {
+          couple: { displayName: 'Maya & Leo' },
+          event: {},
+          venues: [],
+          schedule: [],
+          rsvp: { enabled: true },
+          travel: {},
+          registry: { links: [{ id: 'r1', label: 'Registry', url: 'https://registry.example.com' }] },
+          faq: [],
+          theme: {},
+          media: { gallery: [] },
+        },
+        theme: { preset: 'romantic', tokens: { colorPrimary: '#123456' } },
       },
     });
-    expect(site?.render_model.pages).toEqual([{ id: 'home', slug: 'home', title: 'Home', orderIndex: 0, sections: [], meta: { isHome: true, isHidden: false } }]);
-    expect(site?.render_model.wedding).toEqual({ couple: { displayName: 'Maya & Leo' } });
-    expect(site?.render_model.theme).toEqual({ preset: 'romantic', tokens: { '--color-primary': '#123456' } });
+    expect(site?.render_model.pages).toEqual([{
+      id: 'home',
+      slug: 'home',
+      title: 'Home',
+      orderIndex: 0,
+      sections: [{
+        id: 'hero-1',
+        type: 'hero',
+        variant: 'default',
+        enabled: true,
+        orderIndex: 0,
+        settings: { headline: 'Welcome', showTitle: true, overlayOpacity: 40 },
+        bindings: { venueIds: ['venue-1'] },
+        styleOverrides: { backgroundColor: '#ffffff' },
+      }],
+      meta: { isHome: true },
+    }]);
+    expect(site?.render_model.wedding).toEqual({
+      couple: { displayName: 'Maya & Leo' },
+      event: {},
+      venues: [],
+      schedule: [],
+      rsvp: { enabled: true },
+      travel: {},
+      registry: { links: [{ id: 'r1', label: 'Registry', url: 'https://registry.example.com' }] },
+      faq: [],
+      theme: {},
+      media: { gallery: [] },
+    });
+    expect(site?.render_model.theme).toEqual({ preset: 'romantic', tokens: { colorPrimary: '#123456' } });
+    expect(JSON.stringify(site)).not.toContain('mediaAssetIds');
+    expect(JSON.stringify(site)).not.toContain('fontFamily');
+    expect(JSON.stringify(site)).not.toContain('adminEmail');
+    expect(JSON.stringify(site)).not.toContain('queueTargets');
+    expect(JSON.stringify(site)).not.toContain('providerSecrets');
+    expect(JSON.stringify(site)).not.toContain('hiddenCopy');
     expect(site).not.toHaveProperty('site_password_hash');
     expect(site).not.toHaveProperty('guest_access_token');
     expect(site).not.toHaveProperty('user_id');

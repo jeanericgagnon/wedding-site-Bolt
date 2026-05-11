@@ -72,6 +72,29 @@ Exit bar:
 - `npm run proof:v1:data-integrity` reports `proofMode: "service_role_full"`.
 - No orphan/stale storage, photo, vault, RSVP, seating, guest, or public-submission failures remain.
 
+## 3A. Secure Service-Role And Queue Closeout Bundle
+
+Gate: secure `SUPABASE_SERVICE_ROLE_KEY` or `V1_SUPABASE_SERVICE_ROLE_KEY` proof environment.
+
+Why it remains: the launch board should flip only after the two remaining authorization lanes and the final board refresh run as one closeout package.
+
+Approved path:
+
+```bash
+npm run proof:v1:launch-closeout
+```
+
+What it runs:
+- `npm run proof:v1:service-role-authorization`
+- `npm run proof:v1:email-messaging-authorization`
+- `npm run proof:v1:board:md`
+- `git diff --check`
+
+Exit bar:
+- The bundle returns `ok: true`.
+- No `missing_service_role_key` blocker remains.
+- Launch docs are ready to promote from `HOLD` to `GO`.
+
 ## 4. External OpenAI Key Rotation
 
 Gate: external account/security action outside repo automation.
@@ -106,4 +129,3 @@ Then update:
 - `docs/v1-smoke-proof-log.md`
 - `docs/full-suite-launch-backlog-2026-04-30.md`
 - any deploy/postdeploy state docs if a deploy was approved and completed
-

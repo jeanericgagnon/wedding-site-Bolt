@@ -29,7 +29,8 @@ describe('super nice launch backlog safety guards', () => {
     const source = read('src/pages/dashboard/Overview.tsx');
 
     expect(source).not.toContain("window.open(`/site/${stats.siteSlug}`, '_blank')");
-    expect(source.match(/window\.open\(`\/site\/\$\{stats\.siteSlug\}`, '_blank', 'noopener,noreferrer'\)/g)?.length).toBe(4);
+    expect(source).not.toContain("window.open(`/site/${stats.siteSlug}`, '_blank', 'noopener,noreferrer')");
+    expect(source).not.toContain("window.open('/site/");
   });
 
   it('keeps external blank-target links explicit about opener isolation', () => {
@@ -52,8 +53,11 @@ describe('super nice launch backlog safety guards', () => {
   it('keeps audited recoverable fallback paths from dumping raw errors to the browser console', () => {
     const planning = read('src/pages/dashboard/Planning.tsx');
     const guests = read('src/pages/dashboard/Guests.tsx');
+    const guestCsvImport = read('src/pages/dashboard/guests/useGuestDashboardCsvImport.ts');
     const onboarding = read('src/pages/Onboarding.tsx');
     const vault = read('src/pages/dashboard/Vault.tsx');
+    const vaultActions = read('src/pages/dashboard/useVaultDashboardActions.ts');
+    const vaultData = read('src/pages/dashboard/useVaultDashboardData.ts');
     const songRequests = read('src/pages/dashboard/planning/SongRequestsTab.tsx');
     const addressCollection = read('src/pages/dashboard/planning/AddressCollectionTab.tsx');
     const errorLogs = read('src/pages/dashboard/ErrorLogs.tsx');
@@ -67,13 +71,18 @@ describe('super nice launch backlog safety guards', () => {
     const customerSafeError = read('src/lib/customerSafeError.ts');
     const publicSiteAccess = read('src/lib/publicSiteAccess.ts');
     const guestPhotoSharing = read('src/pages/dashboard/GuestPhotoSharing.tsx');
+    const guestPhotoDashboardData = read('src/pages/dashboard/guestPhotos/useGuestPhotoDashboardData.ts');
     const vaultContribute = read('src/pages/VaultContribute.tsx');
     const quickStart = read('src/pages/onboarding/QuickStart.tsx');
     const googleDriveHealth = read('supabase/functions/google-drive-health/index.ts');
     const itinerary = read('src/pages/dashboard/Itinerary.tsx');
+    const itineraryTimelineActions = read('src/pages/dashboard/useItineraryTimelineActions.ts');
     const registryService = read('src/pages/dashboard/registry/registryService.ts');
     const stripeService = read('src/lib/stripeService.ts');
     const messages = read('src/pages/dashboard/Messages.tsx');
+    const messageService = read('src/pages/dashboard/messages/messageService.ts');
+    const messageDeliveryActions = read('src/pages/dashboard/messages/useMessageDeliveryActions.ts');
+    const messageComposeActions = read('src/pages/dashboard/messages/useMessageComposeActions.ts');
     const messageUtils = read('src/pages/dashboard/messages/messageDashboardUtils.ts');
     const emailService = read('src/lib/emailService.ts');
     const guestContactUpdate = read('src/pages/GuestContactUpdate.tsx');
@@ -101,7 +110,9 @@ describe('super nice launch backlog safety guards', () => {
     const seatingDemoStorage = read('src/pages/dashboard/seating/seatingDemoStorage.ts');
     const itineraryDemoStorage = read('src/pages/dashboard/itineraryDemoStorage.ts');
     const dashboardItinerary = read('src/pages/dashboard/Itinerary.tsx');
+    const itineraryData = read('src/pages/dashboard/useItineraryDashboardData.ts');
     const vaultDemoStorage = read('src/pages/vaultDemoStorage.ts');
+    const vaultCard = read('src/pages/dashboard/VaultCard.tsx');
     const dashboardVault = read('src/pages/dashboard/Vault.tsx');
     const supabaseClient = read('src/lib/supabase.ts');
     const envConfig = read('src/config/env.ts');
@@ -112,8 +123,8 @@ describe('super nice launch backlog safety guards', () => {
     expect(planning).not.toContain('console.error(err)');
     expect(guests).not.toContain('console.error(error)');
     expect(guests).not.toContain("const msg = err instanceof Error ? err.message : 'Couldn’t read that guest file.'");
-    expect(guests).toContain('safeGuestImportReadError,');
-    expect(guests).toContain("toast(safeGuestImportReadError(err), 'error');");
+    expect(guestCsvImport).toContain('safeGuestImportReadError, safeGuestsDashboardError');
+    expect(guestCsvImport).toContain("toast(safeGuestImportReadError(err), 'error');");
     expect(onboarding).not.toContain("console.error('ONBOARDING_NEXT_STEP_FAILED', error)");
     expect(songRequests).not.toContain('console.error(err)');
     expect(addressCollection).not.toContain('console.error(err)');
@@ -121,11 +132,11 @@ describe('super nice launch backlog safety guards', () => {
     expect(vault).not.toContain('Google Drive connection failed: ${error.message}');
     expect(vault).not.toContain('Google Drive OAuth was cancelled or failed: ${oauthError}');
     expect(vault).not.toContain('throw new Error(error.message);');
-    expect(vault).toContain("throw new Error('A vault for that anniversary already exists.')");
-    expect(vault).toContain("throw new Error('Couldn’t update this vault. Please try again.')");
-    expect(vault).toContain("throw new Error('Couldn’t save this vault entry. Please try again.')");
-    expect(vault).toContain('Google Drive connection failed. Please try again.');
-    expect(vault).toContain('Google Drive connected, but dayof could not finish the vault backup setup. Please try reconnecting.');
+    expect(vaultActions).toContain("throw new Error('A vault for that anniversary already exists.')");
+    expect(vaultActions).toContain("throw new Error('Couldn’t update this vault. Please try again.')");
+    expect(vaultActions).toContain("throw new Error('Couldn’t save this vault entry. Please try again.')");
+    expect(vaultData).toContain('Google Drive connection failed. Please try again.');
+    expect(vaultData).toContain('Google Drive connected, but dayof could not finish the vault backup setup. Please try reconnecting.');
     expect(errorLogs).not.toContain('setError(error.message)');
     expect(errorLogs).toContain('Couldn’t verify error-log access right now.');
     expect(builderSectionRenderer).not.toContain('errorMessage: error.message');
@@ -155,7 +166,7 @@ describe('super nice launch backlog safety guards', () => {
     expect(authContext).toContain('DayOf is still being connected. Please try again shortly.');
     expect(publicSiteAccess).not.toContain("throw new Error((json as { error?: string }).error || `Error ${response.status}`)");
     expect(publicSiteAccess).toContain('safePublicSiteAccessError');
-    expect(guestPhotoSharing).toContain('safePhotoOwnerError(err,');
+    expect(guestPhotoDashboardData).toContain("setError(safePhotoOwnerError(err, 'Couldn’t load the photo space. Please refresh and try again.'))");
     expect(guestPhotoSharing).not.toContain('return cleaned;');
     expect(vaultContribute).not.toContain('`${err.message} Uploading original video instead.`');
     expect(vaultContribute).toContain("setSubmitError('Couldn’t prepare a smaller version. Uploading the original video instead.');");
@@ -168,9 +179,9 @@ describe('super nice launch backlog safety guards', () => {
     expect(itinerary).not.toContain('setSaveError(message)');
     expect(itinerary).not.toContain("setSaveError((err as Error)?.message || 'Couldn’t update the timeline.')");
     expect(itinerary).not.toContain("setSaveError((err as Error)?.message || 'Couldn’t build the template.')");
-    expect(itinerary).toContain("setSaveError(customerSafeErrorMessage(err, 'Couldn’t save event. Please try again.'))");
-    expect(itinerary).toContain("setSaveError(customerSafeErrorMessage(err, 'Couldn’t update the timeline.'))");
-    expect(itinerary).toContain("setSaveError(customerSafeErrorMessage(err, 'Couldn’t build the template.'))");
+    expect(itineraryTimelineActions).toContain("setSaveError(customerSafeErrorMessage(err, 'Couldn’t save event. Please try again.'))");
+    expect(itineraryTimelineActions).toContain("setSaveError(customerSafeErrorMessage(err, 'Couldn’t update the timeline.'))");
+    expect(itineraryTimelineActions).toContain("setSaveError(customerSafeErrorMessage(err, 'Couldn’t build the template.'))");
     expect(registryService).not.toContain('throw new Error(error.message)');
     expect(registryService).toContain('REGISTRY_LOAD_ERROR_COPY');
     expect(registryService).toContain('REGISTRY_SAVE_ERROR_COPY');
@@ -193,10 +204,11 @@ describe('super nice launch backlog safety guards', () => {
     expect(messages).toContain('safeMessagesError,');
     expect(messages).not.toContain('throw new Error(body?.error ?? `Send failed (${res.status})`)');
     expect(messages).not.toContain('throw new Error(body?.error ?? `Scheduled send run failed (${res.status})`)');
-    expect(messages).toContain("throw new Error(safeMessagesError((body as { error?: unknown })?.error, 'Delivery needs review. Check message history.'))");
-    expect(messages).toContain("throw new Error(safeMessagesError((body as { error?: unknown })?.error, 'Couldn’t process scheduled messages right now.'))");
-    expect(messages).not.toContain("sendErr instanceof Error ? sendErr.message : 'Delivery needs review. Try again later.'");
-    expect(messages).toContain("toast(safeMessagesError(sendErr, 'Delivery needs review. Try again later.'), 'error');");
+    expect(messageService).toContain("throw new Error(safeMessagesError((body as { error?: unknown })?.error, 'Delivery needs review. Check message history.'))");
+    expect(messageService).toContain("throw new Error(safeMessagesError((body as { error?: unknown })?.error, 'Couldn’t process scheduled messages right now.'))");
+    expect(messageDeliveryActions).not.toContain("sendErr instanceof Error ? sendErr.message : 'Delivery needs review. Try again later.'");
+    expect(messageDeliveryActions).toContain("toast(safeMessagesError(sendErr, 'Delivery needs review. Try again later.'), 'error');");
+    expect(messageComposeActions).toContain("toast(safeMessagesError(sendErr, 'Delivery needs review. Check message history.'), 'error');");
     expect(messageUtils).toContain('return customerSafeErrorMessage(cleaned, fallback, {');
     expect(messageUtils).toContain('\\b(delivery|message|email|phone|contact|recipient|address|number|missing|invalid|blocked|bounced|unsubscribed|review|retry|attention|details)\\b');
     expect(guestContactUpdate).not.toContain("throw new Error((json as any).error || 'Couldn’t reach the couple’s guest list right now.')");
@@ -224,8 +236,8 @@ describe('super nice launch backlog safety guards', () => {
     expect(supabaseClient).toContain('safeFunctionFailureTelemetryMessage');
     expect(supabaseClient).toContain('customerSafeErrorMessage(');
     expect(supabaseClient).not.toContain('message = rawMessage.slice');
-    expect(collaboratorRuntimeProof).toContain('runForbiddenActionProof');
-    expect(collaboratorRuntimeProof).toContain('LIVE_COLLABORATOR_PERMISSION_RLS:');
+    expect(collaboratorRuntimeProof).toContain('runCollaboratorRoleProof');
+    expect(collaboratorRuntimeProof).toContain("LIVE_COLLABORATOR_PERMISSION_RLS: '1'");
     expect(collaboratorRuntimeProof).toContain('tests/e2e/collaborator-permission-rls.spec.ts');
     expect(collaboratorRuntimeProof).toContain('stillManualProofNeeded: []');
     expect(collaboratorRuntimeProof).not.toContain('Attempt at least one forbidden action for the claimed collaborator role');
@@ -296,18 +308,18 @@ describe('super nice launch backlog safety guards', () => {
     expect(itineraryDemoStorage).toContain('ITINERARY_DEMO_STORAGE_RETENTION_MS');
     expect(itineraryDemoStorage).toContain('isItineraryDemoStorageEnvelope');
     expect(itineraryDemoStorage).toContain('writeItineraryDemoStorageEnvelope(normalizeDemoItineraryEvents(events))');
-    expect(dashboardItinerary).toContain('writeDemoItineraryEvents(events)');
-    expect(dashboardItinerary).not.toContain('localStorage.setItem(DEMO_ITINERARY_STORAGE_KEY');
+    expect(itineraryData).toContain('writeDemoItineraryEvents(events)');
+    expect(itineraryData).not.toContain('localStorage.setItem(DEMO_ITINERARY_STORAGE_KEY');
     expect(vaultDemoStorage).toContain('VAULT_DEMO_STORAGE_RETENTION_MS');
     expect(vaultDemoStorage).toContain('isVaultStorageEnvelope');
     expect(vaultDemoStorage).toContain('normalizeDemoVaultState');
     expect(vaultDemoStorage).toContain('markSubmittedVaultYear');
     expect(vaultContribute).toContain('appendDemoVaultEntries(vault, rows)');
     expect(vaultContribute).toContain('readSubmittedVaultYears(submittedKey)');
-    expect(dashboardVault).toContain('writeDemoVaultState(nextConfigs, nextEntries)');
-    expect(dashboardVault).not.toContain('localStorage.setItem(DEMO_VAULT_STORAGE_KEY');
-    expect(dashboardVault).toContain('readLocalE2EBypassFlag(LOCAL_E2E_VAULT_FORCE_UNLOCK_KEY)');
-    expect(dashboardVault).not.toContain("localStorage.getItem(E2E_FORCE_UNLOCK_KEY) === '1'");
+    expect(vaultData).toContain('writeDemoVaultState(nextConfigs, nextEntries)');
+    expect(vaultData).not.toContain('localStorage.setItem(DEMO_VAULT_STORAGE_KEY');
+    expect(vaultCard).toContain('readLocalE2EBypassFlag(LOCAL_E2E_VAULT_FORCE_UNLOCK_KEY)');
+    expect(vaultCard).not.toContain("localStorage.getItem(E2E_FORCE_UNLOCK_KEY) === '1'");
     expect(authContext).toContain('readLocalE2EBypassFlag(LOCAL_E2E_AUTH_KEY)');
     expect(authContext).toContain('clearLocalE2EBypassFlag(LOCAL_E2E_AUTH_KEY)');
     expect(authContext).not.toContain("localStorage.getItem(LOCAL_E2E_AUTH_KEY) === '1'");
@@ -561,5 +573,49 @@ describe('super nice launch backlog safety guards', () => {
       expect(script).toContain(phrase);
     }
     expect(pkg).toContain('"proof:v1:gated-unblock-runbook": "node scripts/v1-proof-gated-unblock-runbook.mjs"');
+  });
+
+  it('keeps the secure launch closeout bundle explicit and guarded', () => {
+    const source = read('scripts/v1-proof-launch-closeout.mjs');
+    const pkg = read('package.json');
+    const backlog = read('BACKLOG.md');
+    const report = read('docs/PRODUCTION_HARDENING_REPORT.md');
+
+    expect(source).toContain("id: 'service-role-authorization'");
+    expect(source).toContain("id: 'email-messaging-authorization'");
+    expect(source).toContain("id: 'board-markdown'");
+    expect(source).toContain("id: 'git-diff-check'");
+    expect(source).toContain("blocker?.blockerType === 'missing_service_role_key'");
+    expect(source).toContain('Rerun npm run proof:v1:launch-closeout.');
+    expect(pkg).toContain('"proof:v1:launch-closeout": "node scripts/v1-proof-launch-closeout.mjs"');
+    expect(backlog).toContain('npm run proof:v1:launch-closeout');
+    expect(report).toContain('npm run proof:v1:launch-closeout');
+  });
+
+  it('keeps runtime operator-note truth centralized and guarded', () => {
+    const checklist = read('docs/v1-runtime-operator-notes-checklist.md');
+    const script = read('scripts/v1-proof-runtime-note-checklist.mjs');
+    const pkg = read('package.json');
+    const backlog = read('BACKLOG.md');
+
+    for (const phrase of [
+      'Canonical Couple Path + Runtime Wording',
+      'Guests / RSVP Ops',
+      'Collaborator Access',
+      'Coordinator Day-Of',
+      'Registry',
+      'Comms Center',
+      'Seating Continuity',
+      'docs/v1-smoke-proof-log.md',
+      'launch stays `HOLD` until that secure closeout bundle is green',
+      'npm run proof:v1:launch-closeout',
+    ]) {
+      expect(checklist).toContain(phrase);
+      expect(script).toContain(phrase);
+    }
+
+    expect(pkg).toContain('"proof:v1:runtime-note-checklist": "node scripts/v1-proof-runtime-note-checklist.mjs"');
+    expect(backlog).toContain('docs/v1-runtime-operator-notes-checklist.md');
+    expect(backlog).toContain('npm run proof:v1:runtime-note-checklist');
   });
 });

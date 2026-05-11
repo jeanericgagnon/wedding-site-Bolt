@@ -1,80 +1,76 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 type ProofBoardOutput = {
+  source?: string;
+  currentState?: Record<string, string>;
   activeUngatedLaunchBlockers?: string[];
-  blockedOrApprovalGatedLaunchItems?: string[];
   summary?: {
-    secondaryTrustGap?: string;
+    currentProofState?: string;
+    currentNextActions?: string;
   };
   ruthlessNextThree?: Array<{
-    id?: string;
+    title?: string;
     status?: string;
-    manualProof?: string[];
   }>;
-  slices?: Array<{
-    id?: string;
-    localWordingEvidence?: string;
-    manualProof?: string[];
-  }>;
+  sections?: Record<string, string>;
 };
 
-const getLatestVerifiedDeploy = () => {
-  const proofLog = readFileSync('docs/v1-smoke-proof-log.md', 'utf8');
-  return proofLog.match(/_Latest verified deploy:_ `([^`]+)`/)?.[1];
-};
+const read = (path: string) => readFileSync(path, 'utf8');
 
-const getLatestRuntimeWordingEvidence = () => {
-  const root = join('docs', 'proof-screenshots');
-  const candidates: Array<{ suffix: number; notesPath: string }> = [];
+const parseCurrentStateTable = (text: string) => {
+  const lines = text.split(/\r?\n/);
+  const state: Record<string, string> = {};
+  let inTable = false;
 
-  for (const dateDir of readdirSync(root, { withFileTypes: true })) {
-    if (!dateDir.isDirectory()) continue;
-    const datePath = join(root, dateDir.name);
-
-    for (const proofDir of readdirSync(datePath, { withFileTypes: true })) {
-      if (!proofDir.isDirectory() || !proofDir.name.startsWith('runtime-wording-truth-')) continue;
-
-      const suffix = Number(proofDir.name.replace('runtime-wording-truth-', ''));
-      const notesPath = join(datePath, proofDir.name, 'notes.md');
-      if (Number.isFinite(suffix) && existsSync(notesPath)) {
-        candidates.push({ suffix, notesPath });
+  for (const line of lines) {
+    if (!inTable) {
+      if (line.trim() === '| Field | Current State |') {
+        inTable = true;
       }
+      continue;
+    }
+
+    if (!line.startsWith('|')) break;
+    if (line.includes('---')) continue;
+
+    const cells = line
+      .split('|')
+      .slice(1, -1)
+      .map((cell) => cell.trim());
+
+    if (cells.length === 2) {
+      state[cells[0]] = cells[1];
     }
   }
 
-  return candidates.sort((a, b) => b.suffix - a.suffix)[0]?.notesPath;
+  return state;
 };
 
 describe('proof board freshness', () => {
-  it('uses the current deploy and latest runtime wording evidence', () => {
-    const expectedDeploy = getLatestVerifiedDeploy();
-    const expectedEvidence = getLatestRuntimeWordingEvidence();
-
-    expect(expectedDeploy).toBeTruthy();
-    expect(expectedEvidence).toBeTruthy();
+  it('derives the board from the current backlog truth', () => {
+    const backlog = read('BACKLOG.md');
+    const expectedState = parseCurrentStateTable(backlog);
 
     const output = execFileSync('node', ['scripts/v1-proof-board.mjs'], {
       encoding: 'utf8',
     });
     const board = JSON.parse(output) as ProofBoardOutput;
-    const sitewideBugTesting = board.ruthlessNextThree?.find((item) => item.id === 'sitewide-bug-testing');
-    const aiProductAudit = board.ruthlessNextThree?.find((item) => item.id === 'ai-product-audit');
-    const publicSiteTrust = board.slices?.find((slice) => slice.id === 'public-site-trust');
 
-    expect(board.summary?.secondaryTrustGap).toContain(expectedDeploy);
+    expect(board.source).toBe('BACKLOG.md');
+    expect(board.currentState).toMatchObject(expectedState);
     expect(board.activeUngatedLaunchBlockers).toEqual([
-      'strict-p0-secure-service-role-queue-storage-proof',
+      'Secure Service-Role Queue/Storage Deep Proof',
+      'Secure Email / Queue-Processing Deep Proof',
     ]);
-    expect(board.blockedOrApprovalGatedLaunchItems?.join('\n')).not.toContain('secure-env model-backed AI');
-    expect(board.blockedOrApprovalGatedLaunchItems?.join('\n')).toContain('external OpenAI key rotation');
-    expect(board.blockedOrApprovalGatedLaunchItems?.join('\n')).not.toContain('secure service-role storage');
-    expect(sitewideBugTesting?.status).toBe('LATEST_LIVE_SITEWIDE_PASS_GREEN_KEEP_REGRESSION_TESTING');
-    expect(aiProductAudit?.status).toBe('AI_PRODUCT_AUDIT_LIVE_GREEN_SECURE_MODEL_PROOF_GREEN');
-    expect(aiProductAudit?.manualProof?.join('\n')).toContain('AI/photo sensitive-column migration');
-    expect(publicSiteTrust?.localWordingEvidence).toBe(expectedEvidence);
-    expect(publicSiteTrust?.manualProof?.join('\n')).toContain(expectedEvidence);
+    expect(board.summary?.currentProofState).toContain('canonical-smoke');
+    expect(board.summary?.currentProofState).toContain('public-quality');
+    expect(board.summary?.currentNextActions).toContain('secure service-role proof');
+    expect(board.ruthlessNextThree?.[0]?.title).toContain('Provide `SUPABASE_SERVICE_ROLE_KEY`');
+    expect(board.ruthlessNextThree?.[0]?.status).toBe('READY_WHEN_SECURE_ENV_EXISTS');
+    expect(board.sections?.['Current Canonical Status']).toContain('single public site resolver');
+    expect(board.sections?.['Current Validation Matrix']).toContain('LIVE PASS');
+    expect(board.sections?.['Deployment Status']).toContain('public-site-access');
   });
 });

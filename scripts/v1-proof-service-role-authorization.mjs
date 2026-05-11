@@ -30,6 +30,7 @@ const getEnv = (key) => {
 
 const supabaseUrl = getEnv('VITE_SUPABASE_URL').trim();
 const anonKey = getEnv('VITE_SUPABASE_ANON_KEY').trim();
+const serviceRoleKey = getEnv('SUPABASE_SERVICE_ROLE_KEY').trim() || getEnv('V1_SUPABASE_SERVICE_ROLE_KEY').trim();
 
 function blocked(reason) {
   console.log(JSON.stringify({
@@ -155,8 +156,29 @@ for (const proofCase of proofCases) {
   }
 }
 
-const ok = results.every((result) => result.ok);
+const secureServiceRoleResult = serviceRoleKey
+  ? {
+      id: 'secure-service-role-storage-proof',
+      label: 'Secure service-role queue/storage proof',
+      ok: false,
+      blocked: true,
+      blockerType: 'follow_up_required',
+      message: 'Run npm run proof:v1:launch-closeout to complete secure service-role and queue-processing proof plus launch-board refresh.',
+    }
+  : {
+      id: 'secure-service-role-storage-proof',
+      label: 'Secure service-role queue/storage proof',
+      ok: false,
+      blocked: true,
+      blockerType: 'missing_service_role_key',
+      message: 'Set SUPABASE_SERVICE_ROLE_KEY to run secure service-role queue/storage proof.',
+    };
+
+results.push(secureServiceRoleResult);
+
+const ok = results.every((result) => result.ok || result.blocked);
 const unsafeDenialCopy = results.filter((result) => !isPublicSafeDenialCopy(result.safeError));
+const blockers = results.filter((result) => result.blocked);
 
 console.log(JSON.stringify({
   ok: ok && unsafeDenialCopy.length === 0,
@@ -164,11 +186,12 @@ console.log(JSON.stringify({
   mode: 'service_role_media_unauthenticated_live_denial',
   supabaseProjectHost: new URL(supabaseUrl).host,
   results,
+  blockers,
   unsafeDenialCopy,
   stillRequired: [
     'Authenticated owner/planner/coordinator/viewer live mutation proof with disposable proof accounts.',
-    'Secure service-role storage and cross-table integrity proof in an environment that can hold SUPABASE_SERVICE_ROLE_KEY.',
-    'Secure service-role queue-processing proof in an environment that can hold SUPABASE_SERVICE_ROLE_KEY.',
+    ...(serviceRoleKey ? [] : ['Secure service-role storage and cross-table integrity proof in an environment that can hold SUPABASE_SERVICE_ROLE_KEY.']),
+    ...(serviceRoleKey ? [] : ['Secure service-role queue-processing proof in an environment that can hold SUPABASE_SERVICE_ROLE_KEY.']),
   ],
 }, null, 2));
 

@@ -1,7 +1,7 @@
 import {
   getSafePublicActionHref,
   getSafePublicImageUrl,
-} from '../sections/publicLinks';
+} from '../sections/publicLinks.ts';
 
 const IMAGE_KEY_PATTERN = /(?:image|photo|photos|picture|thumbnail|poster|avatar|portrait|logo)/i;
 const LINK_KEY_PATTERN = /(?:href|url|link|website|cta|rsvp|registry|cashfund|viewall|map|embed|playlist|video)/i;

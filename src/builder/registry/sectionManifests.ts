@@ -4,7 +4,7 @@ import {
   BuilderSectionCapabilities,
   createDefaultSectionInstance,
   BuilderSectionInstance,
-} from '../../types/builder/section';
+} from '../../types/builder/section.ts';
 
 const defaultCapabilities: BuilderSectionCapabilities = {
   draggable: true,

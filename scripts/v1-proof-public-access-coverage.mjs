@@ -4,6 +4,9 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const functionsRoot = join(process.cwd(), 'supabase', 'functions');
+const renderModelSource = readFileSync(join(process.cwd(), 'src', 'lib', 'publicSiteRenderModel.ts'), 'utf8');
+const clientContractSource = readFileSync(join(process.cwd(), 'src', 'lib', 'publicSiteAccess.ts'), 'utf8');
+const siteViewSource = readFileSync(join(process.cwd(), 'src', 'pages', 'SiteView.tsx'), 'utf8');
 const allowedResolverFunctions = new Set(['public-site-access']);
 const auditedAlternateGateFunctions = new Set(['guest-contact-submit']);
 
@@ -73,7 +76,8 @@ const resolverChecks = functionEntrypoints
       && source.includes('"site_password_hash"')
       && source.includes('"guest_access_token"');
     const buildsSafePublicSite = source.includes('function buildSafePublicSite')
-      && source.includes('buildPublicSiteRenderSite(applyPublicSiteTranslation(row, translation))')
+      && source.includes('const translatedRow = applyPublicSiteTranslation(row, translation);')
+      && source.includes('const site = buildPublicSiteRenderSite(translatedRow);')
       && source.includes('translated_site_json,translated_published_json,translated_wedding_data,translated_layout_config');
     const normalizesPrivacyMode = source.includes('normalizePublicPrivacyMode(row.privacy_mode)');
     const passesStoredInviteToken = source.includes('storedInviteToken: typeof row.guest_access_token === "string" ? row.guest_access_token : null');
@@ -87,6 +91,44 @@ const resolverChecks = functionEntrypoints
       && !source.includes('builderProject:')
       && !source.includes('weddingData:')
       && !source.includes('layoutConfig:');
+    const ownsPersistedSectionsFallback = source.includes('const PUBLIC_SECTION_FALLBACK_COLUMNS = [')
+      && source.includes('.from("sections")')
+      && source.includes('.eq("site_id", String(row.id))')
+      && source.includes('.eq("visible", true)')
+      && source.includes('buildPersistedPublicFallbackPages(persistedSections)');
+    const usesAllowlistedRenderModel = renderModelSource.includes('const ALLOWED_THEME_TOKEN_KEYS')
+      && renderModelSource.includes("const ALLOWED_BINDING_KEYS = ['venueIds', 'scheduleItemIds', 'linkIds', 'faqIds'] as const;")
+      && renderModelSource.includes("const ALLOWED_STYLE_OVERRIDE_KEYS = [")
+      && !renderModelSource.includes("'customClassName'")
+      && !renderModelSource.includes("'customCss'")
+      && !renderModelSource.includes("'styleRecipeCss'")
+      && renderModelSource.includes('function pickPublicSectionSettings(')
+      && renderModelSource.includes('SECTION_MANIFESTS[section.type as keyof typeof SECTION_MANIFESTS]')
+      && renderModelSource.includes('manifestToCanonicalSectionDefinition(manifest)')
+      && renderModelSource.includes('export function buildPersistedPublicFallbackPages(')
+      && renderModelSource.includes('publishedSource?.weddingDataSnapshot')
+      && renderModelSource.includes('publishedSource?.weddingData,')
+      && !renderModelSource.includes('meta: normalized.meta')
+      && !renderModelSource.includes('PUBLIC_SENSITIVE_KEY_PATTERN')
+      && !renderModelSource.includes('sanitizeDeepPublicValue(');
+    const avoidsDraftFirstPublishedWeddingData = !renderModelSource.includes('row.wedding_data,\n        publishedSource?.weddingDataSnapshot');
+    const removesWeddingMetaFromNetworkPayload = !renderModelSource.includes('meta: normalized.meta')
+      && !clientContractSource.includes('const meta = asRecord(wedding.meta);')
+      && !clientContractSource.includes('createdAtISO')
+      && !clientContractSource.includes('updatedAtISO');
+    const clientSanitizerMatchesDto = clientContractSource.includes('function sanitizePublicWeddingModel(')
+      && clientContractSource.includes('function sanitizePublicThemeModel(')
+      && clientContractSource.includes('function sanitizePublicRenderSection(')
+      && clientContractSource.includes('function sanitizePublicRenderSectionSettings(')
+      && !clientContractSource.includes("wedding: asRecord(renderModel?.wedding) as PublicSiteRenderModel['wedding']")
+      && !clientContractSource.includes('tokens: asRecord(asRecord(renderModel?.theme)?.tokens) ?? null')
+      && !clientContractSource.includes('customClassName')
+      && !clientContractSource.includes('customCss')
+      && !clientContractSource.includes('styleRecipeCss');
+    const publicBrowserAvoidsSectionsReads = siteViewSource.includes('fetchPublicSiteAccess({')
+      && !siteViewSource.includes('fetchPublishedSections(')
+      && !siteViewSource.includes('PageRendererFromDB')
+      && !siteViewSource.includes("from '../data/siteRepository'");
 
     return {
       name,
@@ -94,12 +136,24 @@ const resolverChecks = functionEntrypoints
         && buildsSafePublicSite
         && normalizesPrivacyMode
         && passesStoredInviteToken
-        && avoidsUnsafePayload,
+        && avoidsUnsafePayload
+        && ownsPersistedSectionsFallback
+        && usesAllowlistedRenderModel
+        && avoidsDraftFirstPublishedWeddingData
+        && removesWeddingMetaFromNetworkPayload
+        && clientSanitizerMatchesDto
+        && publicBrowserAvoidsSectionsReads,
       keepsPrivateColumnsPrivate,
       buildsSafePublicSite,
       normalizesPrivacyMode,
       passesStoredInviteToken,
       avoidsUnsafePayload,
+      ownsPersistedSectionsFallback,
+      usesAllowlistedRenderModel,
+      avoidsDraftFirstPublishedWeddingData,
+      removesWeddingMetaFromNetworkPayload,
+      clientSanitizerMatchesDto,
+      publicBrowserAvoidsSectionsReads,
     };
   });
 
