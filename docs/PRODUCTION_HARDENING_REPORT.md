@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-12 09:19 AM PDT`
+_Updated:_ `2026-05-12 09:40 AM PDT`
 
 ## Current Score
 
@@ -11,7 +11,7 @@ _Updated:_ `2026-05-12 09:19 AM PDT`
 ## Exact Runtime Identity
 
 - Branch: `codex/v1-finish-hard-gates-3`
-- Current branch head: `4400a7ca` (`Expand strict pocket to auth and public runtime boundary`)
+- Current branch head: `a4e2aaf5` (`Harden internal tooling and signed session guards`)
 - Exact frontend Git SHA: `f0cbf841`
 - Exact frontend commit: `Fix payment gate and serialize RSVP capacity`
 - Exact Vercel production deploy: `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`
