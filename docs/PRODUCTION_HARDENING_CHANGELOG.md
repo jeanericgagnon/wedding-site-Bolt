@@ -44,6 +44,23 @@ This file preserves timestamped historical entries, extraction batches, and no-d
   - the repo no longer argues with itself about whether guest-dashboard settings proof is still pending
   - TS/ESLint rigor is still soft globally, but the highest-risk auth/payment/config/vendor boundary files now fail hard instead of drifting
 
+## 2026-05-12 09:10 AM PDT - Strict Pocket Expanded To Public Access Boundary
+
+- Status: `LOCAL HARDENING + PROOF`
+- What changed:
+  - widened the `eslint.config.js` error pocket to include:
+    - `src/lib/publicRenderContract.ts`
+    - `src/lib/publicSiteAccess.ts`
+    - `src/lib/publicSiteSlug.ts`
+  - widened `npm run proof:v1:strict-pocket` to match that public boundary
+  - updated `strictPocketTypecheck.test.ts` to guard the expanded file list
+- Proof:
+  - `./node_modules/.bin/eslint src/lib/publicSiteSlug.ts src/lib/publicSiteAccess.ts src/lib/publicRenderContract.ts src/components/auth/ProtectedRoute.tsx src/lib/siteConfigValidate.ts src/lib/stripeService.ts src/lib/vendorProfiles.ts`
+  - `npm run proof:v1:strict-pocket`
+  - `npm run proof:v1:test-lanes`
+- Result:
+  - the launch-critical strict pocket now covers auth, public access, public DTO contract, payment/config validation, and vendor-profile boundaries
+
 
 ## 2026-05-12 07:14 AM PDT - Registry Refresh Policy Matrix Coverage And Inventory Guard Tightening
 

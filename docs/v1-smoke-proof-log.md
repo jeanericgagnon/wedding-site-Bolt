@@ -19,6 +19,11 @@ _Launch call right now:_ `GO`
   - `npm test -- --run src/lib/serviceRoleAuthorizationDisposition.test.ts src/lib/strictPocketTypecheck.test.ts src/lib/stripeService.test.ts src/lib/siteConfigValidate.test.ts src/lib/vendorProfiles.test.ts src/lib/vendorProfiles.boundary.test.ts` -> `PASS`
   - `docs/service-role-authorization-disposition-2026-05-05.md` is now aligned with the live-green guest-dashboard settings and broader client-RLS matrix lanes
   - the serialized RSVP capacity function is explicitly called out in the repo proof story
+- 2026-05-12 09:10 AM PDT:
+  - `./node_modules/.bin/eslint src/lib/publicSiteSlug.ts src/lib/publicSiteAccess.ts src/lib/publicRenderContract.ts src/components/auth/ProtectedRoute.tsx src/lib/siteConfigValidate.ts src/lib/stripeService.ts src/lib/vendorProfiles.ts` -> `PASS`
+  - `npm run proof:v1:strict-pocket` -> `PASS`
+  - `npm run proof:v1:test-lanes` -> `PASS`
+  - the launch-critical strict pocket now also covers the public access / public DTO contract boundary
 - 2026-05-12 07:49 AM PDT:
   - `npm run proof:v1:test-lanes` -> `PASS`
   - `npm test -- --run src/lib/ciHardpassWorkflow.test.ts src/lib/releaseLaunchGate.test.ts src/lib/aiExposureProofScript.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts` -> `PASS`

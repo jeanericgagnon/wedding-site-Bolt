@@ -44,6 +44,9 @@ export default tseslint.config(
   {
     files: [
       'src/components/auth/ProtectedRoute.tsx',
+      'src/lib/publicRenderContract.ts',
+      'src/lib/publicSiteAccess.ts',
+      'src/lib/publicSiteSlug.ts',
       'src/lib/siteConfigValidate.ts',
       'src/lib/stripeService.ts',
       'src/lib/vendorProfiles.ts',

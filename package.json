@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "proof:v1:strict-pocket": "eslint --max-warnings 0 src/components/auth/ProtectedRoute.tsx src/lib/siteConfigValidate.ts src/lib/stripeService.ts src/lib/vendorProfiles.ts",
+    "proof:v1:strict-pocket": "eslint --max-warnings 0 src/components/auth/ProtectedRoute.tsx src/lib/publicRenderContract.ts src/lib/publicSiteAccess.ts src/lib/publicSiteSlug.ts src/lib/siteConfigValidate.ts src/lib/stripeService.ts src/lib/vendorProfiles.ts",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "verify": "npm run typecheck && npm run build",
