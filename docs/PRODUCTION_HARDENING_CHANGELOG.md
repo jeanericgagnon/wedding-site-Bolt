@@ -7,6 +7,25 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 
 ---
 
+## 2026-05-11 09:11 PM PDT - Broader Planner / Coordinator RPC Matrix Coverage
+
+- Status: `LIVE PROOF EXPANDED`
+- What changed:
+  - expanded `tests/e2e/collaborator-permission-rls.spec.ts`
+  - planner runtime proof now covers allowed `dashboard_message_write` plus denied `registry_item_write`
+  - coordinator runtime proof now covers allowed `builder_media_asset_write` plus denied `dashboard_message_write`
+  - updated `src/lib/collaboratorPermissionRlsProof.test.ts`
+  - updated `src/lib/clientRlsMatrixProofScript.test.ts`
+  - updated `scripts/v1-proof-collaborator-runtime.mjs` and `scripts/v1-proof-client-rls-matrix.mjs`
+- Proof result:
+  - `npm test -- --run src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Launch effect:
+  - no launch-state change
+  - the live client-RLS baseline now covers guest, planning, seating, messages, registry, and photos instead of stopping at guest/planning/seating
+
 ## 2026-05-11 07:57 PM PDT - Vault And Planning Vendor/Budget RPC Batch
 
 - Status: `LOCAL HARDENING`

@@ -42,11 +42,11 @@ const collaboratorPassword = getEnv('V1_COLLABORATOR_PASSWORD', `DayOf${runtimeS
 function buildStillManualProofNeeded() {
   return liveGuestDashboardSettingsRpcs
     ? [
-        'Broaden the direct client-table role matrix across any remaining non-guest dashboard write surfaces beyond guest, planning, and seating.',
+        'Broaden the live client-RLS matrix beyond guest, planning, seating, messages, registry, and photos across any remaining non-guest dashboard write surfaces.',
       ]
     : [
         'Set LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 and rerun this proof to include the guest-dashboard settings RPC lane.',
-        'Broaden the direct client-table role matrix across any remaining non-guest dashboard write surfaces beyond guest, planning, and seating.',
+        'Broaden the live client-RLS matrix beyond guest, planning, seating, messages, registry, and photos across any remaining non-guest dashboard write surfaces.',
       ];
 }
 
@@ -200,7 +200,8 @@ const output = blocker.blocked
         'Role-aware post-accept landing evidence',
         'Viewer deny plus planner/coordinator allowed-action runtime proof',
         'Guest-scoped collaborators can mutate guest rows directly while timeline/settings writes stay denied without permission',
-        'Planner-scoped collaborators can write planning tasks directly while coordinator-scoped collaborators can write seating events and tables directly',
+        'Planner-scoped collaborators can write planning tasks and dashboard messages while registry RPC writes stay denied without permission',
+        'Coordinator-scoped collaborators can write seating events/tables and builder media assets while dashboard message RPC writes stay denied without permission',
       ],
       stillManualProofNeeded: buildStillManualProofNeeded(),
       blockers: [blocker],
@@ -226,7 +227,8 @@ const output = blocker.blocked
           'Role-aware post-accept landing evidence',
           'Viewer deny plus planner/coordinator allowed-action runtime proof',
           'Guest-scoped collaborators can mutate guest rows directly while timeline/settings writes stay denied without permission',
-          'Planner-scoped collaborators can write planning tasks directly while coordinator-scoped collaborators can write seating events and tables directly',
+          'Planner-scoped collaborators can write planning tasks and dashboard messages while registry RPC writes stay denied without permission',
+          'Coordinator-scoped collaborators can write seating events/tables and builder media assets while dashboard message RPC writes stay denied without permission',
         ],
         stillManualProofNeeded: buildStillManualProofNeeded(),
         blockers: [],

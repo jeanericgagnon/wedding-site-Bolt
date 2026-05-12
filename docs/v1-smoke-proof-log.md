@@ -34,13 +34,7 @@ _Launch call right now:_ `GO`
     - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
     - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
   - refreshed proof scripts so they no longer claim the guest-dashboard settings RPC lane still needs deployment after it is live
-- That matrix now explicitly proves direct guest, planning, and seating writes stay permission-scoped while direct timeline/settings writes remain denied without permission.
-- The guest-dashboard settings RPC batch is still local-only and stays outside the live runtime baseline until deployment plus `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` proof.
-- The message/coordinator write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
-- The settings/overview owner-write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
-- The vault/planning vendor-budget RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
-- The onboarding/signup write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
-- The name-change write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
+- That matrix now explicitly proves guest, planning, seating, message, registry, and photo permission lanes stay scoped while direct timeline/settings and other ungranted writes remain denied.
 - Payment gate now fails closed on billing lookup failure.
 - RSVP capacity enforcement now serializes through the deployed database function path.
 - Release launch CI now hard-fails without strict Supabase RSVP proof secrets and passes with the configured repo secrets.
@@ -184,6 +178,22 @@ _Launch call right now:_ `GO`
 - Result:
   - guest-dashboard settings RPC proof is now part of the live role matrix
   - the remaining work is breadth expansion and future guard upkeep, not pending RPC deployment
+
+## 2026-05-11 09:11 PM PDT - Broader Planner / Coordinator RPC Matrix Coverage
+
+- Expanded the live collaborator runtime proof beyond planning/seating:
+  - planner can create dashboard messages through `dashboard_message_write`
+  - planner is denied ungranted registry writes through `registry_item_write`
+  - coordinator can create builder media assets through `builder_media_asset_write`
+  - coordinator is denied ungranted dashboard message writes
+- Focused proof green:
+  - `npm test -- --run src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Result:
+  - the live role matrix now covers guest, planning, seating, messages, registry, and photos
+  - the remaining work is owner-only / future-surface breadth, not the mainstream collaborator runtime
 
 ## Current Launch Call
 

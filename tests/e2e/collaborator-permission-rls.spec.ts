@@ -661,18 +661,21 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
   let plannerCollaboratorUserId = '';
   let plannerCollaboratorAccessToken = '';
   let planningTaskId = '';
+  let plannerMessageId = '';
   let coordinatorInviteId = '';
   let coordinatorCollaboratorUserId = '';
   let coordinatorCollaboratorAccessToken = '';
   let seatingItineraryEventId = '';
   let seatingEventId = '';
   let seatingTableId = '';
+  let coordinatorMediaAssetId = '';
   const collaboratorContexts: Array<import('@playwright/test').BrowserContext> = [];
 
   const restUrl = (table: string, params: Record<string, string> = {}) => {
     const search = new URLSearchParams(params);
     return `${supabaseUrl}/rest/v1/${table}${search.toString() ? `?${search.toString()}` : ''}`;
   };
+  const rpcUrl = (fn: string) => `${supabaseUrl}/rest/v1/rpc/${fn}`;
   const functionUrl = (functionName: string) => `${supabaseUrl}/functions/v1/${functionName}`;
 
   const restFetch = async (token: string, url: string, init: RequestInit = {}) => fetch(url, {
@@ -701,6 +704,15 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
 
   const cleanup = async () => {
     if (!ownerAccessToken) return;
+    if (coordinatorMediaAssetId) {
+      await restFetch(ownerAccessToken, rpcUrl('builder_media_asset_delete'), {
+        method: 'POST',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          p_asset_id: coordinatorMediaAssetId,
+        }),
+      });
+    }
     if (seatingTableId) {
       await restFetch(ownerAccessToken, restUrl('seating_tables', { id: `eq.${seatingTableId}` }), {
         method: 'DELETE',
@@ -721,6 +733,12 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     }
     if (planningTaskId) {
       await restFetch(ownerAccessToken, restUrl('planning_tasks', { id: `eq.${planningTaskId}` }), {
+        method: 'DELETE',
+        headers: { Prefer: 'return=minimal' },
+      });
+    }
+    if (plannerMessageId) {
+      await restFetch(ownerAccessToken, restUrl('messages', { id: `eq.${plannerMessageId}` }), {
         method: 'DELETE',
         headers: { Prefer: 'return=minimal' },
       });
@@ -828,6 +846,44 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     planningTaskId = createdPlanningTask.id;
     expect(createdPlanningTask.title).toContain('QA Planning Task');
 
+    const allowedPlannerMessageWrite = await restFetch(plannerCollaboratorAccessToken, rpcUrl('dashboard_message_write'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_wedding_site_id: weddingSiteId,
+        p_message_id: null,
+        p_payload: {
+          subject: `QA Planner Message ${runId}`,
+          body: 'Planner permission should allow dashboard message RPC writes.',
+          channel: 'email',
+          status: 'draft',
+          audience_filter: 'all',
+          recipient_filter: { audience: 'all' },
+          recipient_count: 0,
+        },
+      }),
+    });
+    const allowedPlannerMessageWriteText = await allowedPlannerMessageWrite.text();
+    expect(allowedPlannerMessageWrite.ok, allowedPlannerMessageWriteText).toBeTruthy();
+    const plannerMessage = JSON.parse(allowedPlannerMessageWriteText) as { id: string; subject: string };
+    plannerMessageId = plannerMessage.id;
+    expect(plannerMessage.subject).toContain('QA Planner Message');
+
+    const forbiddenPlannerRegistryWrite = await restFetch(plannerCollaboratorAccessToken, rpcUrl('registry_item_write'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_wedding_site_id: weddingSiteId,
+        p_item_id: null,
+        p_payload: {
+          item_name: `Forbidden Planner Registry ${runId}`,
+          item_type: 'gift',
+        },
+      }),
+    });
+    expect(forbiddenPlannerRegistryWrite.ok, await forbiddenPlannerRegistryWrite.text()).toBeFalsy();
+    expect([400, 401, 403]).toContain(forbiddenPlannerRegistryWrite.status);
+
     const coordinatorInvite = await createAndClaimInvite({
       ownerPage,
       ownerAccessToken,
@@ -907,6 +963,53 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     const [createdSeatingTable] = JSON.parse(allowedCoordinatorSeatingTableWriteText) as Array<{ id: string; table_name: string }>;
     seatingTableId = createdSeatingTable.id;
     expect(createdSeatingTable.table_name).toContain('QA Table');
+
+    const allowedCoordinatorMediaWrite = await restFetch(coordinatorCollaboratorAccessToken, rpcUrl('builder_media_asset_write'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_wedding_site_id: weddingSiteId,
+        p_asset_id: null,
+        p_payload: {
+          filename: `qa-coordinator-${runId}.jpg`,
+          original_filename: `qa-coordinator-${runId}.jpg`,
+          mime_type: 'image/jpeg',
+          asset_type: 'image',
+          status: 'ready',
+          url: `https://example.com/qa-coordinator-${runId}.jpg`,
+          thumbnail_url: `https://example.com/qa-coordinator-${runId}-thumb.jpg`,
+          width: 1200,
+          height: 800,
+          size_bytes: 1024,
+          alt_text: 'Coordinator proof asset',
+          caption: 'Coordinator photo permission proof',
+          tags: ['qa', 'coordinator'],
+          attached_section_ids: [],
+        },
+      }),
+    });
+    const allowedCoordinatorMediaWriteText = await allowedCoordinatorMediaWrite.text();
+    expect(allowedCoordinatorMediaWrite.ok, allowedCoordinatorMediaWriteText).toBeTruthy();
+    const coordinatorMediaAsset = JSON.parse(allowedCoordinatorMediaWriteText) as { id: string; filename: string };
+    coordinatorMediaAssetId = coordinatorMediaAsset.id;
+    expect(coordinatorMediaAsset.filename).toContain(`qa-coordinator-${runId}.jpg`);
+
+    const forbiddenCoordinatorMessageWrite = await restFetch(coordinatorCollaboratorAccessToken, rpcUrl('dashboard_message_write'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_wedding_site_id: weddingSiteId,
+        p_message_id: null,
+        p_payload: {
+          subject: `Forbidden Coordinator Message ${runId}`,
+          body: 'Coordinator should not have message permission in this proof.',
+          channel: 'email',
+          status: 'draft',
+        },
+      }),
+    });
+    expect(forbiddenCoordinatorMessageWrite.ok, await forbiddenCoordinatorMessageWrite.text()).toBeFalsy();
+    expect([400, 401, 403]).toContain(forbiddenCoordinatorMessageWrite.status);
   } finally {
     await cleanup();
     for (const context of collaboratorContexts) {
