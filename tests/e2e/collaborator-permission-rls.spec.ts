@@ -666,6 +666,10 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
   let registryCollaboratorUserId = '';
   let registryCollaboratorAccessToken = '';
   let registryItemId = '';
+  let photosInviteId = '';
+  let photosCollaboratorUserId = '';
+  let photosCollaboratorAccessToken = '';
+  let vaultConfigId = '';
   let settingsInviteId = '';
   let settingsCollaboratorUserId = '';
   let settingsCollaboratorAccessToken = '';
@@ -771,6 +775,15 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
         headers: { Prefer: 'return=minimal' },
       });
     }
+    if (vaultConfigId) {
+      await restFetch(ownerAccessToken, rpcUrl('vault_config_delete'), {
+        method: 'POST',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          p_config_id: vaultConfigId,
+        }),
+      });
+    }
     if (weddingSiteId && plannerCollaboratorUserId) {
       await restFetch(ownerAccessToken, restUrl('wedding_site_collaborators', {
         wedding_site_id: `eq.${weddingSiteId}`,
@@ -784,6 +797,15 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
       await restFetch(ownerAccessToken, restUrl('wedding_site_collaborators', {
         wedding_site_id: `eq.${weddingSiteId}`,
         user_id: `eq.${registryCollaboratorUserId}`,
+      }), {
+        method: 'DELETE',
+        headers: { Prefer: 'return=minimal' },
+      });
+    }
+    if (weddingSiteId && photosCollaboratorUserId) {
+      await restFetch(ownerAccessToken, restUrl('wedding_site_collaborators', {
+        wedding_site_id: `eq.${weddingSiteId}`,
+        user_id: `eq.${photosCollaboratorUserId}`,
       }), {
         method: 'DELETE',
         headers: { Prefer: 'return=minimal' },
@@ -815,6 +837,12 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     }
     if (registryInviteId) {
       await restFetch(ownerAccessToken, restUrl('wedding_site_collaborator_invites', { id: `eq.${registryInviteId}` }), {
+        method: 'DELETE',
+        headers: { Prefer: 'return=minimal' },
+      });
+    }
+    if (photosInviteId) {
+      await restFetch(ownerAccessToken, restUrl('wedding_site_collaborator_invites', { id: `eq.${photosInviteId}` }), {
         method: 'DELETE',
         headers: { Prefer: 'return=minimal' },
       });
@@ -1016,6 +1044,69 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     });
     expect(forbiddenRegistryMessageWrite.ok, await forbiddenRegistryMessageWrite.text()).toBeFalsy();
     expect([400, 401, 403]).toContain(forbiddenRegistryMessageWrite.status);
+
+    const photosInvite = await createAndClaimInvite({
+      ownerPage,
+      ownerAccessToken,
+      restFetch,
+      restUrl,
+      inviteName: `QA Photos ${runId}`,
+      inviteEmail: `qa-photos-${runId}@example.com`,
+      inviteRole: 'viewer',
+      permissions: ['photos'],
+      collaboratorPassword: `DayOfPhotos${runId}!`,
+    });
+    photosInviteId = photosInvite.inviteId;
+    photosCollaboratorUserId = photosInvite.collaboratorUserId;
+    photosCollaboratorAccessToken = photosInvite.collaboratorAccessToken;
+    collaboratorContexts.push(photosInvite.collaboratorContext);
+
+    const photosCollaboratorResponse = await restFetch(ownerAccessToken, restUrl('wedding_site_collaborators', {
+      select: 'role,permissions',
+      wedding_site_id: `eq.${weddingSiteId}`,
+      user_id: `eq.${photosCollaboratorUserId}`,
+      limit: '1',
+    }));
+    expect(photosCollaboratorResponse.ok).toBeTruthy();
+    const [photosCollaborator] = await photosCollaboratorResponse.json() as Array<{ role: string; permissions: string[] }>;
+    expect(photosCollaborator).toMatchObject({ role: 'viewer', permissions: ['photos'] });
+
+    const allowedPhotosVaultConfigWrite = await restFetch(photosCollaboratorAccessToken, rpcUrl('vault_config_write'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_wedding_site_id: weddingSiteId,
+        p_config_id: null,
+        p_payload: {
+          vault_index: 4,
+          label: `QA Vault Config ${runId}`,
+          duration_years: 1,
+          is_enabled: true,
+        },
+      }),
+    });
+    const allowedPhotosVaultConfigWriteText = await allowedPhotosVaultConfigWrite.text();
+    expect(allowedPhotosVaultConfigWrite.ok, allowedPhotosVaultConfigWriteText).toBeTruthy();
+    const vaultConfig = JSON.parse(allowedPhotosVaultConfigWriteText) as { id: string; label: string };
+    vaultConfigId = vaultConfig.id;
+    expect(vaultConfig.label).toContain('QA Vault Config');
+
+    const forbiddenPhotosMessageWrite = await restFetch(photosCollaboratorAccessToken, rpcUrl('dashboard_message_write'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_wedding_site_id: weddingSiteId,
+        p_message_id: null,
+        p_payload: {
+          subject: `Forbidden Photos Message ${runId}`,
+          body: 'Photos-only collaborator should not have message permission.',
+          channel: 'email',
+          status: 'draft',
+        },
+      }),
+    });
+    expect(forbiddenPhotosMessageWrite.ok, await forbiddenPhotosMessageWrite.text()).toBeFalsy();
+    expect([400, 401, 403]).toContain(forbiddenPhotosMessageWrite.status);
 
     const baselineSettingsRead = await restFetch(ownerAccessToken, restUrl('wedding_sites', {
       select: 'music_playlist_url',

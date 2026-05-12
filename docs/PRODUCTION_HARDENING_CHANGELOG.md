@@ -28,6 +28,24 @@ This file preserves timestamped historical entries, extraction batches, and no-d
   - no launch-state change
   - the live client-RLS baseline now covers guest, planning, settings, registry, seating, coordinator, messages, and photos instead of stopping short at the settings permission lane
 
+## 2026-05-11 09:45 PM PDT - Photos / Vault RPC Matrix Coverage
+
+- Status: `LIVE PROOF EXPANDED`
+- What changed:
+  - expanded `tests/e2e/collaborator-permission-rls.spec.ts` again
+  - photos-scoped collaborator proof now covers allowed `vault_config_write` plus denied `dashboard_message_write`
+  - fixed a real fixture/schema mismatch after the first live attempt exposed an invalid `vault_index`
+  - updated `src/lib/collaboratorPermissionRlsProof.test.ts`
+  - updated `src/lib/clientRlsMatrixProofScript.test.ts`
+  - updated `scripts/v1-proof-collaborator-runtime.mjs` and `scripts/v1-proof-client-rls-matrix.mjs`
+- Proof result:
+  - `npm test -- --run src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts` -> `PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Launch effect:
+  - no launch-state change
+  - the live client-RLS baseline now covers guest, planning, settings, registry, seating, coordinator, messages, photos, and vault-config writes
+
 ## 2026-05-11 09:11 PM PDT - Broader Planner / Coordinator RPC Matrix Coverage
 
 - Status: `LIVE PROOF EXPANDED`

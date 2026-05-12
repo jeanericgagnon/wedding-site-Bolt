@@ -127,9 +127,9 @@ function runStep(step) {
 function buildStillManualProofNeeded() {
   const items = [];
   if (!liveGuestDashboardSettingsRpcs) {
-    items.push('Set LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 and rerun this matrix to include the guest-dashboard settings RPC lane.');
+  items.push('Set LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 and rerun this matrix to include the guest-dashboard settings RPC lane.');
   }
-  items.push('Broaden the live client-RLS matrix beyond guest, planning, seating, messages, registry, and photos across remaining non-guest dashboard write surfaces.');
+  items.push('Broaden the live client-RLS matrix beyond guest, planning, settings, registry, seating, coordinator, messages, and photos across remaining non-guest dashboard write surfaces.');
   return items;
 }
 
@@ -156,6 +156,7 @@ const output = {
     'Planner-scoped collaborators can write planning tasks and dashboard messages while registry RPC writes stay denied without permission',
     'Settings-scoped collaborators can patch site settings while registry RPC writes stay denied without permission',
     'Registry-scoped collaborators can write registry items while dashboard message RPC writes stay denied without permission',
+    'Photos-scoped collaborators can write vault configs while dashboard message RPC writes stay denied without permission',
     'Coordinator-scoped collaborators can write seating events/tables, coordinator Q&A/check-in, and builder media assets while dashboard message RPC writes stay denied without permission',
   ],
   stillManualProofNeeded: buildStillManualProofNeeded(),

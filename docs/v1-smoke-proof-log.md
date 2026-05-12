@@ -34,7 +34,7 @@ _Launch call right now:_ `GO`
     - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
     - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
   - refreshed proof scripts so they no longer claim the guest-dashboard settings RPC lane still needs deployment after it is live
-- That matrix now explicitly proves guest, planning, settings, registry, seating, coordinator, message, and photo permission lanes stay scoped while direct timeline/settings and other ungranted writes remain denied.
+- That matrix now explicitly proves guest, planning, settings, registry, seating, coordinator, message, photo, and vault-config permission lanes stay scoped while direct timeline/settings and other ungranted writes remain denied.
 - Payment gate now fails closed on billing lookup failure.
 - RSVP capacity enforcement now serializes through the deployed database function path.
 - Release launch CI now hard-fails without strict Supabase RSVP proof secrets and passes with the configured repo secrets.
@@ -231,6 +231,23 @@ _Launch call right now:_ `GO`
   - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
 - Result:
   - the live collaborator/client-RLS matrix now covers guest, planning, settings, registry, seating, coordinator, messages, and photos
+  - the remaining work is owner-only / future-surface breadth, not mainstream collaborator auth
+
+## 2026-05-11 09:45 PM PDT - Photos / Vault RPC Matrix Coverage
+
+- Expanded the same live collaborator/client-RLS proof again:
+  - photos-scoped collaborator can create vault configs through `vault_config_write`
+  - photos-scoped collaborator is denied `dashboard_message_write`
+- The first live attempt exposed a real fixture bug, not an auth bug:
+  - the proof used an invalid `vault_index`
+  - live schema only allows `vault_index` between `1` and `5`
+  - corrected fixture to a valid vault slot and reran green
+- Focused proof green:
+  - `npm test -- --run src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Result:
+  - the live collaborator/client-RLS matrix now covers guest, planning, settings, registry, seating, coordinator, messages, photos, and vault-config writes
   - the remaining work is owner-only / future-surface breadth, not mainstream collaborator auth
 
 ## Current Launch Call
