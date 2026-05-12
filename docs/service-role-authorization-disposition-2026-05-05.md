@@ -98,7 +98,7 @@ Every Edge Function that reads `SUPABASE_SERVICE_ROLE_KEY` is intentionally clas
 - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix`
   - broader direct client-facing RLS matrix is live-green across guest, planning, itinerary, settings, sections, registry item/policy, seating, coordinator, message, photo, and vault RPC lanes
   - the guest-dashboard settings RPC lane is already deployed and proven
-  - regular collaborators cannot query `admin_users` directly while the server-side `admin_access_check()` rollout is pending
+  - regular collaborators cannot query `admin_users` directly while admin access stays behind the deployed server-side `admin_access_check()` path
 - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`
   - public site / itinerary / guest-facing baseline is live-green
 
@@ -107,5 +107,4 @@ Every Edge Function that reads `SUPABASE_SERVICE_ROLE_KEY` is intentionally clas
 - When future non-guest write surfaces are introduced, add them to `npm run proof:v1:client-rls-matrix` and rerun the live matrix.
 - When future runtime write surfaces are introduced, rerun `npm run proof:v1:client-write-inventory` so the no-direct-client-write claim stays current.
 - Live postdeploy proof is now mandatory in `scripts/deploy_prod_guarded.mjs`; rerun it after any newly redeployed public-site, RSVP, registry, or itinerary runtime changes.
-- Apply `20260512050000_harden_admin_access_check.sql` remotely and redeploy the frontend so internal tooling admin gating no longer depends on the client-side `admin_users` path.
 - SMS/Telnyx provider callback proof remains deferred.

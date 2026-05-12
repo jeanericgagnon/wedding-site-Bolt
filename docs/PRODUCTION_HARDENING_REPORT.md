@@ -1,23 +1,23 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-12 11:18 AM PDT`
+_Updated:_ `2026-05-12 11:37 AM PDT`
 
 ## Current Score
 
-- Readiness score: `9.8 / 10`
+- Readiness score: `9.9 / 10`
 - Launch verdict: `GO`
 - Production-ready: `YES`
 
 ## Exact Runtime Identity
 
 - Branch: `codex/v1-finish-hard-gates-3`
-- Current branch head: `19cecf20` (`Sync launch docs after tooling and session hardening`)
-- Exact frontend Git SHA: `f0cbf841`
-- Exact frontend commit: `Fix payment gate and serialize RSVP capacity`
-- Exact Vercel production deploy: `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`
+- Current branch head: `12d15214` (`Separate public session secrets and add admin RPC gate`)
+- Exact frontend Git SHA: `12d15214`
+- Exact frontend commit: `Separate public session secrets and add admin RPC gate`
+- Exact Vercel production deploy: `dpl_2tVf4NXQSy9BDMpPHwrv748gRW2u`
 - Production URL: [dayof.love](https://dayof.love)
 - Supabase project: `atuzuobpprjstfmdnwso`
-- Current local hardening batch: uncommitted public-session-secret separation plus RPC-backed admin-route authorization work
+- Current live hardening batch: dedicated public session secret separation plus RPC-backed admin-route authorization
 
 ## Exact Blockers
 
@@ -28,10 +28,8 @@ No active `P0` / `P1` launch blockers remain.
 No active launch-critical proof gaps remain.
 
 Exact 10/10 gap:
-- `admin_access_check()` is coded and locally proven but not applied remotely
-  - migration: `supabase/migrations/20260512050000_harden_admin_access_check.sql`
-  - blocker: `supabase db push` is blocked in this shell because `SUPABASE_ACCESS_TOKEN` is not available
-  - effect: the frontend has not been redeployed onto the RPC-backed admin gate yet
+- global TS/ESLint rigor is still softer than the widened launch-critical strict pocket
+- several explicitly deferred non-launch lanes remain outside the current baseline
 
 Deferred, non-launch gaps:
 - public vault contribution / anniversary vault guest route
@@ -122,8 +120,10 @@ Fresh production proof after exact-SHA frontend deploy:
 - `supabase functions deploy validate-rsvp-token --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
 - `supabase functions deploy photo-upload --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
 - `supabase functions deploy interactive-section-public --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
-- `supabase db push --linked --include-all` -> `BLOCKED`
-  - the new `admin_access_check()` migration could not be applied from this shell because `SUPABASE_ACCESS_TOKEN` is not present
+- `supabase db push --linked --include-all` -> `PASS`
+  - applied `20260512050000_harden_admin_access_check.sql`
+- `vercel deploy --prod --yes` -> `PASS`
+  - production deploy `dpl_2tVf4NXQSy9BDMpPHwrv748gRW2u`
 
 Same-day still-valid supporting proof:
 - `LIVE_GUEST_HUB_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/guest-hub-write-read.spec.ts` -> `LIVE PASS`
@@ -142,7 +142,7 @@ Deferred/non-launch failed proof:
 ## Exact Deployment State
 
 Current live launch baseline:
-- frontend: `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q` from exact runtime SHA `f0cbf841`
+- frontend: `dpl_2tVf4NXQSy9BDMpPHwrv748gRW2u` from exact runtime SHA `12d15214`
 - `submit-rsvp --no-verify-jwt`: redeployed on the serialized capacity path after migration `20260511170500_serialize_submit_rsvp_capacity.sql`
 - `public-site-access --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `guest-contact-lookup --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
@@ -161,7 +161,7 @@ Current live launch baseline:
   - `20260512041500_fix_itinerary_event_write_ids.sql`
   - `20260512042000_fix_section_write_create_with_explicit_id.sql`
   - `20260512043000_fix_registry_refresh_policy_write_updated_by_type.sql`
-  - `20260512050000_harden_admin_access_check.sql` is still local-only and not in remote state because `SUPABASE_ACCESS_TOKEN` is unavailable in this shell
+  - `20260512050000_harden_admin_access_check.sql`
 
 Explicitly deferred / not in current launch baseline:
 - `vault-contribution-public --no-verify-jwt`
@@ -192,7 +192,7 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Hardened shared signed session verification so malformed token parsing fails closed before payload decode, and versioned token envelopes now support keyed rotation without breaking legacy two-part tokens
 - Separated public session signing from `SUPABASE_SERVICE_ROLE_KEY` by adding `PUBLIC_SITE_SESSION_SECRET_V1` / `PUBLIC_SITE_SESSION_SECRET` handling plus a proof boundary that fails if service-role power is reused for public sessions
 - Redeployed the highest-risk public/session functions on that dedicated session secret path and reran live public-site, guest-contact, RSVP, photo-upload, collaborator-runtime, and client-RLS proof green
-- Added `20260512050000_harden_admin_access_check.sql` plus the frontend `admin_access_check()` client switch; local proof is green and direct non-admin `admin_users` reads now fail in the live matrix, but the remote DB apply is still blocked here by missing `SUPABASE_ACCESS_TOKEN`
+- Added `20260512050000_harden_admin_access_check.sql` plus the frontend `admin_access_check()` client switch; remote DB apply is complete, the frontend is redeployed, and direct non-admin `admin_users` reads now fail in the live matrix
 - Made the RSVP serialization proof easier to audit directly in-repo by calling out `supabase/migrations/20260511170500_serialize_submit_rsvp_capacity.sql` in the current proof story
 - Fixed the `guests-rsvp-ops` wrapper to use a portable shell so Linux Actions runners can execute it cleanly
 - Disabled `/builder-v2-lab`, `/variant-preview-capture`, and `/template-scroll-capture` in production by default unless `VITE_ENABLE_INTERNAL_TOOLING_ROUTES=true`
@@ -234,8 +234,7 @@ Those two deploy commands previously reported success, but the live inventory/ru
 
 ## What Remains Before 10 / 10
 
-Only one meaningful hardening step plus deferred, non-launch follow-up remains:
-- remote apply of `20260512050000_harden_admin_access_check.sql` and a frontend redeploy onto the RPC-backed admin gate
+Only deferred, non-launch follow-up remains:
 - public vault contribution enablement and live proof
 - custom-host/subdomain dedicated DNS rerun
 - rerun `npm run proof:v1:client-rls-matrix` when future non-guest write surfaces are introduced so the live role matrix stays canonical
@@ -243,10 +242,9 @@ Only one meaningful hardening step plus deferred, non-launch follow-up remains:
 - client-write surface reduction into Edge Functions / RPCs
 - dedicated custom-host DNS rerun only if that launch surface becomes active
 
-Why this is `9.8 / 10` instead of `10 / 10`:
+Why this is `9.9 / 10` instead of `10 / 10`:
 - the launch baseline is green and production-ready
-- the dedicated public-session-secret separation is live, but the `admin_access_check()` RPC is not applied remotely yet
-- that missing remote DB apply is the last meaningful hardening step between this repo and a cleaner 10/10 claim
+- the launch-critical runtime is now exact and live, but global TS/ESLint rigor is still softer than the hardened pocket and a few intentionally deferred non-launch lanes remain
 
 ## Bottom Line
 

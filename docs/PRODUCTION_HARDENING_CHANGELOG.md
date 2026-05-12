@@ -35,7 +35,24 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 - Result:
   - dedicated public session secret separation is live on the highest-risk public/session flows
   - direct regular-user reads of `admin_users` are live-proven to fail or return no rows
-  - the last missing step is remote apply of `20260512050000_harden_admin_access_check.sql`; `supabase db push` is blocked in this shell until `SUPABASE_ACCESS_TOKEN` is available, so the frontend RPC-backed admin gate is still local-only
+  - the last missing step was remote apply of `20260512050000_harden_admin_access_check.sql`; that apply is now complete and the frontend RPC-backed admin gate is live on production
+
+## 2026-05-12 11:37 AM PDT - Admin RPC Applied Remotely And Frontend Redeployed
+
+- Status: `REMOTE APPLY + LIVE PROOF`
+- What changed:
+  - applied `20260512050000_harden_admin_access_check.sql` remotely with `supabase db push --linked --include-all`
+  - redeployed the frontend to Vercel production as `dpl_2tVf4NXQSy9BDMpPHwrv748gRW2u`
+  - exact live frontend SHA is now `12d15214`
+- Proof:
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`
+  - `npm run proof:v1:guest-lookup-scope`
+  - `npm run proof:v1:guests-rsvp-ops`
+  - `npm run proof:v1:collaborator-runtime`
+  - `npm run proof:v1:client-rls-matrix`
+- Result:
+  - the admin-route authorization move is now live end to end
+  - the dedicated public-session-secret batch is now fully deployed, not just locally proven
 
 ## 2026-05-12 07:49 AM PDT - CI RSVP Hard Gate And Mandatory Postdeploy Proof
 

@@ -2,8 +2,8 @@
 
 _Date:_ `2026-05-11`
 _Production:_ [dayof.love](https://dayof.love)
-_Latest verified deploy:_ `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`
-_Exact frontend SHA:_ `f0cbf841`
+_Latest verified deploy:_ `dpl_2tVf4NXQSy9BDMpPHwrv748gRW2u`
+_Exact frontend SHA:_ `12d15214`
 _Launch call right now:_ `GO`
 
 ## Current Truth
@@ -14,6 +14,15 @@ _Launch call right now:_ `GO`
 - Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green on the blocker-fix runtime.
 - Client-facing RLS proof now has one canonical live matrix command: `npm run proof:v1:client-rls-matrix`.
 - Active runtime pages now also have one canonical local inventory guard: `npm run proof:v1:client-write-inventory`.
+- 2026-05-12 11:37 AM PDT:
+  - `supabase db push --linked --include-all` -> `PASS`
+  - `vercel deploy --prod --yes` -> `PASS` (`dpl_2tVf4NXQSy9BDMpPHwrv748gRW2u`, aliased to `dayof.love`)
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`
+  - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
+  - `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`
+  - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+  - `admin_access_check()` is now applied remotely and the frontend/admin route gate is live on the RPC-backed path
 - 2026-05-12 11:18 AM PDT:
   - `npm test -- --run src/lib/publicSessionSecretBoundary.test.ts src/lib/adminAccessRpcBoundary.test.ts src/lib/signedSessionShared.test.ts src/lib/publicAccessCoverageProofScript.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts src/lib/launchEdgeFunctions.test.ts` -> `PASS`
   - `npm run proof:v1:public-access-coverage` -> `PASS`
@@ -30,7 +39,7 @@ _Launch call right now:_ `GO`
   - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
   - public/session functions now use `PUBLIC_SITE_SESSION_SECRET_V1` / `PUBLIC_SITE_SESSION_SECRET` instead of `SUPABASE_SERVICE_ROLE_KEY`
   - direct regular-user `admin_users` reads now fail or return no rows in the live matrix
-  - the remaining admin-route hardening step is the remote apply of `20260512050000_harden_admin_access_check.sql`, which is blocked here by missing `SUPABASE_ACCESS_TOKEN`
+  - the remaining admin-route hardening step was the remote apply of `20260512050000_harden_admin_access_check.sql`; that is now complete
 - 2026-05-12 08:45 AM PDT:
   - `npm run proof:v1:strict-pocket` -> `PASS`
   - `npm test -- --run src/lib/serviceRoleAuthorizationDisposition.test.ts src/lib/strictPocketTypecheck.test.ts src/lib/stripeService.test.ts src/lib/siteConfigValidate.test.ts src/lib/vendorProfiles.test.ts src/lib/vendorProfiles.boundary.test.ts` -> `PASS`
