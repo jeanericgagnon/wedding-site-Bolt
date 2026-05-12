@@ -152,7 +152,7 @@ test('guest contact page updates RSVP, address, SMS consent, and household membe
     await page.goto(`/guest-contact/${proofSiteSlug}?contactQa=${runId}`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: /update contact & rsvp/i })).toBeVisible();
     await page.getByPlaceholder(/search your full name/i).fill(`Taylor ${lastName}`);
-    await page.getByPlaceholder(/email hint or phone last 4/i).fill('primary');
+    await page.getByPlaceholder(/first few letters of your email/i).fill('primary');
     await page.getByRole('button', { name: /^find$/i }).click();
     await expect(page.getByRole('combobox').first()).toContainText(`Taylor ${lastName}`);
     await expect(page.getByText(/apply these updates to my whole party \(2 guests\)/i)).toBeVisible();

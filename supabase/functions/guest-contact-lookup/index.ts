@@ -28,7 +28,6 @@ type GuestLookupCandidate = {
   last_name?: string | null;
   household_id?: string | null;
   email?: string | null;
-  phone?: string | null;
 };
 
 function normalizeName(value: string) {
@@ -39,10 +38,6 @@ function normalizeVerifier(value: string) {
   return value.trim().toLowerCase();
 }
 
-function phoneDigits(value: string | null | undefined) {
-  return String(value ?? "").replace(/\D/g, "");
-}
-
 function emailLocalPart(value: string | null | undefined) {
   return String(value ?? "").trim().toLowerCase().split("@")[0] ?? "";
 }
@@ -50,23 +45,7 @@ function emailLocalPart(value: string | null | undefined) {
 function verifierMatchesGuest(guest: GuestLookupCandidate, verifier: string) {
   const normalizedVerifier = normalizeVerifier(verifier);
   if (!normalizedVerifier) return false;
-
-  const digits = phoneDigits(normalizedVerifier);
-  if (digits.length >= 4) {
-    const guestPhoneDigits = phoneDigits(guest.phone);
-    if (guestPhoneDigits.length >= 4 && guestPhoneDigits.endsWith(digits.slice(-4))) {
-      return true;
-    }
-  }
-
-  if (normalizedVerifier.length >= 3) {
-    const localPart = emailLocalPart(guest.email);
-    if (localPart.includes(normalizedVerifier)) {
-      return true;
-    }
-  }
-
-  return false;
+  return normalizedVerifier.length >= 3 && emailLocalPart(guest.email).includes(normalizedVerifier);
 }
 
 function displayName(guest: { name?: string | null; first_name?: string | null; last_name?: string | null }) {
@@ -96,13 +75,12 @@ Deno.serve(async (req: Request) => {
     const normalizedQuery = normalizeName(query);
     const queryParts = normalizedQuery.split(" ").filter(Boolean);
     const normalizedVerifier = normalizeVerifier(verifier);
-    const normalizedVerifierDigits = phoneDigits(verifier);
 
     if (
       !siteRef
       || normalizedQuery.length < 5
       || queryParts.length < 2
-      || (normalizedVerifier.length < 3 && normalizedVerifierDigits.length < 4)
+      || normalizedVerifier.length < 3
     ) {
       return json({ matches: [] });
     }
@@ -153,13 +131,13 @@ Deno.serve(async (req: Request) => {
     const firstName = queryParts.slice(0, -1).join(" ");
     const { data: exactNameCandidates } = await admin
       .from("guests")
-      .select("id, name, first_name, last_name, household_id, email, phone")
+      .select("id, name, first_name, last_name, household_id, email")
       .eq("wedding_site_id", site.id)
       .ilike("name", normalizedQuery)
       .limit(5);
     const { data: splitNameCandidates } = await admin
       .from("guests")
-      .select("id, name, first_name, last_name, household_id, email, phone")
+      .select("id, name, first_name, last_name, household_id, email")
       .eq("wedding_site_id", site.id)
       .ilike("first_name", firstName)
       .ilike("last_name", lastName)

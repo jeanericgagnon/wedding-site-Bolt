@@ -52,8 +52,8 @@ export function GuestContactLookupPanel({
             id="guest-contact-verifier"
             value={verifier}
             onChange={(e) => onVerifierChange(e.target.value)}
-            placeholder="Email hint or phone last 4"
-            aria-label="Confirm one more detail"
+            placeholder="First few letters of your email"
+            aria-label="Confirm your email"
             aria-describedby="guest-contact-verifier-helper"
             className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle"
           />
@@ -64,7 +64,7 @@ export function GuestContactLookupPanel({
           </div>
         </div>
         <p id="guest-contact-search-helper" className="mt-1 text-xs text-text-secondary">Use your full name exactly as it appears on the invitation.</p>
-        <p id="guest-contact-verifier-helper" className="mt-1 text-xs text-text-secondary">Add either the first few characters of your email or the last 4 digits of your phone.</p>
+        <p id="guest-contact-verifier-helper" className="mt-1 text-xs text-text-secondary">Add the first few characters of the email address on your invitation.</p>
       </div>
 
       {matches.length > 0 && (

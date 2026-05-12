@@ -36,9 +36,7 @@ function hasFullNameQuery(value: string) {
 }
 
 function hasGuestContactVerifier(value: string) {
-  const trimmed = value.trim().toLowerCase();
-  if (trimmed.length >= 3) return true;
-  return trimmed.replace(/\D/g, '').length >= 4;
+  return value.trim().toLowerCase().length >= 3;
 }
 
 export const GuestContactUpdate: React.FC = () => {
@@ -83,7 +81,7 @@ export const GuestContactUpdate: React.FC = () => {
 
   async function handleSearch() {
     if (!hasFullNameQuery(query) || !hasGuestContactVerifier(verifier)) {
-      setResult({ ok: false, message: 'Enter your full name and either the first few characters of your email or the last 4 digits of your phone.' });
+      setResult({ ok: false, message: 'Enter your full name and the first few characters of your email address.' });
       return;
     }
     setSearching(true);

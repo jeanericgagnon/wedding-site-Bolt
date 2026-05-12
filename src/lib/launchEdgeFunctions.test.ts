@@ -912,9 +912,9 @@ describe('launch edge function guards', () => {
     expect(lookup).toContain('signSessionToken<ContactSessionPayload>');
     expect(lookup).toContain('contact_session: await signSessionToken');
     expect(lookup).toContain('queryParts.length < 2');
-    expect(lookup).toContain('normalizedVerifier.length < 3 && normalizedVerifierDigits.length < 4');
+    expect(lookup).toContain('normalizedVerifier.length < 3');
     expect(lookup).toContain('const firstName = queryParts.slice(0, -1).join(" ")');
-    expect(lookup).toContain('.select("id, name, first_name, last_name, household_id, email, phone")');
+    expect(lookup).toContain('.select("id, name, first_name, last_name, household_id, email")');
     expect(lookup).toContain('.ilike("first_name", firstName)');
     expect(lookup).toContain('.ilike("last_name", lastName)');
     expect(lookup).toContain('normalizeName(displayName(guest)) === normalizedQuery');
@@ -935,10 +935,10 @@ describe('launch edge function guards', () => {
 
     expect(contactPage).toContain('contact_session: string');
     expect(contactPage).toContain('buildGuestContactAccessPayload');
-    expect(contactPage).toContain("Enter your full name and either the first few characters of your email or the last 4 digits of your phone.");
+    expect(contactPage).toContain("Enter your full name and the first few characters of your email address.");
     expect(contactPage).toContain('verifier: verifier.trim()');
     expect(readFileSync(join(process.cwd(), 'src', 'pages', 'GuestContactLookupPanel.tsx'), 'utf8')).toContain('placeholder="Search your full name"');
-    expect(readFileSync(join(process.cwd(), 'src', 'pages', 'GuestContactLookupPanel.tsx'), 'utf8')).toContain('placeholder="Email hint or phone last 4"');
+    expect(readFileSync(join(process.cwd(), 'src', 'pages', 'GuestContactLookupPanel.tsx'), 'utf8')).toContain('placeholder="First few letters of your email"');
     expect(contactPage).toContain('...buildGuestContactAccessPayload(siteRef)');
     expect(contactPage).toContain("contact_session: selectedContactSession");
     expect(contactPage).not.toContain('guest_id: selectedGuestId');
