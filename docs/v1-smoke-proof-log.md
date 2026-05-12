@@ -56,7 +56,22 @@ _Launch call right now:_ `GO`
   - live proof green again after the repairs:
     - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
     - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
-- The matrix now explicitly proves guest, planning, itinerary, settings, sections, registry, seating, coordinator, message, photo, vault-config, and vault-provider permission lanes stay scoped while direct timeline/settings and other ungranted writes remain denied.
+- The matrix now explicitly proves guest, planning, itinerary, settings, sections, registry item/policy, seating, coordinator, message, photo, vault-config, and vault-provider permission lanes stay scoped while direct timeline/settings and other ungranted writes remain denied.
+- 2026-05-12 07:14 AM PDT:
+  - expanded the live collaborator/client-RLS proof again so registry-scoped collaborators can write `registry_refresh_policy_write` while settings-scoped collaborators stay denied on that lane
+  - tightened `proof:v1:client-write-inventory` so the tracked-runtime scan now also guards double-quoted and backtick table names and skips `.d.ts` noise
+  - the first live rerun exposed one real production DB defect:
+    - `registry_refresh_policy_write` mixed uuid/text in `registry_refresh_policy_updated_by`
+  - remote repair landed via:
+    - `20260512043000_fix_registry_refresh_policy_write_updated_by_type.sql`
+  - focused proof green:
+    - `npm test -- --run src/lib/clientWriteInventoryProofScript.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts`
+    - `npm run proof:v1:client-write-inventory`
+    - `npm run typecheck -- --pretty false`
+    - `git diff --check`
+  - live proof green after the repair:
+    - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+    - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
 - Payment gate now fails closed on billing lookup failure.
 - RSVP capacity enforcement now serializes through the deployed database function path.
 - Release launch CI now hard-fails without strict Supabase RSVP proof secrets and passes with the configured repo secrets.
@@ -79,6 +94,7 @@ _Launch call right now:_ `GO`
 - `npm run proof:v1:email-messaging-authorization` -> `PASS`
 - `npm run proof:v1:launch-closeout` -> `PASS`
 - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+- `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
 
 ## 2026-05-11 07:57 PM PDT - Vault And Planning Vendor/Budget RPC Batch (Local Only)
 

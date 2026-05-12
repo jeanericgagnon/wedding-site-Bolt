@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-11 10:23 PM PDT`
+_Updated:_ `2026-05-12 07:14 AM PDT`
 
 ## Current Score
 
@@ -11,7 +11,7 @@ _Updated:_ `2026-05-11 10:23 PM PDT`
 ## Exact Runtime Identity
 
 - Branch: `codex/v1-finish-hard-gates-3`
-- Current branch head: `df9cff92` (`Expand photos collaborator vault provider proof`)
+- Current branch head: `e71598ad` (`Sync launch board after photos vault provider proof`)
 - Exact frontend Git SHA: `f0cbf841`
 - Exact frontend commit: `Fix payment gate and serialize RSVP capacity`
 - Exact Vercel production deploy: `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`
@@ -38,7 +38,7 @@ Deferred, non-launch gaps:
 - AI secret inventory/internal prereq notes
 - broader client-RLS role matrix expansion
 - client-write surface reduction into Edge Functions / RPCs
-- broader owner-only and remaining non-guest RPC matrix expansion beyond guest, planning, itinerary, settings, sections, registry, seating, coordinator, messages, and photos/vault
+- keep the live client-RLS matrix current when future non-guest write surfaces are introduced
 - keep the no-direct-client-write inventory current after future runtime write-surface changes
 
 ## Exact Proof State
@@ -52,6 +52,8 @@ Fresh local proof:
 - `npm run proof:v1:public-access-coverage` -> `PASS`
 - `npm run proof:v1:client-write-inventory` -> `PASS`
   - broadened tracked-`src` runtime scan now reports no direct client `.insert/.update/.upsert/.delete` calls in shipped `src` runtime files
+  - scanner now also catches single/double/backtick table names and skips `.d.ts` noise
+- `npm test -- --run src/lib/clientWriteInventoryProofScript.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts` -> `PASS`
 - `npm run proof:v1:board:md` -> `PASS`
 - `npm run guard:file-size` -> `PASS`
 - `npm run guard:assets` -> `PASS`
@@ -73,11 +75,12 @@ Fresh secure/runtime proof:
 - `npm run proof:v1:email-messaging-authorization` -> `PASS`
 - `npm run proof:v1:launch-closeout` -> `PASS`
 - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
-- collaborator runtime now also proves guest-scoped collaborators can directly mutate guest rows, planner-scoped collaborators can directly write planning tasks, itinerary events, and dashboard messages while registry RPC writes stay denied, settings-scoped collaborators can directly patch site settings and write sections while registry RPC writes stay denied, registry-scoped collaborators can directly write registry items while dashboard message RPC writes stay denied, photos-scoped collaborators can directly write vault configs and patch vault providers while dashboard message RPC writes stay denied, and coordinator-scoped collaborators can directly write seating events/tables, coordinator Q&A/check-in, and builder media assets while dashboard message RPC writes stay denied
+- collaborator runtime now also proves guest-scoped collaborators can directly mutate guest rows, planner-scoped collaborators can directly write planning tasks, itinerary events, and dashboard messages while registry RPC writes stay denied, settings-scoped collaborators can directly patch site settings and write sections while registry RPC writes stay denied, registry-scoped collaborators can directly write registry items and refresh policy while dashboard message/section RPC writes stay denied, photos-scoped collaborators can directly write vault configs and patch vault providers while dashboard message RPC writes stay denied, and coordinator-scoped collaborators can directly write seating events/tables, coordinator Q&A/check-in, and builder media assets while dashboard message RPC writes stay denied
 - reran green after the remote RPC migration apply with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
 - this rerun exposed and closed real production runtime drift in `itinerary_event_write` and `section_write`
   - remote schema repairs: `20260512040000_reconcile_itinerary_dress_code_column.sql`, `20260512040500_reconcile_itinerary_runtime_columns.sql`
   - remote function repairs: `20260512041000_fix_itinerary_event_write_time_types.sql`, `20260512041500_fix_itinerary_event_write_ids.sql`, `20260512042000_fix_section_write_create_with_explicit_id.sql`
+- the registry refresh policy lane also exposed a real PostgreSQL `CASE` type mismatch on `registry_refresh_policy_updated_by`; remote repair landed via `20260512043000_fix_registry_refresh_policy_write_updated_by_type.sql` and the live reruns are green after the fix
 - `npm run test:smoke` -> `PASS`
 
 Fresh production proof after exact-SHA frontend deploy:
@@ -86,12 +89,12 @@ Fresh production proof after exact-SHA frontend deploy:
 - `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`
 - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
 - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
-- the canonical client-RLS matrix now includes direct guest/planning/seating write allow/deny coverage plus planner itinerary/message RPC allow + registry RPC deny, settings patch/section RPC allow + registry RPC deny, registry RPC allow + message RPC deny, photos vault-config/vault-provider RPC allow + dashboard message RPC deny, and coordinator Q&A/check-in/media RPC allow + dashboard message RPC deny, in addition to anon guest-contact and public RSVP scope
+- the canonical client-RLS matrix now includes direct guest/planning/seating write allow/deny coverage plus planner itinerary/message RPC allow + registry RPC deny, settings patch/section RPC allow + registry RPC deny, registry item/policy RPC allow + dashboard message/section RPC deny, photos vault-config/vault-provider RPC allow + dashboard message RPC deny, and coordinator Q&A/check-in/media RPC allow + dashboard message RPC deny, in addition to anon guest-contact and public RSVP scope
 - reran green after the remote RPC migration apply with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
 - this same rerun exposed a real `wedding_site_settings_patch` PostgreSQL `CASE` type mismatch on `active_template_id`; the DB fix landed via `20260511212626_fix_wedding_site_settings_patch_types.sql` and the live matrix is green after the repair
 - `npm run proof:v1:registry-preview-ssrf` -> `LIVE PASS`
-- `supabase db push` -> `PASS`
-  - applied remote migrations through `20260512031500_seating_assignment_version_rpcs.sql`
+- `supabase db push --linked --include-all` -> `PASS`
+  - applied remote repair migration `20260512043000_fix_registry_refresh_policy_write_updated_by_type.sql`
 
 Same-day still-valid supporting proof:
 - `LIVE_GUEST_HUB_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/guest-hub-write-read.spec.ts` -> `LIVE PASS`
@@ -126,6 +129,7 @@ Current live launch baseline:
   - `20260512041000_fix_itinerary_event_write_time_types.sql`
   - `20260512041500_fix_itinerary_event_write_ids.sql`
   - `20260512042000_fix_section_write_create_with_explicit_id.sql`
+  - `20260512043000_fix_registry_refresh_policy_write_updated_by_type.sql`
 
 Explicitly deferred / not in current launch baseline:
 - `vault-contribution-public --no-verify-jwt`
@@ -149,7 +153,7 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Removed public template links that would otherwise advertise those internal capture routes when the gate is off
 - Added `npm run proof:v1:client-rls-matrix` as the canonical live baseline for anon guest-contact scope, public RSVP scope, owner/collaborator viewer-deny plus planner/coordinator-allow proof, and direct guest-table write allow/deny coverage
 - Expanded the live collaborator/client-RLS proof baseline so planning and seating direct writes are now proven in production too
-- Expanded the live collaborator/client-RLS matrix again so registry-scoped collaborator writes and coordinator Q&A/check-in RPC writes are also proven in production
+- Expanded the live collaborator/client-RLS matrix again so registry-scoped collaborator item writes, refresh-policy writes, and coordinator Q&A/check-in RPC writes are also proven in production
 - Expanded the live collaborator/client-RLS matrix again so photos-scoped collaborators can write vault configs and patch vault providers while dashboard message RPC writes stay denied
 - Expanded the live collaborator/client-RLS matrix one more step so settings-scoped collaborators can patch site settings while registry RPC writes stay denied
 - Guest-dashboard RSVP-config and reminder-settings writes are now behind guest-scoped RPCs in the applied remote sweep, and the `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` proof lane is green
@@ -157,7 +161,7 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Core planning task and seating event/table writes are now behind the applied remote RPC sweep rather than raw client mutations
 - Fixed a collaborator payment-gate timing race in the working tree so planner/coordinator/viewer roles wait for role resolution before any payment redirect path is chosen; focused local proof (`ProtectedRoute.test.tsx`, `typecheck`, `lint`, `build`) is green, but the live frontend runtime has not been refreshed yet
 - The guest invitation/import/assisted-RSVP write paths are now behind the applied remote RPC sweep, and the itinerary invite/uninvite flow reuses those RPCs instead of direct `event_invitations` writes
-- Owner-side vault writes, planning vendor/budget writes, onboarding/signup bootstrap writes, and name-change writes are now behind the applied remote RPC sweep locally and remotely; broader owner-only live matrix breadth is still the follow-up, not raw direct-write removal
+- Owner-side vault writes, planning vendor/budget writes, onboarding/signup bootstrap writes, and name-change writes are now behind the applied remote RPC sweep locally and remotely; the remaining follow-up is keeping the matrix current when future non-guest write lanes are introduced, not raw direct-write removal
 - Added `npm run proof:v1:client-write-inventory` as the canonical local guard for tracked `src` runtime files, and wired it into `test:launch` so the no-direct-client-write claim is rerunnable instead of living only in changelog prose
 - Moved additional direct writes behind local RPCs in the working tree:
   - guest-photo owner writes (`guest_hub_settings`, guestbook moderation, bucket move, bucket corrections, bucket site patch)
@@ -187,7 +191,7 @@ Those two deploy commands previously reported success, but the live inventory/ru
 Only deferred, non-launch follow-up remains:
 - public vault contribution enablement and live proof
 - custom-host/subdomain dedicated DNS rerun
-- broader owner-only and remaining non-guest RPC matrix expansion beyond guest, planning, registry, seating, coordinator, messages, and photos
+- rerun `npm run proof:v1:client-rls-matrix` when future non-guest write surfaces are introduced so the live role matrix stays canonical
 - rerun `npm run proof:v1:client-write-inventory` after future write-surface changes so the local no-direct-client-write inventory stays canonical
 - client-write surface reduction into Edge Functions / RPCs
 - dedicated custom-host DNS rerun only if that launch surface becomes active

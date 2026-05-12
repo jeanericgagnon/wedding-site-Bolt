@@ -27,7 +27,7 @@ begin
     registry_monthly_refresh_count = case when p_patch ? 'registry_monthly_refresh_count' then (p_patch->>'registry_monthly_refresh_count')::integer else registry_monthly_refresh_count end,
     registry_monthly_refresh_month = case when p_patch ? 'registry_monthly_refresh_month' then nullif(btrim(coalesce(p_patch->>'registry_monthly_refresh_month', '')), '') else registry_monthly_refresh_month end,
     registry_refresh_policy_updated_at = case when p_patch ? 'registry_refresh_policy_updated_at' then nullif(p_patch->>'registry_refresh_policy_updated_at', '')::timestamptz else registry_refresh_policy_updated_at end,
-    registry_refresh_policy_updated_by = case when p_patch ? 'registry_refresh_policy_updated_by' then nullif(btrim(coalesce(p_patch->>'registry_refresh_policy_updated_by', '')), '') else registry_refresh_policy_updated_by end
+    registry_refresh_policy_updated_by = case when p_patch ? 'registry_refresh_policy_updated_by' then nullif(btrim(coalesce(p_patch->>'registry_refresh_policy_updated_by', '')), '')::uuid else registry_refresh_policy_updated_by end
   where id = p_wedding_site_id
   returning * into v_site;
 

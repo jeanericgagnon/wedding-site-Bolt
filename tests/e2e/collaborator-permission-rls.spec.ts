@@ -686,6 +686,8 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
   let coordinatorQnaItemId = '';
   let baselineMusicPlaylistUrl: string | null = null;
   let baselineVaultStorageProvider: string | null = null;
+  let baselineRegistryAutoRefreshEnabled: boolean | null = null;
+  let baselineRegistryRefreshIncludePurchased: boolean | null = null;
   const collaboratorContexts: Array<import('@playwright/test').BrowserContext> = [];
 
   const restUrl = (table: string, params: Record<string, string> = {}) => {
@@ -892,6 +894,19 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
         }),
       });
     }
+    if (baselineRegistryAutoRefreshEnabled !== null || baselineRegistryRefreshIncludePurchased !== null) {
+      await restFetch(ownerAccessToken, rpcUrl('registry_refresh_policy_write'), {
+        method: 'POST',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          p_wedding_site_id: weddingSiteId,
+          p_patch: {
+            registry_auto_refresh_enabled: baselineRegistryAutoRefreshEnabled,
+            registry_refresh_include_purchased: baselineRegistryRefreshIncludePurchased,
+          },
+        }),
+      });
+    }
     if (settingsSectionId) {
       await restFetch(ownerAccessToken, rpcUrl('section_delete_one'), {
         method: 'POST',
@@ -1082,6 +1097,49 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     registryItemId = registryItem.id;
     expect(registryItem.item_name).toContain('QA Registry Item');
 
+    const updatedRegistryAutoRefreshEnabled = !(baselineRegistryAutoRefreshEnabled ?? false);
+    const updatedRegistryRefreshIncludePurchased = !(baselineRegistryRefreshIncludePurchased ?? false);
+    const updatedRegistryPolicyAt = new Date().toISOString();
+    const allowedRegistryRefreshPolicyWrite = await restFetch(registryCollaboratorAccessToken, rpcUrl('registry_refresh_policy_write'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_wedding_site_id: weddingSiteId,
+        p_patch: {
+          registry_auto_refresh_enabled: updatedRegistryAutoRefreshEnabled,
+          registry_refresh_include_purchased: updatedRegistryRefreshIncludePurchased,
+          registry_refresh_policy_updated_at: updatedRegistryPolicyAt,
+          registry_refresh_policy_updated_by: registryCollaboratorUserId,
+        },
+      }),
+    });
+    const allowedRegistryRefreshPolicyWriteText = await allowedRegistryRefreshPolicyWrite.text();
+    expect(allowedRegistryRefreshPolicyWrite.ok, allowedRegistryRefreshPolicyWriteText).toBeTruthy();
+    const updatedRegistryPolicyRow = JSON.parse(allowedRegistryRefreshPolicyWriteText) as {
+      registry_auto_refresh_enabled?: boolean | null;
+      registry_refresh_include_purchased?: boolean | null;
+      registry_refresh_policy_updated_by?: string | null;
+    };
+    expect(updatedRegistryPolicyRow.registry_auto_refresh_enabled ?? null).toBe(updatedRegistryAutoRefreshEnabled);
+    expect(updatedRegistryPolicyRow.registry_refresh_include_purchased ?? null).toBe(updatedRegistryRefreshIncludePurchased);
+    expect(updatedRegistryPolicyRow.registry_refresh_policy_updated_by ?? null).toBe(registryCollaboratorUserId);
+
+    const ownerRegistryPolicyRead = await restFetch(ownerAccessToken, restUrl('wedding_sites', {
+      select: 'registry_auto_refresh_enabled,registry_refresh_include_purchased,registry_refresh_policy_updated_by',
+      id: `eq.${weddingSiteId}`,
+      limit: '1',
+    }));
+    const ownerRegistryPolicyReadText = await ownerRegistryPolicyRead.text();
+    expect(ownerRegistryPolicyRead.ok, ownerRegistryPolicyReadText).toBeTruthy();
+    const [ownerRegistryPolicyRow] = JSON.parse(ownerRegistryPolicyReadText) as Array<{
+      registry_auto_refresh_enabled?: boolean | null;
+      registry_refresh_include_purchased?: boolean | null;
+      registry_refresh_policy_updated_by?: string | null;
+    }>;
+    expect(ownerRegistryPolicyRow.registry_auto_refresh_enabled ?? null).toBe(updatedRegistryAutoRefreshEnabled);
+    expect(ownerRegistryPolicyRow.registry_refresh_include_purchased ?? null).toBe(updatedRegistryRefreshIncludePurchased);
+    expect(ownerRegistryPolicyRow.registry_refresh_policy_updated_by ?? null).toBe(registryCollaboratorUserId);
+
     const forbiddenRegistryMessageWrite = await restFetch(registryCollaboratorAccessToken, rpcUrl('dashboard_message_write'), {
       method: 'POST',
       headers: { Prefer: 'return=representation' },
@@ -1143,7 +1201,7 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     expect(photosCollaborator).toMatchObject({ role: 'viewer', permissions: ['photos'] });
 
     const baselineSettingsRead = await restFetch(ownerAccessToken, restUrl('wedding_sites', {
-      select: 'music_playlist_url,vault_storage_provider',
+      select: 'music_playlist_url,vault_storage_provider,registry_auto_refresh_enabled,registry_refresh_include_purchased',
       id: `eq.${weddingSiteId}`,
       limit: '1',
     }));
@@ -1152,9 +1210,13 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     const [baselineSettingsRow] = JSON.parse(baselineSettingsReadText) as Array<{
       music_playlist_url?: string | null;
       vault_storage_provider?: string | null;
+      registry_auto_refresh_enabled?: boolean | null;
+      registry_refresh_include_purchased?: boolean | null;
     }>;
     baselineMusicPlaylistUrl = baselineSettingsRow?.music_playlist_url ?? null;
     baselineVaultStorageProvider = baselineSettingsRow?.vault_storage_provider ?? null;
+    baselineRegistryAutoRefreshEnabled = baselineSettingsRow?.registry_auto_refresh_enabled ?? null;
+    baselineRegistryRefreshIncludePurchased = baselineSettingsRow?.registry_refresh_include_purchased ?? null;
 
     const allowedPhotosVaultConfigWrite = await restFetch(photosCollaboratorAccessToken, rpcUrl('vault_config_write'), {
       method: 'POST',
@@ -1317,6 +1379,19 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     });
     expect(forbiddenSettingsRegistryWrite.ok, await forbiddenSettingsRegistryWrite.text()).toBeFalsy();
     expect([400, 401, 403]).toContain(forbiddenSettingsRegistryWrite.status);
+
+    const forbiddenSettingsRegistryRefreshPolicyWrite = await restFetch(settingsCollaboratorAccessToken, rpcUrl('registry_refresh_policy_write'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_wedding_site_id: weddingSiteId,
+        p_patch: {
+          registry_auto_refresh_enabled: updatedRegistryAutoRefreshEnabled,
+        },
+      }),
+    });
+    expect(forbiddenSettingsRegistryRefreshPolicyWrite.ok, await forbiddenSettingsRegistryRefreshPolicyWrite.text()).toBeFalsy();
+    expect([400, 401, 403]).toContain(forbiddenSettingsRegistryRefreshPolicyWrite.status);
 
     const forbiddenRegistrySectionWrite = await restFetch(registryCollaboratorAccessToken, rpcUrl('section_write'), {
       method: 'POST',

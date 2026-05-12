@@ -12,9 +12,10 @@ const trackedFiles = execFileSync('git', ['ls-files', targetRoot], {
   .split(/\r?\n/)
   .filter(Boolean)
   .filter((file) => !/\.test\./.test(file))
+  .filter((file) => !/\.d\.ts$/.test(file))
   .filter((file) => /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(file));
 
-const directWritePattern = /\.from\('.*?'\)[\s\S]{0,240}?\.(insert|update|upsert|delete)\s*\(/g;
+const directWritePattern = /\.from\(\s*(['"`]).*?\1\s*\)[\s\S]{0,400}?\.(insert|update|upsert|delete)\s*\(/g;
 
 function getLineNumber(source, index) {
   return source.slice(0, index).split(/\r?\n/).length;
@@ -71,7 +72,7 @@ const output = {
     ? 'No direct client .insert/.update/.upsert/.delete calls remain in tracked src runtime files.'
     : 'Direct client write calls still exist in tracked src runtime files and must be removed or moved behind RPC/Edge paths.',
   automatedCoverage: [
-    'Scans tracked src runtime files for direct Supabase .insert/.update/.upsert/.delete calls, including multiline chains',
+    'Scans tracked src runtime files for direct Supabase .insert/.update/.upsert/.delete calls, including multiline chains and single/double/backtick table names',
     'Excludes test files and untracked local duplicates so the guard stays focused on shipped runtime code paths',
     'Provides a canonical local rerun command before and after RPC migration deploy sweeps',
   ],

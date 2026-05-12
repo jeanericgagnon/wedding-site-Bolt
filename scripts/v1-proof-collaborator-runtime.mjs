@@ -42,11 +42,11 @@ const collaboratorPassword = getEnv('V1_COLLABORATOR_PASSWORD', `DayOf${runtimeS
 function buildStillManualProofNeeded() {
   return liveGuestDashboardSettingsRpcs
     ? [
-        'Broaden the live client-RLS matrix beyond guest, planning, settings, registry, seating, coordinator, messages, and photos across any remaining non-guest dashboard write surfaces.',
+        'Broaden the live client-RLS matrix beyond guest, planning, itinerary, settings, registry item/policy, seating, coordinator, messages, and photos across any future non-guest dashboard write surfaces.',
       ]
     : [
         'Set LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 and rerun this proof to include the guest-dashboard settings RPC lane.',
-        'Broaden the live client-RLS matrix beyond guest, planning, settings, registry, seating, coordinator, messages, and photos across any remaining non-guest dashboard write surfaces.',
+        'Broaden the live client-RLS matrix beyond guest, planning, itinerary, settings, registry item/policy, seating, coordinator, messages, and photos across any future non-guest dashboard write surfaces.',
       ];
 }
 
@@ -202,7 +202,7 @@ const output = blocker.blocked
         'Guest-scoped collaborators can mutate guest rows directly while timeline/settings writes stay denied without permission',
         'Planner-scoped collaborators can write planning tasks, itinerary events, and dashboard messages while registry RPC writes stay denied without permission',
         'Settings-scoped collaborators can patch site settings and write sections while registry RPC writes stay denied without permission',
-        'Registry-scoped collaborators can write registry items while dashboard message RPC writes stay denied without permission',
+        'Registry-scoped collaborators can write registry items and refresh policy while dashboard message and section RPC writes stay denied without permission',
         'Photos-scoped collaborators can write vault configs and patch vault providers while dashboard message RPC writes stay denied without permission',
         'Coordinator-scoped collaborators can write seating events/tables, coordinator Q&A/check-in, and builder media assets while dashboard message RPC writes stay denied without permission',
       ],
@@ -232,7 +232,7 @@ const output = blocker.blocked
           'Guest-scoped collaborators can mutate guest rows directly while timeline/settings writes stay denied without permission',
           'Planner-scoped collaborators can write planning tasks, itinerary events, and dashboard messages while registry RPC writes stay denied without permission',
           'Settings-scoped collaborators can patch site settings and write sections while registry RPC writes stay denied without permission',
-          'Registry-scoped collaborators can write registry items while dashboard message RPC writes stay denied without permission',
+          'Registry-scoped collaborators can write registry items and refresh policy while dashboard message and section RPC writes stay denied without permission',
           'Photos-scoped collaborators can write vault configs and patch vault providers while dashboard message RPC writes stay denied without permission',
           'Coordinator-scoped collaborators can write seating events/tables, coordinator Q&A/check-in, and builder media assets while dashboard message RPC writes stay denied without permission',
         ],

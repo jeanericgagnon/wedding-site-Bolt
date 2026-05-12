@@ -7,6 +7,29 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 
 ---
 
+## 2026-05-12 07:14 AM PDT - Registry Refresh Policy Matrix Coverage And Inventory Guard Tightening
+
+- Status: `LIVE PROOF EXPANDED + REMOTE DB FIX`
+- What changed:
+  - expanded `tests/e2e/collaborator-permission-rls.spec.ts` again
+  - registry-scoped collaborator proof now covers allowed `registry_refresh_policy_write` in addition to `registry_item_write`
+  - settings-scoped collaborator proof now stays denied on the registry refresh-policy lane
+  - tightened `scripts/v1-proof-client-write-inventory.mjs` so it now catches direct write chains with single, double, or backtick table names and skips `.d.ts` files
+  - updated `src/lib/clientWriteInventoryProofScript.test.ts`, `src/lib/collaboratorPermissionRlsProof.test.ts`, `src/lib/clientRlsMatrixProofScript.test.ts`, `scripts/v1-proof-collaborator-runtime.mjs`, and `scripts/v1-proof-client-rls-matrix.mjs`
+  - fixed a real live PostgreSQL type mismatch after the first rerun exposed `CASE types uuid and text cannot be matched`
+  - corrected source migration `20260511234500_registry_write_rpcs.sql`
+  - added forward remote repair migration `20260512043000_fix_registry_refresh_policy_write_updated_by_type.sql`
+- Proof result:
+  - `npm test -- --run src/lib/clientWriteInventoryProofScript.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts` -> `PASS`
+  - `npm run proof:v1:client-write-inventory` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `supabase db push --linked --include-all` -> `PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Launch effect:
+  - no launch-state change
+  - the live client-RLS baseline now covers guest, planning, itinerary, settings, sections, registry item/policy, seating, coordinator, messages, photos, vault-config, and vault-provider writes, while the local client-write inventory guard is stricter against future drift
+
 ## 2026-05-11 10:06 PM PDT - Itinerary / Section RPC Runtime Drift Repaired And Live Matrix Expanded
 
 - Status: `LIVE PROOF EXPANDED + REMOTE DB FIX`
