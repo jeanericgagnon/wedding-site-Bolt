@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-11 06:24 PM PDT`
+_Updated:_ `2026-05-11 06:35 PM PDT`
 
 ## Current Score
 
@@ -119,20 +119,21 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Added `npm run proof:v1:client-rls-matrix` as the canonical live baseline for anon guest-contact scope, public RSVP scope, owner/collaborator viewer-deny plus planner/coordinator-allow proof, and direct guest-table write allow/deny coverage
 - Expanded the live collaborator/client-RLS proof baseline so planning and seating direct writes are now proven in production too
 - Moved guest-dashboard RSVP-config and reminder-settings writes behind guest-scoped RPCs in the working tree; migration apply, deploy, and `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` proof are still pending, so the current launch runtime truth is unchanged
+- Moved core planning task and seating event/table writes behind a second local RPC batch in the working tree; focused local proof (`planningService.test`, `seatingService.test`, `typecheck`, `lint`, `build`) is green, but migration apply/deploy/live proof are still pending so the current runtime truth is unchanged
 
 ## What Remains Before 10 / 10
 
 Only deferred, non-launch follow-up remains:
 - public vault contribution enablement and live proof
 - custom-host/subdomain dedicated DNS rerun
-- apply/deploy the local guest-dashboard settings RPC batch and rerun collaborator/client-RLS live proof with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
+- apply/deploy the local guest-dashboard settings RPC batch and the new planning/seating core write RPC batch, then rerun collaborator/client-RLS live proof with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
 - broader client-RLS role matrix expansion for remaining non-guest dashboard write surfaces beyond guest, planning, and seating
 - client-write surface reduction into Edge Functions / RPCs
 - dedicated custom-host DNS rerun only if that launch surface becomes active
 
 Why this is `9.9 / 10` instead of `10 / 10`:
 - the launch baseline is green and production-ready
-- the current committed branch head (`86ab331c`) contains post-deploy proof hardening beyond the exact live frontend runtime SHA (`f0cbf841`)
+- the current committed branch head (`4f3869c6`) contains post-deploy proof hardening beyond the exact live frontend runtime SHA (`f0cbf841`)
 - that remaining delta is non-runtime and non-launch, but it keeps me just shy of calling it mathematically perfect
 
 ## Bottom Line

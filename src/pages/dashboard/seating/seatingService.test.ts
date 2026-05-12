@@ -2,10 +2,13 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  autoCreateTables,
+  createTable,
   deriveEventCountersFromGuests,
   deriveGuestEventAttendance,
   exportPlaceCardsCSV,
   exportSeatingCSV,
+  getOrCreateSeatingEvent,
   mapSeatingLookupRows,
   MAX_SEATING_ELIGIBLE_GUESTS,
   MAX_SEATING_EVENT_INVITATIONS,
@@ -17,13 +20,17 @@ import {
   MAX_SEATING_TABLE_ROWS,
   MAX_SEATING_VERSION_ROWS,
   refreshSeatingSession,
+  updateSeatingEvent,
+  updateTable,
+  deleteTable,
   type EligibleGuest,
   type SeatingAssignment,
   type SeatingTable,
 } from './seatingService';
 
-const { refreshSessionMock } = vi.hoisted(() => ({
+const { refreshSessionMock, rpcMock } = vi.hoisted(() => ({
   refreshSessionMock: vi.fn(),
+  rpcMock: vi.fn(),
 }));
 
 vi.mock('../../../lib/supabase', () => ({
@@ -33,12 +40,14 @@ vi.mock('../../../lib/supabase', () => ({
       getUser: vi.fn(),
     },
     from: vi.fn(),
+    rpc: rpcMock,
   },
 }));
 
 describe('deriveGuestEventAttendance', () => {
   beforeEach(() => {
     refreshSessionMock.mockReset();
+    rpcMock.mockReset();
   });
 
   it('requires an explicit positive event RSVP when event invitations exist', () => {
@@ -383,6 +392,16 @@ describe('mapSeatingLookupRows', () => {
     expect(source).toContain(".order('sort_order', { ascending: true })\n    .limit(MAX_SEATING_TABLE_ROWS);");
     expect(source).toContain(".eq('seating_event_id', seatingEventId)\n    .limit(MAX_SEATING_ASSIGNMENT_ROWS);");
     expect(source).toContain(".order('created_at', { ascending: false })\n    .limit(MAX_SEATING_VERSION_ROWS);");
+    expect(source).toContain("supabase.rpc('seating_event_get_or_create'");
+    expect(source).toContain("supabase.rpc('seating_event_update'");
+    expect(source).toContain("supabase.rpc('seating_table_write'");
+    expect(source).toContain("supabase.rpc('seating_table_delete'");
+    expect(source).toContain("supabase.rpc('seating_table_bulk_create'");
+    expect(source).not.toContain(".from('seating_events')\n    .insert(");
+    expect(source).not.toContain(".from('seating_events')\n    .update(");
+    expect(source).not.toContain(".from('seating_tables')\n    .insert(");
+    expect(source).not.toContain(".from('seating_tables')\n    .update(");
+    expect(source).not.toContain(".from('seating_tables').delete()");
   });
 
   it('refreshes the seating session through the service helper', async () => {
@@ -390,5 +409,56 @@ describe('mapSeatingLookupRows', () => {
 
     await expect(refreshSeatingSession()).resolves.toBeUndefined();
     expect(refreshSessionMock).toHaveBeenCalled();
+  });
+
+  it('persists seating event and table writes through RPCs', async () => {
+    rpcMock
+      .mockResolvedValueOnce({ data: { id: 'se-1' }, error: null })
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ data: { id: 'table-1' }, error: null })
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ data: [{ id: 'table-1' }], error: null });
+
+    await expect(getOrCreateSeatingEvent('site-1', 'event-1')).resolves.toEqual(expect.objectContaining({ id: 'se-1' }));
+    expect(rpcMock).toHaveBeenNthCalledWith(1, 'seating_event_get_or_create', {
+      p_wedding_site_id: 'site-1',
+      p_itinerary_event_id: 'event-1',
+    });
+
+    await expect(updateSeatingEvent('se-1', { default_table_capacity: 10, notes: 'Updated' })).resolves.toBeUndefined();
+    expect(rpcMock).toHaveBeenNthCalledWith(2, 'seating_event_update', {
+      p_seating_event_id: 'se-1',
+      p_default_table_capacity: 10,
+      p_notes: 'Updated',
+    });
+
+    await expect(createTable({ seating_event_id: 'se-1', table_name: 'Head table' })).resolves.toEqual(expect.objectContaining({ id: 'table-1' }));
+    expect(rpcMock).toHaveBeenNthCalledWith(3, 'seating_table_write', {
+      p_seating_event_id: 'se-1',
+      p_table_id: null,
+      p_payload: { seating_event_id: 'se-1', table_name: 'Head table' },
+    });
+
+    await expect(updateTable('table-1', { capacity: 12 })).resolves.toBeUndefined();
+    expect(rpcMock).toHaveBeenNthCalledWith(4, 'seating_table_write', {
+      p_seating_event_id: null,
+      p_table_id: 'table-1',
+      p_payload: { capacity: 12 },
+    });
+
+    await expect(deleteTable('table-1')).resolves.toBeUndefined();
+    expect(rpcMock).toHaveBeenNthCalledWith(5, 'seating_table_delete', {
+      p_table_id: 'table-1',
+    });
+
+    await expect(autoCreateTables('se-1', 10, 5)).resolves.toEqual([{ id: 'table-1' }]);
+    expect(rpcMock).toHaveBeenNthCalledWith(6, 'seating_table_bulk_create', {
+      p_seating_event_id: 'se-1',
+      p_tables: [
+        { seating_event_id: 'se-1', table_name: 'Table 1', capacity: 5, sort_order: 0 },
+        { seating_event_id: 'se-1', table_name: 'Table 2', capacity: 5, sort_order: 1 },
+      ],
+    });
   });
 });

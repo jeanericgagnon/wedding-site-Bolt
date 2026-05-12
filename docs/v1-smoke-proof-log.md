@@ -119,6 +119,22 @@ _Launch call right now:_ `GO`
   - the canonical client-RLS matrix now carries that same broader role-scoped proof
   - the remaining local-only gap in this cluster is the undeployed guest-dashboard settings RPC batch
 
+### 2026-05-11 06:35 PM PDT - Planning And Seating Core Write RPC Batch (Local Only)
+
+- Added migration `20260511211500_planning_seating_write_rpcs.sql`.
+- Moved these dashboard write paths off raw client table mutations in the working tree:
+  - `planning_tasks`
+  - `seating_events`
+  - `seating_tables`
+- Added focused service proof:
+  - `npm test -- --run src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/seating/seatingService.test.ts` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `npm run lint -- --quiet` -> `PASS`
+  - `npm run build` -> `PASS`
+- Result:
+  - no live-state change yet
+  - apply/deploy plus fresh live proof are still required before this batch counts as runtime hardening
+
 ### 2026-05-11 03:42 PM PDT - Public Vault Contribution Downgraded To Deferred / Hard-Disabled
 
 - Attempted closeout redeploys:

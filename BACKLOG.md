@@ -10,9 +10,9 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-11 06:24 PM PDT` |
+| Current date/time | `2026-05-11 06:35 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
-| Latest Git SHA | `86ab331c` |
+| Latest Git SHA | `4f3869c6` |
 | Latest commit message | `Expand live collaborator RLS proof for planning and seating` |
 | Vercel deployment ID | `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
@@ -22,9 +22,9 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | Production-ready | `YES` |
 | Reason production-ready is not yet claimed | No active P0/P1 blockers remain. Remaining items are explicitly deferred and non-launch. |
 | Current blockers | none |
-| Current proof state | `npm test` passed `537/537` files and `3321/3321` tests. The local gate (`typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `board:md`, `git diff --check`) is green. `test:smoke` passed with live Supabase access. The secure proof bundle (`service-role-authorization`, `email-messaging-authorization`, `launch-closeout`) remains green. Live production proofs after the blocker-fix deploy are green for `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, and `client-rls-matrix`, with direct guest, planning, and seating writes now proven role-scoped while direct timeline/settings writes remain denied without permission. The only remaining guest-dashboard settings proof gap is the undeployed local RPC batch gated behind `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`. GitHub Actions `Release Launch Gate` is green on run `25705683563`, with the focused launch-critical proof bundle and mandatory strict RSVP smoke. |
-| Current deployment state | Frontend is live at [dayof.love](https://dayof.love) on exact runtime Git SHA `f0cbf841` via verified Vercel production deploy `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`. The current committed branch head `86ab331c` adds post-deploy proof hardening only and does not change the live frontend runtime. `submit-rsvp` is live with the serialized capacity path and the migration is applied remotely. Public vault contribution remains outside the launch baseline because the live route still fails closed and the function inventory does not confirm `vault-contribution-public`. |
-| Current next actions | none |
+| Current proof state | `npm test` passed `537/537` files and `3321/3321` tests. The local gate (`typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `board:md`, `git diff --check`) is green. `test:smoke` passed with live Supabase access. The secure proof bundle (`service-role-authorization`, `email-messaging-authorization`, `launch-closeout`) remains green. Live production proofs after the blocker-fix deploy are green for `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, and `client-rls-matrix`, with direct guest, planning, and seating writes now proven role-scoped while direct timeline/settings writes remain denied without permission. New local-only proof is green for planning/seating RPC migration wiring (`planningService.test`, `seatingService.test`, `typecheck`, `lint`, `build`). The remaining proof gaps in this cluster are the undeployed local RPC batches gated behind migration apply/deploy plus `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`. GitHub Actions `Release Launch Gate` is green on run `25705683563`, with the focused launch-critical proof bundle and mandatory strict RSVP smoke. |
+| Current deployment state | Frontend is live at [dayof.love](https://dayof.love) on exact runtime Git SHA `f0cbf841` via verified Vercel production deploy `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`. The current committed branch head `4f3869c6` adds post-deploy proof hardening only and does not change the live frontend runtime. `submit-rsvp` is live with the serialized capacity path and the migration is applied remotely. New local-only migrations `20260511200000_guest_dashboard_settings_rpcs.sql` and `20260511211500_planning_seating_write_rpcs.sql` are not applied remotely yet. Public vault contribution remains outside the launch baseline because the live route still fails closed and the function inventory does not confirm `vault-contribution-public`. |
+| Current next actions | apply/deploy the two local RPC batches, rerun `collaborator-runtime` / `client-rls-matrix`, then continue on remaining non-guest direct-write surfaces |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
@@ -67,6 +67,7 @@ No active `P0` or `P1` launch blockers remain.
     - `npm run proof:v1:client-rls-matrix` is now the canonical live baseline for client-facing role proof
     - it already aggregates anon guest-contact scope, public RSVP scope, and owner/collaborator viewer-deny plus planner/coordinator-allow runtime proof
     - it now also proves direct guest, planning, and seating writes remain permission-scoped while direct timeline/settings writes stay denied without the matching permission set
+    - guest-dashboard settings plus planning/seating core writes are now routed through local-only RPC batches
     - deeper direct client-table write coverage is still worth adding for remaining non-guest dashboard surfaces beyond guest, planning, and seating because the client-heavy mutation surface remains broad
 - `P2 Dashboard Guests remains orchestration-heavy`
   - file: [src/pages/dashboard/Guests.tsx](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/src/pages/dashboard/Guests.tsx:1)
@@ -234,9 +235,9 @@ No active `P0` or `P1` launch blockers remain.
 
 ## Next 10 Tasks
 
-1. Apply and deploy the local guest-dashboard settings RPC batch (`20260511200000_guest_dashboard_settings_rpcs.sql`), then rerun `proof:v1:collaborator-runtime` and `proof:v1:client-rls-matrix` with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`.
+1. Apply and deploy the two local RPC batches (`20260511200000_guest_dashboard_settings_rpcs.sql` and `20260511211500_planning_seating_write_rpcs.sql`), then rerun `proof:v1:collaborator-runtime` and `proof:v1:client-rls-matrix` with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`.
 2. Expand the client-RLS matrix from the new baseline into broader direct client-table writes for remaining non-guest dashboard surfaces beyond guest, planning, and seating.
-3. Start moving the highest-risk client writes into Edge Functions or RPCs, starting with guest household, import, and bulk guest operations.
+3. Start moving the next highest-risk client writes into Edge Functions or RPCs, starting with guest household, import, and bulk guest operations.
 4. Resolve the deferred public vault contribution lane before enabling it.
 5. Rerun dedicated custom-host/subdomain DNS proof if that launch surface becomes active.
 6. Keep the deployment matrix current when runtime/deploy IDs change.
@@ -290,4 +291,5 @@ No active `P0` or `P1` launch blockers remain.
 - Reran `collaborator-runtime`, `test:smoke`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, and `guest-lookup-scope` after the exact-SHA deploy.
 - Expanded the live collaborator/client-RLS matrix so it now proves direct guest, planning, and seating writes stay permission-scoped while direct timeline/settings writes remain denied without permission.
 - Moved guest-dashboard RSVP-config and reminder-settings writes behind guest-scoped RPCs in the working tree; migration apply, deploy, and `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` live proof are still pending.
+- Moved core planning task and seating event/table writes behind local RPC batches in the working tree; migration apply, deploy, and fresh live proof are still pending.
 - Tried to bring the public vault contribution lane into the same sweep, but the live route still fails closed and `vault-contribution-public` still does not appear in the live function inventory. That lane is now explicitly deferred/non-launch instead of vaguely “deployed”.

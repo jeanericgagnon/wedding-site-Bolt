@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  createTask,
+  deleteTask,
   generateMilestoneTasks,
   hasPlanningSongQuestion,
   MAX_PLANNING_ADDRESS_GUEST_ROWS,
@@ -11,7 +13,19 @@ import {
   MAX_PLANNING_TASK_ROWS,
   MAX_PLANNING_VENDOR_ROWS,
   readPlanningSongAnswer,
+  updateTask,
 } from './planningService';
+
+const { rpcMock } = vi.hoisted(() => ({
+  rpcMock: vi.fn(),
+}));
+
+vi.mock('../../../lib/supabase', () => ({
+  supabase: {
+    from: vi.fn(),
+    rpc: rpcMock,
+  },
+}));
 
 describe('generateMilestoneTasks', () => {
   it('drops impossible wedding dates instead of generating rolled milestone deadlines', () => {
@@ -29,6 +43,10 @@ describe('generateMilestoneTasks', () => {
 });
 
 describe('planning song request helpers', () => {
+  beforeEach(() => {
+    rpcMock.mockReset();
+  });
+
   it('reads song answers from current and legacy RSVP custom-answer shapes', () => {
     expect(readPlanningSongAnswer({ song_request: 'September - Earth, Wind & Fire' })).toBe('September - Earth, Wind & Fire');
     expect(readPlanningSongAnswer({ 'Dance song': ['Dancing Queen', 'September'] })).toBe('Dancing Queen, September');
@@ -67,5 +85,36 @@ describe('planning song request helpers', () => {
     expect(source).toContain(".order('created_at', { ascending: true })\n    .limit(MAX_PLANNING_TASK_ROWS);");
     expect(source).toContain(".order('name', { ascending: true })\n    .limit(MAX_PLANNING_VENDOR_ROWS);");
     expect(source).toContain(".order('item_name', { ascending: true })\n    .limit(MAX_PLANNING_BUDGET_ITEM_ROWS);");
+    expect(source).toContain("supabase.rpc('planning_task_write'");
+    expect(source).toContain("supabase.rpc('planning_task_delete'");
+    expect(source).not.toContain(".from('planning_tasks')\n    .insert(");
+    expect(source).not.toContain(".from('planning_tasks')\n    .update(");
+    expect(source).not.toContain(".from('planning_tasks').delete()");
+  });
+
+  it('persists planning task writes through RPCs', async () => {
+    rpcMock
+      .mockResolvedValueOnce({ data: { id: 'task-1', title: 'Task' }, error: null })
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: null });
+
+    await expect(createTask('site-1', { title: 'Task', status: 'todo' })).resolves.toEqual(expect.objectContaining({ id: 'task-1' }));
+    expect(rpcMock).toHaveBeenNthCalledWith(1, 'planning_task_write', {
+      p_wedding_site_id: 'site-1',
+      p_task_id: null,
+      p_payload: { title: 'Task', status: 'todo' },
+    });
+
+    await expect(updateTask('task-1', { status: 'done' })).resolves.toBeUndefined();
+    expect(rpcMock).toHaveBeenNthCalledWith(2, 'planning_task_write', {
+      p_wedding_site_id: null,
+      p_task_id: 'task-1',
+      p_payload: { status: 'done' },
+    });
+
+    await expect(deleteTask('task-1')).resolves.toBeUndefined();
+    expect(rpcMock).toHaveBeenNthCalledWith(3, 'planning_task_delete', {
+      p_task_id: 'task-1',
+    });
   });
 });

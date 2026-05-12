@@ -1,6 +1,13 @@
 import { supabase } from '../../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
 
+function requireRpcRecord<T>(data: unknown, functionName: string): T {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error(`${functionName} returned an invalid record payload`);
+  }
+  return data as T;
+}
+
 async function insertWithDriftFallback<T extends Record<string, unknown>>(
   table: string,
   payload: T,
@@ -408,26 +415,28 @@ export async function loadTasks(weddingSiteId: string): Promise<PlanningTask[]> 
 }
 
 export async function createTask(weddingSiteId: string, task: Partial<PlanningTask>): Promise<PlanningTask> {
-  const data = await insertWithDriftFallback(
-    'planning_tasks',
-    { ...task, wedding_site_id: weddingSiteId },
-    ['category'],
-    PLANNING_TASK_SELECT,
-  );
-  return data as unknown as PlanningTask;
+  const { data, error } = await supabase.rpc('planning_task_write', {
+    p_wedding_site_id: weddingSiteId,
+    p_task_id: null,
+    p_payload: task,
+  });
+  if (error) throw error;
+  return requireRpcRecord<PlanningTask>(data, 'planning_task_write');
 }
 
 export async function updateTask(id: string, updates: Partial<PlanningTask>): Promise<void> {
-  await updateWithDriftFallback(
-    'planning_tasks',
-    id,
-    { ...updates, updated_at: new Date().toISOString() },
-    ['category']
-  );
+  const { error } = await supabase.rpc('planning_task_write', {
+    p_wedding_site_id: null,
+    p_task_id: id,
+    p_payload: updates,
+  });
+  if (error) throw error;
 }
 
 export async function deleteTask(id: string): Promise<void> {
-  const { error } = await supabase.from('planning_tasks').delete().eq('id', id);
+  const { error } = await supabase.rpc('planning_task_delete', {
+    p_task_id: id,
+  });
   if (error) throw error;
 }
 

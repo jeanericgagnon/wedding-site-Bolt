@@ -3,6 +3,20 @@ import { resolveActiveSiteForUser } from '../../../lib/activeSite';
 import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../../lib/rsvpStatus';
 import { toSafeCsv } from '../../../lib/csvExport';
 
+function requireRpcRecord<T>(data: unknown, functionName: string): T {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error(`${functionName} returned an invalid record payload`);
+  }
+  return data as T;
+}
+
+function requireRpcArray<T>(data: unknown, functionName: string): T[] {
+  if (!Array.isArray(data)) {
+    throw new Error(`${functionName} returned an invalid array payload`);
+  }
+  return data as T[];
+}
+
 let hasEventRsvpsTable: boolean | null = null;
 
 const SEATING_EVENT_SELECT = 'id, wedding_site_id, itinerary_event_id, default_table_capacity, notes, created_at' as const;
@@ -285,28 +299,20 @@ export async function loadSeatingLookupRowsForUser(userId: string): Promise<Seat
 }
 
 export async function getOrCreateSeatingEvent(weddingSiteId: string, itineraryEventId: string): Promise<SeatingEvent> {
-  const { data: existing } = await supabase
-    .from('seating_events')
-    .select(SEATING_EVENT_SELECT)
-    .eq('wedding_site_id', weddingSiteId)
-    .eq('itinerary_event_id', itineraryEventId)
-    .maybeSingle();
-  if (existing) return existing as SeatingEvent;
-
-  const { data, error } = await supabase
-    .from('seating_events')
-    .insert({ wedding_site_id: weddingSiteId, itinerary_event_id: itineraryEventId })
-    .select(SEATING_EVENT_SELECT)
-    .single();
+  const { data, error } = await supabase.rpc('seating_event_get_or_create', {
+    p_wedding_site_id: weddingSiteId,
+    p_itinerary_event_id: itineraryEventId,
+  });
   if (error) throw error;
-  return data as SeatingEvent;
+  return requireRpcRecord<SeatingEvent>(data, 'seating_event_get_or_create');
 }
 
 export async function updateSeatingEvent(id: string, updates: Partial<SeatingEvent>): Promise<void> {
-  const { error } = await supabase
-    .from('seating_events')
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq('id', id);
+  const { error } = await supabase.rpc('seating_event_update', {
+    p_seating_event_id: id,
+    p_default_table_capacity: updates.default_table_capacity ?? null,
+    p_notes: updates.notes ?? null,
+  });
   if (error) throw error;
 }
 
@@ -322,25 +328,28 @@ export async function loadTables(seatingEventId: string): Promise<SeatingTable[]
 }
 
 export async function createTable(table: Partial<SeatingTable>): Promise<SeatingTable> {
-  const { data, error } = await supabase
-    .from('seating_tables')
-    .insert(table)
-    .select(SEATING_TABLE_SELECT)
-    .single();
+  const { data, error } = await supabase.rpc('seating_table_write', {
+    p_seating_event_id: table.seating_event_id,
+    p_table_id: null,
+    p_payload: table,
+  });
   if (error) throw error;
-  return data as SeatingTable;
+  return requireRpcRecord<SeatingTable>(data, 'seating_table_write');
 }
 
 export async function updateTable(id: string, updates: Partial<SeatingTable>): Promise<void> {
-  const { error } = await supabase
-    .from('seating_tables')
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq('id', id);
+  const { error } = await supabase.rpc('seating_table_write', {
+    p_seating_event_id: null,
+    p_table_id: id,
+    p_payload: updates,
+  });
   if (error) throw error;
 }
 
 export async function deleteTable(id: string): Promise<void> {
-  const { error } = await supabase.from('seating_tables').delete().eq('id', id);
+  const { error } = await supabase.rpc('seating_table_delete', {
+    p_table_id: id,
+  });
   if (error) throw error;
 }
 
@@ -575,12 +584,12 @@ export async function autoCreateTables(
     });
   }
 
-  const { data, error } = await supabase
-    .from('seating_tables')
-    .insert(tables)
-    .select(SEATING_TABLE_SELECT);
+  const { data, error } = await supabase.rpc('seating_table_bulk_create', {
+    p_seating_event_id: seatingEventId,
+    p_tables: tables,
+  });
   if (error) throw error;
-  return (data ?? []) as SeatingTable[];
+  return requireRpcArray<SeatingTable>(data ?? [], 'seating_table_bulk_create');
 }
 
 export async function autoSeatGuests(

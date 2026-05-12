@@ -70,6 +70,23 @@ This file preserves timestamped historical entries, extraction batches, and no-d
   - no launch-state change
   - the remaining RLS expansion gap is now narrowed to the undeployed guest-dashboard settings RPC batch plus broader non-guest surfaces beyond guest/planning/seating
 
+## 2026-05-11 06:35 PM PT - Planning And Seating Core Write RPC Batch (Local Only)
+
+- Status: `LOCAL PASS / DEPLOY REQUIRED`
+- What changed:
+  - added migration `20260511211500_planning_seating_write_rpcs.sql`
+  - moved `planning_tasks` writes in `planningService.ts` behind `planning_task_write` / `planning_task_delete`
+  - moved `seating_events` and `seating_tables` writes in `seatingService.ts` behind `seating_event_get_or_create`, `seating_event_update`, `seating_table_write`, `seating_table_delete`, and `seating_table_bulk_create`
+  - added focused service proof in `planningService.test.ts` and `seatingService.test.ts`
+- Proof result:
+  - `npm test -- --run src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/seating/seatingService.test.ts` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `npm run lint -- --quiet` -> `PASS`
+  - `npm run build` -> `PASS`
+- Launch effect:
+  - no live-state change yet
+  - migration apply, deploy, and fresh live proof are still required before this batch can be counted as runtime hardening
+
 ## 2026-05-11 05:45 PM PT - Internal Tooling Route Production Gating
 
 - Status: `RESOLVED`
