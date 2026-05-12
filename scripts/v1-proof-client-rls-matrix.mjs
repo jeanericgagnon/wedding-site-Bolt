@@ -6,6 +6,7 @@ const scriptShell =
   process.platform === 'win32'
     ? process.env.ComSpec || 'cmd.exe'
     : process.env.SHELL || '/bin/bash';
+const requireLive = process.argv.includes('--require-live');
 const liveGuestDashboardSettingsRpcs = process.env.LIVE_GUEST_DASHBOARD_SETTINGS_RPCS === '1';
 
 const steps = [
@@ -127,26 +128,39 @@ function runStep(step) {
 function buildStillManualProofNeeded() {
   const items = [];
   if (!liveGuestDashboardSettingsRpcs) {
-  items.push('Set LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 and rerun this matrix to include the guest-dashboard settings RPC lane.');
+    items.push('Set LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 and rerun this matrix to include the guest-dashboard settings RPC lane.');
   }
   items.push('Broaden the live client-RLS matrix beyond guest, planning, itinerary, settings, registry item/policy, seating, coordinator, messages, and photos across any future non-guest dashboard write surfaces.');
   return items;
 }
 
+const blockers = [];
+if (requireLive && !liveGuestDashboardSettingsRpcs) {
+  blockers.push({
+    id: 'guest-dashboard-settings-rpcs-env',
+    label: 'Guest dashboard settings RPC runtime lane',
+    blockerType: 'env_missing',
+    message: 'Set LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 so the strongest live client-RLS matrix includes the guest-dashboard settings RPC lane.',
+    recommendation: 'Export LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 before running the required live client-RLS proof.',
+  });
+}
+
 const results = steps.map(runStep);
 const blockedRequired = results.filter((result) => result.required && result.blocked);
 const failedRequired = results.filter((result) => result.required && !result.ok && !result.blocked);
+const hasBlockingPreconditions = blockers.length > 0;
 
 const output = {
-  ok: failedRequired.length === 0 && blockedRequired.length === 0,
-  blocked: blockedRequired.length > 0,
+  ok: failedRequired.length === 0 && blockedRequired.length === 0 && !hasBlockingPreconditions,
+  blocked: blockedRequired.length > 0 || hasBlockingPreconditions,
   slice: 'client-rls-matrix',
   generatedAt: new Date().toISOString(),
+  requireLive,
   summary: {
     total: results.length,
     passed: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,
-    blocked: blockedRequired.length,
+    blocked: blockedRequired.length + blockers.length,
   },
   automatedCoverage: [
     'Anonymous guest-contact lookup denies partial and mismatched names, then scopes signed household updates',
@@ -161,15 +175,18 @@ const output = {
     'Regular authenticated collaborators cannot query admin_users directly while admin access stays behind admin_access_check()',
   ],
   stillManualProofNeeded: buildStillManualProofNeeded(),
-  blockers: blockedRequired.map((result) => ({
+  blockers: [
+    ...blockers,
+    ...blockedRequired.map((result) => ({
     id: result.id,
     label: result.label,
     blockerType: result.blockerType,
     message: result.message ?? result.parsed?.message ?? result.parsed?.reason ?? 'Blocked by environment or missing external fixture.',
     recommendation: result.parsed?.recommendation ?? null,
   })),
+  ],
   results,
 };
 
 console.log(JSON.stringify(output, null, 2));
-if (failedRequired.length > 0) process.exit(1);
+if (failedRequired.length > 0 || (requireLive && (blockedRequired.length > 0 || hasBlockingPreconditions))) process.exit(1);

@@ -3,12 +3,15 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 describe('ci hardpass workflow', () => {
-  it('requires Supabase RSVP secrets and always runs strict RSVP smoke', () => {
+  it('requires launch proof secrets and keeps live launch checks hard-required', () => {
     const source = readFileSync(join(process.cwd(), '.github/workflows/ci-hardpass.yml'), 'utf8');
 
     expect(source).toContain('name: CI Hardpass RSVP/CSV');
-    expect(source).toContain('Require Supabase RSVP proof secrets');
-    expect(source).toContain('Missing VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY secrets required for smoke:rsvp:strict.');
+    expect(source).toContain('Require launch proof secrets');
+    expect(source).toContain('Missing VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY/V1_OWNER_EMAIL/V1_OWNER_PASSWORD secrets required for launch proof.');
+    expect(source).toContain('LIVE_GUEST_DASHBOARD_SETTINGS_RPCS: 1');
+    expect(source).toContain('run: npm run proof:v1:ast-security');
+    expect(source).toContain('run: npm run proof:v1:client-rls-matrix -- --require-live');
     expect(source).toContain('run: npm run smoke:rsvp:strict');
     expect(source).not.toContain('Skipping smoke:rsvp:strict');
     expect(source).not.toContain("if: ${{ env.VITE_SUPABASE_URL != '' && env.VITE_SUPABASE_ANON_KEY != '' }}");

@@ -6,12 +6,14 @@ type Match = {
 
 type GuestContactLookupPanelProps = {
   query: string;
+  verifier: string;
   searching: boolean;
   matches: Match[];
   selectedContactSession: string;
   selectedHouseholdSize: number;
   applyHousehold: boolean;
   onQueryChange: (value: string) => void;
+  onVerifierChange: (value: string) => void;
   onSearch: () => void;
   onSelectContactSession: (contactSession: string) => void;
   onToggleApplyHousehold: (checked: boolean) => void;
@@ -20,12 +22,14 @@ type GuestContactLookupPanelProps = {
 
 export function GuestContactLookupPanel({
   query,
+  verifier,
   searching,
   matches,
   selectedContactSession,
   selectedHouseholdSize,
   applyHousehold,
   onQueryChange,
+  onVerifierChange,
   onSearch,
   onSelectContactSession,
   onToggleApplyHousehold,
@@ -35,20 +39,32 @@ export function GuestContactLookupPanel({
     <>
       <div>
         <label htmlFor="guest-contact-search" className="mb-1 block text-sm font-medium text-text-primary">Find your guest record</label>
-        <div className="flex gap-2">
+        <div className="space-y-2">
           <input
             id="guest-contact-search"
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             placeholder="Search your full name"
             aria-describedby="guest-contact-search-helper"
-            className="flex-1 px-3 py-2 border border-border rounded-lg bg-surface-subtle"
+            className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle"
           />
-          <button onClick={onSearch} disabled={searching || !canSearch} className="px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-50">
-            {searching ? 'Searching…' : 'Find'}
-          </button>
+          <input
+            id="guest-contact-verifier"
+            value={verifier}
+            onChange={(e) => onVerifierChange(e.target.value)}
+            placeholder="Email hint or phone last 4"
+            aria-label="Confirm one more detail"
+            aria-describedby="guest-contact-verifier-helper"
+            className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle"
+          />
+          <div className="flex justify-end">
+            <button onClick={onSearch} disabled={searching || !canSearch} className="px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-50">
+              {searching ? 'Searching…' : 'Find'}
+            </button>
+          </div>
         </div>
         <p id="guest-contact-search-helper" className="mt-1 text-xs text-text-secondary">Use your full name exactly as it appears on the invitation.</p>
+        <p id="guest-contact-verifier-helper" className="mt-1 text-xs text-text-secondary">Add either the first few characters of your email or the last 4 digits of your phone.</p>
       </div>
 
       {matches.length > 0 && (

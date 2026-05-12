@@ -904,6 +904,7 @@ describe('launch edge function guards', () => {
     expect(lookup).toContain('req.method !== "POST"');
     expect(lookup).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
     expect(lookup).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
+    expect(lookup).toContain('const verifier = String(body.verifier ?? "").trim()');
     expect(lookup).toContain('const hasAccess = await canReadPublicSubresource');
     expect(lookup).toContain('storedInviteToken: typeof site.guest_access_token === "string" ? site.guest_access_token : null');
     expect(lookup).toContain('enforcePublicSubmissionRateLimit');
@@ -911,10 +912,13 @@ describe('launch edge function guards', () => {
     expect(lookup).toContain('signSessionToken<ContactSessionPayload>');
     expect(lookup).toContain('contact_session: await signSessionToken');
     expect(lookup).toContain('queryParts.length < 2');
+    expect(lookup).toContain('normalizedVerifier.length < 3 && normalizedVerifierDigits.length < 4');
     expect(lookup).toContain('const firstName = queryParts.slice(0, -1).join(" ")');
+    expect(lookup).toContain('.select("id, name, first_name, last_name, household_id, email, phone")');
     expect(lookup).toContain('.ilike("first_name", firstName)');
     expect(lookup).toContain('.ilike("last_name", lastName)');
     expect(lookup).toContain('normalizeName(displayName(guest)) === normalizedQuery');
+    expect(lookup).toContain('verifierMatchesGuest(guest, verifier)');
     expect(lookup).not.toContain('name.ilike.%');
     expect(lookup).not.toContain('id: g.id');
     expect(lookup).not.toContain('household_id: g.household_id');
@@ -931,8 +935,10 @@ describe('launch edge function guards', () => {
 
     expect(contactPage).toContain('contact_session: string');
     expect(contactPage).toContain('buildGuestContactAccessPayload');
-    expect(contactPage).toContain("Enter your full name as it appears on the invitation.");
+    expect(contactPage).toContain("Enter your full name and either the first few characters of your email or the last 4 digits of your phone.");
+    expect(contactPage).toContain('verifier: verifier.trim()');
     expect(readFileSync(join(process.cwd(), 'src', 'pages', 'GuestContactLookupPanel.tsx'), 'utf8')).toContain('placeholder="Search your full name"');
+    expect(readFileSync(join(process.cwd(), 'src', 'pages', 'GuestContactLookupPanel.tsx'), 'utf8')).toContain('placeholder="Email hint or phone last 4"');
     expect(contactPage).toContain('...buildGuestContactAccessPayload(siteRef)');
     expect(contactPage).toContain("contact_session: selectedContactSession");
     expect(contactPage).not.toContain('guest_id: selectedGuestId');

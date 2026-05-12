@@ -9,6 +9,9 @@ describe('guest lookup scope proof script', () => {
     expect(script).toContain('query: `Taylor Wrong${runId}`');
     expect(script).toContain('query: `${lastName} Taylor`');
     expect(script).toContain('query: `Taylor ${lastName}`');
+    expect(script).toContain('verifier: emailVerifier');
+    expect(script).toContain("expectNoMatches(exactNameWithoutVerifier, 'exact-name-without-verifier')");
+    expect(script).toContain("expectNoMatches(exactNameWithWrongVerifier, 'exact-name-with-wrong-verifier')");
     expect(script).toContain("const forbiddenKeys = ['id', 'guestId', 'guest_id', 'household_id', 'householdId', 'wedding_site_id', 'weddingSiteId'];");
     expect(script).toContain("authMode: accessArtifacts.inviteToken ? 'invite-token' : 'public'");
   });

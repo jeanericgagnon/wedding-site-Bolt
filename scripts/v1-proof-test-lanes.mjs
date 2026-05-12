@@ -10,11 +10,12 @@ const required = {
   'test:smoke': 'npm run smoke:registry && npm run smoke:rsvp && npm run smoke:csvmapper && npm run smoke:checkin && npm run smoke:messages && npm run smoke:site',
   'test:integration': 'npm run proof:v1:canonical-smoke && npm run proof:v1:guests-rsvp-ops && npm run proof:v1:registry && npm run proof:v1:seating-continuity && npm run proof:v1:comms-center',
   'test:e2e': 'npx playwright test --workers=1 tests/e2e',
-  'test:launch': 'npm run typecheck -- --pretty false && npm run proof:v1:strict-pocket && npm run lint -- --quiet && npm run test:security && npm run proof:v1:public-access-coverage && npm run proof:v1:client-write-inventory && npm run proof:v1:registry-preview-ssrf -- --require-live && npm run guard:file-size && npm run guard:assets && npm run build && npm run proof:v1:performance-budget && npm run proof:v1:board:md',
+  'test:launch': 'npm run typecheck -- --pretty false && npm run proof:v1:strict-pocket && npm run lint -- --quiet && npm run test:security && npm run proof:v1:public-access-coverage && npm run proof:v1:client-write-inventory && npm run proof:v1:ast-security && npm run proof:v1:client-rls-matrix -- --require-live && npm run proof:v1:registry-preview-ssrf -- --require-live && npm run guard:file-size && npm run guard:assets && npm run build && npm run proof:v1:performance-budget && npm run proof:v1:board:md',
   'proof:v1:strict-pocket': 'eslint --max-warnings 0 src/components/auth/ProtectedRoute.tsx src/lib/activeSite.ts src/lib/customerSafeError.ts src/lib/mediaUrl.ts src/lib/paymentGate.ts src/lib/publicRenderContract.ts src/lib/publicSiteAccess.ts src/lib/publicSiteRenderModel.ts src/lib/publicSiteSlug.ts src/render/publicSectionDataSanitizer.ts src/lib/siteConfigValidate.ts src/lib/stripeService.ts src/lib/vendorProfiles.ts',
   'proof:v1:test-lanes': 'node scripts/v1-proof-test-lanes.mjs',
   'proof:v1:public-access-coverage': 'node scripts/v1-proof-public-access-coverage.mjs',
   'proof:v1:client-write-inventory': 'node scripts/v1-proof-client-write-inventory.mjs',
+  'proof:v1:ast-security': 'node scripts/v1-proof-ast-security.mjs',
   'guard:file-size': 'node scripts/check-file-size-guard.mjs',
   'guard:assets': 'node scripts/check-asset-budget.mjs',
 };
@@ -40,7 +41,7 @@ if (!scripts['proof:v1:board:md']?.includes('--markdown')) {
 }
 
 const requiredCiSnippets = [
-  'Require Supabase RSVP proof secrets',
+  'Require launch proof secrets',
   'run: npm run lint -- --quiet',
   'run: npm run proof:v1:strict-pocket',
   'run: npm run guard:file-size',
@@ -48,6 +49,8 @@ const requiredCiSnippets = [
   'run: npm run test:security',
   'run: npm run proof:v1:public-access-coverage',
   'run: npm run proof:v1:client-write-inventory',
+  'run: npm run proof:v1:ast-security',
+  'run: npm run proof:v1:client-rls-matrix -- --require-live',
   'run: npm test',
   'run: npm run build',
   'run: npm run proof:v1:performance-budget',

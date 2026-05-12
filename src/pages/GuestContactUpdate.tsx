@@ -35,12 +35,19 @@ function hasFullNameQuery(value: string) {
   return normalized.length >= 5 && normalized.split(' ').filter(Boolean).length >= 2;
 }
 
+function hasGuestContactVerifier(value: string) {
+  const trimmed = value.trim().toLowerCase();
+  if (trimmed.length >= 3) return true;
+  return trimmed.replace(/\D/g, '').length >= 4;
+}
+
 export const GuestContactUpdate: React.FC = () => {
   const { token = '' } = useParams<{ token: string }>();
   const siteRef = token; // now interpreted as site id/slug
   const isDemoSiteRef = siteRef === demoWeddingSite.id || siteRef.toLowerCase() === 'demo';
 
   const [query, setQuery] = useState('');
+  const [verifier, setVerifier] = useState('');
   const [matches, setMatches] = useState<Match[]>([]);
   const [selectedContactSession, setSelectedContactSession] = useState<string>('');
   const [selectedHouseholdSize, setSelectedHouseholdSize] = useState<number>(1);
@@ -75,8 +82,8 @@ export const GuestContactUpdate: React.FC = () => {
   }, [siteRef]);
 
   async function handleSearch() {
-    if (!hasFullNameQuery(query)) {
-      setResult({ ok: false, message: 'Enter your full name as it appears on the invitation.' });
+    if (!hasFullNameQuery(query) || !hasGuestContactVerifier(verifier)) {
+      setResult({ ok: false, message: 'Enter your full name and either the first few characters of your email or the last 4 digits of your phone.' });
       return;
     }
     setSearching(true);
@@ -88,6 +95,7 @@ export const GuestContactUpdate: React.FC = () => {
       const data = await callGuestContactFunction<{ matches?: Match[] }>('guest-contact-lookup', {
         site_ref: siteRef,
         query: query.trim(),
+        verifier: verifier.trim(),
         ...buildGuestContactAccessPayload(siteRef),
       });
       const rows = ((data as any)?.matches ?? []) as Match[];
@@ -159,12 +167,14 @@ export const GuestContactUpdate: React.FC = () => {
 
         <GuestContactLookupPanel
           query={query}
+          verifier={verifier}
           searching={searching}
           matches={matches}
           selectedContactSession={selectedContactSession}
           selectedHouseholdSize={selectedHouseholdSize}
           applyHousehold={applyHousehold}
           onQueryChange={setQuery}
+          onVerifierChange={setVerifier}
           onSearch={handleSearch}
           onSelectContactSession={(contactSession) => {
             setSelectedContactSession(contactSession);
@@ -172,7 +182,7 @@ export const GuestContactUpdate: React.FC = () => {
             setSelectedHouseholdSize(hit?.household_size ?? 1);
           }}
           onToggleApplyHousehold={setApplyHousehold}
-          canSearch={hasFullNameQuery(query)}
+          canSearch={hasFullNameQuery(query) && hasGuestContactVerifier(verifier)}
         />
 
         <form onSubmit={handleSubmit} className="space-y-4" aria-busy={loading}>

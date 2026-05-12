@@ -44,6 +44,8 @@ describe('launch control backlog matrices', () => {
       '`npm run test:smoke`',
       '`npm run proof:v1:public-access-coverage`',
       '`npm run proof:v1:client-write-inventory`',
+      '`npm run proof:v1:ast-security`',
+      '`npm run proof:v1:client-rls-matrix -- --require-live`',
       'public DTO leak tests',
       '`npm run proof:v1:guest-lookup-scope`',
       '`npm run proof:v1:registry-preview-ssrf -- --require-live`',

@@ -20,6 +20,9 @@ jobs:
     env:
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      V1_OWNER_EMAIL: ${{ secrets.V1_OWNER_EMAIL }}
+      V1_OWNER_PASSWORD: ${{ secrets.V1_OWNER_PASSWORD }}
+      LIVE_GUEST_DASHBOARD_SETTINGS_RPCS: 1
 
     steps:
       - name: Checkout
@@ -34,10 +37,10 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Require Supabase RSVP proof secrets
+      - name: Require launch proof secrets
         run: |
-          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
-            echo "::error::Missing VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY secrets required for smoke:rsvp:strict."
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ] || [ -z "$V1_OWNER_EMAIL" ] || [ -z "$V1_OWNER_PASSWORD" ]; then
+            echo "::error::Missing VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY/V1_OWNER_EMAIL/V1_OWNER_PASSWORD secrets required for launch proof."
             exit 1
           fi
 
@@ -64,6 +67,12 @@ jobs:
 
       - name: Client write inventory proof
         run: npm run proof:v1:client-write-inventory
+
+      - name: AST security proof
+        run: npm run proof:v1:ast-security
+
+      - name: Live client RLS matrix proof
+        run: npm run proof:v1:client-rls-matrix -- --require-live
 
       - name: Unit and regression tests
         run: npm test

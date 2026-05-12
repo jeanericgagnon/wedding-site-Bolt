@@ -21,8 +21,52 @@ type ContactSessionPayload = {
   exp: number;
 };
 
+type GuestLookupCandidate = {
+  id: string;
+  name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  household_id?: string | null;
+  email?: string | null;
+  phone?: string | null;
+};
+
 function normalizeName(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function normalizeVerifier(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function phoneDigits(value: string | null | undefined) {
+  return String(value ?? "").replace(/\D/g, "");
+}
+
+function emailLocalPart(value: string | null | undefined) {
+  return String(value ?? "").trim().toLowerCase().split("@")[0] ?? "";
+}
+
+function verifierMatchesGuest(guest: GuestLookupCandidate, verifier: string) {
+  const normalizedVerifier = normalizeVerifier(verifier);
+  if (!normalizedVerifier) return false;
+
+  const digits = phoneDigits(normalizedVerifier);
+  if (digits.length >= 4) {
+    const guestPhoneDigits = phoneDigits(guest.phone);
+    if (guestPhoneDigits.length >= 4 && guestPhoneDigits.endsWith(digits.slice(-4))) {
+      return true;
+    }
+  }
+
+  if (normalizedVerifier.length >= 3) {
+    const localPart = emailLocalPart(guest.email);
+    if (localPart.includes(normalizedVerifier)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function displayName(guest: { name?: string | null; first_name?: string | null; last_name?: string | null }) {
@@ -48,10 +92,18 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => ({}));
     const siteRef = String(body.site_ref ?? "").trim();
     const query = String(body.query ?? "").trim();
+    const verifier = String(body.verifier ?? "").trim();
     const normalizedQuery = normalizeName(query);
     const queryParts = normalizedQuery.split(" ").filter(Boolean);
+    const normalizedVerifier = normalizeVerifier(verifier);
+    const normalizedVerifierDigits = phoneDigits(verifier);
 
-    if (!siteRef || normalizedQuery.length < 5 || queryParts.length < 2) {
+    if (
+      !siteRef
+      || normalizedQuery.length < 5
+      || queryParts.length < 2
+      || (normalizedVerifier.length < 3 && normalizedVerifierDigits.length < 4)
+    ) {
       return json({ matches: [] });
     }
 
@@ -101,28 +153,29 @@ Deno.serve(async (req: Request) => {
     const firstName = queryParts.slice(0, -1).join(" ");
     const { data: exactNameCandidates } = await admin
       .from("guests")
-      .select("id, name, first_name, last_name, household_id")
+      .select("id, name, first_name, last_name, household_id, email, phone")
       .eq("wedding_site_id", site.id)
       .ilike("name", normalizedQuery)
       .limit(5);
     const { data: splitNameCandidates } = await admin
       .from("guests")
-      .select("id, name, first_name, last_name, household_id")
+      .select("id, name, first_name, last_name, household_id, email, phone")
       .eq("wedding_site_id", site.id)
       .ilike("first_name", firstName)
       .ilike("last_name", lastName)
       .limit(5);
 
-    const candidateById = new Map<string, any>();
-    for (const candidate of [...(exactNameCandidates ?? []), ...(splitNameCandidates ?? [])] as any[]) {
+    const candidateById = new Map<string, GuestLookupCandidate>();
+    for (const candidate of [...(exactNameCandidates ?? []), ...(splitNameCandidates ?? [])] as GuestLookupCandidate[]) {
       if (candidate?.id) candidateById.set(candidate.id, candidate);
     }
 
     const guests = Array.from(candidateById.values())
-      .filter((guest: any) => normalizeName(displayName(guest)) === normalizedQuery)
+      .filter((guest) => normalizeName(displayName(guest)) === normalizedQuery)
+      .filter((guest) => verifierMatchesGuest(guest, verifier))
       .slice(0, 5);
 
-    const householdIds = Array.from(new Set((guests ?? []).map((g: any) => g.household_id).filter(Boolean)));
+    const householdIds = Array.from(new Set((guests ?? []).map((g) => g.household_id).filter(Boolean)));
     const householdCounts: Record<string, number> = {};
 
     if (householdIds.length > 0) {
@@ -131,13 +184,13 @@ Deno.serve(async (req: Request) => {
         .select("household_id")
         .eq("wedding_site_id", site.id)
         .in("household_id", householdIds as string[]);
-      for (const row of (hh ?? []) as any[]) {
+      for (const row of (hh ?? []) as Array<{ household_id?: string | null }>) {
         if (!row.household_id) continue;
         householdCounts[row.household_id] = (householdCounts[row.household_id] ?? 0) + 1;
       }
     }
 
-    const matches = await Promise.all((guests ?? []).map(async (g: any) => ({
+    const matches = await Promise.all((guests ?? []).map(async (g) => ({
       contact_session: await signSessionToken<ContactSessionPayload>({
         scope: "guest_contact_update",
         siteId: site.id,

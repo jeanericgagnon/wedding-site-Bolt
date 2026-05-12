@@ -221,6 +221,7 @@ async function main() {
 
   const runId = `${Date.now()}`;
   const lastName = `LookupScopeQA${runId}`;
+  const emailVerifier = runId.slice(-6);
   const householdId = randomUUID();
   const guestRows = [
     {
@@ -274,9 +275,21 @@ async function main() {
       query: `${lastName} Taylor`,
       ...accessArtifacts,
     });
+    const exactNameWithoutVerifier = await lookupGuest({
+      site_ref: proofSiteSlug,
+      query: `Taylor ${lastName}`,
+      ...accessArtifacts,
+    });
+    const exactNameWithWrongVerifier = await lookupGuest({
+      site_ref: proofSiteSlug,
+      query: `Taylor ${lastName}`,
+      verifier: `wrong-${runId}`,
+      ...accessArtifacts,
+    });
     const exactName = await lookupGuest({
       site_ref: proofSiteSlug,
       query: `Taylor ${lastName}`,
+      verifier: emailVerifier,
       ...accessArtifacts,
     });
     const contactSession = exactName.payload?.matches?.[0]?.contact_session;
@@ -302,6 +315,8 @@ async function main() {
       expectNoMatches(partialName, 'last-name-only-lookup'),
       expectNoMatches(mismatchedName, 'mismatched-full-name-lookup'),
       expectNoMatches(reversedName, 'reversed-name-lookup'),
+      expectNoMatches(exactNameWithoutVerifier, 'exact-name-without-verifier'),
+      expectNoMatches(exactNameWithWrongVerifier, 'exact-name-with-wrong-verifier'),
       expectExactSingleMatch(exactName, `Taylor ${lastName}`, 2),
       expectScopedSubmit(submitResult, verifyRows, expectedPhone, expectedCity),
     ];

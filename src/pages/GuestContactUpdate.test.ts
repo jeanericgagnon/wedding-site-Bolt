@@ -50,6 +50,8 @@ describe('friendlyGuestContactError', () => {
     expect(search).toHaveAttribute('aria-describedby', 'guest-contact-search-helper');
     expect(screen.getByPlaceholderText('Search your full name')).toHaveAttribute('id', 'guest-contact-search');
     expect(screen.getByText('Use your full name exactly as it appears on the invitation.')).toHaveAttribute('id', 'guest-contact-search-helper');
+    expect(screen.getByPlaceholderText('Email hint or phone last 4')).toHaveAttribute('id', 'guest-contact-verifier');
+    expect(screen.getByText('Add either the first few characters of your email or the last 4 digits of your phone.')).toHaveAttribute('id', 'guest-contact-verifier-helper');
 
     expect(screen.getByLabelText('Email (optional)')).toHaveAttribute('id', 'guest-contact-email');
     expect(screen.getByLabelText('Phone (optional)')).toHaveAttribute('id', 'guest-contact-phone');
@@ -66,6 +68,7 @@ describe('friendlyGuestContactError', () => {
     expect(pageSource).toContain("from './GuestContactLookupPanel'");
     expect(pageSource).toContain('<GuestContactLookupPanel');
     expect(panelSource).toContain('id="guest-contact-search"');
+    expect(panelSource).toContain('id="guest-contact-verifier"');
     expect(panelSource).toContain('id="guest-contact-match"');
   });
 });

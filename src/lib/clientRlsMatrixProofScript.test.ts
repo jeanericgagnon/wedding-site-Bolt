@@ -6,6 +6,7 @@ describe('client RLS matrix proof script', () => {
     const source = readFileSync('scripts/v1-proof-client-rls-matrix.mjs', 'utf8');
 
     expect(source).toContain("slice: 'client-rls-matrix'");
+    expect(source).toContain("const requireLive = process.argv.includes('--require-live')");
     expect(source).toContain('npm run proof:v1:guest-lookup-scope');
     expect(source).toContain('npm run proof:v1:guests-rsvp-ops');
     expect(source).toContain('npm run proof:v1:collaborator-runtime');
@@ -22,5 +23,6 @@ describe('client RLS matrix proof script', () => {
     expect(source).toContain('network_access_required');
     expect(source).toContain('browser_runtime_required');
     expect(source).toContain("LIVE_GUEST_DASHBOARD_SETTINGS_RPCS === '1'");
+    expect(source).toContain('Set LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 so the strongest live client-RLS matrix includes the guest-dashboard settings RPC lane.');
   });
 });
