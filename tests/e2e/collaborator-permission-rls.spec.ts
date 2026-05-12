@@ -666,6 +666,9 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
   let registryCollaboratorUserId = '';
   let registryCollaboratorAccessToken = '';
   let registryItemId = '';
+  let settingsInviteId = '';
+  let settingsCollaboratorUserId = '';
+  let settingsCollaboratorAccessToken = '';
   let coordinatorInviteId = '';
   let coordinatorCollaboratorUserId = '';
   let coordinatorCollaboratorAccessToken = '';
@@ -675,6 +678,7 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
   let coordinatorMediaAssetId = '';
   let coordinatorGuestId = '';
   let coordinatorQnaItemId = '';
+  let baselineMusicPlaylistUrl: string | null = null;
   const collaboratorContexts: Array<import('@playwright/test').BrowserContext> = [];
 
   const restUrl = (table: string, params: Record<string, string> = {}) => {
@@ -785,6 +789,15 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
         headers: { Prefer: 'return=minimal' },
       });
     }
+    if (weddingSiteId && settingsCollaboratorUserId) {
+      await restFetch(ownerAccessToken, restUrl('wedding_site_collaborators', {
+        wedding_site_id: `eq.${weddingSiteId}`,
+        user_id: `eq.${settingsCollaboratorUserId}`,
+      }), {
+        method: 'DELETE',
+        headers: { Prefer: 'return=minimal' },
+      });
+    }
     if (weddingSiteId && coordinatorCollaboratorUserId) {
       await restFetch(ownerAccessToken, restUrl('wedding_site_collaborators', {
         wedding_site_id: `eq.${weddingSiteId}`,
@@ -806,10 +819,28 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
         headers: { Prefer: 'return=minimal' },
       });
     }
+    if (settingsInviteId) {
+      await restFetch(ownerAccessToken, restUrl('wedding_site_collaborator_invites', { id: `eq.${settingsInviteId}` }), {
+        method: 'DELETE',
+        headers: { Prefer: 'return=minimal' },
+      });
+    }
     if (coordinatorInviteId) {
       await restFetch(ownerAccessToken, restUrl('wedding_site_collaborator_invites', { id: `eq.${coordinatorInviteId}` }), {
         method: 'DELETE',
         headers: { Prefer: 'return=minimal' },
+      });
+    }
+    if (baselineMusicPlaylistUrl !== null) {
+      await restFetch(ownerAccessToken, rpcUrl('wedding_site_settings_patch'), {
+        method: 'POST',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          p_wedding_site_id: weddingSiteId,
+          p_patch: {
+            music_playlist_url: baselineMusicPlaylistUrl,
+          },
+        }),
       });
     }
   };
@@ -985,6 +1016,85 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     });
     expect(forbiddenRegistryMessageWrite.ok, await forbiddenRegistryMessageWrite.text()).toBeFalsy();
     expect([400, 401, 403]).toContain(forbiddenRegistryMessageWrite.status);
+
+    const baselineSettingsRead = await restFetch(ownerAccessToken, restUrl('wedding_sites', {
+      select: 'music_playlist_url',
+      id: `eq.${weddingSiteId}`,
+      limit: '1',
+    }));
+    const baselineSettingsReadText = await baselineSettingsRead.text();
+    expect(baselineSettingsRead.ok, baselineSettingsReadText).toBeTruthy();
+    const [baselineSettingsRow] = JSON.parse(baselineSettingsReadText) as Array<{
+      music_playlist_url?: string | null;
+    }>;
+    baselineMusicPlaylistUrl = baselineSettingsRow?.music_playlist_url ?? null;
+
+    const settingsInvite = await createAndClaimInvite({
+      ownerPage,
+      ownerAccessToken,
+      restFetch,
+      restUrl,
+      inviteName: `QA Settings ${runId}`,
+      inviteEmail: `qa-settings-${runId}@example.com`,
+      inviteRole: 'viewer',
+      permissions: ['settings'],
+      collaboratorPassword: `DayOfSettings${runId}!`,
+    });
+    settingsInviteId = settingsInvite.inviteId;
+    settingsCollaboratorUserId = settingsInvite.collaboratorUserId;
+    settingsCollaboratorAccessToken = settingsInvite.collaboratorAccessToken;
+    collaboratorContexts.push(settingsInvite.collaboratorContext);
+
+    const settingsCollaboratorResponse = await restFetch(ownerAccessToken, restUrl('wedding_site_collaborators', {
+      select: 'role,permissions',
+      wedding_site_id: `eq.${weddingSiteId}`,
+      user_id: `eq.${settingsCollaboratorUserId}`,
+      limit: '1',
+    }));
+    expect(settingsCollaboratorResponse.ok).toBeTruthy();
+    const [settingsCollaborator] = await settingsCollaboratorResponse.json() as Array<{ role: string; permissions: string[] }>;
+    expect(settingsCollaborator).toMatchObject({ role: 'viewer', permissions: ['settings'] });
+
+    const updatedMusicPlaylistUrl = `https://open.spotify.com/playlist/qa-${runId}`;
+    const allowedSettingsPatch = await restFetch(settingsCollaboratorAccessToken, rpcUrl('wedding_site_settings_patch'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_wedding_site_id: weddingSiteId,
+        p_patch: {
+          music_playlist_url: updatedMusicPlaylistUrl,
+        },
+      }),
+    });
+    const allowedSettingsPatchText = await allowedSettingsPatch.text();
+    expect(allowedSettingsPatch.ok, allowedSettingsPatchText).toBeTruthy();
+    const updatedSettingsRow = JSON.parse(allowedSettingsPatchText) as { music_playlist_url?: string | null };
+    expect(updatedSettingsRow.music_playlist_url).toBe(updatedMusicPlaylistUrl);
+
+    const ownerSettingsAfterPatchRead = await restFetch(ownerAccessToken, restUrl('wedding_sites', {
+      select: 'music_playlist_url',
+      id: `eq.${weddingSiteId}`,
+      limit: '1',
+    }));
+    const ownerSettingsAfterPatchText = await ownerSettingsAfterPatchRead.text();
+    expect(ownerSettingsAfterPatchRead.ok, ownerSettingsAfterPatchText).toBeTruthy();
+    const [ownerSettingsAfterPatch] = JSON.parse(ownerSettingsAfterPatchText) as Array<{ music_playlist_url?: string | null }>;
+    expect(ownerSettingsAfterPatch?.music_playlist_url ?? null).toBe(updatedMusicPlaylistUrl);
+
+    const forbiddenSettingsRegistryWrite = await restFetch(settingsCollaboratorAccessToken, rpcUrl('registry_item_write'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_wedding_site_id: weddingSiteId,
+        p_item_id: null,
+        p_payload: {
+          item_name: `Forbidden Settings Registry ${runId}`,
+          item_type: 'product',
+        },
+      }),
+    });
+    expect(forbiddenSettingsRegistryWrite.ok, await forbiddenSettingsRegistryWrite.text()).toBeFalsy();
+    expect([400, 401, 403]).toContain(forbiddenSettingsRegistryWrite.status);
 
     const coordinatorInvite = await createAndClaimInvite({
       ownerPage,

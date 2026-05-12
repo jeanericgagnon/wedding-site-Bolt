@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-11 09:13 PM PDT`
+_Updated:_ `2026-05-11 09:37 PM PDT`
 
 ## Current Score
 
@@ -11,6 +11,7 @@ _Updated:_ `2026-05-11 09:13 PM PDT`
 ## Exact Runtime Identity
 
 - Branch: `codex/v1-finish-hard-gates-3`
+- Current branch head: `f9f18fc4` (`Fix settings RPC type mismatch and expand live settings RLS proof`)
 - Exact frontend Git SHA: `f0cbf841`
 - Exact frontend commit: `Fix payment gate and serialize RSVP capacity`
 - Exact Vercel production deploy: `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`
@@ -82,8 +83,9 @@ Fresh production proof after exact-SHA frontend deploy:
 - `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`
 - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
 - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
-- the canonical client-RLS matrix now includes direct guest/planning/seating write allow/deny coverage plus planner message RPC allow + registry RPC deny, registry RPC allow + message RPC deny, and coordinator Q&A/check-in/media RPC allow + dashboard message RPC deny, in addition to anon guest-contact and public RSVP scope
+- the canonical client-RLS matrix now includes direct guest/planning/seating write allow/deny coverage plus planner message RPC allow + registry RPC deny, settings RPC allow + registry RPC deny, registry RPC allow + message RPC deny, and coordinator Q&A/check-in/media RPC allow + dashboard message RPC deny, in addition to anon guest-contact and public RSVP scope
 - reran green after the remote RPC migration apply with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
+- this same rerun exposed a real `wedding_site_settings_patch` PostgreSQL `CASE` type mismatch on `active_template_id`; the DB fix landed via `20260511212626_fix_wedding_site_settings_patch_types.sql` and the live matrix is green after the repair
 - `npm run proof:v1:registry-preview-ssrf` -> `LIVE PASS`
 - `supabase db push` -> `PASS`
   - applied remote migrations through `20260512031500_seating_assignment_version_rpcs.sql`
@@ -138,6 +140,7 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Added `npm run proof:v1:client-rls-matrix` as the canonical live baseline for anon guest-contact scope, public RSVP scope, owner/collaborator viewer-deny plus planner/coordinator-allow proof, and direct guest-table write allow/deny coverage
 - Expanded the live collaborator/client-RLS proof baseline so planning and seating direct writes are now proven in production too
 - Expanded the live collaborator/client-RLS matrix again so registry-scoped collaborator writes and coordinator Q&A/check-in RPC writes are also proven in production
+- Expanded the live collaborator/client-RLS matrix one more step so settings-scoped collaborators can patch site settings while registry RPC writes stay denied
 - Guest-dashboard RSVP-config and reminder-settings writes are now behind guest-scoped RPCs in the applied remote sweep, and the `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` proof lane is green
 - Guest core create/update/delete and bulk patch writes are now behind the applied remote RPC sweep rather than raw client mutations
 - Core planning task and seating event/table writes are now behind the applied remote RPC sweep rather than raw client mutations
@@ -160,6 +163,7 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Applied the full RPC migration sweep remotely with `supabase db push`
 - Reran live `proof:v1:collaborator-runtime` and `proof:v1:client-rls-matrix` with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`, both green
 - Fixed a real PostgreSQL signature issue in `20260511220000_guest_core_write_rpcs.sql` that the remote apply exposed
+- Fixed a second real PostgreSQL type issue in `wedding_site_settings_patch` where `active_template_id` was incorrectly cast to `uuid`; repaired remotely with `20260511212626_fix_wedding_site_settings_patch_types.sql`
 - Stabilized the collaborator RLS runtime proof so it compares against current owner baseline settings instead of assuming untouched defaults
 - Updated the collaborator/client-RLS proof scripts so they no longer claim the guest-dashboard settings RPC lane still needs deployment after it is live
 - Expanded the live collaborator/client-RLS matrix again so it now proves planner dashboard message RPC allow + registry RPC deny and coordinator builder media RPC allow + dashboard message RPC deny

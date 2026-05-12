@@ -7,6 +7,27 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 
 ---
 
+## 2026-05-11 09:32 PM PDT - Settings RPC Type Repair And Settings Matrix Coverage
+
+- Status: `LIVE PROOF EXPANDED + REMOTE DB FIX`
+- What changed:
+  - expanded `tests/e2e/collaborator-permission-rls.spec.ts` again
+  - settings-scoped collaborator proof now covers allowed `wedding_site_settings_patch` plus denied `registry_item_write`
+  - fixed a real PostgreSQL type mismatch after the first live attempt exposed `CASE types text and uuid cannot be matched`
+  - corrected source migration `20260512012000_settings_overview_write_rpcs.sql`
+  - added forward remote repair migration `20260511212626_fix_wedding_site_settings_patch_types.sql`
+  - added `src/lib/settingsErrorSafety.test.ts`
+  - updated `src/lib/collaboratorPermissionRlsProof.test.ts`, `src/lib/clientRlsMatrixProofScript.test.ts`, `scripts/v1-proof-collaborator-runtime.mjs`, and `scripts/v1-proof-client-rls-matrix.mjs`
+- Proof result:
+  - `npm test -- --run src/lib/settingsErrorSafety.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `supabase db push --include-all` -> `PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Launch effect:
+  - no launch-state change
+  - the live client-RLS baseline now covers guest, planning, settings, registry, seating, coordinator, messages, and photos instead of stopping short at the settings permission lane
+
 ## 2026-05-11 09:11 PM PDT - Broader Planner / Coordinator RPC Matrix Coverage
 
 - Status: `LIVE PROOF EXPANDED`

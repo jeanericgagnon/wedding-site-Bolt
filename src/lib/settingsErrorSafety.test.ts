@@ -53,6 +53,10 @@ const settingsDashboardViewModelSource = () => readFileSync(
 );
 const customerSafeErrorSource = () => readFileSync(join(process.cwd(), 'src/lib/customerSafeError.ts'), 'utf8');
 const settingsSiteDataSource = () => readFileSync(join(process.cwd(), 'src/pages/dashboard/settings/settingsSiteData.ts'), 'utf8');
+const settingsRpcMigrationSource = () => readFileSync(
+  join(process.cwd(), 'supabase/migrations/20260512012000_settings_overview_write_rpcs.sql'),
+  'utf8',
+);
 
 describe('settings error safety', () => {
   it('does not render raw billing or planner invite exception messages directly', () => {
@@ -173,6 +177,13 @@ describe('settings error safety', () => {
     expect(experienceSource).toContain('updateSettingsSite(targetSiteId');
     expect(experienceSource).toContain('rsvp_custom_questions: cleanedQuestions');
     expect(experienceSource).toContain('notification_prefs: { rsvp: notifRsvp');
+  });
+
+  it('keeps wedding_site_settings_patch text fields as text in the RPC migration', () => {
+    const source = settingsRpcMigrationSource();
+
+    expect(source).toContain("active_template_id = case when p_patch ? 'active_template_id' then nullif(btrim(coalesce(p_patch->>'active_template_id', '')), '') else v_existing.active_template_id end");
+    expect(source).not.toContain("active_template_id = case when p_patch ? 'active_template_id' then nullif(p_patch->>'active_template_id', '')::uuid");
   });
 
   it('keeps settings tab rendering behind the shared tab-content seam', () => {

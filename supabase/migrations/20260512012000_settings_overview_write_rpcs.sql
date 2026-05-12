@@ -35,7 +35,7 @@ begin
     wedding_date = case when p_patch ? 'wedding_date' then nullif(p_patch->>'wedding_date', '')::date else v_existing.wedding_date end,
     venue_name = case when p_patch ? 'venue_name' then nullif(btrim(coalesce(p_patch->>'venue_name', '')), '') else v_existing.venue_name end,
     wedding_location = case when p_patch ? 'wedding_location' then nullif(btrim(coalesce(p_patch->>'wedding_location', '')), '') else v_existing.wedding_location end,
-    active_template_id = case when p_patch ? 'active_template_id' then nullif(p_patch->>'active_template_id', '')::uuid else v_existing.active_template_id end,
+    active_template_id = case when p_patch ? 'active_template_id' then nullif(btrim(coalesce(p_patch->>'active_template_id', '')), '') else v_existing.active_template_id end,
     site_slug = case when p_patch ? 'site_slug' then nullif(btrim(coalesce(p_patch->>'site_slug', '')), '') else v_existing.site_slug end,
     rsvp_custom_questions = case when p_patch ? 'rsvp_custom_questions' then p_patch->'rsvp_custom_questions' else v_existing.rsvp_custom_questions end,
     rsvp_meal_config = case when p_patch ? 'rsvp_meal_config' then p_patch->'rsvp_meal_config' else v_existing.rsvp_meal_config end,
