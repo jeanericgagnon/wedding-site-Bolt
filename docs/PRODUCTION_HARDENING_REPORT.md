@@ -35,6 +35,8 @@ Deferred, non-launch gaps:
 - registry owner import/repair manual notes
 - SMS/provider live-send setup
 - AI secret inventory/internal prereq notes
+- broader client-RLS role matrix expansion
+- client-write surface reduction into Edge Functions / RPCs
 
 ## Exact Proof State
 
@@ -109,6 +111,8 @@ Those two deploy commands previously reported success, but the live inventory/ru
   - `25705386070` green with the broader workflow shape
   - `25705683563` green with the focused launch-critical proof shape
 - Fixed the `guests-rsvp-ops` wrapper to use a portable shell so Linux Actions runners can execute it cleanly
+- Disabled `/builder-v2-lab`, `/variant-preview-capture`, and `/template-scroll-capture` in production by default unless `VITE_ENABLE_INTERNAL_TOOLING_ROUTES=true`
+- Removed public template links that would otherwise advertise those internal capture routes when the gate is off
 
 ## What Remains Before 10 / 10
 
@@ -117,6 +121,7 @@ Only deferred, non-launch follow-up remains:
 - custom-host/subdomain dedicated DNS rerun
 - broader client-RLS role matrix expansion
 - client-write surface reduction into Edge Functions / RPCs
+- dedicated custom-host DNS rerun only if that launch surface becomes active
 
 Why this is `9.9 / 10` instead of `10 / 10`:
 - the launch baseline is green and production-ready

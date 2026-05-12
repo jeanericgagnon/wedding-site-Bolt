@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { ToastProvider } from './components/ui/Toast';
+import { isInternalToolingRouteEnabled } from './lib/internalToolingRoutes';
 import { resolveWeddingSubdomainSlugFromHostname } from './lib/publicSiteSlug';
 
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
@@ -75,6 +76,7 @@ const AppContent = () => {
     if (typeof window === 'undefined') return false;
     return Boolean(resolveWeddingSubdomainSlugFromHostname(window.location.hostname));
   })();
+  const internalToolingRoutesEnabled = isInternalToolingRouteEnabled();
 
   return (
     <div className="min-h-screen">
@@ -84,9 +86,9 @@ const AppContent = () => {
         <Route path="/product" element={<Product />} />
         <Route path="/templates" element={<Templates />} />
         <Route path="/templates/:templateId" element={<TemplateDetail />} />
-        <Route path="/builder-v2-lab" element={<BuilderV2Lab />} />
-        <Route path="/variant-preview-capture" element={<VariantPreviewCapture />} />
-        <Route path="/template-scroll-capture" element={<TemplateScrollCapture />} />
+        <Route path="/builder-v2-lab" element={internalToolingRoutesEnabled ? <BuilderV2Lab /> : <Navigate to="/" replace />} />
+        <Route path="/variant-preview-capture" element={internalToolingRoutesEnabled ? <VariantPreviewCapture /> : <Navigate to="/" replace />} />
+        <Route path="/template-scroll-capture" element={internalToolingRoutesEnabled ? <TemplateScrollCapture /> : <Navigate to="/" replace />} />
         <Route path="/site/:slug" element={<SiteView />} />
         <Route path="/vendor/:slug" element={<VendorProfilePage />} />
         <Route

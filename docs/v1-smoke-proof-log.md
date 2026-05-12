@@ -15,6 +15,7 @@ _Launch call right now:_ `GO`
 - Payment gate now fails closed on billing lookup failure.
 - RSVP capacity enforcement now serializes through the deployed database function path.
 - Release launch CI now hard-fails without strict Supabase RSVP proof secrets and passes with the configured repo secrets.
+- Internal tooling routes are now disabled in production by default unless `VITE_ENABLE_INTERNAL_TOOLING_ROUTES=true`.
 - Public vault contribution is not part of the current launch baseline:
   - the route fails closed with safe unavailable copy
   - `vault-contribution-public` still does not appear in live function inventory

@@ -66,12 +66,6 @@ No active `P0` or `P1` launch blockers remain.
   - note:
     - the old disposition doc still says full client RLS proof remains open
     - current live proof is much better than that document suggests, but deeper anon/owner/collaborator/planner/coordinator/viewer/unrelated-user client-RLS proof is still worth adding because of the client-heavy mutation surface
-- `P2 Internal/lab/capture routes are still publicly routable`
-  - file: [src/App.tsx](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/src/App.tsx:87)
-  - note:
-    - `/builder-v2-lab`, `/variant-preview-capture`, and `/template-scroll-capture` are still in the public router
-  - direction:
-    - gate them behind auth/env flags or remove them from production builds
 - `P2 Dashboard Guests remains orchestration-heavy`
   - file: [src/pages/dashboard/Guests.tsx](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/src/pages/dashboard/Guests.tsx:1)
   - note:
@@ -138,7 +132,6 @@ No active `P0` or `P1` launch blockers remain.
 
 ## Non-Critical Before Launch
 
-- `P2 Internal/lab/capture route gating`
 - `P2 Expanded client-RLS proof matrix`
 
 ## Non-Critical After Launch / Deferred
@@ -238,16 +231,16 @@ No active `P0` or `P1` launch blockers remain.
 
 ## Next 10 Tasks
 
-1. Gate or remove `/builder-v2-lab`, `/variant-preview-capture`, and `/template-scroll-capture` from production routing.
-2. Expand live client-RLS proof for anon, owner, collaborator, planner, coordinator, viewer, and unrelated-user paths.
-3. Start moving the highest-risk client writes into Edge Functions or RPCs, starting with guest/household/RSVP/bulk operations.
-4. Resolve the deferred public vault contribution lane before enabling it.
-5. Rerun dedicated custom-host/subdomain DNS proof if that launch surface becomes active.
-6. Keep the deployment matrix current when runtime/deploy IDs change.
-7. Keep the validation matrix current when proof lanes change.
-8. Tighten TS/ESLint rigor for new code and high-risk modules.
-9. Continue shrinking the dashboard Guests orchestration surface by domain.
-10. Keep provider/SMS deferred until explicit setup and live-send proof are approved.
+1. Expand live client-RLS proof for anon, owner, collaborator, planner, coordinator, viewer, and unrelated-user paths.
+2. Start moving the highest-risk client writes into Edge Functions or RPCs, starting with guest/household/RSVP/bulk operations.
+3. Resolve the deferred public vault contribution lane before enabling it.
+4. Rerun dedicated custom-host/subdomain DNS proof if that launch surface becomes active.
+5. Keep the deployment matrix current when runtime/deploy IDs change.
+6. Keep the validation matrix current when proof lanes change.
+7. Tighten TS/ESLint rigor for new code and high-risk modules.
+8. Continue shrinking the dashboard Guests orchestration surface by domain.
+9. Keep provider/SMS deferred until explicit setup and live-send proof are approved.
+10. Keep internal tooling routes disabled by default in production unless the explicit enable flag is reviewed and set.
 
 ## Resolved Work Summary
 
@@ -273,6 +266,9 @@ No active `P0` or `P1` launch blockers remain.
   - local launch gate green
   - board generation green
   - smoke lane green
+- Internal tooling route hardening:
+  - `/builder-v2-lab`, `/variant-preview-capture`, and `/template-scroll-capture` are now disabled in production unless `VITE_ENABLE_INTERNAL_TOOLING_ROUTES=true`
+  - public template pages no longer advertise internal capture routes when that gate is off
 
 ## What Changed In This Final Closeout
 

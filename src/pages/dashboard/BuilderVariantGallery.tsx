@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, CheckCircle2, ExternalLink, ImageOff, LayoutGrid, Search } from 'lucide-react';
 import { getAllSectionManifests } from '../../builder/registry/sectionManifests';
 import { getVariantQualityLabel, getVariantQualityScore, type VariantQualityFlag } from '../../builder/utils/variantQuality';
+import { isInternalToolingRouteEnabled } from '../../lib/internalToolingRoutes';
 
 type VariantFilter = 'all' | 'needs-work' | 'review' | 'shared-preview' | 'missing-preview' | 'mobile-risk' | 'missing-guidance';
 
 export const BuilderVariantGallery: React.FC = () => {
+  const internalToolingRoutesEnabled = isInternalToolingRouteEnabled();
   const manifests = React.useMemo(() => getAllSectionManifests(), []);
   const [query, setQuery] = React.useState('');
   const [sectionFilter, setSectionFilter] = React.useState('all');
@@ -191,15 +193,21 @@ export const BuilderVariantGallery: React.FC = () => {
                           <code className="truncate rounded bg-surface-subtle px-2 py-1 text-[11px] text-text-tertiary">
                             {manifest.type}::{variant.id}
                           </code>
-                          <Link
-                            to={captureUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 rounded-lg border border-border-subtle px-2.5 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-subtle"
-                          >
-                            Preview
-                            <ExternalLink size={12} />
-                          </Link>
+                          {internalToolingRoutesEnabled ? (
+                            <Link
+                              to={captureUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 rounded-lg border border-border-subtle px-2.5 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-subtle"
+                            >
+                              Preview
+                              <ExternalLink size={12} />
+                            </Link>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-lg border border-border-subtle px-2.5 py-1.5 text-xs font-medium text-text-tertiary">
+                              Internal preview
+                            </span>
+                          )}
                         </div>
                         {quality.flags.length > 0 && (
                           <div className="flex flex-wrap gap-1">

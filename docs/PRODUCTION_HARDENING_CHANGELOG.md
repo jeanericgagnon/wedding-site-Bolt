@@ -9,6 +9,26 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 
 # Production Hardening Backlog
 
+## 2026-05-11 05:45 PM PT - Internal Tooling Route Production Gating
+
+- Status: `RESOLVED`
+- What changed:
+  - added shared helper `src/lib/internalToolingRoutes.ts`
+  - gated `/builder-v2-lab`, `/variant-preview-capture`, and `/template-scroll-capture` behind local-dev or explicit `VITE_ENABLE_INTERNAL_TOOLING_ROUTES=true`
+  - removed public template links that would otherwise point at internal capture surfaces when the gate is off
+  - gated builder variant preview links the same way
+  - added focused proof for the helper and route/link boundary
+- Proof result:
+  - `npm test -- --run src/lib/internalToolingRoutes.test.ts src/lib/internalToolingRouteBoundary.test.ts src/lib/launchControlMatrices.test.ts src/lib/proofBoardFreshness.test.ts` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `npm run lint -- --quiet` -> `PASS`
+  - `npm run build` -> `PASS`
+  - `npm run proof:v1:board:md` -> `PASS`
+  - `git diff --check` -> `PASS`
+- Launch effect:
+  - no launch-state change
+  - this closes the exposed internal/lab/capture route finding without reopening the launch baseline
+
 ## 2026-05-11 05:33 PM PT - Live Blocker-Fix Deploy And Release Gate Closure
 
 - Status: `RESOLVED`

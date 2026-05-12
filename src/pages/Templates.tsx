@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { templateCatalog, templateColorwayFacets, templateSeasonFacets, templateStyleFacets } from '../builder/constants/templateCatalog';
 import { getTemplateSupportManifest } from '../builder/constants/templateSupportManifest';
 import { TEMPLATE_USE_CASE_PACKS } from '../builder/constants/templateUseCasePacks';
+import { isInternalToolingRouteEnabled } from '../lib/internalToolingRoutes';
 import { readSetupDraft, selectSetupDraftTemplate } from '../lib/setupDraft';
 import { getRecommendedTemplates } from '../lib/setupDraftRecommendations';
 
@@ -10,6 +11,7 @@ type Facet = 'all' | string;
 
 export const Templates: React.FC = () => {
   const navigate = useNavigate();
+  const internalToolingRoutesEnabled = isInternalToolingRouteEnabled();
 
   const [style, setStyle] = useState<Facet>('all');
   const [season, setSeason] = useState<Facet>('all');
@@ -279,7 +281,11 @@ Start with this
                     {tpl.styleTags.slice(0, 3).map((tag) => <span key={`${tpl.id}-${tag}`} className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-700">{tag}</span>)}
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-1.5">
-                    <Link to={`/template-scroll-capture?templateId=${tpl.id}`} className="rounded border border-neutral-300 px-2 py-1 text-center text-[11px] font-medium text-neutral-700 hover:bg-neutral-100">Open preview</Link>
+                    {internalToolingRoutesEnabled ? (
+                      <Link to={`/template-scroll-capture?templateId=${tpl.id}`} className="rounded border border-neutral-300 px-2 py-1 text-center text-[11px] font-medium text-neutral-700 hover:bg-neutral-100">Open preview</Link>
+                    ) : (
+                      <span className="rounded border border-neutral-200 px-2 py-1 text-center text-[11px] font-medium text-neutral-400">Internal preview</span>
+                    )}
                     <button type="button" onClick={() => handleUseTemplate(tpl.id)} className="rounded bg-primary px-2 py-1 text-[11px] font-semibold text-white hover:bg-primary-hover">Start here</button>
                   </div>
                 </div>
