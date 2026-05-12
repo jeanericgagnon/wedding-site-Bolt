@@ -24,6 +24,7 @@ import { combineDateAndTimeISO } from './itineraryDateTime';
 const {
   getUserMock,
   fromMock,
+  rpcMock,
   resolveActiveSiteForUserMock,
   getEventRsvpSnapshotsByInvitationIdsMock,
   deleteEventRsvpByInvitationIdMock,
@@ -33,6 +34,7 @@ const {
 } = vi.hoisted(() => ({
   getUserMock: vi.fn(),
   fromMock: vi.fn(),
+  rpcMock: vi.fn(),
   resolveActiveSiteForUserMock: vi.fn(),
   getEventRsvpSnapshotsByInvitationIdsMock: vi.fn(),
   deleteEventRsvpByInvitationIdMock: vi.fn(),
@@ -47,6 +49,7 @@ vi.mock('../../lib/supabase', () => ({
       getUser: getUserMock,
     },
     from: fromMock,
+    rpc: rpcMock,
   },
 }));
 
@@ -69,6 +72,7 @@ describe('buildItineraryTemplateInsertRows', () => {
   beforeEach(() => {
     getUserMock.mockReset();
     fromMock.mockReset();
+    rpcMock.mockReset();
     resolveActiveSiteForUserMock.mockReset();
     getEventRsvpSnapshotsByInvitationIdsMock.mockReset();
     deleteEventRsvpByInvitationIdMock.mockReset();
@@ -498,12 +502,12 @@ describe('buildItineraryTemplateInsertRows', () => {
   });
 
   it('adds an itinerary event guest invitation through the service', async () => {
-    const upsertMock = vi.fn().mockResolvedValue({ error: null });
-    fromMock.mockReturnValueOnce({
-      upsert: upsertMock,
-    });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(addItineraryEventGuestInvitation('event-1', 'guest-1')).resolves.toBeUndefined();
+    expect(rpcMock).toHaveBeenCalledWith('guest_dashboard_event_invitation_insert_many', {
+      p_rows: [{ event_id: 'event-1', guest_id: 'guest-1' }],
+    });
   });
 
   it('removes an itinerary event guest invitation through the service', async () => {
@@ -516,27 +520,29 @@ describe('buildItineraryTemplateInsertRows', () => {
             })),
           })),
         })),
-      })
-      .mockReturnValueOnce({
-        delete: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            eq: vi.fn().mockResolvedValue({ error: null }),
-          })),
-        })),
       });
+    rpcMock.mockResolvedValueOnce({ error: null });
     getEventRsvpSnapshotsByInvitationIdsMock.mockResolvedValue([]);
     deleteEventRsvpByInvitationIdMock.mockResolvedValue(undefined);
 
     await expect(removeItineraryEventGuestInvitation('event-1', 'guest-1')).resolves.toBeUndefined();
+    expect(rpcMock).toHaveBeenCalledWith('guest_dashboard_event_invitation_delete', {
+      p_guest_id: 'guest-1',
+      p_event_id: 'event-1',
+      p_guest_ids: null,
+    });
   });
 
   it('invites all guests to an itinerary event through the service', async () => {
-    const upsertMock = vi.fn().mockResolvedValue({ error: null });
-    fromMock.mockReturnValueOnce({
-      upsert: upsertMock,
-    });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(inviteAllGuestsToItineraryEvent('event-1', ['guest-1', 'guest-2'])).resolves.toBeUndefined();
+    expect(rpcMock).toHaveBeenCalledWith('guest_dashboard_event_invitation_insert_many', {
+      p_rows: [
+        { event_id: 'event-1', guest_id: 'guest-1' },
+        { event_id: 'event-1', guest_id: 'guest-2' },
+      ],
+    });
   });
 
   it('removes all guests from an itinerary event through the service', async () => {
@@ -545,16 +551,17 @@ describe('buildItineraryTemplateInsertRows', () => {
         select: vi.fn(() => ({
           eq: vi.fn().mockResolvedValue({ data: [{ id: 'invite-1' }], error: null }),
         })),
-      })
-      .mockReturnValueOnce({
-        delete: vi.fn(() => ({
-          eq: vi.fn().mockResolvedValue({ error: null }),
-        })),
       });
+    rpcMock.mockResolvedValueOnce({ error: null });
     getEventRsvpSnapshotsByInvitationIdsMock.mockResolvedValue([]);
     deleteEventRsvpsByInvitationIdsMock.mockResolvedValue(undefined);
 
     await expect(removeAllGuestsFromItineraryEvent('event-1')).resolves.toBeUndefined();
+    expect(rpcMock).toHaveBeenCalledWith('guest_dashboard_event_invitation_delete', {
+      p_guest_id: null,
+      p_event_id: 'event-1',
+      p_guest_ids: null,
+    });
   });
 
   it('deletes an itinerary event through the service', async () => {

@@ -466,9 +466,9 @@ export async function addItineraryEventGuestInvitation(
   eventId: string,
   guestId: string,
 ): Promise<void> {
-  const { error } = await supabase
-    .from('event_invitations')
-    .upsert([{ event_id: eventId, guest_id: guestId }], { onConflict: 'event_id,guest_id' });
+  const { error } = await supabase.rpc('guest_dashboard_event_invitation_insert_many', {
+    p_rows: [{ event_id: eventId, guest_id: guestId }],
+  });
 
   if (error) throw error;
 }
@@ -493,11 +493,11 @@ export async function removeItineraryEventGuestInvitation(
     await deleteEventRsvpByInvitationId(invitationRow.id);
   }
 
-  const { error } = await supabase
-    .from('event_invitations')
-    .delete()
-    .eq('event_id', eventId)
-    .eq('guest_id', guestId);
+  const { error } = await supabase.rpc('guest_dashboard_event_invitation_delete', {
+    p_guest_id: guestId,
+    p_event_id: eventId,
+    p_guest_ids: null,
+  });
 
   if (error) {
     await restoreEventRsvpSnapshots(eventRsvpSnapshots);
@@ -510,9 +510,9 @@ export async function inviteAllGuestsToItineraryEvent(
   guestIds: string[],
 ): Promise<void> {
   if (guestIds.length === 0) return;
-  const { error } = await supabase
-    .from('event_invitations')
-    .upsert(guestIds.map((guestId) => ({ event_id: eventId, guest_id: guestId })), { onConflict: 'event_id,guest_id' });
+  const { error } = await supabase.rpc('guest_dashboard_event_invitation_insert_many', {
+    p_rows: guestIds.map((guestId) => ({ event_id: eventId, guest_id: guestId })),
+  });
 
   if (error) throw error;
 }
@@ -532,10 +532,11 @@ export async function removeAllGuestsFromItineraryEvent(
     await deleteEventRsvpsByInvitationIds(invitationIds);
   }
 
-  const { error } = await supabase
-    .from('event_invitations')
-    .delete()
-    .eq('event_id', eventId);
+  const { error } = await supabase.rpc('guest_dashboard_event_invitation_delete', {
+    p_guest_id: null,
+    p_event_id: eventId,
+    p_guest_ids: null,
+  });
 
   if (error) {
     await restoreEventRsvpSnapshots(eventRsvpSnapshots);

@@ -3783,6 +3783,17 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - `npm run lint -- --quiet`
   - `npm run build`
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-11 07:27 PM PDT - Itinerary Invitation RPC Reuse (Local Only)
+
+- Reused the guest invitation RPCs in `src/pages/dashboard/itineraryService.ts`.
+- Moved itinerary dashboard invite/uninvite flows off raw client `event_invitations` upsert/delete paths in the working tree.
+- Focused local proof is green:
+  - `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts`
+  - `npm run typecheck -- --pretty false`
+- Result:
+  - no live-state change yet
+  - the already-pending RPC deploy/proof sweep still gates runtime truth
+
 ## 2026-05-11 07:21 PM PDT - Guest Invitation / Import / RSVP RPC Batch (Local Only)
 
 - Added migration `20260511233000_guest_invitation_rsvp_rpcs.sql`.

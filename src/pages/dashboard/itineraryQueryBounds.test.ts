@@ -17,5 +17,8 @@ describe('itinerary query bounds', () => {
     expect(serviceSource).toContain('export const MAX_ITINERARY_EVENT_GUESTS = 5000;');
     expect(serviceSource).toContain(".order('name')\n    .limit(MAX_ITINERARY_EVENT_GUESTS);");
     expect(serviceSource).toContain(".eq('event_id', eventId)\n    .limit(MAX_ITINERARY_EVENT_INVITATIONS);");
+    expect(serviceSource).toContain("supabase.rpc('guest_dashboard_event_invitation_insert_many'");
+    expect(serviceSource).toContain("supabase.rpc('guest_dashboard_event_invitation_delete'");
+    expect(serviceSource).not.toContain(".from('event_invitations')\n    .upsert(");
   });
 });

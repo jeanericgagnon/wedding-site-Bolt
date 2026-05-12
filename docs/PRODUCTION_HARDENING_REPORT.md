@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-11 07:21 PM PDT`
+_Updated:_ `2026-05-11 07:27 PM PDT`
 
 ## Current Score
 
@@ -59,6 +59,7 @@ Fresh local proof:
 - `git diff --check` -> `PASS`
 - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts` -> `PASS`
 - `npm test -- --run src/components/auth/ProtectedRoute.test.tsx` -> `PASS`
+- `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts` -> `PASS`
 
 Fresh secure/runtime proof:
 - `npm run proof:v1:service-role-authorization` -> `PASS`
@@ -130,6 +131,7 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Moved core planning task and seating event/table writes behind a second local RPC batch in the working tree; focused local proof (`planningService.test`, `seatingService.test`, `typecheck`, `lint`, `build`) is green, but migration apply/deploy/live proof are still pending so the current runtime truth is unchanged
 - Fixed a collaborator payment-gate timing race in the working tree so planner/coordinator/viewer roles wait for role resolution before any payment redirect path is chosen; focused local proof (`ProtectedRoute.test.tsx`, `typecheck`, `lint`, `build`) is green, but the live frontend runtime has not been refreshed yet
 - Moved the remaining guest invitation/import/assisted-RSVP direct write paths behind a fourth local RPC batch in the working tree; focused local proof (`guestService.test`, `typecheck`, `lint`, `build`) is green, but migration apply/deploy/live proof are still pending so the current launch runtime truth is unchanged
+- Reused the new invitation RPCs from the itinerary dashboard so event-level guest invite/uninvite flows no longer depend on direct client `event_invitations` writes there; focused local proof (`itineraryService.test`, `itineraryQueryBounds.test`, `typecheck`) is green, and the live runtime truth stays unchanged until the already-pending RPC deploy/proof sweep
 
 ## What Remains Before 10 / 10
 

@@ -178,6 +178,17 @@ _Launch call right now:_ `GO`
   - no live-state change yet
   - apply/deploy plus fresh live collaborator/client-RLS proof are still required before this batch counts as runtime hardening
 
+### 2026-05-11 07:27 PM PDT - Itinerary Invitation RPC Reuse (Local Only)
+
+- Reused the new guest invitation RPCs from the itinerary dashboard service.
+- Event-level guest invite/uninvite flows no longer depend on direct client `event_invitations` upsert/delete paths in the working tree.
+- Focused local proof is green:
+  - `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts`
+  - `npm run typecheck -- --pretty false`
+- Result:
+  - no live-state change yet
+  - runtime truth still depends on the already-pending RPC migration apply/deploy and fresh live proof
+
 ### 2026-05-11 03:42 PM PDT - Public Vault Contribution Downgraded To Deferred / Hard-Disabled
 
 - Attempted closeout redeploys:
