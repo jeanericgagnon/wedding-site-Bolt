@@ -121,6 +121,7 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Moved guest-dashboard RSVP-config and reminder-settings writes behind guest-scoped RPCs in the working tree; migration apply, deploy, and `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` proof are still pending, so the current launch runtime truth is unchanged
 - Moved guest core create/update/delete and bulk patch writes behind a third local RPC batch in the working tree; focused local proof (`guestService.test`, `typecheck`, `lint`, `build`) is green, but migration apply/deploy/live proof are still pending so the current launch runtime truth is unchanged
 - Moved core planning task and seating event/table writes behind a second local RPC batch in the working tree; focused local proof (`planningService.test`, `seatingService.test`, `typecheck`, `lint`, `build`) is green, but migration apply/deploy/live proof are still pending so the current runtime truth is unchanged
+- Fixed a collaborator payment-gate timing race in the working tree so planner/coordinator/viewer roles wait for role resolution before any payment redirect path is chosen; focused local proof (`ProtectedRoute.test.tsx`, `typecheck`, `lint`, `build`) is green, but the live frontend runtime has not been refreshed yet
 
 ## What Remains Before 10 / 10
 

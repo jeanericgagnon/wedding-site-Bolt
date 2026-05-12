@@ -148,6 +148,18 @@ _Launch call right now:_ `GO`
   - no live-state change yet
   - apply/deploy plus fresh live proof are still required before this batch counts as runtime hardening
 
+### 2026-05-11 07:12 PM PDT - ProtectedRoute Role-Timing Hardening (Local Only)
+
+- Fixed a collaborator payment-gate timing race in `ProtectedRoute`.
+- Focused local proof is green:
+  - `npm test -- --run src/components/auth/ProtectedRoute.test.tsx`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+  - `npm run build`
+- Result:
+  - no live-state change yet
+  - a frontend deploy is still required before this batch changes runtime truth
+
 ### 2026-05-11 03:42 PM PDT - Public Vault Contribution Downgraded To Deferred / Hard-Disabled
 
 - Attempted closeout redeploys:

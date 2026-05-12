@@ -11,6 +11,7 @@ interface ProtectedRouteProps {
 }
 
 type BillingGateState = BillingInfo | null | 'loading' | 'unavailable';
+type ActiveSiteRoleState = 'loading' | 'owner' | 'planner' | 'coordinator' | 'viewer' | null;
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPaymentGate = false }) => {
   const { user, loading, isDemoMode } = useAuth();
@@ -18,26 +19,31 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPa
   const paymentBypassAllowed = isPaymentBypassAllowed();
   const location = useLocation();
   const [billingInfo, setBillingInfo] = useState<BillingGateState>('loading');
-  const [activeSiteRole, setActiveSiteRole] = useState<string | null>(null);
+  const [activeSiteRole, setActiveSiteRole] = useState<ActiveSiteRoleState>('loading');
 
   useEffect(() => {
     if (!user) {
       setBillingInfo(null);
+      setActiveSiteRole(null);
       return;
     }
 
     if (isDemoMode) {
       setBillingInfo({ payment_status: 'active', billing_type: 'one_time', site_expires_at: null, paid_at: null, stripe_subscription_id: null, wedding_site_id: '' });
+      setActiveSiteRole('owner');
       return;
     }
 
+    setActiveSiteRole('loading');
     resolveActiveSiteRoleForUser(user.id).then(setActiveSiteRole).catch(() => setActiveSiteRole(null));
     fetchBillingInfo(user.id)
       .then(info => setBillingInfo(info))
       .catch(() => setBillingInfo('unavailable'));
   }, [user, isDemoMode]);
 
-  if (loading || billingInfo === 'loading') {
+  const paymentGateNeedsRoleResolution = paymentGateEnabled && !skipPaymentGate && !isDemoMode;
+
+  if (loading || billingInfo === 'loading' || (paymentGateNeedsRoleResolution && activeSiteRole === 'loading')) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">

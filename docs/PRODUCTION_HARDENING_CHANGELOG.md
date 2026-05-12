@@ -3771,3 +3771,15 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - `npm run proof:v1:board:md`
   - `git diff --check`
 - Launch status did not change. This is local-only hardening and no deploy was run.
+
+# 2026-05-11 07:12 PM PT - ProtectedRoute Role-Timing Hardening (Local Only)
+
+- Fixed a collaborator payment-gate timing race in `src/components/auth/ProtectedRoute.tsx`.
+- Planner/coordinator/viewer users now wait for active-site role resolution before any payment redirect path is chosen.
+- Added focused proof in `src/components/auth/ProtectedRoute.test.tsx`.
+- Validation passed:
+  - `npm test -- --run src/components/auth/ProtectedRoute.test.tsx`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+  - `npm run build`
+- Launch status did not change. This is local-only hardening and no deploy was run.

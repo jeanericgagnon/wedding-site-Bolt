@@ -98,4 +98,47 @@ describe('ProtectedRoute', () => {
 
     expect(await screen.findByText('secret dashboard')).toBeInTheDocument();
   });
+
+  it('waits for collaborator role resolution before applying the payment gate', async () => {
+    const roleResolver: { current: ((value: 'viewer') => void) | null } = { current: null };
+    resolveActiveSiteRoleForUserMock.mockImplementationOnce(
+      () => new Promise((resolve) => {
+        roleResolver.current = resolve as (value: 'viewer') => void;
+      }),
+    );
+    fetchBillingInfoMock.mockResolvedValue({
+      payment_status: 'payment_required',
+      billing_type: 'one_time',
+      site_expires_at: null,
+      paid_at: null,
+      stripe_subscription_id: null,
+      wedding_site_id: 'site-1',
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard/overview']}>
+        <Routes>
+          <Route
+            path="/dashboard/overview"
+            element={(
+              <ProtectedRoute>
+                <div>secret dashboard</div>
+              </ProtectedRoute>
+            )}
+          />
+          <Route path="/payment-required" element={<LocationProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Loading...')).toBeInTheDocument();
+    expect(screen.queryByTestId('location')).not.toBeInTheDocument();
+
+    if (roleResolver.current) {
+      roleResolver.current('viewer');
+    }
+
+    expect(await screen.findByText('secret dashboard')).toBeInTheDocument();
+    expect(screen.queryByTestId('location')).not.toBeInTheDocument();
+  });
 });
