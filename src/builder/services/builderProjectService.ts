@@ -306,41 +306,12 @@ export const builderProjectService = {
         }
       : currentSiteJson;
 
-    // Try richest publish payload first, then gracefully degrade for schema-drifted tables.
-    const publishPayload: Record<string, unknown> = {
-      is_published: true,
-      published_at: publishedAt,
-      updated_at: publishedAt,
-      published_json: nextPublishedJson,
-      site_json: nextSiteJson,
-    };
-
-    const driftFields = ['published_json', 'published_at', 'is_published'];
-    let publishError: { message?: string } | null = null;
-
-    for (let i = 0; i <= driftFields.length; i += 1) {
-      const { error } = await supabase
-        .from('wedding_sites')
-        .update(publishPayload)
-        .eq('id', weddingSiteId);
-      publishError = error;
-
-      if (!publishError) break;
-      const field = driftFields.find((candidate) => publishError?.message?.includes(candidate));
-      if (!field || !(field in publishPayload)) break;
-      delete publishPayload[field];
-    }
-
-    if (publishError) {
-      const fallback = await supabase
-        .from('wedding_sites')
-        .update({
-          site_json: nextSiteJson,
-          updated_at: publishedAt,
-        })
-        .eq('id', weddingSiteId);
-      publishError = fallback.error;
-    }
+    const { error: publishError } = await supabase.rpc('builder_project_publish', {
+      p_wedding_site_id: weddingSiteId,
+      p_published_at: publishedAt,
+      p_next_site_json: nextSiteJson,
+      p_next_published_json: nextPublishedJson,
+    });
 
     if (publishError) throw publishError;
 

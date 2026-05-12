@@ -10,6 +10,12 @@ export interface SectionReorderItem {
 
 const PERSISTED_SECTION_SELECT = 'id, site_id, type, variant, data, order, visible, schema_version, style_overrides, bindings, created_at, updated_at' as const;
 
+function parsePersistedSectionRecord(data: unknown): PersistedSection {
+  const parsed = PersistedSectionSchema.safeParse(data);
+  if (!parsed.success) throw new Error('Invalid section data returned from server');
+  return parsed.data;
+}
+
 function builderToPersistedSection(s: BuilderSectionInstance, siteId: string): Omit<PersistedSection, 'created_at' | 'updated_at'> {
   return {
     id: s.id,
@@ -95,97 +101,90 @@ export const siteRepository = {
 
   async upsertSection(section: PersistedSection): Promise<PersistedSection> {
     const { created_at: _ca, updated_at: _ua, ...rest } = section;
-    const { data, error } = await supabase
-      .from('sections')
-      .upsert({ ...rest, updated_at: new Date().toISOString() })
-      .select(PERSISTED_SECTION_SELECT)
-      .single();
+    const { data, error } = await supabase.rpc('section_write', {
+      p_site_id: section.site_id,
+      p_section_id: section.id,
+      p_payload: { ...rest, updated_at: new Date().toISOString() },
+    });
 
     if (error) throw error;
-    const parsed = PersistedSectionSchema.safeParse(data);
-    if (!parsed.success) throw new Error('Invalid section data returned from server');
-    return parsed.data;
+    return parsePersistedSectionRecord(data);
   },
 
   async upsertSections(siteId: string, sections: BuilderSectionInstance[]): Promise<void> {
     const rows = sections.map(s => builderToPersistedSection(s, siteId));
-    const { error } = await supabase
-      .from('sections')
-      .upsert(rows.map(r => ({ ...r, updated_at: new Date().toISOString() })));
+    const { error } = await supabase.rpc('section_upsert_many', {
+      p_site_id: siteId,
+      p_rows: rows.map(r => ({ ...r, updated_at: new Date().toISOString() })),
+    });
 
     if (error) throw error;
   },
 
   async updateSectionData(sectionId: string, data: Record<string, unknown>): Promise<void> {
-    const { error } = await supabase
-      .from('sections')
-      .update({ data, updated_at: new Date().toISOString() })
-      .eq('id', sectionId);
+    const { error } = await supabase.rpc('section_write', {
+      p_site_id: null,
+      p_section_id: sectionId,
+      p_payload: { data, updated_at: new Date().toISOString() },
+    });
 
     if (error) throw error;
   },
 
   async updateSectionVisibility(sectionId: string, visible: boolean): Promise<void> {
-    const { error } = await supabase
-      .from('sections')
-      .update({ visible, updated_at: new Date().toISOString() })
-      .eq('id', sectionId);
+    const { error } = await supabase.rpc('section_write', {
+      p_site_id: null,
+      p_section_id: sectionId,
+      p_payload: { visible, updated_at: new Date().toISOString() },
+    });
 
     if (error) throw error;
   },
 
   async updateSectionVariant(sectionId: string, variant: string): Promise<void> {
-    const { error } = await supabase
-      .from('sections')
-      .update({ variant, updated_at: new Date().toISOString() })
-      .eq('id', sectionId);
+    const { error } = await supabase.rpc('section_write', {
+      p_site_id: null,
+      p_section_id: sectionId,
+      p_payload: { variant, updated_at: new Date().toISOString() },
+    });
 
     if (error) throw error;
   },
 
   async reorderSections(siteId: string, items: SectionReorderItem[]): Promise<void> {
-    const updates = items.map(item =>
-      supabase
-        .from('sections')
-        .update({ order: item.order, updated_at: new Date().toISOString() })
-        .eq('id', item.id)
-        .eq('site_id', siteId)
-    );
-    const results = await Promise.all(updates);
-    const failed = results.find(r => r.error);
-    if (failed?.error) throw failed.error;
+    const { error } = await supabase.rpc('section_reorder_many', {
+      p_site_id: siteId,
+      p_items: items,
+    });
+    if (error) throw error;
   },
 
   async deleteSection(sectionId: string): Promise<void> {
-    const { error } = await supabase
-      .from('sections')
-      .delete()
-      .eq('id', sectionId);
+    const { error } = await supabase.rpc('section_delete_one', {
+      p_section_id: sectionId,
+    });
 
     if (error) throw error;
   },
 
   async deleteSectionsForSite(siteId: string): Promise<void> {
-    const { error } = await supabase
-      .from('sections')
-      .delete()
-      .eq('site_id', siteId);
+    const { error } = await supabase.rpc('section_delete_by_site', {
+      p_site_id: siteId,
+    });
 
     if (error) throw error;
   },
 
   async addSection(siteId: string, section: Omit<PersistedSection, 'created_at' | 'updated_at'>): Promise<PersistedSection> {
     const now = new Date().toISOString();
-    const { data, error } = await supabase
-      .from('sections')
-      .insert({ ...section, site_id: siteId, created_at: now, updated_at: now })
-      .select(PERSISTED_SECTION_SELECT)
-      .single();
+    const { data, error } = await supabase.rpc('section_write', {
+      p_site_id: siteId,
+      p_section_id: section.id,
+      p_payload: { ...section, site_id: siteId, created_at: now, updated_at: now },
+    });
 
     if (error) throw error;
-    const parsed = PersistedSectionSchema.safeParse(data);
-    if (!parsed.success) throw new Error('Invalid section data returned from server');
-    return parsed.data;
+    return parsePersistedSectionRecord(data);
   },
 
   async syncBuilderSections(siteId: string, sections: BuilderSectionInstance[]): Promise<void> {

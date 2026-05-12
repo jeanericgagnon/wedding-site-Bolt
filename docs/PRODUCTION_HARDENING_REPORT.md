@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-11 08:32 PM PDT`
+_Updated:_ `2026-05-11 08:48 PM PDT`
 
 ## Current Score
 
@@ -48,6 +48,10 @@ Deferred, non-launch gaps:
   - `20260512013000_vault_planning_write_rpcs.sql`
   - `20260512014500_onboarding_signup_write_rpcs.sql`
   - `20260512020000_name_change_write_rpcs.sql`
+  - `20260512023000_media_audit_write_rpcs.sql`
+  - `20260512024500_guest_photo_misc_write_rpcs.sql`
+  - `20260512030000_builder_section_itinerary_write_rpcs.sql`
+  - `20260512031500_seating_assignment_version_rpcs.sql`
 
 ## Exact Proof State
 
@@ -58,12 +62,8 @@ Fresh local proof:
 - `npm run build` -> `PASS`
 - `npm run test:security` -> `PASS`
 - `npm run proof:v1:public-access-coverage` -> `PASS`
-- `npm run proof:v1:client-write-inventory` -> `FAIL`
-  - broadened tracked-`src` runtime scan now isolates the remaining direct-write clusters to:
-    - `src/builder/services/builderProjectService.ts`
-    - `src/data/siteRepository.ts`
-    - `src/pages/dashboard/itineraryService.ts`
-    - `src/pages/dashboard/seating/seatingService.ts`
+- `npm run proof:v1:client-write-inventory` -> `PASS`
+  - broadened tracked-`src` runtime scan now reports no direct client `.insert/.update/.upsert/.delete` calls in shipped `src` runtime files
 - `npm run proof:v1:board:md` -> `PASS`
 - `npm run guard:file-size` -> `PASS`
 - `npm run guard:assets` -> `PASS`
@@ -78,6 +78,7 @@ Fresh local proof:
 - `npm test -- --run src/pages/dashboard/vaultService.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/planning/planningServiceStarterSuite.test.ts` -> `PASS`
 - `npm test -- --run src/pages/onboarding/onboardingService.test.ts src/pages/signupService.test.ts` -> `PASS`
 - `npm test -- --run src/pages/dashboard/planning/nameChangeService.test.ts src/lib/dashboardDataBoundary.test.ts` -> `PASS`
+- `npm test -- --run src/data/siteRepository.test.ts src/builder/services/builderProjectService.test.ts src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/seating/seatingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/clientWriteInventoryProofScript.test.ts` -> `PASS`
 
 Fresh secure/runtime proof:
 - `npm run proof:v1:service-role-authorization` -> `PASS`
@@ -161,8 +162,11 @@ Those two deploy commands previously reported success, but the live inventory/ru
   - vendor profile create
   - builder media writes
   - app action audit writes
-  - focused local proof (`guestPhotoSharingService.test.ts`, `eventRsvpCleanup.test.ts`, `guestService.test.ts`, `vendorProfiles.test.ts`, `clientWriteInventoryProofScript.test.ts`, `dashboardDataBoundary.test.ts`, `typecheck`) is green
-- The broadened write inventory now honestly fails only on the remaining direct-write clusters in `builderProjectService.ts`, `siteRepository.ts`, `itineraryService.ts`, and `seatingService.ts`
+  - section/site publish writes
+  - itinerary event and schedule-mirror writes
+  - seating assignment and seating layout-version writes
+  - focused local proof (`siteRepository.test.ts`, `builderProjectService.test.ts`, `itineraryService.test.ts`, `seatingService.test.ts`, `dashboardDataBoundary.test.ts`, `clientWriteInventoryProofScript.test.ts`, `typecheck`) is green
+- The broadened write inventory is now back to green across tracked `src` runtime files; the remaining gap is remote apply/deploy and fresh live proof, not additional known direct-write clusters
 - Moved registry owner-side item CRUD, reorder, and refresh-policy writes behind a fifth local RPC batch in the working tree; focused local proof (`registryService.test`, `typecheck`) is green, and the live runtime truth stays unchanged until the already-pending RPC deploy/proof sweep
 - Moved dashboard message create/update and coordinator alert/check-in/Q&A writes behind a sixth local RPC batch in the working tree; focused local proof (`messageService.boundary.test.ts`, `coordinatorService.test.ts`, `typecheck`, `lint`) is green, and the live runtime truth stays unchanged until the already-pending RPC deploy/proof sweep
 - Moved owner settings and overview write paths behind a seventh local RPC batch in the working tree; focused local proof (`settingsSiteData.test.ts`, `overviewService.test.ts`, `typecheck`, `lint`) is green, and the live runtime truth stays unchanged until the already-pending RPC deploy/proof sweep
@@ -172,9 +176,8 @@ Those two deploy commands previously reported success, but the live inventory/ru
 Only deferred, non-launch follow-up remains:
 - public vault contribution enablement and live proof
 - custom-host/subdomain dedicated DNS rerun
-- finish the remaining direct-write clusters in `builderProjectService.ts`, `siteRepository.ts`, `itineraryService.ts`, and `seatingService.ts`
-- apply/deploy the local guest/planning/seating/invitation RSVP/registry/message-coordinator/settings-overview/vault/onboarding/name-change/guest-photo-misc RPC batches, then rerun collaborator/client-RLS live proof with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
-- rerun `npm run proof:v1:client-write-inventory` after the local sweep and the remote apply sweep so the local no-direct-client-write inventory stays canonical
+- apply/deploy the local guest/planning/seating/invitation RSVP/registry/message-coordinator/settings-overview/vault/onboarding/name-change/media-audit/guest-photo-misc/builder-section-itinerary/seating-version RPC batches, then rerun collaborator/client-RLS live proof with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
+- rerun `npm run proof:v1:client-write-inventory` after the remote apply sweep so the local no-direct-client-write inventory stays canonical
 - broader client-RLS role matrix expansion for remaining non-guest dashboard write surfaces beyond guest, planning, and seating
 - client-write surface reduction into Edge Functions / RPCs
 - dedicated custom-host DNS rerun only if that launch surface becomes active

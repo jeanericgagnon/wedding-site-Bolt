@@ -240,7 +240,6 @@ describe('buildItineraryTemplateInsertRows', () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
     resolveActiveSiteForUserMock.mockResolvedValue({ id: 'site-1', role: 'owner', permissions: null });
 
-    const sectionUpdateEqMock = vi.fn().mockResolvedValue({ error: null });
     fromMock
       .mockReturnValueOnce({
         select: vi.fn(() => ({
@@ -279,30 +278,6 @@ describe('buildItineraryTemplateInsertRows', () => {
       .mockReturnValueOnce({
         select: vi.fn(() => ({
           eq: vi.fn(() => ({
-            maybeSingle: vi.fn().mockResolvedValue({ data: { wedding_data: {} }, error: null }),
-          })),
-        })),
-      })
-      .mockReturnValueOnce({
-        update: vi.fn(() => ({
-          eq: vi.fn().mockResolvedValue({ error: null }),
-        })),
-      })
-      .mockReturnValueOnce({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            eq: vi.fn().mockResolvedValue({ data: [{ id: 'section-1', data: {} }], error: null }),
-          })),
-        })),
-      })
-      .mockReturnValueOnce({
-        update: vi.fn(() => ({
-          eq: sectionUpdateEqMock,
-        })),
-      })
-      .mockReturnValueOnce({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
             limit: vi.fn().mockResolvedValue({ data: [{ id: 'invite-1' }], error: null }),
           })),
         })),
@@ -312,6 +287,7 @@ describe('buildItineraryTemplateInsertRows', () => {
           in: vi.fn().mockResolvedValue({ data: [{ attending: true }], error: null }),
         })),
       });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(loadItineraryDashboardEvents(null)).resolves.toEqual({
       events: [{
@@ -341,44 +317,9 @@ describe('buildItineraryTemplateInsertRows', () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
     resolveActiveSiteForUserMock.mockResolvedValue({ id: 'site-1', role: 'owner', permissions: null });
 
-    const firstUpdateEqMock = vi.fn().mockResolvedValue({ error: null });
-    const secondUpdateEqMock = vi.fn().mockResolvedValue({ error: null });
-    const sectionUpdateEqMock = vi.fn().mockResolvedValue({ error: null });
-    fromMock
-      .mockReturnValueOnce({
-        update: vi.fn(() => ({
-          eq: firstUpdateEqMock,
-        })),
-      })
-      .mockReturnValueOnce({
-        update: vi.fn(() => ({
-          eq: secondUpdateEqMock,
-        })),
-      })
-      .mockReturnValueOnce({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            maybeSingle: vi.fn().mockResolvedValue({ data: { wedding_data: {} }, error: null }),
-          })),
-        })),
-      })
-      .mockReturnValueOnce({
-        update: vi.fn(() => ({
-          eq: vi.fn().mockResolvedValue({ error: null }),
-        })),
-      })
-      .mockReturnValueOnce({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            eq: vi.fn().mockResolvedValue({ data: [{ id: 'section-1', data: {} }], error: null }),
-          })),
-        })),
-      })
-      .mockReturnValueOnce({
-        update: vi.fn(() => ({
-          eq: sectionUpdateEqMock,
-        })),
-      });
+    rpcMock
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: null });
 
     await expect(persistItineraryTimeline([
       {
@@ -411,9 +352,27 @@ describe('buildItineraryTemplateInsertRows', () => {
       },
     ])).resolves.toBe('site-1');
 
-    expect(firstUpdateEqMock).toHaveBeenCalledWith('id', 'event-1');
-    expect(secondUpdateEqMock).toHaveBeenCalledWith('id', 'event-2');
-    expect(sectionUpdateEqMock).toHaveBeenCalledWith('id', 'section-1');
+    expect(rpcMock).toHaveBeenNthCalledWith(1, 'itinerary_event_reorder_many', {
+      p_rows: [
+        {
+          id: 'event-1',
+          event_date: '2026-06-20',
+          start_time: '16:15',
+          end_time: '16:45',
+          display_order: 1,
+        },
+        {
+          id: 'event-2',
+          event_date: '2026-06-20',
+          start_time: '18:15',
+          end_time: '22:15',
+          display_order: 2,
+        },
+      ],
+    });
+    expect(rpcMock).toHaveBeenNthCalledWith(2, 'itinerary_schedule_mirror_sync', expect.objectContaining({
+      p_wedding_site_id: 'site-1',
+    }));
   });
 
   it('saves a new itinerary event through the service and triggers best-effort album creation', async () => {
@@ -427,14 +386,8 @@ describe('buildItineraryTemplateInsertRows', () => {
             single: vi.fn().mockResolvedValue({ data: { id: 'site-1' }, error: null }),
           })),
         })),
-      })
-      .mockReturnValueOnce({
-        insert: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn().mockResolvedValue({ data: { id: 'event-1', event_name: 'Ceremony' }, error: null }),
-          })),
-        })),
       });
+    rpcMock.mockResolvedValueOnce({ data: { id: 'event-1', event_name: 'Ceremony' }, error: null });
     invokeFunctionOrThrowMock.mockResolvedValue({ data: null, error: null });
 
     await expect(saveItineraryEvent({
@@ -459,13 +412,16 @@ describe('buildItineraryTemplateInsertRows', () => {
       name: 'Ceremony',
       itineraryEventId: 'event-1',
     });
+    expect(rpcMock).toHaveBeenCalledWith('itinerary_event_write', expect.objectContaining({
+      p_wedding_site_id: 'site-1',
+      p_event_id: null,
+    }));
   });
 
   it('updates an existing itinerary event through the service', async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
     resolveActiveSiteForUserMock.mockResolvedValue({ id: 'site-1', role: 'owner', permissions: null });
 
-    const updateMock = vi.fn().mockResolvedValue({ error: null });
     fromMock
       .mockReturnValueOnce({
         select: vi.fn(() => ({
@@ -473,12 +429,8 @@ describe('buildItineraryTemplateInsertRows', () => {
             single: vi.fn().mockResolvedValue({ data: { id: 'site-1' }, error: null }),
           })),
         })),
-      })
-      .mockReturnValueOnce({
-        update: vi.fn(() => ({
-          eq: updateMock,
-        })),
       });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(saveItineraryEvent({
       editingEventId: 'event-1',
@@ -497,7 +449,10 @@ describe('buildItineraryTemplateInsertRows', () => {
       },
     })).resolves.toBeUndefined();
 
-    expect(updateMock).toHaveBeenCalledWith('id', 'event-1');
+    expect(rpcMock).toHaveBeenCalledWith('itinerary_event_write', expect.objectContaining({
+      p_wedding_site_id: 'site-1',
+      p_event_id: 'event-1',
+    }));
     expect(invokeFunctionOrThrowMock).not.toHaveBeenCalled();
   });
 
@@ -565,14 +520,11 @@ describe('buildItineraryTemplateInsertRows', () => {
   });
 
   it('deletes an itinerary event through the service', async () => {
-    const eqMock = vi.fn().mockResolvedValue({ error: null });
-    fromMock.mockReturnValueOnce({
-      delete: vi.fn(() => ({
-        eq: eqMock,
-      })),
-    });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(deleteItineraryEvent('event-1')).resolves.toBeUndefined();
-    expect(eqMock).toHaveBeenCalledWith('id', 'event-1');
+    expect(rpcMock).toHaveBeenCalledWith('itinerary_event_delete', {
+      p_event_id: 'event-1',
+    });
   });
 });

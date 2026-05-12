@@ -131,6 +131,11 @@ describe('dashboard data boundary guards', () => {
 
     expect(source).toContain('const PERSISTED_SECTION_SELECT = ');
     expect(source).toContain('.select(PERSISTED_SECTION_SELECT)');
+    expect(source).toContain("supabase.rpc('section_write'");
+    expect(source).toContain("supabase.rpc('section_upsert_many'");
+    expect(source).toContain("supabase.rpc('section_reorder_many'");
+    expect(source).toContain("supabase.rpc('section_delete_one'");
+    expect(source).toContain("supabase.rpc('section_delete_by_site'");
     expect(source).not.toContain(".from('sections')\n      .select('*')");
     expect(source).not.toContain(".from('sections')\n      .upsert({ ...rest, updated_at: new Date().toISOString() })\n      .select()\n      .single()");
     expect(source).not.toContain(".from('sections')\n      .insert({ ...section, site_id: siteId, created_at: now, updated_at: now })\n      .select()\n      .single()");
@@ -576,10 +581,13 @@ describe('dashboard data boundary guards', () => {
     expect(service).toContain('export async function removeItineraryEventGuestInvitation(');
     expect(service).toContain('export async function inviteAllGuestsToItineraryEvent(');
     expect(service).toContain('export async function removeAllGuestsFromItineraryEvent(');
-    expect(service).toContain("const ITINERARY_SCHEDULE_MIRROR_SITE_SELECT = 'wedding_data'");
-    expect(service).toContain("const ITINERARY_SCHEDULE_SECTION_SELECT = 'id,data'");
     expect(service).toContain('buildScheduleSectionEvents(eventList)');
     expect(service).toContain('buildWeddingSchedule(eventList)');
+    expect(service).toContain("supabase.rpc('itinerary_event_insert_many'");
+    expect(service).toContain("supabase.rpc('itinerary_event_write'");
+    expect(service).toContain("supabase.rpc('itinerary_event_delete'");
+    expect(service).toContain("supabase.rpc('itinerary_event_reorder_many'");
+    expect(service).toContain("supabase.rpc('itinerary_schedule_mirror_sync'");
     expect(service).toContain('supabase.auth.getUser()');
     expect(source).not.toContain(".from('itinerary_events')\n        .select('*')");
     expect(source).not.toContain(".from('guests')\n        .select('*')");
@@ -791,6 +799,7 @@ describe('dashboard data boundary guards', () => {
     expect(builderProjectSource).toContain('.select(BUILDER_PROJECT_SITE_SELECT)');
     expect(builderProjectSource).toContain('.select(BUILDER_WEDDING_DATA_SITE_SELECT)');
     expect(builderProjectSource).toContain('.select(BUILDER_ENTRY_SITE_SELECT)');
+    expect(builderProjectSource).toContain("supabase.rpc('builder_project_publish'");
     expect(mediaSource).toContain('const BUILDER_MEDIA_ASSET_SELECT = ');
     expect(mediaSource).toContain('.select(BUILDER_MEDIA_ASSET_SELECT)');
     expect(mediaSource).toContain("supabase.rpc('builder_media_asset_write'");
@@ -845,6 +854,17 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain(".select('id, event_name, event_date, start_time, location_name')");
     expect(source).toContain('export async function refreshSeatingSession()');
     expect(source).toContain('supabase.auth.refreshSession()');
+    expect(source).toContain("supabase.rpc('seating_event_get_or_create'");
+    expect(source).toContain("supabase.rpc('seating_event_update'");
+    expect(source).toContain("supabase.rpc('seating_table_write'");
+    expect(source).toContain("supabase.rpc('seating_table_delete'");
+    expect(source).toContain("supabase.rpc('seating_table_bulk_create'");
+    expect(source).toContain("supabase.rpc('seating_assignment_write'");
+    expect(source).toContain("supabase.rpc('seating_assignment_delete'");
+    expect(source).toContain("supabase.rpc('seating_assignment_upsert_many'");
+    expect(source).toContain("supabase.rpc('seating_assignment_invalidate_many'");
+    expect(source).toContain("supabase.rpc('seating_layout_version_create'");
+    expect(source).toContain("supabase.rpc('seating_layout_version_restore'");
     expect(source).not.toContain(".from('seating_events')\n    .select('*')");
     expect(source).not.toContain(".from('seating_tables')\n    .select('*')");
     expect(source).not.toContain(".from('seating_assignments')\n    .select('*')");

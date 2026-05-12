@@ -45,8 +45,6 @@ export interface ItineraryScheduleMirrorEvent {
   is_visible: boolean;
 }
 
-const ITINERARY_SCHEDULE_MIRROR_SITE_SELECT = 'wedding_data';
-const ITINERARY_SCHEDULE_SECTION_SELECT = 'id,data';
 const ITINERARY_EVENT_MANAGER_SITE_SELECT = 'id';
 const ITINERARY_EVENT_MUTATION_SITE_SELECT = 'id';
 const ITINERARY_EVENT_LIST_SITE_SELECT = 'id';
@@ -55,7 +53,6 @@ export const ITINERARY_EVENT_GUEST_PICKER_SELECT = 'id, name, first_name, last_n
 export const MAX_ITINERARY_EVENTS = 200;
 export const MAX_ITINERARY_EVENT_INVITATIONS = 10000;
 export const MAX_ITINERARY_EVENT_GUESTS = 5000;
-const ITINERARY_EVENT_DRIFT_FIELDS = ['event_name', 'is_visible', 'dress_code', 'notes', 'location_address', 'end_time'] as const;
 
 export interface ItineraryGuestPickerRow {
   id: string;
@@ -195,9 +192,10 @@ export async function createItineraryTemplateEvents(
   weddingSiteId: string,
   events: ItineraryTemplateEventDraft[],
 ): Promise<void> {
-  const { error } = await supabase
-    .from('itinerary_events')
-    .insert(buildItineraryTemplateInsertRows(weddingSiteId, events));
+  const { error } = await supabase.rpc('itinerary_event_insert_many', {
+    p_wedding_site_id: weddingSiteId,
+    p_rows: buildItineraryTemplateInsertRows(weddingSiteId, events),
+  });
   if (error) throw error;
 }
 
@@ -233,51 +231,24 @@ export async function saveItineraryEvent(input: SaveItineraryEventInput): Promis
   let createdEvent: { id: string; event_name?: string } | null = null;
 
   if (input.editingEventId) {
-    const updatePayload: Record<string, unknown> = { ...payload };
-    let error: { message?: string } | null = null;
-
-    for (let i = 0; i <= ITINERARY_EVENT_DRIFT_FIELDS.length; i += 1) {
-      const result = await supabase
-        .from('itinerary_events')
-        .update(updatePayload)
-        .eq('id', input.editingEventId);
-      error = result.error;
-      if (!error) break;
-
-      const field = ITINERARY_EVENT_DRIFT_FIELDS.find((candidate) => error?.message?.includes(candidate));
-      if (!field || !(field in updatePayload)) break;
-      delete updatePayload[field];
-    }
-
+    const { error } = await supabase.rpc('itinerary_event_write', {
+      p_wedding_site_id: site.id,
+      p_event_id: input.editingEventId,
+      p_payload: payload,
+    });
     if (error) throw error;
     return;
   }
 
-  const insertPayload: Record<string, unknown> = { ...payload };
-  let error: { message?: string } | null = null;
-
-  for (let i = 0; i <= ITINERARY_EVENT_DRIFT_FIELDS.length; i += 1) {
-    const result = await supabase
-      .from('itinerary_events')
-      .insert([
-        {
-          ...insertPayload,
-          wedding_site_id: site.id,
-        },
-      ])
-      .select('id,event_name')
-      .single();
-    error = result.error;
-    if (!error && result.data) {
-      createdEvent = result.data as { id: string; event_name?: string };
-    }
-    if (!error) break;
-
-    const field = ITINERARY_EVENT_DRIFT_FIELDS.find((candidate) => error?.message?.includes(candidate));
-    if (!field || !(field in insertPayload)) break;
-    delete insertPayload[field];
+  const result = await supabase.rpc('itinerary_event_write', {
+    p_wedding_site_id: site.id,
+    p_event_id: null,
+    p_payload: payload,
+  });
+  const error = result.error;
+  if (!error && result.data) {
+    createdEvent = result.data as { id: string; event_name?: string };
   }
-
   if (error) throw error;
 
   if (input.autoCreateAlbum && createdEvent?.id) {
@@ -294,10 +265,9 @@ export async function saveItineraryEvent(input: SaveItineraryEventInput): Promis
 }
 
 export async function deleteItineraryEvent(eventId: string): Promise<void> {
-  const { error } = await supabase
-    .from('itinerary_events')
-    .delete()
-    .eq('id', eventId);
+  const { error } = await supabase.rpc('itinerary_event_delete', {
+    p_event_id: eventId,
+  });
 
   if (error) throw error;
 }
@@ -405,18 +375,16 @@ export async function persistItineraryTimeline(
     throw new Error('Please log in again and retry.');
   }
 
-  const results = await Promise.all(events.map((event) => supabase
-    .from('itinerary_events')
-    .update({
+  const { error } = await supabase.rpc('itinerary_event_reorder_many', {
+    p_rows: events.map((event) => ({
+      id: event.id,
       event_date: event.event_date,
       start_time: event.start_time || null,
       end_time: event.end_time || null,
       display_order: event.display_order,
-    })
-    .eq('id', event.id),
-  ));
-  const failed = results.find((result) => result.error);
-  if (failed?.error) throw failed.error;
+    })),
+  });
+  if (error) throw error;
 
   await syncItineraryScheduleMirror(siteId, events);
   return siteId;
@@ -548,54 +516,12 @@ export async function syncItineraryScheduleMirror(
   siteId: string,
   eventList: ItineraryScheduleMirrorEvent[],
 ): Promise<void> {
-  const { data: siteData, error: readError } = await supabase
-    .from('wedding_sites')
-    .select(ITINERARY_SCHEDULE_MIRROR_SITE_SELECT)
-    .eq('id', siteId)
-    .maybeSingle();
-
-  if (readError) throw readError;
-
-  const weddingData = (siteData?.wedding_data as Record<string, unknown> | null) ?? {};
   const nextSchedule = buildWeddingSchedule(eventList);
-  const currentSchedule = Array.isArray((weddingData as { schedule?: unknown }).schedule)
-    ? (weddingData as { schedule: unknown[] }).schedule
-    : [];
-
-  if (JSON.stringify(currentSchedule) !== JSON.stringify(nextSchedule)) {
-    const { error: updateError } = await supabase
-      .from('wedding_sites')
-      .update({
-        wedding_data: {
-          ...weddingData,
-          schedule: nextSchedule,
-        },
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', siteId);
-
-    if (updateError) throw updateError;
-  }
-
   const sectionEvents = buildScheduleSectionEvents(eventList);
-  const { data: scheduleSections, error: sectionsReadError } = await supabase
-    .from('sections')
-    .select(ITINERARY_SCHEDULE_SECTION_SELECT)
-    .eq('site_id', siteId)
-    .eq('type', 'schedule');
-
-  if (sectionsReadError) throw sectionsReadError;
-
-  for (const section of scheduleSections ?? []) {
-    const currentData = (section.data as Record<string, unknown> | null) ?? {};
-    const nextData = { ...currentData, events: sectionEvents };
-    if (JSON.stringify(currentData) === JSON.stringify(nextData)) continue;
-
-    const { error: sectionUpdateError } = await supabase
-      .from('sections')
-      .update({ data: nextData, updated_at: new Date().toISOString() })
-      .eq('id', section.id);
-
-    if (sectionUpdateError) throw sectionUpdateError;
-  }
+  const { error } = await supabase.rpc('itinerary_schedule_mirror_sync', {
+    p_wedding_site_id: siteId,
+    p_schedule: nextSchedule,
+    p_section_events: sectionEvents,
+  });
+  if (error) throw error;
 }

@@ -2,8 +2,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  assignGuestToTable,
   autoCreateTables,
+  createSeatingVersion,
   createTable,
+  markSeatingVersionRestored,
   deriveEventCountersFromGuests,
   deriveGuestEventAttendance,
   exportPlaceCardsCSV,
@@ -20,6 +23,9 @@ import {
   MAX_SEATING_TABLE_ROWS,
   MAX_SEATING_VERSION_ROWS,
   refreshSeatingSession,
+  resetSeating,
+  setGuestCheckedIn,
+  unassignGuest,
   updateSeatingEvent,
   updateTable,
   deleteTable,
@@ -44,12 +50,12 @@ vi.mock('../../../lib/supabase', () => ({
   },
 }));
 
-describe('deriveGuestEventAttendance', () => {
-  beforeEach(() => {
-    refreshSessionMock.mockReset();
-    rpcMock.mockReset();
-  });
+beforeEach(() => {
+  refreshSessionMock.mockReset();
+  rpcMock.mockReset();
+});
 
+describe('deriveGuestEventAttendance', () => {
   it('requires an explicit positive event RSVP when event invitations exist', () => {
     expect(deriveGuestEventAttendance({
       hasEventInvitations: true,
@@ -459,6 +465,86 @@ describe('mapSeatingLookupRows', () => {
         { seating_event_id: 'se-1', table_name: 'Table 1', capacity: 5, sort_order: 0 },
         { seating_event_id: 'se-1', table_name: 'Table 2', capacity: 5, sort_order: 1 },
       ],
+    });
+  });
+
+  it('routes seating assignment and layout-version writes through RPCs', async () => {
+    rpcMock
+      .mockResolvedValueOnce({
+        data: {
+          id: 'assign-1',
+          seating_event_id: 'se-1',
+          table_id: 'table-1',
+          guest_id: 'guest-1',
+          seat_index: 2,
+          is_valid: true,
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({
+        data: {
+          id: 'version-1',
+          wedding_site_id: 'site-1',
+          seating_event_id: 'se-1',
+          itinerary_event_id: 'event-1',
+          label: 'v1',
+          tables: [],
+          assignments: [],
+          created_by: 'user-1',
+          restored_at: null,
+          created_at: 'now',
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: null });
+
+    await expect(assignGuestToTable('se-1', 'table-1', 'guest-1', 2)).resolves.toMatchObject({ id: 'assign-1' });
+    await expect(unassignGuest('se-1', 'guest-1')).resolves.toBeUndefined();
+    await expect(setGuestCheckedIn('se-1', 'guest-1', true)).resolves.toBeUndefined();
+    await expect(resetSeating('se-1')).resolves.toBeUndefined();
+    await expect(createSeatingVersion({
+      weddingSiteId: 'site-1',
+      seatingEventId: 'se-1',
+      itineraryEventId: 'event-1',
+      label: 'v1',
+      tables: [],
+      assignments: [],
+    })).resolves.toMatchObject({ id: 'version-1' });
+    await expect(markSeatingVersionRestored('version-1')).resolves.toBeUndefined();
+
+    expect(rpcMock).toHaveBeenNthCalledWith(1, 'seating_assignment_write', {
+      p_seating_event_id: 'se-1',
+      p_guest_id: 'guest-1',
+      p_payload: { table_id: 'table-1', seat_index: 2, is_valid: true },
+    });
+    expect(rpcMock).toHaveBeenNthCalledWith(2, 'seating_assignment_delete', {
+      p_seating_event_id: 'se-1',
+      p_guest_id: 'guest-1',
+    });
+    expect(rpcMock).toHaveBeenNthCalledWith(3, 'seating_assignment_write', {
+      p_seating_event_id: 'se-1',
+      p_guest_id: 'guest-1',
+      p_payload: { checked_in_at: expect.any(String) },
+    });
+    expect(rpcMock).toHaveBeenNthCalledWith(4, 'seating_assignment_delete', {
+      p_seating_event_id: 'se-1',
+      p_guest_id: null,
+    });
+    expect(rpcMock).toHaveBeenNthCalledWith(5, 'seating_layout_version_create', {
+      p_wedding_site_id: 'site-1',
+      p_seating_event_id: 'se-1',
+      p_itinerary_event_id: 'event-1',
+      p_label: 'v1',
+      p_tables: [],
+      p_assignments: [],
+    });
+    expect(rpcMock).toHaveBeenNthCalledWith(6, 'seating_layout_version_restore', {
+      p_version_id: 'version-1',
+      p_restored_at: expect.any(String),
     });
   });
 });

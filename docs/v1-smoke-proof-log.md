@@ -14,16 +14,17 @@ _Launch call right now:_ `GO`
 - Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green on the blocker-fix runtime.
 - Client-facing RLS proof now has one canonical live matrix command: `npm run proof:v1:client-rls-matrix`.
 - Active runtime pages now also have one canonical local inventory guard: `npm run proof:v1:client-write-inventory`.
-- 2026-05-11 08:32 PM PDT:
+- 2026-05-11 08:48 PM PDT:
   - broadened `proof:v1:client-write-inventory` from active pages to all tracked `src` runtime files
-  - result is now `FAIL`, but the remainder is isolated and honest:
-    - `src/builder/services/builderProjectService.ts`
-    - `src/data/siteRepository.ts`
-    - `src/pages/dashboard/itineraryService.ts`
-    - `src/pages/dashboard/seating/seatingService.ts`
-  - same batch moved guest-photo owner writes, event RSVP cleanup writes, guest RSVP conflict resolution, vendor profile create, builder media writes, and app-action audit writes behind local RPCs
+  - after the builder/section/itinerary/seating RPC sweep, result is now `PASS`
+  - no direct client `.insert/.update/.upsert/.delete` calls remain in tracked shipped `src` runtime files
+  - final local batches added:
+    - `20260512030000_builder_section_itinerary_write_rpcs.sql`
+    - `20260512031500_seating_assignment_version_rpcs.sql`
+  - same sweep moved section writes, builder project publish, itinerary event/schedule mirror writes, and seating assignment/layout-version writes behind local RPCs
   - focused proof green:
-    - `npm test -- --run src/lib/eventRsvpCleanup.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/vendorProfiles.test.ts src/lib/clientWriteInventoryProofScript.test.ts src/lib/dashboardDataBoundary.test.ts`
+    - `npm test -- --run src/data/siteRepository.test.ts src/builder/services/builderProjectService.test.ts src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/seating/seatingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/clientWriteInventoryProofScript.test.ts`
+    - `npm run proof:v1:client-write-inventory`
     - `npm run typecheck -- --pretty false`
     - `git diff --check`
 - That matrix now explicitly proves direct guest, planning, and seating writes stay permission-scoped while direct timeline/settings writes remain denied without permission.
@@ -129,6 +130,27 @@ _Launch call right now:_ `GO`
 - `npm run proof:v1:registry-preview-ssrf` -> `LIVE PASS`
 - `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model` -> `LIVE PASS`
 - `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance` -> `LIVE PASS`
+
+## 2026-05-11 08:48 PM PDT - Builder / Section / Itinerary / Seating RPC Sweep (Local Only)
+
+- Added local migrations:
+  - `20260512030000_builder_section_itinerary_write_rpcs.sql`
+  - `20260512031500_seating_assignment_version_rpcs.sql`
+- Moved the last known tracked-`src` direct-write clusters behind local RPCs:
+  - section create/update/upsert/reorder/delete
+  - builder project publish
+  - itinerary event insert/update/delete/reorder
+  - itinerary schedule mirror sync
+  - seating assignment write/delete/upsert/invalidate
+  - seating layout version create/restore
+- Focused proof green:
+  - `npm test -- --run src/data/siteRepository.test.ts src/builder/services/builderProjectService.test.ts src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/seating/seatingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/clientWriteInventoryProofScript.test.ts`
+  - `npm run proof:v1:client-write-inventory`
+  - `npm run typecheck -- --pretty false`
+  - `git diff --check`
+- Result:
+  - the tracked shipped `src` runtime is now locally clear of direct client `.insert/.update/.upsert/.delete` calls
+  - the remaining work is remote apply/deploy plus fresh live collaborator/client-RLS proof, not another known local direct-write cluster
 
 ## Current Launch Call
 

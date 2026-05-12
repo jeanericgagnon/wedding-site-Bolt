@@ -66,6 +66,26 @@ This file preserves timestamped historical entries, extraction batches, and no-d
   - no live-state change
   - the active runtime no-direct-client-write claim is now a canonical rerunnable proof lane while the pending RPC migration apply/deploy sweep remains the next runtime step
 
+## 2026-05-11 08:48 PM PDT - Builder / Section / Itinerary / Seating RPC Sweep
+
+- Status: `LOCAL HARDENING`
+- What changed:
+  - added `20260512030000_builder_section_itinerary_write_rpcs.sql`
+  - added `20260512031500_seating_assignment_version_rpcs.sql`
+  - moved section writes in `siteRepository.ts` behind `section_*` RPCs
+  - moved builder publish in `builderProjectService.ts` behind `builder_project_publish`
+  - moved itinerary event and schedule-mirror writes in `itineraryService.ts` behind `itinerary_*` RPCs
+  - moved seating assignment and layout-version writes in `seatingService.ts` behind `seating_assignment_*` and `seating_layout_version_*` RPCs
+- Proof result:
+  - `npm test -- --run src/data/siteRepository.test.ts src/builder/services/builderProjectService.test.ts src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/seating/seatingService.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/clientWriteInventoryProofScript.test.ts` -> `PASS`
+  - `npm run proof:v1:client-write-inventory` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `git diff --check` -> `PASS`
+- Launch effect:
+  - no live-state change yet
+  - the tracked shipped `src` runtime is now locally clear of direct client `.insert/.update/.upsert/.delete` calls
+  - the remaining gap is remote migration apply/deploy and fresh live collaborator/client-RLS proof
+
 
 # Production Hardening Backlog
 

@@ -369,39 +369,24 @@ export async function assignGuestToTable(
   guestId: string,
   seatIndex?: number
 ): Promise<SeatingAssignment> {
-  const { data: existing } = await supabase
-    .from('seating_assignments')
-    .select('id')
-    .eq('seating_event_id', seatingEventId)
-    .eq('guest_id', guestId)
-    .maybeSingle();
-
-  if (existing) {
-    const { data, error } = await supabase
-      .from('seating_assignments')
-      .update({ table_id: tableId, seat_index: seatIndex ?? null, is_valid: true, updated_at: new Date().toISOString() })
-      .eq('id', existing.id)
-      .select(SEATING_ASSIGNMENT_SELECT)
-      .single();
-    if (error) throw error;
-    return data as SeatingAssignment;
-  }
-
-  const { data, error } = await supabase
-    .from('seating_assignments')
-    .insert({ seating_event_id: seatingEventId, table_id: tableId, guest_id: guestId, seat_index: seatIndex ?? null })
-    .select(SEATING_ASSIGNMENT_SELECT)
-    .single();
+  const { data, error } = await supabase.rpc('seating_assignment_write', {
+    p_seating_event_id: seatingEventId,
+    p_guest_id: guestId,
+    p_payload: {
+      table_id: tableId,
+      seat_index: seatIndex ?? null,
+      is_valid: true,
+    },
+  });
   if (error) throw error;
   return data as SeatingAssignment;
 }
 
 export async function unassignGuest(seatingEventId: string, guestId: string): Promise<void> {
-  const { error } = await supabase
-    .from('seating_assignments')
-    .delete()
-    .eq('seating_event_id', seatingEventId)
-    .eq('guest_id', guestId);
+  const { error } = await supabase.rpc('seating_assignment_delete', {
+    p_seating_event_id: seatingEventId,
+    p_guest_id: guestId,
+  });
   if (error) throw error;
 }
 
@@ -414,20 +399,20 @@ export async function setGuestCheckedIn(
     ? { checked_in_at: new Date().toISOString() }
     : { checked_in_at: null };
 
-  const { error } = await supabase
-    .from('seating_assignments')
-    .update({ ...payload, updated_at: new Date().toISOString() })
-    .eq('seating_event_id', seatingEventId)
-    .eq('guest_id', guestId);
+  const { error } = await supabase.rpc('seating_assignment_write', {
+    p_seating_event_id: seatingEventId,
+    p_guest_id: guestId,
+    p_payload: payload,
+  });
 
   if (error) throw error;
 }
 
 export async function resetSeating(seatingEventId: string): Promise<void> {
-  const { error } = await supabase
-    .from('seating_assignments')
-    .delete()
-    .eq('seating_event_id', seatingEventId);
+  const { error } = await supabase.rpc('seating_assignment_delete', {
+    p_seating_event_id: seatingEventId,
+    p_guest_id: null,
+  });
   if (error) throw error;
 }
 
@@ -542,29 +527,23 @@ export async function createSeatingVersion(input: {
   tables: SeatingTable[];
   assignments: SeatingAssignment[];
 }): Promise<SeatingLayoutVersion> {
-  const { data: { user } } = await supabase.auth.getUser();
-  const { data, error } = await supabase
-    .from('seating_layout_versions')
-    .insert({
-      wedding_site_id: input.weddingSiteId,
-      seating_event_id: input.seatingEventId,
-      itinerary_event_id: input.itineraryEventId,
-      label: input.label,
-      tables: input.tables,
-      assignments: input.assignments,
-      created_by: user?.id ?? null,
-    })
-    .select(SEATING_LAYOUT_VERSION_SELECT)
-    .single();
+  const { data, error } = await supabase.rpc('seating_layout_version_create', {
+    p_wedding_site_id: input.weddingSiteId,
+    p_seating_event_id: input.seatingEventId,
+    p_itinerary_event_id: input.itineraryEventId,
+    p_label: input.label,
+    p_tables: input.tables,
+    p_assignments: input.assignments,
+  });
   if (error) throw error;
   return data as SeatingLayoutVersion;
 }
 
 export async function markSeatingVersionRestored(versionId: string): Promise<void> {
-  const { error } = await supabase
-    .from('seating_layout_versions')
-    .update({ restored_at: new Date().toISOString() })
-    .eq('id', versionId);
+  const { error } = await supabase.rpc('seating_layout_version_restore', {
+    p_version_id: versionId,
+    p_restored_at: new Date().toISOString(),
+  });
   if (error) throw error;
 }
 
@@ -680,10 +659,9 @@ export async function autoSeatGuests(
 
   if (assignments.length === 0) return [];
 
-  const { data, error } = await supabase
-    .from('seating_assignments')
-    .upsert(assignments, { onConflict: 'seating_event_id,guest_id' })
-    .select(SEATING_ASSIGNMENT_SELECT);
+  const { data, error } = await supabase.rpc('seating_assignment_upsert_many', {
+    p_rows: assignments,
+  });
   if (error) throw error;
   return (data ?? []) as SeatingAssignment[];
 }
@@ -765,10 +743,9 @@ export async function invalidateDriftedAssignments(
 
   if (invalidIds.length === 0) return 0;
 
-  await supabase
-    .from('seating_assignments')
-    .update({ is_valid: false })
-    .in('id', invalidIds);
+  await supabase.rpc('seating_assignment_invalidate_many', {
+    p_assignment_ids: invalidIds,
+  });
 
   return invalidIds.length;
 }

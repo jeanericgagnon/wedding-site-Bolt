@@ -1,16 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { maybeSingle, eq, select, from } = vi.hoisted(() => {
+const { maybeSingle, eq, select, from, rpc } = vi.hoisted(() => {
   const maybeSingle = vi.fn();
   const eq = vi.fn(() => ({ maybeSingle }));
   const select = vi.fn(() => ({ eq }));
   const from = vi.fn(() => ({ select }));
-  return { maybeSingle, eq, select, from };
+  const rpc = vi.fn();
+  return { maybeSingle, eq, select, from, rpc };
 });
 
 vi.mock('../../lib/supabase', () => ({
   supabase: {
     from,
+    rpc,
   },
 }));
 
@@ -165,5 +167,29 @@ describe('builderProjectService.loadWeddingData', () => {
     expect(result.couple.displayName).toBe('Priya & Sam');
     expect(result.event.weddingDateISO).toBe('2026-09-12T00:00:00.000Z');
     expect(result.venues[0].name).toBe('Garden House');
+  });
+
+  it('publishes builder projects through the dedicated publish RPC', async () => {
+    maybeSingle
+      .mockResolvedValueOnce({
+        data: {
+          site_json: {
+            publishedVersion: 2,
+          },
+          wedding_data: {
+            version: '1',
+          },
+        },
+        error: null,
+      });
+    rpc.mockResolvedValueOnce({ error: null });
+
+    await expect(builderProjectService.publishProject('project-1', 'site-1')).resolves.toMatchObject({
+      version: 3,
+    });
+
+    expect(rpc).toHaveBeenCalledWith('builder_project_publish', expect.objectContaining({
+      p_wedding_site_id: 'site-1',
+    }));
   });
 });
