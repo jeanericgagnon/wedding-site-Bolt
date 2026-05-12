@@ -12,7 +12,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | --- | --- |
 | Current date/time | `2026-05-11 09:46 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
-| Latest Git SHA | `217ca5b7` |
+| Latest Git SHA | `8d327b29` |
 | Latest commit message | `Expand live photos and vault RLS proof` |
 | Vercel deployment ID | `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
