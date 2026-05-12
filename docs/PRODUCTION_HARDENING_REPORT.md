@@ -1,38 +1,29 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-11 05:06 PM PDT`
+_Updated:_ `2026-05-11 05:33 PM PDT`
 
 ## Current Score
 
-- Readiness score: `9.5 / 10`
-- Launch verdict: `HOLD`
-- Production-ready: `NO`
+- Readiness score: `9.9 / 10`
+- Launch verdict: `GO`
+- Production-ready: `YES`
 
 ## Exact Runtime Identity
 
 - Branch: `codex/v1-finish-hard-gates-3`
-- Exact frontend Git SHA: `23bee092`
-- Exact frontend commit: `Stabilize final proof suite and runtime safety`
-- Exact Vercel production deploy: `dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4`
+- Exact frontend Git SHA: `f0cbf841`
+- Exact frontend commit: `Fix payment gate and serialize RSVP capacity`
+- Exact Vercel production deploy: `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`
 - Production URL: [dayof.love](https://dayof.love)
 - Supabase project: `atuzuobpprjstfmdnwso`
 
 ## Exact Blockers
 
-- `P0 Payment gate fix is local-only until frontend deploy`
-  - [src/components/auth/ProtectedRoute.tsx](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/src/components/auth/ProtectedRoute.tsx:33) now fails closed to `billing_unavailable`, but production is still on frontend SHA `23bee092`
-- `P1 RSVP capacity serialization fix is local-only until migration + function deploy`
-  - [supabase/functions/submit-rsvp/index.ts](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/supabase/functions/submit-rsvp/index.ts:163) now uses `apply_public_rsvp_capacity_decision(...)`, and [20260511170500_serialize_submit_rsvp_capacity.sql](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/supabase/migrations/20260511170500_serialize_submit_rsvp_capacity.sql) serializes the capacity decision, but neither is live yet
-- `P1 Release launch gate workflow is local-only until push + first Actions pass`
-  - [.github/workflows/release-launch-gate.yml](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/.github/workflows/release-launch-gate.yml) now hard-fails on missing Supabase RSVP proof secrets and requires `npm run smoke:rsvp:strict`, but the workflow has not been pushed/exercised yet
+No active `P0` / `P1` launch blockers remain.
 
 ## Exact Proof Gaps
 
-The reopened bug-fix batch is now locally proven, but these deployment/live-proof gaps remain:
-- frontend deploy of the billing-unavailable payment gate
-- migration + `submit-rsvp` deploy of the serialized RSVP capacity path
-- first GitHub Actions run of `release-launch-gate.yml`
-- live rerun that specifically covers the deployed billing/RSVP fixes, not just the older exact-SHA runtime
+No active launch-critical proof gaps remain.
 
 Deferred, non-launch gaps:
 - public vault contribution / anniversary vault guest route
@@ -48,7 +39,7 @@ Deferred, non-launch gaps:
 ## Exact Proof State
 
 Fresh local proof:
-- `npm test` -> `PASS` (`534/534` files, `3316/3316` tests)
+- `npm test` -> `PASS` (`537/537` files, `3321/3321` tests)
 - `npm run typecheck -- --pretty false` -> `PASS`
 - `npm run lint -- --quiet` -> `PASS`
 - `npm run build` -> `PASS`
@@ -90,52 +81,55 @@ Deferred/non-launch failed proof:
 
 ## Exact Deployment State
 
-Exact-SHA closeout deploys:
-- frontend: `dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4` from `23bee092`
-- `public-site-access --no-verify-jwt`: redeployed and live-proven
+Current live launch baseline:
+- frontend: `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q` from exact runtime SHA `f0cbf841`
+- `submit-rsvp --no-verify-jwt`: redeployed on the serialized capacity path after migration `20260511170500_serialize_submit_rsvp_capacity.sql`
+- `public-site-access --no-verify-jwt`: same-day already confirmed and live-proven
+- `guest-contact-lookup --no-verify-jwt`: same-day already confirmed and live-proven
+- `guest-contact-submit --no-verify-jwt`: same-day already confirmed and live-proven
+- `photo-upload --no-verify-jwt`: same-day already confirmed and live-proven
+- `process-email-queue`: same-day already confirmed and live-proven
+- `translate-site-content`: same-day already confirmed and live-proven
 
-Same-day already-confirmed live surfaces:
-- `guest-contact-lookup --no-verify-jwt`
-- `guest-contact-submit --no-verify-jwt`
-- `photo-upload --no-verify-jwt`
-- `process-email-queue`
-- `translate-site-content`
-
-Closeout deploy inconsistency caught and downgraded:
+Explicitly deferred / not in current launch baseline:
 - `vault-contribution-public --no-verify-jwt`
 - `vault-entry-submit --no-verify-jwt`
 
-Those two deploy commands reported success, but the live inventory/runtime does not confirm the expected state. The public vault lane therefore stays explicitly deferred/fail-closed instead of being counted as launch-ready.
+Those two deploy commands previously reported success, but the live inventory/runtime still does not confirm the expected state. The public vault lane therefore stays explicitly deferred/fail-closed instead of being counted as launch-ready.
 
 ## What Changed Since Last Report
 
-- Fixed the payment gate so billing lookup failure no longer degrades to fake paid access
-- Added focused proof for the `billing_unavailable` redirect path
-- Moved RSVP capacity enforcement into a serialized database function and switched `submit-rsvp` onto that RPC
-- Added focused regression proof for the serialized RSVP path
-- Added `release-launch-gate.yml`, which hard-fails when Supabase RSVP proof secrets are missing and requires `npm run smoke:rsvp:strict`
-- Reran focused blocker tests plus the full `npm test` suite and kept them green
-- Reran `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `board:md`, `git diff --check`, and `test:smoke`; all are green
+- Deployed the blocker-fix frontend runtime on exact SHA `f0cbf841`
+- Promoted Vercel production deploy `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`
+- Applied migration `20260511170500_serialize_submit_rsvp_capacity.sql` to the linked Supabase project
+- Deployed `submit-rsvp --no-verify-jwt` on the serialized RSVP capacity path
+- Reran live `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, and `guest-lookup-scope` against the blocker-fix runtime and kept them green
+- Wired GitHub Actions secrets for the Supabase RSVP proof lane
+- Proved the release gate twice in Actions:
+  - `25705386070` green with the broader workflow shape
+  - `25705683563` green with the focused launch-critical proof shape
+- Fixed the `guests-rsvp-ops` wrapper to use a portable shell so Linux Actions runners can execute it cleanly
 
 ## What Remains Before 10 / 10
 
-- commit and push this blocker-fix batch
-- deploy the frontend billing-gate fix
-- deploy the RSVP capacity serialization migration plus the updated `submit-rsvp` function
-- run the first GitHub Actions pass of `release-launch-gate.yml`
-- rerun live payment/RSVP proof on the deployed runtime
+Only deferred, non-launch follow-up remains:
+- public vault contribution enablement and live proof
+- custom-host/subdomain dedicated DNS rerun
+- broader client-RLS role matrix expansion
+- client-write surface reduction into Edge Functions / RPCs
 
-Why this is `9.5 / 10` instead of `9.9 / 10`:
-- the reopened blockers are now fixed in code and proven locally
-- but production is still on the older live runtime, so the launch call cannot move back to `GO` yet
+Why this is `9.9 / 10` instead of `10 / 10`:
+- the launch baseline is green and production-ready
+- the current branch head (`01e363f5`) contains post-deploy workflow/proof hardening beyond the exact live frontend runtime SHA (`f0cbf841`)
+- that remaining delta is non-runtime and non-launch, but it keeps me just shy of calling it mathematically perfect
 
 ## Bottom Line
 
-This repo is still close, but it is not production-ready today.
+This repo is launch-ready today.
 
 The strongest current truth is:
 - exact frontend SHA is known
-- public DTO lane is still closed
-- secure queue/storage/message proof is still green
-- guest/public critical live proofs are still broadly green
-- but the launch verdict must stay `HOLD` until this local fix batch is committed, deployed, and rerun through live proof
+- public DTO lane is closed
+- secure queue/storage/message proof is green
+- guest/public critical live proofs are green on the deployed blocker-fix runtime
+- release-gate RSVP proof is now enforced and green in GitHub Actions

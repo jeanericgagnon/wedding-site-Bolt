@@ -9,6 +9,23 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 
 # Production Hardening Backlog
 
+## 2026-05-11 05:33 PM PT - Live Blocker-Fix Deploy And Release Gate Closure
+
+- Status: `RESOLVED`
+- What changed:
+  - pushed blocker-fix runtime commit `f0cbf841` and promoted Vercel production deploy `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`
+  - applied migration `20260511170500_serialize_submit_rsvp_capacity.sql`
+  - deployed `submit-rsvp --no-verify-jwt`
+  - reran live `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, and `guest-lookup-scope`
+  - configured GitHub Actions `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` secrets for the release gate
+  - proved `Release Launch Gate` green in Actions
+  - fixed the Linux shell portability bug in `scripts/v1-proof-guests-rsvp-ops.mjs`
+- Result:
+  - payment fail-open is closed in live frontend runtime
+  - RSVP capacity serialization is closed in live function/database runtime
+  - release-gate Supabase RSVP proof is enforced and green
+  - launch verdict returned to `GO`; production-ready returned to `YES`
+
 ## 2026-05-11 05:06 PM PT - Reopened Billing / RSVP / Release-Gate Fix Batch
 
 - Status: `LOCAL PASS / DEPLOY REQUIRED`

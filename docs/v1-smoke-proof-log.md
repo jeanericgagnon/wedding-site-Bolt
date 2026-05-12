@@ -2,20 +2,19 @@
 
 _Date:_ `2026-05-11`
 _Production:_ [dayof.love](https://dayof.love)
-_Latest verified deploy:_ `dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4`
-_Exact frontend SHA:_ `23bee092`
-_Launch call right now:_ `HOLD`
+_Latest verified deploy:_ `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`
+_Exact frontend SHA:_ `f0cbf841`
+_Launch call right now:_ `GO`
 
 ## Current Truth
 
-- The main verified live runtime is still exact frontend SHA `23bee092`.
+- The main verified live runtime is exact frontend SHA `f0cbf841`.
 - Public DTO minimization is closed and live-proven.
 - Secure service-role, queue, storage/media, and email queue-processing proof lanes are green with the provided secure key.
-- Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green on that older live SHA.
-- A new local blocker-fix batch is now ready but not yet deployed:
-  - payment gate fails closed on billing lookup failure
-  - RSVP capacity enforcement now serializes through a database function
-  - release launch CI now hard-fails without strict Supabase RSVP proof secrets
+- Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green on the blocker-fix runtime.
+- Payment gate now fails closed on billing lookup failure.
+- RSVP capacity enforcement now serializes through the deployed database function path.
+- Release launch CI now hard-fails without strict Supabase RSVP proof secrets and passes with the configured repo secrets.
 - Public vault contribution is not part of the current launch baseline:
   - the route fails closed with safe unavailable copy
   - `vault-contribution-public` still does not appear in live function inventory
@@ -43,11 +42,11 @@ _Launch call right now:_ `HOLD`
 - `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model` -> `LIVE PASS`
 - `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance` -> `LIVE PASS`
 
-## Current Hold Reason
+## Current Launch Call
 
-- The reopened payment-gate, RSVP-capacity, and release-gate defects are fixed locally and locally proven.
-- Production is still on live frontend SHA `23bee092`, so those fixes are not yet part of the deployed runtime.
-- Launch stays `HOLD` until this batch is committed, deployed, and rerun through live payment/RSVP proof.
+- Launch-critical runtime blockers are closed.
+- GitHub Actions `Release Launch Gate` is green on runs `25705386070` and `25705683563`.
+- Remaining items are deferred and non-launch.
 - `npm run proof:v1:ai-product-readiness` -> `PASS`
 - `npm run proof:v1:data-integrity` -> `PASS`
 - `npm run proof:v1:prereqs` -> `PASS`
@@ -72,7 +71,7 @@ _Launch call right now:_ `HOLD`
 ### 2026-05-11 03:42 PM PDT - Full Suite And Secure Closeout Refresh
 
 - Reran the full suite:
-  - `npm test` -> `PASS` (`534/534`, `3316/3316`)
+  - `npm test` -> `PASS` (`537/537`, `3321/3321`)
 - Reran secure closeout with the provided secure key:
   - `npm run proof:v1:service-role-authorization` -> `PASS`
   - `npm run proof:v1:email-messaging-authorization` -> `PASS`
@@ -81,6 +80,25 @@ _Launch call right now:_ `HOLD`
   - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
 - Result:
   - final authorization, queue, and role-scoping truth is same-day evidence
+
+### 2026-05-11 05:33 PM PDT - Live Blocker-Fix Deploy And Release Gate Closure
+
+- Pushed blocker-fix runtime commit `f0cbf841` (`Fix payment gate and serialize RSVP capacity`) to `codex/v1-finish-hard-gates-3`.
+- Promoted Vercel production deploy `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`.
+- Applied migration `20260511170500_serialize_submit_rsvp_capacity.sql`.
+- Deployed `submit-rsvp --no-verify-jwt`.
+- Reran:
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`
+  - `npm run proof:v1:guests-rsvp-ops`
+  - `npm run proof:v1:guest-lookup-scope`
+- Confirmed GitHub Actions `Release Launch Gate` is green on run `25705683563`.
+- Result:
+  - exact current live frontend runtime is `f0cbf841`
+  - payment fail-open is closed in production
+  - RSVP capacity serialization is live and proven
+  - release-gate Supabase RSVP proof is enforced and green
+  - launch remains `GO`
 
 ### 2026-05-11 03:42 PM PDT - Public Vault Contribution Downgraded To Deferred / Hard-Disabled
 

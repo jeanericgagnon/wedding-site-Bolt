@@ -4,73 +4,49 @@
 
 Is the current repo a clean launch baseline today?
 
-Not yet. The highest-priority billing, RSVP-capacity, and release-gate fixes are now implemented and locally proven, but production is still on the older live SHA until this batch is committed, deployed, and rerun through live proof.
+Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is live, and the release gate now enforces the Supabase-backed RSVP proof lane.
 
 ## Current Canonical Status
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-11 05:06 PM PDT` |
+| Current date/time | `2026-05-11 05:33 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
-| Latest Git SHA | `23bee092` |
-| Latest commit message | `Stabilize final proof suite and runtime safety` |
-| Vercel deployment ID | `dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4` |
+| Latest Git SHA | `01e363f5` |
+| Latest commit message | `Fix release guests proof shell portability` |
+| Vercel deployment ID | `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
-| Supabase functions deployed | Confirmed in the final exact-SHA sweep: `public-site-access --no-verify-jwt`. Earlier same-day confirmed/live-proven: `photo-upload --no-verify-jwt`; `process-email-queue`; `guest-contact-lookup --no-verify-jwt`; `guest-contact-submit --no-verify-jwt`; `translate-site-content`. Attempted closeout redeploys for `vault-contribution-public --no-verify-jwt` and `vault-entry-submit --no-verify-jwt` did not produce matching live inventory/runtime evidence, so that lane remains deferred/fail-closed. |
-| Current readiness score | `9.5 / 10` |
-| Current launch verdict | `HOLD` |
-| Production-ready | `NO` |
-| Reason production-ready is not yet claimed | The reopened payment-gate, RSVP-capacity, and release-gate bugs are fixed in the current working tree and locally proven, but the live frontend/function/database runtime has not been updated to those fixes yet. |
-| Current blockers | `P0 payment gate fix is local-only until frontend deploy`; `P1 RSVP capacity serialization fix is local-only until migration + function deploy`; `P1 release launch gate workflow is local-only until push + first GitHub Actions pass` |
-| Current proof state | `npm test` passed `537/537` files and `3321/3321` tests. The local gate (`typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `board:md`, `git diff --check`) is green. `test:smoke` also passed when rerun with network access after the sandbox DNS miss. Focused blocker proof is green for `ProtectedRoute`, the release launch gate workflow, the RSVP serialization migration, launch edge guards, and the proof-board freshness suite. Secure production proofs (`service-role-authorization`, `email-messaging-authorization`, `launch-closeout`) still stand green with the provided secure key. Live production proofs from SHA `23bee092` are still green for `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, and `registry-preview-ssrf`, but those live proofs do not yet include this new blocker-fix batch. |
-| Current deployment state | Frontend is still live at [dayof.love](https://dayof.love) on exact Git SHA `23bee092` via verified Vercel production deploy `dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4`. The current working tree contains unreleased blocker-fix changes in `ProtectedRoute`, `PaymentRequired`, `submit-rsvp`, the new RSVP serialization migration, the release launch gate workflow, and matching proof files. Public vault contribution remains outside the launch baseline because the live route still fails closed and the function inventory does not confirm `vault-contribution-public`. |
-| Current next actions | Commit/push this blocker-fix batch, deploy the frontend plus `submit-rsvp` + migration, then rerun the live RSVP/payment proof lane. |
+| Supabase functions deployed | Live blocker-fix lane now includes `submit-rsvp --no-verify-jwt` plus applied migration `20260511170500_serialize_submit_rsvp_capacity.sql`. Earlier same-day confirmed/live-proven: `public-site-access --no-verify-jwt`; `photo-upload --no-verify-jwt`; `process-email-queue`; `guest-contact-lookup --no-verify-jwt`; `guest-contact-submit --no-verify-jwt`; `translate-site-content`. Public vault contribution remains deferred/fail-closed because live inventory still does not confirm `vault-contribution-public`. |
+| Current readiness score | `9.9 / 10` |
+| Current launch verdict | `GO` |
+| Production-ready | `YES` |
+| Reason production-ready is not yet claimed | No active P0/P1 blockers remain. Remaining items are explicitly deferred and non-launch. |
+| Current blockers | none |
+| Current proof state | `npm test` passed `537/537` files and `3321/3321` tests. The local gate (`typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `board:md`, `git diff --check`) is green. `test:smoke` passed with live Supabase access. The secure proof bundle (`service-role-authorization`, `email-messaging-authorization`, `launch-closeout`) remains green. Live production proofs after the blocker-fix deploy are green for `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, and `guest-lookup-scope`. GitHub Actions `Release Launch Gate` is green on run `25705683563`, with the focused launch-critical proof bundle and mandatory strict RSVP smoke. |
+| Current deployment state | Frontend is live at [dayof.love](https://dayof.love) on exact runtime Git SHA `f0cbf841` via verified Vercel production deploy `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`. The current branch head `01e363f5` adds release-gate workflow/proof hardening only and does not change the live frontend runtime. `submit-rsvp` is live with the serialized capacity path and the migration is applied remotely. Public vault contribution remains outside the launch baseline because the live route still fails closed and the function inventory does not confirm `vault-contribution-public`. |
+| Current next actions | none |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
 - `P1-09 Deployment / proof truth canonicalization` is still closed.
 - The previously reopened guest-contact runtime blocker is still closed with live proof.
-- The reopened billing, RSVP-capacity, and release-gate defects are fixed locally and proven locally.
-- Production still stays `HOLD` until the live runtime catches up to this batch.
+- The reopened billing, RSVP-capacity, and release-gate defects are fixed, deployed, and proven.
+- No active `P0` / `P1` launch blockers remain.
 
 ## Current Launch Blockers
 
-- `P0 Payment gate fail-open fix` -> `LOCAL PASS / DEPLOY REQUIRED`
-  - file: [src/components/auth/ProtectedRoute.tsx](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/src/components/auth/ProtectedRoute.tsx:33)
-  - current evidence:
-    - billing lookup failures now resolve to a billing-unavailable hold state instead of a fake active/paid state
-    - focused route proof confirms protected dashboard access redirects to `/payment-required?reason=billing_unavailable`
-  - why it matters:
-    - this closes the highest-priority backend-failure-to-free-access path, but the fix is not live until the frontend is redeployed
-  - acceptance:
-    - billing lookup failures must fail closed or enter a billing-unavailable holding state
-    - protected paid surfaces must not grant access on billing read failure
-    - add focused proof for payment lookup failure handling
-  - next action:
-    - commit, deploy the frontend, and rerun payment-gate regression proof on the live build
-- `P1 RSVP capacity serialization fix` -> `LOCAL PASS / DEPLOY REQUIRED`
-  - file: [supabase/functions/submit-rsvp/index.ts](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/supabase/functions/submit-rsvp/index.ts:163)
-  - current evidence:
-    - `submit-rsvp` now calls `apply_public_rsvp_capacity_decision(...)` instead of doing a count-then-update write path
-    - new migration `20260511170500_serialize_submit_rsvp_capacity.sql` locks the site row `FOR UPDATE`, applies the RSVP status decision, updates waitlist rows, and recalculates `rsvp_waitlist_count` in one database function
-  - why it matters:
-    - this removes the race window locally, but the migration and function change are not live until they are deployed together
-  - acceptance:
-    - move capacity enforcement and RSVP update into one DB transaction or RPC
-    - add concurrency-focused proof for waitlist/capacity behavior
-  - next action:
-    - push the migration + function change, then rerun live RSVP/waitlist proof on the deployed runtime
-- `P1 Release launch gate workflow` -> `LOCAL PASS / PUSH REQUIRED`
-  - file: [ci-hardpass.yml](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/.github/workflows/ci-hardpass.yml:76)
-  - current evidence:
-    - new workflow [.github/workflows/release-launch-gate.yml](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/.github/workflows/release-launch-gate.yml) now hard-fails on missing Supabase RSVP proof secrets and requires `npm run smoke:rsvp:strict`
-  - why it matters:
-    - this closes the release-gate policy gap locally, but it does nothing until the workflow is pushed and run in GitHub Actions
-  - acceptance:
-    - production release workflow must fail when required Supabase proof secrets are absent
-    - RSVP strict smoke must be mandatory in the release lane
-  - next action:
-    - push the workflow and capture the first successful release-lane run
+No active `P0` or `P1` launch blockers remain.
+
+- `P0 Payment gate fail-open` -> `RESOLVED`
+  - frontend runtime `f0cbf841` now fails closed to the billing-unavailable hold state
+  - focused route proof is green and the blocker-fix frontend deploy is live on [dayof.love](https://dayof.love)
+- `P1 RSVP capacity race` -> `RESOLVED`
+  - migration `20260511170500_serialize_submit_rsvp_capacity.sql` is applied remotely
+  - `submit-rsvp` is live on the serialized RPC path
+  - `npm run proof:v1:guests-rsvp-ops` and strict RSVP smoke are green after deploy
+- `P1 Release launch gate policy gap` -> `RESOLVED`
+  - GitHub Actions `Release Launch Gate` now hard-fails without the Supabase RSVP secrets and passes with the focused launch-critical proof bundle
+  - successful Actions evidence: runs `25705386070` and `25705683563`
 
 ## Additional Hardening Findings
 
@@ -195,7 +171,7 @@ Blunt status:
 | `npm run typecheck -- --pretty false` | `PASS` | `local` | `2026-05-11` | Current public DTO code state |
 | `npm run lint -- --quiet` | `PASS` | `local` | `2026-05-11` | Current public DTO code state |
 | `npm run build` | `PASS` | `local` | `2026-05-11` | Current public DTO code state |
-| `npm test` | `PASS` | `local` | `2026-05-11` | `534/534` files, `3316/3316` tests |
+| `npm test` | `PASS` | `local` | `2026-05-11` | `537/537` files, `3321/3321` tests |
 | `npm run test:security` | `PASS` | `local` | `2026-05-11` | `265/265` |
 | `npm run test:smoke` | `PASS` | `production` | `2026-05-11` | `registry`, `rsvp`, `csvmapper`, `checkin`, `messages`, `site` all green after unrestricted-network rerun |
 | `npm run proof:v1:public-access-coverage` | `PASS` | `local` | `2026-05-11` | Static/public contract coverage is green |
@@ -211,9 +187,10 @@ Blunt status:
 | `npm run proof:v1:prereqs` | `PASS` | `production + local env` | `2026-05-11` | Required migrations/functions/runtime readiness green; deferred provider/AI env notes remain non-launch |
 | `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance` | `LIVE PASS` | `production + secure env` | `2026-05-11` | Live AI/photo column exposure and rollout readiness are green |
 | `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model` | `LIVE PASS` | `production + secure env` | `2026-05-11` | Translation route plus live AI/photo model-backed lanes are green |
-| `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` | `LIVE PASS` | `production` | `2026-05-11` | Fresh rerun against Vercel deploy `dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4` |
-| `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` | `LIVE PASS` | `production` | `2026-05-11` | Fresh rerun against Vercel deploy `dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4`; `4/4` passed |
-| `npm run proof:v1:guests-rsvp-ops` | `LIVE PASS` | `production` | `2026-05-11` | Fresh rerun after exact-SHA deploy |
+| `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` | `LIVE PASS` | `production` | `2026-05-11` | Fresh rerun against Vercel deploy `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q` |
+| `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` | `LIVE PASS` | `production` | `2026-05-11` | Fresh rerun against Vercel deploy `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`; `4/4` passed |
+| `npm run proof:v1:guests-rsvp-ops` | `LIVE PASS` | `production` | `2026-05-11` | Fresh rerun after serialized RSVP deploy; strict smoke green |
+| `GitHub Actions Release Launch Gate` | `PASS` | `GitHub Actions + repo secrets` | `2026-05-11` | Branch-triggered workflow is green on run `25705683563`; strict RSVP smoke is mandatory |
 | `LIVE_GUEST_HUB_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/guest-hub-write-read.spec.ts` | `LIVE PASS` | `production` | `2026-05-11` | Interactive hub write/read is green |
 | `LIVE_PHOTO_UPLOAD_WRITE_READ=1 LIVE_PHOTO_ANALYSIS_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/photo-upload-write-read.spec.ts` | `LIVE PASS` | `production` | `2026-05-11` | Photo upload/readback/analysis/recap/moderation lane green |
 | `LIVE_VAULT_CONTRIBUTE_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/vault-contribute-write-read.spec.ts` | `FAIL` | `production` | `2026-05-11` | Route still fails closed with `This vault is not available right now`; lane is deferred/non-launch until live function inventory and enabled configs are fixed |
@@ -226,7 +203,7 @@ Blunt status:
 
 | Surface | Git SHA | Deployed? | Deploy target | Flags | Proof command | Proof result | Remaining gap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Vercel frontend / `dayof.love` | `23bee092` | `yes` | `Vercel production dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4` | `--prod --yes` | `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`; `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` | both green after exact-SHA deploy | None | `LIVE PASS` |
+| Vercel frontend / `dayof.love` | `f0cbf841` | `yes` | `Vercel production dpl_386dKTNkTVK95UfwJj9qEtnH1b8q` | `--prod` | `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`; `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` | both green after blocker-fix deploy | None | `LIVE PASS` |
 | `public-site-access` | `23bee092` | `yes` | `Supabase Edge runtime atuzuobpprjstfmdnwso` | `--no-verify-jwt` | `npm run proof:v1:public-access-coverage`; live smoke/public-quality | green | None on current public resolver lane | `LIVE PASS` |
 | `public-registry-items` | `older live version (not redeployed in exact-SHA sweep)` | `yes` | `Supabase Edge runtime atuzuobpprjstfmdnwso` | `unknown` | `npm run proof:v1:registry`; live public smoke/public-quality | green | Owner import/repair runtime notes are deferred and not a public-launch blocker | `LIVE PASS` |
 | `public-itinerary-by-slug` | `older live version (not redeployed in exact-SHA sweep)` | `yes` | `Supabase Edge runtime atuzuobpprjstfmdnwso` | `unknown` | `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`; `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` | green | None on the public itinerary lane | `LIVE PASS` |
@@ -261,16 +238,16 @@ Blunt status:
 
 ## Next 10 Tasks
 
-1. Commit and push the reopened blocker-fix batch.
-2. Deploy the frontend billing-gate fix.
-3. Deploy the RSVP capacity serialization migration plus the updated `submit-rsvp` function.
-4. Rerun live RSVP/waitlist proof against the deployed serialization path.
-5. Rerun the live payment-gate regression lane after the new frontend build is live.
-6. Run the new `release-launch-gate` workflow with real Supabase RSVP proof secrets.
-7. Gate or remove `/builder-v2-lab`, `/variant-preview-capture`, and `/template-scroll-capture` from production routing.
-8. Expand live client-RLS proof for anon, owner, collaborator, planner, coordinator, viewer, and unrelated-user paths.
-9. Start moving the highest-risk client writes into Edge Functions or RPCs, starting with guest/household/RSVP/bulk operations.
-10. Preserve the canonical deployment and validation matrices when runtime/deploy IDs change.
+1. Gate or remove `/builder-v2-lab`, `/variant-preview-capture`, and `/template-scroll-capture` from production routing.
+2. Expand live client-RLS proof for anon, owner, collaborator, planner, coordinator, viewer, and unrelated-user paths.
+3. Start moving the highest-risk client writes into Edge Functions or RPCs, starting with guest/household/RSVP/bulk operations.
+4. Resolve the deferred public vault contribution lane before enabling it.
+5. Rerun dedicated custom-host/subdomain DNS proof if that launch surface becomes active.
+6. Keep the deployment matrix current when runtime/deploy IDs change.
+7. Keep the validation matrix current when proof lanes change.
+8. Tighten TS/ESLint rigor for new code and high-risk modules.
+9. Continue shrinking the dashboard Guests orchestration surface by domain.
+10. Keep provider/SMS deferred until explicit setup and live-send proof are approved.
 
 ## Resolved Work Summary
 
