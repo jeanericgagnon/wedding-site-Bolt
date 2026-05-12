@@ -13,6 +13,7 @@ _Launch call right now:_ `GO`
 - Secure service-role, queue, storage/media, and email queue-processing proof lanes are green with the provided secure key.
 - Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green on the blocker-fix runtime.
 - Client-facing RLS proof now has one canonical live matrix command: `npm run proof:v1:client-rls-matrix`.
+- Active runtime pages now also have one canonical local inventory guard: `npm run proof:v1:client-write-inventory`.
 - That matrix now explicitly proves direct guest, planning, and seating writes stay permission-scoped while direct timeline/settings writes remain denied without permission.
 - The guest-dashboard settings RPC batch is still local-only and stays outside the live runtime baseline until deployment plus `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` proof.
 - The message/coordinator write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
@@ -37,6 +38,7 @@ _Launch call right now:_ `GO`
 - `npm run test:security` -> `PASS`
 - `npm run test:smoke` -> `PASS`
 - `npm run proof:v1:public-access-coverage` -> `PASS`
+- `npm run proof:v1:client-write-inventory` -> `PASS`
 - `npm run proof:v1:service-role-authorization` -> `PASS`
 - `npm run proof:v1:email-messaging-authorization` -> `PASS`
 - `npm run proof:v1:launch-closeout` -> `PASS`
@@ -92,6 +94,19 @@ _Launch call right now:_ `GO`
 - Inventory note:
   - `rg -n "\\.from\\('.*'\\)\\.(insert|update|upsert|delete)" src/pages/dashboard src/pages -g '!**/*.test.*'` now returns no matches
 - Not live yet: migration apply/deploy is still pending, so runtime proof remains gated until the local RPC batches are deployed.
+
+## 2026-05-11 08:18 PM PDT - Canonical Client Write Inventory Proof Added
+
+- Added `scripts/v1-proof-client-write-inventory.mjs`.
+- Added `npm run proof:v1:client-write-inventory`.
+- Wired the new guard into `test:launch`.
+- Focused proof green:
+  - `npm test -- --run src/lib/clientWriteInventoryProofScript.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts`
+  - `npm run proof:v1:client-write-inventory`
+  - `git diff --check`
+- Result:
+  - the active `src/pages` / `src/pages/dashboard` no-direct-client-write claim is now a canonical rerunnable proof lane instead of a loose inventory note
+  - runtime truth is still unchanged until the local RPC batches are applied and redeployed
 - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`
 - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` -> `LIVE PASS`
 - `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`

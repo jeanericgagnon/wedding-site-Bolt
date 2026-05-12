@@ -58,6 +58,7 @@ Fresh local proof:
 - `npm run build` -> `PASS`
 - `npm run test:security` -> `PASS`
 - `npm run proof:v1:public-access-coverage` -> `PASS`
+- `npm run proof:v1:client-write-inventory` -> `PASS`
 - `npm run proof:v1:board:md` -> `PASS`
 - `npm run guard:file-size` -> `PASS`
 - `npm run guard:assets` -> `PASS`
@@ -147,6 +148,7 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Moved owner-side vault writes plus planning vendor/budget writes behind an eighth local RPC batch in the working tree; focused local proof (`vaultService.test`, `planningService.test`, `planningServiceStarterSuite.test.ts`, `typecheck`, `lint`, `build`) is green, but migration apply/deploy/live proof are still pending so the current runtime truth is unchanged
 - Moved onboarding/signup site bootstrap, site patch, event seed insert, and guided guest import writes behind a ninth local RPC batch in the working tree; focused local proof (`onboardingService.test.ts`, `signupService.test.ts`, `typecheck`) is green, but migration apply/deploy/live proof are still pending so the current runtime truth is unchanged
 - Moved the name-change planner write paths behind a tenth local RPC batch in the working tree; focused local proof (`nameChangeService.test.ts`, `dashboardDataBoundary.test.ts`, `typecheck`) is green, and the raw-write inventory no longer reports direct client `.insert/.update/.upsert/.delete` calls in `src/pages` / `src/pages/dashboard`, but migration apply/deploy/live proof are still pending so the current runtime truth is unchanged
+- Added `npm run proof:v1:client-write-inventory` as the canonical local guard for active `src/pages` / `src/pages/dashboard` runtime files, and wired it into `test:launch` so the no-direct-client-write claim is rerunnable instead of living only in changelog prose
 - Moved registry owner-side item CRUD, reorder, and refresh-policy writes behind a fifth local RPC batch in the working tree; focused local proof (`registryService.test`, `typecheck`) is green, and the live runtime truth stays unchanged until the already-pending RPC deploy/proof sweep
 - Moved dashboard message create/update and coordinator alert/check-in/Q&A writes behind a sixth local RPC batch in the working tree; focused local proof (`messageService.boundary.test.ts`, `coordinatorService.test.ts`, `typecheck`, `lint`) is green, and the live runtime truth stays unchanged until the already-pending RPC deploy/proof sweep
 - Moved owner settings and overview write paths behind a seventh local RPC batch in the working tree; focused local proof (`settingsSiteData.test.ts`, `overviewService.test.ts`, `typecheck`, `lint`) is green, and the live runtime truth stays unchanged until the already-pending RPC deploy/proof sweep
@@ -156,14 +158,15 @@ Those two deploy commands previously reported success, but the live inventory/ru
 Only deferred, non-launch follow-up remains:
 - public vault contribution enablement and live proof
 - custom-host/subdomain dedicated DNS rerun
-- apply/deploy the seven local guest/planning/seating/invitation RSVP/registry/message-coordinator/settings-overview RPC batches, then rerun collaborator/client-RLS live proof with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
+- apply/deploy the ten local guest/planning/seating/invitation RSVP/registry/message-coordinator/settings-overview/vault/onboarding/name-change RPC batches, then rerun collaborator/client-RLS live proof with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
+- rerun `npm run proof:v1:client-write-inventory` after the remote apply sweep so the local no-direct-client-write inventory stays canonical
 - broader client-RLS role matrix expansion for remaining non-guest dashboard write surfaces beyond guest, planning, and seating
 - client-write surface reduction into Edge Functions / RPCs
 - dedicated custom-host DNS rerun only if that launch surface becomes active
 
 Why this is `9.9 / 10` instead of `10 / 10`:
 - the launch baseline is green and production-ready
-- the current committed branch head (`eb515395`) contains post-deploy proof hardening beyond the exact live frontend runtime SHA (`f0cbf841`)
+- the current committed branch head (`a4342334`) contains post-deploy proof hardening beyond the exact live frontend runtime SHA (`f0cbf841`)
 - that remaining delta is non-runtime and non-launch, but it keeps me just shy of calling it mathematically perfect
 
 ## Bottom Line

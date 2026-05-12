@@ -69,6 +69,7 @@ describe('proof board freshness', () => {
     expect(board.currentState).toMatchObject(expectedState);
     expect(board.activeUngatedLaunchBlockers ?? []).toEqual(expectedBlockers);
     expect(board.summary?.currentProofState).toContain('public-access-coverage');
+    expect(board.summary?.currentProofState).toContain('client-write-inventory');
     expect(board.summary?.currentProofState).toContain('launch-closeout');
     expect(board.summary?.currentProofState).toContain('Release Launch Gate');
     expect(board.summary?.currentNextActions ?? '').toContain('apply/deploy the ten local RPC batches');

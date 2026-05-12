@@ -50,6 +50,22 @@ This file preserves timestamped historical entries, extraction batches, and no-d
   - no change to live launch state
   - the obvious active-page raw client-write inventory is now locally cleared, pending migration apply/deploy and fresh runtime proof
 
+## 2026-05-11 08:18 PM PDT - Canonical Client Write Inventory Proof
+
+- Status: `PROOF EXPANDED`
+- What changed:
+  - added `scripts/v1-proof-client-write-inventory.mjs`
+  - added `npm run proof:v1:client-write-inventory`
+  - wired the guard into `test:launch`
+  - added `src/lib/clientWriteInventoryProofScript.test.ts`
+- Proof result:
+  - `npm test -- --run src/lib/clientWriteInventoryProofScript.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts` -> `PASS`
+  - `npm run proof:v1:client-write-inventory` -> `PASS`
+  - `git diff --check` -> `PASS`
+- Launch effect:
+  - no live-state change
+  - the active runtime no-direct-client-write claim is now a canonical rerunnable proof lane while the pending RPC migration apply/deploy sweep remains the next runtime step
+
 
 # Production Hardening Backlog
 
