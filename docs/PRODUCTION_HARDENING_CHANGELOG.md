@@ -61,6 +61,27 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 - Result:
   - the launch-critical strict pocket now covers auth, public access, public DTO contract, payment/config validation, and vendor-profile boundaries
 
+## 2026-05-12 09:18 AM PDT - Strict Pocket Expanded To Broader Auth/Public Runtime
+
+- Status: `LOCAL HARDENING + PROOF`
+- What changed:
+  - removed a dead helper and stale imports from `src/lib/publicSiteRenderModel.ts`
+  - widened the `eslint.config.js` error pocket again to include:
+    - `src/lib/activeSite.ts`
+    - `src/lib/customerSafeError.ts`
+    - `src/lib/mediaUrl.ts`
+    - `src/lib/paymentGate.ts`
+    - `src/lib/publicSiteRenderModel.ts`
+    - `src/render/publicSectionDataSanitizer.ts`
+  - widened `npm run proof:v1:strict-pocket` and `scripts/v1-proof-test-lanes.mjs` to match
+- Proof:
+  - `npm run proof:v1:strict-pocket`
+  - `npm run proof:v1:test-lanes`
+  - `npm test -- --run src/lib/strictPocketTypecheck.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts src/lib/publicSiteRenderModel.test.ts`
+  - `npm run typecheck -- --pretty false`
+- Result:
+  - the launch-critical strict pocket now covers the broader auth/public runtime boundary, not just the first public DTO/access slice
+
 
 ## 2026-05-12 07:14 AM PDT - Registry Refresh Policy Matrix Coverage And Inventory Guard Tightening
 

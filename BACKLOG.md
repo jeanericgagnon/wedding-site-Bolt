@@ -83,7 +83,7 @@ No active `P0` or `P1` launch blockers remain.
   - note:
     - `strict` is on, but `noImplicitAny`, `noUnusedLocals`, and `noUnusedParameters` are still disabled
     - several high-value lint rules are still warnings
-    - the strict pocket now hard-fails on `ProtectedRoute.tsx`, `publicRenderContract.ts`, `publicSiteAccess.ts`, `publicSiteSlug.ts`, `siteConfigValidate.ts`, `stripeService.ts`, and `vendorProfiles.ts` via `npm run proof:v1:strict-pocket`
+    - the strict pocket now hard-fails on `ProtectedRoute.tsx`, `activeSite.ts`, `customerSafeError.ts`, `mediaUrl.ts`, `paymentGate.ts`, `publicRenderContract.ts`, `publicSiteAccess.ts`, `publicSiteRenderModel.ts`, `publicSiteSlug.ts`, `publicSectionDataSanitizer.ts`, `siteConfigValidate.ts`, `stripeService.ts`, and `vendorProfiles.ts` via `npm run proof:v1:strict-pocket`
   - direction:
     - tighten gradually, starting with new code and high-risk modules
 

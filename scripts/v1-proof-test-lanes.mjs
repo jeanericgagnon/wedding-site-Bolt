@@ -11,7 +11,7 @@ const required = {
   'test:integration': 'npm run proof:v1:canonical-smoke && npm run proof:v1:guests-rsvp-ops && npm run proof:v1:registry && npm run proof:v1:seating-continuity && npm run proof:v1:comms-center',
   'test:e2e': 'npx playwright test --workers=1 tests/e2e',
   'test:launch': 'npm run typecheck -- --pretty false && npm run proof:v1:strict-pocket && npm run lint -- --quiet && npm run test:security && npm run proof:v1:public-access-coverage && npm run proof:v1:client-write-inventory && npm run guard:file-size && npm run guard:assets && npm run build && npm run proof:v1:performance-budget && npm run proof:v1:board:md',
-  'proof:v1:strict-pocket': 'eslint --max-warnings 0 src/components/auth/ProtectedRoute.tsx src/lib/publicRenderContract.ts src/lib/publicSiteAccess.ts src/lib/publicSiteSlug.ts src/lib/siteConfigValidate.ts src/lib/stripeService.ts src/lib/vendorProfiles.ts',
+  'proof:v1:strict-pocket': 'eslint --max-warnings 0 src/components/auth/ProtectedRoute.tsx src/lib/activeSite.ts src/lib/customerSafeError.ts src/lib/mediaUrl.ts src/lib/paymentGate.ts src/lib/publicRenderContract.ts src/lib/publicSiteAccess.ts src/lib/publicSiteRenderModel.ts src/lib/publicSiteSlug.ts src/render/publicSectionDataSanitizer.ts src/lib/siteConfigValidate.ts src/lib/stripeService.ts src/lib/vendorProfiles.ts',
   'proof:v1:test-lanes': 'node scripts/v1-proof-test-lanes.mjs',
   'proof:v1:public-access-coverage': 'node scripts/v1-proof-public-access-coverage.mjs',
   'proof:v1:client-write-inventory': 'node scripts/v1-proof-client-write-inventory.mjs',

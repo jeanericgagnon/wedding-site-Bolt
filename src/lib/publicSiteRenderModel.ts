@@ -2,8 +2,6 @@ import type { BuilderPage } from '../types/builder/project.ts';
 import type { BuilderSectionInstance } from '../types/builder/section.ts';
 import type { WeddingDataV1 } from '../types/weddingData.ts';
 import { normalizeWeddingData } from '../types/weddingData.ts';
-import { SECTION_MANIFESTS } from '../builder/registry/sectionManifests.ts';
-import { manifestToCanonicalSectionDefinition } from './canonicalSectionRegistry.ts';
 import { getSafePublicWebUrl } from '../sections/publicLinks.ts';
 import { sanitizePublicSectionDataDeep } from '../render/publicSectionDataSanitizer.ts';
 import type { ThemeTokens } from './themePresets.ts';
@@ -91,39 +89,6 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   if (value && typeof value === 'object' && !Array.isArray(value)) return value as Record<string, unknown>;
   if (typeof value !== 'string') return null;
   return safeJsonParse<Record<string, unknown> | null>(value, null);
-}
-
-function pickPublicSectionSettings(section: { type: string; variant: string; settings?: Record<string, unknown> }) {
-  const rawSettings = sanitizePublicSectionDataDeep(
-    rewriteSignedMediaUrlsToPublicDeep(section.settings ?? {}),
-  ) as Record<string, unknown>;
-  const manifest = SECTION_MANIFESTS[section.type as keyof typeof SECTION_MANIFESTS];
-  if (!manifest) {
-    return {
-      type: section.type,
-      variant: section.variant,
-      settings: {},
-    };
-  }
-
-  const canonicalDefinition = manifestToCanonicalSectionDefinition(manifest);
-  const canonicalVariant = canonicalDefinition.variants[section.variant]
-    ? section.variant
-    : canonicalDefinition.defaultVariant;
-  const variantDefaults = canonicalDefinition.variants[canonicalVariant]?.defaults ?? {};
-  const allowedKeys = new Set(manifest.settingsSchema.fields.map((field) => field.key));
-  const pickedSettings = Object.fromEntries(
-    Object.entries(rawSettings).filter(([key]) => allowedKeys.has(key)),
-  );
-
-  return {
-    type: canonicalDefinition.type,
-    variant: canonicalVariant,
-    settings: {
-      ...variantDefaults,
-      ...pickedSettings,
-    },
-  };
 }
 
 function sanitizeBuilderSection(section: BuilderSectionInstance): BuilderSectionInstance {

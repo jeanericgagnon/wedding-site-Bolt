@@ -24,6 +24,12 @@ _Launch call right now:_ `GO`
   - `npm run proof:v1:strict-pocket` -> `PASS`
   - `npm run proof:v1:test-lanes` -> `PASS`
   - the launch-critical strict pocket now also covers the public access / public DTO contract boundary
+- 2026-05-12 09:18 AM PDT:
+  - `npm run proof:v1:strict-pocket` -> `PASS`
+  - `npm run proof:v1:test-lanes` -> `PASS`
+  - `npm test -- --run src/lib/strictPocketTypecheck.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts src/lib/publicSiteRenderModel.test.ts` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - the launch-critical strict pocket now also covers the broader auth/public runtime boundary: `activeSite.ts`, `customerSafeError.ts`, `mediaUrl.ts`, `paymentGate.ts`, `publicSiteRenderModel.ts`, and `publicSectionDataSanitizer.ts`
 - 2026-05-12 07:49 AM PDT:
   - `npm run proof:v1:test-lanes` -> `PASS`
   - `npm test -- --run src/lib/ciHardpassWorkflow.test.ts src/lib/releaseLaunchGate.test.ts src/lib/aiExposureProofScript.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts` -> `PASS`
