@@ -135,6 +135,19 @@ _Launch call right now:_ `GO`
   - no live-state change yet
   - apply/deploy plus fresh live proof are still required before this batch counts as runtime hardening
 
+### 2026-05-11 06:46 PM PDT - Guest Core Write RPC Batch (Local Only)
+
+- Added migration `20260511220000_guest_core_write_rpcs.sql`.
+- Moved guest core create/update/delete and bulk patch paths off raw client guest-table writes in the working tree.
+- Focused local proof is green:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/seating/seatingService.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+  - `npm run build`
+- Result:
+  - no live-state change yet
+  - apply/deploy plus fresh live proof are still required before this batch counts as runtime hardening
+
 ### 2026-05-11 03:42 PM PDT - Public Vault Contribution Downgraded To Deferred / Hard-Disabled
 
 - Attempted closeout redeploys:

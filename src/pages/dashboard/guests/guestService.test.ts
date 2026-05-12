@@ -3,6 +3,9 @@ import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   addGuestEventInvitation,
+  clearGuestCheckInsForSite,
+  createGuest,
+  deleteGuestById,
   assignGuestsToHouseholdForSite,
   GUEST_AUDIT_SELECT,
   GUEST_CONFLICT_SELECT,
@@ -44,6 +47,7 @@ import {
   resolveGuestDashboardConflict,
   resolveGuestDashboardConflicts,
   toEventInvitationRows,
+  updateGuest,
   updateGuestCheckInForSite,
   updateGuestHouseholdForSite,
   updateGuestThankYouSentForSite,
@@ -342,11 +346,76 @@ describe('guestService', () => {
     expect(service).toContain('export async function markGuestReminderSentForSite(');
     expect(service).toContain('export async function assignGuestsToHouseholdForSite(');
     expect(service).toContain('export async function updateGuestHouseholdForSite(');
+    expect(service).toContain("supabase.rpc('guest_dashboard_guest_write'");
+    expect(service).toContain("supabase.rpc('guest_dashboard_guest_bulk_patch'");
+    expect(service).toContain("supabase.rpc('guest_dashboard_guest_delete'");
+    expect(service).toContain("supabase.rpc('guest_dashboard_guest_delete_site'");
     expect(service).toContain('export async function persistGuestReminderSettings(');
     expect(service).toContain("supabase.rpc('guest_dashboard_persist_reminder_settings'");
     expect(service).not.toContain(".from('wedding_sites')\n    .update({\n      rsvp_custom_questions:");
     expect(service).not.toContain(".from('wedding_sites')\n    .update(patch)");
+    expect(service).not.toContain(".from('guests')\n    .insert([{");
+    expect(service).not.toContain(".from('guests')\n    .delete()");
     expect(service).toContain('supabase.auth.refreshSession()');
+  });
+
+  it('routes guest core writes through dedicated RPCs', async () => {
+    rpcMock
+      .mockResolvedValueOnce({ data: { id: 'guest-1' }, error: null })
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: null });
+
+    await expect(createGuest({
+      weddingSiteId: 'site-1',
+      firstName: 'Alex',
+      lastName: 'Jordan',
+      email: 'alex@example.com',
+      phone: '555-0100',
+      plusOneAllowed: true,
+      invitedToCeremony: true,
+      invitedToReception: false,
+      inviteToken: 'token-1',
+    })).resolves.toBe('guest-1');
+
+    await expect(updateGuest({
+      guestId: 'guest-1',
+      firstName: 'Alex',
+      lastName: 'Jordan',
+      name: 'Alex Jordan',
+      email: 'alex@example.com',
+      phone: '555-0100',
+      plusOneAllowed: false,
+      invitedToCeremony: true,
+      invitedToReception: true,
+    })).resolves.toBeUndefined();
+
+    await expect(deleteGuestById('guest-1')).resolves.toBeUndefined();
+    await expect(markGuestsThankYouSentForSite('site-1', ['guest-1', 'guest-2'], '2026-05-07T00:00:00Z')).resolves.toBeUndefined();
+    await expect(assignGuestsToHouseholdForSite('site-1', ['guest-1', 'guest-2'], 'household-1')).resolves.toBeUndefined();
+
+    expect(rpcMock).toHaveBeenNthCalledWith(1, 'guest_dashboard_guest_write', expect.objectContaining({
+      p_wedding_site_id: 'site-1',
+      p_guest_id: null,
+    }));
+    expect(rpcMock).toHaveBeenNthCalledWith(2, 'guest_dashboard_guest_write', expect.objectContaining({
+      p_wedding_site_id: null,
+      p_guest_id: 'guest-1',
+    }));
+    expect(rpcMock).toHaveBeenNthCalledWith(3, 'guest_dashboard_guest_delete', {
+      p_guest_id: 'guest-1',
+    });
+    expect(rpcMock).toHaveBeenNthCalledWith(4, 'guest_dashboard_guest_bulk_patch', {
+      p_wedding_site_id: 'site-1',
+      p_guest_ids: ['guest-1', 'guest-2'],
+      p_payload: { thank_you_sent_at: '2026-05-07T00:00:00Z' },
+    });
+    expect(rpcMock).toHaveBeenNthCalledWith(5, 'guest_dashboard_guest_bulk_patch', {
+      p_wedding_site_id: 'site-1',
+      p_guest_ids: ['guest-1', 'guest-2'],
+      p_payload: { household_id: 'household-1' },
+    });
   });
 
   it('refreshes the guest dashboard session through the service', async () => {
@@ -394,7 +463,7 @@ describe('guestService', () => {
     expect(service).toContain('const scopedGuestIds = guestIds.slice(0, MAX_GUEST_BULK_OPERATION_IDS);');
     expect(service).toContain(".in('guest_id', scopedGuestIds);");
     expect(service).toContain(".limit(MAX_GUEST_BULK_INVITATION_ROWS);");
-    expect(service).toContain(".in('id', scopedGuestIds);");
+    expect(service).toContain('p_guest_ids: scopedGuestIds');
     expect(service).toContain("Array.from(new Set(rows.map((row) => row.guest_id))).slice(0, MAX_GUEST_BULK_OPERATION_IDS);");
   });
 
@@ -742,51 +811,31 @@ describe('guestService', () => {
   });
 
   it('updates guest check-in through the service', async () => {
-    const eqIdMock = vi.fn().mockResolvedValue({ error: null });
-    const eqSiteMock = vi.fn(() => ({ eq: eqIdMock }));
-    fromMock.mockReturnValueOnce({
-      update: vi.fn(() => ({ eq: eqSiteMock })),
-    });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(updateGuestCheckInForSite('site-1', 'guest-1', '2026-05-07T00:00:00Z')).resolves.toBeUndefined();
   });
 
   it('updates thank-you state through the service', async () => {
-    const eqIdMock = vi.fn().mockResolvedValue({ error: null });
-    const eqSiteMock = vi.fn(() => ({ eq: eqIdMock }));
-    fromMock.mockReturnValueOnce({
-      update: vi.fn(() => ({ eq: eqSiteMock })),
-    });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(updateGuestThankYouSentForSite('site-1', 'guest-1', null)).resolves.toBeUndefined();
   });
 
   it('updates bulk thank-you state through the service', async () => {
-    const inMock = vi.fn().mockResolvedValue({ error: null });
-    const eqSiteMock = vi.fn(() => ({ in: inMock }));
-    fromMock.mockReturnValueOnce({
-      update: vi.fn(() => ({ eq: eqSiteMock })),
-    });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(markGuestsThankYouSentForSite('site-1', ['guest-1', 'guest-2'], '2026-05-07T00:00:00Z')).resolves.toBeUndefined();
   });
 
   it('updates household state through the service', async () => {
-    const eqIdMock = vi.fn().mockResolvedValue({ error: null });
-    const eqSiteMock = vi.fn(() => ({ eq: eqIdMock }));
-    fromMock.mockReturnValueOnce({
-      update: vi.fn(() => ({ eq: eqSiteMock })),
-    });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(updateGuestHouseholdForSite('site-1', 'guest-1', null)).resolves.toBeUndefined();
   });
 
   it('assigns guests to a household through the service', async () => {
-    const inMock = vi.fn().mockResolvedValue({ error: null });
-    const eqSiteMock = vi.fn(() => ({ in: inMock }));
-    fromMock.mockReturnValueOnce({
-      update: vi.fn(() => ({ eq: eqSiteMock })),
-    });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(assignGuestsToHouseholdForSite('site-1', ['guest-1', 'guest-2'], 'guest-1')).resolves.toBeUndefined();
   });
@@ -820,33 +869,41 @@ describe('guestService', () => {
   });
 
   it('marks guest invitation sent through the service', async () => {
-    const eqIdMock = vi.fn().mockResolvedValue({ error: null });
-    const eqSiteMock = vi.fn(() => ({ eq: eqIdMock }));
-    fromMock.mockReturnValueOnce({
-      update: vi.fn(() => ({ eq: eqSiteMock })),
-    });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(markGuestInvitationSentForSite('site-1', 'guest-1', '2026-05-07T00:00:00Z')).resolves.toBeUndefined();
   });
 
   it('marks guest invitation and reminder sent through the service', async () => {
-    const eqIdMock = vi.fn().mockResolvedValue({ error: null });
-    const eqSiteMock = vi.fn(() => ({ eq: eqIdMock }));
-    fromMock.mockReturnValueOnce({
-      update: vi.fn(() => ({ eq: eqSiteMock })),
-    });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(markGuestInvitationAndReminderSentForSite('site-1', 'guest-1', '2026-05-07T00:00:00Z')).resolves.toBeUndefined();
   });
 
   it('marks guest reminder sent through the service', async () => {
-    const eqIdMock = vi.fn().mockResolvedValue({ error: null });
-    const eqSiteMock = vi.fn(() => ({ eq: eqIdMock }));
-    fromMock.mockReturnValueOnce({
-      update: vi.fn(() => ({ eq: eqSiteMock })),
-    });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(markGuestReminderSentForSite('site-1', 'guest-1', '2026-05-07T00:00:00Z')).resolves.toBeUndefined();
+  });
+
+  it('clears guest check-ins through the service', async () => {
+    const limitMock = vi.fn().mockResolvedValue({
+      data: [{ id: 'guest-1' }, { id: 'guest-2' }],
+      error: null,
+    });
+    const notMock = vi.fn(() => ({ limit: limitMock }));
+    const eqMock = vi.fn(() => ({ not: notMock }));
+    fromMock.mockReturnValueOnce({
+      select: vi.fn(() => ({ eq: eqMock })),
+    });
+    rpcMock.mockResolvedValueOnce({ error: null });
+
+    await expect(clearGuestCheckInsForSite('site-1')).resolves.toBeUndefined();
+    expect(rpcMock).toHaveBeenCalledWith('guest_dashboard_guest_bulk_patch', {
+      p_wedding_site_id: 'site-1',
+      p_guest_ids: ['guest-1', 'guest-2'],
+      p_payload: { checked_in_at: null, checkin_notes: null },
+    });
   });
 
   it('rolls back guest RSVP state when assisted RSVP persistence fails', async () => {

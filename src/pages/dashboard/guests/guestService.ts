@@ -49,6 +49,30 @@ const GUEST_ID_SELECT = 'id';
 const IMPORTED_GUEST_SELECT = 'id, first_name, last_name, name, email';
 const DEFAULT_RSVP_MEAL_OPTIONS = ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'];
 
+function requireRpcGuestId(data: unknown, functionName: string): string {
+  if (!data || typeof data !== 'object' || typeof (data as { id?: unknown }).id !== 'string') {
+    throw new Error(`${functionName} returned an invalid guest row`);
+  }
+
+  return (data as { id: string }).id;
+}
+
+async function runGuestBulkPatch(
+  weddingSiteId: string,
+  guestIds: string[],
+  patch: Record<string, unknown>,
+): Promise<void> {
+  if (guestIds.length === 0) return;
+  const scopedGuestIds = guestIds.slice(0, MAX_GUEST_BULK_OPERATION_IDS);
+  const { error } = await supabase.rpc('guest_dashboard_guest_bulk_patch', {
+    p_wedding_site_id: weddingSiteId,
+    p_guest_ids: scopedGuestIds,
+    p_payload: patch,
+  });
+
+  if (error) throw error;
+}
+
 export async function refreshGuestDashboardSession(): Promise<void> {
   await supabase.auth.refreshSession();
 }
@@ -502,10 +526,10 @@ export async function fetchGuestRsvps(guestIds: string[]): Promise<unknown[]> {
 }
 
 export async function createGuest(input: CreateGuestInput): Promise<string> {
-  const { data, error } = await supabase
-    .from('guests')
-    .insert([{
-      wedding_site_id: input.weddingSiteId,
+  const { data, error } = await supabase.rpc('guest_dashboard_guest_write', {
+    p_wedding_site_id: input.weddingSiteId,
+    p_guest_id: null,
+    p_payload: {
       first_name: input.firstName,
       last_name: input.lastName,
       name: `${input.firstName} ${input.lastName}`,
@@ -516,18 +540,18 @@ export async function createGuest(input: CreateGuestInput): Promise<string> {
       invited_to_reception: input.invitedToReception,
       invite_token: input.inviteToken,
       rsvp_status: 'pending',
-    }])
-    .select(GUEST_ID_SELECT)
-    .single();
+    },
+  });
 
   if (error) throw error;
-  return (data as { id: string }).id;
+  return requireRpcGuestId(data, 'guest_dashboard_guest_write');
 }
 
 export async function updateGuest(input: UpdateGuestInput): Promise<void> {
-  const { error } = await supabase
-    .from('guests')
-    .update({
+  const { error } = await supabase.rpc('guest_dashboard_guest_write', {
+    p_wedding_site_id: null,
+    p_guest_id: input.guestId,
+    p_payload: {
       first_name: input.firstName,
       last_name: input.lastName,
       name: input.name,
@@ -536,14 +560,16 @@ export async function updateGuest(input: UpdateGuestInput): Promise<void> {
       plus_one_allowed: input.plusOneAllowed,
       invited_to_ceremony: input.invitedToCeremony,
       invited_to_reception: input.invitedToReception,
-    })
-    .eq('id', input.guestId);
+    },
+  });
 
   if (error) throw error;
 }
 
 export async function deleteGuestById(guestId: string): Promise<void> {
-  const { error } = await supabase.from('guests').delete().eq('id', guestId);
+  const { error } = await supabase.rpc('guest_dashboard_guest_delete', {
+    p_guest_id: guestId,
+  });
   if (error) throw error;
 }
 
@@ -691,10 +717,9 @@ export async function deleteAllGuestsForSite(weddingSiteId: string): Promise<Gue
     if (rsvpDeleteError) throw rsvpDeleteError;
   }
 
-  const { error } = await supabase
-    .from('guests')
-    .delete()
-    .eq('wedding_site_id', weddingSiteId);
+  const { error } = await supabase.rpc('guest_dashboard_guest_delete_site', {
+    p_wedding_site_id: weddingSiteId,
+  });
   if (error) throw error;
 
   return { guestIds, invitationIds };
@@ -713,10 +738,11 @@ export async function insertImportedGuests(guestRows: Array<Record<string, unkno
 export async function updateHouseholdGuestIds(householdId: string, guestIds: string[]): Promise<void> {
   if (guestIds.length === 0) return;
   const scopedGuestIds = guestIds.slice(0, MAX_GUEST_BULK_OPERATION_IDS);
-  const { error } = await supabase
-    .from('guests')
-    .update({ household_id: householdId })
-    .in('id', scopedGuestIds);
+  const { error } = await supabase.rpc('guest_dashboard_guest_bulk_patch', {
+    p_wedding_site_id: null,
+    p_guest_ids: scopedGuestIds,
+    p_payload: { household_id: householdId },
+  });
 
   if (error) throw error;
 }
@@ -737,13 +763,7 @@ export async function updateGuestForSite(
   guestId: string,
   patch: Record<string, unknown>,
 ): Promise<void> {
-  const { error } = await supabase
-    .from('guests')
-    .update(patch)
-    .eq('wedding_site_id', weddingSiteId)
-    .eq('id', guestId);
-
-  if (error) throw error;
+  await runGuestBulkPatch(weddingSiteId, [guestId], patch);
 }
 
 export async function updateGuestCheckInForSite(
@@ -751,13 +771,7 @@ export async function updateGuestCheckInForSite(
   guestId: string,
   checkedInAt: string | null,
 ): Promise<void> {
-  const { error } = await supabase
-    .from('guests')
-    .update({ checked_in_at: checkedInAt })
-    .eq('wedding_site_id', weddingSiteId)
-    .eq('id', guestId);
-
-  if (error) throw error;
+  await runGuestBulkPatch(weddingSiteId, [guestId], { checked_in_at: checkedInAt });
 }
 
 export async function updateGuestThankYouSentForSite(
@@ -765,13 +779,7 @@ export async function updateGuestThankYouSentForSite(
   guestId: string,
   thankYouSentAt: string | null,
 ): Promise<void> {
-  const { error } = await supabase
-    .from('guests')
-    .update({ thank_you_sent_at: thankYouSentAt })
-    .eq('wedding_site_id', weddingSiteId)
-    .eq('id', guestId);
-
-  if (error) throw error;
+  await runGuestBulkPatch(weddingSiteId, [guestId], { thank_you_sent_at: thankYouSentAt });
 }
 
 export async function markGuestInvitationSentForSite(
@@ -779,13 +787,7 @@ export async function markGuestInvitationSentForSite(
   guestId: string,
   invitationSentAt: string,
 ): Promise<void> {
-  const { error } = await supabase
-    .from('guests')
-    .update({ invitation_sent_at: invitationSentAt })
-    .eq('wedding_site_id', weddingSiteId)
-    .eq('id', guestId);
-
-  if (error) throw error;
+  await runGuestBulkPatch(weddingSiteId, [guestId], { invitation_sent_at: invitationSentAt });
 }
 
 export async function markGuestInvitationAndReminderSentForSite(
@@ -793,16 +795,10 @@ export async function markGuestInvitationAndReminderSentForSite(
   guestId: string,
   sentAt: string,
 ): Promise<void> {
-  const { error } = await supabase
-    .from('guests')
-    .update({
-      invitation_sent_at: sentAt,
-      reminder_last_sent_at: sentAt,
-    })
-    .eq('wedding_site_id', weddingSiteId)
-    .eq('id', guestId);
-
-  if (error) throw error;
+  await runGuestBulkPatch(weddingSiteId, [guestId], {
+    invitation_sent_at: sentAt,
+    reminder_last_sent_at: sentAt,
+  });
 }
 
 export async function markGuestReminderSentForSite(
@@ -810,13 +806,7 @@ export async function markGuestReminderSentForSite(
   guestId: string,
   reminderSentAt: string,
 ): Promise<void> {
-  const { error } = await supabase
-    .from('guests')
-    .update({ reminder_last_sent_at: reminderSentAt })
-    .eq('wedding_site_id', weddingSiteId)
-    .eq('id', guestId);
-
-  if (error) throw error;
+  await runGuestBulkPatch(weddingSiteId, [guestId], { reminder_last_sent_at: reminderSentAt });
 }
 
 export async function markGuestsThankYouSentForSite(
@@ -824,15 +814,7 @@ export async function markGuestsThankYouSentForSite(
   guestIds: string[],
   thankYouSentAt: string,
 ): Promise<void> {
-  if (guestIds.length === 0) return;
-  const scopedGuestIds = guestIds.slice(0, MAX_GUEST_BULK_OPERATION_IDS);
-  const { error } = await supabase
-    .from('guests')
-    .update({ thank_you_sent_at: thankYouSentAt })
-    .eq('wedding_site_id', weddingSiteId)
-    .in('id', scopedGuestIds);
-
-  if (error) throw error;
+  await runGuestBulkPatch(weddingSiteId, guestIds, { thank_you_sent_at: thankYouSentAt });
 }
 
 export async function assignGuestsToHouseholdForSite(
@@ -840,15 +822,7 @@ export async function assignGuestsToHouseholdForSite(
   guestIds: string[],
   householdId: string,
 ): Promise<void> {
-  if (guestIds.length === 0) return;
-  const scopedGuestIds = guestIds.slice(0, MAX_GUEST_BULK_OPERATION_IDS);
-  const { error } = await supabase
-    .from('guests')
-    .update({ household_id: householdId })
-    .eq('wedding_site_id', weddingSiteId)
-    .in('id', scopedGuestIds);
-
-  if (error) throw error;
+  await runGuestBulkPatch(weddingSiteId, guestIds, { household_id: householdId });
 }
 
 export async function updateGuestHouseholdForSite(
@@ -856,13 +830,7 @@ export async function updateGuestHouseholdForSite(
   guestId: string,
   householdId: string | null,
 ): Promise<void> {
-  const { error } = await supabase
-    .from('guests')
-    .update({ household_id: householdId })
-    .eq('wedding_site_id', weddingSiteId)
-    .eq('id', guestId);
-
-  if (error) throw error;
+  await runGuestBulkPatch(weddingSiteId, [guestId], { household_id: householdId });
 }
 
 export async function generateSecureGuestInviteToken(): Promise<string> {
@@ -879,15 +847,7 @@ export async function updateGuestsForSite(
   guestIds: string[],
   patch: Record<string, unknown>,
 ): Promise<void> {
-  if (guestIds.length === 0) return;
-  const scopedGuestIds = guestIds.slice(0, MAX_GUEST_BULK_OPERATION_IDS);
-  const { error } = await supabase
-    .from('guests')
-    .update(patch)
-    .eq('wedding_site_id', weddingSiteId)
-    .in('id', scopedGuestIds);
-
-  if (error) throw error;
+  await runGuestBulkPatch(weddingSiteId, guestIds, patch);
 }
 
 export async function persistGuestReminderSettings(
@@ -904,14 +864,18 @@ export async function persistGuestReminderSettings(
 }
 
 export async function clearGuestCheckInsForSite(weddingSiteId: string): Promise<void> {
-  const { error } = await supabase
+  const { data: guestRows, error: guestReadError } = await supabase
     .from('guests')
-    .update({
-      checked_in_at: null,
-      checkin_notes: null,
-    })
+    .select(GUEST_ID_SELECT)
     .eq('wedding_site_id', weddingSiteId)
-    .not('checked_in_at', 'is', null);
+    .not('checked_in_at', 'is', null)
+    .limit(MAX_GUEST_BULK_OPERATION_IDS);
 
-  if (error) throw error;
+  if (guestReadError) throw guestReadError;
+
+  const guestIds = (guestRows ?? []).map((row) => (row as { id: string }).id);
+  await runGuestBulkPatch(weddingSiteId, guestIds, {
+    checked_in_at: null,
+    checkin_notes: null,
+  });
 }

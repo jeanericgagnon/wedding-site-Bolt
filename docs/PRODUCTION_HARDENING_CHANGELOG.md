@@ -3758,3 +3758,16 @@ Write a short architecture note after the highest-risk hardening lanes are imple
 - Updated `docs/v1-final-gated-unblock-runbook.md`, `BACKLOG.md`, `docs/PRODUCTION_HARDENING_REPORT.md`, and `docs/v1-smoke-proof-log.md` so the last-mile launch steps point to the exact secure closeout command instead of an implicit checklist.
 - Verified locally that `npm run proof:v1:launch-closeout` exits blocked only on the expected `missing_service_role_key` blockers while still keeping the board and diff checks green.
 - Added `docs/v1-runtime-operator-notes-checklist.md` plus `npm run proof:v1:runtime-note-checklist` so the remaining human runtime-note passes are centralized and testable instead of scattered across proof script output.
+
+# 2026-05-11 06:46 PM PT - Guest Core Write RPC Batch (Local Only)
+
+- Added `supabase/migrations/20260511220000_guest_core_write_rpcs.sql`.
+- Moved guest core create/update/delete and bulk patch paths off raw client guest-table writes in `src/pages/dashboard/guests/guestService.ts`.
+- Added focused proof for the new guest-core path:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/seating/seatingService.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+  - `npm run build`
+  - `npm run proof:v1:board:md`
+  - `git diff --check`
+- Launch status did not change. This is local-only hardening and no deploy was run.
