@@ -10,6 +10,7 @@ describe('client RLS matrix proof script', () => {
     expect(source).toContain('npm run proof:v1:guests-rsvp-ops');
     expect(source).toContain('npm run proof:v1:collaborator-runtime');
     expect(source).toContain('viewer deny');
+    expect(source).toContain('Guest-scoped collaborators can mutate guest rows directly');
     expect(source).toContain('network_access_required');
     expect(source).toContain('browser_runtime_required');
   });

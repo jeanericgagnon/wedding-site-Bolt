@@ -197,16 +197,12 @@ export async function loadGuestDashboardSiteSettings(userId: string): Promise<Gu
 }
 
 export async function persistGuestDashboardRsvpConfig(input: PersistGuestDashboardRsvpConfigInput): Promise<void> {
-  const { error } = await supabase
-    .from('wedding_sites')
-    .update({
-      rsvp_custom_questions: input.questions,
-      rsvp_meal_config: {
-        enabled: input.mealEnabled,
-        options: input.mealOptions,
-      },
-    })
-    .eq('id', input.weddingSiteId);
+  const { error } = await supabase.rpc('guest_dashboard_persist_rsvp_config', {
+    p_wedding_site_id: input.weddingSiteId,
+    p_questions: input.questions,
+    p_meal_enabled: input.mealEnabled,
+    p_meal_options: input.mealOptions,
+  });
 
   if (error) throw error;
 }
@@ -898,10 +894,11 @@ export async function persistGuestReminderSettings(
   weddingSiteId: string,
   patch: { reminder_cadence_days?: 1 | 3 | 7; auto_reminders_enabled?: boolean },
 ): Promise<void> {
-  const { error } = await supabase
-    .from('wedding_sites')
-    .update(patch)
-    .eq('id', weddingSiteId);
+  const { error } = await supabase.rpc('guest_dashboard_persist_reminder_settings', {
+    p_wedding_site_id: weddingSiteId,
+    p_reminder_cadence_days: patch.reminder_cadence_days ?? null,
+    p_auto_reminders_enabled: patch.auto_reminders_enabled ?? null,
+  });
 
   if (error) throw error;
 }

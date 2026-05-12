@@ -142,9 +142,10 @@ const output = {
     'Anonymous guest-contact lookup denies partial and mismatched names, then scopes signed household updates',
     'Public RSVP strict smoke proves guest-facing RSVP/token boundaries',
     'Owner invite flow plus viewer deny and planner/coordinator allow collaborator runtime proof',
+    'Guest-scoped collaborators can mutate guest rows directly while timeline/settings writes stay denied without permission',
   ],
   stillManualProofNeeded: [
-    'Broader direct client-table role matrix across every dashboard write surface',
+    'Broader direct client-table role matrix across planning, seating, and other non-guest dashboard write surfaces',
   ],
   blockers: blockedRequired.map((result) => ({
     id: result.id,

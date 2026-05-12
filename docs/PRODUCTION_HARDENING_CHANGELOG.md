@@ -24,6 +24,37 @@ This file preserves timestamped historical entries, extraction batches, and no-d
   - no launch-state change
   - the client-RLS backlog item now has one canonical live baseline command instead of scattered proof references
 
+## 2026-05-11 06:06 PM PT - Guest Direct-Write RLS Coverage Added
+
+- Status: `PROOF EXPANDED`
+- What changed:
+  - expanded `tests/e2e/collaborator-permission-rls.spec.ts`
+  - added `src/lib/collaboratorPermissionRlsProof.test.ts`
+  - broadened `scripts/v1-proof-collaborator-runtime.mjs` and `scripts/v1-proof-client-rls-matrix.mjs` coverage wording
+  - updated the service-role disposition and launch board/report to reflect the sharper live RLS baseline
+- Proof result:
+  - `npm test -- --run src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts` -> `PASS`
+  - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Launch effect:
+  - no launch-state change
+  - the remaining client-RLS expansion gap is now explicitly planning/seating/non-guest direct-write coverage rather than the whole guest dashboard write surface
+
+## 2026-05-11 06:16 PM PT - Guest Dashboard Settings RPC Batch (Local Only)
+
+- Status: `LOCAL PASS / DEPLOY REQUIRED`
+- What changed:
+  - added migration `20260511200000_guest_dashboard_settings_rpcs.sql`
+  - moved guest-dashboard RSVP-config and reminder-settings writes off raw `wedding_sites` updates and behind guest-scoped RPCs
+  - expanded the collaborator permission proof to assert direct settings writes fail closed while the new RPC path is the intended write lane
+- Proof result:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `npm run lint -- --quiet` -> `PASS`
+- Launch effect:
+  - no live-state change yet
+  - migration apply, deploy, and fresh live collaborator/client-RLS proof are still required before this batch can be counted as runtime hardening
+
 ## 2026-05-11 05:45 PM PT - Internal Tooling Route Production Gating
 
 - Status: `RESOLVED`

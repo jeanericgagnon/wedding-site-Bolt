@@ -52,6 +52,7 @@ import {
 const {
   refreshSessionMock,
   fromMock,
+  rpcMock,
   resolveActiveSiteForUserMock,
   getEventRsvpSnapshotsByInvitationIdsMock,
   deleteEventRsvpByInvitationIdMock,
@@ -59,6 +60,7 @@ const {
 } = vi.hoisted(() => ({
   refreshSessionMock: vi.fn(),
   fromMock: vi.fn(),
+  rpcMock: vi.fn(),
   resolveActiveSiteForUserMock: vi.fn(),
   getEventRsvpSnapshotsByInvitationIdsMock: vi.fn(),
   deleteEventRsvpByInvitationIdMock: vi.fn(),
@@ -71,6 +73,7 @@ vi.mock('../../../lib/supabase', () => ({
       refreshSession: refreshSessionMock,
     },
     from: fromMock,
+    rpc: rpcMock,
   },
 }));
 
@@ -89,6 +92,7 @@ describe('guestService', () => {
   beforeEach(() => {
     refreshSessionMock.mockReset();
     fromMock.mockReset();
+    rpcMock.mockReset();
     resolveActiveSiteForUserMock.mockReset();
     getEventRsvpSnapshotsByInvitationIdsMock.mockReset();
     deleteEventRsvpByInvitationIdMock.mockReset();
@@ -332,12 +336,16 @@ describe('guestService', () => {
     expect(service).toContain('export async function updateGuestThankYouSentForSite(');
     expect(service).toContain('export async function markGuestsThankYouSentForSite(');
     expect(service).toContain('export async function persistGuestDashboardRsvpConfig(input: PersistGuestDashboardRsvpConfigInput): Promise<void>');
+    expect(service).toContain("supabase.rpc('guest_dashboard_persist_rsvp_config'");
     expect(service).toContain('export async function markGuestInvitationSentForSite(');
     expect(service).toContain('export async function markGuestInvitationAndReminderSentForSite(');
     expect(service).toContain('export async function markGuestReminderSentForSite(');
     expect(service).toContain('export async function assignGuestsToHouseholdForSite(');
     expect(service).toContain('export async function updateGuestHouseholdForSite(');
     expect(service).toContain('export async function persistGuestReminderSettings(');
+    expect(service).toContain("supabase.rpc('guest_dashboard_persist_reminder_settings'");
+    expect(service).not.toContain(".from('wedding_sites')\n    .update({\n      rsvp_custom_questions:");
+    expect(service).not.toContain(".from('wedding_sites')\n    .update(patch)");
     expect(service).toContain('supabase.auth.refreshSession()');
   });
 
@@ -784,19 +792,18 @@ describe('guestService', () => {
   });
 
   it('persists reminder settings through the service', async () => {
-    const eqMock = vi.fn().mockResolvedValue({ error: null });
-    fromMock.mockReturnValueOnce({
-      update: vi.fn(() => ({ eq: eqMock })),
-    });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(persistGuestReminderSettings('site-1', { auto_reminders_enabled: true })).resolves.toBeUndefined();
+    expect(rpcMock).toHaveBeenCalledWith('guest_dashboard_persist_reminder_settings', {
+      p_wedding_site_id: 'site-1',
+      p_reminder_cadence_days: null,
+      p_auto_reminders_enabled: true,
+    });
   });
 
   it('persists guest RSVP config through the service', async () => {
-    const eqMock = vi.fn().mockResolvedValue({ error: null });
-    fromMock.mockReturnValueOnce({
-      update: vi.fn(() => ({ eq: eqMock })),
-    });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(persistGuestDashboardRsvpConfig({
       weddingSiteId: 'site-1',
@@ -804,6 +811,12 @@ describe('guestService', () => {
       mealEnabled: true,
       mealOptions: ['Chicken', 'Fish'],
     })).resolves.toBeUndefined();
+    expect(rpcMock).toHaveBeenCalledWith('guest_dashboard_persist_rsvp_config', {
+      p_wedding_site_id: 'site-1',
+      p_questions: [],
+      p_meal_enabled: true,
+      p_meal_options: ['Chicken', 'Fish'],
+    });
   });
 
   it('marks guest invitation sent through the service', async () => {
