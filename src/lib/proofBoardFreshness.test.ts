@@ -71,7 +71,7 @@ describe('proof board freshness', () => {
     expect(board.summary?.currentProofState).toContain('public-access-coverage');
     expect(board.summary?.currentProofState).toContain('launch-closeout');
     expect(board.summary?.currentProofState).toContain('Release Launch Gate');
-    expect(board.summary?.currentNextActions ?? '').toContain('apply/deploy the nine local RPC batches');
+    expect(board.summary?.currentNextActions ?? '').toContain('apply/deploy the ten local RPC batches');
     expect(board.activeUngatedLaunchBlockers ?? []).toEqual([]);
     expect(board.currentState?.['Current blockers']).toBe('none');
     expect(board.currentState?.['Reason production-ready is not yet claimed']).toContain('No active P0/P1 blockers remain');

@@ -19,6 +19,7 @@ _Launch call right now:_ `GO`
 - The settings/overview owner-write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
 - The vault/planning vendor-budget RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
 - The onboarding/signup write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
+- The name-change write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
 - Payment gate now fails closed on billing lookup failure.
 - RSVP capacity enforcement now serializes through the deployed database function path.
 - Release launch CI now hard-fails without strict Supabase RSVP proof secrets and passes with the configured repo secrets.
@@ -73,6 +74,23 @@ _Launch call right now:_ `GO`
   - `npm test -- --run src/pages/onboarding/onboardingService.test.ts src/pages/signupService.test.ts`
   - `npm run typecheck -- --pretty false`
   - `git diff --check`
+- Not live yet: migration apply/deploy is still pending, so runtime proof remains gated until the local RPC batches are deployed.
+
+## 2026-05-11 08:10 PM PDT - Name Change Write RPC Batch (Local Only)
+
+- Added local migration `20260512020000_name_change_write_rpcs.sql`
+- Moved name-change planner writes behind local RPCs:
+  - `name_change_case_write`
+  - `name_change_documents_replace`
+  - `name_change_extracted_fields_replace`
+  - `name_change_plan_snapshot_write`
+  - `name_change_reminders_replace`
+- Focused proof green:
+  - `npm test -- --run src/pages/dashboard/planning/nameChangeService.test.ts src/lib/dashboardDataBoundary.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `git diff --check`
+- Inventory note:
+  - `rg -n "\\.from\\('.*'\\)\\.(insert|update|upsert|delete)" src/pages/dashboard src/pages -g '!**/*.test.*'` now returns no matches
 - Not live yet: migration apply/deploy is still pending, so runtime proof remains gated until the local RPC batches are deployed.
 - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`
 - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` -> `LIVE PASS`

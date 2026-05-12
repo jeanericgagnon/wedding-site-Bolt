@@ -828,7 +828,6 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('const SEATING_LOOKUP_ASSIGNMENT_SELECT = ');
     expect(source).toContain('const SEATING_LOOKUP_TABLE_SELECT = ');
     expect(source).toContain('const SEATING_LOOKUP_GUEST_SELECT = ');
-    expect(source).toContain('.select(SEATING_EVENT_SELECT)');
     expect(source).toContain('.select(SEATING_TABLE_SELECT)');
     expect(source).toContain('.select(SEATING_ASSIGNMENT_SELECT)');
     expect(source).toContain('.select(SEATING_ELIGIBLE_GUEST_SELECT)');
@@ -837,6 +836,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('.select(SEATING_LOOKUP_ASSIGNMENT_SELECT)');
     expect(source).toContain('.select(SEATING_LOOKUP_TABLE_SELECT)');
     expect(source).toContain('.select(SEATING_LOOKUP_GUEST_SELECT)');
+    expect(source).toContain(".select('id, event_name, event_date, start_time, location_name')");
     expect(source).toContain('export async function refreshSeatingSession()');
     expect(source).toContain('supabase.auth.refreshSession()');
     expect(source).not.toContain(".from('seating_events')\n    .select('*')");
@@ -940,12 +940,10 @@ describe('dashboard data boundary guards', () => {
     expect(service).toContain('const COORDINATOR_EVENT_SELECT = ');
     expect(service).toContain('const COORDINATOR_EVENT_INVITATION_SELECT = ');
     expect(service).toContain('const COORDINATOR_QNA_SELECT = ');
-    expect(service).toContain('const COORDINATOR_QNA_INSERT_SELECT = ');
     expect(service).toContain('.select(COORDINATOR_GUEST_SELECT)');
     expect(service).toContain('.select(COORDINATOR_EVENT_SELECT)');
     expect(service).toContain('.select(COORDINATOR_EVENT_INVITATION_SELECT)');
     expect(service).toContain('.select(COORDINATOR_QNA_SELECT)');
-    expect(service).toContain('.select(COORDINATOR_QNA_INSERT_SELECT)');
     expect(service).not.toContain(".from('guests')\n      .select('*')");
     expect(service).not.toContain(".from('itinerary_events')\n      .select('*')");
     expect(service).not.toContain(".from('guest_qna_items')\n      .select('*')");

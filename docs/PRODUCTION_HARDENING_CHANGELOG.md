@@ -35,6 +35,21 @@ This file preserves timestamped historical entries, extraction batches, and no-d
   - no change to live launch state
   - another mainstream raw client-write cluster is now reduced locally, pending migration apply/deploy and fresh runtime proof
 
+## 2026-05-11 08:10 PM PDT - Name Change Write RPC Batch
+
+- Status: `LOCAL HARDENING`
+- What changed:
+  - added `20260512020000_name_change_write_rpcs.sql`
+  - moved name-change planner writes behind RPCs
+- Proof result:
+  - `npm test -- --run src/pages/dashboard/planning/nameChangeService.test.ts src/lib/dashboardDataBoundary.test.ts` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `git diff --check` -> `PASS`
+  - raw-write inventory in `src/pages` / `src/pages/dashboard` returned no direct `.insert/.update/.upsert/.delete` matches
+- Launch effect:
+  - no change to live launch state
+  - the obvious active-page raw client-write inventory is now locally cleared, pending migration apply/deploy and fresh runtime proof
+
 
 # Production Hardening Backlog
 

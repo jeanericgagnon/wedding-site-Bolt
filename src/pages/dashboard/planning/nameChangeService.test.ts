@@ -336,6 +336,24 @@ describe('nameChangeService normalization', () => {
     expect(source).toContain(".from('name_change_reminders').select(NAME_CHANGE_REMINDER_SELECT).eq('name_change_case_id', caseId).order('suggested_offset_days', { ascending: true }).limit(MAX_NAME_CHANGE_REMINDER_ROWS)");
   });
 
+  it('routes name-change writes through RPCs instead of raw client table mutations', () => {
+    const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/planning/nameChangeService.ts'), 'utf8');
+
+    expect(source).toContain("supabase.rpc('name_change_case_write'");
+    expect(source).toContain("supabase.rpc('name_change_documents_replace'");
+    expect(source).toContain("supabase.rpc('name_change_extracted_fields_replace'");
+    expect(source).toContain("supabase.rpc('name_change_plan_snapshot_write'");
+    expect(source).toContain("supabase.rpc('name_change_reminders_replace'");
+    expect(source).not.toContain(".from('name_change_cases')\n    .upsert(");
+    expect(source).not.toContain(".from('name_change_documents').delete()");
+    expect(source).not.toContain(".from('name_change_documents')\n    .insert(");
+    expect(source).not.toContain(".from('name_change_extracted_fields').delete()");
+    expect(source).not.toContain(".from('name_change_extracted_fields')\n    .insert(");
+    expect(source).not.toContain(".from('name_change_plan_snapshots')\n    .insert(");
+    expect(source).not.toContain(".from('name_change_reminders').delete()");
+    expect(source).not.toContain(".from('name_change_reminders')\n    .insert(");
+  });
+
   it('remaps legacy court-order extracted fields onto canonical persisted court-order documents', () => {
     const sourceDocuments: NameChangeDocumentInput[] = [
       {

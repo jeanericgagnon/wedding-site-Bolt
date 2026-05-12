@@ -790,7 +790,6 @@ export function hydrateNameChangeWorkspace(workspace: {
 export async function upsertNameChangeCase(weddingSiteId: string, input: NameChangeCaseInput): Promise<NameChangeCaseRecord> {
   const normalizedInput = normalizeNameChangeCaseInput(input);
   const payload = {
-    wedding_site_id: weddingSiteId,
     ...normalizedInput,
     current_middle_name: normalizedInput.current_middle_name || null,
     target_middle_name: normalizedInput.target_middle_name || null,
@@ -803,11 +802,10 @@ export async function upsertNameChangeCase(weddingSiteId: string, input: NameCha
     updated_at: new Date().toISOString(),
   };
 
-  const { data, error } = await supabase
-    .from('name_change_cases')
-    .upsert(payload, { onConflict: 'wedding_site_id' })
-    .select(NAME_CHANGE_CASE_SELECT)
-    .single();
+  const { data, error } = await supabase.rpc('name_change_case_write', {
+    p_wedding_site_id: weddingSiteId,
+    p_payload: payload,
+  });
 
   if (error) throw error;
   return data as unknown as NameChangeCaseRecord;
@@ -815,14 +813,10 @@ export async function upsertNameChangeCase(weddingSiteId: string, input: NameCha
 
 export async function replaceNameChangeDocuments(caseId: string, documents: NameChangeDocumentInput[]): Promise<NameChangeDocumentRecord[]> {
   const normalizedDocuments = normalizeNameChangeDocuments(documents);
-  const { error: deleteError } = await supabase.from('name_change_documents').delete().eq('name_change_case_id', caseId);
-  if (deleteError) throw deleteError;
-  if (normalizedDocuments.length === 0) return [];
-
-  const { data, error } = await supabase
-    .from('name_change_documents')
-    .insert(normalizedDocuments.map(({ id: _id, ...document }) => ({ ...document, name_change_case_id: caseId })))
-    .select(NAME_CHANGE_DOCUMENT_SELECT);
+  const { data, error } = await supabase.rpc('name_change_documents_replace', {
+    p_case_id: caseId,
+    p_documents: normalizedDocuments.map(({ id: _id, ...document }) => ({ ...document })),
+  });
 
   if (error) throw error;
   return (data as unknown as NameChangeDocumentRecord[] | null) ?? [];
@@ -859,29 +853,21 @@ export function remapNameChangeExtractedFieldsToPersistedDocuments(
 
 export async function replaceNameChangeExtractedFields(caseId: string, fields: NameChangeExtractedFieldInput[]): Promise<NameChangeExtractedFieldRecord[]> {
   const normalizedFields = normalizeNameChangeExtractedFields(fields);
-  const { error: deleteError } = await supabase.from('name_change_extracted_fields').delete().eq('name_change_case_id', caseId);
-  if (deleteError) throw deleteError;
-  if (normalizedFields.length === 0) return [];
-
-  const { data, error } = await supabase
-    .from('name_change_extracted_fields')
-    .insert(normalizedFields.map((field) => ({ ...field, name_change_case_id: caseId, document_id: field.document_id ?? null })))
-    .select(NAME_CHANGE_EXTRACTED_FIELD_SELECT);
+  const { data, error } = await supabase.rpc('name_change_extracted_fields_replace', {
+    p_case_id: caseId,
+    p_fields: normalizedFields.map((field) => ({ ...field, document_id: field.document_id ?? null })),
+  });
 
   if (error) throw error;
   return (data as unknown as NameChangeExtractedFieldRecord[] | null) ?? [];
 }
 
 export async function createNameChangePlanSnapshot(caseId: string, plan: NameChangePlan): Promise<NameChangePlanSnapshotRecord> {
-  const { data, error } = await supabase
-    .from('name_change_plan_snapshots')
-    .insert({
-      name_change_case_id: caseId,
-      engine_version: NAME_CHANGE_ENGINE_VERSION,
-      plan_payload: plan,
-    })
-    .select(NAME_CHANGE_PLAN_SNAPSHOT_SELECT)
-    .single();
+  const { data, error } = await supabase.rpc('name_change_plan_snapshot_write', {
+    p_case_id: caseId,
+    p_engine_version: NAME_CHANGE_ENGINE_VERSION,
+    p_plan_payload: plan,
+  });
 
   if (error) throw error;
   return data as unknown as NameChangePlanSnapshotRecord;
@@ -889,14 +875,10 @@ export async function createNameChangePlanSnapshot(caseId: string, plan: NameCha
 
 export async function replaceNameChangeReminders(caseId: string, reminders: NameChangeReminderInput[]): Promise<NameChangeReminderRecord[]> {
   const normalizedReminders = normalizeNameChangeReminders(reminders);
-  const { error: deleteError } = await supabase.from('name_change_reminders').delete().eq('name_change_case_id', caseId);
-  if (deleteError) throw deleteError;
-  if (normalizedReminders.length === 0) return [];
-
-  const { data, error } = await supabase
-    .from('name_change_reminders')
-    .insert(normalizedReminders.map((reminder) => toPersistedNameChangeReminderRow(reminder, caseId)))
-    .select(NAME_CHANGE_REMINDER_SELECT);
+  const { data, error } = await supabase.rpc('name_change_reminders_replace', {
+    p_case_id: caseId,
+    p_reminders: normalizedReminders.map((reminder) => toPersistedNameChangeReminderRow(reminder, caseId)),
+  });
 
   if (error) throw error;
   return (data as unknown as NameChangeReminderRecord[] | null) ?? [];
