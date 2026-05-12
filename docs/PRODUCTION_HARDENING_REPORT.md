@@ -56,7 +56,9 @@ Fresh local proof:
   - hard-fails a high-risk boundary pocket (`ProtectedRoute.tsx`, `activeSite.ts`, `customerSafeError.ts`, `mediaUrl.ts`, `paymentGate.ts`, `publicRenderContract.ts`, `publicSiteAccess.ts`, `publicSiteRenderModel.ts`, `publicSiteSlug.ts`, `publicSectionDataSanitizer.ts`, `siteConfigValidate.ts`, `stripeService.ts`, `vendorProfiles.ts`) on explicit `any`, `ban-ts-comment`, unused vars, empty blocks, and warning leakage
 - `npm run proof:v1:client-write-inventory` -> `PASS`
   - broadened tracked-`src` runtime scan now reports no direct client `.insert/.update/.upsert/.delete` calls in shipped `src` runtime files
-  - scanner now also catches single/double/backtick table names and skips `.d.ts` noise
+  - scanner now also catches single/double/backtick table names, skips `.d.ts` noise, and records the real matched write operation in proof output
+- `npm run proof:v1:registry-preview-ssrf -- --require-live` -> `LIVE PASS`
+  - `test:launch` and `Release Launch Gate` now require the live registry-preview SSRF proof lane instead of leaving it optional
 - `npm test -- --run src/lib/clientWriteInventoryProofScript.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts` -> `PASS`
 - `npm run proof:v1:board:md` -> `PASS`
 - `npm run guard:file-size` -> `PASS`
@@ -65,6 +67,7 @@ Fresh local proof:
 - `git diff --check` -> `PASS`
 - `npm test -- --run src/lib/ciHardpassWorkflow.test.ts src/lib/releaseLaunchGate.test.ts src/lib/aiExposureProofScript.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts` -> `PASS`
 - `npm test -- --run src/lib/serviceRoleAuthorizationDisposition.test.ts src/lib/strictPocketTypecheck.test.ts src/lib/stripeService.test.ts src/lib/siteConfigValidate.test.ts src/lib/vendorProfiles.test.ts src/lib/vendorProfiles.boundary.test.ts` -> `PASS`
+- `npm test -- --run src/lib/internalToolingRoutes.test.ts src/lib/internalToolingRouteBoundary.test.ts src/lib/clientWriteInventoryProofScript.test.ts src/lib/signedSessionShared.test.ts src/lib/releaseLaunchGate.test.ts src/lib/strictPocketTypecheck.test.ts` -> `PASS`
 - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts` -> `PASS`
 - `npm test -- --run src/components/auth/ProtectedRoute.test.tsx` -> `PASS`
 - `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts` -> `PASS`
@@ -98,7 +101,6 @@ Fresh production proof after exact-SHA frontend deploy:
 - the canonical client-RLS matrix now includes direct guest/planning/seating write allow/deny coverage plus planner itinerary/message RPC allow + registry RPC deny, settings patch/section RPC allow + registry RPC deny, registry item/policy RPC allow + dashboard message/section RPC deny, photos vault-config/vault-provider RPC allow + dashboard message RPC deny, and coordinator Q&A/check-in/media RPC allow + dashboard message RPC deny, in addition to anon guest-contact and public RSVP scope
 - reran green after the remote RPC migration apply with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
 - this same rerun exposed a real `wedding_site_settings_patch` PostgreSQL `CASE` type mismatch on `active_template_id`; the DB fix landed via `20260511212626_fix_wedding_site_settings_patch_types.sql` and the live matrix is green after the repair
-- `npm run proof:v1:registry-preview-ssrf` -> `LIVE PASS`
 - `supabase db push --linked --include-all` -> `PASS`
   - applied remote repair migration `20260512043000_fix_registry_refresh_policy_write_updated_by_type.sql`
 
@@ -160,6 +162,10 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Reconciled the stale service-role disposition doc to the current live matrix truth instead of leaving guest-dashboard settings proof and broader matrix coverage described as still pending
 - Added a launch-critical strict pocket so TS/ESLint rigor now hard-fails on the auth/payment/config/vendor boundary files without pretending the whole repo is already strict-clean
 - Widened that strict pocket first to the public access/contract boundary (`publicRenderContract.ts`, `publicSiteAccess.ts`, `publicSiteSlug.ts`), then again to the broader auth/public runtime boundary (`activeSite.ts`, `customerSafeError.ts`, `mediaUrl.ts`, `paymentGate.ts`, `publicSiteRenderModel.ts`, `publicSectionDataSanitizer.ts`) after scoped ESLint sweeps showed those files were clean enough to promote
+- Tightened internal tooling routes so the env flag is no longer enough by itself; lab/capture routes and preview links now require both the flag and a resolved `admin_users` check
+- Made the live registry-preview SSRF matrix mandatory in both `test:launch` and `Release Launch Gate`
+- Fixed the client-write inventory proof output so it records the real matched operation name instead of the quote token
+- Hardened shared signed session verification so malformed token parsing fails closed before payload decode, and versioned token envelopes now support keyed rotation without breaking legacy two-part tokens
 - Made the RSVP serialization proof easier to audit directly in-repo by calling out `supabase/migrations/20260511170500_serialize_submit_rsvp_capacity.sql` in the current proof story
 - Fixed the `guests-rsvp-ops` wrapper to use a portable shell so Linux Actions runners can execute it cleanly
 - Disabled `/builder-v2-lab`, `/variant-preview-capture`, and `/template-scroll-capture` in production by default unless `VITE_ENABLE_INTERNAL_TOOLING_ROUTES=true`

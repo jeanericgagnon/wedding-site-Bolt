@@ -82,6 +82,28 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 - Result:
   - the launch-critical strict pocket now covers the broader auth/public runtime boundary, not just the first public DTO/access slice
 
+## 2026-05-12 09:35 AM PDT - Admin-Gated Tooling, Required SSRF Launch Proof, And Session Hardening
+
+- Status: `LOCAL HARDENING + LIVE PROOF`
+- What changed:
+  - moved admin lookups into `src/lib/adminUsers.ts`
+  - internal tooling access now requires both the env flag and a resolved `admin_users` check via `useInternalToolingRouteAccess`
+  - updated `App.tsx`, `Templates.tsx`, `TemplateDetail.tsx`, and `BuilderVariantGallery.tsx` so lab/capture routes and preview links are no longer exposed by env flag alone
+  - fixed `scripts/v1-proof-client-write-inventory.mjs` so proof output records the real matched write operation
+  - made `test:launch` require `npm run proof:v1:registry-preview-ssrf -- --require-live`
+  - added the same explicit required SSRF step to `.github/workflows/release-launch-gate.yml`
+  - hardened `supabase/functions/_shared/signedSession.ts` so malformed token parsing fails closed before payload decode and versioned token envelopes can use keyed rotation while legacy two-part tokens still verify
+- Proof:
+  - `npm test -- --run src/lib/internalToolingRoutes.test.ts src/lib/internalToolingRouteBoundary.test.ts src/lib/clientWriteInventoryProofScript.test.ts src/lib/signedSessionShared.test.ts src/lib/releaseLaunchGate.test.ts src/lib/strictPocketTypecheck.test.ts`
+  - `npm run proof:v1:strict-pocket`
+  - `npm run proof:v1:test-lanes`
+  - `npm run typecheck -- --pretty false`
+  - `npm run proof:v1:registry-preview-ssrf -- --require-live`
+- Result:
+  - internal tooling routes now require admin auth in addition to the env flag
+  - the live registry-preview SSRF proof lane is no longer optional in the launch bundle
+  - signed session verification is more defensive and version-aware
+
 
 ## 2026-05-12 07:14 AM PDT - Registry Refresh Policy Matrix Coverage And Inventory Guard Tightening
 

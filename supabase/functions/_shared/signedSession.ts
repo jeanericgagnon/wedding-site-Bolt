@@ -1,4 +1,6 @@
 const encoder = new TextEncoder();
+const SESSION_TOKEN_VERSION = "v1";
+type SessionSecretSource = string | Readonly<Record<string, string>>;
 
 function toBase64Url(bytes: Uint8Array): string {
   let binary = "";
@@ -15,6 +17,16 @@ function fromBase64Url(value: string): Uint8Array {
   return Uint8Array.from(binary, (char) => char.charCodeAt(0));
 }
 
+function isTokenSegment(value: string): boolean {
+  return /^[A-Za-z0-9_-]+$/.test(value);
+}
+
+function resolveSecretForVersion(secretSource: SessionSecretSource, version: string): string | null {
+  if (typeof secretSource === "string") return secretSource;
+  const secret = secretSource[version];
+  return typeof secret === "string" && secret.trim() ? secret : null;
+}
+
 async function importHmacKey(secret: string): Promise<CryptoKey> {
   return crypto.subtle.importKey(
     "raw",
@@ -27,32 +39,50 @@ async function importHmacKey(secret: string): Promise<CryptoKey> {
 
 export async function signSessionToken<TPayload extends object>(
   payload: TPayload,
-  secret: string,
+  secretSource: SessionSecretSource,
 ): Promise<string> {
   const payloadText = JSON.stringify(payload);
   const payloadBase64 = toBase64Url(encoder.encode(payloadText));
+  const secret = resolveSecretForVersion(secretSource, SESSION_TOKEN_VERSION);
+  if (!secret) throw new Error(`Missing session secret for ${SESSION_TOKEN_VERSION}`);
   const key = await importHmacKey(secret);
   const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(payloadBase64));
-  return `${payloadBase64}.${toBase64Url(new Uint8Array(signature))}`;
+  return `${SESSION_TOKEN_VERSION}.${payloadBase64}.${toBase64Url(new Uint8Array(signature))}`;
 }
 
 export async function verifySessionToken<TPayload extends object>(
   token: string,
-  secret: string,
+  secretSource: SessionSecretSource,
 ): Promise<TPayload | null> {
-  const [payloadBase64, signatureBase64] = token.split(".");
-  if (!payloadBase64 || !signatureBase64) return null;
-
-  const key = await importHmacKey(secret);
-  const valid = await crypto.subtle.verify(
-    "HMAC",
-    key,
-    fromBase64Url(signatureBase64),
-    encoder.encode(payloadBase64),
-  );
-  if (!valid) return null;
-
   try {
+    const parts = token.split(".");
+    let version = SESSION_TOKEN_VERSION;
+    let payloadBase64 = "";
+    let signatureBase64 = "";
+
+    if (parts.length === 3) {
+      [version, payloadBase64, signatureBase64] = parts;
+    } else if (parts.length === 2) {
+      [payloadBase64, signatureBase64] = parts;
+    } else {
+      return null;
+    }
+
+    if (!payloadBase64 || !signatureBase64 || !isTokenSegment(payloadBase64) || !isTokenSegment(signatureBase64)) return null;
+    if (parts.length === 3 && !isTokenSegment(version)) return null;
+
+    const secret = resolveSecretForVersion(secretSource, version);
+    if (!secret) return null;
+
+    const key = await importHmacKey(secret);
+    const valid = await crypto.subtle.verify(
+      "HMAC",
+      key,
+      fromBase64Url(signatureBase64),
+      encoder.encode(payloadBase64),
+    );
+    if (!valid) return null;
+
     const payloadText = new TextDecoder().decode(fromBase64Url(payloadBase64));
     const parsed = JSON.parse(payloadText);
     return parsed && typeof parsed === "object" ? parsed as TPayload : null;

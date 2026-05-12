@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { templateCatalog, templateColorwayFacets, templateSeasonFacets, templateStyleFacets } from '../builder/constants/templateCatalog';
 import { getTemplateSupportManifest } from '../builder/constants/templateSupportManifest';
 import { TEMPLATE_USE_CASE_PACKS } from '../builder/constants/templateUseCasePacks';
-import { isInternalToolingRouteEnabled } from '../lib/internalToolingRoutes';
+import { useInternalToolingRouteAccess } from '../lib/internalToolingRoutes';
 import { readSetupDraft, selectSetupDraftTemplate } from '../lib/setupDraft';
 import { getRecommendedTemplates } from '../lib/setupDraftRecommendations';
 
@@ -11,7 +11,7 @@ type Facet = 'all' | string;
 
 export const Templates: React.FC = () => {
   const navigate = useNavigate();
-  const internalToolingRoutesEnabled = isInternalToolingRouteEnabled();
+  const { internalToolingRoutesEnabled } = useInternalToolingRouteAccess();
 
   const [style, setStyle] = useState<Facet>('all');
   const [season, setSeason] = useState<Facet>('all');

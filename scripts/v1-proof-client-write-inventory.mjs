@@ -40,7 +40,7 @@ function runInventory() {
         matches.push({
           file,
           line: getLineNumber(source, match.index),
-          operation: match[1],
+          operation: match[2],
           preview: buildMatchPreview(source, match.index),
         });
         match = directWritePattern.exec(source);

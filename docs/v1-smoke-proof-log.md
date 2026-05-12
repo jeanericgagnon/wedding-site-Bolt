@@ -30,6 +30,15 @@ _Launch call right now:_ `GO`
   - `npm test -- --run src/lib/strictPocketTypecheck.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts src/lib/publicSiteRenderModel.test.ts` -> `PASS`
   - `npm run typecheck -- --pretty false` -> `PASS`
   - the launch-critical strict pocket now also covers the broader auth/public runtime boundary: `activeSite.ts`, `customerSafeError.ts`, `mediaUrl.ts`, `paymentGate.ts`, `publicSiteRenderModel.ts`, and `publicSectionDataSanitizer.ts`
+- 2026-05-12 09:35 AM PDT:
+  - `npm test -- --run src/lib/internalToolingRoutes.test.ts src/lib/internalToolingRouteBoundary.test.ts src/lib/clientWriteInventoryProofScript.test.ts src/lib/signedSessionShared.test.ts src/lib/releaseLaunchGate.test.ts src/lib/strictPocketTypecheck.test.ts` -> `PASS`
+  - `npm run proof:v1:strict-pocket` -> `PASS`
+  - `npm run proof:v1:test-lanes` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `npm run proof:v1:registry-preview-ssrf -- --require-live` -> `LIVE PASS`
+  - internal tooling routes now require admin auth in addition to the env flag
+  - `test:launch` and `Release Launch Gate` now require the live registry-preview SSRF proof lane
+  - signed session verification now fails closed on malformed parsing and supports versioned token envelopes
 - 2026-05-12 07:49 AM PDT:
   - `npm run proof:v1:test-lanes` -> `PASS`
   - `npm test -- --run src/lib/ciHardpassWorkflow.test.ts src/lib/releaseLaunchGate.test.ts src/lib/aiExposureProofScript.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts` -> `PASS`

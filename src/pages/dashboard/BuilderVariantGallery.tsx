@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, CheckCircle2, ExternalLink, ImageOff, LayoutGrid, Search } from 'lucide-react';
 import { getAllSectionManifests } from '../../builder/registry/sectionManifests';
 import { getVariantQualityLabel, getVariantQualityScore, type VariantQualityFlag } from '../../builder/utils/variantQuality';
-import { isInternalToolingRouteEnabled } from '../../lib/internalToolingRoutes';
+import { useInternalToolingRouteAccess } from '../../lib/internalToolingRoutes';
 
 type VariantFilter = 'all' | 'needs-work' | 'review' | 'shared-preview' | 'missing-preview' | 'mobile-risk' | 'missing-guidance';
 
 export const BuilderVariantGallery: React.FC = () => {
-  const internalToolingRoutesEnabled = isInternalToolingRouteEnabled();
+  const { internalToolingRoutesEnabled } = useInternalToolingRouteAccess();
   const manifests = React.useMemo(() => getAllSectionManifests(), []);
   const [query, setQuery] = React.useState('');
   const [sectionFilter, setSectionFilter] = React.useState('all');

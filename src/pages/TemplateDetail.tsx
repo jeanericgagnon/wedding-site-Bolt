@@ -3,13 +3,13 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { templateCatalog } from '../builder/constants/templateCatalog';
 import { getTemplateSupportManifest } from '../builder/constants/templateSupportManifest';
 import { TEMPLATE_USE_CASE_PACKS } from '../builder/constants/templateUseCasePacks';
-import { isInternalToolingRouteEnabled } from '../lib/internalToolingRoutes';
+import { useInternalToolingRouteAccess } from '../lib/internalToolingRoutes';
 import { selectSetupDraftTemplate } from '../lib/setupDraft';
 
 export const TemplateDetail: React.FC = () => {
   const { templateId } = useParams();
   const navigate = useNavigate();
-  const internalToolingRoutesEnabled = isInternalToolingRouteEnabled();
+  const { internalToolingRoutesEnabled } = useInternalToolingRouteAccess();
 
   const tpl = templateCatalog.find((t) => t.id === templateId);
 

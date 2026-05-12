@@ -1,6 +1,6 @@
+import { isAdminUser, ADMIN_USER_SELECT } from '../../lib/adminUsers';
 import { supabase } from '../../lib/supabase';
 
-export const ADMIN_USER_SELECT = 'user_id';
 export const ERROR_LOG_SELECT = 'id, created_at, source, severity, route, message, fingerprint';
 export const MAX_ERROR_LOG_ROWS = 100;
 
@@ -15,14 +15,7 @@ export interface ErrorLogRow {
 }
 
 export async function isErrorLogAdmin(userId: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('admin_users')
-    .select(ADMIN_USER_SELECT)
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (error) throw error;
-  return Boolean(data);
+  return isAdminUser(userId);
 }
 
 export async function loadDashboardErrorLogs(): Promise<ErrorLogRow[]> {

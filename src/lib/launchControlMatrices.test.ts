@@ -46,7 +46,7 @@ describe('launch control backlog matrices', () => {
       '`npm run proof:v1:client-write-inventory`',
       'public DTO leak tests',
       '`npm run proof:v1:guest-lookup-scope`',
-      '`npm run proof:v1:registry-preview-ssrf`',
+      '`npm run proof:v1:registry-preview-ssrf -- --require-live`',
       '`npm run proof:v1:service-role-authorization`',
       '`npm run proof:v1:email-messaging-authorization`',
       '`npm run proof:v1:launch-closeout`',
