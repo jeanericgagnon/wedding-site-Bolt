@@ -9,6 +9,21 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 
 # Production Hardening Backlog
 
+## 2026-05-11 05:50 PM PT - Canonical Client-RLS Matrix Proof Added
+
+- Status: `PROOF EXPANDED`
+- What changed:
+  - added `scripts/v1-proof-client-rls-matrix.mjs`
+  - added `npm run proof:v1:client-rls-matrix`
+  - updated the service-role disposition doc so it no longer understates current live client-facing proof
+  - added focused tests for the new matrix script and the updated disposition expectations
+- Proof result:
+  - `npm test -- --run src/lib/clientRlsMatrixProofScript.test.ts src/lib/serviceRoleAuthorizationDisposition.test.ts` -> `PASS`
+  - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Launch effect:
+  - no launch-state change
+  - the client-RLS backlog item now has one canonical live baseline command instead of scattered proof references
+
 ## 2026-05-11 05:45 PM PT - Internal Tooling Route Production Gating
 
 - Status: `RESOLVED`

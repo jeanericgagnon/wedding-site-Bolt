@@ -25,7 +25,7 @@ describe('service-role authorization disposition', () => {
     const missing = serviceRoleFunctionNames().filter((name) => !disposition.includes(`\`${name}\``));
 
     expect(missing).toEqual([]);
-    expect(disposition).toContain('Still Needs Live Proof');
+    expect(disposition).toContain('Still Needs Expanded Live Proof');
     expect(disposition).toContain('process-email-queue` now rejects non-service-role callers');
   });
 

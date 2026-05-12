@@ -12,6 +12,7 @@ _Launch call right now:_ `GO`
 - Public DTO minimization is closed and live-proven.
 - Secure service-role, queue, storage/media, and email queue-processing proof lanes are green with the provided secure key.
 - Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green on the blocker-fix runtime.
+- Client-facing RLS proof now has one canonical live matrix command: `npm run proof:v1:client-rls-matrix`.
 - Payment gate now fails closed on billing lookup failure.
 - RSVP capacity enforcement now serializes through the deployed database function path.
 - Release launch CI now hard-fails without strict Supabase RSVP proof secrets and passes with the configured repo secrets.
@@ -37,6 +38,7 @@ _Launch call right now:_ `GO`
 - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` -> `LIVE PASS`
 - `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`
 - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
+- `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
 - `LIVE_GUEST_HUB_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/guest-hub-write-read.spec.ts` -> `LIVE PASS`
 - `LIVE_PHOTO_UPLOAD_WRITE_READ=1 LIVE_PHOTO_ANALYSIS_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/photo-upload-write-read.spec.ts` -> `LIVE PASS`
 - `npm run proof:v1:registry-preview-ssrf` -> `LIVE PASS`

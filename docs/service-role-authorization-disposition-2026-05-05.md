@@ -73,8 +73,23 @@ Every Edge Function that reads `SUPABASE_SERVICE_ROLE_KEY` is intentionally clas
 - `validate-rsvp-token` no longer issues sessions from broad name lookup or guest ID alone.
 - `registry-preview` now has both in-memory and durable rate limiting plus A/AAAA public-target checks.
 
-## Still Needs Live Proof
+## Current Live Proof Baseline
 
-- Full Supabase RLS policy proof for anonymous and authenticated client access.
-- Live postdeploy proof that public-site, RSVP, registry, and itinerary Edge Function deployments match this source.
+- `npm run proof:v1:guest-lookup-scope`
+  - anonymous guest-contact lookup denies partial and mismatched names
+  - exact-match lookup returns only a signed contact session
+  - signed contact update stays scoped to the intended household rows
+- `npm run proof:v1:guests-rsvp-ops`
+  - strict RSVP smoke proves the guest-facing token and RSVP flow still behaves correctly in production
+- `npm run proof:v1:collaborator-runtime`
+  - owner invite creation and collaborator claim are live-proven
+  - viewer direct message write is denied
+  - planner/coordinator allowed-action runtime proof is green
+- `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`
+  - public site / itinerary / guest-facing baseline is live-green
+
+## Still Needs Expanded Live Proof
+
+- Broader direct client-table RLS matrix across anon, owner, collaborator, planner, coordinator, viewer, and unrelated-user writes on every high-risk dashboard surface.
+- Live postdeploy proof that any newly redeployed public-site, RSVP, registry, or itinerary Edge Function runtime still matches this disposition.
 - SMS/Telnyx provider callback proof remains deferred.

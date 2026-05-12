@@ -65,6 +65,7 @@ Fresh production proof after exact-SHA frontend deploy:
 - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` -> `LIVE PASS`
 - `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`
 - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
+- `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
 - `npm run proof:v1:registry-preview-ssrf` -> `LIVE PASS`
 
 Same-day still-valid supporting proof:
@@ -113,6 +114,7 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Fixed the `guests-rsvp-ops` wrapper to use a portable shell so Linux Actions runners can execute it cleanly
 - Disabled `/builder-v2-lab`, `/variant-preview-capture`, and `/template-scroll-capture` in production by default unless `VITE_ENABLE_INTERNAL_TOOLING_ROUTES=true`
 - Removed public template links that would otherwise advertise those internal capture routes when the gate is off
+- Added `npm run proof:v1:client-rls-matrix` as the canonical live baseline for anon guest-contact scope, public RSVP scope, and owner/collaborator viewer-deny plus planner/coordinator-allow proof
 
 ## What Remains Before 10 / 10
 
