@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { getPublicSessionSecretSource } from "../_shared/publicSessionSecrets.ts";
 import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 import { verifySessionToken } from "../_shared/signedSession.ts";
 
@@ -54,9 +55,10 @@ Deno.serve(async (req: Request) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const publicSessionSecretSource = getPublicSessionSecretSource();
     const admin = createClient(supabaseUrl, serviceRole);
 
-    const contactPayload = await verifySessionToken<ContactSessionPayload>(contactSession, serviceRole);
+    const contactPayload = await verifySessionToken<ContactSessionPayload>(contactSession, publicSessionSecretSource);
     if (
       !contactPayload ||
       contactPayload.scope !== "guest_contact_update" ||

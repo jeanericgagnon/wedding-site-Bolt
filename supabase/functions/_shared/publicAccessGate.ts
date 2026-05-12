@@ -1,4 +1,5 @@
 import { verifySessionToken } from "./signedSession.ts";
+import type { SessionSecretSource } from "./signedSession.ts";
 
 export type PublicPrivacyMode = "public" | "password_protected" | "invite_only" | "hidden";
 export type PublicGateStatus = "coming_soon" | "password_required" | "invite_required" | "open" | "unavailable";
@@ -25,7 +26,7 @@ export function normalizePublicPrivacyMode(value: unknown): PublicPrivacyMode | 
 export async function hasValidPublicPasswordSession(input: {
   slug: string | null | undefined;
   sessionToken: string | null | undefined;
-  secret: string;
+  secret: SessionSecretSource;
 }): Promise<boolean> {
   const slug = typeof input.slug === "string" ? input.slug.trim() : "";
   if (!slug || !input.sessionToken) return false;
@@ -46,7 +47,7 @@ export async function resolvePublicAccessStatus(input: {
   inviteToken?: string | null;
   passwordSession?: string | null;
   storedInviteToken?: string | null;
-  secret: string;
+  secret: SessionSecretSource;
 }): Promise<PublicGateStatus> {
   if (!input.isPublished) return "coming_soon";
 
@@ -84,7 +85,7 @@ export async function canReadPublicSubresource(input: {
   inviteToken?: string | null;
   passwordSession?: string | null;
   storedInviteToken?: string | null;
-  secret: string;
+  secret: SessionSecretSource;
 }): Promise<boolean> {
   return await resolvePublicAccessStatus(input) === "open";
 }

@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts";
+import { getPublicSessionSecretSource } from "../_shared/publicSessionSecrets.ts";
 import { corsHeaders, fail, json, sha256Hex, sleep } from "../_shared/photoUtils.ts";
 
 const MAX_FILE_BYTES = 30 * 1024 * 1024;
@@ -448,6 +449,7 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const publicSessionSecretSource = getPublicSessionSecretSource();
     const admin = createClient(supabaseUrl, serviceRole);
 
     const forwardedFor = req.headers.get("x-forwarded-for") || "";
@@ -517,7 +519,7 @@ Deno.serve(async (req: Request) => {
             inviteToken,
             passwordSession,
             storedInviteToken: typeof siteBySlug.guest_access_token === "string" ? siteBySlug.guest_access_token : null,
-            secret: Deno.env.get("PUBLIC_SITE_SESSION_SECRET") || serviceRole,
+            secret: publicSessionSecretSource,
           })
         : false;
 

@@ -82,6 +82,10 @@ const resolverChecks = functionEntrypoints
       && source.includes('translated_site_json,translated_published_json,translated_wedding_data,translated_layout_config');
     const normalizesPrivacyMode = source.includes('normalizePublicPrivacyMode(row.privacy_mode)');
     const passesStoredInviteToken = source.includes('storedInviteToken: typeof row.guest_access_token === "string" ? row.guest_access_token : null');
+    const usesDedicatedSessionSecretSource = source.includes('getPublicSessionSecretSource')
+      && !source.includes('const sessionSecret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!')
+      && !source.includes('PUBLIC_SITE_SESSION_SECRET") ||')
+      && !source.includes('PUBLIC_SITE_SESSION_SECRET_V1") ||');
     const avoidsUnsafePayload = !source.includes('site: row')
       && !source.includes('site_password_hash:')
       && !source.includes('guest_access_token: row.guest_access_token')
@@ -147,6 +151,7 @@ const resolverChecks = functionEntrypoints
         && buildsSafePublicSite
         && normalizesPrivacyMode
         && passesStoredInviteToken
+        && usesDedicatedSessionSecretSource
         && avoidsUnsafePayload
         && ownsPersistedSectionsFallback
         && usesAllowlistedRenderModel
@@ -158,6 +163,7 @@ const resolverChecks = functionEntrypoints
       buildsSafePublicSite,
       normalizesPrivacyMode,
       passesStoredInviteToken,
+      usesDedicatedSessionSecretSource,
       avoidsUnsafePayload,
       ownsPersistedSectionsFallback,
       usesAllowlistedRenderModel,

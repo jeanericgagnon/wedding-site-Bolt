@@ -120,6 +120,32 @@ async function createOwnerItineraryEvent(options: {
   return createdEvent.id;
 }
 
+async function pickAvailableVaultIndex(options: {
+  ownerAccessToken: string;
+  restFetch: RestFetch;
+  restUrl: (table: string, params?: Record<string, string>) => string;
+  weddingSiteId: string;
+}) {
+  const response = await options.restFetch(options.ownerAccessToken, options.restUrl('vault_configs', {
+    select: 'vault_index',
+    wedding_site_id: `eq.${options.weddingSiteId}`,
+  }));
+  const text = await response.text();
+  expect(response.ok, text).toBeTruthy();
+
+  const used = new Set(
+    (JSON.parse(text) as Array<{ vault_index?: number | null }>)
+      .map((row) => row.vault_index)
+      .filter((value): value is number => typeof value === 'number' && Number.isInteger(value) && value > 0),
+  );
+
+  for (let index = 1; index <= 12; index += 1) {
+    if (!used.has(index)) return index;
+  }
+
+  return used.size + 1;
+}
+
 async function closeContextSafely(context: import('@playwright/test').BrowserContext | null) {
   if (!context) return;
   try {
@@ -320,6 +346,17 @@ test('limited collaborator can write allowed guest records but cannot directly w
     expect(collaboratorResponse.ok).toBeTruthy();
     const [collaborator] = await collaboratorResponse.json() as Array<{ role: string; permissions: string[] }>;
     expect(collaborator).toMatchObject({ role: 'viewer', permissions: ['guests'] });
+
+    const forbiddenAdminUsersRead = await restFetch(collaboratorAccessToken, restUrl('admin_users', {
+      select: 'user_id',
+      limit: '1',
+    }));
+    const forbiddenAdminUsersText = await forbiddenAdminUsersRead.text();
+    if (forbiddenAdminUsersRead.ok) {
+      expect(JSON.parse(forbiddenAdminUsersText)).toEqual([]);
+    } else {
+      expect([401, 403]).toContain(forbiddenAdminUsersRead.status);
+    }
 
     const allowedGuestWrite = await restFetch(collaboratorAccessToken, restUrl('guests'), {
       method: 'POST',
@@ -1217,6 +1254,12 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     baselineVaultStorageProvider = baselineSettingsRow?.vault_storage_provider ?? null;
     baselineRegistryAutoRefreshEnabled = baselineSettingsRow?.registry_auto_refresh_enabled ?? null;
     baselineRegistryRefreshIncludePurchased = baselineSettingsRow?.registry_refresh_include_purchased ?? null;
+    const availableVaultIndex = await pickAvailableVaultIndex({
+      ownerAccessToken,
+      restFetch,
+      restUrl,
+      weddingSiteId,
+    });
 
     const allowedPhotosVaultConfigWrite = await restFetch(photosCollaboratorAccessToken, rpcUrl('vault_config_write'), {
       method: 'POST',
@@ -1225,7 +1268,7 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
         p_wedding_site_id: weddingSiteId,
         p_config_id: null,
         p_payload: {
-          vault_index: 4,
+          vault_index: availableVaultIndex,
           label: `QA Vault Config ${runId}`,
           duration_years: 1,
           is_enabled: true,

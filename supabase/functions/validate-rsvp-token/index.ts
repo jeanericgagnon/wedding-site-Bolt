@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { getPublicSessionSecretSource } from "../_shared/publicSessionSecrets.ts";
 import { sha256Hex, signSessionToken, verifySessionToken } from "../_shared/signedSession.ts";
 
 const corsHeaders = {
@@ -209,7 +210,7 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceKey);
-    const sessionSecret = serviceKey;
+    const sessionSecret = getPublicSessionSecretSource();
 
     const issueRsvpSession = async (guestId: string, inviteToken: string) => {
       const inviteTokenHash = await sha256Hex(`${inviteToken}:${supabaseUrl}`);

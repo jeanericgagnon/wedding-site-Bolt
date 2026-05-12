@@ -12,6 +12,8 @@ describe('public access coverage proof script', () => {
     expect(script).toContain("kind: 'alternate_gate'");
     expect(script).toContain('normalizePublicPrivacyMode(row.privacy_mode)');
     expect(script).toContain('storedInviteToken: typeof row.guest_access_token === "string" ? row.guest_access_token : null');
+    expect(script).toContain('usesDedicatedSessionSecretSource');
+    expect(script).toContain('getPublicSessionSecretSource');
     expect(script).toContain('const translatedRow = applyPublicSiteTranslation(row, translation);');
     expect(script).toContain('const site = buildPublicSiteRenderSite(translatedRow);');
     expect(script).toContain('translated_site_json,translated_published_json,translated_wedding_data,translated_layout_config');

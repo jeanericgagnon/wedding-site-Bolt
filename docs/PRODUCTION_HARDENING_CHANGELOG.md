@@ -7,6 +7,36 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 
 ---
 
+## 2026-05-12 11:18 AM PDT - Dedicated Public Session Secrets And RPC-Backed Admin Gate
+
+- Status: `LOCAL HARDENING + LIVE PUBLIC PROOF`
+- What changed:
+  - added `supabase/functions/_shared/publicSessionSecrets.ts`
+  - public/session Edge functions now read `PUBLIC_SITE_SESSION_SECRET_V1` or `PUBLIC_SITE_SESSION_SECRET` instead of reusing `SUPABASE_SERVICE_ROLE_KEY` for session signing
+  - `signedSession.ts` now supports versioned key-ring verification so legacy tokens can keep verifying during secret rotation
+  - added `20260512050000_harden_admin_access_check.sql`
+  - `src/lib/adminUsers.ts` now calls `admin_access_check()` instead of selecting `admin_users` directly
+  - expanded the live collaborator/client-RLS matrix so regular collaborators must fail or no-row on direct `admin_users` reads
+  - added local guards in `publicSessionSecretBoundary.test.ts`, `adminAccessRpcBoundary.test.ts`, `launchEdgeFunctions.test.ts`, and `publicAccessCoverageProofScript.test.ts`
+- Proof:
+  - `npm test -- --run src/lib/publicSessionSecretBoundary.test.ts src/lib/adminAccessRpcBoundary.test.ts src/lib/signedSessionShared.test.ts src/lib/publicAccessCoverageProofScript.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts src/lib/launchEdgeFunctions.test.ts`
+  - `npm run proof:v1:public-access-coverage`
+  - `supabase functions deploy public-site-access --project-ref atuzuobpprjstfmdnwso --no-verify-jwt`
+  - `supabase functions deploy guest-contact-lookup --project-ref atuzuobpprjstfmdnwso --no-verify-jwt`
+  - `supabase functions deploy guest-contact-submit --project-ref atuzuobpprjstfmdnwso --no-verify-jwt`
+  - `supabase functions deploy validate-rsvp-token --project-ref atuzuobpprjstfmdnwso --no-verify-jwt`
+  - `supabase functions deploy photo-upload --project-ref atuzuobpprjstfmdnwso --no-verify-jwt`
+  - `supabase functions deploy interactive-section-public --project-ref atuzuobpprjstfmdnwso --no-verify-jwt`
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`
+  - `npm run proof:v1:guest-lookup-scope`
+  - `npm run proof:v1:guests-rsvp-ops`
+  - `npm run proof:v1:collaborator-runtime`
+  - `npm run proof:v1:client-rls-matrix`
+- Result:
+  - dedicated public session secret separation is live on the highest-risk public/session flows
+  - direct regular-user reads of `admin_users` are live-proven to fail or return no rows
+  - the last missing step is remote apply of `20260512050000_harden_admin_access_check.sql`; `supabase db push` is blocked in this shell until `SUPABASE_ACCESS_TOKEN` is available, so the frontend RPC-backed admin gate is still local-only
+
 ## 2026-05-12 07:49 AM PDT - CI RSVP Hard Gate And Mandatory Postdeploy Proof
 
 - Status: `LOCAL HARDENING + PROOF`

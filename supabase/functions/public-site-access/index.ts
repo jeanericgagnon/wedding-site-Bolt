@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { getPublicSessionSecretSource } from "../_shared/publicSessionSecrets.ts";
 import { signSessionToken } from "../_shared/signedSession.ts";
 import { normalizePublicPrivacyMode, resolvePublicAccessStatus } from "../_shared/publicAccessGate.ts";
 import { applyPublicSiteTranslation, buildPersistedPublicFallbackPages, buildPublicSiteRenderSite } from "../../../src/lib/publicSiteRenderModel.ts";
@@ -207,14 +208,14 @@ async function buildSafePublicSite(
   };
 }
 
-async function issuePasswordSessionToken(slug: string, secret: string): Promise<string> {
+async function issuePasswordSessionToken(slug: string): Promise<string> {
   return signSessionToken<PasswordSessionPayload>(
     {
       scope: "public_site_password",
       slug,
       exp: Date.now() + 1000 * 60 * 60 * 12,
     },
-    secret,
+    getPublicSessionSecretSource(),
   );
 }
 
@@ -299,7 +300,7 @@ Deno.serve(async (req: Request) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
-    const sessionSecret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const sessionSecret = getPublicSessionSecretSource();
 
     const row = await queryPublicSiteRow(adminClient, slug);
     if (!row) return json({ status: "unavailable", site: null }, 200);
@@ -343,7 +344,7 @@ Deno.serve(async (req: Request) => {
         return json({ status: "password_required", site: null }, 200);
       }
 
-      const passwordSession = await issuePasswordSessionToken(slug, sessionSecret);
+      const passwordSession = await issuePasswordSessionToken(slug);
       return json({
         status: "open",
         site: await buildSafePublicSite(adminClient, row, null),

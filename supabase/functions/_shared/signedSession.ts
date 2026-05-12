@@ -1,6 +1,6 @@
 const encoder = new TextEncoder();
 const SESSION_TOKEN_VERSION = "v1";
-type SessionSecretSource = string | Readonly<Record<string, string>>;
+export type SessionSecretSource = string | Readonly<Record<string, string | readonly string[]>>;
 
 function toBase64Url(bytes: Uint8Array): string {
   let binary = "";
@@ -21,10 +21,17 @@ function isTokenSegment(value: string): boolean {
   return /^[A-Za-z0-9_-]+$/.test(value);
 }
 
-function resolveSecretForVersion(secretSource: SessionSecretSource, version: string): string | null {
-  if (typeof secretSource === "string") return secretSource;
-  const secret = secretSource[version];
-  return typeof secret === "string" && secret.trim() ? secret : null;
+function normalizeSecrets(secret: string | readonly string[] | undefined): string[] {
+  if (typeof secret === "string") return secret.trim() ? [secret.trim()] : [];
+  if (!Array.isArray(secret)) return [];
+  return secret
+    .map((value) => (typeof value === "string" ? value.trim() : ""))
+    .filter((value) => value.length > 0);
+}
+
+function resolveSecretsForVersion(secretSource: SessionSecretSource, version: string): string[] {
+  if (typeof secretSource === "string") return normalizeSecrets(secretSource);
+  return normalizeSecrets(secretSource[version]);
 }
 
 async function importHmacKey(secret: string): Promise<CryptoKey> {
@@ -43,7 +50,7 @@ export async function signSessionToken<TPayload extends object>(
 ): Promise<string> {
   const payloadText = JSON.stringify(payload);
   const payloadBase64 = toBase64Url(encoder.encode(payloadText));
-  const secret = resolveSecretForVersion(secretSource, SESSION_TOKEN_VERSION);
+  const [secret] = resolveSecretsForVersion(secretSource, SESSION_TOKEN_VERSION);
   if (!secret) throw new Error(`Missing session secret for ${SESSION_TOKEN_VERSION}`);
   const key = await importHmacKey(secret);
   const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(payloadBase64));
@@ -71,16 +78,20 @@ export async function verifySessionToken<TPayload extends object>(
     if (!payloadBase64 || !signatureBase64 || !isTokenSegment(payloadBase64) || !isTokenSegment(signatureBase64)) return null;
     if (parts.length === 3 && !isTokenSegment(version)) return null;
 
-    const secret = resolveSecretForVersion(secretSource, version);
-    if (!secret) return null;
+    const secrets = resolveSecretsForVersion(secretSource, version);
+    if (secrets.length === 0) return null;
 
-    const key = await importHmacKey(secret);
-    const valid = await crypto.subtle.verify(
-      "HMAC",
-      key,
-      fromBase64Url(signatureBase64),
-      encoder.encode(payloadBase64),
-    );
+    let valid = false;
+    for (const secret of secrets) {
+      const key = await importHmacKey(secret);
+      valid = await crypto.subtle.verify(
+        "HMAC",
+        key,
+        fromBase64Url(signatureBase64),
+        encoder.encode(payloadBase64),
+      );
+      if (valid) break;
+    }
     if (!valid) return null;
 
     const payloadText = new TextDecoder().decode(fromBase64Url(payloadBase64));

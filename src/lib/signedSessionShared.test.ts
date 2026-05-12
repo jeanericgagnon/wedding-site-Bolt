@@ -19,6 +19,14 @@ describe('signed session helper', () => {
     ).resolves.toEqual({ siteId: 'site-legacy' });
   });
 
+  it('verifies legacy v1 signatures against fallback secrets in a key ring', async () => {
+    const legacy = await signSessionToken({ siteId: 'site-fallback' }, 'legacy-secret');
+
+    await expect(
+      verifySessionToken<{ siteId: string }>(legacy, { v1: ['current-secret', 'legacy-secret'] }),
+    ).resolves.toEqual({ siteId: 'site-fallback' });
+  });
+
   it('fails closed on malformed base64 or unknown versions', async () => {
     await expect(verifySessionToken('v2.payload.signature', { v1: 'secret-1' })).resolves.toBeNull();
     await expect(verifySessionToken('v1.invalid***.signature', { v1: 'secret-1' })).resolves.toBeNull();

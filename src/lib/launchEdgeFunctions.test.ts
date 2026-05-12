@@ -627,6 +627,8 @@ describe('launch edge function guards', () => {
     expect(publicSiteAccess).toContain('guest_token: safeSubjectMarker');
     expect(publicSiteAccess).not.toContain('guest_token: slug.slice(0, 16)');
     expect(publicSiteAccess).toContain('Too many password attempts.');
+    expect(publicSiteAccess).toContain('getPublicSessionSecretSource');
+    expect(publicSiteAccess).not.toContain('const sessionSecret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!');
     expect(publicSiteAccess).toContain('normalizePublicPrivacyMode');
     expect(publicSiteAccess).toContain('resolvePublicAccessStatus');
     expect(publicSiteAccess).toContain('if (!privacyMode)');
@@ -738,6 +740,8 @@ describe('launch edge function guards', () => {
     expect(stripeWebhook).not.toContain('console.error("STRIPE_WEBHOOK_UNEXPECTED_FAILED", err)');
 
     const guestHubTrack = readFunction('guest-hub-track');
+    const guestContactLookup = readFunction('guest-contact-lookup');
+    const guestContactSubmit = readFunction('guest-contact-submit');
     expect(guestHubTrack).toContain('GUEST_LINK_UNAVAILABLE_COPY = "This wedding link is not available."');
     expect(guestHubTrack).toContain('return json({ ok: true, tracked: false })');
     expect(guestHubTrack).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
@@ -758,6 +762,11 @@ describe('launch edge function guards', () => {
     expect(guestHubConfig).toContain('GUEST_HUB_LINK_UNAVAILABLE_COPY = "This wedding link is not available."');
     expect(guestHubConfig).toContain('GUEST_HUB_LOAD_FAILED_COPY = "Could not load this guest hub. Please try again."');
     expect(guestHubConfig).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
+    expect(guestContactLookup).toContain('getPublicSessionSecretSource');
+    expect(guestContactLookup).not.toContain('PUBLIC_SITE_SESSION_SECRET") || serviceRole');
+    expect(guestContactLookup).not.toContain('}, serviceRole)');
+    expect(guestContactSubmit).toContain('getPublicSessionSecretSource');
+    expect(guestContactSubmit).not.toContain('verifySessionToken<ContactSessionPayload>(contactSession, serviceRole)');
     expect(guestHubConfig).toContain('x-dayof-invite-token');
     expect(guestHubConfig).toContain('x-dayof-password-session');
     expect(guestHubConfig).toContain('.select("id,is_published,site_slug,privacy_mode,guest_access_token,couple_name_1,couple_name_2,wedding_date")');

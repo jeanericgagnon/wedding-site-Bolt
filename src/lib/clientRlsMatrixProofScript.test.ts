@@ -17,6 +17,7 @@ describe('client RLS matrix proof script', () => {
     expect(source).toContain('Photos-scoped collaborators can write vault configs and patch vault providers');
     expect(source).toContain('Settings-scoped collaborators can patch site settings and write sections');
     expect(source).toContain('Coordinator-scoped collaborators can write seating events/tables, coordinator Q&A/check-in, and builder media assets');
+    expect(source).toContain('Regular authenticated collaborators cannot query admin_users directly');
     expect(source).toContain('Broaden the live client-RLS matrix beyond guest, planning, itinerary, settings, registry item/policy, seating, coordinator, messages, and photos across any future non-guest dashboard write surfaces.');
     expect(source).toContain('network_access_required');
     expect(source).toContain('browser_runtime_required');

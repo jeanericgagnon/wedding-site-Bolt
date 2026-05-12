@@ -14,6 +14,23 @@ _Launch call right now:_ `GO`
 - Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green on the blocker-fix runtime.
 - Client-facing RLS proof now has one canonical live matrix command: `npm run proof:v1:client-rls-matrix`.
 - Active runtime pages now also have one canonical local inventory guard: `npm run proof:v1:client-write-inventory`.
+- 2026-05-12 11:18 AM PDT:
+  - `npm test -- --run src/lib/publicSessionSecretBoundary.test.ts src/lib/adminAccessRpcBoundary.test.ts src/lib/signedSessionShared.test.ts src/lib/publicAccessCoverageProofScript.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts src/lib/launchEdgeFunctions.test.ts` -> `PASS`
+  - `npm run proof:v1:public-access-coverage` -> `PASS`
+  - `supabase functions deploy public-site-access --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `supabase functions deploy guest-contact-lookup --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `supabase functions deploy guest-contact-submit --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `supabase functions deploy validate-rsvp-token --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `supabase functions deploy photo-upload --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `supabase functions deploy interactive-section-public --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`
+  - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
+  - `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`
+  - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+  - public/session functions now use `PUBLIC_SITE_SESSION_SECRET_V1` / `PUBLIC_SITE_SESSION_SECRET` instead of `SUPABASE_SERVICE_ROLE_KEY`
+  - direct regular-user `admin_users` reads now fail or return no rows in the live matrix
+  - the remaining admin-route hardening step is the remote apply of `20260512050000_harden_admin_access_check.sql`, which is blocked here by missing `SUPABASE_ACCESS_TOKEN`
 - 2026-05-12 08:45 AM PDT:
   - `npm run proof:v1:strict-pocket` -> `PASS`
   - `npm test -- --run src/lib/serviceRoleAuthorizationDisposition.test.ts src/lib/strictPocketTypecheck.test.ts src/lib/stripeService.test.ts src/lib/siteConfigValidate.test.ts src/lib/vendorProfiles.test.ts src/lib/vendorProfiles.boundary.test.ts` -> `PASS`

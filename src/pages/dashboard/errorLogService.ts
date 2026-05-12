@@ -1,4 +1,4 @@
-import { isAdminUser, ADMIN_USER_SELECT } from '../../lib/adminUsers';
+import { isAdminUser } from '../../lib/adminUsers';
 import { supabase } from '../../lib/supabase';
 
 export const ERROR_LOG_SELECT = 'id, created_at, source, severity, route, message, fingerprint';

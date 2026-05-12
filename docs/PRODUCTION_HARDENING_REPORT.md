@@ -1,22 +1,23 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-12 09:40 AM PDT`
+_Updated:_ `2026-05-12 11:18 AM PDT`
 
 ## Current Score
 
-- Readiness score: `9.9 / 10`
+- Readiness score: `9.8 / 10`
 - Launch verdict: `GO`
 - Production-ready: `YES`
 
 ## Exact Runtime Identity
 
 - Branch: `codex/v1-finish-hard-gates-3`
-- Current branch head: `a4e2aaf5` (`Harden internal tooling and signed session guards`)
+- Current branch head: `19cecf20` (`Sync launch docs after tooling and session hardening`)
 - Exact frontend Git SHA: `f0cbf841`
 - Exact frontend commit: `Fix payment gate and serialize RSVP capacity`
 - Exact Vercel production deploy: `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`
 - Production URL: [dayof.love](https://dayof.love)
 - Supabase project: `atuzuobpprjstfmdnwso`
+- Current local hardening batch: uncommitted public-session-secret separation plus RPC-backed admin-route authorization work
 
 ## Exact Blockers
 
@@ -25,6 +26,12 @@ No active `P0` / `P1` launch blockers remain.
 ## Exact Proof Gaps
 
 No active launch-critical proof gaps remain.
+
+Exact 10/10 gap:
+- `admin_access_check()` is coded and locally proven but not applied remotely
+  - migration: `supabase/migrations/20260512050000_harden_admin_access_check.sql`
+  - blocker: `supabase db push` is blocked in this shell because `SUPABASE_ACCESS_TOKEN` is not available
+  - effect: the frontend has not been redeployed onto the RPC-backed admin gate yet
 
 Deferred, non-launch gaps:
 - public vault contribution / anniversary vault guest route
@@ -57,6 +64,9 @@ Fresh local proof:
 - `npm run proof:v1:client-write-inventory` -> `PASS`
   - broadened tracked-`src` runtime scan now reports no direct client `.insert/.update/.upsert/.delete` calls in shipped `src` runtime files
   - scanner now also catches single/double/backtick table names, skips `.d.ts` noise, and records the real matched write operation in proof output
+- `npm test -- --run src/lib/publicSessionSecretBoundary.test.ts src/lib/adminAccessRpcBoundary.test.ts src/lib/signedSessionShared.test.ts src/lib/publicAccessCoverageProofScript.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts src/lib/launchEdgeFunctions.test.ts` -> `PASS`
+  - public/session Edge functions must not reuse `SUPABASE_SERVICE_ROLE_KEY` as the session-signing secret
+  - the RPC-backed admin access boundary is locally guarded
 - `npm run proof:v1:registry-preview-ssrf -- --require-live` -> `LIVE PASS`
   - `test:launch` and `Release Launch Gate` now require the live registry-preview SSRF proof lane instead of leaving it optional
 - `npm test -- --run src/lib/clientWriteInventoryProofScript.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts` -> `PASS`
@@ -98,11 +108,22 @@ Fresh production proof after exact-SHA frontend deploy:
 - `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`
 - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
 - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- reran same-day after the public-session-secret function redeploys:
+  - `public-site-access`, `guest-contact-lookup`, `guest-contact-submit`, `validate-rsvp-token`, `photo-upload`, and `interactive-section-public` all stayed green on the live public/session baseline
 - the canonical client-RLS matrix now includes direct guest/planning/seating write allow/deny coverage plus planner itinerary/message RPC allow + registry RPC deny, settings patch/section RPC allow + registry RPC deny, registry item/policy RPC allow + dashboard message/section RPC deny, photos vault-config/vault-provider RPC allow + dashboard message RPC deny, and coordinator Q&A/check-in/media RPC allow + dashboard message RPC deny, in addition to anon guest-contact and public RSVP scope
+- the same live matrix now also proves regular collaborators cannot query `admin_users` directly while the admin-route server-side move is pending
 - reran green after the remote RPC migration apply with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
 - this same rerun exposed a real `wedding_site_settings_patch` PostgreSQL `CASE` type mismatch on `active_template_id`; the DB fix landed via `20260511212626_fix_wedding_site_settings_patch_types.sql` and the live matrix is green after the repair
 - `supabase db push --linked --include-all` -> `PASS`
   - applied remote repair migration `20260512043000_fix_registry_refresh_policy_write_updated_by_type.sql`
+- `supabase functions deploy public-site-access --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+- `supabase functions deploy guest-contact-lookup --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+- `supabase functions deploy guest-contact-submit --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+- `supabase functions deploy validate-rsvp-token --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+- `supabase functions deploy photo-upload --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+- `supabase functions deploy interactive-section-public --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+- `supabase db push --linked --include-all` -> `BLOCKED`
+  - the new `admin_access_check()` migration could not be applied from this shell because `SUPABASE_ACCESS_TOKEN` is not present
 
 Same-day still-valid supporting proof:
 - `LIVE_GUEST_HUB_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/guest-hub-write-read.spec.ts` -> `LIVE PASS`
@@ -123,10 +144,12 @@ Deferred/non-launch failed proof:
 Current live launch baseline:
 - frontend: `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q` from exact runtime SHA `f0cbf841`
 - `submit-rsvp --no-verify-jwt`: redeployed on the serialized capacity path after migration `20260511170500_serialize_submit_rsvp_capacity.sql`
-- `public-site-access --no-verify-jwt`: same-day already confirmed and live-proven
-- `guest-contact-lookup --no-verify-jwt`: same-day already confirmed and live-proven
-- `guest-contact-submit --no-verify-jwt`: same-day already confirmed and live-proven
-- `photo-upload --no-verify-jwt`: same-day already confirmed and live-proven
+- `public-site-access --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
+- `guest-contact-lookup --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
+- `guest-contact-submit --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
+- `validate-rsvp-token --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
+- `interactive-section-public --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
+- `photo-upload --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `process-email-queue`: same-day already confirmed and live-proven
 - `translate-site-content`: same-day already confirmed and live-proven
 - remote database: RPC sweep applied through `20260512031500_seating_assignment_version_rpcs.sql`
@@ -138,6 +161,7 @@ Current live launch baseline:
   - `20260512041500_fix_itinerary_event_write_ids.sql`
   - `20260512042000_fix_section_write_create_with_explicit_id.sql`
   - `20260512043000_fix_registry_refresh_policy_write_updated_by_type.sql`
+  - `20260512050000_harden_admin_access_check.sql` is still local-only and not in remote state because `SUPABASE_ACCESS_TOKEN` is unavailable in this shell
 
 Explicitly deferred / not in current launch baseline:
 - `vault-contribution-public --no-verify-jwt`
@@ -166,6 +190,9 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Made the live registry-preview SSRF matrix mandatory in both `test:launch` and `Release Launch Gate`
 - Fixed the client-write inventory proof output so it records the real matched operation name instead of the quote token
 - Hardened shared signed session verification so malformed token parsing fails closed before payload decode, and versioned token envelopes now support keyed rotation without breaking legacy two-part tokens
+- Separated public session signing from `SUPABASE_SERVICE_ROLE_KEY` by adding `PUBLIC_SITE_SESSION_SECRET_V1` / `PUBLIC_SITE_SESSION_SECRET` handling plus a proof boundary that fails if service-role power is reused for public sessions
+- Redeployed the highest-risk public/session functions on that dedicated session secret path and reran live public-site, guest-contact, RSVP, photo-upload, collaborator-runtime, and client-RLS proof green
+- Added `20260512050000_harden_admin_access_check.sql` plus the frontend `admin_access_check()` client switch; local proof is green and direct non-admin `admin_users` reads now fail in the live matrix, but the remote DB apply is still blocked here by missing `SUPABASE_ACCESS_TOKEN`
 - Made the RSVP serialization proof easier to audit directly in-repo by calling out `supabase/migrations/20260511170500_serialize_submit_rsvp_capacity.sql` in the current proof story
 - Fixed the `guests-rsvp-ops` wrapper to use a portable shell so Linux Actions runners can execute it cleanly
 - Disabled `/builder-v2-lab`, `/variant-preview-capture`, and `/template-scroll-capture` in production by default unless `VITE_ENABLE_INTERNAL_TOOLING_ROUTES=true`
@@ -207,7 +234,8 @@ Those two deploy commands previously reported success, but the live inventory/ru
 
 ## What Remains Before 10 / 10
 
-Only deferred, non-launch follow-up remains:
+Only one meaningful hardening step plus deferred, non-launch follow-up remains:
+- remote apply of `20260512050000_harden_admin_access_check.sql` and a frontend redeploy onto the RPC-backed admin gate
 - public vault contribution enablement and live proof
 - custom-host/subdomain dedicated DNS rerun
 - rerun `npm run proof:v1:client-rls-matrix` when future non-guest write surfaces are introduced so the live role matrix stays canonical
@@ -215,10 +243,10 @@ Only deferred, non-launch follow-up remains:
 - client-write surface reduction into Edge Functions / RPCs
 - dedicated custom-host DNS rerun only if that launch surface becomes active
 
-Why this is `9.9 / 10` instead of `10 / 10`:
+Why this is `9.8 / 10` instead of `10 / 10`:
 - the launch baseline is green and production-ready
-- the current committed branch head (`d33e8ef4`) contains post-deploy proof hardening beyond the exact live frontend runtime SHA (`f0cbf841`)
-- that remaining delta is non-runtime and non-launch, but it keeps me just shy of calling it mathematically perfect
+- the dedicated public-session-secret separation is live, but the `admin_access_check()` RPC is not applied remotely yet
+- that missing remote DB apply is the last meaningful hardening step between this repo and a cleaner 10/10 claim
 
 ## Bottom Line
 

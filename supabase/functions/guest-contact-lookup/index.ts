@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts";
+import { getPublicSessionSecretSource } from "../_shared/publicSessionSecrets.ts";
 import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 import { signSessionToken } from "../_shared/signedSession.ts";
 
@@ -56,6 +57,7 @@ Deno.serve(async (req: Request) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const publicSessionSecretSource = getPublicSessionSecretSource();
     const admin = createClient(supabaseUrl, serviceRole);
 
     const siteQuery = admin
@@ -76,7 +78,7 @@ Deno.serve(async (req: Request) => {
       inviteToken: bodyString(body, "inviteToken"),
       passwordSession: bodyString(body, "passwordSession"),
       storedInviteToken: typeof site.guest_access_token === "string" ? site.guest_access_token : null,
-      secret: Deno.env.get("PUBLIC_SITE_SESSION_SECRET") || serviceRole,
+      secret: publicSessionSecretSource,
     });
     if (!hasAccess) return json({ matches: [] });
 
@@ -141,7 +143,7 @@ Deno.serve(async (req: Request) => {
         siteId: site.id,
         guestId: g.id,
         exp: Date.now() + CONTACT_SESSION_TTL_MS,
-      }, serviceRole),
+      }, publicSessionSecretSource),
       name: g.name || [g.first_name, g.last_name].filter(Boolean).join(" "),
       household_size: g.household_id ? (householdCounts[g.household_id] ?? 1) : 1,
     })));

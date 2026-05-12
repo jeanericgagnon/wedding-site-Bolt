@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts";
+import { getPublicSessionSecretSource } from "../_shared/publicSessionSecrets.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -80,7 +81,7 @@ Deno.serve(async (req: Request) => {
           inviteToken,
           passwordSession,
           storedInviteToken: typeof site.guest_access_token === "string" ? site.guest_access_token : null,
-          secret: Deno.env.get("PUBLIC_SITE_SESSION_SECRET") || serviceRole,
+          secret: getPublicSessionSecretSource(),
         })
       : false;
 

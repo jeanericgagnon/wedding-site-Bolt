@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts";
+import { getPublicSessionSecretSource } from "../_shared/publicSessionSecrets.ts";
 import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
@@ -62,7 +63,7 @@ async function requireVaultPublicAccess(input: {
     inviteToken: accessValue(input.body, "inviteToken"),
     passwordSession: accessValue(input.body, "passwordSession"),
     storedInviteToken: typeof site.guest_access_token === "string" ? site.guest_access_token : null,
-    secret: Deno.env.get("PUBLIC_SITE_SESSION_SECRET") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    secret: getPublicSessionSecretSource(),
   });
 
   if (!hasAccess) return { ok: false as const, response: json({ error: "Vault site is not available" }, 403) };

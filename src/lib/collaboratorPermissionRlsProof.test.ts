@@ -11,6 +11,7 @@ describe('collaborator permission RLS proof', () => {
     expect(source).toContain('household_id');
     expect(source).toContain("restUrl('event_invitations')");
     expect(source).toContain("restUrl('wedding_sites'");
+    expect(source).toContain("restUrl('admin_users'");
     expect(source).toContain('[401, 403]');
     expect(source).toContain('planner/coordinator permissioned non-guest actions are allowed while ungranted direct writes stay scoped');
     expect(source).toContain("permissions: ['messages', 'planning']");
