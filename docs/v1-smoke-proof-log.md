@@ -13,7 +13,8 @@ _Launch call right now:_ `GO`
 - Secure service-role, queue, storage/media, and email queue-processing proof lanes are green with the provided secure key.
 - Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green on the blocker-fix runtime.
 - Client-facing RLS proof now has one canonical live matrix command: `npm run proof:v1:client-rls-matrix`.
-- That matrix now explicitly proves direct guest-table writes stay guest-scoped while direct timeline/settings writes remain denied without permission.
+- That matrix now explicitly proves direct guest, planning, and seating writes stay permission-scoped while direct timeline/settings writes remain denied without permission.
+- The guest-dashboard settings RPC batch is still local-only and stays outside the live runtime baseline until deployment plus `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` proof.
 - Payment gate now fails closed on billing lookup failure.
 - RSVP capacity enforcement now serializes through the deployed database function path.
 - Release launch CI now hard-fails without strict Supabase RSVP proof secrets and passes with the configured repo secrets.
@@ -103,6 +104,20 @@ _Launch call right now:_ `GO`
   - RSVP capacity serialization is live and proven
   - release-gate Supabase RSVP proof is enforced and green
   - launch remains `GO`
+
+### 2026-05-11 06:24 PM PDT - Planning And Seating Direct-Write RLS Coverage Added
+
+- Expanded `tests/e2e/collaborator-permission-rls.spec.ts` so live collaborator proof now covers:
+  - planner direct `planning_tasks` writes
+  - coordinator direct `seating_events` writes
+  - coordinator direct `seating_tables` writes
+- Reran:
+  - `npm run proof:v1:collaborator-runtime`
+  - `npm run proof:v1:client-rls-matrix`
+- Result:
+  - live collaborator runtime proof is green with guest, planning, and seating direct-write coverage
+  - the canonical client-RLS matrix now carries that same broader role-scoped proof
+  - the remaining local-only gap in this cluster is the undeployed guest-dashboard settings RPC batch
 
 ### 2026-05-11 03:42 PM PDT - Public Vault Contribution Downgraded To Deferred / Hard-Disabled
 

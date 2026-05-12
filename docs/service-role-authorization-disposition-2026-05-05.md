@@ -86,12 +86,15 @@ Every Edge Function that reads `SUPABASE_SERVICE_ROLE_KEY` is intentionally clas
   - viewer direct message write is denied
   - planner/coordinator allowed-action runtime proof is green
   - guest-scoped collaborators can directly mutate guest rows
+  - planner-scoped collaborators can directly write planning tasks
+  - coordinator-scoped collaborators can directly write seating events and seating tables
   - direct timeline writes and direct wedding-site settings writes stay denied without the matching permission set
 - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`
   - public site / itinerary / guest-facing baseline is live-green
 
 ## Still Needs Expanded Live Proof
 
-- Broader direct client-table RLS matrix across planning, seating, and other non-guest dashboard write surfaces.
+- Deploy the guest-dashboard settings RPC batch and rerun the optional `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` collaborator settings-write proof.
+- Broader direct client-table RLS matrix across remaining non-guest dashboard write surfaces beyond guest, planning, and seating.
 - Live postdeploy proof that any newly redeployed public-site, RSVP, registry, or itinerary Edge Function runtime still matches this disposition.
 - SMS/Telnyx provider callback proof remains deferred.

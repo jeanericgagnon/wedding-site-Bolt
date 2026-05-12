@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-11 05:33 PM PDT`
+_Updated:_ `2026-05-11 06:24 PM PDT`
 
 ## Current Score
 
@@ -58,7 +58,7 @@ Fresh secure/runtime proof:
 - `npm run proof:v1:email-messaging-authorization` -> `PASS`
 - `npm run proof:v1:launch-closeout` -> `PASS`
 - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
-- collaborator runtime now also proves guest-scoped collaborators can directly mutate guest rows while direct timeline/settings writes remain denied without permission
+- collaborator runtime now also proves guest-scoped collaborators can directly mutate guest rows, planner-scoped collaborators can directly write planning tasks, and coordinator-scoped collaborators can directly write seating events/tables, while direct timeline/settings writes remain denied without permission
 - `npm run test:smoke` -> `PASS`
 
 Fresh production proof after exact-SHA frontend deploy:
@@ -67,7 +67,7 @@ Fresh production proof after exact-SHA frontend deploy:
 - `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`
 - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
 - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
-- the canonical client-RLS matrix now includes direct guest-table write allow/deny coverage in addition to anon guest-contact and public RSVP scope
+- the canonical client-RLS matrix now includes direct guest/planning/seating write allow/deny coverage in addition to anon guest-contact and public RSVP scope
 - `npm run proof:v1:registry-preview-ssrf` -> `LIVE PASS`
 
 Same-day still-valid supporting proof:
@@ -117,21 +117,22 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Disabled `/builder-v2-lab`, `/variant-preview-capture`, and `/template-scroll-capture` in production by default unless `VITE_ENABLE_INTERNAL_TOOLING_ROUTES=true`
 - Removed public template links that would otherwise advertise those internal capture routes when the gate is off
 - Added `npm run proof:v1:client-rls-matrix` as the canonical live baseline for anon guest-contact scope, public RSVP scope, owner/collaborator viewer-deny plus planner/coordinator-allow proof, and direct guest-table write allow/deny coverage
-- Moved guest-dashboard RSVP-config and reminder-settings writes behind guest-scoped RPCs in the working tree; migration apply, deploy, and live proof are still pending, so the current launch runtime truth is unchanged
+- Expanded the live collaborator/client-RLS proof baseline so planning and seating direct writes are now proven in production too
+- Moved guest-dashboard RSVP-config and reminder-settings writes behind guest-scoped RPCs in the working tree; migration apply, deploy, and `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` proof are still pending, so the current launch runtime truth is unchanged
 
 ## What Remains Before 10 / 10
 
 Only deferred, non-launch follow-up remains:
 - public vault contribution enablement and live proof
 - custom-host/subdomain dedicated DNS rerun
-- apply/deploy the local guest-dashboard settings RPC batch and rerun collaborator/client-RLS live proof
-- broader client-RLS role matrix expansion for planning, seating, and other non-guest dashboard write surfaces
+- apply/deploy the local guest-dashboard settings RPC batch and rerun collaborator/client-RLS live proof with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
+- broader client-RLS role matrix expansion for remaining non-guest dashboard write surfaces beyond guest, planning, and seating
 - client-write surface reduction into Edge Functions / RPCs
 - dedicated custom-host DNS rerun only if that launch surface becomes active
 
 Why this is `9.9 / 10` instead of `10 / 10`:
 - the launch baseline is green and production-ready
-- the current committed branch head (`87ac67e4`) contains post-deploy proof hardening beyond the exact live frontend runtime SHA (`f0cbf841`)
+- the current committed branch head (`86ab331c`) contains post-deploy proof hardening beyond the exact live frontend runtime SHA (`f0cbf841`)
 - that remaining delta is non-runtime and non-launch, but it keeps me just shy of calling it mathematically perfect
 
 ## Bottom Line

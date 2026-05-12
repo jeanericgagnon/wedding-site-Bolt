@@ -187,9 +187,12 @@ const output = blocker.blocked
         'Collaborator accept flow',
         'Role-aware post-accept landing evidence',
         'Viewer deny plus planner/coordinator allowed-action runtime proof',
-        'Direct guest-table writes allowed only for guest-scoped collaborators while timeline/settings writes stay denied',
+        'Guest-scoped collaborators can mutate guest rows directly while timeline/settings writes stay denied without permission',
+        'Planner-scoped collaborators can write planning tasks directly while coordinator-scoped collaborators can write seating events and tables directly',
       ],
-      stillManualProofNeeded: [],
+      stillManualProofNeeded: [
+        'Deploy the guest-dashboard settings RPC batch and rerun the optional LIVE_GUEST_DASHBOARD_SETTINGS_RPCS collaborator settings-write proof',
+      ],
       blockers: [blocker],
       results: [],
     }
@@ -212,9 +215,12 @@ const output = blocker.blocked
           'Collaborator accept flow',
           'Role-aware post-accept landing evidence',
           'Viewer deny plus planner/coordinator allowed-action runtime proof',
-          'Direct guest-table writes allowed only for guest-scoped collaborators while timeline/settings writes stay denied',
+          'Guest-scoped collaborators can mutate guest rows directly while timeline/settings writes stay denied without permission',
+          'Planner-scoped collaborators can write planning tasks directly while coordinator-scoped collaborators can write seating events and tables directly',
         ],
-        stillManualProofNeeded: [],
+        stillManualProofNeeded: [
+          'Deploy the guest-dashboard settings RPC batch and rerun the optional LIVE_GUEST_DASHBOARD_SETTINGS_RPCS collaborator settings-write proof',
+        ],
         blockers: [],
         results,
       };

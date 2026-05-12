@@ -86,6 +86,40 @@ async function resolveOrCreateOwnerEvent(options: {
   return { eventId: createdEvent.id, createdEventId: createdEvent.id };
 }
 
+async function createOwnerItineraryEvent(options: {
+  ownerAccessToken: string;
+  restFetch: RestFetch;
+  restUrl: (table: string, params?: Record<string, string>) => string;
+  weddingSiteId: string;
+  runId: string;
+  namePrefix: string;
+}) {
+  const {
+    ownerAccessToken,
+    restFetch,
+    restUrl,
+    weddingSiteId,
+    runId,
+    namePrefix,
+  } = options;
+
+  const createResponse = await restFetch(ownerAccessToken, restUrl('itinerary_events'), {
+    method: 'POST',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({
+      wedding_site_id: weddingSiteId,
+      event_name: `${namePrefix} ${runId}`,
+      event_date: '2026-12-31',
+      start_time: '19:00',
+    }),
+  });
+  const createText = await createResponse.text();
+  expect(createResponse.ok, createText).toBeTruthy();
+  const [createdEvent] = JSON.parse(createText) as Array<{ id: string }>;
+  expect(createdEvent?.id).toBeTruthy();
+  return createdEvent.id;
+}
+
 async function closeContextSafely(context: import('@playwright/test').BrowserContext | null) {
   if (!context) return;
   try {
@@ -355,6 +389,7 @@ test('guest-permission collaborator can mutate guest rows but is denied direct t
   const collaboratorEmail = `qa-guest-write-${runId}@example.com`;
   const collaboratorPassword = `DayOfGuest${runId}!`;
   const inviteName = `QA Guest Write ${runId}`;
+  const liveGuestDashboardSettingsRpcs = process.env.LIVE_GUEST_DASHBOARD_SETTINGS_RPCS === '1';
   let ownerAccessToken = '';
   let collaboratorAccessToken = '';
   let collaboratorUserId = '';
@@ -369,6 +404,7 @@ test('guest-permission collaborator can mutate guest rows but is denied direct t
     const search = new URLSearchParams(params);
     return `${supabaseUrl}/rest/v1/${table}${search.toString() ? `?${search.toString()}` : ''}`;
   };
+  const rpcUrl = (fn: string) => `${supabaseUrl}/rest/v1/rpc/${fn}`;
 
   const restFetch = async (token: string, url: string, init: RequestInit = {}) => fetch(url, {
     ...init,
@@ -534,49 +570,51 @@ test('guest-permission collaborator can mutate guest rows but is denied direct t
     expect(Array.isArray(ownerSettingsRow.rsvp_custom_questions)).toBe(true);
     expect(ownerSettingsRow.rsvp_custom_questions?.some((item) => item?.id === 'qa-q1')).toBe(false);
 
-    const allowedReminderRpc = await restFetch(collaboratorAccessToken, rpcUrl('guest_dashboard_persist_reminder_settings'), {
-      method: 'POST',
-      headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify({
-        p_wedding_site_id: weddingSiteId,
-        p_reminder_cadence_days: 3,
-        p_auto_reminders_enabled: true,
-      }),
-    });
-    expect(allowedReminderRpc.ok, await allowedReminderRpc.text()).toBeTruthy();
+    if (liveGuestDashboardSettingsRpcs) {
+      const allowedReminderRpc = await restFetch(collaboratorAccessToken, rpcUrl('guest_dashboard_persist_reminder_settings'), {
+        method: 'POST',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          p_wedding_site_id: weddingSiteId,
+          p_reminder_cadence_days: 3,
+          p_auto_reminders_enabled: true,
+        }),
+      });
+      expect(allowedReminderRpc.ok, await allowedReminderRpc.text()).toBeTruthy();
 
-    const allowedRsvpConfigRpc = await restFetch(collaboratorAccessToken, rpcUrl('guest_dashboard_persist_rsvp_config'), {
-      method: 'POST',
-      headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify({
-        p_wedding_site_id: weddingSiteId,
-        p_questions: [{ id: 'qa-q1', label: 'Favorite song?', type: 'short_text', required: false, appliesTo: 'all' }],
-        p_meal_enabled: true,
-        p_meal_options: ['Chicken', 'Fish'],
-      }),
-    });
-    expect(allowedRsvpConfigRpc.ok, await allowedRsvpConfigRpc.text()).toBeTruthy();
+      const allowedRsvpConfigRpc = await restFetch(collaboratorAccessToken, rpcUrl('guest_dashboard_persist_rsvp_config'), {
+        method: 'POST',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          p_wedding_site_id: weddingSiteId,
+          p_questions: [{ id: 'qa-q1', label: 'Favorite song?', type: 'short_text', required: false, appliesTo: 'all' }],
+          p_meal_enabled: true,
+          p_meal_options: ['Chicken', 'Fish'],
+        }),
+      });
+      expect(allowedRsvpConfigRpc.ok, await allowedRsvpConfigRpc.text()).toBeTruthy();
 
-    const ownerSettingsAfterRpcRead = await restFetch(ownerAccessToken, restUrl('wedding_sites', {
-      select: 'auto_reminders_enabled,reminder_cadence_days,rsvp_custom_questions,rsvp_meal_config',
-      id: `eq.${weddingSiteId}`,
-      limit: '1',
-    }));
-    const ownerSettingsAfterRpcText = await ownerSettingsAfterRpcRead.text();
-    expect(ownerSettingsAfterRpcRead.ok, ownerSettingsAfterRpcText).toBeTruthy();
-    const [ownerSettingsAfterRpc] = JSON.parse(ownerSettingsAfterRpcText) as Array<{
-      auto_reminders_enabled?: boolean;
-      reminder_cadence_days?: number | null;
-      rsvp_custom_questions?: Array<{ id?: string }>;
-      rsvp_meal_config?: { enabled?: boolean; options?: string[] };
-    }>;
-    expect(ownerSettingsAfterRpc.auto_reminders_enabled).toBe(true);
-    expect(ownerSettingsAfterRpc.reminder_cadence_days).toBe(3);
-    expect(ownerSettingsAfterRpc.rsvp_custom_questions?.some((item) => item?.id === 'qa-q1')).toBe(true);
-    expect(ownerSettingsAfterRpc.rsvp_meal_config).toMatchObject({
-      enabled: true,
-      options: ['Chicken', 'Fish'],
-    });
+      const ownerSettingsAfterRpcRead = await restFetch(ownerAccessToken, restUrl('wedding_sites', {
+        select: 'auto_reminders_enabled,reminder_cadence_days,rsvp_custom_questions,rsvp_meal_config',
+        id: `eq.${weddingSiteId}`,
+        limit: '1',
+      }));
+      const ownerSettingsAfterRpcText = await ownerSettingsAfterRpcRead.text();
+      expect(ownerSettingsAfterRpcRead.ok, ownerSettingsAfterRpcText).toBeTruthy();
+      const [ownerSettingsAfterRpc] = JSON.parse(ownerSettingsAfterRpcText) as Array<{
+        auto_reminders_enabled?: boolean;
+        reminder_cadence_days?: number | null;
+        rsvp_custom_questions?: Array<{ id?: string }>;
+        rsvp_meal_config?: { enabled?: boolean; options?: string[] };
+      }>;
+      expect(ownerSettingsAfterRpc.auto_reminders_enabled).toBe(true);
+      expect(ownerSettingsAfterRpc.reminder_cadence_days).toBe(3);
+      expect(ownerSettingsAfterRpc.rsvp_custom_questions?.some((item) => item?.id === 'qa-q1')).toBe(true);
+      expect(ownerSettingsAfterRpc.rsvp_meal_config).toMatchObject({
+        enabled: true,
+        options: ['Chicken', 'Fish'],
+      });
+    }
   } finally {
     await cleanup();
     await closeContextSafely(claimedCollaboratorContext);
@@ -584,7 +622,7 @@ test('guest-permission collaborator can mutate guest rows but is denied direct t
   }
 });
 
-test('planner messaging and coordinator photo actions are allowed while viewer-only restrictions stay intact', async ({ browser }) => {
+test('planner/coordinator permissioned non-guest actions are allowed while ungranted direct writes stay scoped', async ({ browser }) => {
   test.setTimeout(180_000);
   const ownerEmail = process.env.V1_OWNER_EMAIL || 'test@gmail.com';
   const ownerPassword = process.env.V1_OWNER_PASSWORD || '12345678';
@@ -602,9 +640,13 @@ test('planner messaging and coordinator photo actions are allowed while viewer-o
   let plannerInviteId = '';
   let plannerCollaboratorUserId = '';
   let plannerCollaboratorAccessToken = '';
+  let planningTaskId = '';
   let coordinatorInviteId = '';
   let coordinatorCollaboratorUserId = '';
   let coordinatorCollaboratorAccessToken = '';
+  let seatingItineraryEventId = '';
+  let seatingEventId = '';
+  let seatingTableId = '';
   const collaboratorContexts: Array<import('@playwright/test').BrowserContext> = [];
 
   const restUrl = (table: string, params: Record<string, string> = {}) => {
@@ -639,6 +681,30 @@ test('planner messaging and coordinator photo actions are allowed while viewer-o
 
   const cleanup = async () => {
     if (!ownerAccessToken) return;
+    if (seatingTableId) {
+      await restFetch(ownerAccessToken, restUrl('seating_tables', { id: `eq.${seatingTableId}` }), {
+        method: 'DELETE',
+        headers: { Prefer: 'return=minimal' },
+      });
+    }
+    if (seatingEventId) {
+      await restFetch(ownerAccessToken, restUrl('seating_events', { id: `eq.${seatingEventId}` }), {
+        method: 'DELETE',
+        headers: { Prefer: 'return=minimal' },
+      });
+    }
+    if (seatingItineraryEventId) {
+      await restFetch(ownerAccessToken, restUrl('itinerary_events', { id: `eq.${seatingItineraryEventId}` }), {
+        method: 'DELETE',
+        headers: { Prefer: 'return=minimal' },
+      });
+    }
+    if (planningTaskId) {
+      await restFetch(ownerAccessToken, restUrl('planning_tasks', { id: `eq.${planningTaskId}` }), {
+        method: 'DELETE',
+        headers: { Prefer: 'return=minimal' },
+      });
+    }
     if (weddingSiteId && plannerCollaboratorUserId) {
       await restFetch(ownerAccessToken, restUrl('wedding_site_collaborators', {
         wedding_site_id: `eq.${weddingSiteId}`,
@@ -689,7 +755,7 @@ test('planner messaging and coordinator photo actions are allowed while viewer-o
       inviteName: plannerInviteName,
       inviteEmail: plannerEmail,
       inviteRole: 'planner',
-      permissions: ['messages'],
+      permissions: ['messages', 'planning'],
       collaboratorPassword: plannerPassword,
     });
     plannerInviteId = plannerInvite.inviteId;
@@ -706,7 +772,7 @@ test('planner messaging and coordinator photo actions are allowed while viewer-o
     }));
     expect(plannerCollaboratorResponse.ok).toBeTruthy();
     const [plannerCollaborator] = await plannerCollaboratorResponse.json() as Array<{ role: string; permissions: string[] }>;
-    expect(plannerCollaborator).toMatchObject({ role: 'planner', permissions: ['messages'] });
+    expect(plannerCollaborator).toMatchObject({ role: 'planner', permissions: ['messages', 'planning'] });
 
     const allowedPlannerFollowupQueue = await functionFetch(plannerCollaboratorAccessToken, 'queue-guest-followups', {
       siteId: weddingSiteId,
@@ -724,6 +790,24 @@ test('planner messaging and coordinator photo actions are allowed while viewer-o
     expect(typeof allowedPlannerFollowupQueueBody.scanned).toBe('number');
     expect(Array.isArray(allowedPlannerFollowupQueueBody.failures)).toBe(true);
 
+    const allowedPlannerTaskWrite = await restFetch(plannerCollaboratorAccessToken, restUrl('planning_tasks'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        wedding_site_id: weddingSiteId,
+        title: `QA Planning Task ${runId}`,
+        description: 'Planning permission should allow this direct task write.',
+        status: 'todo',
+        priority: 'medium',
+        owner_name: 'Planner QA',
+      }),
+    });
+    const allowedPlannerTaskWriteText = await allowedPlannerTaskWrite.text();
+    expect(allowedPlannerTaskWrite.ok, allowedPlannerTaskWriteText).toBeTruthy();
+    const [createdPlanningTask] = JSON.parse(allowedPlannerTaskWriteText) as Array<{ id: string; title: string }>;
+    planningTaskId = createdPlanningTask.id;
+    expect(createdPlanningTask.title).toContain('QA Planning Task');
+
     const coordinatorInvite = await createAndClaimInvite({
       ownerPage,
       ownerAccessToken,
@@ -732,7 +816,7 @@ test('planner messaging and coordinator photo actions are allowed while viewer-o
       inviteName: coordinatorInviteName,
       inviteEmail: coordinatorEmail,
       inviteRole: 'coordinator',
-      permissions: ['photos'],
+      permissions: ['photos', 'seating'],
       collaboratorPassword: coordinatorPassword,
     });
     coordinatorInviteId = coordinatorInvite.inviteId;
@@ -748,7 +832,7 @@ test('planner messaging and coordinator photo actions are allowed while viewer-o
     }));
     expect(coordinatorCollaboratorResponse.ok).toBeTruthy();
     const [coordinatorCollaborator] = await coordinatorCollaboratorResponse.json() as Array<{ role: string; permissions: string[] }>;
-    expect(coordinatorCollaborator).toMatchObject({ role: 'coordinator', permissions: ['photos'] });
+    expect(coordinatorCollaborator).toMatchObject({ role: 'coordinator', permissions: ['photos', 'seating'] });
 
     const allowedCoordinatorPhotoManifest = await functionFetch(coordinatorCollaboratorAccessToken, 'photo-export-manifest', {
       siteId: weddingSiteId,
@@ -762,6 +846,47 @@ test('planner messaging and coordinator photo actions are allowed while viewer-o
     };
     expect(allowedCoordinatorPhotoManifestBody.success).toBe(true);
     expect(Array.isArray(allowedCoordinatorPhotoManifestBody.rows)).toBe(true);
+
+    seatingItineraryEventId = await createOwnerItineraryEvent({
+      ownerAccessToken,
+      restFetch,
+      restUrl,
+      weddingSiteId,
+      runId,
+      namePrefix: 'QA Seating Event',
+    });
+
+    const allowedCoordinatorSeatingEventWrite = await restFetch(coordinatorCollaboratorAccessToken, restUrl('seating_events'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        wedding_site_id: weddingSiteId,
+        itinerary_event_id: seatingItineraryEventId,
+        default_table_capacity: 8,
+        notes: 'Seating permission should allow this direct seating event write.',
+      }),
+    });
+    const allowedCoordinatorSeatingEventWriteText = await allowedCoordinatorSeatingEventWrite.text();
+    expect(allowedCoordinatorSeatingEventWrite.ok, allowedCoordinatorSeatingEventWriteText).toBeTruthy();
+    const [createdSeatingEvent] = JSON.parse(allowedCoordinatorSeatingEventWriteText) as Array<{ id: string }>;
+    seatingEventId = createdSeatingEvent.id;
+    expect(seatingEventId).toBeTruthy();
+
+    const allowedCoordinatorSeatingTableWrite = await restFetch(coordinatorCollaboratorAccessToken, restUrl('seating_tables'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        seating_event_id: seatingEventId,
+        table_name: `QA Table ${runId}`,
+        capacity: 8,
+        sort_order: 0,
+      }),
+    });
+    const allowedCoordinatorSeatingTableWriteText = await allowedCoordinatorSeatingTableWrite.text();
+    expect(allowedCoordinatorSeatingTableWrite.ok, allowedCoordinatorSeatingTableWriteText).toBeTruthy();
+    const [createdSeatingTable] = JSON.parse(allowedCoordinatorSeatingTableWriteText) as Array<{ id: string; table_name: string }>;
+    seatingTableId = createdSeatingTable.id;
+    expect(createdSeatingTable.table_name).toContain('QA Table');
   } finally {
     await cleanup();
     for (const context of collaboratorContexts) {

@@ -55,6 +55,21 @@ This file preserves timestamped historical entries, extraction batches, and no-d
   - no live-state change yet
   - migration apply, deploy, and fresh live collaborator/client-RLS proof are still required before this batch can be counted as runtime hardening
 
+## 2026-05-11 06:24 PM PT - Planning And Seating Direct-Write RLS Coverage Added
+
+- Status: `PROOF EXPANDED`
+- What changed:
+  - expanded `tests/e2e/collaborator-permission-rls.spec.ts` so the live collaborator runtime lane now proves planner direct `planning_tasks` writes and coordinator direct `seating_events` / `seating_tables` writes
+  - tightened `src/lib/collaboratorPermissionRlsProof.test.ts`, `src/lib/clientRlsMatrixProofScript.test.ts`, `scripts/v1-proof-collaborator-runtime.mjs`, and `scripts/v1-proof-client-rls-matrix.mjs` so that broader role-scoped proof stays canonical
+  - split the undeployed guest-dashboard settings RPC assertions behind `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` so live runtime proof stays honest until that migration is actually applied
+- Proof result:
+  - `npm test -- --run src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts` -> `PASS`
+  - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Launch effect:
+  - no launch-state change
+  - the remaining RLS expansion gap is now narrowed to the undeployed guest-dashboard settings RPC batch plus broader non-guest surfaces beyond guest/planning/seating
+
 ## 2026-05-11 05:45 PM PT - Internal Tooling Route Production Gating
 
 - Status: `RESOLVED`

@@ -143,9 +143,11 @@ const output = {
     'Public RSVP strict smoke proves guest-facing RSVP/token boundaries',
     'Owner invite flow plus viewer deny and planner/coordinator allow collaborator runtime proof',
     'Guest-scoped collaborators can mutate guest rows directly while timeline/settings writes stay denied without permission',
+    'Planner-scoped collaborators can write planning tasks directly while coordinator-scoped collaborators can write seating events and tables directly',
   ],
   stillManualProofNeeded: [
-    'Broader direct client-table role matrix across planning, seating, and other non-guest dashboard write surfaces',
+    'Deploy the guest-dashboard settings RPC batch and rerun the optional LIVE_GUEST_DASHBOARD_SETTINGS_RPCS collaborator settings-write proof',
+    'Broader direct client-table role matrix across remaining non-guest dashboard write surfaces beyond guest, planning, and seating',
   ],
   blockers: blockedRequired.map((result) => ({
     id: result.id,
