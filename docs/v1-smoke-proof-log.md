@@ -4,21 +4,25 @@ _Date:_ `2026-05-11`
 _Production:_ [dayof.love](https://dayof.love)
 _Latest verified deploy:_ `dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4`
 _Exact frontend SHA:_ `23bee092`
-_Launch call right now:_ `GO`
+_Launch call right now:_ `HOLD`
 
 ## Current Truth
 
-- The main launch baseline is live on exact frontend SHA `23bee092`.
+- The main verified live runtime is still exact frontend SHA `23bee092`.
 - Public DTO minimization is closed and live-proven.
 - Secure service-role, queue, storage/media, and email queue-processing proof lanes are green with the provided secure key.
-- Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green.
+- Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green on that older live SHA.
+- A new local blocker-fix batch is now ready but not yet deployed:
+  - payment gate fails closed on billing lookup failure
+  - RSVP capacity enforcement now serializes through a database function
+  - release launch CI now hard-fails without strict Supabase RSVP proof secrets
 - Public vault contribution is not part of the current launch baseline:
   - the route fails closed with safe unavailable copy
   - `vault-contribution-public` still does not appear in live function inventory
 
 ## Latest Runtime Proof Results
 
-- `npm test` -> `PASS` (`534/534` files, `3316/3316` tests)
+- `npm test` -> `PASS` (`537/537` files, `3321/3321` tests)
 - `npm run typecheck -- --pretty false` -> `PASS`
 - `npm run lint -- --quiet` -> `PASS`
 - `npm run build` -> `PASS`
@@ -38,6 +42,12 @@ _Launch call right now:_ `GO`
 - `npm run proof:v1:registry-preview-ssrf` -> `LIVE PASS`
 - `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model` -> `LIVE PASS`
 - `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance` -> `LIVE PASS`
+
+## Current Hold Reason
+
+- The reopened payment-gate, RSVP-capacity, and release-gate defects are fixed locally and locally proven.
+- Production is still on live frontend SHA `23bee092`, so those fixes are not yet part of the deployed runtime.
+- Launch stays `HOLD` until this batch is committed, deployed, and rerun through live payment/RSVP proof.
 - `npm run proof:v1:ai-product-readiness` -> `PASS`
 - `npm run proof:v1:data-integrity` -> `PASS`
 - `npm run proof:v1:prereqs` -> `PASS`

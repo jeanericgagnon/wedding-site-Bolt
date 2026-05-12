@@ -1,0 +1,60 @@
+name: Release Launch Gate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  release-launch-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Require Supabase RSVP proof secrets
+        shell: bash
+        run: |
+          if [ -z "${VITE_SUPABASE_URL}" ] || [ -z "${VITE_SUPABASE_ANON_KEY}" ]; then
+            echo "Release launch gate requires VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY."
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck -- --pretty false
+
+      - name: Lint
+        run: npm run lint -- --quiet
+
+      - name: Unit and regression tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Security regression tests
+        run: npm run test:security
+
+      - name: Public access coverage proof
+        run: npm run proof:v1:public-access-coverage
+
+      - name: Mandatory strict RSVP smoke
+        run: npm run smoke:rsvp:strict

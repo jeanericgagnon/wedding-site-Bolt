@@ -159,50 +159,23 @@ Deno.serve(async (req: Request) => {
       .eq("id", guest.wedding_site_id)
       .maybeSingle();
 
-    let waitlisted = false;
-    if (attending && siteData?.rsvp_capacity_limit && siteData.rsvp_capacity_limit > 0) {
-      const { count: confirmedCount } = await adminClient
-        .from("guests")
-        .select("id", { count: "exact", head: true })
-        .eq("wedding_site_id", guest.wedding_site_id)
-        .eq("rsvp_status", "confirmed");
+    const respondedAt = new Date().toISOString();
+    const { data: capacityDecision, error: capacityDecisionError } = await adminClient.rpc(
+      "apply_public_rsvp_capacity_decision",
+      {
+        p_wedding_site_id: guest.wedding_site_id,
+        p_guest_id: guest.id,
+        p_attending: attending,
+        p_already_confirmed: guest.rsvp_status === "confirmed",
+        p_responded_at: respondedAt,
+      },
+    );
 
-      const alreadyConfirmed = guest.rsvp_status === "confirmed";
-      const effectiveConfirmed = Math.max(0, Number(confirmedCount || 0) - (alreadyConfirmed ? 1 : 0));
-      if (effectiveConfirmed >= siteData.rsvp_capacity_limit) {
-        if (siteData.rsvp_waitlist_enabled) {
-          waitlisted = true;
-          await adminClient.from("rsvp_waitlist_entries").upsert({
-            wedding_site_id: guest.wedding_site_id,
-            guest_id: guest.id,
-            status: "waiting",
-            source: "web",
-          }, { onConflict: "wedding_site_id,guest_id" });
+    if (capacityDecisionError) throw capacityDecisionError;
 
-          await adminClient
-            .from("guests")
-            .update({ rsvp_status: "pending", rsvp_received_at: new Date().toISOString() })
-            .eq("id", guest.id);
-        } else {
-          return json({ error: "This event has reached capacity. Please contact the couple for updates." }, 409);
-        }
-      } else {
-        await adminClient
-          .from("guests")
-          .update({
-            rsvp_status: "confirmed",
-            rsvp_received_at: new Date().toISOString(),
-          })
-          .eq("id", guest.id);
-      }
-    } else {
-      await adminClient
-        .from("guests")
-        .update({
-          rsvp_status: attending ? "confirmed" : "declined",
-          rsvp_received_at: new Date().toISOString(),
-        })
-        .eq("id", guest.id);
+    const waitlisted = Boolean(capacityDecision?.waitlisted);
+    if (capacityDecision?.blocked) {
+      return json({ error: "This event has reached capacity. Please contact the couple for updates." }, 409);
     }
 
     const guestName =

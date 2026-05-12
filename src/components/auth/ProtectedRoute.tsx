@@ -10,12 +10,14 @@ interface ProtectedRouteProps {
   skipPaymentGate?: boolean;
 }
 
+type BillingGateState = BillingInfo | null | 'loading' | 'unavailable';
+
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPaymentGate = false }) => {
   const { user, loading, isDemoMode } = useAuth();
   const paymentGateEnabled = isPaymentGateEnabled();
   const paymentBypassAllowed = isPaymentBypassAllowed();
   const location = useLocation();
-  const [billingInfo, setBillingInfo] = useState<BillingInfo | null | 'loading'>('loading');
+  const [billingInfo, setBillingInfo] = useState<BillingGateState>('loading');
   const [activeSiteRole, setActiveSiteRole] = useState<string | null>(null);
 
   useEffect(() => {
@@ -32,7 +34,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPa
     resolveActiveSiteRoleForUser(user.id).then(setActiveSiteRole).catch(() => setActiveSiteRole(null));
     fetchBillingInfo(user.id)
       .then(info => setBillingInfo(info))
-      .catch(() => setBillingInfo({ payment_status: 'active', billing_type: 'one_time', site_expires_at: null, paid_at: null, stripe_subscription_id: null, wedding_site_id: '' }));
+      .catch(() => setBillingInfo('unavailable'));
   }, [user, isDemoMode]);
 
   if (loading || billingInfo === 'loading') {
@@ -60,15 +62,20 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPa
   if (paymentGateEnabled && !skipPaymentGate && !isDemoMode && activeSiteRole !== 'planner' && activeSiteRole !== 'coordinator' && activeSiteRole !== 'viewer') {
     const isPaymentRoute = location.pathname.startsWith('/payment');
     const bypassPayment = paymentBypassAllowed && new URLSearchParams(location.search).get('bypassPayment') === '1';
+    const resolvedBillingInfo = billingInfo && billingInfo !== 'unavailable' ? billingInfo : null;
 
-    if (billingInfo?.payment_status === 'payment_required' && !isPaymentRoute && !bypassPayment) {
+    if (billingInfo === 'unavailable' && !isPaymentRoute && !bypassPayment) {
+      return <Navigate to="/payment-required?reason=billing_unavailable" replace />;
+    }
+
+    if (resolvedBillingInfo?.payment_status === 'payment_required' && !isPaymentRoute && !bypassPayment) {
       return <Navigate to="/payment-required" replace />;
     }
 
     if (
-      billingInfo?.payment_status === 'active' &&
-      billingInfo.billing_type === 'one_time' &&
-      isSiteExpired(billingInfo.site_expires_at) &&
+      resolvedBillingInfo?.payment_status === 'active' &&
+      resolvedBillingInfo.billing_type === 'one_time' &&
+      isSiteExpired(resolvedBillingInfo.site_expires_at) &&
       !isPaymentRoute
     ) {
       return <Navigate to="/payment-required?reason=expired" replace />;

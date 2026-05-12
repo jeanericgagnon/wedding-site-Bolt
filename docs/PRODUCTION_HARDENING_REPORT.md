@@ -1,12 +1,12 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-11 03:42 PM PDT`
+_Updated:_ `2026-05-11 05:06 PM PDT`
 
 ## Current Score
 
-- Readiness score: `9.9 / 10`
-- Launch verdict: `GO`
-- Production-ready: `YES`
+- Readiness score: `9.5 / 10`
+- Launch verdict: `HOLD`
+- Production-ready: `NO`
 
 ## Exact Runtime Identity
 
@@ -19,11 +19,20 @@ _Updated:_ `2026-05-11 03:42 PM PDT`
 
 ## Exact Blockers
 
-None.
+- `P0 Payment gate fix is local-only until frontend deploy`
+  - [src/components/auth/ProtectedRoute.tsx](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/src/components/auth/ProtectedRoute.tsx:33) now fails closed to `billing_unavailable`, but production is still on frontend SHA `23bee092`
+- `P1 RSVP capacity serialization fix is local-only until migration + function deploy`
+  - [supabase/functions/submit-rsvp/index.ts](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/supabase/functions/submit-rsvp/index.ts:163) now uses `apply_public_rsvp_capacity_decision(...)`, and [20260511170500_serialize_submit_rsvp_capacity.sql](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/supabase/migrations/20260511170500_serialize_submit_rsvp_capacity.sql) serializes the capacity decision, but neither is live yet
+- `P1 Release launch gate workflow is local-only until push + first Actions pass`
+  - [.github/workflows/release-launch-gate.yml](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/.github/workflows/release-launch-gate.yml) now hard-fails on missing Supabase RSVP proof secrets and requires `npm run smoke:rsvp:strict`, but the workflow has not been pushed/exercised yet
 
 ## Exact Proof Gaps
 
-No launch-critical proof gaps remain.
+The reopened bug-fix batch is now locally proven, but these deployment/live-proof gaps remain:
+- frontend deploy of the billing-unavailable payment gate
+- migration + `submit-rsvp` deploy of the serialized RSVP capacity path
+- first GitHub Actions run of `release-launch-gate.yml`
+- live rerun that specifically covers the deployed billing/RSVP fixes, not just the older exact-SHA runtime
 
 Deferred, non-launch gaps:
 - public vault contribution / anniversary vault guest route
@@ -100,32 +109,33 @@ Those two deploy commands reported success, but the live inventory/runtime does 
 
 ## What Changed Since Last Report
 
-- Made the production frontend traceable to one exact Git SHA: `23bee092`
-- Promoted Vercel deploy `dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4`
-- Reran the full test suite and got a clean pass
-- Reran the full local launch bundle and kept it green
-- Reran the secure proof bundle with the provided secure key and kept it green
-- Reran fresh postdeploy public proofs on the exact frontend deploy and kept them green
-- Refreshed collaborator runtime proof so owner/planner/coordinator/viewer behavior is same-day evidence
-- Reclassified public vault contribution from vague/deployed language to explicit deferred hard-disabled truth after the live route and function inventory disagreed with the CLI deploy claim
+- Fixed the payment gate so billing lookup failure no longer degrades to fake paid access
+- Added focused proof for the `billing_unavailable` redirect path
+- Moved RSVP capacity enforcement into a serialized database function and switched `submit-rsvp` onto that RPC
+- Added focused regression proof for the serialized RSVP path
+- Added `release-launch-gate.yml`, which hard-fails when Supabase RSVP proof secrets are missing and requires `npm run smoke:rsvp:strict`
+- Reran focused blocker tests plus the full `npm test` suite and kept them green
+- Reran `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `board:md`, `git diff --check`, and `test:smoke`; all are green
 
 ## What Remains Before 10 / 10
 
-Only deferred, non-launch items remain.
+- commit and push this blocker-fix batch
+- deploy the frontend billing-gate fix
+- deploy the RSVP capacity serialization migration plus the updated `submit-rsvp` function
+- run the first GitHub Actions pass of `release-launch-gate.yml`
+- rerun live payment/RSVP proof on the deployed runtime
 
-Why this is `9.9 / 10` instead of `10 / 10`:
-- the main launch baseline is green
-- the frontend runtime is now pinned to an exact Git SHA
-- but one deferred public surface (`vault-contribution-public`) still has a live inventory inconsistency, even though it fails closed and is outside the launch baseline
+Why this is `9.5 / 10` instead of `9.9 / 10`:
+- the reopened blockers are now fixed in code and proven locally
+- but production is still on the older live runtime, so the launch call cannot move back to `GO` yet
 
 ## Bottom Line
 
-This repo is launch-grade and production-ready today.
+This repo is still close, but it is not production-ready today.
 
-The current shipped launch baseline is:
-- exact frontend SHA known
-- public DTO lane closed
-- secure queue/storage/message proof green
-- guest/public critical flows green
-- deployment and validation truth current
-- only explicitly deferred, non-launch lanes remain
+The strongest current truth is:
+- exact frontend SHA is known
+- public DTO lane is still closed
+- secure queue/storage/message proof is still green
+- guest/public critical live proofs are still broadly green
+- but the launch verdict must stay `HOLD` until this local fix batch is committed, deployed, and rerun through live proof

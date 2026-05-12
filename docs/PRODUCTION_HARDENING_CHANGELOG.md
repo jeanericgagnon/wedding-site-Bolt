@@ -9,6 +9,22 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 
 # Production Hardening Backlog
 
+## 2026-05-11 05:06 PM PT - Reopened Billing / RSVP / Release-Gate Fix Batch
+
+- Status: `LOCAL PASS / DEPLOY REQUIRED`
+- What changed:
+  - fixed the payment gate so billing lookup failures no longer degrade to fake paid access
+  - changed `PaymentRequired` to surface a billing-unavailable hold state
+  - added focused route proof for the new billing failure behavior
+  - added migration `20260511170500_serialize_submit_rsvp_capacity.sql`
+  - switched `submit-rsvp` onto `apply_public_rsvp_capacity_decision(...)`
+  - added focused proof for the serialized RSVP capacity path
+  - added `.github/workflows/release-launch-gate.yml` so release cannot skip strict Supabase-backed RSVP smoke
+  - reran focused blocker tests, `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `board:md`, `git diff --check`, and `test:smoke`
+- Result:
+  - the reopened blockers are fixed in the current working tree and proven locally
+  - launch stays `HOLD` because the live runtime is still on exact frontend SHA `23bee092` until this batch is committed, deployed, and rerun through live proof
+
 ## 2026-05-11 03:42 PM PT - Exact-SHA Launch Closeout And Vault Lane Downgrade
 
 - Status: `RESOLVED WITH DEFERRED NON-LAUNCH FOLLOW-UP`

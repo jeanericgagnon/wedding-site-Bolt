@@ -104,6 +104,7 @@ export const PaymentRequired: React.FC = () => {
   const searchParams = new URLSearchParams(window.location.search);
   const isCanceled = searchParams.get('canceled') === '1';
   const isExpired = searchParams.get('reason') === 'expired';
+  const isBillingUnavailable = searchParams.get('reason') === 'billing_unavailable';
   const isNewSignup = searchParams.get('signup') === '1' || searchParams.get('oauth') === 'google';
 
   return (
@@ -114,10 +115,12 @@ export const PaymentRequired: React.FC = () => {
             <Heart className="w-8 h-8 text-accent" />
           </div>
           <h1 className="text-4xl font-semibold leading-tight text-text-primary">
-            {isExpired ? 'Keep your wedding space open' : 'Start with the full wedding suite'}
+            {isBillingUnavailable ? 'We could not verify billing right now' : isExpired ? 'Keep your wedding space open' : 'Start with the full wedding suite'}
           </h1>
           <p className="mt-4 text-base leading-7 text-text-secondary">
-            {isExpired
+            {isBillingUnavailable
+              ? 'Your account is still protected, but billing status could not be confirmed. Please retry below before continuing into paid areas.'
+              : isExpired
               ? 'Your two-year access period has ended. Renew here, then your site, guest details, and planning tools reopen where you left them.'
               : 'Your account is ready. After payment, we’ll take you into setup and help shape the first version together.'}
           </p>
@@ -159,6 +162,13 @@ export const PaymentRequired: React.FC = () => {
               <div className="mb-4 flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
                 <span>Your access period ended. Renew for another two years, then adjust billing preferences in settings.</span>
+              </div>
+            )}
+
+            {isBillingUnavailable && !error && !isCanceled && !isExpired && (
+              <div className="mb-4 flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
+                <span>Billing status is temporarily unavailable. Retry status below or reopen checkout before returning to paid dashboard areas.</span>
               </div>
             )}
 

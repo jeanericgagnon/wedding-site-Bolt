@@ -1084,6 +1084,8 @@ describe('launch edge function guards', () => {
     expect(readFunction('submit-rsvp')).toContain('function cleanText');
     expect(readFunction('submit-rsvp')).toContain('const notes = cleanText(body.notes, 1000)');
     expect(readFunction('submit-rsvp')).toContain('guest_token: await hashRateLimitSubject(inviteToken.trim())');
+    expect(readFunction('submit-rsvp')).toContain('apply_public_rsvp_capacity_decision');
+    expect(readFunction('submit-rsvp')).not.toContain('.select("id", { count: "exact", head: true })');
     expect(readFunction('submit-rsvp')).not.toContain('guest_token: inviteToken.slice(0, 16)');
     expect(readFunction('submit-rsvp')).not.toContain('Invalid JSON body');
     expect(readFunction('submit-rsvp')).not.toContain('A valid invitation token is required to submit your RSVP.');

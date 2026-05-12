@@ -4,37 +4,113 @@
 
 Is the current repo a clean launch baseline today?
 
-Yes. The public DTO lane is fully minimized, the deployment/proof board is canonical, and the launch-critical live proof lanes are green.
+Not yet. The highest-priority billing, RSVP-capacity, and release-gate fixes are now implemented and locally proven, but production is still on the older live SHA until this batch is committed, deployed, and rerun through live proof.
 
 ## Current Canonical Status
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-11 03:42 PM PDT` |
+| Current date/time | `2026-05-11 05:06 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest Git SHA | `23bee092` |
 | Latest commit message | `Stabilize final proof suite and runtime safety` |
 | Vercel deployment ID | `dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
 | Supabase functions deployed | Confirmed in the final exact-SHA sweep: `public-site-access --no-verify-jwt`. Earlier same-day confirmed/live-proven: `photo-upload --no-verify-jwt`; `process-email-queue`; `guest-contact-lookup --no-verify-jwt`; `guest-contact-submit --no-verify-jwt`; `translate-site-content`. Attempted closeout redeploys for `vault-contribution-public --no-verify-jwt` and `vault-entry-submit --no-verify-jwt` did not produce matching live inventory/runtime evidence, so that lane remains deferred/fail-closed. |
-| Current readiness score | `9.9 / 10` |
-| Current launch verdict | `GO` |
-| Production-ready | `YES` |
-| Reason production-ready is not yet claimed | none |
-| Current blockers | `none` |
-| Current proof state | `npm test` passed `534/534` files and `3316/3316` tests. The local gate (`typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `board:md`, `guard:file-size`, `guard:assets`, `performance-budget`, `git diff --check`) is green. Secure production proofs (`service-role-authorization`, `email-messaging-authorization`, `launch-closeout`) are green with the provided secure key. Fresh production proofs after the exact-SHA frontend deploy are green for `test:smoke`, `collaborator-runtime`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, and `registry-preview-ssrf`. |
-| Current deployment state | Frontend is live at [dayof.love](https://dayof.love) on exact Git SHA `23bee092` via verified Vercel production deploy `dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4`. `public-site-access` was freshly redeployed in the same closeout sweep and is live-green. Public vault contribution remains outside the launch baseline because the live route still fails closed and the function inventory does not confirm `vault-contribution-public`. |
-| Current next actions | none |
+| Current readiness score | `9.5 / 10` |
+| Current launch verdict | `HOLD` |
+| Production-ready | `NO` |
+| Reason production-ready is not yet claimed | The reopened payment-gate, RSVP-capacity, and release-gate bugs are fixed in the current working tree and locally proven, but the live frontend/function/database runtime has not been updated to those fixes yet. |
+| Current blockers | `P0 payment gate fix is local-only until frontend deploy`; `P1 RSVP capacity serialization fix is local-only until migration + function deploy`; `P1 release launch gate workflow is local-only until push + first GitHub Actions pass` |
+| Current proof state | `npm test` passed `537/537` files and `3321/3321` tests. The local gate (`typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `board:md`, `git diff --check`) is green. `test:smoke` also passed when rerun with network access after the sandbox DNS miss. Focused blocker proof is green for `ProtectedRoute`, the release launch gate workflow, the RSVP serialization migration, launch edge guards, and the proof-board freshness suite. Secure production proofs (`service-role-authorization`, `email-messaging-authorization`, `launch-closeout`) still stand green with the provided secure key. Live production proofs from SHA `23bee092` are still green for `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, and `registry-preview-ssrf`, but those live proofs do not yet include this new blocker-fix batch. |
+| Current deployment state | Frontend is still live at [dayof.love](https://dayof.love) on exact Git SHA `23bee092` via verified Vercel production deploy `dpl_EusbfjAFUJPpU5fiLwEU5fR1nEb4`. The current working tree contains unreleased blocker-fix changes in `ProtectedRoute`, `PaymentRequired`, `submit-rsvp`, the new RSVP serialization migration, the release launch gate workflow, and matching proof files. Public vault contribution remains outside the launch baseline because the live route still fails closed and the function inventory does not confirm `vault-contribution-public`. |
+| Current next actions | Commit/push this blocker-fix batch, deploy the frontend plus `submit-rsvp` + migration, then rerun the live RSVP/payment proof lane. |
 
 Blunt status:
-- `P1-04 Public section DTO minimization` is closed.
-- `P1-09 Deployment / proof truth canonicalization` is closed.
-- The previously reopened guest-contact runtime blocker is now closed with live proof.
-- No active `P0` or `P1` blockers remain.
+- `P1-04 Public section DTO minimization` is still closed.
+- `P1-09 Deployment / proof truth canonicalization` is still closed.
+- The previously reopened guest-contact runtime blocker is still closed with live proof.
+- The reopened billing, RSVP-capacity, and release-gate defects are fixed locally and proven locally.
+- Production still stays `HOLD` until the live runtime catches up to this batch.
 
 ## Current Launch Blockers
 
-None.
+- `P0 Payment gate fail-open fix` -> `LOCAL PASS / DEPLOY REQUIRED`
+  - file: [src/components/auth/ProtectedRoute.tsx](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/src/components/auth/ProtectedRoute.tsx:33)
+  - current evidence:
+    - billing lookup failures now resolve to a billing-unavailable hold state instead of a fake active/paid state
+    - focused route proof confirms protected dashboard access redirects to `/payment-required?reason=billing_unavailable`
+  - why it matters:
+    - this closes the highest-priority backend-failure-to-free-access path, but the fix is not live until the frontend is redeployed
+  - acceptance:
+    - billing lookup failures must fail closed or enter a billing-unavailable holding state
+    - protected paid surfaces must not grant access on billing read failure
+    - add focused proof for payment lookup failure handling
+  - next action:
+    - commit, deploy the frontend, and rerun payment-gate regression proof on the live build
+- `P1 RSVP capacity serialization fix` -> `LOCAL PASS / DEPLOY REQUIRED`
+  - file: [supabase/functions/submit-rsvp/index.ts](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/supabase/functions/submit-rsvp/index.ts:163)
+  - current evidence:
+    - `submit-rsvp` now calls `apply_public_rsvp_capacity_decision(...)` instead of doing a count-then-update write path
+    - new migration `20260511170500_serialize_submit_rsvp_capacity.sql` locks the site row `FOR UPDATE`, applies the RSVP status decision, updates waitlist rows, and recalculates `rsvp_waitlist_count` in one database function
+  - why it matters:
+    - this removes the race window locally, but the migration and function change are not live until they are deployed together
+  - acceptance:
+    - move capacity enforcement and RSVP update into one DB transaction or RPC
+    - add concurrency-focused proof for waitlist/capacity behavior
+  - next action:
+    - push the migration + function change, then rerun live RSVP/waitlist proof on the deployed runtime
+- `P1 Release launch gate workflow` -> `LOCAL PASS / PUSH REQUIRED`
+  - file: [ci-hardpass.yml](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/.github/workflows/ci-hardpass.yml:76)
+  - current evidence:
+    - new workflow [.github/workflows/release-launch-gate.yml](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/.github/workflows/release-launch-gate.yml) now hard-fails on missing Supabase RSVP proof secrets and requires `npm run smoke:rsvp:strict`
+  - why it matters:
+    - this closes the release-gate policy gap locally, but it does nothing until the workflow is pushed and run in GitHub Actions
+  - acceptance:
+    - production release workflow must fail when required Supabase proof secrets are absent
+    - RSVP strict smoke must be mandatory in the release lane
+  - next action:
+    - push the workflow and capture the first successful release-lane run
+
+## Additional Hardening Findings
+
+- `P2 Client-side Supabase write surface is still too broad`
+  - files:
+    - [src/pages/dashboard/guests/guestService.ts](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/src/pages/dashboard/guests/guestService.ts:508)
+    - [src/pages/dashboard/planning/planningService.ts](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/src/pages/dashboard/planning/planningService.ts:14)
+    - [src/pages/dashboard/seating/seatingService.ts](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/src/pages/dashboard/seating/seatingService.ts:298)
+  - note:
+    - many guest, RSVP, household, import, seating, and planning writes still happen directly from the client
+    - this is survivable only if RLS stays extremely tight
+  - direction:
+    - keep simple reads client-side
+    - migrate dangerous writes into Edge Functions or RPCs
+- `P2 Live RLS proof should be expanded further`
+  - file: [docs/service-role-authorization-disposition-2026-05-05.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/service-role-authorization-disposition-2026-05-05.md:56)
+  - note:
+    - the old disposition doc still says full client RLS proof remains open
+    - current live proof is much better than that document suggests, but deeper anon/owner/collaborator/planner/coordinator/viewer/unrelated-user client-RLS proof is still worth adding because of the client-heavy mutation surface
+- `P2 Internal/lab/capture routes are still publicly routable`
+  - file: [src/App.tsx](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/src/App.tsx:87)
+  - note:
+    - `/builder-v2-lab`, `/variant-preview-capture`, and `/template-scroll-capture` are still in the public router
+  - direction:
+    - gate them behind auth/env flags or remove them from production builds
+- `P2 Dashboard Guests remains orchestration-heavy`
+  - file: [src/pages/dashboard/Guests.tsx](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/src/pages/dashboard/Guests.tsx:1)
+  - note:
+    - decomposition improved, but this route still coordinates a large amount of domain behavior in one place
+  - direction:
+    - continue splitting by domain: guest list, RSVP config, import, invitations, check-in, campaigns
+- `P3 Type/lint rigor is still soft`
+  - files:
+    - [tsconfig.app.json](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/tsconfig.app.json:18)
+    - [eslint.config.js](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/eslint.config.js:29)
+  - note:
+    - `strict` is on, but `noImplicitAny`, `noUnusedLocals`, and `noUnusedParameters` are still disabled
+    - several high-value lint rules are still warnings
+  - direction:
+    - tighten gradually, starting with new code and high-risk modules
 
 ## Public DTO 10/10 Checklist
 
@@ -86,7 +162,8 @@ None.
 
 ## Non-Critical Before Launch
 
-None.
+- `P2 Internal/lab/capture route gating`
+- `P2 Expanded client-RLS proof matrix`
 
 ## Non-Critical After Launch / Deferred
 
@@ -184,16 +261,16 @@ None.
 
 ## Next 10 Tasks
 
-1. Keep `guest-contact-lookup` and `guest-contact-submit` in the postdeploy proof lane after future auth/runtime changes.
-2. Keep `public-site-access`, RSVP, guest hub, photo upload, and guest contact live proofs green after future deploys.
-3. Preserve the canonical deployment matrix when runtime/deploy IDs change.
-4. Preserve the canonical validation matrix when proof lanes change.
-5. Rerun `npm run proof:v1:board:md` after future launch-control edits.
-6. Rerun `git diff --check` after future launch-control edits.
-7. Rerun `npm run proof:v1:guest-lookup-scope` after any guest contact surface deploy.
-8. Leave public vault contribution deferred until live function inventory and enabled vault configs are fixed.
-9. Leave custom-host/subdomain live proof deferred unless that lane changes.
-10. Keep SMS/provider live-send work out of the launch baseline until provider setup is ready.
+1. Commit and push the reopened blocker-fix batch.
+2. Deploy the frontend billing-gate fix.
+3. Deploy the RSVP capacity serialization migration plus the updated `submit-rsvp` function.
+4. Rerun live RSVP/waitlist proof against the deployed serialization path.
+5. Rerun the live payment-gate regression lane after the new frontend build is live.
+6. Run the new `release-launch-gate` workflow with real Supabase RSVP proof secrets.
+7. Gate or remove `/builder-v2-lab`, `/variant-preview-capture`, and `/template-scroll-capture` from production routing.
+8. Expand live client-RLS proof for anon, owner, collaborator, planner, coordinator, viewer, and unrelated-user paths.
+9. Start moving the highest-risk client writes into Edge Functions or RPCs, starting with guest/household/RSVP/bulk operations.
+10. Preserve the canonical deployment and validation matrices when runtime/deploy IDs change.
 
 ## Resolved Work Summary
 
@@ -222,6 +299,8 @@ None.
 
 ## What Changed In This Final Closeout
 
+- Reopened the launch board after a fresh code audit found a fail-open payment gate, an RSVP capacity race, and a release CI proof gap.
+- Reclassified launch state from `GO` back to `HOLD` until those blockers are fixed and proven.
 - Closed `P1-04 Public section DTO minimization` with the last explicit per-family DTO pass and matching focused proof.
 - Closed `P1-09 Deployment / proof truth canonicalization` by rewriting the board into one exact launch-control source of truth.
 - Discovered a real guest-contact blocker while canonicalizing the deployment matrix, then closed it.
