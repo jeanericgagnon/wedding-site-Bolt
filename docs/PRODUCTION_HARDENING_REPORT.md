@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-12 07:14 AM PDT`
+_Updated:_ `2026-05-12 07:49 AM PDT`
 
 ## Current Score
 
@@ -11,7 +11,7 @@ _Updated:_ `2026-05-12 07:14 AM PDT`
 ## Exact Runtime Identity
 
 - Branch: `codex/v1-finish-hard-gates-3`
-- Current branch head: `e71598ad` (`Sync launch board after photos vault provider proof`)
+- Current branch head: `7eff32bb` (`Expand registry policy RLS proof and tighten write inventory guard`)
 - Exact frontend Git SHA: `f0cbf841`
 - Exact frontend commit: `Fix payment gate and serialize RSVP capacity`
 - Exact Vercel production deploy: `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`
@@ -50,6 +50,7 @@ Fresh local proof:
 - `npm run build` -> `PASS`
 - `npm run test:security` -> `PASS`
 - `npm run proof:v1:public-access-coverage` -> `PASS`
+- `npm run proof:v1:test-lanes` -> `PASS`
 - `npm run proof:v1:client-write-inventory` -> `PASS`
   - broadened tracked-`src` runtime scan now reports no direct client `.insert/.update/.upsert/.delete` calls in shipped `src` runtime files
   - scanner now also catches single/double/backtick table names and skips `.d.ts` noise
@@ -59,6 +60,7 @@ Fresh local proof:
 - `npm run guard:assets` -> `PASS`
 - `npm run proof:v1:performance-budget` -> `PASS`
 - `git diff --check` -> `PASS`
+- `npm test -- --run src/lib/ciHardpassWorkflow.test.ts src/lib/releaseLaunchGate.test.ts src/lib/aiExposureProofScript.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts` -> `PASS`
 - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts` -> `PASS`
 - `npm test -- --run src/components/auth/ProtectedRoute.test.tsx` -> `PASS`
 - `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts` -> `PASS`
@@ -148,6 +150,9 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Proved the release gate twice in Actions:
   - `25705386070` green with the broader workflow shape
   - `25705683563` green with the focused launch-critical proof shape
+- Removed the last generic-CI RSVP skip by making `.github/workflows/ci-hardpass.yml` fail if `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` are missing and always run `npm run smoke:rsvp:strict`
+- Removed the `SKIP_POSTDEPLOY_PROOF` bypass path from `scripts/deploy_prod_guarded.mjs`; guarded production deploys now fail instead of silently skipping postdeploy proof
+- Added workflow/proof guards so those two operational hardening guarantees stay test-covered (`ciHardpassWorkflow.test.ts`, `aiExposureProofScript.test.ts`, `proof:v1:test-lanes`)
 - Fixed the `guests-rsvp-ops` wrapper to use a portable shell so Linux Actions runners can execute it cleanly
 - Disabled `/builder-v2-lab`, `/variant-preview-capture`, and `/template-scroll-capture` in production by default unless `VITE_ENABLE_INTERNAL_TOOLING_ROUTES=true`
 - Removed public template links that would otherwise advertise those internal capture routes when the gate is off

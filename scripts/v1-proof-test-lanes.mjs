@@ -39,6 +39,7 @@ if (!scripts['proof:v1:board:md']?.includes('--markdown')) {
 }
 
 const requiredCiSnippets = [
+  'Require Supabase RSVP proof secrets',
   'run: npm run lint -- --quiet',
   'run: npm run guard:file-size',
   'run: npm run guard:assets',
@@ -52,6 +53,7 @@ const requiredCiSnippets = [
   'run: npm run smoke:csvmapper',
   'run: npm run smoke:checkin',
   'run: npm run smoke:messages',
+  'run: npm run smoke:rsvp:strict',
 ];
 
 for (const snippet of requiredCiSnippets) {
@@ -62,6 +64,14 @@ for (const snippet of requiredCiSnippets) {
 
 if (ciHardpass.includes('npm test &&')) {
   failures.push('ci-hardpass.yml should keep hardpass checks as named steps instead of chaining npm test with later checks.');
+}
+
+if (ciHardpass.includes('Skipping smoke:rsvp:strict')) {
+  failures.push('ci-hardpass.yml must not soft-skip strict Supabase RSVP smoke.');
+}
+
+if (ciHardpass.includes("if: ${{ env.VITE_SUPABASE_URL != '' && env.VITE_SUPABASE_ANON_KEY != '' }}")) {
+  failures.push('ci-hardpass.yml must require Supabase RSVP secrets instead of conditionally skipping strict smoke.');
 }
 
 const result = {

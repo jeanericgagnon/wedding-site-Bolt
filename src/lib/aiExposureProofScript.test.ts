@@ -34,7 +34,8 @@ describe('AI exposure proof script', () => {
     expect(packageJson.scripts?.['proof:v1:ai-migration-ready']).toBe('node scripts/v1-proof-ai-migration-ready.mjs');
     expect(deployGuard).toContain('npm run proof:v1:ai-rollout');
     expect(deployGuard).toContain('npm run proof:v1:postdeploy');
-    expect(deployGuard).toContain('SKIP_POSTDEPLOY_PROOF');
+    expect(deployGuard).toContain('Postdeploy proof is mandatory');
+    expect(deployGuard).not.toContain('postdeploy proof skipped by SKIP_POSTDEPLOY_PROOF=1');
     expect(deployGuard).toContain("process.env.PLAYWRIGHT_BASE_URL || 'https://dayof.love'");
     expect(postdeployProof).toContain('npm run proof:v1:ai-rollout');
     expect(postdeployProof).toContain('npm run proof:v1:ai-exposure');

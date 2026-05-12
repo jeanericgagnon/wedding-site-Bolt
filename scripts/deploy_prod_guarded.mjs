@@ -11,7 +11,7 @@ const stateFile = path.join(guardDir, 'deploy-prod-state.json');
 
 const FORCE_DEPLOY = process.env.FORCE_DEPLOY === '1' || process.env.FORCE_DEPLOY === 'true';
 const COOLDOWN_MS = Number.parseInt(process.env.DEPLOY_COOLDOWN_MS ?? '300000', 10); // 5 min default
-const SKIP_POSTDEPLOY_PROOF =
+const POSTDEPLOY_PROOF_BYPASS_REQUESTED =
   process.env.SKIP_POSTDEPLOY_PROOF === '1' || process.env.SKIP_POSTDEPLOY_PROOF === 'true';
 const POSTDEPLOY_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://dayof.love';
 
@@ -72,9 +72,8 @@ function getGitHead() {
 }
 
 function runPostdeployProof() {
-  if (SKIP_POSTDEPLOY_PROOF) {
-    console.log('deploy-prod:postdeploy proof skipped by SKIP_POSTDEPLOY_PROOF=1.');
-    return;
+  if (POSTDEPLOY_PROOF_BYPASS_REQUESTED) {
+    throw new Error('SKIP_POSTDEPLOY_PROOF is no longer supported. Postdeploy proof is mandatory.');
   }
 
   console.log(`deploy-prod:postdeploy proof starting baseUrl=${POSTDEPLOY_BASE_URL}`);

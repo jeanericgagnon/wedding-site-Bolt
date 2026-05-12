@@ -38,7 +38,7 @@ Before launch-clear:
 - No customer-facing UI exposes AI spend, token counts, provider names, or model details.
 - Provider keys stay server-side only.
 - Run `npm run proof:v1:ai-rollout` before any approved deploy while AI/photo column privileges are staged.
-- The guarded production deploy runs `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:postdeploy` automatically after Vercel deploy completion; do not treat a deploy as launch-proven if `SKIP_POSTDEPLOY_PROOF=1` was used.
+- The guarded production deploy runs `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:postdeploy` automatically after Vercel deploy completion, and `SKIP_POSTDEPLOY_PROOF` is no longer accepted. Do not treat a production deploy as complete unless that postdeploy proof passes.
 - Before applying the AI/photo column migration, run `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-migration-ready`; it must report `safeToApplyMigration: true` and `state: frontend_ready_migration_pending`.
 - Run `V1_AI_ROLLOUT_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-rollout` after an approved deploy and before applying the AI/photo column migration if you need to isolate the deployed-bundle check outside the full postdeploy proof.
 - Use `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance` as the single AI launch-clearance gate; it must pass before AI is marked launch-cleared.

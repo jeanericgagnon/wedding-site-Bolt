@@ -34,6 +34,13 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Require Supabase RSVP proof secrets
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "::error::Missing VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY secrets required for smoke:rsvp:strict."
+            exit 1
+          fi
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -51,6 +58,9 @@ jobs:
 
       - name: Public access coverage proof
         run: npm run proof:v1:public-access-coverage
+
+      - name: Client write inventory proof
+        run: npm run proof:v1:client-write-inventory
 
       - name: Unit and regression tests
         run: npm test
@@ -74,9 +84,4 @@ jobs:
         run: npm run smoke:messages
 
       - name: Hardpass RSVP strict (Supabase-backed)
-        if: ${{ env.VITE_SUPABASE_URL != '' && env.VITE_SUPABASE_ANON_KEY != '' }}
         run: npm run smoke:rsvp:strict
-
-      - name: RSVP strict skipped notice
-        if: ${{ env.VITE_SUPABASE_URL == '' || env.VITE_SUPABASE_ANON_KEY == '' }}
-        run: echo "Skipping smoke:rsvp:strict (missing VITE_SUPABASE_URL/VITE_SUPABASE_ANON_KEY secrets)."

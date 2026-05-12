@@ -7,6 +7,21 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 
 ---
 
+## 2026-05-12 07:49 AM PDT - CI RSVP Hard Gate And Mandatory Postdeploy Proof
+
+- Status: `LOCAL HARDENING + PROOF`
+- What changed:
+  - `.github/workflows/ci-hardpass.yml` now hard-fails if `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` are missing
+  - strict Supabase-backed RSVP smoke (`npm run smoke:rsvp:strict`) now always runs in `ci-hardpass`
+  - `scripts/deploy_prod_guarded.mjs` no longer allows `SKIP_POSTDEPLOY_PROOF`; guarded deploys fail instead of silently bypassing postdeploy proof
+  - updated proof guards in `src/lib/ciHardpassWorkflow.test.ts`, `src/lib/aiExposureProofScript.test.ts`, and `scripts/v1-proof-test-lanes.mjs`
+- Proof:
+  - `npm run proof:v1:test-lanes`
+  - `npm test -- --run src/lib/ciHardpassWorkflow.test.ts src/lib/releaseLaunchGate.test.ts src/lib/aiExposureProofScript.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts`
+- Result:
+  - generic CI no longer soft-skips the strict RSVP lane
+  - guarded deploy flow no longer contains a postdeploy-proof bypass
+
 ## 2026-05-12 07:14 AM PDT - Registry Refresh Policy Matrix Coverage And Inventory Guard Tightening
 
 - Status: `LIVE PROOF EXPANDED + REMOTE DB FIX`

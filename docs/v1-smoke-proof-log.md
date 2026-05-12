@@ -14,6 +14,11 @@ _Launch call right now:_ `GO`
 - Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green on the blocker-fix runtime.
 - Client-facing RLS proof now has one canonical live matrix command: `npm run proof:v1:client-rls-matrix`.
 - Active runtime pages now also have one canonical local inventory guard: `npm run proof:v1:client-write-inventory`.
+- 2026-05-12 07:49 AM PDT:
+  - `npm run proof:v1:test-lanes` -> `PASS`
+  - `npm test -- --run src/lib/ciHardpassWorkflow.test.ts src/lib/releaseLaunchGate.test.ts src/lib/aiExposureProofScript.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts` -> `PASS`
+  - generic `ci-hardpass` no longer soft-skips strict Supabase RSVP smoke when secrets are missing
+  - `deploy_prod_guarded.mjs` no longer allows `SKIP_POSTDEPLOY_PROOF`; postdeploy proof is mandatory
 - 2026-05-11 08:48 PM PDT:
   - broadened `proof:v1:client-write-inventory` from active pages to all tracked `src` runtime files
   - after the builder/section/itinerary/seating RPC sweep, result is now `PASS`
