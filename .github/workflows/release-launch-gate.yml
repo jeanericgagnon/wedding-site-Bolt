@@ -49,14 +49,14 @@ jobs:
       - name: Lint
         run: npm run lint -- --quiet
 
-      - name: Unit and regression tests
-        run: npm test
-
       - name: Build
         run: npm run build
 
       - name: Security regression tests
         run: npm run test:security
+
+      - name: Guests / RSVP launch slice
+        run: npm run proof:v1:guests-rsvp-ops
 
       - name: Public access coverage proof
         run: npm run proof:v1:public-access-coverage

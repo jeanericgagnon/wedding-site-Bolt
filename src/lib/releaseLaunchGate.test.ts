@@ -9,6 +9,7 @@ describe('release launch gate workflow', () => {
     expect(source).toContain('name: Release Launch Gate');
     expect(source).toContain('Require Supabase RSVP proof secrets');
     expect(source).toContain('exit 1');
+    expect(source).toContain('npm run proof:v1:guests-rsvp-ops');
     expect(source).toContain('npm run smoke:rsvp:strict');
     expect(source).not.toContain('Skipping smoke:rsvp:strict');
   });
