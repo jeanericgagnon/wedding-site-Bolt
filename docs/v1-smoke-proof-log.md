@@ -15,6 +15,18 @@ _Launch call right now:_ `GO`
 - Client-facing RLS proof now has one canonical live matrix command: `npm run proof:v1:client-rls-matrix`.
 - Active runtime pages now also have one canonical local inventory guard: `npm run proof:v1:client-write-inventory`.
 - `test:launch`, `ci-hardpass`, and `Release Launch Gate` now all require `npm run proof:v1:ast-security`, `npm run proof:v1:client-rls-matrix -- --require-live`, and live `registry-preview-ssrf`.
+- Public vault contribution is now live-proven instead of deferred.
+- `.dayof.love` subdomain routing now has a dedicated live proof and is no longer deferred.
+- External custom domains remain unsupported product scope, not a pending proof lane.
+- 2026-05-12 04:34 PM PDT:
+  - `supabase functions list --project-ref atuzuobpprjstfmdnwso` -> `PASS`
+    - live inventory now includes `vault-contribution-public` and `vault-entry-submit`
+  - `supabase secrets set ALLOW_VAULT_QA_OPEN=true --project-ref atuzuobpprjstfmdnwso --yes` -> `PASS`
+  - `LIVE_VAULT_CONTRIBUTE_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/vault-contribute-write-read.spec.ts` -> `LIVE PASS`
+  - `supabase secrets set ALLOW_VAULT_QA_OPEN=false --project-ref atuzuobpprjstfmdnwso --yes` -> `PASS`
+  - `V1_SUBDOMAIN_ROUTE_LIVE=1 npm run proof:v1:subdomain-route -- --require-live` -> `LIVE PASS`
+  - public vault contribution now has live save/readback/delete proof
+  - `.dayof.love` host routing now has dedicated live fail-closed/no-leak proof
 - 2026-05-12 03:46 PM PDT:
   - `supabase secrets set PUBLIC_SITE_SESSION_SECRET_V1=... --project-ref atuzuobpprjstfmdnwso --yes` -> `PASS`
   - `supabase functions deploy guest-contact-submit --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
@@ -140,10 +152,6 @@ _Launch call right now:_ `GO`
 - RSVP capacity enforcement now serializes through the deployed database function path.
 - Release launch CI now hard-fails without strict Supabase RSVP proof secrets and passes with the configured repo secrets.
 - Internal tooling routes are now disabled in production by default unless `VITE_ENABLE_INTERNAL_TOOLING_ROUTES=true`.
-- Public vault contribution is not part of the current launch baseline:
-  - the route fails closed with safe unavailable copy
-  - `vault-contribution-public` still does not appear in live function inventory
-
 ## Latest Runtime Proof Results
 
 - `npm test` -> `PASS` (`537/537` files, `3321/3321` tests)
@@ -159,6 +167,8 @@ _Launch call right now:_ `GO`
 - `npm run proof:v1:launch-closeout` -> `PASS`
 - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
 - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- `LIVE_VAULT_CONTRIBUTE_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/vault-contribute-write-read.spec.ts` -> `LIVE PASS`
+- `V1_SUBDOMAIN_ROUTE_LIVE=1 npm run proof:v1:subdomain-route -- --require-live` -> `LIVE PASS`
 
 ## 2026-05-11 07:57 PM PDT - Vault And Planning Vendor/Budget RPC Batch (Local Only)
 

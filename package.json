@@ -55,6 +55,7 @@
     "proof:v1:client-rls-matrix": "node scripts/v1-proof-client-rls-matrix.mjs",
     "proof:v1:client-write-inventory": "node scripts/v1-proof-client-write-inventory.mjs",
     "proof:v1:ast-security": "node scripts/v1-proof-ast-security.mjs",
+    "proof:v1:subdomain-route": "node scripts/v1-proof-subdomain-route.mjs",
     "proof:v1:collaborator-access": "node scripts/v1-proof-collaborator-access.mjs",
     "proof:v1:collaborator-runtime": "node scripts/v1-proof-collaborator-runtime.mjs",
     "proof:v1:comms-center": "node scripts/v1-proof-comms-center.mjs",

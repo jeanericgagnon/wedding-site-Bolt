@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-12 03:50 PM PDT`
+_Updated:_ `2026-05-12 04:34 PM PDT`
 
 ## Current Score
 
@@ -32,12 +32,9 @@ Exact 10/10 gap:
 - several explicitly deferred non-launch lanes remain outside the current baseline
 
 Deferred, non-launch gaps:
-- public vault contribution / anniversary vault guest route
-  - live route still fails closed with `This vault is not available right now`
-  - direct function probe for `vault-contribution-public` still returns `404 NOT_FOUND`
-  - `supabase functions list` does not show `vault-contribution-public`
-  - this lane is not part of the current launch baseline
-- custom-host/subdomain live DNS rerun
+- external custom-domain product support
+  - `.dayof.love` subdomain routing is now live-proven
+  - arbitrary external custom domains are still unsupported product scope, not a pending proof lane
 - registry owner import/repair manual notes
 - SMS/provider live-send setup
 - AI secret inventory/internal prereq notes
@@ -106,6 +103,10 @@ Fresh production proof after exact-SHA frontend deploy:
 - `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`
 - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
 - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- `V1_SUBDOMAIN_ROUTE_LIVE=1 npm run proof:v1:subdomain-route -- --require-live` -> `LIVE PASS`
+  - `testandkaras.dayof.love` resolves live and fail-closes safely without wrong-site leakage
+- `LIVE_VAULT_CONTRIBUTE_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/vault-contribute-write-read.spec.ts` -> `LIVE PASS`
+  - public vault contribution save, owner-scoped readback, and cleanup/delete are green after live inventory confirmation
 - reran same-day after the public-session-secret function redeploys:
   - `public-site-access`, `guest-contact-lookup`, `guest-contact-submit`, `validate-rsvp-token`, `photo-upload`, and `interactive-section-public` all stayed green on the live public/session baseline
 - the canonical client-RLS matrix now includes direct guest/planning/seating write allow/deny coverage plus planner itinerary/message RPC allow + registry RPC deny, settings patch/section RPC allow + registry RPC deny, registry item/policy RPC allow + dashboard message/section RPC deny, photos vault-config/vault-provider RPC allow + dashboard message RPC deny, and coordinator Q&A/check-in/media RPC allow + dashboard message RPC deny, in addition to anon guest-contact and public RSVP scope
@@ -135,11 +136,6 @@ Same-day still-valid supporting proof:
 - `npm run proof:v1:data-integrity` -> `PASS`
 - `npm run proof:v1:prereqs` -> `PASS`
 
-Deferred/non-launch failed proof:
-- `LIVE_VAULT_CONTRIBUTE_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/vault-contribute-write-read.spec.ts` -> `FAIL`
-  - route fails closed before write path is reached
-  - this does not block launch because public vault contribution is explicitly deferred/hard-disabled in the current baseline
-
 ## Exact Deployment State
 
 Current live launch baseline:
@@ -152,8 +148,11 @@ Current live launch baseline:
 - `validate-rsvp-token --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `interactive-section-public --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `photo-upload --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
+- `vault-contribution-public --no-verify-jwt`: same-day confirmed in live function inventory and write/read proven green
+- `vault-entry-submit --no-verify-jwt`: same-day confirmed in live function inventory and write/read proven green
 - `process-email-queue`: same-day already confirmed and live-proven
 - `translate-site-content`: same-day already confirmed and live-proven
+- `.dayof.love` host routing: same-day dedicated live proof green for `testandkaras.dayof.love`, with safe fail-closed gating and no wrong-site leak
 - remote database: RPC sweep applied through `20260512031500_seating_assignment_version_rpcs.sql`
 - forward production repairs also applied:
   - `20260511212626_fix_wedding_site_settings_patch_types.sql`
@@ -165,11 +164,10 @@ Current live launch baseline:
   - `20260512043000_fix_registry_refresh_policy_write_updated_by_type.sql`
   - `20260512050000_harden_admin_access_check.sql`
 
-Explicitly deferred / not in current launch baseline:
-- `vault-contribution-public --no-verify-jwt`
-- `vault-entry-submit --no-verify-jwt`
+Not a supported current launch surface:
+- arbitrary external custom domains
 
-Those two deploy commands previously reported success, but the live inventory/runtime still does not confirm the expected state. The public vault lane therefore stays explicitly deferred/fail-closed instead of being counted as launch-ready.
+Those remain future product scope. The `.dayof.love` host-routing lane itself is now live-proven and no longer deferred.
 
 ## What Changed Since Last Report
 
@@ -196,6 +194,9 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Redeployed the highest-risk public/session functions on that dedicated session secret path and reran live public-site, guest-contact, RSVP, photo-upload, collaborator-runtime, and client-RLS proof green
 - Added `20260512050000_harden_admin_access_check.sql` plus the frontend `admin_access_check()` client switch; remote DB apply is complete, the frontend is redeployed, and direct non-admin `admin_users` reads now fail in the live matrix
 - Made the RSVP serialization proof easier to audit directly in-repo by calling out `supabase/migrations/20260511170500_serialize_submit_rsvp_capacity.sql` in the current proof story
+- Redeployed `vault-contribution-public --no-verify-jwt` and `vault-entry-submit --no-verify-jwt`, confirmed both in live function inventory, and turned the public vault contribution lane green with a live save/readback/delete proof
+- Added `npm run proof:v1:subdomain-route` and proved the `.dayof.love` host-routing lane live for `testandkaras.dayof.love`; the host now has explicit runtime evidence that it resolves and fail-closes safely without leaking the wrong site
+- Reframed “custom-host DNS rerun” into the honest product truth: external custom domains remain unsupported future scope rather than a fuzzy proof debt item
 - Fixed the `guests-rsvp-ops` wrapper to use a portable shell so Linux Actions runners can execute it cleanly
 - Disabled `/builder-v2-lab`, `/variant-preview-capture`, and `/template-scroll-capture` in production by default unless `VITE_ENABLE_INTERNAL_TOOLING_ROUTES=true`
 - Removed public template links that would otherwise advertise those internal capture routes when the gate is off
@@ -237,12 +238,10 @@ Those two deploy commands previously reported success, but the live inventory/ru
 ## What Remains Before 10 / 10
 
 Only deferred, non-launch follow-up remains:
-- public vault contribution enablement and live proof
-- custom-host/subdomain dedicated DNS rerun
 - rerun `npm run proof:v1:client-rls-matrix` when future non-guest write surfaces are introduced so the live role matrix stays canonical
 - rerun `npm run proof:v1:client-write-inventory` after future write-surface changes so the local no-direct-client-write inventory stays canonical
 - client-write surface reduction into Edge Functions / RPCs
-- dedicated custom-host DNS rerun only if that launch surface becomes active
+- external custom-domain product support only if that launch surface becomes active
 
 Why this is `9.9 / 10` instead of `10 / 10`:
 - the launch baseline is green and production-ready

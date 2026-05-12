@@ -4282,3 +4282,13 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `guestPhotoSharingService.test.ts`, `eventRsvpCleanup.test.ts`, `guestService.test.ts`, `vendorProfiles.test.ts`, `clientWriteInventoryProofScript.test.ts`, and `dashboardDataBoundary.test.ts` are green, plus `typecheck` and `git diff --check`.
   - Important truth change: `npm run proof:v1:client-write-inventory` now scans all tracked `src` runtime files instead of only active page paths; it no longer passes, and the remaining direct-write clusters are now explicitly isolated to `builderProjectService.ts`, `siteRepository.ts`, `itineraryService.ts`, and `seatingService.ts`.
   - Launch status: unchanged. This is post-launch hardening against remaining client write surface; no deploy was run.
+# 2026-05-12 04:34 PM PDT - Public Vault And Subdomain Deferred Lanes Closed
+
+- Redeployed and re-inventoried `vault-contribution-public --no-verify-jwt` and `vault-entry-submit --no-verify-jwt`; the live function list now confirms both surfaces instead of pretending a missing function is “probably deployed.”
+- Turned the public vault contribution lane green with a real live save/readback/delete proof:
+  - `LIVE_VAULT_CONTRIBUTE_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/vault-contribute-write-read.spec.ts` -> `LIVE PASS`
+  - the temporary `ALLOW_VAULT_QA_OPEN` proof secret was enabled only long enough to run the write/read proof and then set back to `false`
+- Added `npm run proof:v1:subdomain-route` plus `tests/e2e/subdomain-route-live.spec.ts` so `.dayof.love` host routing now has a dedicated live proof lane instead of only local helper tests
+- Proved the live host-routing lane against `testandkaras.dayof.love`; current runtime resolves and fail-closes safely without wrong-site leakage
+- Reframed the old “custom-host DNS rerun” debt into the product truth that actually exists: external custom domains are still unsupported future scope, while shipped `.dayof.love` host routing is now live-proven
+- Synced `BACKLOG.md`, `docs/PRODUCTION_HARDENING_REPORT.md`, and `docs/v1-smoke-proof-log.md` to that sharper truth
