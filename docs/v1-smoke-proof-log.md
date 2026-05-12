@@ -16,6 +16,7 @@ _Launch call right now:_ `GO`
 - That matrix now explicitly proves direct guest, planning, and seating writes stay permission-scoped while direct timeline/settings writes remain denied without permission.
 - The guest-dashboard settings RPC batch is still local-only and stays outside the live runtime baseline until deployment plus `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` proof.
 - The message/coordinator write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
+- The settings/overview owner-write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
 - Payment gate now fails closed on billing lookup failure.
 - RSVP capacity enforcement now serializes through the deployed database function path.
 - Release launch CI now hard-fails without strict Supabase RSVP proof secrets and passes with the configured repo secrets.
@@ -215,6 +216,22 @@ _Launch call right now:_ `GO`
   - coordinator Q&A create/update
 - Focused local proof is green:
   - `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+- Result:
+  - no live-state change yet
+  - apply/deploy plus fresh live proof are still required before this batch counts as runtime hardening
+
+### 2026-05-11 07:49 PM PDT - Settings And Overview Write RPC Batch (Local Only)
+
+- Added migration `20260512012000_settings_overview_write_rpcs.sql`.
+- Moved these working-tree write paths off raw client table mutations:
+  - owner settings site patch writes
+  - collaborator invite create/revoke
+  - overview wedding-data/site-json draft patch writes
+  - interactive suggestion hide
+- Focused local proof is green:
+  - `npm test -- --run src/pages/dashboard/overviewService.test.ts src/pages/dashboard/settings/settingsSiteData.test.ts`
   - `npm run typecheck -- --pretty false`
   - `npm run lint -- --quiet`
 - Result:

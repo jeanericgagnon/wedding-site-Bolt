@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   MAX_OVERVIEW_COLLABORATOR_LINK_ROWS,
@@ -32,5 +34,15 @@ describe('overviewService', () => {
         intelligenceDismissals: ['next-a', 'next-b'],
       },
     });
+  });
+
+  it('routes overview writes through RPCs', () => {
+    const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/overviewService.ts'), 'utf8');
+
+    expect(source).toContain("supabase.rpc('wedding_site_settings_patch'");
+    expect(source).toContain("supabase.rpc('overview_interactive_suggestion_hide'");
+    expect(source).not.toContain(".from('interactive_suggestions')\n    .update({ is_hidden: true })");
+    expect(source).not.toContain(".from('wedding_sites')\n    .update({ wedding_data: nextWeddingData })");
+    expect(source).not.toContain(".from('wedding_sites')\n    .update({ site_json: nextSiteJson })");
   });
 });

@@ -3807,6 +3807,20 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - no live-state change yet
   - apply/deploy plus fresh live proof are still required before this batch changes runtime truth
 
+## 2026-05-11 07:49 PM PDT - Settings And Overview Write RPC Batch (Local Only)
+
+- Added migration `20260512012000_settings_overview_write_rpcs.sql`.
+- Moved owner settings site patch writes behind `wedding_site_settings_patch`.
+- Moved collaborator invite create/revoke behind `settings_collaborator_invite_write` and `settings_collaborator_invite_revoke`.
+- Moved overview wedding-data/site-json patch writes and interactive suggestion hide behind RPCs in the working tree.
+- Focused local proof is green:
+  - `npm test -- --run src/pages/dashboard/overviewService.test.ts src/pages/dashboard/settings/settingsSiteData.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+- Result:
+  - no live-state change yet
+  - apply/deploy plus fresh live proof are still required before this batch changes runtime truth
+
 ## 2026-05-11 07:27 PM PDT - Itinerary Invitation RPC Reuse (Local Only)
 
 - Reused the guest invitation RPCs in `src/pages/dashboard/itineraryService.ts`.

@@ -74,6 +74,17 @@ describe('settings site data boundary', () => {
     expect(MAX_SETTINGS_COLLABORATOR_INVITES).toBe(200);
   });
 
+  it('routes settings writes through RPCs', () => {
+    const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/settings/settingsSiteData.ts'), 'utf8');
+
+    expect(source).toContain("supabase.rpc('wedding_site_settings_patch'");
+    expect(source).toContain("supabase.rpc('settings_collaborator_invite_write'");
+    expect(source).toContain("supabase.rpc('settings_collaborator_invite_revoke'");
+    expect(source).not.toContain(".from('wedding_site_collaborator_invites')\n    .insert(");
+    expect(source).not.toContain(".from('wedding_site_collaborator_invites')\n    .update({ status: 'revoked'");
+    expect(source).not.toContain(".from('wedding_sites')\n    .update(updates)");
+  });
+
   it('keeps owner settings table access behind the settings data service', () => {
     const page = readFileSync(join(process.cwd(), 'src/pages/dashboard/Settings.tsx'), 'utf8');
     const tabContent = readFileSync(

@@ -167,19 +167,18 @@ export async function persistOverviewIntelligenceDismissals(siteId: string, dism
     dismissedIds,
   );
 
-  const { error: updateError } = await supabase
-    .from('wedding_sites')
-    .update({ wedding_data: nextWeddingData })
-    .eq('id', siteId);
+  const { error: updateError } = await supabase.rpc('wedding_site_settings_patch', {
+    p_wedding_site_id: siteId,
+    p_patch: { wedding_data: nextWeddingData },
+  });
 
   if (updateError) throw updateError;
 }
 
 export async function hideInteractiveSuggestion(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('interactive_suggestions')
-    .update({ is_hidden: true })
-    .eq('id', id);
+  const { error } = await supabase.rpc('overview_interactive_suggestion_hide', {
+    p_suggestion_id: id,
+  });
 
   if (error) throw error;
 }
@@ -242,10 +241,10 @@ export async function markOverviewBuilderFieldAsUserEdited(siteId: string, field
     };
   }
 
-  const { error: updateError } = await supabase
-    .from('wedding_sites')
-    .update({ site_json: nextSiteJson })
-    .eq('id', siteId);
+  const { error: updateError } = await supabase.rpc('wedding_site_settings_patch', {
+    p_wedding_site_id: siteId,
+    p_patch: { site_json: nextSiteJson },
+  });
 
   if (updateError) throw updateError;
 }
@@ -273,10 +272,10 @@ export async function updateOverviewDraftRefresh(
     site_json: Record<string, unknown>;
   } & Record<string, unknown>,
 ): Promise<void> {
-  const { error } = await supabase
-    .from('wedding_sites')
-    .update(patch)
-    .eq('id', siteId);
+  const { error } = await supabase.rpc('wedding_site_settings_patch', {
+    p_wedding_site_id: siteId,
+    p_patch: patch,
+  });
 
   if (error) throw error;
 }

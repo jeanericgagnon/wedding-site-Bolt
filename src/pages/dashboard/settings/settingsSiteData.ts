@@ -73,10 +73,10 @@ export async function loadSettingsSite(siteId: string): Promise<SettingsSiteRow 
 }
 
 export async function updateSettingsSite(siteId: string, updates: SettingsSiteUpdates): Promise<void> {
-  const { error } = await supabase
-    .from('wedding_sites')
-    .update(updates)
-    .eq('id', siteId);
+  const { error } = await supabase.rpc('wedding_site_settings_patch', {
+    p_wedding_site_id: siteId,
+    p_patch: updates,
+  });
 
   if (error) throw error;
 }
@@ -102,10 +102,9 @@ export async function createSettingsCollaboratorInvite(params: {
   invitedBy: string;
   permissions: PlannerPermissionKey[];
 }): Promise<SettingsCollaboratorInviteRow> {
-  const { data, error } = await supabase
-    .from('wedding_site_collaborator_invites')
-    .insert({
-      wedding_site_id: params.weddingSiteId,
+  const { data, error } = await supabase.rpc('settings_collaborator_invite_write', {
+    p_wedding_site_id: params.weddingSiteId,
+    p_payload: {
       invite_email: params.inviteEmail,
       invite_name: params.inviteName,
       role: params.role,
@@ -113,19 +112,18 @@ export async function createSettingsCollaboratorInvite(params: {
       invite_token: params.inviteToken,
       invited_by: params.invitedBy,
       permissions: params.permissions,
-    })
-    .select(SETTINGS_COLLABORATOR_INVITE_SELECT)
-    .single();
+    },
+  });
 
   if (error) throw error;
   return data as SettingsCollaboratorInviteRow;
 }
 
 export async function revokeSettingsCollaboratorInvite(inviteId: string, revokedAt = new Date().toISOString()): Promise<void> {
-  const { error } = await supabase
-    .from('wedding_site_collaborator_invites')
-    .update({ status: 'revoked', revoked_at: revokedAt })
-    .eq('id', inviteId);
+  const { error } = await supabase.rpc('settings_collaborator_invite_revoke', {
+    p_invite_id: inviteId,
+    p_revoked_at: revokedAt,
+  });
 
   if (error) throw error;
 }
