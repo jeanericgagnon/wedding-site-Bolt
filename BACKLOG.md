@@ -12,8 +12,8 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | --- | --- |
 | Current date/time | `2026-05-12 04:34 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
-| Latest Git SHA | `17c8089f` |
-| Latest commit message | `Narrow guest contact verifier to email fragment` |
+| Latest Git SHA | `33a78e0c` |
+| Latest commit message | `Sync launch docs after deferred lane closure` |
 | Vercel deployment ID | `dpl_L9m7XKgo3GhpLkH5NR4M1ZzLSDjh` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
 | Supabase functions deployed | Live blocker-fix lane now includes `submit-rsvp --no-verify-jwt` plus applied migration `20260511170500_serialize_submit_rsvp_capacity.sql`. Earlier same-day confirmed/live-proven: `public-site-access --no-verify-jwt`; `photo-upload --no-verify-jwt`; `process-email-queue`; `guest-contact-lookup --no-verify-jwt`; `guest-contact-submit --no-verify-jwt`; `translate-site-content`. Same-day live session-secret separation redeploys are green for `public-site-access --no-verify-jwt`, `guest-contact-lookup --no-verify-jwt`, `guest-contact-submit --no-verify-jwt`, `validate-rsvp-token --no-verify-jwt`, and `interactive-section-public --no-verify-jwt`; `PUBLIC_SITE_SESSION_SECRET_V1` is now set on the linked Supabase project and the guest-contact submit function was redeployed after that secret landed so signed contact sessions verify live. `vault-contribution-public --no-verify-jwt` and `vault-entry-submit --no-verify-jwt` are now confirmed in live function inventory and the public vault contribution write/read/delete proof is green; the temporary `ALLOW_VAULT_QA_OPEN` proof secret was toggled only for that live run and then reset back to `false`. |

@@ -11,7 +11,7 @@ _Updated:_ `2026-05-12 04:34 PM PDT`
 ## Exact Runtime Identity
 
 - Branch: `codex/v1-finish-hard-gates-3`
-- Current branch head: `17c8089f` (`Narrow guest contact verifier to email fragment`)
+- Current branch head: `33a78e0c` (`Sync launch docs after deferred lane closure`)
 - Exact frontend Git SHA: `17c8089f`
 - Exact frontend commit: `Narrow guest contact verifier to email fragment`
 - Exact Vercel production deploy: `dpl_L9m7XKgo3GhpLkH5NR4M1ZzLSDjh`
