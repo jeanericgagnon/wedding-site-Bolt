@@ -14,6 +14,18 @@ _Launch call right now:_ `GO`
 - Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green on the blocker-fix runtime.
 - Client-facing RLS proof now has one canonical live matrix command: `npm run proof:v1:client-rls-matrix`.
 - Active runtime pages now also have one canonical local inventory guard: `npm run proof:v1:client-write-inventory`.
+- 2026-05-11 08:32 PM PDT:
+  - broadened `proof:v1:client-write-inventory` from active pages to all tracked `src` runtime files
+  - result is now `FAIL`, but the remainder is isolated and honest:
+    - `src/builder/services/builderProjectService.ts`
+    - `src/data/siteRepository.ts`
+    - `src/pages/dashboard/itineraryService.ts`
+    - `src/pages/dashboard/seating/seatingService.ts`
+  - same batch moved guest-photo owner writes, event RSVP cleanup writes, guest RSVP conflict resolution, vendor profile create, builder media writes, and app-action audit writes behind local RPCs
+  - focused proof green:
+    - `npm test -- --run src/lib/eventRsvpCleanup.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/guests/guestService.test.ts src/lib/vendorProfiles.test.ts src/lib/clientWriteInventoryProofScript.test.ts src/lib/dashboardDataBoundary.test.ts`
+    - `npm run typecheck -- --pretty false`
+    - `git diff --check`
 - That matrix now explicitly proves direct guest, planning, and seating writes stay permission-scoped while direct timeline/settings writes remain denied without permission.
 - The guest-dashboard settings RPC batch is still local-only and stays outside the live runtime baseline until deployment plus `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` proof.
 - The message/coordinator write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.

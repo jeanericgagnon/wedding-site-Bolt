@@ -438,27 +438,25 @@ describe('guestService', () => {
   });
 
   it('resolves one guest dashboard RSVP conflict through the service', async () => {
-    const eqMock = vi.fn().mockResolvedValue({ error: null });
-    const updateMock = vi.fn(() => ({ eq: eqMock }));
-    fromMock.mockReturnValue({ update: updateMock });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(resolveGuestDashboardConflict('conflict-1', '2026-05-07T12:00:00.000Z')).resolves.toBeUndefined();
 
-    expect(fromMock).toHaveBeenCalledWith('rsvp_conflicts');
-    expect(updateMock).toHaveBeenCalledWith({ resolved: true, resolved_at: '2026-05-07T12:00:00.000Z' });
-    expect(eqMock).toHaveBeenCalledWith('id', 'conflict-1');
+    expect(rpcMock).toHaveBeenCalledWith('guest_dashboard_rsvp_conflict_resolve_many', {
+      p_conflict_ids: ['conflict-1'],
+      p_resolved_at: '2026-05-07T12:00:00.000Z',
+    });
   });
 
   it('resolves many guest dashboard RSVP conflicts through the service', async () => {
-    const inMock = vi.fn().mockResolvedValue({ error: null });
-    const updateMock = vi.fn(() => ({ in: inMock }));
-    fromMock.mockReturnValue({ update: updateMock });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(resolveGuestDashboardConflicts(['conflict-1', 'conflict-2'], '2026-05-07T12:00:00.000Z')).resolves.toBeUndefined();
 
-    expect(fromMock).toHaveBeenCalledWith('rsvp_conflicts');
-    expect(updateMock).toHaveBeenCalledWith({ resolved: true, resolved_at: '2026-05-07T12:00:00.000Z' });
-    expect(inMock).toHaveBeenCalledWith('id', ['conflict-1', 'conflict-2']);
+    expect(rpcMock).toHaveBeenCalledWith('guest_dashboard_rsvp_conflict_resolve_many', {
+      p_conflict_ids: ['conflict-1', 'conflict-2'],
+      p_resolved_at: '2026-05-07T12:00:00.000Z',
+    });
   });
 
   it('keeps guest RSVP lookup fan-out bounded', () => {

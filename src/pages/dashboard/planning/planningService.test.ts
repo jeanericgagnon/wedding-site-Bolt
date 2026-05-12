@@ -91,11 +91,15 @@ describe('planning song request helpers', () => {
     expect(source).toContain("supabase.rpc('planning_vendor_delete'");
     expect(source).toContain("supabase.rpc('planning_budget_item_write'");
     expect(source).toContain("supabase.rpc('planning_budget_item_delete'");
+    expect(source).toContain("supabase.rpc('wedding_site_settings_patch'");
     expect(source).not.toContain(".from('planning_tasks')\n    .insert(");
     expect(source).not.toContain(".from('planning_tasks')\n    .update(");
     expect(source).not.toContain(".from('planning_tasks').delete()");
     expect(source).not.toContain(".from('planning_vendors').delete()");
     expect(source).not.toContain(".from('planning_budget_items').delete()");
+    expect(source).not.toContain(".from('wedding_sites')\n    .update({ wedding_data: nextWeddingData");
+    expect(source).not.toContain(".from('wedding_sites')\n    .update({ music_playlist_url:");
+    expect(source).not.toContain(".from('wedding_sites')\n    .update({ rsvp_custom_questions:");
   });
 
   it('persists planning task writes through RPCs', async () => {

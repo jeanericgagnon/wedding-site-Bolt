@@ -68,5 +68,7 @@ describe('sanitizeMetadata', () => {
     const source = readFileSync(join(process.cwd(), 'src/lib/actionAudit.ts'), 'utf8');
     expect(source).toContain('const boundedLimit = Math.max(1, Math.min(MAX_APP_ACTION_AUDIT_ROWS, Math.floor(limit || 0) || 50));');
     expect(source).toContain('.limit(boundedLimit);');
+    expect(source).toContain("supabase.rpc('app_action_audit_log_write'");
+    expect(source).not.toContain(".from('app_action_audit_logs').insert");
   });
 });

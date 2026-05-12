@@ -670,24 +670,12 @@ export async function generateVendorProfileDraft(input: { vendorName: string; in
 export async function createVendorProfile(draft: VendorProfileDraft): Promise<VendorProfile> {
   const sanitizedDraft = sanitizeVendorProfileDraft(draft);
   const baseSlug = normalizeSlugPart(sanitizedDraft.slug || sanitizedDraft.vendor_name) || `vendor-${Date.now()}`;
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data, error } = await supabase.rpc('vendor_profile_write', {
+    p_payload: { ...sanitizedDraft, slug: baseSlug },
+  });
 
-  for (let attempt = 0; attempt < 8; attempt += 1) {
-    const nextSlug = attempt === 0 ? baseSlug : `${baseSlug}-${attempt + 1}`.slice(0, 72);
-    const { data, error } = await supabase
-      .from('vendor_profiles')
-      .insert({ ...sanitizedDraft, slug: nextSlug, created_by: user?.id ?? null })
-      .select(VENDOR_PROFILE_SELECT)
-      .single();
-
-    if (!error) return normalizeVendorProfile(data);
-
-    const message = (error.message || '').toLowerCase();
-    const duplicateSlug = message.includes('vendor_profiles_slug_key') || message.includes('duplicate key') || message.includes('unique');
-    if (!duplicateSlug) throw error;
-  }
-
-  throw new Error('Could not find an available vendor page URL. Try a slightly different vendor name.');
+  if (error) throw error;
+  return normalizeVendorProfile(data);
 }
 
 export async function getVendorProfileBySlug(slug: string): Promise<VendorProfile | null> {

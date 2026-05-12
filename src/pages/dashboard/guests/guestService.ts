@@ -277,19 +277,19 @@ export async function loadGuestDashboardSnapshot(weddingSiteId: string): Promise
 }
 
 export async function resolveGuestDashboardConflict(conflictId: string, resolvedAt: string): Promise<void> {
-  const { error } = await supabase
-    .from('rsvp_conflicts')
-    .update({ resolved: true, resolved_at: resolvedAt })
-    .eq('id', conflictId);
+  const { error } = await supabase.rpc('guest_dashboard_rsvp_conflict_resolve_many', {
+    p_conflict_ids: [conflictId],
+    p_resolved_at: resolvedAt,
+  });
 
   if (error) throw error;
 }
 
 export async function resolveGuestDashboardConflicts(conflictIds: string[], resolvedAt: string): Promise<void> {
-  const { error } = await supabase
-    .from('rsvp_conflicts')
-    .update({ resolved: true, resolved_at: resolvedAt })
-    .in('id', conflictIds);
+  const { error } = await supabase.rpc('guest_dashboard_rsvp_conflict_resolve_many', {
+    p_conflict_ids: conflictIds,
+    p_resolved_at: resolvedAt,
+  });
 
   if (error) throw error;
 }

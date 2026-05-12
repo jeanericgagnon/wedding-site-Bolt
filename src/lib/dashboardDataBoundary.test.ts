@@ -793,9 +793,15 @@ describe('dashboard data boundary guards', () => {
     expect(builderProjectSource).toContain('.select(BUILDER_ENTRY_SITE_SELECT)');
     expect(mediaSource).toContain('const BUILDER_MEDIA_ASSET_SELECT = ');
     expect(mediaSource).toContain('.select(BUILDER_MEDIA_ASSET_SELECT)');
+    expect(mediaSource).toContain("supabase.rpc('builder_media_asset_write'");
+    expect(mediaSource).toContain("supabase.rpc('builder_media_asset_delete'");
+    expect(mediaSource).toContain("supabase.rpc('builder_media_asset_attach_section'");
     expect(builderPageSource).toContain('builderProjectService.loadEntrySite(activeSite?.id ?? \'\')');
     expect(builderProjectSource).not.toContain(".from('wedding_sites')\n      .select('*')");
     expect(mediaSource).not.toContain(".from('builder_media_assets')\n      .select('*')");
+    expect(mediaSource).not.toContain(".from('builder_media_assets').delete()");
+    expect(mediaSource).not.toContain(".from('builder_media_assets')\n      .insert");
+    expect(mediaSource).not.toContain(".from('builder_media_assets')\n      .update");
     expect(builderPageSource).not.toContain(".from('wedding_sites')\n        .select('*')");
   });
 

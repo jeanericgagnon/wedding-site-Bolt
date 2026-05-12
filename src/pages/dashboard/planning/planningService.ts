@@ -236,16 +236,16 @@ export async function updatePlanningTotalBudget(weddingSiteId: string, value: nu
     },
   };
 
-  let { error } = await supabase
-    .from('wedding_sites')
-    .update({ wedding_data: nextWeddingData, updated_at: new Date().toISOString() })
-    .eq('id', weddingSiteId);
+  let { error } = await supabase.rpc('wedding_site_settings_patch', {
+    p_wedding_site_id: weddingSiteId,
+    p_patch: { wedding_data: nextWeddingData },
+  });
 
   if (error?.message?.includes('wedding_data')) {
-    const fallback = await supabase
-      .from('wedding_sites')
-      .update({ updated_at: new Date().toISOString() })
-      .eq('id', weddingSiteId);
+    const fallback = await supabase.rpc('wedding_site_settings_patch', {
+      p_wedding_site_id: weddingSiteId,
+      p_patch: {},
+    });
     error = fallback.error;
   }
 
@@ -325,10 +325,10 @@ export async function loadSongRequestData(weddingSiteId: string): Promise<Planni
 }
 
 export async function savePlanningPlaylistUrl(weddingSiteId: string, playlistUrl: string): Promise<void> {
-  const { error } = await supabase
-    .from('wedding_sites')
-    .update({ music_playlist_url: playlistUrl.trim() || null, updated_at: new Date().toISOString() })
-    .eq('id', weddingSiteId);
+  const { error } = await supabase.rpc('wedding_site_settings_patch', {
+    p_wedding_site_id: weddingSiteId,
+    p_patch: { music_playlist_url: playlistUrl.trim() || null },
+  });
   if (error) throw error;
 }
 
@@ -352,10 +352,10 @@ export async function ensurePlanningSongRequestQuestion(weddingSiteId: string): 
     });
   }
 
-  const { error } = await supabase
-    .from('wedding_sites')
-    .update({ rsvp_custom_questions: questions, updated_at: new Date().toISOString() })
-    .eq('id', weddingSiteId);
+  const { error } = await supabase.rpc('wedding_site_settings_patch', {
+    p_wedding_site_id: weddingSiteId,
+    p_patch: { rsvp_custom_questions: questions },
+  });
   if (error) throw error;
 }
 

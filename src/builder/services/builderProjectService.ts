@@ -228,10 +228,10 @@ export const builderProjectService = {
     let error: { message?: string } | null = null;
 
     for (let i = 0; i <= driftFields.length; i += 1) {
-      const result = await supabase
-        .from('wedding_sites')
-        .update(payload)
-        .eq('id', project.weddingId);
+      const result = await supabase.rpc('wedding_site_settings_patch', {
+        p_wedding_site_id: project.weddingId,
+        p_patch: payload,
+      });
 
       error = result.error;
       if (!error) break;

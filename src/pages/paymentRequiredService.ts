@@ -18,19 +18,17 @@ export async function ensureMinimalPaymentWeddingSite(userId: string, email?: st
     const siteSlug = `${base}${suffix}`;
     const siteUrl = `${siteSlug}.dayof.love`;
 
-    const { data, error } = await supabase
-      .from('wedding_sites')
-      .insert({
-        user_id: userId,
+    const { data, error } = await supabase.rpc('wedding_site_bootstrap_write', {
+      p_user_id: userId,
+      p_payload: {
         couple_name_1: 'You',
         couple_name_2: 'Partner',
         site_slug: siteSlug,
         site_url: siteUrl,
-      })
-      .select('id')
-      .maybeSingle();
+      },
+    });
 
-    if (!error && data?.id) return data.id;
+    if (!error && data?.id) return data.id as string;
 
     const collision = /duplicate key|already exists|unique/i.test(error?.message || '');
     if (!collision) throw error;

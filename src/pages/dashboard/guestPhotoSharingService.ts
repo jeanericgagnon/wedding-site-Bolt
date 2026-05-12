@@ -65,10 +65,9 @@ export async function saveGuestPhotoHubSettings(
 ): Promise<void> {
   const userId = await getGuestPhotoCurrentUserId();
   const now = new Date().toISOString();
-  const { error: upsertError } = await supabase
-    .from('guest_hub_settings')
-    .upsert({
-      wedding_site_id: siteId,
+  const { error: upsertError } = await supabase.rpc('guest_hub_settings_write', {
+    p_wedding_site_id: siteId,
+    p_payload: {
       ...hubSettings,
       recap_published_at: hubSettings.recap_status === 'published' ? (hubSettings.recap_published_at ?? now) : hubSettings.recap_published_at,
       recap_closed_at: hubSettings.recap_status === 'closed' ? (hubSettings.recap_closed_at ?? now) : null,
@@ -76,7 +75,8 @@ export async function saveGuestPhotoHubSettings(
       language_default: hubSettings.language_default.trim() || 'en',
       updated_by: userId,
       updated_at: now,
-    }, { onConflict: 'wedding_site_id' });
+    },
+  });
   if (upsertError) throw upsertError;
 }
 
@@ -84,10 +84,10 @@ export async function moderateGuestbookEntry(
   entryId: string,
   patch: Partial<Pick<GuestbookEntryRow, 'is_hidden' | 'is_flagged'>>,
 ): Promise<void> {
-  const { error: updateError } = await supabase
-    .from('guestbook_entries')
-    .update({ ...patch, moderated_at: new Date().toISOString() })
-    .eq('id', entryId);
+  const { error: updateError } = await supabase.rpc('guestbook_entry_moderate', {
+    p_entry_id: entryId,
+    p_payload: { ...patch, moderated_at: new Date().toISOString() },
+  });
   if (updateError) throw updateError;
 }
 
@@ -112,10 +112,10 @@ export async function persistGuestPhotoAiOpsPlan(
     },
   };
 
-  const { error: updateError } = await supabase
-    .from('wedding_sites')
-    .update({ wedding_data: nextWeddingData })
-    .eq('id', siteId);
+  const { error: updateError } = await supabase.rpc('wedding_site_settings_patch', {
+    p_wedding_site_id: siteId,
+    p_patch: { wedding_data: nextWeddingData },
+  });
 
   if (updateError) throw updateError;
 }
@@ -125,11 +125,11 @@ export async function moveGuestPhotoUploadToBucket(
   uploadId: string,
   photoAlbumId: string,
 ): Promise<void> {
-  const { error: moveError } = await supabase
-    .from('photo_uploads')
-    .update({ photo_album_id: photoAlbumId })
-    .eq('id', uploadId)
-    .eq('wedding_site_id', siteId);
+  const { error: moveError } = await supabase.rpc('photo_upload_bucket_move', {
+    p_wedding_site_id: siteId,
+    p_upload_id: uploadId,
+    p_photo_album_id: photoAlbumId,
+  });
   if (moveError) throw moveError;
 }
 
@@ -157,11 +157,10 @@ export async function createGuestPhotoBucketCorrection(
     created_by: userId,
   };
 
-  const { data, error: correctionError } = await supabase
-    .from('photo_ai_bucket_corrections')
-    .insert(payload)
-    .select('id,upload_id,action,previous_bucket_id,suggested_bucket_id,chosen_bucket_id,confidence,reason,created_at')
-    .single();
+  const { data, error: correctionError } = await supabase.rpc('photo_ai_bucket_correction_write', {
+    p_wedding_site_id: siteId,
+    p_payload: payload,
+  });
   if (correctionError) throw correctionError;
   return data as PhotoAiBucketCorrectionRow;
 }
@@ -420,9 +419,9 @@ export async function persistGuestPhotoBuckets(siteId: string, nextBuckets: Cano
     nextBuckets,
   );
 
-  const { error: updateError } = await supabase
-    .from('wedding_sites')
-    .update(updatePayload)
-    .eq('id', siteId);
+  const { error: updateError } = await supabase.rpc('wedding_site_settings_patch', {
+    p_wedding_site_id: siteId,
+    p_patch: updatePayload,
+  });
   if (updateError) throw new Error(safeGuestPhotoOwnerServiceError(updateError, 'Couldn’t save photo buckets right now.'));
 }

@@ -16,7 +16,8 @@ describe('payment required service boundary', () => {
     expect(page).toContain('ensureMinimalPaymentWeddingSite(user.id, user.email)');
     expect(page).not.toContain("from '../lib/supabase'");
     expect(page).not.toContain("from('wedding_sites')");
-    expect(service).toContain(".select('id')");
+    expect(service).toContain("supabase.rpc('wedding_site_bootstrap_write'");
     expect(service).not.toContain(".select('*')");
+    expect(service).not.toContain(".from('wedding_sites')\n      .insert");
   });
 });

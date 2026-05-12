@@ -3911,3 +3911,9 @@ Write a short architecture note after the highest-risk hardening lanes are imple
 - Result:
   - no live-state change yet
   - apply/deploy plus fresh live collaborator/client-RLS proof are still required before this batch changes runtime truth
+- 2026-05-11 08:32 PM PDT - No-deploy guest-photo and misc write-RPC hardening:
+  - Resolved in this batch: moved guest-photo owner writes (`guest_hub_settings`, guestbook moderation, bucket move, bucket corrections, and bucket site patch), event RSVP cleanup writes, guest RSVP conflict resolution, vendor profile create, builder media writes, and app-action audit writes behind local RPCs.
+  - Added local migration `supabase/migrations/20260512024500_guest_photo_misc_write_rpcs.sql`.
+  - Proof added/updated: `guestPhotoSharingService.test.ts`, `eventRsvpCleanup.test.ts`, `guestService.test.ts`, `vendorProfiles.test.ts`, `clientWriteInventoryProofScript.test.ts`, and `dashboardDataBoundary.test.ts` are green, plus `typecheck` and `git diff --check`.
+  - Important truth change: `npm run proof:v1:client-write-inventory` now scans all tracked `src` runtime files instead of only active page paths; it no longer passes, and the remaining direct-write clusters are now explicitly isolated to `builderProjectService.ts`, `siteRepository.ts`, `itineraryService.ts`, and `seatingService.ts`.
+  - Launch status: unchanged. This is post-launch hardening against remaining client write surface; no deploy was run.

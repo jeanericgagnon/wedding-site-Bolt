@@ -85,15 +85,14 @@ export async function logAppAction(input: AppActionAuditInput): Promise<void> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.id) return;
 
-  const { error } = await supabase.from('app_action_audit_logs').insert({
-    wedding_site_id: input.weddingSiteId,
-    actor_user_id: user.id,
-    action_area: input.area,
-    action_type: input.type,
-    target_id: input.targetId ?? null,
-    target_label: input.targetLabel ?? null,
-    summary: input.summary,
-    metadata: sanitizeMetadata(input.metadata),
+  const { error } = await supabase.rpc('app_action_audit_log_write', {
+    p_wedding_site_id: input.weddingSiteId,
+    p_action_area: input.area,
+    p_action_type: input.type,
+    p_summary: input.summary,
+    p_target_id: input.targetId ?? null,
+    p_target_label: input.targetLabel ?? null,
+    p_metadata: sanitizeMetadata(input.metadata),
   });
 
   if (error) {

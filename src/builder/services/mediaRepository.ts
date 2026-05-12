@@ -64,10 +64,9 @@ export const mediaRepository = {
   },
 
   async save(asset: Omit<BuilderMediaAsset, 'id'>): Promise<BuilderMediaAsset> {
-    const { data, error } = await supabase
-      .from('builder_media_assets')
-      .insert({
-        wedding_site_id: asset.weddingId,
+    const { data, error } = await supabase.rpc('builder_media_asset_write', {
+      p_wedding_site_id: asset.weddingId,
+      p_payload: {
         filename: asset.filename,
         original_filename: asset.originalFilename,
         mime_type: asset.mimeType,
@@ -82,37 +81,26 @@ export const mediaRepository = {
         caption: asset.caption,
         tags: asset.tags,
         attached_section_ids: asset.attachedSectionIds,
-      })
-      .select(BUILDER_MEDIA_ASSET_SELECT)
-      .single();
+      },
+    });
 
     if (error) throw error;
-    return mapRowToAsset(data);
+    return mapRowToAsset(data as Record<string, unknown>);
   },
 
   async delete(assetId: string): Promise<void> {
-    const { error } = await supabase.from('builder_media_assets').delete().eq('id', assetId);
+    const { error } = await supabase.rpc('builder_media_asset_delete', {
+      p_asset_id: assetId,
+    });
     if (error) throw error;
   },
 
   async attachToSection(assetId: string, sectionId: string): Promise<void> {
-    const { data, error } = await supabase
-      .from('builder_media_assets')
-      .select('attached_section_ids')
-      .eq('id', assetId)
-      .maybeSingle();
-
+    const { error } = await supabase.rpc('builder_media_asset_attach_section', {
+      p_asset_id: assetId,
+      p_section_id: sectionId,
+    });
     if (error) throw error;
-
-    const current: string[] = data?.attached_section_ids ?? [];
-    if (current.includes(sectionId)) return;
-
-    const { error: updateError } = await supabase
-      .from('builder_media_assets')
-      .update({ attached_section_ids: [...current, sectionId] })
-      .eq('id', assetId);
-
-    if (updateError) throw updateError;
   },
 };
 

@@ -3,12 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const invoke = vi.fn();
 const getUser = vi.fn();
 const from = vi.fn();
+const rpc = vi.fn();
 
 vi.mock('./supabase', () => ({
   supabase: {
     functions: { invoke },
     auth: { getUser },
     from,
+    rpc,
   },
 }));
 
@@ -17,6 +19,7 @@ describe('vendor profile draft fallback safety', () => {
     invoke.mockReset();
     getUser.mockReset();
     from.mockReset();
+    rpc.mockReset();
   });
 
   it('does not synthesize third-party screenshot images when preview generation falls back', async () => {
@@ -62,8 +65,7 @@ describe('vendor profile draft fallback safety', () => {
   });
 
   it('sanitizes generated drafts again before inserting vendor profiles', async () => {
-    getUser.mockResolvedValueOnce({ data: { user: { id: 'user-1' } } });
-    const single = vi.fn(async () => ({
+    rpc.mockResolvedValueOnce({
       data: {
         id: 'vendor-1',
         slug: 'acme-photo',
@@ -78,10 +80,7 @@ describe('vendor profile draft fallback safety', () => {
         source_payload: {},
       },
       error: null,
-    }));
-    const select = vi.fn(() => ({ single }));
-    const insert = vi.fn(() => ({ select }));
-    from.mockReturnValueOnce({ insert });
+    });
 
     const { createVendorProfile } = await import('./vendorProfiles');
     await createVendorProfile({
@@ -97,13 +96,15 @@ describe('vendor profile draft fallback safety', () => {
       source_payload: {},
     });
 
-    expect(insert).toHaveBeenCalledWith(expect.objectContaining({
-      hero_image_url: null,
-      image_urls: ['https://cdn.example.com/gallery.jpg'],
-      instagram_url: null,
-      website_url: null,
-      contact_email: null,
-      created_by: 'user-1',
-    }));
+    expect(rpc).toHaveBeenCalledWith('vendor_profile_write', {
+      p_payload: expect.objectContaining({
+        slug: 'acme-photo',
+        hero_image_url: null,
+        image_urls: ['https://cdn.example.com/gallery.jpg'],
+        instagram_url: null,
+        website_url: null,
+        contact_email: null,
+      }),
+    });
   });
 });

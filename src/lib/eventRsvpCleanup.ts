@@ -37,10 +37,9 @@ export async function deleteEventRsvpsByInvitationIds(invitationIds: string[]): 
   if (invitationIds.length === 0) return;
   const scopedInvitationIds = invitationIds.slice(0, MAX_EVENT_RSVP_INVITATION_IDS);
 
-  const { error } = await supabase
-    .from('event_rsvps')
-    .delete()
-    .in('event_invitation_id', scopedInvitationIds);
+  const { error } = await supabase.rpc('event_rsvp_delete_many', {
+    p_event_invitation_ids: scopedInvitationIds,
+  });
 
   if (error && !isMissingEventRsvpsRelation(error.message)) {
     throw error;
@@ -72,9 +71,9 @@ export async function getEventRsvpSnapshotsByInvitationIds(invitationIds: string
 export async function restoreEventRsvpSnapshots(rows: EventRsvpSnapshot[]): Promise<void> {
   if (rows.length === 0) return;
 
-  const { error } = await supabase
-    .from('event_rsvps')
-    .upsert(rows, { onConflict: 'event_invitation_id' });
+  const { error } = await supabase.rpc('event_rsvp_upsert_many', {
+    p_rows: rows,
+  });
 
   if (error && !isMissingEventRsvpsRelation(error.message)) {
     throw error;
