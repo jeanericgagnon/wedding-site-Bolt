@@ -154,7 +154,8 @@ const output = {
     'Owner invite flow plus viewer deny and planner/coordinator allow collaborator runtime proof',
     'Guest-scoped collaborators can mutate guest rows directly while timeline/settings writes stay denied without permission',
     'Planner-scoped collaborators can write planning tasks and dashboard messages while registry RPC writes stay denied without permission',
-    'Coordinator-scoped collaborators can write seating events/tables and builder media assets while dashboard message RPC writes stay denied without permission',
+    'Registry-scoped collaborators can write registry items while dashboard message RPC writes stay denied without permission',
+    'Coordinator-scoped collaborators can write seating events/tables, coordinator Q&A/check-in, and builder media assets while dashboard message RPC writes stay denied without permission',
   ],
   stillManualProofNeeded: buildStillManualProofNeeded(),
   blockers: blockedRequired.map((result) => ({

@@ -72,7 +72,7 @@ Fresh secure/runtime proof:
 - `npm run proof:v1:email-messaging-authorization` -> `PASS`
 - `npm run proof:v1:launch-closeout` -> `PASS`
 - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
-- collaborator runtime now also proves guest-scoped collaborators can directly mutate guest rows, planner-scoped collaborators can directly write planning tasks and dashboard messages while registry RPC writes stay denied, and coordinator-scoped collaborators can directly write seating events/tables and builder media assets while dashboard message RPC writes stay denied
+- collaborator runtime now also proves guest-scoped collaborators can directly mutate guest rows, planner-scoped collaborators can directly write planning tasks and dashboard messages while registry RPC writes stay denied, registry-scoped collaborators can directly write registry items while dashboard message RPC writes stay denied, and coordinator-scoped collaborators can directly write seating events/tables, coordinator Q&A/check-in, and builder media assets while dashboard message RPC writes stay denied
 - reran green after the remote RPC migration apply with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
 - `npm run test:smoke` -> `PASS`
 
@@ -82,7 +82,7 @@ Fresh production proof after exact-SHA frontend deploy:
 - `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`
 - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
 - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
-- the canonical client-RLS matrix now includes direct guest/planning/seating write allow/deny coverage plus planner message RPC allow + registry RPC deny and coordinator media RPC allow + dashboard message RPC deny, in addition to anon guest-contact and public RSVP scope
+- the canonical client-RLS matrix now includes direct guest/planning/seating write allow/deny coverage plus planner message RPC allow + registry RPC deny, registry RPC allow + message RPC deny, and coordinator Q&A/check-in/media RPC allow + dashboard message RPC deny, in addition to anon guest-contact and public RSVP scope
 - reran green after the remote RPC migration apply with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
 - `npm run proof:v1:registry-preview-ssrf` -> `LIVE PASS`
 - `supabase db push` -> `PASS`
@@ -137,6 +137,7 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Removed public template links that would otherwise advertise those internal capture routes when the gate is off
 - Added `npm run proof:v1:client-rls-matrix` as the canonical live baseline for anon guest-contact scope, public RSVP scope, owner/collaborator viewer-deny plus planner/coordinator-allow proof, and direct guest-table write allow/deny coverage
 - Expanded the live collaborator/client-RLS proof baseline so planning and seating direct writes are now proven in production too
+- Expanded the live collaborator/client-RLS matrix again so registry-scoped collaborator writes and coordinator Q&A/check-in RPC writes are also proven in production
 - Guest-dashboard RSVP-config and reminder-settings writes are now behind guest-scoped RPCs in the applied remote sweep, and the `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` proof lane is green
 - Guest core create/update/delete and bulk patch writes are now behind the applied remote RPC sweep rather than raw client mutations
 - Core planning task and seating event/table writes are now behind the applied remote RPC sweep rather than raw client mutations
@@ -171,7 +172,7 @@ Those two deploy commands previously reported success, but the live inventory/ru
 Only deferred, non-launch follow-up remains:
 - public vault contribution enablement and live proof
 - custom-host/subdomain dedicated DNS rerun
-- broader owner-only and remaining non-guest RPC matrix expansion beyond guest, planning, seating, messages, registry, and photos
+- broader owner-only and remaining non-guest RPC matrix expansion beyond guest, planning, registry, seating, coordinator, messages, and photos
 - rerun `npm run proof:v1:client-write-inventory` after future write-surface changes so the local no-direct-client-write inventory stays canonical
 - client-write surface reduction into Edge Functions / RPCs
 - dedicated custom-host DNS rerun only if that launch surface becomes active

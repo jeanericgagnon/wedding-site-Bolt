@@ -662,6 +662,10 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
   let plannerCollaboratorAccessToken = '';
   let planningTaskId = '';
   let plannerMessageId = '';
+  let registryInviteId = '';
+  let registryCollaboratorUserId = '';
+  let registryCollaboratorAccessToken = '';
+  let registryItemId = '';
   let coordinatorInviteId = '';
   let coordinatorCollaboratorUserId = '';
   let coordinatorCollaboratorAccessToken = '';
@@ -669,6 +673,8 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
   let seatingEventId = '';
   let seatingTableId = '';
   let coordinatorMediaAssetId = '';
+  let coordinatorGuestId = '';
+  let coordinatorQnaItemId = '';
   const collaboratorContexts: Array<import('@playwright/test').BrowserContext> = [];
 
   const restUrl = (table: string, params: Record<string, string> = {}) => {
@@ -704,6 +710,18 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
 
   const cleanup = async () => {
     if (!ownerAccessToken) return;
+    if (coordinatorQnaItemId) {
+      await restFetch(ownerAccessToken, restUrl('guest_qna_items', { id: `eq.${coordinatorQnaItemId}` }), {
+        method: 'DELETE',
+        headers: { Prefer: 'return=minimal' },
+      });
+    }
+    if (coordinatorGuestId) {
+      await restFetch(ownerAccessToken, restUrl('guests', { id: `eq.${coordinatorGuestId}` }), {
+        method: 'DELETE',
+        headers: { Prefer: 'return=minimal' },
+      });
+    }
     if (coordinatorMediaAssetId) {
       await restFetch(ownerAccessToken, rpcUrl('builder_media_asset_delete'), {
         method: 'POST',
@@ -743,10 +761,25 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
         headers: { Prefer: 'return=minimal' },
       });
     }
+    if (registryItemId) {
+      await restFetch(ownerAccessToken, restUrl('registry_items', { id: `eq.${registryItemId}` }), {
+        method: 'DELETE',
+        headers: { Prefer: 'return=minimal' },
+      });
+    }
     if (weddingSiteId && plannerCollaboratorUserId) {
       await restFetch(ownerAccessToken, restUrl('wedding_site_collaborators', {
         wedding_site_id: `eq.${weddingSiteId}`,
         user_id: `eq.${plannerCollaboratorUserId}`,
+      }), {
+        method: 'DELETE',
+        headers: { Prefer: 'return=minimal' },
+      });
+    }
+    if (weddingSiteId && registryCollaboratorUserId) {
+      await restFetch(ownerAccessToken, restUrl('wedding_site_collaborators', {
+        wedding_site_id: `eq.${weddingSiteId}`,
+        user_id: `eq.${registryCollaboratorUserId}`,
       }), {
         method: 'DELETE',
         headers: { Prefer: 'return=minimal' },
@@ -763,6 +796,12 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     }
     if (plannerInviteId) {
       await restFetch(ownerAccessToken, restUrl('wedding_site_collaborator_invites', { id: `eq.${plannerInviteId}` }), {
+        method: 'DELETE',
+        headers: { Prefer: 'return=minimal' },
+      });
+    }
+    if (registryInviteId) {
+      await restFetch(ownerAccessToken, restUrl('wedding_site_collaborator_invites', { id: `eq.${registryInviteId}` }), {
         method: 'DELETE',
         headers: { Prefer: 'return=minimal' },
       });
@@ -884,6 +923,69 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     expect(forbiddenPlannerRegistryWrite.ok, await forbiddenPlannerRegistryWrite.text()).toBeFalsy();
     expect([400, 401, 403]).toContain(forbiddenPlannerRegistryWrite.status);
 
+    const registryInvite = await createAndClaimInvite({
+      ownerPage,
+      ownerAccessToken,
+      restFetch,
+      restUrl,
+      inviteName: `QA Registry ${runId}`,
+      inviteEmail: `qa-registry-${runId}@example.com`,
+      inviteRole: 'viewer',
+      permissions: ['registry'],
+      collaboratorPassword: `DayOfRegistry${runId}!`,
+    });
+    registryInviteId = registryInvite.inviteId;
+    registryCollaboratorUserId = registryInvite.collaboratorUserId;
+    registryCollaboratorAccessToken = registryInvite.collaboratorAccessToken;
+    collaboratorContexts.push(registryInvite.collaboratorContext);
+
+    const registryCollaboratorResponse = await restFetch(ownerAccessToken, restUrl('wedding_site_collaborators', {
+      select: 'role,permissions',
+      wedding_site_id: `eq.${weddingSiteId}`,
+      user_id: `eq.${registryCollaboratorUserId}`,
+      limit: '1',
+    }));
+    expect(registryCollaboratorResponse.ok).toBeTruthy();
+    const [registryCollaborator] = await registryCollaboratorResponse.json() as Array<{ role: string; permissions: string[] }>;
+    expect(registryCollaborator).toMatchObject({ role: 'viewer', permissions: ['registry'] });
+
+    const allowedRegistryItemWrite = await restFetch(registryCollaboratorAccessToken, rpcUrl('registry_item_write'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_wedding_site_id: weddingSiteId,
+        p_item_id: null,
+        p_payload: {
+          item_name: `QA Registry Item ${runId}`,
+          item_type: 'product',
+          price_label: '$25',
+          quantity_needed: 1,
+        },
+      }),
+    });
+    const allowedRegistryItemWriteText = await allowedRegistryItemWrite.text();
+    expect(allowedRegistryItemWrite.ok, allowedRegistryItemWriteText).toBeTruthy();
+    const registryItem = JSON.parse(allowedRegistryItemWriteText) as { id: string; item_name: string };
+    registryItemId = registryItem.id;
+    expect(registryItem.item_name).toContain('QA Registry Item');
+
+    const forbiddenRegistryMessageWrite = await restFetch(registryCollaboratorAccessToken, rpcUrl('dashboard_message_write'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_wedding_site_id: weddingSiteId,
+        p_message_id: null,
+        p_payload: {
+          subject: `Forbidden Registry Message ${runId}`,
+          body: 'Registry-only collaborator should not have message permission.',
+          channel: 'email',
+          status: 'draft',
+        },
+      }),
+    });
+    expect(forbiddenRegistryMessageWrite.ok, await forbiddenRegistryMessageWrite.text()).toBeFalsy();
+    expect([400, 401, 403]).toContain(forbiddenRegistryMessageWrite.status);
+
     const coordinatorInvite = await createAndClaimInvite({
       ownerPage,
       ownerAccessToken,
@@ -892,7 +994,7 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
       inviteName: coordinatorInviteName,
       inviteEmail: coordinatorEmail,
       inviteRole: 'coordinator',
-      permissions: ['photos', 'seating'],
+      permissions: ['coordinator', 'photos', 'seating'],
       collaboratorPassword: coordinatorPassword,
     });
     coordinatorInviteId = coordinatorInvite.inviteId;
@@ -908,7 +1010,7 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     }));
     expect(coordinatorCollaboratorResponse.ok).toBeTruthy();
     const [coordinatorCollaborator] = await coordinatorCollaboratorResponse.json() as Array<{ role: string; permissions: string[] }>;
-    expect(coordinatorCollaborator).toMatchObject({ role: 'coordinator', permissions: ['photos', 'seating'] });
+    expect(coordinatorCollaborator).toMatchObject({ role: 'coordinator', permissions: ['coordinator', 'photos', 'seating'] });
 
     const allowedCoordinatorPhotoManifest = await functionFetch(coordinatorCollaboratorAccessToken, 'photo-export-manifest', {
       siteId: weddingSiteId,
@@ -963,6 +1065,58 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     const [createdSeatingTable] = JSON.parse(allowedCoordinatorSeatingTableWriteText) as Array<{ id: string; table_name: string }>;
     seatingTableId = createdSeatingTable.id;
     expect(createdSeatingTable.table_name).toContain('QA Table');
+
+    const createCoordinatorGuestResponse = await restFetch(ownerAccessToken, restUrl('guests'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        wedding_site_id: weddingSiteId,
+        name: `Coordinator Guest ${runId}`,
+        email: `coordinator-guest-${runId}@example.com`,
+        rsvp_status: 'pending',
+      }),
+    });
+    const createCoordinatorGuestText = await createCoordinatorGuestResponse.text();
+    expect(createCoordinatorGuestResponse.ok, createCoordinatorGuestText).toBeTruthy();
+    const [createdCoordinatorGuest] = JSON.parse(createCoordinatorGuestText) as Array<{ id: string }>;
+    coordinatorGuestId = createdCoordinatorGuest.id;
+    expect(coordinatorGuestId).toBeTruthy();
+
+    const allowedCoordinatorCheckInWrite = await restFetch(coordinatorCollaboratorAccessToken, rpcUrl('coordinator_guest_checkin_write'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_site_id: weddingSiteId,
+        p_guest_id: coordinatorGuestId,
+        p_checked_in_at: '2026-05-11T20:00:00.000Z',
+      }),
+    });
+    const allowedCoordinatorCheckInWriteText = await allowedCoordinatorCheckInWrite.text();
+    expect(allowedCoordinatorCheckInWrite.ok, allowedCoordinatorCheckInWriteText).toBeTruthy();
+    const coordinatorCheckedGuest = JSON.parse(allowedCoordinatorCheckInWriteText) as { id: string; checked_in_at: string | null };
+    expect(coordinatorCheckedGuest.id).toBe(coordinatorGuestId);
+    expect(Date.parse(coordinatorCheckedGuest.checked_in_at ?? '')).toBe(Date.parse('2026-05-11T20:00:00.000Z'));
+
+    const allowedCoordinatorQnaWrite = await restFetch(coordinatorCollaboratorAccessToken, rpcUrl('coordinator_qna_write'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_site_id: weddingSiteId,
+        p_item_id: null,
+        p_payload: {
+          question: `QA Coordinator Question ${runId}`,
+          answer: 'Handled',
+          status: 'answered',
+          source: 'manual',
+        },
+      }),
+    });
+    const allowedCoordinatorQnaWriteText = await allowedCoordinatorQnaWrite.text();
+    expect(allowedCoordinatorQnaWrite.ok, allowedCoordinatorQnaWriteText).toBeTruthy();
+    const coordinatorQnaItem = JSON.parse(allowedCoordinatorQnaWriteText) as { id: string; question: string; status: string };
+    coordinatorQnaItemId = coordinatorQnaItem.id;
+    expect(coordinatorQnaItem.question).toContain('QA Coordinator Question');
+    expect(coordinatorQnaItem.status).toBe('answered');
 
     const allowedCoordinatorMediaWrite = await restFetch(coordinatorCollaboratorAccessToken, rpcUrl('builder_media_asset_write'), {
       method: 'POST',

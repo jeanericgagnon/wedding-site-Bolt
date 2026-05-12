@@ -12,7 +12,8 @@ describe('client RLS matrix proof script', () => {
     expect(source).toContain('viewer deny');
     expect(source).toContain('Guest-scoped collaborators can mutate guest rows directly');
     expect(source).toContain('Planner-scoped collaborators can write planning tasks and dashboard messages');
-    expect(source).toContain('Coordinator-scoped collaborators can write seating events/tables and builder media assets');
+    expect(source).toContain('Registry-scoped collaborators can write registry items');
+    expect(source).toContain('Coordinator-scoped collaborators can write seating events/tables, coordinator Q&A/check-in, and builder media assets');
     expect(source).toContain('Broaden the live client-RLS matrix beyond guest, planning, seating, messages, registry, and photos across remaining non-guest dashboard write surfaces.');
     expect(source).toContain('network_access_required');
     expect(source).toContain('browser_runtime_required');

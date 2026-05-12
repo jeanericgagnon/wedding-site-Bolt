@@ -26,6 +26,25 @@ This file preserves timestamped historical entries, extraction batches, and no-d
   - no launch-state change
   - the live client-RLS baseline now covers guest, planning, seating, messages, registry, and photos instead of stopping at guest/planning/seating
 
+## 2026-05-11 09:20 PM PDT - Registry And Coordinator RPC Matrix Coverage
+
+- Status: `LIVE PROOF EXPANDED`
+- What changed:
+  - expanded `tests/e2e/collaborator-permission-rls.spec.ts` again
+  - registry-scoped collaborator proof now covers allowed `registry_item_write` plus denied `dashboard_message_write`
+  - coordinator-scoped collaborator proof now covers allowed `coordinator_guest_checkin_write` and `coordinator_qna_write`
+  - fixed a real fixture/schema mismatch after the first live attempt exposed `item_type: 'gift'` as invalid for the live `registry_items_item_type_check`
+  - updated `src/lib/collaboratorPermissionRlsProof.test.ts`
+  - updated `src/lib/clientRlsMatrixProofScript.test.ts`
+- Proof result:
+  - `npm test -- --run src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Launch effect:
+  - no launch-state change
+  - the live client-RLS baseline now covers guest, planning, registry, seating, coordinator, messages, and photos instead of stopping at guest/planning/seating
+
 ## 2026-05-11 07:57 PM PDT - Vault And Planning Vendor/Budget RPC Batch
 
 - Status: `LOCAL HARDENING`
