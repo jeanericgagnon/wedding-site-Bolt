@@ -12,8 +12,9 @@ describe('client RLS matrix proof script', () => {
     expect(source).toContain('viewer deny');
     expect(source).toContain('Guest-scoped collaborators can mutate guest rows directly');
     expect(source).toContain('Planner-scoped collaborators can write planning tasks directly');
-    expect(source).toContain('remaining non-guest dashboard write surfaces beyond guest, planning, and seating');
+    expect(source).toContain('Broader direct client-table role matrix across remaining non-guest dashboard write surfaces beyond guest, planning, and seating.');
     expect(source).toContain('network_access_required');
     expect(source).toContain('browser_runtime_required');
+    expect(source).toContain("LIVE_GUEST_DASHBOARD_SETTINGS_RPCS === '1'");
   });
 });

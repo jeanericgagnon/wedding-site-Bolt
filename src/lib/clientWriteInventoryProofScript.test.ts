@@ -11,6 +11,6 @@ describe('client write inventory proof script', () => {
     expect(source).toContain(String.raw`/\.from\('.*?'\)[\s\S]{0,240}?\.(insert|update|upsert|delete)\s*\(/g`);
     expect(source).toContain(".filter((file) => !/\\.test\\./.test(file))");
     expect(source).toContain('No direct client .insert/.update/.upsert/.delete calls remain in tracked src runtime files.');
-    expect(source).toContain('Apply and deploy the pending local RPC batches');
+    expect(source).toContain('Rerun this inventory guard after future runtime write-surface changes or RPC migration sweeps');
   });
 });

@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-11 08:48 PM PDT`
+_Updated:_ `2026-05-11 09:02 PM PDT`
 
 ## Current Score
 
@@ -37,21 +37,8 @@ Deferred, non-launch gaps:
 - AI secret inventory/internal prereq notes
 - broader client-RLS role matrix expansion
 - client-write surface reduction into Edge Functions / RPCs
-- local-only guest/planning/seating RPC batches still need migration apply/deploy and fresh live proof:
-  - `20260511200000_guest_dashboard_settings_rpcs.sql`
-  - `20260511211500_planning_seating_write_rpcs.sql`
-  - `20260511220000_guest_core_write_rpcs.sql`
-  - `20260511233000_guest_invitation_rsvp_rpcs.sql`
-  - `20260511234500_registry_write_rpcs.sql`
-  - `20260512001000_message_coordinator_write_rpcs.sql`
-  - `20260512012000_settings_overview_write_rpcs.sql`
-  - `20260512013000_vault_planning_write_rpcs.sql`
-  - `20260512014500_onboarding_signup_write_rpcs.sql`
-  - `20260512020000_name_change_write_rpcs.sql`
-  - `20260512023000_media_audit_write_rpcs.sql`
-  - `20260512024500_guest_photo_misc_write_rpcs.sql`
-  - `20260512030000_builder_section_itinerary_write_rpcs.sql`
-  - `20260512031500_seating_assignment_version_rpcs.sql`
+- broader direct client-table role matrix expansion for remaining non-guest dashboard write surfaces beyond guest, planning, and seating
+- keep the no-direct-client-write inventory current after future runtime write-surface changes
 
 ## Exact Proof State
 
@@ -86,6 +73,7 @@ Fresh secure/runtime proof:
 - `npm run proof:v1:launch-closeout` -> `PASS`
 - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
 - collaborator runtime now also proves guest-scoped collaborators can directly mutate guest rows, planner-scoped collaborators can directly write planning tasks, and coordinator-scoped collaborators can directly write seating events/tables, while direct timeline/settings writes remain denied without permission
+- reran green after the remote RPC migration apply with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
 - `npm run test:smoke` -> `PASS`
 
 Fresh production proof after exact-SHA frontend deploy:
@@ -95,7 +83,10 @@ Fresh production proof after exact-SHA frontend deploy:
 - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
 - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
 - the canonical client-RLS matrix now includes direct guest/planning/seating write allow/deny coverage in addition to anon guest-contact and public RSVP scope
+- reran green after the remote RPC migration apply with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
 - `npm run proof:v1:registry-preview-ssrf` -> `LIVE PASS`
+- `supabase db push` -> `PASS`
+  - applied remote migrations through `20260512031500_seating_assignment_version_rpcs.sql`
 
 Same-day still-valid supporting proof:
 - `LIVE_GUEST_HUB_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/guest-hub-write-read.spec.ts` -> `LIVE PASS`
@@ -122,6 +113,7 @@ Current live launch baseline:
 - `photo-upload --no-verify-jwt`: same-day already confirmed and live-proven
 - `process-email-queue`: same-day already confirmed and live-proven
 - `translate-site-content`: same-day already confirmed and live-proven
+- remote database: RPC sweep applied through `20260512031500_seating_assignment_version_rpcs.sql`
 
 Explicitly deferred / not in current launch baseline:
 - `vault-contribution-public --no-verify-jwt`
@@ -166,7 +158,12 @@ Those two deploy commands previously reported success, but the live inventory/ru
   - itinerary event and schedule-mirror writes
   - seating assignment and seating layout-version writes
   - focused local proof (`siteRepository.test.ts`, `builderProjectService.test.ts`, `itineraryService.test.ts`, `seatingService.test.ts`, `dashboardDataBoundary.test.ts`, `clientWriteInventoryProofScript.test.ts`, `typecheck`) is green
-- The broadened write inventory is now back to green across tracked `src` runtime files; the remaining gap is remote apply/deploy and fresh live proof, not additional known direct-write clusters
+- The broadened write inventory is now back to green across tracked `src` runtime files
+- Applied the full RPC migration sweep remotely with `supabase db push`
+- Reran live `proof:v1:collaborator-runtime` and `proof:v1:client-rls-matrix` with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`, both green
+- Fixed a real PostgreSQL signature issue in `20260511220000_guest_core_write_rpcs.sql` that the remote apply exposed
+- Stabilized the collaborator RLS runtime proof so it compares against current owner baseline settings instead of assuming untouched defaults
+- Updated the collaborator/client-RLS proof scripts so they no longer claim the guest-dashboard settings RPC lane still needs deployment after it is live
 - Moved registry owner-side item CRUD, reorder, and refresh-policy writes behind a fifth local RPC batch in the working tree; focused local proof (`registryService.test`, `typecheck`) is green, and the live runtime truth stays unchanged until the already-pending RPC deploy/proof sweep
 - Moved dashboard message create/update and coordinator alert/check-in/Q&A writes behind a sixth local RPC batch in the working tree; focused local proof (`messageService.boundary.test.ts`, `coordinatorService.test.ts`, `typecheck`, `lint`) is green, and the live runtime truth stays unchanged until the already-pending RPC deploy/proof sweep
 - Moved owner settings and overview write paths behind a seventh local RPC batch in the working tree; focused local proof (`settingsSiteData.test.ts`, `overviewService.test.ts`, `typecheck`, `lint`) is green, and the live runtime truth stays unchanged until the already-pending RPC deploy/proof sweep
@@ -176,15 +173,14 @@ Those two deploy commands previously reported success, but the live inventory/ru
 Only deferred, non-launch follow-up remains:
 - public vault contribution enablement and live proof
 - custom-host/subdomain dedicated DNS rerun
-- apply/deploy the local guest/planning/seating/invitation RSVP/registry/message-coordinator/settings-overview/vault/onboarding/name-change/media-audit/guest-photo-misc/builder-section-itinerary/seating-version RPC batches, then rerun collaborator/client-RLS live proof with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
-- rerun `npm run proof:v1:client-write-inventory` after the remote apply sweep so the local no-direct-client-write inventory stays canonical
 - broader client-RLS role matrix expansion for remaining non-guest dashboard write surfaces beyond guest, planning, and seating
+- rerun `npm run proof:v1:client-write-inventory` after future write-surface changes so the local no-direct-client-write inventory stays canonical
 - client-write surface reduction into Edge Functions / RPCs
 - dedicated custom-host DNS rerun only if that launch surface becomes active
 
 Why this is `9.9 / 10` instead of `10 / 10`:
 - the launch baseline is green and production-ready
-- the current committed branch head (`a4342334`) contains post-deploy proof hardening beyond the exact live frontend runtime SHA (`f0cbf841`)
+- the current committed branch head (`d33e8ef4`) contains post-deploy proof hardening beyond the exact live frontend runtime SHA (`f0cbf841`)
 - that remaining delta is non-runtime and non-launch, but it keeps me just shy of calling it mathematically perfect
 
 ## Bottom Line

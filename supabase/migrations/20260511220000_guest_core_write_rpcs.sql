@@ -112,7 +112,7 @@ grant execute on function public.guest_dashboard_guest_write(uuid, uuid, jsonb) 
 
 create or replace function public.guest_dashboard_guest_bulk_patch(
   p_wedding_site_id uuid default null,
-  p_guest_ids uuid[],
+  p_guest_ids uuid[] default null,
   p_payload jsonb default '{}'::jsonb
 )
 returns integer

@@ -34,9 +34,21 @@ const getEnv = (key, fallback = '') => {
 const baseUrl = getEnv('PLAYWRIGHT_BASE_URL', 'https://dayof.love');
 const ownerEmail = getEnv('V1_OWNER_EMAIL', 'test@gmail.com');
 const ownerPassword = getEnv('V1_OWNER_PASSWORD', '12345678');
+const liveGuestDashboardSettingsRpcs = getEnv('LIVE_GUEST_DASHBOARD_SETTINGS_RPCS') === '1';
 const runtimeSeed = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 const collaboratorEmail = getEnv('V1_COLLABORATOR_EMAIL', `qa-collab-${runtimeSeed}@example.com`);
 const collaboratorPassword = getEnv('V1_COLLABORATOR_PASSWORD', `DayOf${runtimeSeed}!`);
+
+function buildStillManualProofNeeded() {
+  return liveGuestDashboardSettingsRpcs
+    ? [
+        'Broaden the direct client-table role matrix across any remaining non-guest dashboard write surfaces beyond guest, planning, and seating.',
+      ]
+    : [
+        'Set LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 and rerun this proof to include the guest-dashboard settings RPC lane.',
+        'Broaden the direct client-table role matrix across any remaining non-guest dashboard write surfaces beyond guest, planning, and seating.',
+      ];
+}
 
 function classifyBlocker() {
   if (!ownerEmail || !ownerPassword) {
@@ -190,9 +202,7 @@ const output = blocker.blocked
         'Guest-scoped collaborators can mutate guest rows directly while timeline/settings writes stay denied without permission',
         'Planner-scoped collaborators can write planning tasks directly while coordinator-scoped collaborators can write seating events and tables directly',
       ],
-      stillManualProofNeeded: [
-        'Deploy the guest-dashboard settings RPC batch and rerun the optional LIVE_GUEST_DASHBOARD_SETTINGS_RPCS collaborator settings-write proof',
-      ],
+      stillManualProofNeeded: buildStillManualProofNeeded(),
       blockers: [blocker],
       results: [],
     }
@@ -218,9 +228,7 @@ const output = blocker.blocked
           'Guest-scoped collaborators can mutate guest rows directly while timeline/settings writes stay denied without permission',
           'Planner-scoped collaborators can write planning tasks directly while coordinator-scoped collaborators can write seating events and tables directly',
         ],
-        stillManualProofNeeded: [
-          'Deploy the guest-dashboard settings RPC batch and rerun the optional LIVE_GUEST_DASHBOARD_SETTINGS_RPCS collaborator settings-write proof',
-        ],
+        stillManualProofNeeded: buildStillManualProofNeeded(),
         blockers: [],
         results,
       };

@@ -86,6 +86,24 @@ This file preserves timestamped historical entries, extraction batches, and no-d
   - the tracked shipped `src` runtime is now locally clear of direct client `.insert/.update/.upsert/.delete` calls
   - the remaining gap is remote migration apply/deploy and fresh live collaborator/client-RLS proof
 
+## 2026-05-11 09:02 PM PDT - Remote RPC Apply And Live Matrix Refresh
+
+- Status: `REMOTE APPLY + LIVE PASS`
+- What changed:
+  - ran `supabase db push` against the linked production project
+  - applied the pending RPC sweep through `20260512031500_seating_assignment_version_rpcs.sql`
+  - fixed a PostgreSQL function-signature issue in `20260511220000_guest_core_write_rpcs.sql` that the first remote apply exposed
+  - updated the collaborator runtime proof to compare against owner baseline settings instead of assuming pristine defaults
+  - updated the collaborator/client-RLS proof scripts so they no longer claim the guest-dashboard settings RPC lane is undeployed once it is live
+- Proof result:
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+  - `npm run proof:v1:client-write-inventory` -> `PASS`
+  - `npm test -- --run src/lib/clientRlsMatrixProofScript.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientWriteInventoryProofScript.test.ts` -> `PASS`
+- Launch effect:
+  - the RPC sweep is now real runtime truth, not just local hardening
+  - the remaining backlog is broader matrix breadth and future guard upkeep, not pending deployment of the current write-path migration set
+
 
 # Production Hardening Backlog
 

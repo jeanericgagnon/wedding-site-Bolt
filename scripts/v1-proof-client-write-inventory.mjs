@@ -76,8 +76,8 @@ const output = {
     'Provides a canonical local rerun command before and after RPC migration deploy sweeps',
   ],
   stillManualProofNeeded: [
-    'Apply and deploy the pending local RPC batches, then rerun this inventory guard against the post-apply working tree',
-    'Expand live collaborator/client-RLS proof after the remote apply sweep where new RPC paths become runtime truth',
+    'Rerun this inventory guard after future runtime write-surface changes or RPC migration sweeps so the no-direct-client-write claim stays current.',
+    'Expand live collaborator/client-RLS proof whenever new runtime write paths are introduced.',
   ],
   matches: result.matches,
   error: result.error ?? null,

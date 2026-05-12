@@ -10,9 +10,9 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-11 08:48 PM PDT` |
+| Current date/time | `2026-05-11 09:02 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
-| Latest Git SHA | `511dc296` |
+| Latest Git SHA | `d33e8ef4` |
 | Latest commit message | `Move builder, section, itinerary, and seating writes behind RPCs` |
 | Vercel deployment ID | `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
@@ -22,9 +22,9 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | Production-ready | `YES` |
 | Reason production-ready is not yet claimed | No active P0/P1 blockers remain. Remaining items are explicitly deferred and non-launch. |
 | Current blockers | none |
-| Current proof state | Launch-critical runtime proof remains green: `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `service-role-authorization`, `email-messaging-authorization`, `launch-closeout`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, and `client-rls-matrix` are still green on the current live baseline. The post-launch hardening lane is now locally stronger: `npm run proof:v1:client-write-inventory` scans all tracked `src` runtime files and is back to `PASS`, confirming no direct client `.insert/.update/.upsert/.delete` calls remain in tracked shipped runtime code. The final raw-write sweep moved section, builder publish, itinerary, and seating assignment/version writes behind new local RPC batches, with focused proof green (`siteRepository.test.ts`, `builderProjectService.test.ts`, `itineraryService.test.ts`, `seatingService.test.ts`, `dashboardDataBoundary.test.ts`, `clientWriteInventoryProofScript.test.ts`, `typecheck`, `git diff --check`). GitHub Actions `Release Launch Gate` remains green on run `25705683563`. |
-| Current deployment state | Frontend is live at [dayof.love](https://dayof.love) on exact runtime Git SHA `f0cbf841` via verified Vercel production deploy `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`. The latest pushed branch head is now `511dc296`, which contains the final local raw-write RPC sweep but has not changed the live frontend runtime yet. `submit-rsvp` is live with the serialized capacity path and the migration is applied remotely. Local-only migrations now extend through `20260512031500_seating_assignment_version_rpcs.sql`; they are not applied remotely yet. Public vault contribution remains outside the launch baseline because the live route still fails closed and the function inventory does not confirm `vault-contribution-public`. |
-| Current next actions | apply/deploy the pending local RPC batches, rerun `collaborator-runtime` / `client-rls-matrix` with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`, rerun `proof:v1:client-write-inventory` against the post-apply tree, and close any remote proof gaps that appear after the apply sweep |
+| Current proof state | Launch-critical runtime proof remains green: `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `service-role-authorization`, `email-messaging-authorization`, `launch-closeout`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, and `client-rls-matrix` are still green on the current live baseline. The post-launch hardening lane is now stronger both locally and remotely: `supabase db push` applied the RPC sweep through `20260512031500_seating_assignment_version_rpcs.sql`, `npm run proof:v1:client-write-inventory` is `PASS`, and the live reruns with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` kept `collaborator-runtime` and `client-rls-matrix` green. Focused proof is green for the final raw-write sweep (`siteRepository.test.ts`, `builderProjectService.test.ts`, `itineraryService.test.ts`, `seatingService.test.ts`, `dashboardDataBoundary.test.ts`, `clientWriteInventoryProofScript.test.ts`, `typecheck`, `git diff --check`). GitHub Actions `Release Launch Gate` remains green on run `25705683563`. |
+| Current deployment state | Frontend is live at [dayof.love](https://dayof.love) on exact runtime Git SHA `f0cbf841` via verified Vercel production deploy `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`. The latest pushed branch head is `d33e8ef4`, which contains the final local raw-write RPC sweep and proof-script truth sync but has not changed the live frontend runtime yet. `submit-rsvp` is live with the serialized capacity path and the database now includes the full RPC migration sweep through `20260512031500_seating_assignment_version_rpcs.sql`. Public vault contribution remains outside the launch baseline because the live route still fails closed and the function inventory does not confirm `vault-contribution-public`. |
+| Current next actions | broaden the live client-RLS matrix across any remaining non-guest direct-write surfaces, keep the no-direct-client-write inventory current after future runtime write-surface changes, and resolve deferred lanes only when they are intentionally brought into the launch baseline |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
@@ -57,7 +57,8 @@ No active `P0` or `P1` launch blockers remain.
     - [src/pages/dashboard/seating/seatingService.ts](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/src/pages/dashboard/seating/seatingService.ts:298)
   - note:
     - the tracked `src` runtime inventory is now locally clear of direct Supabase `.insert/.update/.upsert/.delete` calls
-    - the remaining gap is that the new RPC batches are still local-only until migration apply/deploy and fresh live proof complete
+    - the RPC migration sweep is applied remotely and the live collaborator/client-RLS reruns are green
+    - the remaining gap is broader matrix breadth beyond the current guest/planning/seating baseline
   - direction:
     - keep simple reads client-side
     - keep migrating any newly discovered dangerous writes into Edge Functions or RPCs if they appear after the remote apply sweep
@@ -174,12 +175,12 @@ No active `P0` or `P1` launch blockers remain.
 | `npm run proof:v1:client-write-inventory` | `PASS` | `local` | `2026-05-11` | Broadened guard scans all tracked `src` runtime files and now reports no direct client `.insert/.update/.upsert/.delete` calls |
 | public DTO leak tests | `PASS` | `local` | `2026-05-11` | Focused `publicRenderContract`, `publicSiteRenderModel`, `publicSiteAccess` lanes are green |
 | `npm run proof:v1:guest-lookup-scope` | `LIVE PASS` | `production` | `2026-05-11` | Included in `proof:v1:client-rls-matrix`; exact-match lookup + signed-session household update are green |
-| `npm run proof:v1:client-rls-matrix` | `LIVE PASS` | `production + browser runtime` | `2026-05-11` | Aggregates live anon guest-contact scope, public RSVP scope, owner/collaborator viewer-deny plus planner/coordinator-allow runtime proof, and direct guest/planning/seating write allow/deny coverage |
+| `npm run proof:v1:client-rls-matrix` | `LIVE PASS` | `production + browser runtime` | `2026-05-11` | Aggregates live anon guest-contact scope, public RSVP scope, owner/collaborator viewer-deny plus planner/coordinator-allow runtime proof, direct guest/planning/seating write allow/deny coverage, and the guest-dashboard settings RPC lane with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` |
 | `npm run proof:v1:registry-preview-ssrf` | `LIVE PASS` | `production` | `2026-05-11` | `26/26` hostile-target checks passed |
 | `npm run proof:v1:service-role-authorization` | `PASS` | `secure env + production` | `2026-05-11` | Unauthenticated denial lane green; secure closeout rerun completed with provided key |
 | `npm run proof:v1:email-messaging-authorization` | `PASS` | `secure env + production` | `2026-05-11` | Queue-processing proof green; controlled invalid-recipient row fails safely |
 | `npm run proof:v1:launch-closeout` | `PASS` | `secure env + production` | `2026-05-11` | Secure closeout bundle green with provided key |
-| `npm run proof:v1:collaborator-runtime` | `LIVE PASS` | `production` | `2026-05-11` | Owner invite/accept flow, viewer deny + planner/coordinator allow runtime proof, and direct guest/planning/seating write allow/deny coverage are green; optional guest-settings RPC proof remains deploy-gated |
+| `npm run proof:v1:collaborator-runtime` | `LIVE PASS` | `production` | `2026-05-11` | Owner invite/accept flow, viewer deny + planner/coordinator allow runtime proof, direct guest/planning/seating write allow/deny coverage, and the guest-dashboard settings RPC lane are green |
 | `npm run proof:v1:ai-product-readiness` | `PASS` | `local` | `2026-05-11` | `25/25` AI product-readiness checks passed |
 | `npm run proof:v1:data-integrity` | `PASS` | `production` | `2026-05-11` | Anon-limited integrity proof green; no hard launch corruption found |
 | `npm run proof:v1:prereqs` | `PASS` | `production + local env` | `2026-05-11` | Required migrations/functions/runtime readiness green; deferred provider/AI env notes remain non-launch |
@@ -236,9 +237,9 @@ No active `P0` or `P1` launch blockers remain.
 
 ## Next 10 Tasks
 
-1. Apply and deploy the pending local RPC batches (`20260511200000_guest_dashboard_settings_rpcs.sql`, `20260511211500_planning_seating_write_rpcs.sql`, `20260511220000_guest_core_write_rpcs.sql`, `20260511233000_guest_invitation_rsvp_rpcs.sql`, `20260511234500_registry_write_rpcs.sql`, `20260512001000_message_coordinator_write_rpcs.sql`, `20260512012000_settings_overview_write_rpcs.sql`, `20260512013000_vault_planning_write_rpcs.sql`, `20260512014500_onboarding_signup_write_rpcs.sql`, `20260512020000_name_change_write_rpcs.sql`, `20260512023000_media_audit_write_rpcs.sql`, `20260512024500_guest_photo_misc_write_rpcs.sql`, `20260512030000_builder_section_itinerary_write_rpcs.sql`, and `20260512031500_seating_assignment_version_rpcs.sql`), then rerun `proof:v1:collaborator-runtime` and `proof:v1:client-rls-matrix` with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`.
-2. Rerun the raw-write inventory after the local sweep and after remote apply so the no-direct-client-write claim stays canonical.
-3. Expand live client-RLS coverage into any remaining non-guest direct-write surfaces that stay client-driven after the RPC apply sweep.
+1. Expand live client-RLS coverage into any remaining non-guest direct-write surfaces that stay client-driven after the RPC apply sweep.
+2. Rerun the raw-write inventory after future runtime write-surface changes so the no-direct-client-write claim stays canonical.
+3. Keep the collaborator/client-RLS live matrix current as new runtime write paths are introduced.
 4. Resolve the deferred public vault contribution lane before enabling it.
 5. Rerun dedicated custom-host/subdomain DNS proof if that launch surface becomes active.
 6. Keep the deployment matrix current when runtime/deploy IDs change.

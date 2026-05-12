@@ -27,6 +27,13 @@ _Launch call right now:_ `GO`
     - `npm run proof:v1:client-write-inventory`
     - `npm run typecheck -- --pretty false`
     - `git diff --check`
+- 2026-05-11 09:02 PM PDT:
+  - applied the full pending RPC sweep remotely with `supabase db push`
+  - the remote apply surfaced one real SQL issue in `20260511220000_guest_core_write_rpcs.sql`, which was fixed by giving `p_guest_ids` a default value and rerunning the push cleanly
+  - reran live proof with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`:
+    - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+    - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+  - refreshed proof scripts so they no longer claim the guest-dashboard settings RPC lane still needs deployment after it is live
 - That matrix now explicitly proves direct guest, planning, and seating writes stay permission-scoped while direct timeline/settings writes remain denied without permission.
 - The guest-dashboard settings RPC batch is still local-only and stays outside the live runtime baseline until deployment plus `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` proof.
 - The message/coordinator write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
@@ -151,6 +158,32 @@ _Launch call right now:_ `GO`
 - Result:
   - the tracked shipped `src` runtime is now locally clear of direct client `.insert/.update/.upsert/.delete` calls
   - the remaining work is remote apply/deploy plus fresh live collaborator/client-RLS proof, not another known local direct-write cluster
+
+## 2026-05-11 09:02 PM PDT - Remote RPC Apply And Live Matrix Refresh
+
+- Ran `supabase db push` successfully against project `atuzuobpprjstfmdnwso`.
+- Applied the RPC migration sweep through:
+  - `20260511200000_guest_dashboard_settings_rpcs.sql`
+  - `20260511211500_planning_seating_write_rpcs.sql`
+  - `20260511220000_guest_core_write_rpcs.sql`
+  - `20260511233000_guest_invitation_rsvp_rpcs.sql`
+  - `20260511234500_registry_write_rpcs.sql`
+  - `20260512001000_message_coordinator_write_rpcs.sql`
+  - `20260512012000_settings_overview_write_rpcs.sql`
+  - `20260512013000_vault_planning_write_rpcs.sql`
+  - `20260512014500_onboarding_signup_write_rpcs.sql`
+  - `20260512020000_name_change_write_rpcs.sql`
+  - `20260512023000_media_audit_write_rpcs.sql`
+  - `20260512024500_guest_photo_misc_write_rpcs.sql`
+  - `20260512030000_builder_section_itinerary_write_rpcs.sql`
+  - `20260512031500_seating_assignment_version_rpcs.sql`
+- The first push exposed one real PostgreSQL function-signature issue; the migration was fixed locally and the second push landed cleanly.
+- Live reruns after the apply:
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Result:
+  - guest-dashboard settings RPC proof is now part of the live role matrix
+  - the remaining work is breadth expansion and future guard upkeep, not pending RPC deployment
 
 ## Current Launch Call
 

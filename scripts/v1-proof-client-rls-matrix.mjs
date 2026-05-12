@@ -6,6 +6,7 @@ const scriptShell =
   process.platform === 'win32'
     ? process.env.ComSpec || 'cmd.exe'
     : process.env.SHELL || '/bin/bash';
+const liveGuestDashboardSettingsRpcs = process.env.LIVE_GUEST_DASHBOARD_SETTINGS_RPCS === '1';
 
 const steps = [
   {
@@ -123,6 +124,15 @@ function runStep(step) {
   }
 }
 
+function buildStillManualProofNeeded() {
+  const items = [];
+  if (!liveGuestDashboardSettingsRpcs) {
+    items.push('Set LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 and rerun this matrix to include the guest-dashboard settings RPC lane.');
+  }
+  items.push('Broader direct client-table role matrix across remaining non-guest dashboard write surfaces beyond guest, planning, and seating.');
+  return items;
+}
+
 const results = steps.map(runStep);
 const blockedRequired = results.filter((result) => result.required && result.blocked);
 const failedRequired = results.filter((result) => result.required && !result.ok && !result.blocked);
@@ -145,10 +155,7 @@ const output = {
     'Guest-scoped collaborators can mutate guest rows directly while timeline/settings writes stay denied without permission',
     'Planner-scoped collaborators can write planning tasks directly while coordinator-scoped collaborators can write seating events and tables directly',
   ],
-  stillManualProofNeeded: [
-    'Deploy the guest-dashboard settings RPC batch and rerun the optional LIVE_GUEST_DASHBOARD_SETTINGS_RPCS collaborator settings-write proof',
-    'Broader direct client-table role matrix across remaining non-guest dashboard write surfaces beyond guest, planning, and seating',
-  ],
+  stillManualProofNeeded: buildStillManualProofNeeded(),
   blockers: blockedRequired.map((result) => ({
     id: result.id,
     label: result.label,

@@ -72,7 +72,7 @@ describe('proof board freshness', () => {
     expect(board.summary?.currentProofState).toContain('client-write-inventory');
     expect(board.summary?.currentProofState).toContain('launch-closeout');
     expect(board.summary?.currentProofState).toContain('Release Launch Gate');
-    expect(board.summary?.currentNextActions ?? '').toContain('apply/deploy the pending local RPC batches');
+    expect(board.summary?.currentNextActions ?? '').toContain('broaden the live client-RLS matrix');
     expect(board.activeUngatedLaunchBlockers ?? []).toEqual([]);
     expect(board.currentState?.['Current blockers']).toBe('none');
     expect(board.currentState?.['Reason production-ready is not yet claimed']).toContain('No active P0/P1 blockers remain');

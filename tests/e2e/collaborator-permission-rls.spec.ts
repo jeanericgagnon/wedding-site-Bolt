@@ -540,6 +540,22 @@ test('guest-permission collaborator can mutate guest rows but is denied direct t
     expect(forbiddenTimelineInsert.ok, await forbiddenTimelineInsert.text()).toBeFalsy();
     expect([401, 403]).toContain(forbiddenTimelineInsert.status);
 
+    const baselineSettingsRead = await restFetch(ownerAccessToken, restUrl('wedding_sites', {
+      select: 'auto_reminders_enabled,rsvp_custom_questions',
+      id: `eq.${weddingSiteId}`,
+      limit: '1',
+    }));
+    const baselineSettingsReadText = await baselineSettingsRead.text();
+    expect(baselineSettingsRead.ok, baselineSettingsReadText).toBeTruthy();
+    const [baselineSettingsRow] = JSON.parse(baselineSettingsReadText) as Array<{
+      auto_reminders_enabled?: boolean | null;
+      rsvp_custom_questions?: Array<{ id?: string }>;
+    }>;
+    const baselineAutoRemindersEnabled = baselineSettingsRow?.auto_reminders_enabled ?? null;
+    const baselineQuestionIds = (baselineSettingsRow?.rsvp_custom_questions ?? [])
+      .map((item) => item?.id)
+      .filter((value): value is string => typeof value === 'string');
+
     const forbiddenSettingsPatch = await restFetch(collaboratorAccessToken, restUrl('wedding_sites', {
       id: `eq.${weddingSiteId}`,
     }), {
@@ -563,14 +579,18 @@ test('guest-permission collaborator can mutate guest rows but is denied direct t
     const ownerSettingsReadText = await ownerSettingsRead.text();
     expect(ownerSettingsRead.ok, ownerSettingsReadText).toBeTruthy();
     const [ownerSettingsRow] = JSON.parse(ownerSettingsReadText) as Array<{
-      auto_reminders_enabled?: boolean;
+      auto_reminders_enabled?: boolean | null;
       rsvp_custom_questions?: Array<{ id?: string }>;
     }>;
-    expect(ownerSettingsRow.auto_reminders_enabled).not.toBe(true);
+    expect(ownerSettingsRow.auto_reminders_enabled ?? null).toBe(baselineAutoRemindersEnabled);
     expect(Array.isArray(ownerSettingsRow.rsvp_custom_questions)).toBe(true);
-    expect(ownerSettingsRow.rsvp_custom_questions?.some((item) => item?.id === 'qa-q1')).toBe(false);
+    const ownerQuestionIds = (ownerSettingsRow.rsvp_custom_questions ?? [])
+      .map((item) => item?.id)
+      .filter((value): value is string => typeof value === 'string');
+    expect(ownerQuestionIds).toEqual(baselineQuestionIds);
 
     if (liveGuestDashboardSettingsRpcs) {
+      const rpcQuestionId = `qa-q1-${Date.now()}`;
       const allowedReminderRpc = await restFetch(collaboratorAccessToken, rpcUrl('guest_dashboard_persist_reminder_settings'), {
         method: 'POST',
         headers: { Prefer: 'return=minimal' },
@@ -587,7 +607,7 @@ test('guest-permission collaborator can mutate guest rows but is denied direct t
         headers: { Prefer: 'return=minimal' },
         body: JSON.stringify({
           p_wedding_site_id: weddingSiteId,
-          p_questions: [{ id: 'qa-q1', label: 'Favorite song?', type: 'short_text', required: false, appliesTo: 'all' }],
+          p_questions: [{ id: rpcQuestionId, label: 'Favorite song?', type: 'short_text', required: false, appliesTo: 'all' }],
           p_meal_enabled: true,
           p_meal_options: ['Chicken', 'Fish'],
         }),
@@ -609,7 +629,7 @@ test('guest-permission collaborator can mutate guest rows but is denied direct t
       }>;
       expect(ownerSettingsAfterRpc.auto_reminders_enabled).toBe(true);
       expect(ownerSettingsAfterRpc.reminder_cadence_days).toBe(3);
-      expect(ownerSettingsAfterRpc.rsvp_custom_questions?.some((item) => item?.id === 'qa-q1')).toBe(true);
+      expect(ownerSettingsAfterRpc.rsvp_custom_questions?.some((item) => item?.id === rpcQuestionId)).toBe(true);
       expect(ownerSettingsAfterRpc.rsvp_meal_config).toMatchObject({
         enabled: true,
         options: ['Chicken', 'Fish'],
