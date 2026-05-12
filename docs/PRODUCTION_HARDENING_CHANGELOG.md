@@ -7,6 +7,31 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 
 ---
 
+## 2026-05-11 10:06 PM PDT - Itinerary / Section RPC Runtime Drift Repaired And Live Matrix Expanded
+
+- Status: `LIVE PROOF EXPANDED + REMOTE DB FIX`
+- What changed:
+  - expanded `tests/e2e/collaborator-permission-rls.spec.ts` again
+  - planner runtime proof now covers allowed `itinerary_event_write` plus denied `registry_item_write`
+  - settings runtime proof now covers allowed `section_write` plus denied `registry_item_write`
+  - fixed real live runtime drift exposed by the first reruns:
+    - added `20260512040000_reconcile_itinerary_dress_code_column.sql`
+    - added `20260512040500_reconcile_itinerary_runtime_columns.sql`
+    - corrected source migration `20260512030000_builder_section_itinerary_write_rpcs.sql`
+    - added forward remote repairs `20260512041000_fix_itinerary_event_write_time_types.sql`, `20260512041500_fix_itinerary_event_write_ids.sql`, and `20260512042000_fix_section_write_create_with_explicit_id.sql`
+  - added `src/lib/itineraryRpcSafety.test.ts`
+  - added `src/lib/sectionRpcSafety.test.ts`
+  - updated `src/lib/collaboratorPermissionRlsProof.test.ts`, `src/lib/clientRlsMatrixProofScript.test.ts`, `scripts/v1-proof-collaborator-runtime.mjs`, and `scripts/v1-proof-client-rls-matrix.mjs`
+- Proof result:
+  - `npm test -- --run src/lib/sectionRpcSafety.test.ts src/lib/itineraryRpcSafety.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `supabase db push` -> `PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Launch effect:
+  - no launch-state change
+  - the live client-RLS baseline now covers guest, planning, itinerary, settings, sections, registry, seating, coordinator, messages, photos, and vault-config writes instead of stopping short at the earlier settings/photos lanes
+
 ## 2026-05-11 09:32 PM PDT - Settings RPC Type Repair And Settings Matrix Coverage
 
 - Status: `LIVE PROOF EXPANDED + REMOTE DB FIX`

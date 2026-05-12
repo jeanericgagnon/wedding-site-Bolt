@@ -21,10 +21,11 @@ begin
     v_site_id := p_site_id;
   else
     select * into v_existing from public.sections where id = p_section_id;
-    if not found then
-      raise exception 'section not found' using errcode = 'P0002';
+    if found then
+      v_site_id := v_existing.site_id;
+    else
+      v_site_id := p_site_id;
     end if;
-    v_site_id := v_existing.site_id;
   end if;
 
   if v_site_id is null then
@@ -444,14 +445,20 @@ begin
     is_visible
   )
   values (
-    p_event_id,
+    coalesce(p_event_id, nullif(p_payload->>'id', '')::uuid, gen_random_uuid()),
     v_site_id,
     coalesce(nullif(p_payload->>'event_name', ''), v_existing.event_name),
     coalesce(nullif(p_payload->>'title', ''), nullif(p_payload->>'event_name', ''), v_existing.title, v_existing.event_name),
     coalesce(p_payload->>'description', v_existing.description, ''),
     coalesce(nullif(p_payload->>'event_date', '')::date, v_existing.event_date),
-    nullif(coalesce(p_payload->>'start_time', v_existing.start_time), ''),
-    nullif(coalesce(p_payload->>'end_time', v_existing.end_time), ''),
+    case
+      when p_payload ? 'start_time' then nullif(p_payload->>'start_time', '')::time
+      else v_existing.start_time
+    end,
+    case
+      when p_payload ? 'end_time' then nullif(p_payload->>'end_time', '')::time
+      else v_existing.end_time
+    end,
     coalesce(p_payload->>'location_name', v_existing.location_name, ''),
     nullif(coalesce(p_payload->>'location_address', v_existing.location_address), ''),
     nullif(coalesce(p_payload->>'dress_code', v_existing.dress_code), ''),

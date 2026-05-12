@@ -35,6 +35,28 @@ _Launch call right now:_ `GO`
     - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
   - refreshed proof scripts so they no longer claim the guest-dashboard settings RPC lane still needs deployment after it is live
 - That matrix now explicitly proves guest, planning, settings, registry, seating, coordinator, message, photo, and vault-config permission lanes stay scoped while direct timeline/settings and other ungranted writes remain denied.
+- 2026-05-11 10:06 PM PDT:
+  - expanded the live collaborator/client-RLS proof again so it now covers planner `itinerary_event_write` allow + registry deny and settings `section_write` allow + registry deny
+  - the first live reruns exposed real production drift, not flaky proof:
+    - missing `itinerary_events.dress_code`
+    - missing `itinerary_events.notes`
+    - `itinerary_event_write` create path inserted `NULL` ids
+    - `itinerary_event_write` still had text/time coercion drift
+    - `section_write` treated explicit-id creates as missing-row updates
+  - remote repairs landed via:
+    - `20260512040000_reconcile_itinerary_dress_code_column.sql`
+    - `20260512040500_reconcile_itinerary_runtime_columns.sql`
+    - `20260512041000_fix_itinerary_event_write_time_types.sql`
+    - `20260512041500_fix_itinerary_event_write_ids.sql`
+    - `20260512042000_fix_section_write_create_with_explicit_id.sql`
+  - focused proof green:
+    - `npm test -- --run src/lib/sectionRpcSafety.test.ts src/lib/itineraryRpcSafety.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts`
+    - `npm run typecheck -- --pretty false`
+    - `git diff --check`
+  - live proof green again after the repairs:
+    - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+    - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- The matrix now explicitly proves guest, planning, itinerary, settings, sections, registry, seating, coordinator, message, photo, and vault-config permission lanes stay scoped while direct timeline/settings and other ungranted writes remain denied.
 - Payment gate now fails closed on billing lookup failure.
 - RSVP capacity enforcement now serializes through the deployed database function path.
 - Release launch CI now hard-fails without strict Supabase RSVP proof secrets and passes with the configured repo secrets.

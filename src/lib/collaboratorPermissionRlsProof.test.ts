@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 describe('collaborator permission RLS proof', () => {
-  it('covers guest, settings, planning, registry, photos, seating, coordinator, and adjacent RPC permission lanes while denying ungranted writes', () => {
+  it('covers guest, settings, planning, registry, photos, sections, itinerary, seating, coordinator, and adjacent RPC permission lanes while denying ungranted writes', () => {
     const source = readFileSync('tests/e2e/collaborator-permission-rls.spec.ts', 'utf8');
 
     expect(source).toContain('guest-permission collaborator can mutate guest rows');
@@ -17,11 +17,14 @@ describe('collaborator permission RLS proof', () => {
     expect(source).toContain("restUrl('planning_tasks')");
     expect(source).toContain("rpcUrl('dashboard_message_write')");
     expect(source).toContain("rpcUrl('registry_item_write')");
+    expect(source).toContain("rpcUrl('itinerary_event_write')");
     expect(source).toContain("permissions: ['registry']");
     expect(source).toContain("permissions: ['photos']");
     expect(source).toContain("rpcUrl('vault_config_write')");
     expect(source).toContain("permissions: ['settings']");
     expect(source).toContain("rpcUrl('wedding_site_settings_patch')");
+    expect(source).toContain("rpcUrl('section_write')");
+    expect(source).toContain("rpcUrl('section_delete_one')");
     expect(source).toContain("permissions: ['coordinator', 'photos', 'seating']");
     expect(source).toContain("restUrl('seating_events')");
     expect(source).toContain("restUrl('seating_tables')");

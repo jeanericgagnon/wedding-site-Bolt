@@ -662,6 +662,7 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
   let plannerCollaboratorAccessToken = '';
   let planningTaskId = '';
   let plannerMessageId = '';
+  let plannerRpcItineraryEventId = '';
   let registryInviteId = '';
   let registryCollaboratorUserId = '';
   let registryCollaboratorAccessToken = '';
@@ -673,6 +674,7 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
   let settingsInviteId = '';
   let settingsCollaboratorUserId = '';
   let settingsCollaboratorAccessToken = '';
+  let settingsSectionId = '';
   let coordinatorInviteId = '';
   let coordinatorCollaboratorUserId = '';
   let coordinatorCollaboratorAccessToken = '';
@@ -765,6 +767,12 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     }
     if (plannerMessageId) {
       await restFetch(ownerAccessToken, restUrl('messages', { id: `eq.${plannerMessageId}` }), {
+        method: 'DELETE',
+        headers: { Prefer: 'return=minimal' },
+      });
+    }
+    if (plannerRpcItineraryEventId) {
+      await restFetch(ownerAccessToken, restUrl('itinerary_events', { id: `eq.${plannerRpcItineraryEventId}` }), {
         method: 'DELETE',
         headers: { Prefer: 'return=minimal' },
       });
@@ -871,6 +879,15 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
         }),
       });
     }
+    if (settingsSectionId) {
+      await restFetch(ownerAccessToken, rpcUrl('section_delete_one'), {
+        method: 'POST',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          p_section_id: settingsSectionId,
+        }),
+      });
+    }
   };
 
   try {
@@ -967,6 +984,30 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     plannerMessageId = plannerMessage.id;
     expect(plannerMessage.subject).toContain('QA Planner Message');
 
+    const allowedPlannerItineraryWrite = await restFetch(plannerCollaboratorAccessToken, rpcUrl('itinerary_event_write'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_wedding_site_id: weddingSiteId,
+        p_event_id: null,
+        p_payload: {
+          event_name: `QA Planner RPC Event ${runId}`,
+          title: `QA Planner RPC Event ${runId}`,
+          description: 'Planner permission should allow itinerary RPC writes.',
+          event_date: '2026-12-31',
+          start_time: '17:00',
+          end_time: '18:00',
+          is_visible: false,
+          display_order: 999,
+        },
+      }),
+    });
+    const allowedPlannerItineraryWriteText = await allowedPlannerItineraryWrite.text();
+    expect(allowedPlannerItineraryWrite.ok, allowedPlannerItineraryWriteText).toBeTruthy();
+    const plannerRpcItineraryEvent = JSON.parse(allowedPlannerItineraryWriteText) as { id: string; event_name: string };
+    plannerRpcItineraryEventId = plannerRpcItineraryEvent.id;
+    expect(plannerRpcItineraryEvent.event_name).toContain('QA Planner RPC Event');
+
     const forbiddenPlannerRegistryWrite = await restFetch(plannerCollaboratorAccessToken, rpcUrl('registry_item_write'), {
       method: 'POST',
       headers: { Prefer: 'return=representation' },
@@ -1044,6 +1085,22 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     });
     expect(forbiddenRegistryMessageWrite.ok, await forbiddenRegistryMessageWrite.text()).toBeFalsy();
     expect([400, 401, 403]).toContain(forbiddenRegistryMessageWrite.status);
+
+    const forbiddenRegistryItineraryWrite = await restFetch(registryCollaboratorAccessToken, rpcUrl('itinerary_event_write'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_wedding_site_id: weddingSiteId,
+        p_event_id: null,
+        p_payload: {
+          event_name: `Forbidden Registry Event ${runId}`,
+          event_date: '2026-12-31',
+          start_time: '12:00',
+        },
+      }),
+    });
+    expect(forbiddenRegistryItineraryWrite.ok, await forbiddenRegistryItineraryWrite.text()).toBeFalsy();
+    expect([400, 401, 403]).toContain(forbiddenRegistryItineraryWrite.status);
 
     const photosInvite = await createAndClaimInvite({
       ownerPage,
@@ -1162,6 +1219,35 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     const updatedSettingsRow = JSON.parse(allowedSettingsPatchText) as { music_playlist_url?: string | null };
     expect(updatedSettingsRow.music_playlist_url).toBe(updatedMusicPlaylistUrl);
 
+    settingsSectionId = `qa-settings-section-${runId}`;
+    const allowedSettingsSectionWrite = await restFetch(settingsCollaboratorAccessToken, rpcUrl('section_write'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_site_id: weddingSiteId,
+        p_section_id: settingsSectionId,
+        p_payload: {
+          id: settingsSectionId,
+          type: 'custom',
+          variant: 'default',
+          data: {
+            headline: `QA Settings Section ${runId}`,
+            body: 'Settings permission should allow section RPC writes.',
+          },
+          order: 999,
+          visible: false,
+          schema_version: 1,
+          style_overrides: {},
+          bindings: {},
+        },
+      }),
+    });
+    const allowedSettingsSectionWriteText = await allowedSettingsSectionWrite.text();
+    expect(allowedSettingsSectionWrite.ok, allowedSettingsSectionWriteText).toBeTruthy();
+    const createdSettingsSection = JSON.parse(allowedSettingsSectionWriteText) as { id: string; type: string };
+    expect(createdSettingsSection.id).toBe(settingsSectionId);
+    expect(createdSettingsSection.type).toBe('custom');
+
     const ownerSettingsAfterPatchRead = await restFetch(ownerAccessToken, restUrl('wedding_sites', {
       select: 'music_playlist_url',
       id: `eq.${weddingSiteId}`,
@@ -1186,6 +1272,28 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     });
     expect(forbiddenSettingsRegistryWrite.ok, await forbiddenSettingsRegistryWrite.text()).toBeFalsy();
     expect([400, 401, 403]).toContain(forbiddenSettingsRegistryWrite.status);
+
+    const forbiddenRegistrySectionWrite = await restFetch(registryCollaboratorAccessToken, rpcUrl('section_write'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_site_id: weddingSiteId,
+        p_section_id: `qa-registry-section-${runId}`,
+        p_payload: {
+          id: `qa-registry-section-${runId}`,
+          type: 'custom',
+          variant: 'default',
+          data: { headline: 'Forbidden Registry Section' },
+          order: 1000,
+          visible: false,
+          schema_version: 1,
+          style_overrides: {},
+          bindings: {},
+        },
+      }),
+    });
+    expect(forbiddenRegistrySectionWrite.ok, await forbiddenRegistrySectionWrite.text()).toBeFalsy();
+    expect([400, 401, 403]).toContain(forbiddenRegistrySectionWrite.status);
 
     const coordinatorInvite = await createAndClaimInvite({
       ownerPage,

@@ -38,7 +38,7 @@ Deferred, non-launch gaps:
 - AI secret inventory/internal prereq notes
 - broader client-RLS role matrix expansion
 - client-write surface reduction into Edge Functions / RPCs
-- broader owner-only and remaining non-guest RPC matrix expansion beyond guest, planning, settings, registry, seating, coordinator, messages, and photos/vault
+- broader owner-only and remaining non-guest RPC matrix expansion beyond guest, planning, itinerary, settings, sections, registry, seating, coordinator, messages, and photos/vault
 - keep the no-direct-client-write inventory current after future runtime write-surface changes
 
 ## Exact Proof State
@@ -73,8 +73,11 @@ Fresh secure/runtime proof:
 - `npm run proof:v1:email-messaging-authorization` -> `PASS`
 - `npm run proof:v1:launch-closeout` -> `PASS`
 - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
-- collaborator runtime now also proves guest-scoped collaborators can directly mutate guest rows, planner-scoped collaborators can directly write planning tasks and dashboard messages while registry RPC writes stay denied, registry-scoped collaborators can directly write registry items while dashboard message RPC writes stay denied, and coordinator-scoped collaborators can directly write seating events/tables, coordinator Q&A/check-in, and builder media assets while dashboard message RPC writes stay denied
+- collaborator runtime now also proves guest-scoped collaborators can directly mutate guest rows, planner-scoped collaborators can directly write planning tasks, itinerary events, and dashboard messages while registry RPC writes stay denied, settings-scoped collaborators can directly patch site settings and write sections while registry RPC writes stay denied, registry-scoped collaborators can directly write registry items while dashboard message RPC writes stay denied, photos-scoped collaborators can directly write vault configs while dashboard message RPC writes stay denied, and coordinator-scoped collaborators can directly write seating events/tables, coordinator Q&A/check-in, and builder media assets while dashboard message RPC writes stay denied
 - reran green after the remote RPC migration apply with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
+- this rerun exposed and closed real production runtime drift in `itinerary_event_write` and `section_write`
+  - remote schema repairs: `20260512040000_reconcile_itinerary_dress_code_column.sql`, `20260512040500_reconcile_itinerary_runtime_columns.sql`
+  - remote function repairs: `20260512041000_fix_itinerary_event_write_time_types.sql`, `20260512041500_fix_itinerary_event_write_ids.sql`, `20260512042000_fix_section_write_create_with_explicit_id.sql`
 - `npm run test:smoke` -> `PASS`
 
 Fresh production proof after exact-SHA frontend deploy:
@@ -83,7 +86,7 @@ Fresh production proof after exact-SHA frontend deploy:
 - `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`
 - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
 - `npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
-- the canonical client-RLS matrix now includes direct guest/planning/seating write allow/deny coverage plus planner message RPC allow + registry RPC deny, settings RPC allow + registry RPC deny, registry RPC allow + message RPC deny, photos vault-config RPC allow + dashboard message RPC deny, and coordinator Q&A/check-in/media RPC allow + dashboard message RPC deny, in addition to anon guest-contact and public RSVP scope
+- the canonical client-RLS matrix now includes direct guest/planning/seating write allow/deny coverage plus planner itinerary/message RPC allow + registry RPC deny, settings patch/section RPC allow + registry RPC deny, registry RPC allow + message RPC deny, photos vault-config RPC allow + dashboard message RPC deny, and coordinator Q&A/check-in/media RPC allow + dashboard message RPC deny, in addition to anon guest-contact and public RSVP scope
 - reran green after the remote RPC migration apply with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
 - this same rerun exposed a real `wedding_site_settings_patch` PostgreSQL `CASE` type mismatch on `active_template_id`; the DB fix landed via `20260511212626_fix_wedding_site_settings_patch_types.sql` and the live matrix is green after the repair
 - `npm run proof:v1:registry-preview-ssrf` -> `LIVE PASS`
@@ -116,6 +119,13 @@ Current live launch baseline:
 - `process-email-queue`: same-day already confirmed and live-proven
 - `translate-site-content`: same-day already confirmed and live-proven
 - remote database: RPC sweep applied through `20260512031500_seating_assignment_version_rpcs.sql`
+- forward production repairs also applied:
+  - `20260511212626_fix_wedding_site_settings_patch_types.sql`
+  - `20260512040000_reconcile_itinerary_dress_code_column.sql`
+  - `20260512040500_reconcile_itinerary_runtime_columns.sql`
+  - `20260512041000_fix_itinerary_event_write_time_types.sql`
+  - `20260512041500_fix_itinerary_event_write_ids.sql`
+  - `20260512042000_fix_section_write_create_with_explicit_id.sql`
 
 Explicitly deferred / not in current launch baseline:
 - `vault-contribution-public --no-verify-jwt`
