@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-12 07:58 AM PDT`
+_Updated:_ `2026-05-12 08:49 AM PDT`
 
 ## Current Score
 
@@ -11,7 +11,7 @@ _Updated:_ `2026-05-12 07:58 AM PDT`
 ## Exact Runtime Identity
 
 - Branch: `codex/v1-finish-hard-gates-3`
-- Current branch head: `42b5aaae` (`Harden CI RSVP proof and require postdeploy verification`)
+- Current branch head: `5fc4d455` (`Refresh RLS disposition and add strict boundary proof`)
 - Exact frontend Git SHA: `f0cbf841`
 - Exact frontend commit: `Fix payment gate and serialize RSVP capacity`
 - Exact Vercel production deploy: `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q`

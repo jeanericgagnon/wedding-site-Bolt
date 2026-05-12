@@ -10,10 +10,10 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-12 07:58 AM PDT` |
+| Current date/time | `2026-05-12 08:49 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
-| Latest Git SHA | `42b5aaae` |
-| Latest commit message | `Harden CI RSVP proof and require postdeploy verification` |
+| Latest Git SHA | `5fc4d455` |
+| Latest commit message | `Refresh RLS disposition and add strict boundary proof` |
 | Vercel deployment ID | `dpl_386dKTNkTVK95UfwJj9qEtnH1b8q` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
 | Supabase functions deployed | Live blocker-fix lane now includes `submit-rsvp --no-verify-jwt` plus applied migration `20260511170500_serialize_submit_rsvp_capacity.sql`. Earlier same-day confirmed/live-proven: `public-site-access --no-verify-jwt`; `photo-upload --no-verify-jwt`; `process-email-queue`; `guest-contact-lookup --no-verify-jwt`; `guest-contact-submit --no-verify-jwt`; `translate-site-content`. Public vault contribution remains deferred/fail-closed because live inventory still does not confirm `vault-contribution-public`. |
