@@ -2,6 +2,11 @@
 
 import { execSync } from 'node:child_process';
 
+const scriptShell =
+  process.platform === 'win32'
+    ? process.env.ComSpec || 'cmd.exe'
+    : process.env.SHELL || '/bin/bash';
+
 const steps = [
   {
     id: 'rsvp-strict',
@@ -50,7 +55,7 @@ function runStep(step) {
     const stdout = execSync(step.command, {
       stdio: ['ignore', 'pipe', 'pipe'],
       encoding: 'utf8',
-      shell: '/bin/zsh',
+      shell: scriptShell,
       env: process.env,
       maxBuffer: 10 * 1024 * 1024,
     });
