@@ -14,8 +14,9 @@ import {
   type VaultEntry,
 } from './vaultService';
 
-const { invokeMock } = vi.hoisted(() => ({
+const { invokeMock, rpcMock } = vi.hoisted(() => ({
   invokeMock: vi.fn(),
+  rpcMock: vi.fn(),
 }));
 
 vi.mock('../../lib/supabase', () => ({
@@ -24,12 +25,14 @@ vi.mock('../../lib/supabase', () => ({
       invoke: invokeMock,
     },
     from: vi.fn(),
+    rpc: rpcMock,
   },
 }));
 
 describe('vaultService', () => {
   beforeEach(() => {
     invokeMock.mockReset();
+    rpcMock.mockReset();
   });
 
   it('uses explicit projections for vault dashboard data', () => {
@@ -96,6 +99,29 @@ describe('vaultService', () => {
     expect(service).toContain("supabase.functions.invoke('google-drive-health'");
     expect(service).toContain("supabase.functions.invoke('google-drive-auth-start'");
     expect(service).toContain("supabase.functions.invoke('google-drive-auth-callback'");
+  });
+
+  it('routes vault owner writes through RPCs instead of raw client table mutations', () => {
+    const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/vaultService.ts'), 'utf8');
+
+    expect(source).toContain("supabase.rpc('wedding_site_vault_provider_patch'");
+    expect(source).toContain("supabase.rpc('vault_config_write'");
+    expect(source).toContain("supabase.rpc('vault_seed_starter_configs'");
+    expect(source).toContain("supabase.rpc('vault_entry_write'");
+    expect(source).toContain("supabase.rpc('vault_entry_delete'");
+    expect(source).toContain("supabase.rpc('vault_config_delete'");
+    expect(source).not.toContain(".from('vault_configs')\n    .insert(");
+    expect(source).not.toContain(".from('vault_configs')\n    .update(");
+    expect(source).not.toContain(".from('vault_entries')\n    .insert(");
+    expect(source).not.toContain(".from('vault_entries')\n    .update(");
+    expect(source).not.toContain(".from('vault_entries').delete()");
+  });
+
+  it('keeps the config delete path atomic on the server side', () => {
+    const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/vaultService.ts'), 'utf8');
+    expect(source).toContain('void deletedEntries;');
+    expect(source).toContain("supabase.rpc('vault_config_delete'");
+    expect(source).not.toContain("supabase.from('vault_entries').insert(buildVaultEntryRollbackRows");
   });
 
   it('resolves vault entry links through the service', async () => {

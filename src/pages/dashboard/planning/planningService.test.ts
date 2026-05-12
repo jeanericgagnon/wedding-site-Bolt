@@ -87,9 +87,15 @@ describe('planning song request helpers', () => {
     expect(source).toContain(".order('item_name', { ascending: true })\n    .limit(MAX_PLANNING_BUDGET_ITEM_ROWS);");
     expect(source).toContain("supabase.rpc('planning_task_write'");
     expect(source).toContain("supabase.rpc('planning_task_delete'");
+    expect(source).toContain("supabase.rpc('planning_vendor_write'");
+    expect(source).toContain("supabase.rpc('planning_vendor_delete'");
+    expect(source).toContain("supabase.rpc('planning_budget_item_write'");
+    expect(source).toContain("supabase.rpc('planning_budget_item_delete'");
     expect(source).not.toContain(".from('planning_tasks')\n    .insert(");
     expect(source).not.toContain(".from('planning_tasks')\n    .update(");
     expect(source).not.toContain(".from('planning_tasks').delete()");
+    expect(source).not.toContain(".from('planning_vendors').delete()");
+    expect(source).not.toContain(".from('planning_budget_items').delete()");
   });
 
   it('persists planning task writes through RPCs', async () => {

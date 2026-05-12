@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-11 07:49 PM PDT`
+_Updated:_ `2026-05-11 07:57 PM PDT`
 
 ## Current Score
 
@@ -45,6 +45,7 @@ Deferred, non-launch gaps:
   - `20260511234500_registry_write_rpcs.sql`
   - `20260512001000_message_coordinator_write_rpcs.sql`
   - `20260512012000_settings_overview_write_rpcs.sql`
+  - `20260512013000_vault_planning_write_rpcs.sql`
 
 ## Exact Proof State
 
@@ -66,6 +67,7 @@ Fresh local proof:
 - `npm test -- --run src/pages/dashboard/registry/registryService.test.ts` -> `PASS`
 - `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts` -> `PASS`
 - `npm test -- --run src/pages/dashboard/overviewService.test.ts src/pages/dashboard/settings/settingsSiteData.test.ts` -> `PASS`
+- `npm test -- --run src/pages/dashboard/vaultService.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/planning/planningServiceStarterSuite.test.ts` -> `PASS`
 
 Fresh secure/runtime proof:
 - `npm run proof:v1:service-role-authorization` -> `PASS`
@@ -138,6 +140,7 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Fixed a collaborator payment-gate timing race in the working tree so planner/coordinator/viewer roles wait for role resolution before any payment redirect path is chosen; focused local proof (`ProtectedRoute.test.tsx`, `typecheck`, `lint`, `build`) is green, but the live frontend runtime has not been refreshed yet
 - Moved the remaining guest invitation/import/assisted-RSVP direct write paths behind a fourth local RPC batch in the working tree; focused local proof (`guestService.test`, `typecheck`, `lint`, `build`) is green, but migration apply/deploy/live proof are still pending so the current launch runtime truth is unchanged
 - Reused the new invitation RPCs from the itinerary dashboard so event-level guest invite/uninvite flows no longer depend on direct client `event_invitations` writes there; focused local proof (`itineraryService.test`, `itineraryQueryBounds.test`, `typecheck`) is green, and the live runtime truth stays unchanged until the already-pending RPC deploy/proof sweep
+- Moved owner-side vault writes plus planning vendor/budget writes behind an eighth local RPC batch in the working tree; focused local proof (`vaultService.test`, `planningService.test`, `planningServiceStarterSuite.test.ts`, `typecheck`, `lint`, `build`) is green, but migration apply/deploy/live proof are still pending so the current runtime truth is unchanged
 - Moved registry owner-side item CRUD, reorder, and refresh-policy writes behind a fifth local RPC batch in the working tree; focused local proof (`registryService.test`, `typecheck`) is green, and the live runtime truth stays unchanged until the already-pending RPC deploy/proof sweep
 - Moved dashboard message create/update and coordinator alert/check-in/Q&A writes behind a sixth local RPC batch in the working tree; focused local proof (`messageService.boundary.test.ts`, `coordinatorService.test.ts`, `typecheck`, `lint`) is green, and the live runtime truth stays unchanged until the already-pending RPC deploy/proof sweep
 - Moved owner settings and overview write paths behind a seventh local RPC batch in the working tree; focused local proof (`settingsSiteData.test.ts`, `overviewService.test.ts`, `typecheck`, `lint`) is green, and the live runtime truth stays unchanged until the already-pending RPC deploy/proof sweep

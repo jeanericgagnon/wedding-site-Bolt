@@ -214,10 +214,10 @@ export async function loadDemoVaultDashboardData(siteSlug = 'alex-jordan-demo'):
 }
 
 export async function ensureHostedVaultProvider(siteId: string): Promise<void> {
-  const { error } = await supabase
-    .from('wedding_sites')
-    .update({ vault_storage_provider: 'supabase' })
-    .eq('id', siteId);
+  const { error } = await supabase.rpc('wedding_site_vault_provider_patch', {
+    p_wedding_site_id: siteId,
+    p_payload: { vault_storage_provider: 'supabase' },
+  });
 
   if (error) throw error;
 }
@@ -228,55 +228,51 @@ export async function createVaultConfig(input: {
   label: string;
   durationYears: number;
 }): Promise<VaultConfig> {
-  const { data, error } = await supabase
-    .from('vault_configs')
-    .insert({
-      wedding_site_id: input.weddingSiteId,
+  const { data, error } = await supabase.rpc('vault_config_write', {
+    p_wedding_site_id: input.weddingSiteId,
+    p_config_id: null,
+    p_payload: {
       vault_index: input.vaultIndex,
       label: input.label,
       duration_years: input.durationYears,
       is_enabled: true,
-    })
-    .select(VAULT_CONFIG_SELECT)
-    .single();
+    },
+  });
 
   if (error) throw error;
   return data as unknown as VaultConfig;
 }
 
 export async function seedStarterVaultConfigs(weddingSiteId: string): Promise<VaultConfig[]> {
-  const starter = [
-    { vault_index: 1, label: '1-Year Anniversary Vault', duration_years: 1 },
-    { vault_index: 2, label: '5-Year Anniversary Vault', duration_years: 5 },
-    { vault_index: 3, label: '10-Year Anniversary Vault', duration_years: 10 },
-  ];
-
-  const { data, error } = await supabase
-    .from('vault_configs')
-    .upsert(
-      starter.map((vault) => ({ ...vault, wedding_site_id: weddingSiteId, is_enabled: true })),
-      { onConflict: 'wedding_site_id,vault_index' },
-    )
-    .select(VAULT_CONFIG_SELECT);
+  const { data, error } = await supabase.rpc('vault_seed_starter_configs', {
+    p_wedding_site_id: weddingSiteId,
+  });
 
   if (error) throw error;
   return (data ?? []) as unknown as VaultConfig[];
 }
 
 export async function updateVaultEnabled(configId: string, enabled: boolean): Promise<void> {
-  const { error } = await supabase
-    .from('vault_configs')
-    .update({ is_enabled: enabled, updated_at: new Date().toISOString() })
-    .eq('id', configId);
+  const { error } = await supabase.rpc('vault_config_write', {
+    p_wedding_site_id: null,
+    p_config_id: configId,
+    p_payload: {
+      is_enabled: enabled,
+    },
+  });
 
   if (error) throw error;
 }
 
 export async function updateVaultConfig(input: { id: string; label: string; durationYears: number }): Promise<void> {
-  const { error } = await supabase
-    .from('vault_configs')
-    .update({ label: input.label, duration_years: input.durationYears, updated_at: new Date().toISOString() })
-    .eq('id', input.id);
+  const { error } = await supabase.rpc('vault_config_write', {
+    p_wedding_site_id: null,
+    p_config_id: input.id,
+    p_payload: {
+      label: input.label,
+      duration_years: input.durationYears,
+    },
+  });
 
   if (error) throw error;
 }
@@ -287,31 +283,36 @@ export async function updateVaultRecapDraft(input: {
   content: string;
   authorName: string;
 }): Promise<void> {
-  const { error } = await supabase
-    .from('vault_entries')
-    .update({
+  const { error } = await supabase.rpc('vault_entry_write', {
+    p_wedding_site_id: null,
+    p_entry_id: input.entryId,
+    p_payload: {
       title: input.title,
       content: input.content,
       author_name: input.authorName,
-    })
-    .eq('id', input.entryId);
+    },
+  });
 
   if (error) throw error;
 }
 
 export async function createVaultEntry(weddingSiteId: string, entry: NewVaultEntry): Promise<VaultEntry> {
-  const { data, error } = await supabase
-    .from('vault_entries')
-    .insert({ ...entry, wedding_site_id: weddingSiteId })
-    .select(VAULT_ENTRY_SELECT)
-    .single();
+  const { data, error } = await supabase.rpc('vault_entry_write', {
+    p_wedding_site_id: weddingSiteId,
+    p_entry_id: null,
+    p_payload: {
+      ...entry,
+    },
+  });
 
   if (error) throw error;
   return data as unknown as VaultEntry;
 }
 
 export async function deleteVaultEntry(id: string): Promise<void> {
-  const { error } = await supabase.from('vault_entries').delete().eq('id', id);
+  const { error } = await supabase.rpc('vault_entry_delete', {
+    p_entry_id: id,
+  });
   if (error) throw error;
 }
 
@@ -324,18 +325,9 @@ export function buildVaultEntryRollbackRows(entries: VaultEntry[]): VaultEntry[]
 }
 
 export async function deleteVaultConfigWithEntryRollback(configId: string, deletedEntries: VaultEntry[]): Promise<void> {
-  const { error: entryDeleteError } = await supabase
-    .from('vault_entries')
-    .delete()
-    .eq('vault_config_id', configId);
-
-  if (entryDeleteError) throw entryDeleteError;
-
-  const { error: configDeleteError } = await supabase.from('vault_configs').delete().eq('id', configId);
-  if (!configDeleteError) return;
-
-  if (deletedEntries.length > 0) {
-    await supabase.from('vault_entries').insert(buildVaultEntryRollbackRows(deletedEntries));
-  }
-  throw configDeleteError;
+  void deletedEntries;
+  const { error } = await supabase.rpc('vault_config_delete', {
+    p_config_id: configId,
+  });
+  if (error) throw error;
 }

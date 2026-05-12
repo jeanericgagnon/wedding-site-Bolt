@@ -17,6 +17,7 @@ _Launch call right now:_ `GO`
 - The guest-dashboard settings RPC batch is still local-only and stays outside the live runtime baseline until deployment plus `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` proof.
 - The message/coordinator write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
 - The settings/overview owner-write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
+- The vault/planning vendor-budget RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
 - Payment gate now fails closed on billing lookup failure.
 - RSVP capacity enforcement now serializes through the deployed database function path.
 - Release launch CI now hard-fails without strict Supabase RSVP proof secrets and passes with the configured repo secrets.
@@ -38,6 +39,26 @@ _Launch call right now:_ `GO`
 - `npm run proof:v1:email-messaging-authorization` -> `PASS`
 - `npm run proof:v1:launch-closeout` -> `PASS`
 - `npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+
+## 2026-05-11 07:57 PM PDT - Vault And Planning Vendor/Budget RPC Batch (Local Only)
+
+- Added local migration `20260512013000_vault_planning_write_rpcs.sql`
+- Moved owner-side vault writes behind local RPCs:
+  - `wedding_site_vault_provider_patch`
+  - `vault_config_write`
+  - `vault_seed_starter_configs`
+  - `vault_entry_write`
+  - `vault_entry_delete`
+  - `vault_config_delete`
+- Moved planning vendor and budget writes behind local RPCs:
+  - `planning_vendor_write`
+  - `planning_vendor_delete`
+  - `planning_budget_item_write`
+  - `planning_budget_item_delete`
+- Focused proof green:
+  - `npm test -- --run src/pages/dashboard/vaultService.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/planning/planningServiceStarterSuite.test.ts`
+  - `git diff --check`
+- Not live yet: migration apply/deploy is still pending, so runtime proof remains gated until the local RPC batches are deployed.
 - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`
 - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` -> `LIVE PASS`
 - `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`

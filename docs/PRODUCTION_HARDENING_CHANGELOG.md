@@ -7,6 +7,21 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 
 ---
 
+## 2026-05-11 07:57 PM PDT - Vault And Planning Vendor/Budget RPC Batch
+
+- Status: `LOCAL HARDENING`
+- What changed:
+  - added `20260512013000_vault_planning_write_rpcs.sql`
+  - moved owner-side vault writes behind local RPCs
+  - moved planning vendor/budget writes behind local RPCs
+- Proof result:
+  - `npm test -- --run src/pages/dashboard/vaultService.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/planning/planningServiceStarterSuite.test.ts` -> `PASS`
+  - `git diff --check` -> `PASS`
+- Launch effect:
+  - no change to live launch state
+  - one more high-risk client-write cluster is now reduced locally, pending migration apply/deploy and fresh runtime proof
+
+
 # Production Hardening Backlog
 
 ## 2026-05-11 05:50 PM PT - Canonical Client-RLS Matrix Proof Added

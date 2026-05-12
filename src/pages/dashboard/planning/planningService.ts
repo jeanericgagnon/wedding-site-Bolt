@@ -8,28 +8,6 @@ function requireRpcRecord<T>(data: unknown, functionName: string): T {
   return data as T;
 }
 
-async function insertWithDriftFallback<T extends Record<string, unknown>>(
-  table: string,
-  payload: T,
-  driftFields: string[],
-  select: string,
-) {
-  const mutablePayload: Record<string, unknown> = { ...payload };
-  let error: { message?: string } | null = null;
-
-  for (let i = 0; i <= driftFields.length; i += 1) {
-    const result = await supabase.from(table).insert(mutablePayload).select(select).single();
-    error = result.error;
-    if (!error) return result.data;
-
-    const field = driftFields.find((candidate) => error?.message?.includes(candidate));
-    if (!field || !(field in mutablePayload)) break;
-    delete mutablePayload[field];
-  }
-
-  throw error;
-}
-
 const PLANNING_TASK_SELECT = 'id, wedding_site_id, title, description, category, due_date, status, priority, owner_name, linked_event_id, linked_vendor_id, sort_order, created_at, updated_at' as const;
 const PLANNING_VENDOR_SELECT = 'id, wedding_site_id, vendor_type, name, contact_name, email, phone, website, contract_total, amount_paid, balance_due, next_payment_due, document_url, document_label, notes, internal_rating, rating_status, rating_notes, created_at, updated_at' as const;
 const PLANNING_VENDOR_LEGACY_SELECT = 'id, wedding_site_id, vendor_type, name, contact_name, email, phone, website, contract_total, amount_paid, balance_due, next_payment_due, document_url, document_label, notes, created_at, updated_at' as const;
@@ -50,27 +28,6 @@ export const MAX_PLANNING_VENDOR_ROWS = 500;
 export const MAX_PLANNING_BUDGET_ITEM_ROWS = 1000;
 export const MAX_PLANNING_SEATING_EVENTS = 200;
 
-async function updateWithDriftFallback<T extends Record<string, unknown>>(
-  table: string,
-  id: string,
-  payload: T,
-  driftFields: string[]
-) {
-  const mutablePayload: Record<string, unknown> = { ...payload };
-  let error: { message?: string } | null = null;
-
-  for (let i = 0; i <= driftFields.length; i += 1) {
-    const result = await supabase.from(table).update(mutablePayload).eq('id', id);
-    error = result.error;
-    if (!error) return;
-
-    const field = driftFields.find((candidate) => error?.message?.includes(candidate));
-    if (!field || !(field in mutablePayload)) break;
-    delete mutablePayload[field];
-  }
-
-  throw error;
-}
 
 export interface PlanningTask {
   id: string;
@@ -465,26 +422,28 @@ export async function loadVendors(weddingSiteId: string): Promise<PlanningVendor
 }
 
 export async function createVendor(weddingSiteId: string, vendor: Partial<PlanningVendor>): Promise<PlanningVendor> {
-  const data = await insertWithDriftFallback(
-    'planning_vendors',
-    { ...vendor, wedding_site_id: weddingSiteId },
-    ['internal_rating', 'rating_status', 'rating_notes', 'vendor_type', 'email', 'contract_total', 'balance_due', 'next_payment_due', 'document_url', 'document_label', 'notes', 'phone'],
-    PLANNING_VENDOR_SELECT,
-  );
-  return data as unknown as PlanningVendor;
+  const { data, error } = await supabase.rpc('planning_vendor_write', {
+    p_wedding_site_id: weddingSiteId,
+    p_vendor_id: null,
+    p_payload: vendor,
+  });
+  if (error) throw error;
+  return requireRpcRecord<PlanningVendor>(data, 'planning_vendor_write');
 }
 
 export async function updateVendor(id: string, updates: Partial<PlanningVendor>): Promise<void> {
-  await updateWithDriftFallback(
-    'planning_vendors',
-    id,
-    { ...updates, updated_at: new Date().toISOString() },
-    ['internal_rating', 'rating_status', 'rating_notes', 'vendor_type', 'email', 'contract_total', 'balance_due', 'next_payment_due', 'document_url', 'document_label', 'notes', 'phone']
-  );
+  const { error } = await supabase.rpc('planning_vendor_write', {
+    p_wedding_site_id: null,
+    p_vendor_id: id,
+    p_payload: updates,
+  });
+  if (error) throw error;
 }
 
 export async function deleteVendor(id: string): Promise<void> {
-  const { error } = await supabase.from('planning_vendors').delete().eq('id', id);
+  const { error } = await supabase.rpc('planning_vendor_delete', {
+    p_vendor_id: id,
+  });
   if (error) throw error;
 }
 
@@ -501,26 +460,28 @@ export async function loadBudgetItems(weddingSiteId: string): Promise<PlanningBu
 }
 
 export async function createBudgetItem(weddingSiteId: string, item: Partial<PlanningBudgetItem>): Promise<PlanningBudgetItem> {
-  const data = await insertWithDriftFallback(
-    'planning_budget_items',
-    { ...item, wedding_site_id: weddingSiteId },
-    ['estimated_amount', 'actual_amount', 'vendor_id', 'due_date', 'notes'],
-    PLANNING_BUDGET_ITEM_SELECT,
-  );
-  return data as unknown as PlanningBudgetItem;
+  const { data, error } = await supabase.rpc('planning_budget_item_write', {
+    p_wedding_site_id: weddingSiteId,
+    p_item_id: null,
+    p_payload: item,
+  });
+  if (error) throw error;
+  return requireRpcRecord<PlanningBudgetItem>(data, 'planning_budget_item_write');
 }
 
 export async function updateBudgetItem(id: string, updates: Partial<PlanningBudgetItem>): Promise<void> {
-  await updateWithDriftFallback(
-    'planning_budget_items',
-    id,
-    { ...updates, updated_at: new Date().toISOString() },
-    ['estimated_amount', 'actual_amount', 'vendor_id', 'due_date', 'notes']
-  );
+  const { error } = await supabase.rpc('planning_budget_item_write', {
+    p_wedding_site_id: null,
+    p_item_id: id,
+    p_payload: updates,
+  });
+  if (error) throw error;
 }
 
 export async function deleteBudgetItem(id: string): Promise<void> {
-  const { error } = await supabase.from('planning_budget_items').delete().eq('id', id);
+  const { error } = await supabase.rpc('planning_budget_item_delete', {
+    p_item_id: id,
+  });
   if (error) throw error;
 }
 
