@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-12 11:37 AM PDT`
+_Updated:_ `2026-05-12 03:50 PM PDT`
 
 ## Current Score
 
@@ -11,10 +11,10 @@ _Updated:_ `2026-05-12 11:37 AM PDT`
 ## Exact Runtime Identity
 
 - Branch: `codex/v1-finish-hard-gates-3`
-- Current branch head: `12d15214` (`Separate public session secrets and add admin RPC gate`)
-- Exact frontend Git SHA: `12d15214`
-- Exact frontend commit: `Separate public session secrets and add admin RPC gate`
-- Exact Vercel production deploy: `dpl_2tVf4NXQSy9BDMpPHwrv748gRW2u`
+- Current branch head: `17c8089f` (`Narrow guest contact verifier to email fragment`)
+- Exact frontend Git SHA: `17c8089f`
+- Exact frontend commit: `Narrow guest contact verifier to email fragment`
+- Exact Vercel production deploy: `dpl_L9m7XKgo3GhpLkH5NR4M1ZzLSDjh`
 - Production URL: [dayof.love](https://dayof.love)
 - Supabase project: `atuzuobpprjstfmdnwso`
 - Current live hardening batch: dedicated public session secret separation plus RPC-backed admin-route authorization
@@ -109,9 +109,10 @@ Fresh production proof after exact-SHA frontend deploy:
 - reran same-day after the public-session-secret function redeploys:
   - `public-site-access`, `guest-contact-lookup`, `guest-contact-submit`, `validate-rsvp-token`, `photo-upload`, and `interactive-section-public` all stayed green on the live public/session baseline
 - the canonical client-RLS matrix now includes direct guest/planning/seating write allow/deny coverage plus planner itinerary/message RPC allow + registry RPC deny, settings patch/section RPC allow + registry RPC deny, registry item/policy RPC allow + dashboard message/section RPC deny, photos vault-config/vault-provider RPC allow + dashboard message RPC deny, and coordinator Q&A/check-in/media RPC allow + dashboard message RPC deny, in addition to anon guest-contact and public RSVP scope
-- the same live matrix now also proves regular collaborators cannot query `admin_users` directly while the admin-route server-side move is pending
+- the same live matrix now also proves regular collaborators cannot query `admin_users` directly while admin access stays behind `admin_access_check()`
 - reran green after the remote RPC migration apply with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
 - this same rerun exposed a real `wedding_site_settings_patch` PostgreSQL `CASE` type mismatch on `active_template_id`; the DB fix landed via `20260511212626_fix_wedding_site_settings_patch_types.sql` and the live matrix is green after the repair
+- `supabase secrets set PUBLIC_SITE_SESSION_SECRET_V1=... --project-ref atuzuobpprjstfmdnwso --yes` -> `PASS`
 - `supabase db push --linked --include-all` -> `PASS`
   - applied remote repair migration `20260512043000_fix_registry_refresh_policy_write_updated_by_type.sql`
 - `supabase functions deploy public-site-access --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
@@ -123,7 +124,7 @@ Fresh production proof after exact-SHA frontend deploy:
 - `supabase db push --linked --include-all` -> `PASS`
   - applied `20260512050000_harden_admin_access_check.sql`
 - `vercel deploy --prod --yes` -> `PASS`
-  - production deploy `dpl_2tVf4NXQSy9BDMpPHwrv748gRW2u`
+  - production deploy `dpl_L9m7XKgo3GhpLkH5NR4M1ZzLSDjh`
 
 Same-day still-valid supporting proof:
 - `LIVE_GUEST_HUB_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/guest-hub-write-read.spec.ts` -> `LIVE PASS`
@@ -142,11 +143,12 @@ Deferred/non-launch failed proof:
 ## Exact Deployment State
 
 Current live launch baseline:
-- frontend: `dpl_2tVf4NXQSy9BDMpPHwrv748gRW2u` from exact runtime SHA `12d15214`
+- frontend: `dpl_L9m7XKgo3GhpLkH5NR4M1ZzLSDjh` from exact runtime SHA `17c8089f`
 - `submit-rsvp --no-verify-jwt`: redeployed on the serialized capacity path after migration `20260511170500_serialize_submit_rsvp_capacity.sql`
 - `public-site-access --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `guest-contact-lookup --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `guest-contact-submit --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
+- `guest-contact-lookup` now requires a full name plus the first few characters of the guest email address before minting a signed contact session
 - `validate-rsvp-token --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `interactive-section-public --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `photo-upload --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path

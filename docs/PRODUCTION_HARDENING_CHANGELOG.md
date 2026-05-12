@@ -7,6 +7,46 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 
 ---
 
+## 2026-05-12 03:46 PM PDT - Mandatory Live Client RLS Gate, AST Security Gate, And Stronger Guest Contact Verification
+
+- Status: `LIVE HARDENING + PROOF`
+- What changed:
+  - `test:launch`, `ci-hardpass`, and `Release Launch Gate` now require `npm run proof:v1:ast-security`
+  - `test:launch`, `ci-hardpass`, and `Release Launch Gate` now require `npm run proof:v1:client-rls-matrix -- --require-live`
+  - `scripts/v1-proof-client-rls-matrix.mjs` now fails closed when the strongest live matrix lane is not enabled with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
+  - added the AST-backed launch proof in `scripts/v1-proof-ast-security.mjs`
+  - the AST proof now guards:
+    - direct client Supabase writes in shipped `src` runtime
+    - `SUPABASE_SERVICE_ROLE_KEY` references in shipped `src` runtime
+    - `dangerouslySetInnerHTML` in shipped runtime
+    - browser-storage bypass patterns in auth/payment boundary files
+    - internal tooling route exposure in `App.tsx`
+    - raw public blob leaks across the public DTO boundary helpers
+  - guest contact lookup now requires a second verifier: exact full name plus an email-fragment verifier
+  - set `PUBLIC_SITE_SESSION_SECRET_V1` on the linked Supabase project and redeployed `guest-contact-submit` so the signed contact session lane verifies live
+- Proof:
+  - `npm test -- --run src/lib/releaseLaunchGate.test.ts src/lib/ciHardpassWorkflow.test.ts src/lib/clientRlsMatrixProofScript.test.ts src/lib/guestLookupScopeProofScript.test.ts src/lib/launchEdgeFunctions.test.ts src/pages/GuestContactUpdate.test.ts src/lib/astSecurityProofScript.test.ts`
+  - `npm run proof:v1:ast-security`
+  - `npm run proof:v1:test-lanes`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+  - `npm run build`
+  - `npm run test:security`
+  - `npm run proof:v1:public-access-coverage`
+  - `npm run proof:v1:client-write-inventory`
+  - `npm run guard:file-size`
+  - `npm run guard:assets`
+  - `npm run proof:v1:performance-budget`
+  - `supabase secrets set PUBLIC_SITE_SESSION_SECRET_V1=... --project-ref atuzuobpprjstfmdnwso --yes`
+  - `supabase functions deploy guest-contact-submit --project-ref atuzuobpprjstfmdnwso --no-verify-jwt`
+  - `npm run proof:v1:guest-lookup-scope`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix -- --require-live`
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`
+- Result:
+  - the strongest live auth/RLS proof is now a mandatory launch gate instead of an optional side lane
+  - the launch chain now has an AST-backed security layer instead of relying only on regex/proof-script guards
+  - the guest contact public update flow now requires a second verifier and is live-proven again after the dedicated session secret was set remotely
+
 ## 2026-05-12 11:18 AM PDT - Dedicated Public Session Secrets And RPC-Backed Admin Gate
 
 - Status: `LOCAL HARDENING + LIVE PUBLIC PROOF`

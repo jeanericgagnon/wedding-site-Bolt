@@ -1,22 +1,30 @@
 # V1 Smoke Proof Log
 
-_Date:_ `2026-05-11`
+_Date:_ `2026-05-12`
 _Production:_ [dayof.love](https://dayof.love)
-_Latest verified deploy:_ `dpl_2tVf4NXQSy9BDMpPHwrv748gRW2u`
-_Exact frontend SHA:_ `12d15214`
+_Latest verified deploy:_ `dpl_L9m7XKgo3GhpLkH5NR4M1ZzLSDjh`
+_Exact frontend SHA:_ `17c8089f`
 _Launch call right now:_ `GO`
 
 ## Current Truth
 
-- The main verified live runtime is exact frontend SHA `f0cbf841`.
+- The main verified live runtime is exact frontend SHA `17c8089f`.
 - Public DTO minimization is closed and live-proven.
 - Secure service-role, queue, storage/media, and email queue-processing proof lanes are green with the provided secure key.
 - Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green on the blocker-fix runtime.
 - Client-facing RLS proof now has one canonical live matrix command: `npm run proof:v1:client-rls-matrix`.
 - Active runtime pages now also have one canonical local inventory guard: `npm run proof:v1:client-write-inventory`.
+- `test:launch`, `ci-hardpass`, and `Release Launch Gate` now all require `npm run proof:v1:ast-security`, `npm run proof:v1:client-rls-matrix -- --require-live`, and live `registry-preview-ssrf`.
+- 2026-05-12 03:46 PM PDT:
+  - `supabase secrets set PUBLIC_SITE_SESSION_SECRET_V1=... --project-ref atuzuobpprjstfmdnwso --yes` -> `PASS`
+  - `supabase functions deploy guest-contact-submit --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix -- --require-live` -> `LIVE PASS`
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`
+  - guest contact update now requires a full name plus the first few characters of the guest email address before a signed household-scoped contact session is issued
 - 2026-05-12 11:37 AM PDT:
   - `supabase db push --linked --include-all` -> `PASS`
-  - `vercel deploy --prod --yes` -> `PASS` (`dpl_2tVf4NXQSy9BDMpPHwrv748gRW2u`, aliased to `dayof.love`)
+  - `vercel deploy --prod --yes` -> `PASS` (`dpl_L9m7XKgo3GhpLkH5NR4M1ZzLSDjh`, aliased to `dayof.love`)
   - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`
   - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
   - `npm run proof:v1:guests-rsvp-ops` -> `LIVE PASS`
