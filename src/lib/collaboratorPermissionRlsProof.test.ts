@@ -21,6 +21,7 @@ describe('collaborator permission RLS proof', () => {
     expect(source).toContain("permissions: ['registry']");
     expect(source).toContain("permissions: ['photos']");
     expect(source).toContain("rpcUrl('vault_config_write')");
+    expect(source).toContain("rpcUrl('wedding_site_vault_provider_patch')");
     expect(source).toContain("permissions: ['settings']");
     expect(source).toContain("rpcUrl('wedding_site_settings_patch')");
     expect(source).toContain("rpcUrl('section_write')");

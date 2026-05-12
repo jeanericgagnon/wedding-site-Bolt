@@ -685,6 +685,7 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
   let coordinatorGuestId = '';
   let coordinatorQnaItemId = '';
   let baselineMusicPlaylistUrl: string | null = null;
+  let baselineVaultStorageProvider: string | null = null;
   const collaboratorContexts: Array<import('@playwright/test').BrowserContext> = [];
 
   const restUrl = (table: string, params: Record<string, string> = {}) => {
@@ -875,6 +876,18 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
           p_wedding_site_id: weddingSiteId,
           p_patch: {
             music_playlist_url: baselineMusicPlaylistUrl,
+          },
+        }),
+      });
+    }
+    if (baselineVaultStorageProvider !== null) {
+      await restFetch(ownerAccessToken, rpcUrl('wedding_site_vault_provider_patch'), {
+        method: 'POST',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          p_wedding_site_id: weddingSiteId,
+          p_payload: {
+            vault_storage_provider: baselineVaultStorageProvider,
           },
         }),
       });
@@ -1102,6 +1115,7 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     expect(forbiddenRegistryItineraryWrite.ok, await forbiddenRegistryItineraryWrite.text()).toBeFalsy();
     expect([400, 401, 403]).toContain(forbiddenRegistryItineraryWrite.status);
 
+
     const photosInvite = await createAndClaimInvite({
       ownerPage,
       ownerAccessToken,
@@ -1128,6 +1142,20 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     const [photosCollaborator] = await photosCollaboratorResponse.json() as Array<{ role: string; permissions: string[] }>;
     expect(photosCollaborator).toMatchObject({ role: 'viewer', permissions: ['photos'] });
 
+    const baselineSettingsRead = await restFetch(ownerAccessToken, restUrl('wedding_sites', {
+      select: 'music_playlist_url,vault_storage_provider',
+      id: `eq.${weddingSiteId}`,
+      limit: '1',
+    }));
+    const baselineSettingsReadText = await baselineSettingsRead.text();
+    expect(baselineSettingsRead.ok, baselineSettingsReadText).toBeTruthy();
+    const [baselineSettingsRow] = JSON.parse(baselineSettingsReadText) as Array<{
+      music_playlist_url?: string | null;
+      vault_storage_provider?: string | null;
+    }>;
+    baselineMusicPlaylistUrl = baselineSettingsRow?.music_playlist_url ?? null;
+    baselineVaultStorageProvider = baselineSettingsRow?.vault_storage_provider ?? null;
+
     const allowedPhotosVaultConfigWrite = await restFetch(photosCollaboratorAccessToken, rpcUrl('vault_config_write'), {
       method: 'POST',
       headers: { Prefer: 'return=representation' },
@@ -1148,6 +1176,22 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     vaultConfigId = vaultConfig.id;
     expect(vaultConfig.label).toContain('QA Vault Config');
 
+    const updatedVaultStorageProvider = baselineVaultStorageProvider === 'google_drive' ? 'supabase' : 'google_drive';
+    const allowedPhotosVaultProviderPatch = await restFetch(photosCollaboratorAccessToken, rpcUrl('wedding_site_vault_provider_patch'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_wedding_site_id: weddingSiteId,
+        p_payload: {
+          vault_storage_provider: updatedVaultStorageProvider,
+        },
+      }),
+    });
+    const allowedPhotosVaultProviderPatchText = await allowedPhotosVaultProviderPatch.text();
+    expect(allowedPhotosVaultProviderPatch.ok, allowedPhotosVaultProviderPatchText).toBeTruthy();
+    const updatedVaultProviderRow = JSON.parse(allowedPhotosVaultProviderPatchText) as { vault_storage_provider?: string | null };
+    expect(updatedVaultProviderRow.vault_storage_provider).toBe(updatedVaultStorageProvider);
+
     const forbiddenPhotosMessageWrite = await restFetch(photosCollaboratorAccessToken, rpcUrl('dashboard_message_write'), {
       method: 'POST',
       headers: { Prefer: 'return=representation' },
@@ -1165,17 +1209,18 @@ test('planner/coordinator permissioned non-guest actions are allowed while ungra
     expect(forbiddenPhotosMessageWrite.ok, await forbiddenPhotosMessageWrite.text()).toBeFalsy();
     expect([400, 401, 403]).toContain(forbiddenPhotosMessageWrite.status);
 
-    const baselineSettingsRead = await restFetch(ownerAccessToken, restUrl('wedding_sites', {
-      select: 'music_playlist_url',
-      id: `eq.${weddingSiteId}`,
-      limit: '1',
-    }));
-    const baselineSettingsReadText = await baselineSettingsRead.text();
-    expect(baselineSettingsRead.ok, baselineSettingsReadText).toBeTruthy();
-    const [baselineSettingsRow] = JSON.parse(baselineSettingsReadText) as Array<{
-      music_playlist_url?: string | null;
-    }>;
-    baselineMusicPlaylistUrl = baselineSettingsRow?.music_playlist_url ?? null;
+    const forbiddenRegistryVaultProviderPatch = await restFetch(registryCollaboratorAccessToken, rpcUrl('wedding_site_vault_provider_patch'), {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        p_wedding_site_id: weddingSiteId,
+        p_payload: {
+          vault_storage_provider: updatedVaultStorageProvider,
+        },
+      }),
+    });
+    expect(forbiddenRegistryVaultProviderPatch.ok, await forbiddenRegistryVaultProviderPatch.text()).toBeFalsy();
+    expect([400, 401, 403]).toContain(forbiddenRegistryVaultProviderPatch.status);
 
     const settingsInvite = await createAndClaimInvite({
       ownerPage,

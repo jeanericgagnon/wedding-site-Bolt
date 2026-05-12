@@ -156,7 +156,7 @@ const output = {
     'Planner-scoped collaborators can write planning tasks, itinerary events, and dashboard messages while registry RPC writes stay denied without permission',
     'Settings-scoped collaborators can patch site settings and write sections while registry RPC writes stay denied without permission',
     'Registry-scoped collaborators can write registry items while dashboard message RPC writes stay denied without permission',
-    'Photos-scoped collaborators can write vault configs while dashboard message RPC writes stay denied without permission',
+    'Photos-scoped collaborators can write vault configs and patch vault providers while dashboard message RPC writes stay denied without permission',
     'Coordinator-scoped collaborators can write seating events/tables, coordinator Q&A/check-in, and builder media assets while dashboard message RPC writes stay denied without permission',
   ],
   stillManualProofNeeded: buildStillManualProofNeeded(),

@@ -32,6 +32,23 @@ This file preserves timestamped historical entries, extraction batches, and no-d
   - no launch-state change
   - the live client-RLS baseline now covers guest, planning, itinerary, settings, sections, registry, seating, coordinator, messages, photos, and vault-config writes instead of stopping short at the earlier settings/photos lanes
 
+## 2026-05-11 10:20 PM PDT - Photos Vault Provider Matrix Coverage
+
+- Status: `LIVE PROOF EXPANDED`
+- What changed:
+  - expanded `tests/e2e/collaborator-permission-rls.spec.ts` again
+  - photos-scoped collaborator proof now covers allowed `wedding_site_vault_provider_patch` in addition to `vault_config_write`
+  - registry-scoped collaborator stays denied on the new photos provider lane
+  - updated `src/lib/collaboratorPermissionRlsProof.test.ts`, `src/lib/clientRlsMatrixProofScript.test.ts`, `scripts/v1-proof-collaborator-runtime.mjs`, and `scripts/v1-proof-client-rls-matrix.mjs`
+- Proof result:
+  - `npm test -- --run src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
+- Launch effect:
+  - no launch-state change
+  - the live client-RLS baseline now covers guest, planning, itinerary, settings, sections, registry, seating, coordinator, messages, photos, vault-config writes, and vault-provider writes
+
 ## 2026-05-11 09:32 PM PDT - Settings RPC Type Repair And Settings Matrix Coverage
 
 - Status: `LIVE PROOF EXPANDED + REMOTE DB FIX`

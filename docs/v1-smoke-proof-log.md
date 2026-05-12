@@ -56,7 +56,7 @@ _Launch call right now:_ `GO`
   - live proof green again after the repairs:
     - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
     - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
-- The matrix now explicitly proves guest, planning, itinerary, settings, sections, registry, seating, coordinator, message, photo, and vault-config permission lanes stay scoped while direct timeline/settings and other ungranted writes remain denied.
+- The matrix now explicitly proves guest, planning, itinerary, settings, sections, registry, seating, coordinator, message, photo, vault-config, and vault-provider permission lanes stay scoped while direct timeline/settings and other ungranted writes remain denied.
 - Payment gate now fails closed on billing lookup failure.
 - RSVP capacity enforcement now serializes through the deployed database function path.
 - Release launch CI now hard-fails without strict Supabase RSVP proof secrets and passes with the configured repo secrets.
@@ -259,6 +259,7 @@ _Launch call right now:_ `GO`
 
 - Expanded the same live collaborator/client-RLS proof again:
   - photos-scoped collaborator can create vault configs through `vault_config_write`
+  - photos-scoped collaborator can patch `vault_storage_provider` through `wedding_site_vault_provider_patch`
   - photos-scoped collaborator is denied `dashboard_message_write`
 - The first live attempt exposed a real fixture bug, not an auth bug:
   - the proof used an invalid `vault_index`
@@ -269,7 +270,7 @@ _Launch call right now:_ `GO`
   - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:collaborator-runtime` -> `LIVE PASS`
   - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix` -> `LIVE PASS`
 - Result:
-  - the live collaborator/client-RLS matrix now covers guest, planning, settings, registry, seating, coordinator, messages, photos, and vault-config writes
+  - the live collaborator/client-RLS matrix now covers guest, planning, settings, registry, seating, coordinator, messages, photos, vault-config writes, and vault-provider writes
   - the remaining work is owner-only / future-surface breadth, not mainstream collaborator auth
 
 ## Current Launch Call
