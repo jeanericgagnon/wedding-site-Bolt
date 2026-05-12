@@ -69,12 +69,14 @@ export async function ensureMinimalWeddingSite(userId: string, email: string): P
     const siteSlug = `${base}${suffix}`;
     const siteUrl = `${siteSlug}.dayof.love`;
 
-    const { error } = await supabase.from('wedding_sites').insert({
-      user_id: userId,
-      couple_name_1: 'You',
-      couple_name_2: 'Partner',
-      site_slug: siteSlug,
-      site_url: siteUrl,
+    const { error } = await supabase.rpc('wedding_site_bootstrap_write', {
+      p_user_id: userId,
+      p_payload: {
+        couple_name_1: 'You',
+        couple_name_2: 'Partner',
+        site_slug: siteSlug,
+        site_url: siteUrl,
+      },
     });
 
     if (!error) return;

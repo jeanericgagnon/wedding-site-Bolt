@@ -18,6 +18,7 @@ _Launch call right now:_ `GO`
 - The message/coordinator write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
 - The settings/overview owner-write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
 - The vault/planning vendor-budget RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
+- The onboarding/signup write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
 - Payment gate now fails closed on billing lookup failure.
 - RSVP capacity enforcement now serializes through the deployed database function path.
 - Release launch CI now hard-fails without strict Supabase RSVP proof secrets and passes with the configured repo secrets.
@@ -57,6 +58,20 @@ _Launch call right now:_ `GO`
   - `planning_budget_item_delete`
 - Focused proof green:
   - `npm test -- --run src/pages/dashboard/vaultService.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/planning/planningServiceStarterSuite.test.ts`
+  - `git diff --check`
+- Not live yet: migration apply/deploy is still pending, so runtime proof remains gated until the local RPC batches are deployed.
+
+## 2026-05-11 08:04 PM PDT - Onboarding And Signup Write RPC Batch (Local Only)
+
+- Added local migration `20260512014500_onboarding_signup_write_rpcs.sql`
+- Moved onboarding/signup writes behind local RPCs:
+  - `wedding_site_bootstrap_write`
+  - `onboarding_event_seed_insert_many`
+  - existing `wedding_site_settings_patch`
+  - existing `guest_dashboard_guest_write`
+- Focused proof green:
+  - `npm test -- --run src/pages/onboarding/onboardingService.test.ts src/pages/signupService.test.ts`
+  - `npm run typecheck -- --pretty false`
   - `git diff --check`
 - Not live yet: migration apply/deploy is still pending, so runtime proof remains gated until the local RPC batches are deployed.
 - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`

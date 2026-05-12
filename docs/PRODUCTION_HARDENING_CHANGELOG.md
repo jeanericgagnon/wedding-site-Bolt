@@ -21,6 +21,20 @@ This file preserves timestamped historical entries, extraction batches, and no-d
   - no change to live launch state
   - one more high-risk client-write cluster is now reduced locally, pending migration apply/deploy and fresh runtime proof
 
+## 2026-05-11 08:04 PM PDT - Onboarding And Signup Write RPC Batch
+
+- Status: `LOCAL HARDENING`
+- What changed:
+  - added `20260512014500_onboarding_signup_write_rpcs.sql`
+  - moved onboarding/signup site bootstrap, site patch, event seed insert, and guided guest import writes behind RPCs
+- Proof result:
+  - `npm test -- --run src/pages/onboarding/onboardingService.test.ts src/pages/signupService.test.ts` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `git diff --check` -> `PASS`
+- Launch effect:
+  - no change to live launch state
+  - another mainstream raw client-write cluster is now reduced locally, pending migration apply/deploy and fresh runtime proof
+
 
 # Production Hardening Backlog
 

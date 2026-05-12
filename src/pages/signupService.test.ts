@@ -4,10 +4,12 @@ const {
   signInWithOAuthMock,
   signUpMock,
   signInWithPasswordMock,
+  rpcMock,
 } = vi.hoisted(() => ({
   signInWithOAuthMock: vi.fn(),
   signUpMock: vi.fn(),
   signInWithPasswordMock: vi.fn(),
+  rpcMock: vi.fn(),
 }));
 
 vi.mock('../lib/supabase', () => ({
@@ -17,6 +19,7 @@ vi.mock('../lib/supabase', () => ({
       signUp: signUpMock,
       signInWithPassword: signInWithPasswordMock,
     },
+    rpc: rpcMock,
     from: () => ({
       select: () => ({
         eq: () => ({
@@ -27,18 +30,18 @@ vi.mock('../lib/supabase', () => ({
           }),
         }),
       }),
-      insert: () => Promise.resolve({ error: null }),
     }),
   },
 }));
 
-import { createSignupAccount, startSignupWithGoogle } from './signupService';
+import { createSignupAccount, ensureMinimalWeddingSite, startSignupWithGoogle } from './signupService';
 
 describe('signupService', () => {
   beforeEach(() => {
     signInWithOAuthMock.mockReset();
     signUpMock.mockReset();
     signInWithPasswordMock.mockReset();
+    rpcMock.mockReset();
   });
 
   it('starts Google sign-up with the provided redirect', async () => {
@@ -79,5 +82,20 @@ describe('signupService', () => {
     await expect(createSignupAccount('test@example.com', 'password-123')).rejects.toThrow(
       'Account created! Check your email to confirm your address, then sign in.',
     );
+  });
+
+  it('creates the minimal wedding site through the bootstrap RPC', async () => {
+    rpcMock.mockResolvedValue({ error: null });
+
+    await expect(ensureMinimalWeddingSite('user-1', 'test@example.com')).resolves.toBeUndefined();
+
+    expect(rpcMock).toHaveBeenCalledWith('wedding_site_bootstrap_write', {
+      p_user_id: 'user-1',
+      p_payload: expect.objectContaining({
+        couple_name_1: 'You',
+        couple_name_2: 'Partner',
+        site_url: expect.stringMatching(/\.dayof\.love$/),
+      }),
+    });
   });
 });

@@ -112,16 +112,25 @@ describe('onboarding service boundaries', () => {
     expect(onboardingService).toContain('supabase.auth.getUser()');
     expect(onboardingService).toContain(".select('id, onboarding_answers, wedding_data')");
     expect(onboardingService).toContain(".select('event_name')");
-    expect(onboardingService).toContain(".select('id')");
+    expect(onboardingService).toContain("supabase.rpc('wedding_site_settings_patch'");
+    expect(onboardingService).toContain("supabase.rpc('wedding_site_bootstrap_write'");
+    expect(onboardingService).toContain("supabase.rpc('onboarding_event_seed_insert_many'");
+    expect(onboardingService).toContain("supabase.rpc('guest_dashboard_guest_write'");
     expect(onboardingService).toContain('updateWeddingPlanningStatus');
     expect(signupService).toContain('export async function startSignupWithGoogle');
     expect(signupService).toContain('export async function createSignupAccount');
     expect(signupService).toContain('supabase.auth.signInWithOAuth');
     expect(signupService).toContain('supabase.auth.signUp');
     expect(signupService).toContain('supabase.auth.signInWithPassword');
+    expect(signupService).toContain("supabase.rpc('wedding_site_bootstrap_write'");
     expect(signupService).toContain(".select('id')");
     expect(onboardingService).not.toContain(".select('*')");
     expect(signupService).not.toContain(".select('*')");
+    expect(onboardingService).not.toContain(".from('wedding_sites')\n    .update(");
+    expect(onboardingService).not.toContain(".from('itinerary_events').insert(");
+    expect(onboardingService).not.toContain(".from('guests').update(");
+    expect(onboardingService).not.toContain(".from('guests').insert(");
+    expect(signupService).not.toContain(".from('wedding_sites').insert(");
   });
 
   it('loads the authenticated onboarding user through the service helper', async () => {

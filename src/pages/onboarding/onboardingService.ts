@@ -91,11 +91,11 @@ export async function updateGuidedSetupSite(params: {
   userId: string;
   updateData: Record<string, unknown>;
 }): Promise<void> {
-  const { error } = await supabase
-    .from('wedding_sites')
-    .update(params.updateData)
-    .eq('id', params.siteId)
-    .eq('user_id', params.userId);
+  void params.userId;
+  const { error } = await supabase.rpc('wedding_site_settings_patch', {
+    p_site_id: params.siteId,
+    p_patch: params.updateData,
+  });
 
   if (error) throw error;
 }
@@ -107,11 +107,10 @@ export async function updateWeddingPlanningStatus(params: {
   const activeSite = await resolveActiveSiteForUser(params.userId);
   if (!activeSite?.id) throw new Error('Couldn’t find your wedding site right now.');
 
-  const { error } = await supabase
-    .from('wedding_sites')
-    .update(params.updateData)
-    .eq('id', activeSite.id)
-    .eq('user_id', params.userId);
+  const { error } = await supabase.rpc('wedding_site_settings_patch', {
+    p_site_id: activeSite.id,
+    p_patch: params.updateData,
+  });
 
   if (error) throw error;
 }
@@ -147,10 +146,10 @@ export async function updateQuickStartPersistSite(params: {
   siteId: string;
   updateData: Record<string, unknown>;
 }): Promise<void> {
-  const { error } = await supabase
-    .from('wedding_sites')
-    .update(params.updateData)
-    .eq('id', params.siteId);
+  const { error } = await supabase.rpc('wedding_site_settings_patch', {
+    p_site_id: params.siteId,
+    p_patch: params.updateData,
+  });
 
   if (error) throw error;
 }
@@ -171,21 +170,11 @@ export async function syncOnboardingEventSeeds(siteId: string, seeds: Onboarding
 
   if (!missingRows.length) return;
 
-  const driftFields = ['display_order', 'description', 'dress_code', 'location_address', 'notes', 'onboarding_seeded', 'rsvp_enabled', 'is_visible'];
-  const insertRows = missingRows.map((row) => ({ ...row }));
-  let insertError: { message?: string } | null = null;
-
-  for (let i = 0; i <= driftFields.length; i += 1) {
-    const result = await supabase.from('itinerary_events').insert(insertRows);
-    insertError = result.error;
-    if (!insertError) break;
-
-    const field = driftFields.find((candidate) => insertError?.message?.includes(candidate));
-    if (!field) break;
-    insertRows.forEach((row) => { delete (row as Record<string, unknown>)[field]; });
-  }
-
-  if (insertError) throw insertError;
+  const { error } = await supabase.rpc('onboarding_event_seed_insert_many', {
+    p_wedding_site_id: siteId,
+    p_rows: missingRows,
+  });
+  if (error) throw error;
 }
 
 export function mergeOnboardingSeedsIntoWeddingData(
@@ -210,11 +199,11 @@ export async function updateExistingOnboardingSite(params: {
   onboardingAnswers: WeddingProfilePayload;
   weddingData: Record<string, unknown>;
 }): Promise<void> {
-  const { error } = await supabase
-    .from('wedding_sites')
-    .update({ onboarding_answers: params.onboardingAnswers, wedding_data: params.weddingData })
-    .eq('id', params.siteId)
-    .eq('user_id', params.userId);
+  void params.userId;
+  const { error } = await supabase.rpc('wedding_site_settings_patch', {
+    p_site_id: params.siteId,
+    p_patch: { onboarding_answers: params.onboardingAnswers, wedding_data: params.weddingData },
+  });
 
   if (error) throw error;
 }
@@ -225,21 +214,11 @@ export async function createOnboardingWeddingSite(params: {
   fallbackRow: Record<string, unknown>;
   itinerarySeeds: OnboardingEventSeed[];
 }): Promise<void> {
-  const { data: createdSite, error } = await supabase
-    .from('wedding_sites')
-    .insert(params.insertRow)
-    .select('id')
-    .single();
-
-  if (error && error.message?.includes('onboarding_answers')) {
-    const { error: fallbackError } = await supabase
-      .from('wedding_sites')
-      .insert(params.fallbackRow);
-
-    if (fallbackError) throw fallbackError;
-    return;
-  }
-
+  void params.fallbackRow;
+  const { data: createdSite, error } = await supabase.rpc('wedding_site_bootstrap_write', {
+    p_user_id: params.userId,
+    p_payload: params.insertRow,
+  });
   if (error) throw error;
   if ((createdSite as { id?: string } | null)?.id) {
     await syncOnboardingEventSeeds((createdSite as { id: string }).id, params.itinerarySeeds);
@@ -271,33 +250,40 @@ export async function upsertGuidedSetupGuestFromCsv(
     if (existingError) throw existingError;
 
     if ((existing as { id?: string } | null)?.id) {
-      const { error: updateGuestError } = await supabase.from('guests').update({
-        first_name: guest.firstName || null,
-        last_name: guest.lastName || null,
-        phone: guest.phone || null,
-        group_name: guest.groupName,
-        plus_one_allowed: guest.plusOne,
-        invited_to_ceremony: guest.invitedToCeremony,
-        invited_to_reception: guest.invitedToReception,
-      }).eq('id', (existing as { id: string }).id);
+      const { error: updateGuestError } = await supabase.rpc('guest_dashboard_guest_write', {
+        p_wedding_site_id: null,
+        p_guest_id: (existing as { id: string }).id,
+        p_payload: {
+          first_name: guest.firstName || null,
+          last_name: guest.lastName || null,
+          phone: guest.phone || null,
+          group_name: guest.groupName,
+          plus_one_allowed: guest.plusOne,
+          invited_to_ceremony: guest.invitedToCeremony,
+          invited_to_reception: guest.invitedToReception,
+        },
+      });
       if (updateGuestError) throw updateGuestError;
       return 'updated';
     }
   }
 
   const name = [guest.firstName, guest.lastName].filter(Boolean).join(' ') || guest.email || 'Guest';
-  const { error: insertGuestError } = await supabase.from('guests').insert({
-    wedding_site_id: weddingSiteId,
-    name,
-    first_name: guest.firstName || null,
-    last_name: guest.lastName || null,
-    email: guest.email || null,
-    phone: guest.phone || null,
-    group_name: guest.groupName,
-    plus_one_allowed: guest.plusOne,
-    invited_to_ceremony: guest.invitedToCeremony,
-    invited_to_reception: guest.invitedToReception,
-    rsvp_status: 'pending',
+  const { error: insertGuestError } = await supabase.rpc('guest_dashboard_guest_write', {
+    p_wedding_site_id: weddingSiteId,
+    p_guest_id: null,
+    p_payload: {
+      name,
+      first_name: guest.firstName || null,
+      last_name: guest.lastName || null,
+      email: guest.email || null,
+      phone: guest.phone || null,
+      group_name: guest.groupName,
+      plus_one_allowed: guest.plusOne,
+      invited_to_ceremony: guest.invitedToCeremony,
+      invited_to_reception: guest.invitedToReception,
+      rsvp_status: 'pending',
+    },
   });
   if (insertGuestError) throw insertGuestError;
   return 'created';
