@@ -78,10 +78,10 @@ export async function updateRegistryRefreshBudget(
   weddingSiteId: string,
   values: { registry_monthly_refresh_count: number; registry_monthly_refresh_month: string },
 ): Promise<void> {
-  const { error } = await supabase
-    .from('wedding_sites')
-    .update(values)
-    .eq('id', weddingSiteId);
+  const { error } = await supabase.rpc('registry_refresh_policy_write', {
+    p_wedding_site_id: weddingSiteId,
+    p_patch: values,
+  });
 
   if (error) throw error;
 }
@@ -90,10 +90,10 @@ export async function saveRegistryRefreshPolicy(
   weddingSiteId: string,
   patch: RegistryRefreshPolicyPatch,
 ): Promise<void> {
-  const { error } = await supabase
-    .from('wedding_sites')
-    .update(patch)
-    .eq('id', weddingSiteId);
+  const { error } = await supabase.rpc('registry_refresh_policy_write', {
+    p_wedding_site_id: weddingSiteId,
+    p_patch: patch,
+  });
 
   if (error) throw error;
 }
@@ -102,30 +102,18 @@ export async function createRegistryItem(
   weddingSiteId: string,
   fields: Partial<RegistryItem>
 ): Promise<RegistryItem> {
-  const maxOrderResult = await supabase
-    .from('registry_items')
-    .select('sort_order')
-    .eq('wedding_site_id', weddingSiteId)
-    .order('sort_order', { ascending: false })
-    .limit(MAX_REGISTRY_SORT_LOOKUP_ROWS)
-    .maybeSingle();
-
-  const nextOrder = ((maxOrderResult.data?.sort_order as number | null) ?? -1) + 1;
-
-  const { data, error } = await supabase
-    .from('registry_items')
-    .insert({
-      wedding_site_id: weddingSiteId,
-      sort_order: nextOrder,
+  const { data, error } = await supabase.rpc('registry_item_write', {
+    p_wedding_site_id: weddingSiteId,
+    p_item_id: null,
+    p_payload: {
       quantity_needed: 1,
       quantity_purchased: 0,
       purchase_status: 'available',
       hide_when_purchased: false,
       priority: 'medium',
       ...fields,
-    })
-    .select(REGISTRY_ITEM_SELECT)
-    .single();
+    },
+  });
 
   if (error) throw new Error(REGISTRY_SAVE_ERROR_COPY);
   return normalizeRegistryItem(data as RegistryItem);
@@ -135,19 +123,20 @@ export async function updateRegistryItem(
   id: string,
   fields: Partial<RegistryItem>
 ): Promise<RegistryItem> {
-  const { data, error } = await supabase
-    .from('registry_items')
-    .update({ ...fields, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select(REGISTRY_ITEM_SELECT)
-    .single();
+  const { data, error } = await supabase.rpc('registry_item_write', {
+    p_wedding_site_id: null,
+    p_item_id: id,
+    p_payload: fields,
+  });
 
   if (error) throw new Error(REGISTRY_SAVE_ERROR_COPY);
   return normalizeRegistryItem(data as RegistryItem);
 }
 
 export async function deleteRegistryItem(id: string): Promise<void> {
-  const { error } = await supabase.from('registry_items').delete().eq('id', id);
+  const { error } = await supabase.rpc('registry_item_delete', {
+    p_item_id: id,
+  });
   if (error) throw new Error(REGISTRY_DELETE_ERROR_COPY);
 }
 
@@ -155,14 +144,11 @@ export async function reorderRegistryItems(
   weddingSiteId: string,
   orderedIds: string[]
 ): Promise<void> {
-  const updates = orderedIds.map((id, index) =>
-    supabase
-      .from('registry_items')
-      .update({ sort_order: index, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .eq('wedding_site_id', weddingSiteId)
-  );
-  await Promise.all(updates);
+  const { error } = await supabase.rpc('registry_items_reorder', {
+    p_wedding_site_id: weddingSiteId,
+    p_ordered_ids: orderedIds,
+  });
+  if (error) throw new Error(REGISTRY_SAVE_ERROR_COPY);
 }
 
 export async function fetchUrlPreview(url: string, forceRefresh = false): Promise<RegistryPreview> {

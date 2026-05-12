@@ -15,6 +15,7 @@ _Launch call right now:_ `GO`
 - Client-facing RLS proof now has one canonical live matrix command: `npm run proof:v1:client-rls-matrix`.
 - That matrix now explicitly proves direct guest, planning, and seating writes stay permission-scoped while direct timeline/settings writes remain denied without permission.
 - The guest-dashboard settings RPC batch is still local-only and stays outside the live runtime baseline until deployment plus `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` proof.
+- The message/coordinator write RPC batch is also local-only and stays outside the live runtime baseline until deployment and fresh live proof.
 - Payment gate now fails closed on billing lookup failure.
 - RSVP capacity enforcement now serializes through the deployed database function path.
 - Release launch CI now hard-fails without strict Supabase RSVP proof secrets and passes with the configured repo secrets.
@@ -188,6 +189,37 @@ _Launch call right now:_ `GO`
 - Result:
   - no live-state change yet
   - runtime truth still depends on the already-pending RPC migration apply/deploy and fresh live proof
+
+### 2026-05-11 07:33 PM PDT - Registry Owner Write RPC Batch (Local Only)
+
+- Added migration `20260511234500_registry_write_rpcs.sql`.
+- Moved these registry dashboard owner-side write paths off raw client table mutations in the working tree:
+  - registry refresh budget writes
+  - registry refresh policy writes
+  - registry item create/update/delete
+  - registry item reorder
+- Focused local proof is green:
+  - `npm test -- --run src/pages/dashboard/registry/registryService.test.ts`
+  - `npm run typecheck -- --pretty false`
+- Result:
+  - no live-state change yet
+  - apply/deploy plus fresh live proof are still required before this batch counts as runtime hardening
+
+### 2026-05-11 07:40 PM PDT - Message And Coordinator Write RPC Batch (Local Only)
+
+- Added migration `20260512001000_message_coordinator_write_rpcs.sql`.
+- Moved these working-tree write paths off raw client table mutations:
+  - dashboard message create/update
+  - coordinator alert-message insert
+  - coordinator guest check-in update
+  - coordinator Q&A create/update
+- Focused local proof is green:
+  - `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+- Result:
+  - no live-state change yet
+  - apply/deploy plus fresh live proof are still required before this batch counts as runtime hardening
 
 ### 2026-05-11 03:42 PM PDT - Public Vault Contribution Downgraded To Deferred / Hard-Disabled
 

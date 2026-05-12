@@ -43,4 +43,16 @@ describe('buildCoordinatorEventGuestMap', () => {
     expect(source).toContain('.limit(MAX_COORDINATOR_EVENT_INVITATIONS);');
     expect(source).toContain(".limit(MAX_COORDINATOR_QNA_ROWS);");
   });
+
+  it('routes coordinator writes through RPCs', () => {
+    const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/coordinatorService.ts'), 'utf8');
+
+    expect(source).toContain("supabase.rpc('coordinator_alert_message_write'");
+    expect(source).toContain("supabase.rpc('coordinator_guest_checkin_write'");
+    expect(source).toContain("supabase.rpc('coordinator_qna_write'");
+    expect(source).not.toContain("supabase.from('messages').insert({");
+    expect(source).not.toContain("supabase\n    .from('guests')\n    .update({ checked_in_at: args.checkedInAt })");
+    expect(source).not.toContain(".from('guest_qna_items')\n    .insert(");
+    expect(source).not.toContain(".from('guest_qna_items').update({");
+  });
 });

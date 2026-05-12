@@ -3,7 +3,20 @@ import { join } from 'node:path';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { RegistryItem, RegistryPreview } from './registryTypes';
 import { derivePurchaseStatus, sanitizeRegistryQuantityState } from './registryTypes';
-import { fetchUrlPreview, findDuplicateItem, ownerMarkPurchased, publicIncrementPurchase, MAX_REGISTRY_ITEMS, MAX_REGISTRY_SORT_LOOKUP_ROWS } from './registryService';
+import {
+  createRegistryItem,
+  deleteRegistryItem,
+  fetchUrlPreview,
+  findDuplicateItem,
+  MAX_REGISTRY_ITEMS,
+  MAX_REGISTRY_SORT_LOOKUP_ROWS,
+  ownerMarkPurchased,
+  publicIncrementPurchase,
+  reorderRegistryItems,
+  saveRegistryRefreshPolicy,
+  updateRegistryItem,
+  updateRegistryRefreshBudget,
+} from './registryService';
 
 const mockRpcResult = {
   data: null as unknown,
@@ -14,6 +27,10 @@ const mockSelectResult = {
   data: null as unknown,
   error: null as { message: string } | null,
 };
+
+const { rpcMock } = vi.hoisted(() => ({
+  rpcMock: vi.fn(() => Promise.resolve(mockRpcResult)),
+}));
 
 vi.mock('../../../lib/supabase', () => ({
   supabase: {
@@ -35,12 +52,13 @@ vi.mock('../../../lib/supabase', () => ({
       maybeSingle: vi.fn(() => mockSelectResult),
       then: vi.fn((cb: (v: typeof mockSelectResult) => unknown) => Promise.resolve(cb(mockSelectResult))),
     })),
-    rpc: vi.fn(() => Promise.resolve(mockRpcResult)),
+    rpc: rpcMock,
   },
 }));
 
 describe('fetchUrlPreview', () => {
   beforeEach(() => {
+    rpcMock.mockClear();
     vi.stubGlobal('fetch', vi.fn());
     // env vars are accessed via import.meta.env in the service
   });
@@ -150,7 +168,12 @@ describe('registry query bounds', () => {
 
     expect(serviceSource).toContain('limit: MAX_REGISTRY_ITEMS,');
     expect(serviceSource).toContain('.limit(MAX_REGISTRY_ITEMS);');
-    expect(serviceSource).toContain(".order('sort_order', { ascending: false })\n    .limit(MAX_REGISTRY_SORT_LOOKUP_ROWS)");
+    expect(serviceSource).toContain("supabase.rpc('registry_item_write'");
+    expect(serviceSource).toContain("supabase.rpc('registry_items_reorder'");
+    expect(serviceSource).toContain("supabase.rpc('registry_refresh_policy_write'");
+    expect(serviceSource).not.toContain(".from('registry_items')\n    .insert(");
+    expect(serviceSource).not.toContain(".from('registry_items')\n    .update({ ...fields, updated_at: new Date().toISOString() })");
+    expect(serviceSource).not.toContain("const updates = orderedIds.map");
     expect(functionSource).toContain('Math.min(500, Number(body.limit))');
     expect(functionSource).toContain(') : 500;');
     expect(functionSource).toContain('.limit(limit);');
@@ -336,6 +359,112 @@ describe('ownerMarkPurchased', () => {
     expect(result.quantity_needed).toBe(2);
     expect(result.quantity_purchased).toBe(2);
     expect(result.purchase_status).toBe('purchased');
+  });
+});
+
+describe('registry owner write RPCs', () => {
+  beforeEach(() => {
+    rpcMock.mockClear();
+    mockRpcResult.data = null;
+    mockRpcResult.error = null;
+  });
+
+  it('routes refresh budget writes through the registry policy RPC', async () => {
+    await expect(updateRegistryRefreshBudget('site-1', {
+      registry_monthly_refresh_count: 4,
+      registry_monthly_refresh_month: '2026-05',
+    })).resolves.toBeUndefined();
+
+    expect(rpcMock).toHaveBeenCalledWith('registry_refresh_policy_write', {
+      p_wedding_site_id: 'site-1',
+      p_patch: {
+        registry_monthly_refresh_count: 4,
+        registry_monthly_refresh_month: '2026-05',
+      },
+    });
+  });
+
+  it('routes registry policy writes through the registry policy RPC', async () => {
+    await expect(saveRegistryRefreshPolicy('site-1', {
+      registry_auto_refresh_enabled: false,
+      registry_refresh_include_purchased: true,
+    })).resolves.toBeUndefined();
+
+    expect(rpcMock).toHaveBeenCalledWith('registry_refresh_policy_write', {
+      p_wedding_site_id: 'site-1',
+      p_patch: {
+        registry_auto_refresh_enabled: false,
+        registry_refresh_include_purchased: true,
+      },
+    });
+  });
+
+  it('routes registry item create through the item write RPC', async () => {
+    mockRpcResult.data = {
+      id: 'item-1',
+      wedding_site_id: 'site-1',
+      item_name: 'Mixer',
+      quantity_needed: 1,
+      quantity_purchased: 0,
+      purchase_status: 'available',
+    };
+
+    await expect(createRegistryItem('site-1', { item_name: 'Mixer' })).resolves.toEqual(expect.objectContaining({
+      id: 'item-1',
+      item_name: 'Mixer',
+    }));
+
+    expect(rpcMock).toHaveBeenCalledWith('registry_item_write', {
+      p_wedding_site_id: 'site-1',
+      p_item_id: null,
+      p_payload: expect.objectContaining({
+        item_name: 'Mixer',
+        quantity_needed: 1,
+        quantity_purchased: 0,
+        purchase_status: 'available',
+        hide_when_purchased: false,
+        priority: 'medium',
+      }),
+    });
+  });
+
+  it('routes registry item update through the item write RPC', async () => {
+    mockRpcResult.data = {
+      id: 'item-1',
+      wedding_site_id: 'site-1',
+      item_name: 'Updated Mixer',
+      quantity_needed: 1,
+      quantity_purchased: 0,
+      purchase_status: 'available',
+    };
+
+    await expect(updateRegistryItem('item-1', { item_name: 'Updated Mixer' })).resolves.toEqual(expect.objectContaining({
+      id: 'item-1',
+      item_name: 'Updated Mixer',
+    }));
+
+    expect(rpcMock).toHaveBeenCalledWith('registry_item_write', {
+      p_wedding_site_id: null,
+      p_item_id: 'item-1',
+      p_payload: { item_name: 'Updated Mixer' },
+    });
+  });
+
+  it('routes registry item delete through the delete RPC', async () => {
+    await expect(deleteRegistryItem('item-1')).resolves.toBeUndefined();
+
+    expect(rpcMock).toHaveBeenCalledWith('registry_item_delete', {
+      p_item_id: 'item-1',
+    });
+  });
+
+  it('routes registry reorder through the reorder RPC', async () => {
+    await expect(reorderRegistryItems('site-1', ['item-2', 'item-1'])).resolves.toBeUndefined();
+
+    expect(rpcMock).toHaveBeenCalledWith('registry_items_reorder', {
+      p_wedding_site_id: 'site-1',
+      p_ordered_ids: ['item-2', 'item-1'],
+    });
   });
 });
 

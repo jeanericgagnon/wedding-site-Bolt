@@ -150,7 +150,11 @@ export async function triggerScheduledMessageDispatch(limit = 10): Promise<{
 }
 
 export async function createDashboardMessage(payload: MessageInsertPayload): Promise<void> {
-  const { error } = await supabase.from('messages').insert(payload);
+  const { error } = await supabase.rpc('dashboard_message_write', {
+    p_wedding_site_id: payload.wedding_site_id,
+    p_message_id: null,
+    p_payload: payload,
+  });
   if (error) throw error;
 }
 
@@ -163,21 +167,22 @@ export async function insertDashboardMessageMinimal(payload: {
   scheduled_for: string | null;
   sent_at: string | null;
 }): Promise<{ id: string }> {
-  const { data, error } = await supabase
-    .from('messages')
-    .insert(payload)
-    .select('id')
-    .single();
+  const { data, error } = await supabase.rpc('dashboard_message_write', {
+    p_wedding_site_id: payload.wedding_site_id,
+    p_message_id: null,
+    p_payload: payload,
+  });
 
   if (error) throw error;
   return { id: (data as { id: string }).id };
 }
 
 export async function updateDashboardMessage(messageId: string, patch: MessageUpdatePayload): Promise<void> {
-  const { error } = await supabase
-    .from('messages')
-    .update(patch)
-    .eq('id', messageId);
+  const { error } = await supabase.rpc('dashboard_message_write', {
+    p_wedding_site_id: null,
+    p_message_id: messageId,
+    p_payload: patch,
+  });
 
   if (error) throw error;
 }

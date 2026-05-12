@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-11 07:27 PM PDT`
+_Updated:_ `2026-05-11 07:40 PM PDT`
 
 ## Current Score
 
@@ -42,6 +42,8 @@ Deferred, non-launch gaps:
   - `20260511211500_planning_seating_write_rpcs.sql`
   - `20260511220000_guest_core_write_rpcs.sql`
   - `20260511233000_guest_invitation_rsvp_rpcs.sql`
+  - `20260511234500_registry_write_rpcs.sql`
+  - `20260512001000_message_coordinator_write_rpcs.sql`
 
 ## Exact Proof State
 
@@ -60,6 +62,8 @@ Fresh local proof:
 - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts` -> `PASS`
 - `npm test -- --run src/components/auth/ProtectedRoute.test.tsx` -> `PASS`
 - `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts` -> `PASS`
+- `npm test -- --run src/pages/dashboard/registry/registryService.test.ts` -> `PASS`
+- `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts` -> `PASS`
 
 Fresh secure/runtime proof:
 - `npm run proof:v1:service-role-authorization` -> `PASS`
@@ -132,20 +136,22 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Fixed a collaborator payment-gate timing race in the working tree so planner/coordinator/viewer roles wait for role resolution before any payment redirect path is chosen; focused local proof (`ProtectedRoute.test.tsx`, `typecheck`, `lint`, `build`) is green, but the live frontend runtime has not been refreshed yet
 - Moved the remaining guest invitation/import/assisted-RSVP direct write paths behind a fourth local RPC batch in the working tree; focused local proof (`guestService.test`, `typecheck`, `lint`, `build`) is green, but migration apply/deploy/live proof are still pending so the current launch runtime truth is unchanged
 - Reused the new invitation RPCs from the itinerary dashboard so event-level guest invite/uninvite flows no longer depend on direct client `event_invitations` writes there; focused local proof (`itineraryService.test`, `itineraryQueryBounds.test`, `typecheck`) is green, and the live runtime truth stays unchanged until the already-pending RPC deploy/proof sweep
+- Moved registry owner-side item CRUD, reorder, and refresh-policy writes behind a fifth local RPC batch in the working tree; focused local proof (`registryService.test`, `typecheck`) is green, and the live runtime truth stays unchanged until the already-pending RPC deploy/proof sweep
+- Moved dashboard message create/update and coordinator alert/check-in/Q&A writes behind a sixth local RPC batch in the working tree; focused local proof (`messageService.boundary.test.ts`, `coordinatorService.test.ts`, `typecheck`, `lint`) is green, and the live runtime truth stays unchanged until the already-pending RPC deploy/proof sweep
 
 ## What Remains Before 10 / 10
 
 Only deferred, non-launch follow-up remains:
 - public vault contribution enablement and live proof
 - custom-host/subdomain dedicated DNS rerun
-- apply/deploy the four local guest/planning/seating/invitation RSVP RPC batches, then rerun collaborator/client-RLS live proof with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
+- apply/deploy the six local guest/planning/seating/invitation RSVP/registry/message-coordinator RPC batches, then rerun collaborator/client-RLS live proof with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
 - broader client-RLS role matrix expansion for remaining non-guest dashboard write surfaces beyond guest, planning, and seating
 - client-write surface reduction into Edge Functions / RPCs
 - dedicated custom-host DNS rerun only if that launch surface becomes active
 
 Why this is `9.9 / 10` instead of `10 / 10`:
 - the launch baseline is green and production-ready
-- the current committed branch head (`b29cc5fd`) contains post-deploy proof hardening beyond the exact live frontend runtime SHA (`f0cbf841`)
+- the current committed branch head (`346e9587`) contains post-deploy proof hardening beyond the exact live frontend runtime SHA (`f0cbf841`)
 - that remaining delta is non-runtime and non-launch, but it keeps me just shy of calling it mathematically perfect
 
 ## Bottom Line

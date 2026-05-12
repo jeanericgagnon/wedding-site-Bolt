@@ -3783,6 +3783,30 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - `npm run lint -- --quiet`
   - `npm run build`
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-11 07:33 PM PDT - Registry Owner Write RPC Batch (Local Only)
+
+- Added migration `20260511234500_registry_write_rpcs.sql`.
+- Moved registry owner-side item CRUD, reorder, and refresh-policy writes behind RPCs in the working tree.
+- Focused local proof is green:
+  - `npm test -- --run src/pages/dashboard/registry/registryService.test.ts`
+  - `npm run typecheck -- --pretty false`
+- Result:
+  - no live-state change yet
+  - apply/deploy plus fresh live proof are still required before this batch changes runtime truth
+
+## 2026-05-11 07:40 PM PDT - Message And Coordinator Write RPC Batch (Local Only)
+
+- Added migration `20260512001000_message_coordinator_write_rpcs.sql`.
+- Moved dashboard message create/update behind `dashboard_message_write`.
+- Moved coordinator alert-message, guest check-in, and Q&A writes behind `coordinator_alert_message_write`, `coordinator_guest_checkin_write`, and `coordinator_qna_write`.
+- Focused local proof is green:
+  - `npm test -- --run src/pages/dashboard/messages/messageService.boundary.test.ts src/pages/dashboard/coordinator/coordinatorService.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+- Result:
+  - no live-state change yet
+  - apply/deploy plus fresh live proof are still required before this batch changes runtime truth
+
 ## 2026-05-11 07:27 PM PDT - Itinerary Invitation RPC Reuse (Local Only)
 
 - Reused the guest invitation RPCs in `src/pages/dashboard/itineraryService.ts`.

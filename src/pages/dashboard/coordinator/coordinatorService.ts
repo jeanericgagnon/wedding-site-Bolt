@@ -8,7 +8,6 @@ const COORDINATOR_GUEST_SELECT = 'id, first_name, last_name, name, rsvp_status, 
 const COORDINATOR_EVENT_SELECT = 'id, event_name, start_time' as const;
 const COORDINATOR_EVENT_INVITATION_SELECT = 'event_id, guest_id' as const;
 const COORDINATOR_QNA_SELECT = 'id, question, answer, status, created_at' as const;
-const COORDINATOR_QNA_INSERT_SELECT = 'id, question, answer, status' as const;
 export const MAX_COORDINATOR_GUESTS = 2000;
 export const MAX_COORDINATOR_EVENTS = 200;
 export const MAX_COORDINATOR_EVENT_INVITATIONS = 10000;
@@ -112,16 +111,19 @@ export async function loadCoordinatorBootstrapData(userId: string): Promise<Coor
 }
 
 export async function createCoordinatorAlertMessage(input: CoordinatorAlertMessageInput): Promise<void> {
-  const { error } = await supabase.from('messages').insert({
-    wedding_site_id: input.siteId,
-    subject: input.subject.trim(),
-    body: input.body.trim(),
-    channel: input.channel,
-    audience_filter: input.audience,
-    recipient_filter: { audience: input.audience, recipient_count: input.recipientCount },
-    status: input.status,
-    sent_at: input.scheduledFor ? null : new Date().toISOString(),
-    scheduled_for: input.scheduledFor,
+  const { error } = await supabase.rpc('coordinator_alert_message_write', {
+    p_wedding_site_id: input.siteId,
+    p_payload: {
+      subject: input.subject.trim(),
+      body: input.body.trim(),
+      channel: input.channel,
+      audience_filter: input.audience,
+      recipient_filter: { audience: input.audience, recipient_count: input.recipientCount },
+      recipient_count: input.recipientCount,
+      status: input.status,
+      sent_at: input.scheduledFor ? null : new Date().toISOString(),
+      scheduled_for: input.scheduledFor,
+    },
   });
   if (error) throw error;
 }
@@ -131,28 +133,32 @@ export async function updateCoordinatorGuestCheckIn(args: {
   guestId: string;
   checkedInAt: string | null;
 }): Promise<void> {
-  const { error } = await supabase
-    .from('guests')
-    .update({ checked_in_at: args.checkedInAt })
-    .eq('id', args.guestId)
-    .eq('wedding_site_id', args.siteId);
+  const { error } = await supabase.rpc('coordinator_guest_checkin_write', {
+    p_site_id: args.siteId,
+    p_guest_id: args.guestId,
+    p_checked_in_at: args.checkedInAt,
+  });
   if (error) throw error;
 }
 
 export async function createCoordinatorQnaQuestion(siteId: string, question: string): Promise<QnaItem> {
-  const { data, error } = await supabase
-    .from('guest_qna_items')
-    .insert({ wedding_site_id: siteId, question, status: 'new', source: 'manual' })
-    .select(COORDINATOR_QNA_INSERT_SELECT)
-    .single();
+  const { data, error } = await supabase.rpc('coordinator_qna_write', {
+    p_site_id: siteId,
+    p_item_id: null,
+    p_payload: { question, status: 'new', source: 'manual' },
+  });
   if (error) throw error;
   return data as QnaItem;
 }
 
 export async function updateCoordinatorQnaAnswer(id: string, item: Pick<QnaItem, 'answer' | 'status'>): Promise<void> {
-  const { error } = await supabase.from('guest_qna_items').update({
-    answer: item.answer ?? null,
-    status: item.status,
-  }).eq('id', id);
+  const { error } = await supabase.rpc('coordinator_qna_write', {
+    p_site_id: null,
+    p_item_id: id,
+    p_payload: {
+      answer: item.answer ?? null,
+      status: item.status,
+    },
+  });
   if (error) throw error;
 }

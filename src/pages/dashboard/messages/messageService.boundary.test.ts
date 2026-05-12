@@ -14,8 +14,9 @@ import {
   triggerScheduledMessageDispatch,
 } from './messageService';
 
-const { getSessionMock } = vi.hoisted(() => ({
+const { getSessionMock, rpcMock } = vi.hoisted(() => ({
   getSessionMock: vi.fn(),
+  rpcMock: vi.fn(),
 }));
 
 vi.mock('../../../lib/supabase', () => ({
@@ -24,12 +25,14 @@ vi.mock('../../../lib/supabase', () => ({
       getSession: getSessionMock,
     },
     from: vi.fn(),
+    rpc: rpcMock,
   },
 }));
 
 describe('message service query bounds', () => {
   beforeEach(() => {
     getSessionMock.mockReset();
+    rpcMock.mockReset();
     vi.unstubAllGlobals();
   });
 
@@ -70,6 +73,14 @@ describe('message service query bounds', () => {
     expect(source).toContain('.limit(MAX_DASHBOARD_MESSAGES);');
     expect(source).toContain('.limit(MAX_MESSAGE_GUESTS);');
     expect(source).toContain('.limit(MAX_SMS_CREDIT_TRANSACTIONS);');
+  });
+
+  it('routes dashboard message writes through RPCs', () => {
+    const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/messageService.ts'), 'utf8');
+
+    expect(source).toContain("supabase.rpc('dashboard_message_write'");
+    expect(source).not.toContain("supabase.from('messages').insert(payload)");
+    expect(source).not.toContain(".from('messages')\n    .update(patch)");
   });
 
   it('loads the bulk-send auth token through the message service', async () => {
