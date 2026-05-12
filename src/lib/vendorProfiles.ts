@@ -557,7 +557,34 @@ function normalizeSlugPart(input: string): string {
     .slice(0, 64);
 }
 
-function normalizeVendorProfile(row: any): VendorProfile {
+type VendorProfileRow = {
+  id: string;
+  slug: string;
+  vendor_name: string;
+  descriptor: string | null;
+  about: string;
+  hero_image_url: string | null;
+  image_urls: unknown;
+  instagram_url: string | null;
+  website_url: string | null;
+  contact_email: string | null;
+  source_payload: Record<string, unknown> | null;
+};
+
+type VendorProfileInquiryRow = {
+  id: string;
+  vendor_profile_id: string;
+  name: string;
+  email: string;
+  message: string;
+  created_at: string;
+  vendor_profiles?: {
+    vendor_name?: string | null;
+    slug?: string | null;
+  } | null;
+};
+
+function normalizeVendorProfile(row: VendorProfileRow): VendorProfile {
   return {
     id: row.id,
     slug: row.slug,
@@ -688,7 +715,7 @@ export async function getVendorProfileBySlug(slug: string): Promise<VendorProfil
     .eq('slug', slug)
     .maybeSingle();
   if (error) throw error;
-  return data ? normalizeVendorProfile(data) : null;
+  return data ? normalizeVendorProfile(data as VendorProfileRow) : null;
 }
 
 export async function submitVendorInquiry(input: VendorProfileInquiryInput): Promise<void> {
@@ -769,7 +796,7 @@ export async function listMyVendorProfileInquiries(limit = 8): Promise<VendorPro
 
   if (error) throw error;
 
-  return (data ?? []).map((row: any) => ({
+  return ((data ?? []) as VendorProfileInquiryRow[]).map((row) => ({
     id: row.id,
     vendor_profile_id: row.vendor_profile_id,
     vendor_name: row.vendor_profiles?.vendor_name ?? 'Vendor',

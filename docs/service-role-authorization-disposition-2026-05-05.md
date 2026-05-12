@@ -81,20 +81,28 @@ Every Edge Function that reads `SUPABASE_SERVICE_ROLE_KEY` is intentionally clas
   - signed contact update stays scoped to the intended household rows
 - `npm run proof:v1:guests-rsvp-ops`
   - strict RSVP smoke proves the guest-facing token and RSVP flow still behaves correctly in production
+  - `submit-rsvp` now routes capacity decisions through `public.apply_public_rsvp_capacity_decision(...)`
+  - the serialized function definition is visible in `supabase/migrations/20260511170500_serialize_submit_rsvp_capacity.sql`
 - `npm run proof:v1:collaborator-runtime`
   - owner invite creation and collaborator claim are live-proven
   - viewer direct message write is denied
   - planner/coordinator allowed-action runtime proof is green
   - guest-scoped collaborators can directly mutate guest rows
-  - planner-scoped collaborators can directly write planning tasks
-  - coordinator-scoped collaborators can directly write seating events and seating tables
-  - direct timeline writes and direct wedding-site settings writes stay denied without the matching permission set
+  - planner-scoped collaborators can directly write planning tasks, itinerary events, and dashboard messages while registry writes stay denied
+  - settings-scoped collaborators can patch wedding-site settings and write sections while registry writes stay denied
+  - registry-scoped collaborators can write registry items and refresh policy while dashboard message/section writes stay denied
+  - photos-scoped collaborators can write vault config and patch vault providers while dashboard message writes stay denied
+  - coordinator-scoped collaborators can directly write seating events/tables, Q&A, check-in, and builder media while dashboard message writes stay denied
+  - direct timeline writes and ungranted wedding-site settings writes stay denied without the matching permission set
+- `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix`
+  - broader direct client-facing RLS matrix is live-green across guest, planning, itinerary, settings, sections, registry item/policy, seating, coordinator, message, photo, and vault RPC lanes
+  - the guest-dashboard settings RPC lane is already deployed and proven
 - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`
   - public site / itinerary / guest-facing baseline is live-green
 
 ## Still Needs Expanded Live Proof
 
-- Deploy the guest-dashboard settings RPC batch and rerun the optional `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1` collaborator settings-write proof.
-- Broader direct client-table RLS matrix across remaining non-guest dashboard write surfaces beyond guest, planning, and seating.
-- Live postdeploy proof that any newly redeployed public-site, RSVP, registry, or itinerary Edge Function runtime still matches this disposition.
+- When future non-guest write surfaces are introduced, add them to `npm run proof:v1:client-rls-matrix` and rerun the live matrix.
+- When future runtime write surfaces are introduced, rerun `npm run proof:v1:client-write-inventory` so the no-direct-client-write claim stays current.
+- Live postdeploy proof is now mandatory in `scripts/deploy_prod_guarded.mjs`; rerun it after any newly redeployed public-site, RSVP, registry, or itinerary runtime changes.
 - SMS/Telnyx provider callback proof remains deferred.

@@ -29,12 +29,24 @@ export function safePaymentFunctionError(value: unknown, fallback: string): stri
   });
 }
 
-function isSessionAuthFunctionError(error: any): boolean {
+type FunctionErrorContextLike = {
+  status?: number;
+  clone?: () => { text?: () => Promise<string> } | Response;
+  text?: () => Promise<string>;
+};
+
+type FunctionErrorLike = {
+  status?: number;
+  message?: string;
+  context?: FunctionErrorContextLike;
+};
+
+function isSessionAuthFunctionError(error: FunctionErrorLike | null | undefined): boolean {
   const status = error?.context?.status ?? error?.status;
   return status === 401 || /401|unauthorized|jwt|token|expired/i.test(error?.message || '');
 }
 
-async function getFunctionErrorMessage(error: any, fallback: string): Promise<string> {
+async function getFunctionErrorMessage(error: FunctionErrorLike | null | undefined, fallback: string): Promise<string> {
   const base = error?.message || '';
   const ctx = error?.context;
 
@@ -44,7 +56,7 @@ async function getFunctionErrorMessage(error: any, fallback: string): Promise<st
       const text = typeof clone.text === 'function' ? await clone.text() : '';
       if (text) {
         try {
-          const parsed = JSON.parse(text);
+          const parsed = JSON.parse(text) as { error?: unknown };
           if (parsed?.error) return safePaymentFunctionError(parsed.error, fallback);
         } catch {
           // not json

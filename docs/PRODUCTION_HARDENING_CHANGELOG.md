@@ -22,6 +22,29 @@ This file preserves timestamped historical entries, extraction batches, and no-d
   - generic CI no longer soft-skips the strict RSVP lane
   - guarded deploy flow no longer contains a postdeploy-proof bypass
 
+## 2026-05-12 08:45 AM PDT - RLS Disposition Truth Sync And Strict Boundary Pocket
+
+- Status: `LOCAL HARDENING + PROOF`
+- What changed:
+  - reconciled `docs/service-role-authorization-disposition-2026-05-05.md` to the actual live-green matrix state
+  - removed stale wording that still claimed guest-dashboard settings RPC proof was pending
+  - explicitly called out the serialized RSVP capacity RPC definition in `supabase/migrations/20260511170500_serialize_submit_rsvp_capacity.sql`
+  - removed explicit `any` usage from `siteConfigValidate.ts`, `stripeService.ts`, and `vendorProfiles.ts`
+  - added a strict boundary pocket in `eslint.config.js` for:
+    - `src/components/auth/ProtectedRoute.tsx`
+    - `src/lib/siteConfigValidate.ts`
+    - `src/lib/stripeService.ts`
+    - `src/lib/vendorProfiles.ts`
+  - added `npm run proof:v1:strict-pocket` and wired it into `test:launch`, `ci-hardpass`, and `proof:v1:test-lanes`
+- Proof:
+  - `npm run proof:v1:strict-pocket`
+  - `npm test -- --run src/lib/serviceRoleAuthorizationDisposition.test.ts src/lib/strictPocketTypecheck.test.ts src/lib/stripeService.test.ts src/lib/siteConfigValidate.test.ts src/lib/vendorProfiles.test.ts src/lib/vendorProfiles.boundary.test.ts`
+  - `npm run proof:v1:test-lanes`
+- Result:
+  - the repo no longer argues with itself about whether guest-dashboard settings proof is still pending
+  - TS/ESLint rigor is still soft globally, but the highest-risk auth/payment/config/vendor boundary files now fail hard instead of drifting
+
+
 ## 2026-05-12 07:14 AM PDT - Registry Refresh Policy Matrix Coverage And Inventory Guard Tightening
 
 - Status: `LIVE PROOF EXPANDED + REMOTE DB FIX`

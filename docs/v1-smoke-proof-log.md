@@ -14,6 +14,11 @@ _Launch call right now:_ `GO`
 - Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green on the blocker-fix runtime.
 - Client-facing RLS proof now has one canonical live matrix command: `npm run proof:v1:client-rls-matrix`.
 - Active runtime pages now also have one canonical local inventory guard: `npm run proof:v1:client-write-inventory`.
+- 2026-05-12 08:45 AM PDT:
+  - `npm run proof:v1:strict-pocket` -> `PASS`
+  - `npm test -- --run src/lib/serviceRoleAuthorizationDisposition.test.ts src/lib/strictPocketTypecheck.test.ts src/lib/stripeService.test.ts src/lib/siteConfigValidate.test.ts src/lib/vendorProfiles.test.ts src/lib/vendorProfiles.boundary.test.ts` -> `PASS`
+  - `docs/service-role-authorization-disposition-2026-05-05.md` is now aligned with the live-green guest-dashboard settings and broader client-RLS matrix lanes
+  - the serialized RSVP capacity function is explicitly called out in the repo proof story
 - 2026-05-12 07:49 AM PDT:
   - `npm run proof:v1:test-lanes` -> `PASS`
   - `npm test -- --run src/lib/ciHardpassWorkflow.test.ts src/lib/releaseLaunchGate.test.ts src/lib/aiExposureProofScript.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts` -> `PASS`

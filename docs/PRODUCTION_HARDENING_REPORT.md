@@ -36,10 +36,11 @@ Deferred, non-launch gaps:
 - registry owner import/repair manual notes
 - SMS/provider live-send setup
 - AI secret inventory/internal prereq notes
-- broader client-RLS role matrix expansion
-- client-write surface reduction into Edge Functions / RPCs
+- broader future-surface client-RLS role matrix expansion
+- future client-write surface reduction into Edge Functions / RPCs when new dangerous writes appear
 - keep the live client-RLS matrix current when future non-guest write surfaces are introduced
 - keep the no-direct-client-write inventory current after future runtime write-surface changes
+- global TypeScript / ESLint strictness remains softer than the launch-critical strict pocket
 
 ## Exact Proof State
 
@@ -51,6 +52,8 @@ Fresh local proof:
 - `npm run test:security` -> `PASS`
 - `npm run proof:v1:public-access-coverage` -> `PASS`
 - `npm run proof:v1:test-lanes` -> `PASS`
+- `npm run proof:v1:strict-pocket` -> `PASS`
+  - hard-fails a high-risk boundary pocket (`ProtectedRoute.tsx`, `siteConfigValidate.ts`, `stripeService.ts`, `vendorProfiles.ts`) on explicit `any`, `ban-ts-comment`, unused vars, empty blocks, and warning leakage
 - `npm run proof:v1:client-write-inventory` -> `PASS`
   - broadened tracked-`src` runtime scan now reports no direct client `.insert/.update/.upsert/.delete` calls in shipped `src` runtime files
   - scanner now also catches single/double/backtick table names and skips `.d.ts` noise
@@ -61,6 +64,7 @@ Fresh local proof:
 - `npm run proof:v1:performance-budget` -> `PASS`
 - `git diff --check` -> `PASS`
 - `npm test -- --run src/lib/ciHardpassWorkflow.test.ts src/lib/releaseLaunchGate.test.ts src/lib/aiExposureProofScript.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts` -> `PASS`
+- `npm test -- --run src/lib/serviceRoleAuthorizationDisposition.test.ts src/lib/strictPocketTypecheck.test.ts src/lib/stripeService.test.ts src/lib/siteConfigValidate.test.ts src/lib/vendorProfiles.test.ts src/lib/vendorProfiles.boundary.test.ts` -> `PASS`
 - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts` -> `PASS`
 - `npm test -- --run src/components/auth/ProtectedRoute.test.tsx` -> `PASS`
 - `npm test -- --run src/pages/dashboard/itineraryService.test.ts src/pages/dashboard/itineraryQueryBounds.test.ts` -> `PASS`
@@ -153,6 +157,9 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Removed the last generic-CI RSVP skip by making `.github/workflows/ci-hardpass.yml` fail if `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` are missing and always run `npm run smoke:rsvp:strict`
 - Removed the `SKIP_POSTDEPLOY_PROOF` bypass path from `scripts/deploy_prod_guarded.mjs`; guarded production deploys now fail instead of silently skipping postdeploy proof
 - Added workflow/proof guards so those two operational hardening guarantees stay test-covered (`ciHardpassWorkflow.test.ts`, `aiExposureProofScript.test.ts`, `proof:v1:test-lanes`)
+- Reconciled the stale service-role disposition doc to the current live matrix truth instead of leaving guest-dashboard settings proof and broader matrix coverage described as still pending
+- Added a launch-critical strict pocket so TS/ESLint rigor now hard-fails on the auth/payment/config/vendor boundary files without pretending the whole repo is already strict-clean
+- Made the RSVP serialization proof easier to audit directly in-repo by calling out `supabase/migrations/20260511170500_serialize_submit_rsvp_capacity.sql` in the current proof story
 - Fixed the `guests-rsvp-ops` wrapper to use a portable shell so Linux Actions runners can execute it cleanly
 - Disabled `/builder-v2-lab`, `/variant-preview-capture`, and `/template-scroll-capture` in production by default unless `VITE_ENABLE_INTERNAL_TOOLING_ROUTES=true`
 - Removed public template links that would otherwise advertise those internal capture routes when the gate is off

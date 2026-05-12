@@ -44,6 +44,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Strict pocket proof
+        run: npm run proof:v1:strict-pocket
+
       - name: Lint
         run: npm run lint -- --quiet
 

@@ -27,6 +27,9 @@ describe('service-role authorization disposition', () => {
     expect(missing).toEqual([]);
     expect(disposition).toContain('Still Needs Expanded Live Proof');
     expect(disposition).toContain('process-email-queue` now rejects non-service-role callers');
+    expect(disposition).toContain('LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix');
+    expect(disposition).toContain('public.apply_public_rsvp_capacity_decision(...)');
+    expect(disposition).not.toContain('Deploy the guest-dashboard settings RPC batch');
   });
 
   it('keeps every service-role Edge Function in exactly one authorization category', () => {

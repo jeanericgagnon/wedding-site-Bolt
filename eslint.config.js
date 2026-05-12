@@ -40,4 +40,20 @@ export default tseslint.config(
       ],
     },
   }
+  ,
+  {
+    files: [
+      'src/components/auth/ProtectedRoute.tsx',
+      'src/lib/siteConfigValidate.ts',
+      'src/lib/stripeService.ts',
+      'src/lib/vendorProfiles.ts',
+    ],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/ban-ts-comment': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
+      'no-empty': 'error',
+      'prefer-const': 'error',
+    },
+  }
 );

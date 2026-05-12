@@ -3,47 +3,84 @@ export interface ValidationResult {
   errors: string[];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function validateSiteConfig(obj: any): ValidationResult {
+type SiteConfigSectionShape = {
+  id?: unknown;
+  type?: unknown;
+  enabled?: unknown;
+  props_key?: unknown;
+};
+
+type SiteConfigShape = {
+  version?: unknown;
+  template_id?: unknown;
+  couple?: {
+    partner1_name?: unknown;
+    partner2_name?: unknown;
+    display_name?: unknown;
+  } | null;
+  event?: unknown;
+  rsvp?: {
+    enabled?: unknown;
+  } | null;
+  sections?: unknown;
+  content?: unknown;
+  theme?: unknown;
+  meta?: unknown;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object';
+}
+
+function isSectionShape(value: unknown): value is SiteConfigSectionShape {
+  return isRecord(value);
+}
+
+export function validateSiteConfig(obj: unknown): ValidationResult {
   const errors: string[] = [];
 
-  if (!obj || typeof obj !== 'object') {
+  if (!isRecord(obj)) {
     return { ok: false, errors: ['Site config must be an object'] };
   }
 
-  if (obj.version !== '1') {
+  const config = obj as SiteConfigShape;
+
+  if (config.version !== '1') {
     errors.push('Version must be "1"');
   }
 
-  if (!obj.template_id || typeof obj.template_id !== 'string') {
+  if (!config.template_id || typeof config.template_id !== 'string') {
     errors.push('template_id is required and must be a string');
   }
 
-  if (!obj.couple || typeof obj.couple !== 'object') {
+  if (!config.couple || typeof config.couple !== 'object') {
     errors.push('couple is required');
   } else {
-    if (!obj.couple.partner1_name) errors.push('couple.partner1_name is required');
-    if (!obj.couple.partner2_name) errors.push('couple.partner2_name is required');
-    if (!obj.couple.display_name) errors.push('couple.display_name is required');
+    if (!config.couple.partner1_name) errors.push('couple.partner1_name is required');
+    if (!config.couple.partner2_name) errors.push('couple.partner2_name is required');
+    if (!config.couple.display_name) errors.push('couple.display_name is required');
   }
 
-  if (!obj.event || typeof obj.event !== 'object') {
+  if (!config.event || typeof config.event !== 'object') {
     errors.push('event is required');
   }
 
-  if (!obj.rsvp || typeof obj.rsvp !== 'object') {
+  if (!config.rsvp || typeof config.rsvp !== 'object') {
     errors.push('rsvp is required');
   } else {
-    if (typeof obj.rsvp.enabled !== 'boolean') {
+    if (typeof config.rsvp.enabled !== 'boolean') {
       errors.push('rsvp.enabled must be a boolean');
     }
   }
 
-  if (!Array.isArray(obj.sections)) {
+  if (!Array.isArray(config.sections)) {
     errors.push('sections must be an array');
   } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    obj.sections.forEach((section: any, index: number) => {
+    config.sections.forEach((section, index) => {
+      if (!isSectionShape(section)) {
+        errors.push(`Section ${index}: must be an object`);
+        return;
+      }
       if (!section.id) errors.push(`Section ${index}: id is required`);
       if (!section.type) errors.push(`Section ${index}: type is required`);
       if (typeof section.enabled !== 'boolean') {
@@ -53,15 +90,15 @@ export function validateSiteConfig(obj: any): ValidationResult {
     });
   }
 
-  if (!obj.content || typeof obj.content !== 'object') {
+  if (!config.content || typeof config.content !== 'object') {
     errors.push('content is required and must be an object');
   }
 
-  if (!obj.theme || typeof obj.theme !== 'object') {
+  if (!config.theme || typeof config.theme !== 'object') {
     errors.push('theme is required');
   }
 
-  if (!obj.meta || typeof obj.meta !== 'object') {
+  if (!config.meta || typeof config.meta !== 'object') {
     errors.push('meta is required');
   }
 
