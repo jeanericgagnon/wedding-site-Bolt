@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-11 06:35 PM PDT`
+_Updated:_ `2026-05-11 07:21 PM PDT`
 
 ## Current Score
 
@@ -37,6 +37,11 @@ Deferred, non-launch gaps:
 - AI secret inventory/internal prereq notes
 - broader client-RLS role matrix expansion
 - client-write surface reduction into Edge Functions / RPCs
+- local-only guest/planning/seating RPC batches still need migration apply/deploy and fresh live proof:
+  - `20260511200000_guest_dashboard_settings_rpcs.sql`
+  - `20260511211500_planning_seating_write_rpcs.sql`
+  - `20260511220000_guest_core_write_rpcs.sql`
+  - `20260511233000_guest_invitation_rsvp_rpcs.sql`
 
 ## Exact Proof State
 
@@ -52,6 +57,8 @@ Fresh local proof:
 - `npm run guard:assets` -> `PASS`
 - `npm run proof:v1:performance-budget` -> `PASS`
 - `git diff --check` -> `PASS`
+- `npm test -- --run src/pages/dashboard/guests/guestService.test.ts` -> `PASS`
+- `npm test -- --run src/components/auth/ProtectedRoute.test.tsx` -> `PASS`
 
 Fresh secure/runtime proof:
 - `npm run proof:v1:service-role-authorization` -> `PASS`
@@ -122,13 +129,14 @@ Those two deploy commands previously reported success, but the live inventory/ru
 - Moved guest core create/update/delete and bulk patch writes behind a third local RPC batch in the working tree; focused local proof (`guestService.test`, `typecheck`, `lint`, `build`) is green, but migration apply/deploy/live proof are still pending so the current launch runtime truth is unchanged
 - Moved core planning task and seating event/table writes behind a second local RPC batch in the working tree; focused local proof (`planningService.test`, `seatingService.test`, `typecheck`, `lint`, `build`) is green, but migration apply/deploy/live proof are still pending so the current runtime truth is unchanged
 - Fixed a collaborator payment-gate timing race in the working tree so planner/coordinator/viewer roles wait for role resolution before any payment redirect path is chosen; focused local proof (`ProtectedRoute.test.tsx`, `typecheck`, `lint`, `build`) is green, but the live frontend runtime has not been refreshed yet
+- Moved the remaining guest invitation/import/assisted-RSVP direct write paths behind a fourth local RPC batch in the working tree; focused local proof (`guestService.test`, `typecheck`, `lint`, `build`) is green, but migration apply/deploy/live proof are still pending so the current launch runtime truth is unchanged
 
 ## What Remains Before 10 / 10
 
 Only deferred, non-launch follow-up remains:
 - public vault contribution enablement and live proof
 - custom-host/subdomain dedicated DNS rerun
-- apply/deploy the local guest-dashboard settings RPC batch, the planning/seating core write RPC batch, and the new guest-core write RPC batch, then rerun collaborator/client-RLS live proof with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
+- apply/deploy the four local guest/planning/seating/invitation RSVP RPC batches, then rerun collaborator/client-RLS live proof with `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
 - broader client-RLS role matrix expansion for remaining non-guest dashboard write surfaces beyond guest, planning, and seating
 - client-write surface reduction into Edge Functions / RPCs
 - dedicated custom-host DNS rerun only if that launch surface becomes active

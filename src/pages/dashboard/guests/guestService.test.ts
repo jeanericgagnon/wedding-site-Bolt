@@ -6,6 +6,7 @@ import {
   clearGuestCheckInsForSite,
   createGuest,
   deleteGuestById,
+  deleteAllGuestsForSite,
   assignGuestsToHouseholdForSite,
   GUEST_AUDIT_SELECT,
   GUEST_CONFLICT_SELECT,
@@ -34,6 +35,7 @@ import {
   loadGuestDashboardSiteSlug,
   loadGuestDashboardSiteSettings,
   loadGuestDashboardSnapshot,
+  insertImportedGuests,
   markGuestInvitationAndReminderSentForSite,
   markGuestInvitationSentForSite,
   markGuestReminderSentForSite,
@@ -43,6 +45,7 @@ import {
   removeGuestEventInvitation,
   saveAssistedGuestRsvp,
   refreshGuestDashboardSession,
+  replaceImportedGuestRsvps,
   resolveGuestDashboardSiteId,
   resolveGuestDashboardConflict,
   resolveGuestDashboardConflicts,
@@ -59,6 +62,7 @@ const {
   rpcMock,
   resolveActiveSiteForUserMock,
   getEventRsvpSnapshotsByInvitationIdsMock,
+  deleteEventRsvpsByInvitationIdsMock,
   deleteEventRsvpByInvitationIdMock,
   restoreEventRsvpSnapshotsMock,
 } = vi.hoisted(() => ({
@@ -67,6 +71,7 @@ const {
   rpcMock: vi.fn(),
   resolveActiveSiteForUserMock: vi.fn(),
   getEventRsvpSnapshotsByInvitationIdsMock: vi.fn(),
+  deleteEventRsvpsByInvitationIdsMock: vi.fn(),
   deleteEventRsvpByInvitationIdMock: vi.fn(),
   restoreEventRsvpSnapshotsMock: vi.fn(),
 }));
@@ -87,7 +92,7 @@ vi.mock('../../../lib/activeSite', () => ({
 
 vi.mock('../../../lib/eventRsvpCleanup', () => ({
   getEventRsvpSnapshotsByInvitationIds: getEventRsvpSnapshotsByInvitationIdsMock,
-  deleteEventRsvpByInvitationIds: vi.fn(),
+  deleteEventRsvpsByInvitationIds: deleteEventRsvpsByInvitationIdsMock,
   restoreEventRsvpSnapshots: restoreEventRsvpSnapshotsMock,
   deleteEventRsvpByInvitationId: deleteEventRsvpByInvitationIdMock,
 }));
@@ -99,6 +104,7 @@ describe('guestService', () => {
     rpcMock.mockReset();
     resolveActiveSiteForUserMock.mockReset();
     getEventRsvpSnapshotsByInvitationIdsMock.mockReset();
+    deleteEventRsvpsByInvitationIdsMock.mockReset();
     deleteEventRsvpByInvitationIdMock.mockReset();
     restoreEventRsvpSnapshotsMock.mockReset();
   });
@@ -350,12 +356,20 @@ describe('guestService', () => {
     expect(service).toContain("supabase.rpc('guest_dashboard_guest_bulk_patch'");
     expect(service).toContain("supabase.rpc('guest_dashboard_guest_delete'");
     expect(service).toContain("supabase.rpc('guest_dashboard_guest_delete_site'");
+    expect(service).toContain("supabase.rpc('guest_dashboard_event_invitation_insert_many'");
+    expect(service).toContain("supabase.rpc('guest_dashboard_event_invitation_delete'");
+    expect(service).toContain("supabase.rpc('guest_dashboard_import_guests'");
+    expect(service).toContain("supabase.rpc('guest_dashboard_rsvp_replace_many'");
+    expect(service).toContain("supabase.rpc('guest_dashboard_assisted_rsvp_write'");
     expect(service).toContain('export async function persistGuestReminderSettings(');
     expect(service).toContain("supabase.rpc('guest_dashboard_persist_reminder_settings'");
     expect(service).not.toContain(".from('wedding_sites')\n    .update({\n      rsvp_custom_questions:");
     expect(service).not.toContain(".from('wedding_sites')\n    .update(patch)");
     expect(service).not.toContain(".from('guests')\n    .insert([{");
     expect(service).not.toContain(".from('guests')\n    .delete()");
+    expect(service).not.toContain(".from('event_invitations').insert(");
+    expect(service).not.toContain(".from('rsvps').delete()");
+    expect(service).not.toContain(".from('rsvps').insert(");
     expect(service).toContain('supabase.auth.refreshSession()');
   });
 
@@ -464,7 +478,7 @@ describe('guestService', () => {
     expect(service).toContain(".in('guest_id', scopedGuestIds);");
     expect(service).toContain(".limit(MAX_GUEST_BULK_INVITATION_ROWS);");
     expect(service).toContain('p_guest_ids: scopedGuestIds');
-    expect(service).toContain("Array.from(new Set(rows.map((row) => row.guest_id))).slice(0, MAX_GUEST_BULK_OPERATION_IDS);");
+    expect(service).toContain("supabase.rpc('guest_dashboard_rsvp_replace_many'");
   });
 
   it('loads guest dashboard site settings through the service', async () => {
@@ -703,17 +717,16 @@ describe('guestService', () => {
   });
 
   it('inserts a guest event invitation through the service', async () => {
-    const insertMock = vi.fn().mockResolvedValue({ error: null });
-    fromMock.mockReturnValueOnce({ insert: insertMock });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(addGuestEventInvitation('event-1', 'guest-1')).resolves.toBeUndefined();
-    expect(insertMock).toHaveBeenCalledWith({ event_id: 'event-1', guest_id: 'guest-1' });
+    expect(rpcMock).toHaveBeenCalledWith('guest_dashboard_event_invitation_insert_many', {
+      p_rows: [{ event_id: 'event-1', guest_id: 'guest-1' }],
+    });
   });
 
   it('removes a guest event invitation through the service', async () => {
     const maybeSingleMock = vi.fn().mockResolvedValue({ data: { id: 'invite-1' }, error: null });
-    const deleteEqGuestMock = vi.fn().mockResolvedValue({ error: null });
-    const deleteEqEventMock = vi.fn(() => ({ eq: deleteEqGuestMock }));
 
     fromMock
       .mockReturnValueOnce({
@@ -722,35 +735,73 @@ describe('guestService', () => {
             eq: vi.fn(() => ({ maybeSingle: maybeSingleMock })),
           })),
         })),
-      })
-      .mockReturnValueOnce({
-        delete: vi.fn(() => ({
-          eq: deleteEqEventMock,
-        })),
       });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(removeGuestEventInvitation('event-1', 'guest-1')).resolves.toBeUndefined();
-    expect(deleteEqEventMock).toHaveBeenCalledWith('event_id', 'event-1');
-    expect(deleteEqGuestMock).toHaveBeenCalledWith('guest_id', 'guest-1');
+    expect(rpcMock).toHaveBeenCalledWith('guest_dashboard_event_invitation_delete', {
+      p_guest_id: 'guest-1',
+      p_event_id: 'event-1',
+      p_guest_ids: null,
+    });
+  });
+
+  it('imports guests through the service RPC', async () => {
+    rpcMock.mockResolvedValueOnce({
+      data: [{ id: 'guest-1', first_name: 'Alex', last_name: 'Jordan', name: 'Alex Jordan', email: 'alex@example.com' }],
+      error: null,
+    });
+
+    await expect(insertImportedGuests([{
+      wedding_site_id: 'site-1',
+      first_name: 'Alex',
+      last_name: 'Jordan',
+      name: 'Alex Jordan',
+      email: 'alex@example.com',
+    }])).resolves.toEqual([
+      { id: 'guest-1', first_name: 'Alex', last_name: 'Jordan', name: 'Alex Jordan', email: 'alex@example.com' },
+    ]);
+
+    expect(rpcMock).toHaveBeenCalledWith('guest_dashboard_import_guests', {
+      p_rows: [{
+        wedding_site_id: 'site-1',
+        first_name: 'Alex',
+        last_name: 'Jordan',
+        name: 'Alex Jordan',
+        email: 'alex@example.com',
+      }],
+    });
+  });
+
+  it('replaces imported RSVP rows through the service RPC', async () => {
+    rpcMock.mockResolvedValueOnce({ error: null });
+
+    await expect(replaceImportedGuestRsvps([{
+      guest_id: 'guest-1',
+      attending: true,
+      meal_choice: 'Fish',
+      plus_one_name: null,
+      plus_one_count: 0,
+      children_count: 0,
+      responded_at: '2026-05-07T00:00:00Z',
+    }])).resolves.toBeUndefined();
+
+    expect(rpcMock).toHaveBeenCalledWith('guest_dashboard_rsvp_replace_many', {
+      p_rows: [{
+        guest_id: 'guest-1',
+        attending: true,
+        meal_choice: 'Fish',
+        plus_one_name: null,
+        plus_one_count: 0,
+        children_count: 0,
+        responded_at: '2026-05-07T00:00:00Z',
+      }],
+      p_guest_ids: null,
+    });
   });
 
   it('saves an assisted RSVP through the service', async () => {
-    const guestUpdateEqMock = vi.fn().mockResolvedValue({ error: null });
-    const existingRsvpMaybeSingleMock = vi.fn().mockResolvedValue({ data: { id: 'rsvp-1', notes: null }, error: null });
-    const rsvpUpdateEqMock = vi.fn().mockResolvedValue({ error: null });
-
-    fromMock
-      .mockReturnValueOnce({
-        update: vi.fn(() => ({ eq: guestUpdateEqMock })),
-      })
-      .mockReturnValueOnce({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({ maybeSingle: existingRsvpMaybeSingleMock })),
-        })),
-      })
-      .mockReturnValueOnce({
-        update: vi.fn(() => ({ eq: rsvpUpdateEqMock })),
-      });
+    rpcMock.mockResolvedValueOnce({ error: null });
 
     await expect(saveAssistedGuestRsvp({
       guest: {
@@ -777,6 +828,54 @@ describe('guestService', () => {
       recordedAt: expect.any(String),
       nextNotes: expect.stringContaining('Called and confirmed'),
     }));
+    expect(rpcMock).toHaveBeenCalledWith('guest_dashboard_assisted_rsvp_write', expect.objectContaining({
+      p_guest_id: 'guest-1',
+      p_status: 'confirmed',
+      p_notes: expect.stringContaining('Called and confirmed'),
+    }));
+  });
+
+  it('deletes all guests through service RPC cleanup paths', async () => {
+    const invitationLimitMock = vi.fn().mockResolvedValue({
+      data: [{ id: 'invite-1' }],
+      error: null,
+    });
+    const invitationInMock = vi.fn(() => ({ limit: invitationLimitMock }));
+    const guestEqMock = vi.fn().mockResolvedValue({
+      data: [{ id: 'guest-1' }, { id: 'guest-2' }],
+      error: null,
+    });
+
+    fromMock
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({ eq: guestEqMock })),
+      })
+      .mockReturnValueOnce({
+        select: vi.fn(() => ({ in: invitationInMock })),
+      });
+
+    rpcMock
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: null });
+
+    await expect(deleteAllGuestsForSite('site-1')).resolves.toEqual({
+      guestIds: ['guest-1', 'guest-2'],
+      invitationIds: ['invite-1'],
+    });
+
+    expect(rpcMock).toHaveBeenNthCalledWith(1, 'guest_dashboard_event_invitation_delete', {
+      p_guest_id: null,
+      p_event_id: null,
+      p_guest_ids: ['guest-1', 'guest-2'],
+    });
+    expect(rpcMock).toHaveBeenNthCalledWith(2, 'guest_dashboard_rsvp_replace_many', {
+      p_rows: [],
+      p_guest_ids: ['guest-1', 'guest-2'],
+    });
+    expect(rpcMock).toHaveBeenNthCalledWith(3, 'guest_dashboard_guest_delete_site', {
+      p_wedding_site_id: 'site-1',
+    });
   });
 
   it('resolves the guest dashboard site id through the service', async () => {
@@ -907,26 +1006,7 @@ describe('guestService', () => {
   });
 
   it('rolls back guest RSVP state when assisted RSVP persistence fails', async () => {
-    const firstGuestUpdateEqMock = vi.fn().mockResolvedValue({ error: null });
-    const existingRsvpMaybeSingleMock = vi.fn().mockResolvedValue({ data: { id: 'rsvp-1', notes: null }, error: null });
-    const rsvpUpdateEqMock = vi.fn().mockResolvedValue({ error: new Error('nope') });
-    const rollbackGuestUpdateEqMock = vi.fn().mockResolvedValue({ error: null });
-
-    fromMock
-      .mockReturnValueOnce({
-        update: vi.fn(() => ({ eq: firstGuestUpdateEqMock })),
-      })
-      .mockReturnValueOnce({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({ maybeSingle: existingRsvpMaybeSingleMock })),
-        })),
-      })
-      .mockReturnValueOnce({
-        update: vi.fn(() => ({ eq: rsvpUpdateEqMock })),
-      })
-      .mockReturnValueOnce({
-        update: vi.fn(() => ({ eq: rollbackGuestUpdateEqMock })),
-      });
+    rpcMock.mockResolvedValueOnce({ error: new Error('nope') });
 
     await expect(saveAssistedGuestRsvp({
       guest: {
@@ -950,7 +1030,5 @@ describe('guestService', () => {
       source: 'text',
       notes: 'Declined by text',
     })).rejects.toThrow();
-
-    expect(rollbackGuestUpdateEqMock).toHaveBeenCalledWith('id', 'guest-1');
   });
 });

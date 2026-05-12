@@ -411,62 +411,15 @@ export async function saveAssistedGuestRsvp(input: SaveAssistedGuestRsvpInput): 
   const manualTag = `[Manual RSVP source:${input.source} recorded:${recordedAt}]`;
   const nextNotes = [manualTag, input.notes.trim()].filter(Boolean).join(' ');
 
-  try {
-    const { error: guestError } = await supabase
-      .from('guests')
-      .update({ rsvp_status: input.status, rsvp_received_at: recordedAt, notes: nextNotes })
-      .eq('id', input.guest.id);
-    if (guestError) throw guestError;
+  const { error } = await supabase.rpc('guest_dashboard_assisted_rsvp_write', {
+    p_guest_id: input.guest.id,
+    p_status: input.status,
+    p_recorded_at: recordedAt,
+    p_notes: nextNotes,
+  });
+  if (error) throw error;
 
-    const { data: existingRsvp, error: existingRsvpError } = await supabase
-      .from('rsvps')
-      .select('id, notes')
-      .eq('guest_id', input.guest.id)
-      .maybeSingle();
-    if (existingRsvpError) throw existingRsvpError;
-
-    const nextAttending = input.status === 'confirmed';
-    const assistedRsvpPayload = {
-      attending: nextAttending,
-      attending_ceremony: nextAttending ? input.guest.invited_to_ceremony : false,
-      attending_reception: nextAttending ? input.guest.invited_to_reception : false,
-      notes: nextNotes,
-      responded_at: recordedAt,
-      ...(nextAttending ? {} : {
-        meal_choice: null,
-        plus_one_name: null,
-        plus_one_count: 0,
-      }),
-    };
-
-    if (existingRsvp?.id) {
-      const { error: rsvpError } = await supabase
-        .from('rsvps')
-        .update(assistedRsvpPayload)
-        .eq('id', existingRsvp.id);
-      if (rsvpError) throw rsvpError;
-    } else {
-      const { error: rsvpInsertError } = await supabase
-        .from('rsvps')
-        .insert({
-          guest_id: input.guest.id,
-          ...assistedRsvpPayload,
-        });
-      if (rsvpInsertError) throw rsvpInsertError;
-    }
-
-    return { recordedAt, nextNotes };
-  } catch (error) {
-    await supabase
-      .from('guests')
-      .update({
-        rsvp_status: input.guest.rsvp_status,
-        rsvp_received_at: input.guest.rsvp_received_at ?? null,
-        notes: input.guest.notes ?? null,
-      })
-      .eq('id', input.guest.id);
-    throw error;
-  }
+  return { recordedAt, nextNotes };
 }
 
 export interface CreateGuestInput {
@@ -575,15 +528,14 @@ export async function deleteGuestById(guestId: string): Promise<void> {
 
 export async function insertEventInvitations(rows: EventInvitationRow[]): Promise<void> {
   if (rows.length === 0) return;
-  const { error } = await supabase.from('event_invitations').insert(rows);
+  const { error } = await supabase.rpc('guest_dashboard_event_invitation_insert_many', {
+    p_rows: rows,
+  });
   if (error) throw error;
 }
 
 export async function addGuestEventInvitation(eventId: string, guestId: string): Promise<void> {
-  const { error } = await supabase
-    .from('event_invitations')
-    .insert({ event_id: eventId, guest_id: guestId });
-  if (error) throw error;
+  await insertEventInvitations([{ event_id: eventId, guest_id: guestId }]);
 }
 
 export async function removeGuestEventInvitation(eventId: string, guestId: string): Promise<void> {
@@ -603,11 +555,11 @@ export async function removeGuestEventInvitation(eventId: string, guestId: strin
     await deleteEventRsvpByInvitationId(invitationRow.id);
   }
 
-  const { error: inviteDeleteError } = await supabase
-    .from('event_invitations')
-    .delete()
-    .eq('event_id', eventId)
-    .eq('guest_id', guestId);
+  const { error: inviteDeleteError } = await supabase.rpc('guest_dashboard_event_invitation_delete', {
+    p_guest_id: guestId,
+    p_event_id: eventId,
+    p_guest_ids: null,
+  });
   if (inviteDeleteError) {
     await restoreEventRsvpSnapshots(eventRsvpSnapshots);
     throw inviteDeleteError;
@@ -634,10 +586,11 @@ export async function replaceGuestEventInvitations(guestId: string, nextEventIds
     await deleteEventRsvpsByInvitationIds(existingInvitationIds);
   }
 
-  const { error: clearInvitesError } = await supabase
-    .from('event_invitations')
-    .delete()
-    .eq('guest_id', guestId);
+  const { error: clearInvitesError } = await supabase.rpc('guest_dashboard_event_invitation_delete', {
+    p_guest_id: guestId,
+    p_event_id: null,
+    p_guest_ids: null,
+  });
   if (clearInvitesError) throw clearInvitesError;
 
   await insertEventInvitations(toEventInvitationRows(guestId, nextEventIds));
@@ -663,17 +616,18 @@ export async function deleteGuestWithDependencies(guestId: string): Promise<{ in
   const invitationIds = (invitationRows ?? []).map((row) => (row as { id: string }).id);
   if (invitationIds.length > 0) {
     await deleteEventRsvpsByInvitationIds(invitationIds);
-    const { error: inviteDeleteError } = await supabase
-      .from('event_invitations')
-      .delete()
-      .eq('guest_id', guestId);
+    const { error: inviteDeleteError } = await supabase.rpc('guest_dashboard_event_invitation_delete', {
+      p_guest_id: guestId,
+      p_event_id: null,
+      p_guest_ids: null,
+    });
     if (inviteDeleteError) throw inviteDeleteError;
   }
 
-  const { error: rsvpDeleteError } = await supabase
-    .from('rsvps')
-    .delete()
-    .eq('guest_id', guestId);
+  const { error: rsvpDeleteError } = await supabase.rpc('guest_dashboard_rsvp_replace_many', {
+    p_rows: [],
+    p_guest_ids: [guestId],
+  });
   if (rsvpDeleteError) throw rsvpDeleteError;
 
   await deleteGuestById(guestId);
@@ -704,16 +658,17 @@ export async function deleteAllGuestsForSite(weddingSiteId: string): Promise<Gue
       await deleteEventRsvpsByInvitationIds(invitationIds);
     }
 
-    const { error: eventInvitationDeleteError } = await supabase
-      .from('event_invitations')
-      .delete()
-      .in('guest_id', scopedGuestIds);
+    const { error: eventInvitationDeleteError } = await supabase.rpc('guest_dashboard_event_invitation_delete', {
+      p_guest_id: null,
+      p_event_id: null,
+      p_guest_ids: scopedGuestIds,
+    });
     if (eventInvitationDeleteError) throw eventInvitationDeleteError;
 
-    const { error: rsvpDeleteError } = await supabase
-      .from('rsvps')
-      .delete()
-      .in('guest_id', scopedGuestIds);
+    const { error: rsvpDeleteError } = await supabase.rpc('guest_dashboard_rsvp_replace_many', {
+      p_rows: [],
+      p_guest_ids: scopedGuestIds,
+    });
     if (rsvpDeleteError) throw rsvpDeleteError;
   }
 
@@ -726,10 +681,9 @@ export async function deleteAllGuestsForSite(weddingSiteId: string): Promise<Gue
 }
 
 export async function insertImportedGuests(guestRows: Array<Record<string, unknown>>): Promise<Array<{ id: string; first_name: string | null; last_name: string | null; name: string | null; email: string | null }>> {
-  const { data, error } = await supabase
-    .from('guests')
-    .insert(guestRows)
-    .select(IMPORTED_GUEST_SELECT);
+  const { data, error } = await supabase.rpc('guest_dashboard_import_guests', {
+    p_rows: guestRows,
+  });
 
   if (error) throw error;
   return (data ?? []) as Array<{ id: string; first_name: string | null; last_name: string | null; name: string | null; email: string | null }>;
@@ -750,12 +704,11 @@ export async function updateHouseholdGuestIds(householdId: string, guestIds: str
 export async function replaceImportedGuestRsvps(rows: Array<{ guest_id: string; attending: boolean; meal_choice: string | null; plus_one_name: string | null; plus_one_count: number; children_count: number; responded_at: string | null }>): Promise<void> {
   if (rows.length === 0) return;
 
-  const rsvpGuestIds = Array.from(new Set(rows.map((row) => row.guest_id))).slice(0, MAX_GUEST_BULK_OPERATION_IDS);
-  const { error: rsvpDeleteError } = await supabase.from('rsvps').delete().in('guest_id', rsvpGuestIds);
-  if (rsvpDeleteError) throw rsvpDeleteError;
-
-  const { error: rsvpInsertError } = await supabase.from('rsvps').insert(rows);
-  if (rsvpInsertError) throw rsvpInsertError;
+  const { error } = await supabase.rpc('guest_dashboard_rsvp_replace_many', {
+    p_rows: rows,
+    p_guest_ids: null,
+  });
+  if (error) throw error;
 }
 
 export async function updateGuestForSite(

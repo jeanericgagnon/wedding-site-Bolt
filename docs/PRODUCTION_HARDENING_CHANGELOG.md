@@ -3783,3 +3783,22 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - `npm run lint -- --quiet`
   - `npm run build`
 - Launch status did not change. This is local-only hardening and no deploy was run.
+## 2026-05-11 07:21 PM PDT - Guest Invitation / Import / RSVP RPC Batch (Local Only)
+
+- Added migration `20260511233000_guest_invitation_rsvp_rpcs.sql`.
+- Moved the remaining guest dashboard invitation/import/assisted-RSVP direct write paths behind RPCs in the working tree:
+  - `event_invitations` insert/delete
+  - imported guest inserts
+  - imported RSVP replace/delete flows
+  - assisted RSVP guest/rsvp persistence
+  - guest dependency cleanup RSVP/event-invitation deletes
+- Focused local proof is green:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+  - `npm run build`
+  - `npm run proof:v1:board:md`
+  - `git diff --check`
+- Result:
+  - no live-state change yet
+  - apply/deploy plus fresh live collaborator/client-RLS proof are still required before this batch changes runtime truth

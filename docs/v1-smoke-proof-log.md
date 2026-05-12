@@ -160,6 +160,24 @@ _Launch call right now:_ `GO`
   - no live-state change yet
   - a frontend deploy is still required before this batch changes runtime truth
 
+### 2026-05-11 07:21 PM PDT - Guest Invitation / Import / RSVP RPC Batch (Local Only)
+
+- Added migration `20260511233000_guest_invitation_rsvp_rpcs.sql`.
+- Moved these guest dashboard write paths off raw client table mutations in the working tree:
+  - event invitation insert/delete flows
+  - imported guest insert flow
+  - imported RSVP replace flow
+  - assisted RSVP save flow
+  - guest dependency cleanup RSVP/event-invitation deletes
+- Focused local proof is green:
+  - `npm test -- --run src/pages/dashboard/guests/guestService.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+  - `npm run build`
+- Result:
+  - no live-state change yet
+  - apply/deploy plus fresh live collaborator/client-RLS proof are still required before this batch counts as runtime hardening
+
 ### 2026-05-11 03:42 PM PDT - Public Vault Contribution Downgraded To Deferred / Hard-Disabled
 
 - Attempted closeout redeploys:
