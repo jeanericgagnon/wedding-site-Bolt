@@ -5,9 +5,9 @@ describe('guest lookup scope proof script', () => {
   it('proves household-wide public updates require phone-last4 unless a guest invite token already proves identity', () => {
     const source = readFileSync('scripts/v1-proof-guest-lookup-scope.mjs', 'utf8');
 
-    expect(source).toContain("household_verifier: '9999'");
+    expect(source).toContain("household_verifier: guestRows[0].phone?.slice(-4)");
     expect(source).toContain('guestInviteToken: guestRows[0].invite_token');
-    expect(source).toContain('exactNameWithoutHouseholdVerifier');
+    expect(source).toContain('exactNameWithHouseholdVerifier');
     expect(source).toContain('exact-full-name-match-with-guest-invite-token');
     expect(source).toContain('contact-session-submit-household-requires-last4');
     expect(source).toContain('guest-invite-token-submit-household-scope');

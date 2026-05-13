@@ -4349,3 +4349,15 @@ Write a short architecture note after the highest-risk hardening lanes are imple
 - Important runtime truth:
   - no deploy was run in this batch
   - live `guest-lookup-scope` still reflects the pre-deploy guest-contact runtime, so the stronger household verifier is branch-ready rather than deployed
+# 2026-05-12 09:31 PM PDT
+
+- Deployed exact runtime SHA `f2cc4811` to Vercel production deploy `dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU`.
+- Redeployed `guest-contact-lookup --no-verify-jwt` and `guest-contact-submit --no-verify-jwt` so the stronger household verifier, guest invite-token path, and redacted public guest-update audit event are live.
+- Added dedicated live proof lanes for coordinator/day-of and name-change runtime depth:
+  - `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live` -> `LIVE PASS`
+  - `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live` -> `LIVE PASS`
+- Refreshed exact-deploy production proof:
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`
+  - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix -- --require-live` -> `LIVE PASS`
+  - `npm run proof:v1:registry-preview-ssrf -- --require-live` -> `LIVE PASS`

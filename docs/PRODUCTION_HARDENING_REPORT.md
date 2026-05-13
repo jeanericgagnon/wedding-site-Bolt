@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-12 05:55 PM PDT`
+_Updated:_ `2026-05-12 09:31 PM PDT`
 
 ## Current Score
 
@@ -11,10 +11,10 @@ _Updated:_ `2026-05-12 05:55 PM PDT`
 ## Exact Runtime Identity
 
 - Branch: `codex/v1-finish-hard-gates-3`
-- Current branch head: `e9f36b94` (`Audit public guest contact updates`)
-- Exact frontend Git SHA: `17c8089f`
-- Exact frontend commit: `Narrow guest contact verifier to email fragment`
-- Exact Vercel production deploy: `dpl_L9m7XKgo3GhpLkH5NR4M1ZzLSDjh`
+- Current branch head: `f2cc4811` (`Harden launch runtime proofs and route splits`)
+- Exact frontend Git SHA: `f2cc4811`
+- Exact frontend commit: `Harden launch runtime proofs and route splits`
+- Exact Vercel production deploy: `dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU`
 - Production URL: [dayof.love](https://dayof.love)
 - Supabase project: `atuzuobpprjstfmdnwso`
 - Current live hardening batch: dedicated public session secret separation plus RPC-backed admin-route authorization
@@ -43,7 +43,7 @@ Deferred, non-launch gaps:
 - keep the live client-RLS matrix current when future non-guest write surfaces are introduced
 - keep the no-direct-client-write inventory current after future runtime write-surface changes
 - global TypeScript / ESLint strictness remains softer than the widened launch-critical strict pocket
-- deploy the stronger guest-contact invite-token / household-verifier rule from the current branch when approved
+- no active launch-lane deploy gap remains
 
 ## Exact Proof State
 
@@ -72,9 +72,9 @@ Fresh local proof:
   - guest-specific RSVP invite tokens now act as the strongest local verifier for signed household-scoped contact sessions
   - guest-contact submit now writes a redacted `app_action_audit_logs` event with verifier strength, household scope, changed-field names, and changed-guest count
   - `App.tsx` now composes grouped route modules instead of hand-owning the entire route tree inline
-- `npm run test:launch` -> `BLOCKED / local branch proof gap`
-  - branch wiring is now correct because `test:launch` self-sets `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
-  - live rerun still fails on `npm run proof:v1:guest-lookup-scope` because the stronger guest-contact invite-token / household-verifier path is not deployed yet
+- `npm run test:launch` -> `PASS`
+  - branch wiring self-sets `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
+  - the stronger guest-contact invite-token / household-verifier path is now deployed and live-green
 - `npm test -- --run src/lib/clientWriteInventoryProofScript.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts` -> `PASS`
 - `npm run proof:v1:board:md` -> `PASS`
 - `npm run guard:file-size` -> `PASS`
@@ -150,13 +150,13 @@ Same-day still-valid supporting proof:
 ## Exact Deployment State
 
 Current live launch baseline:
-- frontend: `dpl_L9m7XKgo3GhpLkH5NR4M1ZzLSDjh` from exact runtime SHA `17c8089f`
+- frontend: `dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU` from exact runtime SHA `f2cc4811`
 - `submit-rsvp --no-verify-jwt`: redeployed on the serialized capacity path after migration `20260511170500_serialize_submit_rsvp_capacity.sql`
 - `public-site-access --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `guest-contact-lookup --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `guest-contact-submit --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
-- `guest-contact-lookup` now requires a full name plus the first few characters of the guest email address before minting a signed contact session
-- the stronger guest-specific invite-token path, whole-party phone-last-4 verifier, and public guest-contact audit event are currently branch-only and not yet deployed
+- `guest-contact-lookup` now requires a full name plus the first few characters of the guest email address before minting a signed contact session, and the whole-party path now requires phone last 4 unless a guest-specific invite token is present
+- `guest-contact-submit` now writes a redacted `app_action_audit_logs` event for public guest updates live
 - `validate-rsvp-token --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `interactive-section-public --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `photo-upload --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
@@ -182,6 +182,16 @@ Not a supported current launch surface:
 Those remain future product scope. The `.dayof.love` host-routing lane itself is now live-proven and no longer deferred.
 
 ## What Changed Since Last Report
+
+- deployed exact runtime SHA `f2cc4811` to Vercel production deploy `dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU`
+- redeployed `guest-contact-lookup --no-verify-jwt` and `guest-contact-submit --no-verify-jwt` so the stronger household verifier, guest invite-token path, and redacted public audit event are live
+- reran live proof green on the exact deploy:
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`
+  - `npm run proof:v1:guest-lookup-scope`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix -- --require-live`
+  - `npm run proof:v1:registry-preview-ssrf -- --require-live`
+  - `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live`
+  - `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live`
 
 - Hardened the sensitive guest-contact flow further in local code:
   - `apply_household` now requires phone last 4 in addition to the existing full-name + email-fragment proof

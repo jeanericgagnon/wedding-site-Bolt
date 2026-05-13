@@ -2,16 +2,28 @@
 
 _Date:_ `2026-05-12`
 _Production:_ [dayof.love](https://dayof.love)
-_Latest verified deploy:_ `dpl_L9m7XKgo3GhpLkH5NR4M1ZzLSDjh`
-_Exact frontend SHA:_ `17c8089f`
+_Latest verified deploy:_ `dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU`
+_Exact frontend SHA:_ `f2cc4811`
 _Launch call right now:_ `GO`
 
 ## Current Truth
 
-- The main verified live runtime is exact frontend SHA `17c8089f`.
+- The main verified live runtime is exact frontend SHA `f2cc4811`.
 - Public DTO minimization is closed and live-proven.
 - Secure service-role, queue, storage/media, and email queue-processing proof lanes are green with the provided secure key.
 - Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green on the blocker-fix runtime.
+- Guest contact now also proves the stronger household verifier path live: no exact-name match without verifier, phone last 4 unlocks household-wide updates, and guest invite tokens act as the strongest verifier.
+- Dedicated live coordinator/day-of and name-change runtime smokes are now green on production.
+- 2026-05-12 09:31 PM PDT:
+  - `supabase functions deploy guest-contact-lookup --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `supabase functions deploy guest-contact-submit --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
+  - `vercel deploy --prod --yes` -> `PASS` (`dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU`, aliased to `dayof.love`)
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` -> `LIVE PASS`
+  - `npm run proof:v1:guest-lookup-scope` -> `LIVE PASS`
+  - `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1 npm run proof:v1:client-rls-matrix -- --require-live` -> `LIVE PASS`
+  - `npm run proof:v1:registry-preview-ssrf -- --require-live` -> `LIVE PASS`
+  - `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live` -> `LIVE PASS`
+  - `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live` -> `LIVE PASS`
 - Client-facing RLS proof now has one canonical live matrix command: `npm run proof:v1:client-rls-matrix`.
 - Active runtime pages now also have one canonical local inventory guard: `npm run proof:v1:client-write-inventory`.
 - `test:launch`, `ci-hardpass`, and `Release Launch Gate` now all require `npm run proof:v1:ast-security`, `npm run proof:v1:client-rls-matrix -- --require-live`, and live `registry-preview-ssrf`.

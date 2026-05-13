@@ -322,13 +322,13 @@ async function main() {
       site_ref: proofSiteSlug,
       query: `Taylor ${lastName}`,
       verifier: emailVerifier,
-      household_verifier: '9999',
       ...accessArtifacts,
     });
-    const exactNameWithoutHouseholdVerifier = await lookupGuest({
+    const exactNameWithHouseholdVerifier = await lookupGuest({
       site_ref: proofSiteSlug,
       query: `Taylor ${lastName}`,
       verifier: emailVerifier,
+      household_verifier: guestRows[0].phone?.slice(-4),
       ...accessArtifacts,
     });
     const exactNameWithGuestInviteToken = await lookupGuest({
@@ -338,24 +338,24 @@ async function main() {
       ...accessArtifacts,
     });
     const contactSession = exactName.payload?.matches?.[0]?.contact_session;
-    const contactSessionWithoutHouseholdVerifier = exactNameWithoutHouseholdVerifier.payload?.matches?.[0]?.contact_session;
+    const contactSessionWithHouseholdVerifier = exactNameWithHouseholdVerifier.payload?.matches?.[0]?.contact_session;
     const contactSessionWithGuestInviteToken = exactNameWithGuestInviteToken.payload?.matches?.[0]?.contact_session;
     const expectedPhone = `555${runId.slice(-7)}`.slice(0, 10);
     const expectedCity = `LookupScope${runId.slice(-4)}`;
-    const submitResult = typeof contactSession === 'string' && contactSession.length > 20
+    const submitResult = typeof contactSessionWithHouseholdVerifier === 'string' && contactSessionWithHouseholdVerifier.length > 20
       ? await submitGuestContact({
         site_ref: proofSiteSlug,
-        contact_session: contactSession,
+        contact_session: contactSessionWithHouseholdVerifier,
         apply_household: true,
         phone: expectedPhone,
         sms_consent: true,
         mailing_city: expectedCity,
       })
       : { status: 0, payload: { error: 'Missing contact session from lookup proof.' } };
-    const deniedHouseholdSubmit = typeof contactSessionWithoutHouseholdVerifier === 'string' && contactSessionWithoutHouseholdVerifier.length > 20
+    const deniedHouseholdSubmit = typeof contactSession === 'string' && contactSession.length > 20
       ? await submitGuestContact({
         site_ref: proofSiteSlug,
-        contact_session: contactSessionWithoutHouseholdVerifier,
+        contact_session: contactSession,
         apply_household: true,
         phone: '5550000000',
       })
@@ -386,8 +386,8 @@ async function main() {
       expectNoMatches(reversedName, 'reversed-name-lookup'),
       expectNoMatches(exactNameWithoutVerifier, 'exact-name-without-verifier'),
       expectNoMatches(exactNameWithWrongVerifier, 'exact-name-with-wrong-verifier'),
-      expectExactSingleMatch(exactName, `Taylor ${lastName}`, 2, true),
-      expectExactSingleMatch(exactNameWithoutHouseholdVerifier, `Taylor ${lastName}`, 2, false),
+      expectExactSingleMatch(exactName, `Taylor ${lastName}`, 2, false),
+      expectExactSingleMatch(exactNameWithHouseholdVerifier, `Taylor ${lastName}`, 2, true),
       expectInviteTokenSingleMatch(exactNameWithGuestInviteToken, `Taylor ${lastName}`, 2),
       expectHouseholdSubmitDenied(deniedHouseholdSubmit),
       expectScopedSubmit(submitResult, verifyRows, expectedPhone, expectedCity),
