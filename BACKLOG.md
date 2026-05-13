@@ -15,11 +15,11 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-13 08:52 AM PDT` |
+| Current date/time | `2026-05-13 08:59 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
-| Latest Git SHA | `4f623318` |
-| Latest commit message | `Ship claim-safe name-change MVP framing` |
-| Vercel deployment ID | `dpl_CRegyLrW91MBRXbkytcPZdy8g8BS` |
+| Latest Git SHA | `5c8166a0` |
+| Latest commit message | `Sync backlog metadata after name-change batch` |
+| Vercel deployment ID | `dpl_AbFTbLY263caiCEhQdniH2wbuM9d` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
 | Supabase functions deployed | Live blocker-fix lane includes `submit-rsvp --no-verify-jwt` plus applied migration `20260511170500_serialize_submit_rsvp_capacity.sql`. Same-day confirmed/live-proven: `public-site-access --no-verify-jwt`; `photo-upload --no-verify-jwt`; `process-email-queue`; `validate-rsvp-token --no-verify-jwt`; `interactive-section-public --no-verify-jwt`; `vault-contribution-public --no-verify-jwt`; `vault-entry-submit --no-verify-jwt`; `translate-site-content`. Latest deploy wave also pushed `guest-contact-lookup --no-verify-jwt` and `guest-contact-submit --no-verify-jwt` with the stronger household verifier, guest invite-token support, and redacted public audit event live. |
 | Current readiness score | `10 / 10` |
@@ -28,8 +28,8 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | Reason production-ready is not yet claimed | No active P0/P1 blockers remain. Production-ready is claimed for the current launch baseline. Remaining items are non-launch, deferred, or repo-rigor follow-up. |
 | Current blockers | none |
 | Current proof state | Launch-critical runtime proof is green on the current live runtime: `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `service-role-authorization`, `email-messaging-authorization`, `launch-closeout`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, `client-rls-matrix`, `registry-preview-ssrf`, `coordinator-dayof`, `name-change-runtime`, and `registry`. The harder repo guardrails are also green: `proof:v1:client-write-inventory`, `proof:v1:ast-security`, `proof:v1:test-lanes`, `proof:v1:strict-pocket`, and `proof:v1:security-automation`. `Release Launch Gate` remains green and the repo now carries Semgrep, CodeQL, Gitleaks, and Dependabot automation. |
-| Current deployment state | The latest deployed frontend runtime is [dayof.love](https://dayof.love) via verified Vercel production deploy `dpl_CRegyLrW91MBRXbkytcPZdy8g8BS`. The barcode scanner migration `20260513064500_add_registry_barcode_scanner_support.sql` is applied remotely, the richer barcode depth batch is now live on `registry-barcode-lookup --no-verify-jwt`, `submit-rsvp` is live with the serialized capacity path, and the public-session-secret, admin route gate, guest-contact, route-module decomposition, vault contribution, and `.dayof.love` host-routing lanes all remain live-proven. External custom domains remain unsupported product scope, not an open proof lane. |
-| Current next actions | No active launch blocker remains for the current launch baseline. The ambiguous "full feature scope" wording for `Day-of / coordinator`, `Name change`, and `Universal Registry Barcode Scanner` is now replaced by the competitor-informed MVP bar in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md). `Day-of / coordinator` now has its deeper MVP build landed locally and green on local proof, but still needs deploy + live proof on the new runtime; `Name change` now also has its deeper claim-safe MVP build landed locally and green on local proof, but still needs deploy + live proof on the new runtime. `Universal Registry Barcode Scanner` now appears to meet that MVP bar and its remaining open work is explicitly post-MVP/deferred depth, not baseline MVP viability. Keep the live client-RLS matrix current and keep the no-direct-client-write inventory current only if future runtime write surfaces reopen. Repo-wide TS/ESLint full-flip work remains explicitly future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
+| Current deployment state | The latest deployed frontend runtime is [dayof.love](https://dayof.love) via verified Vercel production deploy `dpl_AbFTbLY263caiCEhQdniH2wbuM9d`. The coordinator migration `20260513170000_coordinator_event_checkin_write.sql` is now applied remotely, the deeper coordinator MVP lane and the deeper name-change claim-safe MVP lane are both live on the shipped runtime, and the richer barcode depth batch remains live-proven on `registry-barcode-lookup --no-verify-jwt`. `submit-rsvp` remains live with the serialized capacity path, and the public-session-secret, admin route gate, guest-contact, route-module decomposition, vault contribution, and `.dayof.love` host-routing lanes all remain live-proven. External custom domains remain unsupported product scope, not an open proof lane. |
+| Current next actions | No active competitor-informed MVP blocker remains. `Day-of / coordinator`, `Name change`, and `Universal Registry Barcode Scanner` now all meet the MVP/production-ready bar defined in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md). Remaining work is explicitly post-MVP/deferred depth or future maintainability follow-up. Keep the live client-RLS matrix current and keep the no-direct-client-write inventory current only if future runtime write surfaces reopen. Repo-wide TS/ESLint full-flip work remains explicitly future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
@@ -55,29 +55,29 @@ No active `P0` or `P1` launch blockers remain.
 
 ## Additional Hardening Findings
 
-No active baseline launch blocker remains, but the following items are active board work now.
+No active competitor-informed MVP blocker remains. The formerly ambiguous feature lanes below are now shipped to the documented MVP bar on the live runtime.
 
 - launch-critical findings are closed and live-proven on the current deployed production runtime
 - `Day-of / coordinator`
-  - `ACTIVE NOW`
-  - current truth: the current production runtime still reflects the older launch-baseline slice, but the repo now has the deeper competitor-informed MVP build landed locally in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md)
-  - dedicated live product-depth proof exists for the current shipped slice: `npm run proof:v1:coordinator-dayof -- --require-live`
+  - `MVP COMPLETE / DEPLOYED + LIVE-PROVEN`
+  - current truth: the deeper competitor-informed MVP batch is now shipped on the current production runtime in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md)
+  - dedicated live product-depth proof is green on the current shipped runtime: `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live`
   - local deeper-batch proof is green: `npm run proof:v1:coordinator-dayof`, `npm run typecheck -- --pretty false`, targeted coordinator Vitest lane, `npm run build`
-  - live proof is green on the current production runtime for the older baseline slice only
   - MVP bar now defined as: event-specific arrival truth, event-scoped counts, explicit exception states, lookup triage, and role-safe day-of routing
-  - locally shipped now in this wave: event-scoped arrival writes + reads, per-event arrival counters, wrong-event / walk-in / help-desk / manager-decision / household-mismatch state handling, richer door routing, and no-match routing inside coordinator mode
-  - still missing against completion: deploy the deeper runtime and re-run live coordinator proof on the shipped runtime
-  - status: `LOCAL MVP BUILD COMPLETE / DEPLOY + LIVE PROOF PENDING`
+  - shipped now in this wave: event-scoped arrival writes + reads, per-event arrival counters, wrong-event / walk-in / help-desk / manager-decision / household-mismatch state handling, richer door routing, and no-match routing inside coordinator mode
+  - deployed now: migration `20260513170000_coordinator_event_checkin_write.sql` plus Vercel production deploy `dpl_AbFTbLY263caiCEhQdniH2wbuM9d`
+  - live proof is green on the current production runtime for the shipped deeper batch
+  - status: `MVP COMPLETE / DEPLOYED + LIVE-PROVEN`
 - `Name change`
-  - `ACTIVE NOW`
-  - current truth: the current production runtime still reflects the older launch-baseline slice, but the repo now has the deeper competitor-informed MVP build landed locally in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md)
-  - dedicated live runtime proof exists for the current shipped slice: `npm run proof:v1:name-change-runtime -- --require-live`
+  - `MVP COMPLETE / DEPLOYED + LIVE-PROVEN`
+  - current truth: the deeper competitor-informed MVP batch is now shipped on the current production runtime in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md)
+  - dedicated live runtime proof is green on the current shipped slice: `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live`
   - local deeper-batch proof is green: `npm run proof:v1:name-change-runtime`, `npm run typecheck -- --pretty false`, focused planner/overview Vitest lanes, `npm run lint -- --quiet`, `npm run build`
-  - live proof is green on the current production runtime for the older baseline slice only
   - MVP bar now defined as: US-first guided execution, honest sequencing, reminders, status vault, templates, and post-wedding dashboard placement
-  - locally shipped now in this wave: explicit California-guided coverage framing, claim-safe dashboard/helper copy, marriage-state plus jurisdiction intake, generic state-license/document labels, and verified post-wedding dashboard + planner resume placement
-  - still missing against completion: deploy the deeper runtime and re-run live name-change proof on the shipped runtime
-  - status: `LOCAL MVP BUILD COMPLETE / DEPLOY + LIVE PROOF PENDING`
+  - shipped now in this wave: explicit California-guided coverage framing, claim-safe dashboard/helper copy, marriage-state plus jurisdiction intake, generic state-license/document labels, and verified post-wedding dashboard + planner resume placement
+  - deployed now: Vercel production deploy `dpl_AbFTbLY263caiCEhQdniH2wbuM9d`
+  - live proof is green on the current production runtime for the shipped deeper batch
+  - status: `MVP COMPLETE / DEPLOYED + LIVE-PROVEN`
 - `Universal Registry Barcode Scanner`
   - `MVP COMPLETE / POST-MVP DEFERRED`
   - current truth: the competitor-informed MVP bar is shipped and live-proven; remaining work is post-MVP parity and depth only
@@ -191,7 +191,7 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 
 | Surface | Git SHA | Deployed? | Deploy target | Flags | Proof command | Proof result | Remaining gap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Vercel frontend / `dayof.love` | `current production deploy` | `yes` | `Vercel production dpl_CRegyLrW91MBRXbkytcPZdy8g8BS` | `--prod` | `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`; `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`; guarded postdeploy bundle | green on the latest production deploy | None | `LIVE PASS` |
+| Vercel frontend / `dayof.love` | `current production deploy` | `yes` | `Vercel production dpl_AbFTbLY263caiCEhQdniH2wbuM9d` | `--prod` | `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`; `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`; guarded postdeploy bundle | green on the latest production deploy | None | `LIVE PASS` |
 | `registry-barcode-lookup` | `same-day 2026-05-13 deploy` | `yes` | `Supabase Edge runtime atuzuobpprjstfmdnwso` | `--no-verify-jwt` | `node scripts/v1-proof-registry.mjs --require-live`; `LIVE_REGISTRY_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/registry-write-read.spec.ts` | green including the richer provider/review/store-choice batch | None on current barcode lookup/save/read lane | `LIVE PASS` |
 | `public-site-access` | `same-day 2026-05-12 dedicated-session-secret deploy` | `yes` | `Supabase Edge runtime atuzuobpprjstfmdnwso` | `--no-verify-jwt` | `npm run proof:v1:public-access-coverage`; live smoke/public-quality | green | Dedicated public session secret path is live; no remaining public resolver gap | `LIVE PASS` |
 | `public-registry-items` | `older live version (not redeployed in exact-SHA sweep)` | `yes` | `Supabase Edge runtime atuzuobpprjstfmdnwso` | `unknown` | `npm run proof:v1:registry`; live public smoke/public-quality | green | Owner import/repair runtime notes are deferred and not a public-launch blocker | `LIVE PASS` |
@@ -227,15 +227,15 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 
 ## Next 10 Tasks
 
-1. Deploy the deeper `Day-of / coordinator` batch.
-2. Re-prove the deeper `Day-of / coordinator` lane on the deployed runtime.
-3. Deploy the deeper `Name change` claim-safe coverage batch.
-4. Re-prove the deeper `Name change` lane on the deployed runtime.
-5. Keep `Universal Registry Barcode Scanner` post-MVP depth explicitly deferred unless it is reactivated as active scope.
-6. keep the live client-RLS matrix current if future non-guest write surfaces are added.
-7. keep the no-direct-client-write inventory current if future runtime write surfaces are added.
-8. keep the board synced if deploy/live proof changes the active truth for `Day-of / coordinator`.
-9. keep the board synced if deploy/live proof changes the active truth for `Name change`.
+1. No active competitor-informed MVP implementation work remains on the current board.
+2. Keep `Universal Registry Barcode Scanner` post-MVP depth explicitly deferred unless it is reactivated as active scope.
+3. Keep broader `Day-of / coordinator` expansion deferred unless it is reactivated beyond the current MVP bar.
+4. Keep broader `Name change` expansion deferred unless it is reactivated beyond the current MVP bar.
+5. keep the live client-RLS matrix current if future non-guest write surfaces are added.
+6. keep the no-direct-client-write inventory current if future runtime write surfaces are added.
+7. keep the board synced if future deploys change the truth for `Day-of / coordinator`.
+8. keep the board synced if future deploys change the truth for `Name change`.
+9. keep the board synced if future deploys change the truth for `Universal Registry Barcode Scanner`.
 10. keep repo-wide TS/ESLint full-flip work future-only unless it is explicitly reactivated.
 
 ## Resolved Work Summary

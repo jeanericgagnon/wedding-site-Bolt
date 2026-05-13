@@ -73,14 +73,14 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - explicit wrong-event, walk-in, help-desk, manager-decision, and household-mismatch handling
   - per-event arrival counters and a current-door board
   - no-match routing inside coordinator mode
-- Still missing against completion:
-  - deploy the deeper runtime
-  - re-run live proof on the deployed runtime
+- Deployed/live now:
+  - migration `20260513170000_coordinator_event_checkin_write.sql` applied remotely
+  - deeper runtime deployed on Vercel production `dpl_AbFTbLY263caiCEhQdniH2wbuM9d`
+  - `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live` is green against the shipped runtime
 
 ### Build gaps
 
-1. Deploy the deeper coordinator runtime.
-2. Re-prove the deeper day-of lane after deploy.
+1. No active MVP gap remains.
 
 ## Name change
 
@@ -136,14 +136,13 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - marriage-state plus county / jurisdiction intake inside case setup
   - generic state-license and issuing-authority labels so document intake does not overclaim California scope
   - verified post-wedding dashboard and planner resume placement for the shipped planner surfaces
-- Still missing against completion:
-  - deploy the deeper runtime
-  - re-run live proof on the deployed runtime
+- Deployed/live now:
+  - deeper runtime deployed on Vercel production `dpl_AbFTbLY263caiCEhQdniH2wbuM9d`
+  - `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live` is green against the shipped runtime
 
 ### Build gaps
 
-1. Deploy the deeper name-change runtime.
-2. Re-prove the deeper name-change lane after deploy.
+1. No active MVP gap remains.
 
 ## Universal Registry Barcode Scanner
 
@@ -191,6 +190,6 @@ DayOf should count this feature as MVP-complete when it does all of the followin
 
 ## Decision For The Active Board
 
-- `Day-of / coordinator` stays active against the MVP bar in this doc.
-- `Name change` stays active against the MVP bar in this doc.
+- `Day-of / coordinator` has now met the MVP bar in this doc on the shipped runtime.
+- `Name change` has now met the MVP bar in this doc on the shipped runtime.
 - `Universal Registry Barcode Scanner` has met MVP; remaining work is post-MVP parity and depth, not baseline MVP viability.

@@ -566,6 +566,18 @@ _Launch call right now:_ `GO`
   - live owner barcode save/read plus public registry readability are green on the shipped runtime
   - broader universal-registry product depth still remains future active work
 
+### 2026-05-13 08:59 AM PDT - Coordinator + Name-Change MVP Deploy Closeout (Deployed + Live-Proven)
+
+- Deploy/runtime closeout:
+  - `supabase db push --linked --include-all` -> applied `20260513170000_coordinator_event_checkin_write.sql`
+  - `vercel deploy --prod --yes` -> `dpl_AbFTbLY263caiCEhQdniH2wbuM9d`, aliased to [dayof.love](https://dayof.love)
+  - `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live`
+  - `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live`
+- Result:
+  - the deeper coordinator MVP batch is now shipped and live-proven on the production runtime
+  - the deeper claim-safe name-change MVP batch is now shipped and live-proven on the production runtime
+  - all three competitor-informed MVP lanes are now closed on the active board; remaining work is post-MVP/deferred depth only
+
 - Added migration `20260511234500_registry_write_rpcs.sql`.
 - Moved these registry dashboard owner-side write paths off raw client table mutations in the working tree:
   - registry refresh budget writes
