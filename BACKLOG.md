@@ -15,10 +15,10 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-13 11:44 AM PDT` |
+| Current date/time | `2026-05-13 11:51 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
-| Latest verified Git SHA | `c3c2fd70` |
-| Latest verified commit message | `Close coordinator and name-change MVP proof lanes` |
+| Latest verified Git SHA | `b6c0c715` |
+| Latest verified commit message | `Ship registry duplicate merge depth` |
 | Vercel deployment ID | `dpl_21JQUT36gnfrE6i4qKF5yeghwRpB` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
 | Supabase functions deployed | Live blocker-fix lane includes `submit-rsvp --no-verify-jwt` plus applied migration `20260511170500_serialize_submit_rsvp_capacity.sql`. Same-day confirmed/live-proven: `public-site-access --no-verify-jwt`; `photo-upload --no-verify-jwt`; `process-email-queue`; `validate-rsvp-token --no-verify-jwt`; `interactive-section-public --no-verify-jwt`; `vault-contribution-public --no-verify-jwt`; `vault-entry-submit --no-verify-jwt`; `translate-site-content`. Latest deploy wave also pushed `guest-contact-lookup --no-verify-jwt` and `guest-contact-submit --no-verify-jwt` with the stronger household verifier, guest invite-token support, and redacted public audit event live. |
