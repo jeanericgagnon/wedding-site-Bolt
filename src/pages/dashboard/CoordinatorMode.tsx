@@ -23,7 +23,13 @@ import { getCoordinatorStablePromptTarget } from '../../lib/coordinatorStablePro
 import { getCoordinatorStandingPromptReason } from '../../lib/coordinatorStandingPromptReason';
 import { getCoordinatorStandingPromptReasonTightened } from '../../lib/coordinatorStandingPromptReasonTighten';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
-import type { CoordinatorEventHandoff, CoordinatorIssueStatus, CoordinatorIssueType } from './coordinator/coordinatorDashboardTypes';
+import { copyTextOrDownload } from '../../lib/copyText';
+import type {
+  CoordinatorEventHandoff,
+  CoordinatorIssueStatus,
+  CoordinatorIssueType,
+  CoordinatorRunnerTaskStatus,
+} from './coordinator/coordinatorDashboardTypes';
 import {
   updateCoordinatorGuestSeatAssignment,
   updateCoordinatorQnaAnswer,
@@ -37,6 +43,12 @@ import { CoordinatorDashboardRouteContent } from './coordinator/CoordinatorDashb
 import { useCoordinatorDashboardActions } from './coordinator/useCoordinatorDashboardActions';
 import { buildCoordinatorDashboardFocusActions } from './coordinator/buildCoordinatorDashboardFocusActions';
 import { buildCoordinatorDashboardDerivedState } from './coordinator/buildCoordinatorDashboardDerivedState';
+import {
+  buildCoordinatorIssueOperationalMetadata,
+  buildCoordinatorShiftSnapshotHtml,
+  buildCoordinatorShiftSnapshotText,
+  readCoordinatorIssueOperationalMetadata,
+} from './coordinator/coordinatorFullSuiteUtils';
 import { useCoordinatorDashboardData } from './coordinator/useCoordinatorDashboardData';
 import { useCoordinatorDashboardCueLifecycle } from './coordinator/useCoordinatorDashboardCueLifecycle';
 import { useCoordinatorDashboardUiState, useCoordinatorDashboardUiStateSync } from './coordinator/useCoordinatorDashboardUiState';
@@ -47,6 +59,14 @@ type CoordinatorIssueDraft = {
   title: string;
   note: string;
   assignedTo: string;
+  incidentOwner: string;
+  nextAction: string;
+  resolvedOutcome: string;
+  runnerTaskMode: 'none' | 'runner' | 'escort';
+  runnerTaskAssignee: string;
+  runnerTaskStatus: CoordinatorRunnerTaskStatus;
+  runnerTaskDetail: string;
+  runnerTaskCompletionNote: string;
   replacementName: string;
   replacementPartySize: string;
   itineraryEventId: string | null;
@@ -59,6 +79,14 @@ const createEmptyIssueDraft = (): CoordinatorIssueDraft => ({
   title: '',
   note: '',
   assignedTo: '',
+  incidentOwner: '',
+  nextAction: '',
+  resolvedOutcome: '',
+  runnerTaskMode: 'none',
+  runnerTaskAssignee: '',
+  runnerTaskStatus: 'queued',
+  runnerTaskDetail: '',
+  runnerTaskCompletionNote: '',
   replacementName: '',
   replacementPartySize: '1',
   itineraryEventId: null,
@@ -374,6 +402,21 @@ export const DashboardCoordinatorMode: React.FC = () => {
   );
   const issueDraftEventId = issueDraft.itineraryEventId ?? checkInEventId;
   const issueDraftTables = issueDraftEventId ? (eventSeatingTables[issueDraftEventId] ?? []) : [];
+  const shiftSnapshot = useMemo(() => buildCoordinatorShiftSnapshotText({
+    events,
+    eventHandoffs,
+    generatedAtLabel: new Date().toLocaleString('en-US', {
+      timeZone: 'America/Los_Angeles',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    }).replace(',', ''),
+    issueLogs,
+    stats,
+  }), [eventHandoffs, events, issueLogs, stats]);
   const {
     clearCoordinatorTransientState,
     focusCoordinatorAlertLane,
@@ -512,6 +555,25 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setIssueDraft(createEmptyIssueDraft());
   };
 
+  const copyShiftSnapshot = async () => {
+    const result = await copyTextOrDownload(shiftSnapshot.text, shiftSnapshot.filename);
+    toast(result === 'copied' ? 'Shift snapshot copied.' : 'Shift snapshot downloaded.', 'success');
+  };
+
+  const printShiftSnapshot = () => {
+    if (typeof window === 'undefined') return;
+    const popup = window.open('', '_blank', 'noopener,noreferrer,width=1000,height=900');
+    if (!popup) {
+      toast('Popup blocked. Please allow popups to print the shift snapshot.', 'error');
+      return;
+    }
+    popup.document.open();
+    popup.document.write(buildCoordinatorShiftSnapshotHtml(shiftSnapshot.text));
+    popup.document.close();
+    popup.focus();
+    popup.print();
+  };
+
   const upsertLocalHandoff = (eventId: string, patch: Partial<CoordinatorEventHandoff>) => {
     setEventHandoffs((prev) => {
       const existing = prev.find((item) => item.itinerary_event_id === eventId);
@@ -592,8 +654,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
     const eventId = issueDraft.itineraryEventId ?? checkInEventId;
     const eventName = events.find((event) => event.id === eventId)?.event_name ?? checkInEventName ?? null;
     setSelectedIssueId(null);
-    setIssueDraft((prev) => ({
-      ...prev,
+    setIssueDraft({
+      ...createEmptyIssueDraft(),
       issueType,
       title: buildCoordinatorIssueTitle({
         guest: activeIssueGuest,
@@ -602,12 +664,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
       }),
       itineraryEventId: eventId,
       status: issueType === 'seat-change' ? 'working' : 'open',
-    }));
+    });
   };
 
   const selectIssue = (issueId: string) => {
     const issue = issueLogs.find((item) => item.id === issueId);
     if (!issue) return;
+    const metadata = readCoordinatorIssueOperationalMetadata(issue.metadata);
     setSelectedIssueId(issueId);
     if (issue.guest_id) setActiveGuestId(issue.guest_id);
     setIssueDraft({
@@ -616,6 +679,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
       title: issue.title,
       note: issue.note ?? '',
       assignedTo: issue.assigned_to ?? '',
+      incidentOwner: metadata.incident_owner ?? '',
+      nextAction: metadata.next_action ?? '',
+      resolvedOutcome: metadata.resolved_outcome ?? '',
+      runnerTaskMode: metadata.runner_task?.mode ?? 'none',
+      runnerTaskAssignee: metadata.runner_task?.assignee ?? '',
+      runnerTaskStatus: metadata.runner_task?.status ?? 'queued',
+      runnerTaskDetail: metadata.runner_task?.detail ?? '',
+      runnerTaskCompletionNote: metadata.runner_task?.completion_note ?? '',
       replacementName: issue.replacement_name ?? '',
       replacementPartySize: issue.replacement_party_size ? String(issue.replacement_party_size) : '1',
       itineraryEventId: issue.itinerary_event_id ?? checkInEventId,
@@ -648,6 +719,30 @@ export const DashboardCoordinatorMode: React.FC = () => {
     }
     if (issueDraft.replacementPartySize.trim() && Number.isNaN(Number(issueDraft.replacementPartySize.trim()))) {
       toast('Replacement party size must be a number.', 'error');
+      return;
+    }
+    if (!issueDraft.incidentOwner.trim()) {
+      toast('Set an owner before saving the issue.', 'error');
+      return;
+    }
+    if (issueDraft.status !== 'resolved' && !issueDraft.nextAction.trim()) {
+      toast('Add the next action before saving the issue.', 'error');
+      return;
+    }
+    if (issueDraft.status === 'resolved' && !issueDraft.resolvedOutcome.trim()) {
+      toast('Capture the resolved outcome before closing the issue.', 'error');
+      return;
+    }
+    if (issueDraft.runnerTaskMode !== 'none' && !issueDraft.runnerTaskDetail.trim()) {
+      toast('Add the runner or escort task detail before saving.', 'error');
+      return;
+    }
+    if (
+      issueDraft.runnerTaskMode !== 'none'
+      && issueDraft.runnerTaskStatus !== 'queued'
+      && !issueDraft.runnerTaskAssignee.trim()
+    ) {
+      toast('Assign the runner or escort before moving the task forward.', 'error');
       return;
     }
 
@@ -698,15 +793,27 @@ export const DashboardCoordinatorMode: React.FC = () => {
       }
 
       const replacementPartySize = issueDraft.replacementPartySize.trim();
-      const metadata = {
-        source: 'coordinator-issue-desk',
-        active_guest_name: activeIssueGuest.name,
-        household_members: activeIssueGuest.household_id
+      const previousMetadata = issueLogs.find((item) => item.id === selectedIssueId)?.metadata ?? null;
+      const metadata = buildCoordinatorIssueOperationalMetadata({
+        activeGuestName: activeIssueGuest.name,
+        existingMetadata: previousMetadata,
+        householdMembers: activeIssueGuest.household_id
           ? guests
             .filter((guest) => guest.household_id === activeIssueGuest.household_id)
             .map((guest) => ({ id: guest.id, name: guest.name }))
           : [],
-      };
+        incidentOwner: issueDraft.incidentOwner,
+        nextAction: issueDraft.nextAction,
+        resolvedOutcome: issueDraft.resolvedOutcome,
+        runnerTask: {
+          mode: issueDraft.runnerTaskMode,
+          assignee: issueDraft.runnerTaskAssignee,
+          status: issueDraft.runnerTaskStatus,
+          detail: issueDraft.runnerTaskDetail,
+          completionNote: issueDraft.runnerTaskCompletionNote,
+        },
+        now: new Date().toISOString(),
+      });
 
       const saved = isDemoMode
         ? {
@@ -755,12 +862,21 @@ export const DashboardCoordinatorMode: React.FC = () => {
         ...prev.filter((item) => item.id !== saved.id),
       ].sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at)));
       setSelectedIssueId(saved.id);
+      const savedMetadata = readCoordinatorIssueOperationalMetadata(saved.metadata);
       setIssueDraft({
         issueType: saved.issue_type,
         status: saved.status,
         title: saved.title,
         note: saved.note ?? '',
         assignedTo: saved.assigned_to ?? '',
+        incidentOwner: savedMetadata.incident_owner ?? issueDraft.incidentOwner,
+        nextAction: savedMetadata.next_action ?? '',
+        resolvedOutcome: savedMetadata.resolved_outcome ?? '',
+        runnerTaskMode: savedMetadata.runner_task?.mode ?? 'none',
+        runnerTaskAssignee: savedMetadata.runner_task?.assignee ?? '',
+        runnerTaskStatus: savedMetadata.runner_task?.status ?? 'queued',
+        runnerTaskDetail: savedMetadata.runner_task?.detail ?? '',
+        runnerTaskCompletionNote: savedMetadata.runner_task?.completion_note ?? '',
         replacementName: saved.replacement_name ?? '',
         replacementPartySize: saved.replacement_party_size ? String(saved.replacement_party_size) : '1',
         itineraryEventId: saved.itinerary_event_id,
@@ -1075,6 +1191,23 @@ export const DashboardCoordinatorMode: React.FC = () => {
           onPrefillIssueType: prefillIssueType,
           onSaveIssue: () => { void saveIssue(); },
           onSelectIssue: selectIssue,
+        },
+    continuityPanelProps: {
+          activeGuest: activeIssueGuest,
+          eventHandoffs,
+          events,
+          issueLogs,
+          onSelectIssue: selectIssue,
+        },
+    runnerBoardPanelProps: {
+          issueLogs,
+          onSelectIssue: selectIssue,
+          selectedIssueId,
+        },
+    shiftSnapshotPanelProps: {
+          onCopySnapshot: () => { void copyShiftSnapshot(); },
+          onPrintSnapshot: printShiftSnapshot,
+          snapshotDetail: `${issueLogs.filter((issue) => issue.status !== 'resolved').length} unresolved incidents and ${eventHandoffs.length} event handoffs are included in the export.`,
         },
     qnaPanelProps: {
           activeQnaDraftStateLabel,

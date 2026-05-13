@@ -6,11 +6,14 @@ import {
   CoordinatorCheckInQueuePanel,
   CoordinatorDayOfMessagePanel,
   CoordinatorDayOfSummaryPanel,
+  CoordinatorGuestContinuityPanel,
   CoordinatorHandoffPanel,
   CoordinatorHelperAccessPanel,
   CoordinatorIssueDeskPanel,
   CoordinatorQnaPanel,
   CoordinatorRoleSelector,
+  CoordinatorRunnerBoardPanel,
+  CoordinatorShiftSnapshotPanel,
   CoordinatorStatCards,
   CoordinatorTimelinePanel,
 } from './CoordinatorModePanels';
@@ -29,6 +32,9 @@ type CoordinatorDayOfMessagePanelProps = React.ComponentProps<typeof Coordinator
 type CoordinatorQnaPanelProps = React.ComponentProps<typeof CoordinatorQnaPanel>;
 type CoordinatorHandoffPanelProps = Omit<React.ComponentProps<typeof CoordinatorHandoffPanel>, 'coordinatorRole'>;
 type CoordinatorIssueDeskPanelProps = React.ComponentProps<typeof CoordinatorIssueDeskPanel>;
+type CoordinatorGuestContinuityPanelProps = React.ComponentProps<typeof CoordinatorGuestContinuityPanel>;
+type CoordinatorRunnerBoardPanelProps = React.ComponentProps<typeof CoordinatorRunnerBoardPanel>;
+type CoordinatorShiftSnapshotPanelProps = React.ComponentProps<typeof CoordinatorShiftSnapshotPanel>;
 
 type Props = {
   coordinatorRole: PlannerAccessRole;
@@ -39,6 +45,9 @@ type Props = {
   handoffPanelProps: CoordinatorHandoffPanelProps;
   helperAccessPanelProps: CoordinatorHelperAccessPanelProps;
   issueDeskPanelProps: CoordinatorIssueDeskPanelProps;
+  continuityPanelProps: CoordinatorGuestContinuityPanelProps;
+  runnerBoardPanelProps: CoordinatorRunnerBoardPanelProps;
+  shiftSnapshotPanelProps: CoordinatorShiftSnapshotPanelProps;
   dayOfSummaryPanelProps: CoordinatorDayOfSummaryPanelProps;
   checkInQueuePanelProps: CoordinatorCheckInQueuePanelProps;
   timelinePanelProps: CoordinatorTimelinePanelProps;
@@ -58,6 +67,9 @@ export function CoordinatorDashboardRouteContent({
   handoffPanelProps,
   helperAccessPanelProps,
   issueDeskPanelProps,
+  continuityPanelProps,
+  runnerBoardPanelProps,
+  shiftSnapshotPanelProps,
   dayOfSummaryPanelProps,
   checkInQueuePanelProps,
   timelinePanelProps,
@@ -94,6 +106,13 @@ export function CoordinatorDashboardRouteContent({
       <CoordinatorHelperAccessPanel {...helperAccessPanelProps} />
 
       <CoordinatorIssueDeskPanel {...issueDeskPanelProps} />
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.15fr,0.85fr]">
+        <CoordinatorGuestContinuityPanel {...continuityPanelProps} />
+        <CoordinatorRunnerBoardPanel {...runnerBoardPanelProps} />
+      </div>
+
+      <CoordinatorShiftSnapshotPanel {...shiftSnapshotPanelProps} />
 
       <CoordinatorDayOfSummaryPanel {...dayOfSummaryPanelProps} />
 

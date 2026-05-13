@@ -80,20 +80,19 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - a persistent issue desk for seat changes, substitute attendees, plus-one swaps, and manager notes
   - table reassignment inside coordinator mode for seating-change-at-door workflow
   - saved household-context issue history so substitute and plus-one decisions do not disappear after the line moves
+- Fuller-suite shipped batch now adds:
+  - explicit incident owner, next-action, and resolved-outcome lifecycle fields for coordinator issues
+  - runner / escort task workflow with assignment, en route, done, and preserved completion-log state
+  - guest continuity panel that keeps substitutions, seat moves, escort work, and issue history connected across wedding moments
+  - copyable / printable shift snapshot surfaces for real handoff between coordinators
 - Deployed/live now:
   - migrations `20260513170000_coordinator_event_checkin_write.sql` and `20260513213000_coordinator_handoff_issue_depth.sql` applied remotely
-  - deeper runtime deployed on Vercel production `dpl_7BJdMft8MT5jtVCdS1dd1JTM7Ank`
-  - `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live` is green against the shipped deeper runtime, including staffing handoff and issue-desk surfaces
+  - fuller-suite runtime deployed on Vercel production `dpl_3jXVpMfacKiWr4UbhVcQPtHjxEtb`
+  - `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live` is green against the shipped fuller-suite runtime, including staffing handoff, issue desk, incident lifecycle, runner board, guest continuity, and shift snapshot surfaces
 
 ### Active deeper scope
 
-No remaining coordinator gap is active inside the competitor-informed MVP bar. But the board is now reopened above MVP toward a fuller suite bar:
-
-1. incident ownership lifecycle with explicit assignee, owner, status, next action, and resolved outcome for each coordinator issue
-2. mobile-friendly runner / escort flows with assignment, en route, done, and logged completion states
-3. cross-event guest movement continuity so seat changes, substitutions, escort actions, and exceptions stay connected across event moments
-4. export / printable / handoff surfaces that survive real multi-person day-of operations
-5. proof coverage that exercises incident lifecycle, runner workflow, cross-event continuity, and handoff export on the shipped runtime
+No remaining coordinator gap is active inside the competitor-informed MVP bar or the fuller-suite checklist for this lane. The coordinator full-suite checklist is now shipped and live-proven on the current production runtime.
 
 ## Name change
 
@@ -231,7 +230,7 @@ No remaining registry gap is active inside the current competitor-informed MVP b
 
 ## Decision For The Active Board
 
-- `Day-of / coordinator` has met the shipped launch-baseline MVP bar and the earlier deeper product-depth bar, but it is now reopened for a specific full-suite checklist.
+- `Day-of / coordinator` has met the shipped launch-baseline MVP bar, the earlier deeper product-depth bar, and its specific full-suite checklist.
 - `Name change` has met the shipped launch-baseline MVP bar and the earlier deeper planner-depth bar, but it is now reopened for a specific full-suite checklist.
 - `Universal Registry Barcode Scanner` has met the shipped launch-baseline MVP bar and the earlier deeper product-depth bar, but it is now reopened for a specific full-suite checklist.
 - Full-suite readiness should only be claimed after those three checklists are complete and the cross-feature exit gate is also complete: device coverage, empty/error/manual fallback coverage, saved-data continuity, role boundaries, operational handoff/export surfaces, and dedicated proof coverage.

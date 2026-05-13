@@ -30,6 +30,12 @@ const steps = [
     required: true,
   },
   {
+    id: 'coordinator-full-suite-tests',
+    label: 'Coordinator full-suite continuity and export tests',
+    command: 'npm test -- src/pages/dashboard/coordinator/coordinatorFullSuiteUtils.test.ts',
+    required: true,
+  },
+  {
     id: 'checkin-guard',
     label: 'Check-in guard',
     command: 'npm run smoke:checkin',
@@ -121,6 +127,7 @@ const output = {
     'Check-in queue filtering behavior',
     'Single-live-event timeline state truth',
     'Persisted staffing handoff and issue-log service boundaries',
+    'Incident ownership, runner-task, continuity, and shift-snapshot shaping',
     'Check-in mode guardrail',
     'Build integrity after coordinator proof assertions',
   ],

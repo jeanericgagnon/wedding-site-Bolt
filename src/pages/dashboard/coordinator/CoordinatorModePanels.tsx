@@ -51,10 +51,17 @@ import type {
   CoordinatorIssueLog,
   CoordinatorIssueStatus,
   CoordinatorIssueType,
+  CoordinatorRunnerTaskMode,
+  CoordinatorRunnerTaskStatus,
   CoordinatorTableLite,
   EventLite,
   TimelineState,
 } from './coordinatorDashboardTypes';
+import {
+  buildCoordinatorGuestContinuityView,
+  getCoordinatorRunnerTaskLabel,
+  readCoordinatorIssueOperationalMetadata,
+} from './coordinatorFullSuiteUtils';
 import { getCoordinatorQnaDraftStateLabel, type CoordinatorQnaFilter } from '../../../lib/coordinatorQnaTriage';
 
 type CoordinatorCheckInTargetState = {
@@ -105,6 +112,47 @@ const issueTypeLabel = (issueType: CoordinatorIssueType) => {
       return 'Walk-in';
     default:
       return issueType;
+  }
+};
+
+const runnerTaskStatusLabel = (status: CoordinatorRunnerTaskStatus) => {
+  switch (status) {
+    case 'assigned':
+      return 'Assigned';
+    case 'done':
+      return 'Done';
+    case 'en-route':
+      return 'En route';
+    default:
+      return 'Queued';
+  }
+};
+
+const runnerTaskModeLabel = (mode: CoordinatorRunnerTaskMode) => (
+  mode === 'escort' ? 'Escort' : 'Runner'
+);
+
+const formatHandoffStatus = (status: CoordinatorEventHandoff['handoff_status']) => {
+  switch (status) {
+    case 'needs-decision':
+      return 'Needs decision';
+    case 'staffed':
+      return 'Staffed';
+    case 'complete':
+      return 'Complete';
+    default:
+      return 'Ready';
+  }
+};
+
+const formatIssueStatus = (status: CoordinatorIssueStatus) => {
+  switch (status) {
+    case 'resolved':
+      return 'Resolved';
+    case 'working':
+      return 'Working';
+    default:
+      return 'Open';
   }
 };
 
@@ -378,6 +426,14 @@ type CoordinatorIssueDraftView = {
   title: string;
   note: string;
   assignedTo: string;
+  incidentOwner: string;
+  nextAction: string;
+  resolvedOutcome: string;
+  runnerTaskMode: 'none' | CoordinatorRunnerTaskMode;
+  runnerTaskAssignee: string;
+  runnerTaskStatus: CoordinatorRunnerTaskStatus;
+  runnerTaskDetail: string;
+  runnerTaskCompletionNote: string;
   replacementName: string;
   replacementPartySize: string;
   itineraryEventId: string | null;
@@ -427,6 +483,9 @@ export function CoordinatorIssueDeskPanel({
   const selectedGuestHousehold = activeGuest?.household_id
     ? guests.filter((guest) => guest.household_id === activeGuest.household_id)
     : [];
+  const selectedIssueMetadata = selectedIssueId
+    ? readCoordinatorIssueOperationalMetadata(issueLogs.find((issue) => issue.id === selectedIssueId)?.metadata)
+    : null;
 
   return (
     <div className="rounded-xl border border-border-subtle bg-white p-4 shadow-sm">
@@ -530,6 +589,47 @@ export function CoordinatorIssueDeskPanel({
                 placeholder="Lead or desk owner"
               />
             </div>
+            <div>
+              <label className="mb-1 block text-[11px] text-text-tertiary">Owner</label>
+              <Input
+                value={issueDraft.incidentOwner}
+                disabled={!canEditIssues}
+                onChange={(eventTarget) => onDraftChange({ incidentOwner: eventTarget.target.value })}
+                placeholder="Who is accountable for the final outcome?"
+              />
+            </div>
+            <div className="md:col-span-2 rounded-md border border-border/50 bg-surface-subtle/30 px-3 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-medium text-text-primary">Incident ownership</p>
+                  <p className="mt-1 text-[11px] text-text-secondary">Keep every issue anchored to a clear next move and a closeout note.</p>
+                </div>
+                <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${issueStatusClassName(issueDraft.status)}`}>
+                  {issueDraft.status}
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-[11px] text-text-tertiary">Next action</label>
+                  <Input
+                    value={issueDraft.nextAction}
+                    disabled={!canEditIssues}
+                    onChange={(eventTarget) => onDraftChange({ nextAction: eventTarget.target.value })}
+                    placeholder="What should happen before this can move forward?"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-[11px] text-text-tertiary">Resolved outcome</label>
+                  <Textarea
+                    rows={2}
+                    value={issueDraft.resolvedOutcome}
+                    disabled={!canEditIssues}
+                    onChange={(eventTarget) => onDraftChange({ resolvedOutcome: eventTarget.target.value })}
+                    placeholder="Capture the final decision, approval, and what changed on the floor."
+                  />
+                </div>
+              </div>
+            </div>
             {(issueDraft.issueType === 'seat-change' || issueDraft.issueType === 'substitute-attendee' || issueDraft.issueType === 'plus-one-swap') && (
               <>
                 {(issueDraft.issueType === 'substitute-attendee' || issueDraft.issueType === 'plus-one-swap') && (
@@ -570,6 +670,89 @@ export function CoordinatorIssueDeskPanel({
                 </div>
               </>
             )}
+            <div className="md:col-span-2 rounded-md border border-border/50 bg-surface-subtle/30 px-3 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-medium text-text-primary">Runner and escort task</p>
+                  <p className="mt-1 text-[11px] text-text-secondary">Use this when a guest movement needs someone to physically carry it through.</p>
+                </div>
+                {issueDraft.runnerTaskMode !== 'none' && (
+                  <span className="rounded-lg border border-primary/20 bg-primary/5 px-2 py-1 text-[10px] font-medium text-primary">
+                    {runnerTaskModeLabel(issueDraft.runnerTaskMode)} · {runnerTaskStatusLabel(issueDraft.runnerTaskStatus)}
+                  </span>
+                )}
+              </div>
+              <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-[11px] text-text-tertiary">Task type</label>
+                  <select
+                    value={issueDraft.runnerTaskMode}
+                    disabled={!canEditIssues}
+                    onChange={(eventTarget) => onDraftChange({ runnerTaskMode: eventTarget.target.value as CoordinatorIssueDraftView['runnerTaskMode'] })}
+                    className="w-full rounded-md border border-border bg-white px-2 py-2 text-[11px] text-text-secondary disabled:opacity-60"
+                  >
+                    <option value="none">No movement task</option>
+                    <option value="runner">Runner task</option>
+                    <option value="escort">Escort task</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] text-text-tertiary">Task status</label>
+                  <select
+                    value={issueDraft.runnerTaskStatus}
+                    disabled={!canEditIssues || issueDraft.runnerTaskMode === 'none'}
+                    onChange={(eventTarget) => onDraftChange({ runnerTaskStatus: eventTarget.target.value as CoordinatorRunnerTaskStatus })}
+                    className="w-full rounded-md border border-border bg-white px-2 py-2 text-[11px] text-text-secondary disabled:opacity-60"
+                  >
+                    <option value="queued">Queued</option>
+                    <option value="assigned">Assigned</option>
+                    <option value="en-route">En route</option>
+                    <option value="done">Done</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] text-text-tertiary">Task assignee</label>
+                  <Input
+                    value={issueDraft.runnerTaskAssignee}
+                    disabled={!canEditIssues || issueDraft.runnerTaskMode === 'none'}
+                    onChange={(eventTarget) => onDraftChange({ runnerTaskAssignee: eventTarget.target.value })}
+                    placeholder="Who is moving this guest?"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] text-text-tertiary">Completion note</label>
+                  <Input
+                    value={issueDraft.runnerTaskCompletionNote}
+                    disabled={!canEditIssues || issueDraft.runnerTaskMode === 'none'}
+                    onChange={(eventTarget) => onDraftChange({ runnerTaskCompletionNote: eventTarget.target.value })}
+                    placeholder="What should the team record once it lands?"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-[11px] text-text-tertiary">Task detail</label>
+                  <Textarea
+                    rows={2}
+                    value={issueDraft.runnerTaskDetail}
+                    disabled={!canEditIssues || issueDraft.runnerTaskMode === 'none'}
+                    onChange={(eventTarget) => onDraftChange({ runnerTaskDetail: eventTarget.target.value })}
+                    placeholder="Example: Escort the household from cocktails to Table 8 and confirm the chair swap."
+                  />
+                </div>
+                {selectedIssueMetadata?.runner_task?.completion_log.length ? (
+                  <div className="md:col-span-2 rounded-md border border-border/50 bg-white px-3 py-2">
+                    <p className="text-[10px] font-medium text-text-tertiary">Completion log</p>
+                    <div className="mt-2 space-y-1.5">
+                      {selectedIssueMetadata.runner_task.completion_log.slice().reverse().map((entry) => (
+                        <div key={`${entry.completed_at}-${entry.assignee ?? 'open'}`} className="rounded-md border border-border/50 bg-surface-subtle/20 px-2.5 py-2 text-[11px] text-text-secondary">
+                          <p className="font-medium text-text-primary">{runnerTaskModeLabel(entry.mode)} completed {new Date(entry.completed_at).toLocaleString()}</p>
+                          <p className="mt-1">{entry.assignee ?? 'Unassigned'}{entry.note ? ` · ${entry.note}` : ''}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
             <div className="md:col-span-2">
               <label className="mb-1 block text-[11px] text-text-tertiary">Operator notes</label>
               <Textarea
@@ -638,6 +821,20 @@ export function CoordinatorIssueDeskPanel({
                         {issue.table_name ? `Table: ${issue.table_name}` : ''}
                       </p>
                     )}
+                    {(() => {
+                      const metadata = readCoordinatorIssueOperationalMetadata(issue.metadata);
+                      const runnerLabel = getCoordinatorRunnerTaskLabel(metadata.runner_task);
+                      if (!metadata.incident_owner && !metadata.next_action && !runnerLabel) return null;
+                      return (
+                        <p className="mt-1 text-[10px] text-text-tertiary">
+                          {metadata.incident_owner ? `Owner: ${metadata.incident_owner}` : ''}
+                          {metadata.incident_owner && metadata.next_action ? ' · ' : ''}
+                          {metadata.next_action ? `Next: ${metadata.next_action}` : ''}
+                          {(metadata.incident_owner || metadata.next_action) && runnerLabel ? ' · ' : ''}
+                          {runnerLabel ? `Task: ${runnerLabel}` : ''}
+                        </p>
+                      );
+                    })()}
                   </div>
                   <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${issueStatusClassName(issue.status)}`}>
                     {issue.status}
@@ -647,6 +844,254 @@ export function CoordinatorIssueDeskPanel({
               </button>
             ))}
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export interface CoordinatorRunnerBoardPanelProps {
+  issueLogs: CoordinatorIssueLog[];
+  onSelectIssue: (issueId: string) => void;
+  selectedIssueId: string | null;
+}
+
+export function CoordinatorRunnerBoardPanel({
+  issueLogs,
+  onSelectIssue,
+  selectedIssueId,
+}: CoordinatorRunnerBoardPanelProps) {
+  const runnerIssues = issueLogs.filter((issue) => readCoordinatorIssueOperationalMetadata(issue.metadata).runner_task);
+  const openTasks = runnerIssues.filter((issue) => readCoordinatorIssueOperationalMetadata(issue.metadata).runner_task?.status !== 'done');
+  const completedTasks = runnerIssues.filter((issue) => readCoordinatorIssueOperationalMetadata(issue.metadata).runner_task?.status === 'done');
+
+  return (
+    <div className="rounded-xl border border-border-subtle bg-white p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-text-primary">Runner board</p>
+          <p className="mt-1 text-[11px] text-text-secondary">Keep guest movement tasks visible from assignment through completion.</p>
+        </div>
+        <span className="rounded-lg border border-primary/20 bg-primary/5 px-2 py-1 text-[10px] font-medium text-primary">
+          {openTasks.length} active
+        </span>
+      </div>
+      <div className="mt-4 space-y-3">
+        <div>
+          <p className="text-[11px] font-medium text-text-primary">Active tasks</p>
+          <div className="mt-2 space-y-2">
+            {openTasks.length === 0 ? (
+              <p className="rounded-md border border-border/50 bg-surface-subtle/25 px-3 py-2 text-[11px] text-text-tertiary">No runner or escort tasks are active right now.</p>
+            ) : openTasks.map((issue) => {
+              const metadata = readCoordinatorIssueOperationalMetadata(issue.metadata);
+              const runnerTask = metadata.runner_task;
+              if (!runnerTask) return null;
+              return (
+                <button
+                  key={issue.id}
+                  type="button"
+                  onClick={() => onSelectIssue(issue.id)}
+                  className={`w-full rounded-lg border px-3 py-2 text-left ${selectedIssueId === issue.id ? 'border-primary/25 bg-primary/5' : 'border-border/50 bg-white'}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-medium text-text-primary">{issue.title}</p>
+                      <p className="mt-1 text-[11px] text-text-secondary">
+                        {runnerTaskModeLabel(runnerTask.mode)} · {runnerTaskStatusLabel(runnerTask.status)}
+                        {runnerTask.assignee ? ` · ${runnerTask.assignee}` : ''}
+                      </p>
+                      {runnerTask.detail && (
+                        <p className="mt-1 text-[11px] text-text-tertiary">{runnerTask.detail}</p>
+                      )}
+                    </div>
+                    <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${issueStatusClassName(issue.status)}`}>
+                      {runnerTaskStatusLabel(runnerTask.status)}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div>
+          <p className="text-[11px] font-medium text-text-primary">Recent completions</p>
+          <div className="mt-2 space-y-2">
+            {completedTasks.length === 0 ? (
+              <p className="rounded-md border border-border/50 bg-surface-subtle/25 px-3 py-2 text-[11px] text-text-tertiary">No completed movement tasks logged yet.</p>
+            ) : completedTasks.slice(0, 4).map((issue) => {
+              const runnerTask = readCoordinatorIssueOperationalMetadata(issue.metadata).runner_task;
+              if (!runnerTask) return null;
+              return (
+                <button
+                  key={issue.id}
+                  type="button"
+                  onClick={() => onSelectIssue(issue.id)}
+                  className={`w-full rounded-lg border px-3 py-2 text-left ${selectedIssueId === issue.id ? 'border-primary/25 bg-primary/5' : 'border-border/50 bg-white'}`}
+                >
+                  <p className="text-[11px] font-medium text-text-primary">{issue.title}</p>
+                  <p className="mt-1 text-[11px] text-text-secondary">
+                    {runnerTaskModeLabel(runnerTask.mode)} completed
+                    {runnerTask.completed_at ? ` · ${new Date(runnerTask.completed_at).toLocaleString()}` : ''}
+                  </p>
+                  {runnerTask.completion_note && (
+                    <p className="mt-1 text-[11px] text-text-tertiary">{runnerTask.completion_note}</p>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export interface CoordinatorGuestContinuityPanelProps {
+  activeGuest: GuestLiteForCoordinator | null;
+  eventHandoffs: CoordinatorEventHandoff[];
+  events: EventLite[];
+  issueLogs: CoordinatorIssueLog[];
+  onSelectIssue: (issueId: string) => void;
+}
+
+export function CoordinatorGuestContinuityPanel({
+  activeGuest,
+  eventHandoffs,
+  events,
+  issueLogs,
+  onSelectIssue,
+}: CoordinatorGuestContinuityPanelProps) {
+  const continuity = activeGuest
+    ? buildCoordinatorGuestContinuityView({
+      eventHandoffs,
+      events,
+      guest: activeGuest,
+      issueLogs,
+    })
+    : null;
+
+  return (
+    <div className="rounded-xl border border-border-subtle bg-white p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-text-primary">Guest continuity</p>
+          <p className="mt-1 text-[11px] text-text-secondary">Follow one guest across event arrivals, issue decisions, and staffing handoffs.</p>
+        </div>
+        {activeGuest && (
+          <span className="rounded-lg border border-primary/20 bg-primary/5 px-2 py-1 text-[10px] font-medium text-primary">
+            {continuity?.touchedEventIds.length ?? 0} touched moments
+          </span>
+        )}
+      </div>
+      {!activeGuest || !continuity ? (
+        <p className="mt-4 rounded-md border border-border/50 bg-surface-subtle/25 px-3 py-2 text-[11px] text-text-tertiary">Choose a guest in the check-in queue or issue desk to follow their continuity trail.</p>
+      ) : (
+        <div className="mt-4 space-y-3">
+          <div className="rounded-md border border-border/50 bg-surface-subtle/20 px-3 py-2">
+            <p className="text-[11px] font-medium text-text-primary">{activeGuest.name}</p>
+            <p className="mt-1 text-[11px] text-text-secondary">{activeGuest.rsvp_status} · {continuity.relatedIssues.length} related issues</p>
+          </div>
+          <div>
+            <p className="text-[11px] font-medium text-text-primary">Event movement</p>
+            <div className="mt-2 space-y-2">
+              {continuity.moments.length === 0 ? (
+                <p className="rounded-md border border-border/50 bg-surface-subtle/25 px-3 py-2 text-[11px] text-text-tertiary">No event-moment history is linked to this guest yet.</p>
+              ) : continuity.moments.map((moment) => (
+                <div key={moment.eventId} className="rounded-md border border-border/50 bg-white px-3 py-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-medium text-text-primary">{moment.eventName}</p>
+                      <p className="mt-1 text-[11px] text-text-secondary">
+                        {moment.checkedInAt ? `Checked in ${new Date(moment.checkedInAt).toLocaleString()}` : 'Not checked in yet'}
+                        {moment.tableName ? ` · ${moment.tableName}` : ''}
+                      </p>
+                    </div>
+                    {moment.handoffStatus && (
+                      <span className="rounded-lg border border-primary/20 bg-primary/5 px-2 py-1 text-[10px] font-medium text-primary">
+                        {formatHandoffStatus(moment.handoffStatus)}
+                      </span>
+                    )}
+                  </div>
+                  {(moment.handoffNote || moment.issueCount > 0) && (
+                    <p className="mt-1 text-[11px] text-text-tertiary">
+                      {moment.issueCount > 0 ? `${moment.issueCount} issue ${moment.issueCount === 1 ? 'touchpoint' : 'touchpoints'}` : ''}
+                      {moment.issueCount > 0 && moment.handoffNote ? ' · ' : ''}
+                      {moment.handoffNote ?? ''}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-[11px] font-medium text-text-primary">Issue trail</p>
+            <div className="mt-2 space-y-2">
+              {continuity.relatedIssues.length === 0 ? (
+                <p className="rounded-md border border-border/50 bg-surface-subtle/25 px-3 py-2 text-[11px] text-text-tertiary">No issue trail is linked to this guest yet.</p>
+              ) : continuity.relatedIssues.slice(0, 5).map((issue) => {
+                const metadata = readCoordinatorIssueOperationalMetadata(issue.metadata);
+                return (
+                  <button
+                    key={issue.id}
+                    type="button"
+                    onClick={() => onSelectIssue(issue.id)}
+                    className="w-full rounded-md border border-border/50 bg-white px-3 py-2 text-left"
+                  >
+                    <p className="text-[11px] font-medium text-text-primary">{issue.title}</p>
+                    <p className="mt-1 text-[11px] text-text-secondary">
+                      {issueTypeLabel(issue.issue_type)} · {formatIssueStatus(issue.status)}
+                      {metadata.incident_owner ? ` · Owner: ${metadata.incident_owner}` : ''}
+                    </p>
+                    {(metadata.next_action || metadata.resolved_outcome) && (
+                      <p className="mt-1 text-[11px] text-text-tertiary">
+                        {metadata.next_action ?? metadata.resolved_outcome}
+                      </p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export interface CoordinatorShiftSnapshotPanelProps {
+  onCopySnapshot: () => void;
+  onPrintSnapshot: () => void;
+  snapshotDetail: string;
+}
+
+export function CoordinatorShiftSnapshotPanel({
+  onCopySnapshot,
+  onPrintSnapshot,
+  snapshotDetail,
+}: CoordinatorShiftSnapshotPanelProps) {
+  return (
+    <div className="rounded-xl border border-border-subtle bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-sm font-medium text-text-primary">Shift snapshot</p>
+          <p className="mt-1 text-[11px] text-text-secondary">Hand the next coordinator a clean unresolved-work packet without rebuilding the story by hand.</p>
+          <p className="mt-1 text-[11px] text-text-tertiary">{snapshotDetail}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onCopySnapshot}
+            className="rounded-md border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] text-primary"
+          >
+            Copy snapshot
+          </button>
+          <button
+            type="button"
+            onClick={onPrintSnapshot}
+            className="rounded-md border border-border bg-white px-3 py-1.5 text-[11px] text-text-secondary"
+          >
+            Print snapshot
+          </button>
         </div>
       </div>
     </div>

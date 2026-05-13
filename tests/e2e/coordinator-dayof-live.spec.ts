@@ -22,6 +22,9 @@ test('coordinator day-of route loads the core event-day runtime surfaces', async
   await expect(page.getByText(/^Guest questions/).first()).toBeVisible();
   await expect(page.getByText(/^Staffing handoff$/).first()).toBeVisible();
   await expect(page.getByText(/^Issue desk$/).first()).toBeVisible();
+  await expect(page.getByText(/^Guest continuity$/).first()).toBeVisible();
+  await expect(page.getByText(/^Runner board$/).first()).toBeVisible();
+  await expect(page.getByText(/^Shift snapshot$/).first()).toBeVisible();
   await expect(page.getByText(/^Timeline board$/).first()).toBeVisible();
   await expect(page.getByText(/^Q&A board$/).first()).toBeVisible();
 });
