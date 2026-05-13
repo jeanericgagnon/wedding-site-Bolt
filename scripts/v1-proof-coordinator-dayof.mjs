@@ -24,6 +24,12 @@ const steps = [
     required: true,
   },
   {
+    id: 'coordinator-service-tests',
+    label: 'Coordinator service and persistence tests',
+    command: 'npm test -- src/pages/dashboard/coordinator/coordinatorService.test.ts',
+    required: true,
+  },
+  {
     id: 'checkin-guard',
     label: 'Check-in guard',
     command: 'npm run smoke:checkin',
@@ -114,6 +120,7 @@ const output = {
     'Role-aware coordinator live-ops boundaries',
     'Check-in queue filtering behavior',
     'Single-live-event timeline state truth',
+    'Persisted staffing handoff and issue-log service boundaries',
     'Check-in mode guardrail',
     'Build integrity after coordinator proof assertions',
   ],

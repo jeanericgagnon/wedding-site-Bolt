@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react';
 import { readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../../lib/plannerAccess';
 import type { GuestLiteForCoordinator } from '../../../lib/coordinatorTypes';
-import type { AlertLog, EventLite, QnaItem, TimelineState } from './coordinatorDashboardTypes';
+import type {
+  AlertLog,
+  CoordinatorEventHandoff,
+  CoordinatorIssueLog,
+  CoordinatorTableLite,
+  EventLite,
+  QnaItem,
+  TimelineState,
+} from './coordinatorDashboardTypes';
 import {
   readStoredCoordinatorActiveWorkState,
   readStoredCoordinatorAlertIntentState,
@@ -40,6 +48,10 @@ export function useCoordinatorDashboardData(args: {
   const [siteId, setSiteId] = useState<string | null>(null);
   const [eventGuestIds, setEventGuestIds] = useState<Record<string, Set<string>>>({});
   const [eventSeatingConfiguredIds, setEventSeatingConfiguredIds] = useState<Set<string>>(new Set<string>());
+  const [eventSeatingEventIds, setEventSeatingEventIds] = useState<Record<string, string>>({});
+  const [eventSeatingTables, setEventSeatingTables] = useState<Record<string, CoordinatorTableLite[]>>({});
+  const [eventHandoffs, setEventHandoffs] = useState<CoordinatorEventHandoff[]>([]);
+  const [issueLogs, setIssueLogs] = useState<CoordinatorIssueLog[]>([]);
   const [timelineState, setTimelineState] = useState<Record<string, TimelineState>>({});
   const [alertLog, setAlertLog] = useState<AlertLog[]>([]);
   const [qnaItems, setQnaItems] = useState<QnaItem[]>([]);
@@ -113,6 +125,25 @@ export function useCoordinatorDashboardData(args: {
           setEvents([{ id: 'e1', event_name: 'Ceremony', start_time: now }]);
           setEventGuestIds({ e1: new Set(['1', '2']) });
           setEventSeatingConfiguredIds(new Set(['e1']));
+          setEventSeatingEventIds({ e1: 'demo-seating-1' });
+          setEventSeatingTables({
+            e1: [
+              { id: 'demo-table-1', seating_event_id: 'demo-seating-1', table_name: 'Table 1', sort_order: 0 },
+              { id: 'demo-table-2', seating_event_id: 'demo-seating-1', table_name: 'Table 2', sort_order: 1 },
+            ],
+          });
+          setEventHandoffs([
+            {
+              id: 'demo-handoff-1',
+              itinerary_event_id: 'e1',
+              handoff_status: 'staffed',
+              lead_name: 'Jordan',
+              support_name: 'Mina',
+              note: 'Front gate plus family row locked in before 4:00 PM.',
+              updated_at: now,
+            },
+          ]);
+          setIssueLogs([]);
           return;
         }
 
@@ -131,6 +162,10 @@ export function useCoordinatorDashboardData(args: {
         setEvents(bootstrap.events);
         setEventGuestIds(bootstrap.eventGuestIds);
         setEventSeatingConfiguredIds(bootstrap.eventSeatingConfiguredIds);
+        setEventSeatingEventIds(bootstrap.eventSeatingEventIds);
+        setEventSeatingTables(bootstrap.eventSeatingTables);
+        setEventHandoffs(bootstrap.eventHandoffs);
+        setIssueLogs(bootstrap.issueLogs);
         setActiveGuestId(storedGuestWorkState.activeGuestId);
         const cachedQna = readStoredCoordinatorQnaItems(bootstrap.siteId);
         if (bootstrap.qnaItems.length > 0) {
@@ -306,8 +341,12 @@ export function useCoordinatorDashboardData(args: {
     coordinatorRole,
     eventGuestIds,
     eventSeatingConfiguredIds,
+    eventSeatingEventIds,
+    eventSeatingTables,
+    eventHandoffs,
     events,
     guests,
+    issueLogs,
     lastAlertSuggestionKey,
     loading,
     panelFocus,
@@ -329,6 +368,10 @@ export function useCoordinatorDashboardData(args: {
     setCoordinatorRole,
     setEvents,
     setGuests,
+    setEventHandoffs,
+    setEventSeatingEventIds,
+    setEventSeatingTables,
+    setIssueLogs,
     setLastAlertSuggestionKey,
     setPanelFocus,
     setQnaDraftAnswers,

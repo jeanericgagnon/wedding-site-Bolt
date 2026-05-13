@@ -2,6 +2,7 @@ export type CoordinatorGuestDoorRoute = 'walk-in' | 'help-desk' | 'manager-decis
 
 export type CoordinatorGuestEventArrival = {
   seating_event_id: string | null;
+  table_id?: string | null;
   table_name: string | null;
   checked_in_at: string | null;
   is_seated: boolean;

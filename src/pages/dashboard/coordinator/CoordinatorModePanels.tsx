@@ -44,7 +44,17 @@ import { getCoordinatorPrimaryTimelineAction } from '../../../lib/coordinatorTim
 import type { CoordinatorGuestDoorRoute, GuestLiteForCoordinator } from '../../../lib/coordinatorTypes';
 import { getCoordinatorActiveTargetLabel } from '../../../lib/coordinatorActiveTargetLabel';
 import { formatCoordinatorEventDateTime } from '../coordinatorEventTime';
-import type { AlertLog, AudienceOption, EventLite, TimelineState } from './coordinatorDashboardTypes';
+import type {
+  AlertLog,
+  AudienceOption,
+  CoordinatorEventHandoff,
+  CoordinatorIssueLog,
+  CoordinatorIssueStatus,
+  CoordinatorIssueType,
+  CoordinatorTableLite,
+  EventLite,
+  TimelineState,
+} from './coordinatorDashboardTypes';
 import { getCoordinatorQnaDraftStateLabel, type CoordinatorQnaFilter } from '../../../lib/coordinatorQnaTriage';
 
 type CoordinatorCheckInTargetState = {
@@ -66,6 +76,36 @@ type CoordinatorQnaTargetState = {
   boardTargetId: string | null;
   isBoardTargetActive: boolean;
   label: string | null;
+};
+
+const issueStatusClassName = (status: CoordinatorIssueStatus) => {
+  switch (status) {
+    case 'resolved':
+      return 'border-primary/20 bg-primary/5 text-primary';
+    case 'working':
+      return 'border-primary/20 bg-accent-light text-primary';
+    default:
+      return 'border-border bg-white text-text-tertiary';
+  }
+};
+
+const issueTypeLabel = (issueType: CoordinatorIssueType) => {
+  switch (issueType) {
+    case 'help-desk':
+      return 'Help desk';
+    case 'manager-decision':
+      return 'Manager decision';
+    case 'plus-one-swap':
+      return 'Plus-one swap';
+    case 'seat-change':
+      return 'Seat change';
+    case 'substitute-attendee':
+      return 'Substitute attendee';
+    case 'walk-in':
+      return 'Walk-in';
+    default:
+      return issueType;
+  }
 };
 
 export interface CoordinatorRoleSelectorProps {
@@ -218,9 +258,23 @@ export function CoordinatorAttentionPanel({
 
 export interface CoordinatorHandoffPanelProps {
   coordinatorRole: PlannerAccessRole;
+  canEditHandoffs: boolean;
+  events: EventLite[];
+  eventHandoffs: CoordinatorEventHandoff[];
+  handoffBusyEventId: string | null;
+  onChangeHandoff: (eventId: string, patch: Partial<CoordinatorEventHandoff>) => void;
+  onSaveHandoff: (eventId: string) => void;
 }
 
-export function CoordinatorHandoffPanel({ coordinatorRole }: CoordinatorHandoffPanelProps) {
+export function CoordinatorHandoffPanel({
+  coordinatorRole,
+  canEditHandoffs,
+  events,
+  eventHandoffs,
+  handoffBusyEventId,
+  onChangeHandoff,
+  onSaveHandoff,
+}: CoordinatorHandoffPanelProps) {
   const handoffCopy = {
     title: coordinatorRole === 'viewer' ? 'Viewer handoff' : coordinatorRole === 'coordinator' ? 'Coordinator handoff' : 'Planner handoff',
     detail: coordinatorRole === 'viewer'
@@ -229,12 +283,372 @@ export function CoordinatorHandoffPanel({ coordinatorRole }: CoordinatorHandoffP
         ? 'Keep live updates moving and flag anything sensitive back to the couple.'
         : 'Run the room, keep communications aligned, and escalate only the decisions that need the couple.',
   };
+  const handoffByEventId = new Map(eventHandoffs.map((item) => [item.itinerary_event_id, item]));
 
   return (
-    <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
-      <p className="font-medium">{handoffCopy.title}</p>
-      <p className="mt-1 text-primary/80">{handoffCopy.detail}</p>
-      <p className="mt-2 text-primary/70">Final couple decisions stay with the couple when something needs approval.</p>
+    <div className="rounded-xl border border-border-subtle bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-sm font-medium text-text-primary">Staffing handoff</p>
+          <p className="mt-1 text-[11px] text-text-secondary">{handoffCopy.detail}</p>
+          <p className="mt-1 text-[11px] text-text-tertiary">Final couple decisions stay with the couple when something needs approval.</p>
+        </div>
+        <span className="rounded-lg border border-primary/20 bg-primary/5 px-2 py-1 text-[10px] font-medium text-primary">
+          {handoffCopy.title}
+        </span>
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+        {events.map((event) => {
+          const handoff = handoffByEventId.get(event.id) ?? {
+            id: `draft-${event.id}`,
+            itinerary_event_id: event.id,
+            handoff_status: 'ready' as const,
+            lead_name: '',
+            support_name: '',
+            note: '',
+            updated_at: null,
+          };
+          return (
+            <div key={event.id} className="rounded-lg border border-border/60 bg-surface-subtle/25 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-text-primary">{event.event_name}</p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">{formatCoordinatorEventDateTime(event.start_time)}</p>
+                </div>
+                <select
+                  value={handoff.handoff_status}
+                  disabled={!canEditHandoffs}
+                  onChange={(eventTarget) => onChangeHandoff(event.id, { handoff_status: eventTarget.target.value as CoordinatorEventHandoff['handoff_status'] })}
+                  className="rounded-md border border-border bg-white px-2 py-1.5 text-[11px] text-text-secondary disabled:opacity-60"
+                >
+                  <option value="ready">Ready</option>
+                  <option value="staffed">Staffed</option>
+                  <option value="needs-decision">Needs decision</option>
+                  <option value="complete">Complete</option>
+                </select>
+              </div>
+              <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+                <Input
+                  value={handoff.lead_name ?? ''}
+                  disabled={!canEditHandoffs}
+                  onChange={(eventTarget) => onChangeHandoff(event.id, { lead_name: eventTarget.target.value })}
+                  placeholder="Lead"
+                />
+                <Input
+                  value={handoff.support_name ?? ''}
+                  disabled={!canEditHandoffs}
+                  onChange={(eventTarget) => onChangeHandoff(event.id, { support_name: eventTarget.target.value })}
+                  placeholder="Support"
+                />
+              </div>
+              <Textarea
+                className="mt-2"
+                rows={3}
+                value={handoff.note ?? ''}
+                disabled={!canEditHandoffs}
+                onChange={(eventTarget) => onChangeHandoff(event.id, { note: eventTarget.target.value })}
+                placeholder="What does the next helper need to know?"
+              />
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <p className="text-[11px] text-text-tertiary">
+                  {handoff.updated_at ? `Updated ${new Date(handoff.updated_at).toLocaleString()}` : 'No saved handoff yet'}
+                </p>
+                {canEditHandoffs && (
+                  <button
+                    type="button"
+                    onClick={() => onSaveHandoff(event.id)}
+                    disabled={handoffBusyEventId === event.id}
+                    className="rounded-md border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] text-primary disabled:opacity-40"
+                  >
+                    {handoffBusyEventId === event.id ? 'Saving…' : 'Save handoff'}
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+type CoordinatorIssueDraftView = {
+  issueType: CoordinatorIssueType;
+  status: CoordinatorIssueStatus;
+  title: string;
+  note: string;
+  assignedTo: string;
+  replacementName: string;
+  replacementPartySize: string;
+  itineraryEventId: string | null;
+  tableId: string | null;
+};
+
+export interface CoordinatorIssueDeskPanelProps {
+  activeGuest: GuestLiteForCoordinator | null;
+  canEditIssues: boolean;
+  currentEventId: string | null;
+  currentEventName: string | null;
+  events: EventLite[];
+  guests: GuestLiteForCoordinator[];
+  issueBusy: boolean;
+  issueDraft: CoordinatorIssueDraftView;
+  issueLogs: CoordinatorIssueLog[];
+  selectedIssueId: string | null;
+  seatingTables: CoordinatorTableLite[];
+  onClearIssueDraft: () => void;
+  onDraftChange: (patch: Partial<CoordinatorIssueDraftView>) => void;
+  onPrefillIssueType: (issueType: CoordinatorIssueType) => void;
+  onSaveIssue: () => void;
+  onSelectIssue: (issueId: string) => void;
+}
+
+export function CoordinatorIssueDeskPanel({
+  activeGuest,
+  canEditIssues,
+  currentEventId,
+  currentEventName,
+  events,
+  guests,
+  issueBusy,
+  issueDraft,
+  issueLogs,
+  selectedIssueId,
+  seatingTables,
+  onClearIssueDraft,
+  onDraftChange,
+  onPrefillIssueType,
+  onSaveIssue,
+  onSelectIssue,
+}: CoordinatorIssueDeskPanelProps) {
+  const eventNameById = new Map(events.map((event) => [event.id, event.event_name]));
+  const guestNameById = new Map(guests.map((guest) => [guest.id, guest.name]));
+  const selectedEventName = issueDraft.itineraryEventId ? (eventNameById.get(issueDraft.itineraryEventId) ?? null) : currentEventName;
+  const selectedGuestHousehold = activeGuest?.household_id
+    ? guests.filter((guest) => guest.household_id === activeGuest.household_id)
+    : [];
+
+  return (
+    <div className="rounded-xl border border-border-subtle bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-sm font-medium text-text-primary">Issue desk</p>
+          <p className="mt-1 text-[11px] text-text-secondary">Keep seat changes, substitute guests, and manager calls in one persistent day-of thread.</p>
+        </div>
+        <span className="rounded-lg border border-border bg-white px-2 py-1 text-[10px] font-medium text-text-tertiary">
+          {issueLogs.filter((item) => item.status !== 'resolved').length} open
+        </span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[1.2fr,0.8fr]">
+        <div className="rounded-lg border border-border/60 bg-surface-subtle/20 p-3">
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => onPrefillIssueType('seat-change')} disabled={!canEditIssues || !activeGuest} className="rounded-md border border-border bg-white px-2.5 py-1.5 text-[11px] text-text-secondary disabled:opacity-40">Seat change</button>
+            <button type="button" onClick={() => onPrefillIssueType('substitute-attendee')} disabled={!canEditIssues || !activeGuest} className="rounded-md border border-border bg-white px-2.5 py-1.5 text-[11px] text-text-secondary disabled:opacity-40">Substitute</button>
+            <button type="button" onClick={() => onPrefillIssueType('plus-one-swap')} disabled={!canEditIssues || !activeGuest} className="rounded-md border border-border bg-white px-2.5 py-1.5 text-[11px] text-text-secondary disabled:opacity-40">Plus-one swap</button>
+            <button type="button" onClick={() => onPrefillIssueType('manager-decision')} disabled={!canEditIssues || !activeGuest} className="rounded-md border border-border bg-white px-2.5 py-1.5 text-[11px] text-text-secondary disabled:opacity-40">Manager note</button>
+          </div>
+
+          <div className="mt-3 rounded-md border border-border/50 bg-white px-3 py-2">
+            <p className="text-[10px] text-text-tertiary">Focused guest</p>
+            {activeGuest ? (
+              <>
+                <p className="mt-1 text-sm font-medium text-text-primary">{activeGuest.name}</p>
+                <p className="mt-1 text-[11px] text-text-secondary">
+                  {selectedEventName ? `${selectedEventName} · ` : ''}{getCoordinatorEventTableName(activeGuest, issueDraft.itineraryEventId ?? currentEventId) ?? 'Unassigned seat'}
+                </p>
+                {selectedGuestHousehold.length > 1 && (
+                  <p className="mt-1 text-[11px] text-text-tertiary">
+                    Household: {selectedGuestHousehold.map((guest) => guest.name).join(', ')}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="mt-1 text-[11px] text-text-tertiary">Pick someone from the check-in queue to anchor a seat change or substitution.</p>
+            )}
+          </div>
+
+          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-[11px] text-text-tertiary">Issue type</label>
+              <select
+                value={issueDraft.issueType}
+                disabled={!canEditIssues}
+                onChange={(eventTarget) => onDraftChange({ issueType: eventTarget.target.value as CoordinatorIssueType })}
+                className="w-full rounded-md border border-border bg-white px-2 py-2 text-[11px] text-text-secondary disabled:opacity-60"
+              >
+                <option value="seat-change">Seat change</option>
+                <option value="substitute-attendee">Substitute attendee</option>
+                <option value="plus-one-swap">Plus-one swap</option>
+                <option value="manager-decision">Manager decision</option>
+                <option value="help-desk">Help desk</option>
+                <option value="walk-in">Walk-in</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] text-text-tertiary">Status</label>
+              <select
+                value={issueDraft.status}
+                disabled={!canEditIssues}
+                onChange={(eventTarget) => onDraftChange({ status: eventTarget.target.value as CoordinatorIssueStatus })}
+                className="w-full rounded-md border border-border bg-white px-2 py-2 text-[11px] text-text-secondary disabled:opacity-60"
+              >
+                <option value="open">Open</option>
+                <option value="working">Working</option>
+                <option value="resolved">Resolved</option>
+              </select>
+            </div>
+            <div className="md:col-span-2">
+              <label className="mb-1 block text-[11px] text-text-tertiary">Title</label>
+              <Input
+                value={issueDraft.title}
+                disabled={!canEditIssues}
+                onChange={(eventTarget) => onDraftChange({ title: eventTarget.target.value })}
+                placeholder="What needs to happen next?"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] text-text-tertiary">Event</label>
+              <select
+                value={issueDraft.itineraryEventId ?? ''}
+                disabled={!canEditIssues}
+                onChange={(eventTarget) => onDraftChange({ itineraryEventId: eventTarget.target.value || null, tableId: null })}
+                className="w-full rounded-md border border-border bg-white px-2 py-2 text-[11px] text-text-secondary disabled:opacity-60"
+              >
+                <option value="">No event link</option>
+                {events.map((event) => (
+                  <option key={event.id} value={event.id}>{event.event_name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] text-text-tertiary">Assignee</label>
+              <Input
+                value={issueDraft.assignedTo}
+                disabled={!canEditIssues}
+                onChange={(eventTarget) => onDraftChange({ assignedTo: eventTarget.target.value })}
+                placeholder="Lead or desk owner"
+              />
+            </div>
+            {(issueDraft.issueType === 'seat-change' || issueDraft.issueType === 'substitute-attendee' || issueDraft.issueType === 'plus-one-swap') && (
+              <>
+                {(issueDraft.issueType === 'substitute-attendee' || issueDraft.issueType === 'plus-one-swap') && (
+                  <>
+                    <div>
+                      <label className="mb-1 block text-[11px] text-text-tertiary">Replacement name</label>
+                      <Input
+                        value={issueDraft.replacementName}
+                        disabled={!canEditIssues}
+                        onChange={(eventTarget) => onDraftChange({ replacementName: eventTarget.target.value })}
+                        placeholder="Who is arriving in their place?"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[11px] text-text-tertiary">Party size</label>
+                      <Input
+                        value={issueDraft.replacementPartySize}
+                        disabled={!canEditIssues}
+                        onChange={(eventTarget) => onDraftChange({ replacementPartySize: eventTarget.target.value })}
+                        placeholder="1"
+                      />
+                    </div>
+                  </>
+                )}
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-[11px] text-text-tertiary">Target table</label>
+                  <select
+                    value={issueDraft.tableId ?? ''}
+                    disabled={!canEditIssues || seatingTables.length === 0}
+                    onChange={(eventTarget) => onDraftChange({ tableId: eventTarget.target.value || null })}
+                    className="w-full rounded-md border border-border bg-white px-2 py-2 text-[11px] text-text-secondary disabled:opacity-60"
+                  >
+                    <option value="">{seatingTables.length ? 'Keep current table' : 'No tables available for this event yet'}</option>
+                    {seatingTables.map((table) => (
+                      <option key={table.id} value={table.id}>{table.table_name ?? 'Unassigned'}</option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
+            <div className="md:col-span-2">
+              <label className="mb-1 block text-[11px] text-text-tertiary">Operator notes</label>
+              <Textarea
+                rows={4}
+                value={issueDraft.note}
+                disabled={!canEditIssues}
+                onChange={(eventTarget) => onDraftChange({ note: eventTarget.target.value })}
+                placeholder="Capture the decision, who approved it, and what the next helper should honor."
+              />
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {canEditIssues && (
+              <button
+                type="button"
+                onClick={onSaveIssue}
+                disabled={issueBusy || !activeGuest}
+                className="rounded-md border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] text-primary disabled:opacity-40"
+              >
+                {issueBusy ? 'Saving…' : selectedIssueId ? 'Update issue' : 'Save issue'}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClearIssueDraft}
+              className="rounded-md border border-border bg-white px-3 py-1.5 text-[11px] text-text-secondary"
+            >
+              Clear
+            </button>
+            <a href="/dashboard/seating-lookup" className="rounded-md border border-border bg-white px-3 py-1.5 text-[11px] text-text-secondary">Open seating lookup</a>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-border/60 bg-surface-subtle/20 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[11px] font-medium text-text-primary">Recent issue history</p>
+            <p className="text-[11px] text-text-tertiary">{issueLogs.length} logged</p>
+          </div>
+          <div className="mt-3 space-y-2">
+            {issueLogs.length === 0 && (
+              <p className="rounded-md border border-border/50 bg-white px-3 py-2 text-[11px] text-text-tertiary">No saved day-of issue history yet.</p>
+            )}
+            {issueLogs.slice(0, 8).map((issue) => (
+              <button
+                key={issue.id}
+                type="button"
+                onClick={() => onSelectIssue(issue.id)}
+                className={`w-full rounded-md border px-3 py-2 text-left ${selectedIssueId === issue.id ? 'border-primary/25 bg-primary/5' : 'border-border/50 bg-white'}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-medium text-text-primary">{issue.title}</p>
+                    <p className="mt-1 text-[11px] text-text-secondary">
+                      {issueTypeLabel(issue.issue_type)}
+                      {issue.guest_id ? ` · ${guestNameById.get(issue.guest_id) ?? 'Guest'}` : ''}
+                      {issue.itinerary_event_id ? ` · ${eventNameById.get(issue.itinerary_event_id) ?? 'Event'}` : ''}
+                    </p>
+                    {issue.note && (
+                      <p className="mt-1 text-[11px] text-text-tertiary line-clamp-3">{issue.note}</p>
+                    )}
+                    {(issue.replacement_name || issue.table_name) && (
+                      <p className="mt-1 text-[10px] text-text-tertiary">
+                        {issue.replacement_name ? `Replacement: ${issue.replacement_name}` : ''}
+                        {issue.replacement_name && issue.table_name ? ' · ' : ''}
+                        {issue.table_name ? `Table: ${issue.table_name}` : ''}
+                      </p>
+                    )}
+                  </div>
+                  <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${issueStatusClassName(issue.status)}`}>
+                    {issue.status}
+                  </span>
+                </div>
+                <p className="mt-2 text-[10px] text-text-tertiary">{new Date(issue.updated_at).toLocaleString()}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

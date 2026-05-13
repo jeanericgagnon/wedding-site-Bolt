@@ -55,6 +55,7 @@ export function useCoordinatorDashboardActions(args: Args) {
           ...(guest.event_arrivals ?? {}),
           [args.currentDoorEventId]: {
             seating_event_id: guest.event_arrivals?.[args.currentDoorEventId]?.seating_event_id ?? null,
+            table_id: guest.event_arrivals?.[args.currentDoorEventId]?.table_id ?? null,
             table_name: guest.event_arrivals?.[args.currentDoorEventId]?.table_name ?? null,
             checked_in_at: checkedInAt,
             is_seated: guest.event_arrivals?.[args.currentDoorEventId]?.is_seated ?? false,

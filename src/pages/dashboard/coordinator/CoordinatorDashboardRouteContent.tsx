@@ -8,6 +8,7 @@ import {
   CoordinatorDayOfSummaryPanel,
   CoordinatorHandoffPanel,
   CoordinatorHelperAccessPanel,
+  CoordinatorIssueDeskPanel,
   CoordinatorQnaPanel,
   CoordinatorRoleSelector,
   CoordinatorStatCards,
@@ -26,6 +27,8 @@ type CoordinatorCheckInQueuePanelProps = Omit<
 type CoordinatorTimelinePanelProps = React.ComponentProps<typeof CoordinatorTimelinePanel>;
 type CoordinatorDayOfMessagePanelProps = React.ComponentProps<typeof CoordinatorDayOfMessagePanel>;
 type CoordinatorQnaPanelProps = React.ComponentProps<typeof CoordinatorQnaPanel>;
+type CoordinatorHandoffPanelProps = Omit<React.ComponentProps<typeof CoordinatorHandoffPanel>, 'coordinatorRole'>;
+type CoordinatorIssueDeskPanelProps = React.ComponentProps<typeof CoordinatorIssueDeskPanel>;
 
 type Props = {
   coordinatorRole: PlannerAccessRole;
@@ -33,7 +36,9 @@ type Props = {
   roleSelectorProps: CoordinatorRoleSelectorProps;
   statsCardProps: CoordinatorStatCardsProps;
   attentionPanelProps: CoordinatorAttentionPanelProps;
+  handoffPanelProps: CoordinatorHandoffPanelProps;
   helperAccessPanelProps: CoordinatorHelperAccessPanelProps;
+  issueDeskPanelProps: CoordinatorIssueDeskPanelProps;
   dayOfSummaryPanelProps: CoordinatorDayOfSummaryPanelProps;
   checkInQueuePanelProps: CoordinatorCheckInQueuePanelProps;
   timelinePanelProps: CoordinatorTimelinePanelProps;
@@ -50,7 +55,9 @@ export function CoordinatorDashboardRouteContent({
   roleSelectorProps,
   statsCardProps,
   attentionPanelProps,
+  handoffPanelProps,
   helperAccessPanelProps,
+  issueDeskPanelProps,
   dayOfSummaryPanelProps,
   checkInQueuePanelProps,
   timelinePanelProps,
@@ -82,9 +89,11 @@ export function CoordinatorDashboardRouteContent({
         />
       </div>
 
-      <CoordinatorHandoffPanel coordinatorRole={coordinatorRole} />
+      <CoordinatorHandoffPanel coordinatorRole={coordinatorRole} {...handoffPanelProps} />
 
       <CoordinatorHelperAccessPanel {...helperAccessPanelProps} />
+
+      <CoordinatorIssueDeskPanel {...issueDeskPanelProps} />
 
       <CoordinatorDayOfSummaryPanel {...dayOfSummaryPanelProps} />
 

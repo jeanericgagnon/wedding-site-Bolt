@@ -73,19 +73,19 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - explicit wrong-event, walk-in, help-desk, manager-decision, and household-mismatch handling
   - per-event arrival counters and a current-door board
   - no-match routing inside coordinator mode
+- Newer local-only depth batch now adds:
+  - multi-event staffing handoff cards with saved lead/support/note state per event
+  - a persistent issue desk for seat changes, substitute attendees, plus-one swaps, and manager notes
+  - table reassignment inside coordinator mode for seating-change-at-door workflow
+  - saved household-context issue history so substitute and plus-one decisions do not disappear after the line moves
 - Deployed/live now:
-  - migration `20260513170000_coordinator_event_checkin_write.sql` applied remotely
-  - deeper runtime deployed on Vercel production `dpl_AbFTbLY263caiCEhQdniH2wbuM9d`
-  - `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live` is green against the shipped runtime
+  - migrations `20260513170000_coordinator_event_checkin_write.sql` and `20260513213000_coordinator_handoff_issue_depth.sql` applied remotely
+  - deeper runtime deployed on Vercel production `dpl_7BJdMft8MT5jtVCdS1dd1JTM7Ank`
+  - `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live` is green against the shipped deeper runtime, including staffing handoff and issue-desk surfaces
 
 ### Active deeper scope
 
-The shipped baseline is real and launchable, but the board now treats the following as active work for a more in-depth MVP:
-
-1. Add multi-event staffing and handoff views so a weekend coordinator team can work rehearsal, ceremony, reception, and adjacent events without losing event-specific arrival truth.
-2. Add substitute-attendee / plus-one swap handling with clear household continuity so door staff can resolve real-world attendee substitutions safely.
-3. Add seating-change-at-door workflow so unresolved guests can be reseated or moved without leaving coordinator mode.
-4. Add richer issue history, operator notes, and escalation continuity so help-desk/manager decisions do not disappear once a queue item is resolved.
+No remaining coordinator gap is active inside the current competitor-informed MVP bar. The deeper handoff / substitute / seat-change / issue-history scope above is now shipped and live-proven.
 
 ## Name change
 
@@ -211,6 +211,6 @@ The shipped baseline is real and launchable, but the board now treats the follow
 
 ## Decision For The Active Board
 
-- `Day-of / coordinator` has met the shipped launch-baseline MVP bar, but the active board now requires the deeper scope listed above.
+- `Day-of / coordinator` has now met both the shipped launch-baseline MVP bar and the deeper product-depth scope that was reopened on the active board.
 - `Name change` has now met both the shipped launch-baseline MVP bar and the deeper planner-depth scope that was reopened on the active board.
 - `Universal Registry Barcode Scanner` has met the shipped launch-baseline MVP bar, but the active board now requires the deeper scope listed above.

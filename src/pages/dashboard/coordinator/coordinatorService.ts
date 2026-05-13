@@ -2,15 +2,23 @@ import { resolveActiveSiteForUser } from '../../../lib/activeSite';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../../lib/plannerAccess';
 import { supabase } from '../../../lib/supabase';
 import type { GuestLiteForCoordinator } from '../../../lib/coordinatorTypes';
-import type { EventLite, QnaItem } from './coordinatorDashboardTypes';
+import type {
+  CoordinatorEventHandoff,
+  CoordinatorIssueLog,
+  CoordinatorTableLite,
+  EventLite,
+  QnaItem,
+} from './coordinatorDashboardTypes';
 
 const COORDINATOR_GUEST_SELECT = 'id, first_name, last_name, name, rsvp_status, household_id, group_name, checked_in_at' as const;
 const COORDINATOR_EVENT_SELECT = 'id, event_name, start_time' as const;
 const COORDINATOR_EVENT_INVITATION_SELECT = 'event_id, guest_id' as const;
 const COORDINATOR_SEATING_EVENT_SELECT = 'id, itinerary_event_id' as const;
-const COORDINATOR_SEATING_TABLE_SELECT = 'id, seating_event_id, table_name' as const;
+const COORDINATOR_SEATING_TABLE_SELECT = 'id, seating_event_id, table_name, sort_order' as const;
 const COORDINATOR_SEATING_ASSIGNMENT_SELECT = 'seating_event_id, guest_id, table_id, checked_in_at, is_valid' as const;
 const COORDINATOR_QNA_SELECT = 'id, question, answer, status, created_at' as const;
+const COORDINATOR_HANDOFF_SELECT = 'id, itinerary_event_id, handoff_status, lead_name, support_name, note, updated_at' as const;
+const COORDINATOR_ISSUE_SELECT = 'id, guest_id, itinerary_event_id, issue_type, status, title, note, assigned_to, replacement_name, replacement_party_size, table_id, table_name, metadata, created_at, updated_at' as const;
 export const MAX_COORDINATOR_GUESTS = 2000;
 export const MAX_COORDINATOR_EVENTS = 200;
 export const MAX_COORDINATOR_EVENT_INVITATIONS = 10000;
@@ -18,6 +26,8 @@ export const MAX_COORDINATOR_SEATING_EVENTS = 200;
 export const MAX_COORDINATOR_SEATING_TABLES = 2000;
 export const MAX_COORDINATOR_SEATING_ASSIGNMENTS = 10000;
 export const MAX_COORDINATOR_QNA_ROWS = 30;
+export const MAX_COORDINATOR_HANDOFF_ROWS = 200;
+export const MAX_COORDINATOR_ISSUE_ROWS = 200;
 
 type CoordinatorSeatingEventRow = {
   id: string;
@@ -28,6 +38,7 @@ type CoordinatorSeatingTableRow = {
   id: string;
   seating_event_id: string;
   table_name: string | null;
+  sort_order: number | null;
 };
 
 type CoordinatorSeatingAssignmentRow = {
@@ -46,6 +57,10 @@ export interface CoordinatorBootstrapData {
   events: EventLite[];
   eventGuestIds: Record<string, Set<string>>;
   eventSeatingConfiguredIds: Set<string>;
+  eventSeatingEventIds: Record<string, string>;
+  eventSeatingTables: Record<string, CoordinatorTableLite[]>;
+  eventHandoffs: CoordinatorEventHandoff[];
+  issueLogs: CoordinatorIssueLog[];
   qnaItems: QnaItem[];
 }
 
@@ -58,6 +73,32 @@ export interface CoordinatorAlertMessageInput {
   recipientCount: number;
   status: 'queued' | 'scheduled';
   scheduledFor: string | null;
+}
+
+export interface CoordinatorEventHandoffWriteInput {
+  siteId: string;
+  itineraryEventId: string;
+  handoffStatus: CoordinatorEventHandoff['handoff_status'];
+  leadName: string | null;
+  supportName: string | null;
+  note: string | null;
+}
+
+export interface CoordinatorIssueLogWriteInput {
+  siteId: string;
+  issueId?: string | null;
+  guestId: string | null;
+  itineraryEventId: string | null;
+  issueType: CoordinatorIssueLog['issue_type'];
+  status: CoordinatorIssueLog['status'];
+  title: string;
+  note: string | null;
+  assignedTo: string | null;
+  replacementName: string | null;
+  replacementPartySize: number | null;
+  tableId: string | null;
+  tableName: string | null;
+  metadata?: Record<string, unknown> | null;
 }
 
 export function buildCoordinatorEventGuestMap(
@@ -85,6 +126,10 @@ export async function loadCoordinatorBootstrapData(userId: string): Promise<Coor
       events: [],
       eventGuestIds: {},
       eventSeatingConfiguredIds: new Set<string>(),
+      eventSeatingEventIds: {},
+      eventSeatingTables: {},
+      eventHandoffs: [],
+      issueLogs: [],
       qnaItems: [],
     };
   }
@@ -111,6 +156,8 @@ export async function loadCoordinatorBootstrapData(userId: string): Promise<Coor
     { data: qnaData, error: qnaError },
     { data: inviteData, error: inviteError },
     { data: seatingEventsData, error: seatingEventsError },
+    { data: handoffData, error: handoffError },
+    { data: issueData, error: issueError },
   ] = await Promise.all([
     supabase
       .from('guest_qna_items')
@@ -132,11 +179,27 @@ export async function loadCoordinatorBootstrapData(userId: string): Promise<Coor
         .in('itinerary_event_id', eventIds)
         .limit(MAX_COORDINATOR_SEATING_EVENTS)
       : Promise.resolve({ data: [], error: null }),
+    eventIds.length > 0
+      ? supabase
+        .from('coordinator_event_handoffs')
+        .select(COORDINATOR_HANDOFF_SELECT)
+        .eq('wedding_site_id', siteId)
+        .in('itinerary_event_id', eventIds)
+        .limit(MAX_COORDINATOR_HANDOFF_ROWS)
+      : Promise.resolve({ data: [], error: null }),
+    supabase
+      .from('coordinator_issue_logs')
+      .select(COORDINATOR_ISSUE_SELECT)
+      .eq('wedding_site_id', siteId)
+      .order('updated_at', { ascending: false })
+      .limit(MAX_COORDINATOR_ISSUE_ROWS),
   ]);
 
   if (qnaError) throw qnaError;
   if (inviteError) throw inviteError;
   if (seatingEventsError) throw seatingEventsError;
+  if (handoffError) throw handoffError;
+  if (issueError) throw issueError;
 
   const inviteRows = (inviteData ?? []) as Array<{ event_id: string; guest_id: string }>;
   const seatingEvents = (seatingEventsData ?? []) as CoordinatorSeatingEventRow[];
@@ -168,6 +231,21 @@ export async function loadCoordinatorBootstrapData(userId: string): Promise<Coor
   const seatingAssignments = (seatingAssignmentsData ?? []) as CoordinatorSeatingAssignmentRow[];
   const itineraryEventIdBySeatingEventId = new Map(seatingEvents.map((event) => [event.id, event.itinerary_event_id]));
   const tableNameById = new Map(seatingTables.map((table) => [table.id, table.table_name || 'Unassigned']));
+  const eventSeatingEventIds = seatingEvents.reduce<Record<string, string>>((map, event) => {
+    map[event.itinerary_event_id] = event.id;
+    return map;
+  }, {});
+  const eventSeatingTables = seatingEvents.reduce<Record<string, CoordinatorTableLite[]>>((map, event) => {
+    map[event.itinerary_event_id] = seatingTables
+      .filter((table) => table.seating_event_id === event.id)
+      .sort((a, b) => {
+        const sortA = a.sort_order ?? Number.MAX_SAFE_INTEGER;
+        const sortB = b.sort_order ?? Number.MAX_SAFE_INTEGER;
+        if (sortA !== sortB) return sortA - sortB;
+        return (a.table_name ?? '').localeCompare(b.table_name ?? '');
+      });
+    return map;
+  }, {});
   const tableCountBySeatingEventId = seatingTables.reduce((map, table) => {
     map.set(table.seating_event_id, (map.get(table.seating_event_id) ?? 0) + 1);
     return map;
@@ -191,6 +269,7 @@ export async function loadCoordinatorBootstrapData(userId: string): Promise<Coor
     const current = map.get(assignment.guest_id) ?? {};
     current[itineraryEventId] = {
       seating_event_id: assignment.seating_event_id,
+      table_id: assignment.table_id ?? null,
       table_name: assignment.table_id ? (tableNameById.get(assignment.table_id) || 'Unassigned') : 'Unassigned',
       checked_in_at: assignment.checked_in_at ?? null,
       is_seated: Boolean(assignment.table_id),
@@ -211,6 +290,10 @@ export async function loadCoordinatorBootstrapData(userId: string): Promise<Coor
     events,
     eventGuestIds: buildCoordinatorEventGuestMap(events, inviteRows),
     eventSeatingConfiguredIds,
+    eventSeatingEventIds,
+    eventSeatingTables,
+    eventHandoffs: (handoffData ?? []) as CoordinatorEventHandoff[],
+    issueLogs: (issueData ?? []) as CoordinatorIssueLog[],
     qnaItems: (qnaData ?? []) as QnaItem[],
   };
 }
@@ -268,4 +351,70 @@ export async function updateCoordinatorQnaAnswer(id: string, item: Pick<QnaItem,
     },
   });
   if (error) throw error;
+}
+
+export async function upsertCoordinatorEventHandoff(input: CoordinatorEventHandoffWriteInput): Promise<CoordinatorEventHandoff> {
+  const { data, error } = await supabase.rpc('coordinator_event_handoff_write', {
+    p_site_id: input.siteId,
+    p_itinerary_event_id: input.itineraryEventId,
+    p_payload: {
+      handoff_status: input.handoffStatus,
+      lead_name: input.leadName,
+      support_name: input.supportName,
+      note: input.note,
+    },
+  });
+  if (error) throw error;
+  return data as CoordinatorEventHandoff;
+}
+
+export async function upsertCoordinatorIssueLog(input: CoordinatorIssueLogWriteInput): Promise<CoordinatorIssueLog> {
+  const { data, error } = await supabase.rpc('coordinator_issue_log_write', {
+    p_site_id: input.issueId ? null : input.siteId,
+    p_issue_id: input.issueId ?? null,
+    p_payload: {
+      guest_id: input.guestId,
+      itinerary_event_id: input.itineraryEventId,
+      issue_type: input.issueType,
+      status: input.status,
+      title: input.title,
+      note: input.note,
+      assigned_to: input.assignedTo,
+      replacement_name: input.replacementName,
+      replacement_party_size: input.replacementPartySize,
+      table_id: input.tableId,
+      table_name: input.tableName,
+      metadata: input.metadata ?? {},
+    },
+  });
+  if (error) throw error;
+  return data as CoordinatorIssueLog;
+}
+
+export async function updateCoordinatorGuestSeatAssignment(args: {
+  siteId: string;
+  guestId: string;
+  itineraryEventId: string;
+  tableId: string | null;
+}): Promise<{ seatingEventId: string }> {
+  const { data: seatingEvent, error: seatingEventError } = await supabase.rpc('seating_event_get_or_create', {
+    p_wedding_site_id: args.siteId,
+    p_itinerary_event_id: args.itineraryEventId,
+  });
+  if (seatingEventError) throw seatingEventError;
+
+  const seatingEventId = (seatingEvent as { id?: string } | null)?.id;
+  if (!seatingEventId) throw new Error('Missing seating event id');
+
+  const { error } = await supabase.rpc('seating_assignment_write', {
+    p_seating_event_id: seatingEventId,
+    p_guest_id: args.guestId,
+    p_payload: {
+      table_id: args.tableId,
+      is_valid: true,
+    },
+  });
+  if (error) throw error;
+
+  return { seatingEventId };
 }

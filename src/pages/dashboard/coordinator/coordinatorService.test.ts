@@ -6,6 +6,8 @@ import {
   MAX_COORDINATOR_EVENT_INVITATIONS,
   MAX_COORDINATOR_EVENTS,
   MAX_COORDINATOR_GUESTS,
+  MAX_COORDINATOR_HANDOFF_ROWS,
+  MAX_COORDINATOR_ISSUE_ROWS,
   MAX_COORDINATOR_QNA_ROWS,
 } from './coordinatorService';
 import type { EventLite } from './coordinatorDashboardTypes';
@@ -33,6 +35,8 @@ describe('buildCoordinatorEventGuestMap', () => {
     expect(MAX_COORDINATOR_EVENTS).toBe(200);
     expect(MAX_COORDINATOR_EVENT_INVITATIONS).toBe(10000);
     expect(MAX_COORDINATOR_QNA_ROWS).toBe(30);
+    expect(MAX_COORDINATOR_HANDOFF_ROWS).toBe(200);
+    expect(MAX_COORDINATOR_ISSUE_ROWS).toBe(200);
   });
 
   it('keeps coordinator bootstrap reads bounded', () => {
@@ -40,15 +44,20 @@ describe('buildCoordinatorEventGuestMap', () => {
 
     expect(source).toContain('.limit(MAX_COORDINATOR_GUESTS),');
     expect(source).toContain('.limit(MAX_COORDINATOR_EVENTS),');
-    expect(source).toContain('.limit(MAX_COORDINATOR_EVENT_INVITATIONS);');
-    expect(source).toContain(".limit(MAX_COORDINATOR_QNA_ROWS);");
+    expect(source).toContain('.limit(MAX_COORDINATOR_EVENT_INVITATIONS)');
+    expect(source).toContain('.limit(MAX_COORDINATOR_QNA_ROWS)');
+    expect(source).toContain(".limit(MAX_COORDINATOR_HANDOFF_ROWS)");
+    expect(source).toContain(".limit(MAX_COORDINATOR_ISSUE_ROWS)");
   });
 
   it('routes coordinator writes through RPCs', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/coordinator/coordinatorService.ts'), 'utf8');
 
     expect(source).toContain("supabase.rpc('coordinator_alert_message_write'");
-    expect(source).toContain("supabase.rpc('coordinator_guest_checkin_write'");
+    expect(source).toContain("supabase.rpc('coordinator_guest_event_checkin_write'");
+    expect(source).toContain("supabase.rpc('coordinator_event_handoff_write'");
+    expect(source).toContain("supabase.rpc('coordinator_issue_log_write'");
+    expect(source).toContain("supabase.rpc('seating_assignment_write'");
     expect(source).toContain("supabase.rpc('coordinator_qna_write'");
     expect(source).not.toContain("supabase.from('messages').insert({");
     expect(source).not.toContain("supabase\n    .from('guests')\n    .update({ checked_in_at: args.checkedInAt })");

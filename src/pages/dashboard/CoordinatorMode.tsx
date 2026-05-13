@@ -1,7 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../hooks/useAuth';
-import { type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { useToast } from '../../components/ui/Toast';
 import { resolveCoordinatorCorrectionCueTarget } from '../../lib/coordinatorCorrectionCueTarget';
 import { resolveCoordinatorPanelFocus, type CoordinatorPanelFocus } from '../../lib/coordinatorPanelFocus';
@@ -23,7 +22,14 @@ import { resolveCoordinatorQnaFocusAfterItemsChange, resolveCoordinatorTimelineF
 import { getCoordinatorStablePromptTarget } from '../../lib/coordinatorStablePromptTarget';
 import { getCoordinatorStandingPromptReason } from '../../lib/coordinatorStandingPromptReason';
 import { getCoordinatorStandingPromptReasonTightened } from '../../lib/coordinatorStandingPromptReasonTighten';
-import { updateCoordinatorQnaAnswer } from './coordinator/coordinatorService';
+import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
+import type { CoordinatorEventHandoff, CoordinatorIssueStatus, CoordinatorIssueType } from './coordinator/coordinatorDashboardTypes';
+import {
+  updateCoordinatorGuestSeatAssignment,
+  updateCoordinatorQnaAnswer,
+  upsertCoordinatorEventHandoff,
+  upsertCoordinatorIssueLog,
+} from './coordinator/coordinatorService';
 import { buildCoordinatorDashboardBoardActions } from './coordinator/buildCoordinatorDashboardBoardActions';
 import { buildCoordinatorDashboardRouteContentProps } from './coordinator/buildCoordinatorDashboardRouteContentProps';
 import { buildCoordinatorDashboardRouteSupport } from './coordinator/buildCoordinatorDashboardRouteSupport';
@@ -34,6 +40,58 @@ import { buildCoordinatorDashboardDerivedState } from './coordinator/buildCoordi
 import { useCoordinatorDashboardData } from './coordinator/useCoordinatorDashboardData';
 import { useCoordinatorDashboardCueLifecycle } from './coordinator/useCoordinatorDashboardCueLifecycle';
 import { useCoordinatorDashboardUiState, useCoordinatorDashboardUiStateSync } from './coordinator/useCoordinatorDashboardUiState';
+
+type CoordinatorIssueDraft = {
+  issueType: CoordinatorIssueType;
+  status: CoordinatorIssueStatus;
+  title: string;
+  note: string;
+  assignedTo: string;
+  replacementName: string;
+  replacementPartySize: string;
+  itineraryEventId: string | null;
+  tableId: string | null;
+};
+
+const createEmptyIssueDraft = (): CoordinatorIssueDraft => ({
+  issueType: 'seat-change',
+  status: 'open',
+  title: '',
+  note: '',
+  assignedTo: '',
+  replacementName: '',
+  replacementPartySize: '1',
+  itineraryEventId: null,
+  tableId: null,
+});
+
+const buildCoordinatorIssueTitle = ({
+  guest,
+  eventName,
+  issueType,
+}: {
+  guest: GuestLiteForCoordinator;
+  eventName: string | null;
+  issueType: CoordinatorIssueType;
+}) => {
+  const eventLabel = eventName ? ` for ${eventName}` : '';
+  switch (issueType) {
+    case 'help-desk':
+      return `Help desk follow-up for ${guest.name}${eventLabel}`;
+    case 'manager-decision':
+      return `Manager decision for ${guest.name}${eventLabel}`;
+    case 'plus-one-swap':
+      return `Plus-one swap for ${guest.name}${eventLabel}`;
+    case 'seat-change':
+      return `Seat change for ${guest.name}${eventLabel}`;
+    case 'substitute-attendee':
+      return `Substitute attendee for ${guest.name}${eventLabel}`;
+    case 'walk-in':
+      return `Walk-in review for ${guest.name}${eventLabel}`;
+    default:
+      return `${guest.name}${eventLabel}`;
+  }
+};
 
 
 export const DashboardCoordinatorMode: React.FC = () => {
@@ -54,10 +112,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
     commandSource,
     coordinatorPermissions,
     coordinatorRole,
+    eventHandoffs,
     eventGuestIds,
     eventSeatingConfiguredIds,
+    eventSeatingEventIds,
+    eventSeatingTables,
     events,
     guests,
+    issueLogs,
     lastAlertSuggestionKey,
     loading,
     panelFocus,
@@ -77,8 +139,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setCheckInReviewOnly,
     setCommandSource,
     setCoordinatorRole,
-    setEvents,
+    setEventHandoffs,
+    setEventSeatingEventIds,
     setGuests,
+    setIssueLogs,
     setLastAlertSuggestionKey,
     setPanelFocus,
     setQnaDraftAnswers,
@@ -93,6 +157,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
     toast,
     userId: user?.id,
   });
+  const [handoffBusyEventId, setHandoffBusyEventId] = useState<string | null>(null);
+  const [issueBusy, setIssueBusy] = useState(false);
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [issueDraft, setIssueDraft] = useState<CoordinatorIssueDraft>(createEmptyIssueDraft);
   const {
     canCheckIn,
     canEditQna,
@@ -299,9 +367,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setCommandSource,
     setNeutralFocusReason,
   });
+  const canEditHandoffs = coordinatorRole !== 'viewer';
+  const activeIssueGuest = useMemo(
+    () => guests.find((guest) => guest.id === activeGuestId) ?? null,
+    [guests, activeGuestId],
+  );
+  const issueDraftEventId = issueDraft.itineraryEventId ?? checkInEventId;
+  const issueDraftTables = issueDraftEventId ? (eventSeatingTables[issueDraftEventId] ?? []) : [];
   const {
     clearCoordinatorTransientState,
-    escalateDoorReview,
     focusCoordinatorAlertLane,
     focusCoordinatorCheckInLane,
     focusCoordinatorQnaLane,
@@ -428,6 +502,278 @@ export const DashboardCoordinatorMode: React.FC = () => {
     toast,
     validationError: alertValidationError,
   });
+
+  const updateIssueDraft = (patch: Partial<CoordinatorIssueDraft>) => {
+    setIssueDraft((prev) => ({ ...prev, ...patch }));
+  };
+
+  const clearIssueDraft = () => {
+    setSelectedIssueId(null);
+    setIssueDraft(createEmptyIssueDraft());
+  };
+
+  const upsertLocalHandoff = (eventId: string, patch: Partial<CoordinatorEventHandoff>) => {
+    setEventHandoffs((prev) => {
+      const existing = prev.find((item) => item.itinerary_event_id === eventId);
+      if (!existing) {
+        return [
+          ...prev,
+          {
+            id: `draft-${eventId}`,
+            itinerary_event_id: eventId,
+            handoff_status: 'ready',
+            lead_name: null,
+            support_name: null,
+            note: null,
+            updated_at: null,
+            ...patch,
+          },
+        ];
+      }
+      return prev.map((item) => (
+        item.itinerary_event_id === eventId
+          ? { ...item, ...patch }
+          : item
+      ));
+    });
+  };
+
+  const saveHandoff = async (eventId: string) => {
+    const handoff = eventHandoffs.find((item) => item.itinerary_event_id === eventId) ?? {
+      id: `draft-${eventId}`,
+      itinerary_event_id: eventId,
+      handoff_status: 'ready' as const,
+      lead_name: null,
+      support_name: null,
+      note: null,
+      updated_at: null,
+    };
+    setHandoffBusyEventId(eventId);
+    try {
+      const saved = isDemoMode
+        ? {
+          ...handoff,
+          lead_name: handoff.lead_name?.trim() || null,
+          support_name: handoff.support_name?.trim() || null,
+          note: handoff.note?.trim() || null,
+          updated_at: new Date().toISOString(),
+        }
+        : siteId
+          ? await upsertCoordinatorEventHandoff({
+            siteId,
+            itineraryEventId: eventId,
+            handoffStatus: handoff.handoff_status,
+            leadName: handoff.lead_name?.trim() || null,
+            supportName: handoff.support_name?.trim() || null,
+            note: handoff.note?.trim() || null,
+          })
+          : null;
+      if (!saved) {
+        toast('Couldn’t save that handoff right now.', 'error');
+        return;
+      }
+      setEventHandoffs((prev) => [
+        ...prev.filter((item) => item.itinerary_event_id !== eventId),
+        saved,
+      ]);
+      toast('Event handoff saved.', 'success');
+    } catch {
+      toast('Couldn’t save that handoff right now.', 'error');
+    } finally {
+      setHandoffBusyEventId((current) => (current === eventId ? null : current));
+    }
+  };
+
+  const prefillIssueType = (issueType: CoordinatorIssueType) => {
+    if (!activeIssueGuest) {
+      toast('Pick a guest in the check-in queue first.', 'info');
+      return;
+    }
+    const eventId = issueDraft.itineraryEventId ?? checkInEventId;
+    const eventName = events.find((event) => event.id === eventId)?.event_name ?? checkInEventName ?? null;
+    setSelectedIssueId(null);
+    setIssueDraft((prev) => ({
+      ...prev,
+      issueType,
+      title: buildCoordinatorIssueTitle({
+        guest: activeIssueGuest,
+        eventName,
+        issueType,
+      }),
+      itineraryEventId: eventId,
+      status: issueType === 'seat-change' ? 'working' : 'open',
+    }));
+  };
+
+  const selectIssue = (issueId: string) => {
+    const issue = issueLogs.find((item) => item.id === issueId);
+    if (!issue) return;
+    setSelectedIssueId(issueId);
+    if (issue.guest_id) setActiveGuestId(issue.guest_id);
+    setIssueDraft({
+      issueType: issue.issue_type,
+      status: issue.status,
+      title: issue.title,
+      note: issue.note ?? '',
+      assignedTo: issue.assigned_to ?? '',
+      replacementName: issue.replacement_name ?? '',
+      replacementPartySize: issue.replacement_party_size ? String(issue.replacement_party_size) : '1',
+      itineraryEventId: issue.itinerary_event_id ?? checkInEventId,
+      tableId: issue.table_id ?? null,
+    });
+  };
+
+  const saveIssue = async () => {
+    if (!activeIssueGuest) {
+      toast('Pick a guest before saving an issue.', 'info');
+      return;
+    }
+    const itineraryEventId = issueDraft.itineraryEventId ?? checkInEventId;
+    const eventName = events.find((event) => event.id === itineraryEventId)?.event_name ?? checkInEventName ?? null;
+    const title = issueDraft.title.trim() || buildCoordinatorIssueTitle({
+      guest: activeIssueGuest,
+      eventName,
+      issueType: issueDraft.issueType,
+    });
+    if (issueDraft.issueType === 'seat-change' && (!itineraryEventId || !issueDraft.tableId)) {
+      toast('Choose an event and target table for a seat change.', 'error');
+      return;
+    }
+    if (
+      (issueDraft.issueType === 'substitute-attendee' || issueDraft.issueType === 'plus-one-swap')
+      && !issueDraft.replacementName.trim()
+    ) {
+      toast('Add the arriving substitute or plus-one name.', 'error');
+      return;
+    }
+    if (issueDraft.replacementPartySize.trim() && Number.isNaN(Number(issueDraft.replacementPartySize.trim()))) {
+      toast('Replacement party size must be a number.', 'error');
+      return;
+    }
+
+    setIssueBusy(true);
+    try {
+      let resolvedSeatingEventId = itineraryEventId
+        ? (eventSeatingEventIds[itineraryEventId] ?? activeIssueGuest.event_arrivals?.[itineraryEventId]?.seating_event_id ?? null)
+        : null;
+      const nextTable = issueDraft.tableId
+        ? issueDraftTables.find((table) => table.id === issueDraft.tableId)
+        : null;
+
+      if (itineraryEventId && issueDraft.tableId) {
+        if (!isDemoMode) {
+          if (!siteId) {
+            toast('Couldn’t save that issue right now.', 'error');
+            return;
+          }
+          const seatingResult = await updateCoordinatorGuestSeatAssignment({
+            siteId,
+            guestId: activeIssueGuest.id,
+            itineraryEventId,
+            tableId: issueDraft.tableId,
+          });
+          resolvedSeatingEventId = seatingResult.seatingEventId;
+          if (!eventSeatingEventIds[itineraryEventId]) {
+            setEventSeatingEventIds((prev) => ({ ...prev, [itineraryEventId]: seatingResult.seatingEventId }));
+          }
+        }
+
+        setGuests((prev) => prev.map((guest) => {
+          if (guest.id !== activeIssueGuest.id) return guest;
+          return {
+            ...guest,
+            door_route: null,
+            event_arrivals: {
+              ...(guest.event_arrivals ?? {}),
+              [itineraryEventId]: {
+                seating_event_id: resolvedSeatingEventId,
+                table_id: issueDraft.tableId,
+                table_name: nextTable?.table_name ?? 'Unassigned',
+                checked_in_at: guest.event_arrivals?.[itineraryEventId]?.checked_in_at ?? null,
+                is_seated: Boolean(issueDraft.tableId),
+              },
+            },
+          };
+        }));
+      }
+
+      const replacementPartySize = issueDraft.replacementPartySize.trim();
+      const metadata = {
+        source: 'coordinator-issue-desk',
+        active_guest_name: activeIssueGuest.name,
+        household_members: activeIssueGuest.household_id
+          ? guests
+            .filter((guest) => guest.household_id === activeIssueGuest.household_id)
+            .map((guest) => ({ id: guest.id, name: guest.name }))
+          : [],
+      };
+
+      const saved = isDemoMode
+        ? {
+          id: selectedIssueId ?? `demo-issue-${Date.now()}`,
+          guest_id: activeIssueGuest.id,
+          itinerary_event_id: itineraryEventId ?? null,
+          issue_type: issueDraft.issueType,
+          status: issueDraft.status,
+          title,
+          note: issueDraft.note.trim() || null,
+          assigned_to: issueDraft.assignedTo.trim() || null,
+          replacement_name: issueDraft.replacementName.trim() || null,
+          replacement_party_size: replacementPartySize ? Number(replacementPartySize) : null,
+          table_id: issueDraft.tableId ?? null,
+          table_name: nextTable?.table_name ?? null,
+          metadata,
+          created_at: issueLogs.find((item) => item.id === selectedIssueId)?.created_at ?? new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+        : siteId
+          ? await upsertCoordinatorIssueLog({
+            siteId,
+            issueId: selectedIssueId,
+            guestId: activeIssueGuest.id,
+            itineraryEventId: itineraryEventId ?? null,
+            issueType: issueDraft.issueType,
+            status: issueDraft.status,
+            title,
+            note: issueDraft.note.trim() || null,
+            assignedTo: issueDraft.assignedTo.trim() || null,
+            replacementName: issueDraft.replacementName.trim() || null,
+            replacementPartySize: replacementPartySize ? Number(replacementPartySize) : null,
+            tableId: issueDraft.tableId ?? null,
+            tableName: nextTable?.table_name ?? null,
+            metadata,
+          })
+          : null;
+
+      if (!saved) {
+        toast('Couldn’t save that issue right now.', 'error');
+        return;
+      }
+
+      setIssueLogs((prev) => [
+        saved,
+        ...prev.filter((item) => item.id !== saved.id),
+      ].sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at)));
+      setSelectedIssueId(saved.id);
+      setIssueDraft({
+        issueType: saved.issue_type,
+        status: saved.status,
+        title: saved.title,
+        note: saved.note ?? '',
+        assignedTo: saved.assigned_to ?? '',
+        replacementName: saved.replacement_name ?? '',
+        replacementPartySize: saved.replacement_party_size ? String(saved.replacement_party_size) : '1',
+        itineraryEventId: saved.itinerary_event_id,
+        tableId: saved.table_id,
+      });
+      toast('Day-of issue saved.', 'success');
+    } catch {
+      toast('Couldn’t save that issue right now.', 'error');
+    } finally {
+      setIssueBusy(false);
+    }
+  };
+
   useCoordinatorDashboardCueLifecycle({
     activeGuestId,
     activeQnaId,
@@ -567,6 +913,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
           onCorrectionCueClick: runCorrectionCue,
           onEscalationClick: runEscalationIssue,
         },
+    handoffPanelProps: {
+          canEditHandoffs,
+          events,
+          eventHandoffs,
+          handoffBusyEventId,
+          onChangeHandoff: upsertLocalHandoff,
+          onSaveHandoff: (eventId) => { void saveHandoff(eventId); },
+        },
     checkInQueuePanelProps: {
           activeGuestId,
           canCheckIn,
@@ -585,7 +939,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
           isFocused: panelFocus === 'check-in',
           nextArrivals,
           onCheckInGuest: (guest) => { void toggleCheckIn(guest); },
-          onEscalateDoorReview: escalateDoorReview,
+          onEscalateDoorReview: (guest) => {
+            setActiveGuestId(guest.id);
+            setPanelFocus('check-in');
+            prefillIssueType('manager-decision');
+          },
           onFocusFirstQueueGuest: focusFirstCoordinatorQueueGuest,
           onFocusLane: focusCoordinatorCheckInLane,
           onRouteGuest: routeGuestAtDoor,
@@ -699,6 +1057,24 @@ export const DashboardCoordinatorMode: React.FC = () => {
           setCheckInFilter('arrivals');
           setCheckInReviewOnly((prev) => !prev);
           setActiveGuestId(checkInBoardTargetId);
+        },
+    issueDeskPanelProps: {
+          activeGuest: activeIssueGuest,
+          canEditIssues: canEditQna,
+          currentEventId: checkInEventId,
+          currentEventName: checkInEventName,
+          events,
+          guests,
+          issueBusy,
+          issueDraft,
+          issueLogs,
+          selectedIssueId,
+          seatingTables: issueDraftTables,
+          onClearIssueDraft: clearIssueDraft,
+          onDraftChange: updateIssueDraft,
+          onPrefillIssueType: prefillIssueType,
+          onSaveIssue: () => { void saveIssue(); },
+          onSelectIssue: selectIssue,
         },
     qnaPanelProps: {
           activeQnaDraftStateLabel,
