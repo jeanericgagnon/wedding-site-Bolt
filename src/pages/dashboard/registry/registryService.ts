@@ -1,6 +1,13 @@
 import { supabase } from '../../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
-import { RegistryItem, RegistryPreview, normalizeRegistryComparisonUrl, normalizeRegistryTitleForComparison, sanitizeRegistryQuantityState } from './registryTypes';
+import {
+  RegistryBarcodeLookupResult,
+  RegistryItem,
+  RegistryPreview,
+  normalizeRegistryComparisonUrl,
+  normalizeRegistryTitleForComparison,
+  sanitizeRegistryQuantityState,
+} from './registryTypes';
 
 const REGISTRY_PREVIEW_ERROR_COPY = 'Couldn’t fill in gift details from that link. You can still add the item by hand.';
 const REGISTRY_LOAD_ERROR_COPY = 'Couldn’t load registry items. Please refresh and try again.';
@@ -8,7 +15,7 @@ const REGISTRY_SAVE_ERROR_COPY = 'Couldn’t save this gift. Please try again.';
 const REGISTRY_DELETE_ERROR_COPY = 'Couldn’t remove that gift. Please try again.';
 const REGISTRY_PURCHASE_ERROR_COPY = 'Couldn’t update that gift right now. Please try again.';
 
-const REGISTRY_ITEM_SELECT = 'id, wedding_site_id, item_type, item_name, price_label, price_amount, store_name, merchant, item_url, canonical_url, image_url, description, notes, quantity_needed, quantity_purchased, purchaser_name, purchase_status, hide_when_purchased, sort_order, priority, availability, metadata_last_checked_at, metadata_fetch_status, metadata_confidence_score, metadata_source_method, metadata_retailer, previous_price_amount, price_last_changed_at, next_refresh_at, last_auto_refreshed_at, refresh_fail_count, fund_goal_amount, fund_received_amount, fund_venmo_url, fund_paypal_url, fund_zelle_handle, fund_custom_url, fund_custom_label, created_at, updated_at' as const;
+const REGISTRY_ITEM_SELECT = 'id, wedding_site_id, item_type, item_name, price_label, price_amount, store_name, merchant, source_type, barcode, item_url, canonical_url, image_url, selected_retailer, selected_product_url, estimated_price_cents, product_metadata, description, notes, quantity_needed, quantity_purchased, purchaser_name, purchase_status, hide_when_purchased, sort_order, priority, availability, metadata_last_checked_at, metadata_fetch_status, metadata_confidence_score, metadata_source_method, metadata_retailer, previous_price_amount, price_last_changed_at, next_refresh_at, last_auto_refreshed_at, refresh_fail_count, fund_goal_amount, fund_received_amount, fund_venmo_url, fund_paypal_url, fund_zelle_handle, fund_custom_url, fund_custom_label, created_at, updated_at' as const;
 export const REGISTRY_DASHBOARD_SITE_SELECT = 'id, wedding_date, registry_refresh_enabled_until, registry_monthly_refresh_cap, registry_monthly_refresh_count, registry_monthly_refresh_month, registry_auto_refresh_enabled, registry_refresh_include_purchased, registry_refresh_policy_updated_at, registry_refresh_policy_updated_by' as const;
 export const MAX_REGISTRY_ITEMS = 500;
 export const MAX_REGISTRY_SORT_LOOKUP_ROWS = 1;
@@ -195,6 +202,52 @@ export async function fetchUrlPreview(url: string, forceRefresh = false): Promis
 
   const result = await resp.json() as RegistryPreview;
   return result;
+}
+
+export async function lookupRegistryBarcode(barcode: string): Promise<RegistryBarcodeLookupResult> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+  const endpoint = `${supabaseUrl}/functions/v1/registry-barcode-lookup`;
+
+  const invoke = async (accessToken?: string) => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Apikey: anonKey,
+    };
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+
+    return fetch(endpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ barcode }),
+    });
+  };
+
+  let accessToken: string | undefined;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    accessToken = session?.access_token;
+  } catch {
+    accessToken = undefined;
+  }
+
+  let response: Response;
+  try {
+    response = await invoke(accessToken);
+    if (response.status === 401 || response.status === 403) {
+      response = await invoke();
+    }
+  } catch {
+    throw new Error('Couldn’t look up that barcode right now.');
+  }
+
+  const payload = await response.json().catch(() => ({} as RegistryBarcodeLookupResult));
+
+  if (!response.ok) {
+    throw new Error(payload?.error || 'Couldn’t look up that barcode right now.');
+  }
+
+  return payload as RegistryBarcodeLookupResult;
 }
 
 export async function publicFetchRegistryItems(

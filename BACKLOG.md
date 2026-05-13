@@ -29,7 +29,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | Current blockers | none |
 | Current proof state | Launch-critical runtime proof is green on the exact live runtime: `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `service-role-authorization`, `email-messaging-authorization`, `launch-closeout`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, `client-rls-matrix`, `registry-preview-ssrf`, `coordinator-dayof`, and `name-change-runtime`. The harder repo guardrails are also green: `proof:v1:client-write-inventory`, `proof:v1:ast-security`, `proof:v1:test-lanes`, `proof:v1:strict-pocket`, and `proof:v1:security-automation`. `Release Launch Gate` remains green and the repo now carries Semgrep, CodeQL, Gitleaks, and Dependabot automation. |
 | Current deployment state | Branch head is `f29574dd`; the latest deployed frontend runtime is still [dayof.love](https://dayof.love) on exact runtime Git SHA `f2cc4811` via verified Vercel production deploy `dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU`. `submit-rsvp` is live with the serialized capacity path and the database includes the RPC migration sweep through `20260512031500_seating_assignment_version_rpcs.sql` plus repair migrations through `20260512050000_harden_admin_access_check.sql`. The public-session-secret lane is live, the admin route gate is live on `admin_access_check()`, the guest-contact lane now requires a stronger household step-up verifier and accepts guest-specific invite tokens, public guest-contact audit writes are live, the route-module decomposition is live, the public vault contribution lane is live-proven, and the `.dayof.love` subdomain route is live-proven fail-closed. External custom domains remain unsupported product scope, not an open proof lane. |
-| Current next actions | No active launch blocker remains. keep the live client-RLS matrix current and keep the no-direct-client-write inventory current only if future runtime write surfaces reopen. Keep day-of and name-change visible as monitored surfaces, and keep `Universal Registry Barcode Scanner` visible as a future feature on this board for now. Repo-wide TS/ESLint full-flip work is now explicitly future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
+| Current next actions | No active baseline launch blocker remains, but the board now treats `Day-of / coordinator`, `Name change`, and `Universal Registry Barcode Scanner` as immediate work to finish. `Day-of / coordinator` and `Name change` are locally green but still need current-session live reruns. `Universal Registry Barcode Scanner` now has a local implementation slice, but still needs deploy/live proof and a real broad-match barcode metadata provider before it can honestly be called launch-ready. keep the live client-RLS matrix current and keep the no-direct-client-write inventory current only if future runtime write surfaces reopen. Repo-wide TS/ESLint full-flip work remains explicitly future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
@@ -55,18 +55,23 @@ No active `P0` or `P1` launch blockers remain.
 
 ## Additional Hardening Findings
 
-No active launch blocker remains, but the following items stay visible on the active board.
+No active baseline launch blocker remains, but the following items are active board work now.
 
 - launch-critical findings are closed and live-proven on exact deployed runtime SHA `f2cc4811`
 - `Day-of / coordinator`
+  - `ACTIVE NOW`
   - dedicated live product-depth proof exists: `npm run proof:v1:coordinator-dayof -- --require-live`
-  - keep visible because it is a broad operator-facing workflow with meaningful regression risk
+  - local proof is green again: `npm run proof:v1:coordinator-dayof`
+  - current blocker is not local code health; it is the missing current-session live rerun env for the strongest proof lane: `V1_COORDINATOR_DAYOF_LIVE=1`
 - `Name change`
+  - `ACTIVE NOW`
   - dedicated live runtime proof exists: `npm run proof:v1:name-change-runtime -- --require-live`
-  - keep visible because it is a distinct planning/runtime surface with its own service boundary
+  - local proof lane is now stronger and green even without live env: `npm run proof:v1:name-change-runtime`
+  - current blocker is the missing current-session live rerun env for the strongest authenticated runtime proof lane: `V1_NAME_CHANGE_RUNTIME_LIVE=1`
 - `Universal Registry Barcode Scanner`
-  - future feature only, not launch scope
-  - keep visible on the active board for now
+  - `ACTIVE NOW`
+  - local implementation slice now exists: scanner/manual barcode entry UI, barcode normalization, cache-aware edge lookup, registry persistence fields, and focused tests
+  - current blocker is the missing broad-match provider credential plus deploy/live proof needed to make “scan anything” launch-ready beyond manual fallback and limited free-source matches
   - full concept, architecture, provider ladder, cache tables, and risk notes live in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md)
 - repo-wide TS/ESLint full-flip work is `FUTURE-ONLY / MAINTAINABILITY`
   - the enforced strict pocket now also covers RSVP, SiteView, siteViewHelpers, QuickStart, route modules, and `nameChangeService`
@@ -115,7 +120,6 @@ None.
 
 Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md).
 
-- `Universal Registry Barcode Scanner` -> `DEFERRED / FUTURE REGISTRY ENHANCEMENT`
 - `external custom domains` -> `DEFERRED`
 - `registry owner edit/import manual truth notes` -> `DEFERRED`
 - `SMS/Telnyx live provider send` -> `DEFERRED`
@@ -202,17 +206,16 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 
 ## Next 10 Tasks
 
-1. No active launch-board blocker remains.
-2. Keep `proof:v1:client-rls-matrix` current if future non-guest write surfaces are added.
-3. Keep `proof:v1:client-write-inventory` current if future runtime write surfaces are added.
-4. Rerun `proof:v1:coordinator-dayof` after coordinator/day-of workflow changes.
-5. Rerun `proof:v1:name-change-runtime` after name-change workflow changes.
-6. Keep `Universal Registry Barcode Scanner` visible until it is formally prioritized or dropped.
-7. Keep unsupported external custom domains clearly marked as unsupported until product support exists.
-8. Keep the deployment matrix current when runtime/deploy IDs change.
-9. Keep the validation matrix current when proof lanes change.
-10. Tighten TS/ESLint rigor for new code and high-risk modules.
-11. Keep the broader repo-wide `noImplicitAny` / unused-enforcement flip in future maintainability scope unless it is formally reprioritized.
+1. Finish `Day-of / coordinator` until it is independently launch-ready, not just matrix-covered.
+2. Finish `Name change` until it is independently launch-ready, not just runtime-smoke covered.
+3. Build and ship `Universal Registry Barcode Scanner`.
+4. keep the live client-RLS matrix current if future non-guest write surfaces are added.
+5. keep the no-direct-client-write inventory current if future runtime write surfaces are added.
+6. Keep unsupported external custom domains clearly marked as unsupported until product support exists.
+7. Keep the deployment matrix current when runtime/deploy IDs change.
+8. Keep the validation matrix current when proof lanes change.
+9. Tighten TS/ESLint rigor for new code and high-risk modules.
+10. Keep the broader repo-wide `noImplicitAny` / unused-enforcement flip in future maintainability scope unless it is formally reprioritized.
 
 ## Resolved Work Summary
 

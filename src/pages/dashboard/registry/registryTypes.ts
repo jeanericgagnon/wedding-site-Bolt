@@ -1,4 +1,5 @@
 export type PurchaseStatus = 'available' | 'partial' | 'purchased';
+export type RegistrySourceType = 'barcode' | 'link' | 'manual' | 'cash_fund';
 
 export interface RegistryItem {
   id: string;
@@ -9,9 +10,15 @@ export interface RegistryItem {
   price_amount: number | null;
   store_name: string | null;
   merchant: string | null;
+  source_type?: RegistrySourceType | null;
+  barcode?: string | null;
   item_url: string | null;
   canonical_url: string | null;
   image_url: string | null;
+  selected_retailer?: string | null;
+  selected_product_url?: string | null;
+  estimated_price_cents?: number | null;
+  product_metadata?: Record<string, unknown> | null;
   description: string | null;
   notes: string | null;
   quantity_needed: number;
@@ -66,6 +73,37 @@ export interface RegistryPreview {
   error: string | null;
   partial?: boolean;
   missing_fields?: string[];
+}
+
+export interface RegistryBarcodeRetailerOption {
+  label: string;
+  url: string | null;
+  price_cents: number | null;
+  currency: string | null;
+  is_best_match?: boolean;
+}
+
+export interface RegistryBarcodeLookupResult {
+  ok: boolean;
+  matched: boolean;
+  barcode: string;
+  normalized_barcode: string;
+  format: string | null;
+  provider: string | null;
+  from_cache: boolean;
+  confidence_score: number;
+  title: string | null;
+  brand: string | null;
+  image_url: string | null;
+  category: string | null;
+  description: string | null;
+  estimated_price_cents: number | null;
+  currency: string | null;
+  product_url: string | null;
+  selected_retailer: string | null;
+  retailer_options: RegistryBarcodeRetailerOption[];
+  raw_payload?: Record<string, unknown> | null;
+  error?: string | null;
 }
 
 export interface RegistryItemMetadataState {
@@ -156,12 +194,18 @@ export function getRegistryItemMetadataState(item: RegistryItem): RegistryItemMe
 
 export interface RegistryItemDraft {
   item_type?: 'product' | 'cash_fund';
+  source_type?: RegistrySourceType;
   item_name: string;
+  barcode?: string;
   price_label: string;
   price_amount: string;
   merchant: string;
   item_url: string;
   image_url: string;
+  selected_retailer?: string;
+  selected_product_url?: string;
+  estimated_price_cents?: string;
+  product_metadata?: Record<string, unknown> | null;
   notes: string;
   desired_quantity: string;
   hide_when_purchased: boolean;
@@ -182,12 +226,18 @@ export interface RegistryItemDraft {
 }
 
 export const EMPTY_DRAFT: RegistryItemDraft = {
+  source_type: 'manual',
   item_name: '',
+  barcode: '',
   price_label: '',
   price_amount: '',
   merchant: '',
   item_url: '',
   image_url: '',
+  selected_retailer: '',
+  selected_product_url: '',
+  estimated_price_cents: '',
+  product_metadata: null,
   notes: '',
   desired_quantity: '1',
   hide_when_purchased: false,

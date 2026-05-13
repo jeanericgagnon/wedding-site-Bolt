@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RegistryItemForm } from './RegistryItemForm';
 import type { RegistryItem } from './registryTypes';
-import { fetchUrlPreview } from './registryService';
+import { fetchUrlPreview, lookupRegistryBarcode } from './registryService';
 
 vi.mock('./registryService', () => ({
   fetchUrlPreview: vi.fn(async () => ({
@@ -13,6 +13,29 @@ vi.mock('./registryService', () => ({
     image_url: 'https://example.com/bowl.jpg',
     canonical_url: 'https://example.com/product',
     fetch_status: 'success',
+  })),
+  lookupRegistryBarcode: vi.fn(async () => ({
+    ok: true,
+    matched: true,
+    barcode: '036000291452',
+    normalized_barcode: '036000291452',
+    format: 'upc_a',
+    provider: 'cache',
+    from_cache: false,
+    confidence_score: 92,
+    title: 'Scanned Bowl',
+    brand: 'DayOf',
+    image_url: 'https://example.com/scanned-bowl.jpg',
+    category: 'Kitchen',
+    description: 'A nice bowl',
+    estimated_price_cents: 6400,
+    currency: 'USD',
+    product_url: 'https://example.com/scanned-bowl',
+    selected_retailer: 'DayOf QA Store',
+    retailer_options: [
+      { label: 'DayOf QA Store', url: 'https://example.com/scanned-bowl', price_cents: 6400, currency: 'USD', is_best_match: true },
+    ],
+    raw_payload: { sample: true },
   })),
   findDuplicateItem: vi.fn(() => null),
 }));
@@ -64,7 +87,7 @@ describe('RegistryItemForm', () => {
       />,
     );
 
-    expect(screen.getByDisplayValue('https://example.com/canonical-product')).toBeInTheDocument();
+    expect(screen.getAllByDisplayValue('https://example.com/canonical-product')[0]).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /refresh details/i })).toBeInTheDocument();
   });
 
@@ -83,7 +106,7 @@ describe('RegistryItemForm', () => {
       />,
     );
 
-    fireEvent.change(screen.getByDisplayValue('https://example.com/original-product'), {
+    fireEvent.change(screen.getAllByDisplayValue('https://example.com/original-product')[0], {
       target: { value: 'https://example.com/updated-product' },
     });
 
@@ -168,4 +191,25 @@ describe('RegistryItemForm', () => {
     expect(fetchUrlPreview).toHaveBeenCalledTimes(1);
     expect(screen.getByPlaceholderText('e.g. KitchenAid Stand Mixer')).toHaveValue('Owner Edited Bowl');
   }, 10_000);
+
+  it('looks up a barcode and fills the product details', async () => {
+    render(
+      <RegistryItemForm
+        existingItems={[]}
+        onSave={vi.fn(async () => {})}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /scan barcode/i }));
+    fireEvent.change(screen.getByPlaceholderText(/upc, ean, gtin, or isbn/i), {
+      target: { value: '036000291452' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^look up$/i }));
+
+    await waitFor(() => expect(lookupRegistryBarcode).toHaveBeenCalledWith('036000291452'));
+    await waitFor(() => expect(screen.getByDisplayValue('Scanned Bowl')).toBeInTheDocument());
+    expect(screen.getByDisplayValue('64.00')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('DayOf QA Store')).toBeInTheDocument();
+  });
 });

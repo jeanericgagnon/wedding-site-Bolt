@@ -1,12 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link2, Loader2, X, ImageOff, AlertCircle, CheckCircle2, Info, RefreshCw } from 'lucide-react';
 import { Button } from '../../../components/ui';
-import { fetchUrlPreview, findDuplicateItem } from './registryService';
+import { fetchUrlPreview, findDuplicateItem, lookupRegistryBarcode } from './registryService';
 import { normalizeUrl, isValidUrl } from '../../../lib/urlUtils';
-import type { RegistryItem, RegistryItemDraft, RegistryPreview, MetadataConfidence } from './registryTypes';
+import type { RegistryBarcodeLookupResult, RegistryItem, RegistryItemDraft, RegistryPreview, MetadataConfidence, RegistrySourceType } from './registryTypes';
 import { computeConfidence, getBlockedMessage } from './registryTypes';
 import { getSafePublicImageUrl, getSafePublicWebUrl } from '../../../sections/publicLinks';
 import { customerSafeErrorMessage } from '../../../lib/customerSafeError';
+import { normalizeRegistryBarcode } from '../../../lib/registryBarcode';
+import { RegistryBarcodeScanner } from './RegistryBarcodeScanner';
 
 interface Props {
   initial?: RegistryItem | null;
@@ -18,12 +20,18 @@ interface Props {
 function itemToDraft(item: RegistryItem): RegistryItemDraft {
   return {
     item_type: item.item_type ?? 'product',
+    source_type: item.source_type ?? (item.item_type === 'cash_fund' ? 'cash_fund' : item.barcode ? 'barcode' : (item.item_url ?? item.canonical_url) ? 'link' : 'manual'),
     item_name: item.item_name,
+    barcode: item.barcode ?? '',
     price_label: item.price_label ?? '',
     price_amount: item.price_amount != null ? String(item.price_amount) : '',
     merchant: item.merchant ?? item.store_name ?? '',
     item_url: item.item_url ?? item.canonical_url ?? '',
     image_url: item.image_url ?? '',
+    selected_retailer: item.selected_retailer ?? '',
+    selected_product_url: item.selected_product_url ?? item.item_url ?? '',
+    estimated_price_cents: item.estimated_price_cents != null ? String(item.estimated_price_cents) : '',
+    product_metadata: item.product_metadata ?? null,
     notes: item.notes ?? item.description ?? '',
     desired_quantity: String(item.quantity_needed ?? 1),
     hide_when_purchased: item.hide_when_purchased ?? false,
@@ -55,6 +63,7 @@ function sanitizeRegistryFormDraft(draft: RegistryItemDraft): RegistryItemDraft 
   return {
     ...draft,
     item_url: normalizeRegistryFormWebUrl(draft.item_url),
+    selected_product_url: normalizeRegistryFormWebUrl(draft.selected_product_url),
     canonical_url: normalizeRegistryFormWebUrl(draft.canonical_url),
     image_url: getSafePublicImageUrl(draft.image_url) || '',
     fund_venmo_url: normalizeRegistryFormWebUrl(draft.fund_venmo_url),
@@ -67,12 +76,18 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
   const [draft, setDraft] = useState<RegistryItemDraft>(() =>
     initial ? itemToDraft(initial) : {
       item_type: 'product',
+      source_type: 'link',
       item_name: '',
+      barcode: '',
       price_label: '',
       price_amount: '',
       merchant: '',
       item_url: '',
       image_url: '',
+      selected_retailer: '',
+      selected_product_url: '',
+      estimated_price_cents: '',
+      product_metadata: null,
       notes: '',
       desired_quantity: '1',
       hide_when_purchased: false,
@@ -92,8 +107,12 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
       metadata_retailer: '',
     }
   );
+  const [sourceMode, setSourceMode] = useState<RegistrySourceType>(() => initial?.item_type === 'cash_fund'
+    ? 'cash_fund'
+    : initial?.source_type ?? (initial?.barcode ? 'barcode' : (initial?.item_url ?? initial?.canonical_url) ? 'link' : 'link'));
 
   const [urlInput, setUrlInput] = useState(initial?.item_url ?? initial?.canonical_url ?? '');
+  const [barcodeInput, setBarcodeInput] = useState(initial?.barcode ?? '');
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const autoFetchTimerRef = useRef<number | null>(null);
@@ -104,6 +123,9 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
   const [dedupeWarning, setDedupeWarning] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [barcodeLookup, setBarcodeLookup] = useState<RegistryBarcodeLookupResult | null>(null);
+  const [barcodeLookupError, setBarcodeLookupError] = useState<string | null>(null);
+  const [barcodeLookingUp, setBarcodeLookingUp] = useState(false);
 
   const imageUrlLooksDirect = (() => {
     const v = (getSafePublicImageUrl(draft.image_url) || '').trim();
@@ -149,6 +171,78 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
   function set<K extends keyof RegistryItemDraft>(key: K, value: RegistryItemDraft[K]) {
     setDraft(prev => ({ ...prev, [key]: value }));
   }
+
+  useEffect(() => {
+    if (draft.item_type === 'cash_fund') {
+      setSourceMode('cash_fund');
+      setDraft((prev) => ({ ...prev, source_type: 'cash_fund' }));
+      return;
+    }
+
+    if (sourceMode === 'cash_fund') {
+      setSourceMode(draft.barcode ? 'barcode' : draft.item_url ? 'link' : 'manual');
+    }
+  }, [draft.barcode, draft.item_type, draft.item_url, sourceMode]);
+
+  const applyBarcodeLookup = useCallback((lookup: RegistryBarcodeLookupResult) => {
+    const bestRetailer = lookup.retailer_options.find((option) => option.is_best_match) ?? lookup.retailer_options[0] ?? null;
+    const priceAmount = lookup.estimated_price_cents != null ? (lookup.estimated_price_cents / 100).toFixed(2) : '';
+
+    setBarcodeLookup(lookup);
+    setBarcodeLookupError(lookup.error ?? null);
+    setDraft((prev) => ({
+      ...prev,
+      source_type: 'barcode',
+      barcode: lookup.normalized_barcode,
+      item_name: lookup.title ?? prev.item_name,
+      merchant: bestRetailer?.label ?? lookup.selected_retailer ?? lookup.brand ?? prev.merchant,
+      item_url: bestRetailer?.url ?? lookup.product_url ?? prev.item_url,
+      canonical_url: bestRetailer?.url ?? lookup.product_url ?? prev.canonical_url,
+      selected_retailer: bestRetailer?.label ?? lookup.selected_retailer ?? prev.selected_retailer,
+      selected_product_url: bestRetailer?.url ?? lookup.product_url ?? prev.selected_product_url,
+      image_url: lookup.image_url ?? prev.image_url,
+      description: lookup.description ?? prev.description,
+      notes: prev.notes || lookup.description || '',
+      price_amount: priceAmount || prev.price_amount,
+      estimated_price_cents: lookup.estimated_price_cents != null ? String(lookup.estimated_price_cents) : prev.estimated_price_cents,
+      product_metadata: lookup.raw_payload ?? prev.product_metadata ?? null,
+      metadata_fetch_status: lookup.matched ? 'success' : '',
+      metadata_confidence_score: lookup.confidence_score ?? null,
+      metadata_source_method: lookup.matched ? 'adapter' : 'manual',
+      metadata_retailer: bestRetailer?.label ?? lookup.selected_retailer ?? prev.metadata_retailer,
+    }));
+  }, []);
+
+  const handleBarcodeLookup = useCallback(async (value: string) => {
+    const normalized = normalizeRegistryBarcode(value);
+    if (!normalized.ok) {
+      setBarcodeLookup(null);
+      setBarcodeLookupError(normalized.reason);
+      return;
+    }
+
+    setBarcodeInput(normalized.raw);
+    setDraft((prev) => ({
+      ...prev,
+      source_type: 'barcode',
+      barcode: normalized.normalized,
+    }));
+    setBarcodeLookingUp(true);
+    setBarcodeLookupError(null);
+
+    try {
+      const lookup = await lookupRegistryBarcode(normalized.normalized);
+      applyBarcodeLookup(lookup);
+      if (!lookup.matched) {
+        setBarcodeLookupError(lookup.error || 'We could not find full product details for that barcode. You can keep editing the gift by hand.');
+      }
+    } catch (error) {
+      setBarcodeLookup(null);
+      setBarcodeLookupError(customerSafeErrorMessage(error, 'We could not look up that barcode. You can still enter the gift details by hand.'));
+    } finally {
+      setBarcodeLookingUp(false);
+    }
+  }, [applyBarcodeLookup]);
 
   const doFetch = useCallback(async (urlToFetch: string, forceRefresh = false) => {
     const normalized = normalizeUrl(urlToFetch.trim());
@@ -211,11 +305,16 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
 
         return {
           ...prev,
+          source_type: 'link',
           item_name: preview.title ?? (urlChanged ? '' : prev.item_name),
           price_label: preview.price_label ?? (urlChanged ? '' : prev.price_label),
           price_amount: preview.price_amount != null ? String(preview.price_amount) : (urlChanged ? '' : prev.price_amount),
           merchant: nextMerchant,
           item_url: targetUrl,
+          selected_product_url: targetUrl,
+          selected_retailer: nextMerchant ?? prev.selected_retailer ?? '',
+          estimated_price_cents: preview.price_amount != null ? String(Math.round(preview.price_amount * 100)) : prev.estimated_price_cents,
+          product_metadata: prev.product_metadata,
           image_url: preview.image_url ?? (urlChanged || missing.has('image') ? '' : prev.image_url),
           notes: nextNotes,
           canonical_url: preview.canonical_url ?? prev.canonical_url ?? '',
@@ -258,7 +357,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
   }
 
   useEffect(() => {
-    if (draft.item_type === 'cash_fund') return;
+    if (draft.item_type === 'cash_fund' || sourceMode !== 'link') return;
 
     const normalized = normalizeUrl(urlInput.trim());
     if (!isValidUrl(normalized)) return;
@@ -283,7 +382,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
         autoFetchTimerRef.current = null;
       }
     };
-  }, [urlInput, draft.item_type, doFetch]);
+  }, [urlInput, draft.item_type, doFetch, sourceMode]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -291,7 +390,10 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     setSaving(true);
     setSaveError(null);
     try {
-      await onSave(sanitizeRegistryFormDraft(draft));
+      await onSave(sanitizeRegistryFormDraft({
+        ...draft,
+        source_type: draft.item_type === 'cash_fund' ? 'cash_fund' : sourceMode,
+      }));
     } catch (err: unknown) {
       setSaveError(customerSafeErrorMessage(err, 'Couldn’t save this gift.'));
     } finally {
@@ -321,108 +423,225 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
           <div>
             <label className="block text-sm font-medium text-text-primary mb-2">Item Type</label>
             <div className="inline-flex rounded-lg border border-border overflow-hidden">
-              <button type="button" className={`px-3 py-1.5 text-sm ${draft.item_type !== 'cash_fund' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => set('item_type', 'product')}>Product</button>
+              <button type="button" className={`px-3 py-1.5 text-sm ${draft.item_type !== 'cash_fund' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => {
+                set('item_type', 'product');
+                setDraft((prev) => ({ ...prev, source_type: prev.source_type === 'cash_fund' ? 'manual' : prev.source_type }));
+              }}>Product</button>
               <button type="button" className={`px-3 py-1.5 text-sm border-l border-border ${draft.item_type === 'cash_fund' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => set('item_type', 'cash_fund')}>Cash Fund</button>
             </div>
           </div>
 
-          {/* URL Import */}
-          {draft.item_type !== 'cash_fund' && <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-text-primary">
-                {isEdit ? 'Product link' : 'Add from a link'}
-                <span className="ml-2 text-xs text-text-tertiary font-normal">(any store)</span>
-              </label>
-              {isEdit && draft.item_url && (
-                <button
-                  type="button"
-                  onClick={handleRefetch}
-                  disabled={fetching}
-                  className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
-                >
-                  {fetching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                  Refresh details
-                </button>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
-                <input
-                  type="url"
-                  value={urlInput}
-                  onChange={e => {
-                    const nextUrl = e.target.value;
-                    setUrlInput(nextUrl);
-                    setDraft(prev => ({
-                      ...prev,
-                      item_url: nextUrl,
-                      canonical_url: nextUrl,
-                    }));
-                  }}
-                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleFetch(); } }}
-                  placeholder="https://amazon.com/product/… or any store URL"
-                  className="w-full pl-9 pr-3 py-2.5 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
-              {!isEdit && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleFetch}
-                  disabled={fetching || !urlInput.trim()}
-                >
-                  {fetching ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    'Fill details'
-                  )}
-                </Button>
-              )}
-            </div>
-
-            {itemUrlHostHint && (
-              <p className="text-xs text-text-tertiary">{itemUrlHostHint}</p>
-            )}
-
-            {fetchError && (
-              <div className="flex items-start gap-2 p-3 bg-surface-subtle rounded-lg text-sm text-text-secondary border border-border-subtle">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
-                <div className="flex-1">
-                  <span>{fetchError}</span>
-                  {lastPreview?.fetch_status !== 'blocked' && (
-                    <p className="mt-1 text-xs opacity-80">
-                      The URL has been saved to the product link field. Just fill in the name, price, and store below.
-                    </p>
-                  )}
+          {draft.item_type !== 'cash_fund' && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-2">How do you want to add it?</label>
+                <div className="inline-flex flex-wrap rounded-lg border border-border overflow-hidden">
+                  {([
+                    ['barcode', 'Scan barcode'],
+                    ['link', 'Paste product link'],
+                    ['manual', 'Add manually'],
+                  ] as const).map(([mode, label]) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      className={`px-3 py-1.5 text-sm ${sourceMode === mode ? 'bg-primary/10 text-primary' : 'text-text-secondary'} ${mode !== 'barcode' ? 'border-l border-border' : ''}`}
+                      onClick={() => {
+                        setSourceMode(mode);
+                        setDraft((prev) => ({ ...prev, source_type: mode }));
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
               </div>
-            )}
-            {fetchDone && !fetchError && fetchConfidence === 'full' && (
-              <div className="flex items-center gap-2 p-3 bg-success-light rounded-lg text-sm text-success border border-success/20">
-                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                <span>Auto-filled — all details imported. Review and save.</span>
-              </div>
-            )}
-            {fetchDone && !fetchError && fetchConfidence === 'partial' && (
-              <div className="flex items-start gap-2 p-3 bg-primary-light rounded-lg text-sm text-primary border border-primary/20">
-                <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <div>
-                  <span>Please review — some details were imported but a few fields may need filling in below.</span>
-                  {lastPreview?.missing_fields && lastPreview.missing_fields.length > 0 && (
-                    <p className="mt-1 text-xs opacity-80">Missing: {lastPreview.missing_fields.join(', ')}</p>
+
+              {sourceMode === 'barcode' && (
+                <>
+                  <RegistryBarcodeScanner
+                    value={barcodeInput}
+                    disabled={saving}
+                    isLookingUp={barcodeLookingUp}
+                    onChange={(nextValue) => {
+                      setBarcodeInput(nextValue);
+                      setDraft((prev) => ({ ...prev, source_type: 'barcode', barcode: nextValue }));
+                    }}
+                    onConfirm={(nextValue) => {
+                      void handleBarcodeLookup(nextValue);
+                    }}
+                  />
+
+                  {barcodeLookupError && (
+                    <div className="flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
+                      <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-text-tertiary" />
+                      <div className="flex-1">
+                        <span>{barcodeLookupError}</span>
+                        <p className="mt-1 text-xs opacity-80">You can keep the barcode and finish the gift details below by hand.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {barcodeLookup?.matched && (
+                    <div className="space-y-3 rounded-lg border border-border-subtle bg-white p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-text-primary">{barcodeLookup.title || 'Scanned product'}</p>
+                          <p className="mt-1 text-xs text-text-secondary">
+                            {barcodeLookup.brand ? `${barcodeLookup.brand} · ` : ''}{barcodeLookup.normalized_barcode}
+                          </p>
+                        </div>
+                        <span className="rounded-md bg-primary/10 px-2 py-1 text-xs text-primary">
+                          Confidence {Math.round(barcodeLookup.confidence_score)}
+                        </span>
+                      </div>
+                      {barcodeLookup.retailer_options.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Where should guests buy it?</p>
+                          <div className="grid gap-2">
+                            {barcodeLookup.retailer_options.map((option, index) => {
+                              const isActive = (draft.selected_product_url || draft.item_url) === option.url || (!draft.selected_product_url && index === 0);
+                              return (
+                                <button
+                                  key={`${option.label}-${option.url ?? index}`}
+                                  type="button"
+                                  className={`rounded-lg border px-3 py-2 text-left text-sm ${isActive ? 'border-primary bg-primary/5 text-primary' : 'border-border text-text-primary'}`}
+                                  onClick={() => {
+                                    setDraft((prev) => ({
+                                      ...prev,
+                                      merchant: option.label,
+                                      selected_retailer: option.label,
+                                      item_url: option.url || prev.item_url,
+                                      canonical_url: option.url || prev.canonical_url,
+                                      selected_product_url: option.url || prev.selected_product_url,
+                                    }));
+                                  }}
+                                >
+                                  <span className="font-medium">{option.label}</span>
+                                  {option.price_cents != null && (
+                                    <span className="ml-2 text-text-secondary">
+                                      ${(option.price_cents / 100).toFixed(2)}
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {sourceMode === 'link' && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm font-medium text-text-primary">
+                      {isEdit ? 'Product link' : 'Add from a link'}
+                      <span className="ml-2 text-xs text-text-tertiary font-normal">(any store)</span>
+                    </label>
+                    {isEdit && draft.item_url && (
+                      <button
+                        type="button"
+                        onClick={handleRefetch}
+                        disabled={fetching}
+                        className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+                      >
+                        {fetching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                        Refresh details
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
+                      <input
+                        type="url"
+                        value={urlInput}
+                        onChange={e => {
+                          const nextUrl = e.target.value;
+                          setUrlInput(nextUrl);
+                          setDraft(prev => ({
+                            ...prev,
+                            source_type: 'link',
+                            item_url: nextUrl,
+                            canonical_url: nextUrl,
+                            selected_product_url: nextUrl,
+                          }));
+                        }}
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleFetch(); } }}
+                        placeholder="https://amazon.com/product/… or any store URL"
+                        className="w-full pl-9 pr-3 py-2.5 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      />
+                    </div>
+                    {!isEdit && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleFetch}
+                        disabled={fetching || !urlInput.trim()}
+                      >
+                        {fetching ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          'Fill details'
+                        )}
+                      </Button>
+                    )}
+                  </div>
+
+                  {itemUrlHostHint && (
+                    <p className="text-xs text-text-tertiary">{itemUrlHostHint}</p>
+                  )}
+
+                  {fetchError && (
+                    <div className="flex items-start gap-2 p-3 bg-surface-subtle rounded-lg text-sm text-text-secondary border border-border-subtle">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
+                      <div className="flex-1">
+                        <span>{fetchError}</span>
+                        {lastPreview?.fetch_status !== 'blocked' && (
+                          <p className="mt-1 text-xs opacity-80">
+                            The URL has been saved to the product link field. Just fill in the name, price, and store below.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {fetchDone && !fetchError && fetchConfidence === 'full' && (
+                    <div className="flex items-center gap-2 p-3 bg-success-light rounded-lg text-sm text-success border border-success/20">
+                      <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                      <span>Auto-filled — all details imported. Review and save.</span>
+                    </div>
+                  )}
+                  {fetchDone && !fetchError && fetchConfidence === 'partial' && (
+                    <div className="flex items-start gap-2 p-3 bg-primary-light rounded-lg text-sm text-primary border border-primary/20">
+                      <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <span>Please review — some details were imported but a few fields may need filling in below.</span>
+                        {lastPreview?.missing_fields && lastPreview.missing_fields.length > 0 && (
+                          <p className="mt-1 text-xs opacity-80">Missing: {lastPreview.missing_fields.join(', ')}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {dedupeWarning && (
+                    <div className="flex items-start gap-2 p-3 bg-surface-subtle rounded-lg text-sm text-text-secondary border border-border-subtle">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
+                      <span>{dedupeWarning}</span>
+                    </div>
                   )}
                 </div>
-              </div>
-            )}
-            {dedupeWarning && (
-              <div className="flex items-start gap-2 p-3 bg-surface-subtle rounded-lg text-sm text-text-secondary border border-border-subtle">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
-                <span>{dedupeWarning}</span>
-              </div>
-            )}
-          </div>}
+              )}
+
+              {sourceMode === 'manual' && (
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+                  <p className="text-sm font-medium text-text-primary">Add it manually</p>
+                  <p className="mt-1 text-xs text-text-secondary">Use this for one-off items, custom gifts, or anything that is easier to type than import.</p>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 gap-4">
             {/* Image preview + URL */}
@@ -534,6 +753,42 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
               {missingMerchant && (
                 <p className="mt-1 text-xs text-text-tertiary">Store name was not filled in. Add the merchant so guests know where the gift comes from.</p>
               )}
+            </div>
+
+            {sourceMode === 'barcode' && (
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-1">Barcode</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={draft.barcode ?? ''}
+                  onChange={e => set('barcode', e.target.value)}
+                  placeholder="Stored with the registry item"
+                  className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-1">
+                Product link
+                <span className="ml-1 text-xs text-text-tertiary font-normal">(optional but helpful for guests)</span>
+              </label>
+              <input
+                type="url"
+                value={draft.selected_product_url || draft.item_url}
+                onChange={e => {
+                  const nextUrl = e.target.value;
+                  setDraft(prev => ({
+                    ...prev,
+                    item_url: nextUrl,
+                    canonical_url: nextUrl || prev.canonical_url,
+                    selected_product_url: nextUrl,
+                  }));
+                }}
+                placeholder="https://store.com/product"
+                className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
             </div>
 
             {/* Desired quantity */}
