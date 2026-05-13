@@ -2,7 +2,10 @@
 
 import { execSync } from 'node:child_process';
 
-const steps = [
+const requireLive = process.argv.includes('--require-live');
+const liveEnabled = process.env.LIVE_REGISTRY_WRITE_READ === '1';
+
+const localSteps = [
   {
     id: 'registry-service-tests',
     label: 'Registry service trust tests',
@@ -13,6 +16,12 @@ const steps = [
     id: 'registry-types-tests',
     label: 'Registry metadata + attention-state tests',
     command: 'npm test -- src/pages/dashboard/registry/registryTypes.test.ts',
+    required: true,
+  },
+  {
+    id: 'registry-barcode-tests',
+    label: 'Registry barcode normalization tests',
+    command: 'npm test -- src/lib/registryBarcode.test.ts src/pages/dashboard/registry/RegistryItemForm.test.tsx',
     required: true,
   },
   {
@@ -28,6 +37,17 @@ const steps = [
     required: true,
   },
 ];
+
+const liveSteps = liveEnabled ? [
+  {
+    id: 'registry-live-write-read',
+    label: 'Registry live write/read proof',
+    command: 'npx playwright test --workers=1 tests/e2e/registry-write-read.spec.ts',
+    required: true,
+  },
+] : [];
+
+const steps = [...localSteps, ...liveSteps];
 
 function runStep(step) {
   const startedAt = new Date().toISOString();
@@ -71,27 +91,39 @@ function runStep(step) {
 const results = steps.map(runStep);
 const failedRequired = results.filter((result) => result.required && !result.ok);
 
+if (requireLive && !liveEnabled) {
+  console.log(JSON.stringify({
+    ok: false,
+    slice: 'registry',
+    proof: 'registry-live',
+    blocking: true,
+    message: 'Run LIVE_REGISTRY_WRITE_READ=1 npm run proof:v1:registry to verify the live owner registry write/read route, including barcode-backed item creation.',
+  }, null, 2));
+  process.exit(1);
+}
+
 const output = {
   ok: failedRequired.length === 0,
   slice: 'registry',
+  proof: liveEnabled ? 'registry-live' : 'registry-local',
   generatedAt: new Date().toISOString(),
   launchClaim: {
-    status: 'manual-proof-pending',
-    highestRiskTrustGap: 'runtime_registry_truth_after_real_edits',
-    secondaryTrustGap: 'registry_repair_and_import_persistence_manual_verification_missing',
-    manualProofRequired: true,
-    truthGateSummary: 'automation_green_manual_truth_red',
+    status: liveEnabled ? 'live-proof-green' : 'local-proof-green-live-proof-pending',
+    highestRiskTrustGap: liveEnabled ? null : 'runtime_registry_truth_after_real_edits',
+    secondaryTrustGap: liveEnabled ? null : 'barcode_lookup_runtime_truth_after_deploy',
+    manualProofRequired: !liveEnabled,
+    truthGateSummary: liveEnabled ? 'automation_green_live_truth_green' : 'automation_green_live_truth_pending',
     evidenceLogPath: 'docs/v1-smoke-proof-log.md',
-    manualProofStatus: 'pending_runtime_registry_notes',
-    manualProofRequirements: [
+    manualProofStatus: liveEnabled ? 'closed' : 'pending_live_registry_write_read',
+    manualProofRequirements: liveEnabled ? [] : [
       'owner_manage_import_persistence_runtime_pass',
-      'owner_repair_cleanup_runtime_pass',
-      'guest_visible_purchase_truth_runtime_pass',
+      'owner_barcode_lookup_save_runtime_pass',
+      'guest_visible_registry_endpoint_runtime_pass',
     ],
-    manualProofBlockingReasons: {
-      owner_manage_import_persistence_runtime_pass: 'real owner add/import/edit persistence notes are not logged yet',
-      owner_repair_cleanup_runtime_pass: 'repair or cleanup runtime notes are not logged yet',
-      guest_visible_purchase_truth_runtime_pass: 'guest-visible purchase-state notes after owner edits are not logged yet',
+    manualProofBlockingReasons: liveEnabled ? {} : {
+      owner_manage_import_persistence_runtime_pass: 'run the authenticated live registry add/edit proof',
+      owner_barcode_lookup_save_runtime_pass: 'run the live barcode lookup/save proof against deployed runtime',
+      guest_visible_registry_endpoint_runtime_pass: 'confirm the public registry endpoint stays readable after runtime edits',
     },
   },
   summary: {
@@ -102,13 +134,15 @@ const output = {
   automatedCoverage: [
     'Purchased-state normalization and duplicate detection',
     'Metadata confidence / blocked retailer / repair-state attention truth',
+    'Barcode normalization and registry barcode form behavior',
     'Registry dashboard guard coverage',
     'Build integrity after registry proof assertions',
+    ...(liveEnabled ? ['Live owner registry URL import plus barcode-backed item persistence and public registry endpoint readability'] : []),
   ],
-  stillManualProofNeeded: [
-    'Add or import a real registry item',
-    'Run a repair or cleanup path on a weak import',
-    'Verify internal/public purchased-state behavior after runtime edits',
+  stillManualProofNeeded: liveEnabled ? [] : [
+    'Add or import a real registry item on live runtime',
+    'Add a real barcode-backed item on live runtime',
+    'Verify the public registry endpoint stays readable after runtime edits',
   ],
   results,
 };

@@ -17,7 +17,7 @@ function envValue(key: string, fallback = '') {
   return match.slice(key.length + 1).trim().replace(/^['"]|['"]$/g, '');
 }
 
-test('registry owner add persists and public registry endpoint stays readable', async ({ page }, testInfo) => {
+test('registry owner add persists and public registry endpoint stays readable', async ({ page }) => {
   test.setTimeout(180_000);
 
   const email = process.env.V1_OWNER_EMAIL || 'test@gmail.com';
@@ -29,6 +29,8 @@ test('registry owner add persists and public registry endpoint stays readable', 
   const runId = cleanupOnlyRunId || process.env.LIVE_REGISTRY_RUN_ID || `${Date.now()}`;
   const importedFixtureName = 'DayOf QA Ceramic Serving Bowl';
   const editedItemName = `Registry QA Serving Bowl ${runId}`;
+  const barcodeSourceValue = '9780140328721';
+  const barcodeEditedItemName = `Registry QA Barcode Book ${runId}`;
   const appBaseUrl = process.env.PLAYWRIGHT_BASE_URL || 'https://dayof.love';
   const registryFixtureOrigin = /^https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?/i.test(appBaseUrl)
     ? 'https://dayof.love'
@@ -62,7 +64,7 @@ test('registry owner add persists and public registry endpoint stays readable', 
 
   const fetchQaItems = async () => {
     const response = await restFetch(restUrl('registry_items', {
-      select: 'id,wedding_site_id,item_name,merchant,price_amount,notes,image_url,quantity_needed,quantity_purchased,purchase_status,purchaser_name,hide_when_purchased',
+      select: 'id,wedding_site_id,item_name,merchant,price_amount,notes,image_url,quantity_needed,quantity_purchased,purchase_status,purchaser_name,hide_when_purchased,source_type,barcode,selected_retailer,selected_product_url,estimated_price_cents,product_metadata',
       item_name: `ilike.*Registry QA*${runId}*`,
       order: 'created_at.desc',
     }));
@@ -80,6 +82,12 @@ test('registry owner add persists and public registry endpoint stays readable', 
       purchase_status: string;
       purchaser_name: string | null;
       hide_when_purchased: boolean;
+      source_type: string | null;
+      barcode: string | null;
+      selected_retailer: string | null;
+      selected_product_url: string | null;
+      estimated_price_cents: number | null;
+      product_metadata: Record<string, unknown> | null;
     }>;
   };
 
@@ -249,6 +257,37 @@ test('registry owner add persists and public registry endpoint stays readable', 
       quantity_purchased: 0,
       purchase_status: 'available',
     });
+
+    await page.getByRole('button', { name: 'Add gift' }).click();
+    await expect(page.getByRole('heading', { name: 'Add Registry Item' })).toBeVisible();
+    await page.getByRole('button', { name: /scan barcode/i }).click();
+    await page.getByPlaceholder(/UPC, EAN, GTIN, or ISBN/i).fill(barcodeSourceValue);
+    await page.getByRole('button', { name: 'Look up' }).click();
+    await expect(page.getByPlaceholder('e.g. KitchenAid Stand Mixer')).not.toHaveValue('', { timeout: 20_000 });
+    await page.getByPlaceholder('e.g. KitchenAid Stand Mixer').fill(barcodeEditedItemName);
+    await page.getByPlaceholder(/Any notes for guests/i).fill(`Registry QA barcode note ${runId}`);
+    await page.getByRole('button', { name: 'Add to Registry' }).click();
+    await expect(page.getByText('Item added to registry')).toBeVisible();
+
+    await expect.poll(async () => {
+      const rows = await fetchQaItems();
+      return rows.length;
+    }, {
+      timeout: 20_000,
+      message: 'expected barcode-backed registry item to persist after add',
+    }).toBeGreaterThan(1);
+
+    const rowsAfterBarcode = await fetchQaItems();
+    const barcodeRow = rowsAfterBarcode.find((row) => row.item_name === barcodeEditedItemName);
+    expect(barcodeRow).toBeTruthy();
+    expect(barcodeRow).toMatchObject({
+      item_name: barcodeEditedItemName,
+      source_type: 'barcode',
+      barcode: barcodeSourceValue,
+      purchase_status: 'available',
+    });
+    expect(barcodeRow?.selected_retailer || barcodeRow?.merchant).toBeTruthy();
+    expect((barcodeRow?.selected_product_url || '').length > 0 || (barcodeRow?.product_metadata && Object.keys(barcodeRow.product_metadata).length > 0)).toBeTruthy();
 
     const publicItems = await fetchPublicRegistryItems();
     expect(Array.isArray(publicItems)).toBe(true);

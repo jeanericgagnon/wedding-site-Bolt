@@ -363,21 +363,21 @@ describe('sections registry resolution', () => {
 
   it('keeps registry proof output explicit about remaining runtime truth work', () => {
     const registryProof = readFileSync(resolve(__dirname, '../../scripts/v1-proof-registry.mjs'), 'utf8');
-    expect(registryProof).toContain("status: 'manual-proof-pending'");
-    expect(registryProof).toContain("highestRiskTrustGap: 'runtime_registry_truth_after_real_edits'");
-    expect(registryProof).toContain("secondaryTrustGap: 'registry_repair_and_import_persistence_manual_verification_missing'");
-    expect(registryProof).toContain('manualProofRequired: true');
-    expect(registryProof).toContain("truthGateSummary: 'automation_green_manual_truth_red'");
+    expect(registryProof).toContain("status: liveEnabled ? 'live-proof-green' : 'local-proof-green-live-proof-pending'");
+    expect(registryProof).toContain("highestRiskTrustGap: liveEnabled ? null : 'runtime_registry_truth_after_real_edits'");
+    expect(registryProof).toContain("secondaryTrustGap: liveEnabled ? null : 'barcode_lookup_runtime_truth_after_deploy'");
+    expect(registryProof).toContain('manualProofRequired: !liveEnabled');
+    expect(registryProof).toContain("truthGateSummary: liveEnabled ? 'automation_green_live_truth_green' : 'automation_green_live_truth_pending'");
     expect(registryProof).toContain("evidenceLogPath: 'docs/v1-smoke-proof-log.md'");
-    expect(registryProof).toContain("manualProofStatus: 'pending_runtime_registry_notes'");
-    expect(registryProof).toContain('manualProofRequirements: [');
+    expect(registryProof).toContain("manualProofStatus: liveEnabled ? 'closed' : 'pending_live_registry_write_read'");
+    expect(registryProof).toContain('manualProofRequirements: liveEnabled ? [] : [');
     expect(registryProof).toContain("'owner_manage_import_persistence_runtime_pass'");
-    expect(registryProof).toContain("'owner_repair_cleanup_runtime_pass'");
-    expect(registryProof).toContain("'guest_visible_purchase_truth_runtime_pass'");
-    expect(registryProof).toContain('manualProofBlockingReasons: {');
-    expect(registryProof).toContain("owner_manage_import_persistence_runtime_pass: 'real owner add/import/edit persistence notes are not logged yet'");
-    expect(registryProof).toContain("owner_repair_cleanup_runtime_pass: 'repair or cleanup runtime notes are not logged yet'");
-    expect(registryProof).toContain("guest_visible_purchase_truth_runtime_pass: 'guest-visible purchase-state notes after owner edits are not logged yet'");
+    expect(registryProof).toContain("'owner_barcode_lookup_save_runtime_pass'");
+    expect(registryProof).toContain("'guest_visible_registry_endpoint_runtime_pass'");
+    expect(registryProof).toContain('manualProofBlockingReasons: liveEnabled ? {} : {');
+    expect(registryProof).toContain("owner_manage_import_persistence_runtime_pass: 'run the authenticated live registry add/edit proof'");
+    expect(registryProof).toContain("owner_barcode_lookup_save_runtime_pass: 'run the live barcode lookup/save proof against deployed runtime'");
+    expect(registryProof).toContain("guest_visible_registry_endpoint_runtime_pass: 'confirm the public registry endpoint stays readable after runtime edits'");
   });
 
   it('keeps builder registry compatibility tolerant of persisted trim casing and punctuation drift', () => {
@@ -464,7 +464,7 @@ describe('sections registry resolution', () => {
     expect(registryLinkCarryover).toContain('function extractRegistryUrlTokens(line: string): CarryoverRegistryToken[] {');
     expect(registryLinkCarryover).toContain('/\\[[^\\]]+\\]\\((https?:\\/\\/[^)]+|www\\.[^)]+)\\)/gi');
     expect(registryLinkCarryover).toContain('/<(https?:\\/\\/[^>]+|www\\.[^>]+)>/gi');
-    expect(registryLinkCarryover).toContain('/[\"\'](https?:\\/\\/[^\"\']+|www\\.[^\"\']+)[\"\']/gi');
+    expect(registryLinkCarryover).toContain(`/["'](https?:\\/\\/[^"']+|www\\.[^"']+)["']/gi`);
     expect(registryLinkCarryover).toContain('.matchAll(pattern)');
     expect(registryLinkCarryover).toContain(".split('\\n')");
     expect(registryLinkCarryover).toContain("let pendingSourceLabel: string | undefined;");
@@ -594,10 +594,11 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain("variant: isRegistryTemplateSection");
     expect(templateRegistrySource).toContain("variant: isRegistryTemplateSection");
     expect(templateRegistrySource).toContain('? canonicalRegistrySection.variant');
-    expect(templateRegistrySource).toContain("return resolveCanonicalRegistrySectionInput('registry', variant).variant;");
     expect(templateRegistrySource).toContain('const canonicalRegistrySection = resolveCanonicalRegistrySectionInput(section.type, section.variant);');
     expect(templateRegistrySource).toContain("const isRegistryTemplateSection = canonicalRegistrySection.type === 'registry';");
     expect(templateRegistrySource).toContain("type: isRegistryTemplateSection ? canonicalRegistrySection.type : section.type,");
+    expect(templateRegistrySource).toContain("variant: isRegistryTemplateSection");
+    expect(templateRegistrySource).toContain("? canonicalRegistrySection.variant");
     expect(templateRegistrySource).toContain('bindings: cloneTemplateValue(section.bindings ?? {}),');
     expect(templateRegistrySource).toContain('settings: cloneTemplateValue(section.settings ?? {}),');
     expect(templateRegistrySource).toContain('overrides: cloneTemplateValue(section.overrides ?? undefined),');
