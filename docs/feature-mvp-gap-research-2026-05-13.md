@@ -6,6 +6,7 @@ Purpose:
 - turn three ambiguous active features into a concrete MVP bar
 - separate the shipped launch baseline from the deeper product-depth scope now reopened as active work
 - give the backlog an honest build target
+- current truth update: the shipped deeper-MVP/product-depth bar is now below the user's requested finish line; active work is reopened toward a fuller suite bar for all three features
 
 Method:
 - reviewed official product and help pages from direct competitors and adjacent event products
@@ -85,7 +86,12 @@ DayOf should count this feature as MVP-complete when it does all of the followin
 
 ### Active deeper scope
 
-No remaining coordinator gap is active inside the current competitor-informed MVP bar. The deeper handoff / substitute / seat-change / issue-history scope above is now shipped and live-proven.
+No remaining coordinator gap is active inside the competitor-informed MVP bar. But the board is now reopened above MVP toward a fuller suite bar:
+
+1. stronger incident ownership and resolution tracking
+2. mobile-friendly runner / escort flows across event moments
+3. better cross-event guest movement continuity and handoff
+4. export / printable / handoff surfaces that survive real multi-person day-of operations
 
 ## Name change
 
@@ -153,7 +159,12 @@ DayOf should count this feature as MVP-complete when it does all of the followin
 
 ### Active deeper scope
 
-No remaining name-change gap is active inside the current competitor-informed MVP bar. The broader planner-depth scope above is now shipped and live-proven.
+No remaining name-change gap is active inside the competitor-informed MVP bar. But the board is now reopened above MVP toward a fuller suite bar:
+
+1. broader 50-state operational depth
+2. stronger institution-specific follow-through
+3. deeper special-case branches for identity, travel, residency, and edge-case execution
+4. more complete packet/export/collaboration coverage for real post-wedding execution
 
 ## Universal Registry Barcode Scanner
 
@@ -207,10 +218,15 @@ DayOf should count this feature as MVP-complete when it does all of the followin
 
 ### Active deeper scope
 
-No remaining registry gap is active inside the current competitor-informed MVP bar. The broader provider/product-match depth, retailer refresh parity, and camera compatibility scope above is now shipped and live-proven.
+No remaining registry gap is active inside the current competitor-informed MVP bar. But the board is now reopened above MVP toward a fuller suite bar:
+
+1. broader provider catalog depth
+2. stronger retailer-sync and reconciliation depth after save
+3. harder device/browser camera reliability and fallback coverage
+4. richer owner-side repair/review flows when scans or matches drift over time
 
 ## Decision For The Active Board
 
-- `Day-of / coordinator` has now met both the shipped launch-baseline MVP bar and the deeper product-depth scope that was reopened on the active board.
-- `Name change` has now met both the shipped launch-baseline MVP bar and the deeper planner-depth scope that was reopened on the active board.
-- `Universal Registry Barcode Scanner` has now met both the shipped launch-baseline MVP bar and the deeper product-depth scope that was reopened on the active board.
+- `Day-of / coordinator` has met the shipped launch-baseline MVP bar and the earlier deeper product-depth bar, but it is now reopened for fuller suite depth.
+- `Name change` has met the shipped launch-baseline MVP bar and the earlier deeper planner-depth bar, but it is now reopened for fuller suite depth.
+- `Universal Registry Barcode Scanner` has met the shipped launch-baseline MVP bar and the earlier deeper product-depth bar, but it is now reopened for fuller suite depth.
