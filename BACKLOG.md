@@ -15,7 +15,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-13 01:25 PM PDT` |
+| Current date/time | `2026-05-13 01:33 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `current HEAD` |
 | Latest verified commit message | `Ship final registry depth and close active MVP scope` |
@@ -26,10 +26,10 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | Current launch verdict | `GO` |
 | Production-ready | `YES FOR LAUNCH BASELINE / NO FOR FULL-SUITE CLOSEOUT` |
 | Reason production-ready is not yet claimed | Production-ready is still claimed for the launch baseline. It is not claimed for the newly reopened full-suite bar across coordinator, name change, and registry depth. Full-suite readiness is only claimable once every `ACTIVE` item below is shipped, deployed, and proven. |
-| Current blockers | No active launch blocker remains, but the board is now reopened for full-suite work across `Day-of / coordinator`, `Name change`, and `Universal Registry Barcode Scanner`. Current active blockers are product-completeness gaps, not launch-fire defects. |
+| Current blockers | No active launch blocker remains, but the board is now reopened for full-suite work across `Day-of / coordinator`, `Name change`, and `Universal Registry Barcode Scanner`, plus a cross-feature full-suite exit gate. Current active blockers are product-completeness gaps, not launch-fire defects. |
 | Current proof state | Launch-critical runtime proof is green on the current live runtime: `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `service-role-authorization`, `email-messaging-authorization`, `launch-closeout`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, `client-rls-matrix`, `registry-preview-ssrf`, `coordinator-dayof`, `name-change-runtime`, and `registry`. The harder repo guardrails are also green: `proof:v1:client-write-inventory`, `proof:v1:ast-security`, `proof:v1:test-lanes`, `proof:v1:strict-pocket`, and `proof:v1:security-automation`. Current truth: launch/deeper-MVP proof is green, but the board is no longer using that as the finish line; full-suite depth is reopened and not yet proven. |
 | Current deployment state | The latest deployed frontend runtime is [dayof.love](https://dayof.love) via verified Vercel production deploy `dpl_4VVsiJirkb7PJhzNWV3w791teAsw`. The coordinator migrations `20260513170000_coordinator_event_checkin_write.sql` and `20260513213000_coordinator_handoff_issue_depth.sql`, the name-change reminder compatibility migration `20260513193000_fix_name_change_reminders_replace_runtime.sql`, and the registry duplicate-merge migration `20260513195500_add_registry_duplicate_merge.sql` are applied remotely. The current runtime is strong, launchable, and live-proven for the shipped deeper-MVP scope, but it is now explicitly treated as a baseline beneath the reopened full-suite target. `submit-rsvp` remains live with the serialized capacity path, and the public-session-secret, admin route gate, guest-contact, route-module decomposition, vault contribution, and `.dayof.love` host-routing lanes all remain live-proven. External custom domains remain unsupported product scope, not an open proof lane. |
-| Current next actions | Reopen all three feature lanes to full-suite scope and execute the highest-value missing depth in `Day-of / coordinator`, `Name change`, and `Universal Registry Barcode Scanner`. Repo-wide TS/ESLint full-flip work remains future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
+| Current next actions | Execute the active full-suite ship lists in `Day-of / coordinator`, `Name change`, and `Universal Registry Barcode Scanner`, then clear the cross-feature full-suite exit gate before claiming ready. Repo-wide TS/ESLint full-flip work remains future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
@@ -109,6 +109,16 @@ No active launch-baseline blocker remains, but the product-depth lanes below are
     - `ACTIVE`: proof expansion so `proof:v1:registry` covers provider breadth, reconciliation depth, repair/review queue behavior, and device fallback behavior on the shipped runtime
   - status: `FULL-SUITE GAP REOPENED`
   - full concept, architecture, provider ladder, cache tables, and risk notes live in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md)
+- `Cross-feature full-suite exit gate for these 3`
+  - `ACTIVE`
+  - full-suite readiness is only claimable when all three lanes above are shipped and the following are also true:
+    - `ACTIVE`: desktop, tablet, and mobile workflows are proven for the final shipped surfaces that matter in real use
+    - `ACTIVE`: empty, error, retry, and manual-fallback states are complete and not just the happy path
+    - `ACTIVE`: saved-data continuity is proven, including reload, legacy-row compatibility where applicable, and real repair/recovery flows
+    - `ACTIVE`: role and permission boundaries are proven wherever owners, collaborators, planners, or coordinators touch these features
+    - `ACTIVE`: export, handoff, packet, repair, or review flows are complete anywhere the feature depends on them to be operationally usable
+    - `ACTIVE`: dedicated local and live proof lanes cover the final shipped behavior for all newly added full-suite surfaces
+  - status: `ACTIVE`
 - repo-wide TS/ESLint full-flip work is `FUTURE-ONLY / MAINTAINABILITY`
   - the enforced strict pocket now also covers RSVP, SiteView, siteViewHelpers, QuickStart, route modules, and `nameChangeService`
   - the latest cleanup wave restored green `typecheck`, `lint`, `build`, `proof:v1:strict-pocket`, and focused proof tests after a broader dead-code/import sweep
@@ -254,10 +264,15 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 7. `ACTIVE`: ship broader registry provider catalog depth and stronger confident-match coverage.
 8. `ACTIVE`: ship registry retailer-sync / reconciliation depth plus owner repair/review queue surfaces.
 9. `ACTIVE`: ship registry hard device/browser fallback coverage and expand proof for it.
-10. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the live client-RLS matrix current only if future non-guest write surfaces are added.
-11. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the no-direct-client-write inventory current only if future runtime write surfaces are added.
-12. `CONDITIONAL`: keep the board synced as future deploys change the truth for coordinator, name-change, or registry depth.
-13. `FUTURE-ONLY`: keep repo-wide TS/ESLint full-flip work future-only unless it is explicitly reactivated.
+10. `ACTIVE`: prove desktop/tablet/mobile full-suite workflows for the final shipped coordinator, name-change, and registry surfaces.
+11. `ACTIVE`: close empty/error/retry/manual-fallback gaps across the final shipped coordinator, name-change, and registry surfaces.
+12. `ACTIVE`: prove saved-data continuity, repair/recovery, and legacy compatibility across the final shipped coordinator, name-change, and registry surfaces.
+13. `ACTIVE`: prove final role/permission boundaries plus export/handoff/packet/review readiness across the three lanes.
+14. `ACTIVE`: expand dedicated local and live proof lanes so the final full-suite surfaces are covered before ready is claimed.
+15. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the live client-RLS matrix current only if future non-guest write surfaces are added.
+16. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the no-direct-client-write inventory current only if future runtime write surfaces are added.
+17. `CONDITIONAL`: keep the board synced as future deploys change the truth for coordinator, name-change, or registry depth.
+18. `FUTURE-ONLY`: keep repo-wide TS/ESLint full-flip work future-only unless it is explicitly reactivated.
 
 ## Resolved Work Summary
 

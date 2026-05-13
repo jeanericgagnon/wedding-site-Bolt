@@ -7,6 +7,7 @@ Purpose:
 - separate the shipped launch baseline from the deeper product-depth scope now reopened as active work
 - give the backlog an honest build target
 - current truth update: the shipped deeper-MVP/product-depth bar is now below the user's requested finish line; active work is reopened toward a fuller suite bar for all three features
+- full-suite claim update: the backlog should only count as full-suite-ready when the feature-specific ship lists and the cross-feature exit gate are both complete
 
 Method:
 - reviewed official product and help pages from direct competitors and adjacent event products
@@ -233,3 +234,4 @@ No remaining registry gap is active inside the current competitor-informed MVP b
 - `Day-of / coordinator` has met the shipped launch-baseline MVP bar and the earlier deeper product-depth bar, but it is now reopened for a specific full-suite checklist.
 - `Name change` has met the shipped launch-baseline MVP bar and the earlier deeper planner-depth bar, but it is now reopened for a specific full-suite checklist.
 - `Universal Registry Barcode Scanner` has met the shipped launch-baseline MVP bar and the earlier deeper product-depth bar, but it is now reopened for a specific full-suite checklist.
+- Full-suite readiness should only be claimed after those three checklists are complete and the cross-feature exit gate is also complete: device coverage, empty/error/manual fallback coverage, saved-data continuity, role boundaries, operational handoff/export surfaces, and dedicated proof coverage.
