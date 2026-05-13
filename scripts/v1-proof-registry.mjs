@@ -15,13 +15,13 @@ const localSteps = [
   {
     id: 'registry-types-tests',
     label: 'Registry metadata + attention-state tests',
-    command: 'npm test -- src/pages/dashboard/registry/registryTypes.test.ts',
+    command: 'npm test -- src/pages/dashboard/registry/registryTypes.test.ts src/pages/dashboard/registry/repairState.test.ts',
     required: true,
   },
   {
     id: 'registry-barcode-tests',
-    label: 'Registry barcode normalization tests',
-    command: 'npm test -- src/lib/registryBarcode.test.ts src/lib/registryBarcodeMatch.test.ts src/pages/dashboard/registry/registryRefreshFields.test.ts src/pages/dashboard/registry/RegistryItemForm.test.tsx',
+    label: 'Registry barcode normalization + fallback tests',
+    command: 'npm test -- src/lib/registryBarcode.test.ts src/lib/registryBarcodeMatch.test.ts src/lib/registryBarcodeOpenFacts.test.ts src/pages/dashboard/registry/registryRefreshFields.test.ts src/pages/dashboard/registry/RegistryItemForm.test.tsx src/pages/dashboard/registry/RegistryBarcodeScanner.test.tsx',
     required: true,
   },
   {
@@ -136,14 +136,15 @@ const output = {
   automatedCoverage: [
     'Purchased-state normalization and duplicate detection',
     'Metadata confidence / blocked retailer / repair-state attention truth',
-    'Barcode normalization and registry barcode form behavior',
+    'Barcode normalization, provider breadth, and scanner fallback behavior',
     'Registry dashboard guard coverage',
     'Build integrity after registry proof assertions',
-    ...(liveEnabled ? ['Live owner registry URL import, duplicate merge collapse/readback, barcode-backed item persistence, and public registry endpoint readability'] : []),
+    ...(liveEnabled ? ['Live owner registry URL import, duplicate merge collapse/readback, cleanup-queue truth, barcode-backed item persistence, and public registry endpoint readability'] : []),
   ],
   stillManualProofNeeded: liveEnabled ? [] : [
     'Add or import a real registry item on live runtime',
     'Merge a real duplicate registry pair on live runtime',
+    'Review the owner cleanup queue on live runtime',
     'Add a real barcode-backed item on live runtime',
     'Verify the public registry endpoint stays readable after runtime edits',
   ],

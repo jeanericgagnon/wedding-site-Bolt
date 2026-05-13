@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { mergeRegistryBarcodeProducts } from "../../../src/lib/registryBarcodeMatch.ts";
+import { buildOpenFactsLookupProduct, type OpenFactsFlavorConfig } from "../../../src/lib/registryBarcodeOpenFacts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -313,34 +314,57 @@ async function lookupOpenFoodFacts(barcode: BarcodeValidation & { ok: true }): P
   const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode.normalized)}.json`);
   if (!response.ok) return null;
   const payload = await response.json().catch(() => null) as Record<string, unknown> | null;
-  const product = payload?.product as Record<string, unknown> | undefined;
-  if (!product) return null;
-  const title = trimText(product.product_name) ?? trimText(product.generic_name);
-  const brand = trimText(product.brands);
-  const imageUrl = trimText(product.image_front_url) ?? trimText(product.image_url);
-  const retailerOptions = buildRetailerOptions(
-    [{ label: trimText(product.stores) ?? "Open Food Facts", url: trimText(product.link), is_best_match: true }],
-    trimText(product.stores) ?? "Open Food Facts",
-    trimText(product.link),
-    null,
-    "USD",
-  );
-  return {
-    title,
-    brand,
-    image_url: imageUrl,
-    category: trimText(product.categories),
-    description: trimText(product.quantity),
-    estimated_price_cents: null,
-    currency: "USD",
-    product_url: trimText(product.link),
-    selected_retailer: trimText(product.stores) ?? "Open Food Facts",
-    provider: "open_food_facts",
-    confidence_score: scoreLookupConfidence({ title, brand, imageUrl, retailerOptions }),
-    provider_path: ["open_food_facts"],
-    retailer_options: retailerOptions,
-    raw_payload: payload,
-  };
+  return buildOpenFactsLookupProduct({
+    barcode: barcode.normalized,
+    flavor: {
+      host: "world.openfoodfacts.org",
+      provider: "open_food_facts",
+      label: "Open Food Facts",
+    },
+    payload,
+  });
+}
+
+async function lookupOpenFactsFlavor(
+  barcode: BarcodeValidation & { ok: true },
+  flavor: OpenFactsFlavorConfig,
+): Promise<LookupProduct | null> {
+  const response = await fetch(`https://${flavor.host}/api/v2/product/${encodeURIComponent(barcode.normalized)}.json`, {
+    headers: {
+      "User-Agent": "dayof.love-registry-barcode-lookup/1.0",
+    },
+  });
+  if (!response.ok) return null;
+  const payload = await response.json().catch(() => null) as Record<string, unknown> | null;
+  return buildOpenFactsLookupProduct({
+    barcode: barcode.normalized,
+    flavor,
+    payload,
+  });
+}
+
+async function lookupOpenProductsFacts(barcode: BarcodeValidation & { ok: true }): Promise<LookupProduct | null> {
+  return lookupOpenFactsFlavor(barcode, {
+    host: "world.openproductsfacts.org",
+    provider: "open_products_facts",
+    label: "Open Products Facts",
+  });
+}
+
+async function lookupOpenBeautyFacts(barcode: BarcodeValidation & { ok: true }): Promise<LookupProduct | null> {
+  return lookupOpenFactsFlavor(barcode, {
+    host: "world.openbeautyfacts.org",
+    provider: "open_beauty_facts",
+    label: "Open Beauty Facts",
+  });
+}
+
+async function lookupOpenPetFoodFacts(barcode: BarcodeValidation & { ok: true }): Promise<LookupProduct | null> {
+  return lookupOpenFactsFlavor(barcode, {
+    host: "world.openpetfoodfacts.org",
+    provider: "open_pet_food_facts",
+    label: "Open Pet Food Facts",
+  });
 }
 
 async function lookupUpcDatabase(barcode: BarcodeValidation & { ok: true }): Promise<LookupProduct | null> {
@@ -426,6 +450,9 @@ async function lookupProduct(barcode: BarcodeValidation & { ok: true }): Promise
     lookupGoogleBooks(barcode),
     lookupOpenLibrary(barcode),
     lookupOpenFoodFacts(barcode),
+    lookupOpenProductsFacts(barcode),
+    lookupOpenBeautyFacts(barcode),
+    lookupOpenPetFoodFacts(barcode),
     lookupUpcDatabase(barcode),
     lookupUpcItemDb(barcode),
   ]);

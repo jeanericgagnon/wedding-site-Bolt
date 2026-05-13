@@ -265,6 +265,8 @@ test('registry owner add persists and public registry endpoint stays readable', 
       quantity_purchased: 0,
       purchase_status: 'available',
     });
+    await expect(page.getByText('Cleanup queue')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('button', { name: /review item/i }).first()).toBeVisible();
 
     await page.getByRole('button', { name: 'Add gift' }).click();
     await expect(page.getByRole('heading', { name: 'Add Registry Item' })).toBeVisible();
@@ -313,6 +315,7 @@ test('registry owner add persists and public registry endpoint stays readable', 
     await page.getByRole('button', { name: 'Add gift' }).click();
     await expect(page.getByRole('heading', { name: 'Add Registry Item' })).toBeVisible();
     await page.getByRole('button', { name: /scan barcode/i }).click();
+    await expect(page.getByRole('button', { name: /use photo/i })).toBeVisible();
     await page.getByPlaceholder(/UPC, EAN, GTIN, or ISBN/i).fill(barcodeSourceValue);
     await page.getByRole('button', { name: 'Look up' }).click();
     await expect(page.getByPlaceholder('e.g. KitchenAid Stand Mixer')).not.toHaveValue('', { timeout: 20_000 });

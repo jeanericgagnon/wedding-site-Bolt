@@ -6,7 +6,7 @@ Purpose:
 - turn three ambiguous active features into a concrete MVP bar
 - separate the shipped launch baseline from the deeper product-depth scope that was reopened as active work
 - give the backlog an honest build target
-- current truth update: the shipped deeper-MVP/product-depth bar was below the user's requested finish line; coordinator and name-change have now closed their fuller-suite bars, while registry plus the cross-feature exit gate remain active
+- current truth update: the shipped deeper-MVP/product-depth bar was below the user's requested finish line; coordinator, name-change, and registry have now closed their fuller-suite bars, while the cross-feature exit gate remains active
 - full-suite claim update: the backlog should only count as full-suite-ready when the feature-specific ship lists and the cross-feature exit gate are both complete
 
 Method:
@@ -211,25 +211,24 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - merged provider/product-match depth across the current lookup ladder so multiple providers can reinforce the saved match instead of first-hit short-circuiting
   - shared retailer refresh parity so selected merchant, URL, canonical URL, and estimated price stay aligned after refresh
   - broader browser-safe scan support through a compatibility camera mode plus barcode-photo fallback when the native camera path is unavailable
+- Fuller-suite shipped batch now adds:
+  - broader Open Products Facts, Open Beauty Facts, and Open Pet Food Facts coverage on top of the earlier lookup ladder so more non-book barcodes resolve before manual cleanup
+  - retailer-drift and proxy-image detection plus a prioritized owner cleanup queue that turns stale, broken, and conflicting imports into actionable refresh / reimport / review work
+  - clearer camera-permission recovery, photo fallback, and manual fallback framing so the scan flow still feels first-class when the live camera path is unavailable
+  - proof expansion that keeps provider breadth, reconciliation depth, cleanup queue truth, and live add/merge/readback behavior tied to the shipped runtime
 - Deployed/live now:
   - registry duplicate-merge migration `20260513195500_add_registry_duplicate_merge.sql` applied remotely
-  - deeper runtime deployed on Vercel production `dpl_4VVsiJirkb7PJhzNWV3w791teAsw`
-  - `registry-barcode-lookup --no-verify-jwt` redeployed live with the merged provider/product-match path
-  - `LIVE_REGISTRY_WRITE_READ=1 npm run proof:v1:registry -- --require-live` is green against the richer shipped runtime, including duplicate merge collapse/readback, barcode-backed save, merged provider behavior, refresh parity, and compatibility camera/photo fallback
+  - fuller-suite runtime deployed on Vercel production `dpl_2mznMs9MotSfX9LeWSjKvjgfWcRB`
+  - `registry-barcode-lookup --no-verify-jwt` redeployed live with the broader Open Facts ladder and cleanup-queue-compatible lookup path
+  - `LIVE_REGISTRY_WRITE_READ=1 npm run proof:v1:registry -- --require-live` is green against the fuller-suite shipped runtime, including cleanup queue truth, duplicate merge collapse/readback, broader provider behavior, refresh parity, and compatibility camera/photo fallback
 
 ### Active deeper scope
 
-No remaining registry gap is active inside the current competitor-informed MVP bar. But the board is now reopened above MVP toward a fuller suite bar:
-
-1. broader provider catalog depth so more real-world barcodes land on confident matches
-2. stronger retailer-sync and reconciliation depth after save
-3. harder device/browser camera reliability and fallback coverage
-4. richer owner-side repair/review flows when scans or matches drift over time
-5. proof coverage that exercises provider breadth, reconciliation depth, repair/review flows, and device fallback behavior on the shipped runtime
+No remaining registry gap is active inside the competitor-informed MVP bar or the fuller-suite checklist for this lane. The registry full-suite checklist is now shipped and live-proven on the current production runtime.
 
 ## Decision For The Active Board
 
 - `Day-of / coordinator` has met the shipped launch-baseline MVP bar, the earlier deeper product-depth bar, and its specific full-suite checklist.
 - `Name change` has met the shipped launch-baseline MVP bar, the earlier deeper planner-depth bar, and its specific full-suite checklist.
-- `Universal Registry Barcode Scanner` has met the shipped launch-baseline MVP bar and the earlier deeper product-depth bar, but it is now reopened for a specific full-suite checklist.
+- `Universal Registry Barcode Scanner` has met the shipped launch-baseline MVP bar, the earlier deeper product-depth bar, and its specific full-suite checklist.
 - Full-suite readiness should only be claimed after those three checklists are complete and the cross-feature exit gate is also complete: device coverage, empty/error/manual fallback coverage, saved-data continuity, role boundaries, operational handoff/export surfaces, and dedicated proof coverage.

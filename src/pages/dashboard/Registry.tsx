@@ -10,6 +10,7 @@ import { getWeddingRefreshWindowDate, toValidDateOrNull } from './registryRefres
 import { RegistryDashboardRouteContent } from './registry/RegistryDashboardRouteContent';
 import { RegistryItemForm } from './registry/RegistryItemForm';
 import { buildRegistryDashboardDerivedState } from './registry/buildRegistryDashboardDerivedState';
+import type { RegistryRepairActionKind, RegistryRepairQueueItem } from './registry/repairState';
 import { getCurrentMonthKey, resolveRegistryRefreshBudgetState } from './registry/refreshBudget';
 import { normalizeOwnerDashboardRegistryItem, useRegistryDashboardData } from './registry/useRegistryDashboardData';
 import { useRegistryItemActions } from './registry/useRegistryItemActions';
@@ -182,6 +183,7 @@ export const DashboardRegistry: React.FC = () => {
     fundStats,
     nearBudgetCap,
     recentActivity,
+    repairQueue,
     refreshBudgetRemaining,
     refreshWindowOpen,
     registryInsights,
@@ -280,6 +282,20 @@ export const DashboardRegistry: React.FC = () => {
     weddingSiteId,
   });
 
+  async function handleRunRepairQueueAction(queueItem: RegistryRepairQueueItem, action: RegistryRepairActionKind) {
+    if (action === 'refresh-details') {
+      await handleRefetchMetadata(queueItem.item);
+      return;
+    }
+
+    if (action === 'reimport-source') {
+      await handleRefetchMetadata(queueItem.item, false, true);
+      return;
+    }
+
+    handleEdit(queueItem.item);
+  }
+
   return (
     <DashboardLayout currentPage="registry">
       <RegistryDashboardRouteContent
@@ -317,6 +333,7 @@ export const DashboardRegistry: React.FC = () => {
         nearBudgetCap={nearBudgetCap}
         normalizedItems={normalizedItems}
         recentActivity={recentActivity}
+        repairQueue={repairQueue}
         refreshBudgetRemaining={refreshBudgetRemaining}
         refreshWindowOpen={refreshWindowOpen}
         registryActionsOpen={registryActionsOpen}
@@ -325,6 +342,7 @@ export const DashboardRegistry: React.FC = () => {
         registryLaunchReadiness={registryLaunchReadiness}
         registryThankYouPlan={registryThankYouPlan}
         repairingBadImports={repairingBadImports}
+        handleRunRepairQueueAction={handleRunRepairQueueAction}
         search={search}
         setBulkImportOpen={setBulkImportOpen}
         setFilter={setFilter}

@@ -6,6 +6,7 @@ import { CheckCircle2, DollarSign, Gift, Package, Plus, Search, Sparkles } from 
 import { RegistryItemCard } from './RegistryItemCard';
 import type { RegistryDuplicateGroup } from './duplicateRegistryItems';
 import { getRegistryRepairStates } from './repairState';
+import type { RegistryRepairActionKind, RegistryRepairQueueItem } from './repairState';
 import type { RegistryFilter, RegistryItem } from './registryTypes';
 import { formatRegistryItemDate } from '../registryItemTime';
 
@@ -94,6 +95,7 @@ export function RegistryDashboardRouteContent(props: {
   handleRefetchMetadata: (item: RegistryItem, silent?: boolean, replaceExisting?: boolean) => Promise<boolean>;
   handleRefreshImageIssues: () => Promise<void>;
   handleRepairBadImports: () => Promise<void>;
+  handleRunRepairQueueAction: (queueItem: RegistryRepairQueueItem, action: RegistryRepairActionKind) => Promise<void>;
   imageRefreshBusy: boolean;
   items: RegistryItem[];
   loading: boolean;
@@ -103,6 +105,7 @@ export function RegistryDashboardRouteContent(props: {
   nearBudgetCap: boolean;
   normalizedItems: RegistryItem[];
   recentActivity: RegistryItem[];
+  repairQueue: RegistryRepairQueueItem[];
   refreshBudgetRemaining: number;
   refreshWindowOpen: boolean;
   registryActionsOpen: boolean;
@@ -388,7 +391,7 @@ export function RegistryDashboardRouteContent(props: {
             Image issues: {props.alertCounts.imageIssues}
           </span>
           <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
-            Gifts to review: {props.actionableBadImportCount}
+            Gifts to review: {props.repairQueue.length}
           </span>
           <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
             Needs cleanup: {props.normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}
@@ -434,6 +437,70 @@ export function RegistryDashboardRouteContent(props: {
           {props.bulkReviewCounts.imageIssues > 0 && <button onClick={() => void props.handleRefreshImageIssues()} disabled={props.imageRefreshBusy} className="rounded-lg border border-border-subtle bg-primary-light px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-60">{props.imageRefreshBusy ? 'Refreshing…' : 'Refresh image issues'}</button>}
           {props.duplicateGroups.length > 0 && <button onClick={() => void props.handleCopyDuplicateReviewList()} className="px-3 py-1.5 rounded-lg border border-border text-text-secondary text-xs font-medium" title="Review duplicates before removing anything">Copy duplicate review list</button>}
         </div>
+
+        {props.repairQueue.length > 0 && (
+          <div className="mb-4 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-text-primary">Cleanup queue</p>
+                <p className="mt-1 text-xs text-text-secondary">Work through the gifts that still need stronger detail truth, store repair, or fresher guest-facing media.</p>
+              </div>
+              <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
+                {props.repairQueue.length} waiting
+              </span>
+            </div>
+            {props.repairQueue.slice(0, 6).map((queueItem) => (
+              <div key={queueItem.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-medium text-text-primary">{queueItem.item.item_name}</p>
+                      <span className={`rounded-lg border px-2 py-1 text-[11px] ${
+                        queueItem.severity === 'high'
+                          ? 'border-border-subtle bg-primary-light text-primary'
+                          : queueItem.severity === 'medium'
+                          ? 'border-border bg-white text-text-secondary'
+                          : 'border-border bg-white text-text-tertiary'
+                      }`}>
+                        {queueItem.severity === 'high' ? 'Needs attention' : queueItem.severity === 'medium' ? 'Review soon' : 'Keep fresh'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-text-secondary">{queueItem.summary}</p>
+                    <p className="text-xs text-text-secondary">{queueItem.detail}</p>
+                    <div className="flex flex-wrap gap-2 text-[11px]">
+                      {queueItem.states.map((state) => (
+                        <span key={`${queueItem.id}-${state}`} className="rounded-lg border border-border bg-white px-2 py-1 text-text-tertiary">
+                          {state.replace(/-/g, ' ')}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 lg:max-w-[250px] lg:justify-end">
+                    <button
+                      type="button"
+                      onClick={() => void props.handleRunRepairQueueAction(queueItem, queueItem.secondaryAction)}
+                      className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary"
+                    >
+                      {queueItem.secondaryActionLabel}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void props.handleRunRepairQueueAction(queueItem, queueItem.primaryAction)}
+                      className="rounded-lg border border-border-subtle bg-primary-light px-3 py-1.5 text-xs font-medium text-primary"
+                    >
+                      {queueItem.primaryActionLabel}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {props.repairQueue.length > 6 && (
+              <p className="text-xs text-text-tertiary">
+                {props.repairQueue.length - 6} more cleanup item{props.repairQueue.length - 6 === 1 ? '' : 's'} are still waiting below the fold.
+              </p>
+            )}
+          </div>
+        )}
 
         {props.duplicateGroups.length > 0 && (
           <div className="mb-4 space-y-3">

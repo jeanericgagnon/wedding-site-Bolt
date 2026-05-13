@@ -102,6 +102,7 @@ export const RegistryBarcodeScanner: React.FC<Props> = ({
 }) => {
   const detectorSupported = typeof window !== 'undefined' && typeof navigator !== 'undefined' && Boolean(getBarcodeDetector());
   const mediaSupported = typeof window !== 'undefined' && typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia);
+  const photoSupported = typeof window !== 'undefined';
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [detectedFormat, setDetectedFormat] = useState<string | null>(null);
@@ -155,13 +156,38 @@ export const RegistryBarcodeScanner: React.FC<Props> = ({
     return false;
   }, [onChange, onConfirm]);
 
+  const scannerMode = useMemo(() => {
+    if (mediaSupported && detectorSupported) {
+      return {
+        label: 'Live camera + photo fallback',
+        hint: 'Live camera scanning is available here, and you can still switch to a barcode photo if the aisle or lighting gets awkward.',
+      };
+    }
+    if (mediaSupported) {
+      return {
+        label: 'Compatibility camera + photo fallback',
+        hint: 'This device needs the compatibility scanner path. If camera results feel inconsistent, switch to a barcode photo or enter the code manually.',
+      };
+    }
+    if (photoSupported) {
+      return {
+        label: 'Photo + manual fallback',
+        hint: 'Live camera access is not available here, so use a barcode photo or enter the code manually.',
+      };
+    }
+    return {
+      label: 'Manual fallback only',
+      hint: 'Enter the barcode manually on this device.',
+    };
+  }, [detectorSupported, mediaSupported, photoSupported]);
+
   const inputHint = useMemo(() => {
     if (cameraError) return cameraError;
     if (detectedFormat) return `Stable ${detectedFormat.replace(/_/g, ' ')} detected. Review before saving.`;
-    if (!mediaSupported) return 'Live camera scanning is not available here. You can use a barcode photo or enter the code by hand.';
-    if (!detectorSupported) return 'Compatibility camera scanning is ready here. If live scan is awkward, use a barcode photo instead.';
+    if (!mediaSupported) return scannerMode.hint;
+    if (!detectorSupported) return scannerMode.hint;
     return 'Scan the barcode 2 to 3 times, use a barcode photo, or type it by hand if camera access is awkward.';
-  }, [cameraError, detectedFormat, detectorSupported, mediaSupported]);
+  }, [cameraError, detectedFormat, detectorSupported, mediaSupported, scannerMode.hint]);
 
   useEffect(() => () => {
     stopScanner();
@@ -354,7 +380,12 @@ export const RegistryBarcodeScanner: React.FC<Props> = ({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-text-primary">Scan a barcode</p>
-          <p className="mt-1 text-xs text-text-secondary">{inputHint}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <span className="rounded-lg border border-border bg-white px-2 py-0.5 text-[11px] font-medium text-text-tertiary">
+              {scannerMode.label}
+            </span>
+            <p className="text-xs text-text-secondary">{inputHint}</p>
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <input
@@ -423,6 +454,42 @@ export const RegistryBarcodeScanner: React.FC<Props> = ({
             playsInline
             muted
           />
+        </div>
+      )}
+
+      {cameraError && (
+        <div className="rounded-lg border border-border-subtle bg-white p-3" role="alert">
+          <p className="text-sm font-medium text-text-primary">Camera fallback ready</p>
+          <p className="mt-1 text-xs text-text-secondary">
+            Retry camera access if you want, or keep moving with a barcode photo or the manual code field below.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={disabled || !mediaSupported || photoDecoding}
+              onClick={() => {
+                setCameraError(null);
+                setDetectedFormat(null);
+                stableDetectionRef.current = { value: '', count: 0 };
+                setCameraActive(true);
+              }}
+            >
+              Try camera again
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={disabled || photoDecoding}
+              onClick={() => {
+                fileInputRef.current?.click();
+              }}
+            >
+              Use photo instead
+            </Button>
+          </div>
         </div>
       )}
 

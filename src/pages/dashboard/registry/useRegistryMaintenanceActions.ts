@@ -97,7 +97,10 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
   async function handleRefreshImageIssues() {
     if (isDemoMode || imageRefreshBusy) return;
     const candidates = items
-      .filter((item) => (!item.image_url || item.image_url.includes('thum.io') || item.image_url.includes('weserv.nl')))
+      .filter((item) => {
+        const src = (item.image_url || '').toLowerCase();
+        return !item.image_url || src.includes('thum.io') || src.includes('weserv.nl') || src.includes('ui-avatars');
+      })
       .filter((item) => !!(item.item_url || item.canonical_url))
       .slice(0, 12);
 
