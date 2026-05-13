@@ -196,21 +196,21 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - owner merge workflow that preserves stronger metadata, merged quantities, notes, and purchase truth instead of stopping at passive duplicate counts
   - duplicate warnings during barcode-backed add flow when the scanned product already exists in the registry
   - richer refresh/review status surfaces so checked dates, next review dates, price movement, and retry state stay visible after save
+  - merged provider/product-match depth across the current lookup ladder so multiple providers can reinforce the saved match instead of first-hit short-circuiting
+  - shared retailer refresh parity so selected merchant, URL, canonical URL, and estimated price stay aligned after refresh
+  - broader browser-safe scan support through a compatibility camera mode plus barcode-photo fallback when the native camera path is unavailable
 - Deployed/live now:
   - registry duplicate-merge migration `20260513195500_add_registry_duplicate_merge.sql` applied remotely
-  - deeper runtime deployed on Vercel production `dpl_21JQUT36gnfrE6i4qKF5yeghwRpB`
-  - `LIVE_REGISTRY_WRITE_READ=1 npm run proof:v1:registry -- --require-live` is green against the richer shipped runtime, including duplicate merge collapse/readback plus barcode-backed save
+  - deeper runtime deployed on Vercel production `dpl_4VVsiJirkb7PJhzNWV3w791teAsw`
+  - `registry-barcode-lookup --no-verify-jwt` redeployed live with the merged provider/product-match path
+  - `LIVE_REGISTRY_WRITE_READ=1 npm run proof:v1:registry -- --require-live` is green against the richer shipped runtime, including duplicate merge collapse/readback, barcode-backed save, merged provider behavior, refresh parity, and compatibility camera/photo fallback
 
 ### Active deeper scope
 
-The shipped baseline is real and launchable, but the board now treats the following as active work for a more in-depth MVP:
-
-1. Broaden provider and product-match depth.
-2. Improve retailer-sync and refresh parity with the strongest universal-registry products.
-3. Harden the mobile/browser compatibility matrix for camera scanning.
+No remaining registry gap is active inside the current competitor-informed MVP bar. The broader provider/product-match depth, retailer refresh parity, and camera compatibility scope above is now shipped and live-proven.
 
 ## Decision For The Active Board
 
 - `Day-of / coordinator` has now met both the shipped launch-baseline MVP bar and the deeper product-depth scope that was reopened on the active board.
 - `Name change` has now met both the shipped launch-baseline MVP bar and the deeper planner-depth scope that was reopened on the active board.
-- `Universal Registry Barcode Scanner` has met the shipped launch-baseline MVP bar, but the active board now requires the deeper scope listed above.
+- `Universal Registry Barcode Scanner` has now met both the shipped launch-baseline MVP bar and the deeper product-depth scope that was reopened on the active board.

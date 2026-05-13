@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { mergeRegistryBarcodeProducts } from "../../../src/lib/registryBarcodeMatch.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -421,12 +422,20 @@ async function lookupUpcItemDb(barcode: BarcodeValidation & { ok: true }): Promi
 }
 
 async function lookupProduct(barcode: BarcodeValidation & { ok: true }): Promise<LookupProduct | null> {
-  return await lookupGoogleBooks(barcode)
-    ?? await lookupOpenLibrary(barcode)
-    ?? await lookupOpenFoodFacts(barcode)
-    ?? await lookupUpcDatabase(barcode)
-    ?? await lookupUpcItemDb(barcode)
-    ?? null;
+  const settled = await Promise.allSettled([
+    lookupGoogleBooks(barcode),
+    lookupOpenLibrary(barcode),
+    lookupOpenFoodFacts(barcode),
+    lookupUpcDatabase(barcode),
+    lookupUpcItemDb(barcode),
+  ]);
+
+  const matches = settled
+    .filter((result): result is PromiseFulfilledResult<LookupProduct | null> => result.status === "fulfilled")
+    .map((result) => result.value)
+    .filter((product): product is LookupProduct => Boolean(product?.title));
+
+  return mergeRegistryBarcodeProducts(matches);
 }
 
 Deno.serve(async (req) => {

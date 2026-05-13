@@ -15,21 +15,21 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-13 12:41 PM PDT` |
+| Current date/time | `2026-05-13 01:14 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
-| Latest verified Git SHA | `b6c0c715` |
-| Latest verified commit message | `Ship registry duplicate merge depth` |
-| Vercel deployment ID | `dpl_7BJdMft8MT5jtVCdS1dd1JTM7Ank` |
+| Latest verified Git SHA | `current HEAD` |
+| Latest verified commit message | `Ship final registry depth and close active MVP scope` |
+| Vercel deployment ID | `dpl_4VVsiJirkb7PJhzNWV3w791teAsw` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
-| Supabase functions deployed | Live blocker-fix lane includes `submit-rsvp --no-verify-jwt` plus applied migration `20260511170500_serialize_submit_rsvp_capacity.sql`. Same-day confirmed/live-proven: `public-site-access --no-verify-jwt`; `photo-upload --no-verify-jwt`; `process-email-queue`; `validate-rsvp-token --no-verify-jwt`; `interactive-section-public --no-verify-jwt`; `vault-contribution-public --no-verify-jwt`; `vault-entry-submit --no-verify-jwt`; `translate-site-content`. Latest deploy wave also pushed `guest-contact-lookup --no-verify-jwt` and `guest-contact-submit --no-verify-jwt` with the stronger household verifier, guest invite-token support, and redacted public audit event live. |
+| Supabase functions deployed | Live blocker-fix lane includes `submit-rsvp --no-verify-jwt` plus applied migration `20260511170500_serialize_submit_rsvp_capacity.sql`. Same-day confirmed/live-proven: `public-site-access --no-verify-jwt`; `photo-upload --no-verify-jwt`; `process-email-queue`; `validate-rsvp-token --no-verify-jwt`; `interactive-section-public --no-verify-jwt`; `vault-contribution-public --no-verify-jwt`; `vault-entry-submit --no-verify-jwt`; `translate-site-content`. Latest deploy waves also pushed `guest-contact-lookup --no-verify-jwt`, `guest-contact-submit --no-verify-jwt`, and the final `registry-barcode-lookup --no-verify-jwt` merge/refresh-compatibility batch live. |
 | Current readiness score | `10 / 10` |
 | Current launch verdict | `GO` |
 | Production-ready | `YES` |
-| Reason production-ready is not yet claimed | No active P0/P1 blockers remain. Production-ready is claimed for the current launch baseline. Remaining items are non-launch, deferred, or repo-rigor follow-up. |
-| Current blockers | No coordinator ship blocker remains. The only active remaining product-depth work is the last `Universal Registry Barcode Scanner` expansion around provider/product-match breadth, retailer-refresh parity, and camera compatibility. |
-| Current proof state | Launch-critical runtime proof is green on the current live runtime: `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `service-role-authorization`, `email-messaging-authorization`, `launch-closeout`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, `client-rls-matrix`, `registry-preview-ssrf`, `coordinator-dayof`, `name-change-runtime`, and `registry`. The harder repo guardrails are also green: `proof:v1:client-write-inventory`, `proof:v1:ast-security`, `proof:v1:test-lanes`, `proof:v1:strict-pocket`, and `proof:v1:security-automation`. `Release Launch Gate` remains green and the repo now carries Semgrep, CodeQL, Gitleaks, and Dependabot automation. |
-| Current deployment state | The latest deployed frontend runtime is [dayof.love](https://dayof.love) via verified Vercel production deploy `dpl_7BJdMft8MT5jtVCdS1dd1JTM7Ank`. The coordinator migrations `20260513170000_coordinator_event_checkin_write.sql` and `20260513213000_coordinator_handoff_issue_depth.sql`, the name-change reminder compatibility migration `20260513193000_fix_name_change_reminders_replace_runtime.sql`, and the registry duplicate-merge migration `20260513195500_add_registry_duplicate_merge.sql` are now applied remotely. The deeper coordinator MVP lane, the broader name-change planner-depth lane, and the richer registry duplicate-merge lane are all live on the shipped runtime, while `registry-barcode-lookup --no-verify-jwt` remains live-proven inside the current registry flow. `submit-rsvp` remains live with the serialized capacity path, and the public-session-secret, admin route gate, guest-contact, route-module decomposition, vault contribution, and `.dayof.love` host-routing lanes all remain live-proven. External custom domains remain unsupported product scope, not an open proof lane. |
-| Current next actions | Finish the remaining `Universal Registry Barcode Scanner` depth around provider/product-match breadth, retailer-refresh parity, and camera compatibility. Repo-wide TS/ESLint full-flip work remains explicitly future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
+| Reason production-ready is not yet claimed | None. Production-ready is claimed for the launch baseline and the reopened deeper MVP/product-depth board scope. |
+| Current blockers | No active launch or product-depth blocker remains. All current active board items are shipped, deployed, and live-proven. |
+| Current proof state | Launch-critical runtime proof is green on the current live runtime: `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `service-role-authorization`, `email-messaging-authorization`, `launch-closeout`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, `client-rls-matrix`, `registry-preview-ssrf`, `coordinator-dayof`, `name-change-runtime`, and `registry`. The harder repo guardrails are also green: `proof:v1:client-write-inventory`, `proof:v1:ast-security`, `proof:v1:test-lanes`, `proof:v1:strict-pocket`, and `proof:v1:security-automation`. The final reopened registry depth lane is now green both locally and live, including merged provider/product-match behavior, retailer refresh parity, and compatibility camera/photo fallback with `LIVE_REGISTRY_WRITE_READ=1 npm run proof:v1:registry -- --require-live`. `Release Launch Gate` remains green and the repo now carries Semgrep, CodeQL, Gitleaks, and Dependabot automation. |
+| Current deployment state | The latest deployed frontend runtime is [dayof.love](https://dayof.love) via verified Vercel production deploy `dpl_4VVsiJirkb7PJhzNWV3w791teAsw`. The coordinator migrations `20260513170000_coordinator_event_checkin_write.sql` and `20260513213000_coordinator_handoff_issue_depth.sql`, the name-change reminder compatibility migration `20260513193000_fix_name_change_reminders_replace_runtime.sql`, and the registry duplicate-merge migration `20260513195500_add_registry_duplicate_merge.sql` are applied remotely. The final registry depth batch is also live through a redeployed `registry-barcode-lookup --no-verify-jwt`, with merged provider/product-match depth, shared retailer refresh parity, and compatibility camera/photo fallback on the shipped runtime. The deeper coordinator MVP lane, the broader name-change planner-depth lane, and the full reopened registry depth lane are all live on the current production runtime. `submit-rsvp` remains live with the serialized capacity path, and the public-session-secret, admin route gate, guest-contact, route-module decomposition, vault contribution, and `.dayof.love` host-routing lanes all remain live-proven. External custom domains remain unsupported product scope, not an open proof lane. |
+| Current next actions | No active implementation work remains on the current board. Only future-only, deferred, conditional, or maintainability follow-up remains; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
@@ -80,17 +80,17 @@ No active launch-baseline blocker remains, but the product-depth lanes below are
   - live proof is green on the current production runtime for the richer planner-depth batch, including saved planner reload
   - status: `MVP DEPTH SHIPPED / CURRENT ACTIVE GAP CLOSED`
 - `Universal Registry Barcode Scanner`
-  - `ACTIVE EXPANSION / MVP BASELINE SHIPPED`
-  - current truth: the competitor-informed MVP bar is shipped and live-proven, and the duplicate-merge depth lane is now also shipped on the current production runtime, but broader provider/product-match depth, refresh parity, and camera compatibility remain active scope
+  - `MVP DEPTH SHIPPED / CURRENT ACTIVE GAP CLOSED`
+  - current truth: the competitor-informed MVP bar and the reopened deeper product-depth bar are now both shipped and live-proven on the current production runtime
   - implemented now: scan/manual barcode entry UI, barcode normalization, cache-aware edge lookup, registry persistence fields, and focused tests
-  - deeper shipped slice now also includes provider-path metadata, review-required match state, explicit `Use best price` / `Add without store` owner controls, Open Library fallback for ISBNs, optional `UPCITEMDB_API_KEY` ladder support, normalized retailer-option building, miss-cache attempt increments, structured duplicate suggestions, owner merge actions, merged quantity previews, duplicate warnings during barcode add, and richer refresh/review metadata on saved items
-  - deployed now: migrations `20260513064500_add_registry_barcode_scanner_support.sql` and `20260513195500_add_registry_duplicate_merge.sql`, frontend runtime `dpl_21JQUT36gnfrE6i4qKF5yeghwRpB`, and live `registry-barcode-lookup --no-verify-jwt`
-  - live proof is green on the current production runtime, including provider-path/review-required barcode lookup, duplicate merge collapse/readback, owner save/read flow, and public registry endpoint readability
-  - deeper barcode batch proof is green locally: `npm run proof:v1:registry`, `npm run typecheck -- --pretty false`, `npm run build`, `git diff --check`
+  - deeper shipped slice now also includes provider-path metadata, review-required match state, explicit `Use best price` / `Add without store` owner controls, Open Library fallback for ISBNs, optional `UPCITEMDB_API_KEY` ladder support, normalized retailer-option building, miss-cache attempt increments, structured duplicate suggestions, owner merge actions, merged quantity previews, duplicate warnings during barcode add, richer refresh/review metadata on saved items, merged provider/product-match depth across the current lookup ladder, shared retailer refresh parity that keeps selected merchant/url/price state aligned after refresh, and compatibility camera/photo fallback using the broader browser-safe scan path
+  - deployed now: migrations `20260513064500_add_registry_barcode_scanner_support.sql` and `20260513195500_add_registry_duplicate_merge.sql`, frontend runtime `dpl_4VVsiJirkb7PJhzNWV3w791teAsw`, and live `registry-barcode-lookup --no-verify-jwt`
+  - live proof is green on the current production runtime, including provider-path/review-required barcode lookup, duplicate merge collapse/readback, merged provider/product-match behavior, refresh parity, compatibility camera/photo fallback, owner save/read flow, and public registry endpoint readability
+  - deeper barcode batch proof is green locally and live: `npm run proof:v1:registry`, `LIVE_REGISTRY_WRITE_READ=1 npm run proof:v1:registry -- --require-live`, `npm run typecheck -- --pretty false`, `npm run build`, `git diff --check`
   - deeper barcode batch deploy/live proof status: deployed and live-proven in this wave
   - provider ladder currently ships with free/open coverage first and safe manual fallback when no confident match exists
-  - active deeper scope now required: fuller broad-match provider coverage, stronger product-match depth, stronger retailer-sync and refresh parity, and a harder mobile/browser camera compatibility matrix
-  - status: `ACTIVE EXPANSION / MVP BASELINE SHIPPED`
+  - no remaining active deeper scope remains inside the current reopened board
+  - status: `MVP DEPTH SHIPPED / CURRENT ACTIVE GAP CLOSED`
   - full concept, architecture, provider ladder, cache tables, and risk notes live in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md)
 - repo-wide TS/ESLint full-flip work is `FUTURE-ONLY / MAINTAINABILITY`
   - the enforced strict pocket now also covers RSVP, SiteView, siteViewHelpers, QuickStart, route modules, and `nameChangeService`
@@ -149,9 +149,9 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 
 | Command | Status | Environment | Last run | Notes |
 | --- | --- | --- | --- | --- |
-| `npm run typecheck -- --pretty false` | `PASS` | `local` | `2026-05-13` | Green after the coordinator handoff / issue-desk ship batch |
-| `npm run lint -- --quiet` | `PASS` | `local` | `2026-05-13` | Green after the deeper local name-change claim/jurisdiction batch |
-| `npm run build` | `PASS` | `local` | `2026-05-13` | Green after the coordinator handoff / issue-desk ship batch |
+| `npm run typecheck -- --pretty false` | `PASS` | `local` | `2026-05-13` | Green after the final registry provider-merge / refresh-parity / compatibility-camera batch |
+| `npm run lint -- --quiet` | `PASS` | `local` | `2026-05-13` | Green after the final registry provider-merge / refresh-parity / compatibility-camera batch |
+| `npm run build` | `PASS` | `local` | `2026-05-13` | Green after the final registry provider-merge / refresh-parity / compatibility-camera batch |
 | `npm test` | `PASS` | `local` | `2026-05-11` | `537/537` files, `3321/3321` tests |
 | `npm run test:security` | `PASS` | `local` | `2026-05-11` | `265/265` |
 | `npm run test:smoke` | `PASS` | `production` | `2026-05-11` | `registry`, `rsvp`, `csvmapper`, `checkin`, `messages`, `site` all green after unrestricted-network rerun |
@@ -164,8 +164,8 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 | `npm run proof:v1:registry-preview-ssrf -- --require-live` | `LIVE PASS` | `production` | `2026-05-12` | `26/26` hostile-target checks passed; `test:launch` and `Release Launch Gate` now require the live registry-preview SSRF proof lane |
 | `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live` | `LIVE PASS` | `production + browser runtime` | `2026-05-13` | Dedicated day-of runtime smoke now proves the shared coordinator board, check-in queue, staffing handoff, issue desk, timeline, message, and Q&A surfaces on the current live deploy |
 | `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live` | `LIVE PASS` | `production + browser runtime` | `2026-05-13` | Dedicated name-change runtime smoke now proves the richer saved planner route end to end: authenticated save chain, planner reload, milestone board, templates, case setup, dual-partner rollout, and save affordance on the current live deploy |
-| `LIVE_REGISTRY_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/registry-write-read.spec.ts` | `LIVE PASS` | `production + browser runtime` | `2026-05-13` | Registry runtime proof now covers owner import, duplicate merge collapse/readback, barcode-backed save, dashboard readback, and public registry endpoint readability on the current live deploy |
-| `npm run proof:v1:registry` | `PASS` | `local` | `2026-05-13` | Full local registry proof lane is green after the richer duplicate-merge + barcode depth batch and matches the deployed runtime lane |
+| `LIVE_REGISTRY_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/registry-write-read.spec.ts` | `LIVE PASS` | `production + browser runtime` | `2026-05-13` | Registry runtime proof now covers owner import, duplicate merge collapse/readback, merged provider/product-match behavior, barcode-backed save, dashboard readback, refresh parity, compatibility camera/photo fallback, and public registry endpoint readability on the current live deploy |
+| `npm run proof:v1:registry` | `PASS` | `local` | `2026-05-13` | Full local registry proof lane is green after the final provider-merge + refresh-parity + compatibility-camera batch and matches the deployed runtime lane |
 | `V1_SUBDOMAIN_ROUTE_LIVE=1 npm run proof:v1:subdomain-route -- --require-live` | `LIVE PASS` | `production` | `2026-05-12` | Dedicated `.dayof.love` host-routing proof is green for `testandkaras.dayof.love`; the live host resolves and fail-closes safely without wrong-site leakage |
 | `npm run proof:v1:service-role-authorization` | `PASS` | `secure env + production` | `2026-05-11` | Unauthenticated denial lane green; secure closeout rerun completed with provided key |
 | `npm run proof:v1:email-messaging-authorization` | `PASS` | `secure env + production` | `2026-05-11` | Queue-processing proof green; controlled invalid-recipient row fails safely |
@@ -176,9 +176,9 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 | `npm run proof:v1:prereqs` | `PASS` | `production + local env` | `2026-05-13` | Required migrations/functions/runtime readiness green in the guarded postdeploy bundle; deferred provider/AI env notes remain non-launch |
 | `V1_AI_CLEARANCE_LIVE=1 PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:ai-clearance` | `LIVE PASS` | `production + secure env` | `2026-05-11` | Live AI/photo column exposure and rollout readiness are green |
 | `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model` | `LIVE PASS` | `production + secure env` | `2026-05-11` | Translation route plus live AI/photo model-backed lanes are green |
-| `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` | `LIVE PASS` | `production` | `2026-05-13` | Fresh rerun in the guarded postdeploy bundle against Vercel deploy `dpl_7BJdMft8MT5jtVCdS1dd1JTM7Ank` |
-| `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` | `LIVE PASS` | `production` | `2026-05-13` | Fresh rerun in the guarded postdeploy bundle against Vercel deploy `dpl_7BJdMft8MT5jtVCdS1dd1JTM7Ank`; `4/4` passed |
-| `npm run proof:v1:guests-rsvp-ops` | `LIVE PASS` | `production` | `2026-05-13` | Fresh rerun in the guarded postdeploy bundle after the coordinator ship deploy; strict smoke green |
+| `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke` | `LIVE PASS` | `production` | `2026-05-13` | Fresh rerun in the guarded postdeploy bundle against Vercel deploy `dpl_4VVsiJirkb7PJhzNWV3w791teAsw` |
+| `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` | `LIVE PASS` | `production` | `2026-05-13` | Fresh rerun in the guarded postdeploy bundle against Vercel deploy `dpl_4VVsiJirkb7PJhzNWV3w791teAsw`; `4/4` passed |
+| `npm run proof:v1:guests-rsvp-ops` | `LIVE PASS` | `production` | `2026-05-13` | Fresh rerun in the guarded postdeploy bundle after the final registry depth deploy; strict smoke green |
 | `GitHub Actions Release Launch Gate` | `PASS` | `GitHub Actions + repo secrets` | `2026-05-11` | Branch-triggered workflow is green on run `25705683563`; strict RSVP smoke is mandatory |
 | `LIVE_GUEST_HUB_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/guest-hub-write-read.spec.ts` | `LIVE PASS` | `production` | `2026-05-11` | Interactive hub write/read is green |
 | `LIVE_PHOTO_UPLOAD_WRITE_READ=1 LIVE_PHOTO_ANALYSIS_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/photo-upload-write-read.spec.ts` | `LIVE PASS` | `production` | `2026-05-11` | Photo upload/readback/analysis/recap/moderation lane green |
@@ -186,14 +186,14 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 | `npm run guard:file-size` | `PASS` | `local` | `2026-05-11` | Launch lane green |
 | `npm run guard:assets` | `PASS` | `local` | `2026-05-11` | Launch lane green |
 | `npm run proof:v1:performance-budget` | `PASS` | `local` | `2026-05-11` | Launch lane green |
-| `git diff --check` | `PASS` | `local` | `2026-05-13` | Current working tree is clean of whitespace errors after the richer registry duplicate-merge + barcode depth batch |
+| `git diff --check` | `PASS` | `local` | `2026-05-13` | Current working tree is clean of whitespace errors after the final registry depth closeout batch |
 
 ## Deployment Matrix
 
 | Surface | Git SHA | Deployed? | Deploy target | Flags | Proof command | Proof result | Remaining gap | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Vercel frontend / `dayof.love` | `current production deploy` | `yes` | `Vercel production dpl_7BJdMft8MT5jtVCdS1dd1JTM7Ank` | `--prod` | `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`; `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`; guarded postdeploy bundle | green on the latest production deploy | None | `LIVE PASS` |
-| `registry-barcode-lookup` | `same-day 2026-05-13 deploy` | `yes` | `Supabase Edge runtime atuzuobpprjstfmdnwso` | `--no-verify-jwt` | `node scripts/v1-proof-registry.mjs --require-live`; `LIVE_REGISTRY_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/registry-write-read.spec.ts` | green including the richer provider/review/store-choice batch plus duplicate merge collapse/readback on the live owner flow | None on the current duplicate-merge/save/read lane | `LIVE PASS` |
+| Vercel frontend / `dayof.love` | `current production deploy` | `yes` | `Vercel production dpl_4VVsiJirkb7PJhzNWV3w791teAsw` | `--prod` | `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`; `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`; guarded postdeploy bundle | green on the latest production deploy | None | `LIVE PASS` |
+| `registry-barcode-lookup` | `same-day 2026-05-13 deploy` | `yes` | `Supabase Edge runtime atuzuobpprjstfmdnwso` | `--no-verify-jwt` | `node scripts/v1-proof-registry.mjs --require-live`; `LIVE_REGISTRY_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/registry-write-read.spec.ts` | green including merged provider/product-match behavior, retailer refresh parity, compatibility camera/photo fallback, and duplicate merge collapse/readback on the live owner flow | None on the current registry barcode lane | `LIVE PASS` |
 | `public-site-access` | `same-day 2026-05-12 dedicated-session-secret deploy` | `yes` | `Supabase Edge runtime atuzuobpprjstfmdnwso` | `--no-verify-jwt` | `npm run proof:v1:public-access-coverage`; live smoke/public-quality | green | Dedicated public session secret path is live; no remaining public resolver gap | `LIVE PASS` |
 | `public-registry-items` | `older live version (not redeployed in exact-SHA sweep)` | `yes` | `Supabase Edge runtime atuzuobpprjstfmdnwso` | `unknown` | `npm run proof:v1:registry`; live public smoke/public-quality | green | Owner import/repair runtime notes are deferred and not a public-launch blocker | `LIVE PASS` |
 | `public-itinerary-by-slug` | `older live version (not redeployed in exact-SHA sweep)` | `yes` | `Supabase Edge runtime atuzuobpprjstfmdnwso` | `unknown` | `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`; `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality` | green | None on the public itinerary lane | `LIVE PASS` |
@@ -226,16 +226,14 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 | `sections_public_visible_read` removal migration | `remote DB state only` | `yes` | `Supabase database` | `supabase db push` | live public-route proofs stayed green after push | green | Exact migration ledger SHA not recovered here; runtime evidence is green | `LIVE PASS` |
 | public/guest/service-role access migrations | `remote DB state only` | `yes` | `Supabase database` | `historical migrations` | secure auth proofs; public smoke/public-quality; collaborator/guest-hub/photo proof | green | Exact remote migration audit not rerun here; runtime evidence is green | `LIVE PASS` |
 
-## Next 10 Tasks
+## Next Tasks
 
-1. `ACTIVE`: deepen `Universal Registry Barcode Scanner` provider coverage and richer product-match parity beyond the shipped duplicate-merge lane.
-2. `ACTIVE`: deepen `Universal Registry Barcode Scanner` retailer-sync and refresh parity so registry items stay credible after the first save.
-3. `ACTIVE`: deepen `Universal Registry Barcode Scanner` mobile/browser camera compatibility so the scan-first flow stays reliable across the real support matrix.
-4. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the live client-RLS matrix current only if future non-guest write surfaces are added.
-5. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the no-direct-client-write inventory current only if future runtime write surfaces are added.
-6. `CONDITIONAL`: keep the board synced as future deploys change the truth for `Day-of / coordinator`.
-7. `CONDITIONAL / NO-CODE`: reopen `Name change` only if the competitor-informed depth bar expands beyond the shipped planner/playbook/export scope.
-8. `FUTURE-ONLY`: keep repo-wide TS/ESLint full-flip work future-only unless it is explicitly reactivated.
+1. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the live client-RLS matrix current only if future non-guest write surfaces are added.
+2. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the no-direct-client-write inventory current only if future runtime write surfaces are added.
+3. `CONDITIONAL`: keep the board synced as future deploys change the truth for shipped coordinator, name-change, or registry depth.
+4. `CONDITIONAL / NO-CODE`: reopen `Name change` only if the competitor-informed depth bar expands beyond the shipped planner/playbook/export scope.
+5. `CONDITIONAL / NO-CODE`: reopen `Universal Registry Barcode Scanner` only if future provider contracts, retailer sync surfaces, or browser support requirements materially expand beyond the shipped depth.
+6. `FUTURE-ONLY`: keep repo-wide TS/ESLint full-flip work future-only unless it is explicitly reactivated.
 
 ## Resolved Work Summary
 

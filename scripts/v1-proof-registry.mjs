@@ -21,7 +21,7 @@ const localSteps = [
   {
     id: 'registry-barcode-tests',
     label: 'Registry barcode normalization tests',
-    command: 'npm test -- src/lib/registryBarcode.test.ts src/pages/dashboard/registry/RegistryItemForm.test.tsx',
+    command: 'npm test -- src/lib/registryBarcode.test.ts src/lib/registryBarcodeMatch.test.ts src/pages/dashboard/registry/registryRefreshFields.test.ts src/pages/dashboard/registry/RegistryItemForm.test.tsx',
     required: true,
   },
   {

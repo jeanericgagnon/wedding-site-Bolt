@@ -7,6 +7,7 @@ import { buildRegistryDuplicateMergePatch } from './duplicateRegistryItems';
 import type { RegistryDuplicateGroup } from './duplicateRegistryItems';
 import type { RegistryItem } from './registryTypes';
 import { getRegistryItemMetadataState } from './registryTypes';
+import { buildRegistryRefreshFields, getRegistryRefreshSourceUrl } from './registryRefreshFields';
 
 const WEEKLY_REFRESH_MS = 1000 * 60 * 60 * 24 * 7;
 const getBackoffMs = (failCount: number) => Math.min(WEEKLY_REFRESH_MS * 4, Math.max(6 * 60 * 60 * 1000, (2 ** Math.min(5, failCount)) * 60 * 60 * 1000));
@@ -57,7 +58,7 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
   const [repairingBadImports, setRepairingBadImports] = useState(false);
 
   async function handleRefetchMetadata(item: RegistryItem, silent = false, replaceExisting = false) {
-    const url = item.item_url ?? item.canonical_url;
+    const url = getRegistryRefreshSourceUrl(item);
     if (!url) return false;
     if (isDemoMode) {
       if (!silent) toast(replaceExisting ? 'Demo: sample gift details are already refreshed' : 'Demo: sample gift details are already filled in', 'success');
@@ -66,30 +67,7 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
 
     try {
       const preview = await fetchUrlPreview(url, true);
-      const fields: Partial<RegistryItem> = {
-        metadata_last_checked_at: new Date().toISOString(),
-        next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
-        metadata_fetch_status: preview.fetch_status ?? 'success',
-        metadata_confidence_score: preview.confidence_score ?? null,
-        metadata_source_method: preview.source_method ?? null,
-        metadata_retailer: preview.retailer ?? null,
-        availability: preview.availability ?? null,
-      };
-      if (preview.title && (replaceExisting || !item.item_name)) fields.item_name = preview.title;
-      if (preview.price_label && (replaceExisting || !item.price_label)) fields.price_label = preview.price_label;
-      if (preview.price_amount != null) {
-        if (item.price_amount != null && item.price_amount !== preview.price_amount) {
-          fields.previous_price_amount = item.price_amount;
-          fields.price_last_changed_at = new Date().toISOString();
-        }
-        fields.price_amount = preview.price_amount;
-      }
-      if (preview.image_url && (replaceExisting || !item.image_url)) fields.image_url = preview.image_url;
-      if ((preview.merchant ?? preview.brand) && (replaceExisting || !item.merchant)) {
-        fields.merchant = (preview.merchant ?? preview.brand)!;
-        fields.store_name = (preview.merchant ?? preview.brand)!;
-      }
-      if (preview.canonical_url) fields.canonical_url = preview.canonical_url;
+      const fields = buildRegistryRefreshFields(item, preview, { replaceExisting });
       if (Object.keys(fields).length > 0) {
         const updated = await updateRegistryItem(item.id, fields);
         setItems((prev) => prev.map((candidate) => (candidate.id === updated.id ? normalizeOwnerDashboardRegistryItem(updated) : candidate)));
@@ -255,7 +233,7 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
     }
 
     const staleCandidates = items
-      .filter((item) => !!(item.item_url || item.canonical_url))
+      .filter((item) => !!getRegistryRefreshSourceUrl(item))
       .filter((item) => refreshIncludePurchased || (item.purchase_status !== 'purchased' && !item.hide_when_purchased))
       .filter((item) => {
         const dueBySchedule = isRegistryItemDue(item.next_refresh_at);
@@ -276,33 +254,12 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
     setAutoRefreshing(true);
     let updatedCount = 0;
     for (const item of staleCandidates) {
-      const url = item.item_url ?? item.canonical_url;
+      const url = getRegistryRefreshSourceUrl(item);
       if (!url) continue;
 
       try {
         const preview = await fetchUrlPreview(url, true);
-        const fields: Partial<RegistryItem> = {
-          metadata_last_checked_at: new Date().toISOString(),
-          next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
-          metadata_fetch_status: preview.fetch_status ?? 'success',
-          metadata_confidence_score: preview.confidence_score ?? null,
-          availability: preview.availability ?? null,
-        };
-        if (preview.price_label) fields.price_label = preview.price_label;
-        if (preview.price_amount != null) {
-          if (item.price_amount != null && item.price_amount !== preview.price_amount) {
-            fields.previous_price_amount = item.price_amount;
-            fields.price_last_changed_at = new Date().toISOString();
-          }
-          fields.price_amount = preview.price_amount;
-        }
-        if (preview.image_url) fields.image_url = preview.image_url;
-        if (preview.canonical_url) fields.canonical_url = preview.canonical_url;
-        if (preview.merchant ?? preview.brand) {
-          fields.merchant = (preview.merchant ?? preview.brand)!;
-          fields.store_name = (preview.merchant ?? preview.brand)!;
-        }
-
+        const fields = buildRegistryRefreshFields(item, preview, { autoRefresh: true });
         const updated = await updateRegistryItem(item.id, fields);
         setItems((prev) => prev.map((candidate) => (candidate.id === updated.id ? normalizeOwnerDashboardRegistryItem(updated) : candidate)));
         updatedCount += 1;
