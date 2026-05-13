@@ -1,8 +1,11 @@
 import type { GuestLiteForCoordinator } from './coordinatorTypes';
-import { getCoordinatorDoorStatus } from './coordinatorCheckInStatus';
+import { getCoordinatorDoorStatus, type CoordinatorDoorStatusContext } from './coordinatorCheckInStatus';
 
-export const getCoordinatorCheckInBoardTargetId = (guests: GuestLiteForCoordinator[]) => {
-  const watchGuest = guests.find((guest) => getCoordinatorDoorStatus(guest) === 'watch');
+export const getCoordinatorCheckInBoardTargetId = (
+  guests: GuestLiteForCoordinator[],
+  context?: CoordinatorDoorStatusContext,
+) => {
+  const watchGuest = guests.find((guest) => getCoordinatorDoorStatus(guest, context) === 'watch');
   return watchGuest?.id ?? null;
 };
 

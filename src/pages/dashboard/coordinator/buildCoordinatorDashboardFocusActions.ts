@@ -8,6 +8,7 @@ import { getCoordinatorNeutralFocusReason } from '../../../lib/coordinatorNeutra
 import { resolveCoordinatorNeutralFocusTarget } from '../../../lib/coordinatorNeutralFocusTarget';
 import { getCoordinatorStablePromptTarget } from '../../../lib/coordinatorStablePromptTarget';
 import { createCoordinatorSummaryFeedback, type CoordinatorSummaryFeedback } from '../../../lib/coordinatorSummaryFeedback';
+import type { CoordinatorDoorStatusContext } from '../../../lib/coordinatorCheckInStatus';
 import type { GuestLiteForCoordinator } from '../../../lib/coordinatorTypes';
 import type { CoordinatorPanelFocus } from '../../../lib/coordinatorPanelFocus';
 import type { CoordinatorQnaFilter } from '../../../lib/coordinatorQnaTriage';
@@ -24,6 +25,7 @@ type BuildCoordinatorDashboardFocusActionsArgs = {
   canSendAlerts: boolean;
   checkInBoardTargetId: string | null;
   checkInQueue: GuestLiteForCoordinator[];
+  checkInStatusContext: CoordinatorDoorStatusContext;
   checkInWatchCount: number;
   liveEventId: string | null;
   nextArrivals: GuestLiteForCoordinator[];
@@ -165,7 +167,7 @@ export function buildCoordinatorDashboardFocusActions(args: BuildCoordinatorDash
       return;
     }
     clearCoordinatorTransientState();
-    args.setQnaInput(buildCoordinatorDoorEscalationPrompt(guest));
+    args.setQnaInput(buildCoordinatorDoorEscalationPrompt(guest, args.checkInStatusContext));
     args.setCommandSource('escalation');
     args.setPanelFocus('qna');
     args.setActiveQnaId(getFirstOpenCoordinatorQnaId(args.qnaItems));

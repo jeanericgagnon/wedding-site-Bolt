@@ -29,7 +29,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | Current blockers | none |
 | Current proof state | Launch-critical runtime proof is green on the current live runtime: `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `service-role-authorization`, `email-messaging-authorization`, `launch-closeout`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, `client-rls-matrix`, `registry-preview-ssrf`, `coordinator-dayof`, `name-change-runtime`, and `registry`. The harder repo guardrails are also green: `proof:v1:client-write-inventory`, `proof:v1:ast-security`, `proof:v1:test-lanes`, `proof:v1:strict-pocket`, and `proof:v1:security-automation`. `Release Launch Gate` remains green and the repo now carries Semgrep, CodeQL, Gitleaks, and Dependabot automation. |
 | Current deployment state | The latest deployed frontend runtime is [dayof.love](https://dayof.love) via verified Vercel production deploy `dpl_CRegyLrW91MBRXbkytcPZdy8g8BS`. The barcode scanner migration `20260513064500_add_registry_barcode_scanner_support.sql` is applied remotely, the richer barcode depth batch is now live on `registry-barcode-lookup --no-verify-jwt`, `submit-rsvp` is live with the serialized capacity path, and the public-session-secret, admin route gate, guest-contact, route-module decomposition, vault contribution, and `.dayof.love` host-routing lanes all remain live-proven. External custom domains remain unsupported product scope, not an open proof lane. |
-| Current next actions | No active launch blocker remains for the current launch baseline. The ambiguous "full feature scope" wording for `Day-of / coordinator`, `Name change`, and `Universal Registry Barcode Scanner` is now replaced by the competitor-informed MVP bar in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md). `Day-of / coordinator` and `Name change` still miss that MVP bar and remain active implementation work. `Universal Registry Barcode Scanner` now appears to meet that MVP bar; its remaining open work is post-MVP parity and depth, not baseline MVP viability. Keep the live client-RLS matrix current and keep the no-direct-client-write inventory current only if future runtime write surfaces reopen. Repo-wide TS/ESLint full-flip work remains explicitly future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
+| Current next actions | No active launch blocker remains for the current launch baseline. The ambiguous "full feature scope" wording for `Day-of / coordinator`, `Name change`, and `Universal Registry Barcode Scanner` is now replaced by the competitor-informed MVP bar in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md). `Day-of / coordinator` now has its deeper MVP build landed locally and green on local proof, but still needs deploy + live proof on the new runtime; `Name change` still misses its MVP bar and remains active implementation work. `Universal Registry Barcode Scanner` now appears to meet that MVP bar and its remaining open work is explicitly post-MVP/deferred depth, not baseline MVP viability. Keep the live client-RLS matrix current and keep the no-direct-client-write inventory current only if future runtime write surfaces reopen. Repo-wide TS/ESLint full-flip work remains explicitly future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
@@ -60,13 +60,14 @@ No active baseline launch blocker remains, but the following items are active bo
 - launch-critical findings are closed and live-proven on the current deployed production runtime
 - `Day-of / coordinator`
   - `ACTIVE NOW`
-  - current truth: launch-baseline slice is live-proven, but the feature still misses the competitor-informed MVP bar in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md)
+  - current truth: the current production runtime still reflects the older launch-baseline slice, but the repo now has the deeper competitor-informed MVP build landed locally in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md)
   - dedicated live product-depth proof exists for the current shipped slice: `npm run proof:v1:coordinator-dayof -- --require-live`
-  - local proof is green: `npm run proof:v1:coordinator-dayof`
-  - live proof is green on the current production runtime
+  - local deeper-batch proof is green: `npm run proof:v1:coordinator-dayof`, `npm run typecheck -- --pretty false`, targeted coordinator Vitest lane, `npm run build`
+  - live proof is green on the current production runtime for the older baseline slice only
   - MVP bar now defined as: event-specific arrival truth, event-scoped counts, explicit exception states, lookup triage, and role-safe day-of routing
-  - still missing against that MVP bar: event-scoped arrival storage, wrong-event/walk-in/help-desk/manager-decision/household-mismatch states, and a true per-event arrival board
-  - status: `PARTIAL / NOT DONE`
+  - locally shipped now in this wave: event-scoped arrival writes + reads, per-event arrival counters, wrong-event / walk-in / help-desk / manager-decision / household-mismatch state handling, richer door routing, and no-match routing inside coordinator mode
+  - still missing against completion: deploy the deeper runtime and re-run live coordinator proof on the shipped runtime
+  - status: `LOCAL MVP BUILD COMPLETE / DEPLOY + LIVE PROOF PENDING`
 - `Name change`
   - `ACTIVE NOW`
   - current truth: launch-baseline slice is live-proven, but the feature still misses the competitor-informed MVP bar in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md)
@@ -77,8 +78,8 @@ No active baseline launch blocker remains, but the following items are active bo
   - still missing against that MVP bar: clear state-coverage claim, broader claim-safe state/county grounding, and finished post-wedding placement
   - status: `PARTIAL / NOT DONE`
 - `Universal Registry Barcode Scanner`
-  - `ACTIVE NOW`
-  - current truth: the competitor-informed MVP bar now appears shipped and live-proven; remaining work is post-MVP parity and depth
+  - `MVP COMPLETE / POST-MVP DEFERRED`
+  - current truth: the competitor-informed MVP bar is shipped and live-proven; remaining work is post-MVP parity and depth only
   - implemented now: scan/manual barcode entry UI, barcode normalization, cache-aware edge lookup, registry persistence fields, and focused tests
   - deeper shipped slice now also includes provider-path metadata, review-required match state, explicit `Use best price` / `Add without store` owner controls, Open Library fallback for ISBNs, optional `UPCITEMDB_API_KEY` ladder support, normalized retailer-option building, and miss-cache attempt increments
   - deployed now: migration `20260513064500_add_registry_barcode_scanner_support.sql`, frontend runtime, and live `registry-barcode-lookup --no-verify-jwt`
@@ -86,8 +87,8 @@ No active baseline launch blocker remains, but the following items are active bo
   - deeper barcode batch proof is green locally: `npm run proof:v1:registry`, `npm run typecheck -- --pretty false`, `npm run build`, `git diff --check`
   - deeper barcode batch deploy/live proof status: deployed and live-proven in this wave
   - provider ladder currently ships with free/open coverage first and safe manual fallback when no confident match exists
-  - remaining gaps are post-MVP: fuller broad-match provider coverage, stronger duplicate/merge handling, stronger product-match depth, and richer universal-registry parity beyond barcode capture
-  - status: `PARTIAL / NOT DONE`
+  - remaining gaps are explicitly post-MVP/deferred: fuller broad-match provider coverage, stronger duplicate/merge handling, stronger product-match depth, and richer universal-registry parity beyond barcode capture
+  - status: `MVP COMPLETE / POST-MVP DEFERRED`
   - full concept, architecture, provider ladder, cache tables, and risk notes live in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md)
 - repo-wide TS/ESLint full-flip work is `FUTURE-ONLY / MAINTAINABILITY`
   - the enforced strict pocket now also covers RSVP, SiteView, siteViewHelpers, QuickStart, route modules, and `nameChangeService`
@@ -225,16 +226,16 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 
 ## Next 10 Tasks
 
-1. Add event-scoped arrival truth and counts to `Day-of / coordinator`.
-2. Add coordinator exception states and actions for wrong-event, walk-in, help-desk, manager-decision, and household-mismatch handling.
-3. Re-prove the deeper `Day-of / coordinator` lane after the arrival-state expansion.
-4. Decide and document the real launch claim for `Name change`: California-first or broader state-aware coverage.
-5. Finish post-wedding dashboard and resource placement for `Name change`.
-6. Tighten claim-safe state and county grounding for `Name change`.
-7. Re-prove the advanced `Name change` branches before marketing deeper parity.
-8. Continue post-MVP provider and product-depth work for `Universal Registry Barcode Scanner`.
-9. keep the live client-RLS matrix current if future non-guest write surfaces are added.
-10. keep the no-direct-client-write inventory current if future runtime write surfaces are added.
+1. Deploy the deeper `Day-of / coordinator` batch.
+2. Re-prove the deeper `Day-of / coordinator` lane on the deployed runtime.
+3. Decide and document the real launch claim for `Name change`: California-first or broader state-aware coverage.
+4. Finish post-wedding dashboard and resource placement for `Name change`.
+5. Tighten claim-safe state and county grounding for `Name change`.
+6. Re-prove the advanced `Name change` branches before marketing deeper parity.
+7. Keep `Universal Registry Barcode Scanner` post-MVP depth explicitly deferred unless it is reactivated as active scope.
+8. keep the live client-RLS matrix current if future non-guest write surfaces are added.
+9. keep the no-direct-client-write inventory current if future runtime write surfaces are added.
+10. keep the board synced if deploy/live proof changes the active truth for `Day-of / coordinator`.
 
 ## Resolved Work Summary
 

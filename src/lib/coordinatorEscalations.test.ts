@@ -13,6 +13,7 @@ describe('coordinatorEscalations', () => {
       events: [
         { id: 'ceremony', event_name: 'Ceremony', start_time: '2026-04-19T15:00:00' },
       ],
+      currentEventName: 'Ceremony',
       timelineState: {},
     });
 
@@ -30,6 +31,7 @@ describe('coordinatorEscalations', () => {
       events: [
         { id: 'ceremony', event_name: 'Ceremony', start_time: '2026-04-19T15:00:00' },
       ],
+      currentEventName: 'Ceremony',
       timelineState: { ceremony: 'live' },
     });
 

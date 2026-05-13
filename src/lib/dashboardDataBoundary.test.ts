@@ -1025,7 +1025,7 @@ describe('dashboard data boundary guards', () => {
     expect(dataHook).toContain("writePlannerAccessRole('coordinator', siteId, coordinatorRole);");
     expect(focusActions).toContain('export function buildCoordinatorDashboardFocusActions(');
     expect(focusActions).toContain("const jumpToOpsSnapshotLane = (key: 'check-in' | 'timeline' | 'qna' | 'alerting') => {");
-    expect(focusActions).toContain("args.setQnaInput(buildCoordinatorDoorEscalationPrompt(guest));");
+    expect(focusActions).toContain("args.setQnaInput(buildCoordinatorDoorEscalationPrompt(guest, args.checkInStatusContext));");
     expect(focusActions).toContain("args.setAlertForm((prev) => applyCoordinatorAlertSuggestion({ form: prev, suggestion: args.preferredAlertSuggestion! }));");
     expect(boardActions).toContain('export function buildCoordinatorDashboardBoardActions(');
     expect(boardActions).toContain('const runPrimaryAction = () => {');
@@ -1059,7 +1059,7 @@ describe('dashboard data boundary guards', () => {
     expect(panels).toContain('Jump to suggested question');
     expect(actionsHook).toContain('export function useCoordinatorDashboardActions(args: Args)');
     expect(actionsHook).toContain('const toggleCheckIn = async (guest: GuestLiteForCoordinator) => {');
-    expect(actionsHook).toContain('await updateCoordinatorGuestCheckIn({ siteId: args.siteId, guestId: guest.id, checkedInAt: next });');
+    expect(actionsHook).toContain('itineraryEventId: args.currentDoorEventId,');
     expect(actionsHook).toContain('const sendDayOfAlert = async () => {');
     expect(actionsHook).toContain('await createCoordinatorAlertMessage({');
     expect(actionsHook).toContain('const addQnaItem = async () => {');

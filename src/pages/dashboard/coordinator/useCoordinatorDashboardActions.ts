@@ -1,5 +1,5 @@
 import { useState, type Dispatch, type SetStateAction } from 'react';
-import type { GuestLiteForCoordinator } from '../../../lib/coordinatorTypes';
+import type { CoordinatorGuestDoorRoute, GuestLiteForCoordinator } from '../../../lib/coordinatorTypes';
 import type { CoordinatorAlertForm } from '../../../lib/coordinatorAlertFlow';
 import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor } from '../../../lib/coordinatorAlertFlow';
 import { resetCoordinatorAlertFormAfterSend } from '../../../lib/coordinatorAlertReset';
@@ -24,11 +24,13 @@ type Args = {
   canSendAlerts: boolean;
   checkInFilter: 'all' | 'arrivals' | 'checked-in';
   checkInQueue: GuestLiteForCoordinator[];
+  currentDoorEventId: string | null;
   focusCoordinatorQnaLane: () => void;
   isDemoMode: boolean;
   preferredAlertSuggestion: CoordinatorAlertSuggestion | null;
   qnaInput: string;
   setActiveGuestId: (guestId: string | null) => void;
+  setActiveQnaId: (qnaId: string | null) => void;
   setAlertForm: Dispatch<SetStateAction<CoordinatorAlertForm>>;
   setAlertLog: Dispatch<SetStateAction<AlertLog[]>>;
   setAlertOverrideLabelState: Dispatch<SetStateAction<string | null>>;
@@ -44,6 +46,85 @@ type Args = {
 export function useCoordinatorDashboardActions(args: Args) {
   const [alertBusy, setAlertBusy] = useState(false);
   const [checkInBusyGuestId, setCheckInBusyGuestId] = useState<string | null>(null);
+
+  const syncGuestCheckInState = (guestId: string, checkedInAt: string | null) => {
+    args.setGuests((prev) => prev.map((guest) => {
+      if (guest.id !== guestId) return guest;
+      const eventArrivals = args.currentDoorEventId
+        ? {
+          ...(guest.event_arrivals ?? {}),
+          [args.currentDoorEventId]: {
+            seating_event_id: guest.event_arrivals?.[args.currentDoorEventId]?.seating_event_id ?? null,
+            table_name: guest.event_arrivals?.[args.currentDoorEventId]?.table_name ?? null,
+            checked_in_at: checkedInAt,
+            is_seated: guest.event_arrivals?.[args.currentDoorEventId]?.is_seated ?? false,
+          },
+        }
+        : guest.event_arrivals;
+
+      return {
+        ...guest,
+        checked_in_at: checkedInAt,
+        door_route: null,
+        event_arrivals: eventArrivals,
+      };
+    }));
+  };
+
+  const routeGuestAtDoor = (guestId: string, route: CoordinatorGuestDoorRoute | null) => {
+    if (!args.canEditQna) {
+      args.toast('Your collaborator role cannot route door exceptions.', 'info');
+      return;
+    }
+    args.setGuests((prev) => prev.map((guest) => (
+      guest.id === guestId
+        ? { ...guest, door_route: route }
+        : guest
+    )));
+    args.toast(route ? `Door route saved: ${route}.` : 'Door route cleared.', 'success');
+  };
+
+  const buildDoorRoutingPrompt = (query: string, route: CoordinatorGuestDoorRoute) => {
+    switch (route) {
+      case 'walk-in':
+        return `Walk-in at the door: "${query}". Confirm whether to add this guest, pair them with an existing household, or redirect them.`;
+      case 'manager-decision':
+        return `Manager decision needed for door search "${query}". Confirm whether to allow entry, create a walk-in, or redirect to the couple.`;
+      default:
+        return `Help desk follow-up: "${query}" did not match the door queue. Verify spelling, event access, and seating details before check-in.`;
+    }
+  };
+
+  const routeUnmatchedDoorIssue = async (query: string, route: CoordinatorGuestDoorRoute) => {
+    if (!args.canEditQna) {
+      args.toast('Your collaborator role cannot route unmatched arrivals.', 'info');
+      return;
+    }
+
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return;
+
+    args.focusCoordinatorQnaLane();
+    const question = buildDoorRoutingPrompt(trimmedQuery, route);
+
+    if (!args.isDemoMode && args.siteId) {
+      try {
+        const data = await createCoordinatorQnaQuestion(args.siteId, question);
+        args.setQnaItems((prev) => [data, ...prev].slice(0, 30));
+        args.setActiveQnaId(data.id);
+      } catch {
+        args.toast('Couldn’t route that door issue right now.', 'error');
+        return;
+      }
+    } else {
+      const item = { id: `${Date.now()}`, question, status: 'new' as const };
+      args.setQnaItems((prev) => [item, ...prev].slice(0, 30));
+      args.setActiveQnaId(item.id);
+    }
+
+    args.setQnaInput('');
+    args.toast(`Unmatched arrival routed as ${route}.`, 'success');
+  };
 
   const toggleCheckIn = async (guest: GuestLiteForCoordinator) => {
     if (!args.canCheckIn) {
@@ -65,7 +146,7 @@ export function useCoordinatorDashboardActions(args: Args) {
 
     try {
       if (args.isDemoMode) {
-        args.setGuests((prev) => prev.map((g) => (g.id === guest.id ? { ...g, checked_in_at: next } : g)));
+        syncGuestCheckInState(guest.id, next);
         args.setActiveGuestId(nextFocusGuestId);
         args.toast(next ? 'Guest checked in. Door focus moved to the next guest.' : 'Guest moved back to arrivals.', 'success');
         return;
@@ -74,13 +155,18 @@ export function useCoordinatorDashboardActions(args: Args) {
       if (!args.siteId) return;
 
       try {
-        await updateCoordinatorGuestCheckIn({ siteId: args.siteId, guestId: guest.id, checkedInAt: next });
+        await updateCoordinatorGuestCheckIn({
+          siteId: args.siteId,
+          guestId: guest.id,
+          checkedInAt: next,
+          itineraryEventId: args.currentDoorEventId,
+        });
       } catch {
         args.toast('Couldn’t update check-in right now.', 'error');
         return;
       }
 
-      args.setGuests((prev) => prev.map((g) => (g.id === guest.id ? { ...g, checked_in_at: next } : g)));
+      syncGuestCheckInState(guest.id, next);
       args.setActiveGuestId(nextFocusGuestId);
       args.toast(next ? 'Guest checked in. Door focus moved to the next guest.' : 'Guest moved back to arrivals.', 'success');
     } finally {
@@ -173,6 +259,8 @@ export function useCoordinatorDashboardActions(args: Args) {
     addQnaItem,
     alertBusy,
     checkInBusyGuestId,
+    routeGuestAtDoor,
+    routeUnmatchedDoorIssue,
     sendDayOfAlert,
     toggleCheckIn,
   };

@@ -13,13 +13,16 @@ describe('coordinatorCheckInBoard', () => {
     expect(buildCoordinatorCheckInBoard({
       guests,
       activeGuest: guests[0],
+      currentEventName: 'Ceremony',
     })).toEqual({
-      statusLabel: 'Door review is active',
+      eventLabel: 'Ceremony door',
+      eventProgressLabel: '1 in · 3 waiting',
+      statusLabel: 'Ceremony review is active',
       tone: 'warning',
       activeLabel: 'Alex Rivera',
       nextReadyLabel: 'Taylor Ng',
-      queueLabel: '2 ready · 1 checked in',
-      reviewLabel: '1 need review',
+      queueLabel: '2 ready · 1 review · 1 checked in',
+      reviewLabel: '1 need review before arrival',
     });
   });
 
@@ -27,12 +30,15 @@ describe('coordinatorCheckInBoard', () => {
     expect(buildCoordinatorCheckInBoard({
       guests: [{ id: 'g3', first_name: 'Jordan', last_name: 'Kim', name: 'Jordan Kim', rsvp_status: 'confirmed', checked_in_at: '2026-04-22T14:00:00.000Z' }],
       activeGuest: null,
+      currentEventName: null,
     })).toEqual({
+      eventLabel: 'Door board',
+      eventProgressLabel: '1 in · 0 waiting',
       statusLabel: 'Arrivals are covered',
       tone: 'neutral',
       activeLabel: 'No active guest selected',
       nextReadyLabel: 'No other ready arrival queued',
-      queueLabel: '0 ready · 1 checked in',
+      queueLabel: '0 ready · 0 review · 1 checked in',
       reviewLabel: 'No review holds',
     });
   });

@@ -10,8 +10,17 @@ import type { CoordinatorAlertSuggestion } from '../../../lib/coordinatorAlertSu
 import type { CoordinatorAlertTargetCue } from '../../../lib/coordinatorAlertTargetCue';
 import type { CoordinatorCheckInBoard } from '../../../lib/coordinatorCheckInBoard';
 import type { CoordinatorCheckInFilter } from '../../../lib/coordinatorCheckInQueue';
-import { getCoordinatorDoorStatus, getCoordinatorDoorStatusLabel } from '../../../lib/coordinatorCheckInStatus';
-import { getCoordinatorCheckInActionLabel, getCoordinatorTimelineCorrectionAction } from '../../../lib/coordinatorCorrectionActions';
+import {
+  getCoordinatorDoorExceptionStateLabel,
+  getCoordinatorDoorExceptionStates,
+  getCoordinatorDoorStatus,
+  getCoordinatorDoorStatusLabel,
+  getCoordinatorEventCheckInAt,
+  getCoordinatorEventTableName,
+  isCoordinatorGuestInvitedToCurrentEvent,
+  type CoordinatorDoorStatusContext,
+} from '../../../lib/coordinatorCheckInStatus';
+import { getCoordinatorTimelineCorrectionAction } from '../../../lib/coordinatorCorrectionActions';
 import { PLANNER_ROLE_OPTIONS, type PlannerAccessRole } from '../../../lib/plannerAccess';
 import { getCoordinatorActionHint } from '../../../lib/coordinatorActionCopy';
 import type { CoordinatorCommandBoard } from '../../../lib/coordinatorCommandBoard';
@@ -32,7 +41,7 @@ import type { CoordinatorStablePrompt } from '../../../lib/coordinatorStableProm
 import type { CoordinatorSummaryDisplayCue } from '../../../lib/coordinatorSummaryDisplayCue';
 import type { CoordinatorTimelineBoard } from '../../../lib/coordinatorTimelineBoard';
 import { getCoordinatorPrimaryTimelineAction } from '../../../lib/coordinatorTimelineActions';
-import type { GuestLiteForCoordinator } from '../../../lib/coordinatorTypes';
+import type { CoordinatorGuestDoorRoute, GuestLiteForCoordinator } from '../../../lib/coordinatorTypes';
 import { getCoordinatorActiveTargetLabel } from '../../../lib/coordinatorActiveTargetLabel';
 import { formatCoordinatorEventDateTime } from '../coordinatorEventTime';
 import type { AlertLog, AudienceOption, EventLite, TimelineState } from './coordinatorDashboardTypes';
@@ -889,12 +898,14 @@ export interface CoordinatorCheckInQueuePanelProps {
   canCheckIn: boolean;
   canEditQna: boolean;
   checkInBoard: CoordinatorCheckInBoard;
+  checkInEventName: string | null;
   checkInBoardTargetId: string | null;
   checkInBusyGuestId: string | null;
   checkInFilter: CoordinatorCheckInFilter;
   checkInQuery: string;
   checkInQueue: GuestLiteForCoordinator[];
   checkInReviewOnly: boolean;
+  checkInStatusContext: CoordinatorDoorStatusContext;
   checkInTargetState: CoordinatorCheckInTargetState;
   checkInWatchCount: number;
   isFocused: boolean;
@@ -906,6 +917,8 @@ export interface CoordinatorCheckInQueuePanelProps {
   onFocusLane: () => void;
   onReadyNowClick: () => void;
   onReviewOnlyClick: () => void;
+  onRouteGuest: (guestId: string, route: CoordinatorGuestDoorRoute | null) => void;
+  onRouteNoMatch: (route: CoordinatorGuestDoorRoute) => void;
   onSelectGuest: (guestId: string) => void;
   onSetFilter: (filter: CoordinatorCheckInFilter) => void;
   onSetQuery: (query: string) => void;
@@ -916,12 +929,14 @@ export function CoordinatorCheckInQueuePanel({
   canCheckIn,
   canEditQna,
   checkInBoard,
+  checkInEventName,
   checkInBoardTargetId,
   checkInBusyGuestId,
   checkInFilter,
   checkInQuery,
   checkInQueue,
   checkInReviewOnly,
+  checkInStatusContext,
   checkInTargetState,
   checkInWatchCount,
   isFocused,
@@ -933,6 +948,8 @@ export function CoordinatorCheckInQueuePanel({
   onFocusLane,
   onReadyNowClick,
   onReviewOnlyClick,
+  onRouteGuest,
+  onRouteNoMatch,
   onSelectGuest,
   onSetFilter,
   onSetQuery,
@@ -950,7 +967,8 @@ export function CoordinatorCheckInQueuePanel({
         <div className="rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-medium text-text-primary">Door board</p>
+              <p className="text-[11px] font-medium text-text-primary">{checkInBoard.eventLabel}</p>
+              <p className="mt-1 text-[11px] text-text-secondary">{checkInBoard.eventProgressLabel}</p>
               <p className="mt-1 text-[11px] text-text-secondary">Active · {checkInBoard.activeLabel}</p>
               <p className="text-[11px] text-text-secondary">Next ready · {checkInBoard.nextReadyLabel}</p>
             </div>
@@ -980,7 +998,12 @@ export function CoordinatorCheckInQueuePanel({
               if (event.key !== 'Enter') return;
               event.preventDefault();
               const activeGuest = checkInQueue.find((guest) => guest.id === activeGuestId) ?? checkInQueue[0];
-              if (activeGuest && canCheckIn && !activeGuest.checked_in_at && getCoordinatorDoorStatus(activeGuest) !== 'watch') {
+              if (
+                activeGuest
+                && canCheckIn
+                && !getCoordinatorEventCheckInAt(activeGuest, checkInStatusContext.currentEventId)
+                && getCoordinatorDoorStatus(activeGuest, checkInStatusContext) !== 'watch'
+              ) {
                 onFocusLane();
                 onSelectGuest(activeGuest.id);
                 onCheckInGuest(activeGuest);
@@ -1032,12 +1055,47 @@ export function CoordinatorCheckInQueuePanel({
       </div>
       <div className="max-h-[60vh] overflow-auto divide-y divide-border-subtle/70">
         {checkInQueue.length === 0 && (
-          <div className="px-4 py-4 text-xs text-text-tertiary">
-            No guests match this queue right now. Try a different filter or search to keep the door moving.
+          <div className="px-4 py-4 space-y-3 text-xs text-text-tertiary">
+            <p>No guests match this queue right now. Try a different filter or search to keep the door moving.</p>
+            {checkInQuery.trim() && canEditQna && (
+              <div className="rounded-lg border border-primary/20 bg-accent-light px-3 py-3">
+                <p className="text-xs font-medium text-primary">No match for “{checkInQuery.trim()}”</p>
+                <p className="mt-1 text-[11px] text-primary/80">Route the door issue without leaving coordinator mode.</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onRouteNoMatch('walk-in')}
+                    className="rounded-md border border-primary/20 bg-white px-2.5 py-1.5 text-[11px] text-primary"
+                  >
+                    Route walk-in
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onRouteNoMatch('help-desk')}
+                    className="rounded-md border border-primary/20 bg-white px-2.5 py-1.5 text-[11px] text-primary"
+                  >
+                    Send to help desk
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onRouteNoMatch('manager-decision')}
+                    className="rounded-md border border-primary/20 bg-white px-2.5 py-1.5 text-[11px] text-primary"
+                  >
+                    Ask manager
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
         {checkInQueue.map((guest) => {
-          const doorStatus = getCoordinatorDoorStatus(guest);
+          const doorStatus = getCoordinatorDoorStatus(guest, checkInStatusContext);
+          const eventCheckedInAt = getCoordinatorEventCheckInAt(guest, checkInStatusContext.currentEventId);
+          const eventTableName = getCoordinatorEventTableName(guest, checkInStatusContext.currentEventId);
+          const invitedToCurrentEvent = isCoordinatorGuestInvitedToCurrentEvent(guest, checkInStatusContext);
+          const visibleExceptionStates = getCoordinatorDoorExceptionStates(guest, checkInStatusContext)
+            .filter((state) => state !== 'already-checked-in')
+            .slice(0, 3);
           return (
             <div
               key={guest.id}
@@ -1064,9 +1122,47 @@ export function CoordinatorCheckInQueuePanel({
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-text-tertiary">{guest.rsvp_status}{doorStatus === 'watch' ? ' · Flag before check-in' : ''}</p>
+                <p className="text-xs text-text-tertiary">
+                  RSVP {guest.rsvp_status}
+                  {checkInEventName
+                    ? eventCheckedInAt
+                      ? ` · Arrived for ${checkInEventName}`
+                      : invitedToCurrentEvent
+                        ? ` · ${checkInEventName}${eventTableName ? ` · ${eventTableName}` : ''}`
+                        : ` · ${checkInEventName} not invited`
+                    : ''}
+                  {doorStatus === 'watch' ? ' · Flag before check-in' : ''}
+                </p>
+                {visibleExceptionStates.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {visibleExceptionStates.map((state) => (
+                      <span
+                        key={`${guest.id}-${state}`}
+                        className="rounded-md border border-primary/15 bg-primary/5 px-2 py-0.5 text-[10px] text-primary"
+                      >
+                        {getCoordinatorDoorExceptionStateLabel(state)}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-2">
+                {!eventCheckedInAt && canEditQna && (doorStatus === 'watch' || Boolean(guest.door_route)) && (
+                  <select
+                    value={guest.door_route ?? ''}
+                    onClick={(event) => event.stopPropagation()}
+                    onChange={(event) => {
+                      event.stopPropagation();
+                      onRouteGuest(guest.id, (event.target.value || null) as CoordinatorGuestDoorRoute | null);
+                    }}
+                    className="rounded-md border border-border bg-white px-2 py-1.5 text-[11px] text-text-secondary"
+                  >
+                    <option value="">No route</option>
+                    <option value="walk-in">Walk-in</option>
+                    <option value="help-desk">Help desk</option>
+                    <option value="manager-decision">Manager decision</option>
+                  </select>
+                )}
                 {doorStatus === 'watch' && canEditQna && (
                   <button
                     type="button"
@@ -1090,9 +1186,9 @@ export function CoordinatorCheckInQueuePanel({
                     }
                   }}
                   disabled={!canCheckIn || doorStatus === 'watch' || checkInBusyGuestId === guest.id}
-                  className={`rounded-md border px-3 py-1.5 text-xs disabled:opacity-40 ${guest.checked_in_at ? 'border-primary/20 bg-accent-light text-primary' : doorStatus === 'watch' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-secondary'}`}
+                  className={`rounded-md border px-3 py-1.5 text-xs disabled:opacity-40 ${eventCheckedInAt ? 'border-primary/20 bg-accent-light text-primary' : doorStatus === 'watch' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-secondary'}`}
                 >
-                  {checkInBusyGuestId === guest.id ? 'Updating…' : guest.checked_in_at ? getCoordinatorCheckInActionLabel(guest) : doorStatus === 'watch' ? 'Review first' : getCoordinatorCheckInActionLabel(guest)}
+                  {checkInBusyGuestId === guest.id ? 'Updating…' : eventCheckedInAt ? 'Undo check-in' : doorStatus === 'watch' ? 'Review first' : 'Check in'}
                 </button>
               </div>
             </div>

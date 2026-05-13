@@ -1,4 +1,4 @@
-import { getCoordinatorDoorStatus } from '../../../lib/coordinatorCheckInStatus';
+import { getCoordinatorDoorStatus, type CoordinatorDoorStatusContext } from '../../../lib/coordinatorCheckInStatus';
 import { buildCoordinatorAlertActivityBoard } from '../../../lib/coordinatorAlertActivityBoard';
 import { buildCoordinatorAlertBoard } from '../../../lib/coordinatorAlertBoard';
 import { getCoordinatorAlertLaneLabel } from '../../../lib/coordinatorAlertLane';
@@ -94,6 +94,7 @@ type Args = {
   coordinatorPermissions: PlannerPermissionKey[] | null;
   coordinatorRole: PlannerAccessRole;
   eventGuestIds: Record<string, Set<string>>;
+  eventSeatingConfiguredIds: Set<string>;
   events: EventLite[];
   guests: GuestLiteForCoordinator[];
   lastAlertSuggestionKey: string | null;
@@ -140,6 +141,16 @@ export function buildCoordinatorDashboardDerivedState(args: Args) {
   const roleCapabilities = buildCoordinatorRoleCapabilities(args.coordinatorRole);
   const liveEventId = getCoordinatorLiveEventId(args.events as CoordinatorTimelineEventLite[], args.timelineState);
   const upNextEventId = getCoordinatorUpNextEventId(args.events as CoordinatorTimelineEventLite[], args.timelineState);
+  const checkInEventId = liveEventId ?? upNextEventId ?? args.events[0]?.id ?? null;
+  const checkInEvent = args.events.find((event) => event.id === checkInEventId) ?? null;
+  const checkInEventGuestIds = checkInEventId ? (args.eventGuestIds[checkInEventId] ?? null) : null;
+  const useEventScopedDoorQueue = Boolean(checkInEventGuestIds && checkInEventGuestIds.size > 0);
+  const checkInStatusContext: CoordinatorDoorStatusContext = {
+    currentEventId: checkInEventId,
+    eventGuestIds: args.eventGuestIds,
+    eventSeatingConfiguredIds: args.eventSeatingConfiguredIds,
+    guests: args.guests,
+  };
   const liveEventAudience = liveEventId ? `event:${liveEventId}` : null;
   const liveEvent = args.events.find((event) => event.id === liveEventId) ?? null;
   const upNextEvent = args.events.find((event) => event.id === upNextEventId) ?? null;
@@ -242,8 +253,11 @@ export function buildCoordinatorDashboardDerivedState(args: Args) {
   });
   const filteredAlertLogView = buildCoordinatorAlertLogView(filteredAlertLog);
 
-  const nextArrivals = sortedGuests.filter((g) => !g.checked_in_at && getCoordinatorDoorStatus(g) === 'ready').slice(0, 5);
-  const checkInWatchCount = args.guests.filter((guest) => getCoordinatorDoorStatus(guest) === 'watch').length;
+  const nextArrivals = sortedGuests
+    .filter((guest) => (!useEventScopedDoorQueue || checkInEventGuestIds?.has(guest.id)))
+    .filter((guest) => getCoordinatorDoorStatus(guest, checkInStatusContext) === 'ready')
+    .slice(0, 5);
+  const checkInWatchCount = args.guests.filter((guest) => getCoordinatorDoorStatus(guest, checkInStatusContext) === 'watch').length;
   const opsSnapshotItems = buildCoordinatorOpsSnapshot({
     role: args.coordinatorRole,
     reviewCount: checkInWatchCount,
@@ -260,9 +274,11 @@ export function buildCoordinatorDashboardDerivedState(args: Args) {
     capabilities: roleCapabilities,
   });
 
-  const checkInQueueBase = filterCoordinatorCheckInQueue(sortedGuests, args.checkInQuery, args.checkInFilter);
-  const checkInQueue = args.checkInReviewOnly ? checkInQueueBase.filter((guest) => getCoordinatorDoorStatus(guest) === 'watch') : checkInQueueBase;
-  const checkInBoardTargetId = getCoordinatorCheckInBoardTargetId(sortedGuests);
+  const checkInQueueBase = filterCoordinatorCheckInQueue(sortedGuests, args.checkInQuery, args.checkInFilter, checkInStatusContext);
+  const checkInQueue = args.checkInReviewOnly
+    ? checkInQueueBase.filter((guest) => getCoordinatorDoorStatus(guest, checkInStatusContext) === 'watch')
+    : checkInQueueBase;
+  const checkInBoardTargetId = getCoordinatorCheckInBoardTargetId(sortedGuests, checkInStatusContext);
   const checkInTargetState = getCoordinatorCheckInTargetState({ boardTargetId: checkInBoardTargetId, activeGuestId: args.activeGuestId });
   const timelineBoardTargetId = getCoordinatorTimelineBoardTargetId({ liveEventId, upNextEventId });
   const timelineTargetState = getCoordinatorTimelineTargetState({ boardTargetId: timelineBoardTargetId, activeTimelineEventId: args.activeTimelineEventId });
@@ -270,7 +286,14 @@ export function buildCoordinatorDashboardDerivedState(args: Args) {
   const qnaTargetState = getCoordinatorQnaTargetState({ boardTargetId: qnaBoardTargetId, activeQnaId: args.activeQnaId });
   const checkInTargetGuest = sortedGuests.find((guest) => guest.id === checkInBoardTargetId) ?? null;
   const activeCheckInGuest = sortedGuests.find((guest) => guest.id === args.activeGuestId) ?? null;
-  const checkInBoard = buildCoordinatorCheckInBoard({ guests: sortedGuests, activeGuest: activeCheckInGuest });
+  const checkInBoard = buildCoordinatorCheckInBoard({
+    guests: useEventScopedDoorQueue
+      ? sortedGuests.filter((guest) => checkInEventGuestIds?.has(guest.id))
+      : sortedGuests,
+    activeGuest: activeCheckInGuest,
+    currentEventName: checkInEvent?.event_name ?? null,
+    context: checkInStatusContext,
+  });
   const timelineTargetEvent = args.events.find((event) => event.id === timelineBoardTargetId) ?? null;
   const qnaTargetItem = args.qnaItems.find((item) => item.id === qnaBoardTargetId) ?? null;
   const priorityCommandLabel = getCoordinatorCommandPriority({
@@ -367,12 +390,15 @@ export function buildCoordinatorDashboardDerivedState(args: Args) {
     qnaItems: args.qnaItems,
     events: args.events as CoordinatorTimelineEventLite[],
     timelineState: args.timelineState,
+    currentEventName: checkInEvent?.event_name ?? null,
+    doorStatusContext: checkInStatusContext,
   });
   const primaryAction: CoordinatorPrimaryAction = buildCoordinatorPrimaryAction({
     guests: args.guests,
     qnaItems: args.qnaItems as CoordinatorQnaItem[],
     events: args.events as CoordinatorTimelineEventLite[],
     timelineState: args.timelineState,
+    doorStatusContext: checkInStatusContext,
   });
   const primaryActionTarget = resolveCoordinatorPrimaryActionTarget(primaryAction);
   const primaryActionBoard = buildCoordinatorPrimaryActionBoard({
@@ -437,8 +463,11 @@ export function buildCoordinatorDashboardDerivedState(args: Args) {
     alertSummaryTransitionLabel,
     alertTargetCue,
     checkInBoard,
+    checkInEventId,
+    checkInEventName: checkInEvent?.event_name ?? null,
     checkInBoardTargetId,
     checkInQueue,
+    checkInStatusContext,
     checkInTargetGuest,
     checkInTargetState,
     checkInWatchCount,

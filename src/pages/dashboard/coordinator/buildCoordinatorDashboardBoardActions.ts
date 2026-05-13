@@ -15,7 +15,7 @@ import { resolveCoordinatorCorrectionCueTarget } from '../../../lib/coordinatorC
 import type { CoordinatorCorrectionCue } from '../../../lib/coordinatorCorrectionsSummary';
 import { updateCoordinatorQnaItem } from '../../../lib/coordinatorQnaFlow';
 import { getNextCoordinatorQnaFocusId } from '../../../lib/coordinatorQnaFocus';
-import { getCoordinatorDoorStatus } from '../../../lib/coordinatorCheckInStatus';
+import { getCoordinatorDoorStatus, type CoordinatorDoorStatusContext } from '../../../lib/coordinatorCheckInStatus';
 import type { CoordinatorAlertForm } from '../../../lib/coordinatorAlertFlow';
 import type { CoordinatorAlertSuggestion } from '../../../lib/coordinatorAlertSuggestions';
 import type { GuestLiteForCoordinator } from '../../../lib/coordinatorTypes';
@@ -48,6 +48,7 @@ type BuildCoordinatorDashboardBoardActionsArgs = {
   timelineState: Record<string, TimelineState>;
   upNextEvent: EventLite | null;
   upNextEventId: string | null;
+  doorStatusContext: CoordinatorDoorStatusContext;
   setActiveGuestId: Dispatch<SetStateAction<string | null>>;
   setActiveQnaId: Dispatch<SetStateAction<string | null>>;
   setActiveTimelineEventId: Dispatch<SetStateAction<string | null>>;
@@ -74,7 +75,7 @@ type BuildCoordinatorDashboardBoardActionsArgs = {
 export function buildCoordinatorDashboardBoardActions(args: BuildCoordinatorDashboardBoardActionsArgs) {
   const returnToBoard = () => {
     const next = resolveCoordinatorReturnToBoardState({
-      hasDoorReview: args.guests.some((guest) => getCoordinatorDoorStatus(guest) === 'watch'),
+      hasDoorReview: args.guests.some((guest) => getCoordinatorDoorStatus(guest, args.doorStatusContext) === 'watch'),
       hasOpenQna: args.qnaItems.some((item) => item.status === 'new'),
       hasLiveEvent: args.events.some((event) => (args.timelineState[event.id] || 'up-next') === 'live'),
     });

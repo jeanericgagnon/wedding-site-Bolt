@@ -1,7 +1,9 @@
-import { getCoordinatorDoorStatus } from './coordinatorCheckInStatus';
+import { getCoordinatorDoorStatus, type CoordinatorDoorStatusContext } from './coordinatorCheckInStatus';
 import type { GuestLiteForCoordinator } from './coordinatorTypes';
 
 export type CoordinatorCheckInBoard = {
+  eventLabel: string;
+  eventProgressLabel: string;
   statusLabel: string;
   tone: 'ready' | 'warning' | 'neutral';
   activeLabel: string;
@@ -13,27 +15,34 @@ export type CoordinatorCheckInBoard = {
 export const buildCoordinatorCheckInBoard = ({
   guests,
   activeGuest,
+  currentEventName,
+  context,
 }: {
   guests: GuestLiteForCoordinator[];
   activeGuest: GuestLiteForCoordinator | null;
+  currentEventName?: string | null;
+  context?: CoordinatorDoorStatusContext;
 }): CoordinatorCheckInBoard => {
-  const readyGuests = guests.filter((guest) => getCoordinatorDoorStatus(guest) === 'ready');
-  const watchGuests = guests.filter((guest) => getCoordinatorDoorStatus(guest) === 'watch');
-  const doneGuests = guests.filter((guest) => getCoordinatorDoorStatus(guest) === 'done');
+  const readyGuests = guests.filter((guest) => getCoordinatorDoorStatus(guest, context) === 'ready');
+  const watchGuests = guests.filter((guest) => getCoordinatorDoorStatus(guest, context) === 'watch');
+  const doneGuests = guests.filter((guest) => getCoordinatorDoorStatus(guest, context) === 'done');
   const nextReadyGuest = readyGuests.find((guest) => guest.id !== activeGuest?.id) ?? null;
+  const outstandingGuests = readyGuests.length + watchGuests.length;
 
   return {
+    eventLabel: currentEventName ? `${currentEventName} door` : 'Door board',
+    eventProgressLabel: `${doneGuests.length} in · ${outstandingGuests} waiting`,
     statusLabel: watchGuests.length > 0
-      ? 'Door review is active'
+      ? `${currentEventName ?? 'Door'} review is active`
       : readyGuests.length > 0
-        ? 'Door is ready to keep moving'
+        ? `${currentEventName ?? 'Door'} is ready to keep moving`
         : doneGuests.length > 0
           ? 'Arrivals are covered'
           : 'No arrivals in queue',
     tone: watchGuests.length > 0 ? 'warning' : readyGuests.length > 0 ? 'ready' : 'neutral',
     activeLabel: activeGuest ? activeGuest.name : 'No active guest selected',
     nextReadyLabel: nextReadyGuest ? nextReadyGuest.name : 'No other ready arrival queued',
-    queueLabel: `${readyGuests.length} ready · ${doneGuests.length} checked in`,
-    reviewLabel: watchGuests.length ? `${watchGuests.length} need review` : 'No review holds',
+    queueLabel: `${readyGuests.length} ready · ${watchGuests.length} review · ${doneGuests.length} checked in`,
+    reviewLabel: watchGuests.length ? `${watchGuests.length} need review before arrival` : 'No review holds',
   };
 };

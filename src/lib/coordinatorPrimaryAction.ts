@@ -1,7 +1,7 @@
 import type { GuestLiteForCoordinator } from './coordinatorTypes';
 import type { CoordinatorQnaItem, CoordinatorTimelineState } from './coordinatorModePersistence';
 import type { CoordinatorTimelineEventLite } from './coordinatorTimelineFocus';
-import { getCoordinatorDoorStatus } from './coordinatorCheckInStatus';
+import { getCoordinatorDoorStatus, type CoordinatorDoorStatusContext } from './coordinatorCheckInStatus';
 import { getFirstOpenCoordinatorQnaId } from './coordinatorQnaFocus';
 import { getCoordinatorUpNextEventId } from './coordinatorTimelineFocus';
 
@@ -16,13 +16,15 @@ export const buildCoordinatorPrimaryAction = ({
   qnaItems,
   events,
   timelineState,
+  doorStatusContext,
 }: {
   guests: GuestLiteForCoordinator[];
   qnaItems: CoordinatorQnaItem[];
   events: CoordinatorTimelineEventLite[];
   timelineState: Record<string, CoordinatorTimelineState>;
+  doorStatusContext?: CoordinatorDoorStatusContext;
 }): CoordinatorPrimaryAction => {
-  const reviewGuest = guests.find((guest) => getCoordinatorDoorStatus(guest) === 'watch');
+  const reviewGuest = guests.find((guest) => getCoordinatorDoorStatus(guest, doorStatusContext) === 'watch');
   if (reviewGuest) {
     return {
       key: 'door-review',

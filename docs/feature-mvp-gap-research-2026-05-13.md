@@ -67,20 +67,20 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - search and active guest queue
   - basic check-in and undo
   - timeline, Q&A, and day-of message panels
-- Missing against the MVP bar:
-  - arrival truth still centers on shared guest `checked_in_at`
-  - coordinator guest fetch is still narrow: `id, first_name, last_name, name, rsvp_status, checked_in_at`
-  - explicit exception states only cover `unassigned-seat`, `rsvp-unresolved`, and `already-checked-in`
-  - door status is still effectively `ready`, `watch`, or `done`
-  - no first-class wrong-event, walk-in, help-desk, manager-decision, or household-mismatch action model
-  - no visible event-specific arrival counters or event-scoped arrival board
+- Deeper local batch now adds:
+  - event-scoped arrival reads and writes for coordinator check-in
+  - coordinator guest fetch with household + event-arrival context
+  - explicit wrong-event, walk-in, help-desk, manager-decision, and household-mismatch handling
+  - per-event arrival counters and a current-door board
+  - no-match routing inside coordinator mode
+- Still missing against completion:
+  - deploy the deeper runtime
+  - re-run live proof on the deployed runtime
 
 ### Build gaps
 
-1. Add event-scoped arrival truth and counts.
-2. Expand the exception-state model and coordinator board actions.
-3. Add not-found, walk-in, and help-desk routing inside coordinator mode.
-4. Re-prove the deeper day-of lane after the state model changes.
+1. Deploy the deeper coordinator runtime.
+2. Re-prove the deeper day-of lane after deploy.
 
 ## Name change
 

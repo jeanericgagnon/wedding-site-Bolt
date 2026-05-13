@@ -39,6 +39,7 @@ export function useCoordinatorDashboardData(args: {
   const [events, setEvents] = useState<EventLite[]>([]);
   const [siteId, setSiteId] = useState<string | null>(null);
   const [eventGuestIds, setEventGuestIds] = useState<Record<string, Set<string>>>({});
+  const [eventSeatingConfiguredIds, setEventSeatingConfiguredIds] = useState<Set<string>>(new Set<string>());
   const [timelineState, setTimelineState] = useState<Record<string, TimelineState>>({});
   const [alertLog, setAlertLog] = useState<AlertLog[]>([]);
   const [qnaItems, setQnaItems] = useState<QnaItem[]>([]);
@@ -82,24 +83,55 @@ export function useCoordinatorDashboardData(args: {
           setActiveSiteRole('owner');
           setCoordinatorRole('owner');
           setGuests([
-            { id: '1', first_name: 'Alex', last_name: 'Rivera', name: 'Alex Rivera', rsvp_status: 'confirmed', checked_in_at: now },
-            { id: '2', first_name: 'Sam', last_name: 'Lee', name: 'Sam Lee', rsvp_status: 'pending', checked_in_at: null },
+            {
+              id: '1',
+              first_name: 'Alex',
+              last_name: 'Rivera',
+              name: 'Alex Rivera',
+              rsvp_status: 'confirmed',
+              household_id: 'demo-household-1',
+              checked_in_at: now,
+              door_route: null,
+              event_arrivals: {
+                e1: { seating_event_id: 'demo-seating-1', table_name: 'Table 1', checked_in_at: now, is_seated: true },
+              },
+            },
+            {
+              id: '2',
+              first_name: 'Sam',
+              last_name: 'Lee',
+              name: 'Sam Lee',
+              rsvp_status: 'pending',
+              household_id: 'demo-household-1',
+              checked_in_at: null,
+              door_route: null,
+              event_arrivals: {
+                e1: { seating_event_id: 'demo-seating-1', table_name: 'Unassigned', checked_in_at: null, is_seated: false },
+              },
+            },
           ]);
           setEvents([{ id: 'e1', event_name: 'Ceremony', start_time: now }]);
           setEventGuestIds({ e1: new Set(['1', '2']) });
+          setEventSeatingConfiguredIds(new Set(['e1']));
           return;
         }
 
         const bootstrap = await loadCoordinatorBootstrapData(args.userId);
         if (!bootstrap.siteId) return;
         if (!mounted) return;
+        const storedGuestWorkState = readStoredCoordinatorGuestWorkState(bootstrap.siteId);
         setSiteId(bootstrap.siteId);
         setActiveSiteRole(bootstrap.role);
         setCoordinatorRole(bootstrap.role);
         setCoordinatorPermissions(bootstrap.permissions);
-        setGuests(bootstrap.guests);
+        setGuests(bootstrap.guests.map((guest) => ({
+          ...guest,
+          door_route: storedGuestWorkState.doorRoutesByGuestId[guest.id] ?? guest.door_route ?? null,
+        })));
         setEvents(bootstrap.events);
         setEventGuestIds(bootstrap.eventGuestIds);
+        setEventSeatingConfiguredIds(bootstrap.eventSeatingConfiguredIds);
+        setActiveGuestId(storedGuestWorkState.activeGuestId);
         const cachedQna = readStoredCoordinatorQnaItems(bootstrap.siteId);
         if (bootstrap.qnaItems.length > 0) {
           setQnaItems(bootstrap.qnaItems);
@@ -155,7 +187,6 @@ export function useCoordinatorDashboardData(args: {
 
       const guestWorkState = readStoredCoordinatorGuestWorkState(siteId);
       setActiveGuestId(guestWorkState.activeGuestId);
-
       const timelineWorkState = readStoredCoordinatorTimelineWorkState(siteId);
       setActiveTimelineEventId(timelineWorkState.activeTimelineEventId);
 
@@ -222,8 +253,15 @@ export function useCoordinatorDashboardData(args: {
 
   useEffect(() => {
     if (!siteId) return;
-    writeStoredCoordinatorGuestWorkState(siteId, { activeGuestId });
-  }, [siteId, activeGuestId]);
+    writeStoredCoordinatorGuestWorkState(siteId, {
+      activeGuestId,
+      doorRoutesByGuestId: Object.fromEntries(
+        guests
+          .filter((guest) => guest.door_route)
+          .map((guest) => [guest.id, guest.door_route!]),
+      ),
+    });
+  }, [siteId, activeGuestId, guests]);
 
   useEffect(() => {
     if (!siteId) return;
@@ -267,6 +305,7 @@ export function useCoordinatorDashboardData(args: {
     coordinatorPermissions,
     coordinatorRole,
     eventGuestIds,
+    eventSeatingConfiguredIds,
     events,
     guests,
     lastAlertSuggestionKey,

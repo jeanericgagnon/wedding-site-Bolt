@@ -4,14 +4,39 @@ import { supabase } from '../../../lib/supabase';
 import type { GuestLiteForCoordinator } from '../../../lib/coordinatorTypes';
 import type { EventLite, QnaItem } from './coordinatorDashboardTypes';
 
-const COORDINATOR_GUEST_SELECT = 'id, first_name, last_name, name, rsvp_status, checked_in_at' as const;
+const COORDINATOR_GUEST_SELECT = 'id, first_name, last_name, name, rsvp_status, household_id, group_name, checked_in_at' as const;
 const COORDINATOR_EVENT_SELECT = 'id, event_name, start_time' as const;
 const COORDINATOR_EVENT_INVITATION_SELECT = 'event_id, guest_id' as const;
+const COORDINATOR_SEATING_EVENT_SELECT = 'id, itinerary_event_id' as const;
+const COORDINATOR_SEATING_TABLE_SELECT = 'id, seating_event_id, table_name' as const;
+const COORDINATOR_SEATING_ASSIGNMENT_SELECT = 'seating_event_id, guest_id, table_id, checked_in_at, is_valid' as const;
 const COORDINATOR_QNA_SELECT = 'id, question, answer, status, created_at' as const;
 export const MAX_COORDINATOR_GUESTS = 2000;
 export const MAX_COORDINATOR_EVENTS = 200;
 export const MAX_COORDINATOR_EVENT_INVITATIONS = 10000;
+export const MAX_COORDINATOR_SEATING_EVENTS = 200;
+export const MAX_COORDINATOR_SEATING_TABLES = 2000;
+export const MAX_COORDINATOR_SEATING_ASSIGNMENTS = 10000;
 export const MAX_COORDINATOR_QNA_ROWS = 30;
+
+type CoordinatorSeatingEventRow = {
+  id: string;
+  itinerary_event_id: string;
+};
+
+type CoordinatorSeatingTableRow = {
+  id: string;
+  seating_event_id: string;
+  table_name: string | null;
+};
+
+type CoordinatorSeatingAssignmentRow = {
+  seating_event_id: string;
+  guest_id: string;
+  table_id: string | null;
+  checked_in_at: string | null;
+  is_valid: boolean;
+};
 
 export interface CoordinatorBootstrapData {
   siteId: string | null;
@@ -20,6 +45,7 @@ export interface CoordinatorBootstrapData {
   guests: GuestLiteForCoordinator[];
   events: EventLite[];
   eventGuestIds: Record<string, Set<string>>;
+  eventSeatingConfiguredIds: Set<string>;
   qnaItems: QnaItem[];
 }
 
@@ -58,6 +84,7 @@ export async function loadCoordinatorBootstrapData(userId: string): Promise<Coor
       guests: [],
       events: [],
       eventGuestIds: {},
+      eventSeatingConfiguredIds: new Set<string>(),
       qnaItems: [],
     };
   }
@@ -80,32 +107,110 @@ export async function loadCoordinatorBootstrapData(userId: string): Promise<Coor
 
   const events = (eventsData ?? []) as EventLite[];
   const eventIds = events.map((event) => event.id);
-  let inviteRows: Array<{ event_id: string; guest_id: string }> = [];
-  if (eventIds.length > 0) {
-    const { data, error } = await supabase
-      .from('event_invitations')
-      .select(COORDINATOR_EVENT_INVITATION_SELECT)
-      .in('event_id', eventIds)
-      .limit(MAX_COORDINATOR_EVENT_INVITATIONS);
-    if (error) throw error;
-    inviteRows = (data ?? []) as Array<{ event_id: string; guest_id: string }>;
-  }
+  const [
+    { data: qnaData, error: qnaError },
+    { data: inviteData, error: inviteError },
+    { data: seatingEventsData, error: seatingEventsError },
+  ] = await Promise.all([
+    supabase
+      .from('guest_qna_items')
+      .select(COORDINATOR_QNA_SELECT)
+      .eq('wedding_site_id', siteId)
+      .order('created_at', { ascending: false })
+      .limit(MAX_COORDINATOR_QNA_ROWS),
+    eventIds.length > 0
+      ? supabase
+        .from('event_invitations')
+        .select(COORDINATOR_EVENT_INVITATION_SELECT)
+        .in('event_id', eventIds)
+        .limit(MAX_COORDINATOR_EVENT_INVITATIONS)
+      : Promise.resolve({ data: [], error: null }),
+    eventIds.length > 0
+      ? supabase
+        .from('seating_events')
+        .select(COORDINATOR_SEATING_EVENT_SELECT)
+        .in('itinerary_event_id', eventIds)
+        .limit(MAX_COORDINATOR_SEATING_EVENTS)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
 
-  const { data: qnaData, error: qnaError } = await supabase
-    .from('guest_qna_items')
-    .select(COORDINATOR_QNA_SELECT)
-    .eq('wedding_site_id', siteId)
-    .order('created_at', { ascending: false })
-    .limit(MAX_COORDINATOR_QNA_ROWS);
   if (qnaError) throw qnaError;
+  if (inviteError) throw inviteError;
+  if (seatingEventsError) throw seatingEventsError;
+
+  const inviteRows = (inviteData ?? []) as Array<{ event_id: string; guest_id: string }>;
+  const seatingEvents = (seatingEventsData ?? []) as CoordinatorSeatingEventRow[];
+  const seatingEventIds = seatingEvents.map((event) => event.id);
+
+  const [
+    { data: seatingTablesData, error: seatingTablesError },
+    { data: seatingAssignmentsData, error: seatingAssignmentsError },
+  ] = await Promise.all([
+    seatingEventIds.length > 0
+      ? supabase
+        .from('seating_tables')
+        .select(COORDINATOR_SEATING_TABLE_SELECT)
+        .in('seating_event_id', seatingEventIds)
+        .limit(MAX_COORDINATOR_SEATING_TABLES)
+      : Promise.resolve({ data: [], error: null }),
+    seatingEventIds.length > 0
+      ? supabase
+        .from('seating_assignments')
+        .select(COORDINATOR_SEATING_ASSIGNMENT_SELECT)
+        .in('seating_event_id', seatingEventIds)
+        .limit(MAX_COORDINATOR_SEATING_ASSIGNMENTS)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (seatingTablesError) throw seatingTablesError;
+  if (seatingAssignmentsError) throw seatingAssignmentsError;
+
+  const seatingTables = (seatingTablesData ?? []) as CoordinatorSeatingTableRow[];
+  const seatingAssignments = (seatingAssignmentsData ?? []) as CoordinatorSeatingAssignmentRow[];
+  const itineraryEventIdBySeatingEventId = new Map(seatingEvents.map((event) => [event.id, event.itinerary_event_id]));
+  const tableNameById = new Map(seatingTables.map((table) => [table.id, table.table_name || 'Unassigned']));
+  const tableCountBySeatingEventId = seatingTables.reduce((map, table) => {
+    map.set(table.seating_event_id, (map.get(table.seating_event_id) ?? 0) + 1);
+    return map;
+  }, new Map<string, number>());
+  const assignmentCountBySeatingEventId = seatingAssignments.reduce((map, assignment) => {
+    map.set(assignment.seating_event_id, (map.get(assignment.seating_event_id) ?? 0) + 1);
+    return map;
+  }, new Map<string, number>());
+  const eventSeatingConfiguredIds = new Set<string>();
+
+  seatingEvents.forEach((event) => {
+    if ((tableCountBySeatingEventId.get(event.id) ?? 0) > 0 || (assignmentCountBySeatingEventId.get(event.id) ?? 0) > 0) {
+      eventSeatingConfiguredIds.add(event.itinerary_event_id);
+    }
+  });
+
+  const eventArrivalsByGuestId = seatingAssignments.reduce((map, assignment) => {
+    if (assignment.is_valid === false) return map;
+    const itineraryEventId = itineraryEventIdBySeatingEventId.get(assignment.seating_event_id);
+    if (!itineraryEventId) return map;
+    const current = map.get(assignment.guest_id) ?? {};
+    current[itineraryEventId] = {
+      seating_event_id: assignment.seating_event_id,
+      table_name: assignment.table_id ? (tableNameById.get(assignment.table_id) || 'Unassigned') : 'Unassigned',
+      checked_in_at: assignment.checked_in_at ?? null,
+      is_seated: Boolean(assignment.table_id),
+    };
+    map.set(assignment.guest_id, current);
+    return map;
+  }, new Map<string, GuestLiteForCoordinator['event_arrivals']>());
 
   return {
     siteId,
     role: activeSite?.role ?? 'owner',
     permissions: activeSite?.permissions ?? null,
-    guests: (guestsData ?? []) as GuestLiteForCoordinator[],
+    guests: ((guestsData ?? []) as GuestLiteForCoordinator[]).map((guest) => ({
+      ...guest,
+      door_route: guest.door_route ?? null,
+      event_arrivals: eventArrivalsByGuestId.get(guest.id) ?? {},
+    })),
     events,
     eventGuestIds: buildCoordinatorEventGuestMap(events, inviteRows),
+    eventSeatingConfiguredIds,
     qnaItems: (qnaData ?? []) as QnaItem[],
   };
 }
@@ -132,11 +237,13 @@ export async function updateCoordinatorGuestCheckIn(args: {
   siteId: string;
   guestId: string;
   checkedInAt: string | null;
+  itineraryEventId: string | null;
 }): Promise<void> {
-  const { error } = await supabase.rpc('coordinator_guest_checkin_write', {
+  const { error } = await supabase.rpc('coordinator_guest_event_checkin_write', {
     p_site_id: args.siteId,
     p_guest_id: args.guestId,
     p_checked_in_at: args.checkedInAt,
+    p_itinerary_event_id: args.itineraryEventId,
   });
   if (error) throw error;
 }

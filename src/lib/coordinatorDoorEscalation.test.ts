@@ -10,6 +10,6 @@ describe('coordinatorDoorEscalation', () => {
       name: 'Sam Lee',
       rsvp_status: 'pending',
       checked_in_at: null,
-    })).toBe('Sam Lee needs a door decision — RSVP is currently pending. Confirm whether to allow check-in or update their status.');
+    })).toBe('Sam Lee needs a door decision — RSVP unresolved. Confirm whether to allow check-in, reroute, or update their status.');
   });
 });
