@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle, Search, User } from 'lucide-react';
 import { demoGuests, demoRSVPs } from '../lib/demoData';
 import { DEMO_MODE, SUPABASE_CONFIGURED } from '../config/env';
 import { getSafePublicWebUrl } from '../sections/publicLinks';
@@ -10,14 +9,11 @@ import {
   DEFAULT_MEAL_CONFIG,
   RSVP_CONTINUITY_EVENT,
   RSVP_CONTINUITY_STORAGE_KEY,
-  RSVP_LOOKUP_ERROR_COPY,
-  RSVP_SUBMIT_ERROR_COPY,
   normalizeRsvpGuestError,
   normalizeRsvpSubmitError,
   type ExistingRSVP,
   type Guest,
   type HouseholdGuest,
-  type LookupResponse,
   type RSVPMealConfig,
   type RSVPQuestion,
 } from './rsvpTypes';
@@ -27,7 +23,6 @@ import {
   readDemoStoredResponses,
 } from './rsvpDemoStorage';
 import { applyDemoRsvpSubmit } from './applyDemoRsvpSubmit';
-import { applyAmbiguousRsvpLookupState } from './applyAmbiguousRsvpLookupState';
 import { applyManualRsvpLookupResult } from './applyManualRsvpLookupResult';
 import { applyResolvedRsvpGuest } from './applyResolvedRsvpGuest';
 import { applyRsvpSubmitSuccess } from './applyRsvpSubmitSuccess';
@@ -39,7 +34,6 @@ import { buildRsvpLiveContentActions } from './buildRsvpLiveContentActions';
 import { buildRsvpPageViewModel } from './buildRsvpPageViewModel';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { buildRsvpLiveContentViewProps } from './buildRsvpLiveContentViewProps';
-import { lookupRsvpGuest } from './lookupRsvpGuest';
 import { callValidateRsvpToken } from './rsvpFunctionService';
 import { prepareRsvpTokenLookupState } from './prepareRsvpTokenLookupState';
 import { resetRsvpLookupFlow } from './resetRsvpLookupFlow';
@@ -52,8 +46,6 @@ import { submitRsvpResponse } from './submitRsvpResponse';
 import { validateRsvpFormAdvance } from './validateRsvpFormAdvance';
 import { validateRsvpSubmitReadiness } from './validateRsvpSubmitReadiness';
 import { runRsvpTokenLookup } from './runRsvpTokenLookup';
-
-export { normalizeRsvpGuestError, normalizeRsvpSubmitError } from './rsvpTypes';
 
 const USE_DEMO_RSVP = DEMO_MODE && !SUPABASE_CONFIGURED;
 
@@ -272,7 +264,7 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
     };
   }
 
-  const legacyMatch = notes.match(/^Attending events(?:\s*[:\-])?\s+([^\r\n]+)(?:\r?\n([\s\S]*))?$/i);
+  const legacyMatch = notes.match(/^Attending events(?:\s*[:-])?\s+([^\r\n]+)(?:\r?\n([\s\S]*))?$/i);
   if (!legacyMatch) return fallback;
 
   const selectedEvents = new Set(

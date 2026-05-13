@@ -22,7 +22,8 @@ vi.mock('react-i18next', () => ({
 }));
 vi.mock('../components/ui/LanguageSwitcher', () => ({ LanguageSwitcher: () => <div>LanguageSwitcher</div> }));
 
-import RSVP, { normalizeRsvpGuestError, normalizeRsvpSubmitError } from './RSVP';
+import RSVP from './RSVP';
+import { normalizeRsvpGuestError, normalizeRsvpSubmitError } from './rsvpTypes';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -85,14 +86,12 @@ describe('RSVP stale submit protection', () => {
     const searchView = readFileSync(join(process.cwd(), 'src/pages/RsvpSearchView.tsx'), 'utf8');
     const successView = readFileSync(join(process.cwd(), 'src/pages/RsvpSuccessView.tsx'), 'utf8');
 
-    expect(rsvpPage).toContain("from './buildRsvpDerivedViewState'");
-    expect(rsvpPage).toContain("from './applyAmbiguousRsvpLookupState'");
-    expect(rsvpPage).toContain("from './applyManualRsvpLookupResult'");
-    expect(rsvpPage).toContain("from './applyResolvedRsvpGuest'");
-    expect(rsvpPage).toContain("from './applyRsvpSubmitSuccess'");
-    expect(rsvpPage).toContain("from './applyTokenRsvpLookupResult'");
-    expect(rsvpPage).toContain("from './lookupRsvpGuest'");
-    expect(rsvpPage).toContain("from './runRsvpGuestLookup'");
+	    expect(rsvpPage).toContain("from './buildRsvpDerivedViewState'");
+	    expect(rsvpPage).toContain("from './applyManualRsvpLookupResult'");
+	    expect(rsvpPage).toContain("from './applyResolvedRsvpGuest'");
+	    expect(rsvpPage).toContain("from './applyRsvpSubmitSuccess'");
+	    expect(rsvpPage).toContain("from './applyTokenRsvpLookupResult'");
+	    expect(rsvpPage).toContain("from './runRsvpGuestLookup'");
     expect(rsvpPage).toContain("from './runRsvpSubmit'");
     expect(rsvpPage).toContain("from './runRsvpTokenLookup'");
     expect(rsvpPage).toContain("from './buildRsvpSubmitPayload'");

@@ -28,7 +28,7 @@ No active `P0` / `P1` launch blockers remain.
 No active launch-critical proof gaps remain.
 
 Exact 10/10 gap:
-- global TS/ESLint rigor is still softer than the widened launch-critical strict pocket
+- global TS/ESLint rigor is still softer than the widened launch-critical strict pocket, even after adding RSVP/public-site/onboarding/route/name-change files to that hard-fail slice
 - several explicitly deferred non-launch lanes remain outside the current baseline
 
 Deferred, non-launch gaps:
@@ -43,6 +43,7 @@ Deferred, non-launch gaps:
 - keep the live client-RLS matrix current when future non-guest write surfaces are introduced
 - keep the no-direct-client-write inventory current after future runtime write-surface changes
 - global TypeScript / ESLint strictness remains softer than the widened launch-critical strict pocket
+- the latest strict-pocket widening now also covers `RSVP.tsx`, `SiteView.tsx`, `siteViewHelpers.ts`, `QuickStart.tsx`, the route modules, and `nameChangeService.ts`
 - no active launch-lane deploy gap remains
 
 ## Exact Proof State

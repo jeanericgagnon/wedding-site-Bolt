@@ -62,7 +62,7 @@ vi.mock('../lib/publicSiteProject', () => ({
   getPublicWeddingData: vi.fn(() => null),
 }));
 
-import { combineDateAndTime, createAlexJordanDemoWeddingData, toIsoDateOrUndefined } from './SiteView';
+import { combineDateAndTime, createAlexJordanDemoWeddingData, toIsoDateOrUndefined } from './siteViewHelpers';
 import { getUrlWithoutPublicAccessToken } from '../lib/publicAccessArtifacts';
 
 describe('createAlexJordanDemoWeddingData', () => {

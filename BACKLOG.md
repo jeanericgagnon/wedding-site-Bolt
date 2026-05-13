@@ -29,7 +29,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | Current blockers | none |
 | Current proof state | Launch-critical runtime proof is green on the exact live runtime: `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `service-role-authorization`, `email-messaging-authorization`, `launch-closeout`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, `client-rls-matrix`, `registry-preview-ssrf`, `coordinator-dayof`, and `name-change-runtime`. The harder repo guardrails are also green: `proof:v1:client-write-inventory`, `proof:v1:ast-security`, `proof:v1:test-lanes`, `proof:v1:strict-pocket`, and `proof:v1:security-automation`. `Release Launch Gate` remains green and the repo now carries Semgrep, CodeQL, Gitleaks, and Dependabot automation. |
 | Current deployment state | Frontend is live at [dayof.love](https://dayof.love) on exact runtime Git SHA `f2cc4811` via verified Vercel production deploy `dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU`. `submit-rsvp` is live with the serialized capacity path and the database includes the RPC migration sweep through `20260512031500_seating_assignment_version_rpcs.sql` plus repair migrations through `20260512050000_harden_admin_access_check.sql`. The public-session-secret lane is live, the admin route gate is live on `admin_access_check()`, the guest-contact lane now requires a stronger household step-up verifier and accepts guest-specific invite tokens, public guest-contact audit writes are live, the route-module decomposition is live, the public vault contribution lane is live-proven, and the `.dayof.love` subdomain route is live-proven fail-closed. External custom domains remain unsupported product scope, not an open proof lane. |
-| Current next actions | No active work-to-go items remain on the launch board. keep the live client-RLS matrix current and keep the no-direct-client-write inventory current only if future runtime write surfaces reopen; otherwise deferred ideas, maintainability follow-up, and future-surface rigor work live in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
+| Current next actions | No active launch blocker remains. keep the live client-RLS matrix current and keep the no-direct-client-write inventory current only if future runtime write surfaces reopen. Keep day-of and name-change visible as monitored surfaces, and keep `Universal Registry Barcode Scanner` visible as a future feature on this board for now; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
@@ -55,13 +55,23 @@ No active `P0` or `P1` launch blockers remain.
 
 ## Additional Hardening Findings
 
-No active work-to-go findings remain on the launch board.
+No active launch blocker remains, but the following items stay visible on the active board.
 
 - launch-critical findings are closed and live-proven on exact runtime SHA `f2cc4811`
-- dedicated live product-depth proof now exists for:
-  - `npm run proof:v1:coordinator-dayof -- --require-live`
-  - `npm run proof:v1:name-change-runtime -- --require-live`
-- ongoing maintainability, future-surface rigor, and deferred product ideas are archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md)
+- `Day-of / coordinator`
+  - dedicated live product-depth proof exists: `npm run proof:v1:coordinator-dayof -- --require-live`
+  - keep visible because it is a broad operator-facing workflow with meaningful regression risk
+- `Name change`
+  - dedicated live runtime proof exists: `npm run proof:v1:name-change-runtime -- --require-live`
+  - keep visible because it is a distinct planning/runtime surface with its own service boundary
+- `Universal Registry Barcode Scanner`
+  - future feature only, not launch scope
+  - keep visible on the active board for now
+  - full concept, architecture, provider ladder, cache tables, and risk notes live in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md)
+- repo-wide TS/ESLint rigor is still softer than ideal
+  - the enforced strict pocket now also covers RSVP, SiteView, siteViewHelpers, QuickStart, route modules, and `nameChangeService`
+  - full repo-wide `noImplicitAny` / unused enforcement still blows up across hundreds of files, so that broader flip remains the real unfinished rigor item
+- ongoing maintainability and future-surface rigor detail remain archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md)
 
 ## Public DTO 10/10 Checklist
 
@@ -191,16 +201,16 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 
 ## Next 10 Tasks
 
-1. No active launch-board tasks remain.
+1. No active launch-board blocker remains.
 2. Keep `proof:v1:client-rls-matrix` current if future non-guest write surfaces are added.
 3. Keep `proof:v1:client-write-inventory` current if future runtime write surfaces are added.
-4. Keep unsupported external custom domains clearly marked as unsupported until product support exists.
-5. Rerun the dedicated `.dayof.love` subdomain proof after future host-routing changes or DNS migrations.
-6. Keep the deployment matrix current when runtime/deploy IDs change.
-7. Keep the validation matrix current when proof lanes change.
-8. Tighten TS/ESLint rigor for new code and high-risk modules.
-9. Continue maintainability refactors only when a future workstream reopens the area.
-10. Archive future ideas and deferred product work in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md).
+4. Rerun `proof:v1:coordinator-dayof` after coordinator/day-of workflow changes.
+5. Rerun `proof:v1:name-change-runtime` after name-change workflow changes.
+6. Keep `Universal Registry Barcode Scanner` visible until it is formally prioritized or dropped.
+7. Keep unsupported external custom domains clearly marked as unsupported until product support exists.
+8. Keep the deployment matrix current when runtime/deploy IDs change.
+9. Keep the validation matrix current when proof lanes change.
+10. Tighten TS/ESLint rigor for new code and high-risk modules.
 
 ## Resolved Work Summary
 

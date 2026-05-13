@@ -4349,6 +4349,24 @@ Write a short architecture note after the highest-risk hardening lanes are imple
 - Important runtime truth:
   - no deploy was run in this batch
   - live `guest-lookup-scope` still reflects the pre-deploy guest-contact runtime, so the stronger household verifier is branch-ready rather than deployed
+# 2026-05-12 10:00 PM PDT
+
+- widened the hard-fail strict pocket again:
+  - added `RSVP.tsx`
+  - added `SiteView.tsx` + `siteViewHelpers.ts`
+  - added `QuickStart.tsx`
+  - added route modules
+  - added `nameChangeService.ts`
+- cleaned the promoted files to zero-warning status under `eslint --max-warnings 0`
+- moved SiteView helper exports into `siteViewHelpers.ts` so the public route file no longer trips react-refresh boundary warnings
+- refreshed RSVP/QuickStart/SiteView tests to match the cleaned runtime shape
+- proof:
+  - `npm run proof:v1:strict-pocket`
+  - `npm run typecheck -- --pretty false`
+  - `npm test -- --run src/lib/strictPocketTypecheck.test.ts src/pages/RSVP.test.tsx src/pages/SiteView.test.ts src/pages/onboarding/QuickStart.test.tsx`
+- honest remaining gap:
+  - full repo-wide `noImplicitAny` / unused enforcement is still not safe to flip in one shot because it currently explodes across hundreds of files
+
 # 2026-05-12 09:31 PM PDT
 
 - Deployed exact runtime SHA `f2cc4811` to Vercel production deploy `dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU`.

@@ -14,6 +14,7 @@ _Launch call right now:_ `GO`
 - Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green on the blocker-fix runtime.
 - Guest contact now also proves the stronger household verifier path live: no exact-name match without verifier, phone last 4 unlocks household-wide updates, and guest invite tokens act as the strongest verifier.
 - Dedicated live coordinator/day-of and name-change runtime smokes are now green on production.
+- The hard-fail strict pocket now also covers RSVP, SiteView/siteViewHelpers, QuickStart, route modules, and `nameChangeService.ts`.
 - 2026-05-12 09:31 PM PDT:
   - `supabase functions deploy guest-contact-lookup --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
   - `supabase functions deploy guest-contact-submit --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
