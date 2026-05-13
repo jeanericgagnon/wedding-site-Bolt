@@ -6,6 +6,8 @@ import {
   deleteTask,
   generateMilestoneTasks,
   hasPlanningSongQuestion,
+  loadBudgetItems,
+  loadVendors,
   MAX_PLANNING_ADDRESS_GUEST_ROWS,
   MAX_PLANNING_BUDGET_ITEM_ROWS,
   MAX_PLANNING_SEATING_EVENTS,
@@ -20,12 +22,38 @@ const { rpcMock } = vi.hoisted(() => ({
   rpcMock: vi.fn(),
 }));
 
+const { fromMock } = vi.hoisted(() => ({
+  fromMock: vi.fn(),
+}));
+
 vi.mock('../../../lib/supabase', () => ({
   supabase: {
-    from: vi.fn(),
+    from: fromMock,
     rpc: rpcMock,
   },
 }));
+
+function makePlanningVendorQuery(result: { data: unknown; error: { message?: string } | null }) {
+  const chain = {
+    select: vi.fn(() => chain),
+    eq: vi.fn(() => chain),
+    order: vi.fn(() => chain),
+    limit: vi.fn(async () => result),
+  };
+
+  return chain;
+}
+
+function makePlanningBudgetQuery(result: { data: unknown; error: { message?: string } | null }) {
+  const chain = {
+    select: vi.fn(() => chain),
+    eq: vi.fn(() => chain),
+    order: vi.fn(() => chain),
+    limit: vi.fn(async () => result),
+  };
+
+  return chain;
+}
 
 describe('generateMilestoneTasks', () => {
   it('drops impossible wedding dates instead of generating rolled milestone deadlines', () => {
@@ -45,6 +73,7 @@ describe('generateMilestoneTasks', () => {
 describe('planning song request helpers', () => {
   beforeEach(() => {
     rpcMock.mockReset();
+    fromMock.mockReset();
   });
 
   it('reads song answers from current and legacy RSVP custom-answer shapes', () => {
@@ -126,5 +155,90 @@ describe('planning song request helpers', () => {
     expect(rpcMock).toHaveBeenNthCalledWith(3, 'planning_task_delete', {
       p_task_id: 'task-1',
     });
+  });
+
+  it('falls back when the live planning_vendors schema is missing phone', async () => {
+    const initialQuery = makePlanningVendorQuery({
+      data: null,
+      error: { message: 'column planning_vendors.phone does not exist' },
+    });
+    const fallbackQuery = makePlanningVendorQuery({
+      data: [{
+        id: 'vendor-1',
+        wedding_site_id: 'site-1',
+        vendor_type: 'florist',
+        name: 'Bloom',
+        contact_name: 'Jamie',
+        email: 'jamie@example.com',
+        website: 'https://bloom.example.com',
+        contract_total: 1200,
+        amount_paid: 600,
+        balance_due: 600,
+        next_payment_due: null,
+        document_url: null,
+        document_label: null,
+        notes: 'Bring extra stems',
+        internal_rating: 5,
+        rating_status: 'booked',
+        rating_notes: 'Strong fit',
+        created_at: '2026-05-13T00:00:00.000Z',
+        updated_at: '2026-05-13T00:00:00.000Z',
+      }],
+      error: null,
+    });
+    fromMock
+      .mockReturnValueOnce(initialQuery)
+      .mockReturnValueOnce(fallbackQuery);
+
+    await expect(loadVendors('site-1')).resolves.toEqual([
+      expect.objectContaining({
+        id: 'vendor-1',
+        phone: '',
+        internal_rating: 5,
+        rating_status: 'booked',
+        rating_notes: 'Strong fit',
+      }),
+    ]);
+
+    expect(initialQuery.select).toHaveBeenCalledWith(expect.stringContaining('phone'));
+    expect(fallbackQuery.select).toHaveBeenCalledWith(expect.not.stringContaining('phone'));
+  });
+
+  it('falls back when the live planning_budget_items schema is missing due_date', async () => {
+    const initialQuery = makePlanningBudgetQuery({
+      data: null,
+      error: { message: 'column planning_budget_items.due_date does not exist' },
+    });
+    const fallbackQuery = makePlanningBudgetQuery({
+      data: [{
+        id: 'budget-1',
+        wedding_site_id: 'site-1',
+        category: 'venue',
+        item_name: 'Venue deposit',
+        estimated_amount: 2000,
+        actual_amount: 1800,
+        paid_amount: 1200,
+        vendor_id: 'vendor-1',
+        notes: 'Legacy row',
+        created_at: '2026-05-13T00:00:00.000Z',
+        updated_at: '2026-05-13T00:00:00.000Z',
+      }],
+      error: null,
+    });
+    fromMock
+      .mockReturnValueOnce(initialQuery)
+      .mockReturnValueOnce(fallbackQuery);
+
+    await expect(loadBudgetItems('site-1')).resolves.toEqual([
+      expect.objectContaining({
+        id: 'budget-1',
+        due_date: null,
+        actual_amount: 1800,
+        vendor_id: 'vendor-1',
+      }),
+    ]);
+
+    expect(initialQuery.select).toHaveBeenCalledWith(expect.stringContaining('due_date'));
+    expect(fallbackQuery.select).toHaveBeenCalledWith(expect.not.stringContaining('due_date'));
   });
 });

@@ -135,7 +135,7 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - TSA / travel flow
   - dual-partner proof tracks
   - immigration-aware and non-U.S.-passport-aware logic branches in the engine
-- Deeper local batch now adds:
+- Deeper shipped batch now adds:
   - explicit California-guided coverage framing for the state-specific lane
   - claim-safe dashboard and helper copy that separates the California lane from federal and downstream follow-through
   - marriage-state plus county / jurisdiction intake inside case setup
@@ -145,13 +145,15 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - institution coverage mapping from the downstream account library so rollout lanes read like a working execution system
   - stronger dual-partner rollout surfaces that keep proof and downstream status separated per partner
   - action, downstream, status, and dual-partner exports so the planner can hand a real packet or summary into a live work session
+  - live reminder-RPC compatibility plus planning budget/vendor compatibility so the authenticated planner route can still save and rehydrate on the shipped production schema mix
 - Deployed/live now:
-  - deeper runtime deployed on Vercel production `dpl_AbFTbLY263caiCEhQdniH2wbuM9d`
-  - `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live` is green against the shipped runtime
+  - deeper runtime deployed on Vercel production `dpl_5tPUrJk14bc91cCLZqAaf7B1T7qU`
+  - reminder compatibility migration `20260513193000_fix_name_change_reminders_replace_runtime.sql` applied remotely
+  - `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live` is green against the richer shipped runtime, including saved reload
 
 ### Active deeper scope
 
-The shipped baseline is real and launchable. The richer planner-depth batch above is now implemented locally; the remaining active gap is to deploy it and re-run the authenticated live runtime proof on the shipped route.
+No remaining name-change gap is active inside the current competitor-informed MVP bar. The broader planner-depth scope above is now shipped and live-proven.
 
 ## Universal Registry Barcode Scanner
 
@@ -202,5 +204,5 @@ The shipped baseline is real and launchable, but the board now treats the follow
 ## Decision For The Active Board
 
 - `Day-of / coordinator` has met the shipped launch-baseline MVP bar, but the active board now requires the deeper scope listed above.
-- `Name change` has met the shipped launch-baseline MVP bar, but the active board now requires the deeper scope listed above.
+- `Name change` has now met both the shipped launch-baseline MVP bar and the deeper planner-depth scope that was reopened on the active board.
 - `Universal Registry Barcode Scanner` has met the shipped launch-baseline MVP bar, but the active board now requires the deeper scope listed above.

@@ -23,17 +23,27 @@ test('name-change planner route loads the saved planning runtime surfaces', asyn
   await expect(page.getByRole('heading', { name: 'Institution coverage map' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Wedding identity exports' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Copy action packet' })).toBeVisible();
-  await expect(page.getByRole('textbox', { name: 'Current first name' })).toBeVisible();
+  const currentFirstName = page.getByRole('textbox', { name: 'Current first name' });
+  await expect(currentFirstName).toBeVisible();
+  await currentFirstName.fill('Taylor');
 
-  const dualPartnerToggle = page.getByLabel('Both partners changing name');
+  const dualPartnerToggle = page.locator('label', { hasText: 'Both partners changing name' }).locator('input[type="checkbox"]').first();
   await dualPartnerToggle.check();
   await expect(page.getByRole('heading', { name: 'Dual-partner rollout' })).toBeVisible();
 
   const saveButton = page.getByRole('button', { name: /Save and come back later|Save planner case/i }).first();
+  const saveResponsePromise = page.waitForResponse((response) => (
+    response.url().includes('/rest/v1/rpc/name_change_case_write')
+    && response.request().method() === 'POST'
+  ));
   await saveButton.click();
-  await expect(saveButton).toBeVisible();
+  const saveResponse = await saveResponsePromise;
+  expect(saveResponse.ok()).toBeTruthy();
+  await expect(saveButton).toBeEnabled();
 
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await expect(page.getByLabel('Both partners changing name')).toBeChecked();
+  await expect(currentFirstName).toHaveValue('Taylor');
   await expect(page.getByRole('heading', { name: 'Dual-partner rollout' })).toBeVisible();
+  await expect(dualPartnerToggle).toBeChecked();
+  await expect(page.getByRole('button', { name: 'Copy dual-partner rollout' })).toBeVisible();
 });
