@@ -18,7 +18,7 @@ test.describe('mobile core smoke', () => {
   test('guest-facing mobile routes stay reachable and token-free where intended', async ({ page }) => {
     await page.goto('/rsvp', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: /reply in a minute/i })).toBeVisible();
-    await expect(page.getByText(/you can use the code from your invitation email/i)).toBeVisible();
+    await expect(page.getByText(/use the code from your invitation email/i)).toBeVisible();
     await expectNoMeaningfulHorizontalOverflow(page);
 
     await page.goto('/rsvp?previewGuest=guest-1&previewSurface=rsvp', { waitUntil: 'domcontentloaded' });
@@ -143,8 +143,9 @@ test.describe('mobile core smoke', () => {
       }
       if (route.path.includes('/dashboard/guests')) {
         await page.getByRole('button', { name: /rsvp settings/i }).click();
-        await expect(page.getByRole('main').getByText(/setup proof checklist/i)).toBeVisible();
-        await expect(page.getByRole('main').getByText(/owner readback/i)).toBeVisible();
+        await expect(page.getByRole('heading', { name: /ask only what you truly need from guests/i })).toBeVisible();
+        await expect(page.getByText(/setup proof checklist/i)).toBeVisible();
+        await expect(page.getByText(/owner readback/i)).toBeVisible();
         await expect(page.getByRole('button', { name: /dietary notes/i })).toBeVisible();
       }
       if (route.path.includes('tab=budget')) {

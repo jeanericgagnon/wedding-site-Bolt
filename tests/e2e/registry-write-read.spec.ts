@@ -111,6 +111,7 @@ test('registry owner edits and public purchase state persist end to end', async 
       await page.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 });
       await expect(page.getByRole('heading', { name: 'Registry' }).first()).toBeVisible({ timeout: 20_000 });
     });
+    await expect(page.getByText('Loading registry…')).toHaveCount(0, { timeout: 20_000 });
   };
 
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
@@ -162,8 +163,9 @@ test('registry owner edits and public purchase state persist end to end', async 
     await expect(page.getByText('Item added to registry')).toBeVisible();
 
     await page.getByPlaceholder(/Search by name or store/i).fill(editedItemName);
-    await expect(page.getByText(editedItemName).last()).toBeVisible();
-    const editButton = page.getByRole('button', { name: 'Edit' }).last();
+    const ownerCard = page.getByTestId('owner-registry-item-card').filter({ hasText: editedItemName }).first();
+    await expect(ownerCard).toBeVisible();
+    const editButton = ownerCard.getByRole('button', { name: 'Edit' });
     await editButton.scrollIntoViewIfNeeded();
     await editButton.click();
     await expect(page.getByRole('heading', { name: 'Edit Registry Item' })).toBeVisible();

@@ -95,6 +95,15 @@ export function GuestRsvpSettingsView({
   onSetRsvpMealOptions,
   onSetRsvpQuestions,
 }: GuestRsvpSettingsViewProps) {
+  const safeStats = stats ?? { confirmed: 0, declined: 0, pending: 0 };
+  const safeRsvpAccessModePlan = Array.isArray(rsvpAccessModePlan) ? rsvpAccessModePlan : [];
+  const safeRecommendedRsvpAccessMode = recommendedRsvpAccessMode
+    ?? safeRsvpAccessModePlan[0]
+    ?? { id: 'private_link', label: 'Private guest links', detail: '', tradeoff: '', status: 'needs-setup' as const };
+  const safeRsvpQuestionTemplateCoverage = Array.isArray(rsvpQuestionTemplateCoverage) ? rsvpQuestionTemplateCoverage : [];
+  const safeRsvpQuestions = Array.isArray(rsvpQuestions) ? rsvpQuestions : [];
+  const safeRsvpMealOptions = Array.isArray(rsvpMealOptions) ? rsvpMealOptions : [];
+  const safeRsvpSetupChecklist = Array.isArray(rsvpSetupChecklist) ? rsvpSetupChecklist : [];
   const markRsvpConfigDirty = () => onSetRsvpConfigDirty(true);
 
   const updateMealOption = (index: number, value: string) => {
@@ -138,9 +147,9 @@ export function GuestRsvpSettingsView({
           title="Ask only what you truly need from guests."
           description="Meal choices, custom questions, and event-specific answers stay editable before guests see them."
           stats={[
-            { label: 'Questions', value: rsvpQuestions.length, detail: 'custom prompts' },
-            { label: 'Meal choices', value: rsvpMealEnabled ? rsvpMealOptions.length : 'Off', detail: rsvpMealEnabled ? 'shown on RSVP' : 'hidden from guests' },
-            { label: 'Responses', value: stats.confirmed + stats.declined, detail: `${stats.pending} still pending` },
+            { label: 'Questions', value: safeRsvpQuestions.length, detail: 'custom prompts' },
+            { label: 'Meal choices', value: rsvpMealEnabled ? safeRsvpMealOptions.length : 'Off', detail: rsvpMealEnabled ? 'shown on RSVP' : 'hidden from guests' },
+            { label: 'Responses', value: safeStats.confirmed + safeStats.declined, detail: `${safeStats.pending} still pending` },
           ]}
           actions={<a href="/dashboard/rsvp-board" className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white no-underline hover:bg-primary/90">Open RSVP view</a>}
         >
@@ -157,11 +166,11 @@ export function GuestRsvpSettingsView({
                 <h3 className="text-lg font-semibold text-text-primary">RSVP access mode</h3>
                 <p className="text-sm text-text-secondary">Current guest access uses private guest links with name lookup as the backup.</p>
               </div>
-              <Badge variant="success">Recommended: {recommendedRsvpAccessMode.label}</Badge>
+              <Badge variant="success">Recommended: {safeRecommendedRsvpAccessMode.label}</Badge>
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
-              {rsvpAccessModePlan.map((mode) => (
+              {safeRsvpAccessModePlan.map((mode) => (
                 <div
                   key={mode.id}
                   className={`rounded-lg border p-4 ${
@@ -214,7 +223,7 @@ export function GuestRsvpSettingsView({
                 <Badge variant="neutral">Owner readback</Badge>
               </div>
               <div className="grid gap-2 md:grid-cols-2">
-                {rsvpSetupChecklist.map((item) => (
+                {safeRsvpSetupChecklist.map((item) => (
                   <div key={item.id} className="rounded-md border border-border-subtle bg-surface-subtle/30 p-3">
                     <div className="mb-1 flex items-center justify-between gap-3">
                       <p className="text-sm font-medium text-text-primary">{item.label}</p>
@@ -241,7 +250,7 @@ export function GuestRsvpSettingsView({
               </div>
               <div className="flex flex-wrap gap-2">
                 {RSVP_QUESTION_TEMPLATES.map((template) => {
-                  const templateAdded = rsvpQuestionTemplateCoverage.find((item) => item.key === template.key)?.added ?? false;
+                  const templateAdded = safeRsvpQuestionTemplateCoverage.find((item) => item.key === template.key)?.added ?? false;
                   const templateLabel = getRsvpTemplateLabel(template);
 
                   return (
@@ -275,7 +284,7 @@ export function GuestRsvpSettingsView({
               </label>
               {rsvpMealEnabled && (
                 <div className="space-y-2">
-                  {rsvpMealOptions.map((option, index) => (
+                  {safeRsvpMealOptions.map((option, index) => (
                     <div key={`meal-${index}`} className="flex items-center gap-2">
                       <Input value={option} onChange={(event) => updateMealOption(index, event.target.value)} placeholder={`Meal option ${index + 1}`} />
                       <Button
@@ -307,7 +316,7 @@ export function GuestRsvpSettingsView({
             </div>
 
             <div className="space-y-3">
-              {rsvpQuestions.map((question, index) => (
+              {safeRsvpQuestions.map((question, index) => (
                 <div key={question.id} className="p-4 border border-border rounded-lg space-y-3">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold">Question {index + 1}</p>

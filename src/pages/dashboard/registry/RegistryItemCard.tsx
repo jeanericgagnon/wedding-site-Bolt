@@ -237,7 +237,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
 
   if (isCashFund) {
     return (
-      <div className="group relative flex flex-col gap-3 overflow-hidden rounded-lg border border-border bg-surface p-4">
+      <div data-testid="owner-registry-item-card" className="group relative flex flex-col gap-3 overflow-hidden rounded-lg border border-border bg-surface p-4">
         <div className="flex items-start justify-between">
           <h3 className="font-semibold text-text-primary leading-snug">{item.item_name}</h3>
           <Badge variant="neutral">Cash Fund</Badge>
@@ -294,7 +294,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   }
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-surface">
+    <div data-testid="owner-registry-item-card" className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-surface">
       {showPurchaseConfirm && (
         <PurchaseConfirmPanel
           item={item}

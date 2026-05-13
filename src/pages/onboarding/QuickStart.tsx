@@ -461,43 +461,61 @@ export const QuickStart: React.FC = () => {
         generatedDraft,
         canonicalAiContent,
       );
-      await updateQuickStartPersistSite({
-        siteId: site.id,
-        updateData: {
-          onboarding_answers: derivedProfile,
-          planning_status: 'quick_start_complete',
-          wedding_data: {
-            ...mergedWeddingData,
-            clarifyingFieldPatches,
-            draftOutputs: clarifyingOverride?.draftOutputs || {},
-            meta: {
-              ...((((mergedWeddingData.meta as Record<string, unknown> | undefined) ?? {}))),
-              aiDraft: generatedDraft,
-              aiContent: canonicalAiContent,
-              aiOnboarding: {
-                qualityScore: clarifyingOverride?.meta?.qualityScore ?? null,
-                confidence: clarifyingOverride?.meta?.confidence ?? null,
-                loopCount: clarifyingOverride?.meta?.loopCount ?? null,
-                maxLoopCount: clarifyingOverride?.meta?.maxLoopCount ?? null,
-                fallbackUsed: clarifyingOverride?.meta?.fallbackUsed ?? false,
-                source: 'quick_start_concierge',
-                finalizedAt: new Date().toISOString(),
-              },
-              onboardingAutoAppliedAt: new Date().toISOString(),
-            },
+      const persistedWeddingData = {
+        ...mergedWeddingData,
+        clarifyingFieldPatches,
+        draftOutputs: clarifyingOverride?.draftOutputs || {},
+        meta: {
+          ...((((mergedWeddingData.meta as Record<string, unknown> | undefined) ?? {}))),
+          aiDraft: generatedDraft,
+          aiContent: canonicalAiContent,
+          aiOnboarding: {
+            qualityScore: clarifyingOverride?.meta?.qualityScore ?? null,
+            confidence: clarifyingOverride?.meta?.confidence ?? null,
+            loopCount: clarifyingOverride?.meta?.loopCount ?? null,
+            maxLoopCount: clarifyingOverride?.meta?.maxLoopCount ?? null,
+            fallbackUsed: clarifyingOverride?.meta?.fallbackUsed ?? false,
+            source: 'quick_start_concierge',
+            finalizedAt: new Date().toISOString(),
           },
-          site_json: patchedBuilderProject,
-          layout_config: onboardingUpdate.layout_config,
-          active_template_id: onboardingUpdate.active_template_id,
-          template_id: onboardingUpdate.template_id,
-          site_slug: onboardingUpdate.site_slug,
-          couple_name_1: onboardingUpdate.couple_name_1,
-          couple_name_2: onboardingUpdate.couple_name_2,
-          wedding_date: onboardingUpdate.wedding_date,
-          venue_name: onboardingUpdate.venue_name,
-          wedding_location: onboardingUpdate.wedding_location,
+          onboardingAutoAppliedAt: new Date().toISOString(),
         },
-      });
+      };
+      try {
+        await updateQuickStartPersistSite({
+          siteId: site.id,
+          updateData: {
+            onboarding_answers: derivedProfile,
+            planning_status: 'quick_start_complete',
+            wedding_data: persistedWeddingData,
+            site_json: patchedBuilderProject,
+            layout_config: onboardingUpdate.layout_config,
+            active_template_id: onboardingUpdate.active_template_id,
+            template_id: onboardingUpdate.template_id,
+            site_slug: onboardingUpdate.site_slug,
+            couple_name_1: onboardingUpdate.couple_name_1,
+            couple_name_2: onboardingUpdate.couple_name_2,
+            wedding_date: onboardingUpdate.wedding_date,
+            venue_name: onboardingUpdate.venue_name,
+            wedding_location: onboardingUpdate.wedding_location,
+          },
+        });
+      } catch {
+        await updateQuickStartPersistSite({
+          siteId: site.id,
+          updateData: {
+            onboarding_answers: derivedProfile,
+            wedding_data: persistedWeddingData,
+            active_template_id: onboardingUpdate.active_template_id,
+            site_slug: onboardingUpdate.site_slug,
+            couple_name_1: onboardingUpdate.couple_name_1,
+            couple_name_2: onboardingUpdate.couple_name_2,
+            wedding_date: onboardingUpdate.wedding_date,
+            venue_name: onboardingUpdate.venue_name,
+            wedding_location: onboardingUpdate.wedding_location,
+          },
+        });
+      }
       clearQuickStartDraftSnapshot();
       clearOnboardingEntryReturnPath();
       navigate(buildQuickStartGuestsPath(), {

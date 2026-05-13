@@ -174,7 +174,7 @@ test('public RSVP writes details and owner data reads them back', async ({ page 
     await expect(page.getByText('1 guest ready to import', { exact: true })).toBeVisible();
     await expect(page.getByText('Children: 2')).toBeVisible();
     await page.getByRole('button', { name: 'Import 1 Guest' }).click();
-    await expect(page.getByText(/Imported 1 guest/i)).toBeVisible();
+    await expect(page.getByText(/Imported 1 guest\b/i)).toBeVisible();
 
     await page.goto(`/rsvp?token=${encodeURIComponent(inviteToken)}`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: new RegExp(`Welcome, ${guest.name}!`) })).toBeVisible();

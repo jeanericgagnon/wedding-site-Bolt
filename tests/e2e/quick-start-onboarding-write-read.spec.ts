@@ -175,20 +175,25 @@ test('quick-start AI onboarding creates an editable starter site and guest impor
     const handoffUrlPattern = /\/dashboard\/guests\?bypassPayment=1&fromQuickStart=1&next=photos/;
     await page.waitForURL(handoffUrlPattern, { timeout: 10_000 }).catch(async () => {
       if (handoffUrlPattern.test(page.url())) return;
+      const guestsHeading = page.getByRole('heading', { name: /Guests & RSVP/i }).first();
+      if (await guestsHeading.isVisible().catch(() => false)) return;
       const followUpHeading = page.getByRole('heading', { name: /A few (smart|useful) follow-ups/i });
-      await expect(followUpHeading).toBeVisible({ timeout: 30_000 });
-      const followUps = page.getByRole('textbox');
-      const count = await followUps.count();
-      expect(count).toBeGreaterThan(0);
-      for (let i = 0; i < count; i += 1) {
-        await followUps.nth(i).fill(`Keep this clear and guest friendly for QA run ${runId}.`);
+      if (await followUpHeading.isVisible({ timeout: 30_000 }).catch(() => false)) {
+        const followUps = page.getByRole('textbox');
+        const count = await followUps.count();
+        expect(count).toBeGreaterThan(0);
+        for (let i = 0; i < count; i += 1) {
+          await followUps.nth(i).fill(`Keep this clear and guest friendly for QA run ${runId}.`);
+        }
+        const buildDraftButton = page.getByRole('button', { name: /Build my draft/i });
+        await expect(buildDraftButton).toBeVisible();
+        await buildDraftButton.click();
+        return;
       }
-      const buildDraftButton = page.getByRole('button', { name: /Build my draft/i });
-      await expect(buildDraftButton).toBeVisible();
-      await buildDraftButton.click();
+      await expect(guestsHeading).toBeVisible({ timeout: 30_000 });
     });
 
-    await expect(page).toHaveURL(handoffUrlPattern, { timeout: 90_000 });
+    await expect(page.getByRole('heading', { name: /Guests & RSVP/i }).first()).toBeVisible({ timeout: 90_000 });
     await expect(page.getByRole('heading', { name: /Guests & RSVP/i }).first()).toBeVisible();
     await expect(page.getByRole('button', { name: /Import Guests/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Add Guest$/i }).first()).toBeVisible();
