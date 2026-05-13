@@ -93,7 +93,7 @@ export async function updateGuidedSetupSite(params: {
 }): Promise<void> {
   void params.userId;
   const { error } = await supabase.rpc('wedding_site_settings_patch', {
-    p_site_id: params.siteId,
+    p_wedding_site_id: params.siteId,
     p_patch: params.updateData,
   });
 
@@ -108,7 +108,7 @@ export async function updateWeddingPlanningStatus(params: {
   if (!activeSite?.id) throw new Error('Couldn’t find your wedding site right now.');
 
   const { error } = await supabase.rpc('wedding_site_settings_patch', {
-    p_site_id: activeSite.id,
+    p_wedding_site_id: activeSite.id,
     p_patch: params.updateData,
   });
 
@@ -147,7 +147,7 @@ export async function updateQuickStartPersistSite(params: {
   updateData: Record<string, unknown>;
 }): Promise<void> {
   const { error } = await supabase.rpc('wedding_site_settings_patch', {
-    p_site_id: params.siteId,
+    p_wedding_site_id: params.siteId,
     p_patch: params.updateData,
   });
 
@@ -201,7 +201,7 @@ export async function updateExistingOnboardingSite(params: {
 }): Promise<void> {
   void params.userId;
   const { error } = await supabase.rpc('wedding_site_settings_patch', {
-    p_site_id: params.siteId,
+    p_wedding_site_id: params.siteId,
     p_patch: { onboarding_answers: params.onboardingAnswers, wedding_data: params.weddingData },
   });
 

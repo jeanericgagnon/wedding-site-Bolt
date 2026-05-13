@@ -12,11 +12,11 @@ describe('route composition boundary', () => {
     expect(app).toContain("import { AccountRoutes } from './routes/accountRoutes';");
     expect(app).toContain("import { OnboardingRoutes } from './routes/onboardingRoutes';");
     expect(app).toContain("import { DashboardRoutes } from './routes/dashboardRoutes';");
-    expect(app).toContain('<PublicRoutes isWeddingSubdomainHost={isWeddingSubdomainHost} />');
-    expect(app).toContain('<GuestRoutes />');
-    expect(app).toContain('<AccountRoutes />');
-    expect(app).toContain('<OnboardingRoutes />');
-    expect(app).toContain('<DashboardRoutes />');
+    expect(app).toContain('{PublicRoutes({ isWeddingSubdomainHost })}');
+    expect(app).toContain('{GuestRoutes()}');
+    expect(app).toContain('{AccountRoutes()}');
+    expect(app).toContain('{OnboardingRoutes()}');
+    expect(app).toContain('{DashboardRoutes()}');
     expect(app).not.toContain('path="/dashboard/guests"');
     expect(app).not.toContain('path="/vault/:siteSlug"');
   });
@@ -28,7 +28,7 @@ describe('route composition boundary', () => {
 
     expect(helper).toContain("from '../components/auth/ProtectedRoute'");
     expect(helper).toContain('<ProtectedRoute skipPaymentGate={skipPaymentGate}>');
-    expect(onboardingRoutes).toContain('<ProtectedPageRoute path="/onboarding" element={<Onboarding />} />');
-    expect(dashboardRoutes).toContain('<ProtectedPageRoute path="/dashboard/guests" element={<DashboardGuests />} />');
+    expect(onboardingRoutes).toContain("{ProtectedPageRoute({ path: '/onboarding', element: <Onboarding /> })}");
+    expect(dashboardRoutes).toContain("{ProtectedPageRoute({ path: '/dashboard/guests', element: <DashboardGuests /> })}");
   });
 });

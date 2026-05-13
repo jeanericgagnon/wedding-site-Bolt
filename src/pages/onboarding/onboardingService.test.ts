@@ -113,6 +113,8 @@ describe('onboarding service boundaries', () => {
     expect(onboardingService).toContain(".select('id, onboarding_answers, wedding_data')");
     expect(onboardingService).toContain(".select('event_name')");
     expect(onboardingService).toContain("supabase.rpc('wedding_site_settings_patch'");
+    expect(onboardingService).toContain('p_wedding_site_id: params.siteId');
+    expect(onboardingService).toContain('p_wedding_site_id: activeSite.id');
     expect(onboardingService).toContain("supabase.rpc('wedding_site_bootstrap_write'");
     expect(onboardingService).toContain("supabase.rpc('onboarding_event_seed_insert_many'");
     expect(onboardingService).toContain("supabase.rpc('guest_dashboard_guest_write'");

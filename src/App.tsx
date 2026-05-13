@@ -26,15 +26,15 @@ const AppContent = () => {
     <div className="min-h-screen">
       <Suspense fallback={<PageLoader />}>
       <Routes>
-        <PublicRoutes isWeddingSubdomainHost={isWeddingSubdomainHost} />
-        <InternalToolingRoutes
-          internalToolingRoutesEnabled={internalToolingRoutesEnabled}
-          internalToolingRoutesLoading={internalToolingRoutesLoading}
-        />
-        <GuestRoutes />
-        <AccountRoutes />
-        <OnboardingRoutes />
-        <DashboardRoutes />
+        {PublicRoutes({ isWeddingSubdomainHost })}
+        {InternalToolingRoutes({
+          internalToolingRoutesEnabled,
+          internalToolingRoutesLoading,
+        })}
+        {GuestRoutes()}
+        {AccountRoutes()}
+        {OnboardingRoutes()}
+        {DashboardRoutes()}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </Suspense>

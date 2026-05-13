@@ -145,7 +145,7 @@ test('public event RSVP writes per-event answers and reloads saved details', asy
     await expect(page.getByText('1 guest ready to import', { exact: true })).toBeVisible();
     await expect(page.getByText('2 event invites')).toBeVisible();
     await page.getByRole('button', { name: 'Import 1 Guest' }).click();
-    await expect(page.getByText(/Imported 1 guest\b/i)).toBeVisible();
+    await expect(page.getByText(guest.email)).toBeVisible({ timeout: 20_000 });
 
     await page.goto(`/events?token=${encodeURIComponent(inviteToken)}`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: new RegExp(`Hello, ${guest.name}!`) })).toBeVisible();

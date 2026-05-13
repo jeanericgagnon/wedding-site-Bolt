@@ -28,7 +28,7 @@ test.describe('mobile core smoke', () => {
 
     await page.goto('/guest-contact/ericandkaras', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: /update contact & rsvp/i })).toBeVisible();
-    await expect(page.getByPlaceholder(/search your first or last name/i)).toBeVisible();
+    await expect(page.getByPlaceholder(/search your full name/i)).toBeVisible();
     await expectNoMeaningfulHorizontalOverflow(page);
 
     await page.goto('/photos/upload?site=ericandkaras', { waitUntil: 'domcontentloaded' });
@@ -155,9 +155,9 @@ test.describe('mobile core smoke', () => {
         await expect(page.getByRole('button', { name: /export ledger/i })).toBeVisible();
       }
       if (route.path.includes('/dashboard/registry')) {
-        await expect(page.getByRole('main').getByText(/guest-ready registry check/i)).toBeVisible();
-        await expect(page.getByRole('main').getByText(/thank-you tracking preview/i)).toBeVisible();
-        await expect(page.getByRole('main').getByText(/task creation and readback/i)).toBeVisible();
+        await expect(page.getByRole('main').getByText(/keep gifts helpful, optional, and easy for guests/i)).toBeVisible();
+        await expect(page.getByRole('main').getByText(/clean up imported gifts/i)).toBeVisible();
+        await expect(page.getByRole('main').getByText(/gift snapshot and review details/i)).toBeVisible();
       }
       if (route.path.includes('/dashboard/seating')) {
         await expect(page.getByRole('main').getByText(/venue and catering packet/i)).toBeVisible();

@@ -14,6 +14,7 @@ import {
   insertImportedGuests,
   replaceImportedGuestRsvps,
   resolveGuestDashboardSiteId,
+  updateGuestForSite,
   updateHouseholdGuestIds,
 } from './guestService';
 import type { GuestWithRSVP, ItineraryEvent } from './guestDashboardTypes';
@@ -218,6 +219,8 @@ export function useGuestDashboardCsvImport({
         return;
       }
 
+      const importSiteId = resolvedSiteId;
+
       if (isDemoMode) {
         const importedGuests = csvPreview.map((guest, index) => ({
           id: `demo-import-${Date.now()}-${index}`,
@@ -283,6 +286,14 @@ export function useGuestDashboardCsvImport({
       });
 
       const inserted = await insertImportedGuests(guestRows);
+
+      await Promise.all(inserted.map(async (insertedGuest, index) => {
+        const inviteToken = String(guestsWithTokens[index]?.invite_token || '').trim();
+        if (!insertedGuest?.id || !inviteToken) return;
+        if (!importSiteId) return;
+        await updateGuestForSite(importSiteId, insertedGuest.id, { invite_token: inviteToken });
+      }));
+
       const keyToGuestIds = new Map<string, string[]>();
       const householdLastNames = new Map<string, Set<string>>();
 
