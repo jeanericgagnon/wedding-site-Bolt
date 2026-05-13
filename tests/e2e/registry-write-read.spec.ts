@@ -29,8 +29,8 @@ test('registry owner add persists and public registry endpoint stays readable', 
   const runId = cleanupOnlyRunId || process.env.LIVE_REGISTRY_RUN_ID || `${Date.now()}`;
   const importedFixtureName = 'DayOf QA Ceramic Serving Bowl';
   const editedItemName = `Registry QA Serving Bowl ${runId}`;
-  const barcodeSourceValue = '9780140328721';
-  const barcodeEditedItemName = `Registry QA Barcode Book ${runId}`;
+  const barcodeSourceValue = '5449000000996';
+  const barcodeEditedItemName = `Registry QA Barcode Gift ${runId}`;
   const appBaseUrl = process.env.PLAYWRIGHT_BASE_URL || 'https://dayof.love';
   const registryFixtureOrigin = /^https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?/i.test(appBaseUrl)
     ? 'https://dayof.love'
@@ -271,14 +271,14 @@ test('registry owner add persists and public registry endpoint stays readable', 
 
     await expect.poll(async () => {
       const rows = await fetchQaItems();
-      return rows.length;
+      return rows.some((row) => row.barcode === barcodeSourceValue || row.item_name === barcodeEditedItemName);
     }, {
       timeout: 20_000,
       message: 'expected barcode-backed registry item to persist after add',
-    }).toBeGreaterThan(1);
+    }).toBe(true);
 
     const rowsAfterBarcode = await fetchQaItems();
-    const barcodeRow = rowsAfterBarcode.find((row) => row.item_name === barcodeEditedItemName);
+    const barcodeRow = rowsAfterBarcode.find((row) => row.barcode === barcodeSourceValue || row.item_name === barcodeEditedItemName);
     expect(barcodeRow).toBeTruthy();
     expect(barcodeRow).toMatchObject({
       item_name: barcodeEditedItemName,

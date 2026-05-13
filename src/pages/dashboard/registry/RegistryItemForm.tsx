@@ -72,6 +72,31 @@ function sanitizeRegistryFormDraft(draft: RegistryItemDraft): RegistryItemDraft 
   };
 }
 
+function compactBarcodeProductMetadata(lookup: RegistryBarcodeLookupResult): Record<string, unknown> {
+  return {
+    barcode: lookup.normalized_barcode,
+    format: lookup.format,
+    provider: lookup.provider ?? null,
+    confidence_score: lookup.confidence_score ?? 0,
+    title: lookup.title ?? null,
+    brand: lookup.brand ?? null,
+    image_url: lookup.image_url ?? null,
+    category: lookup.category ?? null,
+    description: lookup.description ?? null,
+    estimated_price_cents: lookup.estimated_price_cents ?? null,
+    currency: lookup.currency ?? null,
+    product_url: lookup.product_url ?? null,
+    selected_retailer: lookup.selected_retailer ?? null,
+    retailer_options: lookup.retailer_options.map((option) => ({
+      label: option.label,
+      url: option.url ?? null,
+      price_cents: option.price_cents ?? null,
+      currency: option.currency ?? null,
+      is_best_match: Boolean(option.is_best_match),
+    })),
+  };
+}
+
 export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [], onSave, onCancel }) => {
   const [draft, setDraft] = useState<RegistryItemDraft>(() =>
     initial ? itemToDraft(initial) : {
@@ -205,9 +230,9 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
       notes: prev.notes || lookup.description || '',
       price_amount: priceAmount || prev.price_amount,
       estimated_price_cents: lookup.estimated_price_cents != null ? String(lookup.estimated_price_cents) : prev.estimated_price_cents,
-      product_metadata: lookup.raw_payload ?? prev.product_metadata ?? null,
+      product_metadata: compactBarcodeProductMetadata(lookup),
       metadata_fetch_status: lookup.matched ? 'success' : '',
-      metadata_confidence_score: lookup.confidence_score ?? null,
+      metadata_confidence_score: lookup.confidence_score != null ? Math.max(0, Math.min(1, lookup.confidence_score / 100)) : null,
       metadata_source_method: lookup.matched ? 'adapter' : 'manual',
       metadata_retailer: bestRetailer?.label ?? lookup.selected_retailer ?? prev.metadata_retailer,
     }));

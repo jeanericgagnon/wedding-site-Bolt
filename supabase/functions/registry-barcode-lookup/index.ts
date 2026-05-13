@@ -55,12 +55,8 @@ function isRepeating(value: string) {
 }
 
 function computeModulo10CheckDigit(body: string) {
-  const digits = body.split("").map(Number);
-  const parity = body.length % 2 === 0 ? 3 : 1;
-  const sum = digits.reduce((total, digit, index) => {
-    const weight = index % 2 === 0 ? parity : parity === 3 ? 1 : 3;
-    return total + digit * weight;
-  }, 0);
+  const digits = body.split("").reverse().map(Number);
+  const sum = digits.reduce((total, digit, index) => total + (digit * (index % 2 === 0 ? 3 : 1)), 0);
   return (10 - (sum % 10)) % 10;
 }
 
