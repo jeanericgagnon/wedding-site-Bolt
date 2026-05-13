@@ -29,7 +29,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | Current blockers | none |
 | Current proof state | Launch-critical runtime proof is green on the current live runtime: `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `service-role-authorization`, `email-messaging-authorization`, `launch-closeout`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, `client-rls-matrix`, `registry-preview-ssrf`, `coordinator-dayof`, `name-change-runtime`, and `registry`. The harder repo guardrails are also green: `proof:v1:client-write-inventory`, `proof:v1:ast-security`, `proof:v1:test-lanes`, `proof:v1:strict-pocket`, and `proof:v1:security-automation`. `Release Launch Gate` remains green and the repo now carries Semgrep, CodeQL, Gitleaks, and Dependabot automation. |
 | Current deployment state | The latest deployed frontend runtime is [dayof.love](https://dayof.love) via verified Vercel production deploy `dpl_C9U1LoXCk46GUgJSGrevMUNGpYzd`. The barcode scanner migration `20260513064500_add_registry_barcode_scanner_support.sql` is applied remotely, `registry-barcode-lookup --no-verify-jwt` is live, `submit-rsvp` is live with the serialized capacity path, and the public-session-secret, admin route gate, guest-contact, route-module decomposition, vault contribution, and `.dayof.love` host-routing lanes all remain live-proven. External custom domains remain unsupported product scope, not an open proof lane. |
-| Current next actions | No active launch blocker remains. `Day-of / coordinator`, `Name change`, and `Universal Registry Barcode Scanner` are now implemented, deployed where needed, and live-proven on the current production runtime. Keep the live client-RLS matrix current and keep the no-direct-client-write inventory current only if future runtime write surfaces reopen. Repo-wide TS/ESLint full-flip work remains explicitly future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
+| Current next actions | No active launch blocker remains for the current launch baseline, but `Day-of / coordinator`, `Name change`, and `Universal Registry Barcode Scanner` are not fully complete features yet. Their current shipped slices are baseline/MVP-proven, not end-state complete. Keep those three open as active implementation work until the broader intended product scope is built and re-proven. Keep the live client-RLS matrix current and keep the no-direct-client-write inventory current only if future runtime write surfaces reopen. Repo-wide TS/ESLint full-flip work remains explicitly future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
@@ -60,23 +60,29 @@ No active baseline launch blocker remains, but the following items are active bo
 - launch-critical findings are closed and live-proven on the current deployed production runtime
 - `Day-of / coordinator`
   - `ACTIVE NOW`
-  - dedicated live product-depth proof exists: `npm run proof:v1:coordinator-dayof -- --require-live`
+  - current truth: launch-baseline slice is live-proven, but the full intended coordinator/day-of product surface is not yet complete
+  - dedicated live product-depth proof exists for the current shipped slice: `npm run proof:v1:coordinator-dayof -- --require-live`
   - local proof is green: `npm run proof:v1:coordinator-dayof`
   - live proof is green on the current production runtime
-  - status: launch-ready
+  - still missing before this item is truly done: broader coordinator workflows, deeper event-day operating coverage, and final feature-scope signoff beyond the current smoke slice
+  - status: `PARTIAL / NOT DONE`
 - `Name change`
   - `ACTIVE NOW`
-  - dedicated live runtime proof exists: `npm run proof:v1:name-change-runtime -- --require-live`
+  - current truth: launch-baseline slice is live-proven, but the full intended name-change experience is not yet complete
+  - dedicated live runtime proof exists for the current shipped slice: `npm run proof:v1:name-change-runtime -- --require-live`
   - local proof lane is green: `npm run proof:v1:name-change-runtime`
   - live proof is green on the current production runtime
-  - status: launch-ready
+  - still missing before this item is truly done: complete end-to-end name-change product scope, broader workflow depth, and final feature-scope signoff beyond the current planner/runtime slice
+  - status: `PARTIAL / NOT DONE`
 - `Universal Registry Barcode Scanner`
   - `ACTIVE NOW`
+  - current truth: a shipped MVP slice exists, but the full universal-registry barcode scanner vision is not complete
   - implemented now: scan/manual barcode entry UI, barcode normalization, cache-aware edge lookup, registry persistence fields, and focused tests
   - deployed now: migration `20260513064500_add_registry_barcode_scanner_support.sql`, frontend runtime, and live `registry-barcode-lookup --no-verify-jwt`
   - live proof is green on the current production runtime, including barcode lookup plus owner save/read flow
   - provider ladder currently ships with free/open coverage first and safe manual fallback when no confident match exists
-  - status: launch-ready
+  - still missing before this item is truly done: fuller broad-match provider coverage, richer retailer choice flow, stronger universal product match depth, and completion of the larger product vision documented in the archive
+  - status: `PARTIAL / NOT DONE`
   - full concept, architecture, provider ladder, cache tables, and risk notes live in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md)
 - repo-wide TS/ESLint full-flip work is `FUTURE-ONLY / MAINTAINABILITY`
   - the enforced strict pocket now also covers RSVP, SiteView, siteViewHelpers, QuickStart, route modules, and `nameChangeService`
@@ -213,9 +219,9 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 
 ## Next 10 Tasks
 
-1. Keep `Day-of / coordinator` live proof green when coordinator flows change.
-2. Keep `Name change` live proof green when planner/name-change flows change.
-3. Keep `Universal Registry Barcode Scanner` live proof green when registry/write surfaces change.
+1. Finish `Day-of / coordinator` to full intended feature scope, not just the current launch-baseline proof slice.
+2. Finish `Name change` to full intended feature scope, not just the current planner/runtime proof slice.
+3. Finish `Universal Registry Barcode Scanner` to the full universal-registry product scope, not just the current MVP slice.
 4. keep the live client-RLS matrix current if future non-guest write surfaces are added.
 5. keep the no-direct-client-write inventory current if future runtime write surfaces are added.
 6. Keep unsupported external custom domains clearly marked as unsupported until product support exists.
