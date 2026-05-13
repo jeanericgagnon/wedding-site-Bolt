@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, SlidersHorizontal, ArrowRight, Eye, EyeOff, Plus, ArrowUp, ArrowDown, Undo2, Redo2, CheckCircle2, GripVertical, Keyboard, Command } from 'lucide-react';
+import { Layers, ArrowRight, Eye, EyeOff, ArrowUp, ArrowDown, Undo2, Redo2, CheckCircle2, GripVertical, Keyboard, Command } from 'lucide-react';
 import { getSectionRenderer } from '../builder/registry';
 import type { SectionType, SectionInstance } from '../types/layoutConfig';
 import type { WeddingDataV1 } from '../types/weddingData';
@@ -301,10 +301,10 @@ export const BuilderV2Lab: React.FC = () => {
   const [commandIndex, setCommandIndex] = useState(0);
   const [propertyTab, setPropertyTab] = useState<'content' | 'layout' | 'data'>('content');
   const [recentCommands, setRecentCommands] = useState<string[]>([]);
-  const [actionNotice, setActionNotice] = useState<string>('');
+  const [, setActionNotice] = useState<string>('');
   const [pinnedCommands] = useState<string[]>(['Add section: Hero', 'Select section: Hero']);
   const [showQuickHelp, setShowQuickHelp] = useState(false);
-  const [showAdvancedActions, setShowAdvancedActions] = useState(false);
+  const [, setShowAdvancedActions] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [previewScale, setPreviewScale] = useState(100);
   const [focusPreview, setFocusPreview] = useState(false);
@@ -518,13 +518,6 @@ export const BuilderV2Lab: React.FC = () => {
     markSaving();
   };
 
-  const updateBlockContent = (sectionId: string, blockId: string, content: string) => {
-    setSectionBlocks((prev) => ({
-      ...prev,
-      [sectionId]: (prev[sectionId] ?? []).map((b) => (b.id === blockId ? { ...b, content } : b)),
-    }));
-    markSaving();
-  };
 
   const removeBlock = (sectionId: string, blockId: string) => {
     setSectionBlocks((prev) => ({
@@ -578,11 +571,6 @@ export const BuilderV2Lab: React.FC = () => {
     });
     markSaving();
   };
-
-  const scrollToRailSection = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
 
   const commit = (next: LabSection[]) => {
     const trimmed = history.slice(0, historyIndex + 1);
@@ -648,26 +636,6 @@ export const BuilderV2Lab: React.FC = () => {
   };
 
 
-  const applyVariantToSelection = (variant: string) => {
-    if (selectedIds.length <= 1) return;
-    const selectedSet = new Set(selectedIds);
-    let updated = 0;
-    let skipped = 0;
-    commit(
-      sections.map((s) => {
-        if (!selectedSet.has(s.id)) return s;
-        const allowed = VARIANTS_BY_TYPE[s.type] ?? ['default'];
-        if (allowed.includes(variant)) {
-          updated += 1;
-          return { ...s, variant };
-        }
-        skipped += 1;
-        return s;
-      })
-    );
-    notify(`${updated} updated${skipped ? `, ${skipped} skipped` : ''}`);
-  };
-
   const moveSection = (id: string, dir: -1 | 1) => {
     const idx = sections.findIndex((s) => s.id === id);
     const nextIdx = idx + dir;
@@ -708,28 +676,8 @@ export const BuilderV2Lab: React.FC = () => {
   };
 
 
-  const updateSubtitle = (subtitle: string) => {
-    commit(sections.map((s) => (s.id === selected.id ? { ...s, subtitle } : s)));
-  };
-
   const updateDensity = (density: 'compact' | 'comfortable') => {
     commit(sections.map((s) => (s.id === selected.id ? { ...s, density } : s)));
-  };
-
-
-  const applyLayoutPreset = (preset: 'airy' | 'balanced' | 'compact') => {
-    if (preset === 'airy') {
-      updateDensity('comfortable');
-      notify('Applied Airy preset');
-      return;
-    }
-    if (preset === 'compact') {
-      updateDensity('compact');
-      notify('Applied Compact preset');
-      return;
-    }
-    updateDensity('comfortable');
-    notify('Applied Balanced preset');
   };
 
   const runCommand = (label: string, action: () => void) => {

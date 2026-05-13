@@ -1,4 +1,4 @@
-import React, { type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { AlertCircle, GripVertical, Loader2, Lock, Plus } from 'lucide-react';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { Button, Card } from '../../components/ui';

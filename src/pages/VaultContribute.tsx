@@ -617,7 +617,6 @@ export const VaultContribute: React.FC = () => {
   const coupleName = getVaultCoupleName(site);
 
   const unlockYear = getVaultUnlockYear(site?.wedding_date, vaultConfig?.duration_years);
-  const storageProvider = 'supabase' as const;
   const isDemoVault = DEMO_MODE && site?.id === 'demo-site-id';
 
   const ordinal = vaultConfig ? ordinalLabel(vaultConfig.duration_years) : '';

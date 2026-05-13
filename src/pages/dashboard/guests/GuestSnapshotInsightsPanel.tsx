@@ -1,4 +1,3 @@
-import React from 'react';
 import { CheckCircle2, Clock, Users, XCircle } from 'lucide-react';
 import { Card } from '../../../components/ui';
 

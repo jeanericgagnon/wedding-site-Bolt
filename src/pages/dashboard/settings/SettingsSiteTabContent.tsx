@@ -1,4 +1,3 @@
-import React from 'react';
 import type { FormEvent } from 'react';
 import type { WeddingIdentityExportKit, WeddingIdentityPrintAsset } from '../../../lib/weddingIdentityExports';
 import type { SiteLanguageCode, TranslationLanguageCode, TranslationStatusRow } from './settingsDashboardTypes';

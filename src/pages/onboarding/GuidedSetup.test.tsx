@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GUIDED_SETUP_STORAGE_KEY } from '../../lib/guidedSetupPersistence';

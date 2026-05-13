@@ -1,4 +1,3 @@
-import React from 'react';
 import { Calendar, Check, Clock, ExternalLink, MapPin, X } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';

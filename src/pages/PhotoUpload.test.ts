@@ -61,7 +61,7 @@ describe('photo upload guest error copy', () => {
     expect(mapUploadError('INVALID_TOKEN')).toBe('This upload link is invalid. Ask the couple for a fresh link.');
     expect(mapUploadError('DRIVE_RECONNECT_REQUIRED')).toBe('Uploads are available here. Please refresh and try again.');
     expect(mapUploadError('UNSUPPORTED_FILE_TYPE')).toBe('Please upload photos or videos only.');
-    expect(mapUploadError('FILE_TOO_LARGE', 'storage bucket policy denied token')).toBe('Your upload exceeds the allowed limits.');
+    expect(mapUploadError('FILE_TOO_LARGE')).toBe('Your upload exceeds the allowed limits.');
   });
 
   it('does not pass raw backend upload errors through to guests', () => {

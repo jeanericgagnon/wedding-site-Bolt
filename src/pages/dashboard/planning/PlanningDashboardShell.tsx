@@ -1,4 +1,4 @@
-import React, { type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { DashboardLayout } from '../../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../../components/dashboard/DashboardPageHero';
 import type { PlannerAccessRole } from '../../../lib/plannerAccess';

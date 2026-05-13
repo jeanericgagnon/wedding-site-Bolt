@@ -1,4 +1,3 @@
-import React from 'react';
 import { CheckCircle } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -40,7 +39,7 @@ export function RsvpSuccessView({
   guestDisplayName,
   guestInvitedToCeremony,
   guestInvitedToReception,
-  guestPresent,
+  guestPresent: _guestPresent,
   inheritedHouseholdMembers,
   onDone,
   onSubmitAnother,

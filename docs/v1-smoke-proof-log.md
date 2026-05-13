@@ -15,6 +15,14 @@ _Launch call right now:_ `GO`
 - Guest contact now also proves the stronger household verifier path live: no exact-name match without verifier, phone last 4 unlocks household-wide updates, and guest invite tokens act as the strongest verifier.
 - Dedicated live coordinator/day-of and name-change runtime smokes are now green on production.
 - The hard-fail strict pocket now also covers RSVP, SiteView/siteViewHelpers, QuickStart, route modules, and `nameChangeService.ts`.
+- 2026-05-12 10:14 PM PDT:
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `npm run lint -- --quiet` -> `PASS`
+  - `npm run build` -> `PASS`
+  - `npm run proof:v1:strict-pocket` -> `PASS`
+  - `npm test -- --run src/lib/strictPocketTypecheck.test.ts src/pages/Onboarding.test.tsx src/pages/PhotoUpload.test.ts src/pages/RSVP.test.tsx src/pages/SiteView.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts` -> `PASS`
+  - broader same-night cleanup reduced strict-only repo debt again (`238 -> 205` file-scoped findings) without reopening the launch gate
+  - the remaining full repo-wide strictness flip is now tracked as future maintainability work, not active launch-board debt
 - 2026-05-12 09:31 PM PDT:
   - `supabase functions deploy guest-contact-lookup --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`
   - `supabase functions deploy guest-contact-submit --project-ref atuzuobpprjstfmdnwso --no-verify-jwt` -> `PASS`

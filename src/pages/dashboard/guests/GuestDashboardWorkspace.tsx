@@ -1,4 +1,4 @@
-import React, { type ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 import { Card } from '../../../components/ui';
 import { GuestEngagementControlsPanel } from './GuestEngagementControlsPanel';
 import { GuestListDisplaySwitcher } from './GuestListDisplaySwitcher';

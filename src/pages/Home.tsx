@@ -15,7 +15,7 @@ import {
   ArrowRight,
   Radio,
 } from 'lucide-react';
-import { GridItem, HeroReveal, Reveal, SlideReveal, StaggerGrid } from '../components/marketing/Reveal';
+import { HeroReveal, Reveal, SlideReveal } from '../components/marketing/Reveal';
 
 const V1_HOME_GROUPS = [
   {

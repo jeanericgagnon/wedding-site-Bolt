@@ -1,4 +1,3 @@
-import React from 'react';
 import { GuestHouseholdPanel, type GuestHouseholdPanelProps } from './GuestHouseholdPanel';
 import { GuestListPanel, type GuestListPanelProps } from './GuestListPanel';
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { RefreshCw, WifiOff } from 'lucide-react';
 
 type HubConfigStatus = 'loading' | 'ready' | 'fallback' | 'offline';

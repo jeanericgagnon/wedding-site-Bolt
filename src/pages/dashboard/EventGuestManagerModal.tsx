@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { ConfirmDialog, type ConfirmDialogProps } from '../../components/ui/ConfirmDialog';

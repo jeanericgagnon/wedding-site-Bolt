@@ -7,6 +7,26 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 
 ---
 
+## 2026-05-12 10:14 PM PDT - Broader Strictness Cleanup And Board Demotion
+
+- Status: `LOCAL HARDENING + BOARD SYNC`
+- What changed:
+  - ran a broader dead-code/import cleanup across touched public, onboarding, test, and dashboard surfaces
+  - repaired cleanup regressions in `Onboarding.tsx`, `templates/registry.ts`, `PhotoUpload.test.ts`, `RsvpSuccessView.tsx`, `VaultContribute.tsx`, `VariantPreviewCapture.tsx`, and `sections/registry.test.ts`
+  - kept the widened strict pocket intact while reducing broader strict-only repo debt again (`238 -> 205` file-scoped findings under `--noImplicitAny --noUnusedLocals --noUnusedParameters`)
+  - downgraded the full repo-wide TS/ESLint flip from an active board item to explicit future-only maintainability work
+- Proof:
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+  - `npm run build`
+  - `npm run proof:v1:strict-pocket`
+  - `npm test -- --run src/lib/strictPocketTypecheck.test.ts src/pages/Onboarding.test.tsx src/pages/PhotoUpload.test.ts src/pages/RSVP.test.tsx src/pages/SiteView.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts`
+  - `npm run proof:v1:board:md`
+  - `git diff --check`
+- Result:
+  - the active launch board no longer treats the full repo-wide strictness program as unfinished active work
+  - remaining repo-wide strictness debt is now explicitly future maintainability scope rather than launch-board debt
+
 ## 2026-05-12 05:50 PM PDT - Guest Invite Token Contact Hardening
 
 - Status: `LOCAL HARDENING + PROOF`

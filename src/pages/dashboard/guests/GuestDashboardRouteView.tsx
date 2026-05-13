@@ -1,4 +1,4 @@
-import React, { type ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 import { DashboardLayout } from '../../../components/dashboard/DashboardLayout';
 import { DashboardStateBlock } from '../../../components/dashboard/DashboardStateBlock';
 import { GuestDashboardOpsView } from './GuestDashboardOpsView';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { AlertCircle } from 'lucide-react';
 import { Button, Select } from '../../../components/ui';
 import type { GuestWithRSVP, RsvpConflict, RsvpConflictStats } from './guestDashboardTypes';

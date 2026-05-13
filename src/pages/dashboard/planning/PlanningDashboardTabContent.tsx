@@ -1,4 +1,3 @@
-import React from 'react';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../../lib/plannerAccess';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput, NameChangePlan, NameChangeReminderInput } from '../../../lib/nameChange/types';
 import { canEditPlanningBudget, canEditPlanningTasks, canEditPlanningVendors } from '../../../lib/plannerAccess';

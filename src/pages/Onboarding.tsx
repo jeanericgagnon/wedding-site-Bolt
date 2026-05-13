@@ -1,25 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Heart, ArrowRight, Check } from 'lucide-react';
-import { Button, Input, Textarea, Select, Card } from '../components/ui';
+import { Button, Input, Textarea, Card } from '../components/ui';
 import { useToast } from '../components/ui/Toast';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
-import { SITE_VISIBILITY_COPY } from '../lib/siteVisibilityCopy';
 import { useAuth } from '../hooks/useAuth';
 import { demoWeddingSite } from '../lib/demoData';
-import { applyInitialSetupAnswersToWeddingProfile, buildItinerarySeedFromStructuredEvents, buildRsvpEventSeedFromStructuredEvents, createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile } from '../lib/weddingProfile';
-import { buildIntakeSnapshot, createOnboardingSessionState, createOnboardingSessionStateFromInitialSetup } from '../lib/aiOnboarding';
+import { applyInitialSetupAnswersToWeddingProfile, createEmptyWeddingProfile, evaluateWeddingProfileReadiness, getWeddingProfileFieldStatus, isWeddingProfile } from '../lib/weddingProfile';
+import { createOnboardingSessionStateFromInitialSetup } from '../lib/aiOnboarding';
 import { createEmptyInitialSetupAnswers, createEmptyOnboardingFormShapeFromInitialSetup, initialSetupAnswersToOnboardingFormShape, type InitialSetupAnswers } from '../lib/initialSetupAnswers';
 import { createEmptyInitialSetupFollowUps } from '../lib/initialSetupFollowUps';
-import { buildInitialSetupSnapshot } from '../lib/initialSetupSnapshot';
 import { buildInitialSetupDerivedOutputs } from '../lib/initialSetupDerivedOutputs';
 import { buildOnboardingUpdateWithClarifying } from '../lib/buildOnboardingUpdateWithClarifying';
 import { hasActiveOnboardingDraftSnapshot, hasStoredOnboardingDraftPayload, persistOnboardingDraftSnapshot, readOnboardingDraftSnapshot, type OnboardingStep } from '../lib/onboardingDraftPersistence';
 import { mergeOnboardingFollowUpAnswers } from '../lib/onboardingFollowUpMerge';
 import { resolveOnboardingResumeIndex } from '../lib/onboardingResumeIndex';
 import { clearOnboardingResumeStorage, readOnboardingResumeState } from '../lib/onboardingResumeStorage';
-import { writeSignupReturnPath } from '../lib/signupContinuation';
-import { clearAllOnboardingDraftStorage } from '../lib/onboardingDraftCleanup';
 import { clearAllOnboardingContinuationState } from '../lib/onboardingContinuationCleanup';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import {
@@ -191,7 +187,10 @@ export const Onboarding: React.FC = () => {
   const conversationProgress = Math.round(((conversationIndex + 1) / conciergeQuestions.length) * 100);
   const readiness = evaluateWeddingProfileReadiness(weddingProfile);
   const fieldStatuses = getWeddingProfileFieldStatus(weddingProfile);
-  const onboardingSession = createOnboardingSessionStateFromInitialSetup(initialSetupAnswers, currentQuestion ? [currentQuestion.key] : []);
+  const onboardingSession = createOnboardingSessionStateFromInitialSetup(
+    initialSetupAnswers,
+    currentQuestion ? [currentQuestion.key] : [],
+  );
   const answeredFollowUpCount = Object.keys(followUpAnswers).filter((key) => followUpAnswers[key]?.trim()).length;
   const remainingFollowUpBudget = Math.max(0, 5 - answeredFollowUpCount);
 

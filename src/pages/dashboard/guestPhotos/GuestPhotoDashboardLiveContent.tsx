@@ -1,4 +1,4 @@
-import React, { type ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 import { GuestPhotoAlbumControls } from './GuestPhotoAlbumControls';
 import { GuestPhotoAlbumCreateCard } from './GuestPhotoAlbumCreateCard';
 import { GuestPhotoAlbumListState } from './GuestPhotoAlbumListState';

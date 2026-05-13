@@ -1,4 +1,3 @@
-import React from 'react';
 import { CheckCircle2, Home } from 'lucide-react';
 
 export interface GuestSegmentOption {

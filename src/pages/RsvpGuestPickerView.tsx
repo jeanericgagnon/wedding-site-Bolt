@@ -1,4 +1,3 @@
-import React from 'react';
 import { User } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import type { Guest } from './rsvpTypes';

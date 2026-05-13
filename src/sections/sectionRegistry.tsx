@@ -8,7 +8,7 @@ import { StorySection, StoryCentered, StorySplit, StoryTimeline } from './compon
 import { VenueSection, VenueCard } from './components/VenueSection';
 import { ScheduleSection, ScheduleTimeline, ScheduleDayTabs } from './components/ScheduleSection';
 import { TravelSection, TravelCards, TravelLocalGuide } from './components/TravelSection';
-import { RegistrySection, RegistryGrid, RegistryFundHighlight } from './components/RegistrySection';
+import { RegistryGrid, RegistryFundHighlight } from './components/RegistrySection';
 import { RsvpSection, RsvpInline } from './components/RsvpSection';
 import { FaqSection, FaqAccordion, FaqIconGrid } from './components/FaqSection';
 import { GallerySection, GalleryMasonry } from './components/GallerySection';

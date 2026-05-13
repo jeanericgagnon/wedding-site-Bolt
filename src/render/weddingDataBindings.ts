@@ -74,10 +74,6 @@ function preferNonPlaceholderString(value: unknown, fallback = ''): string {
   return value;
 }
 
-function preferMeaningfulArray<T>(value: unknown, fallback: T[]): T[] {
-  return Array.isArray(value) && value.length > 0 ? value as T[] : fallback;
-}
-
 function preferSafeImageString(value: unknown, fallback: string): string {
   const safeValue = typeof value === 'string' ? getSafePublicImageUrl(value) : '';
   return safeValue || fallback;

@@ -15,7 +15,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-12 09:31 PM PDT` |
+| Current date/time | `2026-05-12 10:14 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest Git SHA | `f2cc4811` |
 | Latest commit message | `Harden launch runtime proofs and route splits` |
@@ -29,7 +29,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | Current blockers | none |
 | Current proof state | Launch-critical runtime proof is green on the exact live runtime: `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `service-role-authorization`, `email-messaging-authorization`, `launch-closeout`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, `client-rls-matrix`, `registry-preview-ssrf`, `coordinator-dayof`, and `name-change-runtime`. The harder repo guardrails are also green: `proof:v1:client-write-inventory`, `proof:v1:ast-security`, `proof:v1:test-lanes`, `proof:v1:strict-pocket`, and `proof:v1:security-automation`. `Release Launch Gate` remains green and the repo now carries Semgrep, CodeQL, Gitleaks, and Dependabot automation. |
 | Current deployment state | Frontend is live at [dayof.love](https://dayof.love) on exact runtime Git SHA `f2cc4811` via verified Vercel production deploy `dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU`. `submit-rsvp` is live with the serialized capacity path and the database includes the RPC migration sweep through `20260512031500_seating_assignment_version_rpcs.sql` plus repair migrations through `20260512050000_harden_admin_access_check.sql`. The public-session-secret lane is live, the admin route gate is live on `admin_access_check()`, the guest-contact lane now requires a stronger household step-up verifier and accepts guest-specific invite tokens, public guest-contact audit writes are live, the route-module decomposition is live, the public vault contribution lane is live-proven, and the `.dayof.love` subdomain route is live-proven fail-closed. External custom domains remain unsupported product scope, not an open proof lane. |
-| Current next actions | No active launch blocker remains. keep the live client-RLS matrix current and keep the no-direct-client-write inventory current only if future runtime write surfaces reopen. Keep day-of and name-change visible as monitored surfaces, and keep `Universal Registry Barcode Scanner` visible as a future feature on this board for now; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
+| Current next actions | No active launch blocker remains. keep the live client-RLS matrix current and keep the no-direct-client-write inventory current only if future runtime write surfaces reopen. Keep day-of and name-change visible as monitored surfaces, and keep `Universal Registry Barcode Scanner` visible as a future feature on this board for now. Repo-wide TS/ESLint full-flip work is now explicitly future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
@@ -68,9 +68,10 @@ No active launch blocker remains, but the following items stay visible on the ac
   - future feature only, not launch scope
   - keep visible on the active board for now
   - full concept, architecture, provider ladder, cache tables, and risk notes live in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md)
-- repo-wide TS/ESLint rigor is still softer than ideal
+- repo-wide TS/ESLint full-flip work is `FUTURE-ONLY / MAINTAINABILITY`
   - the enforced strict pocket now also covers RSVP, SiteView, siteViewHelpers, QuickStart, route modules, and `nameChangeService`
-  - full repo-wide `noImplicitAny` / unused enforcement still blows up across hundreds of files, so that broader flip remains the real unfinished rigor item
+  - the latest cleanup wave restored green `typecheck`, `lint`, `build`, `proof:v1:strict-pocket`, and focused proof tests after a broader dead-code/import sweep
+  - the broader full-repo `noImplicitAny` / unused-enforcement flip is no longer treated as active board work; strict-only debt is reduced again (`238 -> 205` file-scoped findings) and the remaining sweep belongs in future maintainability work
 - ongoing maintainability and future-surface rigor detail remain archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md)
 
 ## Public DTO 10/10 Checklist
@@ -125,9 +126,9 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 
 | Command | Status | Environment | Last run | Notes |
 | --- | --- | --- | --- | --- |
-| `npm run typecheck -- --pretty false` | `PASS` | `local` | `2026-05-11` | Current public DTO code state |
-| `npm run lint -- --quiet` | `PASS` | `local` | `2026-05-11` | Current public DTO code state |
-| `npm run build` | `PASS` | `local` | `2026-05-11` | Current public DTO code state |
+| `npm run typecheck -- --pretty false` | `PASS` | `local` | `2026-05-12` | Green after the broader page/dashboard dead-code cleanup wave |
+| `npm run lint -- --quiet` | `PASS` | `local` | `2026-05-12` | Green after the broader page/dashboard dead-code cleanup wave |
+| `npm run build` | `PASS` | `local` | `2026-05-12` | Green after the broader page/dashboard dead-code cleanup wave |
 | `npm test` | `PASS` | `local` | `2026-05-11` | `537/537` files, `3321/3321` tests |
 | `npm run test:security` | `PASS` | `local` | `2026-05-11` | `265/265` |
 | `npm run test:smoke` | `PASS` | `production` | `2026-05-11` | `registry`, `rsvp`, `csvmapper`, `checkin`, `messages`, `site` all green after unrestricted-network rerun |
@@ -211,6 +212,7 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 8. Keep the deployment matrix current when runtime/deploy IDs change.
 9. Keep the validation matrix current when proof lanes change.
 10. Tighten TS/ESLint rigor for new code and high-risk modules.
+11. Keep the broader repo-wide `noImplicitAny` / unused-enforcement flip in future maintainability scope unless it is formally reprioritized.
 
 ## Resolved Work Summary
 

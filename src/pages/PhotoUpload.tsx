@@ -11,7 +11,7 @@ import { submitGuestHubProspect } from './guestHubPublicService';
 import { hasGuestPublicSubmissionRuntime, uploadGuestPhotos } from './guestPublicSubmissionService';
 import { PhotoUploadStatusPanel } from './PhotoUploadStatusPanel';
 
-export const mapUploadError = (code?: string, fallback?: string): string => {
+export const mapUploadError = (code?: string): string => {
   switch (code) {
     case 'INVALID_TOKEN':
       return 'This upload link is invalid. Ask the couple for a fresh link.';

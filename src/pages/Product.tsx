@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../components/ui/Toast';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { ArrowRight, Calendar, CheckCircle2, Mail, Shield, Users, Wallet } from 'lucide-react';
-import { HeroReveal, SlideReveal } from '../components/marketing/Reveal';
+import { SlideReveal } from '../components/marketing/Reveal';
 
 type StepId = 'launch' | 'guests' | 'rsvp' | 'message' | 'seating' | 'dayof';
 

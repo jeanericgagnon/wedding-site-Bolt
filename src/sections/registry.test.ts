@@ -5,7 +5,7 @@ import { getAllTemplates, getCanonicalTemplateSourceId, getTemplate, resolveCano
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { getSectionComponent, getSectionVariants } from './sectionRegistry';
-import { RegistryFundHighlight, RegistryGrid, RegistrySection } from './components/RegistrySection';
+import { RegistryFundHighlight, RegistryGrid } from './components/RegistrySection';
 
 const EXPECTED_ALIAS_TARGETS: Array<{ type: string; variant: string; expectedResolvedVariant: string }> = [
   { type: 'venue', variant: 'banner', expectedResolvedVariant: 'splitMap' },

@@ -1,5 +1,5 @@
-import { SectionInstance, SectionType } from '../types/layoutConfig';
 import { resolveCanonicalRegistrySectionInput } from '../sections/registry';
+import { SectionInstance, SectionType } from '../types/layoutConfig';
 
 type TemplateSection = Omit<SectionInstance, 'id' | 'type'> & {
   // Keep compatibility with imported template artifacts while preserving known section keys.
@@ -14,10 +14,6 @@ export interface TemplateDefinition {
   defaultLayout: {
     sections: TemplateSection[];
   };
-}
-
-function normalizeRegistryTemplateVariant(variant: string): string {
-  return resolveCanonicalRegistrySectionInput('registry', variant).variant;
 }
 
 function normalizeTemplateIdKey(templateId: unknown): string {

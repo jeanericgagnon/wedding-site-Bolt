@@ -30,7 +30,6 @@ import type { PublicSectionDTO } from '../lib/publicRenderContract';
 type GuestRenderableSection = Pick<BuilderSectionInstance, 'id' | 'type' | 'variant' | 'enabled' | 'orderIndex' | 'settings' | 'bindings' | 'styleOverrides'> | PublicSectionDTO;
 
 async function hydrateWeddingDataFromItinerary(
-  siteId: string,
   siteSlug: string,
   base: WeddingDataV1,
   access: { inviteToken?: string | null; passwordSession?: string | null } = {},
@@ -628,7 +627,7 @@ export const SiteView: React.FC = () => {
           const rawWData = normalizeWeddingData(
             (renderModel.wedding as PublicWeddingRenderModel | WeddingDataV1 | null) ?? createEmptyWeddingData(),
           );
-          const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData, subresourceAccess), resolvedSlug);
+          const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(resolvedSlug, rawWData, subresourceAccess), resolvedSlug);
           const sparsePublicData = isPublicWeddingDataSparse(wData);
 
           if (publicSections.length === 0 || (isDemoSite && sparsePublicData)) {
@@ -677,7 +676,7 @@ export const SiteView: React.FC = () => {
             return;
           }
 
-          const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData, subresourceAccess), resolvedSlug);
+          const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(resolvedSlug, rawWData, subresourceAccess), resolvedSlug);
           if (isDemoSite && isPublicWeddingDataSparse(wData)) {
             const demoData = createAlexJordanDemoWeddingData();
             const demoSections = createDemoFallbackSections('modern-luxe');

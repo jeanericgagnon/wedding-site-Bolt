@@ -1,4 +1,4 @@
-import React, { type ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 import { GuestOpsSummaryPanel } from './GuestOpsSummaryPanel';
 import { GuestRsvpConflictPanels } from './GuestRsvpConflictPanels';
 import { GuestSnapshotInsightsPanel } from './GuestSnapshotInsightsPanel';

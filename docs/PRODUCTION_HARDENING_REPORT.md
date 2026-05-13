@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-12 09:31 PM PDT`
+_Updated:_ `2026-05-12 10:14 PM PDT`
 
 ## Current Score
 
@@ -28,8 +28,8 @@ No active `P0` / `P1` launch blockers remain.
 No active launch-critical proof gaps remain.
 
 Exact 10/10 gap:
-- global TS/ESLint rigor is still softer than the widened launch-critical strict pocket, even after adding RSVP/public-site/onboarding/route/name-change files to that hard-fail slice
 - several explicitly deferred non-launch lanes remain outside the current baseline
+- the broader repo-wide `noImplicitAny` / unused-enforcement flip is now future maintainability work rather than an active launch-board item, even though the strict-only debt is still not zero
 
 Deferred, non-launch gaps:
 - external custom-domain product support
@@ -44,6 +44,7 @@ Deferred, non-launch gaps:
 - keep the no-direct-client-write inventory current after future runtime write-surface changes
 - global TypeScript / ESLint strictness remains softer than the widened launch-critical strict pocket
 - the latest strict-pocket widening now also covers `RSVP.tsx`, `SiteView.tsx`, `siteViewHelpers.ts`, `QuickStart.tsx`, the route modules, and `nameChangeService.ts`
+- a same-night cleanup wave restored green `typecheck`, `lint`, `build`, `proof:v1:strict-pocket`, and focused proof tests while reducing strict-only repo debt again (`238 -> 205` file-scoped findings)
 - no active launch-lane deploy gap remains
 
 ## Exact Proof State
@@ -58,6 +59,8 @@ Fresh local proof:
 - `npm run proof:v1:test-lanes` -> `PASS`
 - `npm run proof:v1:strict-pocket` -> `PASS`
   - hard-fails a high-risk boundary pocket (`ProtectedRoute.tsx`, `activeSite.ts`, `customerSafeError.ts`, `mediaUrl.ts`, `paymentGate.ts`, `publicRenderContract.ts`, `publicSiteAccess.ts`, `publicSiteRenderModel.ts`, `publicSiteSlug.ts`, `publicSectionDataSanitizer.ts`, `siteConfigValidate.ts`, `stripeService.ts`, `vendorProfiles.ts`) on explicit `any`, `ban-ts-comment`, unused vars, empty blocks, and warning leakage
+- `npm test -- --run src/lib/strictPocketTypecheck.test.ts src/pages/Onboarding.test.tsx src/pages/PhotoUpload.test.ts src/pages/RSVP.test.tsx src/pages/SiteView.test.ts src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts` -> `PASS`
+  - same-night cleanup wave kept the widened strict pocket and the touched onboarding/public runtime surfaces green
 - `npm run proof:v1:client-write-inventory` -> `PASS`
   - broadened tracked-`src` runtime scan now reports no direct client `.insert/.update/.upsert/.delete` calls in shipped `src` runtime files
   - scanner now also catches single/double/backtick table names, skips `.d.ts` noise, and records the real matched write operation in proof output

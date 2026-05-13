@@ -1,4 +1,3 @@
-import React from 'react';
 import { CheckCircle2, Home } from 'lucide-react';
 import { Button } from '../../../components/ui';
 import type { GuestOpsQueueItem, GuestRecommendedAction } from './guestDashboardUtils';

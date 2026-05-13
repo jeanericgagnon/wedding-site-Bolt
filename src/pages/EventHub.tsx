@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { CalendarDays, Camera, ClipboardList, Gift, HeartHandshake, Plane, Sparkles } from 'lucide-react';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import { buildGuestHubActions, type GuestHubActionId } from '../lib/guestHubActions';

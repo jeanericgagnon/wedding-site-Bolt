@@ -4,9 +4,8 @@ import { Heart, CreditCard, Check, Loader2, AlertCircle, RefreshCw } from 'lucid
 import { Button } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
 import { createCheckoutSession, fetchPaymentStatus, SessionExpiredError } from '../lib/stripeService';
-import { isPaymentBypassAllowed, isPaymentGateEnabled } from '../lib/paymentGate';
+import { isPaymentBypassAllowed } from '../lib/paymentGate';
 import { clearAllOnboardingContinuationState } from '../lib/onboardingContinuationCleanup';
-import { buildQuickStartEntryPath } from '../lib/quickStartContinuation';
 import { ensureMinimalPaymentWeddingSite } from './paymentRequiredService';
 
 const FEATURES = [
@@ -28,7 +27,6 @@ function safePaymentError(err: unknown, fallback: string): string {
 
 export const PaymentRequired: React.FC = () => {
   const { user, isDemoMode } = useAuth();
-  const paymentGateEnabled = isPaymentGateEnabled();
   const paymentBypassAllowed = isPaymentBypassAllowed();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);

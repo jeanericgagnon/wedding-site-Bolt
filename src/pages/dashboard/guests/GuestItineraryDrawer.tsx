@@ -1,4 +1,3 @@
-import React from 'react';
 import { CalendarDays, CheckCircle2, Copy, ExternalLink, Eye, Loader2, X } from 'lucide-react';
 import { copyTextOrDownload } from '../../../lib/copyText';
 import { extractDietaryNote } from '../../../lib/dietaryNotes';

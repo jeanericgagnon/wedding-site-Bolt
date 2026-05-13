@@ -1,4 +1,3 @@
-import React from 'react';
 import { Bell, ClipboardList, CreditCard, Globe, User, Users, type LucideIcon } from 'lucide-react';
 import type { PlannerAccessRole } from '../../../lib/plannerAccess';
 
