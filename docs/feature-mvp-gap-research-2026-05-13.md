@@ -4,7 +4,7 @@ Date: 2026-05-13
 
 Purpose:
 - turn three ambiguous active features into a concrete MVP bar
-- separate MVP from post-MVP parity work
+- separate the shipped launch baseline from the deeper product-depth scope now reopened as active work
 - give the backlog an honest build target
 
 Method:
@@ -78,9 +78,14 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - deeper runtime deployed on Vercel production `dpl_AbFTbLY263caiCEhQdniH2wbuM9d`
   - `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live` is green against the shipped runtime
 
-### Build gaps
+### Active deeper scope
 
-1. No active MVP gap remains.
+The shipped baseline is real and launchable, but the board now treats the following as active work for a more in-depth MVP:
+
+1. Add multi-event staffing and handoff views so a weekend coordinator team can work rehearsal, ceremony, reception, and adjacent events without losing event-specific arrival truth.
+2. Add substitute-attendee / plus-one swap handling with clear household continuity so door staff can resolve real-world attendee substitutions safely.
+3. Add seating-change-at-door workflow so unresolved guests can be reseated or moved without leaving coordinator mode.
+4. Add richer issue history, operator notes, and escalation continuity so help-desk/manager decisions do not disappear once a queue item is resolved.
 
 ## Name change
 
@@ -140,9 +145,14 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - deeper runtime deployed on Vercel production `dpl_AbFTbLY263caiCEhQdniH2wbuM9d`
   - `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live` is green against the shipped runtime
 
-### Build gaps
+### Active deeper scope
 
-1. No active MVP gap remains.
+The shipped baseline is real and launchable, but the board now treats the following as active work for a more in-depth MVP:
+
+1. Add broader non-California state playbooks so the planner feels genuinely useful outside the current strongest state-guided lane.
+2. Deepen institution/account coverage so downstream update cards feel like a working execution system rather than a thin checklist.
+3. Strengthen dual-partner orchestration so couples changing one or both names can manage parallel but distinct update tracks cleanly.
+4. Add richer packet/export follow-through so users can carry a real-world action packet or summary out of the planner when working through institutions.
 
 ## Universal Registry Barcode Scanner
 
@@ -181,7 +191,9 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - optional `UPCITEMDB_API_KEY` ladder support
   - registry persistence and live proof
 
-### Post-MVP gaps
+### Active deeper scope
+
+The shipped baseline is real and launchable, but the board now treats the following as active work for a more in-depth MVP:
 
 1. Broaden provider and product-match depth.
 2. Add duplicate / merge suggestions against existing registry items.
@@ -190,6 +202,6 @@ DayOf should count this feature as MVP-complete when it does all of the followin
 
 ## Decision For The Active Board
 
-- `Day-of / coordinator` has now met the MVP bar in this doc on the shipped runtime.
-- `Name change` has now met the MVP bar in this doc on the shipped runtime.
-- `Universal Registry Barcode Scanner` has met MVP; remaining work is post-MVP parity and depth, not baseline MVP viability.
+- `Day-of / coordinator` has met the shipped launch-baseline MVP bar, but the active board now requires the deeper scope listed above.
+- `Name change` has met the shipped launch-baseline MVP bar, but the active board now requires the deeper scope listed above.
+- `Universal Registry Barcode Scanner` has met the shipped launch-baseline MVP bar, but the active board now requires the deeper scope listed above.

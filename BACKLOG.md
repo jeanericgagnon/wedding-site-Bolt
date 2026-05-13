@@ -29,7 +29,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | Current blockers | none |
 | Current proof state | Launch-critical runtime proof is green on the current live runtime: `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `service-role-authorization`, `email-messaging-authorization`, `launch-closeout`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, `client-rls-matrix`, `registry-preview-ssrf`, `coordinator-dayof`, `name-change-runtime`, and `registry`. The harder repo guardrails are also green: `proof:v1:client-write-inventory`, `proof:v1:ast-security`, `proof:v1:test-lanes`, `proof:v1:strict-pocket`, and `proof:v1:security-automation`. `Release Launch Gate` remains green and the repo now carries Semgrep, CodeQL, Gitleaks, and Dependabot automation. |
 | Current deployment state | The latest deployed frontend runtime is [dayof.love](https://dayof.love) via verified Vercel production deploy `dpl_AbFTbLY263caiCEhQdniH2wbuM9d`. The coordinator migration `20260513170000_coordinator_event_checkin_write.sql` is now applied remotely, the deeper coordinator MVP lane and the deeper name-change claim-safe MVP lane are both live on the shipped runtime, and the richer barcode depth batch remains live-proven on `registry-barcode-lookup --no-verify-jwt`. `submit-rsvp` remains live with the serialized capacity path, and the public-session-secret, admin route gate, guest-contact, route-module decomposition, vault contribution, and `.dayof.love` host-routing lanes all remain live-proven. External custom domains remain unsupported product scope, not an open proof lane. |
-| Current next actions | No active competitor-informed MVP blocker remains. `Day-of / coordinator`, `Name change`, and `Universal Registry Barcode Scanner` now all meet the MVP/production-ready bar defined in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md). All remaining visible follow-up below is explicitly deferred, future-only, or conditional on future scope reopening. Repo-wide TS/ESLint full-flip work remains explicitly future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
+| Current next actions | The current launch baseline is still live and production-ready, but the board is reopened for deeper product-depth scope on `Day-of / coordinator`, `Name change`, and `Universal Registry Barcode Scanner`. Treat the shipped runtime as the floor, not the finish line: broader day-of workflows, broader name-change depth, and richer barcode/provider parity are active implementation work until they are shipped, deployed, and proven against the stronger bar in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md). Repo-wide TS/ESLint full-flip work remains explicitly future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
@@ -55,32 +55,34 @@ No active `P0` or `P1` launch blockers remain.
 
 ## Additional Hardening Findings
 
-No active competitor-informed MVP blocker remains. The formerly ambiguous feature lanes below are now shipped to the documented MVP bar on the live runtime.
+No active launch-baseline blocker remains, but the product-depth lanes below are active and not done. The shipped runtime is strong enough to launch; it is not yet the finish line for the deeper scope now required on the board.
 
 - launch-critical findings are closed and live-proven on the current deployed production runtime
 - `Day-of / coordinator`
-  - `MVP COMPLETE / DEPLOYED + LIVE-PROVEN`
-  - current truth: the deeper competitor-informed MVP batch is now shipped on the current production runtime in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md)
+  - `ACTIVE EXPANSION / MVP BASELINE SHIPPED`
+  - current truth: the launch-baseline MVP batch is shipped on the current production runtime, but broader day-of depth is now active scope in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md)
   - dedicated live product-depth proof is green on the current shipped runtime: `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live`
   - local deeper-batch proof is green: `npm run proof:v1:coordinator-dayof`, `npm run typecheck -- --pretty false`, targeted coordinator Vitest lane, `npm run build`
   - MVP bar now defined as: event-specific arrival truth, event-scoped counts, explicit exception states, lookup triage, and role-safe day-of routing
   - shipped now in this wave: event-scoped arrival writes + reads, per-event arrival counters, wrong-event / walk-in / help-desk / manager-decision / household-mismatch state handling, richer door routing, and no-match routing inside coordinator mode
+  - active deeper scope now required: multi-event staffing and handoff views, substitute-attendee / plus-one swap handling, seating-change-at-door workflow, richer issue resolution history, and stronger door-to-owner escalation continuity
   - deployed now: migration `20260513170000_coordinator_event_checkin_write.sql` plus Vercel production deploy `dpl_AbFTbLY263caiCEhQdniH2wbuM9d`
-  - live proof is green on the current production runtime for the shipped deeper batch
-  - status: `MVP COMPLETE / DEPLOYED + LIVE-PROVEN`
+  - live proof is green on the current production runtime for the shipped baseline batch
+  - status: `ACTIVE EXPANSION / MVP BASELINE SHIPPED`
 - `Name change`
-  - `MVP COMPLETE / DEPLOYED + LIVE-PROVEN`
-  - current truth: the deeper competitor-informed MVP batch is now shipped on the current production runtime in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md)
+  - `ACTIVE EXPANSION / MVP BASELINE SHIPPED`
+  - current truth: the launch-baseline MVP batch is shipped on the current production runtime, but broader name-change depth is now active scope in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md)
   - dedicated live runtime proof is green on the current shipped slice: `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live`
   - local deeper-batch proof is green: `npm run proof:v1:name-change-runtime`, `npm run typecheck -- --pretty false`, focused planner/overview Vitest lanes, `npm run lint -- --quiet`, `npm run build`
   - MVP bar now defined as: US-first guided execution, honest sequencing, reminders, status vault, templates, and post-wedding dashboard placement
   - shipped now in this wave: explicit California-guided coverage framing, claim-safe dashboard/helper copy, marriage-state plus jurisdiction intake, generic state-license/document labels, and verified post-wedding dashboard + planner resume placement
+  - active deeper scope now required: broader non-California state playbooks, deeper institution/account library coverage, stronger dual-partner orchestration, and richer export/packet-ready follow-through for real-world execution
   - deployed now: Vercel production deploy `dpl_AbFTbLY263caiCEhQdniH2wbuM9d`
-  - live proof is green on the current production runtime for the shipped deeper batch
-  - status: `MVP COMPLETE / DEPLOYED + LIVE-PROVEN`
+  - live proof is green on the current production runtime for the shipped baseline batch
+  - status: `ACTIVE EXPANSION / MVP BASELINE SHIPPED`
 - `Universal Registry Barcode Scanner`
-  - `MVP COMPLETE / POST-MVP DEFERRED`
-  - current truth: the competitor-informed MVP bar is shipped and live-proven; remaining work is post-MVP parity and depth only
+  - `ACTIVE EXPANSION / MVP BASELINE SHIPPED`
+  - current truth: the competitor-informed MVP bar is shipped and live-proven, but richer barcode/provider parity is now active scope instead of deferred
   - implemented now: scan/manual barcode entry UI, barcode normalization, cache-aware edge lookup, registry persistence fields, and focused tests
   - deeper shipped slice now also includes provider-path metadata, review-required match state, explicit `Use best price` / `Add without store` owner controls, Open Library fallback for ISBNs, optional `UPCITEMDB_API_KEY` ladder support, normalized retailer-option building, and miss-cache attempt increments
   - deployed now: migration `20260513064500_add_registry_barcode_scanner_support.sql`, frontend runtime, and live `registry-barcode-lookup --no-verify-jwt`
@@ -88,8 +90,8 @@ No active competitor-informed MVP blocker remains. The formerly ambiguous featur
   - deeper barcode batch proof is green locally: `npm run proof:v1:registry`, `npm run typecheck -- --pretty false`, `npm run build`, `git diff --check`
   - deeper barcode batch deploy/live proof status: deployed and live-proven in this wave
   - provider ladder currently ships with free/open coverage first and safe manual fallback when no confident match exists
-  - remaining gaps are explicitly post-MVP/deferred: fuller broad-match provider coverage, stronger duplicate/merge handling, stronger product-match depth, and richer universal-registry parity beyond barcode capture
-  - status: `MVP COMPLETE / POST-MVP DEFERRED`
+  - active deeper scope now required: fuller broad-match provider coverage, stronger duplicate/merge handling, stronger product-match depth, and richer universal-registry parity beyond barcode capture
+  - status: `ACTIVE EXPANSION / MVP BASELINE SHIPPED`
   - full concept, architecture, provider ladder, cache tables, and risk notes live in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md)
 - repo-wide TS/ESLint full-flip work is `FUTURE-ONLY / MAINTAINABILITY`
   - the enforced strict pocket now also covers RSVP, SiteView, siteViewHelpers, QuickStart, route modules, and `nameChangeService`
@@ -227,15 +229,15 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 
 ## Next 10 Tasks
 
-1. No active competitor-informed MVP implementation work remains on the current board.
-2. `DEFERRED`: keep `Universal Registry Barcode Scanner` post-MVP depth deferred unless it is reactivated as active scope.
-3. `DEFERRED`: keep broader `Day-of / coordinator` expansion deferred unless it is reactivated beyond the current MVP bar.
-4. `DEFERRED`: keep broader `Name change` expansion deferred unless it is reactivated beyond the current MVP bar.
-5. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the live client-RLS matrix current only if future non-guest write surfaces are added.
-6. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the no-direct-client-write inventory current only if future runtime write surfaces are added.
-7. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the board synced if future deploys change the truth for `Day-of / coordinator`.
-8. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the board synced if future deploys change the truth for `Name change`.
-9. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the board synced if future deploys change the truth for `Universal Registry Barcode Scanner`.
+1. `ACTIVE`: deepen `Universal Registry Barcode Scanner` provider coverage, duplicate/merge handling, and richer product-match parity.
+2. `ACTIVE`: deepen `Day-of / coordinator` with multi-event staffing/handoff flow and explicit substitute-attendee / plus-one swap resolution.
+3. `ACTIVE`: deepen `Day-of / coordinator` with seating-change-at-door workflow plus richer issue history and escalation continuity.
+4. `ACTIVE`: deepen `Name change` with broader non-California state playbooks and stronger institution/account coverage.
+5. `ACTIVE`: deepen `Name change` with stronger dual-partner orchestration and richer packet/export follow-through.
+6. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the live client-RLS matrix current only if future non-guest write surfaces are added.
+7. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the no-direct-client-write inventory current only if future runtime write surfaces are added.
+8. `CONDITIONAL`: keep the board synced as future deploys change the truth for `Day-of / coordinator`.
+9. `CONDITIONAL`: keep the board synced as future deploys change the truth for `Name change`.
 10. `FUTURE-ONLY`: keep repo-wide TS/ESLint full-flip work future-only unless it is explicitly reactivated.
 
 ## Resolved Work Summary
