@@ -70,16 +70,17 @@ No active launch-baseline blocker remains, but the product-depth lanes below are
   - live proof is green on the current production runtime for the shipped baseline batch
   - status: `ACTIVE EXPANSION / MVP BASELINE SHIPPED`
 - `Name change`
-  - `ACTIVE EXPANSION / MVP BASELINE SHIPPED`
-  - current truth: the launch-baseline MVP batch is shipped on the current production runtime, but broader name-change depth is now active scope in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md)
+  - `ACTIVE EXPANSION / LOCAL DEPTH BATCH READY`
+  - current truth: the launch-baseline MVP batch is shipped on the current production runtime, and the broader planner-depth batch is now implemented locally with green proof, but it is not yet deployed or live-proven on the authenticated runtime
   - dedicated live runtime proof is green on the current shipped slice: `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live`
   - local deeper-batch proof is green: `npm run proof:v1:name-change-runtime`, `npm run typecheck -- --pretty false`, focused planner/overview Vitest lanes, `npm run lint -- --quiet`, `npm run build`
   - MVP bar now defined as: US-first guided execution, honest sequencing, reminders, status vault, templates, and post-wedding dashboard placement
   - shipped now in this wave: explicit California-guided coverage framing, claim-safe dashboard/helper copy, marriage-state plus jurisdiction intake, generic state-license/document labels, and verified post-wedding dashboard + planner resume placement
-  - active deeper scope now required: broader non-California state playbooks, deeper institution/account library coverage, stronger dual-partner orchestration, and richer export/packet-ready follow-through for real-world execution
+  - deeper local batch now adds: state playbooks for California plus expanded Nevada / New York / Texas / Florida / Washington guidance with generic fallback, institution coverage mapping from the downstream library, stronger dual-partner rollout surfaces, and copy-or-download action/downstream/status/partner packets for real-world follow-through
+  - active deeper scope now required: deploy the richer name-change planner-depth batch and rerun the authenticated live runtime proof on the shipped route
   - deployed now: Vercel production deploy `dpl_AbFTbLY263caiCEhQdniH2wbuM9d`
-  - live proof is green on the current production runtime for the shipped baseline batch
-  - status: `ACTIVE EXPANSION / MVP BASELINE SHIPPED`
+  - live proof is green on the current production runtime for the shipped baseline batch, not yet for the richer local planner-depth batch
+  - status: `ACTIVE EXPANSION / LOCAL DEPTH BATCH READY`
 - `Universal Registry Barcode Scanner`
   - `ACTIVE EXPANSION / MVP BASELINE SHIPPED`
   - current truth: the competitor-informed MVP bar is shipped and live-proven, but richer barcode/provider parity is now active scope instead of deferred
@@ -232,8 +233,8 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 1. `ACTIVE`: deepen `Universal Registry Barcode Scanner` provider coverage, duplicate/merge handling, and richer product-match parity.
 2. `ACTIVE`: deepen `Day-of / coordinator` with multi-event staffing/handoff flow and explicit substitute-attendee / plus-one swap resolution.
 3. `ACTIVE`: deepen `Day-of / coordinator` with seating-change-at-door workflow plus richer issue history and escalation continuity.
-4. `ACTIVE`: deepen `Name change` with broader non-California state playbooks and stronger institution/account coverage.
-5. `ACTIVE`: deepen `Name change` with stronger dual-partner orchestration and richer packet/export follow-through.
+4. `ACTIVE`: deploy the richer `Name change` planner-depth batch and rerun authenticated live runtime proof.
+5. `ACTIVE`: deepen `Universal Registry Barcode Scanner` duplicate/merge handling so the owner workflow does not stop at passive duplicate counts.
 6. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the live client-RLS matrix current only if future non-guest write surfaces are added.
 7. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the no-direct-client-write inventory current only if future runtime write surfaces are added.
 8. `CONDITIONAL`: keep the board synced as future deploys change the truth for `Day-of / coordinator`.

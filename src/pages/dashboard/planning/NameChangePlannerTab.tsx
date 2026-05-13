@@ -42,6 +42,7 @@ import { buildNameChangeOverviewCardModel } from '../nameChangeOverviewCard';
 import { buildNameChangeOverviewInsights } from '../nameChangeOverviewInsights';
 import { NAME_CHANGE_LIFECYCLE_LABELS } from '../nameChangeLifecycleLabels';
 import { deriveNameChangeLifecycleStatus } from '../nameChangeLifecycleStatus';
+import { buildNameChangePlannerExports, resolveNameChangeStatePlaybook } from '../../../lib/nameChange/plannerDeepWork';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -360,6 +361,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(readNameChangeCollapsedSections);
   const [documentSnapshotDrafts, setDocumentSnapshotDrafts] = useState<Record<string, string>>({});
   const [copiedTemplateId, setCopiedTemplateId] = useState<string | null>(null);
+  const [copiedPlannerExportKey, setCopiedPlannerExportKey] = useState<string | null>(null);
   const stepCounts = useMemo(() => ({
     ready: plan.steps.filter((step) => step.status === 'ready').length,
     blocked: plan.steps.filter((step) => step.status === 'blocked').length,
@@ -372,9 +374,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     [milestoneChecklist],
   );
   const dualPartnerProofTracks = useMemo(() => plan.summary.dualPartnerProofTracks ?? [], [plan.summary.dualPartnerProofTracks]);
+  const institutionCategoryCoverage = useMemo(() => plan.summary.institutionCategoryCoverage ?? [], [plan.summary.institutionCategoryCoverage]);
   const accountUpdateTemplates = useMemo(() => plan.summary.accountUpdateTemplates ?? [], [plan.summary.accountUpdateTemplates]);
   const executionTracks = useMemo(() => plan.summary.executionTracks ?? [], [plan.summary.executionTracks]);
   const edgeCaseGuidance = useMemo(() => plan.summary.edgeCaseGuidance ?? [], [plan.summary.edgeCaseGuidance]);
+  const statePlaybook = useMemo(
+    () => resolveNameChangeStatePlaybook(draft),
+    [draft],
+  );
   const hasExecutionActivity = useMemo(
     () => (plan.summary.executionCounts?.in_progress ?? 0) > 0 || (plan.summary.executionCounts?.complete ?? 0) > 0,
     [plan.summary.executionCounts],
@@ -560,6 +567,15 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     missingProofTargets: targetStatusVaultRows.filter((row) => row.proofMissingCount > 0).length,
     attentionProofTargets: targetStatusVaultRows.filter((row) => row.proofAttentionCount > 0).length,
   }), [targetStatusVaultRows]);
+  const plannerExports = useMemo(
+    () => buildNameChangePlannerExports({
+      draft,
+      plan,
+      reminders: effectiveReminders,
+      statePlaybook,
+    }),
+    [draft, effectiveReminders, plan, statePlaybook],
+  );
   const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention, {
     hasRecentStart: plan.summary.hasRecentStart,
     hasRecentCompletion: plan.summary.hasRecentCompletion,
@@ -935,6 +951,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     }, 2000);
   };
 
+  const copyPlannerExport = async (key: string, text: string, fileName: string) => {
+    await copyTextOrDownload(text, fileName);
+    setCopiedPlannerExportKey(key);
+    window.setTimeout(() => {
+      setCopiedPlannerExportKey((current) => (current === key ? null : current));
+    }, 2000);
+  };
+
   return (
     <div id="name-change-roadmap" className="space-y-6 scroll-mt-24">
       <div className="grid gap-4 md:grid-cols-3">
@@ -1156,6 +1180,159 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           </div>
         </Card>
       </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1fr,1fr]">
+        <Card>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <MapPinned className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold text-text-primary">State playbook</h3>
+              </div>
+              <p className="mt-1 text-sm text-text-secondary">A grounded jurisdiction note for the certificate chain, resident-ID handoff, and downstream proof packet.</p>
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-2 text-xs text-text-secondary">
+              <span className="rounded-md bg-surface-subtle px-2 py-1">{statePlaybook.matchedStateLabel}</span>
+              <span className="rounded-md bg-primary/10 px-2 py-1 text-primary">{statePlaybook.supportLabel}</span>
+            </div>
+          </div>
+
+          <p className="mt-4 text-sm text-text-primary">{statePlaybook.summary}</p>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="rounded-lg border border-border-subtle p-4">
+              <p className="text-xs text-text-tertiary">Office path</p>
+              <p className="mt-2 text-sm font-semibold text-text-primary">{statePlaybook.officeLabel}</p>
+              <p className="mt-2 text-sm text-text-secondary">{statePlaybook.officeDetail}</p>
+            </div>
+            <div className="rounded-lg border border-border-subtle p-4">
+              <p className="text-xs text-text-tertiary">County grounding</p>
+              <p className="mt-2 text-sm text-text-secondary">{statePlaybook.countyDetail}</p>
+            </div>
+            <div className="rounded-lg border border-border-subtle p-4">
+              <p className="text-xs text-text-tertiary">Proof packet</p>
+              <p className="mt-2 text-sm text-text-secondary">{statePlaybook.proofPacketDetail}</p>
+            </div>
+            <div className="rounded-lg border border-border-subtle p-4">
+              <p className="text-xs text-text-tertiary">Downstream handoff</p>
+              <p className="mt-2 text-sm text-text-secondary">{statePlaybook.downstreamDetail}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
+            <p className="text-xs text-primary">Partner note</p>
+            <p className="mt-2 text-sm text-text-primary">{statePlaybook.partnerDetail}</p>
+            <ul className="mt-3 space-y-1 text-xs text-text-secondary">
+              {statePlaybook.checklist.map((item) => (
+                <li key={item}>• {item}</li>
+              ))}
+            </ul>
+          </div>
+        </Card>
+
+        <Card>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold text-text-primary">Institution coverage map</h3>
+              </div>
+              <p className="mt-1 text-sm text-text-secondary">See which downstream lanes are already represented in the planner so rollout feels like a system, not a short checklist.</p>
+            </div>
+            <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+              {institutionCategoryCoverage.length} lanes
+            </span>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {institutionCategoryCoverage.map((category) => (
+              <div key={category.id} className="rounded-lg border border-border-subtle p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">{category.label}</p>
+                    <p className="mt-1 text-sm text-text-secondary">{category.summary}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <span className={`rounded-md px-2 py-1 text-xs ${getExecutionSummaryTone(category.status)}`}>
+                      {category.status}
+                    </span>
+                    <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+                      {category.targetCount} targets
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-3 text-xs text-text-secondary">Planner keys: {category.institutionKeys.join(' · ')}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      {dualPartnerProofTracks.length > 0 && (
+        <Card>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold text-text-primary">Dual-partner rollout</h3>
+              </div>
+              <p className="mt-1 text-sm text-text-secondary">Keep proof, updated-ID, and downstream confirmations separated per partner so one timeline does not hide the other.</p>
+            </div>
+            <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+              {dualPartnerProofTracks.length} partner tracks
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {dualPartnerProofTracks.map((track) => (
+              <div key={track.id} className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">{track.label}</p>
+                    <p className="mt-1 text-xs text-text-secondary">Depends on: {track.dependsOnStepIds.join(' → ')}</p>
+                  </div>
+                  <span className={`rounded-md px-2 py-1 text-xs ${getExecutionSummaryTone(track.status)}`}>
+                    {track.status}
+                  </span>
+                </div>
+                <p className="mt-3 text-xs text-text-secondary">Proof packet: {track.requiredProof.join(' · ')}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      <Card>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <FileCheck2 className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-semibold text-text-primary">Wedding identity exports</h3>
+            </div>
+            <p className="mt-1 text-sm text-text-secondary">Carry a working packet into a bank, insurer, payroll conversation, or shared handoff without rebuilding the planner context from memory.</p>
+          </div>
+          <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+            {plannerExports.length} exports
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {plannerExports.map((exportItem) => (
+            <div key={exportItem.key} className="rounded-lg border border-border-subtle p-4">
+              <p className="text-sm font-semibold text-text-primary">{exportItem.label}</p>
+              <p className="mt-2 text-sm text-text-secondary">{exportItem.summary}</p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-4"
+                onClick={() => void copyPlannerExport(exportItem.key, exportItem.text, exportItem.fileName)}
+              >
+                {copiedPlannerExportKey === exportItem.key ? 'Copied' : `Copy ${exportItem.label.toLowerCase()}`}
+              </Button>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       <div className="grid gap-4 xl:grid-cols-[1fr,1fr]">
         <Card>

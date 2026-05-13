@@ -141,18 +141,17 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - marriage-state plus county / jurisdiction intake inside case setup
   - generic state-license and issuing-authority labels so document intake does not overclaim California scope
   - verified post-wedding dashboard and planner resume placement for the shipped planner surfaces
+  - state playbooks for California plus expanded Nevada / New York / Texas / Florida / Washington guidance with generic fallback for other marriage jurisdictions
+  - institution coverage mapping from the downstream account library so rollout lanes read like a working execution system
+  - stronger dual-partner rollout surfaces that keep proof and downstream status separated per partner
+  - action, downstream, status, and dual-partner exports so the planner can hand a real packet or summary into a live work session
 - Deployed/live now:
   - deeper runtime deployed on Vercel production `dpl_AbFTbLY263caiCEhQdniH2wbuM9d`
   - `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live` is green against the shipped runtime
 
 ### Active deeper scope
 
-The shipped baseline is real and launchable, but the board now treats the following as active work for a more in-depth MVP:
-
-1. Add broader non-California state playbooks so the planner feels genuinely useful outside the current strongest state-guided lane.
-2. Deepen institution/account coverage so downstream update cards feel like a working execution system rather than a thin checklist.
-3. Strengthen dual-partner orchestration so couples changing one or both names can manage parallel but distinct update tracks cleanly.
-4. Add richer packet/export follow-through so users can carry a real-world action packet or summary out of the planner when working through institutions.
+The shipped baseline is real and launchable. The richer planner-depth batch above is now implemented locally; the remaining active gap is to deploy it and re-run the authenticated live runtime proof on the shipped route.
 
 ## Universal Registry Barcode Scanner
 
