@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-12 10:14 PM PDT`
+_Updated:_ `2026-05-12 10:21 PM PDT`
 
 ## Current Score
 
@@ -11,9 +11,10 @@ _Updated:_ `2026-05-12 10:14 PM PDT`
 ## Exact Runtime Identity
 
 - Branch: `codex/v1-finish-hard-gates-3`
-- Current branch head: `f2cc4811` (`Harden launch runtime proofs and route splits`)
+- Current branch head: `f29574dd` (`Reduce strictness debt and close active board`)
 - Exact frontend Git SHA: `f2cc4811`
 - Exact frontend commit: `Harden launch runtime proofs and route splits`
+- Current repo head is ahead of the deployed runtime only by the local/branch board-sync cleanup commit `f29574dd`; no runtime deploy was needed for that board-close batch
 - Exact Vercel production deploy: `dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU`
 - Production URL: [dayof.love](https://dayof.love)
 - Supabase project: `atuzuobpprjstfmdnwso`

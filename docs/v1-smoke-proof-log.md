@@ -9,6 +9,7 @@ _Launch call right now:_ `GO`
 ## Current Truth
 
 - The main verified live runtime is exact frontend SHA `f2cc4811`.
+- Current branch head is `f29574dd`; the extra head commit is a board-sync cleanup and does not change deployed runtime behavior.
 - Public DTO minimization is closed and live-proven.
 - Secure service-role, queue, storage/media, and email queue-processing proof lanes are green with the provided secure key.
 - Guest contact, RSVP, public site, guest hub, photo, registry preview, collaborator runtime, and AI/provider launch lanes are green on the blocker-fix runtime.

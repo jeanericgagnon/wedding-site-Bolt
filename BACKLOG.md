@@ -15,10 +15,10 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-12 10:14 PM PDT` |
+| Current date/time | `2026-05-12 10:21 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
-| Latest Git SHA | `f2cc4811` |
-| Latest commit message | `Harden launch runtime proofs and route splits` |
+| Latest Git SHA | `f29574dd` |
+| Latest commit message | `Reduce strictness debt and close active board` |
 | Vercel deployment ID | `dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
 | Supabase functions deployed | Live blocker-fix lane includes `submit-rsvp --no-verify-jwt` plus applied migration `20260511170500_serialize_submit_rsvp_capacity.sql`. Same-day confirmed/live-proven: `public-site-access --no-verify-jwt`; `photo-upload --no-verify-jwt`; `process-email-queue`; `validate-rsvp-token --no-verify-jwt`; `interactive-section-public --no-verify-jwt`; `vault-contribution-public --no-verify-jwt`; `vault-entry-submit --no-verify-jwt`; `translate-site-content`. Latest deploy wave also pushed `guest-contact-lookup --no-verify-jwt` and `guest-contact-submit --no-verify-jwt` with the stronger household verifier, guest invite-token support, and redacted public audit event live. |
@@ -28,7 +28,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | Reason production-ready is not yet claimed | No active P0/P1 blockers remain. Production-ready is claimed for the current launch baseline. Remaining items are non-launch, deferred, or repo-rigor follow-up. |
 | Current blockers | none |
 | Current proof state | Launch-critical runtime proof is green on the exact live runtime: `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `service-role-authorization`, `email-messaging-authorization`, `launch-closeout`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, `client-rls-matrix`, `registry-preview-ssrf`, `coordinator-dayof`, and `name-change-runtime`. The harder repo guardrails are also green: `proof:v1:client-write-inventory`, `proof:v1:ast-security`, `proof:v1:test-lanes`, `proof:v1:strict-pocket`, and `proof:v1:security-automation`. `Release Launch Gate` remains green and the repo now carries Semgrep, CodeQL, Gitleaks, and Dependabot automation. |
-| Current deployment state | Frontend is live at [dayof.love](https://dayof.love) on exact runtime Git SHA `f2cc4811` via verified Vercel production deploy `dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU`. `submit-rsvp` is live with the serialized capacity path and the database includes the RPC migration sweep through `20260512031500_seating_assignment_version_rpcs.sql` plus repair migrations through `20260512050000_harden_admin_access_check.sql`. The public-session-secret lane is live, the admin route gate is live on `admin_access_check()`, the guest-contact lane now requires a stronger household step-up verifier and accepts guest-specific invite tokens, public guest-contact audit writes are live, the route-module decomposition is live, the public vault contribution lane is live-proven, and the `.dayof.love` subdomain route is live-proven fail-closed. External custom domains remain unsupported product scope, not an open proof lane. |
+| Current deployment state | Branch head is `f29574dd`; the latest deployed frontend runtime is still [dayof.love](https://dayof.love) on exact runtime Git SHA `f2cc4811` via verified Vercel production deploy `dpl_DQG5bU5yVbqT79Y6r4ZCx13nPtSU`. `submit-rsvp` is live with the serialized capacity path and the database includes the RPC migration sweep through `20260512031500_seating_assignment_version_rpcs.sql` plus repair migrations through `20260512050000_harden_admin_access_check.sql`. The public-session-secret lane is live, the admin route gate is live on `admin_access_check()`, the guest-contact lane now requires a stronger household step-up verifier and accepts guest-specific invite tokens, public guest-contact audit writes are live, the route-module decomposition is live, the public vault contribution lane is live-proven, and the `.dayof.love` subdomain route is live-proven fail-closed. External custom domains remain unsupported product scope, not an open proof lane. |
 | Current next actions | No active launch blocker remains. keep the live client-RLS matrix current and keep the no-direct-client-write inventory current only if future runtime write surfaces reopen. Keep day-of and name-change visible as monitored surfaces, and keep `Universal Registry Barcode Scanner` visible as a future feature on this board for now. Repo-wide TS/ESLint full-flip work is now explicitly future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
 
 Blunt status:
@@ -57,7 +57,7 @@ No active `P0` or `P1` launch blockers remain.
 
 No active launch blocker remains, but the following items stay visible on the active board.
 
-- launch-critical findings are closed and live-proven on exact runtime SHA `f2cc4811`
+- launch-critical findings are closed and live-proven on exact deployed runtime SHA `f2cc4811`
 - `Day-of / coordinator`
   - dedicated live product-depth proof exists: `npm run proof:v1:coordinator-dayof -- --require-live`
   - keep visible because it is a broad operator-facing workflow with meaningful regression risk
