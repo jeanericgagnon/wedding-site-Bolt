@@ -6,8 +6,8 @@ Purpose:
 - turn three ambiguous active features into a concrete MVP bar
 - separate the shipped launch baseline from the deeper product-depth scope that was reopened as active work
 - give the backlog an honest build target
-- current truth update: the shipped deeper-MVP/product-depth bar was below the user's requested finish line; coordinator, name-change, and registry have now closed their fuller-suite bars, while the cross-feature exit gate remains active
-- full-suite claim update: the backlog should only count as full-suite-ready when the feature-specific ship lists and the cross-feature exit gate are both complete
+- current truth update: the shipped deeper-MVP/product-depth bar was below the user's requested finish line; coordinator, name-change, and registry have now closed their fuller-suite bars, and the cross-feature exit gate is now closed too
+- full-suite claim update: the backlog now counts as full-suite-ready because the feature-specific ship lists and the cross-feature exit gate are both complete on the current production runtime
 
 Method:
 - reviewed official product and help pages from direct competitors and adjacent event products
@@ -231,4 +231,5 @@ No remaining registry gap is active inside the competitor-informed MVP bar or th
 - `Day-of / coordinator` has met the shipped launch-baseline MVP bar, the earlier deeper product-depth bar, and its specific full-suite checklist.
 - `Name change` has met the shipped launch-baseline MVP bar, the earlier deeper planner-depth bar, and its specific full-suite checklist.
 - `Universal Registry Barcode Scanner` has met the shipped launch-baseline MVP bar, the earlier deeper product-depth bar, and its specific full-suite checklist.
-- Full-suite readiness should only be claimed after those three checklists are complete and the cross-feature exit gate is also complete: device coverage, empty/error/manual fallback coverage, saved-data continuity, role boundaries, operational handoff/export surfaces, and dedicated proof coverage.
+- The cross-feature exit gate is now closed too: `npm run proof:v1:full-suite-exit-gate` and `V1_FULL_SUITE_EXIT_GATE_LIVE=1 npm run proof:v1:full-suite-exit-gate -- --require-live` are green for responsive device coverage, empty/error/manual fallback truth, saved-data continuity, role boundaries, operational handoff/export surfaces, and dedicated proof coverage.
+- Full-suite readiness is now claimable for these three features on the current shipped production runtime.

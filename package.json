@@ -63,6 +63,7 @@
     "proof:v1:coordinator-dayof": "node scripts/v1-proof-coordinator-dayof.mjs",
     "proof:v1:name-change-runtime": "node scripts/v1-proof-name-change-runtime.mjs",
     "proof:v1:registry": "node scripts/v1-proof-registry.mjs",
+    "proof:v1:full-suite-exit-gate": "node scripts/v1-proof-full-suite-exit-gate.mjs",
     "proof:v1:registry-preview-ssrf": "node scripts/v1-proof-registry-preview-ssrf.mjs",
     "proof:v1:seating-continuity": "node scripts/v1-proof-seating-continuity.mjs",
     "proof:v1:data-integrity": "node scripts/v1-proof-data-integrity.mjs",

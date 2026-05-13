@@ -15,21 +15,21 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-13 02:35 PM PDT` |
+| Current date/time | `2026-05-13 02:54 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
-| Latest verified Git SHA | `a14fd723` |
-| Latest verified commit message | `Ship name-change full-suite readiness` |
+| Latest verified Git SHA | `4960fca1` |
+| Latest verified commit message | `Ship registry full-suite readiness` |
 | Vercel deployment ID | `dpl_2mznMs9MotSfX9LeWSjKvjgfWcRB` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
 | Supabase functions deployed | Live blocker-fix lane includes `submit-rsvp --no-verify-jwt` plus applied migration `20260511170500_serialize_submit_rsvp_capacity.sql`. Same-day confirmed/live-proven: `public-site-access --no-verify-jwt`; `photo-upload --no-verify-jwt`; `process-email-queue`; `validate-rsvp-token --no-verify-jwt`; `interactive-section-public --no-verify-jwt`; `vault-contribution-public --no-verify-jwt`; `vault-entry-submit --no-verify-jwt`; `translate-site-content`. Latest deploy waves also pushed `guest-contact-lookup --no-verify-jwt`, `guest-contact-submit --no-verify-jwt`, and the final `registry-barcode-lookup --no-verify-jwt` fuller-suite provider/repair/fallback batch live. |
-| Current readiness score | `9.5 / 10` |
+| Current readiness score | `10 / 10` |
 | Current launch verdict | `GO` |
-| Production-ready | `YES FOR LAUNCH BASELINE / NO FOR FULL-SUITE CLOSEOUT` |
-| Reason production-ready is not yet claimed | Production-ready is still claimed for the launch baseline. It is not yet claimed for full-suite closeout because the cross-feature exit gate is still open. Full-suite readiness is only claimable once every `ACTIVE` item below is shipped, deployed, and proven. |
-| Current blockers | No active launch blocker remains. The only active full-suite blocker now is the cross-feature full-suite exit gate. `Day-of / coordinator`, `Name change`, and `Universal Registry Barcode Scanner` are all now shipped, deployed, and live-proven at their fuller suite bars. |
-| Current proof state | Launch-critical runtime proof remains green on the live runtime: `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `service-role-authorization`, `email-messaging-authorization`, `launch-closeout`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, `client-rls-matrix`, `registry-preview-ssrf`, `coordinator-dayof`, `name-change-runtime`, and `registry`. In this batch, the registry full-suite lane also turned green locally and live on the current production deploy: provider breadth, retailer reconciliation, cleanup queue truth, compatibility scanner fallback, and live owner add/merge/readback are now covered by `npm run proof:v1:registry` and `LIVE_REGISTRY_WRITE_READ=1 npm run proof:v1:registry -- --require-live`. Full-suite proof is still incomplete overall only because the cross-feature exit-gate lane remains open. |
-| Current deployment state | The latest deployed frontend runtime is [dayof.love](https://dayof.love) via verified Vercel production deploy `dpl_2mznMs9MotSfX9LeWSjKvjgfWcRB`. The coordinator migrations `20260513170000_coordinator_event_checkin_write.sql` and `20260513213000_coordinator_handoff_issue_depth.sql`, the name-change reminder compatibility migration `20260513193000_fix_name_change_reminders_replace_runtime.sql`, and the registry duplicate-merge migration `20260513195500_add_registry_duplicate_merge.sql` remain applied remotely. This latest deploy ships the coordinator incident lifecycle, runner board, guest continuity, shift snapshot surfaces, the full-suite name-change planner depth, and the full-suite registry provider/repair/fallback batch live on production. `registry-barcode-lookup --no-verify-jwt` is redeployed live with the broader Open Facts ladder and repair-queue-compatible lookup path. `submit-rsvp` remains live with the serialized capacity path, and the public-session-secret, admin route gate, guest-contact, route-module decomposition, vault contribution, and `.dayof.love` host-routing lanes remain live-proven. External custom domains remain unsupported product scope, not an open proof lane. |
-| Current next actions | Clear the remaining active cross-feature full-suite exit gate, then claim ready. Repo-wide TS/ESLint full-flip work remains future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
+| Production-ready | `YES FOR FULL-SUITE CLOSEOUT` |
+| Reason production-ready is not yet claimed | None. All visible `ACTIVE` items for the three full-suite lanes and the cross-feature exit gate are now shipped, deployed, and proven on the current production runtime. |
+| Current blockers | No active launch blocker or active full-suite blocker remains. |
+| Current proof state | Launch-critical runtime proof remains green on the live runtime: `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `service-role-authorization`, `email-messaging-authorization`, `launch-closeout`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, `client-rls-matrix`, `registry-preview-ssrf`, `coordinator-dayof`, `name-change-runtime`, and `registry`. The final cross-feature exit gate is also green locally and live on the current production deploy: `npm run proof:v1:full-suite-exit-gate` and `V1_FULL_SUITE_EXIT_GATE_LIVE=1 npm run proof:v1:full-suite-exit-gate -- --require-live` now prove the three shipped lanes plus responsive surfaces, collaborator permission RLS, saved-data continuity, and operational handoff/repair/export readiness. |
+| Current deployment state | The latest deployed frontend runtime is [dayof.love](https://dayof.love) via verified Vercel production deploy `dpl_2mznMs9MotSfX9LeWSjKvjgfWcRB`. The coordinator migrations `20260513170000_coordinator_event_checkin_write.sql` and `20260513213000_coordinator_handoff_issue_depth.sql`, the name-change reminder compatibility migration `20260513193000_fix_name_change_reminders_replace_runtime.sql`, and the registry duplicate-merge migration `20260513195500_add_registry_duplicate_merge.sql` remain applied remotely. This deploy ships the coordinator incident lifecycle, runner board, guest continuity, shift snapshot surfaces, the full-suite name-change planner depth, and the full-suite registry provider/repair/fallback batch live on production. `registry-barcode-lookup --no-verify-jwt` is redeployed live with the broader Open Facts ladder and repair-queue-compatible lookup path. The cross-feature exit gate is live-proven on this production runtime through the responsive three-lane proof plus collaborator permission RLS proof. `submit-rsvp` remains live with the serialized capacity path, and the public-session-secret, admin route gate, guest-contact, route-module decomposition, vault contribution, and `.dayof.love` host-routing lanes remain live-proven. External custom domains remain unsupported product scope, not an active proof lane. |
+| Current next actions | No active implementation work remains in this backlog. Only `DEFERRED`, `FUTURE-ONLY`, `CONCEPT ONLY`, and `NO-CODE` follow-up remains outside the current full-suite bar. |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
@@ -55,7 +55,7 @@ No active `P0` or `P1` launch blockers remain.
 
 ## Additional Hardening Findings
 
-No active launch-baseline blocker remains, but the product-depth lanes below are active and not done. The shipped runtime is strong enough to launch; it is not yet the finish line for the deeper scope now required on the board.
+No active launch-baseline blocker or full-suite blocker remains. The shipped runtime is strong enough to launch, and the full-suite bar defined on this board is now complete for the three active lanes.
 
 - launch-critical findings are closed and live-proven on the current deployed production runtime
 - `Day-of / coordinator`
@@ -113,15 +113,16 @@ No active launch-baseline blocker remains, but the product-depth lanes below are
   - status: `FULL-SUITE READY FOR THIS LANE`
   - full concept, architecture, provider ladder, cache tables, and risk notes live in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md)
 - `Cross-feature full-suite exit gate for these 3`
-  - `ACTIVE`
-  - full-suite readiness is only claimable when all three lanes above are shipped and the following are also true:
-    - `ACTIVE`: desktop, tablet, and mobile workflows are proven for the final shipped surfaces that matter in real use
-    - `ACTIVE`: empty, error, retry, and manual-fallback states are complete and not just the happy path
-    - `ACTIVE`: saved-data continuity is proven, including reload, legacy-row compatibility where applicable, and real repair/recovery flows
-    - `ACTIVE`: role and permission boundaries are proven wherever owners, collaborators, planners, or coordinators touch these features
-    - `ACTIVE`: export, handoff, packet, repair, or review flows are complete anywhere the feature depends on them to be operationally usable
-    - `ACTIVE`: dedicated local and live proof lanes cover the final shipped behavior for all newly added full-suite surfaces
-  - status: `ACTIVE`
+  - `FULL-SUITE EXIT GATE CLOSED`
+  - final gate proof is green locally and live: `npm run proof:v1:full-suite-exit-gate`, `V1_FULL_SUITE_EXIT_GATE_LIVE=1 npm run proof:v1:full-suite-exit-gate -- --require-live`
+  - full-suite readiness is now claimable because all three lanes above are shipped and the following are also true:
+    - `DONE`: desktop, tablet, and mobile workflows are proven for the final shipped surfaces that matter in real use
+    - `DONE`: empty, error, retry, and manual-fallback states are complete and not just the happy path
+    - `DONE`: saved-data continuity is proven, including reload, legacy-row compatibility where applicable, and real repair/recovery flows
+    - `DONE`: role and permission boundaries are proven wherever owners, collaborators, planners, or coordinators touch these features
+    - `DONE`: export, handoff, packet, repair, or review flows are complete anywhere the feature depends on them to be operationally usable
+    - `DONE`: dedicated local and live proof lanes cover the final shipped behavior for all newly added full-suite surfaces
+  - status: `FULL-SUITE READY FOR THESE 3`
 - repo-wide TS/ESLint full-flip work is `FUTURE-ONLY / MAINTAINABILITY`
   - the enforced strict pocket now also covers RSVP, SiteView, siteViewHelpers, QuickStart, route modules, and `nameChangeService`
   - the latest cleanup wave restored green `typecheck`, `lint`, `build`, `proof:v1:strict-pocket`, and focused proof tests after a broader dead-code/import sweep
