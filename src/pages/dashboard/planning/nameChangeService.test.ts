@@ -21,6 +21,7 @@ import {
   normalizeNameChangeCaseInput,
   normalizeNameChangeDocuments,
   normalizeNameChangeExtractedFields,
+  normalizeNameChangePassportFlags,
   normalizeNameChangeStructuredIntake,
   remapNameChangeExtractedFieldsToPersistedDocuments,
 } from './nameChangeService';
@@ -92,6 +93,27 @@ describe('nameChangeService normalization', () => {
       wantsDocumentIntakeHelp: true,
       bothPartnersChangeName: false,
       employerName: '',
+    });
+  });
+
+  it('maps legacy and canonical passport flags into one stable contract', () => {
+    expect(normalizeNameChangePassportFlags({
+      hasPassport: 1,
+      passportNeedsUpdate: 0,
+      hasRealIdLicense: true,
+      isUsCitizen: true,
+    })).toEqual({
+      has_us_passport: true,
+      passport_needs_update: false,
+      has_real_id_license: true,
+      is_us_citizen: true,
+    });
+
+    expect(normalizeNameChangeCaseInput(makeCase({
+      has_us_passport: false,
+    }))).toMatchObject({
+      has_us_passport: false,
+      passport_needs_update: true,
     });
   });
 

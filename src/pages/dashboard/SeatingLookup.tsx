@@ -2,13 +2,16 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../hooks/useAuth';
-import { getCheckInExceptionStates } from '../../lib/checkInExceptionState';
-import { loadSeatingLookupRowsForUser, type SeatingLookupRow } from './seating/seatingService';
+import { getCheckInExceptionLabel, getCheckInExceptionStates } from '../../lib/checkInExceptionState';
+import { resolveChronologicalOperationalEventId } from '../../lib/operationalEvent';
+import { getWeddingSiteId, loadItineraryEvents, loadSeatingLookupRowsForUser, type ItineraryEvent, type SeatingLookupRow } from './seating/seatingService';
 
 export const DashboardSeatingLookup: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<SeatingLookupRow[]>([]);
+  const [itineraryEvents, setItineraryEvents] = useState<ItineraryEvent[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
 
   useEffect(() => {
@@ -19,15 +22,31 @@ export const DashboardSeatingLookup: React.FC = () => {
         setLoading(true);
         if (isDemoMode) {
           if (!mounted) return;
+          setItineraryEvents([{ id: 'event-1', event_name: 'Reception', event_date: '2026-05-13', start_time: '18:00:00', location_name: 'Main Hall' }]);
+          setSelectedEventId('event-1');
           setRows([
-            { guest_id: '1', full_name: 'Alex Rivera', email: 'alex@example.com', table_name: 'Table 1', seat_index: 2, checked_in_at: null },
-            { guest_id: '2', full_name: 'Sam Lee', email: 'sam@example.com', table_name: 'Table 2', seat_index: 4, checked_in_at: new Date().toISOString() },
+            { itinerary_event_id: 'event-1', event_name: 'Reception', guest_id: '1', full_name: 'Alex Rivera', email: 'alex@example.com', table_name: 'Table 1', seat_index: 2, checked_in_at: null },
+            { itinerary_event_id: 'event-1', event_name: 'Reception', guest_id: '2', full_name: 'Sam Lee', email: 'sam@example.com', table_name: 'Table 2', seat_index: 4, checked_in_at: new Date().toISOString() },
           ]);
           return;
         }
 
-        const mapped = await loadSeatingLookupRowsForUser(user.id);
-        if (mounted) setRows(mapped);
+        const siteId = await getWeddingSiteId();
+        if (!siteId) {
+          if (mounted) {
+            setRows([]);
+            setItineraryEvents([]);
+          }
+          return;
+        }
+        const events = await loadItineraryEvents(siteId);
+        const defaultEventId = resolveChronologicalOperationalEventId(events);
+        const mapped = await loadSeatingLookupRowsForUser(user.id, defaultEventId);
+        if (mounted) {
+          setItineraryEvents(events);
+          setSelectedEventId(defaultEventId);
+          setRows(mapped);
+        }
       } catch {
         if (mounted) setRows([]);
       } finally {
@@ -37,6 +56,24 @@ export const DashboardSeatingLookup: React.FC = () => {
     void run();
     return () => { mounted = false; };
   }, [user, isDemoMode]);
+
+  useEffect(() => {
+    let mounted = true;
+    const run = async () => {
+      if (!user || isDemoMode || !selectedEventId) return;
+      try {
+        setLoading(true);
+        const mapped = await loadSeatingLookupRowsForUser(user.id, selectedEventId);
+        if (mounted) setRows(mapped);
+      } catch {
+        if (mounted) setRows([]);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+    void run();
+    return () => { mounted = false; };
+  }, [user, isDemoMode, selectedEventId]);
 
   const stats = useMemo(() => {
     const assigned = rows.filter((row) => row.table_name !== 'Unassigned').length;
@@ -54,6 +91,7 @@ export const DashboardSeatingLookup: React.FC = () => {
       r.table_name.toLowerCase().includes(q)
     );
   }, [rows, query]);
+  const selectedEvent = itineraryEvents.find((event) => event.id === selectedEventId) ?? null;
 
   return (
     <DashboardLayout currentPage="seating">
@@ -86,6 +124,21 @@ export const DashboardSeatingLookup: React.FC = () => {
 
           <div className="mt-3 rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-2 text-[11px] text-text-secondary">
             Search a guest, answer table and seat questions, then jump back into seating or day-of view if something changes.
+          </div>
+
+          <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-[11px] text-text-primary">
+              Data is for <span className="font-semibold">{selectedEvent?.event_name ?? 'the selected event'}</span>. Keep this matched to the live or next event so rehearsal and reception seating do not get mixed.
+            </div>
+            <select
+              value={selectedEventId ?? ''}
+              onChange={(event) => setSelectedEventId(event.target.value || null)}
+              className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-text-primary"
+            >
+              {itineraryEvents.map((event) => (
+                <option key={event.id} value={event.id}>{event.event_name}</option>
+              ))}
+            </select>
           </div>
 
           <div className="mt-3 rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-[11px] text-text-primary">
@@ -134,7 +187,7 @@ export const DashboardSeatingLookup: React.FC = () => {
                         <div>{r.checked_in_at ? 'Yes' : 'No'}</div>
                         {(() => {
                           const states = getCheckInExceptionStates({ checkedInAt: r.checked_in_at, rsvpStatus: r.rsvp_status, tableName: r.table_name });
-                          return states.length ? <div className="flex flex-wrap gap-1">{states.map((state) => <span key={state} className="inline-flex items-center rounded-lg border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[10px] font-medium text-text-primary">{state}</span>)}</div> : null;
+                          return states.length ? <div className="flex flex-wrap gap-1">{states.map((state) => <span key={state} className="inline-flex items-center rounded-lg border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[10px] font-medium text-text-primary">{getCheckInExceptionLabel(state)}</span>)}</div> : null;
                         })()}
                         {(() => {
                           const states = getCheckInExceptionStates({ checkedInAt: r.checked_in_at, rsvpStatus: r.rsvp_status, tableName: r.table_name });

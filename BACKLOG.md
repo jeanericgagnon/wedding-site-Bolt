@@ -17,19 +17,19 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | --- | --- |
 | Current date/time | `2026-05-13 04:08 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
-| Latest verified Git SHA | `4ebc544f` |
-| Latest verified commit message | `Clean stale active backlog items` |
+| Latest verified Git SHA | `WORKTREE DIRTY` |
+| Latest verified commit message | `In progress: full-suite hardening batch` |
 | Vercel deployment ID | `dpl_5M8Kyb7nWjQANEXgrR7n6q8pnxfP` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
 | Supabase functions deployed | Live blocker-fix lane includes `submit-rsvp --no-verify-jwt` plus applied migration `20260511170500_serialize_submit_rsvp_capacity.sql`. Same-day confirmed/live-proven: `public-site-access --no-verify-jwt`; `photo-upload --no-verify-jwt`; `process-email-queue`; `validate-rsvp-token --no-verify-jwt`; `interactive-section-public --no-verify-jwt`; `vault-contribution-public --no-verify-jwt`; `vault-entry-submit --no-verify-jwt`; `translate-site-content`. Latest deploy waves also pushed `guest-contact-lookup --no-verify-jwt`, `guest-contact-submit --no-verify-jwt`, and the final `registry-barcode-lookup --no-verify-jwt` fuller-suite provider/repair/fallback batch live. |
-| Current readiness score | `10 / 10` |
-| Current launch verdict | `GO` |
-| Production-ready | `YES FOR FULL-SUITE CLOSEOUT` |
-| Reason production-ready is not yet claimed | None. All visible `ACTIVE` items for the three full-suite lanes and the cross-feature exit gate are now shipped, deployed, and proven on the current production runtime. |
-| Current blockers | No active launch blocker or active full-suite blocker remains. |
-| Current proof state | Launch-critical runtime proof remains green on the live runtime: `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `service-role-authorization`, `email-messaging-authorization`, `launch-closeout`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, `client-rls-matrix`, `registry-preview-ssrf`, `coordinator-dayof`, `name-change-runtime`, and `registry`. The broad in-depth production bundle last reran green on deploy `dpl_4TCWmUaSfuV3MJysqcYJUCyKTWJs` via `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:canonical-smoke`, `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live`, `LIVE_REGISTRY_WRITE_READ=1 npm run proof:v1:registry -- --require-live`, `npx playwright test --workers=1 tests/e2e/full-suite-three-lanes-responsive.spec.ts`, and `LIVE_COLLABORATOR_PERMISSION_RLS=1 npx playwright test --workers=1 tests/e2e/collaborator-permission-rls.spec.ts`. After the scoped coordinator audit-proof patch shipped, `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live` reran green on the current deploy `dpl_5M8Kyb7nWjQANEXgrR7n6q8pnxfP`. The combined local cross-feature exit gate also remains green via `npm run proof:v1:full-suite-exit-gate`, and that exit gate is now documented honestly as an aggregate of the dedicated lane proofs plus the responsive/device surface proof. |
+| Current readiness score | `6 / 10` |
+| Current launch verdict | `HOLD FOR FULL-SUITE` |
+| Production-ready | `NO FOR THE CURRENT FULL-SUITE BAR` |
+| Reason production-ready is not yet claimed | Full-suite hardening reopened correctly. The repo still lacks a real day-of QR scanner lane, unified event-aware proof across coordinator/seating/scanner, and refreshed end-to-end proof for the newly reopened full-suite criteria. |
+| Current blockers | Real QR scanner flow is still not shipped. Cross-feature full-suite proof is stale and still overclaims prior closed status. Coordinator/name-change/seating hardening is partially in flight but not yet fully proven live. |
+| Current proof state | This hardening batch has fresh local green proof for shared foundations and touched regressions: `npm test -- --run src/lib/operationalEvent.test.ts src/lib/publicSiteSlug.test.ts src/lib/guestHubQrAssets.test.ts src/pages/dashboard/planning/nameChangeService.test.ts src/pages/dashboard/seating/seatingService.test.ts`, `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `git diff --check`, and `npm run build`. The broader live full-suite claims elsewhere in this file are stale and should be treated as historical until the reopened QR/coordinator/name-change/seating acceptance criteria are rerun and passed honestly. |
 | Current deployment state | The latest deployed frontend runtime is [dayof.love](https://dayof.love) via verified Vercel production deploy `dpl_5M8Kyb7nWjQANEXgrR7n6q8pnxfP` from commit `3c37d94c`. The coordinator migrations `20260513170000_coordinator_event_checkin_write.sql` and `20260513213000_coordinator_handoff_issue_depth.sql`, the name-change reminder compatibility migration `20260513193000_fix_name_change_reminders_replace_runtime.sql`, and the registry duplicate-merge migration `20260513195500_add_registry_duplicate_merge.sql` remain applied remotely. This deploy ships the coordinator audit-proof selector/runtime harness improvements alongside the already-live full-suite name-change planner depth and registry provider/repair/fallback batch. `registry-barcode-lookup --no-verify-jwt` remains live with the broader Open Facts ladder and repair-queue-compatible lookup path. The scoped coordinator live proof reran green on this runtime; the broader canonical/public/name-change/registry/responsive/collaborator bundle remains last green from the immediately prior production deploy because those runtime lanes were untouched in this audit-proof batch. `submit-rsvp` remains live with the serialized capacity path, and the public-session-secret, admin route gate, guest-contact, route-module decomposition, vault contribution, and `.dayof.love` host-routing lanes remain live-proven. External custom domains remain unsupported product scope, not an active proof lane. |
-| Current next actions | No active implementation work remains in this backlog. Only `DEFERRED`, `FUTURE-ONLY`, `CONCEPT ONLY`, and `NO-CODE` follow-up remains outside the current full-suite bar. |
+| Current next actions | Finish the reopened active full-suite work: real QR scanning, final coordinator/day-of event-awareness and exception proof, remaining name-change dependency proof, then rerun/update the dedicated proof lanes and live deploy truth. |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
@@ -55,12 +55,12 @@ No active `P0` or `P1` launch blockers remain.
 
 ## Additional Hardening Findings
 
-No active launch-baseline blocker or full-suite blocker remains. The shipped runtime is strong enough to launch, and the full-suite bar defined on this board is now complete for the three active lanes.
+The shipped runtime remains a strong launch baseline, but the stricter full-suite bar is open again and active work remains.
 
 - launch-critical findings are closed and live-proven on the current deployed production runtime
 - `Day-of / coordinator`
-  - `FULL-SUITE LANE CLOSED`
-  - current truth: the launch-baseline MVP batch, the deeper coordinator batch, and the fuller-suite operational batch are all now shipped on the current production runtime with green dedicated live proof
+  - `ACTIVE FULL-SUITE LANE`
+  - current truth: launch-baseline coordinator behavior exists, but the current full-suite bar is still open because event-aware seating lookup, QR door flow, bulk-safety proof, and refreshed live proof are not all honestly closed together
   - dedicated live coordinator proof is green on the latest shipped runtime: `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live`
   - coordinator full-suite batch proof is green locally and live: `npm run proof:v1:coordinator-dayof`, `npm run typecheck -- --pretty false`, focused coordinator Vitest lane, `npm run lint -- --quiet`, `git diff --check`, `npm run build`, Vercel production deploy `dpl_5M8Kyb7nWjQANEXgrR7n6q8pnxfP`
   - MVP bar now defined as: event-specific arrival truth, event-scoped counts, explicit exception states, lookup triage, and role-safe day-of routing
@@ -75,10 +75,19 @@ No active launch-baseline blocker or full-suite blocker remains. The shipped run
     - `DONE`: cross-event guest continuity panel that shows a guest's movement, exceptions, seat changes, and handoff trail across wedding moments
     - `DONE`: handoff/export surfaces that generate a printable or copyable shift snapshot for the next coordinator without losing unresolved work
     - `DONE`: proof expansion so `proof:v1:coordinator-dayof` covers incident lifecycle, runner workflow, cross-event continuity, and handoff export on the shipped runtime
-  - status: `FULL-SUITE READY FOR THIS LANE`
+  - this batch fixed now:
+    - operational-event helper added and wired into coordinator selection and seating defaults
+    - seating lookup no longer uses latest-created seating event globally
+    - coordinator check-in now retries after auth refresh like seating check-in
+    - bulk seating arrival updates now require confirmation when more than five visible guests would be affected
+  - active remaining work:
+    - real QR scanner entry + secure payload validation + duplicate protection
+    - event-aware proof tying coordinator, seating lookup, and scanner to the same live/up-next event
+    - refreshed coordinator live and local proof for the reopened full-suite acceptance criteria
+  - status: `IN PROGRESS`
 - `Name change`
-  - `FULL-SUITE LANE CLOSED`
-  - current truth: the launch-baseline MVP batch, the broader planner-depth batch, and the fuller-suite execution batch remain shipped on the current production runtime; the dedicated live proof last reran green on the immediately prior production deploy and the current coordinator audit-proof patch did not touch this lane
+  - `ACTIVE FULL-SUITE LANE`
+  - current truth: the planner is deep, but the current full-suite bar remains open until the passport alias mapping, dependency matrix proof, and updated truth docs are all rerun and aligned
   - dedicated live runtime proof is green on the current shipped fuller-suite slice: `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live`
   - local fuller-suite proof is green: `npm run proof:v1:name-change-runtime`, `npm run typecheck -- --pretty false`, focused planner/overview/full-suite Vitest lanes, `npm run lint -- --quiet`, `npm run build`
   - MVP bar now defined as: US-first guided execution, honest sequencing, reminders, status vault, templates, and post-wedding dashboard placement
@@ -92,7 +101,13 @@ No active launch-baseline blocker or full-suite blocker remains. The shipped run
     - `DONE`: special-case execution now covers identity, travel, residency, hyphenation/combination, and court-order edge paths without forcing the user into generic fallback
     - `DONE`: packet/export/collaboration surfaces now support real execution handoff, including proof-gap summaries and institution-ready action packets
     - `DONE`: proof expansion so `proof:v1:name-change-runtime` covers the broadened state matrix, special-case branching, and packet/export handoff surfaces on the shipped runtime
-  - status: `FULL-SUITE READY FOR THIS LANE`
+  - this batch fixed now:
+    - canonical passport-flag normalization now accepts `has_us_passport`, `hasUsPassport`, and legacy `hasPassport` truth consistently
+    - focused regression tests were added for legacy/current passport flag mapping
+  - active remaining work:
+    - targeted TSA/DMV/travel dependency proof refresh against the reopened acceptance matrix
+    - reminder / template / blocker-state proof refresh against the stricter full-suite bar
+  - status: `IN PROGRESS`
 - `Universal Registry Barcode Scanner`
   - `FULL-SUITE LANE CLOSED`
   - current truth: the competitor-informed MVP bar, the reopened deeper product-depth bar, and the fuller-suite barcode/reconciliation/repair batch remain shipped on the current production runtime; the dedicated live proof last reran green on the immediately prior production deploy and the current coordinator audit-proof patch did not touch this lane

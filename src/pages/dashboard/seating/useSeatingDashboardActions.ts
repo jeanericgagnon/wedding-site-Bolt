@@ -23,6 +23,7 @@ export function useSeatingDashboardActions(args: {
   counters: { attending: number } | null;
   isDemoMode: boolean;
   loadSeatingData: () => Promise<void>;
+  requestConfirmation: (options: { title: string; description: string; confirmLabel: string; tone?: 'primary' | 'danger' }) => Promise<boolean>;
   seatingEvent: { id: string } | null;
   selectedEventId: string | null;
   setAddingTable: React.Dispatch<React.SetStateAction<boolean>>;
@@ -105,13 +106,23 @@ export function useSeatingDashboardActions(args: {
         : await assignGuestToTable(args.seatingEvent.id, targetTable.id, guestId, targetSeatIndex);
 
       if (!args.isDemoMode && occupiedAssignment) {
-        await assignGuestToTable(args.seatingEvent.id, occupiedAssignment.table_id, occupiedAssignment.guest_id, sourceSeatIndex);
+        if (existingForGuest?.table_id) {
+          await assignGuestToTable(args.seatingEvent.id, existingForGuest.table_id, occupiedAssignment.guest_id, sourceSeatIndex);
+        } else {
+          await unassignGuest(args.seatingEvent.id, occupiedAssignment.guest_id);
+        }
       }
 
       args.setAssignments((prev) => {
         let next = prev.filter((item) => item.guest_id !== guestId);
         if (occupiedAssignment) {
-          next = next.map((item) => (item.guest_id === occupiedAssignment.guest_id ? { ...item, seat_index: sourceSeatValue } : item));
+          next = next.map((item) => (item.guest_id === occupiedAssignment.guest_id
+            ? {
+                ...item,
+                table_id: existingForGuest?.table_id ?? null,
+                seat_index: sourceSeatValue,
+              }
+            : item));
         }
         return [...next, assignment];
       });
@@ -228,6 +239,8 @@ export function useSeatingDashboardActions(args: {
       if (!ctx) return;
       const x = Math.max(8, Math.round(ctx.originX + (moveEvent.clientX - ctx.startX)));
       const y = Math.max(8, Math.round(ctx.originY + (moveEvent.clientY - ctx.startY)));
+      ctx.originX = x;
+      ctx.originY = y;
       args.setTables((prev) => prev.map((item) => (item.id === ctx.id ? { ...item, layout_x: x, layout_y: y } : item)));
     };
 
@@ -238,11 +251,10 @@ export function useSeatingDashboardActions(args: {
       args.tableDragRef.current = null;
       args.setMovingTableId(null);
       if (!ctx || args.isDemoMode) return;
-      const moved = args.tables.find((item) => item.id === ctx.id);
       try {
         await updateTable(ctx.id, {
-          layout_x: moved?.layout_x ?? ctx.originX,
-          layout_y: moved?.layout_y ?? ctx.originY,
+          layout_x: ctx.originX,
+          layout_y: ctx.originY,
         });
       } catch {
         args.toast('Couldn’t save that table position. Please try again.', 'error');
@@ -389,6 +401,18 @@ export function useSeatingDashboardActions(args: {
 
   async function handleBulkCheckIn(guestIds: string[], checkedIn: boolean) {
     if (!args.seatingEvent || guestIds.length === 0) return;
+    if (guestIds.length > 5) {
+      const guestPreview = guestIds
+        .map((guestId) => args.allGuests.find((guest) => guest.id === guestId)?.full_name ?? 'Guest')
+        .slice(0, 8)
+        .join(', ');
+      const confirmed = await args.requestConfirmation({
+        title: checkedIn ? 'Confirm bulk arrival update' : 'Confirm bulk arrival clear',
+        description: `${checkedIn ? 'Marking arrived' : 'Clearing arrival'} for ${guestIds.length} visible guests: ${guestPreview}${guestIds.length > 8 ? ', …' : ''}`,
+        confirmLabel: checkedIn ? 'Mark visible guests arrived' : 'Clear visible arrivals',
+      });
+      if (!confirmed) return;
+    }
     try {
       if (args.isDemoMode) {
         const stamp = checkedIn ? new Date().toISOString() : null;

@@ -839,7 +839,6 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('const SEATING_ASSIGNMENT_SELECT = ');
     expect(source).toContain('const SEATING_ELIGIBLE_GUEST_SELECT = ');
     expect(source).toContain('const SEATING_LAYOUT_VERSION_SELECT = ');
-    expect(source).toContain('const SEATING_LOOKUP_EVENT_SELECT = ');
     expect(source).toContain('const SEATING_LOOKUP_ASSIGNMENT_SELECT = ');
     expect(source).toContain('const SEATING_LOOKUP_TABLE_SELECT = ');
     expect(source).toContain('const SEATING_LOOKUP_GUEST_SELECT = ');
@@ -847,10 +846,10 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('.select(SEATING_ASSIGNMENT_SELECT)');
     expect(source).toContain('.select(SEATING_ELIGIBLE_GUEST_SELECT)');
     expect(source).toContain('.select(SEATING_LAYOUT_VERSION_SELECT)');
-    expect(source).toContain('.select(SEATING_LOOKUP_EVENT_SELECT)');
     expect(source).toContain('.select(SEATING_LOOKUP_ASSIGNMENT_SELECT)');
     expect(source).toContain('.select(SEATING_LOOKUP_TABLE_SELECT)');
     expect(source).toContain('.select(SEATING_LOOKUP_GUEST_SELECT)');
+    expect(source).toContain("resolveChronologicalOperationalEventId(itineraryEvents)");
     expect(source).toContain(".select('id, event_name, event_date, start_time, location_name')");
     expect(source).toContain('export async function refreshSeatingSession()');
     expect(source).toContain('supabase.auth.refreshSession()');

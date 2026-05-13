@@ -10,6 +10,7 @@ import type { QnaItem, AlertLog } from './coordinatorDashboardTypes';
 import {
   createCoordinatorAlertMessage,
   createCoordinatorQnaQuestion,
+  refreshCoordinatorSession,
   updateCoordinatorGuestCheckIn,
 } from './coordinatorService';
 
@@ -162,9 +163,26 @@ export function useCoordinatorDashboardActions(args: Args) {
           checkedInAt: next,
           itineraryEventId: args.currentDoorEventId,
         });
-      } catch {
-        args.toast('Couldn’t update check-in right now.', 'error');
-        return;
+      } catch (error) {
+        const message = error instanceof Error ? error.message.toLowerCase() : '';
+        const authish = message.includes('invalid jwt') || message.includes('jwt') || message.includes('401') || message.includes('auth');
+        if (authish) {
+          try {
+            await refreshCoordinatorSession();
+            await updateCoordinatorGuestCheckIn({
+              siteId: args.siteId,
+              guestId: guest.id,
+              checkedInAt: next,
+              itineraryEventId: args.currentDoorEventId,
+            });
+          } catch {
+            args.toast('Couldn’t update check-in right now.', 'error');
+            return;
+          }
+        } else {
+          args.toast('Couldn’t update check-in right now.', 'error');
+          return;
+        }
       }
 
       syncGuestCheckInState(guest.id, next);

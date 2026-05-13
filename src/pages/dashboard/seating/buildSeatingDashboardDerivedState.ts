@@ -31,10 +31,11 @@ export function buildSeatingDashboardDerivedState(args: {
     filter: args.checkInFilter,
     query: args.checkInQuery,
   });
+  const cateringAssignments = args.assignments.filter((assignment): assignment is SeatingAssignment & { table_id: string } => typeof assignment.table_id === 'string');
   const cateringPacket = buildSeatingCateringPacket({
     guests: args.allGuests,
     tables: args.tables,
-    assignments: args.assignments,
+    assignments: cateringAssignments,
   });
   const cateringHandoffReview = buildSeatingCateringHandoffReview(cateringPacket);
   const mealHeadcountByTable = cateringPacket.tableSummaries;

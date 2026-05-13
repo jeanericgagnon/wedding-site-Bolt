@@ -6,8 +6,9 @@ Purpose:
 - turn three ambiguous active features into a concrete MVP bar
 - separate the shipped launch baseline from the deeper product-depth scope that was reopened as active work
 - give the backlog an honest build target
-- current truth update: the shipped deeper-MVP/product-depth bar was below the user's requested finish line; coordinator, name-change, and registry have now closed their fuller-suite bars, and the cross-feature exit gate is now closed too
-- full-suite claim update: the backlog now counts as full-suite-ready because the feature-specific ship lists and the cross-feature exit gate are both complete on the current production runtime
+- current truth update: the earlier “full-suite closed” claim was too optimistic for the reopened acceptance bar; this document is back in active-use mode until coordinator/day-of, name-change, seating lookup, and QR scanning are proven together without gaps
+- current implementation batch now closes some concrete regressions: seating lookup no longer keys off the latest created seating event globally, coordinator check-in now retries through auth refresh, public QR generation is stricter about token-ish payloads, and name-change passport flags now normalize legacy/current shapes through one mapper
+- full-suite claim update: do not treat the three lanes as fully closed today; the real QR scanner lane and the refreshed aggregate proof still remain open
 
 Method:
 - reviewed official product and help pages from direct competitors and adjacent event products
@@ -92,7 +93,11 @@ DayOf should count this feature as MVP-complete when it does all of the followin
 
 ### Active deeper scope
 
-No remaining coordinator gap is active inside the competitor-informed MVP bar or the fuller-suite checklist for this lane. The coordinator full-suite checklist is now shipped and live-proven on the current production runtime.
+Still open for this lane:
+
+- real QR scanner entry and secure scan validation inside day-of flow
+- unified event-aware proof across coordinator, seating lookup, and scanner
+- refreshed dedicated coordinator proof after the reopened full-suite criteria
 
 ## Name change
 
@@ -165,7 +170,11 @@ DayOf should count this feature as MVP-complete when it does all of the followin
 
 ### Active deeper scope
 
-No remaining name-change gap is active inside the competitor-informed MVP bar or the fuller-suite checklist for this lane. The name-change full-suite checklist is now shipped and live-proven on the current production runtime.
+Still open for this lane:
+
+- rerun the TSA / DMV / travel dependency matrix against the reopened full-suite criteria
+- rerun proof-aware template / reminder / blocker-state acceptance against the stricter launch truth
+- keep California launch-scope truth explicit while deeper support remains a separate proof burden
 
 ## Universal Registry Barcode Scanner
 

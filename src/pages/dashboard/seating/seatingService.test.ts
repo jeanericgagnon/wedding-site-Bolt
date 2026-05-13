@@ -18,7 +18,6 @@ import {
   MAX_SEATING_ITINERARY_EVENTS,
   MAX_SEATING_ASSIGNMENT_ROWS,
   MAX_SEATING_LOOKUP_GUEST_IDS,
-  MAX_SEATING_LOOKUP_EVENT_ROWS,
   MAX_SEATING_LOOKUP_TABLE_IDS,
   MAX_SEATING_TABLE_ROWS,
   MAX_SEATING_VERSION_ROWS,
@@ -334,8 +333,11 @@ describe('mapSeatingLookupRows', () => {
         { id: 'guest-1', first_name: 'Alex', last_name: 'Rivera', name: 'Alex R.', email: 'alex@example.com', rsvp_status: 'attending' },
         { id: 'guest-2', first_name: null, last_name: null, name: 'Sam Lee', email: null, rsvp_status: 'confirmed' },
       ],
+      { itinerary_event_id: 'event-1', event_name: 'Reception' },
     )).toEqual([
       {
+        itinerary_event_id: 'event-1',
+        event_name: 'Reception',
         guest_id: 'guest-1',
         full_name: 'Alex Rivera',
         email: 'alex@example.com',
@@ -345,6 +347,8 @@ describe('mapSeatingLookupRows', () => {
         rsvp_status: 'attending',
       },
       {
+        itinerary_event_id: 'event-1',
+        event_name: 'Reception',
         guest_id: 'guest-2',
         full_name: 'Sam Lee',
         email: null,
@@ -354,6 +358,8 @@ describe('mapSeatingLookupRows', () => {
         rsvp_status: 'confirmed',
       },
       {
+        itinerary_event_id: 'event-1',
+        event_name: 'Reception',
         guest_id: 'guest-3',
         full_name: 'Guest',
         email: null,
@@ -369,7 +375,6 @@ describe('mapSeatingLookupRows', () => {
     expect(MAX_SEATING_ITINERARY_EVENTS).toBe(200);
     expect(MAX_SEATING_LOOKUP_TABLE_IDS).toBe(500);
     expect(MAX_SEATING_LOOKUP_GUEST_IDS).toBe(2000);
-    expect(MAX_SEATING_LOOKUP_EVENT_ROWS).toBe(1);
     expect(MAX_SEATING_ELIGIBLE_GUESTS).toBe(5000);
     expect(MAX_SEATING_EVENT_INVITATIONS).toBe(10000);
     expect(MAX_SEATING_TABLE_ROWS).toBe(500);
@@ -383,14 +388,14 @@ describe('mapSeatingLookupRows', () => {
     expect(source).toContain('MAX_SEATING_ITINERARY_EVENTS');
     expect(source).toContain('MAX_SEATING_LOOKUP_TABLE_IDS');
     expect(source).toContain('MAX_SEATING_LOOKUP_GUEST_IDS');
-    expect(source).toContain('MAX_SEATING_LOOKUP_EVENT_ROWS');
     expect(source).toContain('MAX_SEATING_ELIGIBLE_GUESTS');
     expect(source).toContain('MAX_SEATING_EVENT_INVITATIONS');
     expect(source).toContain('MAX_SEATING_TABLE_ROWS');
     expect(source).toContain('MAX_SEATING_ASSIGNMENT_ROWS');
     expect(source).toContain('MAX_SEATING_VERSION_ROWS');
     expect(source).toContain(".order('start_time', { ascending: true })\n    .limit(MAX_SEATING_ITINERARY_EVENTS);");
-    expect(source).toContain(".order('created_at', { ascending: false })\n    .limit(MAX_SEATING_LOOKUP_EVENT_ROWS)\n    .maybeSingle();");
+    expect(source).toContain("resolveChronologicalOperationalEventId(itineraryEvents)");
+    expect(source).toContain(".select('id, event_name, event_date, start_time')");
     expect(source).toContain('].slice(0, MAX_SEATING_LOOKUP_TABLE_IDS);');
     expect(source).toContain('].slice(0, MAX_SEATING_LOOKUP_GUEST_IDS);');
     expect(source).toContain(".eq('wedding_site_id', weddingSiteId)\n    .limit(MAX_SEATING_ELIGIBLE_GUESTS);");

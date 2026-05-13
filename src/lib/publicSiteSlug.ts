@@ -33,7 +33,7 @@ export function buildSiteUrlLookupCandidates(slug: string): string[] {
   const normalized = normalizePublicSiteSlug(slug);
   if (!normalized) return [];
 
-  const bare = `${normalized}.dayof.love`;
+  const bare = `${normalized}.${getConfiguredPublicSiteDomain()}`;
   return [
     normalized,
     bare,
@@ -49,6 +49,17 @@ export function resolvePublicSiteSlugFromRow(row: Record<string, unknown> | null
   const bySlug = normalizePublicSiteSlug(typeof row.site_slug === 'string' ? row.site_slug : null);
   if (bySlug) return bySlug;
   return normalizePublicSiteSlug(typeof row.site_url === 'string' ? row.site_url : null);
+}
+
+export function buildPublicSiteUrl(slug: string | null | undefined): string {
+  const normalized = normalizePublicSiteSlug(slug);
+  if (!normalized) return '';
+  return `https://${normalized}.${getConfiguredPublicSiteDomain()}`;
+}
+
+export function getConfiguredPublicSiteDomain(): string {
+  const configured = (import.meta.env.VITE_PUBLIC_SITE_DOMAIN as string | undefined)?.trim().toLowerCase();
+  return configured || 'dayof.love';
 }
 
 function extractHost(raw: string): string | null {

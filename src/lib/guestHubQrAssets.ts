@@ -20,7 +20,9 @@ export interface GuestHubQrAssetInput {
 const TOKENISH_PARAM = /(token|invite|secret|secure|signature|signed|jwt|key|access|auth|bearer|cookie|passcode|password|session)/i;
 
 export const buildQrImageUrl = (url: string, size = 512) =>
-  `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}`;
+  isSafePublicQrAssetUrl(url)
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}`
+    : '';
 
 function cleanText(value: string, fallback: string): string {
   const cleaned = value.replace(/\s+/g, ' ').trim();
@@ -35,10 +37,23 @@ export function isSafePublicQrAssetUrl(value: string): boolean {
     for (const key of url.searchParams.keys()) {
       if (TOKENISH_PARAM.test(key)) return false;
     }
+    for (const [key, paramValue] of url.searchParams.entries()) {
+      if (TOKENISH_PARAM.test(paramValue)) return false;
+      if (TOKENISH_PARAM.test(safeDecodeURIComponent(key))) return false;
+    }
     if (TOKENISH_PARAM.test(url.hash)) return false;
+    if (TOKENISH_PARAM.test(safeDecodeURIComponent(url.hash))) return false;
     return true;
   } catch {
     return false;
+  }
+}
+
+function safeDecodeURIComponent(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
   }
 }
 

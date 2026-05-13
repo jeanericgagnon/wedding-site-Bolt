@@ -133,6 +133,7 @@ export const DashboardSeating: React.FC = () => {
     counters,
     isDemoMode,
     loadSeatingData,
+    requestConfirmation,
     seatingEvent,
     selectedEventId,
     setAddingTable,

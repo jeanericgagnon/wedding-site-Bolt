@@ -140,6 +140,19 @@ export const MAX_NAME_CHANGE_EXTRACTED_FIELD_ROWS = 500;
 export const MAX_NAME_CHANGE_REMINDER_ROWS = 100;
 export const MAX_NAME_CHANGE_SNAPSHOT_ROWS = 1;
 
+type LegacyPassportFlags = Partial<Record<
+  | 'has_us_passport'
+  | 'hasUsPassport'
+  | 'hasPassport'
+  | 'passport_needs_update'
+  | 'passportNeedsUpdate'
+  | 'has_real_id_license'
+  | 'hasRealIdLicense'
+  | 'is_us_citizen'
+  | 'isUsCitizen',
+  unknown
+>>;
+
 function normalizeText(value: string | null | undefined) {
   return (value ?? '').trim();
 }
@@ -156,6 +169,20 @@ function normalizePhoneLast4(value: string | null | undefined) {
 
 function uniqueStrings(values: string[]) {
   return [...new Set(values.map((value) => normalizeText(value)).filter(Boolean))];
+}
+
+export function normalizeNameChangePassportFlags<T extends LegacyPassportFlags>(input: T) {
+  const hasUsPassport = input.has_us_passport ?? input.hasUsPassport ?? input.hasPassport;
+  const passportNeedsUpdate = input.passport_needs_update ?? input.passportNeedsUpdate;
+  const hasRealIdLicense = input.has_real_id_license ?? input.hasRealIdLicense;
+  const isUsCitizen = input.is_us_citizen ?? input.isUsCitizen;
+
+  return {
+    has_us_passport: hasUsPassport == null ? defaultNameChangeCaseInput.has_us_passport : Boolean(hasUsPassport),
+    passport_needs_update: passportNeedsUpdate == null ? defaultNameChangeCaseInput.passport_needs_update : Boolean(passportNeedsUpdate),
+    has_real_id_license: hasRealIdLicense == null ? defaultNameChangeCaseInput.has_real_id_license : Boolean(hasRealIdLicense),
+    is_us_citizen: isUsCitizen == null ? defaultNameChangeCaseInput.is_us_citizen : Boolean(isUsCitizen),
+  };
 }
 
 function toPersistedNameChangeReminderRow(reminder: NameChangeReminderInput, caseId: string) {
@@ -185,6 +212,7 @@ export function normalizeNameChangeStructuredIntake(
 
 export function normalizeNameChangeCaseInput(input: NameChangeCaseInput): NameChangeCaseInput {
   const structuredIntake = normalizeNameChangeStructuredIntake(input.structured_intake);
+  const passportFlags = normalizeNameChangePassportFlags(input as NameChangeCaseInput & LegacyPassportFlags);
 
   return {
     ...input,
@@ -201,6 +229,7 @@ export function normalizeNameChangeCaseInput(input: NameChangeCaseInput): NameCh
     marriage_date: normalizeNullableText(input.marriage_date),
     change_reasons: uniqueStrings(input.change_reasons),
     structured_intake: structuredIntake,
+    ...passportFlags,
   };
 }
 

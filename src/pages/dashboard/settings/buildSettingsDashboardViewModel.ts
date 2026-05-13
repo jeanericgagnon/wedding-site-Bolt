@@ -5,6 +5,7 @@ import {
   type WeddingIdentityExportKit,
   type WeddingIdentityPrintAsset,
 } from '../../../lib/weddingIdentityExports';
+import { buildPublicSiteUrl } from '../../../lib/publicSiteSlug';
 import { PLANNER_ROLE_OPTIONS, type PlannerAccessRole } from '../../../lib/plannerAccess';
 import { getSettingsTabs, type SettingsTab } from './SettingsNavigation';
 import type { SiteLanguageCode } from './settingsDashboardTypes';
@@ -37,7 +38,7 @@ export function buildSettingsDashboardViewModel({
   venueName,
   weddingDate,
 }: BuildSettingsDashboardViewModelArgs): SettingsDashboardViewModel {
-  const derivedPublicSiteUrl = siteSlug ? `https://${siteSlug}.dayof.love` : '';
+  const derivedPublicSiteUrl = buildPublicSiteUrl(siteSlug);
   const currentTemplateName = getAllTemplates().find((template) => template.id === currentTemplate)?.name ?? 'Current site theme';
 
   return {

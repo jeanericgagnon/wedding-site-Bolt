@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { buildSiteUrlLookupCandidates, normalizePublicSiteSlug, resolvePublicSiteSlugFromRow, resolveWeddingSubdomainSlugFromHostname } from './publicSiteSlug';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { buildPublicSiteUrl, buildSiteUrlLookupCandidates, normalizePublicSiteSlug, resolvePublicSiteSlugFromRow, resolveWeddingSubdomainSlugFromHostname } from './publicSiteSlug';
 
 describe('normalizePublicSiteSlug', () => {
   it('keeps plain slugs', () => {
@@ -59,5 +59,24 @@ describe('resolveWeddingSubdomainSlugFromHostname', () => {
   it('ignores non-dayof hosts', () => {
     expect(resolveWeddingSubdomainSlugFromHostname('example.com')).toBeNull();
     expect(resolveWeddingSubdomainSlugFromHostname('alex-jordan-demo.example.com')).toBeNull();
+  });
+});
+
+describe('buildPublicSiteUrl', () => {
+  beforeEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('uses the production domain by default', () => {
+    expect(buildPublicSiteUrl('alex-jordan-demo')).toBe('https://alex-jordan-demo.dayof.love');
+  });
+
+  it('uses a configured preview domain when present', () => {
+    vi.stubEnv('VITE_PUBLIC_SITE_DOMAIN', 'preview.dayof.app');
+    expect(buildPublicSiteUrl('alex-jordan-demo')).toBe('https://alex-jordan-demo.preview.dayof.app');
+  });
+
+  it('returns an empty string for unsafe slugs', () => {
+    expect(buildPublicSiteUrl('https://example.com')).toBe('');
   });
 });

@@ -101,6 +101,10 @@ export interface CoordinatorIssueLogWriteInput {
   metadata?: Record<string, unknown> | null;
 }
 
+export async function refreshCoordinatorSession(): Promise<void> {
+  await supabase.auth.refreshSession();
+}
+
 export function buildCoordinatorEventGuestMap(
   events: EventLite[],
   inviteRows: Array<{ event_id: string; guest_id: string }> | null | undefined,

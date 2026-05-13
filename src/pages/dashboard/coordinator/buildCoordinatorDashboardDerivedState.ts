@@ -57,6 +57,7 @@ import { getCoordinatorSummaryFeedbackLayout } from '../../../lib/coordinatorSum
 import { getCoordinatorSummaryFeedbackTone } from '../../../lib/coordinatorSummaryFeedbackTone';
 import { buildCoordinatorTimelineBoard } from '../../../lib/coordinatorTimelineBoard';
 import { getCoordinatorCorrectionEventId, getCoordinatorCorrectionGuestId } from '../../../lib/coordinatorCorrectionTarget';
+import { resolveOperationalEventId } from '../../../lib/operationalEvent';
 import { getCoordinatorLiveEventId, getCoordinatorUpNextEventId, type CoordinatorTimelineEventLite } from '../../../lib/coordinatorTimelineFocus';
 import { getCoordinatorTimelineBoardTargetId, getCoordinatorTimelineTargetState } from '../../../lib/coordinatorTimelineTargetState';
 import { getCoordinatorManualOverrideActionLabel } from '../../../lib/coordinatorManualOverrideAction';
@@ -141,7 +142,11 @@ export function buildCoordinatorDashboardDerivedState(args: Args) {
   const roleCapabilities = buildCoordinatorRoleCapabilities(args.coordinatorRole);
   const liveEventId = getCoordinatorLiveEventId(args.events as CoordinatorTimelineEventLite[], args.timelineState);
   const upNextEventId = getCoordinatorUpNextEventId(args.events as CoordinatorTimelineEventLite[], args.timelineState);
-  const checkInEventId = liveEventId ?? upNextEventId ?? args.events[0]?.id ?? null;
+  const checkInEventId = resolveOperationalEventId({
+    events: args.events,
+    liveEventId,
+    upNextEventId,
+  });
   const checkInEvent = args.events.find((event) => event.id === checkInEventId) ?? null;
   const checkInEventGuestIds = checkInEventId ? (args.eventGuestIds[checkInEventId] ?? null) : null;
   const useEventScopedDoorQueue = Boolean(checkInEventGuestIds && checkInEventGuestIds.size > 0);
