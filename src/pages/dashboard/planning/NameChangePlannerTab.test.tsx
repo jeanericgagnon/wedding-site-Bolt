@@ -1700,9 +1700,9 @@ describe('NameChangePlannerTab', () => {
     expect(clipboardWriteText).not.toHaveBeenCalledWith(expect.stringContaining('Proof to have handy:'));
   });
 
-  it('surfaces deeper state playbook, institution coverage, dual-partner rollout, and export surfaces', () => {
+  it('surfaces full-suite state playbook, institution handoff packets, dual-partner rollout, and expanded export surfaces', () => {
     const draft = makeDraft({
-      marriage_state: 'Nevada',
+      marriage_state: 'Colorado',
       structured_intake: {
         ...makeDraft().structured_intake,
         spouseLastName: 'Jordan',
@@ -1730,11 +1730,15 @@ describe('NameChangePlannerTab', () => {
     );
 
     expect(screen.getByText('State playbook')).toBeInTheDocument();
-    expect(screen.getByText('Expanded Nevada guidance')).toBeInTheDocument();
+    expect(screen.getByText('Expanded Colorado guidance')).toBeInTheDocument();
     expect(screen.getByText('Institution coverage map')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Institution handoff packets' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Dual-partner rollout' })).toBeInTheDocument();
     expect(screen.getByText('Wedding identity exports')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy banking and credit packet' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy action packet' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy proof gap packet' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy institution handoff brief' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy downstream rollout' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy status ledger' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy dual-partner rollout' })).toBeInTheDocument();
@@ -1747,7 +1751,7 @@ describe('NameChangePlannerTab', () => {
       value: { writeText: clipboardWriteText },
     });
 
-    const draft = makeDraft({ marriage_state: 'Nevada' });
+    const draft = makeDraft({ marriage_state: 'Colorado' });
 
     render(
       <NameChangePlannerTab
@@ -1772,7 +1776,7 @@ describe('NameChangePlannerTab', () => {
 
     await waitFor(() => expect(clipboardWriteText).toHaveBeenCalledTimes(1));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Day of Love name-change action packet'));
-    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('State playbook: Nevada (Expanded)'));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('State playbook: Colorado (Expanded)'));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Next actions:'));
     expect(screen.getAllByRole('button', { name: 'Copied' }).length).toBeGreaterThan(0);
   });

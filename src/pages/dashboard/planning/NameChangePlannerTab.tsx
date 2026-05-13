@@ -42,7 +42,7 @@ import { buildNameChangeOverviewCardModel } from '../nameChangeOverviewCard';
 import { buildNameChangeOverviewInsights } from '../nameChangeOverviewInsights';
 import { NAME_CHANGE_LIFECYCLE_LABELS } from '../nameChangeLifecycleLabels';
 import { deriveNameChangeLifecycleStatus } from '../nameChangeLifecycleStatus';
-import { buildNameChangePlannerExports, resolveNameChangeStatePlaybook } from '../../../lib/nameChange/plannerDeepWork';
+import { buildNameChangeInstitutionPackets, buildNameChangePlannerExports, resolveNameChangeStatePlaybook } from '../../../lib/nameChange/plannerDeepWork';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -362,6 +362,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const [documentSnapshotDrafts, setDocumentSnapshotDrafts] = useState<Record<string, string>>({});
   const [copiedTemplateId, setCopiedTemplateId] = useState<string | null>(null);
   const [copiedPlannerExportKey, setCopiedPlannerExportKey] = useState<string | null>(null);
+  const [copiedInstitutionPacketKey, setCopiedInstitutionPacketKey] = useState<string | null>(null);
   const stepCounts = useMemo(() => ({
     ready: plan.steps.filter((step) => step.status === 'ready').length,
     blocked: plan.steps.filter((step) => step.status === 'blocked').length,
@@ -575,6 +576,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       statePlaybook,
     }),
     [draft, effectiveReminders, plan, statePlaybook],
+  );
+  const institutionPackets = useMemo(
+    () => buildNameChangeInstitutionPackets({
+      draft,
+      plan,
+      statePlaybook,
+    }),
+    [draft, plan, statePlaybook],
   );
   const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention, {
     hasRecentStart: plan.summary.hasRecentStart,
@@ -959,6 +968,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     }, 2000);
   };
 
+  const copyInstitutionPacket = async (key: string, text: string, fileName: string) => {
+    await copyTextOrDownload(text, fileName);
+    setCopiedInstitutionPacketKey(key);
+    window.setTimeout(() => {
+      setCopiedInstitutionPacketKey((current) => (current === key ? null : current));
+    }, 2000);
+  };
+
   return (
     <div id="name-change-roadmap" className="space-y-6 scroll-mt-24">
       <div className="grid gap-4 md:grid-cols-3">
@@ -1267,6 +1284,50 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           </div>
         </Card>
       </div>
+
+      {institutionPackets.length > 0 && (
+        <Card>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <FileStack className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold text-text-primary">Institution handoff packets</h3>
+              </div>
+              <p className="mt-1 text-sm text-text-secondary">Carry a cluster-specific packet into banking, payroll, insurance, travel, or household follow-through without rebuilding the proof story from scratch.</p>
+            </div>
+            <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+              {institutionPackets.length} packets
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {institutionPackets.map((packet) => (
+              <div key={packet.key} className="rounded-lg border border-border-subtle p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">{packet.label}</p>
+                    <p className="mt-2 text-sm text-text-secondary">{packet.summary}</p>
+                  </div>
+                  <span className={`rounded-md px-2 py-1 text-xs ${getExecutionSummaryTone(packet.readiness)}`}>
+                    {packet.readiness}
+                  </span>
+                </div>
+                <p className="mt-3 text-xs text-text-secondary">Includes: {packet.institutionLabels.join(' · ')}</p>
+                <p className="mt-2 text-xs text-text-secondary">Proof to have handy: {packet.proofDocuments.join(' · ')}</p>
+                <p className="mt-2 text-xs text-text-secondary">Completion check: {packet.completionCheck}</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => void copyInstitutionPacket(packet.key, packet.text, packet.fileName)}
+                >
+                  {copiedInstitutionPacketKey === packet.key ? 'Copied' : `Copy ${packet.label.toLowerCase()}`}
+                </Button>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {dualPartnerProofTracks.length > 0 && (
         <Card>

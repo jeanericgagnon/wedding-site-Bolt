@@ -21,8 +21,10 @@ test('name-change planner route loads the saved planning runtime surfaces', asyn
   await expect(page.getByRole('heading', { name: 'Case setup' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'State playbook' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Institution coverage map' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Institution handoff packets' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Wedding identity exports' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Copy action packet' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Copy proof gap packet' })).toBeVisible();
   const currentFirstName = page.getByRole('textbox', { name: 'Current first name' });
   await expect(currentFirstName).toBeVisible();
   await currentFirstName.fill('Taylor');

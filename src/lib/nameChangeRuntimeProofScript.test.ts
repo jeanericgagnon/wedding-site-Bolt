@@ -8,6 +8,8 @@ describe('name change runtime proof script', () => {
 
     expect(source).toContain('V1_NAME_CHANGE_RUNTIME_LIVE');
     expect(source).toContain('tests/e2e/name-change-runtime.spec.ts');
+    expect(source).toContain('src/lib/nameChange/plannerDeepWork.test.ts');
+    expect(source).toContain('src/pages/dashboard/planning/NameChangePlannerTab.test.tsx');
     expect(source).toContain('Run V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime');
   });
 });

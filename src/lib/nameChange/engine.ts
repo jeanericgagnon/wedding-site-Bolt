@@ -1066,6 +1066,14 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
         : 'This is a first-passport branch, so build the new-name application packet instead of assuming a simple renewal.';
   const targetLastTokens = normalizedTargetLastName.split(/[-\s]+/).filter(Boolean);
   const hasHyphenatedTargetLastName = normalizedTargetLastName.includes('-');
+  const hasCombinationSurnamePath = Boolean(
+    normalizedCurrentLastName
+    && normalizedSpouseLastName
+    && normalizedTargetLastName.includes(' ')
+    && !hasHyphenatedTargetLastName
+    && targetLastTokens.includes(normalizedCurrentLastName)
+    && targetLastTokens.includes(normalizedSpouseLastName),
+  );
   const hasDualLastNamePath = Boolean(
     normalizedCurrentLastName
     && normalizedSpouseLastName
@@ -1382,6 +1390,11 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
         label: 'Upcoming travel timing conflict',
         detail: 'Keep booking names, TSA profiles, and passport timing aligned while the SSA → DMV chain is in motion. Do not strand travel records between old and new identity documents.',
         severity: 'warning' as const,
+      }, {
+        id: 'edge-global-entry-followthrough',
+        label: 'Known-traveler and Global Entry follow-through',
+        detail: 'Treat TSA PreCheck, Global Entry, airline profiles, hotel loyalty, title or registration, and auto-policy updates as one travel-safe packet so upcoming bookings and identity checks do not drift apart.',
+        severity: 'info' as const,
       }]
       : []),
     ...(!input.profile.is_us_citizen && input.profile.passport_needs_update
@@ -1398,6 +1411,11 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
         label: 'Court-order path in effect',
         detail: 'This case does not fit the simple marriage shortcut, so the assistant keeps the court-order packet as the hard gate before SSA, DMV, or passport execution.',
         severity: 'info' as const,
+      }, {
+        id: 'edge-court-order-certified-copy',
+        label: 'Court-order certified-copy readiness',
+        detail: 'Downstream teams often want the signed order plus one or more certified copies, so do not treat the court-order lane as ready until you can actually reuse that packet across SSA, DMV, passport, and institutional updates.',
+        severity: hasReviewedCourtOrder ? 'info' as const : 'warning' as const,
       }]
       : []),
     ...(legalBasis === 'marriage'
@@ -1406,6 +1424,13 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
         label: isOutOfStateMarriage ? 'Out-of-state county record variation' : 'County clerk / recorder variation',
         detail: countyOfficeDetail,
         severity: outOfStateMarriageCertificateGroundingMissing ? 'warning' as const : 'info' as const,
+      }, {
+        id: 'edge-resident-id-jurisdiction-handoff',
+        label: isOutOfStateMarriage ? 'Resident-ID jurisdiction handoff' : 'Resident-ID county handoff',
+        detail: isOutOfStateMarriage
+          ? 'The marriage proof comes from outside California, but the resident-ID lane still needs a clean California handoff. Keep the issuing-county trail, certificate number, and California DMV proof packet tied together so downstream accounts do not question the jurisdiction jump.'
+          : 'Keep the county proof trail and the California DMV handoff tied together so the same certificate story survives into payroll, banking, insurance, and travel updates.',
+        severity: isOutOfStateMarriage && outOfStateMarriageCertificateGroundingMissing ? 'warning' as const : 'info' as const,
       }]
       : []),
     ...(outOfStateMarriageCertificateGroundingMissing
@@ -1457,11 +1482,27 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
         severity: input.profile.is_us_citizen ? 'info' as const : 'warning' as const,
       }]
       : []),
+    ...(!input.profile.has_real_id_license
+      ? [{
+        id: 'edge-real-id-followthrough',
+        label: 'Current photo-ID proof is still weaker than REAL ID',
+        detail: 'Keep the DMV or resident-ID lane especially explicit if your current ID is not already Real ID-aligned, because banking, travel, payroll, and insurance teams may ask for a clearer government-photo-ID handoff before they trust the new name.',
+        severity: 'warning' as const,
+      }]
+      : []),
     ...(hasHyphenatedTargetLastName
       ? [{
         id: 'edge-hyphenated-name',
         label: 'Hyphenated surname consistency',
         detail: 'Use the exact same hyphenated surname format on SSA, DMV, passport, payroll, and travel profiles so punctuation drift does not create identity mismatches downstream.',
+        severity: 'info' as const,
+      }]
+      : []),
+    ...(hasCombinationSurnamePath
+      ? [{
+        id: 'edge-combination-name-format',
+        label: 'Space-separated combination surname format',
+        detail: 'This looks like a combination surname without a hyphen, so keep the exact surname order and spacing identical on legal proof, SSA, DMV, passport, payroll, banking, insurance, and travel records.',
         severity: 'info' as const,
       }]
       : []),

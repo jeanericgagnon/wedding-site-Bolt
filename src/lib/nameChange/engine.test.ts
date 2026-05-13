@@ -600,6 +600,10 @@ describe('name change engine', () => {
         id: 'edge-out-of-state-proof',
         detail: 'County, certificate-number, and issuing-authority proof still need to be grounded before the free assistant can safely treat the marriage certificate as execution-ready proof.',
       }),
+      expect.objectContaining({
+        id: 'edge-resident-id-jurisdiction-handoff',
+        label: 'Resident-ID jurisdiction handoff',
+      }),
     ]));
   });
 
@@ -614,6 +618,7 @@ describe('name change engine', () => {
     expect(plan.summary.edgeCaseGuidance).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'edge-travel-timing', severity: 'warning' }),
+        expect.objectContaining({ id: 'edge-global-entry-followthrough', severity: 'info' }),
         expect.objectContaining({ id: 'edge-passport-branch', label: 'Passport renewal branch', severity: 'info' }),
       ]),
     );
@@ -633,6 +638,20 @@ describe('name change engine', () => {
         expect.objectContaining({ id: 'edge-non-us-passport', severity: 'warning' }),
         expect.objectContaining({ id: 'edge-passport-branch', label: 'Non-U.S. passport branch', severity: 'warning' }),
         expect.objectContaining({ id: 'edge-court-order-path', severity: 'info' }),
+        expect.objectContaining({ id: 'edge-court-order-certified-copy' }),
+      ]),
+    );
+  });
+
+  it('warns when the current photo-ID lane is weaker than a Real ID-ready handoff', () => {
+    const plan = buildNameChangePlan(makeInput({ has_real_id_license: false }));
+
+    expect(plan.summary.edgeCaseGuidance).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'edge-real-id-followthrough',
+          severity: 'warning',
+        }),
       ]),
     );
   });
@@ -681,6 +700,25 @@ describe('name change engine', () => {
     expect(plan.summary.edgeCaseGuidance).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'edge-hyphenated-name', severity: 'info' }),
+        expect.objectContaining({ id: 'edge-dual-name-path', severity: 'info' }),
+      ]),
+    );
+  });
+
+  it('surfaces combination-surname guidance when the rollout depends on exact spacing rather than a hyphen', () => {
+    const plan = buildNameChangePlan(makeInput({
+      current_last_name: 'Rivera',
+      target_last_name: 'Rivera Jordan',
+      structured_intake: {
+        spouseLastName: 'Jordan',
+        travelBookedSoon: false,
+        wantsDocumentIntakeHelp: true,
+      },
+    }));
+
+    expect(plan.summary.edgeCaseGuidance).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'edge-combination-name-format', severity: 'info' }),
         expect.objectContaining({ id: 'edge-dual-name-path', severity: 'info' }),
       ]),
     );

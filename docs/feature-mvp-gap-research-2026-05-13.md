@@ -4,9 +4,9 @@ Date: 2026-05-13
 
 Purpose:
 - turn three ambiguous active features into a concrete MVP bar
-- separate the shipped launch baseline from the deeper product-depth scope now reopened as active work
+- separate the shipped launch baseline from the deeper product-depth scope that was reopened as active work
 - give the backlog an honest build target
-- current truth update: the shipped deeper-MVP/product-depth bar is now below the user's requested finish line; active work is reopened toward a fuller suite bar for all three features
+- current truth update: the shipped deeper-MVP/product-depth bar was below the user's requested finish line; coordinator and name-change have now closed their fuller-suite bars, while registry plus the cross-feature exit gate remain active
 - full-suite claim update: the backlog should only count as full-suite-ready when the feature-specific ship lists and the cross-feature exit gate are both complete
 
 Method:
@@ -153,20 +153,19 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - stronger dual-partner rollout surfaces that keep proof and downstream status separated per partner
   - action, downstream, status, and dual-partner exports so the planner can hand a real packet or summary into a live work session
   - live reminder-RPC compatibility plus planning budget/vendor compatibility so the authenticated planner route can still save and rehydrate on the shipped production schema mix
+- Fuller-suite shipped batch now adds:
+  - full 50-state + DC operational playbook coverage instead of a partially expanded state set plus generic fallback
+  - institution handoff packets across government records, banking/credit, work/benefits, coverage/care, home/digital, and travel/mobility clusters
+  - deeper travel, residency, REAL ID, court-order, and combination-name execution branches so special cases stop collapsing into generic fallback
+  - proof-gap and institution-handoff export surfaces for real post-wedding execution handoff
 - Deployed/live now:
-  - deeper runtime deployed on Vercel production `dpl_5tPUrJk14bc91cCLZqAaf7B1T7qU`
+  - fuller-suite runtime deployed on Vercel production `dpl_Ev8rJeN42PtCiga6nQ4ze4xDB26Q`
   - reminder compatibility migration `20260513193000_fix_name_change_reminders_replace_runtime.sql` applied remotely
-  - `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live` is green against the richer shipped runtime, including saved reload
+  - `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live` is green against the fuller-suite shipped runtime, including saved reload, state playbook depth, institution handoff packets, dual-partner rollout, and export/handoff surfaces
 
 ### Active deeper scope
 
-No remaining name-change gap is active inside the competitor-informed MVP bar. But the board is now reopened above MVP toward a fuller suite bar:
-
-1. full 50-state + DC operational matrix instead of a partially expanded state set plus generic fallback
-2. stronger institution-specific follow-through across the major downstream account clusters
-3. deeper special-case branches for identity, travel, residency, hyphenation/combination, and court-order edge execution
-4. more complete packet/export/collaboration coverage for real post-wedding execution
-5. proof coverage that exercises the broadened state matrix, special-case branching, and packet/export handoff surfaces on the shipped runtime
+No remaining name-change gap is active inside the competitor-informed MVP bar or the fuller-suite checklist for this lane. The name-change full-suite checklist is now shipped and live-proven on the current production runtime.
 
 ## Universal Registry Barcode Scanner
 
@@ -231,6 +230,6 @@ No remaining registry gap is active inside the current competitor-informed MVP b
 ## Decision For The Active Board
 
 - `Day-of / coordinator` has met the shipped launch-baseline MVP bar, the earlier deeper product-depth bar, and its specific full-suite checklist.
-- `Name change` has met the shipped launch-baseline MVP bar and the earlier deeper planner-depth bar, but it is now reopened for a specific full-suite checklist.
+- `Name change` has met the shipped launch-baseline MVP bar, the earlier deeper planner-depth bar, and its specific full-suite checklist.
 - `Universal Registry Barcode Scanner` has met the shipped launch-baseline MVP bar and the earlier deeper product-depth bar, but it is now reopened for a specific full-suite checklist.
 - Full-suite readiness should only be claimed after those three checklists are complete and the cross-feature exit gate is also complete: device coverage, empty/error/manual fallback coverage, saved-data continuity, role boundaries, operational handoff/export surfaces, and dedicated proof coverage.

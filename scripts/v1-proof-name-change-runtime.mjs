@@ -19,6 +19,12 @@ const steps = [
     required: true,
   },
   {
+    id: 'name-change-full-suite-tests',
+    label: 'Name change full-suite planner depth tests',
+    command: 'npm test -- --run src/lib/nameChange/plannerDeepWork.test.ts src/lib/nameChange/engine.test.ts src/pages/dashboard/planning/NameChangePlannerTab.test.tsx',
+    required: true,
+  },
+  {
     id: 'build',
     label: 'Build integrity check',
     command: 'npm run build',
@@ -103,6 +109,7 @@ const output = {
   automatedCoverage: [
     'Case normalization and document merge safety',
     'Lifecycle, overview, and planner UI truth',
+    '50-state playbooks, institution handoff packets, edge-case branching, and export surfaces',
     'Build integrity after planner assertions',
     ...(liveEnabled ? ['Authenticated runtime route loads saved planner surfaces'] : []),
   ],
