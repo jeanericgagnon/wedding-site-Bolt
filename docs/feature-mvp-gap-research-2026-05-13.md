@@ -1,0 +1,194 @@
+# Competitor-Informed MVP And Gap Map
+
+Date: 2026-05-13
+
+Purpose:
+- turn three ambiguous active features into a concrete MVP bar
+- separate MVP from post-MVP parity work
+- give the backlog an honest build target
+
+Method:
+- reviewed official product and help pages from direct competitors and adjacent event products
+- used those patterns only to define baseline expectations, not to copy their positioning
+
+## Sources
+
+Day-of / coordinator:
+- [Zola seating chart FAQ](https://www.zola.com/faq/360038917171-How-do-I-use-the-Zola-seating-chart-)
+- [WeddingWire seating chart](https://www.weddingwire.com/wedding-planning/wedding-seating-tables.html)
+- [Joy wedding website and RSVP features](https://withjoy.com/wedding-website/)
+- [Eventbrite Organizer check-in help](https://www.eventbrite.com/help/en-us/articles/741083/how-to-check-in-attendees-at-the-event-with-eventbrite-organizer/)
+
+Name change:
+- [HitchSwitch](https://www.hitchswitch.com/)
+- [NewlyNamed FAQ: what is included](https://help.newlynamed.com/article/53-whats-included-in-a-newlynamed-name-change-kit)
+
+Registry / barcode:
+- [MyRegistry smartphone app](https://www.myregistry.com/Info/smartphoneapps/default.aspx?cloc=ca&lang=en)
+- [Babylist: add items to registry](https://help.babylist.com/hc/en-us/articles/214587937-How-do-I-add-items-to-my-Babylist-registry)
+- [The Knot browser button](https://helpcenter.theknot.com/hc/en-us/articles/360043137191-How-does-the-Add-to-The-Knot-browser-button-work)
+
+## Day-of / coordinator
+
+### Competitor baseline
+
+- Seating and guest movement are event-specific, not one universal arrival state.
+  - Zola asks which event the seating chart is for before building it.
+  - WeddingWire explicitly supports seating for different events.
+- Guest list truth stays connected to events, plus-ones, households, and RSVP responses.
+  - Joy centers per-event RSVP, plus-ones, households, follow-up questions, and personalized schedules.
+- Door workflows expect live validation, not just a binary check-in toggle.
+  - Eventbrite supports scan or manual check-in, role-gated permissions, duplicate validation, and multi-slot check-in.
+
+### DayOf MVP bar
+
+DayOf should count this feature as MVP-complete when it does all of the following:
+
+- event-specific arrival tracking is first-class for the main wedding events
+- coordinator mode can search guests and resolve arrivals without leaving the day-of workspace
+- the door queue supports explicit states for:
+  - `already-checked-in`
+  - `rsvp-unresolved`
+  - `unassigned-seat`
+  - `wrong-event`
+  - `walk-in`
+  - `help-desk`
+  - `manager-decision`
+  - `household-mismatch`
+- helpers can check in, undo check-in, and route exceptions with role-safe controls
+- the same workspace still exposes timeline, Q&A, and day-of message actions
+- per-event counts make it obvious who is in, who needs review, and what still has not arrived
+
+### Current DayOf state
+
+- Shipped now:
+  - coordinator dashboard
+  - helper roles
+  - search and active guest queue
+  - basic check-in and undo
+  - timeline, Q&A, and day-of message panels
+- Missing against the MVP bar:
+  - arrival truth still centers on shared guest `checked_in_at`
+  - coordinator guest fetch is still narrow: `id, first_name, last_name, name, rsvp_status, checked_in_at`
+  - explicit exception states only cover `unassigned-seat`, `rsvp-unresolved`, and `already-checked-in`
+  - door status is still effectively `ready`, `watch`, or `done`
+  - no first-class wrong-event, walk-in, help-desk, manager-decision, or household-mismatch action model
+  - no visible event-specific arrival counters or event-scoped arrival board
+
+### Build gaps
+
+1. Add event-scoped arrival truth and counts.
+2. Expand the exception-state model and coordinator board actions.
+3. Add not-found, walk-in, and help-desk routing inside coordinator mode.
+4. Re-prove the deeper day-of lane after the state model changes.
+
+## Name change
+
+### Competitor baseline
+
+- Paid specialists sell a personalized checklist plus a dashboard, not just a static article.
+  - HitchSwitch markets pre-filled forms, dashboard access, checklist, and step-by-step guidance.
+  - NewlyNamed markets personalized kits plus institution selection from a large account library.
+- The baseline execution chain is consistent:
+  - legal proof
+  - Social Security
+  - driver license / REAL ID
+  - passport if needed
+  - then downstream institutions
+- Travel and identity-adjacent follow-through matters in the category.
+  - HitchSwitch and NewlyNamed both call out TSA, Global Entry, travel, licenses, and large institution coverage.
+- Broad 50-state depth is a premium differentiator in this space.
+
+### DayOf MVP bar
+
+DayOf should count this feature as MVP-complete when it does all of the following:
+
+- provides a US-first personalized planner for a primary name-change case
+- handles both marriage-proof and court-order proof entry
+- enforces the legal-proof -> SSA -> DMV/ID -> passport -> downstream sequence honestly
+- gives usable execution cards for:
+  - SSA
+  - DMV / state ID
+  - passport
+  - employer / payroll
+  - banks / cards
+  - insurance / medical
+  - voter
+  - TSA / travel profiles
+  - utilities / courtesy cleanup
+- includes reminders, status tracking, and copy-ready account update templates
+- is discoverable from the post-wedding dashboard
+- stays clearly framed as guidance, not legal filing automation or paid-kit upsell
+
+### Current DayOf state
+
+- Shipped now:
+  - planner UI with execution cards
+  - reminders and reminder posture
+  - status vault
+  - account update templates
+  - TSA / travel flow
+  - dual-partner proof tracks
+  - immigration-aware and non-U.S.-passport-aware logic branches in the engine
+- Missing against the MVP bar:
+  - core architecture and UI language still read California-first in key places
+  - state and county coverage is not yet clearly documented or claim-safe at specialist depth
+  - post-wedding dashboard / resource placement is still incomplete
+  - advanced branches exist in code but are not yet the kind of breadth we should market as specialist-grade nationwide coverage
+
+### Build gaps
+
+1. Set and document the real launch claim: California-first or broader state-aware coverage.
+2. Finish the post-wedding dashboard and resource placement.
+3. Tighten state and county grounding so the product claim matches runtime reality.
+4. Re-prove advanced branches before claiming parity on dual-partner, non-U.S. passport, or immigration-heavy cases.
+
+## Universal Registry Barcode Scanner
+
+### Competitor baseline
+
+- Universal registries treat "add from anywhere" as table stakes.
+  - Babylist supports browser-button and mobile add-item flows.
+  - The Knot supports add-from-anywhere through a browser button.
+- Stronger registry leaders add in-store capture and retailer choice.
+  - MyRegistry markets mobile barcode scanning, best-price help, registry sync, and add-from-any-store behavior.
+
+### DayOf MVP bar
+
+DayOf should count this feature as MVP-complete when it does all of the following:
+
+- supports manual barcode entry and camera scanning
+- normalizes UPC / EAN / GTIN / ISBN input
+- looks up product data with a confidence signal
+- lets the owner keep a weak match, edit by hand, or add without a store
+- lets the owner choose a retailer or best-price option when matches exist
+- persists barcode-backed items into the registry with useful metadata
+- falls back safely to manual edit when no confident match exists
+
+### Current DayOf state
+
+- The competitor-informed MVP is already shipped and live-proven.
+- Shipped now:
+  - camera scanner
+  - manual barcode entry
+  - normalized lookup
+  - confidence and review-required states
+  - retailer options
+  - `Use best price`
+  - `Add without store`
+  - Open Library ISBN fallback
+  - optional `UPCITEMDB_API_KEY` ladder support
+  - registry persistence and live proof
+
+### Post-MVP gaps
+
+1. Broaden provider and product-match depth.
+2. Add duplicate / merge suggestions against existing registry items.
+3. Improve retailer-sync and refresh parity with the strongest universal-registry products.
+4. Harden the mobile/browser compatibility matrix for camera scanning.
+
+## Decision For The Active Board
+
+- `Day-of / coordinator` stays active against the MVP bar in this doc.
+- `Name change` stays active against the MVP bar in this doc.
+- `Universal Registry Barcode Scanner` has met MVP; remaining work is post-MVP parity and depth, not baseline MVP viability.

@@ -1,5 +1,9 @@
 # Check-in and Day-of Edge Case Audit
 
+MVP note:
+- This audit captures realism gaps, not the full product contract.
+- The current competitor-informed MVP bar and build gaps live in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md).
+
 Date: 2026-04-13
 
 ## Current real strengths

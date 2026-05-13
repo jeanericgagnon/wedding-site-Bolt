@@ -1,5 +1,9 @@
 # Name Change Assistant Product Scope
 
+MVP note:
+- This file is the broader end-state product target.
+- The current competitor-informed MVP bar and build gaps live in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md).
+
 ## Product Promise
 
 Day of Love includes a free post-wedding name-change assistant.
