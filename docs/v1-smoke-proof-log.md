@@ -542,6 +542,30 @@ _Launch call right now:_ `GO`
 
 ### 2026-05-11 07:33 PM PDT - Registry Owner Write RPC Batch (Local Only)
 
+### 2026-05-13 07:49 AM PDT - Registry Barcode Review / Provider Depth Batch (Deployed + Live-Proven)
+
+- Added a richer local-only registry barcode depth batch:
+  - provider-path metadata in the barcode lookup contract
+  - review-required match state for lower-confidence product matches
+  - explicit owner controls to use the best price, clear the store, or pivot back to manual/link editing
+  - Open Library fallback for ISBN barcode lookups
+  - optional `UPCITEMDB_API_KEY` provider-ladder support
+  - normalized retailer-option building and miss-cache attempt increments in `registry-barcode-lookup`
+- Focused/local proof is green:
+  - `npm test -- --run src/pages/dashboard/registry/RegistryItemForm.test.tsx src/pages/dashboard/registry/registryService.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `npm run build`
+  - `npm run proof:v1:registry`
+  - `git diff --check`
+- Deploy/runtime closeout:
+  - `supabase functions deploy registry-barcode-lookup --no-verify-jwt`
+  - `vercel deploy --prod --yes` -> `dpl_CRegyLrW91MBRXbkytcPZdy8g8BS`, aliased to [dayof.love](https://dayof.love)
+  - `LIVE_REGISTRY_WRITE_READ=1 PLAYWRIGHT_BASE_URL=https://dayof.love npx playwright test --workers=1 tests/e2e/registry-write-read.spec.ts`
+- Result:
+  - the richer barcode review/provider batch is deployed
+  - live owner barcode save/read plus public registry readability are green on the shipped runtime
+  - broader universal-registry product depth still remains future active work
+
 - Added migration `20260511234500_registry_write_rpcs.sql`.
 - Moved these registry dashboard owner-side write paths off raw client table mutations in the working tree:
   - registry refresh budget writes

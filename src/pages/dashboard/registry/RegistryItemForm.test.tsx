@@ -21,8 +21,10 @@ vi.mock('./registryService', () => ({
     normalized_barcode: '036000291452',
     format: 'upc_a',
     provider: 'cache',
+    provider_path: ['open_food_facts', 'cache'],
     from_cache: false,
     confidence_score: 92,
+    review_required: false,
     title: 'Scanned Bowl',
     brand: 'DayOf',
     image_url: 'https://example.com/scanned-bowl.jpg',
@@ -211,5 +213,70 @@ describe('RegistryItemForm', () => {
     await waitFor(() => expect(screen.getByDisplayValue('Scanned Bowl')).toBeInTheDocument());
     expect(screen.getByDisplayValue('64.00')).toBeInTheDocument();
     expect(screen.getByDisplayValue('DayOf QA Store')).toBeInTheDocument();
+  });
+
+  it('lets the owner clear the store choice after a barcode match', async () => {
+    render(
+      <RegistryItemForm
+        existingItems={[]}
+        onSave={vi.fn(async () => {})}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /scan barcode/i }));
+    fireEvent.change(screen.getByPlaceholderText(/upc, ean, gtin, or isbn/i), {
+      target: { value: '036000291452' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^look up$/i }));
+
+    await waitFor(() => expect(screen.getByDisplayValue('DayOf QA Store')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /add without store/i }));
+
+    expect(screen.getByPlaceholderText('e.g. Amazon, Target')).toHaveValue('');
+    expect(screen.getByPlaceholderText('https://store.com/product')).toHaveValue('');
+  });
+
+  it('shows review required copy for low-confidence barcode matches', async () => {
+    vi.mocked(lookupRegistryBarcode).mockResolvedValueOnce({
+      ok: true,
+      matched: true,
+      barcode: '5449000000996',
+      normalized_barcode: '5449000000996',
+      format: 'ean_13',
+      provider: 'open_food_facts',
+      provider_path: ['open_food_facts'],
+      from_cache: false,
+      confidence_score: 55,
+      review_required: true,
+      title: 'Possible Match',
+      brand: null,
+      image_url: null,
+      category: null,
+      description: null,
+      estimated_price_cents: null,
+      currency: 'USD',
+      product_url: null,
+      selected_retailer: null,
+      retailer_options: [],
+      raw_payload: null,
+    });
+
+    render(
+      <RegistryItemForm
+        existingItems={[]}
+        onSave={vi.fn(async () => {})}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /scan barcode/i }));
+    fireEvent.change(screen.getByPlaceholderText(/upc, ean, gtin, or isbn/i), {
+      target: { value: '5449000000996' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^look up$/i }));
+
+    await waitFor(() => expect(screen.getByText(/review required/i)).toBeInTheDocument());
+    expect(screen.getByText(/review the title, price, image, and retailer before saving it/i)).toBeInTheDocument();
   });
 });

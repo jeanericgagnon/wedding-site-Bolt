@@ -90,8 +90,10 @@ export interface RegistryBarcodeLookupResult {
   normalized_barcode: string;
   format: string | null;
   provider: string | null;
+  provider_path?: string[] | null;
   from_cache: boolean;
   confidence_score: number;
+  review_required?: boolean;
   title: string | null;
   brand: string | null;
   image_url: string | null;

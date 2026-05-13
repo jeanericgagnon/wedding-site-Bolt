@@ -32,6 +32,7 @@ type LookupProduct = {
   selected_retailer: string | null;
   provider: string | null;
   confidence_score: number;
+  provider_path?: string[];
   retailer_options: Array<{ label: string; url: string | null; price_cents: number | null; currency: string | null; is_best_match?: boolean }>;
   raw_payload: Record<string, unknown> | null;
 };
@@ -135,6 +136,7 @@ function toLookupResponse(input: {
   error?: string | null;
 }) {
   const product = input.product;
+  const reviewRequired = Boolean(product && product.confidence_score < 70);
   return {
     ok: true,
     matched: input.matched,
@@ -142,8 +144,10 @@ function toLookupResponse(input: {
     normalized_barcode: input.normalized.normalized,
     format: input.normalized.format,
     provider: product?.provider ?? null,
+    provider_path: product?.provider_path ?? [],
     from_cache: input.fromCache,
     confidence_score: product?.confidence_score ?? 0,
+    review_required: reviewRequired,
     title: product?.title ?? null,
     brand: product?.brand ?? null,
     image_url: product?.image_url ?? null,
@@ -157,6 +161,60 @@ function toLookupResponse(input: {
     raw_payload: product?.raw_payload ?? null,
     error: input.error ?? null,
   };
+}
+
+function buildRetailerOptions(
+  rawOptions: Array<Record<string, unknown> | null | undefined>,
+  fallbackLabel: string | null,
+  fallbackUrl: string | null,
+  fallbackPriceCents: number | null,
+  fallbackCurrency: string | null,
+) {
+  const options = rawOptions
+    .map((option) => ({
+      label: trimText(option?.label ?? option?.merchant ?? option?.store_name),
+      url: trimText(option?.url ?? option?.link),
+      price_cents: typeof option?.price_cents === "number" ? option.price_cents : toCents(option?.price),
+      currency: trimText(option?.currency ?? option?.currency_code) ?? fallbackCurrency,
+      is_best_match: Boolean(option?.is_best_match),
+    }))
+    .filter((option) => option.label || option.url);
+
+  if (options.length > 0) {
+    if (!options.some((option) => option.is_best_match)) {
+      options[0].is_best_match = true;
+    }
+    return options.map((option) => ({
+      label: option.label ?? fallbackLabel ?? "Suggested store",
+      url: option.url ?? fallbackUrl,
+      price_cents: option.price_cents ?? fallbackPriceCents,
+      currency: option.currency ?? fallbackCurrency,
+      is_best_match: option.is_best_match,
+    }));
+  }
+
+  return [{
+    label: fallbackLabel ?? "Suggested store",
+    url: fallbackUrl,
+    price_cents: fallbackPriceCents,
+    currency: fallbackCurrency,
+    is_best_match: true,
+  }];
+}
+
+function scoreLookupConfidence(input: {
+  title: string | null;
+  brand: string | null;
+  imageUrl: string | null;
+  retailerOptions: Array<{ label: string; url: string | null; price_cents: number | null; currency: string | null; is_best_match?: boolean }>;
+}) {
+  let score = 0;
+  if (input.title) score += 45;
+  if (input.brand) score += 15;
+  if (input.imageUrl) score += 20;
+  if (input.retailerOptions.some((option) => option.url)) score += 15;
+  if (input.retailerOptions.some((option) => option.price_cents != null)) score += 5;
+  return Math.max(0, Math.min(100, score));
 }
 
 async function enforceRateLimit(ip: string) {
@@ -190,6 +248,13 @@ async function lookupGoogleBooks(barcode: BarcodeValidation & { ok: true }): Pro
   const item = payload?.items?.[0];
   const info = item?.volumeInfo as Record<string, unknown> | undefined;
   if (!info) return null;
+  const retailerOptions = buildRetailerOptions(
+    [{ label: "Book listing", url: trimText(info.infoLink), price_cents: null, currency: "USD", is_best_match: true }],
+    "Book listing",
+    trimText(info.infoLink),
+    null,
+    "USD",
+  );
   return {
     title: trimText(info.title),
     brand: Array.isArray(info.authors) ? trimText((info.authors as unknown[]).join(", ")) : null,
@@ -202,10 +267,44 @@ async function lookupGoogleBooks(barcode: BarcodeValidation & { ok: true }): Pro
     selected_retailer: "Book listing",
     provider: "google_books",
     confidence_score: 85,
-    retailer_options: [
-      { label: "Book listing", url: trimText(info.infoLink), price_cents: null, currency: "USD", is_best_match: true },
-    ],
+    provider_path: ["google_books"],
+    retailer_options: retailerOptions,
     raw_payload: item,
+  };
+}
+
+async function lookupOpenLibrary(barcode: BarcodeValidation & { ok: true }): Promise<LookupProduct | null> {
+  if (barcode.format !== "isbn_10" && barcode.format !== "isbn_13") return null;
+  const response = await fetch(`https://openlibrary.org/isbn/${encodeURIComponent(barcode.normalized)}.json`);
+  if (!response.ok) return null;
+  const payload = await response.json().catch(() => null) as Record<string, unknown> | null;
+  const title = trimText(payload?.title);
+  if (!payload || !title) return null;
+  const coverId = Array.isArray(payload.covers) && typeof payload.covers[0] === "number" ? payload.covers[0] : null;
+  const imageUrl = coverId ? `https://covers.openlibrary.org/b/id/${coverId}-L.jpg` : null;
+  const detailsUrl = `https://openlibrary.org/isbn/${encodeURIComponent(barcode.normalized)}`;
+  const retailerOptions = buildRetailerOptions(
+    [{ label: "Open Library", url: detailsUrl, is_best_match: true }],
+    "Open Library",
+    detailsUrl,
+    null,
+    "USD",
+  );
+  return {
+    title,
+    brand: null,
+    image_url: imageUrl,
+    category: trimText(Array.isArray(payload.subjects) ? payload.subjects.join(", ") : null),
+    description: trimText(payload.subtitle),
+    estimated_price_cents: null,
+    currency: "USD",
+    product_url: detailsUrl,
+    selected_retailer: "Open Library",
+    provider: "open_library",
+    confidence_score: scoreLookupConfidence({ title, brand: null, imageUrl, retailerOptions }),
+    provider_path: ["open_library"],
+    retailer_options: retailerOptions,
+    raw_payload: payload,
   };
 }
 
@@ -215,10 +314,20 @@ async function lookupOpenFoodFacts(barcode: BarcodeValidation & { ok: true }): P
   const payload = await response.json().catch(() => null) as Record<string, unknown> | null;
   const product = payload?.product as Record<string, unknown> | undefined;
   if (!product) return null;
+  const title = trimText(product.product_name) ?? trimText(product.generic_name);
+  const brand = trimText(product.brands);
+  const imageUrl = trimText(product.image_front_url) ?? trimText(product.image_url);
+  const retailerOptions = buildRetailerOptions(
+    [{ label: trimText(product.stores) ?? "Open Food Facts", url: trimText(product.link), is_best_match: true }],
+    trimText(product.stores) ?? "Open Food Facts",
+    trimText(product.link),
+    null,
+    "USD",
+  );
   return {
-    title: trimText(product.product_name) ?? trimText(product.generic_name),
-    brand: trimText(product.brands),
-    image_url: trimText(product.image_front_url) ?? trimText(product.image_url),
+    title,
+    brand,
+    image_url: imageUrl,
     category: trimText(product.categories),
     description: trimText(product.quantity),
     estimated_price_cents: null,
@@ -226,10 +335,9 @@ async function lookupOpenFoodFacts(barcode: BarcodeValidation & { ok: true }): P
     product_url: trimText(product.link),
     selected_retailer: trimText(product.stores) ?? "Open Food Facts",
     provider: "open_food_facts",
-    confidence_score: 72,
-    retailer_options: [
-      { label: trimText(product.stores) ?? "Open Food Facts", url: trimText(product.link), price_cents: null, currency: "USD", is_best_match: true },
-    ],
+    confidence_score: scoreLookupConfidence({ title, brand, imageUrl, retailerOptions }),
+    provider_path: ["open_food_facts"],
+    retailer_options: retailerOptions,
     raw_payload: payload,
   };
 }
@@ -249,6 +357,13 @@ async function lookupUpcDatabase(barcode: BarcodeValidation & { ok: true }): Pro
   const offerUrl = trimText(item?.offers?.[0]?.url) ?? trimText(payload?.url);
   const retailer = trimText(item?.offers?.[0]?.merchant) ?? trimText(payload?.brand);
   const priceCents = toCents(item?.offers?.[0]?.price ?? payload?.price);
+  const retailerOptions = buildRetailerOptions(
+    Array.isArray(item?.offers) ? item.offers as Array<Record<string, unknown>> : [],
+    retailer,
+    offerUrl,
+    priceCents,
+    "USD",
+  );
   return {
     title,
     brand: trimText(payload?.brand),
@@ -260,18 +375,57 @@ async function lookupUpcDatabase(barcode: BarcodeValidation & { ok: true }): Pro
     product_url: offerUrl,
     selected_retailer: retailer,
     provider: "upcdatabase",
-    confidence_score: image && retailer ? 90 : 78,
-    retailer_options: [
-      { label: retailer ?? "UPC Database", url: offerUrl, price_cents: priceCents, currency: "USD", is_best_match: true },
-    ],
+    confidence_score: scoreLookupConfidence({ title, brand: trimText(payload?.brand), imageUrl: image, retailerOptions }),
+    provider_path: ["upcdatabase"],
+    retailer_options: retailerOptions,
+    raw_payload: payload,
+  };
+}
+
+async function lookupUpcItemDb(barcode: BarcodeValidation & { ok: true }): Promise<LookupProduct | null> {
+  const apiKey = Deno.env.get("UPCITEMDB_API_KEY");
+  if (!apiKey) return null;
+  const response = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${encodeURIComponent(barcode.normalized)}`, {
+    headers: { Authorization: apiKey },
+  });
+  if (!response.ok) return null;
+  const payload = await response.json().catch(() => null) as Record<string, unknown> | null;
+  const item = Array.isArray(payload?.items) ? payload.items[0] as Record<string, unknown> | undefined : undefined;
+  const title = trimText(item?.title);
+  if (!title) return null;
+  const brand = trimText(item?.brand);
+  const imageUrl = trimText(Array.isArray(item?.images) ? item.images[0] : null);
+  const retailerOptions = buildRetailerOptions(
+    Array.isArray(item?.offers) ? item.offers as Array<Record<string, unknown>> : [],
+    brand ?? "UPCitemdb",
+    null,
+    null,
+    "USD",
+  );
+  return {
+    title,
+    brand,
+    image_url: imageUrl,
+    category: trimText(item?.category),
+    description: trimText(item?.description),
+    estimated_price_cents: retailerOptions[0]?.price_cents ?? null,
+    currency: retailerOptions[0]?.currency ?? "USD",
+    product_url: retailerOptions[0]?.url ?? null,
+    selected_retailer: retailerOptions[0]?.label ?? "UPCitemdb",
+    provider: "upcitemdb",
+    confidence_score: scoreLookupConfidence({ title, brand, imageUrl, retailerOptions }),
+    provider_path: ["upcitemdb"],
+    retailer_options: retailerOptions,
     raw_payload: payload,
   };
 }
 
 async function lookupProduct(barcode: BarcodeValidation & { ok: true }): Promise<LookupProduct | null> {
   return await lookupGoogleBooks(barcode)
+    ?? await lookupOpenLibrary(barcode)
     ?? await lookupOpenFoodFacts(barcode)
     ?? await lookupUpcDatabase(barcode)
+    ?? await lookupUpcItemDb(barcode)
     ?? null;
 }
 
@@ -341,15 +495,18 @@ Deno.serve(async (req) => {
         selected_retailer: trimText(cachedRow.selected_retailer),
         provider: trimText(cachedRow.provider),
         confidence_score: Number(cachedRow.confidence_score ?? 0),
-        retailer_options: [
-          {
-            label: trimText(cachedRow.selected_retailer) ?? "Suggested store",
-            url: trimText(cachedRow.product_url),
-            price_cents: typeof cachedRow.price_cents === "number" ? cachedRow.price_cents : null,
-            currency: trimText(cachedRow.currency),
-            is_best_match: true,
-          },
-        ],
+        provider_path: Array.isArray((cachedRow.raw_payload as Record<string, unknown> | null)?.provider_path)
+          ? ((cachedRow.raw_payload as Record<string, unknown>).provider_path as string[])
+          : [trimText(cachedRow.provider) ?? "cache"],
+        retailer_options: buildRetailerOptions(
+          Array.isArray((cachedRow.raw_payload as Record<string, unknown> | null)?.retailer_options)
+            ? ((cachedRow.raw_payload as Record<string, unknown>).retailer_options as Array<Record<string, unknown>>)
+            : [],
+          trimText(cachedRow.selected_retailer),
+          trimText(cachedRow.product_url),
+          typeof cachedRow.price_cents === "number" ? cachedRow.price_cents : null,
+          trimText(cachedRow.currency),
+        ),
         raw_payload: (cachedRow.raw_payload as Record<string, unknown> | null) ?? null,
       },
     }));
@@ -380,7 +537,7 @@ Deno.serve(async (req) => {
         .from("registry_barcode_misses")
         .upsert({
           barcode: validated.normalized,
-          attempts: 1,
+          attempts: Number(missRow?.attempts ?? 0) + 1,
           last_attempt_at: new Date().toISOString(),
           last_provider: null,
           last_error: "no_confident_match",
@@ -411,7 +568,11 @@ Deno.serve(async (req) => {
         selected_retailer: product.selected_retailer,
         provider: product.provider,
         confidence_score: product.confidence_score,
-        raw_payload: product.raw_payload ?? {},
+        raw_payload: {
+          ...(product.raw_payload ?? {}),
+          provider_path: product.provider_path ?? [product.provider].filter(Boolean),
+          retailer_options: product.retailer_options,
+        },
         first_seen_at: new Date().toISOString(),
         last_seen_at: new Date().toISOString(),
         lookup_count: 1,

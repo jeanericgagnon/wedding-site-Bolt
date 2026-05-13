@@ -77,7 +77,9 @@ function compactBarcodeProductMetadata(lookup: RegistryBarcodeLookupResult): Rec
     barcode: lookup.normalized_barcode,
     format: lookup.format,
     provider: lookup.provider ?? null,
+    provider_path: lookup.provider_path ?? [],
     confidence_score: lookup.confidence_score ?? 0,
+    review_required: Boolean(lookup.review_required),
     title: lookup.title ?? null,
     brand: lookup.brand ?? null,
     image_url: lookup.image_url ?? null,
@@ -151,6 +153,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
   const [barcodeLookup, setBarcodeLookup] = useState<RegistryBarcodeLookupResult | null>(null);
   const [barcodeLookupError, setBarcodeLookupError] = useState<string | null>(null);
   const [barcodeLookingUp, setBarcodeLookingUp] = useState(false);
+  const barcodeNeedsReview = Boolean(barcodeLookup?.matched && barcodeLookup.review_required);
 
   const imageUrlLooksDirect = (() => {
     const v = (getSafePublicImageUrl(draft.image_url) || '').trim();
@@ -235,6 +238,32 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
       metadata_confidence_score: lookup.confidence_score != null ? Math.max(0, Math.min(1, lookup.confidence_score / 100)) : null,
       metadata_source_method: lookup.matched ? 'adapter' : 'manual',
       metadata_retailer: bestRetailer?.label ?? lookup.selected_retailer ?? prev.metadata_retailer,
+    }));
+  }, []);
+
+  const chooseBarcodeRetailer = useCallback((label: string, url: string | null, priceCents: number | null) => {
+    setDraft((prev) => ({
+      ...prev,
+      merchant: label,
+      selected_retailer: label,
+      item_url: url || prev.item_url,
+      canonical_url: url || prev.canonical_url,
+      selected_product_url: url || prev.selected_product_url,
+      estimated_price_cents: priceCents != null ? String(priceCents) : prev.estimated_price_cents,
+      price_amount: priceCents != null ? (priceCents / 100).toFixed(2) : prev.price_amount,
+      metadata_retailer: label,
+    }));
+  }, []);
+
+  const clearBarcodeRetailerSelection = useCallback(() => {
+    setDraft((prev) => ({
+      ...prev,
+      merchant: prev.merchant === prev.selected_retailer ? '' : prev.merchant,
+      selected_retailer: '',
+      item_url: '',
+      canonical_url: '',
+      selected_product_url: '',
+      metadata_retailer: '',
     }));
   }, []);
 
@@ -515,10 +544,61 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                             {barcodeLookup.brand ? `${barcodeLookup.brand} · ` : ''}{barcodeLookup.normalized_barcode}
                           </p>
                         </div>
-                        <span className="rounded-md bg-primary/10 px-2 py-1 text-xs text-primary">
-                          Confidence {Math.round(barcodeLookup.confidence_score)}
-                        </span>
+                        <div className="space-y-1 text-right">
+                          <span className={`rounded-md px-2 py-1 text-xs ${barcodeNeedsReview ? 'bg-warning/10 text-warning' : 'bg-primary/10 text-primary'}`}>
+                            {barcodeNeedsReview ? 'Review required' : 'High confidence'} · {Math.round(barcodeLookup.confidence_score)}
+                          </span>
+                          {barcodeLookup.provider && (
+                            <p className="text-[11px] text-text-tertiary">
+                              {barcodeLookup.provider_path?.length ? barcodeLookup.provider_path.join(' -> ') : barcodeLookup.provider}
+                            </p>
+                          )}
+                        </div>
                       </div>
+                      <div className="flex flex-wrap gap-2">
+                        {barcodeLookup.retailer_options.length > 0 && (
+                          <button
+                            type="button"
+                            className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm text-primary"
+                            onClick={() => {
+                              const bestRetailer = barcodeLookup.retailer_options.find((option) => option.is_best_match) ?? barcodeLookup.retailer_options[0];
+                              if (!bestRetailer) return;
+                              chooseBarcodeRetailer(bestRetailer.label, bestRetailer.url, bestRetailer.price_cents);
+                            }}
+                          >
+                            Use best price
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="rounded-lg border border-border px-3 py-1.5 text-sm text-text-primary"
+                          onClick={clearBarcodeRetailerSelection}
+                        >
+                          Add without store
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-lg border border-border px-3 py-1.5 text-sm text-text-primary"
+                          onClick={() => setSourceMode('link')}
+                        >
+                          Paste another link
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-lg border border-border px-3 py-1.5 text-sm text-text-primary"
+                          onClick={() => {
+                            setBarcodeLookupError(null);
+                            setBarcodeLookup((prev) => prev ? { ...prev, review_required: false } : prev);
+                          }}
+                        >
+                          Edit manually
+                        </button>
+                      </div>
+                      {barcodeNeedsReview && (
+                        <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm text-text-secondary">
+                          We found a possible product match, but it is missing enough detail that you should review the title, price, image, and retailer before saving it.
+                        </div>
+                      )}
                       {barcodeLookup.retailer_options.length > 0 && (
                         <div className="space-y-2">
                           <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Where should guests buy it?</p>
@@ -530,16 +610,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                                   key={`${option.label}-${option.url ?? index}`}
                                   type="button"
                                   className={`rounded-lg border px-3 py-2 text-left text-sm ${isActive ? 'border-primary bg-primary/5 text-primary' : 'border-border text-text-primary'}`}
-                                  onClick={() => {
-                                    setDraft((prev) => ({
-                                      ...prev,
-                                      merchant: option.label,
-                                      selected_retailer: option.label,
-                                      item_url: option.url || prev.item_url,
-                                      canonical_url: option.url || prev.canonical_url,
-                                      selected_product_url: option.url || prev.selected_product_url,
-                                    }));
-                                  }}
+                                  onClick={() => chooseBarcodeRetailer(option.label, option.url, option.price_cents)}
                                 >
                                   <span className="font-medium">{option.label}</span>
                                   {option.price_cents != null && (
