@@ -1,7 +1,7 @@
 import { buildRegistryInsights } from '../../../lib/invisibleIntelligence';
 import { buildRegistryLaunchReadiness, buildRegistryThankYouPlan } from '../../../lib/registryLaunchReadiness';
 import { ageExceedsMs, getRegistryItemTimestamp } from '../registryItemTime';
-import { findDuplicateRegistryGroups } from './duplicateRegistryItems';
+import { buildRegistryDuplicateGroups } from './duplicateRegistryItems';
 import { getRegistryItemMetadataState } from './registryTypes';
 import type { RegistryFilter, RegistryItem } from './registryTypes';
 
@@ -34,11 +34,11 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
     showImageIssuesOnly,
   } = args;
 
-  const duplicateGroups = findDuplicateRegistryGroups(items);
+  const duplicateGroups = buildRegistryDuplicateGroups(items);
   const actionableBadImportCount = items.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length;
   const bulkReviewCounts = {
     repair: actionableBadImportCount,
-    duplicates: duplicateGroups.reduce((sum, group) => sum + group.length, 0),
+    duplicates: duplicateGroups.reduce((sum, group) => sum + group.items.length, 0),
     imageIssues: items.filter((item) => !item.image_url || item.image_url.includes('thum.io') || item.image_url.includes('weserv.nl')).length,
   };
 

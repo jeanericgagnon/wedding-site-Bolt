@@ -185,4 +185,24 @@ describe('RegistryItemCard', () => {
     expect(getOwnerRegistrySourceLabel('manual')).toBe('Details entered by you');
     expect(getOwnerRegistrySourceLabel(null)).toBeNull();
   });
+
+  it('shows sync parity details when a gift has stale pricing or retries queued', () => {
+    render(
+      <RegistryItemCard
+        item={makeItem({
+          metadata_last_checked_at: '2026-05-10T00:00:00.000Z',
+          next_refresh_at: '2026-05-15T00:00:00.000Z',
+          previous_price_amount: 450,
+          price_amount: 399.99,
+          refresh_fail_count: 2,
+        })}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/checked may/i)).toBeInTheDocument();
+    expect(screen.getByText(/price moved from \$450\.00 to \$399\.99/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 retries are queued for this gift/i)).toBeInTheDocument();
+  });
 });

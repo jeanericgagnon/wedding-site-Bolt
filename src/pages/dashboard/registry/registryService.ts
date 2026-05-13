@@ -140,6 +140,21 @@ export async function updateRegistryItem(
   return normalizeRegistryItem(data as RegistryItem);
 }
 
+export async function mergeDuplicateRegistryItems(
+  primaryItemId: string,
+  secondaryItemIds: string[],
+  fields: Partial<RegistryItem>
+): Promise<RegistryItem> {
+  const { data, error } = await supabase.rpc('registry_duplicate_merge', {
+    p_primary_item_id: primaryItemId,
+    p_secondary_item_ids: secondaryItemIds,
+    p_payload: fields,
+  });
+
+  if (error) throw new Error(REGISTRY_SAVE_ERROR_COPY);
+  return normalizeRegistryItem(data as RegistryItem);
+}
+
 export async function deleteRegistryItem(id: string): Promise<void> {
   const { error } = await supabase.rpc('registry_item_delete', {
     p_item_id: id,
@@ -327,19 +342,30 @@ export function findDuplicateItem(
   url: string,
   title: string | null,
   existingItems: RegistryItem[],
-  excludeId?: string
+  excludeId?: string,
+  barcode?: string | null,
 ): RegistryItem | null {
   const normalizedUrl = normalizeRegistryComparisonUrl(url);
   const normalizedTitle = normalizeRegistryTitleForComparison(title);
+  const normalizedBarcode = (barcode || '').trim();
 
   for (const item of existingItems) {
     if (excludeId && item.id === excludeId) continue;
 
+    if (normalizedBarcode && (item.barcode || '').trim() === normalizedBarcode) {
+      return item;
+    }
+
     const itemCanonical = normalizeRegistryComparisonUrl(item.canonical_url);
     const itemUrl = normalizeRegistryComparisonUrl(item.item_url);
+    const itemSelectedUrl = normalizeRegistryComparisonUrl(item.selected_product_url);
     const itemTitle = normalizeRegistryTitleForComparison(item.item_name);
 
     if (normalizedUrl && itemCanonical && itemCanonical === normalizedUrl) {
+      return item;
+    }
+
+    if (normalizedUrl && itemSelectedUrl && itemSelectedUrl === normalizedUrl) {
       return item;
     }
 

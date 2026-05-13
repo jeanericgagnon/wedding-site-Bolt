@@ -4,6 +4,7 @@ import { DashboardStateBlock } from '../../../components/dashboard/DashboardStat
 import { ActionsMenu, Button, Card } from '../../../components/ui';
 import { CheckCircle2, DollarSign, Gift, Package, Plus, Search, Sparkles } from 'lucide-react';
 import { RegistryItemCard } from './RegistryItemCard';
+import type { RegistryDuplicateGroup } from './duplicateRegistryItems';
 import { getRegistryRepairStates } from './repairState';
 import type { RegistryFilter, RegistryItem } from './registryTypes';
 import { formatRegistryItemDate } from '../registryItemTime';
@@ -76,7 +77,7 @@ export function RegistryDashboardRouteContent(props: {
   bulkReviewCounts: BulkReviewCounts;
   budgetUtilization: number;
   counts: Counts;
-  duplicateGroups: RegistryItem[][];
+  duplicateGroups: RegistryDuplicateGroup[];
   editItem: RegistryItem | null;
   filter: RegistryFilter;
   filtered: RegistryItem[];
@@ -88,6 +89,7 @@ export function RegistryDashboardRouteContent(props: {
   handleCopyDuplicateReviewList: () => Promise<void>;
   handleDelete: (id: string) => Promise<void>;
   handleEdit: (item: RegistryItem) => void;
+  handleMergeDuplicateGroup: (group: RegistryDuplicateGroup) => Promise<void>;
   handleMarkPurchased: (item: RegistryItem, qty: number) => Promise<void>;
   handleRefetchMetadata: (item: RegistryItem, silent?: boolean, replaceExisting?: boolean) => Promise<boolean>;
   handleRefreshImageIssues: () => Promise<void>;
@@ -97,6 +99,7 @@ export function RegistryDashboardRouteContent(props: {
   loading: boolean;
   monthlyRefreshCap: number;
   monthlyRefreshCount: number;
+  mergingDuplicateGroupId: string | null;
   nearBudgetCap: boolean;
   normalizedItems: RegistryItem[];
   recentActivity: RegistryItem[];
@@ -433,14 +436,61 @@ export function RegistryDashboardRouteContent(props: {
         </div>
 
         {props.duplicateGroups.length > 0 && (
-          <div className="mb-4 rounded-lg border border-border-subtle bg-surface-subtle/20 p-4 text-sm text-text-secondary space-y-2">
-            <p className="font-medium">Possible duplicate gifts found</p>
-            <div className="space-y-1 text-xs">
-              {props.duplicateGroups.slice(0, 4).map((group, index) => (
-                <p key={index}>• {group.map((item) => item.item_name).join(' / ')}</p>
-              ))}
-            </div>
-            <p className="text-xs">Review these before guests see repeated items.</p>
+          <div className="mb-4 space-y-3">
+            {props.duplicateGroups.slice(0, 4).map((group) => (
+              <div key={group.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-sm font-medium text-text-primary">Possible duplicate group</p>
+                      <p className="mt-1 text-xs text-text-secondary">
+                        Keep <span className="font-medium text-text-primary">{group.primaryItem.item_name}</span> and merge {group.secondaryItems.length} repeat{group.secondaryItems.length === 1 ? '' : 's'} into it.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-[11px]">
+                      {group.signals.map((signal) => (
+                        <span key={`${signal.kind}-${signal.value ?? signal.label}`} className="rounded-lg border border-border bg-white px-2 py-1 text-text-tertiary">
+                          {signal.label}
+                        </span>
+                      ))}
+                      <span className="rounded-lg border border-border bg-white px-2 py-1 text-text-tertiary">
+                        Merge result: {group.mergedQuantityPurchased}/{group.mergedQuantityNeeded}
+                      </span>
+                    </div>
+                    <div className="space-y-1 text-xs text-text-secondary">
+                      {group.items.map((item) => (
+                        <p key={item.id}>
+                          • {item.item_name}
+                          {item.id === group.primaryItem.id ? ' (keep)' : ''}
+                          {item.merchant || item.store_name ? ` — ${item.merchant || item.store_name}` : ''}
+                          {item.quantity_purchased > 0 || item.quantity_needed > 1 ? ` — ${item.quantity_purchased}/${item.quantity_needed}` : ''}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 lg:max-w-[220px] lg:justify-end">
+                    <button
+                      onClick={() => props.handleEdit(group.primaryItem)}
+                      className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary"
+                    >
+                      Review keep item
+                    </button>
+                    <button
+                      onClick={() => void props.handleMergeDuplicateGroup(group)}
+                      disabled={props.mergingDuplicateGroupId === group.id}
+                      className="rounded-lg border border-border-subtle bg-primary-light px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-60"
+                    >
+                      {props.mergingDuplicateGroupId === group.id ? 'Merging…' : `Merge ${group.items.length} items`}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {props.duplicateGroups.length > 4 && (
+              <p className="text-xs text-text-tertiary">
+                {props.duplicateGroups.length - 4} more duplicate group{props.duplicateGroups.length - 4 === 1 ? '' : 's'} are waiting in this review list.
+              </p>
+            )}
           </div>
         )}
 

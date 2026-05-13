@@ -41,7 +41,7 @@ const localSteps = [
 const liveSteps = liveEnabled ? [
   {
     id: 'registry-live-write-read',
-    label: 'Registry live write/read proof',
+    label: 'Registry live write/read + duplicate merge proof',
     command: 'npx playwright test --workers=1 tests/e2e/registry-write-read.spec.ts',
     required: true,
   },
@@ -97,7 +97,7 @@ if (requireLive && !liveEnabled) {
     slice: 'registry',
     proof: 'registry-live',
     blocking: true,
-    message: 'Run LIVE_REGISTRY_WRITE_READ=1 npm run proof:v1:registry to verify the live owner registry write/read route, including barcode-backed item creation.',
+    message: 'Run LIVE_REGISTRY_WRITE_READ=1 npm run proof:v1:registry to verify the live owner registry import, duplicate merge, barcode-backed item creation, and public registry readback route.',
   }, null, 2));
   process.exit(1);
 }
@@ -117,11 +117,13 @@ const output = {
     manualProofStatus: liveEnabled ? 'closed' : 'pending_live_registry_write_read',
     manualProofRequirements: liveEnabled ? [] : [
       'owner_manage_import_persistence_runtime_pass',
+      'owner_duplicate_merge_runtime_pass',
       'owner_barcode_lookup_save_runtime_pass',
       'guest_visible_registry_endpoint_runtime_pass',
     ],
     manualProofBlockingReasons: liveEnabled ? {} : {
       owner_manage_import_persistence_runtime_pass: 'run the authenticated live registry add/edit proof',
+      owner_duplicate_merge_runtime_pass: 'run the live duplicate-merge proof against deployed runtime',
       owner_barcode_lookup_save_runtime_pass: 'run the live barcode lookup/save proof against deployed runtime',
       guest_visible_registry_endpoint_runtime_pass: 'confirm the public registry endpoint stays readable after runtime edits',
     },
@@ -137,10 +139,11 @@ const output = {
     'Barcode normalization and registry barcode form behavior',
     'Registry dashboard guard coverage',
     'Build integrity after registry proof assertions',
-    ...(liveEnabled ? ['Live owner registry URL import plus barcode-backed item persistence and public registry endpoint readability'] : []),
+    ...(liveEnabled ? ['Live owner registry URL import, duplicate merge collapse/readback, barcode-backed item persistence, and public registry endpoint readability'] : []),
   ],
   stillManualProofNeeded: liveEnabled ? [] : [
     'Add or import a real registry item on live runtime',
+    'Merge a real duplicate registry pair on live runtime',
     'Add a real barcode-backed item on live runtime',
     'Verify the public registry endpoint stays readable after runtime edits',
   ],

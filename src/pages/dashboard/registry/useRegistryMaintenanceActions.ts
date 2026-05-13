@@ -2,7 +2,9 @@ import { useState } from 'react';
 
 import { copyTextOrDownload } from '../../../lib/copyText';
 import { ageExceedsMs, isRegistryItemDue } from '../registryItemTime';
-import { createRegistryItem, fetchUrlPreview, updateRegistryItem, updateRegistryRefreshBudget } from './registryService';
+import { createRegistryItem, fetchUrlPreview, mergeDuplicateRegistryItems, updateRegistryItem, updateRegistryRefreshBudget } from './registryService';
+import { buildRegistryDuplicateMergePatch } from './duplicateRegistryItems';
+import type { RegistryDuplicateGroup } from './duplicateRegistryItems';
 import type { RegistryItem } from './registryTypes';
 import { getRegistryItemMetadataState } from './registryTypes';
 
@@ -10,7 +12,7 @@ const WEEKLY_REFRESH_MS = 1000 * 60 * 60 * 24 * 7;
 const getBackoffMs = (failCount: number) => Math.min(WEEKLY_REFRESH_MS * 4, Math.max(6 * 60 * 60 * 1000, (2 ** Math.min(5, failCount)) * 60 * 60 * 1000));
 
 interface UseRegistryMaintenanceActionsArgs {
-  duplicateGroups: RegistryItem[][];
+  duplicateGroups: RegistryDuplicateGroup[];
   ensureMonthlyBudgetState: () => Promise<{ monthKey: string; count: number }>;
   isDemoMode: boolean;
   items: RegistryItem[];
@@ -51,6 +53,7 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
   const [autoRefreshing, setAutoRefreshing] = useState(false);
   const [bulkImportBusy, setBulkImportBusy] = useState(false);
   const [imageRefreshBusy, setImageRefreshBusy] = useState(false);
+  const [mergingDuplicateGroupId, setMergingDuplicateGroupId] = useState<string | null>(null);
   const [repairingBadImports, setRepairingBadImports] = useState(false);
 
   async function handleRefetchMetadata(item: RegistryItem, silent = false, replaceExisting = false) {
@@ -140,7 +143,11 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
   }
 
   async function handleCopyDuplicateReviewList() {
-    const lines = duplicateGroups.flatMap((group, index) => [`Group ${index + 1}: ${group.map((item) => item.item_name).join(' / ')}`]);
+    const lines = duplicateGroups.flatMap((group, index) => [
+      `Group ${index + 1}: ${group.items.map((item) => item.item_name).join(' / ')}`,
+      `Why it matches: ${group.signals.map((signal) => signal.label).join(', ')}`,
+      `Suggested keep: ${group.primaryItem.item_name}`,
+    ]);
     if (lines.length === 0) {
       toast('No duplicate groups to review.', 'error');
       return;
@@ -151,6 +158,59 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
       toast('Copied duplicate review list');
     } else {
       toast('Clipboard was blocked, so the duplicate review list downloaded.');
+    }
+  }
+
+  async function handleMergeDuplicateGroup(group: RegistryDuplicateGroup) {
+    if (group.secondaryItems.length === 0 || mergingDuplicateGroupId === group.id) return;
+
+    const mergedPatch = buildRegistryDuplicateMergePatch(group.primaryItem, group.secondaryItems);
+    const secondaryIds = group.secondaryItems.map((item) => item.id);
+    setMergingDuplicateGroupId(group.id);
+
+    try {
+      if (isDemoMode) {
+        const merged = normalizeOwnerDashboardRegistryItem({
+          ...group.primaryItem,
+          ...mergedPatch,
+          id: group.primaryItem.id,
+          wedding_site_id: group.primaryItem.wedding_site_id,
+          created_at: group.primaryItem.created_at,
+          updated_at: new Date().toISOString(),
+        } as RegistryItem);
+
+        setItems((prev) =>
+          prev
+            .filter((item) => !secondaryIds.includes(item.id))
+            .map((item) => (item.id === merged.id ? merged : item))
+        );
+      } else {
+        const updated = await mergeDuplicateRegistryItems(group.primaryItem.id, secondaryIds, mergedPatch);
+        setItems((prev) =>
+          prev
+            .filter((item) => !secondaryIds.includes(item.id))
+            .map((item) => (item.id === updated.id ? normalizeOwnerDashboardRegistryItem(updated) : item))
+        );
+      }
+
+      logRegistryAction(
+        'registry_duplicates_merged',
+        'Registry duplicate items were merged into one owner-approved entry.',
+        {
+          primaryItemId: group.primaryItem.id,
+          secondaryItemIds: secondaryIds,
+          mergedQuantityNeeded: mergedPatch.quantity_needed ?? group.primaryItem.quantity_needed,
+          mergedQuantityPurchased: mergedPatch.quantity_purchased ?? group.primaryItem.quantity_purchased,
+          duplicateSignalKinds: group.signals.map((signal) => signal.kind),
+        },
+        group.primaryItem.id,
+        group.primaryItem.item_name,
+      );
+      toast(`Merged ${group.secondaryItems.length + 1} duplicate gifts into "${group.primaryItem.item_name}".`);
+    } catch {
+      toast('Couldn’t merge those duplicate gifts right now. Please try again.', 'error');
+    } finally {
+      setMergingDuplicateGroupId(null);
     }
   }
 
@@ -371,10 +431,12 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
     handleAutoRefreshStale,
     handleBulkImport,
     handleCopyDuplicateReviewList,
+    handleMergeDuplicateGroup,
     handleRefetchMetadata,
     handleRefreshImageIssues,
     handleRepairBadImports,
     imageRefreshBusy,
+    mergingDuplicateGroupId,
     repairingBadImports,
   };
 }

@@ -29,6 +29,7 @@ test('registry owner add persists and public registry endpoint stays readable', 
   const runId = cleanupOnlyRunId || process.env.LIVE_REGISTRY_RUN_ID || `${Date.now()}`;
   const importedFixtureName = 'DayOf QA Ceramic Serving Bowl';
   const editedItemName = `Registry QA Serving Bowl ${runId}`;
+  const duplicateEditedItemName = `Registry QA Duplicate Merge ${runId}`;
   const barcodeSourceValue = '5449000000996';
   const barcodeEditedItemName = `Registry QA Barcode Gift ${runId}`;
   const appBaseUrl = process.env.PLAYWRIGHT_BASE_URL || 'https://dayof.love';
@@ -92,10 +93,18 @@ test('registry owner add persists and public registry endpoint stays readable', 
   };
 
   const cleanupQaItems = async () => {
-    const rows = await fetchQaItems().catch(() => []);
-    for (const row of rows) {
-      await restFetch(restUrl('registry_items', { id: `eq.${row.id}` }), { method: 'DELETE' });
-    }
+    await expect.poll(async () => {
+      const rows = await fetchQaItems().catch(() => []);
+      for (const row of rows) {
+        const response = await restFetch(restUrl('registry_items', { id: `eq.${row.id}` }), { method: 'DELETE' });
+        expect(response.ok, `expected cleanup delete for registry item ${row.id} to succeed`).toBeTruthy();
+      }
+      const remaining = await fetchQaItems().catch(() => []);
+      return remaining.length;
+    }, {
+      timeout: 20_000,
+      message: 'expected QA registry cleanup to remove live proof rows',
+    }).toBe(0);
   };
 
   const fetchPublicRegistryItems = async () => {
@@ -220,7 +229,6 @@ test('registry owner add persists and public registry endpoint stays readable', 
   await cleanupQaItems();
 
   if (cleanupOnlyRunId) {
-    expect(await fetchQaItems()).toHaveLength(0);
     return;
   }
 
@@ -260,6 +268,50 @@ test('registry owner add persists and public registry endpoint stays readable', 
 
     await page.getByRole('button', { name: 'Add gift' }).click();
     await expect(page.getByRole('heading', { name: 'Add Registry Item' })).toBeVisible();
+    await page.getByRole('button', { name: /add manually/i }).click();
+    await page.getByPlaceholder('e.g. KitchenAid Stand Mixer').fill(duplicateEditedItemName);
+    await page.getByPlaceholder('0.00').fill('52.00');
+    await page.getByPlaceholder('e.g. Amazon, Target').fill('QA Home Store');
+    await page.getByPlaceholder('https://store.com/product').fill(registryFixtureUrl);
+    await page.getByPlaceholder(/Any notes for guests/i).fill(`Registry QA duplicate note ${runId}`);
+    await page.getByRole('button', { name: 'Add to Registry' }).click();
+    await expect(page.getByText('Item added to registry')).toBeVisible();
+
+    await expect.poll(async () => {
+      const rows = await fetchQaItems();
+      return rows.length;
+    }, {
+      timeout: 20_000,
+      message: 'expected duplicate QA registry item to persist after add',
+    }).toBe(2);
+
+    await expect(page.getByRole('button', { name: /merge 2 items/i })).toBeVisible({ timeout: 20_000 });
+    await page.getByRole('button', { name: /merge 2 items/i }).click();
+    await expect(page.getByText(/merged 2 duplicate gifts into/i)).toBeVisible({ timeout: 20_000 });
+
+    await expect.poll(async () => {
+      const rows = await fetchQaItems();
+      return {
+        length: rows.length,
+        notes: rows[0]?.notes || '',
+        quantityNeeded: rows[0]?.quantity_needed ?? 0,
+        itemName: rows[0]?.item_name || '',
+      };
+    }, {
+      timeout: 20_000,
+      message: 'expected duplicate registry merge to collapse the duplicate pair',
+    }).toMatchObject({
+      length: 1,
+      quantityNeeded: 2,
+      itemName: expect.stringMatching(new RegExp(runId)),
+    });
+
+    const rowsAfterMerge = await fetchQaItems();
+    expect(rowsAfterMerge[0]?.notes || '').toContain(`Registry QA note ${runId}`);
+    expect(rowsAfterMerge[0]?.notes || '').toContain(`Registry QA duplicate note ${runId}`);
+
+    await page.getByRole('button', { name: 'Add gift' }).click();
+    await expect(page.getByRole('heading', { name: 'Add Registry Item' })).toBeVisible();
     await page.getByRole('button', { name: /scan barcode/i }).click();
     await page.getByPlaceholder(/UPC, EAN, GTIN, or ISBN/i).fill(barcodeSourceValue);
     await page.getByRole('button', { name: 'Look up' }).click();
@@ -278,6 +330,7 @@ test('registry owner add persists and public registry endpoint stays readable', 
     }).toBe(true);
 
     const rowsAfterBarcode = await fetchQaItems();
+    expect(rowsAfterBarcode).toHaveLength(2);
     const barcodeRow = rowsAfterBarcode.find((row) => row.barcode === barcodeSourceValue || row.item_name === barcodeEditedItemName);
     expect(barcodeRow).toBeTruthy();
     expect(barcodeRow).toMatchObject({
@@ -300,6 +353,5 @@ test('registry owner add persists and public registry endpoint stays readable', 
     }).toBeGreaterThanOrEqual(0);
   } finally {
     await cleanupQaItems();
-    expect(await fetchQaItems()).toHaveLength(0);
   }
 });

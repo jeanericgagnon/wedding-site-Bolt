@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RegistryItemForm } from './RegistryItemForm';
 import type { RegistryItem } from './registryTypes';
-import { fetchUrlPreview, lookupRegistryBarcode } from './registryService';
+import { fetchUrlPreview, findDuplicateItem, lookupRegistryBarcode } from './registryService';
 
 vi.mock('./registryService', () => ({
   fetchUrlPreview: vi.fn(async () => ({
@@ -278,5 +278,26 @@ describe('RegistryItemForm', () => {
 
     await waitFor(() => expect(screen.getByText(/review required/i)).toBeInTheDocument());
     expect(screen.getByText(/review the title, price, image, and retailer before saving it/i)).toBeInTheDocument();
+  });
+
+  it('warns when a barcode match already exists in the registry', async () => {
+    vi.mocked(findDuplicateItem).mockReturnValueOnce(makeItem({ id: 'existing-1', item_name: 'Existing Bowl' }));
+
+    render(
+      <RegistryItemForm
+        existingItems={[makeItem({ id: 'existing-1', item_name: 'Existing Bowl', barcode: '036000291452' })]}
+        onSave={vi.fn(async () => {})}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /scan barcode/i }));
+    fireEvent.change(screen.getByPlaceholderText(/upc, ean, gtin, or isbn/i), {
+      target: { value: '036000291452' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^look up$/i }));
+
+    await waitFor(() => expect(findDuplicateItem).toHaveBeenCalled());
+    expect(screen.getByText(/review the existing gift before keeping another copy/i)).toBeInTheDocument();
   });
 });

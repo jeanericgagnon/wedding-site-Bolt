@@ -395,6 +395,24 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
             {repairGuidance && <p className="text-[11px] text-text-tertiary">{repairGuidance}</p>}
           </div>
         )}
+        {(asOfLabel || nextCheckLabel || priceChanged || failCount > 0) && (
+          <div className="space-y-1 text-[11px] text-text-tertiary">
+            {(asOfLabel || nextCheckLabel) && (
+              <p>
+                {asOfLabel ? `Checked ${asOfLabel}` : 'Not checked yet'}
+                {nextCheckLabel ? ` • Next review ${nextCheckLabel}` : ''}
+              </p>
+            )}
+            {priceChanged && normalizedItem.previous_price_amount != null && normalizedItem.price_amount != null && (
+              <p>
+                Price moved from ${normalizedItem.previous_price_amount.toFixed(2)} to ${normalizedItem.price_amount.toFixed(2)}.
+              </p>
+            )}
+            {failCount > 0 && (
+              <p>{failCount === 1 ? '1 retry is queued for this gift.' : `${failCount} retries are queued for this gift.`}</p>
+            )}
+          </div>
+        )}
 
         {getOwnerRegistryPurchaserLabel(normalizedItem) && (
           <p className="text-xs text-text-secondary">{getOwnerRegistryPurchaserLabel(normalizedItem)}</p>

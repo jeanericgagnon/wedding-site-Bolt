@@ -191,15 +191,23 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - Open Library ISBN fallback
   - optional `UPCITEMDB_API_KEY` ladder support
   - registry persistence and live proof
+- Deeper shipped batch now adds:
+  - structured duplicate suggestion groups with signal-aware matching across barcode, source URL, canonical URL, title, and price clues
+  - owner merge workflow that preserves stronger metadata, merged quantities, notes, and purchase truth instead of stopping at passive duplicate counts
+  - duplicate warnings during barcode-backed add flow when the scanned product already exists in the registry
+  - richer refresh/review status surfaces so checked dates, next review dates, price movement, and retry state stay visible after save
+- Deployed/live now:
+  - registry duplicate-merge migration `20260513195500_add_registry_duplicate_merge.sql` applied remotely
+  - deeper runtime deployed on Vercel production `dpl_21JQUT36gnfrE6i4qKF5yeghwRpB`
+  - `LIVE_REGISTRY_WRITE_READ=1 npm run proof:v1:registry -- --require-live` is green against the richer shipped runtime, including duplicate merge collapse/readback plus barcode-backed save
 
 ### Active deeper scope
 
 The shipped baseline is real and launchable, but the board now treats the following as active work for a more in-depth MVP:
 
 1. Broaden provider and product-match depth.
-2. Add duplicate / merge suggestions against existing registry items.
-3. Improve retailer-sync and refresh parity with the strongest universal-registry products.
-4. Harden the mobile/browser compatibility matrix for camera scanning.
+2. Improve retailer-sync and refresh parity with the strongest universal-registry products.
+3. Harden the mobile/browser compatibility matrix for camera scanning.
 
 ## Decision For The Active Board
 

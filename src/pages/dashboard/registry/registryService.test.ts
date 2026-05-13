@@ -10,6 +10,7 @@ import {
   findDuplicateItem,
   MAX_REGISTRY_ITEMS,
   MAX_REGISTRY_SORT_LOOKUP_ROWS,
+  mergeDuplicateRegistryItems,
   ownerMarkPurchased,
   publicIncrementPurchase,
   reorderRegistryItems,
@@ -169,6 +170,7 @@ describe('registry query bounds', () => {
     expect(serviceSource).toContain('limit: MAX_REGISTRY_ITEMS,');
     expect(serviceSource).toContain('.limit(MAX_REGISTRY_ITEMS);');
     expect(serviceSource).toContain("supabase.rpc('registry_item_write'");
+    expect(serviceSource).toContain("supabase.rpc('registry_duplicate_merge'");
     expect(serviceSource).toContain("supabase.rpc('registry_items_reorder'");
     expect(serviceSource).toContain("supabase.rpc('registry_refresh_policy_write'");
     expect(serviceSource).not.toContain(".from('registry_items')\n    .insert(");
@@ -235,6 +237,29 @@ describe('findDuplicateItem', () => {
       'https://example.com/product',
       'Test Product',
       items
+    );
+
+    expect(duplicate).not.toBeNull();
+    expect(duplicate?.id).toBe('item-1');
+  });
+
+  it('finds duplicate by selected product URL and barcode when present', () => {
+    const items = [
+      mockItem({
+        id: 'item-1',
+        barcode: '036000291452',
+        selected_product_url: 'https://store.example.com/product',
+        canonical_url: null,
+        item_url: null,
+      }),
+    ];
+
+    const duplicate = findDuplicateItem(
+      'https://store.example.com/product',
+      'Test Product',
+      items,
+      undefined,
+      '036000291452',
     );
 
     expect(duplicate).not.toBeNull();
@@ -326,6 +351,42 @@ describe('findDuplicateItem', () => {
 
     expect(duplicate).not.toBeNull();
     expect(duplicate?.id).toBe('item-1');
+  });
+});
+
+describe('mergeDuplicateRegistryItems', () => {
+  it('routes duplicate merges through the protected RPC', async () => {
+    mockRpcResult.data = {
+      id: 'item-1',
+      wedding_site_id: 'site-1',
+      item_name: 'Merged gift',
+      quantity_needed: 2,
+      quantity_purchased: 1,
+      purchase_status: 'partial',
+    };
+    mockRpcResult.error = null;
+
+    const result = await mergeDuplicateRegistryItems('item-1', ['item-2'], {
+      item_name: 'Merged gift',
+      quantity_needed: 2,
+      quantity_purchased: 1,
+      purchase_status: 'partial',
+    });
+
+    expect(rpcMock).toHaveBeenCalledWith('registry_duplicate_merge', expect.objectContaining({
+      p_primary_item_id: 'item-1',
+      p_secondary_item_ids: ['item-2'],
+      p_payload: expect.objectContaining({
+        item_name: 'Merged gift',
+        quantity_needed: 2,
+      }),
+    }));
+    expect(result).toEqual(expect.objectContaining({
+      id: 'item-1',
+      item_name: 'Merged gift',
+      quantity_needed: 2,
+      quantity_purchased: 1,
+    }));
   });
 });
 

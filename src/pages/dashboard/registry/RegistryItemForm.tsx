@@ -287,6 +287,18 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     try {
       const lookup = await lookupRegistryBarcode(normalized.normalized);
       applyBarcodeLookup(lookup);
+      const duplicate = findDuplicateItem(
+        lookup.product_url || lookup.retailer_options[0]?.url || '',
+        lookup.title,
+        existingItems,
+        initial?.id,
+        lookup.normalized_barcode,
+      );
+      if (duplicate) {
+        setDedupeWarning(`"${duplicate.item_name}" is already in your registry. Review the existing gift before keeping another copy.`);
+      } else {
+        setDedupeWarning(null);
+      }
       if (!lookup.matched) {
         setBarcodeLookupError(lookup.error || 'We could not find full product details for that barcode. You can keep editing the gift by hand.');
       }
@@ -296,7 +308,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     } finally {
       setBarcodeLookingUp(false);
     }
-  }, [applyBarcodeLookup]);
+  }, [applyBarcodeLookup, existingItems, initial?.id]);
 
   const doFetch = useCallback(async (urlToFetch: string, forceRefresh = false) => {
     const normalized = normalizeUrl(urlToFetch.trim());
@@ -333,7 +345,9 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
       const canonicalToCheck = preview.canonical_url ?? normalized;
       const duplicate = findDuplicateItem(canonicalToCheck, preview.title, existingItems, initial?.id);
       if (duplicate) {
-        setDedupeWarning(`"${duplicate.item_name}" may already be in your registry. You can still add it if it's a different item.`);
+        setDedupeWarning(`"${duplicate.item_name}" is already in your registry. Review the existing gift before keeping another copy.`);
+      } else {
+        setDedupeWarning(null);
       }
       setDraft(prev => {
         const targetUrl = preview.canonical_url ?? normalized;
@@ -532,6 +546,12 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                         <span>{barcodeLookupError}</span>
                         <p className="mt-1 text-xs opacity-80">You can keep the barcode and finish the gift details below by hand.</p>
                       </div>
+                    </div>
+                  )}
+                  {dedupeWarning && (
+                    <div className="flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
+                      <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-text-tertiary" />
+                      <span>{dedupeWarning}</span>
                     </div>
                   )}
 

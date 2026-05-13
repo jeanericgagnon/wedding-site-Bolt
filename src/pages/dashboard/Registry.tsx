@@ -254,10 +254,12 @@ export const DashboardRegistry: React.FC = () => {
     handleAutoRefreshStale,
     handleBulkImport,
     handleCopyDuplicateReviewList,
+    handleMergeDuplicateGroup,
     handleRefetchMetadata,
     handleRefreshImageIssues,
     handleRepairBadImports,
     imageRefreshBusy,
+    mergingDuplicateGroupId,
     repairingBadImports,
   } = useRegistryMaintenanceActions({
     duplicateGroups,
@@ -301,6 +303,7 @@ export const DashboardRegistry: React.FC = () => {
         handleCopyDuplicateReviewList={handleCopyDuplicateReviewList}
         handleDelete={handleDeleteById}
         handleEdit={handleEdit}
+        handleMergeDuplicateGroup={handleMergeDuplicateGroup}
         handleMarkPurchased={handleMarkPurchased}
         handleRefetchMetadata={handleRefetchMetadata}
         handleRefreshImageIssues={handleRefreshImageIssues}
@@ -310,6 +313,7 @@ export const DashboardRegistry: React.FC = () => {
         loading={loading}
         monthlyRefreshCap={monthlyRefreshCap}
         monthlyRefreshCount={monthlyRefreshCount}
+        mergingDuplicateGroupId={mergingDuplicateGroupId}
         nearBudgetCap={nearBudgetCap}
         normalizedItems={normalizedItems}
         recentActivity={recentActivity}
