@@ -1,6 +1,6 @@
 # Production Hardening Report
 
-_Updated:_ `2026-05-12 05:36 PM PDT`
+_Updated:_ `2026-05-12 05:55 PM PDT`
 
 ## Current Score
 
@@ -11,7 +11,7 @@ _Updated:_ `2026-05-12 05:36 PM PDT`
 ## Exact Runtime Identity
 
 - Branch: `codex/v1-finish-hard-gates-3`
-- Current branch head: `172741fc` (`Harden guest contact and add security automation`)
+- Current branch head: `6f47a442` (`Strengthen guest contact with guest invite tokens`)
 - Exact frontend Git SHA: `17c8089f`
 - Exact frontend commit: `Narrow guest contact verifier to email fragment`
 - Exact Vercel production deploy: `dpl_L9m7XKgo3GhpLkH5NR4M1ZzLSDjh`
@@ -43,7 +43,7 @@ Deferred, non-launch gaps:
 - keep the live client-RLS matrix current when future non-guest write surfaces are introduced
 - keep the no-direct-client-write inventory current after future runtime write-surface changes
 - global TypeScript / ESLint strictness remains softer than the widened launch-critical strict pocket
-- deploy the stronger guest-contact household verifier rule from the current branch when approved
+- deploy the stronger guest-contact invite-token / household-verifier rule from the current branch when approved
 
 ## Exact Proof State
 
@@ -67,12 +67,13 @@ Fresh local proof:
   - `test:launch` and `Release Launch Gate` now require the live registry-preview SSRF proof lane instead of leaving it optional
 - `npm run proof:v1:security-automation` -> `PASS`
   - local proof now pins Dependabot, Semgrep, CodeQL, Gitleaks secret scanning, and launch-chain wiring
-- `npm test -- --run src/lib/securityAutomationProof.test.ts src/lib/routeCompositionBoundary.test.ts src/lib/internalToolingRouteBoundary.test.ts src/lib/guestLookupScopeProofScript.test.ts src/pages/GuestContactUpdate.test.ts src/lib/launchEdgeFunctions.test.ts` -> `PASS`
+- `npm test -- --run src/lib/publicAccessArtifacts.test.ts src/lib/securityAutomationProof.test.ts src/lib/routeCompositionBoundary.test.ts src/lib/internalToolingRouteBoundary.test.ts src/lib/guestLookupScopeProofScript.test.ts src/pages/GuestContactUpdate.test.ts src/lib/launchEdgeFunctions.test.ts` -> `PASS`
   - guest-contact household-wide updates now require phone last 4 in local code/proof before `apply_household`
+  - guest-specific RSVP invite tokens now act as the strongest local verifier for signed household-scoped contact sessions
   - `App.tsx` now composes grouped route modules instead of hand-owning the entire route tree inline
 - `npm run test:launch` -> `BLOCKED / local branch proof gap`
   - branch wiring is now correct because `test:launch` self-sets `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
-  - live rerun still fails on `npm run proof:v1:guest-lookup-scope` because the stronger guest-contact household verifier is not deployed yet
+  - live rerun still fails on `npm run proof:v1:guest-lookup-scope` because the stronger guest-contact invite-token / household-verifier path is not deployed yet
 - `npm test -- --run src/lib/clientWriteInventoryProofScript.test.ts src/lib/collaboratorPermissionRlsProof.test.ts src/lib/clientRlsMatrixProofScript.test.ts` -> `PASS`
 - `npm run proof:v1:board:md` -> `PASS`
 - `npm run guard:file-size` -> `PASS`
@@ -154,7 +155,7 @@ Current live launch baseline:
 - `guest-contact-lookup --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `guest-contact-submit --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `guest-contact-lookup` now requires a full name plus the first few characters of the guest email address before minting a signed contact session
-- the stronger household-wide phone-last-4 verifier is currently branch-only and not yet deployed
+- the stronger guest-specific invite-token path plus the whole-party phone-last-4 verifier are currently branch-only and not yet deployed
 - `validate-rsvp-token --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `interactive-section-public --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `photo-upload --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path

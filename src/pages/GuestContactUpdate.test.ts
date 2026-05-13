@@ -3,17 +3,21 @@ import { render, screen } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
-import { buildGuestContactAccessPayload, friendlyGuestContactError, GuestContactUpdate, safeGuestContactFunctionError } from './GuestContactUpdate';
+import { buildGuestContactAccessPayload, buildGuestContactIdentityPayload, friendlyGuestContactError, GuestContactUpdate, safeGuestContactFunctionError } from './GuestContactUpdate';
 
 describe('friendlyGuestContactError', () => {
   it('packages invite and password artifacts for gated guest-contact lookup', () => {
     sessionStorage.setItem('dayof_invite_token_ericandkaras', 'stored-invite');
+    sessionStorage.setItem('dayof_guest_invite_token_ericandkaras', 'guest-invite-123');
     sessionStorage.setItem('dayof_pw_session_ericandkaras', 'password-session');
-    window.history.replaceState({}, '', '/guest-contact/ericandkaras?token=current-invite');
+    window.history.replaceState({}, '', '/guest-contact/ericandkaras?token=current-invite&invite_token=current-guest-invite');
 
     expect(buildGuestContactAccessPayload('ericandkaras')).toEqual({
       inviteToken: 'current-invite',
       passwordSession: 'password-session',
+    });
+    expect(buildGuestContactIdentityPayload('ericandkaras')).toEqual({
+      guestInviteToken: 'current-guest-invite',
     });
   });
 
@@ -53,7 +57,7 @@ describe('friendlyGuestContactError', () => {
     expect(screen.getByPlaceholderText('Search your full name')).toHaveAttribute('id', 'guest-contact-search');
     expect(screen.getByText('Use your full name exactly as it appears on the invitation.')).toHaveAttribute('id', 'guest-contact-search-helper');
     expect(screen.getByPlaceholderText('First few letters of your email')).toHaveAttribute('id', 'guest-contact-verifier');
-    expect(screen.getByText('Add the first few characters of the email address on your invitation.')).toHaveAttribute('id', 'guest-contact-verifier-helper');
+    expect(screen.getByText('Add the first few characters of the email address on your invitation. If you opened this from your RSVP link, we can use that secure token too.')).toHaveAttribute('id', 'guest-contact-verifier-helper');
     expect(screen.getByPlaceholderText('Last 4 digits of your phone (for whole-party updates)')).toHaveAttribute('id', 'guest-contact-household-verifier');
     expect(screen.getByText('Add the last 4 digits of the phone number on file if you want to update your whole party.')).toHaveAttribute('id', 'guest-contact-household-verifier-helper');
 
@@ -75,5 +79,6 @@ describe('friendlyGuestContactError', () => {
     expect(panelSource).toContain('id="guest-contact-verifier"');
     expect(panelSource).toContain('id="guest-contact-household-verifier"');
     expect(panelSource).toContain('id="guest-contact-match"');
+    expect(pageSource).toContain('buildGuestContactIdentityPayload');
   });
 });

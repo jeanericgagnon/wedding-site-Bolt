@@ -906,6 +906,7 @@ describe('launch edge function guards', () => {
     expect(lookup).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
     expect(lookup).toContain('const verifier = String(body.verifier ?? "").trim()');
     expect(lookup).toContain('const householdVerifier = String(body.household_verifier ?? "").trim()');
+    expect(lookup).toContain('const guestInviteToken = bodyString(body, "guestInviteToken") ?? ""');
     expect(lookup).toContain('const hasAccess = await canReadPublicSubresource');
     expect(lookup).toContain('storedInviteToken: typeof site.guest_access_token === "string" ? site.guest_access_token : null');
     expect(lookup).toContain('enforcePublicSubmissionRateLimit');
@@ -913,13 +914,15 @@ describe('launch edge function guards', () => {
     expect(lookup).toContain('signSessionToken<ContactSessionPayload>');
     expect(lookup).toContain('contact_session: await signSessionToken');
     expect(lookup).toContain('household_updates_allowed: householdAllowed');
+    expect(lookup).toContain('verification_strength: verificationStrength');
     expect(lookup).toContain('queryParts.length < 2');
-    expect(lookup).toContain('normalizedVerifier.length < 3');
+    expect(lookup).toContain('(!hasGuestInviteToken && normalizedVerifier.length < 3)');
     expect(lookup).toContain('const firstName = queryParts.slice(0, -1).join(" ")');
-    expect(lookup).toContain('.select("id, name, first_name, last_name, household_id, email, phone")');
+    expect(lookup).toContain('.select("id, name, first_name, last_name, household_id, email, phone, invite_token")');
     expect(lookup).toContain('.ilike("first_name", firstName)');
     expect(lookup).toContain('.ilike("last_name", lastName)');
     expect(lookup).toContain('normalizeName(displayName(guest)) === normalizedQuery');
+    expect(lookup).toContain('inviteTokenMatchesGuest(guest, guestInviteToken)');
     expect(lookup).toContain('verifierMatchesGuest(guest, verifier)');
     expect(lookup).toContain('householdVerifierMatchesGuest(g, householdVerifier)');
     expect(lookup).not.toContain('name.ilike.%');
@@ -939,9 +942,12 @@ describe('launch edge function guards', () => {
 
     expect(contactPage).toContain('contact_session: string');
     expect(contactPage).toContain('buildGuestContactAccessPayload');
+    expect(contactPage).toContain('buildGuestContactIdentityPayload');
     expect(contactPage).toContain("Enter your full name and the first few characters of your email address.");
     expect(contactPage).toContain('verifier: verifier.trim()');
     expect(contactPage).toContain('household_verifier: normalizeHouseholdVerifier(householdVerifier)');
+    expect(contactPage).toContain('const guestIdentity = buildGuestContactIdentityPayload(siteRef);');
+    expect(contactPage).toContain('...guestIdentity');
     expect(contactPage).toContain('setSelectedHouseholdAllowed(rows[0].household_updates_allowed === true);');
     expect(contactPage).toContain('Add the last 4 digits of the phone number on file before updating your whole party.');
     expect(readFileSync(join(process.cwd(), 'src', 'pages', 'GuestContactLookupPanel.tsx'), 'utf8')).toContain('placeholder="Search your full name"');

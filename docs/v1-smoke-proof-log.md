@@ -18,6 +18,18 @@ _Launch call right now:_ `GO`
 - Public vault contribution is now live-proven instead of deferred.
 - `.dayof.love` subdomain routing now has a dedicated live proof and is no longer deferred.
 - External custom domains remain unsupported product scope, not a pending proof lane.
+- 2026-05-12 05:50 PM PDT:
+  - `npm test -- --run src/lib/publicAccessArtifacts.test.ts src/pages/GuestContactUpdate.test.ts src/lib/guestLookupScopeProofScript.test.ts src/lib/launchEdgeFunctions.test.ts src/lib/routeCompositionBoundary.test.ts src/lib/securityAutomationProof.test.ts` -> `PASS`
+  - `npm run proof:v1:security-automation` -> `PASS`
+  - `npm run proof:v1:ast-security` -> `PASS`
+  - `npm run proof:v1:test-lanes` -> `PASS`
+  - `npm run typecheck -- --pretty false` -> `PASS`
+  - `npm run lint -- --quiet` -> `PASS`
+  - `npm run build` -> `PASS`
+  - `npm run proof:v1:board:md` -> `PASS`
+  - `npm test -- --run src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts src/lib/guestLookupScopeProofScript.test.ts src/lib/securityAutomationProof.test.ts` -> `PASS`
+  - local guest-contact hardening now accepts a guest-specific RSVP invite token as the strongest verifier and still requires the phone-last-4 step-up check before whole-party updates when that stronger token is absent
+  - no deploy was run, so production still reflects the earlier guest-contact verifier behavior
 - 2026-05-12 04:34 PM PDT:
   - `supabase functions list --project-ref atuzuobpprjstfmdnwso` -> `PASS`
     - live inventory now includes `vault-contribution-public` and `vault-entry-submit`

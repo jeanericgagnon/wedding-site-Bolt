@@ -4,6 +4,8 @@ import { demoGuests, demoWeddingSite } from '../lib/demoData';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import {
   buildPublicAccessArtifacts,
+  buildGuestIdentityArtifacts,
+  captureGuestInviteTokenFromSearch,
   capturePublicInviteTokenFromSearch,
 } from '../lib/publicAccessArtifacts';
 import { callGuestContactFunction } from './guestPublicSubmissionService';
@@ -14,6 +16,7 @@ type Match = {
   name: string;
   household_size?: number;
   household_updates_allowed?: boolean;
+  verification_strength?: 'email_verifier' | 'invite_token';
 };
 
 export const friendlyGuestContactError = (err: unknown, fallback: string) => {
@@ -34,6 +37,11 @@ export const buildGuestContactAccessPayload = (siteRef: string) => {
   return buildPublicAccessArtifacts(siteRef, searchParams);
 };
 
+export const buildGuestContactIdentityPayload = (siteRef: string) => {
+  const searchParams = new URLSearchParams(window.location.search);
+  return buildGuestIdentityArtifacts(siteRef, searchParams);
+};
+
 function hasFullNameQuery(value: string) {
   const normalized = value.trim().toLowerCase().replace(/\s+/g, ' ');
   return normalized.length >= 5 && normalized.split(' ').filter(Boolean).length >= 2;
@@ -45,6 +53,10 @@ function hasGuestContactVerifier(value: string) {
 
 function normalizeHouseholdVerifier(value: string) {
   return value.replace(/\D+/g, '').slice(-4);
+}
+
+function hasGuestInviteToken(value: string | null | undefined) {
+  return typeof value === 'string' && value.trim().length >= 8;
 }
 
 export const GuestContactUpdate: React.FC = () => {
@@ -86,12 +98,20 @@ export const GuestContactUpdate: React.FC = () => {
   ), [selectedContactSession, email, phone, rsvpStatus, mailingAddressLine1, mailingCity, mailingPostalCode, mailingCountry]);
 
   useEffect(() => {
-    if (siteRef) capturePublicInviteTokenFromSearch(siteRef, new URLSearchParams(window.location.search));
+    if (siteRef) {
+      const searchParams = new URLSearchParams(window.location.search);
+      capturePublicInviteTokenFromSearch(siteRef, searchParams);
+      captureGuestInviteTokenFromSearch(siteRef, searchParams);
+    }
   }, [siteRef]);
 
   async function handleSearch() {
-    if (!hasFullNameQuery(query) || !hasGuestContactVerifier(verifier)) {
-      setResult({ ok: false, message: 'Enter your full name and the first few characters of your email address.' });
+    const guestIdentity = buildGuestContactIdentityPayload(siteRef);
+    const hasTokenVerifier = hasGuestInviteToken(guestIdentity.guestInviteToken);
+    if (!hasFullNameQuery(query) || (!hasTokenVerifier && !hasGuestContactVerifier(verifier))) {
+      setResult({ ok: false, message: hasTokenVerifier
+        ? 'Enter your full name exactly as it appears on the invitation.'
+        : 'Enter your full name and the first few characters of your email address.' });
       return;
     }
     setSearching(true);
@@ -108,6 +128,7 @@ export const GuestContactUpdate: React.FC = () => {
         verifier: verifier.trim(),
         household_verifier: normalizeHouseholdVerifier(householdVerifier),
         ...buildGuestContactAccessPayload(siteRef),
+        ...guestIdentity,
       });
       const rows = ((data as any)?.matches ?? []) as Match[];
       setMatches(rows);
@@ -209,7 +230,7 @@ export const GuestContactUpdate: React.FC = () => {
             if (hit?.household_updates_allowed !== true) setApplyHousehold(false);
           }}
           onToggleApplyHousehold={setApplyHousehold}
-          canSearch={hasFullNameQuery(query) && hasGuestContactVerifier(verifier)}
+          canSearch={hasFullNameQuery(query) && (hasGuestContactVerifier(verifier) || hasGuestInviteToken(buildGuestContactIdentityPayload(siteRef).guestInviteToken))}
         />
 
         <form onSubmit={handleSubmit} className="space-y-4" aria-busy={loading}>

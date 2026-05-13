@@ -17,6 +17,7 @@ type ContactSessionPayload = {
   siteId: string;
   guestId: string;
   householdAllowed: boolean;
+  verificationStrength: "email_verifier" | "invite_token";
   exp: number;
 };
 

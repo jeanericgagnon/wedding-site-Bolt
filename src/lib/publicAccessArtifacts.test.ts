@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  buildGuestIdentityArtifacts,
+  captureGuestInviteTokenFromSearch,
+  getGuestInviteTokenStorageKey,
   buildPublicAccessArtifacts,
   capturePublicInviteTokenFromSearch,
   getPublicInviteTokenStorageKey,
@@ -43,5 +46,16 @@ describe('public access artifacts', () => {
     expect(capturePublicInviteTokenFromSearch('maya-leo', new URLSearchParams(window.location.search))).toBe('current-token');
     expect(sessionStorage.getItem(getPublicInviteTokenStorageKey('maya-leo'))).toBe('current-token');
     expect(window.location.pathname + window.location.search + window.location.hash).toBe('/event/maya-leo?guestLang=es#travel');
+  });
+
+  it('captures guest invite tokens separately from site access tokens', () => {
+    window.history.replaceState({}, '', '/guest-contact/maya-leo?invite_token=guest-token-123&guestLang=es#contact');
+
+    expect(captureGuestInviteTokenFromSearch('maya-leo', new URLSearchParams(window.location.search))).toBe('guest-token-123');
+    expect(sessionStorage.getItem(getGuestInviteTokenStorageKey('maya-leo'))).toBe('guest-token-123');
+    expect(buildGuestIdentityArtifacts('maya-leo', new URLSearchParams('guestLang=es'))).toEqual({
+      guestInviteToken: 'guest-token-123',
+    });
+    expect(window.location.pathname + window.location.search + window.location.hash).toBe('/guest-contact/maya-leo?guestLang=es#contact');
   });
 });

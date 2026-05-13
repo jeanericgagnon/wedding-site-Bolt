@@ -165,6 +165,24 @@ function expectExactSingleMatch(result, expectedName, expectedHouseholdSize, exp
   };
 }
 
+function expectInviteTokenSingleMatch(result, expectedName, expectedHouseholdSize) {
+  const matches = Array.isArray(result.payload?.matches) ? result.payload.matches : [];
+  const match = matches[0] || null;
+  return {
+    id: 'exact-full-name-match-with-guest-invite-token',
+    ok: result.status === 200
+      && matches.length === 1
+      && match?.name === expectedName
+      && match?.household_size === expectedHouseholdSize
+      && match?.household_updates_allowed === true
+      && match?.verification_strength === 'invite_token'
+      && typeof match?.contact_session === 'string'
+      && match.contact_session.length > 20,
+    status: result.status,
+    payload: result.payload,
+  };
+}
+
 function expectScopedSubmit(result, rows, expectedPhone, expectedCity) {
   const everyoneUpdated = Array.isArray(rows)
     && rows.length === 2
@@ -241,6 +259,7 @@ async function main() {
       name: `Taylor ${lastName}`,
       email: `dayof.lookupscope.${runId}.1@example.com`,
       phone: '5555550999',
+      invite_token: `guest-contact-proof-${runId}-a`,
       rsvp_status: 'pending',
       household_id: householdId,
     },
@@ -251,6 +270,7 @@ async function main() {
       name: `Morgan ${lastName}`,
       email: `dayof.lookupscope.${runId}.2@example.com`,
       phone: null,
+      invite_token: `guest-contact-proof-${runId}-b`,
       rsvp_status: 'pending',
       household_id: householdId,
     },
@@ -311,8 +331,15 @@ async function main() {
       verifier: emailVerifier,
       ...accessArtifacts,
     });
+    const exactNameWithGuestInviteToken = await lookupGuest({
+      site_ref: proofSiteSlug,
+      query: `Taylor ${lastName}`,
+      guestInviteToken: guestRows[0].invite_token,
+      ...accessArtifacts,
+    });
     const contactSession = exactName.payload?.matches?.[0]?.contact_session;
     const contactSessionWithoutHouseholdVerifier = exactNameWithoutHouseholdVerifier.payload?.matches?.[0]?.contact_session;
+    const contactSessionWithGuestInviteToken = exactNameWithGuestInviteToken.payload?.matches?.[0]?.contact_session;
     const expectedPhone = `555${runId.slice(-7)}`.slice(0, 10);
     const expectedCity = `LookupScope${runId.slice(-4)}`;
     const submitResult = typeof contactSession === 'string' && contactSession.length > 20
@@ -338,6 +365,20 @@ async function main() {
       auth.accessToken,
     );
     const verifyRows = await verifyResponse.json().catch(() => []);
+    const inviteScopedCity = `InviteScope${runId.slice(-4)}`;
+    const inviteTokenSubmitResult = typeof contactSessionWithGuestInviteToken === 'string' && contactSessionWithGuestInviteToken.length > 20
+      ? await submitGuestContact({
+        site_ref: proofSiteSlug,
+        contact_session: contactSessionWithGuestInviteToken,
+        apply_household: true,
+        mailing_city: inviteScopedCity,
+      })
+      : { status: 0, payload: { error: 'Missing contact session from lookup proof.' } };
+    const verifyInviteResponse = await restFetch(
+      `guests?select=id,phone,sms_consent,mailing_city&id=in.(${insertedIds.join(',')})`,
+      auth.accessToken,
+    );
+    const inviteVerifyRows = await verifyInviteResponse.json().catch(() => []);
 
     const checks = [
       expectNoMatches(partialName, 'last-name-only-lookup'),
@@ -347,8 +388,20 @@ async function main() {
       expectNoMatches(exactNameWithWrongVerifier, 'exact-name-with-wrong-verifier'),
       expectExactSingleMatch(exactName, `Taylor ${lastName}`, 2, true),
       expectExactSingleMatch(exactNameWithoutHouseholdVerifier, `Taylor ${lastName}`, 2, false),
+      expectInviteTokenSingleMatch(exactNameWithGuestInviteToken, `Taylor ${lastName}`, 2),
       expectHouseholdSubmitDenied(deniedHouseholdSubmit),
       expectScopedSubmit(submitResult, verifyRows, expectedPhone, expectedCity),
+      {
+        id: 'guest-invite-token-submit-household-scope',
+        ok: inviteTokenSubmitResult.status === 200
+          && inviteTokenSubmitResult.payload?.ok === true
+          && Array.isArray(inviteVerifyRows)
+          && inviteVerifyRows.length === 2
+          && inviteVerifyRows.every((row) => row?.mailing_city === inviteScopedCity),
+        status: inviteTokenSubmitResult.status,
+        payload: inviteTokenSubmitResult.payload,
+        rows: inviteVerifyRows,
+      },
     ];
 
     const failures = checks.filter((check) => !check.ok);

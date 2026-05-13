@@ -7,6 +7,32 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 
 ---
 
+## 2026-05-12 05:50 PM PDT - Guest Invite Token Contact Hardening
+
+- Status: `LOCAL HARDENING + PROOF`
+- What changed:
+  - guest-contact lookup now accepts a guest-specific RSVP invite token as the strongest verifier when one is present
+  - guest-contact sessions now carry `verificationStrength` and can allow whole-party updates either through that guest token or the phone-last-4 step-up verifier
+  - added guest invite token capture/storage helpers in `publicAccessArtifacts.ts`
+  - `GuestContactUpdate.tsx` now uses the stored/search `invite_token` identity artifact during lookup
+  - updated the local guest-contact proof so it exercises both:
+    - household update denial without phone last 4
+    - household update allow when a guest-specific invite token is present
+- Proof:
+  - `npm test -- --run src/lib/publicAccessArtifacts.test.ts src/pages/GuestContactUpdate.test.ts src/lib/guestLookupScopeProofScript.test.ts src/lib/launchEdgeFunctions.test.ts src/lib/routeCompositionBoundary.test.ts src/lib/securityAutomationProof.test.ts`
+  - `npm run proof:v1:security-automation`
+  - `npm run proof:v1:ast-security`
+  - `npm run proof:v1:test-lanes`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+  - `npm run build`
+  - `npm run proof:v1:board:md`
+  - `npm test -- --run src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts src/lib/guestLookupScopeProofScript.test.ts src/lib/securityAutomationProof.test.ts`
+  - `git diff --check`
+- Result:
+  - the repo now supports a token-backed guest contact identity path instead of relying only on exact-name plus email-fragment matching
+  - no deploy was run, so production still reflects the earlier guest-contact verifier behavior
+
 ## 2026-05-12 03:46 PM PDT - Mandatory Live Client RLS Gate, AST Security Gate, And Stronger Guest Contact Verification
 
 - Status: `LIVE HARDENING + PROOF`

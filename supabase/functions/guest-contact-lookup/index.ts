@@ -19,6 +19,7 @@ type ContactSessionPayload = {
   siteId: string;
   guestId: string;
   householdAllowed: boolean;
+  verificationStrength: "email_verifier" | "invite_token";
   exp: number;
 };
 
@@ -30,6 +31,7 @@ type GuestLookupCandidate = {
   household_id?: string | null;
   email?: string | null;
   phone?: string | null;
+  invite_token?: string | null;
 };
 
 function normalizeName(value: string) {
@@ -61,11 +63,17 @@ function householdVerifierMatchesGuest(guest: GuestLookupCandidate, verifier: st
   return normalizePhoneLast4(String(guest.phone ?? "")) === normalizedVerifier;
 }
 
+function inviteTokenMatchesGuest(guest: GuestLookupCandidate, token: string) {
+  const normalizedToken = token.trim();
+  if (normalizedToken.length < 8) return false;
+  return String(guest.invite_token ?? "").trim() === normalizedToken;
+}
+
 function displayName(guest: { name?: string | null; first_name?: string | null; last_name?: string | null }) {
   return guest.name || [guest.first_name, guest.last_name].filter(Boolean).join(" ");
 }
 
-function bodyString(body: Record<string, unknown>, key: "inviteToken" | "passwordSession"): string | null {
+function bodyString(body: Record<string, unknown>, key: "inviteToken" | "passwordSession" | "guestInviteToken"): string | null {
   const raw = body[key];
   return typeof raw === "string" && raw.trim() ? raw.trim() : null;
 }
@@ -86,15 +94,17 @@ Deno.serve(async (req: Request) => {
     const query = String(body.query ?? "").trim();
     const verifier = String(body.verifier ?? "").trim();
     const householdVerifier = String(body.household_verifier ?? "").trim();
+    const guestInviteToken = bodyString(body, "guestInviteToken") ?? "";
     const normalizedQuery = normalizeName(query);
     const queryParts = normalizedQuery.split(" ").filter(Boolean);
     const normalizedVerifier = normalizeVerifier(verifier);
+    const hasGuestInviteToken = guestInviteToken.length >= 8;
 
     if (
       !siteRef
       || normalizedQuery.length < 5
       || queryParts.length < 2
-      || normalizedVerifier.length < 3
+      || (!hasGuestInviteToken && normalizedVerifier.length < 3)
     ) {
       return json({ matches: [] });
     }
@@ -145,13 +155,13 @@ Deno.serve(async (req: Request) => {
     const firstName = queryParts.slice(0, -1).join(" ");
     const { data: exactNameCandidates } = await admin
       .from("guests")
-      .select("id, name, first_name, last_name, household_id, email, phone")
+      .select("id, name, first_name, last_name, household_id, email, phone, invite_token")
       .eq("wedding_site_id", site.id)
       .ilike("name", normalizedQuery)
       .limit(5);
     const { data: splitNameCandidates } = await admin
       .from("guests")
-      .select("id, name, first_name, last_name, household_id, email, phone")
+      .select("id, name, first_name, last_name, household_id, email, phone, invite_token")
       .eq("wedding_site_id", site.id)
       .ilike("first_name", firstName)
       .ilike("last_name", lastName)
@@ -164,7 +174,10 @@ Deno.serve(async (req: Request) => {
 
     const guests = Array.from(candidateById.values())
       .filter((guest) => normalizeName(displayName(guest)) === normalizedQuery)
-      .filter((guest) => verifierMatchesGuest(guest, verifier))
+      .filter((guest) =>
+        inviteTokenMatchesGuest(guest, guestInviteToken)
+        || verifierMatchesGuest(guest, verifier)
+      )
       .slice(0, 5);
 
     const householdIds = Array.from(new Set((guests ?? []).map((g) => g.household_id).filter(Boolean)));
@@ -183,18 +196,22 @@ Deno.serve(async (req: Request) => {
     }
 
     const matches = await Promise.all((guests ?? []).map(async (g) => {
-      const householdAllowed = householdVerifierMatchesGuest(g, householdVerifier);
+      const inviteTokenVerified = inviteTokenMatchesGuest(g, guestInviteToken);
+      const householdAllowed = inviteTokenVerified || householdVerifierMatchesGuest(g, householdVerifier);
+      const verificationStrength = inviteTokenVerified ? "invite_token" as const : "email_verifier" as const;
       return {
         contact_session: await signSessionToken<ContactSessionPayload>({
           scope: "guest_contact_update",
           siteId: site.id,
           guestId: g.id,
           householdAllowed,
+          verificationStrength,
           exp: Date.now() + CONTACT_SESSION_TTL_MS,
         }, publicSessionSecretSource),
         name: g.name || [g.first_name, g.last_name].filter(Boolean).join(" "),
         household_size: g.household_id ? (householdCounts[g.household_id] ?? 1) : 1,
         household_updates_allowed: householdAllowed,
+        verification_strength: verificationStrength,
       };
     }));
 
