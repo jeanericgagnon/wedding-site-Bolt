@@ -87,8 +87,8 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - copyable / printable shift snapshot surfaces for real handoff between coordinators
 - Deployed/live now:
   - migrations `20260513170000_coordinator_event_checkin_write.sql` and `20260513213000_coordinator_handoff_issue_depth.sql` applied remotely
-  - fuller-suite runtime deployed on Vercel production `dpl_3jXVpMfacKiWr4UbhVcQPtHjxEtb`
-  - `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live` is green against the shipped fuller-suite runtime, including staffing handoff, issue desk, incident lifecycle, runner board, guest continuity, and shift snapshot surfaces
+  - fuller-suite runtime deployed on Vercel production `dpl_4TCWmUaSfuV3MJysqcYJUCyKTWJs`
+  - `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live` is green against the shipped fuller-suite runtime, including handoff save, issue ownership lifecycle, runner completion flow, guest continuity, and shift snapshot copy/print export
 
 ### Active deeper scope
 
@@ -159,7 +159,7 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - deeper travel, residency, REAL ID, court-order, and combination-name execution branches so special cases stop collapsing into generic fallback
   - proof-gap and institution-handoff export surfaces for real post-wedding execution handoff
 - Deployed/live now:
-  - fuller-suite runtime deployed on Vercel production `dpl_Ev8rJeN42PtCiga6nQ4ze4xDB26Q`
+  - fuller-suite runtime deployed on Vercel production `dpl_4TCWmUaSfuV3MJysqcYJUCyKTWJs`
   - reminder compatibility migration `20260513193000_fix_name_change_reminders_replace_runtime.sql` applied remotely
   - `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live` is green against the fuller-suite shipped runtime, including saved reload, state playbook depth, institution handoff packets, dual-partner rollout, and export/handoff surfaces
 
@@ -218,7 +218,7 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - proof expansion that keeps provider breadth, reconciliation depth, cleanup queue truth, and live add/merge/readback behavior tied to the shipped runtime
 - Deployed/live now:
   - registry duplicate-merge migration `20260513195500_add_registry_duplicate_merge.sql` applied remotely
-  - fuller-suite runtime deployed on Vercel production `dpl_2mznMs9MotSfX9LeWSjKvjgfWcRB`
+  - fuller-suite runtime deployed on Vercel production `dpl_4TCWmUaSfuV3MJysqcYJUCyKTWJs`
   - `registry-barcode-lookup --no-verify-jwt` redeployed live with the broader Open Facts ladder and cleanup-queue-compatible lookup path
   - `LIVE_REGISTRY_WRITE_READ=1 npm run proof:v1:registry -- --require-live` is green against the fuller-suite shipped runtime, including cleanup queue truth, duplicate merge collapse/readback, broader provider behavior, refresh parity, and compatibility camera/photo fallback
 
@@ -231,5 +231,5 @@ No remaining registry gap is active inside the competitor-informed MVP bar or th
 - `Day-of / coordinator` has met the shipped launch-baseline MVP bar, the earlier deeper product-depth bar, and its specific full-suite checklist.
 - `Name change` has met the shipped launch-baseline MVP bar, the earlier deeper planner-depth bar, and its specific full-suite checklist.
 - `Universal Registry Barcode Scanner` has met the shipped launch-baseline MVP bar, the earlier deeper product-depth bar, and its specific full-suite checklist.
-- The cross-feature exit gate is now closed too: `npm run proof:v1:full-suite-exit-gate` and `V1_FULL_SUITE_EXIT_GATE_LIVE=1 npm run proof:v1:full-suite-exit-gate -- --require-live` are green for responsive device coverage, empty/error/manual fallback truth, saved-data continuity, role boundaries, operational handoff/export surfaces, and dedicated proof coverage.
+- The cross-feature exit gate is now closed too: `npm run proof:v1:full-suite-exit-gate` and `V1_FULL_SUITE_EXIT_GATE_LIVE=1 npm run proof:v1:full-suite-exit-gate -- --require-live` are green as an honest aggregate of the dedicated coordinator, name-change, and registry proof lanes plus the responsive cross-device surface proof.
 - Full-suite readiness is now claimable for these three features on the current shipped production runtime.

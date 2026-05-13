@@ -357,13 +357,14 @@ export function CoordinatorHandoffPanel({
             updated_at: null,
           };
           return (
-            <div key={event.id} className="rounded-lg border border-border/60 bg-surface-subtle/25 p-3">
+            <div key={event.id} data-testid={`coordinator-handoff-card-${event.id}`} className="rounded-lg border border-border/60 bg-surface-subtle/25 p-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-text-primary">{event.event_name}</p>
                   <p className="mt-1 text-[11px] text-text-tertiary">{formatCoordinatorEventDateTime(event.start_time)}</p>
                 </div>
                 <select
+                  data-testid={`coordinator-handoff-status-${event.id}`}
                   value={handoff.handoff_status}
                   disabled={!canEditHandoffs}
                   onChange={(eventTarget) => onChangeHandoff(event.id, { handoff_status: eventTarget.target.value as CoordinatorEventHandoff['handoff_status'] })}
@@ -377,12 +378,14 @@ export function CoordinatorHandoffPanel({
               </div>
               <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
                 <Input
+                  data-testid={`coordinator-handoff-lead-${event.id}`}
                   value={handoff.lead_name ?? ''}
                   disabled={!canEditHandoffs}
                   onChange={(eventTarget) => onChangeHandoff(event.id, { lead_name: eventTarget.target.value })}
                   placeholder="Lead"
                 />
                 <Input
+                  data-testid={`coordinator-handoff-support-${event.id}`}
                   value={handoff.support_name ?? ''}
                   disabled={!canEditHandoffs}
                   onChange={(eventTarget) => onChangeHandoff(event.id, { support_name: eventTarget.target.value })}
@@ -390,6 +393,7 @@ export function CoordinatorHandoffPanel({
                 />
               </div>
               <Textarea
+                data-testid={`coordinator-handoff-note-${event.id}`}
                 className="mt-2"
                 rows={3}
                 value={handoff.note ?? ''}
@@ -404,6 +408,7 @@ export function CoordinatorHandoffPanel({
                 {canEditHandoffs && (
                   <button
                     type="button"
+                    data-testid={`coordinator-handoff-save-${event.id}`}
                     onClick={() => onSaveHandoff(event.id)}
                     disabled={handoffBusyEventId === event.id}
                     className="rounded-md border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] text-primary disabled:opacity-40"
@@ -531,6 +536,7 @@ export function CoordinatorIssueDeskPanel({
             <div>
               <label className="mb-1 block text-[11px] text-text-tertiary">Issue type</label>
               <select
+                data-testid="coordinator-issue-type"
                 value={issueDraft.issueType}
                 disabled={!canEditIssues}
                 onChange={(eventTarget) => onDraftChange({ issueType: eventTarget.target.value as CoordinatorIssueType })}
@@ -547,6 +553,7 @@ export function CoordinatorIssueDeskPanel({
             <div>
               <label className="mb-1 block text-[11px] text-text-tertiary">Status</label>
               <select
+                data-testid="coordinator-issue-status"
                 value={issueDraft.status}
                 disabled={!canEditIssues}
                 onChange={(eventTarget) => onDraftChange({ status: eventTarget.target.value as CoordinatorIssueStatus })}
@@ -560,6 +567,7 @@ export function CoordinatorIssueDeskPanel({
             <div className="md:col-span-2">
               <label className="mb-1 block text-[11px] text-text-tertiary">Title</label>
               <Input
+                data-testid="coordinator-issue-title"
                 value={issueDraft.title}
                 disabled={!canEditIssues}
                 onChange={(eventTarget) => onDraftChange({ title: eventTarget.target.value })}
@@ -569,6 +577,7 @@ export function CoordinatorIssueDeskPanel({
             <div>
               <label className="mb-1 block text-[11px] text-text-tertiary">Event</label>
               <select
+                data-testid="coordinator-issue-event"
                 value={issueDraft.itineraryEventId ?? ''}
                 disabled={!canEditIssues}
                 onChange={(eventTarget) => onDraftChange({ itineraryEventId: eventTarget.target.value || null, tableId: null })}
@@ -583,6 +592,7 @@ export function CoordinatorIssueDeskPanel({
             <div>
               <label className="mb-1 block text-[11px] text-text-tertiary">Assignee</label>
               <Input
+                data-testid="coordinator-issue-assignee"
                 value={issueDraft.assignedTo}
                 disabled={!canEditIssues}
                 onChange={(eventTarget) => onDraftChange({ assignedTo: eventTarget.target.value })}
@@ -592,6 +602,7 @@ export function CoordinatorIssueDeskPanel({
             <div>
               <label className="mb-1 block text-[11px] text-text-tertiary">Owner</label>
               <Input
+                data-testid="coordinator-issue-owner"
                 value={issueDraft.incidentOwner}
                 disabled={!canEditIssues}
                 onChange={(eventTarget) => onDraftChange({ incidentOwner: eventTarget.target.value })}
@@ -612,6 +623,7 @@ export function CoordinatorIssueDeskPanel({
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-[11px] text-text-tertiary">Next action</label>
                   <Input
+                    data-testid="coordinator-issue-next-action"
                     value={issueDraft.nextAction}
                     disabled={!canEditIssues}
                     onChange={(eventTarget) => onDraftChange({ nextAction: eventTarget.target.value })}
@@ -621,6 +633,7 @@ export function CoordinatorIssueDeskPanel({
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-[11px] text-text-tertiary">Resolved outcome</label>
                   <Textarea
+                    data-testid="coordinator-issue-resolved-outcome"
                     rows={2}
                     value={issueDraft.resolvedOutcome}
                     disabled={!canEditIssues}
@@ -636,7 +649,8 @@ export function CoordinatorIssueDeskPanel({
                   <>
                     <div>
                       <label className="mb-1 block text-[11px] text-text-tertiary">Replacement name</label>
-                      <Input
+                  <Input
+                        data-testid="coordinator-issue-replacement-name"
                         value={issueDraft.replacementName}
                         disabled={!canEditIssues}
                         onChange={(eventTarget) => onDraftChange({ replacementName: eventTarget.target.value })}
@@ -646,6 +660,7 @@ export function CoordinatorIssueDeskPanel({
                     <div>
                       <label className="mb-1 block text-[11px] text-text-tertiary">Party size</label>
                       <Input
+                        data-testid="coordinator-issue-replacement-party-size"
                         value={issueDraft.replacementPartySize}
                         disabled={!canEditIssues}
                         onChange={(eventTarget) => onDraftChange({ replacementPartySize: eventTarget.target.value })}
@@ -657,6 +672,7 @@ export function CoordinatorIssueDeskPanel({
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-[11px] text-text-tertiary">Target table</label>
                   <select
+                    data-testid="coordinator-issue-target-table"
                     value={issueDraft.tableId ?? ''}
                     disabled={!canEditIssues || seatingTables.length === 0}
                     onChange={(eventTarget) => onDraftChange({ tableId: eventTarget.target.value || null })}
@@ -686,6 +702,7 @@ export function CoordinatorIssueDeskPanel({
                 <div>
                   <label className="mb-1 block text-[11px] text-text-tertiary">Task type</label>
                   <select
+                    data-testid="coordinator-issue-runner-mode"
                     value={issueDraft.runnerTaskMode}
                     disabled={!canEditIssues}
                     onChange={(eventTarget) => onDraftChange({ runnerTaskMode: eventTarget.target.value as CoordinatorIssueDraftView['runnerTaskMode'] })}
@@ -699,6 +716,7 @@ export function CoordinatorIssueDeskPanel({
                 <div>
                   <label className="mb-1 block text-[11px] text-text-tertiary">Task status</label>
                   <select
+                    data-testid="coordinator-issue-runner-status"
                     value={issueDraft.runnerTaskStatus}
                     disabled={!canEditIssues || issueDraft.runnerTaskMode === 'none'}
                     onChange={(eventTarget) => onDraftChange({ runnerTaskStatus: eventTarget.target.value as CoordinatorRunnerTaskStatus })}
@@ -713,6 +731,7 @@ export function CoordinatorIssueDeskPanel({
                 <div>
                   <label className="mb-1 block text-[11px] text-text-tertiary">Task assignee</label>
                   <Input
+                    data-testid="coordinator-issue-runner-assignee"
                     value={issueDraft.runnerTaskAssignee}
                     disabled={!canEditIssues || issueDraft.runnerTaskMode === 'none'}
                     onChange={(eventTarget) => onDraftChange({ runnerTaskAssignee: eventTarget.target.value })}
@@ -722,6 +741,7 @@ export function CoordinatorIssueDeskPanel({
                 <div>
                   <label className="mb-1 block text-[11px] text-text-tertiary">Completion note</label>
                   <Input
+                    data-testid="coordinator-issue-runner-completion-note"
                     value={issueDraft.runnerTaskCompletionNote}
                     disabled={!canEditIssues || issueDraft.runnerTaskMode === 'none'}
                     onChange={(eventTarget) => onDraftChange({ runnerTaskCompletionNote: eventTarget.target.value })}
@@ -731,6 +751,7 @@ export function CoordinatorIssueDeskPanel({
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-[11px] text-text-tertiary">Task detail</label>
                   <Textarea
+                    data-testid="coordinator-issue-runner-detail"
                     rows={2}
                     value={issueDraft.runnerTaskDetail}
                     disabled={!canEditIssues || issueDraft.runnerTaskMode === 'none'}
@@ -756,6 +777,7 @@ export function CoordinatorIssueDeskPanel({
             <div className="md:col-span-2">
               <label className="mb-1 block text-[11px] text-text-tertiary">Operator notes</label>
               <Textarea
+                data-testid="coordinator-issue-operator-notes"
                 rows={4}
                 value={issueDraft.note}
                 disabled={!canEditIssues}
@@ -769,6 +791,7 @@ export function CoordinatorIssueDeskPanel({
             {canEditIssues && (
               <button
                 type="button"
+                data-testid="coordinator-issue-save"
                 onClick={onSaveIssue}
                 disabled={issueBusy || !activeGuest}
                 className="rounded-md border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] text-primary disabled:opacity-40"
@@ -800,6 +823,7 @@ export function CoordinatorIssueDeskPanel({
               <button
                 key={issue.id}
                 type="button"
+                data-testid={`coordinator-issue-history-${issue.id}`}
                 onClick={() => onSelectIssue(issue.id)}
                 className={`w-full rounded-md border px-3 py-2 text-left ${selectedIssueId === issue.id ? 'border-primary/25 bg-primary/5' : 'border-border/50 bg-white'}`}
               >
@@ -890,6 +914,7 @@ export function CoordinatorRunnerBoardPanel({
                 <button
                   key={issue.id}
                   type="button"
+                  data-testid={`coordinator-runner-active-${issue.id}`}
                   onClick={() => onSelectIssue(issue.id)}
                   className={`w-full rounded-lg border px-3 py-2 text-left ${selectedIssueId === issue.id ? 'border-primary/25 bg-primary/5' : 'border-border/50 bg-white'}`}
                 >
@@ -925,6 +950,7 @@ export function CoordinatorRunnerBoardPanel({
                 <button
                   key={issue.id}
                   type="button"
+                  data-testid={`coordinator-runner-complete-${issue.id}`}
                   onClick={() => onSelectIssue(issue.id)}
                   className={`w-full rounded-lg border px-3 py-2 text-left ${selectedIssueId === issue.id ? 'border-primary/25 bg-primary/5' : 'border-border/50 bg-white'}`}
                 >
@@ -1034,6 +1060,7 @@ export function CoordinatorGuestContinuityPanel({
                   <button
                     key={issue.id}
                     type="button"
+                    data-testid={`coordinator-continuity-issue-${issue.id}`}
                     onClick={() => onSelectIssue(issue.id)}
                     className="w-full rounded-md border border-border/50 bg-white px-3 py-2 text-left"
                   >
@@ -1080,6 +1107,7 @@ export function CoordinatorShiftSnapshotPanel({
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
+            data-testid="coordinator-shift-snapshot-copy"
             onClick={onCopySnapshot}
             className="rounded-md border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px] text-primary"
           >
@@ -1087,6 +1115,7 @@ export function CoordinatorShiftSnapshotPanel({
           </button>
           <button
             type="button"
+            data-testid="coordinator-shift-snapshot-print"
             onClick={onPrintSnapshot}
             className="rounded-md border border-border bg-white px-3 py-1.5 text-[11px] text-text-secondary"
           >
@@ -1958,6 +1987,7 @@ export function CoordinatorCheckInQueuePanel({
           return (
             <div
               key={guest.id}
+              data-testid={`coordinator-checkin-guest-${guest.id}`}
               className={`flex items-center justify-between gap-3 px-4 py-2.5 cursor-pointer ${activeGuestId === guest.id ? 'bg-primary/5' : ''}`}
               onClick={() => {
                 onFocusLane();

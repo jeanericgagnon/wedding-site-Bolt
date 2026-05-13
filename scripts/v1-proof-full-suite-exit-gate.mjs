@@ -138,12 +138,12 @@ const output = {
     failed: failedRequired.length,
   },
   automatedCoverage: [
-    'Desktop, tablet, and mobile route usability across the three full-suite lanes',
-    'Empty, error, retry, and manual-fallback truth inherited from the feature proof lanes',
-    'Saved-data continuity across planner save/reload, coordinator continuity shaping, and registry live write/read',
-    'Role and permission boundaries through coordinator role access plus live collaborator RLS proof',
-    'Operational handoff, packet, review, and repair surfaces across coordinator, name-change, and registry',
-    'Dedicated local and live proof coverage for the final shipped surfaces',
+    'Responsive route usability across desktop, tablet, and mobile for the three shipped full-suite lanes',
+    'Dedicated coordinator, name-change, and registry proof lanes aggregated into one exit-gate result',
+    'Saved-data continuity inherited from planner save/reload, coordinator handoff/issue lifecycle, and registry live write/read proof lanes',
+    'Role and permission boundaries aggregated from coordinator role-access coverage plus live collaborator RLS proof',
+    'Operational handoff, packet, review, repair, and export surfaces aggregated from the dedicated feature proof lanes',
+    'Dedicated local and live proof coverage for the final shipped surfaces, with the responsive gate acting as the cross-feature device check',
   ],
   stillManualProofNeeded: liveEnabled ? [] : [
     'Run V1_FULL_SUITE_EXIT_GATE_LIVE=1 npm run proof:v1:full-suite-exit-gate for the live responsive and collaborator-permission proof bundle.',
