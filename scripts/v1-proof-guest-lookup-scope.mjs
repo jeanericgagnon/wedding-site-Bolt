@@ -145,7 +145,7 @@ function expectNoMatches(result, label) {
   };
 }
 
-function expectExactSingleMatch(result, expectedName, expectedHouseholdSize) {
+function expectExactSingleMatch(result, expectedName, expectedHouseholdSize, expectedHouseholdAllowed) {
   const matches = Array.isArray(result.payload?.matches) ? result.payload.matches : [];
   const match = matches[0] || null;
   const forbiddenKeys = ['id', 'guestId', 'guest_id', 'household_id', 'householdId', 'wedding_site_id', 'weddingSiteId'];
@@ -156,6 +156,7 @@ function expectExactSingleMatch(result, expectedName, expectedHouseholdSize) {
       && matches.length === 1
       && match?.name === expectedName
       && match?.household_size === expectedHouseholdSize
+      && match?.household_updates_allowed === expectedHouseholdAllowed
       && typeof match?.contact_session === 'string'
       && match.contact_session.length > 20
       && !leaksForbiddenIds,
@@ -174,6 +175,15 @@ function expectScopedSubmit(result, rows, expectedPhone, expectedCity) {
     status: result.status,
     payload: result.payload,
     rows,
+  };
+}
+
+function expectHouseholdSubmitDenied(result) {
+  return {
+    id: 'contact-session-submit-household-requires-last4',
+    ok: result.status === 403 && result.payload?.error === 'Add the last 4 digits of the phone number on file before updating your whole party.',
+    status: result.status,
+    payload: result.payload,
   };
 }
 
@@ -230,6 +240,7 @@ async function main() {
       last_name: lastName,
       name: `Taylor ${lastName}`,
       email: `dayof.lookupscope.${runId}.1@example.com`,
+      phone: '5555550999',
       rsvp_status: 'pending',
       household_id: householdId,
     },
@@ -239,6 +250,7 @@ async function main() {
       last_name: lastName,
       name: `Morgan ${lastName}`,
       email: `dayof.lookupscope.${runId}.2@example.com`,
+      phone: null,
       rsvp_status: 'pending',
       household_id: householdId,
     },
@@ -256,7 +268,7 @@ async function main() {
     });
     const insertedRows = await insertResponse.json().catch(() => []);
     if (!insertResponse.ok || !Array.isArray(insertedRows) || insertedRows.length !== 2) {
-      throw new Error(`Could not insert QA guest rows (${insertResponse.status}).`);
+      throw new Error(`Could not insert QA guest rows (${insertResponse.status}): ${JSON.stringify(insertedRows)}`);
     }
     insertedIds = insertedRows.map((row) => row.id).filter(Boolean);
 
@@ -290,9 +302,17 @@ async function main() {
       site_ref: proofSiteSlug,
       query: `Taylor ${lastName}`,
       verifier: emailVerifier,
+      household_verifier: '9999',
+      ...accessArtifacts,
+    });
+    const exactNameWithoutHouseholdVerifier = await lookupGuest({
+      site_ref: proofSiteSlug,
+      query: `Taylor ${lastName}`,
+      verifier: emailVerifier,
       ...accessArtifacts,
     });
     const contactSession = exactName.payload?.matches?.[0]?.contact_session;
+    const contactSessionWithoutHouseholdVerifier = exactNameWithoutHouseholdVerifier.payload?.matches?.[0]?.contact_session;
     const expectedPhone = `555${runId.slice(-7)}`.slice(0, 10);
     const expectedCity = `LookupScope${runId.slice(-4)}`;
     const submitResult = typeof contactSession === 'string' && contactSession.length > 20
@@ -303,6 +323,14 @@ async function main() {
         phone: expectedPhone,
         sms_consent: true,
         mailing_city: expectedCity,
+      })
+      : { status: 0, payload: { error: 'Missing contact session from lookup proof.' } };
+    const deniedHouseholdSubmit = typeof contactSessionWithoutHouseholdVerifier === 'string' && contactSessionWithoutHouseholdVerifier.length > 20
+      ? await submitGuestContact({
+        site_ref: proofSiteSlug,
+        contact_session: contactSessionWithoutHouseholdVerifier,
+        apply_household: true,
+        phone: '5550000000',
       })
       : { status: 0, payload: { error: 'Missing contact session from lookup proof.' } };
     const verifyResponse = await restFetch(
@@ -317,7 +345,9 @@ async function main() {
       expectNoMatches(reversedName, 'reversed-name-lookup'),
       expectNoMatches(exactNameWithoutVerifier, 'exact-name-without-verifier'),
       expectNoMatches(exactNameWithWrongVerifier, 'exact-name-with-wrong-verifier'),
-      expectExactSingleMatch(exactName, `Taylor ${lastName}`, 2),
+      expectExactSingleMatch(exactName, `Taylor ${lastName}`, 2, true),
+      expectExactSingleMatch(exactNameWithoutHouseholdVerifier, `Taylor ${lastName}`, 2, false),
+      expectHouseholdSubmitDenied(deniedHouseholdSubmit),
       expectScopedSubmit(submitResult, verifyRows, expectedPhone, expectedCity),
     ];
 

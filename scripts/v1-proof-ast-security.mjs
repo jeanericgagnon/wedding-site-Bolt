@@ -39,6 +39,9 @@ const internalToolingPaths = new Set([
   '/variant-preview-capture',
   '/template-scroll-capture',
 ]);
+const internalToolingRouteFiles = new Set([
+  'src/routes/internalToolingRoutes.tsx',
+]);
 
 function scriptKindForFile(file) {
   if (file.endsWith('.tsx')) return ts.ScriptKind.TSX;
@@ -153,7 +156,7 @@ function scanSourceFile(sourceFile) {
       }
     }
 
-    if (sourceFile.fileName === 'src/App.tsx') {
+    if (internalToolingRouteFiles.has(sourceFile.fileName)) {
       const path = routePathValue(node);
       if (path && internalToolingPaths.has(path)) {
         const nodeText = textOf(node, sourceFile);
@@ -189,7 +192,7 @@ const output = {
     'AST-scans shipped runtime code for direct client Supabase .insert/.update/.upsert/.delete calls instead of relying only on regex matching.',
     'Fails if SUPABASE_SERVICE_ROLE_KEY appears in client runtime code or if critical auth/payment files touch browser storage for authorization.',
     'Fails on dangerouslySetInnerHTML in shipped runtime code and on raw public blob keys leaking into public DTO boundaries.',
-    'Checks that internal tooling routes in App.tsx stay guarded by internalToolingRoutesEnabled.',
+    'Checks that internal tooling routes in src/routes/internalToolingRoutes.tsx stay guarded by internalToolingRoutesEnabled.',
   ],
   stillManualProofNeeded: [
     'Expand this AST guard when new runtime auth or public-boundary surfaces are added.',

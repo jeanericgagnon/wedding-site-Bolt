@@ -13,11 +13,15 @@ type Match = {
   contact_session: string;
   name: string;
   household_size?: number;
+  household_updates_allowed?: boolean;
 };
 
 export const friendlyGuestContactError = (err: unknown, fallback: string) => {
   return customerSafeErrorMessage(err, fallback, {
-    allow: [/^Add an email or phone first\.$/i],
+    allow: [
+      /^Add an email or phone first\.$/i,
+      /^Add the last 4 digits of the phone number on file before updating your whole party\.$/i,
+    ],
   });
 };
 
@@ -39,6 +43,10 @@ function hasGuestContactVerifier(value: string) {
   return value.trim().toLowerCase().length >= 3;
 }
 
+function normalizeHouseholdVerifier(value: string) {
+  return value.replace(/\D+/g, '').slice(-4);
+}
+
 export const GuestContactUpdate: React.FC = () => {
   const { token = '' } = useParams<{ token: string }>();
   const siteRef = token; // now interpreted as site id/slug
@@ -46,9 +54,11 @@ export const GuestContactUpdate: React.FC = () => {
 
   const [query, setQuery] = useState('');
   const [verifier, setVerifier] = useState('');
+  const [householdVerifier, setHouseholdVerifier] = useState('');
   const [matches, setMatches] = useState<Match[]>([]);
   const [selectedContactSession, setSelectedContactSession] = useState<string>('');
   const [selectedHouseholdSize, setSelectedHouseholdSize] = useState<number>(1);
+  const [selectedHouseholdAllowed, setSelectedHouseholdAllowed] = useState(false);
   const [applyHousehold, setApplyHousehold] = useState(false);
 
   const [email, setEmail] = useState('');
@@ -89,11 +99,14 @@ export const GuestContactUpdate: React.FC = () => {
     setMatches([]);
     setSelectedContactSession('');
     setSelectedHouseholdSize(1);
+    setSelectedHouseholdAllowed(false);
+    setApplyHousehold(false);
     try {
       const data = await callGuestContactFunction<{ matches?: Match[] }>('guest-contact-lookup', {
         site_ref: siteRef,
         query: query.trim(),
         verifier: verifier.trim(),
+        household_verifier: normalizeHouseholdVerifier(householdVerifier),
         ...buildGuestContactAccessPayload(siteRef),
       });
       const rows = ((data as any)?.matches ?? []) as Match[];
@@ -101,6 +114,7 @@ export const GuestContactUpdate: React.FC = () => {
       if (rows.length > 0) {
         setSelectedContactSession(rows[0].contact_session);
         setSelectedHouseholdSize(rows[0].household_size ?? 1);
+        setSelectedHouseholdAllowed(rows[0].household_updates_allowed === true);
       } else {
         setResult({ ok: false, message: 'No guest record matched that search. Try your full name as it appears on the invitation.' });
       }
@@ -110,11 +124,17 @@ export const GuestContactUpdate: React.FC = () => {
         const rows = demoGuests
           .filter((g) => (g.name || '').toLowerCase().includes(q))
           .slice(0, 10)
-          .map((g) => ({ contact_session: g.id, name: g.name, household_size: ((g as any).household_size as number | undefined) ?? 1 }));
+          .map((g) => ({
+            contact_session: g.id,
+            name: g.name,
+            household_size: ((g as any).household_size as number | undefined) ?? 1,
+            household_updates_allowed: normalizeHouseholdVerifier(householdVerifier).length === 4,
+          }));
         setMatches(rows);
         if (rows.length > 0) {
           setSelectedContactSession(rows[0].contact_session);
           setSelectedHouseholdSize(rows[0].household_size ?? 1);
+          setSelectedHouseholdAllowed(rows[0].household_updates_allowed === true);
         } else {
           setResult({ ok: false, message: 'No demo guest matched that search. Try a full name from the sample guest list.' });
         }
@@ -129,6 +149,10 @@ export const GuestContactUpdate: React.FC = () => {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
+    if (applyHousehold && !selectedHouseholdAllowed) {
+      setResult({ ok: false, message: 'Add the last 4 digits of the phone number on file before updating your whole party.' });
+      return;
+    }
     setLoading(true);
     setResult(null);
     try {
@@ -166,18 +190,23 @@ export const GuestContactUpdate: React.FC = () => {
         <GuestContactLookupPanel
           query={query}
           verifier={verifier}
+          householdVerifier={householdVerifier}
           searching={searching}
           matches={matches}
           selectedContactSession={selectedContactSession}
           selectedHouseholdSize={selectedHouseholdSize}
+          selectedHouseholdAllowed={selectedHouseholdAllowed}
           applyHousehold={applyHousehold}
           onQueryChange={setQuery}
           onVerifierChange={setVerifier}
+          onHouseholdVerifierChange={setHouseholdVerifier}
           onSearch={handleSearch}
           onSelectContactSession={(contactSession) => {
             setSelectedContactSession(contactSession);
             const hit = matches.find((match) => match.contact_session === contactSession);
             setSelectedHouseholdSize(hit?.household_size ?? 1);
+            setSelectedHouseholdAllowed(hit?.household_updates_allowed === true);
+            if (hit?.household_updates_allowed !== true) setApplyHousehold(false);
           }}
           onToggleApplyHousehold={setApplyHousehold}
           canSearch={hasFullNameQuery(query) && hasGuestContactVerifier(verifier)}

@@ -905,20 +905,23 @@ describe('launch edge function guards', () => {
     expect(lookup).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
     expect(lookup).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
     expect(lookup).toContain('const verifier = String(body.verifier ?? "").trim()');
+    expect(lookup).toContain('const householdVerifier = String(body.household_verifier ?? "").trim()');
     expect(lookup).toContain('const hasAccess = await canReadPublicSubresource');
     expect(lookup).toContain('storedInviteToken: typeof site.guest_access_token === "string" ? site.guest_access_token : null');
     expect(lookup).toContain('enforcePublicSubmissionRateLimit');
     expect(lookup).toContain('scope: "guest_contact_lookup"');
     expect(lookup).toContain('signSessionToken<ContactSessionPayload>');
     expect(lookup).toContain('contact_session: await signSessionToken');
+    expect(lookup).toContain('household_updates_allowed: householdAllowed');
     expect(lookup).toContain('queryParts.length < 2');
     expect(lookup).toContain('normalizedVerifier.length < 3');
     expect(lookup).toContain('const firstName = queryParts.slice(0, -1).join(" ")');
-    expect(lookup).toContain('.select("id, name, first_name, last_name, household_id, email")');
+    expect(lookup).toContain('.select("id, name, first_name, last_name, household_id, email, phone")');
     expect(lookup).toContain('.ilike("first_name", firstName)');
     expect(lookup).toContain('.ilike("last_name", lastName)');
     expect(lookup).toContain('normalizeName(displayName(guest)) === normalizedQuery');
     expect(lookup).toContain('verifierMatchesGuest(guest, verifier)');
+    expect(lookup).toContain('householdVerifierMatchesGuest(g, householdVerifier)');
     expect(lookup).not.toContain('name.ilike.%');
     expect(lookup).not.toContain('id: g.id');
     expect(lookup).not.toContain('household_id: g.household_id');
@@ -930,6 +933,7 @@ describe('launch edge function guards', () => {
     expect(submit).toContain('site.id !== contactPayload.siteId');
     expect(submit).toContain('.eq("id", contactPayload.guestId)');
     expect(submit).toContain('scope: "guest_contact_submit"');
+    expect(submit).toContain('contactPayload.householdAllowed !== true');
     expect(submit).not.toContain('const guestId = String(body.guest_id');
     expect(submit).not.toContain('.eq("id", guestId)');
 
@@ -937,8 +941,12 @@ describe('launch edge function guards', () => {
     expect(contactPage).toContain('buildGuestContactAccessPayload');
     expect(contactPage).toContain("Enter your full name and the first few characters of your email address.");
     expect(contactPage).toContain('verifier: verifier.trim()');
+    expect(contactPage).toContain('household_verifier: normalizeHouseholdVerifier(householdVerifier)');
+    expect(contactPage).toContain('setSelectedHouseholdAllowed(rows[0].household_updates_allowed === true);');
+    expect(contactPage).toContain('Add the last 4 digits of the phone number on file before updating your whole party.');
     expect(readFileSync(join(process.cwd(), 'src', 'pages', 'GuestContactLookupPanel.tsx'), 'utf8')).toContain('placeholder="Search your full name"');
     expect(readFileSync(join(process.cwd(), 'src', 'pages', 'GuestContactLookupPanel.tsx'), 'utf8')).toContain('placeholder="First few letters of your email"');
+    expect(readFileSync(join(process.cwd(), 'src', 'pages', 'GuestContactLookupPanel.tsx'), 'utf8')).toContain('placeholder="Last 4 digits of your phone (for whole-party updates)"');
     expect(contactPage).toContain('...buildGuestContactAccessPayload(siteRef)');
     expect(contactPage).toContain("contact_session: selectedContactSession");
     expect(contactPage).not.toContain('guest_id: selectedGuestId');

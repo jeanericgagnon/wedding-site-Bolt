@@ -16,6 +16,7 @@ type ContactSessionPayload = {
   scope: "guest_contact_update";
   siteId: string;
   guestId: string;
+  householdAllowed: boolean;
   exp: number;
 };
 
@@ -28,6 +29,7 @@ const json = (data: unknown, status = 200) =>
 const CONTACT_LINK_UNAVAILABLE_COPY = "This contact update link is missing or expired.";
 const CONTACT_LINK_SITE_MISMATCH_COPY = "This contact update link is not available for this site.";
 const CONTACT_UPDATE_REQUIRED_COPY = "Add at least one update before saving.";
+const CONTACT_HOUSEHOLD_VERIFIER_REQUIRED_COPY = "Add the last 4 digits of the phone number on file before updating your whole party.";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
@@ -124,6 +126,10 @@ Deno.serve(async (req: Request) => {
 
     if (Object.keys(patch).length === 0) {
       return json({ error: CONTACT_UPDATE_REQUIRED_COPY }, 400);
+    }
+
+    if (applyHousehold && guest.household_id && contactPayload.householdAllowed !== true) {
+      return json({ error: CONTACT_HOUSEHOLD_VERIFIER_REQUIRED_COPY }, 403);
     }
 
     let query = admin.from("guests").update(patch).eq("wedding_site_id", site.id);

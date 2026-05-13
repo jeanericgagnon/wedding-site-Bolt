@@ -4292,3 +4292,33 @@ Write a short architecture note after the highest-risk hardening lanes are imple
 - Proved the live host-routing lane against `testandkaras.dayof.love`; current runtime resolves and fail-closes safely without wrong-site leakage
 - Reframed the old “custom-host DNS rerun” debt into the product truth that actually exists: external custom domains are still unsupported future scope, while shipped `.dayof.love` host routing is now live-proven
 - Synced `BACKLOG.md`, `docs/PRODUCTION_HARDENING_REPORT.md`, and `docs/v1-smoke-proof-log.md` to that sharper truth
+
+# 2026-05-12 05:36 PM PDT - Guest Contact Step-Up, Security Automation, And Route Composition (Local Only)
+
+- Hardened the guest-contact branch flow so household-wide updates now require a phone-last-4 verifier in addition to the existing full-name + email-fragment lookup proof.
+- Kept single-guest public contact updates on the lighter path; only `apply_household` is step-up gated.
+- Added local proof and boundary coverage for that stronger rule:
+  - `GuestContactUpdate.test.ts`
+  - `guestLookupScopeProofScript.test.ts`
+  - `launchEdgeFunctions.test.ts`
+- Added enterprise-style security automation artifacts:
+  - `.github/dependabot.yml`
+  - `.github/workflows/semgrep.yml`
+  - `.github/workflows/codeql.yml`
+  - `.github/workflows/gitleaks.yml`
+  - `.semgrep/dayof-security.yml`
+  - local guard `npm run proof:v1:security-automation`
+- Reduced route-registry maintenance risk:
+  - `App.tsx` now composes grouped route modules in `src/routes/*`
+  - internal tooling route gating moved with the route module structure and remains locally proven
+- Focused local proof is green:
+  - `npm test -- --run src/lib/securityAutomationProof.test.ts src/lib/routeCompositionBoundary.test.ts src/lib/internalToolingRouteBoundary.test.ts src/lib/guestLookupScopeProofScript.test.ts src/pages/GuestContactUpdate.test.ts src/lib/launchEdgeFunctions.test.ts`
+  - `npm run proof:v1:security-automation`
+  - `npm run proof:v1:test-lanes`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+  - `npm run build`
+  - `git diff --check`
+- Important runtime truth:
+  - no deploy was run in this batch
+  - live `guest-lookup-scope` still reflects the pre-deploy guest-contact runtime, so the stronger household verifier is branch-ready rather than deployed

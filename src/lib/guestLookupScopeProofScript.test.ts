@@ -2,17 +2,14 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 describe('guest lookup scope proof script', () => {
-  it('keeps live guest-contact lookup scoping checks explicit', () => {
-    const script = readFileSync('scripts/v1-proof-guest-lookup-scope.mjs', 'utf8');
+  it('proves household-wide public updates require the stronger phone-last4 verifier', () => {
+    const source = readFileSync('scripts/v1-proof-guest-lookup-scope.mjs', 'utf8');
 
-    expect(script).toContain("query: lastName");
-    expect(script).toContain('query: `Taylor Wrong${runId}`');
-    expect(script).toContain('query: `${lastName} Taylor`');
-    expect(script).toContain('query: `Taylor ${lastName}`');
-    expect(script).toContain('verifier: emailVerifier');
-    expect(script).toContain("expectNoMatches(exactNameWithoutVerifier, 'exact-name-without-verifier')");
-    expect(script).toContain("expectNoMatches(exactNameWithWrongVerifier, 'exact-name-with-wrong-verifier')");
-    expect(script).toContain("const forbiddenKeys = ['id', 'guestId', 'guest_id', 'household_id', 'householdId', 'wedding_site_id', 'weddingSiteId'];");
-    expect(script).toContain("authMode: accessArtifacts.inviteToken ? 'invite-token' : 'public'");
+    expect(source).toContain("household_verifier: '9999'");
+    expect(source).toContain('exactNameWithoutHouseholdVerifier');
+    expect(source).toContain('contact-session-submit-household-requires-last4');
+    expect(source).toContain('match?.household_updates_allowed === expectedHouseholdAllowed');
+    expect(source).toContain("phone: '5555550999'");
+    expect(source).toContain('Add the last 4 digits of the phone number on file before updating your whole party.');
   });
 });

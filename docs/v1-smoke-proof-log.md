@@ -568,3 +568,21 @@ _Launch call right now:_ `GO`
 ## Historical Note
 
 Longer chronological detail now lives in [docs/PRODUCTION_HARDENING_CHANGELOG.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/PRODUCTION_HARDENING_CHANGELOG.md). This file stays focused on the current verified runtime picture.
+
+### 2026-05-12 05:36 PM PDT - Guest Contact Step-Up + Security Automation (Local Only)
+
+- Local hardening is green:
+  - `npm run proof:v1:security-automation`
+  - `npm run proof:v1:test-lanes`
+  - `npm test -- --run src/lib/securityAutomationProof.test.ts src/lib/routeCompositionBoundary.test.ts src/lib/internalToolingRouteBoundary.test.ts src/lib/guestLookupScopeProofScript.test.ts src/pages/GuestContactUpdate.test.ts src/lib/launchEdgeFunctions.test.ts`
+  - `npm run typecheck -- --pretty false`
+  - `npm run lint -- --quiet`
+  - `npm run build`
+- Added:
+  - phone-last-4 step-up verifier for household-wide guest-contact updates
+  - Dependabot, Semgrep, CodeQL, and Gitleaks repo automation
+  - grouped route modules under `src/routes/*`
+- No deploy was run in this batch.
+- Live follow-up truth:
+  - `npm run proof:v1:guest-lookup-scope` currently still exercises the older deployed guest-contact runtime
+  - until guest-contact functions/frontend are redeployed, this batch is branch-hardening rather than runtime-hardening

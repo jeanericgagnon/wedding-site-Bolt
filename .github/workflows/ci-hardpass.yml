@@ -71,6 +71,9 @@ jobs:
       - name: AST security proof
         run: npm run proof:v1:ast-security
 
+      - name: Security automation proof
+        run: npm run proof:v1:security-automation
+
       - name: Live client RLS matrix proof
         run: npm run proof:v1:client-rls-matrix -- --require-live
 

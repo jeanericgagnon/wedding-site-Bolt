@@ -1,0 +1,77 @@
+rules:
+  - id: dayof-client-direct-supabase-write
+    message: Shipped client runtime must not perform direct Supabase insert/update/upsert/delete calls.
+    severity: ERROR
+    languages: [typescript, tsx, javascript, jsx]
+    paths:
+      include:
+        - src/**/*.ts
+        - src/**/*.tsx
+        - src/**/*.js
+        - src/**/*.jsx
+      exclude:
+        - src/**/*.test.*
+        - src/**/*.d.ts
+    patterns:
+      - pattern-either:
+          - pattern: $CLIENT.from(...).insert(...)
+          - pattern: $CLIENT.from(...).update(...)
+          - pattern: $CLIENT.from(...).upsert(...)
+          - pattern: $CLIENT.from(...).delete(...)
+
+  - id: dayof-client-no-service-role
+    message: Client runtime must not reference SUPABASE_SERVICE_ROLE_KEY.
+    severity: ERROR
+    languages: [typescript, tsx, javascript, jsx]
+    paths:
+      include:
+        - src/**/*.ts
+        - src/**/*.tsx
+        - src/**/*.js
+        - src/**/*.jsx
+      exclude:
+        - src/**/*.test.*
+        - src/**/*.d.ts
+    pattern: SUPABASE_SERVICE_ROLE_KEY
+
+  - id: dayof-no-dangerously-set-inner-html
+    message: dangerouslySetInnerHTML is not allowed in shipped runtime code.
+    severity: ERROR
+    languages: [tsx, jsx]
+    paths:
+      include:
+        - src/**/*.tsx
+        - src/**/*.jsx
+      exclude:
+        - src/**/*.test.*
+    pattern: <... dangerouslySetInnerHTML={...} ...>
+
+  - id: dayof-protected-route-no-storage-auth-bypass
+    message: Critical auth/payment gates must not authorize from browser storage directly.
+    severity: ERROR
+    languages: [typescript, tsx, javascript, jsx]
+    paths:
+      include:
+        - src/components/auth/ProtectedRoute.tsx
+        - src/lib/paymentGate.ts
+    patterns:
+      - pattern-either:
+          - pattern: localStorage
+          - pattern: sessionStorage
+
+  - id: dayof-internal-tooling-route-must-stay-centralized
+    message: Internal tooling routes must stay in the dedicated internal tooling route module.
+    severity: ERROR
+    languages: [tsx, jsx]
+    paths:
+      include:
+        - src/**/*.tsx
+        - src/**/*.jsx
+      exclude:
+        - src/routes/internalToolingRoutes.tsx
+        - src/**/*.test.*
+    patterns:
+      - pattern-either:
+          - pattern: <Route path="/builder-v2-lab" ... />
+          - pattern: <Route path="/variant-preview-capture" ... />
+          - pattern: <Route path="/template-scroll-capture" ... />

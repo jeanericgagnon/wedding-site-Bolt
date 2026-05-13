@@ -31,6 +31,7 @@ test('guest contact page updates RSVP, address, SMS consent, and household membe
   const lastName = `ContactQA${runId}`;
   const primaryEmail = `dayof.contactqa.${runId}.primary@example.com`;
   const partnerEmail = `dayof.contactqa.${runId}.partner@example.com`;
+  const phoneLast4 = '0999';
   let ownerAccessToken = '';
   let siteId = '';
   let createdGuestIds: string[] = [];
@@ -130,6 +131,7 @@ test('guest contact page updates RSVP, address, SMS consent, and household membe
           last_name: lastName,
           name: `Taylor ${lastName}`,
           email: primaryEmail,
+          phone: '5555550999',
           rsvp_status: 'pending',
           household_id: householdId,
         },
@@ -139,6 +141,7 @@ test('guest contact page updates RSVP, address, SMS consent, and household membe
           last_name: lastName,
           name: `Morgan ${lastName}`,
           email: partnerEmail,
+          phone: null,
           rsvp_status: 'pending',
           household_id: householdId,
         },
@@ -157,6 +160,8 @@ test('guest contact page updates RSVP, address, SMS consent, and household membe
     await expect(page.getByRole('combobox').first()).toContainText(`Taylor ${lastName}`);
     await expect(page.getByText(/apply these updates to my whole party \(2 guests\)/i)).toBeVisible();
 
+    await page.getByPlaceholder('Last 4 digits of your phone (for whole-party updates)').fill(phoneLast4);
+    await page.getByRole('button', { name: /^find$/i }).click();
     await page.getByLabel(/apply these updates to my whole party/i).check();
     await page.getByPlaceholder('you@example.com').fill(`updated.contactqa.${runId}@example.com`);
     await page.getByPlaceholder('(555) 123-4567').fill('+15555550123');

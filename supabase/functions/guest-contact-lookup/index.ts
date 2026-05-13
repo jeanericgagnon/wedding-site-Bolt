@@ -18,6 +18,7 @@ type ContactSessionPayload = {
   scope: "guest_contact_update";
   siteId: string;
   guestId: string;
+  householdAllowed: boolean;
   exp: number;
 };
 
@@ -28,6 +29,7 @@ type GuestLookupCandidate = {
   last_name?: string | null;
   household_id?: string | null;
   email?: string | null;
+  phone?: string | null;
 };
 
 function normalizeName(value: string) {
@@ -42,10 +44,21 @@ function emailLocalPart(value: string | null | undefined) {
   return String(value ?? "").trim().toLowerCase().split("@")[0] ?? "";
 }
 
+function normalizePhoneLast4(value: string) {
+  const digits = value.replace(/\D+/g, "");
+  return digits.length >= 4 ? digits.slice(-4) : "";
+}
+
 function verifierMatchesGuest(guest: GuestLookupCandidate, verifier: string) {
   const normalizedVerifier = normalizeVerifier(verifier);
   if (!normalizedVerifier) return false;
   return normalizedVerifier.length >= 3 && emailLocalPart(guest.email).includes(normalizedVerifier);
+}
+
+function householdVerifierMatchesGuest(guest: GuestLookupCandidate, verifier: string) {
+  const normalizedVerifier = normalizePhoneLast4(verifier);
+  if (normalizedVerifier.length !== 4) return false;
+  return normalizePhoneLast4(String(guest.phone ?? "")) === normalizedVerifier;
 }
 
 function displayName(guest: { name?: string | null; first_name?: string | null; last_name?: string | null }) {
@@ -72,6 +85,7 @@ Deno.serve(async (req: Request) => {
     const siteRef = String(body.site_ref ?? "").trim();
     const query = String(body.query ?? "").trim();
     const verifier = String(body.verifier ?? "").trim();
+    const householdVerifier = String(body.household_verifier ?? "").trim();
     const normalizedQuery = normalizeName(query);
     const queryParts = normalizedQuery.split(" ").filter(Boolean);
     const normalizedVerifier = normalizeVerifier(verifier);
@@ -131,13 +145,13 @@ Deno.serve(async (req: Request) => {
     const firstName = queryParts.slice(0, -1).join(" ");
     const { data: exactNameCandidates } = await admin
       .from("guests")
-      .select("id, name, first_name, last_name, household_id, email")
+      .select("id, name, first_name, last_name, household_id, email, phone")
       .eq("wedding_site_id", site.id)
       .ilike("name", normalizedQuery)
       .limit(5);
     const { data: splitNameCandidates } = await admin
       .from("guests")
-      .select("id, name, first_name, last_name, household_id, email")
+      .select("id, name, first_name, last_name, household_id, email, phone")
       .eq("wedding_site_id", site.id)
       .ilike("first_name", firstName)
       .ilike("last_name", lastName)
@@ -168,16 +182,21 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    const matches = await Promise.all((guests ?? []).map(async (g) => ({
-      contact_session: await signSessionToken<ContactSessionPayload>({
-        scope: "guest_contact_update",
-        siteId: site.id,
-        guestId: g.id,
-        exp: Date.now() + CONTACT_SESSION_TTL_MS,
-      }, publicSessionSecretSource),
-      name: g.name || [g.first_name, g.last_name].filter(Boolean).join(" "),
-      household_size: g.household_id ? (householdCounts[g.household_id] ?? 1) : 1,
-    })));
+    const matches = await Promise.all((guests ?? []).map(async (g) => {
+      const householdAllowed = householdVerifierMatchesGuest(g, householdVerifier);
+      return {
+        contact_session: await signSessionToken<ContactSessionPayload>({
+          scope: "guest_contact_update",
+          siteId: site.id,
+          guestId: g.id,
+          householdAllowed,
+          exp: Date.now() + CONTACT_SESSION_TTL_MS,
+        }, publicSessionSecretSource),
+        name: g.name || [g.first_name, g.last_name].filter(Boolean).join(" "),
+        household_size: g.household_id ? (householdCounts[g.household_id] ?? 1) : 1,
+        household_updates_allowed: householdAllowed,
+      };
+    }));
 
     return json({ matches });
   } catch (err) {
