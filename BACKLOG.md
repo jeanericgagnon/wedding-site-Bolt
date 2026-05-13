@@ -15,10 +15,10 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-13 02:54 PM PDT` |
+| Current date/time | `2026-05-13 02:58 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
-| Latest verified Git SHA | `4960fca1` |
-| Latest verified commit message | `Ship registry full-suite readiness` |
+| Latest verified Git SHA | `742e7b34` |
+| Latest verified commit message | `Close full-suite exit gate` |
 | Vercel deployment ID | `dpl_2mznMs9MotSfX9LeWSjKvjgfWcRB` |
 | Supabase project ID | `atuzuobpprjstfmdnwso` |
 | Supabase functions deployed | Live blocker-fix lane includes `submit-rsvp --no-verify-jwt` plus applied migration `20260511170500_serialize_submit_rsvp_capacity.sql`. Same-day confirmed/live-proven: `public-site-access --no-verify-jwt`; `photo-upload --no-verify-jwt`; `process-email-queue`; `validate-rsvp-token --no-verify-jwt`; `interactive-section-public --no-verify-jwt`; `vault-contribution-public --no-verify-jwt`; `vault-entry-submit --no-verify-jwt`; `translate-site-content`. Latest deploy waves also pushed `guest-contact-lookup --no-verify-jwt`, `guest-contact-submit --no-verify-jwt`, and the final `registry-barcode-lookup --no-verify-jwt` fuller-suite provider/repair/fallback batch live. |
@@ -259,14 +259,14 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 
 ## Next Tasks
 
-1. `ACTIVE`: ship broader registry provider catalog depth and stronger confident-match coverage.
-2. `ACTIVE`: ship registry retailer-sync / reconciliation depth plus owner repair/review queue surfaces.
-3. `ACTIVE`: ship registry hard device/browser fallback coverage and expand proof for it.
-4. `ACTIVE`: prove desktop/tablet/mobile full-suite workflows for the final shipped coordinator, name-change, and registry surfaces.
-5. `ACTIVE`: close empty/error/retry/manual-fallback gaps across the final shipped coordinator, name-change, and registry surfaces.
-6. `ACTIVE`: prove saved-data continuity, repair/recovery, and legacy compatibility across the final shipped coordinator, name-change, and registry surfaces.
-7. `ACTIVE`: prove final role/permission boundaries plus export/handoff/packet/review readiness across the three lanes.
-8. `ACTIVE`: expand dedicated local and live proof lanes so the final full-suite surfaces are covered before ready is claimed.
+1. `DONE IN CURRENT FULL-SUITE CLOSEOUT`: broader registry provider catalog depth and stronger confident-match coverage shipped live.
+2. `DONE IN CURRENT FULL-SUITE CLOSEOUT`: registry retailer-sync / reconciliation depth plus owner repair/review queue surfaces shipped live.
+3. `DONE IN CURRENT FULL-SUITE CLOSEOUT`: registry hard device/browser fallback coverage and proof expansion shipped live.
+4. `DONE IN CURRENT FULL-SUITE CLOSEOUT`: desktop/tablet/mobile full-suite workflows are proven for the final shipped coordinator, name-change, and registry surfaces.
+5. `DONE IN CURRENT FULL-SUITE CLOSEOUT`: empty/error/retry/manual-fallback gaps are closed across the final shipped coordinator, name-change, and registry surfaces.
+6. `DONE IN CURRENT FULL-SUITE CLOSEOUT`: saved-data continuity, repair/recovery, and legacy compatibility are proven across the final shipped coordinator, name-change, and registry surfaces.
+7. `DONE IN CURRENT FULL-SUITE CLOSEOUT`: final role/permission boundaries plus export/handoff/packet/review readiness are proven across the three lanes.
+8. `DONE IN CURRENT FULL-SUITE CLOSEOUT`: dedicated local and live proof lanes now cover the final full-suite surfaces before ready was claimed.
 9. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the live client-RLS matrix current only if future non-guest write surfaces are added.
 10. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the no-direct-client-write inventory current only if future runtime write surfaces are added.
 11. `CONDITIONAL / NO-CODE UNTIL FUTURE DEPLOYS`: keep the board synced as future deploys change the truth for coordinator, name-change, or registry depth.
