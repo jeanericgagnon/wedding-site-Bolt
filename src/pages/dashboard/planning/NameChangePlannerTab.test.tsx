@@ -103,15 +103,23 @@ describe('NameChangePlannerTab', () => {
 
     const currentMiddleNameInput = screen.getByLabelText('Current middle name') as HTMLInputElement;
     const targetMiddleNameInput = screen.getByLabelText('Target middle name') as HTMLInputElement;
+    const marriageStateInput = screen.getByLabelText('Marriage state / issuing jurisdiction') as HTMLInputElement;
+    const countyInput = screen.getByLabelText('County / issuing county') as HTMLInputElement;
 
     expect(currentMiddleNameInput.value).toBe('Marie');
     expect(targetMiddleNameInput.value).toBe('Quinn');
+    expect(marriageStateInput.value).toBe('California');
+    expect(countyInput.value).toBe('San Diego');
 
     fireEvent.change(currentMiddleNameInput, { target: { value: 'Rae' } });
     fireEvent.change(targetMiddleNameInput, { target: { value: 'Lane' } });
+    fireEvent.change(marriageStateInput, { target: { value: 'Nevada' } });
+    fireEvent.change(countyInput, { target: { value: 'Clark' } });
 
     expect(onDraftChange).toHaveBeenCalledWith({ current_middle_name: 'Rae' });
     expect(onDraftChange).toHaveBeenCalledWith({ target_middle_name: 'Lane' });
+    expect(onDraftChange).toHaveBeenCalledWith({ marriage_state: 'Nevada' });
+    expect(onDraftChange).toHaveBeenCalledWith({ county_residence: 'Clark' });
     expect(document.getElementById('case-setup')).not.toBeNull();
   });
 
@@ -148,8 +156,11 @@ describe('NameChangePlannerTab', () => {
       expect(screen.getByText('Milestones ready to confirm')).toBeInTheDocument();
       expect(screen.getByText('No open reminders')).toBeInTheDocument();
       expect(screen.getByText(/Optional next step:/i)).toBeInTheDocument();
-      expect(screen.getByText('The roadmap is already there, even if you have not started checking steps off yet, so you can come back without rebuilding the plan.')).toBeInTheDocument();
+      expect(screen.getByText('The roadmap is already there, including the California-guided state lane, the federal identity chain, and the downstream account follow-through, so you can come back without rebuilding the plan.')).toBeInTheDocument();
       expect(screen.getByText('Certificate, SSA, and DMV stay together so the legal identity chain does not drift.')).toBeInTheDocument();
+      expect(screen.getByText('Coverage today')).toBeInTheDocument();
+      expect(screen.getByText(/California-guided state filing, plus the U\.S\. federal identity chain/i)).toBeInTheDocument();
+      expect(screen.getByText(/California is saved as the marriage jurisdiction/i)).toBeInTheDocument();
 
       const roadmapButtons = screen.getAllByRole('button', { name: 'See roadmap first' });
       const milestoneChip = screen.getByRole('button', { name: 'Milestones ready to confirm' });
@@ -204,7 +215,7 @@ describe('NameChangePlannerTab', () => {
       expect(screen.getByText('Free assistant · saved status · document checklist')).toBeInTheDocument();
       expect(screen.getByText('Milestones ready to confirm')).toBeInTheDocument();
       expect(screen.getByText('No open reminders')).toBeInTheDocument();
-      expect(screen.getByText('You already started the name-change flow, so dayof brings you back to the saved status view instead of making you hunt for your place again.')).toBeInTheDocument();
+      expect(screen.getByText('You already started the name-change flow, so dayof brings you back to the saved California-guided state lane, federal identity chain, and downstream status view instead of making you hunt for your place again.')).toBeInTheDocument();
       expect(screen.getByText('Optional next step: Pick back up in the vault if you want progress and proof. If details changed, case setup is still one click away.')).toBeInTheDocument();
       expect(screen.getByText('0 complete · 1 in progress across the legal identity chain.')).toBeInTheDocument();
 
@@ -310,7 +321,7 @@ describe('NameChangePlannerTab', () => {
 
       expect(screen.getByText('Status vault complete')).toBeInTheDocument();
       expect(screen.getByText('Everything is saved. Reopen only when you need proof.')).toBeInTheDocument();
-      expect(screen.getByText('Your status vault already has the chain mapped, so you can reopen it anytime to confirm what landed and what still needs follow-through.')).toBeInTheDocument();
+      expect(screen.getByText('Your status vault already has the California-guided state lane, the federal identity chain, and the downstream follow-through mapped, so you can reopen it anytime to confirm what landed and what still needs follow-through.')).toBeInTheDocument();
       expect(screen.getByText(/Nothing pushy here/i)).toBeInTheDocument();
 
       fireEvent.click(screen.getByRole('button', { name: 'Review status vault' }));

@@ -65,7 +65,7 @@ export const NameChangePlannerIntroCards: React.FC<NameChangePlannerIntroCardsPr
         <p className="mt-2 text-sm text-text-primary">{stepCounts.ready} ready · {stepCounts.blocked} blocked · {stepCounts.later} later</p>
         <p className="mt-2 text-xs text-text-secondary">Steps: {plan.summary.executionCounts?.todo ?? 0} to do · {plan.summary.executionCounts?.in_progress ?? 0} started · {plan.summary.executionCounts?.complete ?? 0} complete</p>
         <p className="mt-2 text-sm font-semibold text-text-primary">{plan.summary.readinessPercent}% intake-ready</p>
-        <p className="mt-2 text-xs text-text-secondary">Federal-first, California-second, institutions after primary ID.</p>
+        <p className="mt-2 text-xs text-text-secondary">Federal first, California-guided state filing next, then downstream follow-through.</p>
       </Card>
       <Card padding="sm" className="border-primary/20 bg-primary/5">
         <div className="flex items-start gap-2">

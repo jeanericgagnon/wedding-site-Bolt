@@ -60,7 +60,7 @@ describe('PlanningOverviewTab', () => {
     expect(onTabChange).toHaveBeenCalledWith('nameChange');
     expect(replaceState).toHaveBeenCalledWith(null, '', '/#name-change-roadmap');
     expect(screen.getByText('Start whenever you want, then come back whenever you need')).toBeTruthy();
-    expect(screen.getByText('The roadmap is already there, even if you have not started checking steps off yet, so you can come back without rebuilding the plan.')).toBeTruthy();
+    expect(screen.getByText('The roadmap is already there, including the California-guided state lane, the federal identity chain, and the downstream account follow-through, so you can come back without rebuilding the plan.')).toBeTruthy();
     expect(screen.getByText('Roadmap saved')).toBeTruthy();
     expect(screen.getByText('See roadmap first')).toBeTruthy();
     expect(screen.getByText('Post-wedding')).toBeTruthy();

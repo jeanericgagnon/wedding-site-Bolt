@@ -107,7 +107,7 @@ export const EXECUTION_SECTION_STEP_IDS: Record<string, string[]> = {
 export const NAME_CHANGE_DOCUMENT_OPTIONS: Array<{ key: NameChangeDocumentInput['document_kind']; label: string }> = [
   { key: 'marriage_certificate', label: 'Certified marriage certificate' },
   { key: 'court_order', label: 'Court order' },
-  { key: 'current_drivers_license', label: 'Current California license / ID' },
+  { key: 'current_drivers_license', label: 'Current driver license / state ID' },
   { key: 'current_passport', label: 'Current passport' },
   { key: 'social_security_card', label: 'Social Security card' },
   { key: 'birth_certificate', label: 'Birth certificate' },

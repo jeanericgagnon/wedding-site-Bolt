@@ -12,6 +12,11 @@ Positioning: "Name change, without the fee."
 
 The product should help couples change names without confusion, missed steps, or paid kits. It should feel supportive, optional, and practical. It is not legal advice and must not pressure users with completion scores, comparisons, or upsells.
 
+Current launch claim:
+- California-guided state filing lane.
+- U.S. federal identity, passport, payroll, tax, travel, and downstream account follow-through.
+- State-specific depth beyond California stays future scope until the runtime and proof bar actually expand.
+
 ## Required End State
 
 The assistant must produce a personalized, state-aware plan from intake details:

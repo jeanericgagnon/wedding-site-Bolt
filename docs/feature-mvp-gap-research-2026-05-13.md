@@ -130,18 +130,20 @@ DayOf should count this feature as MVP-complete when it does all of the followin
   - TSA / travel flow
   - dual-partner proof tracks
   - immigration-aware and non-U.S.-passport-aware logic branches in the engine
-- Missing against the MVP bar:
-  - core architecture and UI language still read California-first in key places
-  - state and county coverage is not yet clearly documented or claim-safe at specialist depth
-  - post-wedding dashboard / resource placement is still incomplete
-  - advanced branches exist in code but are not yet the kind of breadth we should market as specialist-grade nationwide coverage
+- Deeper local batch now adds:
+  - explicit California-guided coverage framing for the state-specific lane
+  - claim-safe dashboard and helper copy that separates the California lane from federal and downstream follow-through
+  - marriage-state plus county / jurisdiction intake inside case setup
+  - generic state-license and issuing-authority labels so document intake does not overclaim California scope
+  - verified post-wedding dashboard and planner resume placement for the shipped planner surfaces
+- Still missing against completion:
+  - deploy the deeper runtime
+  - re-run live proof on the deployed runtime
 
 ### Build gaps
 
-1. Set and document the real launch claim: California-first or broader state-aware coverage.
-2. Finish the post-wedding dashboard and resource placement.
-3. Tighten state and county grounding so the product claim matches runtime reality.
-4. Re-prove advanced branches before claiming parity on dual-partner, non-U.S. passport, or immigration-heavy cases.
+1. Deploy the deeper name-change runtime.
+2. Re-prove the deeper name-change lane after deploy.
 
 ## Universal Registry Barcode Scanner
 

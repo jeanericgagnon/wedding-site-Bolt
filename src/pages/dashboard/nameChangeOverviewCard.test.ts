@@ -15,6 +15,7 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.secondaryLabel).toBe('See roadmap first');
     expect(model.secondaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.statusLabel).toBe('Start free assistant');
+    expect(model.helperCopy).toContain('California-guided state steps');
     expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.tertiaryLabel).toBe('Browse full assistant');
     expect(model.plannerHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
@@ -30,6 +31,7 @@ describe('buildNameChangeOverviewCardModel', () => {
 
     expect(model.headline).toBe('Soft next steps, not a checklist you have to clear');
     expect(model.statusLabel).toBe('Resume where you left off');
+    expect(model.helperCopy).toContain('California-guided state lane');
     expect(model.primaryHref).toBe('/dashboard/planning?tab=nameChange#target-status-tracking');
     expect(model.secondaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.secondaryLabel).toBe('Open full assistant');
@@ -67,6 +69,7 @@ describe('buildNameChangeOverviewCardModel', () => {
 
     expect(model.headline).toBe('Start whenever you want, then come back whenever you need');
     expect(model.statusLabel).toBe('Roadmap saved');
+    expect(model.helperCopy).toContain('California-guided state lane');
     expect(model.primaryLabel).toBe('See roadmap first');
     expect(model.primaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');

@@ -392,6 +392,25 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     () => buildNameChangeOverviewInsights({ plan, reminders: effectiveReminders }),
     [effectiveReminders, plan],
   );
+  const launchCoverageSummary = useMemo(() => {
+    if (draft.launch_state === 'california') {
+      return 'California-guided state filing, plus the U.S. federal identity chain, passport work, payroll, tax, travel, and downstream account follow-through.';
+    }
+
+    return 'Federal identity, passport, payroll, tax, travel, and downstream account follow-through are in scope here, but the state-specific filing lane still needs a California-guided setup.';
+  }, [draft.launch_state]);
+  const jurisdictionGuidance = useMemo(() => {
+    const marriageState = (draft.marriage_state ?? '').trim();
+    if (!marriageState) {
+      return 'Add the marriage state and county so the certificate chain stays grounded before the state ID, passport, and downstream follow-through lanes move.';
+    }
+
+    if (marriageState.toLowerCase() === 'california') {
+      return 'California is saved as the marriage jurisdiction. Keep the county and certificate reference grounded before moving the DMV and passport lanes.';
+    }
+
+    return `${marriageState} is saved as the marriage jurisdiction. Keep the issuing county and certificate reference grounded before moving the passport and downstream follow-through lanes.`;
+  }, [draft.marriage_state]);
   const documentVaultRows = useMemo(() => documents.map((document) => {
     const contract = NAME_CHANGE_DOCUMENT_CONTRACTS.find((entry) => matchesNameChangeDocumentKind(document.document_kind, entry.kind));
     const linkedFieldCount = extractedFields.filter((field) => {
@@ -930,7 +949,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           <p className="mt-2 text-sm text-text-primary">{stepCounts.ready} ready · {stepCounts.blocked} blocked · {stepCounts.later} later</p>
           <p className="mt-2 text-xs text-text-secondary">Steps: {plan.summary.executionCounts?.todo ?? 0} to do · {plan.summary.executionCounts?.in_progress ?? 0} started · {plan.summary.executionCounts?.complete ?? 0} complete</p>
           <p className="mt-2 text-sm font-semibold text-text-primary">{plan.summary.readinessPercent}% intake-ready</p>
-          <p className="mt-2 text-xs text-text-secondary">Federal-first, California-second, institutions after primary ID.</p>
+          <p className="mt-2 text-xs text-text-secondary">Federal first, California-guided state filing next, then downstream follow-through.</p>
         </Card>
         <Card padding="sm" className="border-primary/20 bg-primary/5">
           <div className="flex items-start gap-2">
@@ -942,6 +961,19 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           </div>
         </Card>
       </div>
+
+      <Card padding="sm" className="border-primary/20 bg-primary/5">
+        <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+          <div>
+            <p className="text-xs text-primary">Coverage today</p>
+            <p className="mt-2 text-sm text-text-primary">{launchCoverageSummary}</p>
+            <p className="mt-2 text-xs text-text-secondary">{jurisdictionGuidance}</p>
+          </div>
+          <span className="rounded-md bg-white px-2 py-1 text-xs text-text-secondary">
+            {draft.launch_state === 'california' ? 'California-guided state lane' : 'State lane needs review'}
+          </span>
+        </div>
+      </Card>
 
       <Card className="border-border-subtle bg-white">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -1353,7 +1385,11 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             <input type="date" className="w-full rounded-lg border border-border px-3 py-2" value={draft.marriage_date ?? ''} onChange={(e) => onDraftChange({ marriage_date: e.target.value })} />
           </label>
           <label className="text-sm">
-            <span className="mb-1 block text-xs font-medium text-text-secondary">California county</span>
+            <span className="mb-1 block text-xs font-medium text-text-secondary">Marriage state / issuing jurisdiction</span>
+            <input className="w-full rounded-lg border border-border px-3 py-2" value={draft.marriage_state ?? ''} onChange={(e) => onDraftChange({ marriage_state: e.target.value })} />
+          </label>
+          <label className="text-sm">
+            <span className="mb-1 block text-xs font-medium text-text-secondary">County / issuing county</span>
             <input className="w-full rounded-lg border border-border px-3 py-2" value={draft.county_residence ?? ''} onChange={(e) => onDraftChange({ county_residence: e.target.value })} />
           </label>
           <label className="text-sm">
@@ -1385,7 +1421,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           {[
             { label: 'Has passport', checked: draft.has_us_passport, key: 'has_us_passport' },
             { label: 'Passport needs update', checked: draft.passport_needs_update, key: 'passport_needs_update' },
-            { label: 'Has CA Real ID / license', checked: draft.has_real_id_license, key: 'has_real_id_license' },
+            { label: 'Has current state license / REAL ID', checked: draft.has_real_id_license, key: 'has_real_id_license' },
             { label: 'Travel booked soon', checked: Boolean(draft.structured_intake.travelBookedSoon), key: 'travelBookedSoon', source: 'structured' },
             { label: 'Wants doc intake help', checked: draft.structured_intake.wantsDocumentIntakeHelp !== false, key: 'wantsDocumentIntakeHelp', source: 'structured' },
           ].map((item) => (
@@ -1901,7 +1937,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                       className="w-full rounded-lg border border-border px-3 py-2"
                       value={document.issuing_authority ?? ''}
                       onChange={(e) => onDocumentsChange(updateDocument(documents, document.document_kind, { issuing_authority: e.target.value || null }))}
-                      placeholder="California DMV / County Clerk"
+                      placeholder="State DMV / county clerk / recorder"
                     />
                   </label>
                   <label className="text-sm">
