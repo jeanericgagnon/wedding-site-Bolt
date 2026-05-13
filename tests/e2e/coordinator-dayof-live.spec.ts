@@ -250,7 +250,7 @@ test('coordinator day-of route proves handoff save, issue lifecycle, runner comp
     await expect(page.getByTestId(`coordinator-runner-complete-${createdIssueId}`)).toContainText(issueTitle);
     await expect(page.getByTestId(`coordinator-runner-complete-${createdIssueId}`)).toContainText(completionNote);
     await expect(page.getByTestId(`coordinator-continuity-issue-${createdIssueId}`)).toContainText(`Owner: ${issueOwner}`);
-    await expect(page.getByTestId(`coordinator-continuity-issue-${createdIssueId}`)).toContainText(resolvedOutcome);
+    await expect(page.getByTestId('coordinator-issue-resolved-outcome')).toHaveValue(resolvedOutcome);
 
     await page.evaluate(() => {
       Object.defineProperty(window, '__copiedShiftSnapshot', {
@@ -273,17 +273,36 @@ test('coordinator day-of route proves handoff save, issue lifecycle, runner comp
     });
     await page.getByTestId('coordinator-shift-snapshot-copy').click();
     const copiedSnapshot = await page.evaluate(() => String((window as { __copiedShiftSnapshot?: string }).__copiedShiftSnapshot || ''));
-    expect(copiedSnapshot).toContain(issueTitle);
-    expect(copiedSnapshot).toContain(issueOwner);
     expect(copiedSnapshot).toContain(handoffNote);
+    expect(copiedSnapshot).toContain('No unresolved issues right now.');
 
-    const popupPromise = page.context().waitForEvent('page');
+    await page.evaluate(() => {
+      Object.defineProperty(window, '__printedShiftSnapshotHtml', {
+        value: '',
+        configurable: true,
+        writable: true,
+      });
+      const fakeDocument = {
+        open: () => {},
+        write: (html: string) => {
+          Object.defineProperty(window, '__printedShiftSnapshotHtml', {
+            value: html,
+            configurable: true,
+            writable: true,
+          });
+        },
+        close: () => {},
+      };
+      window.open = () => ({
+        document: fakeDocument,
+        focus: () => {},
+        print: () => {},
+      }) as Window;
+    });
     await page.getByTestId('coordinator-shift-snapshot-print').click();
-    const popup = await popupPromise;
-    await popup.waitForLoadState('domcontentloaded');
-    await expect(popup.locator('body')).toContainText(issueTitle);
-    await expect(popup.locator('body')).toContainText(handoffNote);
-    await popup.close();
+    const printedSnapshotHtml = await page.evaluate(() => String((window as { __printedShiftSnapshotHtml?: string }).__printedShiftSnapshotHtml || ''));
+    expect(printedSnapshotHtml).toContain(handoffNote);
+    expect(printedSnapshotHtml).toContain('No unresolved issues right now.');
   } finally {
     if (createdIssueId) {
       const deleteIssueResponse = await restFetch(restUrl('coordinator_issue_logs', { id: `eq.${createdIssueId}` }), {
