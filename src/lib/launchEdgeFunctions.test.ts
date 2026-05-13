@@ -937,6 +937,18 @@ describe('launch edge function guards', () => {
     expect(submit).toContain('.eq("id", contactPayload.guestId)');
     expect(submit).toContain('scope: "guest_contact_submit"');
     expect(submit).toContain('contactPayload.householdAllowed !== true');
+    expect(submit).toContain('.from("app_action_audit_logs")');
+    expect(submit).toContain('action_type: "guest_contact_public_update"');
+    expect(submit).toContain('verification_strength: contactPayload.verificationStrength');
+    expect(submit).toContain('apply_household: applyHousehold');
+    expect(submit).toContain('changed_fields: changedFields');
+    expect(submit).toContain('changed_guest_count: changedGuestCount');
+    expect(submit).toContain('GUEST_CONTACT_SUBMIT_AUDIT_UNAVAILABLE');
+    expect(submit).not.toContain('metadata: patch');
+    expect(submit).not.toContain('metadata: { patch');
+    expect(submit).not.toContain('metadata: { email');
+    expect(submit).not.toContain('metadata: { phone');
+    expect(submit).not.toContain('metadata: { mailing_');
     expect(submit).not.toContain('const guestId = String(body.guest_id');
     expect(submit).not.toContain('.eq("id", guestId)');
 

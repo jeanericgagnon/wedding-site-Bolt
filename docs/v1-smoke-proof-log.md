@@ -29,6 +29,7 @@ _Launch call right now:_ `GO`
   - `npm run proof:v1:board:md` -> `PASS`
   - `npm test -- --run src/lib/proofBoardFreshness.test.ts src/lib/launchControlMatrices.test.ts src/lib/guestLookupScopeProofScript.test.ts src/lib/securityAutomationProof.test.ts` -> `PASS`
   - local guest-contact hardening now accepts a guest-specific RSVP invite token as the strongest verifier and still requires the phone-last-4 step-up check before whole-party updates when that stronger token is absent
+  - local guest-contact submit now also writes a redacted app-action audit event for public guest updates
   - no deploy was run, so production still reflects the earlier guest-contact verifier behavior
 - 2026-05-12 04:34 PM PDT:
   - `supabase functions list --project-ref atuzuobpprjstfmdnwso` -> `PASS`

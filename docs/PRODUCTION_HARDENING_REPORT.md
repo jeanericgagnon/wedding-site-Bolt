@@ -11,7 +11,7 @@ _Updated:_ `2026-05-12 05:55 PM PDT`
 ## Exact Runtime Identity
 
 - Branch: `codex/v1-finish-hard-gates-3`
-- Current branch head: `6f47a442` (`Strengthen guest contact with guest invite tokens`)
+- Current branch head: `e9f36b94` (`Audit public guest contact updates`)
 - Exact frontend Git SHA: `17c8089f`
 - Exact frontend commit: `Narrow guest contact verifier to email fragment`
 - Exact Vercel production deploy: `dpl_L9m7XKgo3GhpLkH5NR4M1ZzLSDjh`
@@ -70,6 +70,7 @@ Fresh local proof:
 - `npm test -- --run src/lib/publicAccessArtifacts.test.ts src/lib/securityAutomationProof.test.ts src/lib/routeCompositionBoundary.test.ts src/lib/internalToolingRouteBoundary.test.ts src/lib/guestLookupScopeProofScript.test.ts src/pages/GuestContactUpdate.test.ts src/lib/launchEdgeFunctions.test.ts` -> `PASS`
   - guest-contact household-wide updates now require phone last 4 in local code/proof before `apply_household`
   - guest-specific RSVP invite tokens now act as the strongest local verifier for signed household-scoped contact sessions
+  - guest-contact submit now writes a redacted `app_action_audit_logs` event with verifier strength, household scope, changed-field names, and changed-guest count
   - `App.tsx` now composes grouped route modules instead of hand-owning the entire route tree inline
 - `npm run test:launch` -> `BLOCKED / local branch proof gap`
   - branch wiring is now correct because `test:launch` self-sets `LIVE_GUEST_DASHBOARD_SETTINGS_RPCS=1`
@@ -155,7 +156,7 @@ Current live launch baseline:
 - `guest-contact-lookup --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `guest-contact-submit --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `guest-contact-lookup` now requires a full name plus the first few characters of the guest email address before minting a signed contact session
-- the stronger guest-specific invite-token path plus the whole-party phone-last-4 verifier are currently branch-only and not yet deployed
+- the stronger guest-specific invite-token path, whole-party phone-last-4 verifier, and public guest-contact audit event are currently branch-only and not yet deployed
 - `validate-rsvp-token --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `interactive-section-public --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path
 - `photo-upload --no-verify-jwt`: same-day confirmed and live-proven again on the dedicated public session secret path

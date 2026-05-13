@@ -13,6 +13,7 @@ This file preserves timestamped historical entries, extraction batches, and no-d
 - What changed:
   - guest-contact lookup now accepts a guest-specific RSVP invite token as the strongest verifier when one is present
   - guest-contact sessions now carry `verificationStrength` and can allow whole-party updates either through that guest token or the phone-last-4 step-up verifier
+  - guest-contact submit now writes a redacted `app_action_audit_logs` event describing verifier strength, household scope, changed-field names, and changed-guest count
   - added guest invite token capture/storage helpers in `publicAccessArtifacts.ts`
   - `GuestContactUpdate.tsx` now uses the stored/search `invite_token` identity artifact during lookup
   - updated the local guest-contact proof so it exercises both:

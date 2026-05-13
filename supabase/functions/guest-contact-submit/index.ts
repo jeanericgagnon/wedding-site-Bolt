@@ -31,6 +31,15 @@ const CONTACT_LINK_UNAVAILABLE_COPY = "This contact update link is missing or ex
 const CONTACT_LINK_SITE_MISMATCH_COPY = "This contact update link is not available for this site.";
 const CONTACT_UPDATE_REQUIRED_COPY = "Add at least one update before saving.";
 const CONTACT_HOUSEHOLD_VERIFIER_REQUIRED_COPY = "Add the last 4 digits of the phone number on file before updating your whole party.";
+const CONTACT_UPDATE_AUDIT_FAILED_REASON = "CONTACT_UPDATE_AUDIT_FAILED";
+
+function displayGuestName(guest: { name?: string | null; first_name?: string | null; last_name?: string | null }) {
+  return guest.name || [guest.first_name, guest.last_name].filter(Boolean).join(" ");
+}
+
+function summarizeChangedFields(patch: Record<string, unknown>) {
+  return Object.keys(patch).sort();
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
@@ -89,7 +98,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: guest } = await admin
       .from("guests")
-      .select("id, household_id")
+      .select("id, name, first_name, last_name, household_id")
       .eq("id", contactPayload.guestId)
       .eq("wedding_site_id", site.id)
       .maybeSingle();
@@ -133,6 +142,14 @@ Deno.serve(async (req: Request) => {
       return json({ error: CONTACT_HOUSEHOLD_VERIFIER_REQUIRED_COPY }, 403);
     }
 
+    const targetRowsQuery = admin
+      .from("guests")
+      .select("id")
+      .eq("wedding_site_id", site.id);
+    const { data: targetRows } = applyHousehold && guest.household_id
+      ? await targetRowsQuery.eq("household_id", guest.household_id)
+      : await targetRowsQuery.eq("id", guest.id);
+
     let query = admin.from("guests").update(patch).eq("wedding_site_id", site.id);
     if (applyHousehold && guest.household_id) {
       query = query.eq("household_id", guest.household_id);
@@ -144,6 +161,33 @@ Deno.serve(async (req: Request) => {
     if (updateError) {
       console.error("GUEST_CONTACT_SUBMIT_UPDATE_FAILED", { reason: "CONTACT_UPDATE_FAILED" });
       return json({ error: "Could not save this contact update. Please try again." }, 500);
+    }
+
+    const changedFields = summarizeChangedFields(patch);
+    const changedGuestCount = Array.isArray(targetRows) ? targetRows.length : 0;
+    const { error: auditError } = await admin
+      .from("app_action_audit_logs")
+      .insert({
+        wedding_site_id: site.id,
+        actor_user_id: null,
+        action_area: "guests",
+        action_type: "guest_contact_public_update",
+        target_id: guest.id,
+        target_label: displayGuestName(guest) || "Guest contact update",
+        summary: applyHousehold
+          ? `Guest updated contact details for ${changedGuestCount || "their"} household record(s).`
+          : "Guest updated their contact details.",
+        metadata: {
+          source: "guest_contact_public",
+          verification_strength: contactPayload.verificationStrength,
+          apply_household: applyHousehold,
+          changed_fields: changedFields,
+          changed_guest_count: changedGuestCount,
+        },
+      });
+
+    if (auditError) {
+      console.info("GUEST_CONTACT_SUBMIT_AUDIT_UNAVAILABLE", { reason: CONTACT_UPDATE_AUDIT_FAILED_REASON });
     }
 
     return json({ ok: true });
