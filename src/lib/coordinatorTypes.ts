@@ -13,6 +13,8 @@ export type GuestLiteForCoordinator = {
   first_name: string | null;
   last_name: string | null;
   name: string;
+  email?: string | null;
+  invite_token?: string | null;
   rsvp_status: string;
   household_id?: string | null;
   group_name?: string | null;

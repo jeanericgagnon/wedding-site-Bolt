@@ -179,6 +179,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setQnaItems,
     setTimelineState,
     siteId,
+    siteSlug,
     timelineState,
   } = useCoordinatorDashboardData({
     isDemoMode,
@@ -993,6 +994,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     qnaItems,
     sortedGuests,
     siteId,
+    siteSlug,
     timelineBoardTargetId,
     timelineState,
     upNextEvent,
@@ -1054,6 +1056,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
           checkInWatchCount,
           isFocused: panelFocus === 'check-in',
           nextArrivals,
+          siteSlug,
           onCheckInGuest: (guest) => { void toggleCheckIn(guest); },
           onEscalateDoorReview: (guest) => {
             setActiveGuestId(guest.id);

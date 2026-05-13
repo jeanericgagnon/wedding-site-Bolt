@@ -7,8 +7,8 @@ Purpose:
 - separate the shipped launch baseline from the deeper product-depth scope that was reopened as active work
 - give the backlog an honest build target
 - current truth update: the earlier “full-suite closed” claim was too optimistic for the reopened acceptance bar; this document is back in active-use mode until coordinator/day-of, name-change, seating lookup, and QR scanning are proven together without gaps
-- current implementation batch now closes some concrete regressions: seating lookup no longer keys off the latest created seating event globally, coordinator check-in now retries through auth refresh, public QR generation is stricter about token-ish payloads, and name-change passport flags now normalize legacy/current shapes through one mapper
-- full-suite claim update: do not treat the three lanes as fully closed today; the real QR scanner lane and the refreshed aggregate proof still remain open
+- current implementation batch now closes some concrete regressions: seating lookup no longer keys off the latest created seating event globally, coordinator check-in now retries through auth refresh, public QR generation is stricter about token-ish payloads, name-change passport flags now normalize legacy/current shapes through one mapper, and the coordinator route now has a real QR scanner plus secure token/url parsing locally
+- full-suite claim update: do not treat the three lanes as fully closed today; the scanner batch still needs live deploy proof and the refreshed aggregate proof still remains open
 
 Method:
 - reviewed official product and help pages from direct competitors and adjacent event products
@@ -95,9 +95,9 @@ DayOf should count this feature as MVP-complete when it does all of the followin
 
 Still open for this lane:
 
-- real QR scanner entry and secure scan validation inside day-of flow
-- unified event-aware proof across coordinator, seating lookup, and scanner
-- refreshed dedicated coordinator proof after the reopened full-suite criteria
+- QR scanner entry and secure scan validation are now shipped locally in coordinator mode, but still need live deploy proof
+- unified event-aware live proof across coordinator, seating lookup, and scanner
+- refreshed dedicated coordinator live proof after the reopened full-suite criteria
 
 ## Name change
 

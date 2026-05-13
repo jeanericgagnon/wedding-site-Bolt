@@ -46,6 +46,7 @@ export function useCoordinatorDashboardData(args: {
   const [guests, setGuests] = useState<GuestLiteForCoordinator[]>([]);
   const [events, setEvents] = useState<EventLite[]>([]);
   const [siteId, setSiteId] = useState<string | null>(null);
+  const [siteSlug, setSiteSlug] = useState<string | null>(null);
   const [eventGuestIds, setEventGuestIds] = useState<Record<string, Set<string>>>({});
   const [eventSeatingConfiguredIds, setEventSeatingConfiguredIds] = useState<Set<string>>(new Set<string>());
   const [eventSeatingEventIds, setEventSeatingEventIds] = useState<Record<string, string>>({});
@@ -92,6 +93,7 @@ export function useCoordinatorDashboardData(args: {
           if (!mounted) return;
           const now = new Date().toISOString();
           setSiteId('demo-site');
+          setSiteSlug('demo-site');
           setActiveSiteRole('owner');
           setCoordinatorRole('owner');
           setGuests([
@@ -152,6 +154,7 @@ export function useCoordinatorDashboardData(args: {
         if (!mounted) return;
         const storedGuestWorkState = readStoredCoordinatorGuestWorkState(bootstrap.siteId);
         setSiteId(bootstrap.siteId);
+        setSiteSlug(bootstrap.siteSlug);
         setActiveSiteRole(bootstrap.role);
         setCoordinatorRole(bootstrap.role);
         setCoordinatorPermissions(bootstrap.permissions);
@@ -380,6 +383,7 @@ export function useCoordinatorDashboardData(args: {
     setQnaItems,
     setTimelineState,
     siteId,
+    siteSlug,
     timelineState,
   };
 }

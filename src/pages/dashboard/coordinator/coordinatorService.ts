@@ -10,7 +10,7 @@ import type {
   QnaItem,
 } from './coordinatorDashboardTypes';
 
-const COORDINATOR_GUEST_SELECT = 'id, first_name, last_name, name, rsvp_status, household_id, group_name, checked_in_at' as const;
+const COORDINATOR_GUEST_SELECT = 'id, first_name, last_name, name, email, invite_token, rsvp_status, household_id, group_name, checked_in_at' as const;
 const COORDINATOR_EVENT_SELECT = 'id, event_name, start_time' as const;
 const COORDINATOR_EVENT_INVITATION_SELECT = 'event_id, guest_id' as const;
 const COORDINATOR_SEATING_EVENT_SELECT = 'id, itinerary_event_id' as const;
@@ -51,6 +51,7 @@ type CoordinatorSeatingAssignmentRow = {
 
 export interface CoordinatorBootstrapData {
   siteId: string | null;
+  siteSlug: string | null;
   role: PlannerAccessRole;
   permissions: PlannerPermissionKey[] | null;
   guests: GuestLiteForCoordinator[];
@@ -124,6 +125,7 @@ export async function loadCoordinatorBootstrapData(userId: string): Promise<Coor
   if (!siteId) {
     return {
       siteId: null,
+      siteSlug: null,
       role: 'owner',
       permissions: null,
       guests: [],
@@ -153,6 +155,13 @@ export async function loadCoordinatorBootstrapData(userId: string): Promise<Coor
   ]);
   if (guestsError) throw guestsError;
   if (eventsError) throw eventsError;
+
+  const { data: siteData, error: siteError } = await supabase
+    .from('wedding_sites')
+    .select('site_slug')
+    .eq('id', siteId)
+    .maybeSingle();
+  if (siteError) throw siteError;
 
   const events = (eventsData ?? []) as EventLite[];
   const eventIds = events.map((event) => event.id);
@@ -284,6 +293,7 @@ export async function loadCoordinatorBootstrapData(userId: string): Promise<Coor
 
   return {
     siteId,
+    siteSlug: typeof siteData?.site_slug === 'string' ? siteData.site_slug : null,
     role: activeSite?.role ?? 'owner',
     permissions: activeSite?.permissions ?? null,
     guests: ((guestsData ?? []) as GuestLiteForCoordinator[]).map((guest) => ({

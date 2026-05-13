@@ -27,6 +27,8 @@ describe('guestHubQrAssets', () => {
     expect(isSafePublicQrAssetUrl('https://example.test/event/maya-and-leo')).toBe(false);
     expect(isSafePublicQrAssetUrl('javascript:alert(1)')).toBe(false);
     expect(isSafePublicQrAssetUrl('https://dayof.love/event/maya-and-leo?redirect=%2Fcheckin%23access_token%3Dsecret')).toBe(false);
+    expect(isSafePublicQrAssetUrl('https://dayof.love/rsvp?token=secret')).toBe(false);
+    expect(isSafePublicQrAssetUrl('https://dayof.love/guest-contact/maya-and-leo?guestInviteToken=secret')).toBe(false);
     expect(buildQrImageUrl('https://dayof.love/event/maya-and-leo?guest_access_token=secret')).toBe('');
     expect(buildGuestHubQrAssets({
       hubUrl: 'https://dayof.love/event/maya-and-leo?secureToken=secret',

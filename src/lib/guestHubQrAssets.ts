@@ -1,4 +1,5 @@
 import { getSafePublicWebUrl } from '../sections/publicLinks';
+import { isPrivateQrPayloadForThirdPartyQr } from './qr/qrPayload';
 
 export type GuestHubQrAssetKind = 'welcome-sign' | 'table-card' | 'invite-insert' | 'photo-prompt';
 
@@ -20,7 +21,7 @@ export interface GuestHubQrAssetInput {
 const TOKENISH_PARAM = /(token|invite|secret|secure|signature|signed|jwt|key|access|auth|bearer|cookie|passcode|password|session)/i;
 
 export const buildQrImageUrl = (url: string, size = 512) =>
-  isSafePublicQrAssetUrl(url)
+  isSafePublicQrAssetUrl(url) && !isPrivateQrPayloadForThirdPartyQr(url)
     ? `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}`
     : '';
 

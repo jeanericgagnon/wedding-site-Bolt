@@ -25,11 +25,11 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | Current readiness score | `6 / 10` |
 | Current launch verdict | `HOLD FOR FULL-SUITE` |
 | Production-ready | `NO FOR THE CURRENT FULL-SUITE BAR` |
-| Reason production-ready is not yet claimed | Full-suite hardening reopened correctly. The repo still lacks a real day-of QR scanner lane, unified event-aware proof across coordinator/seating/scanner, and refreshed end-to-end proof for the newly reopened full-suite criteria. |
-| Current blockers | Real QR scanner flow is still not shipped. Cross-feature full-suite proof is stale and still overclaims prior closed status. Coordinator/name-change/seating hardening is partially in flight but not yet fully proven live. |
-| Current proof state | This hardening batch has fresh local green proof for shared foundations and touched regressions: `npm test -- --run src/lib/operationalEvent.test.ts src/lib/publicSiteSlug.test.ts src/lib/guestHubQrAssets.test.ts src/pages/dashboard/planning/nameChangeService.test.ts src/pages/dashboard/seating/seatingService.test.ts`, `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `git diff --check`, and `npm run build`. The broader live full-suite claims elsewhere in this file are stale and should be treated as historical until the reopened QR/coordinator/name-change/seating acceptance criteria are rerun and passed honestly. |
+| Reason production-ready is not yet claimed | Full-suite hardening reopened correctly. The coordinator QR scanner lane is now shipped locally, but unified event-aware live proof across coordinator/seating/scanner plus the remaining name-change dependency proof still are not honestly closed together. |
+| Current blockers | Coordinator QR scanning is not yet deployed/live-proven. Cross-feature full-suite proof is stale and still overclaims prior closed status. Name-change dependency-proof refresh remains open. |
+| Current proof state | This hardening batch now has fresh local green proof for shared foundations, scanner security, and touched regressions: `npm test -- --run src/lib/operationalEvent.test.ts src/lib/publicSiteSlug.test.ts src/lib/guestHubQrAssets.test.ts src/lib/qr/qrPayload.test.ts src/components/qr/QrScanner.test.tsx src/pages/dashboard/planning/nameChangeService.test.ts src/pages/dashboard/seating/seatingService.test.ts`, `npm run proof:v1:qr-scanner`, `npm run proof:v1:coordinator-dayof`, `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `git diff --check`, and `npm run build`. The broader live full-suite claims elsewhere in this file are stale and should be treated as historical until the reopened QR/coordinator/name-change/seating acceptance criteria are rerun and passed honestly. |
 | Current deployment state | The latest deployed frontend runtime is [dayof.love](https://dayof.love) via verified Vercel production deploy `dpl_5M8Kyb7nWjQANEXgrR7n6q8pnxfP` from commit `3c37d94c`. The coordinator migrations `20260513170000_coordinator_event_checkin_write.sql` and `20260513213000_coordinator_handoff_issue_depth.sql`, the name-change reminder compatibility migration `20260513193000_fix_name_change_reminders_replace_runtime.sql`, and the registry duplicate-merge migration `20260513195500_add_registry_duplicate_merge.sql` remain applied remotely. This deploy ships the coordinator audit-proof selector/runtime harness improvements alongside the already-live full-suite name-change planner depth and registry provider/repair/fallback batch. `registry-barcode-lookup --no-verify-jwt` remains live with the broader Open Facts ladder and repair-queue-compatible lookup path. The scoped coordinator live proof reran green on this runtime; the broader canonical/public/name-change/registry/responsive/collaborator bundle remains last green from the immediately prior production deploy because those runtime lanes were untouched in this audit-proof batch. `submit-rsvp` remains live with the serialized capacity path, and the public-session-secret, admin route gate, guest-contact, route-module decomposition, vault contribution, and `.dayof.love` host-routing lanes remain live-proven. External custom domains remain unsupported product scope, not an active proof lane. |
-| Current next actions | Finish the reopened active full-suite work: real QR scanning, final coordinator/day-of event-awareness and exception proof, remaining name-change dependency proof, then rerun/update the dedicated proof lanes and live deploy truth. |
+| Current next actions | Deploy the new coordinator QR scanner batch, rerun the dedicated live coordinator proof against it, finish the remaining name-change dependency proof refresh, then rerun/update the aggregate full-suite truth. |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
@@ -81,9 +81,9 @@ The shipped runtime remains a strong launch baseline, but the stricter full-suit
     - coordinator check-in now retries after auth refresh like seating check-in
     - bulk seating arrival updates now require confirmation when more than five visible guests would be affected
   - active remaining work:
-    - real QR scanner entry + secure payload validation + duplicate protection
-    - event-aware proof tying coordinator, seating lookup, and scanner to the same live/up-next event
-    - refreshed coordinator live and local proof for the reopened full-suite acceptance criteria
+    - `DONE LOCAL / LIVE PENDING`: real QR scanner entry + secure payload validation + duplicate protection
+    - event-aware live proof tying coordinator, seating lookup, and scanner to the same live/up-next event
+    - refreshed coordinator live proof on the reopened full-suite acceptance criteria after the scanner batch deploy
   - status: `IN PROGRESS`
 - `Name change`
   - `ACTIVE FULL-SUITE LANE`
@@ -197,7 +197,8 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 | --- | --- | --- | --- | --- |
 | `npm run typecheck -- --pretty false` | `PASS` | `local` | `2026-05-13` | Green after the name-change full-suite matrix / institution-packet / edge-branch batch |
 | `npm run lint -- --quiet` | `PASS` | `local` | `2026-05-13` | Green after the name-change full-suite matrix / institution-packet / edge-branch batch |
-| `npm run build` | `PASS` | `local` | `2026-05-13` | Green after the name-change full-suite matrix / institution-packet / edge-branch batch |
+| `npm run build` | `PASS` | `local` | `2026-05-13` | Green after the coordinator QR scanner + proof batch |
+| `npm run proof:v1:qr-scanner` | `PASS` | `local` | `2026-05-13` | QR parsing/security, duplicate-scan debounce, manual fallback, and build integrity are green |
 | `npm test` | `PASS` | `local` | `2026-05-11` | `537/537` files, `3321/3321` tests |
 | `npm run test:security` | `PASS` | `local` | `2026-05-11` | `265/265` |
 | `npm run test:smoke` | `PASS` | `production` | `2026-05-11` | `registry`, `rsvp`, `csvmapper`, `checkin`, `messages`, `site` all green after unrestricted-network rerun |

@@ -18,6 +18,12 @@ const steps = [
     required: true,
   },
   {
+    id: 'coordinator-qr-tests',
+    label: 'Coordinator QR parser and scanner tests',
+    command: 'npm test -- --run src/lib/qr/qrPayload.test.ts src/components/qr/QrScanner.test.tsx',
+    required: true,
+  },
+  {
     id: 'coordinator-timeline-state-tests',
     label: 'Coordinator timeline state tests',
     command: 'npm test -- src/lib/coordinatorTimelineState.test.ts',
@@ -125,6 +131,7 @@ const output = {
   automatedCoverage: [
     'Role-aware coordinator live-ops boundaries',
     'Check-in queue filtering behavior',
+    'QR payload safety, duplicate-scan debounce, and guest resolution behavior',
     'Single-live-event timeline state truth',
     'Persisted staffing handoff save and issue-log service boundaries',
     'Incident ownership, runner-task lifecycle completion, guest continuity, and shift-snapshot export behavior',

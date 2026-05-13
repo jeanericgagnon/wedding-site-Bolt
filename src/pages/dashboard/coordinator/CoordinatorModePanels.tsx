@@ -1,4 +1,5 @@
 import React from 'react';
+import { QrScanner } from '../../../components/qr/QrScanner';
 import { Input, Textarea } from '../../../components/ui';
 import { applyCoordinatorAlertSuggestion } from '../../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../../lib/coordinatorAlertSuggestionState';
@@ -43,6 +44,7 @@ import type { CoordinatorTimelineBoard } from '../../../lib/coordinatorTimelineB
 import { getCoordinatorPrimaryTimelineAction } from '../../../lib/coordinatorTimelineActions';
 import type { CoordinatorGuestDoorRoute, GuestLiteForCoordinator } from '../../../lib/coordinatorTypes';
 import { getCoordinatorActiveTargetLabel } from '../../../lib/coordinatorActiveTargetLabel';
+import { resolveCoordinatorQrPayload, type CoordinatorQrResolution } from '../../../lib/qr/qrPayload';
 import { formatCoordinatorEventDateTime } from '../coordinatorEventTime';
 import type {
   AlertLog,
@@ -1798,6 +1800,7 @@ export interface CoordinatorCheckInQueuePanelProps {
   checkInWatchCount: number;
   isFocused: boolean;
   nextArrivals: GuestLiteForCoordinator[];
+  siteSlug: string | null;
   onActiveGuestCheckIn: () => void;
   onCheckInGuest: (guest: GuestLiteForCoordinator) => void;
   onEscalateDoorReview: (guest: GuestLiteForCoordinator) => void;
@@ -1829,6 +1832,7 @@ export function CoordinatorCheckInQueuePanel({
   checkInWatchCount,
   isFocused,
   nextArrivals,
+  siteSlug,
   onActiveGuestCheckIn,
   onCheckInGuest,
   onEscalateDoorReview,
@@ -1842,6 +1846,41 @@ export function CoordinatorCheckInQueuePanel({
   onSetFilter,
   onSetQuery,
 }: CoordinatorCheckInQueuePanelProps) {
+  const [qrResolution, setQrResolution] = React.useState<CoordinatorQrResolution | null>(null);
+  const [qrBusy, setQrBusy] = React.useState(false);
+
+  const handleQrPayload = async (value: string) => {
+    setQrBusy(true);
+    try {
+      const resolution = resolveCoordinatorQrPayload(value, {
+        siteSlug,
+        currentEventName: checkInEventName,
+        checkInStatusContext,
+      });
+      setQrResolution(resolution);
+      if ('guest' in resolution) {
+        onFocusLane();
+        onSelectGuest(resolution.guest.id);
+      }
+    } finally {
+      setQrBusy(false);
+    }
+  };
+
+  const confirmQrCheckIn = () => {
+    if (!qrResolution || !('guest' in qrResolution) || qrResolution.status !== 'success') return;
+    onFocusLane();
+    onSelectGuest(qrResolution.guest.id);
+    onCheckInGuest(qrResolution.guest);
+  };
+
+  const escalateQrIssue = () => {
+    if (!qrResolution || !('guest' in qrResolution)) return;
+    onFocusLane();
+    onSelectGuest(qrResolution.guest.id);
+    onEscalateDoorReview(qrResolution.guest);
+  };
+
   return (
     <div className={`lg:col-span-2 overflow-hidden rounded-xl border bg-white shadow-sm ${isFocused ? 'border-primary/40 ring-2 ring-primary/10' : 'border-border-subtle'}`}>
       <div className="px-4 py-3 border-b border-border/60 space-y-3">
@@ -1874,6 +1913,71 @@ export function CoordinatorCheckInQueuePanel({
               <p className="mt-1 text-[11px] text-text-primary">{checkInBoard.reviewLabel}</p>
             </div>
           </div>
+        </div>
+        <div className="rounded-lg border border-border/50 bg-white px-3 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-medium text-text-primary">Door QR check-in</p>
+              <p className="mt-1 text-[11px] text-text-secondary">
+                Scan a guest RSVP/check-in code, validate it against this site and event, then confirm the arrival with one tap.
+              </p>
+            </div>
+            <span className="rounded-lg border border-border bg-surface-subtle px-2 py-1 text-[10px] font-medium text-text-tertiary">
+              {checkInEventName ? `Event · ${checkInEventName}` : 'Event-aware'}
+            </span>
+          </div>
+          <div className="mt-3">
+            <QrScanner
+              busy={qrBusy}
+              manualPlaceholder="Paste a guest RSVP/check-in URL or invite token"
+              onPayload={handleQrPayload}
+            />
+          </div>
+          {qrResolution && (
+            <div className={`mt-3 rounded-lg border px-3 py-3 ${
+              qrResolution.status === 'success'
+                ? 'border-primary/20 bg-primary/5'
+                : qrResolution.status === 'already-checked-in'
+                  ? 'border-border/50 bg-surface-subtle/40'
+                  : 'border-primary/20 bg-accent-light'
+            }`}>
+              <p className="text-sm font-medium text-text-primary">{qrResolution.title}</p>
+              <p className="mt-1 text-[11px] text-text-secondary">{qrResolution.detail}</p>
+              {'checkedInAt' in qrResolution && (
+                <p className="mt-1 text-[11px] text-text-tertiary">Checked in at {new Date(qrResolution.checkedInAt).toLocaleString()}</p>
+              )}
+              {qrResolution.warnings.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {qrResolution.warnings.map((warning) => (
+                    <span key={`${qrResolution.source}-${warning}`} className="rounded-md border border-primary/15 bg-white px-2 py-0.5 text-[10px] text-primary">
+                      {warning}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="mt-3 flex flex-wrap gap-2">
+                {qrResolution.status === 'success' && (
+                  <button
+                    type="button"
+                    onClick={confirmQrCheckIn}
+                    disabled={!canCheckIn}
+                    className="rounded-md border border-primary/20 bg-white px-3 py-1.5 text-[11px] text-primary disabled:opacity-40"
+                  >
+                    Confirm check-in
+                  </button>
+                )}
+                {(qrResolution.status === 'wrong-event' || qrResolution.status === 'already-checked-in') && 'guest' in qrResolution && canEditQna && (
+                  <button
+                    type="button"
+                    onClick={escalateQrIssue}
+                    className="rounded-md border border-primary/20 bg-white px-3 py-1.5 text-[11px] text-primary"
+                  >
+                    Route to issue desk
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <Input
