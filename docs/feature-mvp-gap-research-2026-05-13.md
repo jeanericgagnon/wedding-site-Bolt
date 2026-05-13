@@ -88,10 +88,11 @@ DayOf should count this feature as MVP-complete when it does all of the followin
 
 No remaining coordinator gap is active inside the competitor-informed MVP bar. But the board is now reopened above MVP toward a fuller suite bar:
 
-1. stronger incident ownership and resolution tracking
-2. mobile-friendly runner / escort flows across event moments
-3. better cross-event guest movement continuity and handoff
+1. incident ownership lifecycle with explicit assignee, owner, status, next action, and resolved outcome for each coordinator issue
+2. mobile-friendly runner / escort flows with assignment, en route, done, and logged completion states
+3. cross-event guest movement continuity so seat changes, substitutions, escort actions, and exceptions stay connected across event moments
 4. export / printable / handoff surfaces that survive real multi-person day-of operations
+5. proof coverage that exercises incident lifecycle, runner workflow, cross-event continuity, and handoff export on the shipped runtime
 
 ## Name change
 
@@ -161,10 +162,11 @@ DayOf should count this feature as MVP-complete when it does all of the followin
 
 No remaining name-change gap is active inside the competitor-informed MVP bar. But the board is now reopened above MVP toward a fuller suite bar:
 
-1. broader 50-state operational depth
-2. stronger institution-specific follow-through
-3. deeper special-case branches for identity, travel, residency, and edge-case execution
+1. full 50-state + DC operational matrix instead of a partially expanded state set plus generic fallback
+2. stronger institution-specific follow-through across the major downstream account clusters
+3. deeper special-case branches for identity, travel, residency, hyphenation/combination, and court-order edge execution
 4. more complete packet/export/collaboration coverage for real post-wedding execution
+5. proof coverage that exercises the broadened state matrix, special-case branching, and packet/export handoff surfaces on the shipped runtime
 
 ## Universal Registry Barcode Scanner
 
@@ -220,13 +222,14 @@ DayOf should count this feature as MVP-complete when it does all of the followin
 
 No remaining registry gap is active inside the current competitor-informed MVP bar. But the board is now reopened above MVP toward a fuller suite bar:
 
-1. broader provider catalog depth
+1. broader provider catalog depth so more real-world barcodes land on confident matches
 2. stronger retailer-sync and reconciliation depth after save
 3. harder device/browser camera reliability and fallback coverage
 4. richer owner-side repair/review flows when scans or matches drift over time
+5. proof coverage that exercises provider breadth, reconciliation depth, repair/review flows, and device fallback behavior on the shipped runtime
 
 ## Decision For The Active Board
 
-- `Day-of / coordinator` has met the shipped launch-baseline MVP bar and the earlier deeper product-depth bar, but it is now reopened for fuller suite depth.
-- `Name change` has met the shipped launch-baseline MVP bar and the earlier deeper planner-depth bar, but it is now reopened for fuller suite depth.
-- `Universal Registry Barcode Scanner` has met the shipped launch-baseline MVP bar and the earlier deeper product-depth bar, but it is now reopened for fuller suite depth.
+- `Day-of / coordinator` has met the shipped launch-baseline MVP bar and the earlier deeper product-depth bar, but it is now reopened for a specific full-suite checklist.
+- `Name change` has met the shipped launch-baseline MVP bar and the earlier deeper planner-depth bar, but it is now reopened for a specific full-suite checklist.
+- `Universal Registry Barcode Scanner` has met the shipped launch-baseline MVP bar and the earlier deeper product-depth bar, but it is now reopened for a specific full-suite checklist.
