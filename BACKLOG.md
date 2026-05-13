@@ -29,7 +29,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | Current blockers | none |
 | Current proof state | Launch-critical runtime proof is green on the current live runtime: `npm test`, `typecheck`, `lint`, `build`, `test:security`, `public-access-coverage`, `service-role-authorization`, `email-messaging-authorization`, `launch-closeout`, `canonical-smoke`, `public-quality`, `guests-rsvp-ops`, `guest-lookup-scope`, `collaborator-runtime`, `client-rls-matrix`, `registry-preview-ssrf`, `coordinator-dayof`, `name-change-runtime`, and `registry`. The harder repo guardrails are also green: `proof:v1:client-write-inventory`, `proof:v1:ast-security`, `proof:v1:test-lanes`, `proof:v1:strict-pocket`, and `proof:v1:security-automation`. `Release Launch Gate` remains green and the repo now carries Semgrep, CodeQL, Gitleaks, and Dependabot automation. |
 | Current deployment state | The latest deployed frontend runtime is [dayof.love](https://dayof.love) via verified Vercel production deploy `dpl_AbFTbLY263caiCEhQdniH2wbuM9d`. The coordinator migration `20260513170000_coordinator_event_checkin_write.sql` is now applied remotely, the deeper coordinator MVP lane and the deeper name-change claim-safe MVP lane are both live on the shipped runtime, and the richer barcode depth batch remains live-proven on `registry-barcode-lookup --no-verify-jwt`. `submit-rsvp` remains live with the serialized capacity path, and the public-session-secret, admin route gate, guest-contact, route-module decomposition, vault contribution, and `.dayof.love` host-routing lanes all remain live-proven. External custom domains remain unsupported product scope, not an open proof lane. |
-| Current next actions | No active competitor-informed MVP blocker remains. `Day-of / coordinator`, `Name change`, and `Universal Registry Barcode Scanner` now all meet the MVP/production-ready bar defined in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md). Remaining work is explicitly post-MVP/deferred depth or future maintainability follow-up. Keep the live client-RLS matrix current and keep the no-direct-client-write inventory current only if future runtime write surfaces reopen. Repo-wide TS/ESLint full-flip work remains explicitly future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
+| Current next actions | No active competitor-informed MVP blocker remains. `Day-of / coordinator`, `Name change`, and `Universal Registry Barcode Scanner` now all meet the MVP/production-ready bar defined in [feature-mvp-gap-research-2026-05-13.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/docs/feature-mvp-gap-research-2026-05-13.md). All remaining visible follow-up below is explicitly deferred, future-only, or conditional on future scope reopening. Repo-wide TS/ESLint full-flip work remains explicitly future-only maintainability follow-up; detailed deferred/history context still lives in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md). |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
@@ -228,15 +228,15 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 ## Next 10 Tasks
 
 1. No active competitor-informed MVP implementation work remains on the current board.
-2. Keep `Universal Registry Barcode Scanner` post-MVP depth explicitly deferred unless it is reactivated as active scope.
-3. Keep broader `Day-of / coordinator` expansion deferred unless it is reactivated beyond the current MVP bar.
-4. Keep broader `Name change` expansion deferred unless it is reactivated beyond the current MVP bar.
-5. keep the live client-RLS matrix current if future non-guest write surfaces are added.
-6. keep the no-direct-client-write inventory current if future runtime write surfaces are added.
-7. keep the board synced if future deploys change the truth for `Day-of / coordinator`.
-8. keep the board synced if future deploys change the truth for `Name change`.
-9. keep the board synced if future deploys change the truth for `Universal Registry Barcode Scanner`.
-10. keep repo-wide TS/ESLint full-flip work future-only unless it is explicitly reactivated.
+2. `DEFERRED`: keep `Universal Registry Barcode Scanner` post-MVP depth deferred unless it is reactivated as active scope.
+3. `DEFERRED`: keep broader `Day-of / coordinator` expansion deferred unless it is reactivated beyond the current MVP bar.
+4. `DEFERRED`: keep broader `Name change` expansion deferred unless it is reactivated beyond the current MVP bar.
+5. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the live client-RLS matrix current only if future non-guest write surfaces are added.
+6. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the no-direct-client-write inventory current only if future runtime write surfaces are added.
+7. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the board synced if future deploys change the truth for `Day-of / coordinator`.
+8. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the board synced if future deploys change the truth for `Name change`.
+9. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the board synced if future deploys change the truth for `Universal Registry Barcode Scanner`.
+10. `FUTURE-ONLY`: keep repo-wide TS/ESLint full-flip work future-only unless it is explicitly reactivated.
 
 ## Resolved Work Summary
 
