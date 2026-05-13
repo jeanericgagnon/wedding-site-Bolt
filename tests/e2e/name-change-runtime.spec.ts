@@ -19,6 +19,21 @@ test('name-change planner route loads the saved planning runtime surfaces', asyn
   await expect(page.getByRole('heading', { name: 'Milestones and progress' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Prewritten update templates' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Case setup' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'State playbook' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Institution coverage map' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Wedding identity exports' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Copy action packet' })).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Current first name' })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Save and come back later|Save planner case/i }).first()).toBeVisible();
+
+  const dualPartnerToggle = page.getByLabel('Both partners changing name');
+  await dualPartnerToggle.check();
+  await expect(page.getByRole('heading', { name: 'Dual-partner rollout' })).toBeVisible();
+
+  const saveButton = page.getByRole('button', { name: /Save and come back later|Save planner case/i }).first();
+  await saveButton.click();
+  await expect(saveButton).toBeVisible();
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page.getByLabel('Both partners changing name')).toBeChecked();
+  await expect(page.getByRole('heading', { name: 'Dual-partner rollout' })).toBeVisible();
 });

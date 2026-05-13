@@ -43,6 +43,8 @@ function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseI
       spouseLastName: ' Jordan ',
       travelBookedSoon: true,
       wantsDocumentIntakeHelp: true,
+      bothPartnersChangeName: true,
+      employerName: ' Acme Corp ',
     },
     ...overrides,
   };
@@ -63,6 +65,8 @@ describe('nameChangeService normalization', () => {
       spouseLastName: 'Jordan',
       travelBookedSoon: true,
       wantsDocumentIntakeHelp: true,
+      bothPartnersChangeName: true,
+      employerName: 'Acme Corp',
     });
   });
 
@@ -71,17 +75,23 @@ describe('nameChangeService normalization', () => {
       spouseLastName: ' Jordan ',
       travelBookedSoon: 1,
       wantsDocumentIntakeHelp: undefined,
+      bothPartnersChangeName: 1,
+      employerName: ' Acme Corp ',
       randomNoise: 'ignore me',
     } as unknown as Record<string, unknown>)).toEqual({
       spouseLastName: 'Jordan',
       travelBookedSoon: true,
       wantsDocumentIntakeHelp: true,
+      bothPartnersChangeName: true,
+      employerName: 'Acme Corp',
     });
 
     expect(normalizeNameChangeStructuredIntake(null)).toEqual({
       spouseLastName: '',
       travelBookedSoon: false,
       wantsDocumentIntakeHelp: true,
+      bothPartnersChangeName: false,
+      employerName: '',
     });
   });
 

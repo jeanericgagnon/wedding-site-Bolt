@@ -24,6 +24,8 @@ export const defaultNameChangeStructuredIntake: NameChangeStructuredIntake = {
   spouseLastName: '',
   travelBookedSoon: false,
   wantsDocumentIntakeHelp: true,
+  bothPartnersChangeName: false,
+  employerName: '',
 };
 
 export const defaultNameChangeCaseInput: NameChangeCaseInput = {
@@ -176,6 +178,8 @@ export function normalizeNameChangeStructuredIntake(
     spouseLastName: normalizeText(String(intake?.spouseLastName ?? '')),
     travelBookedSoon: Boolean(intake?.travelBookedSoon),
     wantsDocumentIntakeHelp: intake?.wantsDocumentIntakeHelp !== false,
+    bothPartnersChangeName: Boolean(intake?.bothPartnersChangeName),
+    employerName: normalizeText(String(intake?.employerName ?? '')),
   };
 }
 

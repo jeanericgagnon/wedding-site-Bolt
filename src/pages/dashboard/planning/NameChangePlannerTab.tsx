@@ -1599,6 +1599,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             { label: 'Has passport', checked: draft.has_us_passport, key: 'has_us_passport' },
             { label: 'Passport needs update', checked: draft.passport_needs_update, key: 'passport_needs_update' },
             { label: 'Has current state license / REAL ID', checked: draft.has_real_id_license, key: 'has_real_id_license' },
+            { label: 'Both partners changing name', checked: Boolean(draft.structured_intake.bothPartnersChangeName), key: 'bothPartnersChangeName', source: 'structured' },
             { label: 'Travel booked soon', checked: Boolean(draft.structured_intake.travelBookedSoon), key: 'travelBookedSoon', source: 'structured' },
             { label: 'Wants doc intake help', checked: draft.structured_intake.wantsDocumentIntakeHelp !== false, key: 'wantsDocumentIntakeHelp', source: 'structured' },
           ].map((item) => (
