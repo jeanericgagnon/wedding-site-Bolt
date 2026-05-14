@@ -10,13 +10,16 @@ type SettingsSiteTabContentProps = {
   allowedLanguages: SiteLanguageCode[];
   currentTemplate: string;
   defaultLanguage: SiteLanguageCode;
+  hasWeddingIdentityStoryGraphic: boolean;
   guestAccessToken: string | null;
   hideFromSearch: boolean;
   onAutoTranslateLanguage: (language: TranslationLanguageCode) => void;
   onAllowedLanguagesChange: (languages: SiteLanguageCode[]) => void;
   onCopyIdentityManifest: () => void;
+  onCopyIdentityStyleKit: () => void;
   onCopyInviteLink: () => void;
   onDefaultLanguageChange: (language: SiteLanguageCode) => void;
+  onDownloadIdentityStoryGraphic: () => void;
   onDownloadIdentityPrintPack: () => void;
   onHideFromSearchChange: (checked: boolean) => void;
   onPrivacyModeChange: (mode: 'public' | 'password_protected' | 'invite_only') => void;
@@ -57,13 +60,16 @@ export function SettingsSiteTabContent({
   changingTemplate,
   currentTemplate,
   defaultLanguage,
+  hasWeddingIdentityStoryGraphic,
   guestAccessToken,
   hideFromSearch,
   onAutoTranslateLanguage,
   onAllowedLanguagesChange,
   onCopyIdentityManifest,
+  onCopyIdentityStyleKit,
   onCopyInviteLink,
   onDefaultLanguageChange,
+  onDownloadIdentityStoryGraphic,
   onDownloadIdentityPrintPack,
   onHideFromSearchChange,
   onPrivacyModeChange,
@@ -110,7 +116,10 @@ export function SettingsSiteTabContent({
       />
 
       <SettingsIdentityExportsPanel
+        hasStoryGraphic={hasWeddingIdentityStoryGraphic}
         onCopyIdentityManifest={onCopyIdentityManifest}
+        onCopyIdentityStyleKit={onCopyIdentityStyleKit}
+        onDownloadIdentityStoryGraphic={onDownloadIdentityStoryGraphic}
         onDownloadIdentityPrintPack={onDownloadIdentityPrintPack}
         weddingIdentityExportKit={weddingIdentityExportKit}
         weddingIdentityPrintAssets={weddingIdentityPrintAssets}

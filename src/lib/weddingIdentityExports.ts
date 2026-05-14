@@ -17,6 +17,7 @@ export interface WeddingIdentityExportKitInput {
   weddingDate?: string | null;
   venueName?: string | null;
   templateName?: string | null;
+  templateId?: string | null;
   defaultLanguage?: string | null;
 }
 
@@ -46,6 +47,24 @@ export interface WeddingIdentityPrintAsset {
   instruction: string;
   url: string;
 }
+
+export interface WeddingIdentityStoryGraphic {
+  filename: string;
+  svg: string;
+}
+
+export interface WeddingIdentityStyleKit {
+  filename: string;
+  text: string;
+}
+
+type WeddingIdentityPalette = {
+  background: string;
+  foreground: string;
+  accent: string;
+  accentSoft: string;
+  frame: string;
+};
 
 const hasValue = (value: string | null | undefined) => Boolean(value?.trim());
 
@@ -108,8 +127,8 @@ export function buildWeddingIdentityExportKit(input: WeddingIdentityExportKitInp
       label: 'Share graphic',
       description: 'Mobile story and text-message image using the same wedding identity.',
       format: '1080x1920 target',
-      status: 'planned',
-      blockers: ['Needs generated image export rendering before this is ready.'],
+      status: hasPublicUrl ? 'ready' : 'needs-info',
+      blockers: hasPublicUrl ? [] : ['Set a public site URL before generating a share graphic.'],
     },
     {
       id: 'identity-summary',
@@ -164,6 +183,69 @@ export function buildWeddingIdentityManifestText(kit: WeddingIdentityExportKit):
 function cleanPrintText(value: string | null | undefined, fallback: string): string {
   const cleaned = value?.replace(/\s+/g, ' ').trim();
   return cleaned || fallback;
+}
+
+function buildWeddingMonogram(coupleNames: string): string {
+  const initials = coupleNames
+    .split(/[\s&+/,-]+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .slice(0, 3)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .filter(Boolean);
+
+  if (initials.length >= 2) return initials.slice(0, 2).join(' · ');
+  if (initials.length === 1) return initials[0]!;
+  return 'D · O';
+}
+
+function resolveWeddingIdentityPalette(input: WeddingIdentityExportKitInput): WeddingIdentityPalette {
+  const key = `${input.templateId ?? ''} ${input.templateName ?? ''}`.toLowerCase();
+
+  if (key.includes('editorial') || key.includes('luxury')) {
+    return {
+      background: '#171311',
+      foreground: '#f7efe2',
+      accent: '#cfb27a',
+      accentSoft: '#2b221d',
+      frame: '#8c7452',
+    };
+  }
+  if (key.includes('coastal')) {
+    return {
+      background: '#eef6f7',
+      foreground: '#14333d',
+      accent: '#5d8ea0',
+      accentSoft: '#d7e8ed',
+      frame: '#9bbdc6',
+    };
+  }
+  if (key.includes('garden') || key.includes('romantic')) {
+    return {
+      background: '#f8f2eb',
+      foreground: '#45332d',
+      accent: '#9b6d6d',
+      accentSoft: '#ecd9d2',
+      frame: '#d3b7a8',
+    };
+  }
+  if (key.includes('playful')) {
+    return {
+      background: '#fff7ef',
+      foreground: '#3d2a22',
+      accent: '#f08a5d',
+      accentSoft: '#ffe2d2',
+      frame: '#e7b392',
+    };
+  }
+
+  return {
+    background: '#fbf8f3',
+    foreground: '#2d241d',
+    accent: '#7c5d49',
+    accentSoft: '#ebe1d4',
+    frame: '#d7c8b7',
+  };
 }
 
 function formatWeddingDate(value: string | null | undefined): string {
@@ -248,6 +330,82 @@ export function buildWeddingIdentityPrintAssets(input: WeddingIdentityExportKitI
   ];
 }
 
+export function buildWeddingIdentityStoryGraphic(input: WeddingIdentityExportKitInput): WeddingIdentityStoryGraphic | null {
+  const publicSiteUrl = input.publicSiteUrl.trim();
+  if (!isSafePublicQrAssetUrl(publicSiteUrl)) return null;
+
+  const palette = resolveWeddingIdentityPalette(input);
+  const coupleNames = cleanPrintText(input.coupleNames, 'Your wedding');
+  const monogram = buildWeddingMonogram(coupleNames);
+  const dateLabel = formatWeddingDate(input.weddingDate);
+  const venueName = cleanPrintText(input.venueName, 'Wedding details');
+  const qrUrl = buildQrImageUrl(publicSiteUrl, 420);
+  if (!qrUrl) return null;
+
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1080" height="1920" viewBox="0 0 1080 1920" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1080" height="1920" fill="${palette.background}"/>
+  <rect x="72" y="72" width="936" height="1776" rx="40" fill="${palette.background}" stroke="${palette.frame}" stroke-width="2"/>
+  <rect x="132" y="132" width="816" height="360" rx="28" fill="${palette.accentSoft}"/>
+  <text x="540" y="240" text-anchor="middle" fill="${palette.accent}" font-family="Georgia, 'Times New Roman', serif" font-size="44">dayof wedding weekend</text>
+  <text x="540" y="360" text-anchor="middle" fill="${palette.foreground}" font-family="Georgia, 'Times New Roman', serif" font-size="128">${escapeXml(monogram)}</text>
+  <text x="540" y="445" text-anchor="middle" fill="${palette.foreground}" font-family="Arial, sans-serif" font-size="56">${escapeXml(coupleNames)}</text>
+  <text x="540" y="748" text-anchor="middle" fill="${palette.foreground}" font-family="Georgia, 'Times New Roman', serif" font-size="54">${escapeXml(dateLabel)}</text>
+  <text x="540" y="812" text-anchor="middle" fill="${palette.foreground}" font-family="Arial, sans-serif" font-size="34">${escapeXml(venueName)}</text>
+  <rect x="300" y="892" width="480" height="480" rx="24" fill="#ffffff"/>
+  <image x="330" y="922" width="420" height="420" href="${escapeXml(qrUrl)}"/>
+  <text x="540" y="1470" text-anchor="middle" fill="${palette.foreground}" font-family="Arial, sans-serif" font-size="36">Scan for RSVP, schedule, registry, travel, and photo sharing.</text>
+  <text x="540" y="1562" text-anchor="middle" fill="${palette.accent}" font-family="Arial, sans-serif" font-size="26">${escapeXml(publicSiteUrl)}</text>
+</svg>`;
+
+  return {
+    filename: 'dayof-wedding-story-graphic.svg',
+    svg,
+  };
+}
+
+export function buildWeddingIdentityStyleKit(input: WeddingIdentityExportKitInput): WeddingIdentityStyleKit {
+  const palette = resolveWeddingIdentityPalette(input);
+  const coupleNames = cleanPrintText(input.coupleNames, 'Your wedding');
+  const monogram = buildWeddingMonogram(coupleNames);
+  const themeName = input.templateName?.trim() || 'Current site theme';
+  const dateLabel = formatWeddingDate(input.weddingDate);
+  const venueName = cleanPrintText(input.venueName, 'Not set');
+  const safePublicSiteUrl = isSafePublicQrAssetUrl(input.publicSiteUrl) ? input.publicSiteUrl.trim() : 'Not set';
+  const defaultLanguage = input.defaultLanguage?.trim() || 'en';
+
+  return {
+    filename: 'dayof-wedding-identity-style-kit.txt',
+    text: [
+      `${coupleNames} wedding identity kit`,
+      '',
+      'Identity',
+      `Monogram: ${monogram}`,
+      `Theme: ${themeName}`,
+      `Public site: ${safePublicSiteUrl}`,
+      `Wedding date: ${dateLabel}`,
+      `Venue: ${venueName}`,
+      `Default language: ${defaultLanguage}`,
+      '',
+      'Palette',
+      `Background: ${palette.background}`,
+      `Foreground: ${palette.foreground}`,
+      `Accent: ${palette.accent}`,
+      `Accent soft: ${palette.accentSoft}`,
+      `Frame: ${palette.frame}`,
+      '',
+      'Typography',
+      'Display: Georgia, Times New Roman, serif',
+      'Support: Arial, sans-serif',
+      '',
+      'Usage notes',
+      'Use the monogram for welcome signage, RSVP cards, and small story graphics.',
+      'Keep QR exports on first-party public URLs only.',
+      'Do not add guest-specific or private invite URLs to shared print assets.',
+    ].join('\n'),
+  };
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -255,6 +413,10 @@ function escapeHtml(value: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+function escapeXml(value: string): string {
+  return escapeHtml(value);
 }
 
 export function renderWeddingIdentityPrintHtml(assets: WeddingIdentityPrintAsset[]): string {

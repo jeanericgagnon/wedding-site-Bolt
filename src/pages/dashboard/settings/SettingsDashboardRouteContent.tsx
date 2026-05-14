@@ -38,6 +38,7 @@ type Props = {
   allowedLanguages: SiteLanguageCode[];
   defaultLanguage: SiteLanguageCode;
   guestAccessToken: string | null;
+  hasWeddingIdentityStoryGraphic: boolean;
   handleCopyCollaboratorInviteLink: (inviteToken: string) => void | Promise<void>;
   handleCreateCollaboratorInvite: () => Promise<void>;
   handleAllowedLanguagesChange: (languages: SiteLanguageCode[]) => void;
@@ -159,7 +160,9 @@ type Props = {
   weddingIdentityPrintAssets: WeddingIdentityPrintAsset[];
   onAutoTranslateLanguage: (language: TranslationLanguageCode) => Promise<void>;
   onCopyIdentityManifest: () => Promise<void>;
+  onCopyIdentityStyleKit: () => Promise<void>;
   onCopyInviteLink: () => void;
+  onDownloadIdentityStoryGraphic: () => void;
   onDownloadIdentityPrintPack: () => void;
 };
 
@@ -240,6 +243,7 @@ export function SettingsDashboardRouteContent(props: Props) {
             currentTemplate={props.currentTemplate}
             allowedLanguages={props.allowedLanguages}
             defaultLanguage={props.defaultLanguage}
+            hasWeddingIdentityStoryGraphic={props.hasWeddingIdentityStoryGraphic}
             guestAccessToken={props.guestAccessToken}
             hideFromSearch={props.hideFromSearch}
             onAutoTranslateLanguage={(language) => { void props.onAutoTranslateLanguage(language); }}
@@ -248,8 +252,10 @@ export function SettingsDashboardRouteContent(props: Props) {
               props.handleAllowedLanguagesChange(languages);
             }}
             onCopyIdentityManifest={() => { void props.onCopyIdentityManifest(); }}
+            onCopyIdentityStyleKit={() => { void props.onCopyIdentityStyleKit(); }}
             onCopyInviteLink={props.onCopyInviteLink}
             onDefaultLanguageChange={(language) => { void props.handleDefaultLanguageChange(language); }}
+            onDownloadIdentityStoryGraphic={() => { void props.onDownloadIdentityStoryGraphic(); }}
             onDownloadIdentityPrintPack={() => { void props.onDownloadIdentityPrintPack(); }}
             onHideFromSearchChange={(checked) => {
               props.visibilityDraftMarkDirty();

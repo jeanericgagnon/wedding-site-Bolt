@@ -20,6 +20,8 @@ import {
 } from '../../../lib/plannerAccess';
 import {
   buildWeddingIdentityManifestText,
+  buildWeddingIdentityStoryGraphic,
+  buildWeddingIdentityStyleKit,
   renderWeddingIdentityPrintHtml,
   type WeddingIdentityExportKit,
   type WeddingIdentityPrintAsset,
@@ -76,6 +78,8 @@ export type UseSettingsSiteAccessActionsArgs = {
   musicPlaylistUrl: string;
   weddingIdentityExportKit: WeddingIdentityExportKit;
   weddingIdentityPrintAssets: WeddingIdentityPrintAsset[];
+  weddingIdentityStoryGraphic: ReturnType<typeof buildWeddingIdentityStoryGraphic>;
+  weddingIdentityStyleKit: ReturnType<typeof buildWeddingIdentityStyleKit>;
   resolveSettingsSiteId: () => Promise<string | null>;
   loadCollaboratorInvites: (siteId: string) => Promise<void>;
   loadTranslationStatuses: (siteId: string) => Promise<void>;
@@ -128,6 +132,8 @@ export function useSettingsSiteAccessActions({
   musicPlaylistUrl,
   weddingIdentityExportKit,
   weddingIdentityPrintAssets,
+  weddingIdentityStoryGraphic,
+  weddingIdentityStyleKit,
   resolveSettingsSiteId,
   loadCollaboratorInvites,
   loadTranslationStatuses,
@@ -458,6 +464,11 @@ export function useSettingsSiteAccessActions({
     toast(result === 'copied' ? 'Wedding identity manifest copied.' : 'Wedding identity manifest downloaded.', 'success');
   };
 
+  const copyIdentityStyleKit = async () => {
+    const result = await copyTextOrDownload(weddingIdentityStyleKit.text, weddingIdentityStyleKit.filename);
+    toast(result === 'copied' ? 'Wedding identity style kit copied.' : 'Wedding identity style kit downloaded.', 'success');
+  };
+
   const downloadIdentityPrintPack = () => {
     if (weddingIdentityPrintAssets.length === 0) {
       toast('Set a public site URL before saving the identity print pack.', 'error');
@@ -470,6 +481,20 @@ export function useSettingsSiteAccessActions({
       'text/html;charset=utf-8',
     );
     toast('Wedding identity print pack saved.', 'success');
+  };
+
+  const downloadIdentityStoryGraphic = () => {
+    if (!weddingIdentityStoryGraphic) {
+      toast('Set a public site URL before saving the story graphic.', 'error');
+      return;
+    }
+
+    downloadTextFile(
+      weddingIdentityStoryGraphic.filename,
+      weddingIdentityStoryGraphic.svg,
+      'image/svg+xml;charset=utf-8',
+    );
+    toast('Wedding story graphic saved.', 'success');
   };
 
   const togglePlannerPermission = (key: PlannerPermissionKey) => {
@@ -575,7 +600,9 @@ export function useSettingsSiteAccessActions({
 
   return {
     copyIdentityManifest,
+    copyIdentityStyleKit,
     copyInviteLink,
+    downloadIdentityStoryGraphic,
     downloadIdentityPrintPack,
     handleAllowedLanguagesChange,
     handleAutoTranslateLanguage,

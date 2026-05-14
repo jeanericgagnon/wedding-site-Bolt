@@ -1,19 +1,25 @@
-import { Copy, Layout } from 'lucide-react';
+import { Copy, Image, Layout, Palette } from 'lucide-react';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui';
 import type { WeddingIdentityExportKit, WeddingIdentityPrintAsset } from '../../../lib/weddingIdentityExports';
 
 type SettingsIdentityExportsPanelProps = {
   onCopyIdentityManifest: () => void;
+  onCopyIdentityStyleKit: () => void;
+  onDownloadIdentityStoryGraphic: () => void;
   onDownloadIdentityPrintPack: () => void;
   weddingIdentityExportKit: WeddingIdentityExportKit;
   weddingIdentityPrintAssets: WeddingIdentityPrintAsset[];
+  hasStoryGraphic: boolean;
 };
 
 export function SettingsIdentityExportsPanel({
   onCopyIdentityManifest,
+  onCopyIdentityStyleKit,
+  onDownloadIdentityStoryGraphic,
   onDownloadIdentityPrintPack,
   weddingIdentityExportKit,
   weddingIdentityPrintAssets,
+  hasStoryGraphic,
 }: SettingsIdentityExportsPanelProps) {
   return (
     <Card variant="bordered" padding="lg">
@@ -77,6 +83,10 @@ export function SettingsIdentityExportsPanel({
                 <Copy className="mr-1 h-3.5 w-3.5" />
                 Copy manifest
               </Button>
+              <Button type="button" variant="outline" size="sm" onClick={onCopyIdentityStyleKit}>
+                <Palette className="mr-1 h-3.5 w-3.5" />
+                Copy style kit
+              </Button>
               <Button
                 type="button"
                 variant="outline"
@@ -86,6 +96,16 @@ export function SettingsIdentityExportsPanel({
               >
                 <Layout className="mr-1 h-3.5 w-3.5" />
                 Save print pack
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!hasStoryGraphic}
+                onClick={onDownloadIdentityStoryGraphic}
+              >
+                <Image className="mr-1 h-3.5 w-3.5" />
+                Save story graphic
               </Button>
             </div>
           </div>

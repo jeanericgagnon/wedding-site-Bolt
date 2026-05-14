@@ -3,6 +3,8 @@ import {
   buildWeddingIdentityExportKit,
   buildWeddingIdentityManifestText,
   buildWeddingIdentityPrintAssets,
+  buildWeddingIdentityStoryGraphic,
+  buildWeddingIdentityStyleKit,
   renderWeddingIdentityPrintHtml,
 } from './weddingIdentityExports';
 
@@ -17,12 +19,12 @@ describe('weddingIdentityExports', () => {
       defaultLanguage: 'en',
     });
 
-    expect(kit.readyCount).toBe(6);
+    expect(kit.readyCount).toBe(7);
     expect(kit.items.find((item) => item.id === 'public-qr-card')).toMatchObject({
       status: 'ready',
       blockers: [],
     });
-    expect(kit.items.find((item) => item.id === 'share-graphic')?.status).toBe('planned');
+    expect(kit.items.find((item) => item.id === 'share-graphic')?.status).toBe('ready');
     expect(kit.warnings).toEqual([]);
   });
 
@@ -101,6 +103,43 @@ describe('weddingIdentityExports', () => {
     expect(html).not.toMatch(/guest_access|service-role|secret/i);
   });
 
+  it('builds a downloadable story graphic svg for safe public site URLs', () => {
+    const graphic = buildWeddingIdentityStoryGraphic({
+      coupleNames: 'Maya & Leo',
+      publicSiteUrl: 'https://maya-leo.dayof.love',
+      weddingDate: '2026-09-12',
+      venueName: 'Garden House',
+      templateId: 'editorial-impact',
+      templateName: 'Editorial Impact',
+    });
+
+    expect(graphic?.filename).toBe('dayof-wedding-story-graphic.svg');
+    expect(graphic?.svg).toContain('<svg');
+    expect(graphic?.svg).toContain('M · L');
+    expect(graphic?.svg).toContain('https://maya-leo.dayof.love');
+    expect(graphic?.svg).toContain('api.qrserver.com');
+    expect(graphic?.svg).not.toMatch(/token|invite_token|guest_access/i);
+  });
+
+  it('builds a planner-safe style kit with palette and typography notes', () => {
+    const styleKit = buildWeddingIdentityStyleKit({
+      coupleNames: 'Maya & Leo',
+      publicSiteUrl: 'https://maya-leo.dayof.love',
+      weddingDate: '2026-09-12',
+      venueName: 'Garden House',
+      templateId: 'coastal-breeze',
+      templateName: 'Coastal Breeze',
+      defaultLanguage: 'fr',
+    });
+
+    expect(styleKit.filename).toBe('dayof-wedding-identity-style-kit.txt');
+    expect(styleKit.text).toContain('Monogram: M · L');
+    expect(styleKit.text).toContain('Theme: Coastal Breeze');
+    expect(styleKit.text).toContain('Default language: fr');
+    expect(styleKit.text).toContain('Background: #eef6f7');
+    expect(styleKit.text).not.toMatch(/token|invite_token|guest_access/i);
+  });
+
   it('refuses print assets when the public URL includes private access parameters', () => {
     expect(buildWeddingIdentityPrintAssets({
       coupleNames: 'Maya & Leo',
@@ -122,5 +161,9 @@ describe('weddingIdentityExports', () => {
     ]);
     expect(html).not.toContain('<script>alert(1)</script>');
     expect(html).not.toContain('invite_token=abc');
+    expect(buildWeddingIdentityStoryGraphic({
+      coupleNames: 'Maya & Leo',
+      publicSiteUrl: 'https://maya-leo.dayof.love?invite_token=abc',
+    })).toBeNull();
   });
 });

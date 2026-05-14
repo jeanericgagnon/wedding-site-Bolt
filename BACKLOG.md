@@ -349,10 +349,12 @@ Execution rule for this section:
    - add full bad-code/password/open-RSVP proof before any non-private mode is marked ready
 
 5. `ACTIVE`: wedding identity exports
+   - this batch shipped: wedding identity exports now include a real downloadable story-graphic SVG, a downloadable/copyable style-kit text export, and a `share-graphic` readiness state that turns ready when the public site URL is safe
+   - this batch shipped: the settings site panel now exposes owner actions for `Copy style kit` and `Save story graphic` alongside the existing manifest and print-pack surfaces
+   - this batch shipped: a dedicated `proof:v1:wedding-identity-exports` lane now reruns readiness/unit coverage plus a real browser capture of manifest copy, style-kit copy, print-pack download, and story-graphic download without private token leakage
    - implement real PNG/PDF rendering rather than HTML-only print-pack output
-   - add mobile story graphic export plus monogram/palette/type kit export
    - prove print text-fit and contrast against multiple themes
-   - add live browser proof for copying/downloading manifest and print-pack assets
+   - rerun the same copy/download flow against the shipped production runtime after the next approved identity-export deploy
 
 ### Strong-Differentiator Lanes Still Open
 

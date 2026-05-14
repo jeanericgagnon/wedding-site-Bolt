@@ -269,6 +269,8 @@ export const DashboardSettings: React.FC = () => {
     tabs,
     weddingIdentityExportKit,
     weddingIdentityPrintAssets,
+    weddingIdentityStoryGraphic,
+    weddingIdentityStyleKit,
   } = useSettingsDashboardRouteSupport({
     coupleNames,
     currentTemplate,
@@ -284,7 +286,9 @@ export const DashboardSettings: React.FC = () => {
 
   const {
     copyIdentityManifest,
+    copyIdentityStyleKit,
     copyInviteLink,
+    downloadIdentityStoryGraphic,
     downloadIdentityPrintPack,
     handleAllowedLanguagesChange,
     handleAutoTranslateLanguage,
@@ -320,6 +324,8 @@ export const DashboardSettings: React.FC = () => {
     musicPlaylistUrl,
     weddingIdentityExportKit,
     weddingIdentityPrintAssets,
+    weddingIdentityStoryGraphic,
+    weddingIdentityStyleKit,
     resolveSettingsSiteId,
     loadCollaboratorInvites,
     loadTranslationStatuses,
@@ -449,7 +455,9 @@ export const DashboardSettings: React.FC = () => {
     notifSuccess,
     notifUpdates,
     onCopyIdentityManifest: copyIdentityManifest,
+    onCopyIdentityStyleKit: copyIdentityStyleKit,
     onCopyInviteLink: copyInviteLink,
+    onDownloadIdentityStoryGraphic: downloadIdentityStoryGraphic,
     onDownloadIdentityPrintPack: downloadIdentityPrintPack,
     passwordError,
     passwordSaving,
@@ -536,6 +544,7 @@ export const DashboardSettings: React.FC = () => {
     visibilityError,
     visibilitySaving,
     visibilitySuccess,
+    hasWeddingIdentityStoryGraphic: Boolean(weddingIdentityStoryGraphic),
     weddingIdentityExportKit,
     weddingIdentityPrintAssets,
   });

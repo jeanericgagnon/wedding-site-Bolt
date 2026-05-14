@@ -2,8 +2,12 @@ import { getAllTemplates } from '../../../templates/registry';
 import {
   buildWeddingIdentityExportKit,
   buildWeddingIdentityPrintAssets,
+  buildWeddingIdentityStoryGraphic,
+  buildWeddingIdentityStyleKit,
   type WeddingIdentityExportKit,
   type WeddingIdentityPrintAsset,
+  type WeddingIdentityStoryGraphic,
+  type WeddingIdentityStyleKit,
 } from '../../../lib/weddingIdentityExports';
 import { buildPublicSiteUrl } from '../../../lib/publicSiteSlug';
 import { PLANNER_ROLE_OPTIONS, type PlannerAccessRole } from '../../../lib/plannerAccess';
@@ -27,6 +31,8 @@ export type SettingsDashboardViewModel = {
   tabs: SettingsTab[];
   weddingIdentityExportKit: WeddingIdentityExportKit;
   weddingIdentityPrintAssets: WeddingIdentityPrintAsset[];
+  weddingIdentityStoryGraphic: WeddingIdentityStoryGraphic | null;
+  weddingIdentityStyleKit: WeddingIdentityStyleKit;
 };
 
 export function buildSettingsDashboardViewModel({
@@ -49,6 +55,7 @@ export function buildSettingsDashboardViewModel({
     weddingIdentityExportKit: buildWeddingIdentityExportKit({
       coupleNames,
       publicSiteUrl: derivedPublicSiteUrl,
+      templateId: currentTemplate,
       weddingDate,
       venueName,
       templateName: currentTemplateName,
@@ -57,6 +64,25 @@ export function buildSettingsDashboardViewModel({
     weddingIdentityPrintAssets: buildWeddingIdentityPrintAssets({
       coupleNames,
       publicSiteUrl: derivedPublicSiteUrl,
+      templateId: currentTemplate,
+      weddingDate,
+      venueName,
+      templateName: currentTemplateName,
+      defaultLanguage,
+    }),
+    weddingIdentityStoryGraphic: buildWeddingIdentityStoryGraphic({
+      coupleNames,
+      publicSiteUrl: derivedPublicSiteUrl,
+      templateId: currentTemplate,
+      weddingDate,
+      venueName,
+      templateName: currentTemplateName,
+      defaultLanguage,
+    }),
+    weddingIdentityStyleKit: buildWeddingIdentityStyleKit({
+      coupleNames,
+      publicSiteUrl: derivedPublicSiteUrl,
+      templateId: currentTemplate,
       weddingDate,
       venueName,
       templateName: currentTemplateName,

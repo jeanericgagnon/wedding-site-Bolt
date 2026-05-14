@@ -37,6 +37,8 @@ export function useSettingsDashboardRouteSupport({
     tabs,
     weddingIdentityExportKit,
     weddingIdentityPrintAssets,
+    weddingIdentityStoryGraphic,
+    weddingIdentityStyleKit,
   } = useMemo(
     () =>
       buildSettingsDashboardViewModel({
@@ -64,5 +66,7 @@ export function useSettingsDashboardRouteSupport({
     tabs,
     weddingIdentityExportKit,
     weddingIdentityPrintAssets,
+    weddingIdentityStoryGraphic,
+    weddingIdentityStyleKit,
   };
 }
