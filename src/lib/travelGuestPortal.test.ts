@@ -24,6 +24,12 @@ describe('travelGuestPortal', () => {
     expect(readiness.emptyCount).toBe(0);
     expect(readiness.plannedCount).toBe(0);
     expect(readiness.blockers).toEqual([]);
+    expect(readiness.coverageBadges).toEqual([
+      '6 of 6 guest sections ready',
+      'Stay guidance ready',
+      'Weekend routing ready',
+      'Arrival coverage ready',
+    ]);
     expect(readiness.summary).toBe('7 ready.');
     expect(readiness.steps.find((step) => step.id === 'guest-specific')?.status).toBe('ready');
   });
@@ -44,6 +50,12 @@ describe('travelGuestPortal', () => {
     expect(readiness.steps.find((step) => step.id === 'lodging')?.status).toBe('needs-info');
     expect(readiness.steps.find((step) => step.id === 'transport')?.status).toBe('needs-info');
     expect(readiness.steps.find((step) => step.id === 'local-context')?.status).toBe('empty');
+    expect(readiness.coverageBadges).toEqual([
+      '0 of 6 guest sections ready',
+      'Stay guidance missing',
+      'Weekend routing missing',
+      'Arrival coverage missing',
+    ]);
     expect(readiness.blockers).toContain('Add airport, train, shuttle, or arrival guidance.');
     expect(readiness.summary).toBe('0 ready · 4 need info · 2 empty · 1 planned. Still missing: Arrival guidance, Lodging, Local transport, Venue addresses, Weekend schedule, Local context.');
   });
@@ -65,6 +77,12 @@ describe('travelGuestPortal', () => {
     expect(readiness.steps.find((step) => step.id === 'transport')?.status).toBe('ready');
     expect(readiness.steps.find((step) => step.id === 'local-context')?.status).toBe('ready');
     expect(readiness.steps.find((step) => step.id === 'guest-specific')?.status).toBe('ready');
+    expect(readiness.coverageBadges).toEqual([
+      '5 of 6 guest sections ready',
+      'Stay guidance ready',
+      'Weekend routing ready',
+      'Arrival coverage ready',
+    ]);
     expect(readiness.summary).toBe('7 ready.');
   });
 
@@ -78,6 +96,12 @@ describe('travelGuestPortal', () => {
 
     expect(readiness.steps.find((step) => step.id === 'venues')?.status).toBe('empty');
     expect(readiness.steps.find((step) => step.id === 'schedule')?.status).toBe('empty');
+    expect(readiness.coverageBadges).toEqual([
+      '0 of 6 guest sections ready',
+      'Stay guidance missing',
+      'Weekend routing missing',
+      'Arrival coverage missing',
+    ]);
     expect(readiness.summary).toBe('0 ready · 3 need info · 3 empty · 1 planned. Still missing: Arrival guidance, Lodging, Local transport, Venue addresses, Weekend schedule, Local context.');
   });
 
@@ -178,7 +202,7 @@ describe('travelGuestPortal', () => {
     expect(spotlight).toEqual({
       summary: '8 travel details ready from the guest hub, including 1 visible event window for this invitation.',
       travelHref: '/site/maya-and-leo?invite_token=guest-token-123&guestLang=fr#travel',
-      badges: ['Invite-scoped', '1 event window', '1 route card', '2 booking links', 'Arrival ready'],
+      badges: ['Invite-scoped', '1 event window', '1 route card', '2 booking links', 'Stay ready', 'Weekend timing ready', 'Arrival ready'],
       cards: [
         { id: 'hotel', label: 'Harbor Hotel', detail: 'Code MAYALEO', href: 'https://harbor.example.com/stay' },
         { id: 'room-block', label: 'Room block', detail: 'Harbor Hotel · Code MAYALEO', href: 'https://harbor.example.com/block' },
@@ -197,7 +221,7 @@ describe('travelGuestPortal', () => {
       shareText: [
         'DayOf travel quick plan',
         'Guide reflects the events visible for this invitation.',
-        'Coverage: Invite-scoped · 1 event window · 1 route card · 2 booking links · Arrival ready',
+        'Coverage: Invite-scoped · 1 event window · 1 route card · 2 booking links · Stay ready · Weekend timing ready · Arrival ready',
         'Harbor Hotel: Code MAYALEO',
         'Room block: Harbor Hotel · Code MAYALEO',
         'Ceremony shuttle: Harbor Hotel to venue · Board near the lobby fireplace.',
@@ -213,7 +237,7 @@ describe('travelGuestPortal', () => {
     });
     expect(spotlight?.htmlDocument).toContain('Open the live travel page');
     expect(spotlight?.htmlDocument).toContain('This guide reflects the events visible for this invitation.');
-    expect(spotlight?.htmlDocument).toContain('Invite-scoped · 1 event window · 1 route card · 2 booking links · Arrival ready');
+    expect(spotlight?.htmlDocument).toContain('Invite-scoped · 1 event window · 1 route card · 2 booking links · Stay ready · Weekend timing ready · Arrival ready');
     expect(spotlight?.htmlDocument).toContain('https://harbor.example.com/stay');
     expect(spotlight?.htmlDocument).toContain('Valet opens at 3:15 PM at the garden gate.');
     expect(spotlight?.htmlDocument).not.toContain('guest-token-123</');
@@ -259,9 +283,9 @@ describe('travelGuestPortal', () => {
       'Directions · Harbor Lounge',
       'Directions · Sunset Gardens Estate',
     ]);
-    expect(spotlight?.badges).toEqual(['Invite-scoped', '2 event windows', '2 route cards']);
+    expect(spotlight?.badges).toEqual(['Invite-scoped', '2 event windows', '2 route cards', 'Weekend timing ready']);
     expect(spotlight?.cards.filter((card) => card.href).length).toBe(2);
-    expect(spotlight?.shareText).toContain('Coverage: Invite-scoped · 2 event windows · 2 route cards');
+    expect(spotlight?.shareText).toContain('Coverage: Invite-scoped · 2 event windows · 2 route cards · Weekend timing ready');
     expect(spotlight?.shareText).toContain('Welcome drinks: Sat, Jun 13, 11:00 PM · Harbor Lounge');
     expect(spotlight?.shareText).toContain('Directions · Harbor Lounge: 1 Dock Road, Sausalito, CA');
     expect(spotlight?.htmlDocument).toContain('Directions · Sunset Gardens Estate');
@@ -284,7 +308,7 @@ describe('travelGuestPortal', () => {
       { id: 'parking', label: 'Parking and arrival', detail: 'Street parking is limited after 4 PM, so rideshare is the easier option.' },
       { id: 'guest-note', label: 'Guest note', detail: 'Most guests dress for sun at ceremony and a cooler breeze by dinner.' },
     ]);
-    expect(spotlight?.badges).toEqual([]);
+    expect(spotlight?.badges).toEqual(['Stay ready']);
     expect(spotlight?.shareText).toContain('Guest note: Most guests dress for sun at ceremony and a cooler breeze by dinner.');
   });
 });

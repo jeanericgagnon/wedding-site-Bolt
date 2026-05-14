@@ -44,7 +44,7 @@ describe('EventHubLiveContent', () => {
           travelHubSpotlight={{
             summary: '4 travel details ready from the guest hub, including 1 visible event window for this invitation.',
             travelHref: '/site/alex-jordan-demo#travel',
-            badges: ['Invite-scoped', '1 event window', '1 route card', '1 booking link', 'Arrival ready'],
+            badges: ['Invite-scoped', '1 event window', '1 route card', '1 booking link', 'Stay ready', 'Weekend timing ready', 'Arrival ready'],
             cards: [
               { id: 'hotel', label: 'Riverfront House', detail: 'Code THOMPSONRIVERA', href: 'https://riverfront.example.com/stay' },
               { id: 'flight-info', label: 'Arrival guidance', detail: 'Fly into OAK or SFO and leave time for bridge traffic.' },
@@ -113,6 +113,8 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Invite-scoped')).toBeInTheDocument();
     expect(screen.getByText('1 event window')).toBeInTheDocument();
     expect(screen.getByText('1 route card')).toBeInTheDocument();
+    expect(screen.getByText('Stay ready')).toBeInTheDocument();
+    expect(screen.getByText('Weekend timing ready')).toBeInTheDocument();
     expect(screen.getByText('Arrival ready')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Riverfront House/i })).toHaveAttribute('href', 'https://riverfront.example.com/stay');
     expect(screen.getByText('Arrival guidance')).toBeInTheDocument();

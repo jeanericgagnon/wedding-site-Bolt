@@ -43,6 +43,7 @@ export interface TravelGuestPortalReadiness {
   needsInfoCount: number;
   emptyCount: number;
   plannedCount: number;
+  coverageBadges: string[];
   summary: string;
   steps: TravelGuestPortalStep[];
   blockers: string[];
@@ -104,7 +105,7 @@ export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): 
   const shuttleCount = input.shuttleCount ?? 0;
   const visaTipCount = input.visaTipCount ?? 0;
   const culturalTipCount = input.culturalTipCount ?? 0;
-  const hasArrival = hasUsefulText(input.flightInfo);
+  const hasArrival = hasUsefulText(input.flightInfo) || hasUsefulText(input.parkingInfo) || shuttleCount > 0 || visaTipCount > 0;
   const hasLodging = hasUsefulText(input.hotelInfo) || hotelCount > 0 || roomBlockCount > 0;
   const hasTransport = hasUsefulText(input.parkingInfo) || shuttleCount > 0;
   const hasLocalContext = hasUsefulText(input.notes) || visaTipCount > 0 || culturalTipCount > 0;
@@ -187,15 +188,24 @@ export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): 
   const needsInfoCount = steps.filter((step) => step.status === 'needs-info').length;
   const emptyCount = steps.filter((step) => step.status === 'empty').length;
   const plannedCount = steps.filter((step) => step.status === 'planned').length;
+  const guestFacingSections = steps.filter((step) => step.id !== 'guest-specific');
+  const guestFacingReadyCount = guestFacingSections.filter((step) => step.status === 'ready').length;
   const missingLabels = steps
     .filter((step) => step.status === 'needs-info' || step.status === 'empty')
     .map((step) => step.label);
+  const coverageBadges = [
+    `${guestFacingReadyCount} of ${guestFacingSections.length} guest sections ready`,
+    hasLodging ? 'Stay guidance ready' : 'Stay guidance missing',
+    venuesAddressed && hasSchedule ? 'Weekend routing ready' : 'Weekend routing missing',
+    hasArrival || hasTransport ? 'Arrival coverage ready' : 'Arrival coverage missing',
+  ];
 
   return {
     readyCount,
     needsInfoCount,
     emptyCount,
     plannedCount,
+    coverageBadges,
     summary: missingLabels.length > 0
       ? `${readyCount} ready · ${needsInfoCount} need info · ${emptyCount} empty${plannedCount > 0 ? ` · ${plannedCount} planned` : ''}. Still missing: ${missingLabels.join(', ')}.`
       : `${readyCount} ready${plannedCount > 0 ? ` · ${plannedCount} planned` : ''}.`,
@@ -482,11 +492,15 @@ export function buildTravelHubSpotlight(input: {
   if (cards.length === 0) return null;
 
   const bookingLinkCount = [firstHotel?.url, firstRoomBlock?.url].filter(Boolean).length;
+  const stayReady = Boolean(firstHotel || firstRoomBlock || structured.hotelInfo);
+  const weekendTimingReady = visibleEventCount > 0;
   const badges = [
     ...(guestScoped ? ['Invite-scoped'] : []),
     ...(visibleEventCount > 0 ? [`${visibleEventCount} event window${visibleEventCount === 1 ? '' : 's'}`] : []),
     ...(routeCardCount > 0 ? [`${routeCardCount} route card${routeCardCount === 1 ? '' : 's'}`] : []),
     ...(bookingLinkCount > 0 ? [`${bookingLinkCount} booking link${bookingLinkCount === 1 ? '' : 's'}`] : []),
+    ...(stayReady ? ['Stay ready'] : []),
+    ...(weekendTimingReady ? ['Weekend timing ready'] : []),
     ...(arrivalGuidanceReady ? ['Arrival ready'] : []),
   ];
 
