@@ -128,6 +128,8 @@ test('demo photo memory flow proves slideshow, export, and recap readback contin
 
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.getByText(/2 videos captured for the memory flow\./i)).toBeVisible();
+  const uploadedClipRow = page.getByRole('listitem').filter({ hasText: 'welcome-toast.mp4' }).filter({ hasText: 'Taylor Guest' }).first();
+  await expect(uploadedClipRow).toBeVisible();
 
   const slideshowCard = page.locator('section, div').filter({ has: page.getByRole('heading', { name: 'Slideshow draft' }) }).first();
   const slideshowPreviewButton = slideshowCard.getByRole('button', { name: 'Preview', exact: true });
@@ -144,6 +146,18 @@ test('demo photo memory flow proves slideshow, export, and recap readback contin
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.getByText('4 story picks')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Remove from story' }).first()).toBeVisible();
+
+  const moderatedUploadedClipRow = page.getByRole('listitem').filter({ hasText: 'welcome-toast.mp4' }).filter({ hasText: 'Taylor Guest' }).first();
+  await moderatedUploadedClipRow.getByRole('button', { name: 'Feature', exact: true }).click();
+  await moderatedUploadedClipRow.getByRole('button', { name: 'Story', exact: true }).click();
+  await expect(moderatedUploadedClipRow.getByText('Featured', { exact: true })).toBeVisible();
+  await expect(moderatedUploadedClipRow.getByText('Story', { exact: true })).toBeVisible();
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  const reloadedUploadedClipRow = page.getByRole('listitem').filter({ hasText: 'welcome-toast.mp4' }).filter({ hasText: 'Taylor Guest' }).first();
+  await expect(reloadedUploadedClipRow.getByText('Featured', { exact: true })).toBeVisible();
+  await expect(reloadedUploadedClipRow.getByText('Story', { exact: true })).toBeVisible();
+  await expect(reloadedUploadedClipRow.getByRole('button', { name: 'Unfeature', exact: true })).toBeVisible();
+  await expect(reloadedUploadedClipRow.getByRole('button', { name: 'Unstory', exact: true })).toBeVisible();
 
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save full-res download job' }).click();
@@ -174,6 +188,8 @@ test('demo photo memory flow proves slideshow, export, and recap readback contin
   await expect(recapPreviewPage.getByText('Story pick').first()).toBeVisible();
   await expect(recapPreviewPage.getByText('Featured').first()).toBeVisible();
   await expect(recapPreviewPage.getByText('Short motion clip from the first big reception toast.')).toBeVisible();
+  await expect(recapPreviewPage.getByText('Short welcome toast clip.')).toBeVisible();
+  await expect(recapPreviewPage.getByText(/Taylor Guest/i)).toBeVisible();
   await expect(recapPreviewPage.getByText(/Emma Waters/i)).toBeVisible();
   await expect(recapPreviewPage.locator('body')).not.toContainText('token-c-2');
   await recapPreviewPage.close();
@@ -186,6 +202,8 @@ test('demo photo memory flow proves slideshow, export, and recap readback contin
   await expect(page.getByText('Story pick').first()).toBeVisible();
   await expect(page.getByText('Featured').first()).toBeVisible();
   await expect(page.getByText('Short motion clip from the first big reception toast.')).toBeVisible();
+  await expect(page.getByText('Short welcome toast clip.')).toBeVisible();
+  await expect(page.getByText(/Taylor Guest/i)).toBeVisible();
   await expect(page.getByText(/Emma Waters/i)).toBeVisible();
   await expect(page.locator('body')).not.toContainText('token-c-2');
 });
