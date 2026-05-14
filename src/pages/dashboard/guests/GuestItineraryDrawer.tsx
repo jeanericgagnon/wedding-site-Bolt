@@ -231,6 +231,11 @@ function GuestDrawerDetails({
     || link.kind === 'vault'
     || link.kind === 'recap'
   )).length;
+  const publicPreviewRouteCount = visibilityPreview.links.filter((link) => (
+    link.kind === 'travel'
+    || link.kind === 'registry'
+    || link.kind === 'site'
+  )).length;
   const guestContactUrl = visibilityPreview.links.find((link) => link.kind === 'contact')
     ? `${window.location.origin}${visibilityPreview.links.find((link) => link.kind === 'contact')?.href ?? ''}`
     : '';
@@ -258,6 +263,7 @@ function GuestDrawerDetails({
           <p className="text-xs text-text-tertiary">
             {visibilityPreview.links.length} guest route{visibilityPreview.links.length === 1 ? '' : 's'} ready
             {privatePreviewRouteCount > 0 ? ` · ${privatePreviewRouteCount} invite-only` : ''}
+            {publicPreviewRouteCount > 0 ? ` · ${publicPreviewRouteCount} public shell` : ''}
           </p>
         )}
         {visibilityPreview.visibleEvents.length > 0 && (
