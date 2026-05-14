@@ -36,6 +36,7 @@ export interface MemoryFlowReadinessLane {
 export interface MemoryFlowReadiness {
   readyCount: number;
   summaryBadges: string[];
+  mainGapLabel: string | null;
   lanes: MemoryFlowReadinessLane[];
   steps: MemoryFlowReadinessStep[];
   blockers: string[];
@@ -203,6 +204,9 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
   const blockers = steps
     .filter((step) => step.status === 'needs-action')
     .map((step) => step.detail);
+  const highestPriorityGap = lanes.find((lane) => lane.status === 'needs-action')
+    ?? lanes.find((lane) => lane.status === 'empty')
+    ?? null;
   const summaryBadges = [
     hasActiveAlbum && input.photoUploadEnabled
       ? `${countLabel(input.uploadCount, 'upload')} live`
@@ -236,6 +240,7 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
   return {
     readyCount: steps.filter((step) => step.status === 'ready').length,
     summaryBadges,
+    mainGapLabel: highestPriorityGap ? `Main gap: ${highestPriorityGap.label}` : null,
     lanes,
     steps,
     blockers,

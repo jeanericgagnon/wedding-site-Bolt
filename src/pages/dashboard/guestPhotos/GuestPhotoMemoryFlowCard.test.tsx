@@ -9,6 +9,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
         memoryFlowReadiness={{
           readyCount: 5,
           summaryBadges: ['12 uploads live', 'Private recap link', '33% story coverage', 'Handoff ready', '1 opt-in captured'],
+          mainGapLabel: null,
           lanes: [
             { id: 'collection', label: 'Collection', detail: '12 uploads across 1 active album, including 1 video.', status: 'ready' },
             { id: 'curation', label: 'Curation', detail: '3 curated picks and 6 slideshow frames are ready for recap review.', status: 'ready' },
@@ -43,5 +44,37 @@ describe('GuestPhotoMemoryFlowCard', () => {
     expect(screen.getByText('Owner handoff export and full-resolution download are ready from 12 reviewed uploads.')).toBeInTheDocument();
     expect(screen.getByText('Photo upload links')).toBeInTheDocument();
     expect(screen.getByText('Guest recap')).toBeInTheDocument();
+  });
+
+  it('shows the main gap when the memory flow still needs work', () => {
+    render(
+      <GuestPhotoMemoryFlowCard
+        memoryFlowReadiness={{
+          readyCount: 1,
+          summaryBadges: ['No live upload lane', 'Recap not shareable', 'No story curation yet', 'No handoff yet', 'No follow-up opt-ins'],
+          mainGapLabel: 'Main gap: Collection',
+          lanes: [
+            { id: 'collection', label: 'Collection', detail: 'Create an active album and leave uploads on before sharing the memory-flow QR.', status: 'empty' },
+            { id: 'curation', label: 'Curation', detail: 'Guest uploads will unlock curation and story-building.', status: 'empty' },
+            { id: 'sharing', label: 'Sharing', detail: 'Guest recap sharing will unlock after uploads and curation are in place.', status: 'empty' },
+            { id: 'handoff', label: 'Handoff', detail: 'Owner handoff exports will appear after guests start uploading moments.', status: 'empty' },
+          ],
+          steps: [
+            { id: 'guest-hub', label: 'No-app guest hub', detail: 'Turn on at least one guest action before printing the hub QR.', status: 'needs-action' },
+            { id: 'album-links', label: 'Photo upload links', detail: 'Create an album before sharing photo upload links.', status: 'empty' },
+            { id: 'guestbook', label: 'Guestbook notes', detail: 'Guestbook notes are optional and currently off in the guest hub controls.', status: 'planned' },
+            { id: 'video-capture', label: 'Video memories', detail: 'Video upload is supported, but live video capture still needs a proof pass.', status: 'planned' },
+            { id: 'moderation', label: 'Moderation queue', detail: 'No uploads to moderate yet.', status: 'empty' },
+            { id: 'slideshow', label: 'Slideshow draft', detail: 'Guest uploads will unlock the slideshow draft.', status: 'empty' },
+            { id: 'recap', label: 'Guest recap', detail: 'Feature photos or mark story picks before sharing the recap.', status: 'empty' },
+            { id: 'follow-up', label: 'Guest follow-up', detail: 'No guest follow-up opt-ins captured yet.', status: 'empty' },
+            { id: 'export', label: 'Photo handoff export', detail: 'Guest uploads will unlock owner handoff exports and full-resolution download jobs.', status: 'empty' },
+          ],
+          blockers: ['Turn on at least one guest action before printing the hub QR.'],
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Main gap: Collection')).toBeInTheDocument();
   });
 });

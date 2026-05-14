@@ -27,6 +27,9 @@ export function GuestPhotoMemoryFlowCard({ memoryFlowReadiness }: GuestPhotoMemo
           </div>
         ))}
       </div>
+      {memoryFlowReadiness.mainGapLabel && (
+        <p className="mt-3 text-xs text-text-tertiary">{memoryFlowReadiness.mainGapLabel}</p>
+      )}
       <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {memoryFlowReadiness.lanes.map((lane) => (
           <div key={lane.id} className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
