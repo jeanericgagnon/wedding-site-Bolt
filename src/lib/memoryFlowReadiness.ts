@@ -26,8 +26,16 @@ export interface MemoryFlowReadinessStep {
   status: MemoryFlowReadinessStatus;
 }
 
+export interface MemoryFlowReadinessLane {
+  id: 'collection' | 'curation' | 'sharing' | 'handoff';
+  label: string;
+  detail: string;
+  status: MemoryFlowReadinessStatus;
+}
+
 export interface MemoryFlowReadiness {
   readyCount: number;
+  lanes: MemoryFlowReadinessLane[];
   steps: MemoryFlowReadinessStep[];
   blockers: string[];
 }
@@ -46,6 +54,61 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
   const slideshowFrameCount = Math.max(input.slideshowFrameCount ?? 0, 0);
   const slideshowReadyAlbumCount = Math.max(input.slideshowReadyAlbumCount ?? 0, 0);
   const handoffExportReady = hasUploads && !needsReview;
+  const curatedPickCount = input.recapFeaturedCount + input.recapStoryCount;
+  const curationCounts = [curatedPickCount > 0 ? countLabel(curatedPickCount, 'curated pick') : null, slideshowFrameCount >= 3 ? countLabel(slideshowFrameCount, 'slideshow frame') : null]
+    .filter(Boolean)
+    .join(' and ');
+
+  const lanes: MemoryFlowReadinessLane[] = [
+    {
+      id: 'collection',
+      label: 'Collection',
+      detail: hasActiveAlbum && input.photoUploadEnabled
+        ? `${countLabel(input.uploadCount, 'upload')} across ${countLabel(input.activeAlbumCount, 'active album')}${videoUploadCount > 0 ? `, including ${countLabel(videoUploadCount, 'video')}` : ''}.`
+        : hasAlbums
+          ? input.photoUploadEnabled
+            ? 'Albums exist, but guest uploads still need at least one active album.'
+            : 'Albums exist, but photo uploads are off in guest hub controls.'
+          : 'Create an active album and leave uploads on before sharing the memory-flow QR.',
+      status: hasActiveAlbum && input.photoUploadEnabled ? 'ready' : hasAlbums ? 'needs-action' : 'empty',
+    },
+    {
+      id: 'curation',
+      label: 'Curation',
+      detail: hasUploads
+        ? needsReview
+          ? `${countLabel(input.flaggedUploadCount, 'flagged upload')} and ${countLabel(input.reviewQueueCount, 'review item')} still need review before the story is clean.`
+          : curatedPickCount > 0 || slideshowFrameCount >= 3
+            ? `${curationCounts} ${curationCounts.includes(' and ') ? 'are' : 'is'} ready for recap review.`
+            : 'Uploads are in, but curation still needs story picks or slideshow-ready moments.'
+        : 'Guest uploads will unlock curation and story-building.',
+      status: !hasUploads ? 'empty' : needsReview ? 'needs-action' : curatedPickCount > 0 || slideshowFrameCount >= 3 ? 'ready' : 'needs-action',
+    },
+    {
+      id: 'sharing',
+      label: 'Sharing',
+      detail: recapShareable && recapHasPicks
+        ? `Recap is ${input.recapStatus === 'private_link' ? 'private-link ready' : 'published'} with ${countLabel(curatedPickCount, 'curated pick')}.`
+        : recapHasPicks
+          ? `${countLabel(curatedPickCount, 'curated pick')} saved, but the recap is not shareable yet.`
+          : hasUploads
+            ? 'Uploads exist, but guests still need featured or story picks before recap sharing is ready.'
+            : 'Guest recap sharing will unlock after uploads and curation are in place.',
+      status: recapShareable && recapHasPicks ? 'ready' : recapHasPicks || hasUploads ? 'needs-action' : 'empty',
+    },
+    {
+      id: 'handoff',
+      label: 'Handoff',
+      detail: handoffExportReady
+        ? `Owner handoff export is ready from ${countLabel(input.uploadCount, 'reviewed upload')}${input.guestProspectCount > 0 ? `, with ${countLabel(input.guestProspectCount, 'guest opt-in')} saved for follow-up.` : '.'}`
+        : needsReview
+          ? 'Review flagged uploads before relying on owner handoff exports or full-resolution jobs.'
+          : hasUploads
+            ? 'Reviewed uploads will unlock owner handoff exports and full-resolution jobs.'
+            : 'Owner handoff exports will appear after guests start uploading moments.',
+      status: handoffExportReady ? 'ready' : needsReview || hasUploads ? 'needs-action' : 'empty',
+    },
+  ];
 
   const steps: MemoryFlowReadinessStep[] = [
     {
@@ -138,6 +201,7 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
 
   return {
     readyCount: steps.filter((step) => step.status === 'ready').length,
+    lanes,
     steps,
     blockers,
   };

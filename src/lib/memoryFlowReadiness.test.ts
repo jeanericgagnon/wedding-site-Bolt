@@ -24,6 +24,12 @@ describe('memoryFlowReadiness', () => {
 
     expect(readiness.readyCount).toBe(9);
     expect(readiness.blockers).toEqual([]);
+    expect(readiness.lanes).toEqual([
+      { id: 'collection', label: 'Collection', detail: '24 uploads across 2 active albums, including 2 videos.', status: 'ready' },
+      { id: 'curation', label: 'Curation', detail: '7 curated picks and 12 slideshow frames are ready for recap review.', status: 'ready' },
+      { id: 'sharing', label: 'Sharing', detail: 'Recap is published with 7 curated picks.', status: 'ready' },
+      { id: 'handoff', label: 'Handoff', detail: 'Owner handoff export is ready from 24 reviewed uploads, with 8 guest opt-ins saved for follow-up.', status: 'ready' },
+    ]);
     expect(readiness.steps.find((step) => step.id === 'video-capture')?.status).toBe('ready');
     expect(readiness.steps.find((step) => step.id === 'slideshow')?.status).toBe('ready');
     expect(readiness.steps.find((step) => step.id === 'export')?.detail).toContain('full-resolution download jobs can be saved');
@@ -50,6 +56,22 @@ describe('memoryFlowReadiness', () => {
     });
 
     expect(readiness.steps.find((step) => step.id === 'guest-hub')?.status).toBe('needs-action');
+    expect(readiness.lanes.find((lane) => lane.id === 'collection')).toMatchObject({
+      status: 'needs-action',
+      detail: 'Albums exist, but guest uploads still need at least one active album.',
+    });
+    expect(readiness.lanes.find((lane) => lane.id === 'curation')).toMatchObject({
+      status: 'needs-action',
+      detail: '2 flagged uploads and 3 review items still need review before the story is clean.',
+    });
+    expect(readiness.lanes.find((lane) => lane.id === 'sharing')).toMatchObject({
+      status: 'needs-action',
+      detail: '1 curated pick saved, but the recap is not shareable yet.',
+    });
+    expect(readiness.lanes.find((lane) => lane.id === 'handoff')).toMatchObject({
+      status: 'needs-action',
+      detail: 'Review flagged uploads before relying on owner handoff exports or full-resolution jobs.',
+    });
     expect(readiness.steps.find((step) => step.id === 'album-links')?.status).toBe('needs-action');
     expect(readiness.steps.find((step) => step.id === 'guestbook')?.status).toBe('planned');
     expect(readiness.steps.find((step) => step.id === 'moderation')?.status).toBe('needs-action');
@@ -83,6 +105,10 @@ describe('memoryFlowReadiness', () => {
       status: 'planned',
       detail: 'Guestbook notes are optional and currently off in the guest hub controls.',
     });
+    expect(readiness.lanes.find((lane) => lane.id === 'sharing')).toMatchObject({
+      status: 'ready',
+      detail: 'Recap is private-link ready with 3 curated picks.',
+    });
     expect(readiness.blockers).not.toContain('Guestbook notes are optional and currently off in the guest hub controls.');
   });
 
@@ -107,6 +133,14 @@ describe('memoryFlowReadiness', () => {
     });
 
     expect(readiness.steps.find((step) => step.id === 'album-links')?.status).toBe('empty');
+    expect(readiness.lanes.find((lane) => lane.id === 'collection')).toMatchObject({
+      status: 'empty',
+      detail: 'Create an active album and leave uploads on before sharing the memory-flow QR.',
+    });
+    expect(readiness.lanes.find((lane) => lane.id === 'sharing')).toMatchObject({
+      status: 'empty',
+      detail: 'Guest recap sharing will unlock after uploads and curation are in place.',
+    });
     expect(readiness.steps.find((step) => step.id === 'video-capture')?.status).toBe('planned');
     expect(readiness.steps.find((step) => step.id === 'moderation')?.status).toBe('empty');
     expect(readiness.steps.find((step) => step.id === 'slideshow')?.status).toBe('empty');
@@ -138,6 +172,10 @@ describe('memoryFlowReadiness', () => {
     expect(readiness.steps.find((step) => step.id === 'export')).toMatchObject({
       status: 'needs-action',
       detail: 'Review flagged uploads before relying on photo handoff exports.',
+    });
+    expect(readiness.lanes.find((lane) => lane.id === 'handoff')).toMatchObject({
+      status: 'needs-action',
+      detail: 'Review flagged uploads before relying on owner handoff exports or full-resolution jobs.',
     });
     expect(readiness.blockers).toContain('Review flagged uploads before relying on photo handoff exports.');
   });

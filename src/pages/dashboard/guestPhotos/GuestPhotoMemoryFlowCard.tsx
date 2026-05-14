@@ -21,6 +21,27 @@ export function GuestPhotoMemoryFlowCard({ memoryFlowReadiness }: GuestPhotoMemo
         </span>
       </div>
       <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {memoryFlowReadiness.lanes.map((lane) => (
+          <div key={lane.id} className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm font-semibold text-text-primary">{lane.label}</p>
+              <span className={`shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-medium ${
+                lane.status === 'ready'
+                  ? 'bg-success/10 text-success'
+                  : lane.status === 'needs-action'
+                    ? 'bg-warning/10 text-warning'
+                    : lane.status === 'planned'
+                      ? 'bg-surface-subtle text-text-tertiary'
+                      : 'bg-white text-text-tertiary'
+              }`}>
+                {lane.status === 'ready' ? 'Ready' : lane.status === 'needs-action' ? 'Needs action' : lane.status === 'planned' ? 'Planned' : 'Empty'}
+              </span>
+            </div>
+            <p className="mt-2 text-xs leading-5 text-text-secondary">{lane.detail}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {memoryFlowReadiness.steps.map((step) => (
           <div key={step.id} className="rounded-lg border border-border-subtle bg-surface-subtle/50 p-4">
             <div className="flex items-start justify-between gap-3">
