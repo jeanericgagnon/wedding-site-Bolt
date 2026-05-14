@@ -115,8 +115,11 @@ export function buildGuestDashboardViewProps(args: any) {
     isDemoMode: args.isDemoMode,
     publicSiteSlug: args.publicSiteSlug,
     selectedGuestIds: args.selectedGuestIds,
+    selectedGuestLanguageDraft: args.selectedGuestLanguageDraft,
     getStatusBadge: args.getStatusBadge,
+    onApplySelectedGuestLanguage: args.onApplySelectedGuestLanguage,
     onMergeIntoHousehold: args.onMergeIntoHousehold,
+    onSetSelectedGuestLanguageDraft: args.onSetSelectedGuestLanguageDraft,
     onSetSelectedGuestIds: args.onSetSelectedGuestIds,
   };
 

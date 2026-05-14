@@ -790,6 +790,14 @@ export async function updateGuestHouseholdForSite(
   await runGuestBulkPatch(weddingSiteId, [guestId], { household_id: householdId });
 }
 
+export async function setGuestsPreferredLanguageForSite(
+  weddingSiteId: string,
+  guestIds: string[],
+  preferredLanguage: string | null,
+): Promise<void> {
+  await runGuestBulkPatch(weddingSiteId, guestIds, { preferred_language: preferredLanguage });
+}
+
 export async function generateSecureGuestInviteToken(): Promise<string> {
   const { data, error } = await supabase.rpc('generate_secure_token', { byte_length: 32 });
   if (!error && typeof data === 'string' && data.trim()) return data;

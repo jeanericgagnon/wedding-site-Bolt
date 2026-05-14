@@ -101,6 +101,7 @@ export const DashboardGuests: React.FC = () => {
     savedSegments,
     searchQuery,
     selectedGuestIds,
+    selectedGuestLanguageDraft,
     setAutoRemindersEnabled,
     setCampaignLog,
     setCampaignPreset,
@@ -121,6 +122,7 @@ export const DashboardGuests: React.FC = () => {
     setSavedSegments,
     setSearchQuery,
     setSelectedGuestIds,
+    setSelectedGuestLanguageDraft,
     setShowAddModal,
     setShowCampaignModal,
     setShowConflictDetails,
@@ -243,6 +245,7 @@ export const DashboardGuests: React.FC = () => {
     handleMergeIntoHousehold,
     handleReassignHousehold,
     handleSaveAssistedRsvp,
+    handleSetGuestsPreferredLanguage,
     handleSplitFromHousehold,
     handleToggleCheckIn,
     handleToggleEventInvite,
@@ -655,6 +658,7 @@ export const DashboardGuests: React.FC = () => {
     searchQuery,
     segmentLabelMap,
     selectedGuestIds,
+    selectedGuestLanguageDraft,
     sendingInviteId,
     showCampaignModal,
     showConflictDetails,
@@ -699,6 +703,7 @@ export const DashboardGuests: React.FC = () => {
     onSetConfirmDialog: setConfirmDialog,
     onSetConflictFilter: setConflictFilter,
     onSetGuestsTab: setGuestsTab,
+    onSetSelectedGuestLanguageDraft: setSelectedGuestLanguageDraft,
     onSetRsvpConfigDirty: setRsvpConfigDirty,
     onSetRsvpMealEnabled: setRsvpMealEnabled,
     onSetRsvpMealOptions: setRsvpMealOptions,
@@ -709,6 +714,10 @@ export const DashboardGuests: React.FC = () => {
     onSetShowRecipientPreview: setShowRecipientPreview,
     onSetSkipRecentlyInvited: setSkipRecentlyInvited,
     onSkipToPhotos: () => navigate(buildQuickStartPhotosPath()),
+    onApplySelectedGuestLanguage: () => handleSetGuestsPreferredLanguage(selectedGuestIds, selectedGuestLanguageDraft, () => {
+      setSelectedGuestIds(new Set());
+      setSelectedGuestLanguageDraft('');
+    }),
     onToggleCheckIn: handleToggleCheckIn,
     ...guestDashboardRouteActions,
   });

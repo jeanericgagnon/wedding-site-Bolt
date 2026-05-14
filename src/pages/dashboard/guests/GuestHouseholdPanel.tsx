@@ -1,7 +1,7 @@
 import React from 'react';
 import { ExternalLink, Home, Merge, Users } from 'lucide-react';
-import { Button } from '../../../components/ui';
-import { GUEST_LANGUAGE_LABELS, normalizeGuestLanguageCode } from '../../../lib/guestLanguagePreference';
+import { Button, Select } from '../../../components/ui';
+import { GUEST_LANGUAGE_LABELS, normalizeGuestLanguageCode, SUPPORTED_GUEST_LANGUAGES } from '../../../lib/guestLanguagePreference';
 import { buildGuestPreviewRoutes } from '../../../lib/guestPreviewRoutes';
 import type { GuestHouseholdGroups } from './guestDashboardUtils';
 
@@ -11,8 +11,11 @@ export interface GuestHouseholdPanelProps {
   isDemoMode: boolean;
   publicSiteSlug: string | null;
   selectedGuestIds: Set<string>;
+  selectedGuestLanguageDraft: string;
   getStatusBadge: (status: string) => React.ReactNode;
+  onApplySelectedGuestLanguage: () => void;
   onMergeIntoHousehold: () => void;
+  onSetSelectedGuestLanguageDraft: React.Dispatch<React.SetStateAction<string>>;
   onSetSelectedGuestIds: React.Dispatch<React.SetStateAction<Set<string>>>;
 }
 
@@ -22,24 +25,52 @@ export function GuestHouseholdPanel({
   isDemoMode,
   publicSiteSlug,
   selectedGuestIds,
+  selectedGuestLanguageDraft,
   getStatusBadge,
+  onApplySelectedGuestLanguage,
   onMergeIntoHousehold,
+  onSetSelectedGuestLanguageDraft,
   onSetSelectedGuestIds,
 }: GuestHouseholdPanelProps) {
   return (
     <div className="space-y-6">
-      {selectedGuestIds.size >= 2 && (
+      {selectedGuestIds.size >= 1 && (
         <div className="flex items-center justify-between px-4 py-3 bg-primary/8 border border-primary/20 rounded-lg">
           <span className="text-sm font-medium text-primary">{selectedGuestIds.size} guests selected</span>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={onMergeIntoHousehold}
-            disabled={householdBusy || isDemoMode}
-          >
-            <Merge className="w-3.5 h-3.5 mr-1.5" />
-            Merge into Household
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="min-w-[180px]">
+              <Select
+                value={selectedGuestLanguageDraft}
+                onChange={(event) => onSetSelectedGuestLanguageDraft(event.target.value)}
+                options={[
+                  { value: '', label: 'Use site default' },
+                  ...SUPPORTED_GUEST_LANGUAGES.map((language) => ({
+                    value: language,
+                    label: GUEST_LANGUAGE_LABELS[language],
+                  })),
+                ]}
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onApplySelectedGuestLanguage}
+              disabled={householdBusy || isDemoMode}
+            >
+              Save language
+            </Button>
+            {selectedGuestIds.size >= 2 && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={onMergeIntoHousehold}
+                disabled={householdBusy || isDemoMode}
+              >
+                <Merge className="w-3.5 h-3.5 mr-1.5" />
+                Merge into Household
+              </Button>
+            )}
+          </div>
         </div>
       )}
 

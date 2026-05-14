@@ -55,6 +55,7 @@ export function useGuestDashboardUiState() {
   const [viewMode, setViewMode] = useState<'list' | 'households'>('households');
   const [checkInMode, setCheckInMode] = useState(false);
   const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
+  const [selectedGuestLanguageDraft, setSelectedGuestLanguageDraft] = useState('');
   const [showInsights, setShowInsights] = useState(false);
   const [formData, setFormData] = useState({
     first_name: '',
@@ -125,6 +126,7 @@ export function useGuestDashboardUiState() {
     savedSegments,
     searchQuery,
     selectedGuestIds,
+    selectedGuestLanguageDraft,
     setAutoRemindersEnabled,
     setCampaignLog,
     setCampaignPreset,
@@ -146,6 +148,7 @@ export function useGuestDashboardUiState() {
     setSavedSegments,
     setSearchQuery,
     setSelectedGuestIds,
+    setSelectedGuestLanguageDraft,
     setShowAddModal,
     setShowCampaignModal,
     setShowConflictDetails,

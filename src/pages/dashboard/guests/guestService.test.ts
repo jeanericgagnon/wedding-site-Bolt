@@ -44,6 +44,7 @@ import {
   persistGuestReminderSettings,
   removeGuestEventInvitation,
   saveAssistedGuestRsvp,
+  setGuestsPreferredLanguageForSite,
   refreshGuestDashboardSession,
   replaceImportedGuestRsvps,
   resolveGuestDashboardSiteId,
@@ -379,6 +380,7 @@ describe('guestService', () => {
       .mockResolvedValueOnce({ error: null })
       .mockResolvedValueOnce({ error: null })
       .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: null })
       .mockResolvedValueOnce({ error: null });
 
     await expect(createGuest({
@@ -410,6 +412,7 @@ describe('guestService', () => {
     await expect(deleteGuestById('guest-1')).resolves.toBeUndefined();
     await expect(markGuestsThankYouSentForSite('site-1', ['guest-1', 'guest-2'], '2026-05-07T00:00:00Z')).resolves.toBeUndefined();
     await expect(assignGuestsToHouseholdForSite('site-1', ['guest-1', 'guest-2'], 'household-1')).resolves.toBeUndefined();
+    await expect(setGuestsPreferredLanguageForSite('site-1', ['guest-1', 'guest-2'], 'es')).resolves.toBeUndefined();
 
     expect(rpcMock).toHaveBeenNthCalledWith(1, 'guest_dashboard_guest_write', expect.objectContaining({
       p_wedding_site_id: 'site-1',
@@ -433,6 +436,11 @@ describe('guestService', () => {
       p_wedding_site_id: 'site-1',
       p_guest_ids: ['guest-1', 'guest-2'],
       p_payload: { household_id: 'household-1' },
+    });
+    expect(rpcMock).toHaveBeenNthCalledWith(6, 'guest_dashboard_guest_bulk_patch', {
+      p_wedding_site_id: 'site-1',
+      p_guest_ids: ['guest-1', 'guest-2'],
+      p_payload: { preferred_language: 'es' },
     });
   });
 

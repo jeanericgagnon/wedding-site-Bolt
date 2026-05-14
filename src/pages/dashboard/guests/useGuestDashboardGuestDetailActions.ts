@@ -10,6 +10,7 @@ import {
   refreshGuestDashboardSession,
   removeGuestEventInvitation,
   saveAssistedGuestRsvp,
+  setGuestsPreferredLanguageForSite,
   updateGuestCheckInForSite,
   updateGuestHouseholdForSite,
   type AssistedRsvpSource,
@@ -88,6 +89,31 @@ export function useGuestDashboardGuestDetailActions({
       toast('Guest reassigned', 'success');
     } catch {
       toast('Couldn’t move guest to that household.', 'error');
+    }
+  }
+
+  async function handleSetGuestsPreferredLanguage(
+    selectedGuestIds: Set<string>,
+    preferredLanguage: string,
+    onApplied?: () => void,
+  ) {
+    if (selectedGuestIds.size < 1 || !weddingSiteId || isDemoMode) return;
+    setHouseholdBusy(true);
+    try {
+      const ids = [...selectedGuestIds];
+      await setGuestsPreferredLanguageForSite(weddingSiteId, ids, preferredLanguage || null);
+      await fetchGuests();
+      onApplied?.();
+      toast(
+        preferredLanguage
+          ? `Saved guest language for ${ids.length} guest${ids.length === 1 ? '' : 's'}`
+          : `Cleared guest language for ${ids.length} guest${ids.length === 1 ? '' : 's'}`,
+        'success',
+      );
+    } catch {
+      toast('Couldn’t update guest language right now.', 'error');
+    } finally {
+      setHouseholdBusy(false);
     }
   }
 
@@ -266,6 +292,7 @@ export function useGuestDashboardGuestDetailActions({
     handleMergeIntoHousehold,
     handleReassignHousehold,
     handleSaveAssistedRsvp,
+    handleSetGuestsPreferredLanguage,
     handleSplitFromHousehold,
     handleToggleCheckIn,
     handleToggleEventInvite,
