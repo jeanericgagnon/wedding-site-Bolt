@@ -205,7 +205,7 @@ function buildWeddingMonogram(coupleNames: string): string {
   return 'D · O';
 }
 
-function resolveWeddingIdentityPalette(input: WeddingIdentityExportKitInput): WeddingIdentityPalette {
+export function resolveWeddingIdentityPalette(input: WeddingIdentityExportKitInput): WeddingIdentityPalette {
   const key = `${input.templateId ?? ''} ${input.templateName ?? ''}`.toLowerCase();
 
   if (key.includes('editorial') || key.includes('luxury')) {
@@ -252,6 +252,45 @@ function resolveWeddingIdentityPalette(input: WeddingIdentityExportKitInput): We
     accentSoft: '#ebe1d4',
     frame: '#d7c8b7',
   };
+}
+
+function hexChannelToNumber(value: string): number {
+  return Number.parseInt(value, 16);
+}
+
+function normalizeHexColor(value: string): string {
+  const trimmed = value.trim();
+  if (/^#[\da-f]{6}$/i.test(trimmed)) return trimmed.toLowerCase();
+  if (/^#[\da-f]{3}$/i.test(trimmed)) {
+    const [, r, g, b] = trimmed;
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+  }
+  return '#000000';
+}
+
+function toLinearChannel(value: number): number {
+  const normalized = value / 255;
+  return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+}
+
+export function getHexContrastRatio(foreground: string, background: string): number {
+  const foregroundHex = normalizeHexColor(foreground);
+  const backgroundHex = normalizeHexColor(background);
+  const [fr, fg, fb] = [foregroundHex.slice(1, 3), foregroundHex.slice(3, 5), foregroundHex.slice(5, 7)].map(hexChannelToNumber);
+  const [br, bg, bb] = [backgroundHex.slice(1, 3), backgroundHex.slice(3, 5), backgroundHex.slice(5, 7)].map(hexChannelToNumber);
+  const foregroundLuminance = 0.2126 * toLinearChannel(fr) + 0.7152 * toLinearChannel(fg) + 0.0722 * toLinearChannel(fb);
+  const backgroundLuminance = 0.2126 * toLinearChannel(br) + 0.7152 * toLinearChannel(bg) + 0.0722 * toLinearChannel(bb);
+  const lighter = Math.max(foregroundLuminance, backgroundLuminance);
+  const darker = Math.min(foregroundLuminance, backgroundLuminance);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function fitSvgFontSize(value: string, options: { max: number; min: number; threshold: number; step: number }): number {
+  const text = value.trim();
+  if (!text) return options.max;
+  const overflow = Math.max(0, text.length - options.threshold);
+  const reduction = Math.ceil(overflow / options.step) * 4;
+  return Math.max(options.min, options.max - reduction);
 }
 
 function formatWeddingDate(value: string | null | undefined): string {
@@ -345,6 +384,9 @@ export function buildWeddingIdentityStoryGraphic(input: WeddingIdentityExportKit
   const monogram = buildWeddingMonogram(coupleNames);
   const dateLabel = formatWeddingDate(input.weddingDate);
   const venueName = cleanPrintText(input.venueName, 'Wedding details');
+  const monogramFontSize = fitSvgFontSize(monogram, { max: 128, min: 96, threshold: 5, step: 2 });
+  const coupleFontSize = fitSvgFontSize(coupleNames, { max: 56, min: 38, threshold: 18, step: 4 });
+  const venueFontSize = fitSvgFontSize(venueName, { max: 34, min: 24, threshold: 26, step: 6 });
   const qrUrl = buildLocalQrSvgDataUrl(publicSiteUrl, 420);
   if (!qrUrl) return null;
 
@@ -354,10 +396,10 @@ export function buildWeddingIdentityStoryGraphic(input: WeddingIdentityExportKit
   <rect x="72" y="72" width="936" height="1776" rx="40" fill="${palette.background}" stroke="${palette.frame}" stroke-width="2"/>
   <rect x="132" y="132" width="816" height="360" rx="28" fill="${palette.accentSoft}"/>
   <text x="540" y="240" text-anchor="middle" fill="${palette.accent}" font-family="Georgia, 'Times New Roman', serif" font-size="44">dayof wedding weekend</text>
-  <text x="540" y="360" text-anchor="middle" fill="${palette.foreground}" font-family="Georgia, 'Times New Roman', serif" font-size="128">${escapeXml(monogram)}</text>
-  <text x="540" y="445" text-anchor="middle" fill="${palette.foreground}" font-family="Arial, sans-serif" font-size="56">${escapeXml(coupleNames)}</text>
+  <text x="540" y="360" text-anchor="middle" fill="${palette.foreground}" font-family="Georgia, 'Times New Roman', serif" font-size="${monogramFontSize}">${escapeXml(monogram)}</text>
+  <text x="540" y="445" text-anchor="middle" fill="${palette.foreground}" font-family="Arial, sans-serif" font-size="${coupleFontSize}">${escapeXml(coupleNames)}</text>
   <text x="540" y="748" text-anchor="middle" fill="${palette.foreground}" font-family="Georgia, 'Times New Roman', serif" font-size="54">${escapeXml(dateLabel)}</text>
-  <text x="540" y="812" text-anchor="middle" fill="${palette.foreground}" font-family="Arial, sans-serif" font-size="34">${escapeXml(venueName)}</text>
+  <text x="540" y="812" text-anchor="middle" fill="${palette.foreground}" font-family="Arial, sans-serif" font-size="${venueFontSize}">${escapeXml(venueName)}</text>
   <rect x="300" y="892" width="480" height="480" rx="24" fill="#ffffff"/>
   <image x="330" y="922" width="420" height="420" href="${escapeXml(qrUrl)}"/>
   <text x="540" y="1470" text-anchor="middle" fill="${palette.foreground}" font-family="Arial, sans-serif" font-size="36">Scan for RSVP, schedule, registry, travel, and photo sharing.</text>

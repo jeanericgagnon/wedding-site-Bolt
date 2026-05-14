@@ -3,8 +3,10 @@ import {
   buildWeddingIdentityExportKit,
   buildWeddingIdentityManifestText,
   buildWeddingIdentityPrintAssets,
-  renderWeddingIdentityPrintSvg,
   buildWeddingIdentityStoryGraphic,
+  getHexContrastRatio,
+  renderWeddingIdentityPrintSvg,
+  resolveWeddingIdentityPalette,
   buildWeddingIdentityStyleKit,
   renderWeddingIdentityPrintHtml,
 } from './weddingIdentityExports';
@@ -137,6 +139,42 @@ describe('weddingIdentityExports', () => {
     expect(graphic?.svg).toContain('https://maya-leo.dayof.love');
     expect(graphic?.svg).toContain('data:image/svg+xml');
     expect(graphic?.svg).not.toMatch(/token|invite_token|guest_access/i);
+  });
+
+  it('keeps long couple and venue names inside a smaller fitted story-graphic type scale', () => {
+    const graphic = buildWeddingIdentityStoryGraphic({
+      coupleNames: 'Alexandria Montgomery-Smythe & Christopher Benedict Holloway',
+      publicSiteUrl: 'https://maya-leo.dayof.love',
+      weddingDate: '2026-09-12',
+      venueName: 'The Conservatory Ballroom at the Historic Riverside Estate',
+      templateId: 'editorial-impact',
+      templateName: 'Editorial Impact',
+    });
+
+    expect(graphic?.svg).toContain('font-size="38"');
+    expect(graphic?.svg).toContain('font-size="24"');
+  });
+
+  it('keeps readable text and accent separation across supported identity themes', () => {
+    const templateNames = [
+      'Editorial Impact',
+      'Coastal Breeze',
+      'Garden Romance',
+      'Playful Weekend',
+      'Current site theme',
+    ];
+
+    for (const templateName of templateNames) {
+      const palette = resolveWeddingIdentityPalette({
+        coupleNames: 'Maya & Leo',
+        publicSiteUrl: 'https://maya-leo.dayof.love',
+        templateName,
+      });
+
+      expect(getHexContrastRatio(palette.foreground, palette.background)).toBeGreaterThan(7);
+      expect(getHexContrastRatio(palette.foreground, palette.accentSoft)).toBeGreaterThan(8);
+      expect(getHexContrastRatio(palette.accent, palette.background)).toBeGreaterThan(2.2);
+    }
   });
 
   it('builds a planner-safe style kit with palette and typography notes', () => {

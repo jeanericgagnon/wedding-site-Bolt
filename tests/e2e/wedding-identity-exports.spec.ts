@@ -169,3 +169,21 @@ test('settings identity exports copy and download safe wedding assets', async ({
   ]);
   expect(fileMetadata.every((item) => item.size > 5000)).toBe(true);
 });
+
+test('settings identity exports stay readable across theme variants with long names', async ({ page }) => {
+  test.setTimeout(120_000);
+  await enableLocalDemo(page);
+  await page.goto('/dashboard/settings?bypassPayment=1&identityExportsQa=1&identityThemeQa=1', { waitUntil: 'domcontentloaded' });
+
+  const siteSettingsButton = page.getByRole('button', { name: /site settings/i });
+  await expect(siteSettingsButton).toBeVisible();
+  await siteSettingsButton.evaluate((button) => {
+    (button as HTMLButtonElement).click();
+  });
+  await expect(page.getByRole('heading', { name: 'Wedding identity exports' })).toBeVisible();
+
+  await expect(page.getByRole('button', { name: /save print pack/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /save story graphic/i })).toBeVisible();
+
+  await expect(page.getByText(/7 of 7 ready|6 of 7 ready|5 of 7 ready/)).toBeVisible();
+});
