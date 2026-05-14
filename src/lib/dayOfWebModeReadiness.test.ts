@@ -15,7 +15,7 @@ describe('day-of web mode readiness', () => {
     });
 
     expect(model.status).toBe('ready');
-    expect(model.summary).toBe('Ready as a no-app guest hub for the wedding day with 6 guest actions live.');
+    expect(model.summary).toBe('Ready as a no-app guest hub for the wedding day with 6 guest actions live, including RSVP, Schedule, Directions and travel, and more.');
     expect(model.readyCount).toBe(7);
     expect(model.plannedCount).toBe(1);
     expect(model.signals.find((signal) => signal.id === 'guest-actions')?.detail).toContain('RSVP, Schedule, Directions and travel');

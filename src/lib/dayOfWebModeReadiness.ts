@@ -154,7 +154,7 @@ export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebMo
       ? 'needs-content'
       : 'ready';
   const summary = status === 'ready'
-    ? `Ready as a no-app guest hub for the wedding day with ${visibleActions.length} guest action${visibleActions.length === 1 ? '' : 's'} live.`
+    ? `Ready as a no-app guest hub for the wedding day with ${visibleActions.length} guest action${visibleActions.length === 1 ? '' : 's'} live, including ${visibleActions.slice(0, 3).join(', ')}${visibleActions.length > 3 ? ', and more' : ''}.`
     : status === 'empty'
       ? 'Add a site link and guest actions before sharing this as day-of mode.'
       : missingCoreActions.length > 0
