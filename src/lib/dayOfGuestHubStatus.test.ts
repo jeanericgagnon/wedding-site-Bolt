@@ -55,12 +55,15 @@ describe('dayOfGuestHubStatus', () => {
     const card = buildGuestHubLinkAccessCard({
       hasGuestInviteToken: true,
       guestName: 'Alex Rivera',
+      enabledActionIds: ['rsvp', 'updates', 'travel', 'photos'],
     });
 
     expect(card).toMatchObject({
       title: 'Private guest link',
       badgeLabel: 'Guest-specific',
       summary: 'Guest-specific access is active for this link, including RSVP and check-in readback.',
+      actionCountLabel: '4 guest actions are ready from this link.',
+      actionSummaryLabel: 'RSVP, day-of updates, travel, and photo upload',
     });
     expect(card?.detail).toContain('Alex Rivera');
   });
@@ -76,6 +79,8 @@ describe('dayOfGuestHubStatus', () => {
       title: 'Private event access',
       badgeLabel: 'Invite-only',
       summary: 'Invite-only access is active for this link, without guest-specific RSVP or check-in readback.',
+      actionCountLabel: 'No guest actions are ready from this link yet.',
+      actionSummaryLabel: null,
     });
     expect(card?.detail).toContain('invite-only wedding details');
   });
@@ -91,6 +96,8 @@ describe('dayOfGuestHubStatus', () => {
       title: 'Public site view',
       badgeLabel: 'Public',
       summary: 'Public-only access is active for this link, without private event or guest-specific readback.',
+      actionCountLabel: 'No guest actions are ready from this link yet.',
+      actionSummaryLabel: null,
     });
     expect(card?.detail).toContain('public wedding hub');
   });

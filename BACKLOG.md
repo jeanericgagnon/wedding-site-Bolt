@@ -352,6 +352,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: private RSVP and guest-update QR panels now save owner-controlled printable HTML cards that keep raw token URLs out of normal visible copy while still rendering the local private QR artifact
    - this batch shipped: the guest-hub QR proof lane now has a real authenticated live export spec for the shipped owner runtime instead of relying on the localhost-only demo-auth dashboard harness for production evidence
    - 2026-05-14 authenticated production rerun on `https://dayof.love` passed for the owner photos dashboard print-pack export, confirming the shipped owner runtime saves a nonblank token-safe guest-hub QR HTML pack on the real site
+   - this batch shipped: the guest-hub `Link access` card now also spells out how many guest actions the current link unlocks and which actions those are, so QR/day-of link truth no longer stops at `Public`, `Invite-only`, or `Guest-specific`
    - add live production mobile proof that public and guest-specific QR modes land on the right actions without private leakage
 
 3. `ACTIVE`: status-based messaging and invitation tracking

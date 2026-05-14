@@ -251,7 +251,7 @@ export const EventHub: React.FC = () => {
   const announcementCard = buildGuestHubAnnouncementCard(announcement);
   const guestStateCard = buildGuestHubGuestStateCard(guestState);
   const coordinatorHandoffCard = buildGuestHubCoordinatorHandoffCard(coordinatorHandoff);
-  const linkAccessCard = buildGuestHubLinkAccessCard({
+  const linkAccessBaseCard = buildGuestHubLinkAccessCard({
     hasGuestInviteToken: Boolean(guestIdentity.guestInviteToken),
     hasInviteToken: Boolean(accessPayload.inviteToken),
     hasPasswordSession: Boolean(accessPayload.passwordSession),
@@ -259,9 +259,9 @@ export const EventHub: React.FC = () => {
   });
   const dayOfUpdatesHref = useMemo(() => {
     if (!slug) return null;
-    if (!announcementCard && !guestStateCard && !coordinatorHandoffCard && !linkAccessCard) return null;
+    if (!announcementCard && !guestStateCard && !coordinatorHandoffCard && !linkAccessBaseCard) return null;
     return `/event/${encodeURIComponent(slug)}#day-of-updates`;
-  }, [announcementCard, coordinatorHandoffCard, guestStateCard, linkAccessCard, slug]);
+  }, [announcementCard, coordinatorHandoffCard, guestStateCard, linkAccessBaseCard, slug]);
 
   const actions = useMemo<HubAction[]>(() => buildGuestHubActions(slug, settings, {
     guestContactHref,
@@ -276,6 +276,13 @@ export const EventHub: React.FC = () => {
     icon: actionIcons[action.id],
     primary: action.primary,
   })), [dayOfUpdatesHref, guestContactHref, guestIdentity.guestInviteToken, languagePreference.language, settings, slug, t]);
+  const linkAccessCard = buildGuestHubLinkAccessCard({
+    hasGuestInviteToken: Boolean(guestIdentity.guestInviteToken),
+    hasInviteToken: Boolean(accessPayload.inviteToken),
+    hasPasswordSession: Boolean(accessPayload.passwordSession),
+    guestName: guestState?.guestName,
+    enabledActionIds: actions.map((action) => action.id),
+  });
 
   useEffect(() => {
     if (typeof navigator === 'undefined') return;
@@ -376,6 +383,7 @@ export const EventHub: React.FC = () => {
               hasInviteToken: Boolean(accessPayload.inviteToken),
               hasPasswordSession: Boolean(accessPayload.passwordSession),
               guestName: data.guestState?.guestName,
+              enabledActionIds: actions.map((action) => action.id),
             }),
             travelContext,
           });
@@ -424,6 +432,7 @@ export const EventHub: React.FC = () => {
               hasInviteToken: Boolean(accessPayload.inviteToken),
               hasPasswordSession: Boolean(accessPayload.passwordSession),
               guestName: guestState?.guestName,
+              enabledActionIds: actions.map((action) => action.id),
             }),
             travelContext: nextTravelContext,
           });

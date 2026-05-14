@@ -1,3 +1,4 @@
+import { summarizeGuestHubActions, type GuestHubActionId } from './guestHubActions';
 import { getMessageDeliveryState } from './messageDeliveryState';
 
 export type GuestHubAnnouncementInput = {
@@ -52,6 +53,7 @@ export type GuestHubLinkAccessInput = {
   hasInviteToken?: boolean;
   hasPasswordSession?: boolean;
   guestName?: string | null;
+  enabledActionIds?: GuestHubActionId[] | null;
 };
 
 export type GuestHubLinkAccessCard = {
@@ -59,6 +61,8 @@ export type GuestHubLinkAccessCard = {
   badgeLabel: string;
   detail: string;
   summary: string;
+  actionCountLabel: string | null;
+  actionSummaryLabel: string | null;
 };
 
 function formatDateTime(value?: string | null): string | null {
@@ -164,12 +168,20 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
   if (!input) return null;
 
   const guestLabel = scrubSensitiveCopy(input.guestName) || 'your guest details';
+  const enabledActionIds = Array.from(new Set((input.enabledActionIds ?? []).filter(Boolean)));
+  const actionCount = enabledActionIds.length;
+  const actionCountLabel = actionCount > 0
+    ? `${actionCount} guest action${actionCount === 1 ? ' is' : 's are'} ready from this link.`
+    : 'No guest actions are ready from this link yet.';
+  const actionSummaryLabel = actionCount > 0 ? summarizeGuestHubActions(enabledActionIds.map((id) => ({ id }))) : null;
   if (input.hasGuestInviteToken) {
     return {
       title: 'Private guest link',
       badgeLabel: 'Guest-specific',
       detail: `This link includes invite-only event details plus RSVP and check-in readback for ${guestLabel}.`,
       summary: 'Guest-specific access is active for this link, including RSVP and check-in readback.',
+      actionCountLabel,
+      actionSummaryLabel,
     };
   }
 
@@ -179,6 +191,8 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
       badgeLabel: 'Invite-only',
       detail: 'This link includes invite-only wedding details that do not appear on the public site shell.',
       summary: 'Invite-only access is active for this link, without guest-specific RSVP or check-in readback.',
+      actionCountLabel,
+      actionSummaryLabel,
     };
   }
 
@@ -187,5 +201,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
     badgeLabel: 'Public',
     detail: 'This link shows the public wedding hub. Invite-only event details stay on the private link from the couple.',
     summary: 'Public-only access is active for this link, without private event or guest-specific readback.',
+    actionCountLabel,
+    actionSummaryLabel,
   };
 }
