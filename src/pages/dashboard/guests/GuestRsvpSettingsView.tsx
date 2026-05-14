@@ -370,6 +370,7 @@ export function GuestRsvpSettingsView({
                 <div className="rounded-md border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Custom questions</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{customQuestionCount}</p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">{safeRsvpQuestions.length} total live question{safeRsvpQuestions.length === 1 ? '' : 's'}</p>
                 </div>
                 <div className="rounded-md border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Required now</p>

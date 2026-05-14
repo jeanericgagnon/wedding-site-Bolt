@@ -165,6 +165,7 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('2 required · 2 event-specific · 2 choice-based questions.')).toBeInTheDocument();
     expect(screen.getByText('2 saved')).toBeInTheDocument();
     expect(screen.getByText('0% coverage')).toBeInTheDocument();
+    expect(screen.getByText('3 total live questions')).toBeInTheDocument();
     expect(screen.getByText('100% ready')).toBeInTheDocument();
   });
 });
