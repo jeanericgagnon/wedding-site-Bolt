@@ -12,6 +12,7 @@ import {
   exportPlaceCardsCSV,
   exportSeatingCSV,
   getOrCreateSeatingEvent,
+  invalidateDriftedAssignments,
   mapSeatingLookupRows,
   MAX_SEATING_ELIGIBLE_GUESTS,
   MAX_SEATING_EVENT_INVITATIONS,
@@ -33,7 +34,8 @@ import {
   type SeatingTable,
 } from './seatingService';
 
-const { refreshSessionMock, rpcMock } = vi.hoisted(() => ({
+const { fromMock, refreshSessionMock, rpcMock } = vi.hoisted(() => ({
+  fromMock: vi.fn(),
   refreshSessionMock: vi.fn(),
   rpcMock: vi.fn(),
 }));
@@ -44,12 +46,13 @@ vi.mock('../../../lib/supabase', () => ({
       refreshSession: refreshSessionMock,
       getUser: vi.fn(),
     },
-    from: vi.fn(),
+    from: fromMock,
     rpc: rpcMock,
   },
 }));
 
 beforeEach(() => {
+  fromMock.mockReset();
   refreshSessionMock.mockReset();
   rpcMock.mockReset();
 });
@@ -556,6 +559,72 @@ describe('mapSeatingLookupRows', () => {
     expect(rpcMock).toHaveBeenNthCalledWith(6, 'seating_layout_version_restore', {
       p_version_id: 'version-1',
       p_restored_at: expect.any(String),
+    });
+  });
+
+  it('invalidates drifted assignments after RSVP-backed attendance changes', async () => {
+    const selectMock = vi.fn();
+    const eqGuestsMock = vi.fn();
+    const limitGuestsMock = vi.fn();
+    const eqInvitesMock = vi.fn();
+    const limitInvitesMock = vi.fn();
+    const inEventRsvpsMock = vi.fn();
+    const eqAssignmentsMock = vi.fn();
+    const limitAssignmentsMock = vi.fn();
+
+    fromMock
+      .mockReturnValueOnce({ select: selectMock })
+      .mockReturnValueOnce({ select: selectMock })
+      .mockReturnValueOnce({ select: selectMock })
+      .mockReturnValueOnce({ select: selectMock });
+
+    selectMock
+      .mockReturnValueOnce({ eq: eqGuestsMock })
+      .mockReturnValueOnce({ eq: eqInvitesMock })
+      .mockReturnValueOnce({ in: inEventRsvpsMock })
+      .mockReturnValueOnce({ eq: eqAssignmentsMock });
+
+    eqGuestsMock.mockReturnValueOnce({ limit: limitGuestsMock });
+    limitGuestsMock.mockResolvedValueOnce({
+      data: [
+        { id: 'guest-1', name: 'Avery Guest', first_name: null, last_name: null, email: null, rsvp_status: 'attending', household_id: null, group_name: null, meal_preference: null, notes: null },
+        { id: 'guest-2', name: 'Bailey Guest', first_name: null, last_name: null, email: null, rsvp_status: 'attending', household_id: null, group_name: null, meal_preference: null, notes: null },
+      ],
+      error: null,
+    });
+
+    eqInvitesMock.mockReturnValueOnce({ limit: limitInvitesMock });
+    limitInvitesMock.mockResolvedValueOnce({
+      data: [
+        { id: 'invite-1', guest_id: 'guest-1' },
+        { id: 'invite-2', guest_id: 'guest-2' },
+      ],
+      error: null,
+    });
+
+    inEventRsvpsMock.mockResolvedValueOnce({
+      data: [
+        { event_invitation_id: 'invite-1', attending: true },
+        { event_invitation_id: 'invite-2', attending: false },
+      ],
+      error: null,
+    });
+
+    eqAssignmentsMock.mockReturnValueOnce({ limit: limitAssignmentsMock });
+    limitAssignmentsMock.mockResolvedValueOnce({
+      data: [
+        { id: 'assign-1', seating_event_id: 'se-1', table_id: 'table-1', guest_id: 'guest-1', seat_index: 1, is_valid: true },
+        { id: 'assign-2', seating_event_id: 'se-1', table_id: 'table-1', guest_id: 'guest-2', seat_index: 2, is_valid: true },
+      ],
+      error: null,
+    });
+
+    rpcMock.mockResolvedValueOnce({ error: null });
+
+    await expect(invalidateDriftedAssignments('se-1', 'event-1', 'site-1')).resolves.toBe(1);
+
+    expect(rpcMock).toHaveBeenCalledWith('seating_assignment_invalidate_many', {
+      p_assignment_ids: ['assign-2'],
     });
   });
 });

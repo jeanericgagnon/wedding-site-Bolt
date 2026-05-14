@@ -415,9 +415,11 @@ Execution rule for this section:
    - this batch shipped: catering packet rows now include richer structured household/group, dietary-restriction, allergy, and guest-note columns instead of flattening everything into one generic note field
    - this batch shipped: seating exports now include a dedicated kitchen-summary CSV that groups meal counts plus dietary/allergy highlights for catering prep beyond the existing row CSV, table summary, PDF, and image packet
    - this batch shipped: focused proof is green for the richer catering packet rows, grouped kitchen-summary export, and handoff review file inventory
+   - this batch shipped: `proof:v1:seating-continuity` now captures real local browser downloads for seating CSV, kitchen-summary CSV, SVG image export, and printable PDF markup so packet truth is no longer implied only by helper-unit tests
+   - this batch shipped: RSVP-backed seating drift proof now covers `invalidateDriftedAssignments`, so assignment invalidation after event RSVP changes is exercised directly instead of living only as a manual note
    - add live production seating write/read with cleanup for packet/export flows
-   - inspect real downloaded CSV/PDF/image packets against RSVP source data
-   - prove seating lookup readback after assignment edits and itinerary/seating drift after RSVP changes
+   - rerun the same packet export/download assertions against the shipped production runtime after the next approved seating deploy
+   - prove seating lookup readback after real assignment edits in browser/live flows instead of only service-level drift invalidation
    - keep extending source-of-truth meal/dietary fields wherever real RSVP schemas still flatten too much detail upstream
 
 12. `ACTIVE`: budget and vendor ledger
