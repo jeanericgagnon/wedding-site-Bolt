@@ -309,11 +309,12 @@ Execution rule for this section:
    - this batch shipped: owner guest preview now exposes direct guest-surface links for photo upload, guestbook, recap, travel, and registry instead of limiting preview confidence to RSVP, contact update, or the top-level site shell
    - this batch shipped: the main Guests dashboard list and household views now expose direct guest-view preview actions, so owners can jump into the real guest-facing site path without opening the itinerary drawer first
    - this batch shipped: the guest visibility drawer now includes the anniversary-vault guest path alongside RSVP, guest update, photos, guestbook, recap, travel, and registry so preview confidence covers another real private guest surface
-   - finish true route-level personalization beyond the owner preview banner and guest-update path
+   - this batch shipped: demo/local guest preview proof now includes structured visible-versus-hidden itinerary variation, routes the drawer through the real guest-specific event set, carries demo site context into guest preview links, and proves in a real browser that owners can open the public-site preview plus the exact guest RSVP route for a hidden-event guest without raw-token UI leakage
+   - finish true route-level personalization beyond the owner preview banner, guest-update path, and demo/local preview proof
    - wire planner/coordinator role preview controls from dashboard flows
-   - extend preview confidence to photo, registry, and travel surfaces
-   - add cross-surface tests proving private event visibility is hidden from the wrong guest and visible to the right guest
-   - add live/mobile click proof for the Guests drawer preview flow
+   - extend preview confidence to photo, registry, and travel surfaces in live/mobile proof, not only owner/local preview
+   - add cross-surface live tests proving private event visibility is hidden from the wrong guest and visible to the right guest
+   - add live/mobile click proof for the Guests drawer preview flow on the shipped runtime
 
 2. `ACTIVE`: unified QR guest hub
    - this batch shipped: QR share surfaces now support private DayOf payloads through local SVG generation instead of the public QR vendor, and the private guest QR path is now wired into both RSVP and guest-update owner surfaces

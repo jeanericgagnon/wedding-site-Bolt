@@ -16,6 +16,7 @@ import {
   type AssistedRsvpSource,
   type AssistedRsvpStatus,
 } from './guestService';
+import { buildDemoGuestItinerarySnapshot } from './demoGuestItinerary';
 
 interface UseGuestDashboardGuestDetailActionsInput {
   fetchGuests: () => Promise<void>;
@@ -36,6 +37,7 @@ export function useGuestDashboardGuestDetailActions({
   toast,
   weddingSiteId,
 }: UseGuestDashboardGuestDetailActionsInput) {
+  const demoItinerarySnapshot = buildDemoGuestItinerarySnapshot();
   const [householdBusy, setHouseholdBusy] = useState(false);
   const [itineraryDrawerGuest, setItineraryDrawerGuest] = useState<GuestWithRSVP | null>(null);
   const [drawerItineraryEvents, setDrawerItineraryEvents] = useState<ItineraryEvent[]>([]);
@@ -124,11 +126,12 @@ export function useGuestDashboardGuestDetailActions({
     try {
       if (isDemoMode) {
         const now = Date.now();
+        setDrawerItineraryEvents(demoItinerarySnapshot.itineraryEvents);
         setGuestAuditEntries([
           { id: `${guest.id}-a1`, action: 'update', changed_at: new Date(now - 1000 * 60 * 90).toISOString(), changed_by: null, old_data: { rsvp_status: 'pending' }, new_data: { rsvp_status: guest.rsvp_status } },
           { id: `${guest.id}-a2`, action: 'update', changed_at: new Date(now - 1000 * 60 * 60 * 26).toISOString(), changed_by: null, old_data: { invited_to_reception: false }, new_data: { invited_to_reception: guest.invited_to_reception } },
         ]);
-        setGuestEventIds(new Set());
+        setGuestEventIds(new Set(demoItinerarySnapshot.guestInvitedEventIds.get(guest.id) ?? []));
       }
 
       if (!isDemoMode) {

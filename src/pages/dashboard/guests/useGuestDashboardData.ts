@@ -5,6 +5,7 @@ import type { PlannerAccessRole, PlannerPermissionKey } from '../../../lib/plann
 import { hasRespondedRsvpStatus } from '../../../lib/rsvpStatus';
 import type { ToastType } from '../../../components/ui/Toast';
 import { readStoredDemoRsvpConfig } from './guestDashboardStorage';
+import { buildDemoGuestItinerarySnapshot } from './demoGuestItinerary';
 import type {
   GuestAuditEntry,
   GuestWithRSVP,
@@ -55,6 +56,7 @@ export function useGuestDashboardData({
   const [itineraryEvents, setItineraryEvents] = useState<ItineraryEvent[]>([]);
   const [rsvpAuditFeed, setRsvpAuditFeed] = useState<GuestAuditEntry[]>([]);
   const [rsvpAuditLoading, setRsvpAuditLoading] = useState(false);
+  const demoItinerarySnapshot = buildDemoGuestItinerarySnapshot();
 
   const fetchWeddingSite = useCallback(async () => {
     if (!userId) {
@@ -66,6 +68,16 @@ export function useGuestDashboardData({
 
     if (isDemoMode) {
       setWeddingSiteId(demoWeddingSite.id);
+      setWeddingSiteInfo({
+        id: demoWeddingSite.id,
+        couple_name_1: demoWeddingSite.couple_name_1,
+        couple_name_2: demoWeddingSite.couple_name_2,
+        wedding_date: demoWeddingSite.wedding_date,
+        venue_name: demoWeddingSite.venue_name,
+        venue_address: demoWeddingSite.venue_location,
+        site_slug: null,
+        site_url: demoWeddingSite.site_url,
+      });
       const demoRsvpConfig = readStoredDemoRsvpConfig();
       setRsvpQuestions(demoRsvpConfig.questions);
       setRsvpMealEnabled(demoRsvpConfig.mealEnabled);
@@ -112,6 +124,7 @@ export function useGuestDashboardData({
           phone: null,
           plus_one_allowed: false,
           plus_one_name: null,
+          invited_event_ids: demoItinerarySnapshot.guestInvitedEventIds.get(guest.id) ?? [],
           rsvp_received_at: hasRespondedRsvpStatus(guest.rsvp_status) ? new Date().toISOString() : null,
           rsvp: demoRSVPs.find((r) => r.guest_id === guest.id),
         }));
@@ -150,10 +163,20 @@ export function useGuestDashboardData({
     let cancelled = false;
 
     async function loadItineraryFilterData() {
-      if (!weddingSiteId || isDemoMode) {
+      if (!weddingSiteId) {
         if (!cancelled) {
           setItineraryFilterEvents([]);
+          setItineraryEvents([]);
           setEventInviteGuestMap(new Map());
+        }
+        return;
+      }
+
+      if (isDemoMode) {
+        if (!cancelled) {
+          setItineraryEvents(demoItinerarySnapshot.itineraryEvents);
+          setItineraryFilterEvents(demoItinerarySnapshot.itineraryEvents);
+          setEventInviteGuestMap(demoItinerarySnapshot.eventInviteGuestMap);
         }
         return;
       }

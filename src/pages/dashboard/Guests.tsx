@@ -752,7 +752,7 @@ export const DashboardGuests: React.FC = () => {
     guestEventIds,
     guests,
     itineraryDrawerGuest,
-    itineraryEvents,
+    itineraryEvents: drawerItineraryEvents,
     itineraryFilterEventCount: itineraryFilterEvents.length,
     loadingDrawer,
     showAddModal,

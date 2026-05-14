@@ -55,7 +55,12 @@ export function GuestItineraryDrawer({
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-surface z-50 flex flex-col border-l border-border">
+      <div
+        className="fixed right-0 top-0 h-full w-full max-w-sm bg-surface z-50 flex flex-col border-l border-border"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${guestName} guest drawer`}
+      >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div>
             <h2 className="text-base font-semibold text-text-primary">{guestName}</h2>
@@ -87,6 +92,7 @@ export function GuestItineraryDrawer({
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-surface-subtle text-text-secondary transition-colors"
+            aria-label="Close guest drawer"
           >
             <X className="w-5 h-5" />
           </button>
