@@ -94,6 +94,9 @@ describe('budget vendor ledger readiness', () => {
           next_payment_due: '2026-05-20',
           document_url: 'https://docs.example.com/photo',
           notes: 'Needs final shot list',
+          internal_rating: 5,
+          rating_status: 'Booked',
+          rating_notes: 'Strong fit',
         },
       ],
       budgetItems: [
@@ -127,12 +130,14 @@ describe('budget vendor ledger readiness', () => {
 
     expect(csv).toContain('"Record Type","Name","Category or Type","Vendor"');
     expect(csv).toContain('"Reminder Channel","Follow Up","Reminder Lead Time","Reminder Last Queued"');
+    expect(csv).toContain('"Internal Rating","Rating Status","Private Rating Notes","Notes"');
     expect(csv).toContain('"Budget item","Photo deposit","Photography","Photo Studio"');
     expect(csv).toContain('"Vendor","Photo Studio","Photographer","Photo Studio"');
     expect(csv).toContain('"photo@example.com / 555-0101"');
     expect(csv).toContain('"Email","2026-05-18","7 days before","2026-05-11T12:00:00.000Z"');
     expect(csv).toContain('"contract: Signed contract"');
     expect(csv).toContain('"Final balance (scheduled, 2026-05-20, $2,500)"');
+    expect(csv).toContain('"5","Booked","Strong fit","Booked"');
   });
 
   it('builds a planner payment review without guest-facing financial exposure', () => {

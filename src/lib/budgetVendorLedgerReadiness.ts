@@ -28,6 +28,9 @@ export interface VendorLedgerItem {
   document_url?: string | null;
   document_label?: string | null;
   notes?: string | null;
+  internal_rating?: number | null;
+  rating_status?: string | null;
+  rating_notes?: string | null;
 }
 
 export interface BudgetVendorLedgerChecklistItem {
@@ -315,7 +318,7 @@ export function budgetVendorLedgerToCsv(input: {
   const vendorMap = new Map(input.vendors.map((vendor) => [vendor.id, vendor]));
   const vendorMeta = input.vendorMeta ?? {};
   const rows = [
-    ['Record Type', 'Name', 'Category or Type', 'Vendor', 'Estimated', 'Actual or Contract', 'Paid', 'Open', 'Due Date', 'Contact', 'Reminder Channel', 'Follow Up', 'Reminder Lead Time', 'Reminder Last Queued', 'Document URL', 'Files', 'Milestones', 'Notes'],
+    ['Record Type', 'Name', 'Category or Type', 'Vendor', 'Estimated', 'Actual or Contract', 'Paid', 'Open', 'Due Date', 'Contact', 'Reminder Channel', 'Follow Up', 'Reminder Lead Time', 'Reminder Last Queued', 'Document URL', 'Files', 'Milestones', 'Internal Rating', 'Rating Status', 'Private Rating Notes', 'Notes'],
     ...input.budgetItems.map((item) => {
       const total = money(item.actual_amount) || money(item.estimated_amount);
       const paid = money(item.paid_amount);
@@ -339,6 +342,9 @@ export function budgetVendorLedgerToCsv(input: {
         vendor?.document_url ?? '',
         summarizeVendorFiles(meta),
         summarizeVendorMilestones(meta),
+        vendor?.internal_rating != null ? String(vendor.internal_rating) : '',
+        vendor?.rating_status ?? '',
+        vendor?.rating_notes ?? '',
         item.notes ?? '',
       ];
     }),
@@ -365,6 +371,9 @@ export function budgetVendorLedgerToCsv(input: {
         vendor.document_url ?? '',
         summarizeVendorFiles(meta),
         summarizeVendorMilestones(meta),
+        vendor.internal_rating != null ? String(vendor.internal_rating) : '',
+        vendor.rating_status ?? '',
+        vendor.rating_notes ?? '',
         vendor.notes ?? '',
       ];
     }),
