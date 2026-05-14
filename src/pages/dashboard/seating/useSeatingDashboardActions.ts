@@ -15,6 +15,7 @@ import {
   updateTable,
 } from './seatingService';
 import { buildDemoAutoSeatAssignments, buildDemoAutoTables, type TableShape } from './seatingDashboardUtils';
+import { retryOnceAfterRefresh } from '../../../lib/supabaseAuthRetry';
 
 export function useSeatingDashboardActions(args: {
   allGuests: EligibleGuest[];
@@ -377,24 +378,14 @@ export function useSeatingDashboardActions(args: {
           assignment.guest_id === guestId ? { ...assignment, checked_in_at: checkedIn ? new Date().toISOString() : null } : assignment
         )));
       } else {
-        await setGuestCheckedIn(args.seatingEvent.id, guestId, checkedIn);
+        await retryOnceAfterRefresh({
+          action: () => setGuestCheckedIn(args.seatingEvent!.id, guestId, checkedIn),
+          refresh: refreshSeatingSession,
+        });
         await args.loadSeatingData();
       }
       args.toast(checkedIn ? 'Guest marked arrived' : 'Arrival removed', 'success');
-    } catch (error) {
-      const message = error instanceof Error ? error.message.toLowerCase() : '';
-      const authish = message.includes('invalid jwt') || message.includes('jwt') || message.includes('401') || message.includes('auth');
-      if (!args.isDemoMode && authish) {
-        try {
-          await refreshSeatingSession();
-          await setGuestCheckedIn(args.seatingEvent.id, guestId, checkedIn);
-          await args.loadSeatingData();
-          args.toast(checkedIn ? 'Guest marked arrived' : 'Arrival removed', 'success');
-          return;
-        } catch {
-          // fall through
-        }
-      }
+    } catch {
       args.toast('Couldn’t update check-in right now. Please try again.', 'error');
     }
   }
@@ -421,7 +412,10 @@ export function useSeatingDashboardActions(args: {
           guestIdSet.has(assignment.guest_id) ? { ...assignment, checked_in_at: stamp } : assignment
         )));
       } else {
-        await Promise.all(guestIds.map((guestId) => setGuestCheckedIn(args.seatingEvent!.id, guestId, checkedIn)));
+        await retryOnceAfterRefresh({
+          action: () => Promise.all(guestIds.map((guestId) => setGuestCheckedIn(args.seatingEvent!.id, guestId, checkedIn))),
+          refresh: refreshSeatingSession,
+        });
         await args.loadSeatingData();
       }
       args.toast(
@@ -430,25 +424,7 @@ export function useSeatingDashboardActions(args: {
           : `Cleared arrival for ${guestIds.length} guest${guestIds.length !== 1 ? 's' : ''}`,
         'success',
       );
-    } catch (error) {
-      const message = error instanceof Error ? error.message.toLowerCase() : '';
-      const authish = message.includes('invalid jwt') || message.includes('jwt') || message.includes('401') || message.includes('auth');
-      if (!args.isDemoMode && authish) {
-        try {
-          await refreshSeatingSession();
-          await Promise.all(guestIds.map((guestId) => setGuestCheckedIn(args.seatingEvent!.id, guestId, checkedIn)));
-          await args.loadSeatingData();
-          args.toast(
-            checkedIn
-              ? `Marked ${guestIds.length} guest${guestIds.length !== 1 ? 's' : ''} arrived`
-              : `Cleared arrival for ${guestIds.length} guest${guestIds.length !== 1 ? 's' : ''}`,
-            'success',
-          );
-          return;
-        } catch {
-          // fall through
-        }
-      }
+    } catch {
       args.toast('Couldn’t update those arrivals right now. Please try again.', 'error');
     }
   }

@@ -1917,9 +1917,9 @@ export function CoordinatorCheckInQueuePanel({
         <div className="rounded-lg border border-border/50 bg-white px-3 py-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-medium text-text-primary">Door QR check-in</p>
+              <p className="text-[11px] font-medium text-text-primary">Scan guest QR</p>
               <p className="mt-1 text-[11px] text-text-secondary">
-                Scan a guest RSVP/check-in code, validate it against this site and event, then confirm the arrival with one tap.
+                Scans validate against this event before check-in.
               </p>
             </div>
             <span className="rounded-lg border border-border bg-surface-subtle px-2 py-1 text-[10px] font-medium text-text-tertiary">

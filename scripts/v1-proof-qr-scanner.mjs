@@ -16,6 +16,12 @@ const steps = [
     required: true,
   },
   {
+    id: 'coordinator-qr-integration-tests',
+    label: 'Coordinator QR scanner integration tests',
+    command: 'npm test -- --run src/pages/dashboard/coordinator/CoordinatorQrScannerIntegration.test.tsx',
+    required: true,
+  },
+  {
     id: 'build',
     label: 'Build integrity check',
     command: 'npm run build',

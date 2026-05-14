@@ -6,6 +6,7 @@ import { resetCoordinatorAlertFormAfterSend } from '../../../lib/coordinatorAler
 import { applyCoordinatorAlertSuggestion } from '../../../lib/coordinatorAlertSuggestionApply';
 import { getNextCoordinatorCheckInFocusId } from '../../../lib/coordinatorCheckInAdvance';
 import type { CoordinatorAlertSuggestion } from '../../../lib/coordinatorAlertSuggestions';
+import { retryOnceAfterRefresh } from '../../../lib/supabaseAuthRetry';
 import type { QnaItem, AlertLog } from './coordinatorDashboardTypes';
 import {
   createCoordinatorAlertMessage,
@@ -157,32 +158,18 @@ export function useCoordinatorDashboardActions(args: Args) {
       if (!args.siteId) return;
 
       try {
-        await updateCoordinatorGuestCheckIn({
-          siteId: args.siteId,
-          guestId: guest.id,
-          checkedInAt: next,
-          itineraryEventId: args.currentDoorEventId,
+        await retryOnceAfterRefresh({
+          action: () => updateCoordinatorGuestCheckIn({
+            siteId: args.siteId!,
+            guestId: guest.id,
+            checkedInAt: next,
+            itineraryEventId: args.currentDoorEventId,
+          }),
+          refresh: refreshCoordinatorSession,
         });
-      } catch (error) {
-        const message = error instanceof Error ? error.message.toLowerCase() : '';
-        const authish = message.includes('invalid jwt') || message.includes('jwt') || message.includes('401') || message.includes('auth');
-        if (authish) {
-          try {
-            await refreshCoordinatorSession();
-            await updateCoordinatorGuestCheckIn({
-              siteId: args.siteId,
-              guestId: guest.id,
-              checkedInAt: next,
-              itineraryEventId: args.currentDoorEventId,
-            });
-          } catch {
-            args.toast('Couldn’t update check-in right now.', 'error');
-            return;
-          }
-        } else {
-          args.toast('Couldn’t update check-in right now.', 'error');
-          return;
-        }
+      } catch {
+        args.toast('Couldn’t update check-in right now.', 'error');
+        return;
       }
 
       syncGuestCheckInState(guest.id, next);
@@ -213,15 +200,18 @@ export function useCoordinatorDashboardActions(args: Args) {
     setAlertBusy(true);
     try {
       if (!args.isDemoMode) {
-        await createCoordinatorAlertMessage({
-          siteId: args.siteId,
-          subject: args.alertForm.subject.trim(),
-          body: args.alertForm.body.trim(),
-          channel: args.alertForm.channel,
-          audience: args.alertForm.audience,
-          recipientCount: args.alertAudienceCount,
-          status,
-          scheduledFor,
+        await retryOnceAfterRefresh({
+          action: () => createCoordinatorAlertMessage({
+            siteId: args.siteId!,
+            subject: args.alertForm.subject.trim(),
+            body: args.alertForm.body.trim(),
+            channel: args.alertForm.channel,
+            audience: args.alertForm.audience,
+            recipientCount: args.alertAudienceCount,
+            status,
+            scheduledFor,
+          }),
+          refresh: refreshCoordinatorSession,
         });
       }
 
@@ -262,7 +252,10 @@ export function useCoordinatorDashboardActions(args: Args) {
 
     if (!args.isDemoMode && args.siteId) {
       try {
-        const data = await createCoordinatorQnaQuestion(args.siteId, q);
+        const data = await retryOnceAfterRefresh({
+          action: () => createCoordinatorQnaQuestion(args.siteId!, q),
+          refresh: refreshCoordinatorSession,
+        });
         args.setQnaItems((prev) => [data, ...prev].slice(0, 30));
       } catch {
         args.toast('Couldn’t save that guest question right now.', 'error');

@@ -8,7 +8,7 @@ Purpose:
 - give the backlog an honest build target
 - current truth update: the earlier “full-suite closed” claim was too optimistic for the reopened acceptance bar; this document stayed in active-use mode until coordinator/day-of, name-change, seating lookup, and QR scanning were reproven together without gaps
 - current implementation batch now closes some concrete regressions: seating lookup no longer keys off the latest created seating event globally, coordinator check-in now retries through auth refresh, public QR generation is stricter about token-ish payloads, name-change passport flags now normalize legacy/current shapes through one mapper, and the coordinator route now has a real QR scanner plus secure token/url parsing locally
-- full-suite claim update: the reopened scanner/event-awareness lane, the refreshed name-change dependency lane, and the aggregate full-suite gate have now rerun green locally and live on the current production runtime
+- full-suite claim update: the reopened scanner/event-awareness lane, the refreshed name-change dependency lane, the dedicated QR acceptance lane, and the aggregate full-suite gate have now rerun green locally and live on the current production runtime
 
 Method:
 - reviewed official product and help pages from direct competitors and adjacent event products

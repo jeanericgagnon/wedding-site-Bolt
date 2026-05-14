@@ -1,6 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
-import { resolveChronologicalOperationalEventId } from '../../../lib/operationalEvent';
+import { resolveOperationalEventId } from '../../../lib/operationalEvent';
 import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../../lib/rsvpStatus';
 import { toSafeCsv } from '../../../lib/csvExport';
 
@@ -277,7 +277,7 @@ export async function loadSeatingLookupRowsForUser(userId: string, itineraryEven
   if (seatingEventsResult.error) throw seatingEventsResult.error;
 
   const itineraryEvents = (itineraryResult.data ?? []) as Array<Pick<ItineraryEvent, 'id' | 'event_name' | 'event_date' | 'start_time'>>;
-  const lookupEventId = itineraryEventId ?? resolveChronologicalOperationalEventId(itineraryEvents);
+  const lookupEventId = itineraryEventId ?? resolveOperationalEventId({ events: itineraryEvents });
   const eventMeta = itineraryEvents.find((event) => event.id === lookupEventId) ?? null;
   if (!eventMeta) return [];
 

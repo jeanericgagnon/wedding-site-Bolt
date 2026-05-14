@@ -394,7 +394,7 @@ describe('mapSeatingLookupRows', () => {
     expect(source).toContain('MAX_SEATING_ASSIGNMENT_ROWS');
     expect(source).toContain('MAX_SEATING_VERSION_ROWS');
     expect(source).toContain(".order('start_time', { ascending: true })\n    .limit(MAX_SEATING_ITINERARY_EVENTS);");
-    expect(source).toContain("resolveChronologicalOperationalEventId(itineraryEvents)");
+    expect(source).toContain("resolveOperationalEventId({ events: itineraryEvents })");
     expect(source).toContain(".select('id, event_name, event_date, start_time')");
     expect(source).toContain('].slice(0, MAX_SEATING_LOOKUP_TABLE_IDS);');
     expect(source).toContain('].slice(0, MAX_SEATING_LOOKUP_GUEST_IDS);');

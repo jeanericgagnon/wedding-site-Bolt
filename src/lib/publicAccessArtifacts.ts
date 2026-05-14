@@ -14,13 +14,23 @@ export function getUrlWithoutPublicAccessToken(href: string, origin = window.loc
 }
 
 export function getInviteTokenFromSearch(searchParams: URLSearchParams): string | null {
-  const token = searchParams.get('token')?.trim();
-  return token || null;
+  return getCaseInsensitiveSearchParam(searchParams, ['token', 'access_token', 'auth', 'session', 'passcode', 'jwt', 'signed', 'signature', 'bearer', 'key', 'secret']);
 }
 
 export function getGuestInviteTokenFromSearch(searchParams: URLSearchParams): string | null {
-  const token = searchParams.get('invite_token')?.trim() ?? searchParams.get('guestInviteToken')?.trim();
-  return token || null;
+  return getCaseInsensitiveSearchParam(searchParams, ['invite_token', 'guestInviteToken']);
+}
+
+function getCaseInsensitiveSearchParam(searchParams: URLSearchParams, candidates: string[]): string | null {
+  const normalizedCandidates = new Set(candidates.map((candidate) => candidate.toLowerCase()));
+  for (const [key, value] of searchParams.entries()) {
+    if (normalizedCandidates.has(key.toLowerCase())) {
+      const trimmed = value.trim();
+      return trimmed || null;
+    }
+  }
+
+  return null;
 }
 
 export function readStoredPublicInviteToken(slug: string): string | null {

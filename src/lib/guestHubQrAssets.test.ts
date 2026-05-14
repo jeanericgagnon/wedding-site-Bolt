@@ -19,13 +19,19 @@ describe('guestHubQrAssets', () => {
   it('blocks token-like urls from printable public assets', () => {
     expect(isSafePublicQrAssetUrl('https://dayof.love/event/maya-and-leo?token=secret')).toBe(false);
     expect(isSafePublicQrAssetUrl('https://dayof.love/event/maya-and-leo?invite_token=secret')).toBe(false);
+    expect(isSafePublicQrAssetUrl('https://dayof.love/event/maya-and-leo?Invite_Token=secret')).toBe(false);
     expect(isSafePublicQrAssetUrl('https://dayof.love/event/maya-and-leo?passwordSession=secret')).toBe(false);
     expect(isSafePublicQrAssetUrl('https://dayof.love/event/maya-and-leo?auth=bearer')).toBe(false);
+    expect(isSafePublicQrAssetUrl('https://dayof.love/event/maya-and-leo?access_token=secret')).toBe(false);
+    expect(isSafePublicQrAssetUrl('https://dayof.love/event/maya-and-leo?jwt=secret')).toBe(false);
+    expect(isSafePublicQrAssetUrl('https://dayof.love/event/maya-and-leo?signature=secret')).toBe(false);
+    expect(isSafePublicQrAssetUrl('https://dayof.love/event/maya-and-leo?session=secret')).toBe(false);
     expect(isSafePublicQrAssetUrl('https://dayof.love/event/maya-and-leo?cookie=session')).toBe(false);
     expect(isSafePublicQrAssetUrl('http://169.254.169.254/latest/meta-data')).toBe(false);
     expect(isSafePublicQrAssetUrl('https://user:pass@dayof.love/event/maya-and-leo')).toBe(false);
     expect(isSafePublicQrAssetUrl('https://example.test/event/maya-and-leo')).toBe(false);
     expect(isSafePublicQrAssetUrl('javascript:alert(1)')).toBe(false);
+    expect(isSafePublicQrAssetUrl('https://dayof.love/event/maya-and-leo#access_token=secret')).toBe(false);
     expect(isSafePublicQrAssetUrl('https://dayof.love/event/maya-and-leo?redirect=%2Fcheckin%23access_token%3Dsecret')).toBe(false);
     expect(isSafePublicQrAssetUrl('https://dayof.love/rsvp?token=secret')).toBe(false);
     expect(isSafePublicQrAssetUrl('https://dayof.love/guest-contact/maya-and-leo?guestInviteToken=secret')).toBe(false);

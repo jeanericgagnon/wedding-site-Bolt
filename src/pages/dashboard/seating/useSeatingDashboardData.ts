@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { demoWeddingSite, demoGuests } from '../../../lib/demoData';
-import { resolveChronologicalOperationalEventId } from '../../../lib/operationalEvent';
+import { resolveOperationalEventId } from '../../../lib/operationalEvent';
 import { isAttendingRsvpStatus } from '../../../lib/rsvpStatus';
 import {
   type EligibleGuest,
@@ -116,7 +116,7 @@ export function useSeatingDashboardData(args: {
           setSiteId(demoWeddingSite.id);
           const usableEvents = loadDemoItineraryEventsFromStorage();
           setItineraryEvents(usableEvents);
-          setSelectedEventId(resolveChronologicalOperationalEventId(usableEvents));
+          setSelectedEventId(resolveOperationalEventId({ events: usableEvents }));
           return;
         }
 
@@ -125,7 +125,7 @@ export function useSeatingDashboardData(args: {
         setSiteId(id);
         const events = await loadItineraryEvents(id);
         setItineraryEvents(events);
-        setSelectedEventId(resolveChronologicalOperationalEventId(events));
+        setSelectedEventId(resolveOperationalEventId({ events }));
       } catch {
         args.toast('Couldn’t load events right now. Please try again.', 'error');
       } finally {
@@ -163,7 +163,7 @@ export function useSeatingDashboardData(args: {
   useEffect(() => {
     if (!itineraryEvents.length) return;
     if (!selectedEventId || !itineraryEvents.some((event) => event.id === selectedEventId)) {
-      setSelectedEventId(resolveChronologicalOperationalEventId(itineraryEvents));
+      setSelectedEventId(resolveOperationalEventId({ events: itineraryEvents }));
     }
   }, [itineraryEvents, selectedEventId]);
 

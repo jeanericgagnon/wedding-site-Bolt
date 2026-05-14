@@ -10,7 +10,7 @@ describe('coordinator event-awareness proof wiring', () => {
 
     expect(coordinatorSource).toContain('resolveOperationalEventId');
     expect(coordinatorSource).toContain('currentEventId: checkInEventId');
-    expect(seatingLookupSource).toContain('resolveChronologicalOperationalEventId');
+    expect(seatingLookupSource).toContain('resolveOperationalEventId');
     expect(qrSource).toContain('args.checkInStatusContext.currentEventId');
     expect(qrSource).toContain('isCoordinatorGuestInvitedToCurrentEvent');
   });

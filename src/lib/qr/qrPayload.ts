@@ -38,7 +38,15 @@ export type CoordinatorQrResolution =
     checkedInAt: string;
   }
   | {
-    status: 'wrong-event' | 'wrong-site' | 'malformed' | 'expired-invalid-token';
+    status: 'wrong-event';
+    source: string;
+    guest: GuestLiteForCoordinator;
+    title: string;
+    detail: string;
+    warnings: string[];
+  }
+  | {
+    status: 'wrong-site' | 'malformed' | 'expired-invalid-token';
     source: string;
     title: string;
     detail: string;
@@ -62,7 +70,8 @@ export function parseDayOfQrPayload(input: string, options?: {
     };
   }
 
-  const fallbackOrigin = options?.currentOrigin?.trim() || 'https://dayof.love';
+  const fallbackOriginCandidate = options?.currentOrigin?.trim() || 'https://dayof.love';
+  const fallbackOrigin = getSafeFallbackOrigin(fallbackOriginCandidate);
   const looksRelative = source.startsWith('/') || source.startsWith('?');
   const candidate = looksRelative ? `${fallbackOrigin}${source}` : source;
 
@@ -73,7 +82,7 @@ export function parseDayOfQrPayload(input: string, options?: {
     return { kind: 'invalid', source, reason: 'malformed' };
   }
 
-  if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+  if (url.protocol !== 'https:') {
     return { kind: 'invalid', source, reason: 'unsupported-scheme' };
   }
   if (url.username || url.password || isUnsafeQrHostname(url.hostname)) {
@@ -116,6 +125,16 @@ export function parseDayOfQrPayload(input: string, options?: {
   };
 }
 
+function getSafeFallbackOrigin(value: string): string {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:' || isUnsafeQrHostname(url.hostname)) return 'https://dayof.love';
+    return `${url.protocol}//${url.host}`;
+  } catch {
+    return 'https://dayof.love';
+  }
+}
+
 export function resolveCoordinatorQrPayload(
   input: string,
   args: {
@@ -134,11 +153,13 @@ export function resolveCoordinatorQrPayload(
       status: parsed.reason === 'malformed' ? 'malformed' : 'expired-invalid-token',
       source: parsed.source,
       title: parsed.reason === 'malformed' ? 'Malformed QR' : 'Invalid QR',
-      detail: parsed.reason === 'wrong-host'
-        ? 'This code points outside the approved DayOf check-in surfaces.'
+      detail: parsed.reason === 'malformed'
+        ? 'Malformed QR. Search the guest manually.'
+        : parsed.reason === 'wrong-host'
+          ? 'Wrong wedding site. Search the guest manually or route the arrival to help desk.'
         : parsed.reason === 'unsafe-host'
           ? 'This code uses an unsafe destination and was blocked.'
-          : 'This code cannot be used for secure guest check-in.',
+          : 'Invalid or expired QR. Search the guest manually or route the arrival to help desk.',
       warnings: [],
     };
   }
@@ -148,7 +169,7 @@ export function resolveCoordinatorQrPayload(
       status: 'wrong-site',
       source: parsed.source,
       title: 'Wrong site',
-      detail: `This QR belongs to ${parsed.siteSlug}, not this live site.`,
+      detail: `Wrong wedding site. This QR belongs to ${parsed.siteSlug}, not this live site.`,
       warnings: [],
     };
   }
@@ -158,7 +179,7 @@ export function resolveCoordinatorQrPayload(
       status: 'expired-invalid-token',
       source: parsed.source,
       title: 'Public hub QR detected',
-      detail: 'This code opens a guest-facing page, not a private guest check-in code. Use a guest RSVP/check-in QR or search the guest manually.',
+      detail: 'This code opens the public guest hub, not a private check-in code. Search the guest manually or use a guest RSVP/check-in QR.',
       warnings: [],
     };
   }
@@ -170,7 +191,7 @@ export function resolveCoordinatorQrPayload(
       status: 'expired-invalid-token',
       source: parsed.source,
       title: 'Invalid or expired code',
-      detail: 'No guest matches this QR code anymore. Search the guest manually or route the arrival to help desk.',
+      detail: 'Invalid or expired QR. Search the guest manually or route the arrival to help desk.',
       warnings: [],
     };
   }
@@ -179,6 +200,7 @@ export function resolveCoordinatorQrPayload(
     return {
       status: 'wrong-event',
       source: parsed.source,
+      guest,
       title: 'Wrong event guest',
       detail: args.currentEventName
         ? `${guest.name} is not invited to ${args.currentEventName}. Route this to the exception desk instead of checking them in.`

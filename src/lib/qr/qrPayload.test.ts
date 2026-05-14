@@ -49,6 +49,13 @@ const baseGuests: GuestLiteForCoordinator[] = [
 ];
 
 describe('parseDayOfQrPayload', () => {
+  it('accepts a direct invite token', () => {
+    expect(parseDayOfQrPayload('guest-token-1')).toMatchObject({
+      kind: 'guest-invite-token',
+      token: 'guest-token-1',
+    });
+  });
+
   it('accepts a valid public dayof event url', () => {
     expect(parseDayOfQrPayload('https://maya-and-leo.dayof.love/event/maya-and-leo')).toMatchObject({
       kind: 'public-event-url',
@@ -70,11 +77,35 @@ describe('parseDayOfQrPayload', () => {
     });
   });
 
+  it('accepts mixed-case token params on approved hosts', () => {
+    expect(parseDayOfQrPayload('https://dayof.love/rsvp?Invite_Token=guest-token-1')).toMatchObject({
+      kind: 'guest-invite-token',
+      token: 'guest-token-1',
+    });
+    expect(parseDayOfQrPayload('https://dayof.love/rsvp?access_token=guest-token-1')).toMatchObject({
+      kind: 'guest-invite-token',
+      token: 'guest-token-1',
+    });
+  });
+
   it('rejects malformed, wrong-host, and unsafe urls', () => {
     expect(parseDayOfQrPayload('not a url')).toMatchObject({ kind: 'invalid', reason: 'malformed' });
     expect(parseDayOfQrPayload('https://proof.invalid/rsvp?token=guest-token-1')).toMatchObject({ kind: 'invalid', reason: 'unsafe-host' });
     expect(parseDayOfQrPayload('javascript:alert(1)')).toMatchObject({ kind: 'invalid', reason: 'unsupported-scheme' });
-    expect(parseDayOfQrPayload('http://169.254.169.254/latest/meta-data')).toMatchObject({ kind: 'invalid', reason: 'unsafe-host' });
+    expect(parseDayOfQrPayload('data:text/plain,hello')).toMatchObject({ kind: 'invalid', reason: 'unsupported-scheme' });
+    expect(parseDayOfQrPayload('file:///tmp/guest-token-1')).toMatchObject({ kind: 'invalid', reason: 'unsupported-scheme' });
+    expect(parseDayOfQrPayload('http://dayof.love/rsvp?token=guest-token-1')).toMatchObject({ kind: 'invalid', reason: 'unsupported-scheme' });
+    expect(parseDayOfQrPayload('http://169.254.169.254/latest/meta-data')).toMatchObject({ kind: 'invalid', reason: 'unsupported-scheme' });
+    expect(parseDayOfQrPayload('https://localhost/rsvp?token=guest-token-1')).toMatchObject({ kind: 'invalid', reason: 'unsafe-host' });
+    expect(parseDayOfQrPayload('https://127.0.0.1/rsvp?token=guest-token-1')).toMatchObject({ kind: 'invalid', reason: 'unsafe-host' });
+    expect(parseDayOfQrPayload('https://10.0.0.3/rsvp?token=guest-token-1')).toMatchObject({ kind: 'invalid', reason: 'unsafe-host' });
+    expect(parseDayOfQrPayload('https://172.16.2.4/rsvp?token=guest-token-1')).toMatchObject({ kind: 'invalid', reason: 'unsafe-host' });
+    expect(parseDayOfQrPayload('https://192.168.1.9/rsvp?token=guest-token-1')).toMatchObject({ kind: 'invalid', reason: 'unsafe-host' });
+    expect(parseDayOfQrPayload('https://169.254.169.254/latest/meta-data')).toMatchObject({ kind: 'invalid', reason: 'unsafe-host' });
+    expect(parseDayOfQrPayload('https://metadata.google.internal/rsvp?token=guest-token-1')).toMatchObject({ kind: 'invalid', reason: 'unsafe-host' });
+    expect(parseDayOfQrPayload('https://user:pass@dayof.love/rsvp?token=guest-token-1')).toMatchObject({ kind: 'invalid', reason: 'unsafe-host' });
+    expect(parseDayOfQrPayload('https://example.com/rsvp?token=guest-token-1')).toMatchObject({ kind: 'invalid', reason: 'wrong-host' });
+    expect(parseDayOfQrPayload('https://preview.dayof.app/rsvp?token=guest-token-1')).toMatchObject({ kind: 'invalid', reason: 'wrong-host' });
   });
 });
 
@@ -145,12 +176,24 @@ describe('resolveCoordinatorQrPayload', () => {
     const resolution = resolveCoordinatorQrPayload('https://maya-and-leo.dayof.love/event/maya-and-leo', baseArgs);
     expect(resolution).toMatchObject({ status: 'expired-invalid-token' });
   });
+
+  it('keeps malformed and wrong-site errors free of raw token values', () => {
+    const malformed = resolveCoordinatorQrPayload('javascript:alert(guest-token-1)', baseArgs);
+    const wrongSite = resolveCoordinatorQrPayload('https://other-couple.dayof.love/rsvp?token=guest-token-1', baseArgs);
+
+    expect(malformed.detail).not.toContain('guest-token-1');
+    expect(wrongSite.detail).not.toContain('guest-token-1');
+  });
 });
 
 describe('isPrivateQrPayloadForThirdPartyQr', () => {
   it('rejects tokenized urls from third-party qr generation', () => {
     expect(isPrivateQrPayloadForThirdPartyQr('https://dayof.love/rsvp?token=guest-token-1')).toBe(true);
     expect(isPrivateQrPayloadForThirdPartyQr('https://dayof.love/guest-contact/maya-and-leo?invite_token=guest-token-1')).toBe(true);
+    expect(isPrivateQrPayloadForThirdPartyQr('https://dayof.love/event/maya-and-leo#access_token=guest-token-1')).toBe(true);
+    expect(isPrivateQrPayloadForThirdPartyQr('https://dayof.love/event/maya-and-leo?JWT=guest-token-1')).toBe(true);
+    expect(isPrivateQrPayloadForThirdPartyQr('https://dayof.love/event/maya-and-leo?signature=guest-token-1')).toBe(true);
+    expect(isPrivateQrPayloadForThirdPartyQr('https://dayof.love/event/maya-and-leo?passcode=guest-token-1')).toBe(true);
     expect(isPrivateQrPayloadForThirdPartyQr('https://dayof.love/event/maya-and-leo')).toBe(false);
   });
 });
