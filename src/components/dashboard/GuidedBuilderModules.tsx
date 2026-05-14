@@ -643,6 +643,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                         {travelPortalReadiness.readyCount} of {travelPortalReadiness.steps.length} ready
                       </span>
                     </div>
+                    <p className="mt-3 text-xs text-text-tertiary">{travelPortalReadiness.summary}</p>
                     <div className="mt-4 grid gap-2 sm:grid-cols-2">
                       {travelPortalReadiness.steps.map((step) => (
                         <div key={step.id} className="rounded-lg border border-border-subtle bg-white p-3">

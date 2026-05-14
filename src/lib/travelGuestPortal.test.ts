@@ -20,7 +20,11 @@ describe('travelGuestPortal', () => {
     });
 
     expect(readiness.readyCount).toBe(7);
+    expect(readiness.needsInfoCount).toBe(0);
+    expect(readiness.emptyCount).toBe(0);
+    expect(readiness.plannedCount).toBe(0);
     expect(readiness.blockers).toEqual([]);
+    expect(readiness.summary).toBe('7 ready.');
     expect(readiness.steps.find((step) => step.id === 'guest-specific')?.status).toBe('ready');
   });
 
@@ -41,6 +45,7 @@ describe('travelGuestPortal', () => {
     expect(readiness.steps.find((step) => step.id === 'transport')?.status).toBe('needs-info');
     expect(readiness.steps.find((step) => step.id === 'local-context')?.status).toBe('empty');
     expect(readiness.blockers).toContain('Add airport, train, shuttle, or arrival guidance.');
+    expect(readiness.summary).toBe('0 ready · 4 need info · 2 empty · 1 planned. Still missing: Arrival guidance, Lodging, Local transport, Venue addresses, Weekend schedule, Local context.');
   });
 
   it('treats structured travel records as guest-ready even when the owner skips long-form summaries', () => {
@@ -60,6 +65,7 @@ describe('travelGuestPortal', () => {
     expect(readiness.steps.find((step) => step.id === 'transport')?.status).toBe('ready');
     expect(readiness.steps.find((step) => step.id === 'local-context')?.status).toBe('ready');
     expect(readiness.steps.find((step) => step.id === 'guest-specific')?.status).toBe('ready');
+    expect(readiness.summary).toBe('7 ready.');
   });
 
   it('keeps venue and schedule empty states clear before a couple has built those sections', () => {
@@ -72,6 +78,7 @@ describe('travelGuestPortal', () => {
 
     expect(readiness.steps.find((step) => step.id === 'venues')?.status).toBe('empty');
     expect(readiness.steps.find((step) => step.id === 'schedule')?.status).toBe('empty');
+    expect(readiness.summary).toBe('0 ready · 3 need info · 3 empty · 1 planned. Still missing: Arrival guidance, Lodging, Local transport, Venue addresses, Weekend schedule, Local context.');
   });
 
   it('builds a safe mobile journey from travel to RSVP to photo upload', () => {

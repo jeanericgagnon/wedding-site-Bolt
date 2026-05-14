@@ -40,6 +40,10 @@ export interface TravelGuestPortalStep {
 
 export interface TravelGuestPortalReadiness {
   readyCount: number;
+  needsInfoCount: number;
+  emptyCount: number;
+  plannedCount: number;
+  summary: string;
   steps: TravelGuestPortalStep[];
   blockers: string[];
 }
@@ -179,9 +183,22 @@ export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): 
   const blockers = steps
     .filter((step) => step.status === 'needs-info')
     .map((step) => step.detail);
+  const readyCount = steps.filter((step) => step.status === 'ready').length;
+  const needsInfoCount = steps.filter((step) => step.status === 'needs-info').length;
+  const emptyCount = steps.filter((step) => step.status === 'empty').length;
+  const plannedCount = steps.filter((step) => step.status === 'planned').length;
+  const missingLabels = steps
+    .filter((step) => step.status === 'needs-info' || step.status === 'empty')
+    .map((step) => step.label);
 
   return {
-    readyCount: steps.filter((step) => step.status === 'ready').length,
+    readyCount,
+    needsInfoCount,
+    emptyCount,
+    plannedCount,
+    summary: missingLabels.length > 0
+      ? `${readyCount} ready · ${needsInfoCount} need info · ${emptyCount} empty${plannedCount > 0 ? ` · ${plannedCount} planned` : ''}. Still missing: ${missingLabels.join(', ')}.`
+      : `${readyCount} ready${plannedCount > 0 ? ` · ${plannedCount} planned` : ''}.`,
     steps,
     blockers,
   };
