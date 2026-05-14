@@ -12,7 +12,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
             { id: 'collection', label: 'Collection', detail: '12 uploads across 1 active album, including 1 video.', status: 'ready' },
             { id: 'curation', label: 'Curation', detail: '3 curated picks and 6 slideshow frames are ready for recap review.', status: 'ready' },
             { id: 'sharing', label: 'Sharing', detail: 'Recap is private-link ready with 3 curated picks, including 1 story pick.', status: 'ready' },
-            { id: 'handoff', label: 'Handoff', detail: 'Owner handoff export is ready from 12 reviewed uploads.', status: 'ready' },
+            { id: 'handoff', label: 'Handoff', detail: 'Owner handoff export and full-resolution download are ready from 12 reviewed uploads.', status: 'ready' },
           ],
           steps: [
             { id: 'guest-hub', label: 'No-app guest hub', detail: '4 guest actions enabled from the QR hub.', status: 'ready' },
@@ -34,6 +34,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
     expect(screen.getByText('Sharing')).toBeInTheDocument();
     expect(screen.getByText('12 uploads across 1 active album, including 1 video.')).toBeInTheDocument();
     expect(screen.getByText('Recap is private-link ready with 3 curated picks, including 1 story pick.')).toBeInTheDocument();
+    expect(screen.getByText('Owner handoff export and full-resolution download are ready from 12 reviewed uploads.')).toBeInTheDocument();
     expect(screen.getByText('Photo upload links')).toBeInTheDocument();
     expect(screen.getByText('Guest recap')).toBeInTheDocument();
   });

@@ -100,7 +100,7 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
       id: 'handoff',
       label: 'Handoff',
       detail: handoffExportReady
-        ? `Owner handoff export is ready from ${countLabel(input.uploadCount, 'reviewed upload')}${input.guestProspectCount > 0 ? `, with ${countLabel(input.guestProspectCount, 'guest opt-in')} saved for follow-up.` : '.'}`
+        ? `Owner handoff export and full-resolution download are ready from ${countLabel(input.uploadCount, 'reviewed upload')}${input.guestProspectCount > 0 ? `, with ${countLabel(input.guestProspectCount, 'guest opt-in')} saved for follow-up.` : '.'}`
         : needsReview
           ? 'Review flagged uploads before relying on owner handoff exports or full-resolution jobs.'
           : hasUploads
