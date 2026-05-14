@@ -63,6 +63,7 @@ type GuestHubLinkAccessCard = {
   actionSummaryLabel?: string | null;
   coreActionCoverageLabel?: string | null;
   coreActionSummaryLabel?: string | null;
+  mainGapLabel?: string | null;
 };
 
 type TravelGuestJourneyStep = {
@@ -345,6 +346,9 @@ export function EventHubLiveContent({
                           )}
                           {linkAccessCard.coreActionSummaryLabel && (
                             <p className="mt-1 text-xs leading-5 text-[#6f5843]">{linkAccessCard.coreActionSummaryLabel}</p>
+                          )}
+                          {linkAccessCard.mainGapLabel && (
+                            <p className="mt-1 text-xs leading-5 text-[#8b6f53]">{linkAccessCard.mainGapLabel}</p>
                           )}
                         </div>
                       )}

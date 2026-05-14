@@ -88,4 +88,16 @@ describe('day-of web mode readiness', () => {
       'Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are unlocked from it: RSVP, Schedule, Directions and travel, and Photo upload. Core day-of coverage from this link is ready: RSVP, Schedule, Directions and travel, and Photo upload.'
     );
   });
+
+  it('calls out the main core-day-of gap when link visibility is connected but coverage is partial', () => {
+    const board = buildDayOfHubStatusBoard({
+      enabledActionIds: ['rsvp', 'travel'],
+      hasPoorNetworkFallback: true,
+      privateEventVisibilityConnected: true,
+    });
+
+    expect(board.items.find((item) => item.id === 'link-access')?.detail).toBe(
+      'Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are unlocked from it: RSVP and Directions and travel. Core day-of coverage from this link is 2 of 4 ready. Main gap: Schedule. Still missing: Schedule, Photo upload.'
+    );
+  });
 });

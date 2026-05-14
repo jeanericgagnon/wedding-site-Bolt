@@ -65,6 +65,7 @@ export type GuestHubLinkAccessCard = {
   actionSummaryLabel: string | null;
   coreActionCoverageLabel: string | null;
   coreActionSummaryLabel: string | null;
+  mainGapLabel: string | null;
 };
 
 const coreGuestHubActionIds: GuestHubActionId[] = ['rsvp', 'schedule', 'travel', 'photos'];
@@ -188,6 +189,9 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
   const coreActionSummaryLabel = missingCoreActionIds.length > 0
     ? `Still missing from this link: ${summarizeGuestHubActions(missingCoreActionIds.map((id) => ({ id })))}.`
     : 'This link covers RSVP, timing, travel, and photo follow-through.';
+  const mainGapLabel = missingCoreActionIds.length > 0
+    ? `Main gap: ${actionCount === 0 ? 'Turn on RSVP, schedule, travel, and photo upload' : `Add ${summarizeGuestHubActions(missingCoreActionIds.map((id) => ({ id })))} to this link`}.`
+    : null;
   if (input.hasGuestInviteToken) {
     return {
       title: 'Private guest link',
@@ -198,6 +202,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
       actionSummaryLabel,
       coreActionCoverageLabel,
       coreActionSummaryLabel,
+      mainGapLabel,
     };
   }
 
@@ -211,6 +216,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
       actionSummaryLabel,
       coreActionCoverageLabel,
       coreActionSummaryLabel,
+      mainGapLabel,
     };
   }
 
@@ -223,5 +229,6 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
     actionSummaryLabel,
     coreActionCoverageLabel,
     coreActionSummaryLabel,
+    mainGapLabel,
   };
 }

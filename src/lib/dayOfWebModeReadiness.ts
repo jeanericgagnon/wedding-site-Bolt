@@ -232,7 +232,7 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
       label: 'Private event visibility',
       detail: input.privateEventVisibilityConnected
         ? input.enabledActionIds.length > 0
-          ? `Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are unlocked from it: ${summarizeDayOfActions(input.enabledActionIds)}. ${readyCoreActionIds.length === coreDayOfActionIds.length ? `Core day-of coverage from this link is ready: ${summarizeDayOfActions(readyCoreActionIds)}.` : readyCoreActionIds.length > 0 ? `Core day-of coverage from this link is ${readyCoreActionIds.length} of ${coreDayOfActionIds.length} ready. Still missing: ${missingCoreActionLabels.join(', ')}.` : 'Core day-of coverage is still missing from this link.'}`
+          ? `Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are unlocked from it: ${summarizeDayOfActions(input.enabledActionIds)}. ${readyCoreActionIds.length === coreDayOfActionIds.length ? `Core day-of coverage from this link is ready: ${summarizeDayOfActions(readyCoreActionIds)}.` : readyCoreActionIds.length > 0 ? `Core day-of coverage from this link is ${readyCoreActionIds.length} of ${coreDayOfActionIds.length} ready. Main gap: ${missingCoreActionLabels[0]}. Still missing: ${missingCoreActionLabels.join(', ')}.` : 'Core day-of coverage is still missing from this link. Main gap: RSVP.'}`
           : 'Guests can tell whether this hub link is public, invite-only, or guest-specific before they rely on it.'
         : 'Guests still need to infer whether this hub link is public or private.',
       state: input.privateEventVisibilityConnected ? 'ready' : 'planned',
