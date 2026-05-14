@@ -270,6 +270,7 @@ function GuestDrawerDetails({
               {visibleEventCount > 0 ? ` · ${visibleEventCount} visible event${visibleEventCount === 1 ? '' : 's'}` : ''}
               {hiddenEventCount > 0 ? ` · ${hiddenEventCount} hidden event${hiddenEventCount === 1 ? '' : 's'}` : ''}
             </p>
+            <p className="text-xs font-medium text-text-secondary">{visibilityPreview.routeReadinessLabel}</p>
             <p className="text-xs text-text-tertiary">{visibilityPreview.pathCoverageSummary}</p>
           </div>
         )}

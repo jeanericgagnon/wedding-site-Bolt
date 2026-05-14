@@ -49,6 +49,7 @@ export interface GuestVisibilityPreview {
   bannerLabel: string;
   accessSummary: string;
   accessDetail: string;
+  routeReadinessLabel: string;
   pathCoverageSummary: string;
   visibleEvents: VisibilityPreviewEvent[];
   hiddenEvents: VisibilityPreviewEvent[];
@@ -127,6 +128,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
 
   const totalEventCount = hasStructuredEvents ? input.events.length : visibleEvents.length + hiddenEvents.length;
   const hasPrivateInviteAccess = Boolean(input.guest.inviteToken);
+  const hasPublicShellPreview = Boolean(input.publicSiteSlug);
 
   const links: GuestVisibilityPreviewLink[] = [];
   if (hasPrivateInviteAccess) {
@@ -215,6 +217,15 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
     : input.publicSiteSlug
       ? 'Public shell preview is ready, but this guest still has no visible private event access.'
       : 'No guest-facing preview path is fully ready yet.';
+  const routeReadinessLabel = visibleEvents.length > 0
+    ? hasPrivateInviteAccess
+      ? 'Private guest path ready'
+      : hasPublicShellPreview
+        ? 'Public shell plus visible events'
+        : 'Visible events without private link'
+    : hasPublicShellPreview
+      ? 'Public shell only'
+      : 'No guest path ready';
 
   return {
     guestLabel,
@@ -225,6 +236,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
     accessDetail: visibleEvents.length > 0
       ? `${eventState.summary}: ${guestLabel} should see ${formatEventList(visibleEvents)}.`
       : `${guestLabel} needs at least one event invitation before this guest path is ready.`,
+    routeReadinessLabel,
     pathCoverageSummary,
     visibleEvents,
     hiddenEvents,
