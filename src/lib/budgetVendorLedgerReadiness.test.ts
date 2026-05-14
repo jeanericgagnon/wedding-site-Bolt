@@ -275,6 +275,8 @@ describe('budget vendor ledger readiness', () => {
     });
 
     expect(reconciliation.status).toBe('needs-review');
+    expect(reconciliation.contactReadyCount).toBe(1);
+    expect(reconciliation.dueDateReadyCount).toBe(1);
     expect(reconciliation.fileReadyCount).toBe(1);
     expect(reconciliation.milestoneReadyCount).toBe(1);
     expect(reconciliation.mismatchedCount).toBe(1);

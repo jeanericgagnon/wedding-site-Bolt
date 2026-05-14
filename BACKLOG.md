@@ -512,6 +512,7 @@ Execution rule for this section:
    - this batch shipped: the combined budget/vendor ledger CSV now also preserves vendor contact name, website, and document label so planner exports keep the same routing and document context already present in the dashboard and vendor-only export
    - this batch shipped: vendor reconciliation now flags open balances that still have no saved email or phone, so planner handoff review catches payment follow-through blockers instead of treating missing contact data like a separate, easy-to-miss surface
    - this batch shipped: vendor reconciliation now also flags open balances that still have no saved due date, so planner handoff review catches payment-timing gaps instead of leaving “money owed, timing unknown” buried outside the reconciliation surface
+   - this batch shipped: reconciliation summary cards now expose contact-ready and due-date-ready counts alongside files and milestones, so the owner/planner readback reflects the newer payment follow-through blockers instead of keeping them hidden only inside per-vendor issue chips
 
 13. `ACTIVE`: website and invite analytics
    - this batch shipped: owner overview analytics now read from the real `guest_hub_events` table instead of review-model-only placeholders, with a 30-day aggregate summary for website visits, private invite-link opens, QR entries, recap views, and guest-hub action clicks

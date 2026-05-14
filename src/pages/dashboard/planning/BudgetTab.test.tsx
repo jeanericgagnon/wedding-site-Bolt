@@ -71,6 +71,8 @@ describe('BudgetTab', () => {
     expect(screen.getByText('Budget and vendor ledger')).toBeInTheDocument();
     expect(screen.getByText('Vendor balance reconciliation')).toBeInTheDocument();
     expect(screen.getByText(/Totals, files, and milestones are lined up/i)).toBeInTheDocument();
+    expect(screen.getByText('Contact ready')).toBeInTheDocument();
+    expect(screen.getByText('Due dates saved')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Export ledger/i })).toBeEnabled();
     expect(screen.getByRole('button', { name: /Add expense/i })).toBeDisabled();
     expect(screen.getByDisplayValue('12000')).toBeDisabled();

@@ -127,6 +127,8 @@ export interface BudgetVendorReconciliation {
   status: 'ready' | 'needs-review' | 'empty';
   summary: string;
   mismatchedCount: number;
+  contactReadyCount: number;
+  dueDateReadyCount: number;
   milestoneReadyCount: number;
   fileReadyCount: number;
   rows: BudgetVendorReconciliationRow[];
@@ -494,6 +496,8 @@ export function buildBudgetVendorReconciliation(input: {
       status: 'empty',
       summary: 'Add vendors before reconciling contracts and payment schedules.',
       mismatchedCount: 0,
+      contactReadyCount: 0,
+      dueDateReadyCount: 0,
       milestoneReadyCount: 0,
       fileReadyCount: 0,
       rows: [],
@@ -543,6 +547,11 @@ export function buildBudgetVendorReconciliation(input: {
   }).sort((a, b) => b.issueCount - a.issueCount || b.contractGap - a.contractGap || a.vendorName.localeCompare(b.vendorName));
 
   const mismatchedCount = rows.filter((row) => row.issueCount > 0).length;
+  const contactReadyCount = input.vendors.filter((vendor) => Boolean(vendor.email || vendor.phone)).length;
+  const dueDateReadyCount = input.vendors.filter((vendor) => {
+    const openBalance = vendor.balance_due != null ? money(vendor.balance_due) : Math.max(0, money(vendor.contract_total) - money(vendor.amount_paid));
+    return openBalance <= 0 || Boolean(vendor.next_payment_due);
+  }).length;
   const milestoneReadyCount = rows.filter((row) => row.milestoneCount > 0).length;
   const fileReadyCount = rows.filter((row) => row.fileCount > 0).length;
 
@@ -552,6 +561,8 @@ export function buildBudgetVendorReconciliation(input: {
       ? `${mismatchedCount} vendor ledger row${mismatchedCount === 1 ? '' : 's'} still need contract, milestone, or balance reconciliation.`
       : 'Vendor contracts, files, and payment milestones line up with linked budget rows.',
     mismatchedCount,
+    contactReadyCount,
+    dueDateReadyCount,
     milestoneReadyCount,
     fileReadyCount,
     rows,
