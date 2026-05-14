@@ -130,6 +130,13 @@ export function GuestRsvpSettingsView({
   const requiredQuestionCount = safeRsvpQuestions.filter((question) => question.required).length;
   const eventSpecificQuestionCount = safeRsvpQuestions.filter((question) => question.appliesTo === 'ceremony' || question.appliesTo === 'reception').length;
   const choiceQuestionCount = safeRsvpQuestions.filter((question) => question.type === 'single_choice' || question.type === 'multi_choice').length;
+  const templateCoverageTotal = safeRsvpQuestionTemplateCoverage.length || RSVP_QUESTION_TEMPLATES.length;
+  const templateCoverageRate = templateCoverageTotal > 0
+    ? Math.round((addedTemplateCount / templateCoverageTotal) * 100)
+    : 0;
+  const mealChoiceReadinessRate = rsvpMealEnabled
+    ? (safeRsvpMealOptions.length >= 2 ? 100 : Math.round((safeRsvpMealOptions.length / 2) * 100))
+    : null;
   const markRsvpConfigDirty = () => onSetRsvpConfigDirty(true);
   const rsvpAccessSummary = safeRsvpAccessSelection.primaryMode === 'private_link'
     ? safeRsvpAccessSelection.allowNameLookupBackup
@@ -352,8 +359,9 @@ export function GuestRsvpSettingsView({
                 <div className="rounded-md border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Templates added</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">
-                    {addedTemplateCount} of {safeRsvpQuestionTemplateCoverage.length || RSVP_QUESTION_TEMPLATES.length}
+                    {addedTemplateCount} of {templateCoverageTotal}
                   </p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">{templateCoverageRate}% coverage</p>
                 </div>
                 <div className="rounded-md border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Still available</p>
@@ -379,6 +387,9 @@ export function GuestRsvpSettingsView({
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Meal choices</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">
                     {rsvpMealEnabled ? `${safeRsvpMealOptions.length} saved` : 'Optional'}
+                  </p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">
+                    {mealChoiceReadinessRate == null ? 'Planned until meal collection is on' : `${mealChoiceReadinessRate}% ready`}
                   </p>
                 </div>
               </div>
