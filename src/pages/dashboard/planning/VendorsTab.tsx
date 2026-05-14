@@ -95,6 +95,7 @@ function VendorForm({ initial, onSave, onCancel }: {
   onSave: (v: Partial<PlanningVendor>) => Promise<void>;
   onCancel: () => void;
 }) {
+  const fieldId = (name: string) => `vendor-form-${name}`;
   const [form, setForm] = useState({
     vendor_type: initial?.vendor_type ?? '',
     name: initial?.name ?? '',
@@ -135,8 +136,9 @@ function VendorForm({ initial, onSave, onCancel }: {
     <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-border-subtle bg-surface-subtle p-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Type *</label>
+          <label htmlFor={fieldId('type')} className="block text-xs font-medium text-text-secondary mb-1">Type *</label>
           <select
+            id={fieldId('type')}
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.vendor_type}
             onChange={e => setForm(f => ({ ...f, vendor_type: e.target.value }))}
@@ -147,8 +149,9 @@ function VendorForm({ initial, onSave, onCancel }: {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Business Name *</label>
+          <label htmlFor={fieldId('business-name')} className="block text-xs font-medium text-text-secondary mb-1">Business Name *</label>
           <input
+            id={fieldId('business-name')}
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
@@ -157,8 +160,9 @@ function VendorForm({ initial, onSave, onCancel }: {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Contact Name</label>
+          <label htmlFor={fieldId('contact-name')} className="block text-xs font-medium text-text-secondary mb-1">Contact Name</label>
           <input
+            id={fieldId('contact-name')}
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.contact_name}
             onChange={e => setForm(f => ({ ...f, contact_name: e.target.value }))}
@@ -166,8 +170,9 @@ function VendorForm({ initial, onSave, onCancel }: {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Email</label>
+          <label htmlFor={fieldId('email')} className="block text-xs font-medium text-text-secondary mb-1">Email</label>
           <input
+            id={fieldId('email')}
             type="email"
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.email}
@@ -176,8 +181,9 @@ function VendorForm({ initial, onSave, onCancel }: {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Phone</label>
+          <label htmlFor={fieldId('phone')} className="block text-xs font-medium text-text-secondary mb-1">Phone</label>
           <input
+            id={fieldId('phone')}
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.phone}
             onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
@@ -185,8 +191,9 @@ function VendorForm({ initial, onSave, onCancel }: {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Website</label>
+          <label htmlFor={fieldId('website')} className="block text-xs font-medium text-text-secondary mb-1">Website</label>
           <input
+            id={fieldId('website')}
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.website}
             onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
@@ -194,8 +201,9 @@ function VendorForm({ initial, onSave, onCancel }: {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Contract Total ($)</label>
+          <label htmlFor={fieldId('contract-total')} className="block text-xs font-medium text-text-secondary mb-1">Contract Total ($)</label>
           <input
+            id={fieldId('contract-total')}
             type="number"
             min="0"
             step="0.01"
@@ -205,8 +213,9 @@ function VendorForm({ initial, onSave, onCancel }: {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Amount Paid ($)</label>
+          <label htmlFor={fieldId('amount-paid')} className="block text-xs font-medium text-text-secondary mb-1">Amount Paid ($)</label>
           <input
+            id={fieldId('amount-paid')}
             type="number"
             min="0"
             step="0.01"
@@ -216,8 +225,9 @@ function VendorForm({ initial, onSave, onCancel }: {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Next Payment Due</label>
+          <label htmlFor={fieldId('next-payment-due')} className="block text-xs font-medium text-text-secondary mb-1">Next Payment Due</label>
           <input
+            id={fieldId('next-payment-due')}
             type="date"
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.next_payment_due ?? ''}
@@ -225,8 +235,9 @@ function VendorForm({ initial, onSave, onCancel }: {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Document Label</label>
+          <label htmlFor={fieldId('document-label')} className="block text-xs font-medium text-text-secondary mb-1">Document Label</label>
           <input
+            id={fieldId('document-label')}
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.document_label}
             onChange={e => setForm(f => ({ ...f, document_label: e.target.value }))}
@@ -234,8 +245,9 @@ function VendorForm({ initial, onSave, onCancel }: {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Document Link</label>
+          <label htmlFor={fieldId('document-link')} className="block text-xs font-medium text-text-secondary mb-1">Document Link</label>
           <input
+            id={fieldId('document-link')}
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.document_url}
             onChange={e => setForm(f => ({ ...f, document_url: e.target.value }))}
@@ -243,8 +255,9 @@ function VendorForm({ initial, onSave, onCancel }: {
           />
         </div>
         <div className="sm:col-span-2">
-          <label className="block text-xs font-medium text-text-secondary mb-1">Notes</label>
+          <label htmlFor={fieldId('notes')} className="block text-xs font-medium text-text-secondary mb-1">Notes</label>
           <textarea
+            id={fieldId('notes')}
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             value={form.notes}
             onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
@@ -253,8 +266,9 @@ function VendorForm({ initial, onSave, onCancel }: {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Internal rating</label>
+          <label htmlFor={fieldId('internal-rating')} className="block text-xs font-medium text-text-secondary mb-1">Internal rating</label>
           <select
+            id={fieldId('internal-rating')}
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.internal_rating}
             onChange={e => setForm(f => ({ ...f, internal_rating: Number(e.target.value) }))}
@@ -264,8 +278,9 @@ function VendorForm({ initial, onSave, onCancel }: {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Rating status</label>
+          <label htmlFor={fieldId('rating-status')} className="block text-xs font-medium text-text-secondary mb-1">Rating status</label>
           <select
+            id={fieldId('rating-status')}
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.rating_status}
             onChange={e => setForm(f => ({ ...f, rating_status: e.target.value }))}
@@ -274,8 +289,9 @@ function VendorForm({ initial, onSave, onCancel }: {
           </select>
         </div>
         <div className="sm:col-span-2">
-          <label className="block text-xs font-medium text-text-secondary mb-1">Private rating notes</label>
+          <label htmlFor={fieldId('rating-notes')} className="block text-xs font-medium text-text-secondary mb-1">Private rating notes</label>
           <textarea
+            id={fieldId('rating-notes')}
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             value={form.rating_notes}
             onChange={e => setForm(f => ({ ...f, rating_notes: e.target.value }))}
@@ -589,10 +605,10 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
                         >
                           {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                         </button>
-                        <button onClick={() => canEdit && setEditingVendor(vendor)} disabled={!canEdit} className="p-1.5 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-40">
+                        <button aria-label={`Edit vendor ${vendor.name}`} onClick={() => canEdit && setEditingVendor(vendor)} disabled={!canEdit} className="p-1.5 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-40">
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => canEdit && onDelete(vendor.id)} disabled={!canEdit} className="p-1.5 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors disabled:opacity-40">
+                        <button aria-label={`Delete vendor ${vendor.name}`} onClick={() => canEdit && onDelete(vendor.id)} disabled={!canEdit} className="p-1.5 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors disabled:opacity-40">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>

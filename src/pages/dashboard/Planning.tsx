@@ -25,6 +25,7 @@ import { PlanningDashboardTabContent } from './planning/PlanningDashboardTabCont
 import { usePlanningDashboardActions } from './planning/usePlanningDashboardActions';
 import { usePlanningNameChangeWorkspace } from './planning/usePlanningNameChangeWorkspace';
 import { usePlanningStarterSuiteActions } from './planning/usePlanningStarterSuiteActions';
+import { readDemoPlanningState, writeDemoPlanningState } from './planning/planningDemoState';
 
 type Tab = 'overview' | 'tasks' | 'budget' | 'payments' | 'vendors' | 'songs' | 'addresses' | 'nameChange';
 
@@ -134,15 +135,27 @@ export const DashboardPlanning: React.FC = () => {
     writePlannerAccessRole('planning', siteId, planningRole);
   }, [siteId, planningRole]);
 
+  useEffect(() => {
+    if (!isDemoMode || loading) return;
+    writeDemoPlanningState({
+      totalBudget,
+      budgetItems,
+      vendors,
+      vendorMeta,
+    });
+  }, [isDemoMode, loading, totalBudget, budgetItems, vendors, vendorMeta]);
+
   async function loadAll() {
     try {
       if (isDemoMode) {
+        const demoPlanningState = readDemoPlanningState();
         setSiteId(demoWeddingSite.id);
         setWeddingDate(demoWeddingSite.wedding_date);
         setTasks(demoPlanningTasks as unknown as PlanningTask[]);
-        setBudgetItems(demoBudgetItems as unknown as PlanningBudgetItem[]);
-        setVendors(demoVendors as unknown as PlanningVendor[]);
-        setTotalBudget(30000);
+        setBudgetItems(demoPlanningState.budgetItems);
+        setVendors(demoPlanningState.vendors);
+        setTotalBudget(demoPlanningState.totalBudget);
+        setVendorMeta(demoPlanningState.vendorMeta);
         setSeatingReadiness({ attending: 68, seated: 52, unassigned: 16 });
         setGuestCount(demoGuests.length);
         setVenueName(demoWeddingSite.venue_name);

@@ -446,6 +446,10 @@ Execution rule for this section:
    - keep extending source-of-truth meal/dietary fields wherever real RSVP schemas still flatten too much detail upstream
 
 12. `ACTIVE`: budget and vendor ledger
+   - this batch shipped: demo/local planning ledger state now persists total budget, budget rows, vendors, and vendor meta through a shared saved planning snapshot instead of resetting on reload, so local owner CRUD proof can read back the same ledger after browser refresh
+   - this batch shipped: budget and vendor entry forms now have explicit label/input wiring plus named edit/delete controls, which makes the planning ledger UI accessible and lets the browser proof target real owner actions instead of brittle positional selectors
+   - this batch shipped: `proof:v1:budget-vendor-ledger` now gives this lane a dedicated acceptance gate with focused model tests, build integrity, and a real browser add/edit/delete continuity run across page reloads for both vendor rows and budget rows
+   - this batch shipped: focused proof is green for persisted demo planning state, malformed-storage fallback safety, and browser CRUD/readback continuity across reloads for vendor and budget ledger rows
    - add live owner add/edit/delete proof with cleanup for vendor/payment/budget rows
    - prove collaborator/planner allowed-view readback and guest non-exposure for financial details
    - this batch shipped: budget and vendor tabs now show explicit owner/planner-only financial readback copy when editing is disabled, so read-only collaborator roles keep visibility without pretending they can mutate the ledger

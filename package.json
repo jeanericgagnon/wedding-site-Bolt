@@ -57,6 +57,7 @@
     "proof:v1:guest-language-continuity": "node scripts/v1-proof-guest-language-continuity.mjs",
     "proof:v1:travel-guest-portal": "node scripts/v1-proof-travel-guest-portal.mjs",
     "proof:v1:wedding-identity-exports": "node scripts/v1-proof-wedding-identity-exports.mjs",
+    "proof:v1:budget-vendor-ledger": "node scripts/v1-proof-budget-vendor-ledger.mjs",
     "proof:v1:client-rls-matrix": "node scripts/v1-proof-client-rls-matrix.mjs",
     "proof:v1:client-write-inventory": "node scripts/v1-proof-client-write-inventory.mjs",
     "proof:v1:ast-security": "node scripts/v1-proof-ast-security.mjs",

@@ -44,6 +44,7 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
   onSave: (item: Partial<PlanningBudgetItem>) => Promise<void>;
   onCancel: () => void;
 }) {
+  const fieldId = (name: string) => `budget-form-${name}`;
   const [form, setForm] = useState({
     category: initial?.category ?? '',
     item_name: initial?.item_name ?? '',
@@ -74,8 +75,9 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
     <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-border-subtle bg-surface-subtle p-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Category *</label>
+          <label htmlFor={fieldId('category')} className="block text-xs font-medium text-text-secondary mb-1">Category *</label>
           <select
+            id={fieldId('category')}
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.category}
             onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
@@ -86,8 +88,9 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Item Name *</label>
+          <label htmlFor={fieldId('item-name')} className="block text-xs font-medium text-text-secondary mb-1">Item Name *</label>
           <input
+            id={fieldId('item-name')}
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.item_name}
             onChange={e => setForm(f => ({ ...f, item_name: e.target.value }))}
@@ -96,8 +99,9 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Estimated ($)</label>
+          <label htmlFor={fieldId('estimated')} className="block text-xs font-medium text-text-secondary mb-1">Estimated ($)</label>
           <input
+            id={fieldId('estimated')}
             type="number"
             min="0"
             step="0.01"
@@ -107,8 +111,9 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Actual ($)</label>
+          <label htmlFor={fieldId('actual')} className="block text-xs font-medium text-text-secondary mb-1">Actual ($)</label>
           <input
+            id={fieldId('actual')}
             type="number"
             min="0"
             step="0.01"
@@ -118,8 +123,9 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Paid ($)</label>
+          <label htmlFor={fieldId('paid')} className="block text-xs font-medium text-text-secondary mb-1">Paid ($)</label>
           <input
+            id={fieldId('paid')}
             type="number"
             min="0"
             step="0.01"
@@ -129,8 +135,9 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-text-secondary mb-1">Payment Due</label>
+          <label htmlFor={fieldId('due-date')} className="block text-xs font-medium text-text-secondary mb-1">Payment Due</label>
           <input
+            id={fieldId('due-date')}
             type="date"
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.due_date ?? ''}
@@ -139,8 +146,9 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
         </div>
         {vendors.length > 0 && (
           <div>
-            <label className="block text-xs font-medium text-text-secondary mb-1">Vendor</label>
+            <label htmlFor={fieldId('vendor')} className="block text-xs font-medium text-text-secondary mb-1">Vendor</label>
             <select
+              id={fieldId('vendor')}
               className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               value={form.vendor_id}
               onChange={e => setForm(f => ({ ...f, vendor_id: e.target.value }))}
@@ -151,8 +159,9 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
           </div>
         )}
         <div className="sm:col-span-2">
-          <label className="block text-xs font-medium text-text-secondary mb-1">Notes</label>
+          <label htmlFor={fieldId('notes')} className="block text-xs font-medium text-text-secondary mb-1">Notes</label>
           <input
+            id={fieldId('notes')}
             className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
             value={form.notes}
             onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
@@ -538,10 +547,10 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
                   <td className="px-3 py-2 text-right text-success">{fmt(item.paid_amount)}</td>
                   <td className="px-3 py-2">
                     <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => canEdit && setEditingItem(item)} disabled={!canEdit} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-40">
+                      <button aria-label={`Edit budget item ${item.item_name}`} onClick={() => canEdit && setEditingItem(item)} disabled={!canEdit} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-40">
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => canEdit && onDelete(item.id)} disabled={!canEdit} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors disabled:opacity-40">
+                      <button aria-label={`Delete budget item ${item.item_name}`} onClick={() => canEdit && onDelete(item.id)} disabled={!canEdit} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors disabled:opacity-40">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -589,10 +598,10 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
                             <span className="text-success hidden sm:block">{fmt(item.paid_amount)}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <button onClick={() => canEdit && setEditingItem(item)} disabled={!canEdit} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-40">
+                            <button aria-label={`Edit budget item ${item.item_name}`} onClick={() => canEdit && setEditingItem(item)} disabled={!canEdit} className="p-1 hover:bg-surface-subtle rounded text-text-tertiary hover:text-text-primary transition-colors disabled:opacity-40">
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
-                            <button onClick={() => canEdit && onDelete(item.id)} disabled={!canEdit} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors disabled:opacity-40">
+                            <button aria-label={`Delete budget item ${item.item_name}`} onClick={() => canEdit && onDelete(item.id)} disabled={!canEdit} className="p-1 hover:bg-error/10 rounded text-text-tertiary hover:text-error transition-colors disabled:opacity-40">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
