@@ -999,6 +999,7 @@ export interface MessageHistorySummaryPanelsProps {
     sent: number;
   };
   channelBreakdown: Record<'email' | 'sms', {
+    active: number;
     failed: number;
     partial: number;
     scheduled: number;
@@ -1106,7 +1107,7 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
             <p className="text-xs text-text-secondary">{channelBreakdown[channel].targeted} recipients</p>
           </div>
           <p className="text-xs text-text-secondary">
-            Sent {channelBreakdown[channel].sent} · Scheduled {channelBreakdown[channel].scheduled} · Needs follow-up {channelBreakdown[channel].partial} · Needs review {channelBreakdown[channel].failed}
+            Sent {channelBreakdown[channel].sent} · Active {channelBreakdown[channel].active} · Scheduled {channelBreakdown[channel].scheduled} · Needs follow-up {channelBreakdown[channel].partial} · Needs review {channelBreakdown[channel].failed}
           </p>
         </div>
       ))}

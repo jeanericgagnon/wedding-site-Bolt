@@ -106,12 +106,13 @@ export function buildMessageEngagementSummary(messages: Message[]) {
 
 export function buildChannelBreakdown(messages: Message[]) {
   const init = {
-    email: { sent: 0, scheduled: 0, failed: 0, partial: 0, targeted: 0 },
-    sms: { sent: 0, scheduled: 0, failed: 0, partial: 0, targeted: 0 },
+    email: { sent: 0, active: 0, scheduled: 0, failed: 0, partial: 0, targeted: 0 },
+    sms: { sent: 0, active: 0, scheduled: 0, failed: 0, partial: 0, targeted: 0 },
   };
   messages.forEach((message) => {
     const channel = message.channel === 'sms' ? 'sms' : 'email';
     if (message.status === 'sent') init[channel].sent += 1;
+    if (message.status === 'queued' || message.status === 'sending') init[channel].active += 1;
     if (message.status === 'scheduled') init[channel].scheduled += 1;
     if (message.status === 'failed') init[channel].failed += 1;
     if (message.status === 'partial') init[channel].partial += 1;

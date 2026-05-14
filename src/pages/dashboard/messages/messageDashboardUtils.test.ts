@@ -266,8 +266,8 @@ describe('messageDashboardUtils', () => {
     });
 
     expect(buildChannelBreakdown(messages)).toEqual({
-      email: { sent: 1, scheduled: 1, failed: 0, partial: 0, targeted: 16 },
-      sms: { sent: 0, scheduled: 0, failed: 1, partial: 1, targeted: 7 },
+      email: { sent: 1, active: 1, scheduled: 1, failed: 0, partial: 0, targeted: 16 },
+      sms: { sent: 0, active: 0, scheduled: 0, failed: 1, partial: 1, targeted: 7 },
     });
 
     expect(buildHistoryStatusCounts(messages)).toEqual({
