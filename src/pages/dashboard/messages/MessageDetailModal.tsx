@@ -12,6 +12,7 @@ import {
   getCampaignName,
   getCampaignTypeLabel,
   getCustomerDeliveryReason,
+  getFollowThroughFocusLabel,
   getMessageEngagementStats,
   getRecipientReviewPlanSummary,
   getRecipientCount,
@@ -97,6 +98,11 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
   const reviewCoverageRate = targetedRecipients > 0 ? Math.round((Math.max(0, Number(message.failed_count ?? 0)) / targetedRecipients) * 100) : null;
   const contactCoverageRate = targetedRecipients > 0 ? Math.round((skippedCount / targetedRecipients) * 100) : null;
   const unreachedCoverageRate = targetedRecipients > 0 ? Math.round((unreachedCount / targetedRecipients) * 100) : null;
+  const followThroughFocusLabel = getFollowThroughFocusLabel({
+    failed: Math.max(0, Number(message.failed_count ?? 0)),
+    skipped: skippedCount,
+    unreached: unreachedCount,
+  });
   const openRate = deliveredRecipients > 0 && engagement.opened != null ? Math.round((engagement.opened / deliveredRecipients) * 100) : null;
   const clickRate = deliveredRecipients > 0 && engagement.clicked != null ? Math.round((engagement.clicked / deliveredRecipients) * 100) : null;
   const replyRate = deliveredRecipients > 0 && engagement.replied != null ? Math.round((engagement.replied / deliveredRecipients) * 100) : null;
@@ -198,6 +204,9 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
                     {deliveredCoverageRate}% delivered coverage · {reviewCoverageRate}% review coverage · {contactCoverageRate}% needs contact · {unreachedCoverageRate}% unreached
                   </span>
+                )}
+                {followThroughFocusLabel && (
+                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{followThroughFocusLabel}</span>
                 )}
                 {deliveredRecipients > 0 && openRate != null && clickRate != null && replyRate != null && (
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{openRate}% open · {clickRate}% click · {replyRate}% reply</span>

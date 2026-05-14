@@ -47,6 +47,7 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('67% delivered coverage · 17% review coverage · 17% needs contact · 0% unreached')).toBeInTheDocument();
     expect(screen.getByText('6 opened · 2 viewed · 3 clicked · 1 replied · 1 bounced')).toBeInTheDocument();
     expect(screen.getByText('1 recipient needs contact details · 0 not reached yet')).toBeInTheDocument();
+    expect(screen.getByText('Main cleanup: contact cleanup')).toBeInTheDocument();
     expect(screen.getByText('150% open · 75% click · 25% reply')).toBeInTheDocument();
   });
 
@@ -93,6 +94,7 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('9% review coverage')).toBeInTheDocument();
     expect(screen.getByText('9% needs contact')).toBeInTheDocument();
     expect(screen.getByText('9% unreached')).toBeInTheDocument();
+    expect(screen.getByText('Main cleanup: delivery review')).toBeInTheDocument();
     expect(screen.getByText('Needs review 1')).toBeInTheDocument();
     expect(screen.getByText('Needs contact 1')).toBeInTheDocument();
     expect(screen.getByText('Not reached 1')).toBeInTheDocument();
@@ -242,6 +244,7 @@ describe('MessageReachSnapshotCard', () => {
     expect(screen.getByText('10 delivered · 2 need review')).toBeInTheDocument();
     expect(screen.getByText('1 need contact details · 1 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('71% delivered coverage · 14% review coverage · 7% needs contact · 7% unreached')).toBeInTheDocument();
+    expect(screen.getByText('Main cleanup: delivery review')).toBeInTheDocument();
     expect(screen.getByText('Photo links ready')).toBeInTheDocument();
     expect(screen.getAllByText('3')).toHaveLength(2);
   });

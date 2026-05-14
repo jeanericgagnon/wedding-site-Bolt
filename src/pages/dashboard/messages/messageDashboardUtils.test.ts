@@ -23,6 +23,7 @@ import {
   getActiveCampaignThread,
   getCustomerDeliveryReason,
   getCustomerDeliveryBucket,
+  getFollowThroughFocusLabel,
   getRecipientExcludedGuestIds,
   getMessageEngagementStats,
   getRecipientRetryGuestIds,
@@ -210,6 +211,10 @@ describe('messageDashboardUtils', () => {
     expect(getRecipientExcludedGuestIds(eventMessage)).toEqual(['g3']);
     expect(getRecipientReviewPlanSummary(eventMessage)).toBe('next send targets 2 reviewed guests and excludes 1 guest still missing contact details');
     expect(describeRecipientReview(1)).toBe('1 recipient needs contact details');
+    expect(getFollowThroughFocusLabel({ failed: 1, skipped: 3, unreached: 2 })).toBe('Main cleanup: contact cleanup');
+    expect(getFollowThroughFocusLabel({ failed: 4, skipped: 1, unreached: 2 })).toBe('Main cleanup: delivery review');
+    expect(getFollowThroughFocusLabel({ failed: 0, skipped: 0, unreached: 2 })).toBe('Main cleanup: unreached guests');
+    expect(getFollowThroughFocusLabel({ failed: 0, skipped: 0, unreached: 0 })).toBeNull();
   });
 
   it('builds customer-safe delivery review buckets for failed and skipped recipients', () => {

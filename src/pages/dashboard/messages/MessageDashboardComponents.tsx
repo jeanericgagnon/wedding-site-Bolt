@@ -19,6 +19,7 @@ import {
   getCampaignName,
   getCampaignTypeLabel,
   getCustomerDeliveryReason,
+  getFollowThroughFocusLabel,
   getMessageEngagementStats,
   getRecipientCount,
   getSkippedCount,
@@ -231,6 +232,11 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
   const reviewCoverageRate = deliveryStats.targeted > 0 ? Math.round((deliveryStats.failed / deliveryStats.targeted) * 100) : null;
   const contactCoverageRate = deliveryStats.targeted > 0 ? Math.round((deliveryStats.skipped / deliveryStats.targeted) * 100) : null;
   const unreachedCoverageRate = deliveryStats.targeted > 0 ? Math.round((deliveryStats.unreached / deliveryStats.targeted) * 100) : null;
+  const followThroughFocusLabel = getFollowThroughFocusLabel({
+    failed: deliveryStats.failed,
+    skipped: deliveryStats.skipped,
+    unreached: deliveryStats.unreached,
+  });
 
   return (
   <Card variant="bordered" padding="lg" className="border-border-subtle overflow-hidden">
@@ -303,6 +309,9 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
               <p className="mt-1 text-xs text-text-tertiary">
                 {deliveredCoverageRate}% delivered coverage · {reviewCoverageRate}% review coverage · {contactCoverageRate}% needs contact · {unreachedCoverageRate}% unreached
               </p>
+            )}
+            {followThroughFocusLabel && (
+              <p className="mt-1 text-xs text-text-tertiary">{followThroughFocusLabel}</p>
             )}
           </>
         ) : (
@@ -1313,6 +1322,11 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                   const skippedRate = targeted > 0 ? Math.round((thread.skipped / targeted) * 100) : null;
                   const reviewRate = targeted > 0 ? Math.round((thread.failed / targeted) * 100) : null;
                   const unreachedRate = targeted > 0 ? Math.round((thread.unreached / targeted) * 100) : null;
+                  const focusLabel = getFollowThroughFocusLabel({
+                    failed: thread.failed,
+                    skipped: thread.skipped,
+                    unreached: thread.unreached,
+                  });
                   return (
                     <>
                 <p>{thread.delivered} delivered · {thread.failed} need review</p>
@@ -1325,6 +1339,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                     {thread.unreached} not reached yet
                   </p>
                 )}
+                {focusLabel && <p className="text-text-secondary">{focusLabel}</p>}
                 {thread.deliveredRecipients > 0 && <p className="text-text-secondary">{thread.openRate}% open · {thread.clickRate}% click · {thread.replyRate}% reply</p>}
                     </>
                   );
@@ -1382,6 +1397,19 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
           {activeThreadUnreachedRate != null && (
             <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
               {activeThreadUnreachedRate}% unreached
+            </span>
+          )}
+          {getFollowThroughFocusLabel({
+            failed: activeCampaignThread.failed,
+            skipped: activeCampaignThread.skipped,
+            unreached: activeCampaignThread.unreached,
+          }) && (
+            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+              {getFollowThroughFocusLabel({
+                failed: activeCampaignThread.failed,
+                skipped: activeCampaignThread.skipped,
+                unreached: activeCampaignThread.unreached,
+              })}
             </span>
           )}
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs review {activeCampaignThread.failed}</span>

@@ -215,6 +215,29 @@ export function buildDeliveryHealth(messages: Message[], deliveries: DeliveryRow
   return { successRate, failRate, skipped, skippedRate, overdueScheduled, retryBacklog, reviewBacklog };
 }
 
+export function getFollowThroughFocusLabel(input: {
+  failed: number;
+  skipped: number;
+  unreached: number;
+}): string | null {
+  const buckets = [
+    { key: 'failed', count: Math.max(0, input.failed), label: 'delivery review' },
+    { key: 'skipped', count: Math.max(0, input.skipped), label: 'contact cleanup' },
+    { key: 'unreached', count: Math.max(0, input.unreached), label: 'unreached guests' },
+  ].filter((bucket) => bucket.count > 0);
+
+  if (buckets.length === 0) return null;
+
+  buckets.sort((left, right) => {
+    if (right.count !== left.count) return right.count - left.count;
+    const priority = { skipped: 3, failed: 2, unreached: 1 } as const;
+    return priority[right.key as keyof typeof priority] - priority[left.key as keyof typeof priority];
+  });
+
+  const top = buckets[0];
+  return `Main cleanup: ${top.label}`;
+}
+
 export type CampaignThreadSummary = {
   key: string;
   name: string;
