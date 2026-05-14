@@ -52,6 +52,7 @@
     "proof:v1:canonical-smoke": "node scripts/v1-proof-canonical-smoke.mjs",
     "proof:v1:guests-rsvp-ops": "node scripts/v1-proof-guests-rsvp-ops.mjs",
     "proof:v1:guest-lookup-scope": "node scripts/v1-proof-guest-lookup-scope.mjs",
+    "proof:v1:guest-language-continuity": "node scripts/v1-proof-guest-language-continuity.mjs",
     "proof:v1:client-rls-matrix": "node scripts/v1-proof-client-rls-matrix.mjs",
     "proof:v1:client-write-inventory": "node scripts/v1-proof-client-write-inventory.mjs",
     "proof:v1:ast-security": "node scripts/v1-proof-ast-security.mjs",

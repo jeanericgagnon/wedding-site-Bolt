@@ -4,8 +4,8 @@ test.describe('guest-facing language selector', () => {
   test('translates RSVP, event hub, upload flow, and recap shell from guest language links without exposing raw keys', async ({ page }) => {
     await page.goto('/rsvp?guestLang=es-MX&i18nSmoke=1');
     await expect(page.getByRole('heading', { name: 'Responde en un minuto y vuelve a celebrar.' })).toBeVisible();
-    await expect(page.getByPlaceholder('Tu nombre o código de invitación')).toBeVisible();
-    await expect(page.getByText('Puedes usar el código de tu invitación por correo')).toBeVisible();
+    await expect(page.getByPlaceholder('Tu código de invitación')).toBeVisible();
+    await expect(page.getByText('Usa el código de tu invitación por correo')).toBeVisible();
     await expect(page.getByRole('button', { name: /Buscar mi invitación/i })).toBeVisible();
     await expect(page.getByRole('button', { name: 'ES' })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText(/rsvp\./)).toHaveCount(0);
