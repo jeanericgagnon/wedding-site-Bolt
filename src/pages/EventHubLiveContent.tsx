@@ -85,6 +85,7 @@ type TravelHubSpotlight = {
   summary: string;
   travelHref: string;
   badges: string[];
+  mainGapLabel?: string | null;
   cards: TravelHubSpotlightCard[];
   shareText: string;
   htmlDocument: string;
@@ -423,6 +424,9 @@ export function EventHubLiveContent({
                     <div>
                       <p className="text-sm font-semibold text-[#2f261d]">Travel quick plan</p>
                       <p className="mt-1 text-sm leading-6 text-[#6f5843]">{travelHubSpotlight.summary}</p>
+                      {travelHubSpotlight.mainGapLabel && (
+                        <p className="mt-2 text-xs text-[#8b6f53]">{travelHubSpotlight.mainGapLabel}</p>
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Link

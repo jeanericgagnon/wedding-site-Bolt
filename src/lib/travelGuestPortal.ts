@@ -91,6 +91,7 @@ export interface TravelHubSpotlight {
   summary: string;
   travelHref: string;
   badges: string[];
+  mainGapLabel: string | null;
   cards: TravelHubSpotlightCard[];
   shareText: string;
   htmlDocument: string;
@@ -508,6 +509,13 @@ export function buildTravelHubSpotlight(input: {
     ...(weekendTimingReady ? ['Weekend timing ready'] : []),
     ...(arrivalGuidanceReady ? ['Arrival ready'] : []),
   ];
+  const mainGapLabel = !stayReady
+    ? 'Main gap: Stay details'
+    : !weekendTimingReady
+      ? 'Main gap: Weekend timing'
+      : !arrivalGuidanceReady
+        ? 'Main gap: Arrival guidance'
+        : null;
 
   const travelHref = appendGuestLanguageToInternalHref(
     appendGuestInviteTokenToInternalHref(
@@ -538,6 +546,7 @@ export function buildTravelHubSpotlight(input: {
     summary,
     travelHref,
     badges,
+    mainGapLabel,
     cards,
     shareText,
     htmlDocument: buildTravelHubSpotlightHtml({

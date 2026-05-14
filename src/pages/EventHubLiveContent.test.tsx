@@ -45,6 +45,7 @@ describe('EventHubLiveContent', () => {
             summary: '4 travel details ready from the guest hub, including 1 visible event window for this invitation.',
             travelHref: '/site/alex-jordan-demo#travel',
             badges: ['Invite-scoped', '1 event window', '1 route card', '1 booking link', 'Stay ready', 'Weekend timing ready', 'Arrival ready'],
+            mainGapLabel: null,
             cards: [
               { id: 'hotel', label: 'Riverfront House', detail: 'Code THOMPSONRIVERA', href: 'https://riverfront.example.com/stay' },
               { id: 'flight-info', label: 'Arrival guidance', detail: 'Fly into OAK or SFO and leave time for bridge traffic.' },
@@ -93,6 +94,7 @@ describe('EventHubLiveContent', () => {
             actionSummaryLabel: 'RSVP, day-of updates, travel, and photo upload',
             coreActionCoverageLabel: '3 of 4 core day-of actions are ready from this link.',
             coreActionSummaryLabel: 'Still missing from this link: schedule.',
+            mainGapLabel: 'Main gap: Add schedule to this link.',
           }}
           guestName=""
           guestContact=""
@@ -120,6 +122,7 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Stay ready')).toBeInTheDocument();
     expect(screen.getByText('Weekend timing ready')).toBeInTheDocument();
     expect(screen.getByText('Arrival ready')).toBeInTheDocument();
+    expect(screen.queryByText(/Main gap: Stay details/i)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Riverfront House/i })).toHaveAttribute('href', 'https://riverfront.example.com/stay');
     expect(screen.getByText('Arrival guidance')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Directions · Sunset Gardens Estate/i })).toHaveAttribute('href', 'https://maps.google.com/?q=Sunset%20Gardens%20Estate%20100%20Harbor%20Road%2C%20Sausalito%2C%20CA');
@@ -139,6 +142,7 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Core day-of coverage')).toBeInTheDocument();
     expect(screen.getByText('3 of 4 core day-of actions are ready from this link.')).toBeInTheDocument();
     expect(screen.getByText('Still missing from this link: schedule.')).toBeInTheDocument();
+    expect(screen.getByText('Main gap: Add schedule to this link.')).toBeInTheDocument();
     expect(document.getElementById('day-of-updates')).not.toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy travel plan' }));
