@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { demoRegistryItems, demoWeddingSite } from '../../../lib/demoData';
+import type { RegistryThankYouLedger } from '../../../lib/registryLaunchReadiness';
 import { getCurrentMonthKey, resolveRegistryRefreshBudgetState } from './refreshBudget';
+import { loadRegistryThankYouLedger } from './registryThankYouLedger';
 import { toDateInputValueOrEmpty } from '../registryRefreshWindow';
 import { fetchRegistryItems, loadRegistryDashboardSite } from './registryService';
 import type { RegistryItem } from './registryTypes';
@@ -90,6 +92,7 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
   const [refreshIncludePurchased, setRefreshIncludePurchased] = useState(false);
   const [policyUpdatedAt, setPolicyUpdatedAt] = useState<string | null>(null);
   const [policyUpdatedBy, setPolicyUpdatedBy] = useState<string | null>(null);
+  const [registryThankYouLedger, setRegistryThankYouLedger] = useState<RegistryThankYouLedger>({});
 
   const loadItems = useCallback(async (siteId: string) => {
     try {
@@ -107,6 +110,7 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
         if (isDemoMode) {
           setWeddingSiteId(demoWeddingSite.id);
           setItems(demoRegistryItems.map(toDemoRegistryItem));
+          setRegistryThankYouLedger({});
           return;
         }
 
@@ -133,7 +137,11 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
         setRefreshCapDraft(loadedCap);
         setRefreshPreset(loadedCap <= 60 ? 'lean' : loadedCap <= 160 ? 'balanced' : 'aggressive');
         setMonthlyRefreshCount(budgetState.count);
-        await loadItems(site.id);
+        const [_, ledger] = await Promise.all([
+          loadItems(site.id),
+          loadRegistryThankYouLedger(site.id),
+        ]);
+        setRegistryThankYouLedger(ledger);
       } catch {
         toast('Couldn’t finish setup right now. Please try again.', 'error');
       } finally {
@@ -170,9 +178,11 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
     setRefreshEnabledUntil,
     setRefreshIncludePurchased,
     setRefreshPreset,
+    setRegistryThankYouLedger,
     setRefreshWindowDraft,
     weddingDate,
     weddingSiteId,
     loadItems,
+    registryThankYouLedger,
   };
 }

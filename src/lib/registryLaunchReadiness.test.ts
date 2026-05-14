@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildRegistryLaunchReadiness, buildRegistryThankYouPlan } from './registryLaunchReadiness';
+import { buildRegistryLaunchReadiness, buildRegistryThankYouPlanWithLedger, normalizeRegistryThankYouLedger, syncRegistryThankYouLedger, toggleRegistryThankYouLedgerStatus } from './registryLaunchReadiness';
 import type { RegistryItem } from '../pages/dashboard/registry/registryTypes';
 
 function item(overrides: Partial<RegistryItem> = {}): RegistryItem {
@@ -78,34 +78,84 @@ describe('registryLaunchReadiness', () => {
     ]);
 
     expect(readiness.items.find((entry) => entry.id === 'thank-you-follow-up')).toMatchObject({
-      tone: 'planned',
+      tone: 'ready',
       count: 1,
     });
     expect(readiness.items.find((entry) => entry.id === 'hide-purchased')?.detail).toContain('hide after purchase');
   });
 
-  it('builds a thank-you preview from purchased gifts without claiming tasks already exist', () => {
-    const plan = buildRegistryThankYouPlan([
+  it('builds a persisted thank-you list from purchased gifts', () => {
+    const plan = buildRegistryThankYouPlanWithLedger([
       item({ id: 'plates', item_name: 'Dinner plates', purchase_status: 'purchased', quantity_purchased: 1, purchaser_name: 'Alex' }),
       item({ id: 'towels', item_name: 'Towels', purchase_status: 'partial', quantity_needed: 4, quantity_purchased: 2, purchaser_name: null }),
-    ]);
+    ], {});
 
-    expect(plan.headline).toBe('Thank-you follow-up preview');
+    expect(plan.headline).toBe('Thank-you follow-up list');
     expect(plan.purchasedCount).toBe(2);
     expect(plan.namedPurchaserCount).toBe(1);
     expect(plan.missingPurchaserCount).toBe(1);
+    expect(plan.completedCount).toBe(0);
     expect(plan.items.find((entry) => entry.id === 'plates')).toMatchObject({
       purchaserLabel: 'Purchased by Alex',
-      status: 'planned',
+      taskStatus: 'todo',
     });
-    expect(plan.items.find((entry) => entry.id === 'towels')?.detail).toContain('2 of 4 marked purchased');
+    expect(plan.items.find((entry) => entry.id === 'towels')).toMatchObject({
+      taskStatus: 'needs-purchaser',
+    });
   });
 
   it('keeps the thank-you preview quiet before gifts are purchased', () => {
-    const plan = buildRegistryThankYouPlan([item()]);
+    const plan = buildRegistryThankYouPlanWithLedger([item()], {});
 
     expect(plan.headline).toBe('Thank-you follow-up is quiet');
     expect(plan.items).toEqual([]);
     expect(plan.summary).toContain('Purchased gifts will appear here');
+  });
+
+  it('normalizes and syncs persisted thank-you ledger entries', () => {
+    const normalized = normalizeRegistryThankYouLedger({
+      plates: {
+        itemId: 'plates',
+        giftName: 'Dinner plates',
+        purchaserName: 'Alex',
+        quantityPurchased: 1,
+        quantityNeeded: 1,
+        status: 'done',
+        generatedAt: '2026-05-01T00:00:00.000Z',
+        completedAt: '2026-05-02T00:00:00.000Z',
+      },
+      bad: 'nope',
+    });
+
+    const synced = syncRegistryThankYouLedger([
+      item({ id: 'plates', item_name: 'Dinner plates', purchase_status: 'purchased', quantity_purchased: 1, purchaser_name: 'Alex' }),
+      item({ id: 'bowls', item_name: 'Bowls', purchase_status: 'partial', quantity_purchased: 1, quantity_needed: 2 }),
+    ], normalized, '2026-05-03T00:00:00.000Z');
+
+    expect(synced.plates.status).toBe('done');
+    expect(synced.bowls.status).toBe('needs-purchaser');
+    expect(Object.keys(synced)).toEqual(['plates', 'bowls']);
+  });
+
+  it('toggles persisted thank-you sent state without losing purchaser truth', () => {
+    const toggledDone = toggleRegistryThankYouLedgerStatus({
+      plates: {
+        itemId: 'plates',
+        giftName: 'Dinner plates',
+        purchaserName: 'Alex',
+        quantityPurchased: 1,
+        quantityNeeded: 1,
+        status: 'todo',
+        generatedAt: '2026-05-01T00:00:00.000Z',
+        completedAt: null,
+      },
+    }, 'plates', '2026-05-04T00:00:00.000Z');
+
+    expect(toggledDone.plates.status).toBe('done');
+    expect(toggledDone.plates.completedAt).toBe('2026-05-04T00:00:00.000Z');
+
+    const toggledBack = toggleRegistryThankYouLedgerStatus(toggledDone, 'plates', '2026-05-05T00:00:00.000Z');
+    expect(toggledBack.plates.status).toBe('todo');
+    expect(toggledBack.plates.completedAt).toBeNull();
   });
 });

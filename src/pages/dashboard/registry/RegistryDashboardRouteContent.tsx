@@ -38,7 +38,16 @@ type RegistryThankYouPlan = {
   namedPurchaserCount: number;
   purchasedCount: number;
   missingPurchaserCount: number;
-  items: Array<{ id: string; giftName: string; purchaserLabel: string; detail: string }>;
+  completedCount: number;
+  items: Array<{
+    id: string;
+    giftName: string;
+    purchaserLabel: string;
+    detail: string;
+    status: string;
+    taskStatus: 'todo' | 'done' | 'needs-purchaser';
+    completedAt: string | null;
+  }>;
 };
 
 type RegistryInsight = {
@@ -92,9 +101,12 @@ export function RegistryDashboardRouteContent(props: {
   handleEdit: (item: RegistryItem) => void;
   handleMergeDuplicateGroup: (group: RegistryDuplicateGroup) => Promise<void>;
   handleMarkPurchased: (item: RegistryItem, qty: number) => Promise<void>;
+  handleResetPurchaseState: (item: RegistryItem) => Promise<void>;
   handleRefetchMetadata: (item: RegistryItem, silent?: boolean, replaceExisting?: boolean) => Promise<boolean>;
   handleRefreshImageIssues: () => Promise<void>;
   handleRepairBadImports: () => Promise<void>;
+  handleSyncRegistryThankYouTasks: () => Promise<void>;
+  handleToggleRegistryThankYouTask: (itemId: string) => Promise<void>;
   handleRunRepairQueueAction: (queueItem: RegistryRepairQueueItem, action: RegistryRepairActionKind) => Promise<void>;
   imageRefreshBusy: boolean;
   items: RegistryItem[];
@@ -113,6 +125,8 @@ export function RegistryDashboardRouteContent(props: {
   registryInsights: RegistryInsight[];
   registryLaunchReadiness: RegistryLaunchReadiness;
   registryThankYouPlan: RegistryThankYouPlan;
+  registryThankYouBusyItemId: string | null;
+  registryThankYouSyncing: boolean;
   repairingBadImports: boolean;
   search: string;
   setBulkImportOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -321,6 +335,76 @@ export function RegistryDashboardRouteContent(props: {
               </div>
             </Card>
           </div>
+
+          <Card variant="bordered" padding="lg">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-text-primary">{props.registryThankYouPlan.headline}</p>
+                <p className="mt-1 text-sm text-text-secondary">{props.registryThankYouPlan.summary}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void props.handleSyncRegistryThankYouTasks()}
+                disabled={props.registryThankYouSyncing}
+              >
+                {props.registryThankYouSyncing ? 'Saving…' : 'Save thank-you list'}
+              </Button>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2 text-xs">
+              <span className="rounded-lg border border-border px-2 py-1 text-text-tertiary">
+                Purchased gifts: {props.registryThankYouPlan.purchasedCount}
+              </span>
+              <span className="rounded-lg border border-border px-2 py-1 text-text-tertiary">
+                Purchasers named: {props.registryThankYouPlan.namedPurchaserCount}
+              </span>
+              <span className="rounded-lg border border-border px-2 py-1 text-text-tertiary">
+                Thank-yous sent: {props.registryThankYouPlan.completedCount}
+              </span>
+            </div>
+            <div className="mt-4 space-y-3">
+              {props.registryThankYouPlan.items.length === 0 ? (
+                <p className="text-sm text-text-secondary">Purchased gifts will show up here once you save the thank-you list.</p>
+              ) : props.registryThankYouPlan.items.map((item) => (
+                <div key={item.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-text-primary">{item.giftName}</p>
+                      <p className="mt-1 text-xs text-text-secondary">{item.purchaserLabel}</p>
+                      <p className="mt-2 text-sm text-text-secondary">{item.detail}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 lg:justify-end">
+                      {item.taskStatus === 'needs-purchaser' ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const targetItem = props.items.find((entry) => entry.id === item.id) ?? props.normalizedItems.find((entry) => entry.id === item.id);
+                            if (targetItem) props.handleEdit(targetItem);
+                          }}
+                        >
+                          Review gift
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void props.handleToggleRegistryThankYouTask(item.id)}
+                          disabled={props.registryThankYouBusyItemId === item.id}
+                        >
+                          {props.registryThankYouBusyItemId === item.id
+                            ? 'Saving…'
+                            : item.taskStatus === 'done'
+                              ? 'Clear sent'
+                              : 'Mark sent'}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       </details>
 
@@ -596,6 +680,7 @@ export function RegistryDashboardRouteContent(props: {
                 onEdit={props.handleEdit}
                 onDelete={props.handleDelete}
                 onMarkPurchased={props.handleMarkPurchased}
+                onResetPurchaseState={props.handleResetPurchaseState}
                 onRefetchMetadata={props.handleRefetchMetadata}
               />
             ))}

@@ -5,6 +5,7 @@ import { Button } from '../../components/ui';
 import { useAuth } from '../../hooks/useAuth';
 import { logAppAction } from '../../lib/actionAudit';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import { syncRegistryThankYouLedger, toggleRegistryThankYouLedgerStatus } from '../../lib/registryLaunchReadiness';
 import { ageExceedsMs } from './registryItemTime';
 import { getWeddingRefreshWindowDate, toValidDateOrNull } from './registryRefreshWindow';
 import { RegistryDashboardRouteContent } from './registry/RegistryDashboardRouteContent';
@@ -16,6 +17,7 @@ import { normalizeOwnerDashboardRegistryItem, useRegistryDashboardData } from '.
 import { useRegistryItemActions } from './registry/useRegistryItemActions';
 import { useRegistryMaintenanceActions } from './registry/useRegistryMaintenanceActions';
 import { useRegistryRefreshPolicyActions } from './registry/useRegistryRefreshPolicyActions';
+import { saveRegistryThankYouLedger } from './registry/registryThankYouLedger';
 import {
   updateRegistryRefreshBudget,
 } from './registry/registryService';
@@ -61,6 +63,8 @@ export const DashboardRegistry: React.FC = () => {
   const [bulkUrls, setBulkUrls] = useState('');
   const [registryActionsOpen, setRegistryActionsOpen] = useState(false);
   const [, setSavingRefreshPolicy] = useState(false);
+  const [registryThankYouSyncing, setRegistryThankYouSyncing] = useState(false);
+  const [registryThankYouBusyItemId, setRegistryThankYouBusyItemId] = useState<string | null>(null);
 
   const {
     autoRefreshEnabled,
@@ -82,7 +86,9 @@ export const DashboardRegistry: React.FC = () => {
     setRefreshCapDraft,
     setRefreshEnabledUntil,
     setRefreshPreset,
+    registryThankYouLedger,
     setRefreshWindowDraft,
+    setRegistryThankYouLedger,
     weddingDate,
     weddingSiteId,
   } = useRegistryDashboardData({
@@ -195,6 +201,7 @@ export const DashboardRegistry: React.FC = () => {
     items: normalizedItems,
     monthlyRefreshCap,
     monthlyRefreshCount,
+    registryThankYouLedger,
     refreshEnabledUntil: refreshWindowUntil,
     refreshIncludePurchased,
     search,
@@ -230,6 +237,7 @@ export const DashboardRegistry: React.FC = () => {
   const {
     handleDelete,
     handleMarkPurchased,
+    handleResetPurchaseState,
     handleSave,
   } = useRegistryItemActions({
     editItem,
@@ -296,6 +304,40 @@ export const DashboardRegistry: React.FC = () => {
     handleEdit(queueItem.item);
   }
 
+  async function handleSyncRegistryThankYouTasks() {
+    if (!weddingSiteId || registryThankYouSyncing) return;
+    setRegistryThankYouSyncing(true);
+    try {
+      const nextLedger = syncRegistryThankYouLedger(normalizedItems, registryThankYouLedger);
+      if (!isDemoMode) {
+        await saveRegistryThankYouLedger(weddingSiteId, nextLedger);
+      }
+      setRegistryThankYouLedger(nextLedger);
+      toast(Object.keys(nextLedger).length > 0 ? 'Thank-you follow-up saved' : 'Thank-you follow-up is quiet');
+    } catch {
+      toast('Couldn’t save thank-you follow-up right now. Please try again.', 'error');
+    } finally {
+      setRegistryThankYouSyncing(false);
+    }
+  }
+
+  async function handleToggleRegistryThankYouTask(itemId: string) {
+    if (!weddingSiteId || registryThankYouBusyItemId) return;
+    setRegistryThankYouBusyItemId(itemId);
+    try {
+      const nextLedger = toggleRegistryThankYouLedgerStatus(registryThankYouLedger, itemId);
+      if (!isDemoMode) {
+        await saveRegistryThankYouLedger(weddingSiteId, nextLedger);
+      }
+      setRegistryThankYouLedger(nextLedger);
+      toast(nextLedger[itemId]?.status === 'done' ? 'Thank-you marked sent' : 'Thank-you follow-up reopened');
+    } catch {
+      toast('Couldn’t update thank-you follow-up right now. Please try again.', 'error');
+    } finally {
+      setRegistryThankYouBusyItemId(null);
+    }
+  }
+
   return (
     <DashboardLayout currentPage="registry">
       <RegistryDashboardRouteContent
@@ -321,9 +363,12 @@ export const DashboardRegistry: React.FC = () => {
         handleEdit={handleEdit}
         handleMergeDuplicateGroup={handleMergeDuplicateGroup}
         handleMarkPurchased={handleMarkPurchased}
+        handleResetPurchaseState={handleResetPurchaseState}
         handleRefetchMetadata={handleRefetchMetadata}
         handleRefreshImageIssues={handleRefreshImageIssues}
         handleRepairBadImports={handleRepairBadImports}
+        handleSyncRegistryThankYouTasks={handleSyncRegistryThankYouTasks}
+        handleToggleRegistryThankYouTask={handleToggleRegistryThankYouTask}
         imageRefreshBusy={imageRefreshBusy}
         items={items}
         loading={loading}
@@ -341,6 +386,8 @@ export const DashboardRegistry: React.FC = () => {
         registryInsights={registryInsights}
         registryLaunchReadiness={registryLaunchReadiness}
         registryThankYouPlan={registryThankYouPlan}
+        registryThankYouBusyItemId={registryThankYouBusyItemId}
+        registryThankYouSyncing={registryThankYouSyncing}
         repairingBadImports={repairingBadImports}
         handleRunRepairQueueAction={handleRunRepairQueueAction}
         search={search}

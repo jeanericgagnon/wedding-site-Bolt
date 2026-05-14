@@ -22,6 +22,20 @@ export interface RegistryLaunchReadiness {
 }
 
 export type RegistryThankYouPlanStatus = 'ready' | 'planned' | 'quiet';
+export type RegistryThankYouTaskStatus = 'todo' | 'done' | 'needs-purchaser';
+
+export interface RegistryThankYouLedgerEntry {
+  itemId: string;
+  giftName: string;
+  purchaserName: string | null;
+  quantityPurchased: number;
+  quantityNeeded: number;
+  status: RegistryThankYouTaskStatus;
+  generatedAt: string;
+  completedAt: string | null;
+}
+
+export type RegistryThankYouLedger = Record<string, RegistryThankYouLedgerEntry>;
 
 export interface RegistryThankYouPlanItem {
   id: string;
@@ -29,6 +43,8 @@ export interface RegistryThankYouPlanItem {
   purchaserLabel: string;
   detail: string;
   status: RegistryThankYouPlanStatus;
+  taskStatus: RegistryThankYouTaskStatus;
+  completedAt: string | null;
 }
 
 export interface RegistryThankYouPlan {
@@ -37,6 +53,7 @@ export interface RegistryThankYouPlan {
   purchasedCount: number;
   namedPurchaserCount: number;
   missingPurchaserCount: number;
+  completedCount: number;
   items: RegistryThankYouPlanItem[];
 }
 
@@ -65,7 +82,7 @@ function safePaymentLinkCount(item: RegistryItem): number {
   ].filter(hasSafeLink).length;
 }
 
-export function buildRegistryLaunchReadiness(items: RegistryItem[]): RegistryLaunchReadiness {
+export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: RegistryThankYouLedger = {}): RegistryLaunchReadiness {
   const total = items.length;
   const productItems = items.filter((item) => item.item_type !== 'cash_fund');
   const cashFunds = items.filter((item) => item.item_type === 'cash_fund');
@@ -82,7 +99,7 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[]): RegistryLau
   const cashFundsReady = cashFunds.filter((item) => safePaymentLinkCount(item) > 0 || Boolean((item.fund_zelle_handle ?? '').trim())).length;
   const cashFundsNeedingPayment = cashFunds.length - cashFundsReady;
   const hiddenPurchased = items.filter((item) => item.hide_when_purchased).length;
-  const thankYouFollowUps = purchasedItems.length;
+  const thankYouFollowUps = Object.values(syncRegistryThankYouLedger(items, ledger)).length;
 
   const itemsOut: RegistryLaunchReadinessItem[] = [
     {
@@ -121,9 +138,9 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[]): RegistryLau
       label: 'Thank-you follow-up',
       count: thankYouFollowUps,
       detail: thankYouFollowUps > 0
-        ? `${plural(thankYouFollowUps, 'gift')} should flow into a thank-you follow-up list.`
+        ? `${plural(thankYouFollowUps, 'gift')} are in the thank-you follow-up list.`
         : 'Thank-you follow-up is quiet until gifts are marked purchased.',
-      tone: thankYouFollowUps > 0 ? 'planned' : 'ready',
+      tone: thankYouFollowUps > 0 ? 'ready' : 'ready',
     },
     {
       id: 'hide-purchased',
@@ -159,32 +176,130 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[]): RegistryLau
 }
 
 export function buildRegistryThankYouPlan(items: RegistryItem[]): RegistryThankYouPlan {
+  return buildRegistryThankYouPlanWithLedger(items, {});
+}
+
+function safeRegistryIso(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const time = Date.parse(value);
+  return Number.isFinite(time) ? new Date(time).toISOString() : null;
+}
+
+export function normalizeRegistryThankYouLedger(value: unknown): RegistryThankYouLedger {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const entries = Object.entries(value as Record<string, unknown>);
+  const next: RegistryThankYouLedger = {};
+  for (const [key, raw] of entries) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+    const entry = raw as Record<string, unknown>;
+    const itemId = typeof entry.itemId === 'string' && entry.itemId.trim() ? entry.itemId.trim() : key.trim();
+    if (!itemId) continue;
+    const quantityPurchased = safeCount(Number(entry.quantityPurchased));
+    const quantityNeeded = Math.max(1, safeCount(Number(entry.quantityNeeded) || 1));
+    const purchaserName = typeof entry.purchaserName === 'string' && entry.purchaserName.trim() ? entry.purchaserName.trim() : null;
+    const completedAt = safeRegistryIso(typeof entry.completedAt === 'string' ? entry.completedAt : null);
+    const status = entry.status === 'done'
+      ? 'done'
+      : purchaserName
+        ? 'todo'
+        : 'needs-purchaser';
+    next[itemId] = {
+      itemId,
+      giftName: typeof entry.giftName === 'string' && entry.giftName.trim() ? entry.giftName.trim() : 'Registry gift',
+      purchaserName,
+      quantityPurchased,
+      quantityNeeded,
+      status,
+      generatedAt: safeRegistryIso(typeof entry.generatedAt === 'string' ? entry.generatedAt : null) ?? new Date(0).toISOString(),
+      completedAt: status === 'done' ? (completedAt ?? new Date(0).toISOString()) : null,
+    };
+  }
+  return next;
+}
+
+export function syncRegistryThankYouLedger(items: RegistryItem[], ledger: RegistryThankYouLedger, nowIso = new Date().toISOString()): RegistryThankYouLedger {
+  const purchasedItems = items.filter((item) => item.purchase_status === 'purchased' || safeCount(item.quantity_purchased ?? 0) > 0);
+  const next: RegistryThankYouLedger = {};
+  for (const item of purchasedItems) {
+    const purchased = safeCount(item.quantity_purchased ?? 0);
+    const needed = Math.max(safeCount(item.quantity_needed ?? 1), 1);
+    const purchaser = item.purchaser_name?.trim() || null;
+    const previous = ledger[item.id];
+    const done = previous?.status === 'done';
+    next[item.id] = {
+      itemId: item.id,
+      giftName: item.item_name || previous?.giftName || 'Registry gift',
+      purchaserName: purchaser,
+      quantityPurchased: purchased,
+      quantityNeeded: needed,
+      status: done ? 'done' : purchaser ? 'todo' : 'needs-purchaser',
+      generatedAt: previous?.generatedAt ?? nowIso,
+      completedAt: done ? (previous?.completedAt ?? nowIso) : null,
+    };
+  }
+  return next;
+}
+
+export function toggleRegistryThankYouLedgerStatus(
+  ledger: RegistryThankYouLedger,
+  itemId: string,
+  nowIso = new Date().toISOString(),
+): RegistryThankYouLedger {
+  const current = ledger[itemId];
+  if (!current) return ledger;
+  const nextStatus = current.status === 'done'
+    ? (current.purchaserName ? 'todo' : 'needs-purchaser')
+    : 'done';
+  return {
+    ...ledger,
+    [itemId]: {
+      ...current,
+      status: nextStatus,
+      completedAt: nextStatus === 'done' ? nowIso : null,
+    },
+  };
+}
+
+export function buildRegistryThankYouPlanWithLedger(items: RegistryItem[], ledger: RegistryThankYouLedger): RegistryThankYouPlan {
+  const syncedLedger = syncRegistryThankYouLedger(items, ledger);
   const purchasedItems = items.filter((item) => item.purchase_status === 'purchased' || safeCount(item.quantity_purchased ?? 0) > 0);
   const namedPurchasers = purchasedItems.filter((item) => Boolean(item.purchaser_name?.trim()));
   const missingPurchasers = purchasedItems.length - namedPurchasers.length;
-  const planItems = purchasedItems.slice(0, 6).map((item): RegistryThankYouPlanItem => {
-    const purchased = safeCount(item.quantity_purchased ?? 0);
-    const needed = Math.max(safeCount(item.quantity_needed ?? 1), 1);
-    const purchaser = item.purchaser_name?.trim();
+  const completedCount = Object.values(syncedLedger).filter((entry) => entry.status === 'done').length;
+  const planItems = Object.values(syncedLedger).slice(0, 6).map((entry): RegistryThankYouPlanItem => {
+    const purchaser = entry.purchaserName;
+    const partiallyPurchased = entry.quantityPurchased > 0 && entry.quantityPurchased < entry.quantityNeeded;
+    const detail = entry.status === 'done'
+      ? `Thank-you marked sent${entry.completedAt ? ` on ${new Date(entry.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}.`
+      : purchaser
+        ? partiallyPurchased
+          ? `${entry.quantityPurchased} of ${entry.quantityNeeded} marked purchased. Ready for thank-you follow-up.`
+          : 'Ready for thank-you follow-up.'
+        : partiallyPurchased
+          ? `${entry.quantityPurchased} of ${entry.quantityNeeded} marked purchased. Add the purchaser before you send a thank-you.`
+          : 'Add the purchaser before you send a thank-you.';
     return {
-      id: item.id,
-      giftName: item.item_name || 'Registry gift',
+      id: entry.itemId,
+      giftName: entry.giftName,
       purchaserLabel: purchaser ? `Purchased by ${purchaser}` : 'Purchaser not recorded yet',
-      detail: purchased > 0 && purchased < needed
-        ? `${purchased} of ${needed} marked purchased. Add this to thank-you review when the purchaser is confirmed.`
-        : 'Ready for a thank-you follow-up once task creation is connected.',
-      status: purchaser ? 'planned' : 'ready',
+      detail,
+      status: entry.status === 'done' ? 'planned' : entry.status === 'todo' ? 'ready' : 'quiet',
+      taskStatus: entry.status,
+      completedAt: entry.completedAt,
     };
   });
 
   return {
-    headline: purchasedItems.length > 0 ? 'Thank-you follow-up preview' : 'Thank-you follow-up is quiet',
+    headline: purchasedItems.length > 0 ? 'Thank-you follow-up list' : 'Thank-you follow-up is quiet',
     summary: purchasedItems.length > 0
-      ? `${plural(purchasedItems.length, 'purchased gift')} can be reviewed before thank-you tasks are connected.`
-      : 'Purchased gifts will appear here before they become thank-you follow-up work.',
+      ? completedCount > 0
+        ? `${plural(completedCount, 'thank-you')} marked sent. ${plural(purchasedItems.length - completedCount, 'gift')} still need follow-up.`
+        : `${plural(purchasedItems.length, 'purchased gift')} are in the thank-you list.`
+      : 'Purchased gifts will appear here once they become thank-you follow-up work.',
     purchasedCount: purchasedItems.length,
     namedPurchaserCount: namedPurchasers.length,
     missingPurchaserCount: missingPurchasers,
+    completedCount,
     items: planItems,
   };
 }

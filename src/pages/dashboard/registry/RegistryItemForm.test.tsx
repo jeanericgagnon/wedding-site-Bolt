@@ -120,6 +120,34 @@ describe('RegistryItemForm', () => {
     }));
   });
 
+  it('saves owner purchase tracking fields with consistent registry truth', async () => {
+    const onSave = vi.fn(async () => {});
+
+    render(
+      <RegistryItemForm
+        initial={makeItem({
+          quantity_needed: 3,
+          quantity_purchased: 1,
+          purchaser_name: 'Alex',
+          purchase_status: 'partial',
+        })}
+        existingItems={[]}
+        onSave={onSave}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/purchased so far/i), { target: { value: '3' } });
+    fireEvent.change(screen.getByLabelText(/purchaser name/i), { target: { value: 'Jordan' } });
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      quantity_purchased: '3',
+      purchaser_name: 'Jordan',
+      desired_quantity: '3',
+    }));
+  });
+
   it('does not render unsafe image URLs in the owner preview', () => {
     const { container } = render(
       <RegistryItemForm

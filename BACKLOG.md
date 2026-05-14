@@ -409,11 +409,16 @@ Execution rule for this section:
 ### Later-Value Lanes Still Open
 
 10. `ACTIVE`: registry polish beyond barcode
+   - this batch shipped: registry owner edit state now includes purchased-quantity and purchaser tracking, so claim/purchase truth no longer depends on one-way “mark purchased” clicks alone
+   - this batch shipped: owners now have a quick `Clear purchase state` workflow on purchased/partial items, with focused proof for owner-side purchase reset behavior
+   - this batch shipped: registry thank-you follow-up is now a persisted site-backed ledger instead of preview-only copy, with save/readback/mark-sent/clear-sent behavior and focused route proof
+   - this batch shipped: registry launch readiness and thank-you readiness now use the persisted task ledger honestly instead of claiming future follow-up work without saved state
+   - this batch shipped: focused proof is green for owner purchase-state normalization, form save truth, thank-you ledger sync/toggle behavior, route rendering, and guest-facing registry purchase rendering
    - add live owner add/import/edit persistence proof for broader registry workflows
    - add owner repair/cleanup runtime proof outside the barcode lane
-   - prove guest-visible purchase-state truth after real edits
-   - persist thank-you task generation/readback instead of preview-only readiness
-   - add owner claim-state workflows, richer public fund-card polish, and broader registry analytics
+   - rerun the guest-visible purchase-state assertions against the live production runtime after the next approved registry deploy instead of only local/public-component proof
+   - keep extending owner claim-state workflows beyond purchased/reset into richer purchaser attribution / fund follow-through / analytics depth
+   - add richer public fund-card polish and broader registry analytics
 
 11. `ACTIVE`: seating and catering export polish
    - this batch shipped: catering packet rows now include richer structured household/group, dietary-restriction, allergy, and guest-note columns instead of flattening everything into one generic note field

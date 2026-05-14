@@ -34,6 +34,8 @@ function itemToDraft(item: RegistryItem): RegistryItemDraft {
     product_metadata: item.product_metadata ?? null,
     notes: item.notes ?? item.description ?? '',
     desired_quantity: String(item.quantity_needed ?? 1),
+    quantity_purchased: String(item.quantity_purchased ?? 0),
+    purchaser_name: item.purchaser_name ?? '',
     hide_when_purchased: item.hide_when_purchased ?? false,
     fund_goal_amount: item.fund_goal_amount != null ? String(item.fund_goal_amount) : '',
     fund_received_amount: item.fund_received_amount != null ? String(item.fund_received_amount) : '',
@@ -117,6 +119,8 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
       product_metadata: null,
       notes: '',
       desired_quantity: '1',
+      quantity_purchased: '0',
+      purchaser_name: '',
       hide_when_purchased: false,
       fund_goal_amount: '',
       fund_received_amount: '',
@@ -910,15 +914,46 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
             {/* Desired quantity */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">
+                <label htmlFor="registry-desired-quantity" className="block text-sm font-medium text-text-primary mb-1">
                   Desired Quantity
                 </label>
                 <input
+                  id="registry-desired-quantity"
                   type="number"
                   min="1"
                   step="1"
                   value={draft.desired_quantity}
                   onChange={e => set('desired_quantity', e.target.value)}
+                  className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label htmlFor="registry-purchased-quantity" className="block text-sm font-medium text-text-primary mb-1">
+                  Purchased so far
+                </label>
+                <input
+                  id="registry-purchased-quantity"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={draft.quantity_purchased ?? '0'}
+                  onChange={e => set('quantity_purchased', e.target.value)}
+                  className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label htmlFor="registry-purchaser-name" className="block text-sm font-medium text-text-primary mb-1">
+                  Purchaser name
+                  <span className="ml-1 text-xs text-text-tertiary font-normal">(optional)</span>
+                </label>
+                <input
+                  id="registry-purchaser-name"
+                  type="text"
+                  value={draft.purchaser_name ?? ''}
+                  onChange={e => set('purchaser_name', e.target.value)}
+                  placeholder="e.g. Alex"
                   className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>

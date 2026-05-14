@@ -165,6 +165,25 @@ describe('RegistryItemCard', () => {
     expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ purchase_status: 'available', purchaser_name: null }));
   });
 
+  it('offers a quick reset for purchased owner state', async () => {
+    const onResetPurchaseState = vi.fn(async () => {});
+
+    render(
+      <RegistryItemCard
+        item={makeItem({ purchase_status: 'purchased', quantity_purchased: 1, quantity_needed: 1, purchaser_name: 'Alex' })}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onResetPurchaseState={onResetPurchaseState}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /clear purchase state/i }));
+    expect(onResetPurchaseState).toHaveBeenCalledWith(expect.objectContaining({
+      purchase_status: 'purchased',
+      purchaser_name: 'Alex',
+    }));
+  });
+
   it('keeps stale details guidance visible when persisted metadata check time is invalid', () => {
     render(
       <RegistryItemCard

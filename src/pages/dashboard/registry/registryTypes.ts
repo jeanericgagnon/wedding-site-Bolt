@@ -210,6 +210,8 @@ export interface RegistryItemDraft {
   product_metadata?: Record<string, unknown> | null;
   notes: string;
   desired_quantity: string;
+  quantity_purchased?: string;
+  purchaser_name?: string;
   hide_when_purchased: boolean;
   fund_goal_amount?: string;
   fund_received_amount?: string;
@@ -242,6 +244,8 @@ export const EMPTY_DRAFT: RegistryItemDraft = {
   product_metadata: null,
   notes: '',
   desired_quantity: '1',
+  quantity_purchased: '0',
+  purchaser_name: '',
   hide_when_purchased: false,
   item_type: 'product',
   fund_goal_amount: '',

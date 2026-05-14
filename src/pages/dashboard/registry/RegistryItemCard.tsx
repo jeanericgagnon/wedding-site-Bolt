@@ -11,6 +11,7 @@ interface Props {
   onEdit: (item: RegistryItem) => void;
   onDelete: (id: string) => void;
   onMarkPurchased?: (item: RegistryItem, qty: number) => Promise<void>;
+  onResetPurchaseState?: (item: RegistryItem) => Promise<void>;
   onRefetchMetadata?: (item: RegistryItem, silent?: boolean, replaceExisting?: boolean) => Promise<unknown>;
 }
 
@@ -123,7 +124,7 @@ const PurchaseConfirmPanel: React.FC<PurchaseConfirmProps> = ({ item, onConfirm,
   );
 };
 
-export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMarkPurchased, onRefetchMetadata }) => {
+export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMarkPurchased, onResetPurchaseState, onRefetchMetadata }) => {
   const normalizedItem = normalizeOwnerRegistryItemState(item);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showPurchaseConfirm, setShowPurchaseConfirm] = useState(false);
@@ -425,6 +426,14 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
           >
             <ShoppingBag className="w-3.5 h-3.5" />
             Mark as purchased
+          </button>
+        )}
+        {!canMarkPurchased && normalizedItem.purchase_status !== 'available' && onResetPurchaseState && (
+          <button
+            onClick={() => void onResetPurchaseState(normalizedItem)}
+            className="w-full py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-1.5"
+          >
+            Clear purchase state
           </button>
         )}
 

@@ -1,5 +1,5 @@
 import { buildRegistryInsights } from '../../../lib/invisibleIntelligence';
-import { buildRegistryLaunchReadiness, buildRegistryThankYouPlan } from '../../../lib/registryLaunchReadiness';
+import { buildRegistryLaunchReadiness, buildRegistryThankYouPlanWithLedger, type RegistryThankYouLedger } from '../../../lib/registryLaunchReadiness';
 import { ageExceedsMs, getRegistryItemTimestamp } from '../registryItemTime';
 import { buildRegistryDuplicateGroups } from './duplicateRegistryItems';
 import { getRegistryItemMetadataState } from './registryTypes';
@@ -18,6 +18,7 @@ interface BuildRegistryDashboardDerivedStateArgs {
   items: RegistryItem[];
   monthlyRefreshCap: number;
   monthlyRefreshCount: number;
+  registryThankYouLedger: RegistryThankYouLedger;
   refreshEnabledUntil: Date | null;
   refreshIncludePurchased: boolean;
   search: string;
@@ -32,6 +33,7 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
     items,
     monthlyRefreshCap,
     monthlyRefreshCount,
+    registryThankYouLedger,
     refreshEnabledUntil,
     refreshIncludePurchased,
     search,
@@ -114,8 +116,8 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
     image_url: item.image_url,
     price: item.price_amount,
   }))).slice(0, 3);
-  const registryLaunchReadiness = buildRegistryLaunchReadiness(items);
-  const registryThankYouPlan = buildRegistryThankYouPlan(items);
+  const registryLaunchReadiness = buildRegistryLaunchReadiness(items, registryThankYouLedger);
+  const registryThankYouPlan = buildRegistryThankYouPlanWithLedger(items, registryThankYouLedger);
 
   const alertCounts = {
     stale: items.filter((item) => ageExceedsMs(item.metadata_last_checked_at, 1000 * 60 * 60 * 24)).length,

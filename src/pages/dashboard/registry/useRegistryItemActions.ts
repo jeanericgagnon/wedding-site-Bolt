@@ -73,7 +73,7 @@ export function useRegistryItemActions(args: UseRegistryItemActionsArgs) {
     }
 
     const quantityState = sanitizeRegistryQuantityState(
-      editItem?.quantity_purchased ?? 0,
+      parseInt(draft.quantity_purchased || '', 10) || 0,
       isCashFund ? 1 : (parseInt(draft.desired_quantity) || 1),
     );
 
@@ -97,6 +97,7 @@ export function useRegistryItemActions(args: UseRegistryItemActionsArgs) {
       notes: draft.notes || draft.description || null,
       quantity_needed: quantityState.quantityNeeded,
       quantity_purchased: quantityState.quantityPurchased,
+      purchaser_name: quantityState.purchaseStatus === 'available' ? null : (draft.purchaser_name?.trim() || null),
       purchase_status: quantityState.purchaseStatus,
       hide_when_purchased: isCashFund ? false : draft.hide_when_purchased,
       availability: isCashFund ? null : (draft.availability || null),
@@ -141,9 +142,9 @@ export function useRegistryItemActions(args: UseRegistryItemActionsArgs) {
           description: fields.description ?? null,
           notes: fields.notes ?? null,
           quantity_needed: fields.quantity_needed ?? 1,
-          quantity_purchased: 0,
-          purchaser_name: null,
-          purchase_status: 'available',
+          quantity_purchased: fields.quantity_purchased ?? 0,
+          purchaser_name: fields.purchaser_name ?? null,
+          purchase_status: (fields.purchase_status as RegistryItem['purchase_status'] | undefined) ?? 'available',
           hide_when_purchased: fields.hide_when_purchased ?? false,
           sort_order: items.length,
           priority: 'medium',
@@ -252,9 +253,35 @@ export function useRegistryItemActions(args: UseRegistryItemActionsArgs) {
     }
   }
 
+  async function handleResetPurchaseState(item: RegistryItem) {
+    const updates: Partial<RegistryItem> = {
+      quantity_purchased: 0,
+      purchaser_name: null,
+      purchase_status: 'available',
+    };
+    try {
+      const updated = isDemoMode
+        ? {
+            ...item,
+            ...updates,
+            updated_at: new Date().toISOString(),
+          }
+        : await updateRegistryItem(item.id, updates);
+      setItems((prev) => prev.map((candidate) => (candidate.id === updated.id ? normalizeOwnerDashboardRegistryItem(updated) : candidate)));
+      logRegistryAction('registry_purchase_reset', 'Registry purchase state was cleared by the owner.', {
+        quantityPurchased: 0,
+        purchaseStatus: 'available',
+      }, updated.id, updated.item_name);
+      toast(`Cleared purchase state for "${item.item_name}"`);
+    } catch {
+      toast('Couldn’t clear purchase state. Please try again.', 'error');
+    }
+  }
+
   return {
     handleDelete,
     handleMarkPurchased,
+    handleResetPurchaseState,
     handleSave,
   };
 }
