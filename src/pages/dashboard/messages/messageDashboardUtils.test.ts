@@ -4,6 +4,7 @@ import {
   buildCampaignStatusSummary,
   buildCampaignThreads,
   buildChannelBreakdown,
+  buildChannelEngagementBreakdown,
   buildDeliveryHealth,
   buildDeliveryBucketSummary,
   buildDeliveryStats,
@@ -233,10 +234,34 @@ describe('messageDashboardUtils', () => {
     const messages = [
       message({ id: 'draft', status: 'draft', recipient_count: 5, delivered_count: 0, failed_count: 0 }),
       message({ id: 'scheduled-email', status: 'scheduled', channel: 'email', recipient_count: 7, delivered_count: 0, failed_count: 0 }),
-      message({ id: 'sent-email', status: 'sent', channel: 'email', recipient_count: 10, delivered_count: 8, failed_count: 1 }),
-      message({ id: 'partial-sms', status: 'partial', channel: 'sms', recipient_count: 4, delivered_count: 2, failed_count: 1 }),
+      message({
+        id: 'sent-email',
+        status: 'sent',
+        channel: 'email',
+        recipient_count: 10,
+        delivered_count: 8,
+        failed_count: 1,
+        recipient_filter: { opened_count: 15, viewed_count: 4, clicked_count: 5, replied_count: 1, bounced_count: 1 },
+      }),
+      message({
+        id: 'partial-sms',
+        status: 'partial',
+        channel: 'sms',
+        recipient_count: 4,
+        delivered_count: 2,
+        failed_count: 1,
+        recipient_filter: { opened_count: 2, clicked_count: 1 },
+      }),
       message({ id: 'failed-sms', status: 'failed', channel: 'sms', recipient_count: 3, delivered_count: 0, failed_count: 3 }),
-      message({ id: 'queued-email', status: 'queued', channel: 'email', recipient_count: 6, delivered_count: 0, failed_count: 0 }),
+      message({
+        id: 'queued-email',
+        status: 'queued',
+        channel: 'email',
+        recipient_count: 6,
+        delivered_count: 0,
+        failed_count: 0,
+        recipient_filter: { opened_count: 99, clicked_count: 99 },
+      }),
     ];
 
     expect(buildCampaignStatusSummary(messages)).toEqual({
@@ -258,16 +283,21 @@ describe('messageDashboardUtils', () => {
 
     expect(buildMessageEngagementSummary(messages)).toEqual({
       trackedMessages: 3,
-      opened: 0,
-      viewed: 0,
-      clicked: 0,
-      replied: 0,
-      bounced: 0,
+      opened: 17,
+      viewed: 4,
+      clicked: 6,
+      replied: 1,
+      bounced: 1,
     });
 
     expect(buildChannelBreakdown(messages)).toEqual({
       email: { sent: 1, active: 1, scheduled: 1, failed: 0, partial: 0, targeted: 16 },
       sms: { sent: 0, active: 0, scheduled: 0, failed: 1, partial: 1, targeted: 7 },
+    });
+
+    expect(buildChannelEngagementBreakdown(messages)).toEqual({
+      email: { trackedMessages: 1, opened: 15, viewed: 4, clicked: 5, replied: 1, bounced: 1 },
+      sms: { trackedMessages: 2, opened: 2, viewed: 0, clicked: 1, replied: 0, bounced: 0 },
     });
 
     expect(buildHistoryStatusCounts(messages)).toEqual({

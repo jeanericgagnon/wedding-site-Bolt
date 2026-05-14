@@ -1012,6 +1012,14 @@ export interface MessageHistorySummaryPanelsProps {
     sent: number;
     targeted: number;
   }>;
+  channelEngagementBreakdown: Record<'email' | 'sms', {
+    bounced: number;
+    clicked: number;
+    opened: number;
+    replied: number;
+    trackedMessages: number;
+    viewed: number;
+  }>;
   deliveryHealth: {
     failRate: number;
     overdueScheduled: number;
@@ -1039,6 +1047,7 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
   audienceBreakdown,
   campaignStatusSummary,
   channelBreakdown,
+  channelEngagementBreakdown,
   deliveryHealth,
   historyStatusCounts,
   providerTelemetry,
@@ -1115,6 +1124,16 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
           <p className="text-xs text-text-secondary">
             Sent {channelBreakdown[channel].sent} · Active {channelBreakdown[channel].active} · Scheduled {channelBreakdown[channel].scheduled} · Needs follow-up {channelBreakdown[channel].partial} · Needs review {channelBreakdown[channel].failed}
           </p>
+          {channelEngagementBreakdown[channel].trackedMessages > 0 && (
+            <>
+              <p className="mt-1 text-xs text-text-primary">
+                {channelEngagementBreakdown[channel].opened} opened · {channelEngagementBreakdown[channel].clicked} clicked · {channelEngagementBreakdown[channel].replied} replied
+              </p>
+              <p className="mt-1 text-[11px] text-text-tertiary">
+                {channelEngagementBreakdown[channel].viewed} viewed{channelEngagementBreakdown[channel].bounced > 0 ? ` · ${channelEngagementBreakdown[channel].bounced} bounced` : ''} across {channelEngagementBreakdown[channel].trackedMessages} completed campaign{channelEngagementBreakdown[channel].trackedMessages === 1 ? '' : 's'}
+              </p>
+            </>
+          )}
         </div>
       ))}
     </div>
@@ -1436,6 +1455,7 @@ export interface MessageHistoryCardProps {
   campaignThreads: CampaignThreadSummary[];
   canCompose: boolean;
   channelBreakdown: MessageHistorySummaryPanelsProps['channelBreakdown'];
+  channelEngagementBreakdown: MessageHistorySummaryPanelsProps['channelEngagementBreakdown'];
   deliveries: DeliveryRow[];
   deliveryHealth: MessageHistorySummaryPanelsProps['deliveryHealth'];
   filteredHistory: Message[];
@@ -1478,6 +1498,7 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
   campaignThreads,
   canCompose,
   channelBreakdown,
+  channelEngagementBreakdown,
   deliveries,
   deliveryHealth,
   filteredHistory,
@@ -1583,6 +1604,7 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
         audienceBreakdown={audienceBreakdown}
         campaignStatusSummary={campaignStatusSummary}
         channelBreakdown={channelBreakdown}
+        channelEngagementBreakdown={channelEngagementBreakdown}
         deliveryHealth={deliveryHealth}
         historyStatusCounts={historyStatusCounts}
         providerTelemetry={providerTelemetry}

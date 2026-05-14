@@ -54,6 +54,10 @@ describe('MessageHistorySummaryPanels', () => {
           email: { sent: 1, active: 2, scheduled: 1, failed: 0, partial: 0, targeted: 16 },
           sms: { sent: 0, active: 0, scheduled: 0, failed: 1, partial: 1, targeted: 7 },
         }}
+        channelEngagementBreakdown={{
+          email: { trackedMessages: 2, opened: 7, viewed: 3, clicked: 4, replied: 1, bounced: 0 },
+          sms: { trackedMessages: 1, opened: 2, viewed: 0, clicked: 1, replied: 0, bounced: 1 },
+        }}
         deliveryHealth={{ successRate: 75, failRate: 25, skipped: 1, skippedRate: 10, overdueScheduled: 0 }}
         historyStatusCounts={{ sent: 1, active: 2, scheduled: 1, partial: 1, failed: 1 }}
         providerTelemetry={{ attempted: 4, errorTop: [['Temporary delivery issue', 2]], sent: 3, sentRate: 75, skipped: 1 }}
@@ -62,6 +66,10 @@ describe('MessageHistorySummaryPanels', () => {
 
     expect(screen.getByText('Sent 1 · Active 2 · Scheduled 1 · Needs follow-up 0 · Needs review 0')).toBeInTheDocument();
     expect(screen.getByText('Sent 0 · Active 0 · Scheduled 0 · Needs follow-up 1 · Needs review 1')).toBeInTheDocument();
+    expect(screen.getByText('7 opened · 4 clicked · 1 replied')).toBeInTheDocument();
+    expect(screen.getByText('3 viewed across 2 completed campaigns')).toBeInTheDocument();
+    expect(screen.getByText('2 opened · 1 clicked · 0 replied')).toBeInTheDocument();
+    expect(screen.getByText('0 viewed · 1 bounced across 1 completed campaign')).toBeInTheDocument();
   });
 });
 

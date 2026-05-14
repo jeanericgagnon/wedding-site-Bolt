@@ -123,6 +123,25 @@ export function buildChannelBreakdown(messages: Message[]) {
   return init;
 }
 
+export function buildChannelEngagementBreakdown(messages: Message[]) {
+  const init = {
+    email: { trackedMessages: 0, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0 },
+    sms: { trackedMessages: 0, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0 },
+  };
+  messages.forEach((message) => {
+    if (!isDeliveryCompletedStatus(message.status)) return;
+    const channel = message.channel === 'sms' ? 'sms' : 'email';
+    const engagement = getMessageEngagementStats(message);
+    init[channel].trackedMessages += 1;
+    init[channel].opened += engagement.opened ?? 0;
+    init[channel].viewed += engagement.viewed ?? 0;
+    init[channel].clicked += engagement.clicked ?? 0;
+    init[channel].replied += engagement.replied ?? 0;
+    init[channel].bounced += engagement.bounced ?? 0;
+  });
+  return init;
+}
+
 export function buildHistoryStatusCounts(messages: Message[]) {
   return {
     sent: messages.filter((message) => message.status === 'sent').length,
