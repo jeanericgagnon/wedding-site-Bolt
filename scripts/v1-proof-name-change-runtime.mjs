@@ -13,6 +13,18 @@ const steps = [
     required: true,
   },
   {
+    id: 'name-change-dependency-tests',
+    label: 'Name change TSA, DMV, passport, and dependency matrix tests',
+    command: 'npm test -- --run src/lib/nameChange/requirements.test.ts src/lib/nameChange/tsaFlow.test.ts src/lib/nameChange/dmvFlow.test.ts src/lib/nameChange/passportFlow.test.ts src/lib/nameChange/targetExecution.test.ts',
+    required: true,
+  },
+  {
+    id: 'name-change-reminder-tests',
+    label: 'Name change reminder, blocker, and template proof tests',
+    command: 'npm test -- --run src/lib/nameChange/reminders.test.ts',
+    required: true,
+  },
+  {
     id: 'name-change-overview-tests',
     label: 'Name change overview and lifecycle tests',
     command: 'npm test -- --run src/pages/dashboard/nameChangeLifecycleLabels.test.ts src/pages/dashboard/nameChangeLifecycleStatus.test.ts src/pages/dashboard/nameChangeOverviewCard.test.ts src/pages/dashboard/nameChangeOverviewInsights.test.ts src/pages/dashboard/planning/nameChangePlannerUi.test.ts src/pages/dashboard/planning/nameChangeExecutionTime.test.ts',
@@ -108,6 +120,8 @@ const output = {
   },
   automatedCoverage: [
     'Case normalization and document merge safety',
+    'Passport alias mapping plus TSA, DMV, travel, and execution dependency truth',
+    'Reminder, blocker, and proof-aware template behavior',
     'Lifecycle, overview, and planner UI truth',
     '50-state playbooks, institution handoff packets, edge-case branching, and export surfaces',
     'Build integrity after planner assertions',

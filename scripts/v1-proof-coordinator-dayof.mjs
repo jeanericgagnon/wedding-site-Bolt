@@ -24,6 +24,12 @@ const steps = [
     required: true,
   },
   {
+    id: 'coordinator-event-awareness-tests',
+    label: 'Coordinator event-awareness and seating-scope tests',
+    command: 'npm test -- --run src/lib/operationalEvent.test.ts src/pages/dashboard/coordinator/buildCoordinatorDashboardDerivedState.test.ts src/pages/dashboard/seating/seatingService.test.ts src/lib/coordinatorEventAwarenessProof.test.ts',
+    required: true,
+  },
+  {
     id: 'coordinator-timeline-state-tests',
     label: 'Coordinator timeline state tests',
     command: 'npm test -- src/lib/coordinatorTimelineState.test.ts',
@@ -132,6 +138,7 @@ const output = {
     'Role-aware coordinator live-ops boundaries',
     'Check-in queue filtering behavior',
     'QR payload safety, duplicate-scan debounce, and guest resolution behavior',
+    'Operational event selection shared across coordinator, seating lookup, and scanner entry points',
     'Single-live-event timeline state truth',
     'Persisted staffing handoff save and issue-log service boundaries',
     'Incident ownership, runner-task lifecycle completion, guest continuity, and shift-snapshot export behavior',

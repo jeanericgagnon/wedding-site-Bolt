@@ -20,4 +20,18 @@ describe('coordinatorCheckInQueue', () => {
     expect(filterCoordinatorCheckInQueue(guests, 'jordan', 'all').map((guest) => guest.id)).toEqual(['3']);
     expect(filterCoordinatorCheckInQueue(guests, 'pending', 'all').map((guest) => guest.id)).toEqual(['3']);
   });
+
+  it('keeps the active queue scoped to the current event invitation list', () => {
+    expect(filterCoordinatorCheckInQueue(
+      guests,
+      '',
+      'all',
+      {
+        currentEventId: 'event-1',
+        eventGuestIds: {
+          'event-1': new Set(['1', '3']),
+        },
+      },
+    ).map((guest) => guest.id)).toEqual(['1', '3']);
+  });
 });

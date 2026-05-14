@@ -9,6 +9,8 @@ describe('coordinator day-of proof script', () => {
     expect(source).toContain('V1_COORDINATOR_DAYOF_LIVE');
     expect(source).toContain('tests/e2e/coordinator-dayof-live.spec.ts');
     expect(source).toContain('src/pages/dashboard/coordinator/coordinatorFullSuiteUtils.test.ts');
+    expect(source).toContain('src/pages/dashboard/coordinator/buildCoordinatorDashboardDerivedState.test.ts');
+    expect(source).toContain('src/pages/dashboard/seating/seatingService.test.ts');
     expect(source).toContain('Run V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof');
   });
 });

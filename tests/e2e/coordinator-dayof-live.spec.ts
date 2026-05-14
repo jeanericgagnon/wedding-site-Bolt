@@ -143,22 +143,61 @@ test('coordinator day-of route proves handoff save, issue lifecycle, runner comp
   }>;
   expect(eventRow?.id).toBeTruthy();
 
-  const guestResponse = await restFetch(restUrl('guests', {
-    select: 'id,name,first_name,last_name',
-    wedding_site_id: `eq.${eventRow.wedding_site_id}`,
+  const invitedGuestResponse = await restFetch(restUrl('event_invitations', {
+    select: 'guest_id',
+    event_id: `eq.${eventRow.id}`,
+    limit: '250',
+  }));
+  const invitedGuestText = await invitedGuestResponse.text();
+  expect(invitedGuestResponse.ok, invitedGuestText).toBeTruthy();
+  const invitedGuestIds = (JSON.parse(invitedGuestText) as Array<{ guest_id: string }>).map((row) => row.guest_id);
+  expect(invitedGuestIds.length).toBeGreaterThan(0);
+
+  const seatingEventResponse = await restFetch(restUrl('seating_events', {
+    select: 'id',
+    itinerary_event_id: `eq.${eventRow.id}`,
     limit: '1',
+  }));
+  const seatingEventText = await seatingEventResponse.text();
+  expect(seatingEventResponse.ok, seatingEventText).toBeTruthy();
+  const [seatingEventRow] = JSON.parse(seatingEventText) as Array<{ id: string }>;
+
+  const eventCheckInByGuestId = new Map<string, string | null>();
+  if (seatingEventRow?.id) {
+    const seatingAssignmentResponse = await restFetch(restUrl('seating_assignments', {
+      select: 'guest_id,checked_in_at',
+      seating_event_id: `eq.${seatingEventRow.id}`,
+      limit: '500',
+    }));
+    const seatingAssignmentText = await seatingAssignmentResponse.text();
+    expect(seatingAssignmentResponse.ok, seatingAssignmentText).toBeTruthy();
+    (JSON.parse(seatingAssignmentText) as Array<{ guest_id: string; checked_in_at: string | null }>).forEach((row) => {
+      eventCheckInByGuestId.set(row.guest_id, row.checked_in_at);
+    });
+  }
+
+  const guestResponse = await restFetch(restUrl('guests', {
+    select: 'id,name,first_name,last_name,invite_token',
+    wedding_site_id: `eq.${eventRow.wedding_site_id}`,
+    invite_token: 'not.is.null',
+    limit: '250',
   }));
   const guestText = await guestResponse.text();
   expect(guestResponse.ok, guestText).toBeTruthy();
-  const [guestRow] = JSON.parse(guestText) as Array<{
+  const guestRows = JSON.parse(guestText) as Array<{
     id: string;
     name: string | null;
     first_name: string | null;
     last_name: string | null;
+    invite_token: string | null;
   }>;
+  const [guestRow] = guestRows.filter((guest) => (
+    invitedGuestIds.includes(guest.id) && !eventCheckInByGuestId.get(guest.id)
+  ));
   expect(guestRow?.id).toBeTruthy();
   const guestName = guestRow.name || [guestRow.first_name, guestRow.last_name].filter(Boolean).join(' ').trim();
   expect(guestName).toBeTruthy();
+  expect(guestRow.invite_token).toBeTruthy();
 
   const existingHandoffResponse = await restFetch(restUrl('coordinator_event_handoffs', {
     select: 'id,handoff_status,lead_name,support_name,note',
@@ -186,6 +225,13 @@ test('coordinator day-of route proves handoff save, issue lifecycle, runner comp
     await expect(page.getByText(/^Guest continuity$/).first()).toBeVisible();
     await expect(page.getByText(/^Runner board$/).first()).toBeVisible();
     await expect(page.getByText(/^Shift snapshot$/).first()).toBeVisible();
+    await expect(page.getByText(`Event · ${eventRow.event_name}`)).toBeVisible();
+
+    const qrInput = page.getByPlaceholder('Paste a guest RSVP/check-in URL or invite token');
+    await qrInput.fill(guestRow.invite_token ?? '');
+    await page.getByRole('button', { name: 'Validate code' }).click();
+    await expect(page.getByText(guestName, { exact: true }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Confirm check-in' })).toBeVisible();
 
     const handoffCard = page.getByTestId(`coordinator-handoff-card-${eventRow.id}`);
     await expect(handoffCard).toBeVisible();

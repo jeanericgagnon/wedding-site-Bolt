@@ -3,6 +3,7 @@ import {
   getCoordinatorDoorExceptionStates,
   getCoordinatorEventCheckInAt,
   getCoordinatorEventTableName,
+  isCoordinatorGuestInvitedToCurrentEvent,
   type CoordinatorDoorStatusContext,
 } from './coordinatorCheckInStatus';
 import type { GuestLiteForCoordinator } from './coordinatorTypes';
@@ -37,6 +38,7 @@ export const filterCoordinatorCheckInQueue = (
   context?: CoordinatorDoorStatusContext,
 ) => guests.filter((guest) => {
   const checkedInAt = getCoordinatorEventCheckInAt(guest, context?.currentEventId);
+  if (!isCoordinatorGuestInvitedToCurrentEvent(guest, context)) return false;
   if (!matchesQuery(guest, query, context)) return false;
   if (filter === 'arrivals') return !checkedInAt;
   if (filter === 'checked-in') return !!checkedInAt;

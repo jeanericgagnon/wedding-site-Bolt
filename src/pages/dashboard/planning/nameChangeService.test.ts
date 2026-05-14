@@ -109,6 +109,18 @@ describe('nameChangeService normalization', () => {
       is_us_citizen: true,
     });
 
+    expect(normalizeNameChangePassportFlags({
+      hasUsPassport: false,
+      passportNeedsUpdate: true,
+      hasRealIdLicense: false,
+      isUsCitizen: false,
+    })).toEqual({
+      has_us_passport: false,
+      passport_needs_update: true,
+      has_real_id_license: false,
+      is_us_citizen: false,
+    });
+
     expect(normalizeNameChangeCaseInput(makeCase({
       has_us_passport: false,
     }))).toMatchObject({
