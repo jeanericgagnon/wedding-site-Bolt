@@ -311,8 +311,9 @@ Execution rule for this section:
    - this batch shipped: the guest visibility drawer now includes the anniversary-vault guest path alongside RSVP, guest update, photos, guestbook, recap, travel, and registry so preview confidence covers another real private guest surface
    - this batch shipped: demo/local guest preview proof now includes structured visible-versus-hidden itinerary variation, routes the drawer through the real guest-specific event set, carries demo site context into guest preview links, and proves in a real browser that owners can open the public-site preview plus the exact guest RSVP route for a hidden-event guest without raw-token UI leakage
    - this batch shipped: coordinator door-check and seating-lookup surfaces now expose direct guest-view preview actions, so owners/planners can jump from live ops tools into the real guest-facing RSVP/site path without losing event context or exposing raw token copy in the UI
+   - this batch shipped: a dedicated `proof:v1:guest-preview-confidence` lane now reruns preview-route generation, guest drawer token-safe QR surfaces, the real desktop drawer flow, and a new mobile drawer flow that opens photo upload, travel, registry, and public-site guest views from the owner drawer without raw-token leakage
    - finish true route-level personalization beyond the owner preview banner, guest-update path, and demo/local preview proof
-   - extend preview confidence to photo, registry, and travel surfaces in live/mobile proof, not only owner/local preview
+   - rerun the same photo, registry, travel, and public-site guest drawer flow against the shipped production runtime for live/mobile proof, not only local preview
    - add cross-surface live tests proving private event visibility is hidden from the wrong guest and visible to the right guest
    - add live/mobile click proof for the Guests drawer preview flow on the shipped runtime
 

@@ -26,7 +26,10 @@ test('guests drawer preview shows visible vs hidden event access and opens real 
   await page.goto('/dashboard/guests?bypassPayment=1&guestPreviewQa=1', { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByRole('heading', { name: /know who is coming and who still needs a gentle nudge/i })).toBeVisible();
-  await page.getByRole('button', { name: 'Households' }).click();
+  await page.getByRole('button', { name: /All \(120\)/i }).click();
+  if (await page.locator('table').count() === 0) {
+    await page.getByRole('button', { name: 'Households' }).click();
+  }
 
   const searchInput = page.getByPlaceholder('Search guests...');
 
