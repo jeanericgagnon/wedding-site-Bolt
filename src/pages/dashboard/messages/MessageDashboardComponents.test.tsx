@@ -50,6 +50,51 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('150% open · 75% click · 25% reply')).toBeInTheDocument();
   });
 
+  it('shows delivered coverage inside the active campaign thread chip row', () => {
+    render(
+      <MessageCampaignThreadPanels
+        activeCampaignLatestMessage={null}
+        activeCampaignThread={{
+          key: 'thread-1',
+          name: 'RSVP push',
+          count: 2,
+          delivered: 8,
+          failed: 1,
+          skipped: 1,
+          unreached: 1,
+          opened: 4,
+          viewed: 2,
+          clicked: 1,
+          replied: 1,
+          bounced: 0,
+          deliveredRecipients: 8,
+          deliveredRate: 73,
+          openRate: 50,
+          clickRate: 13,
+          replyRate: 13,
+          latestStatus: 'partial',
+          latestAt: 100,
+        }}
+        campaignThreads={[]}
+        canCompose
+        deliveries={[]}
+        onClearThreadFilter={vi.fn()}
+        onDuplicateLatest={vi.fn()}
+        onEditLatest={vi.fn()}
+        onScheduleFollowUp={vi.fn()}
+        onSelectThread={vi.fn()}
+        onStartFollowUp={vi.fn()}
+        onViewLatest={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Delivered 8')).toBeInTheDocument();
+    expect(screen.getByText('73% delivered coverage')).toBeInTheDocument();
+    expect(screen.getByText('Needs review 1')).toBeInTheDocument();
+    expect(screen.getByText('Needs contact 1')).toBeInTheDocument();
+    expect(screen.getByText('Not reached 1')).toBeInTheDocument();
+  });
+
   it('shows engagement rates on the latest campaign message when delivered recipients exist', () => {
     render(
       <MessageCampaignThreadPanels

@@ -1333,6 +1333,11 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
         </div>
         <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Delivered {activeCampaignThread.delivered}</span>
+          {activeCampaignThread.deliveredRecipients > 0 && (
+            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+              {activeCampaignThread.deliveredRate}% delivered coverage
+            </span>
+          )}
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs review {activeCampaignThread.failed}</span>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs contact {activeCampaignThread.skipped}</span>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Not reached {activeCampaignThread.unreached}</span>
