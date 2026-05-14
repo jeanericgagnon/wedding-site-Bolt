@@ -1,3 +1,5 @@
+import { appendGuestInviteTokenToInternalHref } from './publicAccessArtifacts';
+
 export type GuestHubActionId = 'rsvp' | 'schedule' | 'travel' | 'registry' | 'photos' | 'guestbook' | 'recap' | 'contact';
 
 export interface GuestHubActionSettings {
@@ -11,6 +13,7 @@ export interface GuestHubActionSettings {
 
 export interface GuestHubActionOptions {
   guestContactHref?: string | null;
+  guestInviteToken?: string | null;
 }
 
 export interface GuestHubAction {
@@ -25,6 +28,7 @@ const isEnabled = (value: boolean | null | undefined) => value !== false;
 
 export function buildGuestHubActions(slug: string, settings: GuestHubActionSettings, options: GuestHubActionOptions = {}): GuestHubAction[] {
   const encodedSlug = encodeURIComponent(slug);
+  const guestInviteToken = options.guestInviteToken?.trim() || null;
   const actions: GuestHubAction[] = [
     {
       id: 'rsvp',
@@ -55,19 +59,19 @@ export function buildGuestHubActions(slug: string, settings: GuestHubActionSetti
       id: 'photos',
       titleKey: 'guest_hub.action_upload',
       detailKey: 'guest_hub.action_upload_detail',
-      href: `/photos/upload?site=${encodedSlug}&hub=1`,
+      href: appendGuestInviteTokenToInternalHref(`/photos/upload?site=${encodedSlug}&hub=1`, guestInviteToken),
     },
     {
       id: 'guestbook',
       titleKey: 'guest_hub.action_guestbook',
       detailKey: 'guest_hub.action_guestbook_detail',
-      href: `/guestbook/${encodedSlug}`,
+      href: appendGuestInviteTokenToInternalHref(`/guestbook/${encodedSlug}`, guestInviteToken),
     },
     {
       id: 'recap',
       titleKey: 'guest_hub.action_recap',
       detailKey: 'guest_hub.action_recap_detail',
-      href: `/event/${encodedSlug}/recap`,
+      href: appendGuestInviteTokenToInternalHref(`/event/${encodedSlug}/recap`, guestInviteToken),
     },
   ];
 
@@ -77,7 +81,7 @@ export function buildGuestHubActions(slug: string, settings: GuestHubActionSetti
       id: 'contact',
       titleKey: 'guest_hub.action_contact',
       detailKey: 'guest_hub.action_contact_detail',
-      href: guestContactHref,
+      href: appendGuestInviteTokenToInternalHref(guestContactHref, guestInviteToken),
     });
   }
 

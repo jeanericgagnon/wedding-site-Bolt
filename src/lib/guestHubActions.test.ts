@@ -34,6 +34,19 @@ describe('guestHubActions', () => {
     });
   });
 
+  it('carries guest-specific identity through private guest-path actions without changing public site anchors', () => {
+    const actions = buildGuestHubActions('maya-and-leo', {}, {
+      guestContactHref: '/guest-contact/maya-and-leo',
+      guestInviteToken: 'guest-token-123',
+    });
+
+    expect(actions.find((action) => action.id === 'photos')?.href).toBe('/photos/upload?site=maya-and-leo&hub=1&invite_token=guest-token-123');
+    expect(actions.find((action) => action.id === 'guestbook')?.href).toBe('/guestbook/maya-and-leo?invite_token=guest-token-123');
+    expect(actions.find((action) => action.id === 'recap')?.href).toBe('/event/maya-and-leo/recap?invite_token=guest-token-123');
+    expect(actions.find((action) => action.id === 'contact')?.href).toBe('/guest-contact/maya-and-leo?invite_token=guest-token-123');
+    expect(actions.find((action) => action.id === 'schedule')?.href).toBe('/site/maya-and-leo#schedule');
+  });
+
   it('honors hub controls without leaving orphan recap links when photos are off', () => {
     const actions = buildGuestHubActions('maya-and-leo', {
       photos_enabled: false,

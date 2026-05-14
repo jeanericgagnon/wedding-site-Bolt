@@ -78,6 +78,7 @@ describe('public guest surface boundary', () => {
     expect(eventHub).toContain("trackGuestHubEvent(slug, 'view', '/event'");
     expect(eventHub).toContain('submitGuestHubProspect(');
     expect(eventHub).toContain('buildGuestHubAccessPayload(slug, searchParams)');
+    expect(eventHub).toContain('guestInviteToken: guestIdentity.guestInviteToken');
     expect(eventHub).not.toContain('if (!slug) {');
     expect(eventHubLiveContent).toContain("from './EventHubConfigStatusCard'");
     expect(eventHubLiveContent).toContain("Travel guest path");
@@ -92,6 +93,7 @@ describe('public guest surface boundary', () => {
     expect(eventRecap).toContain("from '../components/site/OwnerPreviewBanner'");
     expect(eventRecap).toContain('<EventRecapLiveContent');
     expect(eventRecap).toContain('<OwnerPreviewBanner />');
+    expect(eventRecap).toContain('captureGuestInviteTokenFromSearch(slug, searchParams);');
     expect(eventRecap).toContain('fetchGuestRecapConfig<RecapData>(');
     expect(eventRecap).toContain("trackGuestHubEvent(slug, 'view', '/event/recap'");
     expect(eventRecap).toContain('submitGuestHubProspect(');
@@ -113,6 +115,7 @@ describe('public guest surface boundary', () => {
     expect(photoUpload).toContain('uploadGuestPhotos(form)');
     expect(photoUpload).toContain('submitGuestHubProspect(');
     expect(photoUpload).toContain('buildPhotoUploadAccessPayload(siteSlug)');
+    expect(photoUpload).toContain('captureGuestInviteTokenFromSearch(siteSlug, params);');
     expect(photoUploadStatusPanel).toContain("href={`/event/${encodeURIComponent(siteSlug)}/recap`}");
     expect(guestSubmissionService).toContain('/functions/v1/photo-upload');
     expect(guestHubService).toContain('/functions/v1/guest-prospect-submit');
@@ -127,6 +130,7 @@ describe('public guest surface boundary', () => {
     expect(vaultContribute).toContain('<VaultContributeRouteView');
     expect(vaultContribute).toContain('loadEnabledVaultContributionConfig(siteSlug, vaultYear, buildVaultAccessPayload(siteSlug))');
     expect(vaultContribute).toContain('listEnabledVaultContributionConfigs(siteSlug, buildVaultAccessPayload(siteSlug))');
+    expect(vaultContribute).toContain('captureGuestInviteTokenFromSearch(siteSlug, searchParams);');
     expect(vaultContribute).toContain('uploadVaultContributionToGoogleDrive({');
     expect(vaultContribute).toContain('uploadVaultContributionAttachment({');
     expect(vaultContribute).toContain("submitVaultContributionRows(rows, buildVaultAccessPayload(siteSlug ?? ''), qaOpen)");
@@ -150,6 +154,7 @@ describe('public guest surface boundary', () => {
     expect(guestbook).toContain("from './guestPublicSubmissionService'");
     expect(guestbook).toContain('submitGuestbookEntry({');
     expect(guestbook).toContain('buildGuestbookAccessPayload(siteSlug)');
+    expect(guestbook).toContain('captureGuestInviteTokenFromSearch(siteSlug, searchParams);');
     expect(guestbookFormPanel).toContain('id="guestbook-message"');
     expect(guestbookFormPanel).toContain('Back to wedding hub');
     expect(guestSubmissionService).toContain('/functions/v1/guestbook-submit');

@@ -8,6 +8,7 @@ import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
 import {
   buildPublicAccessArtifacts,
+  captureGuestInviteTokenFromSearch,
   capturePublicInviteTokenFromSearch,
 } from '../lib/publicAccessArtifacts';
 import {
@@ -115,7 +116,10 @@ export const EventRecap: React.FC = () => {
   const recap = data;
 
   useEffect(() => {
-    if (slug) capturePublicInviteTokenFromSearch(slug, searchParams);
+    if (slug) {
+      capturePublicInviteTokenFromSearch(slug, searchParams);
+      captureGuestInviteTokenFromSearch(slug, searchParams);
+    }
     const languagePreference = resolveGuestLanguagePreference({
       search: searchParams,
       storedLanguage: readStoredGuestLanguage(),

@@ -305,6 +305,7 @@ Execution rule for this section:
    - this batch shipped: guest itinerary drawer now exposes private RSVP and guest-update QR surfaces that render locally, keep raw token URLs out of normal UI copy, and give owners concrete guest-path artifacts from the dashboard instead of only plain links
    - this batch shipped: the public guest hub now preserves guest invite identity, exposes a real guest-update action when a private guest path exists, and carries that guest-specific path without printing raw token URLs in the hub UI
    - this batch shipped: owner preview context now follows through on guest-facing contact update, photo upload, guestbook, vault, and recap routes instead of stopping at the site or RSVP shell
+   - this batch shipped: guest-specific hub links now carry private guest identity into photo upload, guestbook, vault, and recap routes, and those routes now capture and preserve that identity instead of dropping back to purely public context on the next click
    - finish true route-level personalization beyond the owner preview banner and guest-update path
    - wire planner/coordinator role preview controls from dashboard flows
    - extend preview confidence to photo, registry, and travel surfaces
@@ -314,6 +315,7 @@ Execution rule for this section:
 2. `ACTIVE`: unified QR guest hub
    - this batch shipped: QR share surfaces now support private DayOf payloads through local SVG generation instead of the public QR vendor, and the private guest QR path is now wired into both RSVP and guest-update owner surfaces
    - this batch shipped: the guest hub action model now supports a guest-specific update path that can ride the same private guest identity captured from the link instead of falling back to only public hub actions
+   - this batch shipped: guest-specific QR/hub flows now preserve private guest identity across the next-step guest routes instead of only into the first contact-update page
    - add guest-specific QR mode that never prints private invite access in public assets
    - add QR revocation/rotation model for guest-specific QR links
    - wire vault/day-of update deep links into the shared hub model

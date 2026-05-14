@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  appendGuestInviteTokenToInternalHref,
   buildGuestIdentityArtifacts,
   captureGuestInviteTokenFromSearch,
   getGuestInviteTokenStorageKey,
@@ -57,5 +58,12 @@ describe('public access artifacts', () => {
       guestInviteToken: 'guest-token-123',
     });
     expect(window.location.pathname + window.location.search + window.location.hash).toBe('/guest-contact/maya-leo?guestLang=es#contact');
+  });
+
+  it('appends guest invite tokens only to internal guest-path links', () => {
+    expect(appendGuestInviteTokenToInternalHref('/photos/upload?site=maya-leo&hub=1', 'guest-token-123', 'https://dayof.love'))
+      .toBe('/photos/upload?site=maya-leo&hub=1&invite_token=guest-token-123');
+    expect(appendGuestInviteTokenToInternalHref('https://example.com/photos/upload', 'guest-token-123', 'https://dayof.love'))
+      .toBe('https://example.com/photos/upload');
   });
 });

@@ -63,6 +63,7 @@ describe('friendlyGuestbookError', () => {
 
     expect(pageSource).toContain("from './GuestbookSubmitFormPanel'");
     expect(pageSource).toContain('<GuestbookSubmitFormPanel');
+    expect(pageSource).toContain('captureGuestInviteTokenFromSearch(siteSlug, searchParams);');
     expect(panelSource).toContain('id="guestbook-message"');
     expect(panelSource).toContain('Back to wedding hub');
   });

@@ -5,6 +5,7 @@ import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import {
   buildPublicAccessArtifacts,
+  captureGuestInviteTokenFromSearch,
   capturePublicInviteTokenFromSearch,
 } from '../lib/publicAccessArtifacts';
 import { hasGuestPublicSubmissionRuntime, submitGuestbookEntry } from './guestPublicSubmissionService';
@@ -39,7 +40,11 @@ export const GuestbookSubmit: React.FC = () => {
   const labelClassName = 'mb-2 block text-sm font-medium text-stone-800';
 
   useEffect(() => {
-    if (siteSlug) capturePublicInviteTokenFromSearch(siteSlug, new URLSearchParams(window.location.search));
+    if (siteSlug) {
+      const searchParams = new URLSearchParams(window.location.search);
+      capturePublicInviteTokenFromSearch(siteSlug, searchParams);
+      captureGuestInviteTokenFromSearch(siteSlug, searchParams);
+    }
   }, [siteSlug]);
 
   async function onSubmit(event: React.FormEvent) {

@@ -47,6 +47,15 @@ describe('buildVaultAccessPayload', () => {
   });
 });
 
+describe('vault contribution guest identity capture', () => {
+  it('captures guest-specific invite identity on vault entry links alongside public access artifacts', () => {
+    const page = readFileSync(join(process.cwd(), 'src/pages/VaultContribute.tsx'), 'utf8');
+
+    expect(page).toContain('capturePublicInviteTokenFromSearch(siteSlug, searchParams);');
+    expect(page).toContain('captureGuestInviteTokenFromSearch(siteSlug, searchParams);');
+  });
+});
+
 describe('getVaultCoupleName', () => {
   it('keeps a single partner name truthful instead of showing a broken ampersand', () => {
     expect(getVaultCoupleName({ couple_name_1: 'Alex', couple_name_2: '   ' })).toBe('Alex');

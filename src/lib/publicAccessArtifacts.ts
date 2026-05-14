@@ -102,3 +102,21 @@ export function buildGuestIdentityArtifacts(slug: string, searchParams: URLSearc
     guestInviteToken: getGuestInviteTokenFromSearch(searchParams) ?? readStoredGuestInviteToken(slug),
   };
 }
+
+export function appendGuestInviteTokenToInternalHref(
+  href: string,
+  guestInviteToken: string | null | undefined,
+  origin = window.location.origin,
+): string {
+  const token = guestInviteToken?.trim();
+  if (!token) return href;
+
+  try {
+    const url = new URL(href, origin);
+    if (url.origin !== origin || !url.pathname.startsWith('/')) return href;
+    url.searchParams.set('invite_token', token);
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return href;
+  }
+}

@@ -160,14 +160,17 @@ export const EventHub: React.FC = () => {
     return `/guest-contact/${encodeURIComponent(slug)}`;
   }, [guestIdentity.guestInviteToken, slug]);
 
-  const actions = useMemo<HubAction[]>(() => buildGuestHubActions(slug, settings, { guestContactHref }).map((action) => ({
+  const actions = useMemo<HubAction[]>(() => buildGuestHubActions(slug, settings, {
+    guestContactHref,
+    guestInviteToken: guestIdentity.guestInviteToken,
+  }).map((action) => ({
     id: action.id,
     title: t(action.titleKey),
     description: t(action.detailKey),
     href: action.href,
     icon: actionIcons[action.id],
     primary: action.primary,
-  })), [guestContactHref, settings, slug, t]);
+  })), [guestContactHref, guestIdentity.guestInviteToken, settings, slug, t]);
 
   useEffect(() => {
     if (!slug) return;

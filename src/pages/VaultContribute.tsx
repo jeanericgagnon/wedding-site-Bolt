@@ -8,6 +8,7 @@ import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import { fetchPublicSiteAccess } from '../lib/publicSiteAccess';
 import {
   buildPublicAccessArtifacts,
+  captureGuestInviteTokenFromSearch,
   capturePublicInviteTokenFromSearch,
 } from '../lib/publicAccessArtifacts';
 import {
@@ -163,6 +164,13 @@ export const VaultContribute: React.FC = () => {
 
 
   const submittedKey = getVaultSubmittedYearsStorageKey(siteSlug);
+
+  useEffect(() => {
+    if (!siteSlug) return;
+    const searchParams = new URLSearchParams(window.location.search);
+    capturePublicInviteTokenFromSearch(siteSlug, searchParams);
+    captureGuestInviteTokenFromSearch(siteSlug, searchParams);
+  }, [siteSlug]);
 
   function loadSubmittedYears() {
     setSubmittedYears(readSubmittedVaultYears(submittedKey));

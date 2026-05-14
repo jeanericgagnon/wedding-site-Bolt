@@ -195,6 +195,7 @@ describe('event recap page boundary', () => {
 
     expect(page).toContain("from './EventRecapLiveContent'");
     expect(page).toContain('<EventRecapLiveContent');
+    expect(page).toContain('captureGuestInviteTokenFromSearch(slug, searchParams);');
     expect(page).not.toContain("{loading && <div className=\"mt-6 rounded-lg border border-neutral-200 bg-white p-6 text-neutral-600\">");
     expect(page).not.toContain("{error && <div className=\"mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-6 text-neutral-700\">");
     expect(liveContent).toContain("from './EventRecapRouteView'");

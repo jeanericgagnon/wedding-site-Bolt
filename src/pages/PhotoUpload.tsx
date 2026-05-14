@@ -6,6 +6,7 @@ import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
 import {
   buildPublicAccessArtifacts,
+  captureGuestInviteTokenFromSearch,
   capturePublicInviteTokenFromSearch,
 } from '../lib/publicAccessArtifacts';
 import { submitGuestHubProspect } from './guestHubPublicService';
@@ -80,7 +81,10 @@ export const PhotoUpload: React.FC = () => {
   const labelClassName = 'mb-2 block text-sm font-medium text-stone-800';
 
   useEffect(() => {
-    if (siteSlug) capturePublicInviteTokenFromSearch(siteSlug, params);
+    if (siteSlug) {
+      capturePublicInviteTokenFromSearch(siteSlug, params);
+      captureGuestInviteTokenFromSearch(siteSlug, params);
+    }
     const languagePreference = resolveGuestLanguagePreference({
       search: params,
       storedLanguage: readStoredGuestLanguage(),

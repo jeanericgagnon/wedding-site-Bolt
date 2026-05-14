@@ -1,6 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildPhotoUploadAccessPayload, mapUploadError, PhotoUpload, safePhotoUploadMessage } from './PhotoUpload';
 
@@ -79,6 +80,7 @@ describe('photo upload guest error copy', () => {
     expect(source).toContain("const access = siteSlug ? buildPhotoUploadAccessPayload(siteSlug) : null;");
     expect(source).toContain("...(access ?? {}),");
     expect(source).toContain("uploadToken: token.trim() || null,");
+    expect(source).toContain('captureGuestInviteTokenFromSearch(siteSlug, params);');
   });
 
   it('routes upload feedback and post-upload CTAs through the shared status panel', () => {
@@ -94,7 +96,13 @@ describe('photo upload guest error copy', () => {
   it('connects the file chooser to upload limits and live selected-file status', () => {
     window.history.pushState({}, '', '/photos/upload?site=ericandkaras');
 
-    render(React.createElement(PhotoUpload));
+    render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(PhotoUpload),
+      ),
+    );
 
     const fileInput = screen.getByLabelText('Files');
     expect(fileInput).toHaveAttribute('aria-describedby', 'photo-upload-files-hint photo-upload-status');
