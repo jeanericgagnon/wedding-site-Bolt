@@ -169,7 +169,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
       title: 'Private guest link',
       badgeLabel: 'Guest-specific',
       detail: `This link includes invite-only event details plus RSVP and check-in readback for ${guestLabel}.`,
-      summary: 'Guest-specific access is active for this link.',
+      summary: 'Guest-specific access is active for this link, including RSVP and check-in readback.',
     };
   }
 
@@ -178,7 +178,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
       title: 'Private event access',
       badgeLabel: 'Invite-only',
       detail: 'This link includes invite-only wedding details that do not appear on the public site shell.',
-      summary: 'Invite-only access is active for this link.',
+      summary: 'Invite-only access is active for this link, without guest-specific RSVP or check-in readback.',
     };
   }
 
@@ -186,6 +186,6 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
     title: 'Public site view',
     badgeLabel: 'Public',
     detail: 'This link shows the public wedding hub. Invite-only event details stay on the private link from the couple.',
-    summary: 'Public-only access is active for this link.',
+    summary: 'Public-only access is active for this link, without private event or guest-specific readback.',
   };
 }

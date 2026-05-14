@@ -619,6 +619,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the new browser proof explicitly checks that both offline guest paths stay token-safe, mobile-safe, and still expose the travel/day-of hub actions guests need instead of collapsing into a blank error or raw-token fallback
    - this batch shipped: the guest hub now shows an explicit `Link access` status card so guests can tell whether the current hub link is public-only, invite-only, or guest-specific before relying on day-of schedule/travel details
    - this batch shipped: the day-of hub status board now treats private-event visibility as its own connected signal instead of leaving guests to infer public-vs-private access from surrounding copy
+   - this batch shipped: the guest-hub `Link access` summary now explicitly says whether RSVP/check-in readback is included, so guests can tell the difference between public, invite-only, and fully guest-specific links without guessing from the badge alone
    - this batch shipped: focused proof is green for guest-safe access-card helper truth, EventHub render wiring, and offline/mobile browser continuity for the new `Link access` surface
    - rerun live production proof for the new `Link access` surface after the next approved deploy so public vs guest-specific visibility is proven on `https://dayof.love`
    - add live production guest-hub write/read with cleanup after the day-of web-mode lane is finished

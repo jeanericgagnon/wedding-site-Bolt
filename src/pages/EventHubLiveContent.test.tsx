@@ -88,7 +88,7 @@ describe('EventHubLiveContent', () => {
             title: 'Private guest link',
             badgeLabel: 'Guest-specific',
             detail: 'This link includes invite-only event details plus RSVP and check-in readback for Alex Rivera.',
-            summary: 'Guest-specific access is active for this link.',
+            summary: 'Guest-specific access is active for this link, including RSVP and check-in readback.',
           }}
           guestName=""
           guestContact=""
@@ -123,7 +123,7 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Morgan · Avery')).toBeInTheDocument();
     expect(screen.getByText('Link access')).toBeInTheDocument();
     expect(screen.getByText('Private guest link')).toBeInTheDocument();
-    expect(screen.getByText('Guest-specific access is active for this link.')).toBeInTheDocument();
+    expect(screen.getByText('Guest-specific access is active for this link, including RSVP and check-in readback.')).toBeInTheDocument();
     expect(document.getElementById('day-of-updates')).not.toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy travel plan' }));

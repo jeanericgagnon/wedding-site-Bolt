@@ -60,9 +60,24 @@ describe('dayOfGuestHubStatus', () => {
     expect(card).toMatchObject({
       title: 'Private guest link',
       badgeLabel: 'Guest-specific',
-      summary: 'Guest-specific access is active for this link.',
+      summary: 'Guest-specific access is active for this link, including RSVP and check-in readback.',
     });
     expect(card?.detail).toContain('Alex Rivera');
+  });
+
+  it('builds an invite-only link access card when a private event link exists without guest-specific state', () => {
+    const card = buildGuestHubLinkAccessCard({
+      hasGuestInviteToken: false,
+      hasInviteToken: true,
+      hasPasswordSession: false,
+    });
+
+    expect(card).toMatchObject({
+      title: 'Private event access',
+      badgeLabel: 'Invite-only',
+      summary: 'Invite-only access is active for this link, without guest-specific RSVP or check-in readback.',
+    });
+    expect(card?.detail).toContain('invite-only wedding details');
   });
 
   it('builds a public-only link access card when no invite artifacts are present', () => {
@@ -75,7 +90,7 @@ describe('dayOfGuestHubStatus', () => {
     expect(card).toMatchObject({
       title: 'Public site view',
       badgeLabel: 'Public',
-      summary: 'Public-only access is active for this link.',
+      summary: 'Public-only access is active for this link, without private event or guest-specific readback.',
     });
     expect(card?.detail).toContain('public wedding hub');
   });
