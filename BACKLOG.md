@@ -416,7 +416,8 @@ Execution rule for this section:
    - this batch shipped: a dedicated local continuity proof lane now reruns guest-language preference, owner messaging preview derivation, translated RSVP question/meal assets, and a real browser pass across RSVP, event hub, photo upload, and recap guest-language routes
    - this batch shipped: owner guest-preview links and guest-hub actions now carry each guest's saved language across RSVP, public-site, contact-update, photo, guestbook, vault, recap, travel, and registry routes instead of dropping back to the site default after the first click
    - this batch shipped: local browser proof now confirms the guest drawer resolves the correct guest-facing route set while those preview links preserve token-safe guest identity state and guest-language continuity
-   - add live production proof for owner messaging previews and guest-facing language continuity
+   - this batch shipped: authenticated live production proof is now green for owner messaging language previews plus guest-facing translated RSVP, event hub, photo upload, and recap continuity on [dayof.love](https://dayof.love), with explicit checks that raw invite tokens and untranslated i18n keys do not leak into the rendered UI
+   - active remaining work: none beyond keeping this proof green on future deploys
 
 ### Later-Value Lanes Still Open
 

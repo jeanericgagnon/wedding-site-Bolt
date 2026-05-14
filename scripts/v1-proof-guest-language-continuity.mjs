@@ -1,9 +1,27 @@
 #!/usr/bin/env node
 
 import { execSync, spawn } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const PREVIEW_URL = 'http://127.0.0.1:4173';
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
+function envValue(key, fallback = '') {
+  if (process.env[key]) return String(process.env[key]);
+  const envPath = join(process.cwd(), '.env');
+  if (!existsSync(envPath)) return fallback;
+  const match = readFileSync(envPath, 'utf8')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('#'))
+    .find((line) => line.startsWith(`${key}=`));
+  if (!match) return fallback;
+  return match.slice(key.length + 1).trim().replace(/^['"]|['"]$/g, '');
+}
+
+const ownerEmail = envValue('V1_OWNER_EMAIL', '');
+const ownerPassword = envValue('V1_OWNER_PASSWORD', '');
+const shouldRunLiveProof = baseUrl !== PREVIEW_URL && /^https?:\/\//i.test(baseUrl) && Boolean(ownerEmail && ownerPassword);
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -102,6 +120,14 @@ try {
     command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/guest-i18n.spec.ts`,
   }));
 
+  if (shouldRunLiveProof) {
+    results.push(runStep({
+      id: 'guest-language-live-proof',
+      label: 'Guest language authenticated live proof',
+      command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/guest-language-live.spec.ts`,
+    }));
+  }
+
   if (previewStdout.trim()) {
     results.push({
       id: 'preview-server-log',
@@ -148,10 +174,13 @@ const output = {
     'Stored guest language preference and owner-preview language derivation truth',
     'Translated RSVP question and meal-choice continuity coverage',
     'Guest-facing RSVP, event hub, photo upload, and recap language continuity in a browser',
+    'Authenticated live owner messaging preview plus guest-facing translated-route continuity when live credentials are available',
   ],
-  stillManualProofNeeded: [
-    'Rerun the same flow on production after the next guest-language deploy wave.',
-  ],
+  stillManualProofNeeded: shouldRunLiveProof
+    ? []
+    : [
+        'Rerun the authenticated live owner messaging preview plus guest-facing language continuity flow on production once V1_OWNER_EMAIL, V1_OWNER_PASSWORD, and a live PLAYWRIGHT_BASE_URL are available.',
+      ],
   results,
 };
 
