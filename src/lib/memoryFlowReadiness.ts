@@ -71,8 +71,8 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
       label: 'Guestbook notes',
       detail: input.guestbookEnabled
         ? `${countLabel(input.guestbookCount, 'guestbook note')} captured.`
-        : 'Guestbook notes are off in the guest hub controls.',
-      status: input.guestbookEnabled ? 'ready' : 'needs-action',
+        : 'Guestbook notes are optional and currently off in the guest hub controls.',
+      status: input.guestbookEnabled ? 'ready' : 'planned',
     },
     {
       id: 'video-capture',

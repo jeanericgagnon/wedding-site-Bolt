@@ -447,16 +447,16 @@ export function buildRsvpSetupChecklist(
       label: 'Question templates',
       detail: addedTemplateCount > 0
         ? `${addedTemplateCount} of ${RSVP_QUESTION_TEMPLATES.length} reusable templates are in this RSVP setup.`
-        : 'Add reusable questions for meals, travel, songs, childcare, plus-ones, or events as needed.',
-      status: addedTemplateCount > 0 ? 'ready' : 'needs-setup',
+        : 'Reusable question templates are optional. Add them when you want faster setup for meals, travel, songs, childcare, plus-ones, or events.',
+      status: addedTemplateCount > 0 ? 'ready' : 'planned',
     },
     {
       id: 'meal_choices',
       label: 'Meal choices',
       detail: mealEnabled
         ? `${mealOptionCount} meal options will appear on the RSVP form.`
-        : 'Meal collection is off for this RSVP form.',
-      status: mealEnabled && mealOptionCount >= 2 ? 'ready' : 'needs-setup',
+        : 'Meal collection is off for this RSVP form unless you need catering choices.',
+      status: mealEnabled ? (mealOptionCount >= 2 ? 'ready' : 'needs-setup') : 'planned',
     },
     {
       id: 'future_access_modes',

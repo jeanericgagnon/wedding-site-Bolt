@@ -212,7 +212,25 @@ describe('rsvpAccessPlanner', () => {
     expect(checklist.find((item) => item.id === 'household_scope')).toMatchObject({ status: 'needs-setup' });
     expect(checklist.find((item) => item.id === 'verification_inputs')).toMatchObject({ status: 'needs-setup' });
     expect(checklist.find((item) => item.id === 'verification_inputs')?.detail).toContain('verification step');
-    expect(checklist.find((item) => item.id === 'question_templates')).toMatchObject({ status: 'needs-setup' });
+    expect(checklist.find((item) => item.id === 'question_templates')).toMatchObject({ status: 'planned' });
+    expect(checklist.find((item) => item.id === 'question_templates')?.detail).toContain('optional');
     expect(checklist.find((item) => item.id === 'meal_choices')).toMatchObject({ status: 'needs-setup' });
+  });
+
+  it('keeps optional template and meal setup out of the blocker state when owners do not need them yet', () => {
+    const checklist = buildRsvpSetupChecklist({
+      guestCount: 24,
+      inviteTokenCount: 24,
+      householdCount: 8,
+      emailCount: 12,
+      phoneCount: 4,
+      mealEnabled: false,
+      mealOptionCount: 0,
+      questions: [],
+    });
+
+    expect(checklist.find((item) => item.id === 'question_templates')).toMatchObject({ status: 'planned' });
+    expect(checklist.find((item) => item.id === 'meal_choices')).toMatchObject({ status: 'planned' });
+    expect(checklist.find((item) => item.id === 'meal_choices')?.detail).toContain('unless you need catering choices');
   });
 });

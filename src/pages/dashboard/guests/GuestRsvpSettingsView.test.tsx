@@ -84,6 +84,10 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText(/Household access proof/i)).toBeInTheDocument();
     expect(screen.getByText(/shared RSVP recovery stays scoped/i)).toBeInTheDocument();
     expect(screen.getAllByText(/bad-code and bad-password lockouts/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Templates and meal collection are optional/i)).toBeInTheDocument();
+    expect(screen.getByText(/Custom questions/i)).toBeInTheDocument();
+    expect(screen.getByText(/Meal choices/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Optional$/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: /Use as primary access/i })[0]);
 

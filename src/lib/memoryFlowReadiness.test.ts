@@ -51,11 +51,39 @@ describe('memoryFlowReadiness', () => {
 
     expect(readiness.steps.find((step) => step.id === 'guest-hub')?.status).toBe('needs-action');
     expect(readiness.steps.find((step) => step.id === 'album-links')?.status).toBe('needs-action');
+    expect(readiness.steps.find((step) => step.id === 'guestbook')?.status).toBe('planned');
     expect(readiness.steps.find((step) => step.id === 'moderation')?.status).toBe('needs-action');
     expect(readiness.steps.find((step) => step.id === 'slideshow')?.status).toBe('needs-action');
     expect(readiness.steps.find((step) => step.id === 'recap')?.status).toBe('needs-action');
     expect(readiness.steps.find((step) => step.id === 'export')?.status).toBe('needs-action');
     expect(readiness.blockers.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('keeps guestbook off as an optional planned step instead of a blocker', () => {
+    const readiness = buildMemoryFlowReadiness({
+      albumCount: 2,
+      activeAlbumCount: 1,
+      uploadCount: 6,
+      videoUploadCount: 1,
+      guestbookEnabled: false,
+      guestbookCount: 0,
+      photoUploadEnabled: true,
+      flaggedUploadCount: 0,
+      reviewQueueCount: 0,
+      recapStatus: 'private_link',
+      recapFeaturedCount: 2,
+      recapStoryCount: 1,
+      slideshowFrameCount: 4,
+      slideshowReadyAlbumCount: 1,
+      guestHubActionCount: 4,
+      guestProspectCount: 1,
+    });
+
+    expect(readiness.steps.find((step) => step.id === 'guestbook')).toMatchObject({
+      status: 'planned',
+      detail: 'Guestbook notes are optional and currently off in the guest hub controls.',
+    });
+    expect(readiness.blockers).not.toContain('Guestbook notes are optional and currently off in the guest hub controls.');
   });
 
   it('keeps empty states distinct from blockers before guests submit anything', () => {

@@ -77,6 +77,10 @@ function getRsvpTemplateLabel(template: RsvpQuestionTemplate): string {
   return 'Event attendance';
 }
 
+function normalizeRsvpTemplateLabel(label: string): string {
+  return label.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
 export function GuestRsvpSettingsView({
   recommendedRsvpAccessMode,
   rsvpAccessModePlan,
@@ -115,6 +119,14 @@ export function GuestRsvpSettingsView({
   const safeRsvpMealOptions = Array.isArray(rsvpMealOptions) ? rsvpMealOptions : [];
   const safeRsvpSetupChecklist = Array.isArray(rsvpSetupChecklist) ? rsvpSetupChecklist : [];
   const verificationInputsChecklistItem = safeRsvpSetupChecklist.find((item) => item.id === 'verification_inputs') ?? null;
+  const addedTemplateCount = safeRsvpQuestionTemplateCoverage.filter((item) => item.added).length;
+  const missingTemplateCount = Math.max(safeRsvpQuestionTemplateCoverage.length - addedTemplateCount, 0);
+  const normalizedTemplateLabels = new Set(
+    RSVP_QUESTION_TEMPLATES.map((template) => normalizeRsvpTemplateLabel(template.label)),
+  );
+  const customQuestionCount = safeRsvpQuestions.filter(
+    (question) => !normalizedTemplateLabels.has(normalizeRsvpTemplateLabel(question.label ?? '')),
+  ).length;
   const markRsvpConfigDirty = () => onSetRsvpConfigDirty(true);
   const rsvpAccessSummary = safeRsvpAccessSelection.primaryMode === 'private_link'
     ? safeRsvpAccessSelection.allowNameLookupBackup
@@ -333,6 +345,31 @@ export function GuestRsvpSettingsView({
                 <p className="text-sm font-semibold text-text-primary">Question templates</p>
                 <p className="text-sm text-text-secondary">Add common wedding questions, then edit the wording before guests see them.</p>
               </div>
+              <div className="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Templates added</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">
+                    {addedTemplateCount} of {safeRsvpQuestionTemplateCoverage.length || RSVP_QUESTION_TEMPLATES.length}
+                  </p>
+                </div>
+                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Still available</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{missingTemplateCount}</p>
+                </div>
+                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Custom questions</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{customQuestionCount}</p>
+                </div>
+                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Meal choices</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">
+                    {rsvpMealEnabled ? `${safeRsvpMealOptions.length} saved` : 'Optional'}
+                  </p>
+                </div>
+              </div>
+              <p className="mb-3 text-xs text-text-tertiary">
+                Templates and meal collection are optional. This readback shows what is already covered before you publish RSVP changes.
+              </p>
               <div className="flex flex-wrap gap-2">
                 {RSVP_QUESTION_TEMPLATES.map((template) => {
                   const templateAdded = safeRsvpQuestionTemplateCoverage.find((item) => item.key === template.key)?.added ?? false;

@@ -305,7 +305,9 @@ export function getFeaturedRegistryFundPublicSignals(item: Pick<RegistryItem, 'f
 }
 
 export function pickFeaturedRegistryFund(items: RegistryItem[]): RegistryItem | null {
-  const funds = sanitizePublicRegistryItems(items).filter((item) => item.item_type === 'cash_fund');
+  const funds = sanitizePublicRegistryItems(items)
+    .filter((item) => item.item_type === 'cash_fund')
+    .filter((item) => getRegistryFundContributionMethods(item).length > 0);
   if (funds.length === 0) return null;
   return [...funds].sort((a, b) => {
     const methodsA = getRegistryFundContributionMethods(a).length;

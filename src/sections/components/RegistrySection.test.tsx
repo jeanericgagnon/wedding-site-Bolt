@@ -475,6 +475,89 @@ describe('RegistrySection', () => {
     });
   });
 
+  it('does not pick a featured public fund when no safe contribution method exists', () => {
+    const unreadyFund = {
+      id: 'fund-unready',
+      wedding_site_id: 'site-1',
+      item_type: 'cash_fund',
+      item_name: 'Future honeymoon fund',
+      price_label: null,
+      price_amount: null,
+      store_name: null,
+      merchant: null,
+      item_url: null,
+      canonical_url: null,
+      image_url: null,
+      description: null,
+      notes: 'We are still deciding how to collect this one.',
+      quantity_needed: 1,
+      quantity_purchased: 0,
+      purchaser_name: null,
+      purchase_status: 'available',
+      hide_when_purchased: false,
+      sort_order: 0,
+      priority: 'medium',
+      fund_goal_amount: 5000,
+      fund_received_amount: 0,
+      fund_venmo_url: null,
+      fund_paypal_url: null,
+      fund_custom_url: null,
+      fund_custom_label: null,
+      fund_zelle_handle: null,
+      created_at: new Date(0).toISOString(),
+      updated_at: new Date(0).toISOString(),
+    } satisfies RegistryItem;
+
+    expect(pickFeaturedRegistryFund([unreadyFund])).toBeNull();
+  });
+
+  it('falls back to the generic fund hero when live funds are not guest-ready to share yet', async () => {
+    mockPublicFetchRegistryItems.mockResolvedValue([
+      {
+        id: 'fund-unready',
+        wedding_site_id: 'site-1',
+        item_type: 'cash_fund',
+        item_name: 'Future honeymoon fund',
+        price_label: null,
+        price_amount: null,
+        store_name: null,
+        merchant: null,
+        item_url: null,
+        canonical_url: null,
+        image_url: null,
+        description: null,
+        notes: 'We are still deciding how to collect this one.',
+        quantity_needed: 1,
+        quantity_purchased: 0,
+        purchaser_name: null,
+        purchase_status: 'available',
+        hide_when_purchased: false,
+        sort_order: 0,
+        priority: 'medium',
+        fund_goal_amount: 5000,
+        fund_received_amount: 0,
+        fund_venmo_url: null,
+        fund_paypal_url: null,
+        fund_custom_url: null,
+        fund_custom_label: null,
+        fund_zelle_handle: null,
+        created_at: new Date(0).toISOString(),
+        updated_at: new Date(0).toISOString(),
+      },
+    ] satisfies RegistryItem[]);
+
+    render(
+      <RegistryFundHighlight
+        data={createEmptyWeddingData()}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(await screen.findByText('Honeymoon & Experiences Fund')).toBeInTheDocument();
+    expect(screen.queryByText('Future honeymoon fund')).not.toBeInTheDocument();
+    expect(screen.queryByText(/ways to contribute/i)).not.toBeInTheDocument();
+  });
+
   it('wraps public registry purchase memory in a timestamped bounded envelope', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-05-06T20:00:00.000Z'));
