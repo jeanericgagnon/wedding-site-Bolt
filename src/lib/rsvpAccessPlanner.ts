@@ -11,6 +11,8 @@ export interface RsvpAccessModePlanInput {
   inviteTokenCount: number;
   householdCount?: number;
   eventCount?: number;
+  emailCount?: number;
+  phoneCount?: number;
 }
 
 export interface RsvpAccessModePlan {
@@ -46,10 +48,17 @@ export interface RsvpQuestionTemplateCoverageItem {
 }
 
 export interface RsvpSetupChecklistItem {
-  id: 'private_links' | 'name_lookup_backup' | 'household_scope' | 'question_templates' | 'meal_choices' | 'future_access_modes';
+  id: 'private_links' | 'name_lookup_backup' | 'household_scope' | 'verification_inputs' | 'question_templates' | 'meal_choices' | 'future_access_modes';
   label: string;
   detail: string;
   status: 'ready' | 'needs-setup' | 'planned';
+}
+
+export interface RsvpRecoveryVerificationReadiness {
+  detail: string;
+  blockers: string[];
+  status: 'ready' | 'needs-setup';
+  supportLabel: string;
 }
 
 export interface RsvpSetupChecklistInput extends RsvpAccessModePlanInput {
@@ -63,16 +72,20 @@ function computeRsvpAccessReadiness(input: RsvpAccessModePlanInput) {
   const inviteTokenCount = Math.max(input.inviteTokenCount, 0);
   const householdCount = Math.max(input.householdCount ?? 0, 0);
   const eventCount = Math.max(input.eventCount ?? 0, 0);
+  const emailCount = Math.max(input.emailCount ?? 0, 0);
+  const phoneCount = Math.max(input.phoneCount ?? 0, 0);
   const tokenCoverage = guestCount > 0 ? inviteTokenCount / guestCount : 0;
   const hasGuestList = guestCount > 0;
   const privateLinksReady = hasGuestList && tokenCoverage >= 0.8;
 
   return {
+    emailCount,
     eventCount,
     guestCount,
     hasGuestList,
     householdCount,
     inviteTokenCount,
+    phoneCount,
     privateLinksReady,
     tokenCoverage,
   };
@@ -96,10 +109,15 @@ function buildFutureAccessModeBlockerDetail(input: {
   guestCount: number;
   householdCount: number;
   eventCount: number;
+  emailCount: number;
+  phoneCount: number;
 }) {
   const blockers = [
     'replacement-link recovery when a code or password is lost',
     'bad-code and bad-password lockouts before guests can brute-force the page',
+    input.emailCount > 0 || input.phoneCount > 0
+      ? 'phone or email verification that still preserves private-link recovery as the safer default'
+      : 'saved phone or email contact data before verification can replace less private name-only recovery',
   ];
 
   if (input.householdCount > 0) {
@@ -115,6 +133,61 @@ function buildFutureAccessModeBlockerDetail(input: {
   }
 
   return blockers.join(', ') + '.';
+}
+
+export function buildRsvpRecoveryVerificationReadiness(
+  input: RsvpAccessModePlanInput,
+  selection = deriveDefaultRsvpAccessSelection(input),
+): RsvpRecoveryVerificationReadiness {
+  const readiness = computeRsvpAccessReadiness(input);
+  const contactReady = readiness.emailCount > 0 || readiness.phoneCount > 0;
+  const supportParts: string[] = [];
+
+  if (readiness.emailCount > 0) {
+    supportParts.push(`${readiness.emailCount} guest email${readiness.emailCount === 1 ? '' : 's'}`);
+  }
+  if (readiness.phoneCount > 0) {
+    supportParts.push(`${readiness.phoneCount} phone number${readiness.phoneCount === 1 ? '' : 's'}`);
+  }
+
+  const supportLabel = supportParts.length > 0 ? supportParts.join(' and ') : 'no saved guest phone or email contacts';
+  const blockers: string[] = [];
+
+  if (!contactReady) blockers.push('save at least one guest email or phone number before adding a verification step');
+  if (readiness.householdCount <= 0) blockers.push('group guests into households before relying on shared recovery rules');
+  if (readiness.eventCount > 1) blockers.push('keep any future verification challenge scoped to the right event instead of the full weekend');
+
+  if (readiness.guestCount === 0) {
+    return {
+      detail: 'Add guests with saved email or phone details before planning verification-backed RSVP recovery.',
+      blockers: ['import guests before testing recovery verification'],
+      status: 'needs-setup',
+      supportLabel,
+    };
+  }
+
+  if (!contactReady) {
+    return {
+      detail: 'Phone or email verification stays blocked until guests have saved contact details that can back a safer recovery step than name-only lookup.',
+      blockers,
+      status: 'needs-setup',
+      supportLabel,
+    };
+  }
+
+  const preservePrivateLinks = selection.primaryMode === 'private_link'
+    ? 'This keeps private guest links as the primary RSVP path while giving misplaced-invite recovery a safer verification step.'
+    : 'This lets you tighten name lookup with a verification step before treating it as a launch-ready recovery path.';
+  const householdScopeNote = readiness.householdCount > 0
+    ? `Household scope is already grounded across ${readiness.householdCount} household${readiness.householdCount === 1 ? '' : 's'}.`
+    : 'Household grouping still needs to be added before shared recovery can stay scoped safely.';
+
+  return {
+    detail: `${supportLabel[0].toUpperCase()}${supportLabel.slice(1)} are saved. ${preservePrivateLinks} ${householdScopeNote}`,
+    blockers,
+    status: blockers.length === 0 ? 'ready' : 'needs-setup',
+    supportLabel,
+  };
 }
 
 function toSupportedRsvpAccessModeId(value: unknown): SupportedRsvpAccessModeId | null {
@@ -223,7 +296,7 @@ export function buildRsvpAccessModePlan(
   input: RsvpAccessModePlanInput,
   selection = deriveDefaultRsvpAccessSelection(input),
 ): RsvpAccessModePlan[] {
-  const { eventCount, guestCount, hasGuestList, householdCount, inviteTokenCount, privateLinksReady } = computeRsvpAccessReadiness(input);
+  const { emailCount, eventCount, guestCount, hasGuestList, householdCount, inviteTokenCount, phoneCount, privateLinksReady } = computeRsvpAccessReadiness(input);
 
   return [
     {
@@ -259,6 +332,8 @@ export function buildRsvpAccessModePlan(
         guestCount,
         householdCount,
         eventCount,
+        emailCount,
+        phoneCount,
       })}`,
       tradeoff: 'Useful for paper invites, but it needs code generation and recovery rules before launch.',
       status: 'future',
@@ -270,6 +345,8 @@ export function buildRsvpAccessModePlan(
         guestCount,
         householdCount,
         eventCount,
+        emailCount,
+        phoneCount,
       })}`,
       tradeoff: 'Easy to explain, but weaker for private events, meal limits, households, and plus-one rules.',
       status: 'future',
@@ -279,7 +356,7 @@ export function buildRsvpAccessModePlan(
       label: 'Open RSVP',
       detail: guestCount === 0
         ? 'Anyone with the public page can submit an RSVP, so only use this when you truly want an open guest list.'
-        : `Anyone with the public page could submit an RSVP, so it stays blocked until wrong-guest, wrong-event, and capacity fallout are fully proven for ${guestCount} guest${guestCount === 1 ? '' : 's'}.`,
+        : `Anyone with the public page could submit an RSVP, so it stays blocked until wrong-guest, wrong-event, capacity, and verification fallout are fully proven for ${guestCount} guest${guestCount === 1 ? '' : 's'}.`,
       tradeoff: 'Lowest friction, but it is risky for private events, capacity, catering, and guest-list accuracy.',
       status: guestCount === 0 ? 'ready' : 'future',
     },
@@ -325,6 +402,7 @@ export function buildRsvpSetupChecklist(
   const addedTemplateCount = templateCoverage.filter((template) => template.added).length;
   const mealEnabled = input.mealEnabled ?? false;
   const mealOptionCount = Math.max(input.mealOptionCount ?? 0, 0);
+  const verificationReadiness = buildRsvpRecoveryVerificationReadiness(input, selection);
 
   return [
     {
@@ -359,6 +437,12 @@ export function buildRsvpSetupChecklist(
       status: guestCount > 0 && householdCount > 0 ? 'ready' : 'needs-setup',
     },
     {
+      id: 'verification_inputs',
+      label: 'Phone or email recovery inputs',
+      detail: verificationReadiness.detail,
+      status: verificationReadiness.status,
+    },
+    {
       id: 'question_templates',
       label: 'Question templates',
       detail: addedTemplateCount > 0
@@ -381,6 +465,8 @@ export function buildRsvpSetupChecklist(
         guestCount,
         householdCount,
         eventCount,
+        emailCount: readiness.emailCount,
+        phoneCount: readiness.phoneCount,
       })}`,
       status: 'planned',
     },

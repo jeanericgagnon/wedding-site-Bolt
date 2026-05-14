@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   RSVP_QUESTION_TEMPLATES,
   buildRsvpAccessModePlan,
+  buildRsvpRecoveryVerificationReadiness,
   buildRsvpQuestionTemplateCoverage,
   buildRsvpSetupChecklist,
   createRsvpQuestionFromTemplate,
@@ -42,12 +43,49 @@ describe('rsvpAccessPlanner', () => {
       inviteTokenCount: 24,
       householdCount: 9,
       eventCount: 3,
+      emailCount: 20,
+      phoneCount: 6,
     });
 
     expect(plan.find((mode) => mode.id === 'unique_code')?.detail).toContain('replacement-link recovery');
+    expect(plan.find((mode) => mode.id === 'unique_code')?.detail).toContain('phone or email verification');
     expect(plan.find((mode) => mode.id === 'unique_code')?.detail).toContain('household-safe verification');
     expect(plan.find((mode) => mode.id === 'password')?.detail).toContain('bad-password lockouts');
-    expect(plan.find((mode) => mode.id === 'open')?.detail).toContain('wrong-event');
+    expect(plan.find((mode) => mode.id === 'open')?.detail).toContain('verification fallout');
+  });
+
+  it('builds verification readiness that protects private links as the primary RSVP path', () => {
+    const readiness = buildRsvpRecoveryVerificationReadiness({
+      guestCount: 18,
+      inviteTokenCount: 18,
+      householdCount: 7,
+      eventCount: 2,
+      emailCount: 14,
+      phoneCount: 5,
+    }, {
+      primaryMode: 'private_link',
+      allowNameLookupBackup: true,
+    });
+
+    expect(readiness.status).toBe('needs-setup');
+    expect(readiness.detail).toContain('14 guest emails and 5 phone numbers');
+    expect(readiness.detail).toContain('keeps private guest links as the primary RSVP path');
+    expect(readiness.blockers).toContain('keep any future verification challenge scoped to the right event instead of the full weekend');
+  });
+
+  it('keeps verification readiness blocked when contact data is missing', () => {
+    const readiness = buildRsvpRecoveryVerificationReadiness({
+      guestCount: 10,
+      inviteTokenCount: 10,
+      householdCount: 3,
+      eventCount: 1,
+      emailCount: 0,
+      phoneCount: 0,
+    });
+
+    expect(readiness.status).toBe('needs-setup');
+    expect(readiness.supportLabel).toBe('no saved guest phone or email contacts');
+    expect(readiness.detail).toContain('safer recovery step than name-only lookup');
   });
 
   it('normalizes persisted RSVP access selection from current and legacy shapes', () => {
@@ -119,6 +157,8 @@ describe('rsvpAccessPlanner', () => {
       inviteTokenCount: 78,
       householdCount: 28,
       eventCount: 3,
+      emailCount: 70,
+      phoneCount: 24,
       mealEnabled: true,
       mealOptionCount: 4,
       questions: [
@@ -130,6 +170,8 @@ describe('rsvpAccessPlanner', () => {
     expect(checklist.find((item) => item.id === 'private_links')).toMatchObject({ status: 'ready' });
     expect(checklist.find((item) => item.id === 'name_lookup_backup')).toMatchObject({ status: 'ready' });
     expect(checklist.find((item) => item.id === 'household_scope')).toMatchObject({ status: 'ready' });
+    expect(checklist.find((item) => item.id === 'verification_inputs')).toMatchObject({ status: 'needs-setup' });
+    expect(checklist.find((item) => item.id === 'verification_inputs')?.detail).toContain('private guest links as the primary RSVP path');
     expect(checklist.find((item) => item.id === 'household_scope')?.detail).toContain('event invitations');
     expect(checklist.find((item) => item.id === 'question_templates')?.detail).toContain('2 of 7');
     expect(checklist.find((item) => item.id === 'meal_choices')).toMatchObject({ status: 'ready' });
@@ -159,6 +201,8 @@ describe('rsvpAccessPlanner', () => {
       guestCount: 24,
       inviteTokenCount: 4,
       householdCount: 0,
+      emailCount: 2,
+      phoneCount: 0,
       mealEnabled: true,
       mealOptionCount: 1,
       questions: [],
@@ -166,6 +210,8 @@ describe('rsvpAccessPlanner', () => {
 
     expect(checklist.find((item) => item.id === 'private_links')).toMatchObject({ status: 'needs-setup' });
     expect(checklist.find((item) => item.id === 'household_scope')).toMatchObject({ status: 'needs-setup' });
+    expect(checklist.find((item) => item.id === 'verification_inputs')).toMatchObject({ status: 'needs-setup' });
+    expect(checklist.find((item) => item.id === 'verification_inputs')?.detail).toContain('verification step');
     expect(checklist.find((item) => item.id === 'question_templates')).toMatchObject({ status: 'needs-setup' });
     expect(checklist.find((item) => item.id === 'meal_choices')).toMatchObject({ status: 'needs-setup' });
   });

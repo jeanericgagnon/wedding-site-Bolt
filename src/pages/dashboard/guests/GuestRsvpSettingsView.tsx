@@ -114,6 +114,7 @@ export function GuestRsvpSettingsView({
   const safeRsvpQuestions = Array.isArray(rsvpQuestions) ? rsvpQuestions : [];
   const safeRsvpMealOptions = Array.isArray(rsvpMealOptions) ? rsvpMealOptions : [];
   const safeRsvpSetupChecklist = Array.isArray(rsvpSetupChecklist) ? rsvpSetupChecklist : [];
+  const verificationInputsChecklistItem = safeRsvpSetupChecklist.find((item) => item.id === 'verification_inputs') ?? null;
   const markRsvpConfigDirty = () => onSetRsvpConfigDirty(true);
   const rsvpAccessSummary = safeRsvpAccessSelection.primaryMode === 'private_link'
     ? safeRsvpAccessSelection.allowNameLookupBackup
@@ -269,6 +270,25 @@ export function GuestRsvpSettingsView({
             <p className="text-xs text-text-tertiary">
               Guest codes, shared passwords, and open RSVP stay planned until recovery, privacy, and capacity rules are fully proven.
             </p>
+
+            {verificationInputsChecklistItem ? (
+              <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">Phone or email recovery plan</p>
+                    <p className="text-xs text-text-tertiary">This does not turn code, password, or open RSVP on. It shows whether your saved guest contact data is strong enough to design a safer recovery step later.</p>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                    verificationInputsChecklistItem.status === 'ready'
+                      ? 'bg-success/10 text-success'
+                      : 'bg-warning/10 text-warning'
+                  }`}>
+                    {verificationInputsChecklistItem.status === 'ready' ? 'Ready to design' : 'Needs setup'}
+                  </span>
+                </div>
+                <p className="text-sm text-text-secondary">{verificationInputsChecklistItem.detail}</p>
+              </div>
+            ) : null}
           </div>
         </Card>
 

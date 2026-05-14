@@ -77,6 +77,8 @@ export function useGuestDashboardRouteSupport({
     inviteTokenCount: guests.filter((guest) => Boolean(guest.invite_token)).length,
     householdCount: new Set(guests.map((guest) => guest.household_id).filter(Boolean)).size,
     eventCount: effectiveItineraryEvents.length,
+    emailCount: guests.filter((guest) => Boolean(guest.email?.trim())).length,
+    phoneCount: guests.filter((guest) => Boolean(guest.phone?.trim())).length,
   }, rsvpAccessSelection), [effectiveItineraryEvents.length, guests, rsvpAccessSelection]);
 
   const recommendedRsvpAccessMode = rsvpAccessModePlan.find((mode) => mode.status === 'recommended') ?? rsvpAccessModePlan[0];
@@ -86,6 +88,8 @@ export function useGuestDashboardRouteSupport({
     inviteTokenCount: guests.filter((guest) => Boolean(guest.invite_token)).length,
     householdCount: new Set(guests.map((guest) => guest.household_id).filter(Boolean)).size,
     eventCount: effectiveItineraryEvents.length,
+    emailCount: guests.filter((guest) => Boolean(guest.email?.trim())).length,
+    phoneCount: guests.filter((guest) => Boolean(guest.phone?.trim())).length,
     questions: rsvpQuestions,
     mealEnabled: rsvpMealEnabled,
     mealOptionCount: rsvpMealOptions.filter((option) => option.trim().length > 0).length,

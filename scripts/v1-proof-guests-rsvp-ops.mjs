@@ -137,7 +137,7 @@ const output = {
     blocked: blockedRequired.length,
   },
   automatedCoverage: [
-    'RSVP access-mode recovery + household-scope truth',
+    'RSVP access-mode recovery + household-scope + verification-input truth',
     'RSVP token validation + scope guards',
     'CSV mapper guardrail',
     'Check-in mode / guest ops guardrail',
