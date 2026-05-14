@@ -32,31 +32,35 @@ export function buildGuestHubActions(slug: string, settings: GuestHubActionSetti
   const encodedSlug = encodeURIComponent(slug);
   const guestInviteToken = options.guestInviteToken?.trim() || null;
   const guestLanguage = options.guestLanguage?.trim() || null;
+  const withGuestContext = (href: string) => appendGuestLanguageToInternalHref(
+    appendGuestInviteTokenToInternalHref(href, guestInviteToken),
+    guestLanguage,
+  );
   const actions: GuestHubAction[] = [
     {
       id: 'rsvp',
       titleKey: 'guest_hub.action_rsvp',
       detailKey: 'guest_hub.action_rsvp_detail',
-      href: appendGuestLanguageToInternalHref(`/site/${encodedSlug}#rsvp`, guestLanguage),
+      href: withGuestContext(`/site/${encodedSlug}#rsvp`),
       primary: true,
     },
     {
       id: 'schedule',
       titleKey: 'guest_hub.action_schedule',
       detailKey: 'guest_hub.action_schedule_detail',
-      href: appendGuestLanguageToInternalHref(`/site/${encodedSlug}#schedule`, guestLanguage),
+      href: withGuestContext(`/site/${encodedSlug}#schedule`),
     },
     {
       id: 'travel',
       titleKey: 'guest_hub.action_travel',
       detailKey: 'guest_hub.action_travel_detail',
-      href: appendGuestLanguageToInternalHref(`/site/${encodedSlug}#travel`, guestLanguage),
+      href: withGuestContext(`/site/${encodedSlug}#travel`),
     },
     {
       id: 'registry',
       titleKey: 'guest_hub.action_registry',
       detailKey: 'guest_hub.action_registry_detail',
-      href: appendGuestLanguageToInternalHref(`/site/${encodedSlug}#registry`, guestLanguage),
+      href: withGuestContext(`/site/${encodedSlug}#registry`),
     },
     {
       id: 'photos',

@@ -8,6 +8,7 @@ describe('EventHubLiveContent', () => {
   it('renders the travel quick plan spotlight when structured travel details are available', () => {
     const onTrackClick = vi.fn();
     const onCopyTravelPlan = vi.fn();
+    const onDownloadTravelGuide = vi.fn();
 
     render(
       <MemoryRouter>
@@ -41,9 +42,12 @@ describe('EventHubLiveContent', () => {
               { id: 'cultural-tip', label: 'Local tip', detail: 'Bring a light layer for the waterfront.' },
             ],
             shareText: 'DayOf travel quick plan',
+            htmlDocument: '<!doctype html><html><body>Travel guide</body></html>',
+            filename: 'alex-jordan-demo-travel-guide.html',
           }}
           travelShareStatus="Travel plan copied."
           onCopyTravelPlan={onCopyTravelPlan}
+          onDownloadTravelGuide={onDownloadTravelGuide}
           hubUrl="https://dayof.love/event/alex-jordan-demo"
           searchParams={new URLSearchParams('')}
           shouldOpenHubDetailsByDefault={() => false}
@@ -68,6 +72,9 @@ describe('EventHubLiveContent', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy travel plan' }));
     expect(onCopyTravelPlan).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save travel guide' }));
+    expect(onDownloadTravelGuide).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole('link', { name: 'Open travel page' }));
     expect(onTrackClick).toHaveBeenCalledWith('/site/alex-jordan-demo#travel');

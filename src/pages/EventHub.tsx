@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { Archive, CalendarDays, Camera, ClipboardList, Gift, HeartHandshake, Plane, Sparkles } from 'lucide-react';
-import { copyTextOrDownload } from '../lib/copyText';
+import { copyTextOrDownload, downloadTextFile } from '../lib/copyText';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import { buildGuestHubActions, type GuestHubActionId } from '../lib/guestHubActions';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
@@ -328,17 +328,29 @@ export const EventHub: React.FC = () => {
   const travelGuestJourney = buildTravelGuestJourney({
     siteSlug: slug,
     enabledActionIds: actions.map((action) => action.id),
+    guestInviteToken: guestIdentity.guestInviteToken,
+    guestLanguage: languagePreference.language,
   });
   const travelHubSpotlight = buildTravelHubSpotlight({
     siteSlug: slug,
     travel: travelSource,
     enabledActionIds: actions.map((action) => action.id),
+    guestInviteToken: guestIdentity.guestInviteToken,
+    guestLanguage: languagePreference.language,
+    coupleLabel,
+    weddingDateLabel,
   });
 
   const handleCopyTravelPlan = async () => {
     if (!travelHubSpotlight) return;
     const result = await copyTextOrDownload(travelHubSpotlight.shareText, 'dayof-travel-plan.txt');
     setTravelShareStatus(result === 'copied' ? 'Travel plan copied.' : 'Travel plan downloaded.');
+  };
+
+  const handleDownloadTravelGuide = () => {
+    if (!travelHubSpotlight) return;
+    downloadTextFile(travelHubSpotlight.filename, travelHubSpotlight.htmlDocument, 'text/html;charset=utf-8');
+    setTravelShareStatus('Travel guide saved.');
   };
 
   const liveContent = (
@@ -356,6 +368,7 @@ export const EventHub: React.FC = () => {
       travelHubSpotlight={travelHubSpotlight}
       travelShareStatus={travelShareStatus}
       onCopyTravelPlan={handleCopyTravelPlan}
+      onDownloadTravelGuide={handleDownloadTravelGuide}
       hubUrl={hubUrl}
       searchParams={searchParams}
       shouldOpenHubDetailsByDefault={shouldOpenHubDetailsByDefault}

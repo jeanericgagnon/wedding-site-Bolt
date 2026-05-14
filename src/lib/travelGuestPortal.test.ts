@@ -78,14 +78,16 @@ describe('travelGuestPortal', () => {
     const journey = buildTravelGuestJourney({
       siteSlug: 'maya-and-leo',
       enabledActionIds: ['travel', 'rsvp', 'photos'],
+      guestInviteToken: 'guest-token-123',
+      guestLanguage: 'fr',
     });
 
     expect(journey.map((step) => step.id)).toEqual(['travel', 'rsvp', 'photos']);
     expect(journey.map((step) => step.status)).toEqual(['ready', 'ready', 'ready']);
     expect(journey.map((step) => step.href)).toEqual([
-      '/site/maya-and-leo#travel',
-      '/site/maya-and-leo#rsvp',
-      '/photos/upload?site=maya-and-leo&hub=1',
+      '/site/maya-and-leo?invite_token=guest-token-123&guestLang=fr#travel',
+      '/site/maya-and-leo?invite_token=guest-token-123&guestLang=fr#rsvp',
+      '/photos/upload?site=maya-and-leo&hub=1&invite_token=guest-token-123&guestLang=fr',
     ]);
   });
 
@@ -136,17 +138,21 @@ describe('travelGuestPortal', () => {
     const spotlight = buildTravelHubSpotlight({
       siteSlug: 'maya-and-leo',
       enabledActionIds: ['travel', 'rsvp', 'photos'],
+      guestInviteToken: 'guest-token-123',
+      guestLanguage: 'fr',
       travel: {
         hotels: [{ name: 'Harbor Hotel', bookingCode: 'MAYALEO' }],
         roomBlocks: [{ hotelName: 'Harbor Hotel', bookingCode: 'MAYALEO' }],
         shuttles: [{ label: 'Ceremony shuttle', route: 'Harbor Hotel to venue' }],
         culturalTips: ['Bring a light layer for the waterfront.'],
       },
+      coupleLabel: 'Maya & Leo',
+      weddingDateLabel: 'June 14, 2026',
     });
 
     expect(spotlight).toEqual({
       summary: '4 travel details ready from the guest hub.',
-      travelHref: '/site/maya-and-leo#travel',
+      travelHref: '/site/maya-and-leo?invite_token=guest-token-123&guestLang=fr#travel',
       cards: [
         { id: 'hotel', label: 'Harbor Hotel', detail: 'Code MAYALEO' },
         { id: 'room-block', label: 'Room block', detail: 'Harbor Hotel · Code MAYALEO' },
@@ -159,8 +165,12 @@ describe('travelGuestPortal', () => {
         'Room block: Harbor Hotel · Code MAYALEO',
         'Ceremony shuttle: Harbor Hotel to venue',
         'Local tip: Bring a light layer for the waterfront.',
-        'Travel page: /site/maya-and-leo#travel',
+        'Travel page: /site/maya-and-leo?invite_token=guest-token-123&guestLang=fr#travel',
       ].join('\n'),
+      htmlDocument: expect.stringContaining('<title>Maya &amp; Leo travel guide</title>'),
+      filename: 'maya-and-leo-travel-guide.html',
     });
+    expect(spotlight?.htmlDocument).toContain('Open the live travel page');
+    expect(spotlight?.htmlDocument).not.toContain('guest-token-123</');
   });
 });

@@ -49,6 +49,8 @@ type TravelHubSpotlight = {
   travelHref: string;
   cards: TravelHubSpotlightCard[];
   shareText: string;
+  htmlDocument: string;
+  filename: string;
 };
 
 type HubAction = {
@@ -74,6 +76,7 @@ type EventHubLiveContentProps = {
   travelHubSpotlight: TravelHubSpotlight | null;
   travelShareStatus: string | null;
   onCopyTravelPlan: () => void;
+  onDownloadTravelGuide: () => void;
   hubUrl: string;
   searchParams: URLSearchParams;
   shouldOpenHubDetailsByDefault: (params: URLSearchParams) => boolean;
@@ -104,6 +107,7 @@ export function EventHubLiveContent({
   travelHubSpotlight,
   travelShareStatus,
   onCopyTravelPlan,
+  onDownloadTravelGuide,
   hubUrl,
   searchParams,
   shouldOpenHubDetailsByDefault,
@@ -253,6 +257,13 @@ export function EventHubLiveContent({
                         className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 text-xs font-semibold text-[#2f261d] transition-colors hover:border-[#d8c8b6]"
                       >
                         Copy travel plan
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onDownloadTravelGuide}
+                        className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 text-xs font-semibold text-[#2f261d] transition-colors hover:border-[#d8c8b6]"
+                      >
+                        Save travel guide
                       </button>
                     </div>
                   </div>

@@ -1,3 +1,5 @@
+import { appendGuestInviteTokenToInternalHref } from './publicAccessArtifacts';
+import { appendGuestLanguageToInternalHref } from './guestLanguagePreference';
 import { getSafePublicActionHref, getSafePublicMapsUrl } from '../sections/publicLinks';
 import type { GuestHubActionId } from './guestHubActions';
 import { normalizeTravelPortalData } from './travelStructuredData';
@@ -55,6 +57,8 @@ export interface TravelGuestJourneyStep {
 export interface TravelGuestJourneyInput {
   siteSlug: string;
   enabledActionIds: GuestHubActionId[];
+  guestInviteToken?: string | null;
+  guestLanguage?: string | null;
 }
 
 export interface TravelVenueMapInput {
@@ -81,6 +85,8 @@ export interface TravelHubSpotlight {
   travelHref: string;
   cards: TravelHubSpotlightCard[];
   shareText: string;
+  htmlDocument: string;
+  filename: string;
 }
 
 const hasUsefulText = (value: string | null | undefined, minLength = 8) => Boolean(value && value.trim().length >= minLength);
@@ -184,13 +190,17 @@ export function buildTravelGuestJourney(input: TravelGuestJourneyInput): TravelG
   if (!siteSlug) return [];
 
   const encodedSlug = encodeURIComponent(siteSlug);
+  const withGuestContext = (href: string) => appendGuestLanguageToInternalHref(
+    appendGuestInviteTokenToInternalHref(href, input.guestInviteToken?.trim() || null),
+    input.guestLanguage?.trim() || null,
+  );
   const candidates: Array<TravelGuestJourneyStep & { actionId: GuestHubActionId }> = [
     {
       id: 'travel',
       actionId: 'travel',
       label: 'Travel details',
       detail: 'Review travel, venue, and weekend timing before you reply.',
-      href: `/site/${encodedSlug}#travel`,
+      href: withGuestContext(`/site/${encodedSlug}#travel`),
       status: 'ready',
     },
     {
@@ -198,7 +208,7 @@ export function buildTravelGuestJourney(input: TravelGuestJourneyInput): TravelG
       actionId: 'rsvp',
       label: 'Reply',
       detail: 'Confirm attendance and any event-specific details from the same hub.',
-      href: `/site/${encodedSlug}#rsvp`,
+      href: withGuestContext(`/site/${encodedSlug}#rsvp`),
       status: 'ready',
     },
     {
@@ -206,7 +216,7 @@ export function buildTravelGuestJourney(input: TravelGuestJourneyInput): TravelG
       actionId: 'photos',
       label: 'Upload photos',
       detail: 'Share photos or videos without installing an app.',
-      href: `/photos/upload?site=${encodedSlug}&hub=1`,
+      href: withGuestContext(`/photos/upload?site=${encodedSlug}&hub=1`),
       status: 'ready',
     },
   ];
@@ -234,10 +244,70 @@ export function buildTravelVenueMapLinks(venues: TravelVenueMapInput[]): TravelV
     .filter((venue): venue is TravelVenueMapLink => Boolean(venue.href));
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function buildTravelHubSpotlightHtml(input: {
+  summary: string;
+  travelHref: string;
+  cards: TravelHubSpotlightCard[];
+  coupleLabel?: string | null;
+  weddingDateLabel?: string | null;
+}): string {
+  const title = input.coupleLabel?.trim() || 'DayOf travel guide';
+  const dateLine = input.weddingDateLabel?.trim();
+  const cardsMarkup = input.cards.map((card) => `
+      <li>
+        <strong>${escapeHtml(card.label)}</strong><br />
+        <span>${escapeHtml(card.detail)}</span>
+      </li>`).join('');
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${escapeHtml(title)} travel guide</title>
+    <style>
+      body { font-family: Inter, Arial, sans-serif; margin: 40px; color: #2f261d; background: #fbf7f1; }
+      main { max-width: 760px; margin: 0 auto; background: #fffdf9; border: 1px solid #eadfd2; border-radius: 16px; padding: 32px; }
+      h1 { margin: 0 0 8px; font-size: 32px; }
+      p { line-height: 1.6; }
+      ul { padding-left: 20px; }
+      li { margin: 0 0 14px; }
+      a { color: #2f261d; }
+      .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8b6f53; }
+      .summary { margin: 18px 0 22px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="eyebrow">DayOf travel guide</div>
+      <h1>${escapeHtml(title)}</h1>
+      ${dateLine ? `<p>${escapeHtml(dateLine)}</p>` : ''}
+      <p class="summary">${escapeHtml(input.summary)}</p>
+      <ul>${cardsMarkup}
+      </ul>
+      <p><a href="${escapeHtml(input.travelHref)}">Open the live travel page</a></p>
+    </main>
+  </body>
+</html>`;
+}
+
 export function buildTravelHubSpotlight(input: {
   siteSlug: string;
   travel: unknown;
   enabledActionIds: GuestHubActionId[];
+  guestInviteToken?: string | null;
+  guestLanguage?: string | null;
+  coupleLabel?: string | null;
+  weddingDateLabel?: string | null;
 }): TravelHubSpotlight | null {
   const siteSlug = input.siteSlug.trim().toLowerCase();
   if (!siteSlug || !hasAction(input.enabledActionIds, 'travel')) return null;
@@ -297,17 +367,33 @@ export function buildTravelHubSpotlight(input: {
 
   if (cards.length === 0) return null;
 
-  const travelHref = getSafePublicActionHref(`/site/${encodeURIComponent(siteSlug)}#travel`, '');
+  const travelHref = appendGuestLanguageToInternalHref(
+    appendGuestInviteTokenToInternalHref(
+      getSafePublicActionHref(`/site/${encodeURIComponent(siteSlug)}#travel`, ''),
+      input.guestInviteToken?.trim() || null,
+    ),
+    input.guestLanguage?.trim() || null,
+  );
   const shareText = [
     'DayOf travel quick plan',
     ...cards.map((card) => `${card.label}: ${card.detail}`),
     `Travel page: ${travelHref}`,
   ].join('\n');
+  const summary = `${cards.length} travel detail${cards.length === 1 ? '' : 's'} ready from the guest hub.`;
+  const filename = `${siteSlug.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'dayof'}-travel-guide.html`;
 
   return {
-    summary: `${cards.length} travel detail${cards.length === 1 ? '' : 's'} ready from the guest hub.`,
+    summary,
     travelHref,
     cards,
     shareText,
+    htmlDocument: buildTravelHubSpotlightHtml({
+      summary,
+      travelHref,
+      cards,
+      coupleLabel: input.coupleLabel,
+      weddingDateLabel: input.weddingDateLabel,
+    }),
+    filename,
   };
 }

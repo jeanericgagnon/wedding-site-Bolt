@@ -377,9 +377,9 @@ Execution rule for this section:
    - this batch shipped: the guest hub now shows a structured `Travel quick plan` card with copyable guest-safe travel summary text, so invite-to-travel is no longer just a bare link list
    - this batch shipped: local/demo guest hub fallback now carries structured hotel, room-block, shuttle, and destination-tip data so the travel hub flow can be proven without hand-waving over empty state
    - this batch shipped: focused proof is green for the guest hub travel spotlight helper plus a real `EventHubLiveContent` render pass that proves the quick-plan card and copy action render in the hub
+   - this batch shipped: guest-hub `travel`, `schedule`, `rsvp`, and `registry` actions now preserve private guest invite context and guest language instead of dropping travel/detail surfaces back to generic site-shell state
+   - this batch shipped: the guest-hub travel quick plan now saves a real downloadable HTML travel guide instead of stopping at copy-only summary text
    - add guest-specific room/shuttle/travel guidance instead of generic shared copy only
-   - reuse event/household visibility rules across travel detail surfaces
-   - add deeper export/share views beyond the current copyable quick-plan text and richer travel-route content already in the hub
    - add live mobile guest-path proof from invite to travel to RSVP/photo surfaces
 
 8. `ACTIVE`: reminders, digests, and notification preferences
