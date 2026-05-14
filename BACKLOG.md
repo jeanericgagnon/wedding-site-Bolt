@@ -441,11 +441,15 @@ Execution rule for this section:
    - reconcile vendor contract balances against budget line balances
 
 13. `ACTIVE`: website and invite analytics
-   - add privacy-safe site-visit, invite-open/view, and QR-scan event instrumentation
-   - define event storage and aggregation contracts
-   - add event-backed funnel charts instead of review-model-only analytics
-   - prove public/guest non-exposure of analytics data
-   - add live production analytics readback plus owner retention/consent controls
+   - this batch shipped: owner overview analytics now read from the real `guest_hub_events` table instead of review-model-only placeholders, with a 30-day aggregate summary for website visits, private invite-link opens, QR entries, recap views, and guest-hub action clicks
+   - this batch shipped: the guest-hub route now classifies public site visits, private invite opens, and QR-tagged entries into separate aggregate event targets without storing guest tokens, raw invite URLs, IPs, or exact device fingerprints
+   - this batch shipped: public guest-hub QR assets now encode a safe `entry=qr` marker in the QR payload itself while keeping the visible printed copy clean, so owner QR analytics can distinguish QR-driven guest-hub entry from ordinary public-link traffic
+   - this batch shipped: wedding overview baseline/readiness/funnel cards now show measured website visits, invite-link opens, and QR entries instead of claiming those lanes are still purely planned
+   - this batch shipped: focused proof is green for analytics aggregation math, readiness/funnel state, overview model wiring, guest-hub QR safety, identity-export QR payload continuity, and the standard local type/lint/build gate
+   - rerun the same owner analytics readback against the shipped production runtime after the next approved deploy
+   - add explicit owner retention/consent controls and readback for analytics history policy
+   - extend invite-open instrumentation beyond guest-hub/private-link entry into any remaining RSVP-only invite paths before claiming broader invitation analytics coverage
+   - add live production proof that public and guest-facing routes still expose no owner analytics detail
 
 14. `ACTIVE`: app-like web day-of mode
    - implement true offline caching/service-worker behavior

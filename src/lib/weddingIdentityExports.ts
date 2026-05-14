@@ -1,4 +1,4 @@
-import { buildQrImageUrl, isSafePublicQrAssetUrl } from './guestHubQrAssets';
+import { buildQrImageUrl, buildTrackedPublicQrPayloadUrl, isSafePublicQrAssetUrl } from './guestHubQrAssets';
 import { buildLocalQrSvgDataUrl } from './qr/localQrImage';
 
 export type WeddingIdentityExportId =
@@ -321,6 +321,7 @@ export function buildWeddingIdentityPrintAssets(input: WeddingIdentityExportKitI
   const coupleNames = cleanPrintText(input.coupleNames, 'The wedding');
   const dateLabel = formatWeddingDate(input.weddingDate);
   const venueName = cleanPrintText(input.venueName, 'Wedding venue');
+  const trackedPublicSiteUrl = buildTrackedPublicQrPayloadUrl(publicSiteUrl) || publicSiteUrl;
   const rsvpUrl = withPath(publicSiteUrl, '/rsvp');
   const photoUrl = withPath(publicSiteUrl, '/photos/upload');
 
@@ -334,7 +335,7 @@ export function buildWeddingIdentityPrintAssets(input: WeddingIdentityExportKitI
       title: coupleNames,
       subtitle: 'Wedding website',
       instruction: 'Scan for schedule, travel, registry, photos, and RSVP details.',
-      url: publicSiteUrl,
+      url: trackedPublicSiteUrl,
     },
     {
       id: 'details-insert',
@@ -343,7 +344,7 @@ export function buildWeddingIdentityPrintAssets(input: WeddingIdentityExportKitI
       title: 'Wedding details',
       subtitle: `${dateLabel} · ${venueName}`,
       instruction: 'Scan for the latest weekend details before you travel.',
-      url: publicSiteUrl,
+      url: trackedPublicSiteUrl,
     },
     {
       id: 'rsvp-card',
@@ -370,7 +371,7 @@ export function buildWeddingIdentityPrintAssets(input: WeddingIdentityExportKitI
       title: 'Everything in one place',
       subtitle: coupleNames,
       instruction: 'Scan for the wedding hub anytime today.',
-      url: publicSiteUrl,
+      url: trackedPublicSiteUrl,
     },
   ];
 }
@@ -387,7 +388,7 @@ export function buildWeddingIdentityStoryGraphic(input: WeddingIdentityExportKit
   const monogramFontSize = fitSvgFontSize(monogram, { max: 128, min: 96, threshold: 5, step: 2 });
   const coupleFontSize = fitSvgFontSize(coupleNames, { max: 56, min: 38, threshold: 18, step: 4 });
   const venueFontSize = fitSvgFontSize(venueName, { max: 34, min: 24, threshold: 26, step: 6 });
-  const qrUrl = buildLocalQrSvgDataUrl(publicSiteUrl, 420);
+  const qrUrl = buildLocalQrSvgDataUrl(buildTrackedPublicQrPayloadUrl(publicSiteUrl) || publicSiteUrl, 420);
   if (!qrUrl) return null;
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>

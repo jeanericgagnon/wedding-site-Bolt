@@ -96,6 +96,7 @@ describe('weddingIdentityExports', () => {
       'photo-upload-sign',
       'table-card',
     ]);
+    expect(assets.find((asset) => asset.id === 'public-qr-card')?.url).toBe('https://maya-leo.dayof.love/');
     expect(assets.find((asset) => asset.id === 'rsvp-card')?.url).toBe('https://maya-leo.dayof.love/rsvp');
     expect(assets.find((asset) => asset.id === 'photo-upload-sign')?.url).toBe('https://maya-leo.dayof.love/photos/upload');
 

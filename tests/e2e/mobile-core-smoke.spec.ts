@@ -120,7 +120,7 @@ test.describe('mobile core smoke', () => {
         await expect(page.getByRole('main').getByText(/website and invite analytics/i)).toBeVisible();
         await expect(page.getByRole('main').getByText(/guest journey funnel/i)).toBeVisible();
         await expect(page.getByRole('main').getByText(/Do not expose IP addresses, exact devices, raw user agents, guest tokens/i)).toBeVisible();
-        await expect(page.getByRole('main').getByText(/visit tracking, invite opens, and qr scans stay marked planned/i)).toBeVisible();
+        await expect(page.getByRole('main').getByText(/website visits, invite-link opens, and qr entries now come from tracked guest-hub events/i)).toBeVisible();
         await expect(page.getByRole('main').getByText(/ready check/i)).toBeVisible();
       }
       if (route.path.includes('/dashboard/messages')) {

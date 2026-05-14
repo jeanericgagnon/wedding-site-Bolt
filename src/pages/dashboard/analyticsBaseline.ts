@@ -8,6 +8,9 @@ export interface AnalyticsBaselineInput {
   photoAlbumCount: number;
   activePhotoAlbumCount: number;
   interactiveSuggestionCount: number;
+  websiteVisitCount: number;
+  inviteOpenCount: number;
+  qrScanCount: number;
 }
 
 export interface AnalyticsBaselineMetric {
@@ -61,6 +64,30 @@ export function buildAnalyticsBaseline(input: AnalyticsBaselineInput): Analytics
       label: 'Guest photo prompts',
       value: `${input.interactiveSuggestionCount}`,
       detail: input.interactiveSuggestionCount === 0 ? 'No guest suggestions have come in yet.' : `${input.interactiveSuggestionCount} suggestion${input.interactiveSuggestionCount === 1 ? '' : 's'} captured so far.`,
+      source: 'measured',
+    },
+    {
+      label: 'Website visits',
+      value: `${input.websiteVisitCount}`,
+      detail: input.websiteVisitCount === 0
+        ? 'No public or guest-hub visits recorded in the last 30 days yet.'
+        : `${input.websiteVisitCount} aggregate website visits were recorded in the last 30 days.`,
+      source: 'measured',
+    },
+    {
+      label: 'Invite link opens',
+      value: `${input.inviteOpenCount}`,
+      detail: input.inviteOpenCount === 0
+        ? 'No private invite or guest-hub opens recorded in the last 30 days yet.'
+        : `${input.inviteOpenCount} private invite or guest-hub opens were recorded in the last 30 days.`,
+      source: 'measured',
+    },
+    {
+      label: 'QR entries',
+      value: `${input.qrScanCount}`,
+      detail: input.qrScanCount === 0
+        ? 'No QR entries recorded in the last 30 days yet.'
+        : `${input.qrScanCount} QR-driven guest-hub entries were recorded in the last 30 days.`,
       source: 'measured',
     },
     {

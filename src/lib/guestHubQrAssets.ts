@@ -21,9 +21,23 @@ export interface GuestHubQrAssetInput {
 
 const TOKENISH_PARAM = /(token|invite|secret|secure|signature|signed|jwt|key|access|auth|bearer|cookie|passcode|password|session)/i;
 
+export function buildTrackedPublicQrPayloadUrl(url: string): string {
+  if (!isSafePublicQrAssetUrl(url)) return '';
+
+  try {
+    const parsed = new URL(url);
+    if (/^\/event\/[^/]+\/?$/.test(parsed.pathname)) {
+      parsed.searchParams.set('entry', 'qr');
+    }
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
 export const buildQrImageUrl = (url: string, size = 512) =>
   isSafePublicQrAssetUrl(url) && !isPrivateQrPayloadForThirdPartyQr(url)
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}`
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(buildTrackedPublicQrPayloadUrl(url))}`
     : '';
 
 export const buildRenderableQrImageUrl = (

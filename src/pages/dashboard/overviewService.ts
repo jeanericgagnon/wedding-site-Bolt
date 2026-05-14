@@ -1,6 +1,7 @@
 import { resolveActiveSiteForUser, type ActiveSiteSummary } from '../../lib/activeSite';
 import { buildBudgetPaymentReview, type BudgetLedgerItem, type VendorLedgerItem } from '../../lib/budgetVendorLedgerReadiness';
 import { supabase } from '../../lib/supabase';
+import { buildAnalyticsEventSummary, buildEmptyAnalyticsEventSummary, type AnalyticsEventSummary } from './analyticsEventSummary';
 
 const OVERVIEW_DISMISSALS_SITE_SELECT = 'wedding_data';
 const OVERVIEW_BUILDER_SITE_SELECT = 'site_json';
@@ -19,6 +20,8 @@ export const OVERVIEW_RECENT_UPLOAD_LOOKBACK_DAYS = 7;
 export const OVERVIEW_GUEST_SELECT = 'id, rsvp_status, rsvp_received_at, first_name, last_name, name';
 export const OVERVIEW_BUDGET_ITEM_SELECT = 'id, estimated_amount, actual_amount, paid_amount, due_date, vendor_id';
 export const OVERVIEW_VENDOR_SELECT = 'id, name, email, phone, contract_total, amount_paid, balance_due, next_payment_due, document_url';
+export const OVERVIEW_GUEST_HUB_EVENT_SELECT = 'event_type, target, created_at';
+export const OVERVIEW_ANALYTICS_LOOKBACK_DAYS = 30;
 
 export interface OverviewInteractiveSuggestion {
   id: string;
@@ -88,6 +91,7 @@ export interface OverviewDashboardSnapshot {
   newPhotoUploadCount: number;
   seatingGapCount: number;
   recentRsvps: OverviewRecentRsvp[];
+  analyticsEventSummary: AnalyticsEventSummary;
 }
 
 export interface OverviewDraftRefreshSeed {
@@ -355,6 +359,7 @@ export async function loadOverviewDashboardSnapshot(userId: string): Promise<Ove
       newPhotoUploadCount: 0,
       seatingGapCount: 0,
       recentRsvps: [],
+      analyticsEventSummary: buildEmptyAnalyticsEventSummary(OVERVIEW_ANALYTICS_LOOKBACK_DAYS),
     };
   }
 
@@ -380,6 +385,7 @@ export async function loadOverviewDashboardSnapshot(userId: string): Promise<Ove
     recentUploadCountResult,
     seatingAttendingCountResult,
     seatingEventsResult,
+    guestHubEventsResult,
   ] = await Promise.all([
     supabase
       .from('guests')
@@ -470,6 +476,13 @@ export async function loadOverviewDashboardSnapshot(userId: string): Promise<Ove
       .from('seating_events')
       .select('id')
       .eq('wedding_site_id', siteId),
+    supabase
+      .from('guest_hub_events')
+      .select(OVERVIEW_GUEST_HUB_EVENT_SELECT)
+      .eq('wedding_site_id', siteId)
+      .gte('created_at', new Date(Date.now() - OVERVIEW_ANALYTICS_LOOKBACK_DAYS * 24 * 60 * 60 * 1000).toISOString())
+      .order('created_at', { ascending: false })
+      .limit(5000),
   ]);
 
   if (totalGuestsResult.error) throw totalGuestsResult.error;
@@ -490,6 +503,7 @@ export async function loadOverviewDashboardSnapshot(userId: string): Promise<Ove
   if (recentUploadCountResult.error) throw recentUploadCountResult.error;
   if (seatingAttendingCountResult.error) throw seatingAttendingCountResult.error;
   if (seatingEventsResult.error) throw seatingEventsResult.error;
+  if (guestHubEventsResult.error) throw guestHubEventsResult.error;
 
   const paymentReview = buildBudgetPaymentReview({
     budgetItems: ((budgetItemsResult.data ?? []) as Array<Record<string, unknown>>).map((row) => ({
@@ -548,5 +562,8 @@ export async function loadOverviewDashboardSnapshot(userId: string): Promise<Ove
     newPhotoUploadCount: recentUploadCountResult.count ?? 0,
     seatingGapCount,
     recentRsvps: formatRecentRsvps((recentRsvpsResult.data ?? []) as OverviewRecentRsvpRow[]),
+    analyticsEventSummary: buildAnalyticsEventSummary((guestHubEventsResult.data ?? []) as Array<{ event_type: string | null; target: string | null; created_at: string | null }>, {
+      lookbackDays: OVERVIEW_ANALYTICS_LOOKBACK_DAYS,
+    }),
   };
 }

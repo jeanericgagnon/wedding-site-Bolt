@@ -1007,7 +1007,7 @@ export function OverviewDashboardLiveContent({
                   ))}
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-secondary/25 px-3 py-2 text-xs leading-5 text-text-secondary">
-                  Analytics shown here are limited to owner-visible action counts. Visit tracking, invite opens, and QR scans stay marked planned until privacy-safe event instrumentation exists.
+                  Analytics shown here stay aggregate-only. Website visits, invite-link opens, and QR entries now come from tracked guest-hub events without exposing IPs, exact devices, guest tokens, or private invite URLs.
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface px-3 py-3">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">

@@ -9,6 +9,7 @@ import { hydrateNameChangeWorkspace } from './planning/nameChangeService';
 import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../lib/plannerAccess';
 import type { NotificationPrefs } from '../../lib/notificationPrefs';
+import type { AnalyticsEventSummary } from './analyticsEventSummary';
 
 type RecentRsvp = {
   id: string;
@@ -52,6 +53,7 @@ export interface OverviewStatsState {
   seatingGapCount: number;
   contactableGuestCount: number;
   recentRsvps: RecentRsvp[];
+  analyticsEventSummary: AnalyticsEventSummary;
   activeSiteRole: PlannerAccessRole;
   activeSitePermissions: PlannerPermissionKey[] | null;
   notificationPrefs: NotificationPrefs;
@@ -136,6 +138,25 @@ export function buildDemoOverviewSnapshotState(): {
       seatingGapCount: 2,
       contactableGuestCount: demoGuests.filter((guest) => Boolean(guest.email)).length,
       recentRsvps,
+      analyticsEventSummary: {
+        lookbackDays: 30,
+        totalTrackedEvents: 33,
+        pageViews: 18,
+        siteVisits: 8,
+        inviteOpens: 6,
+        qrScans: 4,
+        recapViews: 2,
+        totalClicks: 11,
+        rsvpClicks: 4,
+        registryClicks: 2,
+        photoClicks: 3,
+        travelClicks: 1,
+        scheduleClicks: 1,
+        guestbookClicks: 0,
+        vaultClicks: 0,
+        contactClicks: 0,
+        lastTrackedAt: new Date().toISOString(),
+      },
       activeSiteRole: 'owner',
       activeSitePermissions: null,
       notificationPrefs: {
@@ -285,6 +306,7 @@ export function buildOverviewStatsFromSnapshot({
   photoAlbumCount,
   publishedVersion,
   recentRsvps,
+  analyticsEventSummary,
   registryItemCount,
   seatingGapCount,
   site,
@@ -315,6 +337,7 @@ export function buildOverviewStatsFromSnapshot({
   photoAlbumCount: number;
   publishedVersion: number | null;
   recentRsvps: RecentRsvp[];
+  analyticsEventSummary: AnalyticsEventSummary;
   registryItemCount: number;
   seatingGapCount: number;
   site: { couple_name_1?: string | null; couple_name_2?: string | null; venue_name?: string | null; wedding_location?: string | null } | null;
@@ -360,6 +383,7 @@ export function buildOverviewStatsFromSnapshot({
     seatingGapCount,
     contactableGuestCount,
     recentRsvps,
+    analyticsEventSummary,
     activeSiteRole,
     activeSitePermissions,
     notificationPrefs,

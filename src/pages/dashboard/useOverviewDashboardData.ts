@@ -122,6 +122,7 @@ export function useOverviewDashboardData({
         photoAlbumCount: overviewSnapshot.photoAlbumCount,
         publishedVersion: typeof siteJson?.publishedVersion === 'number' ? (siteJson.publishedVersion as number) : null,
         recentRsvps: overviewSnapshot.recentRsvps,
+        analyticsEventSummary: overviewSnapshot.analyticsEventSummary,
         registryItemCount: overviewSnapshot.registryItemCount,
         seatingGapCount: overviewSnapshot.seatingGapCount,
         site,

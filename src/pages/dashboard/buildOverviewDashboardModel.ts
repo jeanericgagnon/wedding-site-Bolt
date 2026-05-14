@@ -1,4 +1,5 @@
 import { buildAnalyticsBaseline } from './analyticsBaseline';
+import type { AnalyticsEventSummary } from './analyticsEventSummary';
 import { buildPublishReadinessItems, getChecklistProgress, getFirstIncompleteChecklistItem, getIncompleteChecklistItems } from './overviewUtils';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { getPublishStateDescriptor } from '../../lib/publishState';
@@ -32,6 +33,7 @@ type OverviewStatsLike = {
   pendingGuests: number;
   photoAlbumCount: number;
   recentRsvps: RecentRsvp[];
+  analyticsEventSummary: AnalyticsEventSummary;
   registryItemCount: number;
   messageReviewCount: number;
   upcomingTaskCount: number;
@@ -87,6 +89,9 @@ export function buildOverviewDashboardModel({
     photoAlbumCount: stats?.photoAlbumCount ?? 0,
     activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
     interactiveSuggestionCount: interactiveSuggestions.length,
+    websiteVisitCount: (stats?.analyticsEventSummary.siteVisits ?? 0) + (stats?.analyticsEventSummary.inviteOpens ?? 0) + (stats?.analyticsEventSummary.qrScans ?? 0),
+    inviteOpenCount: stats?.analyticsEventSummary.inviteOpens ?? 0,
+    qrScanCount: stats?.analyticsEventSummary.qrScans ?? 0,
   });
 
   const websiteInviteAnalytics = buildWebsiteInviteAnalyticsReadiness({
@@ -103,6 +108,9 @@ export function buildOverviewDashboardModel({
     interactiveSuggestionCount: interactiveSuggestions.length,
     interactiveVoteWidgetCount: interactiveVoteSummaries.length,
     recentRsvpCount: stats?.recentRsvps.length ?? 0,
+    websiteVisitCount: (stats?.analyticsEventSummary.siteVisits ?? 0) + (stats?.analyticsEventSummary.inviteOpens ?? 0) + (stats?.analyticsEventSummary.qrScans ?? 0),
+    inviteOpenCount: stats?.analyticsEventSummary.inviteOpens ?? 0,
+    qrScanCount: stats?.analyticsEventSummary.qrScans ?? 0,
   });
 
   const websiteInviteAnalyticsFunnel = buildWebsiteInviteAnalyticsFunnelReview(websiteInviteAnalytics);

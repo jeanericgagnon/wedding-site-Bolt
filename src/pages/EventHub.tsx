@@ -63,6 +63,12 @@ const normalizeSiteRef = (value?: string) => (value ?? '').trim().toLowerCase();
 export const buildGuestHubAccessPayload = (slug: string, searchParams: URLSearchParams) => buildPublicAccessArtifacts(slug, searchParams);
 export const buildGuestHubIdentityPayload = (slug: string, searchParams: URLSearchParams) => buildGuestIdentityArtifacts(slug, searchParams);
 
+function resolveGuestHubViewTarget(searchParams: URLSearchParams) {
+  if (searchParams.get('entry') === 'qr') return '/event/qr';
+  if (searchParams.has('invite_token') || searchParams.has('token') || searchParams.has('passwordSession')) return '/event/invite';
+  return '/event';
+}
+
 export const buildGuestHubAccessHeaders = (slug: string, searchParams: URLSearchParams) => {
   const access = buildGuestHubAccessPayload(slug, searchParams);
   return {
@@ -305,7 +311,7 @@ export const EventHub: React.FC = () => {
           });
         }
       });
-    trackGuestHubEvent(slug, 'view', '/event', buildGuestHubAccessPayload(slug, searchParams)).catch(() => {});
+    trackGuestHubEvent(slug, 'view', resolveGuestHubViewTarget(searchParams), buildGuestHubAccessPayload(slug, searchParams)).catch(() => {});
     return () => {
       cancelled = true;
     };

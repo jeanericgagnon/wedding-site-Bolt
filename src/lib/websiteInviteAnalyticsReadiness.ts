@@ -15,6 +15,9 @@ export interface WebsiteInviteAnalyticsInput {
   interactiveSuggestionCount: number;
   interactiveVoteWidgetCount: number;
   recentRsvpCount: number;
+  websiteVisitCount: number;
+  inviteOpenCount: number;
+  qrScanCount: number;
 }
 
 export interface WebsiteInviteAnalyticsSignal {
@@ -81,27 +84,37 @@ export function buildWebsiteInviteAnalyticsReadiness(input: WebsiteInviteAnalyti
     {
       id: 'site-visit-tracking',
       label: 'Website visits',
-      value: hasPublishedSite ? 'Planned' : 'Not ready',
+      value: hasPublishedSite ? String(input.websiteVisitCount) : 'Not ready',
       detail: hasPublishedSite
-        ? 'Needs privacy-safe page view instrumentation before showing visit counts.'
+        ? input.websiteVisitCount > 0
+          ? `${input.websiteVisitCount} aggregate website visits were recorded in the last 30 days.`
+          : 'No aggregate website visits were recorded in the last 30 days yet.'
         : 'Publish the site before visit analytics can be meaningful.',
-      state: 'planned',
+      state: hasPublishedSite ? 'measured' : 'planned',
       privacy: 'Should stay aggregate and avoid IP/device fingerprint exposure.',
     },
     {
       id: 'invite-open-tracking',
-      label: 'Invite opens',
-      value: 'Planned',
-      detail: 'Invite/email open tracking is not counted yet, so the dashboard should not claim it.',
-      state: 'planned',
-      privacy: 'Should be opt-in and explainable before launch use.',
+      label: 'Invite link opens',
+      value: hasPublishedSite ? String(input.inviteOpenCount) : 'Planned',
+      detail: hasPublishedSite
+        ? input.inviteOpenCount > 0
+          ? `${input.inviteOpenCount} private invite or guest-hub opens were recorded in the last 30 days.`
+          : 'No private invite or guest-hub opens were recorded in the last 30 days yet.'
+        : 'Publish the site before invite-link analytics can be meaningful.',
+      state: hasPublishedSite ? 'measured' : 'planned',
+      privacy: 'Counts guest-hub invite loads only; it is not inbox pixel tracking.',
     },
     {
       id: 'qr-scans',
-      label: 'QR scans',
-      value: 'Planned',
-      detail: 'QR-specific scan events are not tracked yet.',
-      state: 'planned',
+      label: 'QR entries',
+      value: hasPublishedSite ? String(input.qrScanCount) : 'Planned',
+      detail: hasPublishedSite
+        ? input.qrScanCount > 0
+          ? `${input.qrScanCount} QR-driven guest-hub entries were recorded in the last 30 days.`
+          : 'No QR-driven guest-hub entries were recorded in the last 30 days yet.'
+        : 'Publish the site before QR entry analytics can be meaningful.',
+      state: hasPublishedSite ? 'measured' : 'planned',
       privacy: 'Should count aggregate scans without exposing guest tokens.',
     },
     {
@@ -217,7 +230,7 @@ export function buildWebsiteInviteAnalyticsFunnelReview(readiness: WebsiteInvite
     steps,
     guardrails: [
       'Do not expose IP addresses, exact devices, raw user agents, guest tokens, or private invite URLs.',
-      'Keep visit, invite-open, and QR scan metrics aggregate until consent and retention controls are designed.',
+      'Keep visit, invite-link, and QR metrics aggregate until consent and retention controls are designed.',
       'Show owner/planner summaries only; public and guest routes should not reveal analytics detail.',
     ],
   };

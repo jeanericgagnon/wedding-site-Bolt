@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildGuestHubQrAssets, buildQrImageUrl, buildRenderableQrImageUrl, isSafePublicQrAssetUrl, renderGuestHubQrPrintHtml } from './guestHubQrAssets';
+import { buildGuestHubQrAssets, buildQrImageUrl, buildRenderableQrImageUrl, buildTrackedPublicQrPayloadUrl, isSafePublicQrAssetUrl, renderGuestHubQrPrintHtml } from './guestHubQrAssets';
 
 describe('guestHubQrAssets', () => {
   it('builds a printable public guest hub asset pack', () => {
@@ -63,5 +63,10 @@ describe('guestHubQrAssets', () => {
 
     expect(buildQrImageUrl(privateUrl)).toBe('');
     expect(buildRenderableQrImageUrl(privateUrl, 320, { allowPrivate: true })).toContain('data:image/svg+xml');
+  });
+
+  it('adds qr analytics entry context to public guest-hub qr payloads only', () => {
+    expect(buildTrackedPublicQrPayloadUrl('https://dayof.love/event/maya-and-leo')).toBe('https://dayof.love/event/maya-and-leo?entry=qr');
+    expect(buildTrackedPublicQrPayloadUrl('https://dayof.love/rsvp')).toBe('https://dayof.love/rsvp');
   });
 });

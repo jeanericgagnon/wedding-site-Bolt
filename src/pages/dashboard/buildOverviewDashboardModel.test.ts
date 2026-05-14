@@ -30,6 +30,25 @@ const baseStats = {
   pendingGuests: 6,
   photoAlbumCount: 0,
   recentRsvps: [],
+  analyticsEventSummary: {
+    lookbackDays: 30,
+    totalTrackedEvents: 28,
+    pageViews: 11,
+    siteVisits: 5,
+    inviteOpens: 4,
+    qrScans: 2,
+    recapViews: 1,
+    totalClicks: 12,
+    rsvpClicks: 4,
+    registryClicks: 2,
+    photoClicks: 3,
+    travelClicks: 1,
+    scheduleClicks: 1,
+    guestbookClicks: 0,
+    vaultClicks: 0,
+    contactClicks: 1,
+    lastTrackedAt: '2026-05-14T09:00:00.000Z',
+  },
   registryItemCount: 4,
   seatingGapCount: 1,
   siteSlug: 'avery-and-jordan',
@@ -97,6 +116,28 @@ describe('buildOverviewDashboardModel', () => {
     expect(model.calmDigest?.items.find((item) => item.id === 'payments')?.count).toBe(5);
     expect(model.calmDigest?.items.find((item) => item.id === 'photo-memory')?.count).toBe(3);
     expect(model.calmDigest?.items.find((item) => item.id === 'seating')?.count).toBe(1);
+  });
+
+  it('surfaces measured website, invite, and qr analytics when tracked events exist', () => {
+    const model = buildOverviewDashboardModel({
+      dismissedIntelligenceIds: [],
+      interactiveSuggestions: [],
+      interactiveVoteSummaries: [],
+      stats: baseStats,
+    });
+
+    expect(model.websiteInviteAnalytics.signals.find((signal) => signal.id === 'site-visit-tracking')).toMatchObject({
+      value: '11',
+      state: 'measured',
+    });
+    expect(model.websiteInviteAnalytics.signals.find((signal) => signal.id === 'invite-open-tracking')).toMatchObject({
+      value: '4',
+      state: 'measured',
+    });
+    expect(model.websiteInviteAnalytics.signals.find((signal) => signal.id === 'qr-scans')).toMatchObject({
+      value: '2',
+      state: 'measured',
+    });
   });
 
   it('shows scheduled digest truth when a next delivery is saved', () => {

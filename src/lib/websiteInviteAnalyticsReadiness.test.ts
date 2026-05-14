@@ -17,20 +17,21 @@ describe('website invite analytics readiness', () => {
       interactiveSuggestionCount: 3,
       interactiveVoteWidgetCount: 2,
       recentRsvpCount: 5,
+      websiteVisitCount: 18,
+      inviteOpenCount: 7,
+      qrScanCount: 4,
     });
 
-    expect(model.status).toBe('needs-instrumentation');
-    expect(model.summary).toBe('5 signals are usable now; 3 need instrumentation before launch claims.');
+    expect(model.status).toBe('ready');
+    expect(model.summary).toBe('Analytics are tied to real product actions.');
     expect(model.signals.find((signal) => signal.id === 'rsvp-funnel')).toMatchObject({
       value: '76%',
       state: 'measured',
       privacy: 'Aggregated guest counts only.',
     });
-    expect(model.signals.filter((signal) => signal.state === 'planned').map((signal) => signal.id)).toEqual([
-      'site-visit-tracking',
-      'invite-open-tracking',
-      'qr-scans',
-    ]);
+    expect(model.signals.find((signal) => signal.id === 'site-visit-tracking')).toMatchObject({ value: '18', state: 'measured' });
+    expect(model.signals.find((signal) => signal.id === 'invite-open-tracking')).toMatchObject({ value: '7', state: 'measured' });
+    expect(model.signals.find((signal) => signal.id === 'qr-scans')).toMatchObject({ value: '4', state: 'measured' });
   });
 
   it('does not invent analytics when guests and published site are missing', () => {
@@ -48,6 +49,9 @@ describe('website invite analytics readiness', () => {
       interactiveSuggestionCount: 0,
       interactiveVoteWidgetCount: 0,
       recentRsvpCount: 0,
+      websiteVisitCount: 0,
+      inviteOpenCount: 0,
+      qrScanCount: 0,
     });
 
     expect(model.status).toBe('empty');
@@ -71,6 +75,9 @@ describe('website invite analytics readiness', () => {
       interactiveSuggestionCount: 0,
       interactiveVoteWidgetCount: 0,
       recentRsvpCount: 1,
+      websiteVisitCount: 0,
+      inviteOpenCount: 0,
+      qrScanCount: 0,
     });
 
     expect(model.signals.find((signal) => signal.id === 'qr-scans')?.privacy).toContain('without exposing guest tokens');
@@ -92,15 +99,18 @@ describe('website invite analytics readiness', () => {
       interactiveSuggestionCount: 3,
       interactiveVoteWidgetCount: 2,
       recentRsvpCount: 5,
+      websiteVisitCount: 18,
+      inviteOpenCount: 7,
+      qrScanCount: 4,
     });
 
     const review = buildWebsiteInviteAnalyticsFunnelReview(model);
 
-    expect(review.status).toBe('needs-instrumentation');
-    expect(review.summary).toBe('3 funnel steps are real now; 2 still need privacy-safe instrumentation.');
+    expect(review.status).toBe('ready');
+    expect(review.summary).toBe('The guest journey funnel is backed by measured product events.');
     expect(review.steps.map((step) => [step.id, step.state])).toEqual([
-      ['visit', 'planned'],
-      ['invite', 'planned'],
+      ['visit', 'measured'],
+      ['invite', 'measured'],
       ['rsvp', 'measured'],
       ['photos', 'measured'],
       ['prompts', 'measured'],
