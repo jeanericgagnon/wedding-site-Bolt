@@ -2,6 +2,7 @@ import React from 'react';
 import { AtSign, Calendar, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Clock, Copy, Eye, Loader2, Mail, Link2, RefreshCw, Save, Send, Users } from 'lucide-react';
 import { Button, Card, Input, Textarea } from '../../../components/ui';
 import { GUEST_COMMUNICATION_FLOW } from '../../../lib/guestCommunicationFlow';
+import { getMessageDeliveryState } from '../../../lib/messageDeliveryState';
 import { SMS_PROVIDER_PENDING_COPY } from '../../../lib/smsProvider';
 import { SMS_SEGMENT_SIZE } from '../../../lib/smsSegments';
 import { hasReachableEmail } from './messageDashboardUtils';
@@ -247,9 +248,9 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
         </div>
         <div>
           <p className="text-2xl font-bold text-text-primary">
-            {messages.filter((message) => message.status === 'sent' || message.status === 'queued' || message.status === 'sending').length}
+            {messages.filter((message) => message.status === 'sent' || message.status === 'queued' || message.status === 'sending' || message.status === 'partial').length}
           </p>
-          <p className="text-sm text-text-secondary">Delivered, queued, or sending</p>
+          <p className="text-sm text-text-secondary">Sent, queued, sending, or needs follow-up</p>
         </div>
       </div>
       <div className="flex items-center gap-3">
@@ -1347,24 +1348,26 @@ export const MessageReviewQueuePanels: React.FC<MessageReviewQueuePanelsProps> =
 );
 
 export function getStatusBadge(message: Message) {
-  switch (message.status) {
-    case 'draft':
-      return <span className="px-2 py-1 bg-surface-subtle text-text-secondary rounded text-xs border border-border">Draft</span>;
-    case 'scheduled':
-      return <span className="px-2 py-1 bg-warning-light text-warning rounded text-xs border border-warning/20">Scheduled</span>;
-    case 'queued':
-      return <span className="px-2 py-1 bg-primary-light text-primary rounded text-xs border border-primary/20">Queued</span>;
-    case 'sending':
-      return <span className="px-2 py-1 bg-primary-light text-primary rounded text-xs border border-primary/20 flex items-center gap-1"><Loader2 size={10} className="animate-spin" />Sending…</span>;
-    case 'sent':
-      return <span className="px-2 py-1 bg-success-light text-success rounded text-xs border border-success/20">Sent</span>;
-    case 'partial':
-      return <span className="px-2 py-1 bg-warning-light text-warning rounded text-xs border border-warning/20">Needs follow-up</span>;
-    case 'failed':
-      return <span className="px-2 py-1 bg-error-light text-error rounded text-xs border border-error/20">Needs review</span>;
-    default:
-      return null;
+  const deliveryState = getMessageDeliveryState({
+    status: message.status,
+    sentAt: message.sent_at,
+  });
+  const toneClasses = (() => {
+    switch (deliveryState.tone) {
+      case 'success':
+        return 'bg-success-light text-success border-success/20';
+      case 'danger':
+        return 'bg-error-light text-error border-error/20';
+      case 'warning':
+        return 'bg-warning-light text-warning border-warning/20';
+      default:
+        return 'bg-surface-subtle text-text-secondary border-border';
+    }
+  })();
+  if (deliveryState.label === 'Sending') {
+    return <span className={`px-2 py-1 rounded text-xs border flex items-center gap-1 ${toneClasses}`}><Loader2 size={10} className="animate-spin" />Sending…</span>;
   }
+  return <span className={`px-2 py-1 rounded text-xs border ${toneClasses}`}>{deliveryState.label}</span>;
 }
 
 export interface MessageHistoryCardProps {

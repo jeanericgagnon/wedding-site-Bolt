@@ -332,6 +332,7 @@ Execution rule for this section:
 3. `ACTIVE`: status-based messaging and invitation tracking
    - this batch shipped: message audience segmentation now hydrates meal-choice truth from canonical RSVP rows instead of trusting possibly stale guest-table meal fields, so `Missing meal` targeting follows the real RSVP record
    - this batch shipped: owner messaging surfaces now use slightly stricter delivery wording (`delivered`, `queued`, `sending`) instead of flatter “sent or ready” phrasing on the reach snapshot
+   - this batch shipped: the comms dashboard now runs a single owner-facing delivery-state model across badges and message detail headers, so `scheduled`, `queued`, `sending`, `partial`, `failed`, and `sent` stay visibly distinct instead of collapsing into “sent or ready” language
    - this batch shipped: message detail review now supports focused retry for reviewed failed recipients and next-send exclusions for recipients still missing contact details, backed by explicit recipient filters instead of provider-specific operator steps
    - this batch shipped: dashboard delivery reads now carry `guest_id`, so follow-up review can target or exclude real guest rows without printing raw provider internals in the UI
    - this batch shipped: review buckets now collapse raw provider noise into customer-safe labels like `Missing contact details`, `Phone number needs review`, `Email address needs review`, `Blocked or unsubscribed`, and `Temporary delivery issue`, with the comms proof lane expanded to cover the new workflow

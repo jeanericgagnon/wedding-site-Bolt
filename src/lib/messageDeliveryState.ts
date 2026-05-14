@@ -29,11 +29,32 @@ export function getMessageDeliveryState(input: MessageDeliveryInput): MessageDel
       explainer: safeDeliveryExplainer(input.error),
     };
   }
-  if (status === 'queued' || status === 'processing') {
+  if (status === 'scheduled') {
     return {
-      label: 'Getting ready',
+      label: 'Scheduled',
       tone: 'warning',
-      explainer: 'This message is prepared and may still be on its way.',
+      explainer: 'This message is scheduled for later and has not gone out yet.',
+    };
+  }
+  if (status === 'queued') {
+    return {
+      label: 'Queued',
+      tone: 'warning',
+      explainer: 'This message is waiting for the send step to start.',
+    };
+  }
+  if (status === 'processing' || status === 'sending') {
+    return {
+      label: 'Sending',
+      tone: 'warning',
+      explainer: 'This message is actively working through recipients now.',
+    };
+  }
+  if (status === 'partial') {
+    return {
+      label: 'Needs follow-up',
+      tone: 'warning',
+      explainer: 'Some guests were reached, but some still need attention before another send.',
     };
   }
   if (status === 'sent' || input.sentAt) {

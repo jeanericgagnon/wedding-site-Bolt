@@ -32,17 +32,39 @@ describe('getMessageDeliveryState', () => {
     });
   });
 
-  it('treats queued and processing states as in-flight delivery', () => {
-    expect(getMessageDeliveryState({ status: 'queued' })).toEqual({
-      label: 'Getting ready',
+  it('keeps scheduled messages distinct from sent messages', () => {
+    expect(getMessageDeliveryState({ status: 'scheduled' })).toEqual({
+      label: 'Scheduled',
       tone: 'warning',
-      explainer: 'This message is prepared and may still be on its way.',
+      explainer: 'This message is scheduled for later and has not gone out yet.',
+    });
+  });
+
+  it('treats queued and processing states as in-flight delivery without calling them sent', () => {
+    expect(getMessageDeliveryState({ status: 'queued' })).toEqual({
+      label: 'Queued',
+      tone: 'warning',
+      explainer: 'This message is waiting for the send step to start.',
     });
 
     expect(getMessageDeliveryState({ status: 'processing' })).toEqual({
-      label: 'Getting ready',
+      label: 'Sending',
       tone: 'warning',
-      explainer: 'This message is prepared and may still be on its way.',
+      explainer: 'This message is actively working through recipients now.',
+    });
+
+    expect(getMessageDeliveryState({ status: 'sending' })).toEqual({
+      label: 'Sending',
+      tone: 'warning',
+      explainer: 'This message is actively working through recipients now.',
+    });
+  });
+
+  it('keeps partial delivery distinct from fully sent', () => {
+    expect(getMessageDeliveryState({ status: 'partial' })).toEqual({
+      label: 'Needs follow-up',
+      tone: 'warning',
+      explainer: 'Some guests were reached, but some still need attention before another send.',
     });
   });
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertCircle, ArrowLeft, CheckCircle, Loader2, RefreshCw, Send, X } from 'lucide-react';
 import { Button } from '../../../components/ui';
+import { getMessageDeliveryState } from '../../../lib/messageDeliveryState';
 import { formatMessageHistoryDateTime } from '../messageHistoryTime';
 import { parseScheduleInputToIso, toScheduleInputValue } from '../messageScheduleTime';
 import type { DeliveryRow, Message } from './messageDashboardTypes';
@@ -57,6 +58,10 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
   const campaignName = getCampaignName(message);
   const campaignType = getCampaignTypeLabel(message);
   const recipientReviewPlan = getRecipientReviewPlanSummary(message);
+  const deliveryState = getMessageDeliveryState({
+    status: message.status,
+    sentAt: message.sent_at,
+  });
 
   const sentDate = message.sent_at
     ? formatMessageHistoryDateTime(message.sent_at, { dateStyle: 'long', timeStyle: 'short' }, 'Sent time unavailable')
@@ -112,9 +117,17 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
               <p className="text-xs text-text-tertiary mt-0.5">
                 {message.status === 'scheduled' && scheduledDate
                   ? `Scheduled for ${scheduledDate}`
+                  : message.status === 'queued'
+                  ? 'Queued — waiting to start'
+                  : message.status === 'sending'
+                  ? 'Sending now'
+                  : message.status === 'partial'
+                  ? 'Needs follow-up — some guests still need attention'
+                  : message.status === 'failed'
+                  ? 'Needs review before another send'
                   : sentDate
                   ? `Sent ${sentDate}`
-                  : 'Draft — not yet sent'}
+                  : deliveryState.explainer}
               </p>
             </div>
           </div>

@@ -90,4 +90,44 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('Next-send review plan')).toBeInTheDocument();
     expect(screen.getByText(/next send targets 2 reviewed guests and excludes 1 guest still missing contact details/i)).toBeInTheDocument();
   });
+
+  it('keeps queued and partial headers truthful instead of calling them sent', () => {
+    const { rerender } = render(
+      <MessageDetailModal
+        message={message({ status: 'queued', sent_at: null })}
+        deliveries={deliveries([])}
+        canManageCampaigns
+        onClose={vi.fn()}
+        onRetry={vi.fn().mockResolvedValue(undefined)}
+        onRetryFailedRecipients={vi.fn().mockResolvedValue(undefined)}
+        onExcludeSkippedRecipients={vi.fn().mockResolvedValue(undefined)}
+        onSendScheduledNow={vi.fn().mockResolvedValue(undefined)}
+        onReschedule={vi.fn().mockResolvedValue(undefined)}
+        onCancelSchedule={vi.fn().mockResolvedValue(undefined)}
+        onLoadIntoComposer={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Queued — waiting to start')).toBeInTheDocument();
+    expect(screen.queryByText(/^Sent /)).not.toBeInTheDocument();
+
+    rerender(
+      <MessageDetailModal
+        message={message({ status: 'partial', sent_at: null, delivered_count: 2, failed_count: 1 })}
+        deliveries={deliveries([])}
+        canManageCampaigns
+        onClose={vi.fn()}
+        onRetry={vi.fn().mockResolvedValue(undefined)}
+        onRetryFailedRecipients={vi.fn().mockResolvedValue(undefined)}
+        onExcludeSkippedRecipients={vi.fn().mockResolvedValue(undefined)}
+        onSendScheduledNow={vi.fn().mockResolvedValue(undefined)}
+        onReschedule={vi.fn().mockResolvedValue(undefined)}
+        onCancelSchedule={vi.fn().mockResolvedValue(undefined)}
+        onLoadIntoComposer={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Needs follow-up — some guests still need attention')).toBeInTheDocument();
+    expect(screen.queryByText(/^Sent /)).not.toBeInTheDocument();
+  });
 });
