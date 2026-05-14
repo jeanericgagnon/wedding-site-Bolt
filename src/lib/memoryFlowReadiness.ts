@@ -59,6 +59,7 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
   const storyPickCoverageRate = curatedPickCount > 0
     ? Math.round((input.recapStoryCount / curatedPickCount) * 100)
     : 0;
+  const moderationItemCount = input.flaggedUploadCount + input.reviewQueueCount;
   const curationCounts = [curatedPickCount > 0 ? countLabel(curatedPickCount, 'curated pick') : null, slideshowFrameCount >= 3 ? countLabel(slideshowFrameCount, 'slideshow frame') : null]
     .filter(Boolean)
     .join(' and ');
@@ -215,10 +216,15 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
       : recapHasPicks
         ? 'Recap saved, not shareable'
         : 'Recap not shareable',
+    recapHasPicks && input.recapStoryCount > 0
+      ? `${storyPickCoverageRate}% story coverage`
+      : recapHasPicks
+        ? 'No story picks yet'
+        : 'No story curation yet',
     handoffExportReady
       ? 'Handoff ready'
       : needsReview
-        ? 'Review queue active'
+        ? `${countLabel(moderationItemCount, 'review item')} need attention`
         : hasUploads
           ? 'Handoff not ready'
           : 'No handoff yet',

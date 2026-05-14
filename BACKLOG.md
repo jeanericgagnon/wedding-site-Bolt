@@ -441,6 +441,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the memory-flow recap summary now also shows story-pick coverage percentage when recap sharing is ready, so owners can tell whether the recap has enough story shaping to feel intentional instead of only seeing a raw story-pick count
    - this batch shipped: the top-level memory-flow `Handoff` summary now explicitly says when both the owner export and the full-resolution download path are ready, so couples do not have to infer that the download handoff is unlocked from the deeper checklist alone
    - this batch shipped: the no-app memory-flow card now also surfaces top-level summary badges for live uploads, recap share mode, handoff readiness, and captured follow-up opt-ins, so owners can judge the overall shape of the photo lane before scanning the deeper collection/curation/sharing/handoff tiles
+   - this batch shipped: those top-level photo-memory badges now also surface story-pick coverage and concrete moderation burden, so owners can tell whether the recap is story-shaped and whether review cleanup is still blocking handoff without opening the deeper tiles
    - add live guest video upload browser proof
    - rerun the strengthened owner preview plus guest-facing published recap proof against the shipped production runtime after the next approved deploy
    - prove owner moderation readback after real live uploads

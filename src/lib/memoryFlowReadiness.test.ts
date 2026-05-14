@@ -27,6 +27,7 @@ describe('memoryFlowReadiness', () => {
     expect(readiness.summaryBadges).toEqual([
       '24 uploads live',
       'Published recap',
+      '43% story coverage',
       'Handoff ready',
       '8 opt-ins captured',
     ]);
@@ -65,7 +66,8 @@ describe('memoryFlowReadiness', () => {
     expect(readiness.summaryBadges).toEqual([
       'Upload lane needs setup',
       'Recap saved, not shareable',
-      'Review queue active',
+      'No story picks yet',
+      '5 review items need attention',
       'No follow-up opt-ins',
     ]);
     expect(readiness.lanes.find((lane) => lane.id === 'collection')).toMatchObject({
@@ -120,6 +122,7 @@ describe('memoryFlowReadiness', () => {
     expect(readiness.summaryBadges).toEqual([
       '6 uploads live',
       'Private recap link',
+      '33% story coverage',
       'Handoff ready',
       '1 opt-in captured',
     ]);
@@ -154,6 +157,7 @@ describe('memoryFlowReadiness', () => {
     expect(readiness.summaryBadges).toEqual([
       'No live upload lane',
       'Recap not shareable',
+      'No story curation yet',
       'No handoff yet',
       'No follow-up opt-ins',
     ]);
@@ -200,7 +204,8 @@ describe('memoryFlowReadiness', () => {
     expect(readiness.summaryBadges).toEqual([
       '5 uploads live',
       'Private recap link',
-      'Review queue active',
+      '33% story coverage',
+      '1 review item need attention',
       'No follow-up opt-ins',
     ]);
     expect(readiness.lanes.find((lane) => lane.id === 'handoff')).toMatchObject({
