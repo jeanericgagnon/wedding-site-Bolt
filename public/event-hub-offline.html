@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DayOf offline guest hub</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #fbf7f1;
+        color: #2f261d;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #fbf7f1;
+      }
+      main {
+        max-width: 44rem;
+        margin: 0 auto;
+        padding: 2rem 1rem 3rem;
+      }
+      .panel {
+        background: #fffdf9;
+        border: 1px solid #eadfd2;
+        border-radius: 1rem;
+        padding: 1.25rem;
+        box-shadow: 0 12px 28px rgba(47, 38, 29, 0.06);
+      }
+      .eyebrow {
+        margin: 0;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #8b6f53;
+      }
+      h1 {
+        margin: 0.5rem 0 0;
+        font-size: clamp(2rem, 6vw, 3rem);
+        line-height: 1.05;
+      }
+      p {
+        line-height: 1.6;
+      }
+      .muted {
+        color: #6f5843;
+      }
+      .stack {
+        display: grid;
+        gap: 1rem;
+        margin-top: 1.25rem;
+      }
+      .card {
+        border: 1px solid #eadfd2;
+        border-radius: 0.9rem;
+        background: #ffffff;
+        padding: 1rem;
+      }
+      .label {
+        margin: 0;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #8b6f53;
+      }
+      .value {
+        margin: 0.35rem 0 0;
+        font-size: 1rem;
+        color: #2f261d;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.25rem;
+      }
+      button,
+      a {
+        appearance: none;
+        border: none;
+        border-radius: 999px;
+        padding: 0.85rem 1.1rem;
+        font: inherit;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .primary {
+        background: #2f261d;
+        color: #fff;
+      }
+      .secondary {
+        background: #f3eadf;
+        color: #69513f;
+      }
+      ul {
+        margin: 0.5rem 0 0;
+        padding-left: 1rem;
+      }
+      li + li {
+        margin-top: 0.35rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="panel">
+        <p class="eyebrow">DayOf offline guest hub</p>
+        <h1 id="couple">Saved wedding hub</h1>
+        <p class="muted" id="summary">
+          You are offline. DayOf saved the last guest-safe version of this hub so you can still see key wedding details.
+        </p>
+        <p class="muted" id="saved-at"></p>
+        <div class="actions">
+          <button class="primary" type="button" id="retry">Try live hub again</button>
+          <a class="secondary" id="travel-link" href="#travel">Travel details</a>
+        </div>
+      </section>
+
+      <div class="stack">
+        <section class="card">
+          <p class="label">Latest update</p>
+          <p class="value" id="update-title">Saved guest hub</p>
+          <p class="muted" id="update-detail">Reconnect to load the newest wedding note.</p>
+        </section>
+
+        <section class="card">
+          <p class="label">Your day-of status</p>
+          <p class="value" id="guest-name">Guest details unavailable</p>
+          <p class="muted" id="guest-status">Reconnect to confirm RSVP or arrival changes.</p>
+        </section>
+
+        <section class="card">
+          <p class="label">Coordinator handoff</p>
+          <p class="value" id="handoff-title">Team updates are saved here when available.</p>
+          <p class="muted" id="handoff-detail">Reconnect for the newest staffing note.</p>
+        </section>
+
+        <section class="card" id="travel">
+          <p class="label">Travel quick plan</p>
+          <p class="value" id="travel-title">Saved travel details</p>
+          <ul class="muted" id="travel-list"></ul>
+        </section>
+      </div>
+    </main>
+    <script>
+      (function () {
+        const prefix = 'dayof.guestHub.offline.';
+        const slugMatch = window.location.pathname.match(/^\/event\/([^/]+)/i);
+        const slug = slugMatch ? decodeURIComponent(slugMatch[1]) : '';
+        const key = slug ? prefix + slug.toLowerCase() : '';
+        const snapshot = key ? window.localStorage.getItem(key) : null;
+
+        const setText = (id, value) => {
+          const element = document.getElementById(id);
+          if (!element) return;
+          element.textContent = value || '';
+        };
+
+        const addTravelLine = (list, value) => {
+          if (!value) return;
+          const item = document.createElement('li');
+          item.textContent = value;
+          list.appendChild(item);
+        };
+
+        setText('travel-link', 'Travel details');
+        document.getElementById('retry').addEventListener('click', () => window.location.reload());
+
+        if (!snapshot) {
+          setText('couple', slug ? slug.replace(/[-_]+/g, ' ') : 'Saved wedding hub');
+          setText('saved-at', 'Open this page once online to save the latest guest hub for offline use.');
+          return;
+        }
+
+        try {
+          const parsed = JSON.parse(snapshot);
+          const siteSummary = parsed && typeof parsed === 'object' ? parsed.siteSummary || null : null;
+          const announcement = parsed && typeof parsed === 'object' ? parsed.announcement || null : null;
+          const guestState = parsed && typeof parsed === 'object' ? parsed.guestState || null : null;
+          const coordinatorHandoff = parsed && typeof parsed === 'object' ? parsed.coordinatorHandoff || null : null;
+          const travelContext = parsed && typeof parsed === 'object' ? parsed.travelContext || null : null;
+          const savedAt = parsed && typeof parsed === 'object' ? parsed.savedAt || null : null;
+
+          const coupleName1 = siteSummary && typeof siteSummary.coupleName1 === 'string' ? siteSummary.coupleName1.trim() : '';
+          const coupleName2 = siteSummary && typeof siteSummary.coupleName2 === 'string' ? siteSummary.coupleName2.trim() : '';
+          const coupleLabel = [coupleName1, coupleName2].filter(Boolean).join(' & ') || (slug ? slug.replace(/[-_]+/g, ' ') : 'Saved wedding hub');
+          setText('couple', coupleLabel);
+
+          if (siteSummary && typeof siteSummary.weddingDate === 'string' && siteSummary.weddingDate) {
+            setText('summary', 'You are offline. The last saved wedding hub is still available for travel, RSVP, and day-of status details.');
+          }
+          if (savedAt) {
+            const formatted = new Date(savedAt);
+            setText('saved-at', Number.isNaN(formatted.getTime()) ? '' : 'Last saved ' + formatted.toLocaleString());
+          }
+
+          if (announcement) {
+            setText('update-title', announcement.title || 'Saved guest hub');
+            setText('update-detail', announcement.detail || 'Reconnect to load the newest wedding note.');
+          }
+
+          if (guestState) {
+            setText('guest-name', guestState.guestName || 'Guest details unavailable');
+            const statusParts = [];
+            if (guestState.rsvpStatus) statusParts.push('RSVP: ' + guestState.rsvpStatus);
+            if (guestState.checkedInAt) statusParts.push('Checked in');
+            setText('guest-status', statusParts.join(' · ') || 'Reconnect to confirm RSVP or arrival changes.');
+          }
+
+          if (coordinatorHandoff) {
+            const titleParts = [];
+            if (coordinatorHandoff.eventName) titleParts.push(coordinatorHandoff.eventName);
+            if (coordinatorHandoff.handoffStatus) titleParts.push(coordinatorHandoff.handoffStatus);
+            setText('handoff-title', titleParts.join(' · ') || 'Team updates are saved here when available.');
+            const detailParts = [];
+            if (coordinatorHandoff.leadName) detailParts.push('Lead: ' + coordinatorHandoff.leadName);
+            if (coordinatorHandoff.supportName) detailParts.push('Support: ' + coordinatorHandoff.supportName);
+            if (coordinatorHandoff.note) detailParts.push(coordinatorHandoff.note);
+            setText('handoff-detail', detailParts.join(' · ') || 'Reconnect for the newest staffing note.');
+          }
+
+          const travelList = document.getElementById('travel-list');
+          if (travelList) {
+            travelList.innerHTML = '';
+            const schedule = travelContext && Array.isArray(travelContext.schedule) ? travelContext.schedule : [];
+            const venues = travelContext && Array.isArray(travelContext.venues) ? travelContext.venues : [];
+            schedule.slice(0, 3).forEach((item) => addTravelLine(travelList, item && typeof item.label === 'string' ? item.label : ''));
+            venues.slice(0, 3).forEach((item) => {
+              const name = item && typeof item.name === 'string' ? item.name : '';
+              const address = item && typeof item.address === 'string' ? item.address : '';
+              addTravelLine(travelList, [name, address].filter(Boolean).join(' · '));
+            });
+            if (!travelList.children.length) {
+              addTravelLine(travelList, 'Reconnect to load the latest travel details.');
+            }
+          }
+        } catch (_) {
+          setText('saved-at', 'Reconnect once online to save a fresh offline guest hub.');
+        }
+      })();
+    </script>
+  </body>
+</html>

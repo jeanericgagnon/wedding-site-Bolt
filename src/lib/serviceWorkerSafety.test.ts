@@ -9,6 +9,10 @@ describe('service worker safety', () => {
     expect(source).toContain('function isSafeStaticRequest');
     expect(source).toContain("request.headers.has('Authorization')");
     expect(source).toContain("requestUrl.origin !== self.location.origin");
+    expect(source).toContain('function isGuestHubNavigationRequest');
+    expect(source).toContain("request.mode !== 'navigate'");
+    expect(source).toContain("return /^\\/event\\/[^/]+(?:\\/.*)?$/.test(requestUrl.pathname);");
+    expect(source).toContain("fetch(event.request).catch(() => caches.match('/event-hub-offline.html'))");
     expect(source).toContain("request.mode === 'navigate'");
     expect(source).toContain("request.destination === 'document'");
     expect(source).toContain("requestUrl.pathname.startsWith('/functions/v1/')");
@@ -21,8 +25,8 @@ describe('service worker safety', () => {
     expect(source).toContain("response.headers.get('Content-Type')");
     expect(source).toContain('/text\\/html|application\\/json/i');
     expect(source).toContain('STATIC_ASSET_PATTERN');
-    expect(source).toContain("const ASSETS = ['/manifest.webmanifest', '/image.png'];");
-    expect(source).not.toContain("const ASSETS = ['/', '/manifest.webmanifest', '/image.png'];");
+    expect(source).toContain("const ASSETS = ['/manifest.webmanifest', '/image.png', '/event-hub-offline.html'];");
+    expect(source).not.toContain("const ASSETS = ['/', '/manifest.webmanifest', '/image.png', '/event-hub-offline.html'];");
     expect(source).toContain('catch(() => caches.match(event.request))');
     expect(source).not.toContain("cached || caches.match('/')");
     expect(source).not.toContain('cache.put(event.request, copy)).catch(() => {});\n        return response;\n      })\n      .catch(() => caches.match(event.request).then((cached) => cached || caches.match(\'/\')))');

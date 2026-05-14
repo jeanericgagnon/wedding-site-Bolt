@@ -478,6 +478,9 @@ Execution rule for this section:
    - this batch shipped: the guest hub now saves a guest-safe offline snapshot of settings, site summary, travel context, latest update, guest state, and coordinator handoff, then rehydrates that snapshot when the hub opens offline instead of dropping guests into an empty shell
    - this batch shipped: day-of web-mode readiness now distinguishes between simple retry fallback and a real cached offline shell/snapshot path, so the board only claims offline support when the snapshot and service-worker shell are actually present
    - this batch shipped: focused proof is green for offline snapshot sanitization/retention, EventHub snapshot read-write wiring, and the updated day-of readiness truth
+   - this batch shipped: the service worker now caches a dedicated guest-safe offline event shell for `/event/...` navigations, so reopening the wedding hub offline returns a real hub fallback page instead of a dead browser error
+   - this batch shipped: the offline event shell reads the saved guest-safe snapshot from local storage and shows couple, update, guest-status, coordinator, and travel summary readback without exposing invite tokens or private operator state
+   - this batch shipped: focused proof is green for guest-hub navigation fallback rules inside the service worker and for the token-safe offline shell asset being part of the cached shell path
    - add live production proof for directions/map deep links, coordinator/guest handoff, and private-event visibility on the hub after the next approved deploy
    - add live production guest-hub write/read with cleanup after the day-of web-mode lane is finished
 

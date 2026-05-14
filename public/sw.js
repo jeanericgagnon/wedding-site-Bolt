@@ -1,5 +1,5 @@
-const CACHE_NAME = 'dayof-static-v3';
-const ASSETS = ['/manifest.webmanifest', '/image.png'];
+const CACHE_NAME = 'dayof-static-v4';
+const ASSETS = ['/manifest.webmanifest', '/image.png', '/event-hub-offline.html'];
 const STATIC_ASSET_PATTERN = /\.(?:js|css|png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf)$/i;
 
 function isSafeStaticRequest(requestUrl, request) {
@@ -27,6 +27,15 @@ function isCacheableStaticResponse(response) {
   return true;
 }
 
+function isGuestHubNavigationRequest(requestUrl, request) {
+  if (request.method !== 'GET') return false;
+  if (request.headers.has('Authorization')) return false;
+  if (requestUrl.origin !== self.location.origin) return false;
+  if (request.mode !== 'navigate') return false;
+  if (request.destination && request.destination !== 'document') return false;
+  return /^\/event\/[^/]+(?:\/.*)?$/.test(requestUrl.pathname);
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting())
@@ -41,6 +50,13 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url);
+  if (isGuestHubNavigationRequest(requestUrl, event.request)) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('/event-hub-offline.html'))
+    );
+    return;
+  }
+
   if (!isSafeStaticRequest(requestUrl, event.request)) {
     return;
   }
