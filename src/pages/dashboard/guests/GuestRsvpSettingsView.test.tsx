@@ -86,6 +86,9 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getAllByText(/bad-code and bad-password lockouts/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Templates and meal collection are optional/i)).toBeInTheDocument();
     expect(screen.getByText(/Custom questions/i)).toBeInTheDocument();
+    expect(screen.getByText(/Required now/i)).toBeInTheDocument();
+    expect(screen.getByText(/Event-specific/i)).toBeInTheDocument();
+    expect(screen.getByText(/Choice questions/i)).toBeInTheDocument();
     expect(screen.getByText(/Meal choices/i)).toBeInTheDocument();
     expect(screen.getByText(/^Optional$/i)).toBeInTheDocument();
 
@@ -93,5 +96,73 @@ describe('GuestRsvpSettingsView', () => {
 
     expect(screen.getByText(/Guests can find their RSVP by name or email/i)).toBeInTheDocument();
     expect(screen.getByText(/Name lookup is already the active RSVP path/i)).toBeInTheDocument();
+  });
+
+  it('summarizes required, event-specific, and choice-based RSVP questions in the owner readback', () => {
+    const selection: PersistedRsvpAccessSelection = {
+      primaryMode: 'private_link',
+      allowNameLookupBackup: true,
+    };
+    const plan = buildRsvpAccessModePlan({
+      guestCount: 18,
+      inviteTokenCount: 18,
+      householdCount: 7,
+      eventCount: 2,
+      emailCount: 14,
+      phoneCount: 5,
+    }, selection);
+    const recommended = plan.find((mode) => mode.status === 'recommended') ?? plan[0];
+
+    render(
+      <GuestRsvpSettingsView
+        recommendedRsvpAccessMode={recommended}
+        rsvpAccessModePlan={plan}
+        rsvpAccessSelection={selection}
+        rsvpAuditFeed={[]}
+        rsvpAuditLoading={false}
+        rsvpAutoSaveState="idle"
+        rsvpConfigSaving={false}
+        rsvpMealEnabled={true}
+        rsvpMealOptions={['Chicken', 'Vegetarian']}
+        rsvpQuestionTemplateCoverage={[]}
+        rsvpQuestions={[
+          { id: 'q1', label: 'Which wedding weekend events do you plan to attend?', type: 'multi_choice', required: true, appliesTo: 'all', options: ['Ceremony', 'Reception'] },
+          { id: 'q2', label: 'Do you need a shuttle seat?', type: 'single_choice', required: false, appliesTo: 'ceremony', options: ['Yes', 'No'] },
+          { id: 'q3', label: 'Anything we should know for dinner?', type: 'long_text', required: true, appliesTo: 'reception', options: [] },
+        ]}
+        rsvpSetupChecklist={buildRsvpSetupChecklist({
+          guestCount: 18,
+          inviteTokenCount: 18,
+          householdCount: 7,
+          eventCount: 2,
+          emailCount: 14,
+          phoneCount: 5,
+          mealEnabled: true,
+          mealOptionCount: 2,
+          questions: [
+            { label: 'Which wedding weekend events do you plan to attend?' },
+            { label: 'Do you need a shuttle seat?' },
+            { label: 'Anything we should know for dinner?' },
+          ],
+        }, selection)}
+        stats={{ confirmed: 10, declined: 2, pending: 6 }}
+        onAddRsvpQuestionTemplate={vi.fn()}
+        onSaveRsvpConfig={vi.fn()}
+        onSetConfirmDialog={vi.fn()}
+        onSetGuestsTab={vi.fn()}
+        onSetRsvpAccessSelection={vi.fn()}
+        onSetRsvpConfigDirty={vi.fn()}
+        onSetRsvpMealEnabled={vi.fn()}
+        onSetRsvpMealOptions={vi.fn()}
+        onSetRsvpQuestions={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/Required now/i)).toBeInTheDocument();
+    expect(screen.getByText(/Event-specific/i)).toBeInTheDocument();
+    expect(screen.getByText(/Choice questions/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^2$/i).length).toBeGreaterThanOrEqual(3);
+    expect(screen.getByText('2 required · 2 event-specific · 2 choice-based questions.')).toBeInTheDocument();
+    expect(screen.getByText('2 saved')).toBeInTheDocument();
   });
 });

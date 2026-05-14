@@ -127,6 +127,9 @@ export function GuestRsvpSettingsView({
   const customQuestionCount = safeRsvpQuestions.filter(
     (question) => !normalizedTemplateLabels.has(normalizeRsvpTemplateLabel(question.label ?? '')),
   ).length;
+  const requiredQuestionCount = safeRsvpQuestions.filter((question) => question.required).length;
+  const eventSpecificQuestionCount = safeRsvpQuestions.filter((question) => question.appliesTo === 'ceremony' || question.appliesTo === 'reception').length;
+  const choiceQuestionCount = safeRsvpQuestions.filter((question) => question.type === 'single_choice' || question.type === 'multi_choice').length;
   const markRsvpConfigDirty = () => onSetRsvpConfigDirty(true);
   const rsvpAccessSummary = safeRsvpAccessSelection.primaryMode === 'private_link'
     ? safeRsvpAccessSelection.allowNameLookupBackup
@@ -345,7 +348,7 @@ export function GuestRsvpSettingsView({
                 <p className="text-sm font-semibold text-text-primary">Question templates</p>
                 <p className="text-sm text-text-secondary">Add common wedding questions, then edit the wording before guests see them.</p>
               </div>
-              <div className="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-6">
                 <div className="rounded-md border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Templates added</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">
@@ -361,6 +364,18 @@ export function GuestRsvpSettingsView({
                   <p className="mt-1 text-sm font-semibold text-text-primary">{customQuestionCount}</p>
                 </div>
                 <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Required now</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{requiredQuestionCount}</p>
+                </div>
+                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Event-specific</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{eventSpecificQuestionCount}</p>
+                </div>
+                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Choice questions</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{choiceQuestionCount}</p>
+                </div>
+                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Meal choices</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">
                     {rsvpMealEnabled ? `${safeRsvpMealOptions.length} saved` : 'Optional'}
@@ -370,6 +385,11 @@ export function GuestRsvpSettingsView({
               <p className="mb-3 text-xs text-text-tertiary">
                 Templates and meal collection are optional. This readback shows what is already covered before you publish RSVP changes.
               </p>
+              {(requiredQuestionCount > 0 || eventSpecificQuestionCount > 0 || choiceQuestionCount > 0) && (
+                <p className="mb-3 text-xs text-text-tertiary">
+                  {requiredQuestionCount} required · {eventSpecificQuestionCount} event-specific · {choiceQuestionCount} choice-based question{choiceQuestionCount === 1 ? '' : 's'}.
+                </p>
+              )}
               <div className="flex flex-wrap gap-2">
                 {RSVP_QUESTION_TEMPLATES.map((template) => {
                   const templateAdded = safeRsvpQuestionTemplateCoverage.find((item) => item.key === template.key)?.added ?? false;
