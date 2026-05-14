@@ -325,14 +325,21 @@ export function budgetVendorLedgerToCsv(input: {
     vendorMeta,
   });
   const reconciliationMap = new Map(reconciliation.rows.map((row) => [row.vendorId, row]));
+  const linkedBudgetItemsByVendor = new Map(
+    input.vendors.map((vendor) => [
+      vendor.id,
+      input.budgetItems.filter((item) => item.vendor_id === vendor.id),
+    ]),
+  );
   const rows = [
-    ['Record Type', 'Name', 'Category or Type', 'Vendor', 'Estimated', 'Actual or Contract', 'Paid', 'Open', 'Due Date', 'Contact', 'Contact Name', 'Website', 'Reminder Channel', 'Follow Up', 'Reminder Lead Time', 'Reminder Last Queued', 'Document Label', 'Document URL', 'Files', 'Milestones', 'Internal Rating', 'Rating Status', 'Private Rating Notes', 'Contact Ready', 'Due Date Ready', 'File Count', 'Milestone Count', 'Linked Budget Estimated', 'Linked Budget Actual', 'Linked Budget Paid', 'Contract Gap', 'Paid Gap', 'Ledger Issue Count', 'Ledger Issues', 'Notes'],
+    ['Record Type', 'Name', 'Category or Type', 'Vendor', 'Estimated', 'Actual or Contract', 'Paid', 'Open', 'Due Date', 'Contact', 'Contact Name', 'Website', 'Reminder Channel', 'Follow Up', 'Reminder Lead Time', 'Reminder Last Queued', 'Document Label', 'Document URL', 'Files', 'Milestones', 'Internal Rating', 'Rating Status', 'Private Rating Notes', 'Contact Ready', 'Due Date Ready', 'File Count', 'Milestone Count', 'Linked Budget Count', 'Linked Budget Lines', 'Linked Budget Estimated', 'Linked Budget Actual', 'Linked Budget Paid', 'Contract Gap', 'Paid Gap', 'Ledger Issue Count', 'Ledger Issues', 'Notes'],
     ...input.budgetItems.map((item) => {
       const total = money(item.actual_amount) || money(item.estimated_amount);
       const paid = money(item.paid_amount);
       const vendor = item.vendor_id ? vendorMap.get(item.vendor_id) : undefined;
       const meta = item.vendor_id ? vendorMeta[item.vendor_id] : undefined;
       const reconciliationRow = item.vendor_id ? reconciliationMap.get(item.vendor_id) : undefined;
+      const linkedBudgetItems = item.vendor_id ? linkedBudgetItemsByVendor.get(item.vendor_id) ?? [] : [];
       return [
         'Budget item',
         item.item_name,
@@ -361,6 +368,8 @@ export function budgetVendorLedgerToCsv(input: {
         vendor ? ((reconciliationRow ? reconciliationRow.issues.includes('Open balance has no saved due date') : false) ? 'No' : 'Yes') : '',
         reconciliationRow ? String(reconciliationRow.fileCount) : '',
         reconciliationRow ? String(reconciliationRow.milestoneCount) : '',
+        linkedBudgetItems.length > 0 ? String(linkedBudgetItems.length) : '',
+        linkedBudgetItems.map((budgetItem) => budgetItem.item_name).filter(Boolean).join(' | '),
         reconciliationRow ? String(reconciliationRow.linkedEstimatedTotal) : '',
         reconciliationRow ? String(reconciliationRow.linkedActualTotal) : '',
         reconciliationRow ? String(reconciliationRow.linkedPaidTotal) : '',
@@ -377,6 +386,7 @@ export function budgetVendorLedgerToCsv(input: {
       const open = vendor.balance_due != null ? money(vendor.balance_due) : Math.max(0, total - paid);
       const meta = vendorMeta[vendor.id];
       const reconciliationRow = reconciliationMap.get(vendor.id);
+      const linkedBudgetItems = linkedBudgetItemsByVendor.get(vendor.id) ?? [];
       return [
         'Vendor',
         vendor.name,
@@ -405,6 +415,8 @@ export function budgetVendorLedgerToCsv(input: {
         reconciliationRow?.issues.includes('Open balance has no saved due date') ? 'No' : 'Yes',
         reconciliationRow ? String(reconciliationRow.fileCount) : '',
         reconciliationRow ? String(reconciliationRow.milestoneCount) : '',
+        linkedBudgetItems.length > 0 ? String(linkedBudgetItems.length) : '',
+        linkedBudgetItems.map((budgetItem) => budgetItem.item_name).filter(Boolean).join(' | '),
         reconciliationRow ? String(reconciliationRow.linkedEstimatedTotal) : '',
         reconciliationRow ? String(reconciliationRow.linkedActualTotal) : '',
         reconciliationRow ? String(reconciliationRow.linkedPaidTotal) : '',
