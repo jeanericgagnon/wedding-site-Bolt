@@ -1,4 +1,5 @@
 import { appendGuestInviteTokenToInternalHref } from './publicAccessArtifacts';
+import { appendGuestLanguageToInternalHref } from './guestLanguagePreference';
 
 export type GuestHubActionId = 'rsvp' | 'schedule' | 'travel' | 'registry' | 'photos' | 'guestbook' | 'vault' | 'recap' | 'contact';
 
@@ -14,6 +15,7 @@ export interface GuestHubActionSettings {
 export interface GuestHubActionOptions {
   guestContactHref?: string | null;
   guestInviteToken?: string | null;
+  guestLanguage?: string | null;
 }
 
 export interface GuestHubAction {
@@ -29,55 +31,68 @@ const isEnabled = (value: boolean | null | undefined) => value !== false;
 export function buildGuestHubActions(slug: string, settings: GuestHubActionSettings, options: GuestHubActionOptions = {}): GuestHubAction[] {
   const encodedSlug = encodeURIComponent(slug);
   const guestInviteToken = options.guestInviteToken?.trim() || null;
+  const guestLanguage = options.guestLanguage?.trim() || null;
   const actions: GuestHubAction[] = [
     {
       id: 'rsvp',
       titleKey: 'guest_hub.action_rsvp',
       detailKey: 'guest_hub.action_rsvp_detail',
-      href: `/site/${encodedSlug}#rsvp`,
+      href: appendGuestLanguageToInternalHref(`/site/${encodedSlug}#rsvp`, guestLanguage),
       primary: true,
     },
     {
       id: 'schedule',
       titleKey: 'guest_hub.action_schedule',
       detailKey: 'guest_hub.action_schedule_detail',
-      href: `/site/${encodedSlug}#schedule`,
+      href: appendGuestLanguageToInternalHref(`/site/${encodedSlug}#schedule`, guestLanguage),
     },
     {
       id: 'travel',
       titleKey: 'guest_hub.action_travel',
       detailKey: 'guest_hub.action_travel_detail',
-      href: `/site/${encodedSlug}#travel`,
+      href: appendGuestLanguageToInternalHref(`/site/${encodedSlug}#travel`, guestLanguage),
     },
     {
       id: 'registry',
       titleKey: 'guest_hub.action_registry',
       detailKey: 'guest_hub.action_registry_detail',
-      href: `/site/${encodedSlug}#registry`,
+      href: appendGuestLanguageToInternalHref(`/site/${encodedSlug}#registry`, guestLanguage),
     },
     {
       id: 'photos',
       titleKey: 'guest_hub.action_upload',
       detailKey: 'guest_hub.action_upload_detail',
-      href: appendGuestInviteTokenToInternalHref(`/photos/upload?site=${encodedSlug}&hub=1`, guestInviteToken),
+      href: appendGuestLanguageToInternalHref(
+        appendGuestInviteTokenToInternalHref(`/photos/upload?site=${encodedSlug}&hub=1`, guestInviteToken),
+        guestLanguage,
+      ),
     },
     {
       id: 'guestbook',
       titleKey: 'guest_hub.action_guestbook',
       detailKey: 'guest_hub.action_guestbook_detail',
-      href: appendGuestInviteTokenToInternalHref(`/guestbook/${encodedSlug}`, guestInviteToken),
+      href: appendGuestLanguageToInternalHref(
+        appendGuestInviteTokenToInternalHref(`/guestbook/${encodedSlug}`, guestInviteToken),
+        guestLanguage,
+      ),
     },
     {
       id: 'vault',
       titleKey: 'guest_hub.action_vault',
       detailKey: 'guest_hub.action_vault_detail',
-      href: appendGuestInviteTokenToInternalHref(`/vault/${encodedSlug}`, guestInviteToken),
+      href: appendGuestLanguageToInternalHref(
+        appendGuestInviteTokenToInternalHref(`/vault/${encodedSlug}`, guestInviteToken),
+        guestLanguage,
+      ),
     },
     {
       id: 'recap',
       titleKey: 'guest_hub.action_recap',
       detailKey: 'guest_hub.action_recap_detail',
-      href: appendGuestInviteTokenToInternalHref(`/event/${encodedSlug}/recap`, guestInviteToken),
+      href: appendGuestLanguageToInternalHref(
+        appendGuestInviteTokenToInternalHref(`/event/${encodedSlug}/recap`, guestInviteToken),
+        guestLanguage,
+      ),
     },
   ];
 
@@ -87,7 +102,10 @@ export function buildGuestHubActions(slug: string, settings: GuestHubActionSetti
       id: 'contact',
       titleKey: 'guest_hub.action_contact',
       detailKey: 'guest_hub.action_contact_detail',
-      href: appendGuestInviteTokenToInternalHref(guestContactHref, guestInviteToken),
+      href: appendGuestLanguageToInternalHref(
+        appendGuestInviteTokenToInternalHref(guestContactHref, guestInviteToken),
+        guestLanguage,
+      ),
     });
   }
 

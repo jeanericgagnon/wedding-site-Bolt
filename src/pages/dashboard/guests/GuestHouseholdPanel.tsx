@@ -92,6 +92,7 @@ export function GuestHouseholdPanel({
                 guestId: guest.id,
                 inviteToken: guest.invite_token,
                 publicSiteSlug,
+                preferredLanguage: guest.preferred_language,
               });
               return (
                 <div key={guest.id} className="flex items-center justify-between px-5 py-3.5">
@@ -142,6 +143,7 @@ export function GuestHouseholdPanel({
                 guestId: guest.id,
                 inviteToken: guest.invite_token,
                 publicSiteSlug,
+                preferredLanguage: guest.preferred_language,
               });
               return (
                 <div

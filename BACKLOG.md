@@ -383,6 +383,8 @@ Execution rule for this section:
    - this batch shipped: settings now carry both the default public language and the owner-managed allowed guest-facing language set, saved into wedding data instead of living as an implied all-languages default
    - this batch shipped: generated site translations now carry RSVP custom questions and meal-choice wording into the guest RSVP lookup flow, so guests who arrive in an allowed translated language stop falling back to English-only prompts while owners keep a review reminder in RSVP settings
    - this batch shipped: a dedicated local continuity proof lane now reruns guest-language preference, owner messaging preview derivation, translated RSVP question/meal assets, and a real browser pass across RSVP, event hub, photo upload, and recap guest-language routes
+   - this batch shipped: owner guest-preview links and guest-hub actions now carry each guest's saved language across RSVP, public-site, contact-update, photo, guestbook, vault, recap, travel, and registry routes instead of dropping back to the site default after the first click
+   - this batch shipped: local browser proof now confirms the guest drawer resolves the correct guest-facing route set while those preview links preserve token-safe guest identity state and guest-language continuity
    - add live production proof for owner messaging previews and guest-facing language continuity
 
 ### Later-Value Lanes Still Open

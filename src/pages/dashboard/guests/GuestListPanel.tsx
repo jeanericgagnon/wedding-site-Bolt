@@ -73,6 +73,7 @@ export function GuestListPanel({
                 guestId: guest.id,
                 inviteToken: guest.invite_token,
                 publicSiteSlug,
+                preferredLanguage: guest.preferred_language,
               });
 
               return (

@@ -120,3 +120,21 @@ export function writeStoredGuestLanguage(language: GuestLanguageCode): void {
     // Guest pages still work if storage is unavailable.
   }
 }
+
+export function appendGuestLanguageToInternalHref(
+  href: string,
+  language: string | null | undefined,
+  origin = typeof window === 'undefined' ? 'https://dayof.love' : window.location.origin,
+): string {
+  const normalizedLanguage = normalizeGuestLanguageCode(language);
+  if (!normalizedLanguage) return href;
+
+  try {
+    const url = new URL(href, origin);
+    if (url.origin !== origin || !url.pathname.startsWith('/')) return href;
+    url.searchParams.set('guestLang', normalizedLanguage);
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return href;
+  }
+}

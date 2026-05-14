@@ -1,4 +1,5 @@
 import { getPerEventRsvpState } from './perEventRsvpState';
+import { appendGuestLanguageToInternalHref } from './guestLanguagePreference';
 
 export interface VisibilityPreviewGuest {
   id: string;
@@ -10,6 +11,7 @@ export interface VisibilityPreviewGuest {
   invitedToReception?: boolean | null;
   plusOneAllowed?: boolean | null;
   householdId?: string | null;
+  preferredLanguage?: string | null;
 }
 
 export interface VisibilityPreviewEvent {
@@ -129,51 +131,78 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
     links.push({
       kind: 'rsvp',
       label: 'Open RSVP as guest',
-      href: `/rsvp?token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=rsvp`,
+      href: appendGuestLanguageToInternalHref(
+        `/rsvp?token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=rsvp`,
+        input.guest.preferredLanguage,
+      ),
     });
   }
   if (input.guest.inviteToken && input.publicSiteSlug) {
     links.push({
       kind: 'contact',
       label: 'Open guest update view',
-      href: `/guest-contact/${encodeURIComponent(input.publicSiteSlug)}?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=contact`,
+      href: appendGuestLanguageToInternalHref(
+        `/guest-contact/${encodeURIComponent(input.publicSiteSlug)}?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=contact`,
+        input.guest.preferredLanguage,
+      ),
     });
     links.push({
       kind: 'photos',
       label: 'Open photo upload as guest',
-      href: `/photos/upload?site=${encodeURIComponent(input.publicSiteSlug)}&hub=1&invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=photos`,
+      href: appendGuestLanguageToInternalHref(
+        `/photos/upload?site=${encodeURIComponent(input.publicSiteSlug)}&hub=1&invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=photos`,
+        input.guest.preferredLanguage,
+      ),
     });
     links.push({
       kind: 'guestbook',
       label: 'Open guestbook as guest',
-      href: `/guestbook/${encodeURIComponent(input.publicSiteSlug)}?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=guestbook`,
+      href: appendGuestLanguageToInternalHref(
+        `/guestbook/${encodeURIComponent(input.publicSiteSlug)}?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=guestbook`,
+        input.guest.preferredLanguage,
+      ),
     });
     links.push({
       kind: 'vault',
       label: 'Open anniversary vault as guest',
-      href: `/vault/${encodeURIComponent(input.publicSiteSlug)}?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=vault`,
+      href: appendGuestLanguageToInternalHref(
+        `/vault/${encodeURIComponent(input.publicSiteSlug)}?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=vault`,
+        input.guest.preferredLanguage,
+      ),
     });
     links.push({
       kind: 'recap',
       label: 'Open recap as guest',
-      href: `/event/${encodeURIComponent(input.publicSiteSlug)}/recap?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=recap`,
+      href: appendGuestLanguageToInternalHref(
+        `/event/${encodeURIComponent(input.publicSiteSlug)}/recap?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=recap`,
+        input.guest.preferredLanguage,
+      ),
     });
   }
   if (input.publicSiteSlug) {
     links.push({
       kind: 'travel',
       label: 'Open travel section as guest',
-      href: `/site/${encodeURIComponent(input.publicSiteSlug)}?previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=travel#travel`,
+      href: appendGuestLanguageToInternalHref(
+        `/site/${encodeURIComponent(input.publicSiteSlug)}?previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=travel#travel`,
+        input.guest.preferredLanguage,
+      ),
     });
     links.push({
       kind: 'registry',
       label: 'Open registry section as guest',
-      href: `/site/${encodeURIComponent(input.publicSiteSlug)}?previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=registry#registry`,
+      href: appendGuestLanguageToInternalHref(
+        `/site/${encodeURIComponent(input.publicSiteSlug)}?previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=registry#registry`,
+        input.guest.preferredLanguage,
+      ),
     });
     links.push({
       kind: 'site',
       label: 'Open public site view',
-      href: `/site/${encodeURIComponent(input.publicSiteSlug)}?previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=public`,
+      href: appendGuestLanguageToInternalHref(
+        `/site/${encodeURIComponent(input.publicSiteSlug)}?previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=public`,
+        input.guest.preferredLanguage,
+      ),
     });
   }
 

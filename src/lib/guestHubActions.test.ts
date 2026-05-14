@@ -38,14 +38,15 @@ describe('guestHubActions', () => {
     const actions = buildGuestHubActions('maya-and-leo', {}, {
       guestContactHref: '/guest-contact/maya-and-leo',
       guestInviteToken: 'guest-token-123',
+      guestLanguage: 'fr-CA',
     });
 
-    expect(actions.find((action) => action.id === 'photos')?.href).toBe('/photos/upload?site=maya-and-leo&hub=1&invite_token=guest-token-123');
-    expect(actions.find((action) => action.id === 'guestbook')?.href).toBe('/guestbook/maya-and-leo?invite_token=guest-token-123');
-    expect(actions.find((action) => action.id === 'vault')?.href).toBe('/vault/maya-and-leo?invite_token=guest-token-123');
-    expect(actions.find((action) => action.id === 'recap')?.href).toBe('/event/maya-and-leo/recap?invite_token=guest-token-123');
-    expect(actions.find((action) => action.id === 'contact')?.href).toBe('/guest-contact/maya-and-leo?invite_token=guest-token-123');
-    expect(actions.find((action) => action.id === 'schedule')?.href).toBe('/site/maya-and-leo#schedule');
+    expect(actions.find((action) => action.id === 'photos')?.href).toBe('/photos/upload?site=maya-and-leo&hub=1&invite_token=guest-token-123&guestLang=fr');
+    expect(actions.find((action) => action.id === 'guestbook')?.href).toBe('/guestbook/maya-and-leo?invite_token=guest-token-123&guestLang=fr');
+    expect(actions.find((action) => action.id === 'vault')?.href).toBe('/vault/maya-and-leo?invite_token=guest-token-123&guestLang=fr');
+    expect(actions.find((action) => action.id === 'recap')?.href).toBe('/event/maya-and-leo/recap?invite_token=guest-token-123&guestLang=fr');
+    expect(actions.find((action) => action.id === 'contact')?.href).toBe('/guest-contact/maya-and-leo?invite_token=guest-token-123&guestLang=fr');
+    expect(actions.find((action) => action.id === 'schedule')?.href).toBe('/site/maya-and-leo?guestLang=fr#schedule');
   });
 
   it('keeps the anniversary vault out of the generic public hub when there is no private guest path', () => {

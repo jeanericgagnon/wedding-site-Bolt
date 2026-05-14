@@ -31,6 +31,7 @@ describe('guestVisibilityPreview', () => {
         id: 'guest-1',
         name: 'Maya Lee',
         inviteToken: 'private-token',
+        preferredLanguage: 'es-MX',
       },
       events: [],
       invitedEventIds: null,
@@ -41,47 +42,47 @@ describe('guestVisibilityPreview', () => {
       {
         kind: 'rsvp',
         label: 'Open RSVP as guest',
-        href: '/rsvp?token=private-token&previewGuest=guest-1&previewSurface=rsvp',
+        href: '/rsvp?token=private-token&previewGuest=guest-1&previewSurface=rsvp&guestLang=es',
       },
       {
         kind: 'contact',
         label: 'Open guest update view',
-        href: '/guest-contact/maya-and-rowan?invite_token=private-token&previewGuest=guest-1&previewSurface=contact',
+        href: '/guest-contact/maya-and-rowan?invite_token=private-token&previewGuest=guest-1&previewSurface=contact&guestLang=es',
       },
       {
         kind: 'photos',
         label: 'Open photo upload as guest',
-        href: '/photos/upload?site=maya-and-rowan&hub=1&invite_token=private-token&previewGuest=guest-1&previewSurface=photos',
+        href: '/photos/upload?site=maya-and-rowan&hub=1&invite_token=private-token&previewGuest=guest-1&previewSurface=photos&guestLang=es',
       },
       {
         kind: 'guestbook',
         label: 'Open guestbook as guest',
-        href: '/guestbook/maya-and-rowan?invite_token=private-token&previewGuest=guest-1&previewSurface=guestbook',
+        href: '/guestbook/maya-and-rowan?invite_token=private-token&previewGuest=guest-1&previewSurface=guestbook&guestLang=es',
       },
       {
         kind: 'vault',
         label: 'Open anniversary vault as guest',
-        href: '/vault/maya-and-rowan?invite_token=private-token&previewGuest=guest-1&previewSurface=vault',
+        href: '/vault/maya-and-rowan?invite_token=private-token&previewGuest=guest-1&previewSurface=vault&guestLang=es',
       },
       {
         kind: 'recap',
         label: 'Open recap as guest',
-        href: '/event/maya-and-rowan/recap?invite_token=private-token&previewGuest=guest-1&previewSurface=recap',
+        href: '/event/maya-and-rowan/recap?invite_token=private-token&previewGuest=guest-1&previewSurface=recap&guestLang=es',
       },
       {
         kind: 'travel',
         label: 'Open travel section as guest',
-        href: '/site/maya-and-rowan?previewGuest=guest-1&previewSurface=travel#travel',
+        href: '/site/maya-and-rowan?previewGuest=guest-1&previewSurface=travel&guestLang=es#travel',
       },
       {
         kind: 'registry',
         label: 'Open registry section as guest',
-        href: '/site/maya-and-rowan?previewGuest=guest-1&previewSurface=registry#registry',
+        href: '/site/maya-and-rowan?previewGuest=guest-1&previewSurface=registry&guestLang=es#registry',
       },
       {
         kind: 'site',
         label: 'Open public site view',
-        href: '/site/maya-and-rowan?previewGuest=guest-1&previewSurface=public',
+        href: '/site/maya-and-rowan?previewGuest=guest-1&previewSurface=public&guestLang=es',
       },
     ]);
     expect(`${preview.bannerLabel} ${preview.accessDetail} ${preview.accessSummary}`).not.toContain('private-token');

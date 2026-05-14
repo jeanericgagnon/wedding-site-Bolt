@@ -156,6 +156,11 @@ export const EventHub: React.FC = () => {
   const [hubConfigStatus, setHubConfigStatus] = useState<HubConfigStatus>('loading');
   const [hubConfigRetryKey, setHubConfigRetryKey] = useState(0);
   const guestIdentity = useMemo(() => buildGuestHubIdentityPayload(slug, searchParams), [searchParams, slug]);
+  const languagePreference = useMemo(() => resolveGuestLanguagePreference({
+    search: searchParams,
+    storedLanguage: readStoredGuestLanguage(),
+    siteDefaultLanguage: settings.language_default,
+  }), [searchParams, settings.language_default]);
   const guestContactHref = useMemo(() => {
     if (!slug || !guestIdentity.guestInviteToken) return null;
     return `/guest-contact/${encodeURIComponent(slug)}`;
@@ -164,6 +169,7 @@ export const EventHub: React.FC = () => {
   const actions = useMemo<HubAction[]>(() => buildGuestHubActions(slug, settings, {
     guestContactHref,
     guestInviteToken: guestIdentity.guestInviteToken,
+    guestLanguage: languagePreference.language,
   }).map((action) => ({
     id: action.id,
     title: t(action.titleKey),
@@ -171,7 +177,7 @@ export const EventHub: React.FC = () => {
     href: action.href,
     icon: actionIcons[action.id],
     primary: action.primary,
-  })), [guestContactHref, guestIdentity.guestInviteToken, settings, slug, t]);
+  })), [guestContactHref, guestIdentity.guestInviteToken, languagePreference.language, settings, slug, t]);
 
   useEffect(() => {
     if (!slug) return;
@@ -203,11 +209,6 @@ export const EventHub: React.FC = () => {
               weddingDate: typeof data.site.weddingDate === 'string' ? data.site.weddingDate : null,
             });
           }
-          const languagePreference = resolveGuestLanguagePreference({
-            search: searchParams,
-            storedLanguage: readStoredGuestLanguage(),
-            siteDefaultLanguage: nextSettings.language_default,
-          });
           if (languagePreference.language !== i18n.language?.split('-')[0]?.toLowerCase()) {
             void i18n.changeLanguage(languagePreference.language);
           }

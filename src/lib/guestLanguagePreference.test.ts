@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  appendGuestLanguageToInternalHref,
   GUEST_LANGUAGE_STORAGE_KEY,
   hasStoredGuestLanguagePreference,
   normalizeGuestLanguageCode,
@@ -88,5 +89,16 @@ describe('guestLanguagePreference', () => {
 
     expect(hasStoredGuestLanguagePreference()).toBe(false);
     expect(window.localStorage.getItem(GUEST_LANGUAGE_STORAGE_KEY)).toBeNull();
+  });
+
+  it('appends only normalized guest language to internal app routes', () => {
+    expect(appendGuestLanguageToInternalHref('/rsvp?token=private', 'es-MX', 'https://dayof.love'))
+      .toBe('/rsvp?token=private&guestLang=es');
+    expect(appendGuestLanguageToInternalHref('/site/maya#travel', 'FR', 'https://dayof.love'))
+      .toBe('/site/maya?guestLang=fr#travel');
+    expect(appendGuestLanguageToInternalHref('https://example.com/outside', 'es', 'https://dayof.love'))
+      .toBe('https://example.com/outside');
+    expect(appendGuestLanguageToInternalHref('/rsvp?token=private', 'ja', 'https://dayof.love'))
+      .toBe('/rsvp?token=private');
   });
 });

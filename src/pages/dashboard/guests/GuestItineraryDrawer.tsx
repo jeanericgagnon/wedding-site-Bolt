@@ -194,6 +194,7 @@ function GuestDrawerDetails({
       lastName: guest.last_name,
       name: guest.name,
       inviteToken: guest.invite_token,
+      preferredLanguage: guest.preferred_language,
       invitedToCeremony: guest.invited_to_ceremony,
       invitedToReception: guest.invited_to_reception,
       plusOneAllowed: guest.plus_one_allowed,
