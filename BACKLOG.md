@@ -495,6 +495,9 @@ Execution rule for this section:
    - this batch shipped: the service worker now caches a dedicated guest-safe offline event shell for `/event/...` navigations, so reopening the wedding hub offline returns a real hub fallback page instead of a dead browser error
    - this batch shipped: the offline event shell reads the saved guest-safe snapshot from local storage and shows couple, update, guest-status, coordinator, and travel summary readback without exposing invite tokens or private operator state
    - this batch shipped: focused proof is green for guest-hub navigation fallback rules inside the service worker and for the token-safe offline shell asset being part of the cached shell path
+   - this batch shipped: a dedicated `proof:v1:dayof-web-mode` lane now reruns offline snapshot, readiness, service-worker, and EventHub render truth before a real browser pass, so this lane is no longer guarded only by unit/helper tests
+   - this batch shipped: real browser proof is now green for the two distinct offline day-of guest paths: degraded-network `Showing the saved guest hub` fallback inside the live EventHub app and the cached `/event/...` offline shell returned by the service worker
+   - this batch shipped: the new browser proof explicitly checks that both offline guest paths stay token-safe, mobile-safe, and still expose the travel/day-of hub actions guests need instead of collapsing into a blank error or raw-token fallback
    - add live production proof for directions/map deep links, coordinator/guest handoff, and private-event visibility on the hub after the next approved deploy
    - add live production guest-hub write/read with cleanup after the day-of web-mode lane is finished
 
