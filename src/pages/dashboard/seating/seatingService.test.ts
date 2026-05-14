@@ -147,6 +147,14 @@ describe('deriveEligibleGuestDietaryFields', () => {
     });
   });
 
+  it('extracts equals-separated dietary labels from flattened RSVP notes', () => {
+    expect(deriveEligibleGuestDietaryFields('Dietary=Gluten-free; Allergy=Peanut; Kitchen note=sauce on side')).toEqual({
+      dietary_restrictions: 'Gluten-free',
+      dietary_notes: 'sauce on side',
+      allergies: 'Peanut',
+    });
+  });
+
   it('keeps extra dietary note detail while splitting explicit restriction labels', () => {
     expect(deriveEligibleGuestDietaryFields('Dietary restrictions - Gluten-free\nMeal note: kosher-style plating preferred\nAllergies: Peanut')).toEqual({
       dietary_restrictions: 'Gluten-free',
@@ -185,6 +193,10 @@ describe('deriveEligibleGuestMealPreference', () => {
 
   it('extracts pipe-separated meal labels into the seating meal field', () => {
     expect(deriveEligibleGuestMealPreference('Meal choice: Fish | Allergy: Peanut | Service note: split plate')).toBe('Fish');
+  });
+
+  it('extracts equals-separated meal labels into the seating meal field', () => {
+    expect(deriveEligibleGuestMealPreference('Meal choice=Fish; Allergy=Peanut; Service note=split plate')).toBe('Fish');
   });
 
   it('leaves generic guest notes alone when no explicit meal label exists', () => {
@@ -507,6 +519,57 @@ describe('getEligibleGuests', () => {
           group_name: null,
           meal_preference: null,
           notes: 'Meal choice: Fish | Dietary: Gluten-free | Allergy: Peanut | Kitchen note: sauce on side',
+        },
+      ],
+      error: null,
+    });
+
+    eqInvitesMock.mockReturnValueOnce({ limit: limitInvitesMock });
+    limitInvitesMock.mockResolvedValueOnce({
+      data: [],
+      error: null,
+    });
+
+    await expect(getEligibleGuests('site-1', 'event-1')).resolves.toEqual([
+      expect.objectContaining({
+        id: 'guest-1',
+        meal_preference: 'Fish',
+        dietary_restrictions: 'Gluten-free',
+        dietary_notes: 'sauce on side',
+        allergies: 'Peanut',
+      }),
+    ]);
+  });
+
+  it('promotes flattened equals-separated meal and dietary labels when guest fields are blank', async () => {
+    const selectMock = vi.fn();
+    const eqGuestsMock = vi.fn();
+    const limitGuestsMock = vi.fn();
+    const eqInvitesMock = vi.fn();
+    const limitInvitesMock = vi.fn();
+
+    fromMock
+      .mockReturnValueOnce({ select: selectMock })
+      .mockReturnValueOnce({ select: selectMock });
+
+    selectMock
+      .mockReturnValueOnce({ eq: eqGuestsMock })
+      .mockReturnValueOnce({ eq: eqInvitesMock });
+
+    eqGuestsMock.mockReturnValueOnce({ limit: limitGuestsMock });
+    limitGuestsMock.mockResolvedValueOnce({
+      data: [
+        {
+          id: 'guest-1',
+          name: 'Avery Guest',
+          first_name: null,
+          last_name: null,
+          email: null,
+          rsvp_status: 'attending',
+          household_id: null,
+          group_name: null,
+          meal_preference: null,
+          notes: 'Meal choice=Fish; Dietary=Gluten-free; Allergy=Peanut; Kitchen note=sauce on side',
         },
       ],
       error: null,
