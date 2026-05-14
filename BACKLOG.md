@@ -312,10 +312,11 @@ Execution rule for this section:
    - this batch shipped: demo/local guest preview proof now includes structured visible-versus-hidden itinerary variation, routes the drawer through the real guest-specific event set, carries demo site context into guest preview links, and proves in a real browser that owners can open the public-site preview plus the exact guest RSVP route for a hidden-event guest without raw-token UI leakage
    - this batch shipped: coordinator door-check and seating-lookup surfaces now expose direct guest-view preview actions, so owners/planners can jump from live ops tools into the real guest-facing RSVP/site path without losing event context or exposing raw token copy in the UI
    - this batch shipped: a dedicated `proof:v1:guest-preview-confidence` lane now reruns preview-route generation, guest drawer token-safe QR surfaces, the real desktop drawer flow, and a new mobile drawer flow that opens photo upload, travel, registry, and public-site guest views from the owner drawer without raw-token leakage
+   - 2026-05-14 production rerun on `https://dayof.love` failed in both desktop and mobile guest-preview proofs because `/dashboard/guests?bypassPayment=1&guestPreviewQa=1` landed on the old signed-out shell instead of the expected guest dashboard heading/filter controls, so live/mobile preview proof is still open even though the local lane is green
    - finish true route-level personalization beyond the owner preview banner, guest-update path, and demo/local preview proof
-   - rerun the same photo, registry, travel, and public-site guest drawer flow against the shipped production runtime for live/mobile proof, not only local preview
+   - rerun the same photo, registry, travel, and public-site guest drawer flow against the shipped production runtime for live/mobile proof after the live guests dashboard route matches the proven local runtime again
    - add cross-surface live tests proving private event visibility is hidden from the wrong guest and visible to the right guest
-   - add live/mobile click proof for the Guests drawer preview flow on the shipped runtime
+   - add live/mobile click proof for the Guests drawer preview flow on the shipped runtime once the live guests dashboard shell exposes the expected owner QA controls again
 
 2. `ACTIVE`: unified QR guest hub
    - this batch shipped: QR share surfaces now support private DayOf payloads through local SVG generation instead of the public QR vendor, and the private guest QR path is now wired into both RSVP and guest-update owner surfaces
@@ -326,7 +327,8 @@ Execution rule for this section:
    - this batch shipped: a dedicated `proof:v1:guest-hub-qr` lane now reruns safe public QR asset generation, dashboard print-card readiness, and a browser-triggered export capture that verifies the saved guest-hub print pack is nonblank HTML with safe public QR payloads and no private token leakage
    - this batch shipped: private RSVP and guest-update QR panels now save owner-controlled printable HTML cards that keep raw token URLs out of normal visible copy while still rendering the local private QR artifact
    - finish day-of update deep links and any remaining private guest-surface routing in the shared hub model
-   - rerun the same guest-hub print-pack export open/download flow against the shipped production runtime after the next approved deploy
+   - 2026-05-14 production rerun on `https://dayof.love` failed because the live `/dashboard/photos?bypassPayment=1&guestHubQrQa=1` surface did not expose the expected `Collect guest photos` / `Memories` heading, so shipped print-pack/mobile QR proof is still open until the live runtime matches the locally proven owner photos flow
+   - rerun the same guest-hub print-pack export open/download flow against the shipped production runtime after the next approved deploy/runtime sync
    - add live production mobile proof that public and guest-specific QR modes land on the right actions without private leakage
 
 3. `ACTIVE`: status-based messaging and invitation tracking
@@ -383,7 +385,8 @@ Execution rule for this section:
    - this batch shipped: the guest-hub travel spotlight now adds invite-scoped event timing and venue-direction cards when private guest context, schedule, and venue data are available instead of stopping at generic hotel/shuttle notes only
    - this batch shipped: the guest-hub fallback/runtime path now preserves the seeded couple summary and travel context strongly enough for real guest travel continuity proof instead of dropping the hub back to raw slug-only framing
    - this batch shipped: a dedicated `proof:v1:travel-guest-portal` lane now reruns travel helper/render tests plus a real mobile browser flow from invite-scoped guest hub to travel, RSVP, and photo-upload surfaces without raw-token body leakage
-   - rerun the same invite-scoped travel hub flow against the shipped production runtime for live/mobile proof, not only local preview
+   - 2026-05-14 production rerun on `https://dayof.love` failed because the live invite-scoped guest hub did not render the proven `Travel quick plan` card, so live/mobile proof is still open until that shipped runtime picks up the structured travel spotlight
+   - rerun the same invite-scoped travel hub flow against the shipped production runtime for live/mobile proof after the live guest hub renders the structured travel card again
 
 8. `ACTIVE`: reminders, digests, and notification preferences
    - persist digest cadence, planner audience, and quiet-state preferences across settings + overview digest preview
