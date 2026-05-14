@@ -17,6 +17,11 @@ export interface TravelGuestPortalInput {
   hotelInfo?: string | null;
   parkingInfo?: string | null;
   notes?: string | null;
+  hotelCount?: number;
+  roomBlockCount?: number;
+  shuttleCount?: number;
+  visaTipCount?: number;
+  culturalTipCount?: number;
   venueCount: number;
   venueAddressCount: number;
   scheduleCount: number;
@@ -68,13 +73,19 @@ const hasUsefulText = (value: string | null | undefined, minLength = 8) => Boole
 const hasAction = (actionIds: GuestHubActionId[], id: GuestHubActionId) => actionIds.includes(id);
 
 export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): TravelGuestPortalReadiness {
+  const hotelCount = input.hotelCount ?? 0;
+  const roomBlockCount = input.roomBlockCount ?? 0;
+  const shuttleCount = input.shuttleCount ?? 0;
+  const visaTipCount = input.visaTipCount ?? 0;
+  const culturalTipCount = input.culturalTipCount ?? 0;
   const hasArrival = hasUsefulText(input.flightInfo);
-  const hasLodging = hasUsefulText(input.hotelInfo);
-  const hasTransport = hasUsefulText(input.parkingInfo);
-  const hasLocalContext = hasUsefulText(input.notes);
+  const hasLodging = hasUsefulText(input.hotelInfo) || hotelCount > 0 || roomBlockCount > 0;
+  const hasTransport = hasUsefulText(input.parkingInfo) || shuttleCount > 0;
+  const hasLocalContext = hasUsefulText(input.notes) || visaTipCount > 0 || culturalTipCount > 0;
   const hasVenues = input.venueCount > 0;
   const venuesAddressed = hasVenues && input.venueAddressCount >= input.venueCount;
   const hasSchedule = input.scheduleCount > 0;
+  const hasStructuredGuestGuidance = roomBlockCount > 0 || shuttleCount > 0 || visaTipCount > 0 || culturalTipCount > 0;
 
   const steps: TravelGuestPortalStep[] = [
     {
@@ -86,13 +97,23 @@ export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): 
     {
       id: 'lodging',
       label: 'Lodging',
-      detail: hasLodging ? 'Hotel or room-block guidance is ready.' : 'Add hotel, room block, or where-to-stay guidance.',
+      detail: hasLodging
+        ? roomBlockCount > 0
+          ? `${Math.max(hotelCount, 1)} hotel option${Math.max(hotelCount, 1) === 1 ? '' : 's'} and ${roomBlockCount} room block${roomBlockCount === 1 ? '' : 's'} are ready for guests.`
+          : hotelCount > 0
+            ? `${hotelCount} structured hotel option${hotelCount === 1 ? '' : 's'} are ready for guests.`
+            : 'Hotel or room-block guidance is ready.'
+        : 'Add hotel, room block, or where-to-stay guidance.',
       status: hasLodging ? 'ready' : 'needs-info',
     },
     {
       id: 'transport',
       label: 'Local transport',
-      detail: hasTransport ? 'Parking, shuttle, or local transport details are ready.' : 'Add parking, shuttle, rideshare, or local transport guidance.',
+      detail: hasTransport
+        ? shuttleCount > 0
+          ? `${shuttleCount} shuttle plan${shuttleCount === 1 ? '' : 's'} plus local transport details are ready.`
+          : 'Parking, shuttle, or local transport details are ready.'
+        : 'Add parking, shuttle, rideshare, or local transport guidance.',
       status: hasTransport ? 'ready' : 'needs-info',
     },
     {
@@ -114,16 +135,22 @@ export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): 
     {
       id: 'local-context',
       label: 'Local context',
-      detail: hasLocalContext ? 'Local notes or cultural context are ready.' : 'Add local recommendations, dress/weather context, or destination notes if guests need them.',
+      detail: hasLocalContext
+        ? visaTipCount > 0 || culturalTipCount > 0
+          ? `${visaTipCount > 0 ? `${visaTipCount} visa` : 'No visa'} and ${culturalTipCount} local-tip note${culturalTipCount === 1 ? '' : 's'} are ready for guests.`
+          : 'Local notes or cultural context are ready.'
+        : 'Add local recommendations, dress/weather context, or destination notes if guests need them.',
       status: hasLocalContext ? 'ready' : 'empty',
     },
     {
       id: 'guest-specific',
-      label: 'Guest-specific portal',
-      detail: input.eventInviteScoped
-        ? 'Travel details can build on event invite visibility.'
-        : 'Guest-specific room assignments, shuttle groups, and visa/cultural tips need a dedicated data contract before launch.',
-      status: input.eventInviteScoped ? 'planned' : 'planned',
+      label: 'Structured guest guidance',
+      detail: hasStructuredGuestGuidance
+        ? 'Structured room blocks, shuttle plans, or destination guidance are available for guest travel surfaces.'
+        : input.eventInviteScoped
+          ? 'Travel details can already inherit invite visibility, but structured guest guidance still needs room blocks, shuttles, or local tips.'
+          : 'Structured guest travel guidance still needs room blocks, shuttles, or local tips before this lane feels complete.',
+      status: hasStructuredGuestGuidance ? 'ready' : 'planned',
     },
   ];
 

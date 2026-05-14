@@ -370,10 +370,13 @@ Execution rule for this section:
    - prove owner moderation readback after real live uploads
 
 7. `ACTIVE`: destination/travel guest portal
-   - add structured hotel, room-block, shuttle, visa, and cultural-tip records
-   - add guest-specific room/shuttle/travel guidance instead of generic travel copy
+   - this batch shipped: the public travel data contract now allowlists structured hotel, room-block, shuttle, visa-tip, and cultural-tip records instead of flattening the lane to a few generic strings
+   - this batch shipped: public travel rendering now surfaces structured hotel options, room blocks, shuttle timing, and destination notes on the real guest-facing travel section instead of burying them in one travel paragraph
+   - this batch shipped: travel portal readiness now recognizes structured lodging, shuttle, and destination guidance as real progress, and the guided-builder readiness card reflects those records instead of staying stuck on freeform copy only
+   - this batch shipped: focused proof is green for structured travel sanitization, public render-model/public-access allowlisting, readiness logic, and the public travel section render path
+   - add guest-specific room/shuttle/travel guidance instead of generic shared copy only
    - reuse event/household visibility rules across travel detail surfaces
-   - add export/share views and richer public travel-route content
+   - add export/share views and richer travel-route content inside the guest hub itself, not only the public site section
    - add live mobile guest-path proof from invite to travel to RSVP/photo surfaces
 
 8. `ACTIVE`: reminders, digests, and notification preferences

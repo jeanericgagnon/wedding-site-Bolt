@@ -49,6 +49,38 @@ export interface WeddingDataV1 {
     parkingInfo?: string;
     hotelInfo?: string;
     flightInfo?: string;
+    hotels?: Array<{
+      id?: string;
+      name?: string;
+      distance?: string;
+      address?: string;
+      phone?: string;
+      url?: string;
+      notes?: string;
+      priceRange?: string;
+      bookingCode?: string;
+      bookingDeadline?: string;
+      shuttleInfo?: string;
+    }>;
+    roomBlocks?: Array<{
+      id?: string;
+      hotelName?: string;
+      hotel?: string;
+      bookingCode?: string;
+      bookingDeadline?: string;
+      detail?: string;
+      url?: string;
+    }>;
+    shuttles?: Array<{
+      id?: string;
+      label?: string;
+      route?: string;
+      departureTime?: string;
+      returnTime?: string;
+      notes?: string;
+    }>;
+    visaTips?: string[];
+    culturalTips?: string[];
   };
   registry: any;
   faq: Array<{

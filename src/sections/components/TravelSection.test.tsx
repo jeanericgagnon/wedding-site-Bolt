@@ -108,6 +108,59 @@ describe('TravelSection', () => {
     expect(screen.getByText('Local weekend guide')).toBeInTheDocument();
   });
 
+  it('renders structured hotel, room-block, shuttle, and local-tip travel data on public travel variants', () => {
+    const data = createWeddingData();
+    data.travel = {
+      hotels: [
+        {
+          name: 'Harbor Hotel',
+          bookingCode: 'MAYALEO',
+          bookingDeadline: 'May 20',
+          url: 'https://example.com/stay',
+        },
+      ],
+      roomBlocks: [
+        {
+          hotelName: 'Harbor Hotel',
+          bookingCode: 'MAYALEO',
+          detail: 'Two-night minimum on the waterfront block.',
+        },
+      ],
+      shuttles: [
+        {
+          label: 'Ceremony shuttle',
+          route: 'Harbor Hotel to Garden ceremony',
+          departureTime: '4:30 PM',
+        },
+      ],
+      visaTips: ['Bring the passport used for travel booking.'],
+      culturalTips: ['Bring a light layer for the waterfront.'],
+    };
+
+    const { rerender } = render(
+      <TravelSection
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getByText('Hotel options')).toBeInTheDocument();
+    expect(screen.getAllByText('Harbor Hotel').length).toBeGreaterThan(0);
+    expect(screen.getByText('Room blocks')).toBeInTheDocument();
+    expect(screen.getByText('Ceremony shuttle')).toBeInTheDocument();
+    expect(screen.getByText('Visa and arrival tips')).toBeInTheDocument();
+    expect(screen.getByText('Bring a light layer for the waterfront.')).toBeInTheDocument();
+
+    rerender(
+      <TravelLocalGuide
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getByText('Shuttle timing')).toBeInTheDocument();
+  });
+
   it('drops unsafe external links from public travel variants', () => {
     const Compact = travelCompactDefinition.Component;
     const MapPins = travelMapPinsDefinition.Component;

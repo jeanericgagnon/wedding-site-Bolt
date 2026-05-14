@@ -169,7 +169,13 @@ function hasGuestReadyTravel(data: WeddingDataV1): boolean {
     travel.hotelInfo,
     travel.flightInfo,
     typeof travel.accommodations === 'string' ? travel.accommodations : '',
-  ].some((value) => hasMeaningfulText(value, 12)) || (Array.isArray(travel.accommodations) && travel.accommodations.length > 0);
+  ].some((value) => hasMeaningfulText(value, 12))
+    || (Array.isArray(travel.accommodations) && travel.accommodations.length > 0)
+    || (Array.isArray(travel.hotels) && travel.hotels.length > 0)
+    || (Array.isArray(travel.roomBlocks) && travel.roomBlocks.length > 0)
+    || (Array.isArray(travel.shuttles) && travel.shuttles.length > 0)
+    || (Array.isArray(travel.visaTips) && travel.visaTips.length > 0)
+    || (Array.isArray(travel.culturalTips) && travel.culturalTips.length > 0);
 }
 
 function hasGuestReadyRegistry(data: WeddingDataV1): boolean {

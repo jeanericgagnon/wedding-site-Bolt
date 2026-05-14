@@ -388,6 +388,58 @@ describe('public site access client contract', () => {
     expect(JSON.stringify(site)).not.toContain('providerSecret');
   });
 
+  it('keeps structured travel portal records in the client-safe wedding contract without leaking private fields', () => {
+    const site = sanitizePublicSiteSafeRow({
+      id: 'site-travel-structured',
+      site_slug: 'kara-eric',
+      site_url: 'kara-eric',
+      is_published: true,
+      couple_name_1: 'Kara',
+      couple_name_2: 'Eric',
+      wedding_date: '2026-06-14',
+      venue_name: 'Grand Pavilion',
+      wedding_location: 'New York',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      allow_search_indexing: false,
+      render_model: {
+        pages: [],
+        wedding: {
+          couple: {},
+          event: {},
+          venues: [],
+          schedule: [],
+          rsvp: { enabled: true },
+          travel: {
+            hotels: [{ name: 'Harbor Hotel', url: 'https://example.com/stay', adminEmail: 'hide@example.com' }],
+            roomBlocks: [{ hotelName: 'Harbor Hotel', bookingCode: 'WEEKEND', ownerNotes: 'hide-me' }],
+            shuttles: [{ label: 'Ceremony shuttle', route: 'Hotel to venue', rawToken: 'hide-me' }],
+            visaTips: ['Bring the passport used for travel booking.'],
+            culturalTips: ['Bring a light layer for the waterfront.'],
+          },
+          registry: { links: [] },
+          faq: [],
+          theme: {},
+          media: { gallery: [] },
+        },
+        theme: { preset: null, tokens: null },
+      },
+    });
+
+    expect(site?.render_model.wedding?.travel).toEqual({
+      hotels: [{ id: 'hotel-0', name: 'Harbor Hotel', url: 'https://example.com/stay' }],
+      roomBlocks: [{ id: 'room-block-0', hotelName: 'Harbor Hotel', bookingCode: 'WEEKEND' }],
+      shuttles: [{ id: 'shuttle-0', label: 'Ceremony shuttle', route: 'Hotel to venue' }],
+      visaTips: ['Bring the passport used for travel booking.'],
+      culturalTips: ['Bring a light layer for the waterfront.'],
+    });
+
+    const serialized = JSON.stringify(site?.render_model.wedding?.travel);
+    expect(serialized).not.toContain('adminEmail');
+    expect(serialized).not.toContain('ownerNotes');
+    expect(serialized).not.toContain('rawToken');
+  });
+
   it('normalizes directions settings into the client-safe public contract', () => {
     const site = sanitizePublicSiteSafeRow({
       id: 'site-directions',

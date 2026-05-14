@@ -2,6 +2,7 @@ import type { PublicSiteRenderModel } from './publicSiteRenderModel';
 import { customerSafeErrorMessage } from "./customerSafeError";
 import { supabase } from './supabase';
 import { sanitizePublicBindings, sanitizePublicSectionSettings, sanitizePublicStyleOverrides } from './publicRenderContract';
+import { normalizeTravelPortalData } from './travelStructuredData';
 
 export type PublicSiteGateStatus =
   | "unavailable"
@@ -84,6 +85,7 @@ function sanitizePublicWeddingModel(value: unknown): PublicSiteRenderModel['wedd
   const event = asRecord(wedding.event);
   const rsvp = asRecord(wedding.rsvp);
   const travel = asRecord(wedding.travel);
+  const structuredTravel = normalizeTravelPortalData(travel);
   const registry = asRecord(wedding.registry);
   const theme = asRecord(wedding.theme);
   const media = asRecord(wedding.media);
@@ -146,6 +148,11 @@ function sanitizePublicWeddingModel(value: unknown): PublicSiteRenderModel['wedd
         : Array.isArray(travel?.accommodations)
           ? { accommodations: travel.accommodations.filter((item): item is string => typeof item === 'string') }
           : {}),
+      ...(structuredTravel.hotels.length > 0 ? { hotels: structuredTravel.hotels } : {}),
+      ...(structuredTravel.roomBlocks.length > 0 ? { roomBlocks: structuredTravel.roomBlocks } : {}),
+      ...(structuredTravel.shuttles.length > 0 ? { shuttles: structuredTravel.shuttles } : {}),
+      ...(structuredTravel.visaTips.length > 0 ? { visaTips: structuredTravel.visaTips } : {}),
+      ...(structuredTravel.culturalTips.length > 0 ? { culturalTips: structuredTravel.culturalTips } : {}),
     },
     registry: {
       links: Array.isArray(registry?.links)

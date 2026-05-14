@@ -585,7 +585,7 @@ describe('publicSiteRenderModel', () => {
       default_language: 'en',
       hide_from_search: false,
       site_json: null,
-      published_json: { pages: [] },
+      published_json: null,
       wedding_data: {
         version: '1',
         couple: { partner1Name: 'Eric', partner2Name: 'Kara', displayName: 'Eric & Kara' },
@@ -1146,6 +1146,62 @@ describe('publicSiteRenderModel', () => {
     expect(serialized).not.toContain('adminEmail');
     expect(serialized).not.toContain('hiddenGallery');
     expect(serialized).not.toContain('internalQueueConfig');
+  });
+
+  it('allowlists structured travel portal records from wedding data before they reach the public render model', () => {
+    const site = buildPublicSiteRenderSite({
+      id: 'site-travel-structured',
+      site_slug: 'maya-leo',
+      site_url: 'maya-leo.dayof.love',
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-09-12',
+      venue_name: 'Garden Hall',
+      wedding_location: 'Portland',
+      template_id: 'modern-luxe',
+      default_language: 'en',
+      hide_from_search: false,
+      site_json: null,
+      published_json: {
+        pages: [],
+        weddingData: {
+          version: '1',
+          couple: {},
+          event: {},
+          venues: [],
+          schedule: [],
+          rsvp: { enabled: true },
+          travel: {
+            hotels: [{ name: 'Harbor Hotel', url: 'https://example.com/stay', adminEmail: 'hide@example.com' }],
+            roomBlocks: [{ hotelName: 'Harbor Hotel', bookingCode: 'MAYALEO', providerSecret: 'hide-me' }],
+            shuttles: [{ label: 'Ceremony shuttle', route: 'Hotel to venue', internalId: 'hide-me' }],
+            visaTips: ['Bring the passport used for travel booking.'],
+            culturalTips: ['Bring a light layer for the waterfront.'],
+          },
+          registry: { links: [] },
+          faq: [],
+          theme: {},
+          media: { gallery: [] },
+          meta: { createdAtISO: '2026-01-01T00:00:00.000Z', updatedAtISO: '2026-02-01T00:00:00.000Z' },
+        },
+      },
+      wedding_data: null,
+      layout_config: null,
+    });
+
+    expect(site.render_model.wedding?.travel).toEqual({
+      hotels: [{ id: 'hotel-0', name: 'Harbor Hotel', url: 'https://example.com/stay' }],
+      roomBlocks: [{ id: 'room-block-0', hotelName: 'Harbor Hotel', bookingCode: 'MAYALEO' }],
+      shuttles: [{ id: 'shuttle-0', label: 'Ceremony shuttle', route: 'Hotel to venue' }],
+      visaTips: ['Bring the passport used for travel booking.'],
+      culturalTips: ['Bring a light layer for the waterfront.'],
+    });
+
+    const serialized = JSON.stringify(site.render_model.wedding?.travel);
+    expect(serialized).not.toContain('adminEmail');
+    expect(serialized).not.toContain('providerSecret');
+    expect(serialized).not.toContain('internalId');
   });
 
   it('allowlists directions transport entries before they reach the public render model', () => {

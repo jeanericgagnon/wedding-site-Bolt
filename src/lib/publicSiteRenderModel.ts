@@ -10,6 +10,7 @@ import { safeJsonParse } from './jsonUtils.ts';
 import { rewriteSignedMediaUrlsToPublicDeep } from './mediaUrl.ts';
 import { getIsPublishedFromSiteRow } from './publicSiteProject.ts';
 import { toPublicPageDTO, toPublicSectionDTO, type PublicPageDTO } from './publicRenderContract.ts';
+import { normalizeTravelPortalData } from './travelStructuredData.ts';
 
 export interface PublicSiteThemeModel {
   preset: string | null;
@@ -171,6 +172,7 @@ function pickPublicWeddingMedia(value: unknown): WeddingDataV1['media'] {
 function pickPublicTravel(value: unknown): WeddingDataV1['travel'] {
   const source = asRecord(value);
   const accommodations = source?.accommodations;
+  const structured = normalizeTravelPortalData(source);
   return {
     ...(asString(source?.notes) ? { notes: asString(source?.notes) } : {}),
     ...(asString(source?.parkingInfo) ? { parkingInfo: asString(source?.parkingInfo) } : {}),
@@ -185,6 +187,11 @@ function pickPublicTravel(value: unknown): WeddingDataV1['travel'] {
               .filter((item): item is string => Boolean(item && item.trim())),
           }
         : {}),
+    ...(structured.hotels.length > 0 ? { hotels: structured.hotels } : {}),
+    ...(structured.roomBlocks.length > 0 ? { roomBlocks: structured.roomBlocks } : {}),
+    ...(structured.shuttles.length > 0 ? { shuttles: structured.shuttles } : {}),
+    ...(structured.visaTips.length > 0 ? { visaTips: structured.visaTips } : {}),
+    ...(structured.culturalTips.length > 0 ? { culturalTips: structured.culturalTips } : {}),
   };
 }
 

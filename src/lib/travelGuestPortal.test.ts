@@ -8,15 +8,20 @@ describe('travelGuestPortal', () => {
       hotelInfo: 'Room block at Harbor House under the Chen Patel wedding.',
       parkingInfo: 'Use valet at the north entrance or rideshare to the garden gate.',
       notes: 'Bring a light layer for the waterfront after sunset.',
+      hotelCount: 2,
+      roomBlockCount: 1,
+      shuttleCount: 2,
+      visaTipCount: 1,
+      culturalTipCount: 2,
       venueCount: 2,
       venueAddressCount: 2,
       scheduleCount: 4,
       eventInviteScoped: true,
     });
 
-    expect(readiness.readyCount).toBe(6);
+    expect(readiness.readyCount).toBe(7);
     expect(readiness.blockers).toEqual([]);
-    expect(readiness.steps.find((step) => step.id === 'guest-specific')?.status).toBe('planned');
+    expect(readiness.steps.find((step) => step.id === 'guest-specific')?.status).toBe('ready');
   });
 
   it('surfaces missing travel details without treating empty optional context as a blocker', () => {
@@ -36,6 +41,25 @@ describe('travelGuestPortal', () => {
     expect(readiness.steps.find((step) => step.id === 'transport')?.status).toBe('needs-info');
     expect(readiness.steps.find((step) => step.id === 'local-context')?.status).toBe('empty');
     expect(readiness.blockers).toContain('Add airport, train, shuttle, or arrival guidance.');
+  });
+
+  it('treats structured travel records as guest-ready even when the owner skips long-form summaries', () => {
+    const readiness = buildTravelGuestPortalReadiness({
+      hotelCount: 2,
+      roomBlockCount: 1,
+      shuttleCount: 1,
+      visaTipCount: 1,
+      culturalTipCount: 1,
+      venueCount: 1,
+      venueAddressCount: 1,
+      scheduleCount: 1,
+      eventInviteScoped: true,
+    });
+
+    expect(readiness.steps.find((step) => step.id === 'lodging')?.status).toBe('ready');
+    expect(readiness.steps.find((step) => step.id === 'transport')?.status).toBe('ready');
+    expect(readiness.steps.find((step) => step.id === 'local-context')?.status).toBe('ready');
+    expect(readiness.steps.find((step) => step.id === 'guest-specific')?.status).toBe('ready');
   });
 
   it('keeps venue and schedule empty states clear before a couple has built those sections', () => {
