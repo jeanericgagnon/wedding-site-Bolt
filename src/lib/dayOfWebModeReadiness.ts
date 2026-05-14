@@ -71,6 +71,8 @@ const actionLabels: Record<DayOfWebActionId, string> = {
   recap: 'Photo recap',
 };
 
+const coreDayOfActionIds: DayOfWebActionId[] = ['rsvp', 'schedule', 'travel', 'photos'];
+
 function summarizeDayOfActions(actionIds: DayOfWebActionId[]): string {
   const labels = actionIds.map((id) => actionLabels[id]).filter(Boolean);
   if (labels.length === 0) return 'No guest actions';
@@ -182,6 +184,8 @@ export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebMo
 export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubStatusBoard {
   const enabled = new Set(input.enabledActionIds);
   const hasCoreGuestActions = enabled.has('schedule') && enabled.has('travel') && enabled.has('photos');
+  const readyCoreActionIds = coreDayOfActionIds.filter((id) => enabled.has(id));
+  const missingCoreActionLabels = coreDayOfActionIds.filter((id) => !enabled.has(id)).map((id) => actionLabels[id]);
   const items: DayOfHubStatusItem[] = [
     {
       id: 'saved-hub',
@@ -228,7 +232,7 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
       label: 'Private event visibility',
       detail: input.privateEventVisibilityConnected
         ? input.enabledActionIds.length > 0
-          ? `Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are unlocked from it: ${summarizeDayOfActions(input.enabledActionIds)}.`
+          ? `Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are unlocked from it: ${summarizeDayOfActions(input.enabledActionIds)}. ${readyCoreActionIds.length === coreDayOfActionIds.length ? `Core day-of coverage from this link is ready: ${summarizeDayOfActions(readyCoreActionIds)}.` : readyCoreActionIds.length > 0 ? `Core day-of coverage from this link is ${readyCoreActionIds.length} of ${coreDayOfActionIds.length} ready. Still missing: ${missingCoreActionLabels.join(', ')}.` : 'Core day-of coverage is still missing from this link.'}`
           : 'Guests can tell whether this hub link is public, invite-only, or guest-specific before they rely on it.'
         : 'Guests still need to infer whether this hub link is public or private.',
       state: input.privateEventVisibilityConnected ? 'ready' : 'planned',

@@ -59,6 +59,10 @@ type GuestHubLinkAccessCard = {
   badgeLabel: string;
   detail: string;
   summary: string;
+  actionCountLabel?: string | null;
+  actionSummaryLabel?: string | null;
+  coreActionCoverageLabel?: string | null;
+  coreActionSummaryLabel?: string | null;
 };
 
 type TravelGuestJourneyStep = {
@@ -330,6 +334,17 @@ export function EventHubLiveContent({
                           )}
                           {linkAccessCard.actionSummaryLabel && (
                             <p className="mt-1 text-xs leading-5 text-[#6f5843]">{linkAccessCard.actionSummaryLabel}</p>
+                          )}
+                        </div>
+                      )}
+                      {(linkAccessCard.coreActionCoverageLabel || linkAccessCard.coreActionSummaryLabel) && (
+                        <div className="mt-3 rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Core day-of coverage</p>
+                          {linkAccessCard.coreActionCoverageLabel && (
+                            <p className="mt-1 text-sm font-semibold text-[#2f261d]">{linkAccessCard.coreActionCoverageLabel}</p>
+                          )}
+                          {linkAccessCard.coreActionSummaryLabel && (
+                            <p className="mt-1 text-xs leading-5 text-[#6f5843]">{linkAccessCard.coreActionSummaryLabel}</p>
                           )}
                         </div>
                       )}

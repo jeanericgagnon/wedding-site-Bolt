@@ -64,6 +64,8 @@ describe('dayOfGuestHubStatus', () => {
       summary: 'Guest-specific access is active for this link, including RSVP and check-in readback.',
       actionCountLabel: '4 guest actions are ready from this link.',
       actionSummaryLabel: 'RSVP, day-of updates, travel, and photo upload',
+      coreActionCoverageLabel: '3 of 4 core day-of actions are ready from this link.',
+      coreActionSummaryLabel: 'Still missing from this link: schedule.',
     });
     expect(card?.detail).toContain('Alex Rivera');
   });
@@ -81,6 +83,8 @@ describe('dayOfGuestHubStatus', () => {
       summary: 'Invite-only access is active for this link, without guest-specific RSVP or check-in readback.',
       actionCountLabel: 'No guest actions are ready from this link yet.',
       actionSummaryLabel: null,
+      coreActionCoverageLabel: 'Core day-of actions are not ready from this link yet.',
+      coreActionSummaryLabel: 'Still missing from this link: RSVP, schedule, travel, and photo upload.',
     });
     expect(card?.detail).toContain('invite-only wedding details');
   });
@@ -98,6 +102,8 @@ describe('dayOfGuestHubStatus', () => {
       summary: 'Public-only access is active for this link, without private event or guest-specific readback.',
       actionCountLabel: 'No guest actions are ready from this link yet.',
       actionSummaryLabel: null,
+      coreActionCoverageLabel: 'Core day-of actions are not ready from this link yet.',
+      coreActionSummaryLabel: 'Still missing from this link: RSVP, schedule, travel, and photo upload.',
     });
     expect(card?.detail).toContain('public wedding hub');
   });

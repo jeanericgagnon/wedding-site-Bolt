@@ -63,7 +63,11 @@ export type GuestHubLinkAccessCard = {
   summary: string;
   actionCountLabel: string | null;
   actionSummaryLabel: string | null;
+  coreActionCoverageLabel: string | null;
+  coreActionSummaryLabel: string | null;
 };
+
+const coreGuestHubActionIds: GuestHubActionId[] = ['rsvp', 'schedule', 'travel', 'photos'];
 
 function formatDateTime(value?: string | null): string | null {
   if (!value) return null;
@@ -170,10 +174,20 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
   const guestLabel = scrubSensitiveCopy(input.guestName) || 'your guest details';
   const enabledActionIds = Array.from(new Set((input.enabledActionIds ?? []).filter(Boolean)));
   const actionCount = enabledActionIds.length;
+  const readyCoreActionIds = coreGuestHubActionIds.filter((id) => enabledActionIds.includes(id));
+  const missingCoreActionIds = coreGuestHubActionIds.filter((id) => !enabledActionIds.includes(id));
   const actionCountLabel = actionCount > 0
     ? `${actionCount} guest action${actionCount === 1 ? ' is' : 's are'} ready from this link.`
     : 'No guest actions are ready from this link yet.';
   const actionSummaryLabel = actionCount > 0 ? summarizeGuestHubActions(enabledActionIds.map((id) => ({ id }))) : null;
+  const coreActionCoverageLabel = readyCoreActionIds.length === coreGuestHubActionIds.length
+    ? `Core day-of actions are ready from this link: ${summarizeGuestHubActions(readyCoreActionIds.map((id) => ({ id })))}.`
+    : readyCoreActionIds.length > 0
+      ? `${readyCoreActionIds.length} of ${coreGuestHubActionIds.length} core day-of actions are ready from this link.`
+      : 'Core day-of actions are not ready from this link yet.';
+  const coreActionSummaryLabel = missingCoreActionIds.length > 0
+    ? `Still missing from this link: ${summarizeGuestHubActions(missingCoreActionIds.map((id) => ({ id })))}.`
+    : 'This link covers RSVP, timing, travel, and photo follow-through.';
   if (input.hasGuestInviteToken) {
     return {
       title: 'Private guest link',
@@ -182,6 +196,8 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
       summary: 'Guest-specific access is active for this link, including RSVP and check-in readback.',
       actionCountLabel,
       actionSummaryLabel,
+      coreActionCoverageLabel,
+      coreActionSummaryLabel,
     };
   }
 
@@ -193,6 +209,8 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
       summary: 'Invite-only access is active for this link, without guest-specific RSVP or check-in readback.',
       actionCountLabel,
       actionSummaryLabel,
+      coreActionCoverageLabel,
+      coreActionSummaryLabel,
     };
   }
 
@@ -203,5 +221,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
     summary: 'Public-only access is active for this link, without private event or guest-specific readback.',
     actionCountLabel,
     actionSummaryLabel,
+    coreActionCoverageLabel,
+    coreActionSummaryLabel,
   };
 }

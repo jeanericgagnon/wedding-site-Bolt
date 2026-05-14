@@ -91,6 +91,8 @@ describe('EventHubLiveContent', () => {
             summary: 'Guest-specific access is active for this link, including RSVP and check-in readback.',
             actionCountLabel: '4 guest actions are ready from this link.',
             actionSummaryLabel: 'RSVP, day-of updates, travel, and photo upload',
+            coreActionCoverageLabel: '3 of 4 core day-of actions are ready from this link.',
+            coreActionSummaryLabel: 'Still missing from this link: schedule.',
           }}
           guestName=""
           guestContact=""
@@ -134,6 +136,9 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Unlocked here')).toBeInTheDocument();
     expect(screen.getByText('4 guest actions are ready from this link.')).toBeInTheDocument();
     expect(screen.getByText('RSVP, day-of updates, travel, and photo upload')).toBeInTheDocument();
+    expect(screen.getByText('Core day-of coverage')).toBeInTheDocument();
+    expect(screen.getByText('3 of 4 core day-of actions are ready from this link.')).toBeInTheDocument();
+    expect(screen.getByText('Still missing from this link: schedule.')).toBeInTheDocument();
     expect(document.getElementById('day-of-updates')).not.toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy travel plan' }));

@@ -354,6 +354,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the guest-hub QR proof lane now has a real authenticated live export spec for the shipped owner runtime instead of relying on the localhost-only demo-auth dashboard harness for production evidence
    - 2026-05-14 authenticated production rerun on `https://dayof.love` passed for the owner photos dashboard print-pack export, confirming the shipped owner runtime saves a nonblank token-safe guest-hub QR HTML pack on the real site
    - this batch shipped: the guest-hub `Link access` card now also spells out how many guest actions the current link unlocks and which actions those are, so QR/day-of link truth no longer stops at `Public`, `Invite-only`, or `Guest-specific`
+   - this batch shipped: the guest-hub `Link access` card now also reads back core day-of coverage from that exact link, including what is still missing from RSVP, schedule, travel, and photo follow-through, so couples can tell whether a QR path is merely private or actually complete enough to rely on
    - this batch shipped: the owner-facing `Guest hub status` board now also reads back which guest actions the current link unlocks when link-access truth is connected, so the day-of readiness summary stays aligned with the guest-facing QR/hub access card
    - add live production mobile proof that public and guest-specific QR modes land on the right actions without private leakage
 

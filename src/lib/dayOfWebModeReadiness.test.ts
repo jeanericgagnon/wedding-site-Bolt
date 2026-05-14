@@ -85,7 +85,7 @@ describe('day-of web mode readiness', () => {
     expect(board.readyCount).toBe(6);
     expect(board.plannedCount).toBe(0);
     expect(board.items.find((item) => item.id === 'link-access')?.detail).toBe(
-      'Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are unlocked from it: RSVP, Schedule, Directions and travel, and Photo upload.'
+      'Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are unlocked from it: RSVP, Schedule, Directions and travel, and Photo upload. Core day-of coverage from this link is ready: RSVP, Schedule, Directions and travel, and Photo upload.'
     );
   });
 });
