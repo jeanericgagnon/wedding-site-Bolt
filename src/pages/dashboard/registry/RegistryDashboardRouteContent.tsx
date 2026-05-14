@@ -190,6 +190,9 @@ export function RegistryDashboardRouteContent(props: {
   const claimAttributionCoverageRate = props.claimAttributionCoverageRate ?? 0;
   const fundGoalCoverageRate = props.fundGoalCoverageRate ?? 0;
   const fundShareReadyRate = props.fundShareReadyRate ?? 0;
+  const thankYouReadyCoverageRate = props.registryThankYouStats.purchasedCount > 0
+    ? Math.round((props.registryThankYouStats.readyToSendCount / props.registryThankYouStats.purchasedCount) * 100)
+    : 0;
   const guestReadyCoverageRate = props.guestVisibilityStats.guestReadyCoverageRate ?? 0;
   const guestVisibleCoverageRate = props.guestVisibilityStats.guestVisibleCoverageRate ?? 0;
 
@@ -314,7 +317,10 @@ export function RegistryDashboardRouteContent(props: {
                 {props.registryThankYouStats.pendingCount} still pending{props.registryThankYouStats.blockedByMissingPurchaserCount > 0 ? ` · ${props.registryThankYouStats.blockedByMissingPurchaserCount} need purchaser` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
-                {props.registryThankYouStats.readyToSendCount} ready to send · {props.registryThankYouStats.completionRate}% sent
+                {thankYouReadyCoverageRate}% ready now · {props.registryThankYouStats.completionRate}% sent
+              </p>
+              <p className="mt-1 text-xs text-text-tertiary">
+                {props.registryThankYouStats.readyToSendCount} ready to send{props.registryThankYouStats.blockedByMissingPurchaserCount > 0 ? ` · ${props.registryThankYouStats.blockedByMissingPurchaserCount} blocked by purchaser` : ''}
               </p>
             </Card>
             <Card variant="bordered" padding="md">

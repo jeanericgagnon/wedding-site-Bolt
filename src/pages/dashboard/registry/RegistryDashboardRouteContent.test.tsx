@@ -779,7 +779,8 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(screen.getByText('Thank-yous')).toBeInTheDocument();
     expect(screen.getByText('2 still pending · 1 need purchaser')).toBeInTheDocument();
-    expect(screen.getByText('1 ready to send · 33% sent')).toBeInTheDocument();
+    expect(screen.getByText('33% ready now · 33% sent')).toBeInTheDocument();
+    expect(screen.getByText('1 ready to send · 1 blocked by purchaser')).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Thank-yous sent: 1 · Still pending: 2'),
     ).toBeInTheDocument();
