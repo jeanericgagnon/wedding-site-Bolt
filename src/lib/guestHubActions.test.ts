@@ -21,6 +21,19 @@ describe('guestHubActions', () => {
     expect(actions.find((action) => action.id === 'photos')?.href).toBe('/photos/upload?site=maya-and-leo&hub=1');
   });
 
+  it('adds the guest update action only when a private guest path exists', () => {
+    const noGuestPath = buildGuestHubActions('maya-and-leo', {});
+    const withGuestPath = buildGuestHubActions('maya-and-leo', {}, {
+      guestContactHref: '/guest-contact/maya-and-leo',
+    });
+
+    expect(noGuestPath.map((action) => action.id)).not.toContain('contact');
+    expect(withGuestPath.map((action) => action.id)).toContain('contact');
+    expect(withGuestPath.find((action) => action.id === 'contact')).toMatchObject({
+      href: '/guest-contact/maya-and-leo',
+    });
+  });
+
   it('honors hub controls without leaving orphan recap links when photos are off', () => {
     const actions = buildGuestHubActions('maya-and-leo', {
       photos_enabled: false,
@@ -39,6 +52,7 @@ describe('guestHubActions', () => {
 
   it('summarizes enabled actions for owner QR confidence copy', () => {
     expect(summarizeGuestHubActions(buildGuestHubActions('maya-and-leo', { photos_enabled: false }).slice(0, 3))).toBe('RSVP, schedule, and travel');
+    expect(summarizeGuestHubActions(buildGuestHubActions('maya-and-leo', {}, { guestContactHref: '/guest-contact/maya-and-leo' }).slice(0, 2))).toBe('RSVP and guest update');
     expect(summarizeGuestHubActions([])).toBe('No guest actions are enabled yet');
   });
 });

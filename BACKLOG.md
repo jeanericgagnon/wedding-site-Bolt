@@ -26,10 +26,10 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 | Current launch verdict | `FULL-SUITE READY FOR THE ACTIVE THREE-LANE SCOPE` |
 | Production-ready | `YES FOR DAY-OF / COORDINATOR, NAME CHANGE, AND REGISTRY BARCODE` |
 | Reason production-ready is claimed | The reopened coordinator scanner/event-awareness lane, the name-change dependency matrix lane, and the aggregate full-suite gate have all rerun green locally and live on production, including a fresh authenticated name-change runtime rerun that closes the last named proof risk with the board and research doc aligned again. |
-| Current blockers | None for the active three-lane full-suite scope. Remaining items are deferred, future-only, conditional, or maintainability-only. |
+| Current blockers | None for the active three-lane full-suite scope. Broader repo-completion work remains open in the backlog below. |
 | Current proof state | Fresh green proof now covers the reopened hardening bar honestly: focused shared-foundation/scanner/name-change/coordinator Vitest lanes, `npm run proof:v1:qr-scanner`, `npm run proof:v1:coordinator-dayof`, `npm run proof:v1:full-suite-features`, a fresh `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live` rerun, `V1_COORDINATOR_DAYOF_LIVE=1 npm run proof:v1:coordinator-dayof -- --require-live`, `V1_FULL_SUITE_EXIT_GATE_LIVE=1 npm run proof:v1:full-suite-exit-gate -- --require-live`, `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `git diff --check`, and `npm run build`. |
 | Current deployment state | The latest deployed frontend runtime is [dayof.love](https://dayof.love) via verified Vercel production deploy `dpl_EgkU34BQxP2sibkgpcwaqiZTUJNW`. The coordinator migrations `20260513170000_coordinator_event_checkin_write.sql` and `20260513213000_coordinator_handoff_issue_depth.sql`, the name-change reminder compatibility migration `20260513193000_fix_name_change_reminders_replace_runtime.sql`, and the registry duplicate-merge migration `20260513195500_add_registry_duplicate_merge.sql` remain applied remotely. This runtime now has current-production green proof for coordinator QR/manual validation, event-aware day-of routing, name-change dependency/runtime truth, registry live write/read, the responsive three-lane surface check, and collaborator permission boundaries. `submit-rsvp` remains live with the serialized capacity path, and the public-session-secret, admin route gate, guest-contact, route-module decomposition, vault contribution, and `.dayof.love` host-routing lanes remain live-proven. External custom domains remain unsupported product scope, not an active proof lane. |
-| Current next actions | Keep the board synced as future deploys change truth. No active implementation work remains inside the current three-lane full-suite bar. |
+| Current next actions | Keep the three-lane truth synced as future deploys change it. Use the broader product-completion backlog below for unfinished feature work outside the current hard-claimed scope. |
 
 Blunt status:
 - `P1-04 Public section DTO minimization` is still closed.
@@ -289,6 +289,130 @@ Deferred detail is archived in [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/
 10. `CONDITIONAL / NO-CODE UNTIL REOPENED`: keep the no-direct-client-write inventory current only if future runtime write surfaces are added.
 11. `CONDITIONAL / NO-CODE UNTIL FUTURE DEPLOYS`: keep the board synced as future deploys change the truth for coordinator, name-change, or registry depth.
 12. `FUTURE-ONLY`: keep repo-wide TS/ESLint full-flip work future-only unless it is explicitly reactivated.
+
+## Broader Product Completion Backlog
+
+This section is the honest backlog for product surface that is still not fully made, even though the current launch baseline and the active three-lane hard claim are closed.
+
+Execution rule for this section:
+- a lane is only `DONE` when runtime behavior, local proof, live proof where applicable, and board truth all agree
+- do not promote planned/readiness cards to done just because copy or static UI exists
+- keep `DEFERRED` items clearly separate from true product gaps
+
+### Highest-Leverage Open Lanes
+
+1. `ACTIVE`: guest-specific preview and visibility confidence
+   - this batch shipped: guest itinerary drawer now exposes private RSVP and guest-update QR surfaces that render locally, keep raw token URLs out of normal UI copy, and give owners concrete guest-path artifacts from the dashboard instead of only plain links
+   - this batch shipped: the public guest hub now preserves guest invite identity, exposes a real guest-update action when a private guest path exists, and carries that guest-specific path without printing raw token URLs in the hub UI
+   - finish true route-level personalization beyond the owner preview banner and guest-update path
+   - wire planner/coordinator role preview controls from dashboard flows
+   - extend preview confidence to photo, registry, and travel surfaces
+   - add cross-surface tests proving private event visibility is hidden from the wrong guest and visible to the right guest
+   - add live/mobile click proof for the Guests drawer preview flow
+
+2. `ACTIVE`: unified QR guest hub
+   - this batch shipped: QR share surfaces now support private DayOf payloads through local SVG generation instead of the public QR vendor, and the private guest QR path is now wired into both RSVP and guest-update owner surfaces
+   - this batch shipped: the guest hub action model now supports a guest-specific update path that can ride the same private guest identity captured from the link instead of falling back to only public hub actions
+   - add guest-specific QR mode that never prints private invite access in public assets
+   - add QR revocation/rotation model for guest-specific QR links
+   - wire vault/day-of update deep links into the shared hub model
+   - prove generated print-pack assets are nonblank and route correctly after real download
+   - add live production mobile proof that public and guest-specific QR modes land on the right actions without private leakage
+
+3. `ACTIVE`: status-based messaging and invitation tracking
+   - normalize delivery/open/view/bounce/replied truth across channels
+   - add recipient retry and exclusion workflow without exposing provider internals
+   - pull full meal-choice source truth into segment logic instead of partial RSVP-row assumptions
+   - prove customer-safe delivery-failure grouping against live rows
+   - add live browser proof for composing/saving each operational segment
+   - keep SMS/Telnyx live-send behavior deferred until provider/compliance setup is ready
+
+4. `ACTIVE`: RSVP access modes and question templates
+   - persist owner-selected RSVP access mode instead of leaving code/password/open modes as planned-only
+   - implement recovery rules for unique-code/password flows
+   - design and prove phone/email verification without breaking existing private-link behavior
+   - add household-specific access proof beyond the current strict token lane
+   - add full bad-code/password/open-RSVP proof before any non-private mode is marked ready
+
+5. `ACTIVE`: wedding identity exports
+   - implement real PNG/PDF rendering rather than HTML-only print-pack output
+   - add mobile story graphic export plus monogram/palette/type kit export
+   - prove print text-fit and contrast against multiple themes
+   - add live browser proof for copying/downloading manifest and print-pack assets
+
+### Strong-Differentiator Lanes Still Open
+
+6. `ACTIVE`: premium no-app guest photo and memory flow
+   - ship true full-resolution export/download jobs
+   - add live guest video upload browser proof
+   - add live slideshow publish/display proof beyond owner-draft readiness
+   - add mobile guest upload proof for the checklist/no-app flow
+   - prove owner moderation readback after real live uploads
+
+7. `ACTIVE`: destination/travel guest portal
+   - add structured hotel, room-block, shuttle, visa, and cultural-tip records
+   - add guest-specific room/shuttle/travel guidance instead of generic travel copy
+   - reuse event/household visibility rules across travel detail surfaces
+   - add export/share views and richer public travel-route content
+   - add live mobile guest-path proof from invite to travel to RSVP/photo surfaces
+
+8. `ACTIVE`: reminders, digests, and notification preferences
+   - persist digest cadence and real notification preferences
+   - add snooze/quiet controls backed by saved preference state
+   - add scheduled email delivery instead of readiness-only framing
+   - connect digest counts to real source-of-truth task/payment/message/photo/seating state
+   - prove owner/planner email rendering and safe delivered-readback behavior
+
+9. `ACTIVE`: guest language system
+   - persist guest/household language fields
+   - add owner controls for default and allowed languages
+   - add true per-recipient language targeting in message sends
+   - translate RSVP custom questions and review workflows for translated builder/site content
+   - add live production proof for owner messaging previews and guest-facing language continuity
+
+### Later-Value Lanes Still Open
+
+10. `ACTIVE`: registry polish beyond barcode
+   - add live owner add/import/edit persistence proof for broader registry workflows
+   - add owner repair/cleanup runtime proof outside the barcode lane
+   - prove guest-visible purchase-state truth after real edits
+   - persist thank-you task generation/readback instead of preview-only readiness
+   - add owner claim-state workflows, richer public fund-card polish, and broader registry analytics
+
+11. `ACTIVE`: seating and catering export polish
+   - add live production seating write/read with cleanup for packet/export flows
+   - inspect real downloaded CSV/PDF/image packets against RSVP source data
+   - prove seating lookup readback after assignment edits and itinerary/seating drift after RSVP changes
+   - persist richer structured meal/dietary/venue-note fields where schema is still thin
+   - add catering-specific exports beyond the current CSV/PDF/image packet set
+
+12. `ACTIVE`: budget and vendor ledger
+   - add live owner add/edit/delete proof with cleanup for vendor/payment/budget rows
+   - prove collaborator/planner allowed-view readback and guest non-exposure for financial details
+   - persist reminder delivery/preferences for the ledger
+   - add richer contract/invoice file storage and payment-schedule subtasks
+   - reconcile vendor contract balances against budget line balances
+
+13. `ACTIVE`: website and invite analytics
+   - add privacy-safe site-visit, invite-open/view, and QR-scan event instrumentation
+   - define event storage and aggregation contracts
+   - add event-backed funnel charts instead of review-model-only analytics
+   - prove public/guest non-exposure of analytics data
+   - add live production analytics readback plus owner retention/consent controls
+
+14. `ACTIVE`: app-like web day-of mode
+   - implement true offline caching/service-worker behavior
+   - tie guest-hub announcements to owner messaging instead of planned-only status
+   - add guest-specific RSVP/check-in state on the hub
+   - prove directions/map deep links, coordinator/guest handoff, and private-event visibility on the hub
+   - add live production guest-hub write/read with cleanup after the day-of web-mode lane is finished
+
+### Deferred / Outside This Backlog
+
+- `DEFERRED`: live SMS/Telnyx sending and SMS credit purchase proof until LLC, compliance, sender setup, and provider billing are ready
+- `DEFERRED`: native Instagram/TikTok direct story posting until native/app share integration exists
+- `DEFERRED`: external custom domains until the custom-domain lane is explicitly reopened
+- `DEFERRED`: face recognition / identity clustering unless explicit privacy controls are added first
 
 ## Resolved Work Summary
 

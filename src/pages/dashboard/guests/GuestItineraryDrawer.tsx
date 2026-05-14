@@ -1,4 +1,5 @@
 import { CalendarDays, CheckCircle2, Copy, ExternalLink, Eye, Loader2, X } from 'lucide-react';
+import { ShareQrPanel } from '../../../components/ui/ShareQrPanel';
 import { copyTextOrDownload } from '../../../lib/copyText';
 import { extractDietaryNote } from '../../../lib/dietaryNotes';
 import { buildGuestVisibilityPreview } from '../../../lib/guestVisibilityPreview';
@@ -197,6 +198,15 @@ function GuestDrawerDetails({
       site_url: weddingSiteInfo?.site_url ?? null,
     }),
   });
+  const guestRsvpUrl = guest.invite_token
+    ? `${window.location.origin}/rsvp?token=${encodeURIComponent(guest.invite_token)}`
+    : '';
+  const guestContactUrl = visibilityPreview.links.find((link) => link.kind === 'contact')
+    ? `${window.location.origin}${visibilityPreview.links.find((link) => link.kind === 'contact')?.href ?? ''}`
+    : '';
+  const guestPublicSiteUrl = visibilityPreview.links.find((link) => link.kind === 'site')
+    ? `${window.location.origin}${visibilityPreview.links.find((link) => link.kind === 'site')?.href ?? ''}`
+    : '';
 
   return (
     <>
@@ -259,6 +269,39 @@ function GuestDrawerDetails({
                 <Copy className="w-3.5 h-3.5" />
                 Copy preview link
               </button>
+            )}
+          </div>
+        )}
+        {(guestRsvpUrl || guestPublicSiteUrl) && (
+          <div className="grid gap-3 pt-2">
+            {guestRsvpUrl && (
+              <ShareQrPanel
+                title="Private RSVP QR"
+                description="Use this only for this guest or household. The QR is generated locally and the token stays out of public QR services."
+                url={guestRsvpUrl}
+                copyLabel="Copy RSVP link"
+                allowPrivate
+                className="bg-white"
+              />
+            )}
+            {guestContactUrl && (
+              <ShareQrPanel
+                title="Private guest update QR"
+                description="Open the guest update path for this guest or household. The QR is generated locally and the private token stays out of public QR services."
+                url={guestContactUrl}
+                copyLabel="Copy guest update link"
+                allowPrivate
+                className="bg-white"
+              />
+            )}
+            {guestPublicSiteUrl && (
+              <ShareQrPanel
+                title="Public site preview QR"
+                description="This is the public guest-facing site view for this guest context."
+                url={guestPublicSiteUrl}
+                copyLabel="Copy preview link"
+                className="bg-white"
+              />
             )}
           </div>
         )}

@@ -39,7 +39,7 @@ export interface GuestVisibilityPreviewInput {
 export interface GuestVisibilityPreviewLink {
   label: string;
   href: string;
-  kind: 'rsvp' | 'site';
+  kind: 'rsvp' | 'site' | 'contact';
 }
 
 export interface GuestVisibilityPreview {
@@ -130,6 +130,13 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
       kind: 'rsvp',
       label: 'Open RSVP as guest',
       href: `/rsvp?token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=rsvp`,
+    });
+  }
+  if (input.guest.inviteToken && input.publicSiteSlug) {
+    links.push({
+      kind: 'contact',
+      label: 'Open guest update view',
+      href: `/guest-contact/${encodeURIComponent(input.publicSiteSlug)}?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=contact`,
     });
   }
   if (input.publicSiteSlug) {

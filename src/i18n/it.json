@@ -54,6 +54,8 @@
     "qr_target": "Link matrimonio",
     "action_rsvp": "RSVP",
     "action_rsvp_detail": "Trova il tuo invito e rispondi per gli eventi del matrimonio.",
+    "action_contact": "Aggiorna i tuoi dati",
+    "action_contact_detail": "Controlla i dati ospite, aggiorna i contatti e correggi indirizzo o RSVP dallo stesso accesso privato.",
     "action_schedule": "Programma",
     "action_schedule_detail": "Vedi il programma del weekend, gli orari e i momenti importanti.",
     "action_travel": "Viaggio",

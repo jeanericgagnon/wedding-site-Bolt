@@ -44,6 +44,11 @@ describe('guestVisibilityPreview', () => {
         href: '/rsvp?token=private-token&previewGuest=guest-1&previewSurface=rsvp',
       },
       {
+        kind: 'contact',
+        label: 'Open guest update view',
+        href: '/guest-contact/maya-and-rowan?invite_token=private-token&previewGuest=guest-1&previewSurface=contact',
+      },
+      {
         kind: 'site',
         label: 'Open public site view',
         href: '/site/maya-and-rowan?previewGuest=guest-1&previewSurface=public',

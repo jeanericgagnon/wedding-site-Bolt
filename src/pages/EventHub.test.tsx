@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildGuestHubAccessHeaders, buildGuestHubAccessPayload, formatEventHubCoupleLabel, friendlyGuestHubError, safeGuestHubFunctionError, shouldOpenHubDetailsByDefault } from './EventHub';
+import { buildGuestHubAccessHeaders, buildGuestHubAccessPayload, buildGuestHubIdentityPayload, formatEventHubCoupleLabel, friendlyGuestHubError, safeGuestHubFunctionError, shouldOpenHubDetailsByDefault } from './EventHub';
 
 afterEach(() => {
   sessionStorage.clear();
@@ -40,6 +40,19 @@ describe('buildGuestHubAccessHeaders', () => {
 
   it('omits empty access headers for normal public hub config requests', () => {
     expect(buildGuestHubAccessHeaders('maya-leo', new URLSearchParams(''))).toEqual({});
+  });
+});
+
+describe('buildGuestHubIdentityPayload', () => {
+  it('pulls guest-specific invite identity from the current URL or stored session scope', () => {
+    sessionStorage.setItem('dayof_guest_invite_token_maya-leo', 'stored-guest-invite');
+
+    expect(buildGuestHubIdentityPayload('maya-leo', new URLSearchParams('invite_token=current-guest-invite'))).toEqual({
+      guestInviteToken: 'current-guest-invite',
+    });
+    expect(buildGuestHubIdentityPayload('maya-leo', new URLSearchParams('guestLang=es'))).toEqual({
+      guestInviteToken: 'stored-guest-invite',
+    });
   });
 });
 
@@ -91,6 +104,8 @@ describe('event hub page boundary', () => {
     expect(page).toContain("from './EventHubLiveContent'");
     expect(page).toContain('<EventHubRouteView');
     expect(page).toContain('<EventHubLiveContent');
+    expect(page).toContain('captureGuestInviteTokenFromSearch(slug, searchParams)');
+    expect(page).toContain('const guestIdentity = useMemo(() => buildGuestHubIdentityPayload(slug, searchParams)');
     expect(page).not.toContain('if (!slug) {');
     expect(routeView).toContain('if (!hasSlug) return <>{missingSlugView}</>;');
     expect(liveContent).toContain("from './EventHubConfigStatusCard'");

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildGuestHubQrAssets, buildQrImageUrl, isSafePublicQrAssetUrl, renderGuestHubQrPrintHtml } from './guestHubQrAssets';
+import { buildGuestHubQrAssets, buildQrImageUrl, buildRenderableQrImageUrl, isSafePublicQrAssetUrl, renderGuestHubQrPrintHtml } from './guestHubQrAssets';
 
 describe('guestHubQrAssets', () => {
   it('builds a printable public guest hub asset pack', () => {
@@ -56,5 +56,12 @@ describe('guestHubQrAssets', () => {
     expect(html).toContain(buildQrImageUrl('https://dayof.love/event/maya-and-leo', 420).replace(/&/g, '&amp;'));
     expect(html).not.toContain('<Maya>');
     expect(html).not.toContain('photo-prompt');
+  });
+
+  it('renders private dayof qr payloads locally instead of through the public qr vendor', () => {
+    const privateUrl = 'https://dayof.love/rsvp?token=private-token';
+
+    expect(buildQrImageUrl(privateUrl)).toBe('');
+    expect(buildRenderableQrImageUrl(privateUrl, 320, { allowPrivate: true })).toContain('data:image/svg+xml');
   });
 });

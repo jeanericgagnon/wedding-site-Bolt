@@ -1,5 +1,6 @@
 import { getSafePublicWebUrl } from '../sections/publicLinks';
 import { isPrivateQrPayloadForThirdPartyQr } from './qr/qrPayload';
+import { buildLocalQrSvgDataUrl } from './qr/localQrImage';
 
 export type GuestHubQrAssetKind = 'welcome-sign' | 'table-card' | 'invite-insert' | 'photo-prompt';
 
@@ -24,6 +25,20 @@ export const buildQrImageUrl = (url: string, size = 512) =>
   isSafePublicQrAssetUrl(url) && !isPrivateQrPayloadForThirdPartyQr(url)
     ? `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}`
     : '';
+
+export const buildRenderableQrImageUrl = (
+  url: string,
+  size = 512,
+  options?: { allowPrivate?: boolean },
+) => {
+  const publicUrl = buildQrImageUrl(url, size);
+  if (publicUrl) return publicUrl;
+  if (!options?.allowPrivate) return '';
+  if (isPrivateQrPayloadForThirdPartyQr(url)) {
+    return buildLocalQrSvgDataUrl(url, size);
+  }
+  return '';
+};
 
 function cleanText(value: string, fallback: string): string {
   const cleaned = value.replace(/\s+/g, ' ').trim();

@@ -1,4 +1,4 @@
-export type GuestHubActionId = 'rsvp' | 'schedule' | 'travel' | 'registry' | 'photos' | 'guestbook' | 'recap';
+export type GuestHubActionId = 'rsvp' | 'schedule' | 'travel' | 'registry' | 'photos' | 'guestbook' | 'recap' | 'contact';
 
 export interface GuestHubActionSettings {
   rsvp_enabled?: boolean | null;
@@ -7,6 +7,10 @@ export interface GuestHubActionSettings {
   registry_enabled?: boolean | null;
   schedule_enabled?: boolean | null;
   travel_enabled?: boolean | null;
+}
+
+export interface GuestHubActionOptions {
+  guestContactHref?: string | null;
 }
 
 export interface GuestHubAction {
@@ -19,7 +23,7 @@ export interface GuestHubAction {
 
 const isEnabled = (value: boolean | null | undefined) => value !== false;
 
-export function buildGuestHubActions(slug: string, settings: GuestHubActionSettings): GuestHubAction[] {
+export function buildGuestHubActions(slug: string, settings: GuestHubActionSettings, options: GuestHubActionOptions = {}): GuestHubAction[] {
   const encodedSlug = encodeURIComponent(slug);
   const actions: GuestHubAction[] = [
     {
@@ -67,6 +71,16 @@ export function buildGuestHubActions(slug: string, settings: GuestHubActionSetti
     },
   ];
 
+  const guestContactHref = options.guestContactHref?.trim();
+  if (guestContactHref) {
+    actions.splice(1, 0, {
+      id: 'contact',
+      titleKey: 'guest_hub.action_contact',
+      detailKey: 'guest_hub.action_contact_detail',
+      href: guestContactHref,
+    });
+  }
+
   return actions.filter((action) => {
     if (action.id === 'rsvp') return isEnabled(settings.rsvp_enabled);
     if (action.id === 'schedule') return isEnabled(settings.schedule_enabled);
@@ -87,6 +101,7 @@ export function summarizeGuestHubActions(actions: Pick<GuestHubAction, 'id'>[]):
     photos: 'photo upload',
     guestbook: 'guestbook',
     recap: 'photo recap',
+    contact: 'guest update',
   };
   const parts = actions.map((action) => labels[action.id]).filter(Boolean);
   if (parts.length === 0) return 'No guest actions are enabled yet';

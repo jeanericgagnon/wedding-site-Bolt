@@ -9,6 +9,8 @@ import { buildDayOfHubStatusBoard, buildDayOfWebModeReadiness, type DayOfWebActi
 import { buildTravelGuestJourney } from '../lib/travelGuestPortal';
 import {
   buildPublicAccessArtifacts,
+  buildGuestIdentityArtifacts,
+  captureGuestInviteTokenFromSearch,
   capturePublicInviteTokenFromSearch,
 } from '../lib/publicAccessArtifacts';
 import {
@@ -51,6 +53,7 @@ type HubConfigStatus = 'loading' | 'ready' | 'fallback' | 'offline';
 
 const normalizeSiteRef = (value?: string) => (value ?? '').trim().toLowerCase();
 export const buildGuestHubAccessPayload = (slug: string, searchParams: URLSearchParams) => buildPublicAccessArtifacts(slug, searchParams);
+export const buildGuestHubIdentityPayload = (slug: string, searchParams: URLSearchParams) => buildGuestIdentityArtifacts(slug, searchParams);
 
 export const buildGuestHubAccessHeaders = (slug: string, searchParams: URLSearchParams) => {
   const access = buildGuestHubAccessPayload(slug, searchParams);
@@ -117,6 +120,7 @@ const defaultSettings: HubSettings = {
 
 const actionIcons: Record<GuestHubActionId, React.ComponentType<{ className?: string }>> = {
   rsvp: ClipboardList,
+  contact: ClipboardList,
   schedule: CalendarDays,
   travel: Plane,
   registry: Gift,
@@ -150,19 +154,25 @@ export const EventHub: React.FC = () => {
   const [optInStatus, setOptInStatus] = useState<string | null>(null);
   const [hubConfigStatus, setHubConfigStatus] = useState<HubConfigStatus>('loading');
   const [hubConfigRetryKey, setHubConfigRetryKey] = useState(0);
+  const guestIdentity = useMemo(() => buildGuestHubIdentityPayload(slug, searchParams), [searchParams, slug]);
+  const guestContactHref = useMemo(() => {
+    if (!slug || !guestIdentity.guestInviteToken) return null;
+    return `/guest-contact/${encodeURIComponent(slug)}`;
+  }, [guestIdentity.guestInviteToken, slug]);
 
-  const actions = useMemo<HubAction[]>(() => buildGuestHubActions(slug, settings).map((action) => ({
+  const actions = useMemo<HubAction[]>(() => buildGuestHubActions(slug, settings, { guestContactHref }).map((action) => ({
     id: action.id,
     title: t(action.titleKey),
     description: t(action.detailKey),
     href: action.href,
     icon: actionIcons[action.id],
     primary: action.primary,
-  })), [settings, slug, t]);
+  })), [guestContactHref, settings, slug, t]);
 
   useEffect(() => {
     if (!slug) return;
     capturePublicInviteTokenFromSearch(slug, searchParams);
+    captureGuestInviteTokenFromSearch(slug, searchParams);
     if (searchParams.has('hubQaConfigFallback')) {
       setHubConfigStatus('fallback');
       return;

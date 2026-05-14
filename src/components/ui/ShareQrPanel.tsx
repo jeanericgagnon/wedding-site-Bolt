@@ -2,7 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { Copy, ExternalLink, QrCode } from 'lucide-react';
 import { Button } from './Button';
 import { copyTextOrDownload } from '../../lib/copyText';
-import { buildQrImageUrl, isSafePublicQrAssetUrl } from '../../lib/guestHubQrAssets';
+import { buildRenderableQrImageUrl, isSafePublicQrAssetUrl } from '../../lib/guestHubQrAssets';
+import { isPrivateQrPayloadForThirdPartyQr } from '../../lib/qr/qrPayload';
 
 interface ShareQrPanelProps {
   title: string;
@@ -10,6 +11,7 @@ interface ShareQrPanelProps {
   url: string;
   copyLabel?: string;
   className?: string;
+  allowPrivate?: boolean;
 }
 
 export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
@@ -18,11 +20,35 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
   url,
   copyLabel = 'Copy link',
   className = '',
+  allowPrivate = false,
 }) => {
   const [copied, setCopied] = useState(false);
   const [copyFallback, setCopyFallback] = useState(false);
-  const safeUrl = useMemo(() => (isSafePublicQrAssetUrl(url) ? url.trim() : ''), [url]);
-  const qrUrl = useMemo(() => buildQrImageUrl(safeUrl), [safeUrl]);
+  const normalizedUrl = useMemo(() => url.trim(), [url]);
+  const usesPrivateQr = useMemo(
+    () => allowPrivate && isPrivateQrPayloadForThirdPartyQr(normalizedUrl),
+    [allowPrivate, normalizedUrl],
+  );
+  const safeUrl = useMemo(() => {
+    if (isSafePublicQrAssetUrl(normalizedUrl)) return normalizedUrl;
+    if (usesPrivateQr) return normalizedUrl;
+    return '';
+  }, [normalizedUrl, usesPrivateQr]);
+  const qrUrl = useMemo(
+    () => buildRenderableQrImageUrl(safeUrl, 512, { allowPrivate }),
+    [allowPrivate, safeUrl],
+  );
+  const visibleUrl = useMemo(() => {
+    if (!safeUrl) return '';
+    if (!usesPrivateQr) return safeUrl;
+    try {
+      const baseOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://dayof.love';
+      const urlObject = new URL(safeUrl, baseOrigin);
+      return `${urlObject.origin}${urlObject.pathname} · private guest link`;
+    } catch {
+      return 'Private guest link';
+    }
+  }, [safeUrl, usesPrivateQr]);
 
   const copyUrl = async () => {
     try {
@@ -50,9 +76,9 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
           </div>
           {description && <p className="mt-1 text-xs text-text-secondary">{description}</p>}
           <p className="mt-2 truncate rounded-lg border border-border-subtle bg-surface-subtle px-2 py-1.5 text-xs text-text-secondary">
-            {safeUrl}
+            {visibleUrl}
           </p>
-          {copyFallback && (
+          {copyFallback && !usesPrivateQr && (
             <input
               aria-label={`${title} share link`}
               className="mt-2 w-full rounded-lg border border-border bg-white px-2 py-1.5 text-xs text-text-primary"

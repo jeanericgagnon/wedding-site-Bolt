@@ -23,4 +23,15 @@ describe('ShareQrPanel', () => {
 
     expect(container).toBeEmptyDOMElement();
   });
+
+  it('renders private guest qr locally without showing the raw token in normal UI', () => {
+    render(<ShareQrPanel title="Private RSVP QR" url="https://dayof.love/rsvp?token=secret-token" allowPrivate />);
+
+    expect(screen.getByText('https://dayof.love/rsvp · private guest link')).toBeInTheDocument();
+    expect(screen.queryByText('https://dayof.love/rsvp?token=secret-token')).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Private RSVP QR QR code' })).toHaveAttribute(
+      'src',
+      expect.stringContaining('data:image/svg+xml'),
+    );
+  });
 });
