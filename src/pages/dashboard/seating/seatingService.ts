@@ -1,8 +1,10 @@
 import { supabase } from '../../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
+import { demoGuests } from '../../../lib/demoData';
 import { resolveOperationalEventId } from '../../../lib/operationalEvent';
 import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../../lib/rsvpStatus';
 import { toSafeCsv } from '../../../lib/csvExport';
+import { loadDemoItineraryEventsFromStorage, readDemoSeatingState } from './seatingDemoStorage';
 
 function requireRpcRecord<T>(data: unknown, functionName: string): T {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
@@ -251,6 +253,44 @@ export function mapSeatingLookupRows(
       rsvp_status: guest?.rsvp_status ?? null,
     };
   });
+}
+
+export function loadDemoSeatingLookupRows(itineraryEventId?: string | null): SeatingLookupRow[] {
+  const itineraryEvents = loadDemoItineraryEventsFromStorage();
+  const lookupEventId = itineraryEventId ?? resolveOperationalEventId({ events: itineraryEvents });
+  const eventMeta = itineraryEvents.find((event) => event.id === lookupEventId) ?? null;
+  if (!eventMeta) return [];
+
+  const saved = readDemoSeatingState(eventMeta.id);
+  const attendingGuests = demoGuests
+    .filter((guest) => isAttendingRsvpStatus(guest.rsvp_status))
+    .map((guest) => ({
+      id: guest.id,
+      first_name: guest.first_name ?? null,
+      last_name: guest.last_name ?? null,
+      name: guest.name ?? null,
+      email: guest.email ?? null,
+      rsvp_status: guest.rsvp_status,
+      invite_token: guest.invite_token ?? null,
+      preferred_language: null,
+    }));
+
+  return mapSeatingLookupRows(
+    saved.assignments
+      .filter((assignment) => assignment.is_valid)
+      .map((assignment) => ({
+        guest_id: assignment.guest_id,
+        table_id: assignment.table_id,
+        seat_index: assignment.seat_index ?? null,
+        checked_in_at: assignment.checked_in_at ?? null,
+      })),
+    saved.tables.map((table) => ({
+      id: table.id,
+      table_name: table.table_name,
+    })),
+    attendingGuests,
+    { itinerary_event_id: eventMeta.id, event_name: eventMeta.event_name },
+  );
 }
 
 export async function loadSeatingLookupRowsForUser(userId: string, itineraryEventId?: string | null): Promise<SeatingLookupRow[]> {

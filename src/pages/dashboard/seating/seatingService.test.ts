@@ -13,6 +13,7 @@ import {
   exportSeatingCSV,
   getOrCreateSeatingEvent,
   invalidateDriftedAssignments,
+  loadDemoSeatingLookupRows,
   mapSeatingLookupRows,
   MAX_SEATING_ELIGIBLE_GUESTS,
   MAX_SEATING_EVENT_INVITATIONS,
@@ -389,6 +390,60 @@ describe('mapSeatingLookupRows', () => {
     expect(MAX_SEATING_TABLE_ROWS).toBe(500);
     expect(MAX_SEATING_ASSIGNMENT_ROWS).toBe(10000);
     expect(MAX_SEATING_VERSION_ROWS).toBe(12);
+  });
+
+  it('builds demo lookup rows from the persisted demo seating state', () => {
+    localStorage.setItem('dayof.demo.itinerary.events', JSON.stringify({
+      savedAtISO: new Date().toISOString(),
+      value: [
+        {
+          id: 'welcome-dinner-id',
+          event_name: 'Welcome Dinner',
+          event_date: '2026-06-14',
+          start_time: '18:00:00',
+          location_name: 'The Vineyard Restaurant',
+        },
+      ],
+    }));
+    localStorage.setItem('dayof.demo.seating.state', JSON.stringify({
+      savedAtISO: new Date().toISOString(),
+      value: {
+        'welcome-dinner-id': {
+          tables: [
+            {
+              id: 'table-1',
+              seating_event_id: 'demo-seating-event',
+              table_name: 'Head Table',
+              capacity: 8,
+              sort_order: 0,
+              notes: '',
+            },
+          ],
+          assignments: [
+            {
+              id: 'assign-1',
+              seating_event_id: 'demo-seating-event',
+              table_id: 'table-1',
+              guest_id: 'confirmed-guest-3',
+              seat_index: 3,
+              is_valid: true,
+              checked_in_at: null,
+            },
+          ],
+        },
+      },
+    }));
+
+    expect(loadDemoSeatingLookupRows('welcome-dinner-id')).toEqual([
+      expect.objectContaining({
+        itinerary_event_id: 'welcome-dinner-id',
+        event_name: 'Welcome Dinner',
+        guest_id: 'confirmed-guest-3',
+        full_name: 'Liam Nguyen',
+        table_name: 'Head Table',
+        seat_index: 3,
+      }),
+    ]);
   });
 
   it('keeps seating itinerary, lookup, and eligible-guest fan-out bounded', () => {

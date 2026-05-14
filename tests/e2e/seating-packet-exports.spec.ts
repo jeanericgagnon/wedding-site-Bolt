@@ -6,6 +6,8 @@ async function enableLocalDemo(page: Page) {
   await page.addInitScript(() => {
     window.localStorage.setItem('dayof_e2e_local_auth', '1');
 
+    if (window.localStorage.getItem('dayof.demo.seating.state')) return;
+
     const savedAtISO = new Date().toISOString();
     window.localStorage.setItem('dayof.demo.seating.state', JSON.stringify({
       savedAtISO,
@@ -145,9 +147,8 @@ async function enableLocalDemo(page: Page) {
   });
 }
 
-test('seating packet exports stay event-scoped and reflect RSVP-backed source rows', async ({ page }) => {
-  await enableLocalDemo(page);
-  await page.goto('/dashboard/seating?bypassPayment=1&packetQa=1', { waitUntil: 'domcontentloaded' });
+async function enterDemoSeatingBoard(page: Page, url = '/dashboard/seating?bypassPayment=1&packetQa=1') {
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
 
   const tryDemo = page.getByRole('button', { name: /try demo/i });
   if (await tryDemo.isVisible().catch(() => false)) {
@@ -156,6 +157,11 @@ test('seating packet exports stay event-scoped and reflect RSVP-backed source ro
       tryDemo.click(),
     ]);
   }
+}
+
+test('seating packet exports stay event-scoped and reflect RSVP-backed source rows', async ({ page }) => {
+  await enableLocalDemo(page);
+  await enterDemoSeatingBoard(page);
 
   await expect(page.getByRole('heading', { name: /place guests at tables without losing the room/i })).toBeVisible();
   await expect(page.getByText(/Current Event:/)).toContainText('Welcome Dinner');
@@ -206,4 +212,37 @@ test('seating packet exports stay event-scoped and reflect RSVP-backed source ro
   expect(captured.popup.html).toContain('Welcome Dinner');
   expect(captured.popup.html).toContain('Emma Waters');
   expect(captured.popup.html).toContain('Head Table');
+});
+
+test('seating lookup reads back demo assignment edits after a browser seat change', async ({ page }) => {
+  await enableLocalDemo(page);
+  await enterDemoSeatingBoard(page, '/dashboard/seating?bypassPayment=1&lookupContinuityQa=1');
+
+  await expect(page.getByRole('heading', { name: /place guests at tables without losing the room/i })).toBeVisible();
+  await page.getByRole('button', { name: 'Seat 3' }).first().click();
+  await expect(page.getByRole('heading', { name: /Map a guest to seat 3/i })).toBeVisible();
+  await page.getByRole('button', { name: 'Liam Nguyen Guest' }).click();
+  await expect(page.getByRole('heading', { name: /Map a guest to seat 3/i })).not.toBeVisible();
+  await page.waitForFunction(() => {
+    const raw = window.localStorage.getItem('dayof.demo.seating.state');
+    if (!raw) return false;
+    const parsed = JSON.parse(raw) as {
+      value?: Record<string, { assignments?: Array<{ guest_id?: string; table_id?: string | null; seat_index?: number | null }> }>;
+    };
+    const assignments = parsed.value?.['welcome-dinner-id']?.assignments ?? [];
+    return assignments.some((assignment) => (
+      assignment.guest_id === 'confirmed-guest-3'
+      && assignment.table_id === 'table-1'
+      && assignment.seat_index === 3
+    ));
+  });
+
+  await page.goto('/dashboard/seating-lookup?bypassPayment=1&lookupContinuityQa=1', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { name: /find a guest seat/i })).toBeVisible();
+  await expect(page.getByText(/Data is for/i)).toContainText('Welcome Dinner');
+  await page.getByPlaceholder('Search guest name, email, or table').fill('Liam');
+
+  const liamRow = page.locator('tr', { hasText: 'Liam Nguyen' });
+  await expect(liamRow).toContainText('Head Table');
+  await expect(liamRow).toContainText('Seat 3');
 });

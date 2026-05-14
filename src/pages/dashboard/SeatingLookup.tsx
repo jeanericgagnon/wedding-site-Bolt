@@ -5,7 +5,8 @@ import { buildGuestPreviewRoutes } from '../../lib/guestPreviewRoutes';
 import { useAuth } from '../../hooks/useAuth';
 import { getCheckInExceptionLabel, getCheckInExceptionStates } from '../../lib/checkInExceptionState';
 import { resolveOperationalEventId } from '../../lib/operationalEvent';
-import { getWeddingSiteId, loadItineraryEvents, loadSeatingLookupRowsForUser, type ItineraryEvent, type SeatingLookupRow } from './seating/seatingService';
+import { getWeddingSiteId, loadDemoSeatingLookupRows, loadItineraryEvents, loadSeatingLookupRowsForUser, type ItineraryEvent, type SeatingLookupRow } from './seating/seatingService';
+import { loadDemoItineraryEventsFromStorage } from './seating/seatingDemoStorage';
 
 export const DashboardSeatingLookup: React.FC = () => {
   const { user, isDemoMode } = useAuth();
@@ -23,14 +24,9 @@ export const DashboardSeatingLookup: React.FC = () => {
         setLoading(true);
         if (isDemoMode) {
           if (!mounted) return;
-          const demoEvents = [{ id: 'event-1', event_name: 'Reception', event_date: '2026-05-13', start_time: '18:00:00', location_name: 'Main Hall' }] as ItineraryEvent[];
+          const demoEvents = loadDemoItineraryEventsFromStorage();
           setItineraryEvents(demoEvents);
           setSelectedEventId(resolveOperationalEventId({ events: demoEvents }));
-          setRows([
-            { itinerary_event_id: 'event-1', event_name: 'Reception', guest_id: '1', full_name: 'Alex Rivera', email: 'alex@example.com', table_name: 'Table 1', seat_index: 2, checked_in_at: null },
-            { itinerary_event_id: 'event-1', event_name: 'Reception', guest_id: '2', full_name: 'Sam Lee', email: 'sam@example.com', table_name: 'Table 2', seat_index: 4, checked_in_at: new Date().toISOString() },
-          ]);
-          setLoading(false);
           return;
         }
 
@@ -61,10 +57,12 @@ export const DashboardSeatingLookup: React.FC = () => {
   useEffect(() => {
     let mounted = true;
     const run = async () => {
-      if (!user || isDemoMode || !selectedEventId) return;
+      if (!user || !selectedEventId) return;
       try {
         setLoading(true);
-        const mapped = await loadSeatingLookupRowsForUser(user.id, selectedEventId);
+        const mapped = isDemoMode
+          ? loadDemoSeatingLookupRows(selectedEventId)
+          : await loadSeatingLookupRowsForUser(user.id, selectedEventId);
         if (mounted) setRows(mapped);
       } catch {
         if (mounted) setRows([]);

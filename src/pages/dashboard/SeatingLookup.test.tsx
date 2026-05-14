@@ -19,17 +19,25 @@ vi.mock('../../hooks/useAuth', () => ({
 
 const getWeddingSiteId = vi.fn();
 const loadItineraryEvents = vi.fn();
+const loadDemoSeatingLookupRows = vi.fn();
 const loadSeatingLookupRowsForUser = vi.fn();
+const loadDemoItineraryEventsFromStorage = vi.fn();
 
 vi.mock('./seating/seatingService', () => ({
   getWeddingSiteId: () => getWeddingSiteId(),
+  loadDemoSeatingLookupRows: (...args: unknown[]) => loadDemoSeatingLookupRows(...args),
   loadItineraryEvents: (...args: unknown[]) => loadItineraryEvents(...args),
   loadSeatingLookupRowsForUser: (...args: unknown[]) => loadSeatingLookupRowsForUser(...args),
+}));
+
+vi.mock('./seating/seatingDemoStorage', () => ({
+  loadDemoItineraryEventsFromStorage: () => loadDemoItineraryEventsFromStorage(),
 }));
 
 describe('DashboardSeatingLookup', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    authState.isDemoMode = false;
   });
 
   it('loads rows once on mount for the default selected event', async () => {
@@ -131,5 +139,35 @@ describe('DashboardSeatingLookup', () => {
 
     await screen.findByText('No guests found.');
     expect(loadSeatingLookupRowsForUser).not.toHaveBeenCalled();
+  });
+
+  it('reads demo lookup rows from the shared seating demo state instead of hardcoded placeholders', async () => {
+    authState.isDemoMode = true;
+    loadDemoItineraryEventsFromStorage.mockReturnValue([
+      { id: 'welcome-dinner-id', event_name: 'Welcome Dinner', event_date: '2026-06-14', start_time: '18:00:00', location_name: 'The Vineyard Restaurant' },
+    ]);
+    loadDemoSeatingLookupRows.mockReturnValue([
+      {
+        itinerary_event_id: 'welcome-dinner-id',
+        event_name: 'Welcome Dinner',
+        guest_id: 'confirmed-guest-3',
+        full_name: 'Liam Nguyen',
+        email: 'liam.nguyen+3@dayof.demo',
+        table_name: 'Head Table',
+        seat_index: 3,
+        checked_in_at: null,
+      },
+    ]);
+
+    render(
+      <MemoryRouter>
+        <DashboardSeatingLookup />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText('Liam Nguyen');
+    expect(loadDemoSeatingLookupRows).toHaveBeenCalledWith('welcome-dinner-id');
+    expect(loadSeatingLookupRowsForUser).not.toHaveBeenCalled();
+    expect(screen.getByText(/Data is for/i)).toHaveTextContent('Welcome Dinner');
   });
 });

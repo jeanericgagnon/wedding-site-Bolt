@@ -161,6 +161,7 @@ const output = {
     'Invited-only seating counters and valid-assignment counting',
     'Catering packet export structure and grouped kitchen-summary truth',
     'Browser-captured seating CSV, kitchen-summary, SVG, and printable PDF packet content',
+    'Browser seat change continuity into seating lookup readback',
     'Check-in mode guardrail',
     'Build integrity after seating continuity assertions',
   ],
