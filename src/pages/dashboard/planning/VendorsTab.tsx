@@ -380,6 +380,15 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
 
   return (
     <div className="space-y-4">
+      {!canEdit && (
+        <Card padding="sm" className="border-border-subtle bg-surface-subtle">
+          <p className="text-sm font-semibold text-text-primary">Owner and planner financial details</p>
+          <p className="mt-1 text-sm text-text-secondary">
+            Vendor balances, reminders, and contract notes stay visible for planning readback here. Editing is turned off in this role, and guest-facing pages do not expose vendor financial details.
+          </p>
+        </Card>
+      )}
+
       {(vendors.length > 0 || totalBalance > 0 || followUpDueCount > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
           <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-white p-3 transition-colors hover:border-primary/25">
@@ -440,7 +449,7 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
           <a href="/vendor-templates" className="inline-flex items-center rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text-primary hover:bg-surface-subtle">
             Template lab
           </a>
-          {!canEdit && <p className="text-xs text-text-tertiary">Viewer mode: editing is turned off here.</p>}
+          {!canEdit && <p className="text-xs text-text-tertiary">Read-only role: editing is turned off here.</p>}
           <Button size="sm" onClick={() => setShowAdd(true)} disabled={!canEdit}>
             <Plus className="w-4 h-4 mr-1" /> Add vendor
           </Button>

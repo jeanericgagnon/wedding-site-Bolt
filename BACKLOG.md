@@ -440,6 +440,9 @@ Execution rule for this section:
 12. `ACTIVE`: budget and vendor ledger
    - add live owner add/edit/delete proof with cleanup for vendor/payment/budget rows
    - prove collaborator/planner allowed-view readback and guest non-exposure for financial details
+   - this batch shipped: budget and vendor tabs now show explicit owner/planner-only financial readback copy when editing is disabled, so read-only collaborator roles keep visibility without pretending they can mutate the ledger
+   - this batch shipped: focused UI proof is green for read-only budget and vendor surfaces, including disabled mutation controls, preserved export/readback actions, and explicit guest non-exposure language
+   - this batch shipped: `proof:v1:collaborator-access` now includes the planning financial read-only surface tests, so the collaborator gate proves these budget/vendor role boundaries instead of leaving them implied
    - this batch shipped: vendor follow-up metadata now persists as real site-backed planning state instead of local-only browser storage, including next follow-up date, reminder channel, lead time, and queued-readback timestamps
    - this batch shipped: vendor and payment ledger exports now include reminder preference/readback columns, and the planning ledger shows a real reminder-readiness summary instead of treating reminders as side notes
    - this batch shipped: focused proof is green for vendor reminder metadata normalization, site-meta persistence/readback through `wedding_site_settings_patch`, and reminder-readiness summary logic

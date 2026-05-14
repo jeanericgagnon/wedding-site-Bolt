@@ -244,6 +244,15 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
 
   return (
     <div className="space-y-4">
+      {!canEdit && (
+        <Card padding="sm" className="border-border-subtle bg-surface-subtle">
+          <p className="text-sm font-semibold text-text-primary">Owner and planner financial details</p>
+          <p className="mt-1 text-sm text-text-secondary">
+            Budget readback stays visible here for planning review. Editing is turned off in this role, and guest-facing surfaces do not expose these financial details.
+          </p>
+        </Card>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: 'Budget goal', value: totalBudget || 0, color: 'text-text-primary', format: 'currency' },
@@ -400,7 +409,9 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
               disabled={!canEdit}
             />
             <p className="mt-1 text-[11px] text-text-tertiary">
-              {budgetSaving
+              {!canEdit
+                ? 'Read only in this role'
+                : budgetSaving
                 ? 'Saving…'
                 : budgetSavedAt
                 ? `Saved ${new Date(budgetSavedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`

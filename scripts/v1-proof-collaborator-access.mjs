@@ -16,6 +16,12 @@ const steps = [
     required: true,
   },
   {
+    id: 'planning-financial-readonly-tests',
+    label: 'Planning financial read-only surface tests',
+    command: 'npm test -- --run src/pages/dashboard/planning/BudgetTab.test.tsx src/pages/dashboard/planning/VendorsTab.test.tsx',
+    required: true,
+  },
+  {
     id: 'build',
     label: 'Build integrity check',
     command: 'npm run build',
@@ -92,6 +98,7 @@ const output = {
   automatedCoverage: [
     'Invite validation + redirect utility behavior',
     'Role-permission matrix boundaries for owner/planner/coordinator/viewer',
+    'Read-only budget and vendor ledger surfaces for non-edit collaborator roles',
     'Build integrity after collaborator-proof assertions',
   ],
   stillManualProofNeeded: [
