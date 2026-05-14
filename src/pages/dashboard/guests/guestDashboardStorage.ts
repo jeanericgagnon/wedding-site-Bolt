@@ -1,4 +1,5 @@
 import {
+  DEMO_RSVP_ACCESS_CONFIG_KEY,
   DEMO_RSVP_CUSTOM_QUESTIONS_KEY,
   DEMO_RSVP_MEAL_CONFIG_KEY,
   RSVP_CAMPAIGN_LOG_KEY,
@@ -7,6 +8,12 @@ import {
   RSVP_SAVED_SEGMENTS_KEY,
   type RSVPQuestionSetting,
 } from './guestDashboardTypes';
+import {
+  deriveDefaultRsvpAccessSelection,
+  normalizePersistedRsvpAccessSelection,
+  serializePersistedRsvpAccessSelection,
+  type PersistedRsvpAccessSelection,
+} from '../../../lib/rsvpAccessPlanner';
 
 export type RsvpCampaignPreset = 'pending' | 'missing-meal' | 'plusone-missing' | 'ceremony-no' | 'reception-no' | 'pending-no-email';
 export type RsvpFollowUpTask = { id: number; text: string; createdAt: string };
@@ -217,41 +224,65 @@ function normalizeDemoMealConfig(value: unknown): { enabled: boolean; options: s
   };
 }
 
-export function readStoredDemoRsvpConfig(): { questions: RSVPQuestionSetting[]; mealEnabled: boolean; mealOptions: string[] } {
+function normalizeDemoRsvpAccessConfig(value: unknown): PersistedRsvpAccessSelection {
+  return normalizePersistedRsvpAccessSelection(value, deriveDefaultRsvpAccessSelection({
+    guestCount: 0,
+    inviteTokenCount: 0,
+  }));
+}
+
+export function readStoredDemoRsvpConfig(): {
+  questions: RSVPQuestionSetting[];
+  mealEnabled: boolean;
+  mealOptions: string[];
+  accessSelection: PersistedRsvpAccessSelection;
+} {
   try {
     const storedQuestions = readStoredValue<unknown>(DEMO_RSVP_CUSTOM_QUESTIONS_KEY, []);
     const storedMealConfig = readStoredValue<unknown>(DEMO_RSVP_MEAL_CONFIG_KEY, null);
+    const storedAccessConfig = readStoredValue<unknown>(DEMO_RSVP_ACCESS_CONFIG_KEY, null);
     const questions = normalizeDemoRsvpQuestions(storedQuestions.value);
     const mealConfig = normalizeDemoMealConfig(storedMealConfig.value);
+    const accessSelection = normalizeDemoRsvpAccessConfig(storedAccessConfig.value);
     if (storedQuestions.shouldMigrate && questions.length > 0) writeStoredValue(DEMO_RSVP_CUSTOM_QUESTIONS_KEY, questions);
     if (storedQuestions.shouldMigrate && questions.length === 0 && localStorage.getItem(DEMO_RSVP_CUSTOM_QUESTIONS_KEY)) {
       localStorage.removeItem(DEMO_RSVP_CUSTOM_QUESTIONS_KEY);
     }
     if (storedMealConfig.shouldMigrate) writeStoredValue(DEMO_RSVP_MEAL_CONFIG_KEY, mealConfig);
+    if (storedAccessConfig.shouldMigrate) writeStoredValue(DEMO_RSVP_ACCESS_CONFIG_KEY, serializePersistedRsvpAccessSelection(accessSelection));
     return {
       questions,
       mealEnabled: mealConfig.enabled,
       mealOptions: mealConfig.options,
+      accessSelection,
     };
   } catch {
     try {
       localStorage.removeItem(DEMO_RSVP_CUSTOM_QUESTIONS_KEY);
       localStorage.removeItem(DEMO_RSVP_MEAL_CONFIG_KEY);
+      localStorage.removeItem(DEMO_RSVP_ACCESS_CONFIG_KEY);
     } catch {}
     return {
       questions: [],
       mealEnabled: true,
       mealOptions: DEFAULT_MEAL_OPTIONS,
+      accessSelection: deriveDefaultRsvpAccessSelection({ guestCount: 0, inviteTokenCount: 0 }),
     };
   }
 }
 
-export function writeStoredDemoRsvpConfig(input: { questions: RSVPQuestionSetting[]; mealEnabled: boolean; mealOptions: string[] }): void {
+export function writeStoredDemoRsvpConfig(input: {
+  questions: RSVPQuestionSetting[];
+  mealEnabled: boolean;
+  mealOptions: string[];
+  accessSelection: PersistedRsvpAccessSelection;
+}): void {
   try {
     writeStoredValue(DEMO_RSVP_CUSTOM_QUESTIONS_KEY, normalizeDemoRsvpQuestions(input.questions));
     writeStoredValue(DEMO_RSVP_MEAL_CONFIG_KEY, normalizeDemoMealConfig({
       enabled: input.mealEnabled,
       options: input.mealOptions,
     }));
+    writeStoredValue(DEMO_RSVP_ACCESS_CONFIG_KEY, serializePersistedRsvpAccessSelection(input.accessSelection));
   } catch {}
 }

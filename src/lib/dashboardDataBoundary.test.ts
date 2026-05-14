@@ -389,8 +389,10 @@ describe('dashboard data boundary guards', () => {
     expect(detailHook).not.toContain("from '../../../lib/supabase'");
     expect(rsvpConfigHook).toContain('const addRsvpQuestionTemplate = useCallback((template: RsvpQuestionTemplate) => {');
     expect(rsvpConfigHook).toContain('const handleSaveRsvpConfig = useCallback(async () => {');
-    expect(rsvpConfigHook).toContain('writeStoredDemoRsvpConfig({ questions: cleanedQuestions, mealEnabled: rsvpMealEnabled, mealOptions });');
+    expect(rsvpConfigHook).toContain('writeStoredDemoRsvpConfig({');
+    expect(rsvpConfigHook).toContain('accessSelection: rsvpAccessSelection');
     expect(rsvpConfigHook).toContain('await persistGuestDashboardRsvpConfig({');
+    expect(rsvpConfigHook).toContain('rsvpAccessSelection,');
     expect(routeSupportHook).toContain('export function useGuestDashboardRouteSupport({');
     expect(routeSupportHook).toContain("const [confirmDialog, setConfirmDialog] = useState<null | Omit<ConfirmDialogProps, 'open'>>(null);");
     expect(routeSupportHook).toContain("const requestConfirmation = (options: Pick<ConfirmDialogProps, 'title' | 'description' | 'confirmLabel' | 'tone'>) =>");
@@ -723,8 +725,9 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('const SONG_REQUEST_RSVP_SELECT = ');
     expect(source).toContain('.select(PLANNING_TASK_SELECT)');
     expect(source).toContain('const { data, error } = await query(PLANNING_VENDOR_SELECT)');
-    expect(source).toContain('const fallback = await query(PLANNING_VENDOR_LEGACY_SELECT)');
-    expect(source).toContain('.select(PLANNING_BUDGET_ITEM_SELECT)');
+    expect(source).toContain('const fallbackSelect = missingPhone');
+    expect(source).toContain('const fallback = await query(fallbackSelect)');
+    expect(source).toContain('const { data, error } = await query(PLANNING_BUDGET_ITEM_SELECT)');
     expect(source).toContain('.select(PLANNING_SITE_META_SELECT)');
     expect(source).toContain('.select(PLANNING_TOTAL_BUDGET_SELECT)');
     expect(source).toContain('.select(SEATING_READINESS_EVENT_SELECT)');
@@ -849,7 +852,7 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('.select(SEATING_LOOKUP_ASSIGNMENT_SELECT)');
     expect(source).toContain('.select(SEATING_LOOKUP_TABLE_SELECT)');
     expect(source).toContain('.select(SEATING_LOOKUP_GUEST_SELECT)');
-    expect(source).toContain("resolveChronologicalOperationalEventId(itineraryEvents)");
+    expect(source).toContain("resolveOperationalEventId({ events: itineraryEvents })");
     expect(source).toContain(".select('id, event_name, event_date, start_time, location_name')");
     expect(source).toContain('export async function refreshSeatingSession()');
     expect(source).toContain('supabase.auth.refreshSession()');
@@ -939,7 +942,7 @@ describe('dashboard data boundary guards', () => {
     expect(actionsHook).toContain('const assignGuestToSeatDirect = useCallback(async (guestId: string, targetTableId: string, targetSeatIndex?: number) => {');
     expect(actionsHook).toContain('async function handleCheckDrift()');
     expect(actionsHook).toContain('await invalidateDriftedAssignments(args.seatingEvent.id, args.selectedEventId, args.siteId);');
-    expect(actionsHook).toContain('await refreshSeatingSession();');
+    expect(actionsHook).toContain('refresh: refreshSeatingSession');
     expect(actionsHook).toContain('async function handleBulkCheckIn(guestIds: string[], checkedIn: boolean)');
     expect(lookupPage).not.toContain("from '../../lib/supabase'");
     expect(lookupPage).not.toContain("from '../../lib/activeSite'");
@@ -1060,9 +1063,10 @@ describe('dashboard data boundary guards', () => {
     expect(actionsHook).toContain('const toggleCheckIn = async (guest: GuestLiteForCoordinator) => {');
     expect(actionsHook).toContain('itineraryEventId: args.currentDoorEventId,');
     expect(actionsHook).toContain('const sendDayOfAlert = async () => {');
-    expect(actionsHook).toContain('await createCoordinatorAlertMessage({');
+    expect(actionsHook).toContain('action: () => createCoordinatorAlertMessage({');
     expect(actionsHook).toContain('const addQnaItem = async () => {');
-    expect(actionsHook).toContain('const data = await createCoordinatorQnaQuestion(args.siteId, q);');
+    expect(actionsHook).toContain('const data = await retryOnceAfterRefresh({');
+    expect(actionsHook).toContain('action: () => createCoordinatorQnaQuestion(args.siteId!, q)');
     expect(cueLifecycle).toContain('export function useCoordinatorDashboardCueLifecycle(');
     expect(cueLifecycle).toContain('shouldResetCoordinatorCommandJumpLabel({');
     expect(cueLifecycle).toContain("const timer = window.setTimeout(() => {");
@@ -1252,7 +1256,7 @@ describe('dashboard data boundary guards', () => {
     expect(liveContent).toContain('A calmer place to plan {coupleLabel}.');
     expect(liveContent).toContain('<CardTitle>Your wedding site</CardTitle>');
     expect(service).toContain("const OVERVIEW_DISMISSALS_SITE_SELECT = 'wedding_data'");
-    expect(service).toContain("const OVERVIEW_SITE_SELECT = 'id, site_slug, site_url, is_published, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location'");
+    expect(service).toContain("const OVERVIEW_SITE_SELECT = 'id, site_slug, site_url, is_published, site_json, notification_prefs, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location'");
     expect(service).toContain('.select(OVERVIEW_DISMISSALS_SITE_SELECT)');
     expect(service).toContain('.select(OVERVIEW_SITE_SELECT)');
     expect(service).toContain('.select(OVERVIEW_GUEST_SELECT)');

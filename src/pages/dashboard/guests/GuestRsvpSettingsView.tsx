@@ -6,10 +6,12 @@ import { Badge, Button, Card, Input, Select } from '../../../components/ui';
 import type { ConfirmDialogProps } from '../../../components/ui/ConfirmDialog';
 import {
   RSVP_QUESTION_TEMPLATES,
+  type PersistedRsvpAccessSelection,
   type RsvpAccessModePlan,
   type RsvpQuestionTemplate,
   type RsvpQuestionTemplateCoverageItem,
   type RsvpSetupChecklistItem,
+  type SupportedRsvpAccessModeId,
 } from '../../../lib/rsvpAccessPlanner';
 import { formatGuestOpsRelativeTime } from '../guestOpsTime';
 import {
@@ -30,6 +32,7 @@ interface GuestRsvpStats {
 interface GuestRsvpSettingsViewProps {
   recommendedRsvpAccessMode: RsvpAccessModePlan;
   rsvpAccessModePlan: RsvpAccessModePlan[];
+  rsvpAccessSelection: PersistedRsvpAccessSelection;
   rsvpAuditFeed: GuestAuditEntry[];
   rsvpAuditLoading: boolean;
   rsvpAutoSaveState: 'idle' | 'saving' | 'saved' | 'error';
@@ -44,6 +47,7 @@ interface GuestRsvpSettingsViewProps {
   onSaveRsvpConfig: () => void;
   onSetConfirmDialog: React.Dispatch<React.SetStateAction<null | Omit<ConfirmDialogProps, 'open'>>>;
   onSetGuestsTab: (tab: 'ops' | 'rsvp-config') => void;
+  onSetRsvpAccessSelection: React.Dispatch<React.SetStateAction<PersistedRsvpAccessSelection>>;
   onSetRsvpConfigDirty: (dirty: boolean) => void;
   onSetRsvpMealEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   onSetRsvpMealOptions: React.Dispatch<React.SetStateAction<string[]>>;
@@ -76,6 +80,7 @@ function getRsvpTemplateLabel(template: RsvpQuestionTemplate): string {
 export function GuestRsvpSettingsView({
   recommendedRsvpAccessMode,
   rsvpAccessModePlan,
+  rsvpAccessSelection,
   rsvpAuditFeed,
   rsvpAuditLoading,
   rsvpAutoSaveState,
@@ -90,6 +95,7 @@ export function GuestRsvpSettingsView({
   onSaveRsvpConfig,
   onSetConfirmDialog,
   onSetGuestsTab,
+  onSetRsvpAccessSelection,
   onSetRsvpConfigDirty,
   onSetRsvpMealEnabled,
   onSetRsvpMealOptions,
@@ -100,11 +106,28 @@ export function GuestRsvpSettingsView({
   const safeRecommendedRsvpAccessMode = recommendedRsvpAccessMode
     ?? safeRsvpAccessModePlan[0]
     ?? { id: 'private_link', label: 'Private guest links', detail: '', tradeoff: '', status: 'needs-setup' as const };
+  const safeRsvpAccessSelection = rsvpAccessSelection ?? {
+    primaryMode: 'private_link' as const,
+    allowNameLookupBackup: true,
+  };
   const safeRsvpQuestionTemplateCoverage = Array.isArray(rsvpQuestionTemplateCoverage) ? rsvpQuestionTemplateCoverage : [];
   const safeRsvpQuestions = Array.isArray(rsvpQuestions) ? rsvpQuestions : [];
   const safeRsvpMealOptions = Array.isArray(rsvpMealOptions) ? rsvpMealOptions : [];
   const safeRsvpSetupChecklist = Array.isArray(rsvpSetupChecklist) ? rsvpSetupChecklist : [];
   const markRsvpConfigDirty = () => onSetRsvpConfigDirty(true);
+  const rsvpAccessSummary = safeRsvpAccessSelection.primaryMode === 'private_link'
+    ? safeRsvpAccessSelection.allowNameLookupBackup
+      ? 'Guests reply through private RSVP links, with name lookup kept on as the backup for misplaced invites.'
+      : 'Guests reply through private RSVP links only.'
+    : 'Guests can find their RSVP by name or email, while private invite links still stay available per guest.';
+
+  const selectPrimaryMode = (primaryMode: SupportedRsvpAccessModeId) => {
+    onSetRsvpAccessSelection((prev) => ({
+      primaryMode,
+      allowNameLookupBackup: primaryMode === 'name_lookup' ? false : prev.allowNameLookupBackup,
+    }));
+    markRsvpConfigDirty();
+  };
 
   const updateMealOption = (index: number, value: string) => {
     onSetRsvpMealOptions((prev) => {
@@ -164,7 +187,7 @@ export function GuestRsvpSettingsView({
             <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-text-primary">RSVP access mode</h3>
-                <p className="text-sm text-text-secondary">Current guest access uses private guest links with name lookup as the backup.</p>
+                <p className="text-sm text-text-secondary">{rsvpAccessSummary}</p>
               </div>
               <Badge variant="success">Recommended: {safeRecommendedRsvpAccessMode.label}</Badge>
             </div>
@@ -182,7 +205,10 @@ export function GuestRsvpSettingsView({
                   }`}
                 >
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-text-primary">{mode.label}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-text-primary">{mode.label}</p>
+                      {mode.selected ? <Badge variant="neutral">Selected</Badge> : null}
+                    </div>
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
                       mode.status === 'recommended'
                         ? 'bg-primary/10 text-primary'
@@ -197,8 +223,47 @@ export function GuestRsvpSettingsView({
                   </div>
                   <p className="text-sm text-text-secondary">{mode.detail}</p>
                   <p className="mt-2 text-xs text-text-tertiary">{mode.tradeoff}</p>
+                  {mode.id === 'private_link' || mode.id === 'name_lookup' ? (
+                    <div className="mt-3">
+                      <Button
+                        type="button"
+                        variant={mode.selected ? 'secondary' : 'outline'}
+                        size="sm"
+                        disabled={mode.selected}
+                        onClick={() => selectPrimaryMode(mode.id as SupportedRsvpAccessModeId)}
+                      >
+                        {mode.selected ? 'Selected as primary' : 'Use as primary access'}
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
               ))}
+            </div>
+
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
+              <label className="flex items-start gap-3 text-sm text-text-primary">
+                <input
+                  type="checkbox"
+                  checked={safeRsvpAccessSelection.allowNameLookupBackup}
+                  disabled={safeRsvpAccessSelection.primaryMode !== 'private_link'}
+                  onChange={(event) => {
+                    onSetRsvpAccessSelection((prev) => ({
+                      ...prev,
+                      allowNameLookupBackup: event.target.checked,
+                    }));
+                    markRsvpConfigDirty();
+                  }}
+                  className="mt-0.5 h-4 w-4"
+                />
+                <span>
+                  Keep name lookup as the backup when guests lose their private link.
+                  <span className="mt-1 block text-xs text-text-tertiary">
+                    {safeRsvpAccessSelection.primaryMode === 'private_link'
+                      ? 'This keeps search-by-name recovery on without changing your primary RSVP path.'
+                      : 'Name lookup is already the active RSVP path, so the backup toggle stays off.'}
+                  </span>
+                </span>
+              </label>
             </div>
 
             <p className="text-xs text-text-tertiary">

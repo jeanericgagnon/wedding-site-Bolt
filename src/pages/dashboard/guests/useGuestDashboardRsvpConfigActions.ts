@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 
 import type { ToastType } from '../../../components/ui/Toast';
 import {
   createRsvpQuestionFromTemplate,
+  type PersistedRsvpAccessSelection,
   type RsvpQuestionTemplate,
 } from '../../../lib/rsvpAccessPlanner';
 import { safeGuestsDashboardError, toTitleCase } from './guestDashboardUtils';
@@ -14,6 +15,7 @@ interface UseGuestDashboardRsvpConfigActionsInput {
   guestsTab: 'ops' | 'rsvp-config';
   isDemoMode: boolean;
   rsvpConfigLoadedRef: MutableRefObject<boolean>;
+  rsvpAccessSelection: PersistedRsvpAccessSelection;
   rsvpMealEnabled: boolean;
   rsvpMealOptions: string[];
   rsvpQuestions: RSVPQuestionSetting[];
@@ -26,6 +28,7 @@ export function useGuestDashboardRsvpConfigActions({
   guestsTab,
   isDemoMode,
   rsvpConfigLoadedRef,
+  rsvpAccessSelection,
   rsvpMealEnabled,
   rsvpMealOptions,
   rsvpQuestions,
@@ -80,7 +83,12 @@ export function useGuestDashboardRsvpConfigActions({
       }
 
       if (isDemoMode || !weddingSiteId) {
-        writeStoredDemoRsvpConfig({ questions: cleanedQuestions, mealEnabled: rsvpMealEnabled, mealOptions });
+        writeStoredDemoRsvpConfig({
+          questions: cleanedQuestions,
+          mealEnabled: rsvpMealEnabled,
+          mealOptions,
+          accessSelection: rsvpAccessSelection,
+        });
         setRsvpQuestions(cleanedQuestions);
         toast('RSVP settings saved (demo).', 'success');
         setRsvpAutoSaveState('saved');
@@ -93,6 +101,7 @@ export function useGuestDashboardRsvpConfigActions({
         questions: cleanedQuestions,
         mealEnabled: rsvpMealEnabled,
         mealOptions,
+        rsvpAccessSelection,
       });
       setRsvpQuestions(cleanedQuestions);
       toast('RSVP settings saved.', 'success');
@@ -106,6 +115,7 @@ export function useGuestDashboardRsvpConfigActions({
     }
   }, [
     isDemoMode,
+    rsvpAccessSelection,
     rsvpMealEnabled,
     rsvpMealOptions,
     rsvpQuestions,

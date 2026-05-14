@@ -226,8 +226,10 @@ describe('guestService', () => {
     expect(campaignHook).toContain('await markGuestInvitationAndReminderSentForSite(weddingSiteId, guest.id, sentAtIso)');
     expect(rsvpConfigHook).toContain('const addRsvpQuestionTemplate = useCallback((template: RsvpQuestionTemplate) => {');
     expect(rsvpConfigHook).toContain('const handleSaveRsvpConfig = useCallback(async () => {');
-    expect(rsvpConfigHook).toContain('writeStoredDemoRsvpConfig({ questions: cleanedQuestions, mealEnabled: rsvpMealEnabled, mealOptions });');
+    expect(rsvpConfigHook).toContain('writeStoredDemoRsvpConfig({');
+    expect(rsvpConfigHook).toContain('accessSelection: rsvpAccessSelection');
     expect(rsvpConfigHook).toContain('await persistGuestDashboardRsvpConfig({');
+    expect(rsvpConfigHook).toContain('rsvpAccessSelection,');
     expect(rsvpConfigHook).toContain('autoSaveTimer.current = window.setTimeout(() => {');
     expect(conflictHook).toContain('const visibleRsvpConflicts = useMemo(');
     expect(conflictHook).toContain('const rsvpConflictStats = useMemo<RsvpConflictStats>(() => {');
@@ -511,6 +513,12 @@ describe('guestService', () => {
         rsvp_meal_config: { enabled: true, options: ['Chicken', 'Fish'] },
         reminder_cadence_days: 3,
         auto_reminders_enabled: true,
+        wedding_data: {
+          rsvp_access: {
+            primary_mode: 'private_link',
+            allow_name_lookup_backup: true,
+          },
+        },
       },
       error: null,
     });
@@ -524,6 +532,10 @@ describe('guestService', () => {
       permissions: ['guests'],
       mealEnabled: true,
       mealOptions: ['Chicken', 'Fish'],
+      rsvpAccessSelection: {
+        primaryMode: 'private_link',
+        allowNameLookupBackup: true,
+      },
       reminderCadenceDays: 3,
       autoRemindersEnabled: true,
       siteInfo: expect.objectContaining({ id: 'site-1', site_slug: 'alex-jordan' }),
@@ -961,19 +973,40 @@ describe('guestService', () => {
   });
 
   it('persists guest RSVP config through the service', async () => {
-    rpcMock.mockResolvedValueOnce({ error: null });
+    rpcMock
+      .mockResolvedValueOnce({ error: null })
+      .mockResolvedValueOnce({ error: null });
 
     await expect(persistGuestDashboardRsvpConfig({
       weddingSiteId: 'site-1',
       questions: [],
       mealEnabled: true,
       mealOptions: ['Chicken', 'Fish'],
+      rsvpAccessSelection: {
+        primaryMode: 'name_lookup',
+        allowNameLookupBackup: false,
+      },
+      weddingData: {
+        language_settings: { allowed_languages: ['en'] },
+      },
     })).resolves.toBeUndefined();
-    expect(rpcMock).toHaveBeenCalledWith('guest_dashboard_persist_rsvp_config', {
+    expect(rpcMock).toHaveBeenNthCalledWith(1, 'guest_dashboard_persist_rsvp_config', {
       p_wedding_site_id: 'site-1',
       p_questions: [],
       p_meal_enabled: true,
       p_meal_options: ['Chicken', 'Fish'],
+    });
+    expect(rpcMock).toHaveBeenNthCalledWith(2, 'wedding_site_settings_patch', {
+      p_wedding_site_id: 'site-1',
+      p_patch: {
+        wedding_data: {
+          language_settings: { allowed_languages: ['en'] },
+          rsvp_access: {
+            primary_mode: 'name_lookup',
+            allow_name_lookup_backup: false,
+          },
+        },
+      },
     });
   });
 

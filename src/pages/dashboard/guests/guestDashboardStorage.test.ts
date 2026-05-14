@@ -16,6 +16,7 @@ import {
   type RsvpSavedSegment,
 } from './guestDashboardStorage';
 import {
+  DEMO_RSVP_ACCESS_CONFIG_KEY,
   DEMO_RSVP_CUSTOM_QUESTIONS_KEY,
   DEMO_RSVP_MEAL_CONFIG_KEY,
   RSVP_CAMPAIGN_LOG_KEY,
@@ -175,6 +176,10 @@ describe('guest dashboard storage helpers', () => {
       enabled: false,
       options: ['Chicken', '', 123, 'Vegan'],
     }));
+    localStorage.setItem(DEMO_RSVP_ACCESS_CONFIG_KEY, JSON.stringify({
+      primary_mode: 'name_lookup',
+      allow_name_lookup_backup: false,
+    }));
 
     expect(readStoredDemoRsvpConfig()).toEqual({
       questions: [{
@@ -187,6 +192,10 @@ describe('guest dashboard storage helpers', () => {
       }],
       mealEnabled: false,
       mealOptions: ['Chicken', 'Vegan'],
+      accessSelection: {
+        primaryMode: 'name_lookup',
+        allowNameLookupBackup: false,
+      },
     });
   });
 
@@ -202,16 +211,28 @@ describe('guest dashboard storage helpers', () => {
       }],
       mealEnabled: true,
       mealOptions: ['Chicken', ''],
+      accessSelection: {
+        primaryMode: 'private_link',
+        allowNameLookupBackup: true,
+      },
     });
 
     expect(readStoredDemoRsvpConfig().mealOptions).toEqual(['Chicken']);
     expect(readStoredDemoRsvpConfig().questions[0]?.type).toBe('long_text');
+    expect(readStoredDemoRsvpConfig().accessSelection).toEqual({
+      primaryMode: 'private_link',
+      allowNameLookupBackup: true,
+    });
 
     localStorage.setItem(DEMO_RSVP_CUSTOM_QUESTIONS_KEY, '{broken');
     expect(readStoredDemoRsvpConfig()).toEqual({
       questions: [],
       mealEnabled: true,
       mealOptions: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'],
+      accessSelection: {
+        primaryMode: 'name_lookup',
+        allowNameLookupBackup: false,
+      },
     });
   });
 
@@ -229,10 +250,21 @@ describe('guest dashboard storage helpers', () => {
       }],
       mealEnabled: false,
       mealOptions: [' Steak ', 'x'.repeat(140)],
+      accessSelection: {
+        primaryMode: 'name_lookup',
+        allowNameLookupBackup: false,
+      },
     });
 
     expect(JSON.parse(localStorage.getItem(DEMO_RSVP_CUSTOM_QUESTIONS_KEY) || '{}')).toMatchObject({
       savedAtISO: '2026-05-06T12:00:00.000Z',
+    });
+    expect(JSON.parse(localStorage.getItem(DEMO_RSVP_ACCESS_CONFIG_KEY) || '{}')).toMatchObject({
+      savedAtISO: '2026-05-06T12:00:00.000Z',
+      value: {
+        primary_mode: 'name_lookup',
+        allow_name_lookup_backup: false,
+      },
     });
     expect(readStoredDemoRsvpConfig().questions[0]?.options).toHaveLength(12);
     expect(readStoredDemoRsvpConfig().mealOptions).toEqual(['Steak', 'x'.repeat(120)]);
@@ -248,13 +280,22 @@ describe('guest dashboard storage helpers', () => {
       savedAtISO: new Date(Date.now() - GUEST_DASHBOARD_STORAGE_RETENTION_MS - 1).toISOString(),
       value: { enabled: false, options: ['Old'] },
     }));
+    localStorage.setItem(DEMO_RSVP_ACCESS_CONFIG_KEY, JSON.stringify({
+      savedAtISO: new Date(Date.now() - GUEST_DASHBOARD_STORAGE_RETENTION_MS - 1).toISOString(),
+      value: { primary_mode: 'private_link', allow_name_lookup_backup: true },
+    }));
 
     expect(readStoredDemoRsvpConfig()).toEqual({
       questions: [],
       mealEnabled: true,
       mealOptions: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'],
+      accessSelection: {
+        primaryMode: 'name_lookup',
+        allowNameLookupBackup: false,
+      },
     });
     expect(localStorage.getItem(DEMO_RSVP_CUSTOM_QUESTIONS_KEY)).toBeNull();
     expect(localStorage.getItem(DEMO_RSVP_MEAL_CONFIG_KEY)).toBeNull();
+    expect(localStorage.getItem(DEMO_RSVP_ACCESS_CONFIG_KEY)).toBeNull();
   });
 });

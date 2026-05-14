@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { buildRsvpAccessModePlan, buildRsvpQuestionTemplateCoverage, buildRsvpSetupChecklist } from '../../../lib/rsvpAccessPlanner';
+import {
+  buildRsvpAccessModePlan,
+  buildRsvpQuestionTemplateCoverage,
+  buildRsvpSetupChecklist,
+  type PersistedRsvpAccessSelection,
+} from '../../../lib/rsvpAccessPlanner';
 import { type PlannerAccessRole, readPlannerAccessRole, writePlannerAccessRole } from '../../../lib/plannerAccess';
 import type { ConfirmDialogProps } from '../../../components/ui/ConfirmDialog';
 import type { Guest, ItineraryEvent, RSVPQuestionSetting } from './guestDashboardTypes';
@@ -8,6 +13,7 @@ type Args = {
   guests: Guest[];
   guestsRole: PlannerAccessRole;
   itineraryFilterEvents: ItineraryEvent[];
+  rsvpAccessSelection: PersistedRsvpAccessSelection;
   rsvpMealEnabled: boolean;
   rsvpMealOptions: string[];
   rsvpQuestions: RSVPQuestionSetting[];
@@ -19,6 +25,7 @@ export function useGuestDashboardRouteSupport({
   guests,
   guestsRole,
   itineraryFilterEvents,
+  rsvpAccessSelection,
   rsvpMealEnabled,
   rsvpMealOptions,
   rsvpQuestions,
@@ -70,7 +77,7 @@ export function useGuestDashboardRouteSupport({
     inviteTokenCount: guests.filter((guest) => Boolean(guest.invite_token)).length,
     householdCount: new Set(guests.map((guest) => guest.household_id).filter(Boolean)).size,
     eventCount: effectiveItineraryEvents.length,
-  }), [effectiveItineraryEvents.length, guests]);
+  }, rsvpAccessSelection), [effectiveItineraryEvents.length, guests, rsvpAccessSelection]);
 
   const recommendedRsvpAccessMode = rsvpAccessModePlan.find((mode) => mode.status === 'recommended') ?? rsvpAccessModePlan[0];
   const rsvpQuestionTemplateCoverage = useMemo(() => buildRsvpQuestionTemplateCoverage(rsvpQuestions), [rsvpQuestions]);
@@ -82,7 +89,7 @@ export function useGuestDashboardRouteSupport({
     questions: rsvpQuestions,
     mealEnabled: rsvpMealEnabled,
     mealOptionCount: rsvpMealOptions.filter((option) => option.trim().length > 0).length,
-  }), [effectiveItineraryEvents.length, guests, rsvpMealEnabled, rsvpMealOptions, rsvpQuestions]);
+  }, rsvpAccessSelection), [effectiveItineraryEvents.length, guests, rsvpAccessSelection, rsvpMealEnabled, rsvpMealOptions, rsvpQuestions]);
 
   return {
     confirmDialog,

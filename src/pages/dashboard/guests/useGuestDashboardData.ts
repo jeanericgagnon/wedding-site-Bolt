@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 
 import { demoGuests, demoRSVPs, demoWeddingSite } from '../../../lib/demoData';
+import { deriveDefaultRsvpAccessSelection } from '../../../lib/rsvpAccessPlanner';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../../lib/plannerAccess';
 import { hasRespondedRsvpStatus } from '../../../lib/rsvpStatus';
 import type { ToastType } from '../../../components/ui/Toast';
@@ -49,6 +50,10 @@ export function useGuestDashboardData({
   const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestionSetting[]>([]);
   const [rsvpMealEnabled, setRsvpMealEnabled] = useState(true);
   const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan']);
+  const [rsvpAccessSelection, setRsvpAccessSelection] = useState(() => deriveDefaultRsvpAccessSelection({
+    guestCount: 0,
+    inviteTokenCount: 0,
+  }));
   const [rsvpConflicts, setRsvpConflicts] = useState<RsvpConflict[]>([]);
   const [rsvpConflictHistory, setRsvpConflictHistory] = useState<RsvpConflict[]>([]);
   const [itineraryFilterEvents, setItineraryFilterEvents] = useState<ItineraryEvent[]>([]);
@@ -82,6 +87,7 @@ export function useGuestDashboardData({
       setRsvpQuestions(demoRsvpConfig.questions);
       setRsvpMealEnabled(demoRsvpConfig.mealEnabled);
       setRsvpMealOptions(demoRsvpConfig.mealOptions);
+      setRsvpAccessSelection(demoRsvpConfig.accessSelection);
       rsvpConfigLoadedRef.current = true;
       return;
     }
@@ -97,6 +103,7 @@ export function useGuestDashboardData({
         setRsvpQuestions(snapshot.questions);
         setRsvpMealEnabled(snapshot.mealEnabled);
         setRsvpMealOptions(snapshot.mealOptions);
+        setRsvpAccessSelection(snapshot.rsvpAccessSelection);
         if (snapshot.reminderCadenceDays) setReminderCadenceDays(snapshot.reminderCadenceDays);
         setAutoRemindersEnabled(snapshot.autoRemindersEnabled);
         rsvpConfigLoadedRef.current = true;
@@ -262,6 +269,7 @@ export function useGuestDashboardData({
     rsvpAuditLoading,
     rsvpConflictHistory,
     rsvpConflicts,
+    rsvpAccessSelection,
     rsvpMealEnabled,
     rsvpMealOptions,
     rsvpQuestions,
@@ -271,6 +279,7 @@ export function useGuestDashboardData({
     setItineraryEvents,
     setRsvpConflictHistory,
     setRsvpConflicts,
+    setRsvpAccessSelection,
     setRsvpMealEnabled,
     setRsvpMealOptions,
     setRsvpQuestions,

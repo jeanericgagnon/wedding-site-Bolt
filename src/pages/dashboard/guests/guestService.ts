@@ -1,6 +1,12 @@
 import { supabase } from '../../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
 import { resolvePublicSiteSlugFromRow } from '../../../lib/publicSiteSlug';
+import {
+  deriveDefaultRsvpAccessSelection,
+  normalizePersistedRsvpAccessSelection,
+  serializePersistedRsvpAccessSelection,
+  type PersistedRsvpAccessSelection,
+} from '../../../lib/rsvpAccessPlanner';
 import { deriveInviteEvents, type RsvpSeedEvent } from '../../../lib/rsvpEventFallback';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../../lib/plannerAccess';
 import {
@@ -24,7 +30,7 @@ export const GUEST_DASHBOARD_RSVP_SELECT = [
   'notes',
   'custom_answers',
 ].join(', ');
-export const GUEST_SITE_SETTINGS_SELECT = 'id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_address, site_url, site_slug, rsvp_custom_questions, rsvp_meal_config, reminder_cadence_days, auto_reminders_enabled';
+export const GUEST_SITE_SETTINGS_SELECT = 'id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_address, site_url, site_slug, rsvp_custom_questions, rsvp_meal_config, reminder_cadence_days, auto_reminders_enabled, wedding_data';
 export const GUEST_CONFLICT_SELECT = 'id, guest_id, conflict_code, message, severity, created_at, resolved, resolved_at';
 export const GUEST_ITINERARY_EVENT_SELECT = 'id, event_name, event_date, start_time, location_name';
 export const GUEST_ITINERARY_SITE_SELECT = 'wedding_data';
@@ -90,6 +96,7 @@ export interface GuestDashboardSiteSettingsSnapshot {
   questions: RSVPQuestionSetting[];
   mealEnabled: boolean;
   mealOptions: string[];
+  rsvpAccessSelection: PersistedRsvpAccessSelection;
   reminderCadenceDays: 1 | 3 | 7 | null;
   autoRemindersEnabled: boolean;
 }
@@ -132,6 +139,8 @@ export interface PersistGuestDashboardRsvpConfigInput {
   questions: RSVPQuestionSetting[];
   mealEnabled: boolean;
   mealOptions: string[];
+  rsvpAccessSelection: PersistedRsvpAccessSelection;
+  weddingData?: Record<string, unknown> | null;
 }
 
 export async function loadGuestDashboardSiteSettings(userId: string): Promise<GuestDashboardSiteSettingsSnapshot> {
@@ -149,6 +158,7 @@ export async function loadGuestDashboardSiteSettings(userId: string): Promise<Gu
       questions: [],
       mealEnabled: true,
       mealOptions: [...DEFAULT_RSVP_MEAL_OPTIONS],
+      rsvpAccessSelection: deriveDefaultRsvpAccessSelection({ guestCount: 0, inviteTokenCount: 0 }),
       reminderCadenceDays: null,
       autoRemindersEnabled: false,
     };
@@ -171,6 +181,7 @@ export async function loadGuestDashboardSiteSettings(userId: string): Promise<Gu
       questions: [],
       mealEnabled: true,
       mealOptions: [...DEFAULT_RSVP_MEAL_OPTIONS],
+      rsvpAccessSelection: deriveDefaultRsvpAccessSelection({ guestCount: 0, inviteTokenCount: 0 }),
       reminderCadenceDays: null,
       autoRemindersEnabled: false,
     };
@@ -197,6 +208,14 @@ export async function loadGuestDashboardSiteSettings(userId: string): Promise<Gu
     ? (mealCfg.options as unknown[]).filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
     : [...DEFAULT_RSVP_MEAL_OPTIONS];
   const cadence = Number((data as { reminder_cadence_days?: unknown }).reminder_cadence_days);
+  const weddingData = ((data as { wedding_data?: unknown }).wedding_data as Record<string, unknown> | null) ?? null;
+  const rsvpAccessSelection = normalizePersistedRsvpAccessSelection(
+    (weddingData?.rsvp_access as Record<string, unknown> | undefined) ?? null,
+    deriveDefaultRsvpAccessSelection({
+      guestCount: 0,
+      inviteTokenCount: 0,
+    }),
+  );
 
   return {
     activeSiteId,
@@ -215,6 +234,7 @@ export async function loadGuestDashboardSiteSettings(userId: string): Promise<Gu
     questions,
     mealEnabled,
     mealOptions,
+    rsvpAccessSelection,
     reminderCadenceDays: [1, 3, 7].includes(cadence) ? (cadence as 1 | 3 | 7) : null,
     autoRemindersEnabled: Boolean((data as { auto_reminders_enabled?: unknown }).auto_reminders_enabled),
   };
@@ -229,6 +249,32 @@ export async function persistGuestDashboardRsvpConfig(input: PersistGuestDashboa
   });
 
   if (error) throw error;
+
+  let currentWeddingData = input.weddingData;
+  if (!currentWeddingData) {
+    const { data, error: loadError } = await supabase
+      .from('wedding_sites')
+      .select('wedding_data')
+      .eq('id', input.weddingSiteId)
+      .maybeSingle();
+
+    if (loadError) throw loadError;
+    currentWeddingData = ((data as { wedding_data?: unknown } | null)?.wedding_data as Record<string, unknown> | null) ?? null;
+  }
+
+  const nextWeddingData = {
+    ...((currentWeddingData && typeof currentWeddingData === 'object') ? currentWeddingData : {}),
+    rsvp_access: serializePersistedRsvpAccessSelection(input.rsvpAccessSelection),
+  };
+
+  const { error: settingsError } = await supabase.rpc('wedding_site_settings_patch', {
+    p_wedding_site_id: input.weddingSiteId,
+    p_patch: {
+      wedding_data: nextWeddingData,
+    },
+  });
+
+  if (settingsError) throw settingsError;
 }
 
 export async function loadGuestDashboardSnapshot(weddingSiteId: string): Promise<GuestDashboardRecordsSnapshot> {

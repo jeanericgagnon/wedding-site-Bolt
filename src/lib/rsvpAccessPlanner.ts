@@ -1,4 +1,10 @@
 export type RsvpAccessModeId = 'private_link' | 'name_lookup' | 'unique_code' | 'password' | 'open';
+export type SupportedRsvpAccessModeId = 'private_link' | 'name_lookup';
+
+export interface PersistedRsvpAccessSelection {
+  primaryMode: SupportedRsvpAccessModeId;
+  allowNameLookupBackup: boolean;
+}
 
 export interface RsvpAccessModePlanInput {
   guestCount: number;
@@ -13,6 +19,7 @@ export interface RsvpAccessModePlan {
   detail: string;
   tradeoff: string;
   status: 'recommended' | 'ready' | 'needs-setup' | 'future';
+  selected?: boolean;
 }
 
 export type RsvpQuestionTemplateKey = 'dietary' | 'song' | 'shuttle' | 'lodging' | 'childcare' | 'plus_one_note' | 'event_attendance';
@@ -49,6 +56,69 @@ export interface RsvpSetupChecklistInput extends RsvpAccessModePlanInput {
   questions?: RsvpQuestionLike[];
   mealEnabled?: boolean;
   mealOptionCount?: number;
+}
+
+function computeRsvpAccessReadiness(input: RsvpAccessModePlanInput) {
+  const guestCount = Math.max(input.guestCount, 0);
+  const inviteTokenCount = Math.max(input.inviteTokenCount, 0);
+  const tokenCoverage = guestCount > 0 ? inviteTokenCount / guestCount : 0;
+  const hasGuestList = guestCount > 0;
+  const privateLinksReady = hasGuestList && tokenCoverage >= 0.8;
+
+  return {
+    guestCount,
+    hasGuestList,
+    inviteTokenCount,
+    privateLinksReady,
+    tokenCoverage,
+  };
+}
+
+function toSupportedRsvpAccessModeId(value: unknown): SupportedRsvpAccessModeId | null {
+  return value === 'private_link' || value === 'name_lookup' ? value : null;
+}
+
+export function deriveDefaultRsvpAccessSelection(input: RsvpAccessModePlanInput): PersistedRsvpAccessSelection {
+  const readiness = computeRsvpAccessReadiness(input);
+
+  return {
+    primaryMode: readiness.privateLinksReady ? 'private_link' : 'name_lookup',
+    allowNameLookupBackup: readiness.hasGuestList,
+  };
+}
+
+export function normalizePersistedRsvpAccessSelection(
+  value: unknown,
+  fallback: PersistedRsvpAccessSelection,
+): PersistedRsvpAccessSelection {
+  if (!value || typeof value !== 'object') {
+    return fallback;
+  }
+
+  const record = value as Record<string, unknown>;
+  const primaryMode = toSupportedRsvpAccessModeId(
+    record.primaryMode
+    ?? record.primary_mode
+    ?? record.currentMode
+    ?? record.current_mode,
+  );
+  const allowNameLookupBackup = typeof record.allowNameLookupBackup === 'boolean'
+    ? record.allowNameLookupBackup
+    : typeof record.allow_name_lookup_backup === 'boolean'
+      ? record.allow_name_lookup_backup
+      : fallback.allowNameLookupBackup;
+
+  return {
+    primaryMode: primaryMode ?? fallback.primaryMode,
+    allowNameLookupBackup,
+  };
+}
+
+export function serializePersistedRsvpAccessSelection(selection: PersistedRsvpAccessSelection) {
+  return {
+    primary_mode: selection.primaryMode,
+    allow_name_lookup_backup: selection.allowNameLookupBackup,
+  };
 }
 
 export const RSVP_QUESTION_TEMPLATES: RsvpQuestionTemplate[] = [
@@ -106,12 +176,11 @@ export const RSVP_QUESTION_TEMPLATES: RsvpQuestionTemplate[] = [
   },
 ];
 
-export function buildRsvpAccessModePlan(input: RsvpAccessModePlanInput): RsvpAccessModePlan[] {
-  const guestCount = Math.max(input.guestCount, 0);
-  const inviteTokenCount = Math.max(input.inviteTokenCount, 0);
-  const tokenCoverage = guestCount > 0 ? inviteTokenCount / guestCount : 0;
-  const hasGuestList = guestCount > 0;
-  const privateLinksReady = hasGuestList && tokenCoverage >= 0.8;
+export function buildRsvpAccessModePlan(
+  input: RsvpAccessModePlanInput,
+  selection = deriveDefaultRsvpAccessSelection(input),
+): RsvpAccessModePlan[] {
+  const { guestCount, inviteTokenCount, hasGuestList, privateLinksReady } = computeRsvpAccessReadiness(input);
 
   return [
     {
@@ -124,6 +193,7 @@ export function buildRsvpAccessModePlan(input: RsvpAccessModePlanInput): RsvpAcc
           : 'Add or import guests before using private RSVP links.',
       tradeoff: 'Best for households, private events, plus-one limits, and guest-specific RSVP readback.',
       status: privateLinksReady ? 'recommended' : 'needs-setup',
+      selected: selection.primaryMode === 'private_link',
     },
     {
       id: 'name_lookup',
@@ -133,6 +203,7 @@ export function buildRsvpAccessModePlan(input: RsvpAccessModePlanInput): RsvpAcc
         : 'Needs a guest list before lookup is useful.',
       tradeoff: 'Helpful backup mode, but names can collide and should be paired with careful household review.',
       status: hasGuestList && !privateLinksReady ? 'recommended' : hasGuestList ? 'ready' : 'needs-setup',
+      selected: selection.primaryMode === 'name_lookup',
     },
     {
       id: 'unique_code',
@@ -183,10 +254,14 @@ export function buildRsvpQuestionTemplateCoverage(questions: RsvpQuestionLike[] 
   }));
 }
 
-export function buildRsvpSetupChecklist(input: RsvpSetupChecklistInput): RsvpSetupChecklistItem[] {
-  const guestCount = Math.max(input.guestCount, 0);
-  const inviteTokenCount = Math.max(input.inviteTokenCount, 0);
-  const tokenCoverage = guestCount > 0 ? inviteTokenCount / guestCount : 0;
+export function buildRsvpSetupChecklist(
+  input: RsvpSetupChecklistInput,
+  selection = deriveDefaultRsvpAccessSelection(input),
+): RsvpSetupChecklistItem[] {
+  const readiness = computeRsvpAccessReadiness(input);
+  const guestCount = readiness.guestCount;
+  const inviteTokenCount = readiness.inviteTokenCount;
+  const tokenCoverage = readiness.tokenCoverage;
   const templateCoverage = buildRsvpQuestionTemplateCoverage(input.questions);
   const addedTemplateCount = templateCoverage.filter((template) => template.added).length;
   const mealEnabled = input.mealEnabled ?? false;
@@ -199,7 +274,9 @@ export function buildRsvpSetupChecklist(input: RsvpSetupChecklistInput): RsvpSet
       detail: guestCount === 0
         ? 'Add guests before private RSVP links can be proven.'
         : tokenCoverage >= 0.8
-          ? `${inviteTokenCount} of ${guestCount} guests have private RSVP links.`
+          ? selection.primaryMode === 'private_link'
+            ? `${inviteTokenCount} of ${guestCount} guests have private RSVP links, and they are the active RSVP path.`
+            : `${inviteTokenCount} of ${guestCount} guests have private RSVP links ready if you want to switch back to them.`
           : `${Math.max(guestCount - inviteTokenCount, 0)} guests still need private links before launch.`
       ,
       status: guestCount > 0 && tokenCoverage >= 0.8 ? 'ready' : 'needs-setup',
@@ -207,10 +284,14 @@ export function buildRsvpSetupChecklist(input: RsvpSetupChecklistInput): RsvpSet
     {
       id: 'name_lookup_backup',
       label: 'Name lookup backup',
-      detail: guestCount > 0
-        ? 'Guest lookup can back up private links for misplaced invitations.'
-        : 'Needs at least one guest before lookup can be useful.',
-      status: guestCount > 0 ? 'ready' : 'needs-setup',
+      detail: guestCount === 0
+        ? 'Needs at least one guest before lookup can be useful.'
+        : selection.primaryMode === 'name_lookup'
+          ? 'Name lookup is the active RSVP path right now.'
+          : selection.allowNameLookupBackup
+            ? 'Guest lookup can back up private links for misplaced invitations.'
+            : 'Turn on name lookup backup before launch if you want guests to recover misplaced invite links.',
+      status: guestCount > 0 && (selection.primaryMode === 'name_lookup' || selection.allowNameLookupBackup) ? 'ready' : 'needs-setup',
     },
     {
       id: 'question_templates',

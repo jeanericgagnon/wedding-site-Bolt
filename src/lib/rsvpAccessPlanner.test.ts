@@ -5,6 +5,9 @@ import {
   buildRsvpQuestionTemplateCoverage,
   buildRsvpSetupChecklist,
   createRsvpQuestionFromTemplate,
+  deriveDefaultRsvpAccessSelection,
+  normalizePersistedRsvpAccessSelection,
+  serializePersistedRsvpAccessSelection,
 } from './rsvpAccessPlanner';
 
 describe('rsvpAccessPlanner', () => {
@@ -15,6 +18,7 @@ describe('rsvpAccessPlanner', () => {
       status: 'recommended',
       label: 'Private guest links',
     });
+    expect(plan.find((mode) => mode.id === 'private_link')?.selected).toBe(true);
     expect(plan.find((mode) => mode.id === 'name_lookup')?.status).toBe('ready');
   });
 
@@ -29,6 +33,42 @@ describe('rsvpAccessPlanner', () => {
     const plan = buildRsvpAccessModePlan({ guestCount: 12, inviteTokenCount: 12 });
 
     expect(plan.find((mode) => mode.id === 'open')?.status).toBe('future');
+  });
+
+  it('normalizes persisted RSVP access selection from current and legacy shapes', () => {
+    const fallback = deriveDefaultRsvpAccessSelection({ guestCount: 20, inviteTokenCount: 19 });
+
+    expect(normalizePersistedRsvpAccessSelection({
+      primary_mode: 'name_lookup',
+      allow_name_lookup_backup: false,
+    }, fallback)).toEqual({
+      primaryMode: 'name_lookup',
+      allowNameLookupBackup: false,
+    });
+
+    expect(normalizePersistedRsvpAccessSelection({
+      primaryMode: 'private_link',
+      allowNameLookupBackup: true,
+    }, fallback)).toEqual({
+      primaryMode: 'private_link',
+      allowNameLookupBackup: true,
+    });
+
+    expect(normalizePersistedRsvpAccessSelection({
+      primary_mode: 'open',
+      allow_name_lookup_backup: false,
+    }, fallback)).toEqual({
+      primaryMode: fallback.primaryMode,
+      allowNameLookupBackup: false,
+    });
+
+    expect(serializePersistedRsvpAccessSelection({
+      primaryMode: 'private_link',
+      allowNameLookupBackup: true,
+    })).toEqual({
+      primary_mode: 'private_link',
+      allow_name_lookup_backup: true,
+    });
   });
 
   it('creates reusable question templates without sharing mutable option arrays', () => {
@@ -75,6 +115,23 @@ describe('rsvpAccessPlanner', () => {
     expect(checklist.find((item) => item.id === 'question_templates')?.detail).toContain('2 of 7');
     expect(checklist.find((item) => item.id === 'meal_choices')).toMatchObject({ status: 'ready' });
     expect(checklist.find((item) => item.id === 'future_access_modes')).toMatchObject({ status: 'planned' });
+  });
+
+  it('keeps name lookup backup honest when owners turn it off', () => {
+    const checklist = buildRsvpSetupChecklist({
+      guestCount: 24,
+      inviteTokenCount: 24,
+      mealEnabled: false,
+      mealOptionCount: 0,
+      questions: [],
+    }, {
+      primaryMode: 'private_link',
+      allowNameLookupBackup: false,
+    });
+
+    expect(checklist.find((item) => item.id === 'name_lookup_backup')).toMatchObject({
+      status: 'needs-setup',
+    });
   });
 
   it('flags missing RSVP setup pieces before launch proof', () => {

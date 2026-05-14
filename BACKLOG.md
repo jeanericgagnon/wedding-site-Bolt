@@ -342,7 +342,9 @@ Execution rule for this section:
    - keep SMS/Telnyx live-send behavior deferred until provider/compliance setup is ready
 
 4. `ACTIVE`: RSVP access modes and question templates
-   - persist owner-selected RSVP access mode instead of leaving code/password/open modes as planned-only
+   - this batch shipped: owner RSVP access mode is now persisted and hydrated as real site truth instead of staying planner-only copy, with supported primary modes (`private_link`, `name_lookup`) saved through `wedding_data.rsvp_access`, demo storage, the guest RSVP settings UI, and the owner proof checklist
+   - this batch shipped: the RSVP settings surface now shows the active primary mode and explicit name-lookup backup truth, while unsupported code/password/open modes remain visibly planned instead of pretending to be launch-ready
+   - this batch shipped: focused proof is green for planner normalization, demo-storage migration, service persistence, owner-facing selection UI, the broader guest RSVP ops smoke lane, and the standard local gate
    - implement recovery rules for unique-code/password flows
    - design and prove phone/email verification without breaking existing private-link behavior
    - add household-specific access proof beyond the current strict token lane

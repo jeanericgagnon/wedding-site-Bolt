@@ -4,6 +4,7 @@ export const RSVP_CAMPAIGN_PRESET_KEY = 'dayof_rsvp_campaign_preset_v1';
 export const RSVP_SAVED_SEGMENTS_KEY = 'dayof_rsvp_saved_segments_v1';
 export const DEMO_RSVP_CUSTOM_QUESTIONS_KEY = 'dayof_demo_rsvp_custom_questions_v1';
 export const DEMO_RSVP_MEAL_CONFIG_KEY = 'dayof_demo_rsvp_meal_config_v1';
+export const DEMO_RSVP_ACCESS_CONFIG_KEY = 'dayof_demo_rsvp_access_config_v1';
 
 export interface Guest {
   id: string;

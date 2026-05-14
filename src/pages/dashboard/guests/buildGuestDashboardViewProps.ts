@@ -226,6 +226,7 @@ export function buildGuestDashboardViewProps(args: any) {
   const guestRsvpConfigViewProps = {
     recommendedRsvpAccessMode: args.recommendedRsvpAccessMode,
     rsvpAccessModePlan: args.rsvpAccessModePlan,
+    rsvpAccessSelection: args.rsvpAccessSelection,
     rsvpAuditFeed: args.rsvpAuditFeed,
     rsvpAuditLoading: args.rsvpAuditLoading,
     rsvpAutoSaveState: args.rsvpAutoSaveState,
@@ -240,6 +241,7 @@ export function buildGuestDashboardViewProps(args: any) {
     onSaveRsvpConfig: args.onSaveRsvpConfig,
     onSetConfirmDialog: args.onSetConfirmDialog,
     onSetGuestsTab: args.onSetGuestsTab,
+    onSetRsvpAccessSelection: args.onSetRsvpAccessSelection,
     onSetRsvpConfigDirty: args.onSetRsvpConfigDirty,
     onSetRsvpMealEnabled: args.onSetRsvpMealEnabled,
     onSetRsvpMealOptions: args.onSetRsvpMealOptions,
