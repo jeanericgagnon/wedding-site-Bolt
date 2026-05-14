@@ -198,6 +198,9 @@ export function RegistryDashboardRouteContent(props: {
     : 0;
   const guestReadyCoverageRate = props.guestVisibilityStats.guestReadyCoverageRate ?? 0;
   const guestVisibleCoverageRate = props.guestVisibilityStats.guestVisibleCoverageRate ?? 0;
+  const fundReceivingCoverageRate = props.fundStats.count > 0
+    ? Math.round((props.fundStats.withProgress / props.fundStats.count) * 100)
+    : 0;
 
   const tabCount = (key: RegistryFilter) => {
     if (key === 'all') return props.counts.total;
@@ -344,7 +347,7 @@ export function RegistryDashboardRouteContent(props: {
                 {props.fundStats.withGoal > 0 ? ` across ${props.fundStats.withGoal} tracked fund${props.fundStats.withGoal === 1 ? '' : 's'}` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
-                {fundGoalCoverageRate}% goal-tracked · {props.fundStats.withProgress} showing tracked progress{props.fundStats.flexibleWithProgress > 0 ? ` · ${props.fundStats.flexibleWithProgress} flexible fund${props.fundStats.flexibleWithProgress === 1 ? '' : 's'} already receiving gifts` : ''}
+                {fundGoalCoverageRate}% goal-tracked · {fundReceivingCoverageRate}% already receiving gifts · {props.fundStats.withProgress} showing tracked progress{props.fundStats.flexibleWithProgress > 0 ? ` · ${props.fundStats.flexibleWithProgress} flexible fund${props.fundStats.flexibleWithProgress === 1 ? '' : 's'} already receiving gifts` : ''}
               </p>
             </Card>
             <Card variant="bordered" padding="md">
@@ -470,6 +473,9 @@ export function RegistryDashboardRouteContent(props: {
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Share-ready coverage: <span className="font-semibold text-text-primary">{fundShareReadyRate}%</span> · Goal-tracked funds: <span className="font-semibold text-text-primary">{fundGoalCoverageRate}%</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Receiving-gift coverage: <span className="font-semibold text-text-primary">{fundReceivingCoverageRate}%</span> · Funds already moving: <span className="font-semibold text-text-primary">{props.fundStats.withProgress}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Ready funds already moving: <span className="font-semibold text-text-primary">{props.fundStats.readyWithProgress}</span> · Waiting on first gift: <span className="font-semibold text-text-primary">{props.fundStats.readyAwaitingFirstGift}</span>
