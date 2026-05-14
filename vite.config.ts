@@ -25,6 +25,7 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom'],
           'vendor-router': ['react-router-dom'],
           'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-zxing': ['@zxing/browser', '@zxing/library'],
           'vendor-dnd': ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
           'vendor-icons': ['lucide-react'],
         },

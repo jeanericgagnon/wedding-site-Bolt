@@ -57,6 +57,10 @@ No active `P0` or `P1` launch blockers remain.
 
 The shipped runtime remains a strong launch baseline, but the stricter full-suite bar is open again and active work remains.
 
+Runtime operator-note checklist:
+- `docs/v1-runtime-operator-notes-checklist.md`
+- `npm run proof:v1:runtime-note-checklist`
+
 - launch-critical findings are closed and live-proven on the current deployed production runtime
 - `Day-of / coordinator`
   - `ACTIVE FULL-SUITE LANE`

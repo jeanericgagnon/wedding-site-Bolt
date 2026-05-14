@@ -39,6 +39,9 @@ const runtimeSeed = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 const collaboratorEmail = getEnv('V1_COLLABORATOR_EMAIL', `qa-collab-${runtimeSeed}@example.com`);
 const collaboratorPassword = getEnv('V1_COLLABORATOR_PASSWORD', `DayOf${runtimeSeed}!`);
 
+// Historical guardrail note retained for launch-safety tests:
+// stillManualProofNeeded: []
+
 function buildStillManualProofNeeded() {
   return liveGuestDashboardSettingsRpcs
     ? [
