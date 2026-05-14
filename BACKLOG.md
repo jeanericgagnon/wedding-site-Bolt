@@ -349,6 +349,7 @@ Execution rule for this section:
    - focused proof is green for engagement-count normalization in demo storage plus shared helper readback and detail-modal rendering
    - this batch shipped: the top-level guest-reach snapshot now reads the same normalized engagement totals from completed campaigns, so owners can see opens, clicks, replies, page views, and bounces without drilling into thread history first
    - focused proof is green for completed-campaign engagement rollup math plus the updated snapshot wiring staying aligned with the shared messaging helper
+   - this batch shipped: the top-level guest-reach snapshot now also separates `Sent`, `Active`, and `Needs follow-up` campaign counts instead of flattening queued/sending work into one opaque total beside sent campaigns
    - this batch shipped: recent campaign-thread rollups now surface opens, views, clicks, replies, and bounces when those counts exist, so owners do not have to open the active thread or latest message detail just to see whether a campaign is getting traction
    - this batch shipped: the per-channel history summary now keeps queued/sending campaigns visible as `Active` instead of flattening those in-flight email/SMS sends out of the channel readback while other messaging surfaces still show them
    - keep extending normalized delivery/open/view/bounce/replied truth across channels and real live rows

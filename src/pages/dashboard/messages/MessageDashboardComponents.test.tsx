@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { MessageCampaignThreadPanels, MessageHistorySummaryPanels } from './MessageDashboardComponents';
+import { MessageCampaignThreadPanels, MessageHistorySummaryPanels, MessageReachSnapshotCard } from './MessageDashboardComponents';
 
 describe('MessageCampaignThreadPanels', () => {
   it('shows engagement readback on recent campaign rollups when it exists', () => {
@@ -62,5 +62,41 @@ describe('MessageHistorySummaryPanels', () => {
 
     expect(screen.getByText('Sent 1 · Active 2 · Scheduled 1 · Needs follow-up 0 · Needs review 0')).toBeInTheDocument();
     expect(screen.getByText('Sent 0 · Active 0 · Scheduled 0 · Needs follow-up 1 · Needs review 1')).toBeInTheDocument();
+  });
+});
+
+describe('MessageReachSnapshotCard', () => {
+  it('separates sent, active, and follow-up campaign counts in the top reach snapshot', () => {
+    render(
+      <MessageReachSnapshotCard
+        canCompose
+        guests={[
+          {
+            id: 'guest-1',
+            email: 'alex@example.com',
+          },
+          {
+            id: 'guest-2',
+            email: null,
+          },
+        ] as any}
+        knownPhotoLinksCount={3}
+        messages={[
+          { id: 'message-sent', status: 'sent' },
+          { id: 'message-queued', status: 'queued' },
+          { id: 'message-partial', status: 'partial' },
+        ] as any}
+        onApplyComposerTemplate={vi.fn()}
+        onApplyDayOfAlertPreset={vi.fn()}
+        onApplySaveTheDatePreset={vi.fn()}
+        onNavigatePhotos={vi.fn()}
+        onQuickCreateSaveTheDateCampaign={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Sent, active, or needs follow-up')).toBeInTheDocument();
+    expect(screen.getByText('Sent 1 · Active 1 · Needs follow-up 1')).toBeInTheDocument();
+    expect(screen.getByText('Photo links ready')).toBeInTheDocument();
+    expect(screen.getAllByText('3')).toHaveLength(2);
   });
 });
