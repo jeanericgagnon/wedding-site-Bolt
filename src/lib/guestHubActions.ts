@@ -1,6 +1,6 @@
 import { appendGuestInviteTokenToInternalHref } from './publicAccessArtifacts';
 
-export type GuestHubActionId = 'rsvp' | 'schedule' | 'travel' | 'registry' | 'photos' | 'guestbook' | 'recap' | 'contact';
+export type GuestHubActionId = 'rsvp' | 'schedule' | 'travel' | 'registry' | 'photos' | 'guestbook' | 'vault' | 'recap' | 'contact';
 
 export interface GuestHubActionSettings {
   rsvp_enabled?: boolean | null;
@@ -68,6 +68,12 @@ export function buildGuestHubActions(slug: string, settings: GuestHubActionSetti
       href: appendGuestInviteTokenToInternalHref(`/guestbook/${encodedSlug}`, guestInviteToken),
     },
     {
+      id: 'vault',
+      titleKey: 'guest_hub.action_vault',
+      detailKey: 'guest_hub.action_vault_detail',
+      href: appendGuestInviteTokenToInternalHref(`/vault/${encodedSlug}`, guestInviteToken),
+    },
+    {
       id: 'recap',
       titleKey: 'guest_hub.action_recap',
       detailKey: 'guest_hub.action_recap_detail',
@@ -92,6 +98,7 @@ export function buildGuestHubActions(slug: string, settings: GuestHubActionSetti
     if (action.id === 'registry') return isEnabled(settings.registry_enabled);
     if (action.id === 'photos' || action.id === 'recap') return isEnabled(settings.photos_enabled);
     if (action.id === 'guestbook') return isEnabled(settings.guestbook_enabled);
+    if (action.id === 'vault') return Boolean(guestInviteToken);
     return true;
   });
 }
@@ -104,6 +111,7 @@ export function summarizeGuestHubActions(actions: Pick<GuestHubAction, 'id'>[]):
     registry: 'registry',
     photos: 'photo upload',
     guestbook: 'guestbook',
+    vault: 'anniversary vault',
     recap: 'photo recap',
     contact: 'guest update',
   };

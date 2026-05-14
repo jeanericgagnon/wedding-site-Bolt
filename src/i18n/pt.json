@@ -68,6 +68,8 @@
     "action_recap_detail": "Veja destaques, capítulos de memórias e o álbum completo.",
     "action_guestbook": "Deixar uma mensagem",
     "action_guestbook_detail": "Envie uma memória ou votos sem criar uma conta.",
+    "action_vault": "Adicionar ao cofre de aniversário",
+    "action_vault_detail": "Deixe uma nota, foto ou mensagem de voz para o casal abrir depois.",
     "enabled_actions": "Disponível aqui: {{actions}}.",
     "default_message": "Salve esta página para o dia do casamento. Você pode confirmar presença, compartilhar fotos, deixar uma mensagem e voltar para o resumo.",
     "save_link_heading": "Salve esta página",

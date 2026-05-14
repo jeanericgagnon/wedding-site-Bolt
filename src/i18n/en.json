@@ -68,6 +68,8 @@
     "action_recap_detail": "See highlights, memory chapters, and the full wedding album.",
     "action_guestbook": "Leave a guestbook note",
     "action_guestbook_detail": "Send a written memory or well-wish without creating an account.",
+    "action_vault": "Add to the anniversary vault",
+    "action_vault_detail": "Leave a note, photo, or voice message for the couple to open later.",
     "enabled_actions": "Available here: {{actions}}.",
     "default_message": "Save this page for the wedding day. You can RSVP, share photos, leave a note, and come back for the recap here.",
     "save_link_heading": "Save this page",

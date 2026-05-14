@@ -68,6 +68,8 @@
     "action_recap_detail": "Sieh Highlights, Erinnerungskapitel und das ganze Hochzeitsalbum.",
     "action_guestbook": "Gästebuch-Nachricht schreiben",
     "action_guestbook_detail": "Sende eine Erinnerung oder Glückwünsche ohne Konto.",
+    "action_vault": "Zum Jubiläumsarchiv beitragen",
+    "action_vault_detail": "Hinterlasse eine Notiz, ein Foto oder eine Sprachnachricht, die das Paar später öffnet.",
     "enabled_actions": "Hier verfügbar: {{actions}}.",
     "default_message": "Speichere diese Seite für den Hochzeitstag. Du kannst antworten, Fotos teilen, eine Nachricht schreiben und später den Rückblick ansehen.",
     "save_link_heading": "Speichere diese Seite",

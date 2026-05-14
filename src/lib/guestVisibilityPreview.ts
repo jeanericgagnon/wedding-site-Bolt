@@ -39,7 +39,7 @@ export interface GuestVisibilityPreviewInput {
 export interface GuestVisibilityPreviewLink {
   label: string;
   href: string;
-  kind: 'rsvp' | 'site' | 'contact' | 'photos' | 'guestbook' | 'recap' | 'travel' | 'registry';
+  kind: 'rsvp' | 'site' | 'contact' | 'photos' | 'guestbook' | 'vault' | 'recap' | 'travel' | 'registry';
 }
 
 export interface GuestVisibilityPreview {
@@ -147,6 +147,11 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
       kind: 'guestbook',
       label: 'Open guestbook as guest',
       href: `/guestbook/${encodeURIComponent(input.publicSiteSlug)}?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=guestbook`,
+    });
+    links.push({
+      kind: 'vault',
+      label: 'Open anniversary vault as guest',
+      href: `/vault/${encodeURIComponent(input.publicSiteSlug)}?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=vault`,
     });
     links.push({
       kind: 'recap',

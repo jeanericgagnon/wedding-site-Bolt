@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
-import { CalendarDays, Camera, ClipboardList, Gift, HeartHandshake, Plane, Sparkles } from 'lucide-react';
+import { Archive, CalendarDays, Camera, ClipboardList, Gift, HeartHandshake, Plane, Sparkles } from 'lucide-react';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import { buildGuestHubActions, type GuestHubActionId } from '../lib/guestHubActions';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
@@ -126,6 +126,7 @@ const actionIcons: Record<GuestHubActionId, React.ComponentType<{ className?: st
   registry: Gift,
   photos: Camera,
   guestbook: HeartHandshake,
+  vault: Archive,
   recap: Sparkles,
 };
 

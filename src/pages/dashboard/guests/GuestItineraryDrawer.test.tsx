@@ -85,6 +85,7 @@ describe('GuestItineraryDrawer', () => {
     );
     expect(screen.getByRole('button', { name: /Open photo upload as guest/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Open guestbook as guest/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Open anniversary vault as guest/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Open recap as guest/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Open travel section as guest/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Open registry section as guest/i })).toBeInTheDocument();

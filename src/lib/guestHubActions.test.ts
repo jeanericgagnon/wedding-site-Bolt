@@ -42,9 +42,16 @@ describe('guestHubActions', () => {
 
     expect(actions.find((action) => action.id === 'photos')?.href).toBe('/photos/upload?site=maya-and-leo&hub=1&invite_token=guest-token-123');
     expect(actions.find((action) => action.id === 'guestbook')?.href).toBe('/guestbook/maya-and-leo?invite_token=guest-token-123');
+    expect(actions.find((action) => action.id === 'vault')?.href).toBe('/vault/maya-and-leo?invite_token=guest-token-123');
     expect(actions.find((action) => action.id === 'recap')?.href).toBe('/event/maya-and-leo/recap?invite_token=guest-token-123');
     expect(actions.find((action) => action.id === 'contact')?.href).toBe('/guest-contact/maya-and-leo?invite_token=guest-token-123');
     expect(actions.find((action) => action.id === 'schedule')?.href).toBe('/site/maya-and-leo#schedule');
+  });
+
+  it('keeps the anniversary vault out of the generic public hub when there is no private guest path', () => {
+    const actions = buildGuestHubActions('maya-and-leo', {});
+
+    expect(actions.map((action) => action.id)).not.toContain('vault');
   });
 
   it('honors hub controls without leaving orphan recap links when photos are off', () => {
@@ -66,6 +73,7 @@ describe('guestHubActions', () => {
   it('summarizes enabled actions for owner QR confidence copy', () => {
     expect(summarizeGuestHubActions(buildGuestHubActions('maya-and-leo', { photos_enabled: false }).slice(0, 3))).toBe('RSVP, schedule, and travel');
     expect(summarizeGuestHubActions(buildGuestHubActions('maya-and-leo', {}, { guestContactHref: '/guest-contact/maya-and-leo' }).slice(0, 2))).toBe('RSVP and guest update');
+    expect(summarizeGuestHubActions([{ id: 'vault' }])).toBe('anniversary vault');
     expect(summarizeGuestHubActions([])).toBe('No guest actions are enabled yet');
   });
 });

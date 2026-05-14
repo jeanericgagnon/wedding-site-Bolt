@@ -68,6 +68,8 @@
     "action_recap_detail": "Vedi momenti speciali, capitoli di ricordi e album completo.",
     "action_guestbook": "Lascia un messaggio",
     "action_guestbook_detail": "Invia un ricordo o un augurio senza creare un account.",
+    "action_vault": "Aggiungi alla cassaforte anniversario",
+    "action_vault_detail": "Lascia una nota, una foto o un messaggio vocale che la coppia aprirà più avanti.",
     "enabled_actions": "Disponibile qui: {{actions}}.",
     "default_message": "Salva questa pagina per il giorno del matrimonio. Puoi rispondere, condividere foto, lasciare un messaggio e tornare per il riepilogo.",
     "save_link_heading": "Salva questa pagina",

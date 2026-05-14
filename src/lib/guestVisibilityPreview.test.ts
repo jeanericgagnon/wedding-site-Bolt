@@ -59,6 +59,11 @@ describe('guestVisibilityPreview', () => {
         href: '/guestbook/maya-and-rowan?invite_token=private-token&previewGuest=guest-1&previewSurface=guestbook',
       },
       {
+        kind: 'vault',
+        label: 'Open anniversary vault as guest',
+        href: '/vault/maya-and-rowan?invite_token=private-token&previewGuest=guest-1&previewSurface=vault',
+      },
+      {
         kind: 'recap',
         label: 'Open recap as guest',
         href: '/event/maya-and-rowan/recap?invite_token=private-token&previewGuest=guest-1&previewSurface=recap',

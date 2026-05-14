@@ -68,6 +68,8 @@
     "action_recap_detail": "Découvrez les moments forts, chapitres de souvenirs et l'album complet.",
     "action_guestbook": "Laisser un mot",
     "action_guestbook_detail": "Envoyez un souvenir ou un message sans créer de compte.",
+    "action_vault": "Ajouter au coffre d'anniversaire",
+    "action_vault_detail": "Laissez une note, une photo ou un message vocal que la couple ouvrira plus tard.",
     "enabled_actions": "Disponible ici : {{actions}}.",
     "default_message": "Gardez cette page pour le jour du mariage. Vous pouvez RSVP, partager des photos, laisser un mot et revenir pour le récap.",
     "save_link_heading": "Gardez cette page",

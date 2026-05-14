@@ -68,6 +68,8 @@
     "action_recap_detail": "Ve destacados, capítulos de recuerdos y el álbum completo.",
     "action_guestbook": "Dejar una nota",
     "action_guestbook_detail": "Envía un recuerdo o buenos deseos sin crear una cuenta.",
+    "action_vault": "Agregar a la cápsula de aniversario",
+    "action_vault_detail": "Deja una nota, foto o mensaje de voz para que la pareja lo abra más adelante.",
     "enabled_actions": "Disponible aquí: {{actions}}.",
     "default_message": "Guarda esta página para el día de la boda. Puedes confirmar asistencia, compartir fotos, dejar una nota y volver por el resumen.",
     "save_link_heading": "Guarda esta página",
