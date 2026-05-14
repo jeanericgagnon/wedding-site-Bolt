@@ -189,6 +189,7 @@ export const DashboardRegistry: React.FC = () => {
     filtered,
     fulfillmentRate,
     fundStats,
+    guestVisibilityStats,
     nearBudgetCap,
     recentActivity,
     repairQueue,
@@ -369,6 +370,7 @@ export const DashboardRegistry: React.FC = () => {
         filtered={filtered}
         fulfillmentRate={fulfillmentRate}
         fundStats={fundStats}
+        guestVisibilityStats={guestVisibilityStats}
         handleAddNew={handleAddNew}
         handleAutoRefreshStale={handleAutoRefreshStale}
         handleBulkImport={handleBulkImport}

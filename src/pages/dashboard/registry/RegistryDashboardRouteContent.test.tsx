@@ -54,6 +54,7 @@ describe('RegistryDashboardRouteContent', () => {
         filtered={[makeItem()]}
         fulfillmentRate={100}
         fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
+        guestVisibilityStats={{ guestReadyItems: 1, guestVisibleItems: 1, visibleAvailableItems: 0, visibleClaimedItems: 1, hiddenPurchasedItems: 0, blockedGuestItems: 0 }}
         handleAddNew={vi.fn()}
         handleAutoRefreshStale={vi.fn(async () => {})}
         handleBulkImport={vi.fn(async () => {})}
@@ -156,6 +157,7 @@ describe('RegistryDashboardRouteContent', () => {
         filtered={[makeItem({ purchaser_name: null, purchase_status: 'partial' })]}
         fulfillmentRate={0}
         fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
+        guestVisibilityStats={{ guestReadyItems: 1, guestVisibleItems: 1, visibleAvailableItems: 0, visibleClaimedItems: 1, hiddenPurchasedItems: 0, blockedGuestItems: 0 }}
         handleAddNew={vi.fn()}
         handleAutoRefreshStale={vi.fn(async () => {})}
         handleBulkImport={vi.fn(async () => {})}
@@ -413,6 +415,61 @@ describe('RegistryDashboardRouteContent', () => {
     });
   });
 
+  it('derives guest-visible registry analytics from hidden purchased and blocked guest items', () => {
+    const derived = buildRegistryDashboardDerivedState({
+      autoRefreshEnabled: true,
+      items: [
+        makeItem({
+          id: 'visible-available',
+          item_name: 'Cake stand',
+          purchase_status: 'available',
+          quantity_purchased: 0,
+          quantity_needed: 1,
+        }),
+        makeItem({
+          id: 'visible-partial',
+          item_name: 'Wine glasses',
+          purchase_status: 'partial',
+          quantity_purchased: 2,
+          quantity_needed: 6,
+        }),
+        makeItem({
+          id: 'hidden-purchased',
+          item_name: 'Serving bowls',
+          purchase_status: 'purchased',
+          quantity_purchased: 1,
+          quantity_needed: 1,
+          hide_when_purchased: true,
+        }),
+        makeItem({
+          id: 'broken-guest-title',
+          item_name: 'Page Not Found',
+          purchase_status: 'available',
+          quantity_purchased: 0,
+          quantity_needed: 1,
+        }),
+      ],
+      monthlyRefreshCap: 50,
+      monthlyRefreshCount: 0,
+      registryThankYouLedger: {},
+      refreshEnabledUntil: null,
+      refreshIncludePurchased: false,
+      search: '',
+      filter: 'all',
+      showAlertsOnly: false,
+      showImageIssuesOnly: false,
+    });
+
+    expect(derived.guestVisibilityStats).toEqual({
+      guestReadyItems: 3,
+      guestVisibleItems: 2,
+      visibleAvailableItems: 1,
+      visibleClaimedItems: 1,
+      hiddenPurchasedItems: 1,
+      blockedGuestItems: 1,
+    });
+  });
+
   it('tracks missing fund goals and first-gift gaps separately', () => {
     const derived = buildRegistryDashboardDerivedState({
       autoRefreshEnabled: true,
@@ -489,6 +546,7 @@ describe('RegistryDashboardRouteContent', () => {
         filtered={[makeItem({ id: 'fund-1' }), makeItem({ id: 'fund-2' })]}
         fulfillmentRate={0}
         fundStats={{ count: 2, received: 1500, goal: 4000, readyToShare: 2, needsSetup: 0, readyWithProgress: 1, readyAwaitingFirstGift: 1, withGoal: 1, missingGoal: 1, withProgress: 1, awaitingFirstGift: 0, flexibleWithProgress: 1 }}
+        guestVisibilityStats={{ guestReadyItems: 2, guestVisibleItems: 2, visibleAvailableItems: 2, visibleClaimedItems: 0, hiddenPurchasedItems: 0, blockedGuestItems: 0 }}
         handleAddNew={vi.fn()}
         handleAutoRefreshStale={vi.fn(async () => {})}
         handleBulkImport={vi.fn(async () => {})}
@@ -567,6 +625,7 @@ describe('RegistryDashboardRouteContent', () => {
         filtered={[makeItem({ id: 'gift-1' })]}
         fulfillmentRate={25}
         fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
+        guestVisibilityStats={{ guestReadyItems: 3, guestVisibleItems: 2, visibleAvailableItems: 1, visibleClaimedItems: 1, hiddenPurchasedItems: 1, blockedGuestItems: 1 }}
         handleAddNew={vi.fn()}
         handleAutoRefreshStale={vi.fn(async () => {})}
         handleBulkImport={vi.fn(async () => {})}
@@ -652,6 +711,7 @@ describe('RegistryDashboardRouteContent', () => {
         filtered={[makeItem({ id: 'gift-1' })]}
         fulfillmentRate={50}
         fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
+        guestVisibilityStats={{ guestReadyItems: 3, guestVisibleItems: 2, visibleAvailableItems: 1, visibleClaimedItems: 1, hiddenPurchasedItems: 1, blockedGuestItems: 0 }}
         handleAddNew={vi.fn()}
         handleAutoRefreshStale={vi.fn(async () => {})}
         handleBulkImport={vi.fn(async () => {})}
@@ -713,6 +773,89 @@ describe('RegistryDashboardRouteContent', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Attribution coverage: 67% · Follow-up sent: 33%'),
+    ).toBeInTheDocument();
+  });
+
+  it('renders guest-visible inventory analytics for hidden and blocked gifts', () => {
+    render(
+      <RegistryDashboardRouteContent
+        actionableBadImportCount={0}
+        alertCounts={{ stale: 0, priceChanged: 0, outOfStock: 0, imageIssues: 0 }}
+        autoRefreshEnabled
+        autoRefreshing={false}
+        bulkImportBusy={false}
+        bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
+        budgetUtilization={0}
+        claimStats={{ claimedItems: 3, claimedQuantity: 4, fullyClaimedItems: 2, partiallyClaimedItems: 1, namedPurchaserItems: 2, missingPurchaserItems: 1, multiQuantityInProgress: 1, remainingQuantity: 2 }}
+        counts={{ total: 4, available: 1, partial: 1, purchased: 2, totalValue: 320 }}
+        duplicateGroups={[]}
+        editItem={null}
+        filter="all"
+        filtered={[makeItem({ id: 'gift-1' })]}
+        fulfillmentRate={50}
+        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
+        guestVisibilityStats={{ guestReadyItems: 3, guestVisibleItems: 2, visibleAvailableItems: 1, visibleClaimedItems: 1, hiddenPurchasedItems: 1, blockedGuestItems: 1 }}
+        handleAddNew={vi.fn()}
+        handleAutoRefreshStale={vi.fn(async () => {})}
+        handleBulkImport={vi.fn(async () => {})}
+        handleCopyDuplicateReviewList={vi.fn(async () => {})}
+        handleDelete={vi.fn(async () => {})}
+        handleEdit={vi.fn()}
+        handleMergeDuplicateGroup={vi.fn(async () => {})}
+        handleMarkPurchased={vi.fn(async () => {})}
+        handleResetPurchaseState={vi.fn(async () => {})}
+        handleRefetchMetadata={vi.fn(async () => true)}
+        handleRefreshImageIssues={vi.fn(async () => {})}
+        handleRepairBadImports={vi.fn(async () => {})}
+        handleRunRepairQueueAction={vi.fn(async () => {})}
+        handleSyncRegistryThankYouTasks={vi.fn(async () => {})}
+        handleToggleRegistryThankYouTask={vi.fn(async () => {})}
+        imageRefreshBusy={false}
+        items={[makeItem({ id: 'gift-1' })]}
+        loading={false}
+        monthlyRefreshCap={100}
+        monthlyRefreshCount={0}
+        mergingDuplicateGroupId={null}
+        nearBudgetCap={false}
+        normalizedItems={[makeItem({ id: 'gift-1' })]}
+        recentActivity={[makeItem({ id: 'gift-1' })]}
+        registryActionsOpen={false}
+        registryActionsRef={{ current: null }}
+        registryInsights={[]}
+        registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}
+        registryThankYouPlan={{ headline: 'Quiet', summary: 'Quiet', purchasedCount: 1, namedPurchaserCount: 0, missingPurchaserCount: 1, completedCount: 0, items: [] }}
+        registryThankYouStats={{ purchasedCount: 1, completedCount: 0, pendingCount: 1, readyToSendCount: 0, blockedByMissingPurchaserCount: 1, attributionCoverageRate: 0, completionRate: 0 }}
+        registryThankYouBusyItemId={null}
+        registryThankYouSyncing={false}
+        repairingBadImports={false}
+        repairQueue={[]}
+        refreshBudgetRemaining={100}
+        refreshWindowOpen={true}
+        search=""
+        setBulkImportOpen={vi.fn()}
+        setFilter={vi.fn()}
+        setRegistryActionsOpen={vi.fn()}
+        setSearch={vi.fn()}
+        setShowAlertsOnly={vi.fn()}
+        setShowImageIssuesOnly={vi.fn()}
+        showAlertsOnly={false}
+        showImageIssuesOnly={false}
+        topRegistryItems={[makeItem({ id: 'gift-1' })]}
+        weddingSiteId="site-1"
+      />,
+    );
+
+    expect(screen.getByText('Guest view')).toBeInTheDocument();
+    expect(screen.getByText('1 ready now · 1 already claimed')).toBeInTheDocument();
+    expect(screen.getByText('1 hidden when bought · 1 blocked from guests')).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Guest-visible gifts: 2 · Hidden when purchased: 1'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Guest-ready gifts: 3 · Blocked from guests: 1'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Ready for guests now: 1 · Claimed but still visible: 1'),
     ).toBeInTheDocument();
   });
 });

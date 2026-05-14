@@ -1,5 +1,6 @@
 import { buildRegistryInsights } from '../../../lib/invisibleIntelligence';
 import { buildRegistryLaunchReadiness, buildRegistryThankYouPlanWithLedger, type RegistryThankYouLedger } from '../../../lib/registryLaunchReadiness';
+import { isGuestReadyRegistryItem } from '../../../sections/components/RegistrySection';
 import { getSafePublicWebUrl } from '../../../sections/publicLinks';
 import { ageExceedsMs, getRegistryItemTimestamp } from '../registryItemTime';
 import { buildRegistryDuplicateGroups } from './duplicateRegistryItems';
@@ -45,6 +46,15 @@ type RegistryThankYouStats = {
   blockedByMissingPurchaserCount: number;
   attributionCoverageRate: number;
   completionRate: number;
+};
+
+type GuestVisibilityStats = {
+  guestReadyItems: number;
+  guestVisibleItems: number;
+  visibleAvailableItems: number;
+  visibleClaimedItems: number;
+  hiddenPurchasedItems: number;
+  blockedGuestItems: number;
 };
 
 export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardDerivedStateArgs) {
@@ -223,6 +233,16 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
       ? Math.round((registryThankYouPlan.completedCount / registryThankYouPlan.purchasedCount) * 100)
       : 0,
   };
+  const guestReadyItems = items.filter((item) => isGuestReadyRegistryItem(item));
+  const guestVisibleItems = guestReadyItems.filter((item) => !item.hide_when_purchased || item.purchase_status !== 'purchased');
+  const guestVisibilityStats: GuestVisibilityStats = {
+    guestReadyItems: guestReadyItems.length,
+    guestVisibleItems: guestVisibleItems.length,
+    visibleAvailableItems: guestVisibleItems.filter((item) => item.purchase_status === 'available').length,
+    visibleClaimedItems: guestVisibleItems.filter((item) => item.purchase_status !== 'available').length,
+    hiddenPurchasedItems: guestReadyItems.filter((item) => item.hide_when_purchased && item.purchase_status === 'purchased').length,
+    blockedGuestItems: Math.max(items.length - guestReadyItems.length, 0),
+  };
 
   const alertCounts = {
     stale: items.filter((item) => ageExceedsMs(item.metadata_last_checked_at, 1000 * 60 * 60 * 24)).length,
@@ -246,6 +266,7 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
     filtered,
     fulfillmentRate,
     fundStats,
+    guestVisibilityStats,
     nearBudgetCap,
     projectedMonthlyCalls,
     projectedRefreshCoverage,

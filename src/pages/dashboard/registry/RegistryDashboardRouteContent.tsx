@@ -95,6 +95,15 @@ type RegistryThankYouStats = {
   completionRate: number;
 };
 
+type GuestVisibilityStats = {
+  guestReadyItems: number;
+  guestVisibleItems: number;
+  visibleAvailableItems: number;
+  visibleClaimedItems: number;
+  hiddenPurchasedItems: number;
+  blockedGuestItems: number;
+};
+
 type AlertCounts = {
   stale: number;
   priceChanged: number;
@@ -124,6 +133,7 @@ export function RegistryDashboardRouteContent(props: {
   filtered: RegistryItem[];
   fulfillmentRate: number;
   fundStats: FundStats;
+  guestVisibilityStats: GuestVisibilityStats;
   handleAddNew: () => void;
   handleAutoRefreshStale: (silent?: boolean, alertsOnly?: boolean) => Promise<void>;
   handleBulkImport: (urls: string) => Promise<void>;
@@ -260,7 +270,7 @@ export function RegistryDashboardRouteContent(props: {
             ))}
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Gift progress</p>
               <p className="mt-1 text-2xl font-bold text-text-primary">{props.fulfillmentRate}%</p>
@@ -274,6 +284,16 @@ export function RegistryDashboardRouteContent(props: {
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
                 {props.claimStats.fullyClaimedItems} fully claimed{props.claimStats.partiallyClaimedItems > 0 ? ` · ${props.claimStats.partiallyClaimedItems} partial` : ''}
+              </p>
+            </Card>
+            <Card variant="bordered" padding="md">
+              <p className="text-xs font-medium text-text-tertiary">Guest view</p>
+              <p className="mt-1 text-2xl font-bold text-text-primary">{props.guestVisibilityStats.guestVisibleItems}</p>
+              <p className="mt-1 text-xs text-text-secondary">
+                {props.guestVisibilityStats.visibleAvailableItems} ready now · {props.guestVisibilityStats.visibleClaimedItems} already claimed
+              </p>
+              <p className="mt-1 text-xs text-text-tertiary">
+                {props.guestVisibilityStats.hiddenPurchasedItems} hidden when bought{props.guestVisibilityStats.blockedGuestItems > 0 ? ` · ${props.guestVisibilityStats.blockedGuestItems} blocked from guests` : ''}
               </p>
             </Card>
             <Card variant="bordered" padding="md">
@@ -397,6 +417,15 @@ export function RegistryDashboardRouteContent(props: {
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Claimed quantity: <span className="font-semibold text-text-primary">{props.claimStats.claimedQuantity}</span> · Still needed: <span className="font-semibold text-text-primary">{props.claimStats.remainingQuantity}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Guest-visible gifts: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.guestVisibleItems}</span> · Hidden when purchased: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.hiddenPurchasedItems}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Guest-ready gifts: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.guestReadyItems}</span> · Blocked from guests: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.blockedGuestItems}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Ready for guests now: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.visibleAvailableItems}</span> · Claimed but still visible: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.visibleClaimedItems}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Thank-yous sent: <span className="font-semibold text-text-primary">{props.registryThankYouStats.completedCount}</span> · Still pending: <span className="font-semibold text-text-primary">{props.registryThankYouStats.pendingCount}</span>
