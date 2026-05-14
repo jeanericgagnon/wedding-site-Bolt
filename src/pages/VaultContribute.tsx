@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Lock, Heart, Send, CheckCircle, AlertCircle, Loader2, Mic, Square } from 'lucide-react';
+import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
 import { DEMO_MODE } from '../config/env';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
@@ -1007,15 +1008,18 @@ export const VaultContribute: React.FC = () => {
   );
 
   return (
-    <VaultContributeRouteView
-      step={step}
-      loadingView={loadingView}
-      invalidView={invalidView}
-      hubView={hubView}
-      successView={successView}
-      errorView={errorView}
-      formView={formView}
-    />
+    <>
+      <OwnerPreviewBanner />
+      <VaultContributeRouteView
+        step={step}
+        loadingView={loadingView}
+        invalidView={invalidView}
+        hubView={hubView}
+        successView={successView}
+        errorView={errorView}
+        formView={formView}
+      />
+    </>
   );
 };
 

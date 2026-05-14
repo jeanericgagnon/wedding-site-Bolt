@@ -89,7 +89,9 @@ describe('public guest surface boundary', () => {
     const eventRecapLiveContent = readSource('src/pages/EventRecapLiveContent.tsx');
     expect(eventRecap).toContain("from './EventRecapLiveContent'");
     expect(eventRecap).toContain("from './guestHubPublicService'");
+    expect(eventRecap).toContain("from '../components/site/OwnerPreviewBanner'");
     expect(eventRecap).toContain('<EventRecapLiveContent');
+    expect(eventRecap).toContain('<OwnerPreviewBanner />');
     expect(eventRecap).toContain('fetchGuestRecapConfig<RecapData>(');
     expect(eventRecap).toContain("trackGuestHubEvent(slug, 'view', '/event/recap'");
     expect(eventRecap).toContain('submitGuestHubProspect(');
@@ -103,6 +105,8 @@ describe('public guest surface boundary', () => {
     const photoUpload = readSource('src/pages/PhotoUpload.tsx');
     const photoUploadStatusPanel = readSource('src/pages/PhotoUploadStatusPanel.tsx');
     const guestSubmissionService = readSource('src/pages/guestPublicSubmissionService.ts');
+    expect(photoUpload).toContain("from '../components/site/OwnerPreviewBanner'");
+    expect(photoUpload).toContain('<OwnerPreviewBanner />');
     expect(photoUpload).toContain("from './PhotoUploadStatusPanel'");
     expect(photoUpload).toContain('<PhotoUploadStatusPanel');
     expect(photoUpload).toContain("from './guestPublicSubmissionService'");
@@ -115,6 +119,8 @@ describe('public guest surface boundary', () => {
 
     const vaultContribute = readSource('src/pages/VaultContribute.tsx');
     const vaultContributionService = readSource('src/pages/vaultContributionService.ts');
+    expect(vaultContribute).toContain("from '../components/site/OwnerPreviewBanner'");
+    expect(vaultContribute).toContain('<OwnerPreviewBanner />');
     expect(vaultContribute).not.toContain("from '../lib/supabase'");
     expect(vaultContribute).toContain("from './VaultContributeRouteView'");
     expect(vaultContribute).toContain("from './vaultContributionService'");
@@ -137,6 +143,8 @@ describe('public guest surface boundary', () => {
 
     const guestbook = readSource('src/pages/GuestbookSubmit.tsx');
     const guestbookFormPanel = readSource('src/pages/GuestbookSubmitFormPanel.tsx');
+    expect(guestbook).toContain("from '../components/site/OwnerPreviewBanner'");
+    expect(guestbook).toContain('<OwnerPreviewBanner />');
     expect(guestbook).toContain("from './GuestbookSubmitFormPanel'");
     expect(guestbook).toContain('<GuestbookSubmitFormPanel');
     expect(guestbook).toContain("from './guestPublicSubmissionService'");
@@ -148,6 +156,8 @@ describe('public guest surface boundary', () => {
 
     const guestContact = readSource('src/pages/GuestContactUpdate.tsx');
     const guestContactLookupPanel = readSource('src/pages/GuestContactLookupPanel.tsx');
+    expect(guestContact).toContain("from '../components/site/OwnerPreviewBanner'");
+    expect(guestContact).toContain('<OwnerPreviewBanner />');
     expect(guestContact).toContain("from './GuestContactLookupPanel'");
     expect(guestContact).toContain('<GuestContactLookupPanel');
     expect(guestContact).toContain("from './guestPublicSubmissionService'");
@@ -198,12 +208,10 @@ describe('public guest surface boundary', () => {
     const rsvpFunctionService = readSource('src/pages/rsvpFunctionService.ts');
     const rsvpRouteView = readSource('src/pages/RsvpRouteView.tsx');
     expect(rsvpPage).toContain("from './buildRsvpDerivedViewState'");
-    expect(rsvpPage).toContain("from './applyAmbiguousRsvpLookupState'");
     expect(rsvpPage).toContain("from './applyManualRsvpLookupResult'");
     expect(rsvpPage).toContain("from './applyResolvedRsvpGuest'");
     expect(rsvpPage).toContain("from './applyRsvpSubmitSuccess'");
     expect(rsvpPage).toContain("from './applyTokenRsvpLookupResult'");
-    expect(rsvpPage).toContain("from './lookupRsvpGuest'");
     expect(rsvpPage).toContain("from './runRsvpGuestLookup'");
     expect(rsvpPage).toContain("from './runRsvpSubmit'");
     expect(rsvpPage).toContain("from './runRsvpTokenLookup'");
@@ -241,6 +249,7 @@ describe('public guest surface boundary', () => {
     expect(rsvpAmbiguousLookupState).toContain('setAmbiguousGuests(guests)');
     expect(rsvpAmbiguousLookupState).toContain('setSelectedHouseholdGuestIds(householdGuests.map((guest) => guest.id))');
     expect(rsvpAmbiguousLookupState).toContain("setStep('pick')");
+    expect(rsvpAmbiguousLookupState).toContain("export function applyAmbiguousRsvpLookupState");
     expect(rsvpManualLookupResult).toContain('fallbackGuest');
     expect(rsvpManualLookupResult).toContain('classifyRsvpLookupResponse(data as LookupResponse)');
     expect(rsvpManualLookupResult).toContain('applyAmbiguousRsvpLookupState({');
@@ -323,7 +332,6 @@ describe('public guest surface boundary', () => {
     expect(rsvpValidateAdvance).toContain('Please choose a meal option before review.');
     expect(rsvpValidateAdvance).toContain('Please answer:');
     expect(rsvpPage).toContain("from './rsvpFunctionService'");
-    expect(rsvpPage).toContain("from './lookupRsvpGuest'");
     expect(rsvpLookupGuest).toContain("callValidateRsvpToken({");
     expect(rsvpLookupToken).toContain("callValidateRsvpToken({");
     expect(rsvpRouteView).toContain('if (tokenAutoLoading) return <>{tokenAutoLoadingView}</>;');

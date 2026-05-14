@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
 import { demoGuests, demoWeddingSite } from '../lib/demoData';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import {
@@ -203,8 +204,10 @@ export const GuestContactUpdate: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-xl bg-surface border border-border rounded-lg p-6 space-y-4">
+    <div className="min-h-screen bg-background">
+      <OwnerPreviewBanner />
+      <div className="flex items-center justify-center p-4">
+        <div className="w-full max-w-xl bg-surface border border-border rounded-lg p-6 space-y-4">
         <h1 className="text-xl font-semibold text-text-primary">Update contact & RSVP</h1>
         <p className="text-sm text-text-secondary">Search your name, choose your record, then update details for yourself or your party.</p>
 
@@ -295,6 +298,7 @@ export const GuestContactUpdate: React.FC = () => {
         {result && (
           <p role={result.ok ? 'status' : 'alert'} className="rounded-lg border border-border-subtle bg-surface-secondary px-3 py-2 text-sm text-text-secondary">{result.message}</p>
         )}
+        </div>
       </div>
     </div>
   );

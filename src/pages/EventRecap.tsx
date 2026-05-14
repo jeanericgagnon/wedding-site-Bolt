@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import { Camera, Heart, Share2, Sparkles } from 'lucide-react';
+import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
 import { copyTextOrDownload } from '../lib/copyText';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
@@ -494,18 +495,21 @@ export const EventRecap: React.FC = () => {
   );
 
   return (
-    <EventRecapLiveContent
-      t={t}
-      slug={slug}
-      coupleLabel={coupleLabel}
-      shareStatus={shareStatus}
-      data={data}
-      loading={loading}
-      recapLoadingView={recapLoadingView}
-      recapErrorView={recapErrorView}
-      recapContentView={recapContentView}
-      onShareRecap={() => shareRecap()}
-    />
+    <>
+      <OwnerPreviewBanner />
+      <EventRecapLiveContent
+        t={t}
+        slug={slug}
+        coupleLabel={coupleLabel}
+        shareStatus={shareStatus}
+        data={data}
+        loading={loading}
+        recapLoadingView={recapLoadingView}
+        recapErrorView={recapErrorView}
+        recapContentView={recapContentView}
+        onShareRecap={() => shareRecap()}
+      />
+    </>
   );
 };
 

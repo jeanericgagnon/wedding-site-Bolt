@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { HeartHandshake } from 'lucide-react';
+import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import {
   buildPublicAccessArtifacts,
@@ -69,6 +70,7 @@ export const GuestbookSubmit: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#fbf7f1] px-4 py-6 text-stone-950 sm:py-10">
+      <OwnerPreviewBanner />
       <main className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
         <section className="overflow-hidden rounded-lg border border-stone-200 bg-white">
           <div className="relative min-h-[250px] bg-stone-900">

@@ -304,6 +304,7 @@ Execution rule for this section:
 1. `ACTIVE`: guest-specific preview and visibility confidence
    - this batch shipped: guest itinerary drawer now exposes private RSVP and guest-update QR surfaces that render locally, keep raw token URLs out of normal UI copy, and give owners concrete guest-path artifacts from the dashboard instead of only plain links
    - this batch shipped: the public guest hub now preserves guest invite identity, exposes a real guest-update action when a private guest path exists, and carries that guest-specific path without printing raw token URLs in the hub UI
+   - this batch shipped: owner preview context now follows through on guest-facing contact update, photo upload, guestbook, vault, and recap routes instead of stopping at the site or RSVP shell
    - finish true route-level personalization beyond the owner preview banner and guest-update path
    - wire planner/coordinator role preview controls from dashboard flows
    - extend preview confidence to photo, registry, and travel surfaces
