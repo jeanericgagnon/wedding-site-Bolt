@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
-import { execSync } from 'node:child_process';
+import { execSync, spawn } from 'node:child_process';
 
 const requireLive = process.argv.includes('--require-live');
 const liveEnabled = process.env.LIVE_REGISTRY_WRITE_READ === '1';
+const PREVIEW_URL = 'http://127.0.0.1:4178';
+const baseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
 
 const localSteps = [
   {
@@ -22,6 +24,12 @@ const localSteps = [
     id: 'registry-barcode-tests',
     label: 'Registry barcode normalization + fallback tests',
     command: 'npm test -- src/lib/registryBarcode.test.ts src/lib/registryBarcodeMatch.test.ts src/lib/registryBarcodeOpenFacts.test.ts src/pages/dashboard/registry/registryRefreshFields.test.ts src/pages/dashboard/registry/RegistryItemForm.test.tsx src/pages/dashboard/registry/RegistryBarcodeScanner.test.tsx',
+    required: true,
+  },
+  {
+    id: 'registry-demo-continuity-tests',
+    label: 'Registry demo continuity tests',
+    command: 'npm test -- --run src/pages/dashboard/registry/registryDemoStorage.test.ts src/pages/dashboard/registry/RegistryDashboardRouteContent.test.tsx',
     required: true,
   },
   {
@@ -48,6 +56,24 @@ const liveSteps = liveEnabled ? [
 ] : [];
 
 const steps = [...localSteps, ...liveSteps];
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForPreview(url, timeoutMs = 20_000) {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
+      if (response.ok) return;
+    } catch {
+      // keep waiting
+    }
+    await sleep(500);
+  }
+  throw new Error(`Preview server did not become ready at ${url} within ${timeoutMs}ms`);
+}
 
 function runStep(step) {
   const startedAt = new Date().toISOString();
@@ -88,7 +114,57 @@ function runStep(step) {
   }
 }
 
-const results = steps.map(runStep);
+const initialSteps = steps.filter((step) => step.id !== 'registry-demo-browser-proof');
+const results = initialSteps.map(runStep);
+let previewProcess = null;
+let previewStdout = '';
+let previewStderr = '';
+
+try {
+  if (!liveEnabled) {
+    if (baseUrl === PREVIEW_URL) {
+      previewProcess = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', '4178'], {
+        cwd: process.cwd(),
+        env: process.env,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+
+      previewProcess.stdout.on('data', (chunk) => {
+        previewStdout += chunk.toString('utf8');
+      });
+      previewProcess.stderr.on('data', (chunk) => {
+        previewStderr += chunk.toString('utf8');
+      });
+
+      await waitForPreview(PREVIEW_URL);
+    }
+
+    results.push(runStep({
+      id: 'registry-demo-browser-proof',
+      label: 'Registry demo browser continuity proof',
+      command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/registry-demo-continuity.spec.ts`,
+      required: true,
+    }));
+  }
+} catch (error) {
+  results.push({
+    id: 'registry-demo-browser-proof',
+    label: 'Registry demo browser continuity proof',
+    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/registry-demo-continuity.spec.ts`,
+    required: true,
+    ok: false,
+    startedAt: new Date().toISOString(),
+    finishedAt: new Date().toISOString(),
+    stderr: [previewStderr.trim(), error instanceof Error ? error.message : 'Registry preview server failed to start.'].filter(Boolean).join('\n'),
+  });
+} finally {
+  if (previewProcess) {
+    previewProcess.kill('SIGTERM');
+    await sleep(300);
+    if (!previewProcess.killed) previewProcess.kill('SIGKILL');
+  }
+}
+
 const failedRequired = results.filter((result) => result.required && !result.ok);
 
 if (requireLive && !liveEnabled) {
@@ -137,6 +213,7 @@ const output = {
     'Purchased-state normalization and duplicate detection',
     'Metadata confidence / blocked retailer / repair-state attention truth',
     'Barcode normalization, provider breadth, and scanner fallback behavior',
+    'Demo owner purchase-state and thank-you follow-up continuity across reloads',
     'Registry dashboard guard coverage',
     'Build integrity after registry proof assertions',
     ...(liveEnabled ? ['Live owner registry URL import, duplicate merge collapse/readback, cleanup-queue truth, barcode-backed item persistence, and public registry endpoint readability'] : []),

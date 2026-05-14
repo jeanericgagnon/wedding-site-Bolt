@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 
-import { demoRegistryItems, demoWeddingSite } from '../../../lib/demoData';
 import type { RegistryThankYouLedger } from '../../../lib/registryLaunchReadiness';
 import { getCurrentMonthKey, resolveRegistryRefreshBudgetState } from './refreshBudget';
+import { readDemoRegistryState, writeDemoRegistryState } from './registryDemoStorage';
 import { loadRegistryThankYouLedger } from './registryThankYouLedger';
 import { toDateInputValueOrEmpty } from '../registryRefreshWindow';
 import { fetchRegistryItems, loadRegistryDashboardSite } from './registryService';
 import type { RegistryItem } from './registryTypes';
+import { demoWeddingSite } from '../../../lib/demoData';
 
 function sanitizeRegistryQuantityState(quantityPurchased = 0, quantityNeeded = 1) {
   const safeNeeded = Math.max(1, Number.isFinite(quantityNeeded) ? quantityNeeded : 1);
@@ -30,45 +31,6 @@ export function normalizeOwnerDashboardRegistryItem(item: RegistryItem): Registr
   };
 }
 
-function toDemoRegistryItem(item: typeof demoRegistryItems[number], index: number): RegistryItem {
-  const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased ?? 0, item.quantity_needed ?? 1);
-
-  return {
-    id: item.id,
-    wedding_site_id: demoWeddingSite.id,
-    item_name: item.item_name,
-    price_label: null,
-    price_amount: item.price ?? null,
-    store_name: item.store_name ?? null,
-    merchant: item.store_name ?? null,
-    item_url: null,
-    canonical_url: null,
-    image_url: null,
-    description: null,
-    notes: null,
-    quantity_needed: quantityState.quantityNeeded,
-    quantity_purchased: quantityState.quantityPurchased,
-    purchaser_name: null,
-    purchase_status: quantityState.purchaseStatus,
-    hide_when_purchased: false,
-    sort_order: index,
-    priority: item.priority,
-    availability: null,
-    metadata_last_checked_at: null,
-    metadata_fetch_status: null,
-    metadata_confidence_score: null,
-    metadata_source_method: null,
-    metadata_retailer: null,
-    previous_price_amount: null,
-    price_last_changed_at: null,
-    next_refresh_at: null,
-    last_auto_refreshed_at: null,
-    refresh_fail_count: 0,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-}
-
 interface UseRegistryDashboardDataArgs {
   isDemoMode: boolean;
   userId: string | undefined;
@@ -77,7 +39,7 @@ interface UseRegistryDashboardDataArgs {
 
 export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
   const { isDemoMode, userId, toast } = args;
-  const [items, setItems] = useState<RegistryItem[]>([]);
+  const [itemsState, setItemsState] = useState<RegistryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
   const [weddingDate, setWeddingDate] = useState<string | null>(null);
@@ -92,7 +54,33 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
   const [refreshIncludePurchased, setRefreshIncludePurchased] = useState(false);
   const [policyUpdatedAt, setPolicyUpdatedAt] = useState<string | null>(null);
   const [policyUpdatedBy, setPolicyUpdatedBy] = useState<string | null>(null);
-  const [registryThankYouLedger, setRegistryThankYouLedger] = useState<RegistryThankYouLedger>({});
+  const [registryThankYouLedgerState, setRegistryThankYouLedgerState] = useState<RegistryThankYouLedger>({});
+
+  const setItems: Dispatch<SetStateAction<RegistryItem[]>> = useCallback((value) => {
+    setItemsState((prev) => {
+      const next = typeof value === 'function' ? value(prev) : value;
+      if (isDemoMode) {
+        writeDemoRegistryState({
+          items: next.map(normalizeOwnerDashboardRegistryItem),
+          thankYouLedger: registryThankYouLedgerState,
+        });
+      }
+      return next;
+    });
+  }, [isDemoMode, registryThankYouLedgerState]);
+
+  const setRegistryThankYouLedger: Dispatch<SetStateAction<RegistryThankYouLedger>> = useCallback((value) => {
+    setRegistryThankYouLedgerState((prev) => {
+      const next = typeof value === 'function' ? value(prev) : value;
+      if (isDemoMode) {
+        writeDemoRegistryState({
+          items: itemsState.map(normalizeOwnerDashboardRegistryItem),
+          thankYouLedger: next,
+        });
+      }
+      return next;
+    });
+  }, [isDemoMode, itemsState]);
 
   const loadItems = useCallback(async (siteId: string) => {
     try {
@@ -108,9 +96,10 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
       setLoading(true);
       try {
         if (isDemoMode) {
+          const demoState = readDemoRegistryState();
           setWeddingSiteId(demoWeddingSite.id);
-          setItems(demoRegistryItems.map(toDemoRegistryItem));
-          setRegistryThankYouLedger({});
+          setItemsState(demoState.items.map(normalizeOwnerDashboardRegistryItem));
+          setRegistryThankYouLedgerState(demoState.thankYouLedger);
           return;
         }
 
@@ -154,7 +143,7 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
 
   return {
     autoRefreshEnabled,
-    items,
+    items: itemsState,
     loading,
     monthlyRefreshCap,
     monthlyRefreshCount,
@@ -183,6 +172,6 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
     weddingDate,
     weddingSiteId,
     loadItems,
-    registryThankYouLedger,
+    registryThankYouLedger: registryThankYouLedgerState,
   };
 }

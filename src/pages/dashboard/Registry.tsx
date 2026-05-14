@@ -18,6 +18,7 @@ import { useRegistryItemActions } from './registry/useRegistryItemActions';
 import { useRegistryMaintenanceActions } from './registry/useRegistryMaintenanceActions';
 import { useRegistryRefreshPolicyActions } from './registry/useRegistryRefreshPolicyActions';
 import { saveRegistryThankYouLedger } from './registry/registryThankYouLedger';
+import { writeDemoRegistryState } from './registry/registryDemoStorage';
 import {
   updateRegistryRefreshBudget,
 } from './registry/registryService';
@@ -309,7 +310,12 @@ export const DashboardRegistry: React.FC = () => {
     setRegistryThankYouSyncing(true);
     try {
       const nextLedger = syncRegistryThankYouLedger(normalizedItems, registryThankYouLedger);
-      if (!isDemoMode) {
+      if (isDemoMode) {
+        writeDemoRegistryState({
+          items: normalizedItems,
+          thankYouLedger: nextLedger,
+        });
+      } else {
         await saveRegistryThankYouLedger(weddingSiteId, nextLedger);
       }
       setRegistryThankYouLedger(nextLedger);
@@ -326,7 +332,12 @@ export const DashboardRegistry: React.FC = () => {
     setRegistryThankYouBusyItemId(itemId);
     try {
       const nextLedger = toggleRegistryThankYouLedgerStatus(registryThankYouLedger, itemId);
-      if (!isDemoMode) {
+      if (isDemoMode) {
+        writeDemoRegistryState({
+          items: normalizedItems,
+          thankYouLedger: nextLedger,
+        });
+      } else {
         await saveRegistryThankYouLedger(weddingSiteId, nextLedger);
       }
       setRegistryThankYouLedger(nextLedger);
