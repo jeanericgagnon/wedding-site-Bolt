@@ -10,14 +10,33 @@ describe('planningDemoState', () => {
     const state = readDemoPlanningState();
 
     expect(state.totalBudget).toBe(30000);
+    expect(state.tasks.length).toBeGreaterThan(0);
     expect(state.budgetItems.length).toBeGreaterThan(0);
     expect(state.vendors.length).toBeGreaterThan(0);
     expect(state.vendorMeta).toEqual({});
   });
 
-  it('persists budget, vendor, and vendor-meta edits for demo proof continuity', () => {
+  it('persists task, budget, vendor, and vendor-meta edits for demo proof continuity', () => {
     const saved = writeDemoPlanningState({
       totalBudget: 41250,
+      tasks: [
+        {
+          id: 'demo-task-proof',
+          wedding_site_id: 'demo-site-id',
+          title: 'Proof task',
+          description: 'Confirm digest continuity',
+          category: 'Proof',
+          due_date: '2026-05-20',
+          status: 'in_progress',
+          priority: 'high',
+          owner_name: 'Alex',
+          linked_event_id: 'ceremony-id',
+          linked_vendor_id: null,
+          sort_order: 10,
+          created_at: '2026-05-14T00:00:00.000Z',
+          updated_at: '2026-05-14T00:00:00.000Z',
+        },
+      ],
       budgetItems: [
         {
           id: 'demo-budget-proof',
@@ -71,6 +90,7 @@ describe('planningDemoState', () => {
 
     const restored = readDemoPlanningState();
     expect(restored.totalBudget).toBe(41250);
+    expect(restored.tasks[0]?.title).toBe('Proof task');
     expect(restored.budgetItems[0]?.item_name).toBe('Proof florals');
     expect(restored.vendors[0]?.name).toBe('Proof Florals');
     expect(restored.vendorMeta['demo-vendor-proof']).toMatchObject({
@@ -85,6 +105,7 @@ describe('planningDemoState', () => {
 
     const restored = readDemoPlanningState();
     expect(restored.totalBudget).toBe(30000);
+    expect(restored.tasks.length).toBeGreaterThan(0);
     expect(restored.budgetItems.length).toBeGreaterThan(0);
     expect(restored.vendors.length).toBeGreaterThan(0);
   });

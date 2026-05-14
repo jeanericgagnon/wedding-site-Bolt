@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
-import { demoWeddingSite, demoGuests, demoPlanningTasks, demoBudgetItems, demoVendors, demoNameChangeCase, demoNameChangeDocuments, demoNameChangeExtractedFields } from '../../lib/demoData';
+import { demoWeddingSite, demoGuests, demoBudgetItems, demoVendors, demoNameChangeCase, demoNameChangeDocuments, demoNameChangeExtractedFields } from '../../lib/demoData';
 import { PLANNER_ROLE_OPTIONS, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import {
   PlanningTask, PlanningBudgetItem, PlanningVendor,
@@ -139,11 +139,12 @@ export const DashboardPlanning: React.FC = () => {
     if (!isDemoMode || loading) return;
     writeDemoPlanningState({
       totalBudget,
+      tasks,
       budgetItems,
       vendors,
       vendorMeta,
     });
-  }, [isDemoMode, loading, totalBudget, budgetItems, vendors, vendorMeta]);
+  }, [isDemoMode, loading, totalBudget, tasks, budgetItems, vendors, vendorMeta]);
 
   async function loadAll() {
     try {
@@ -151,7 +152,7 @@ export const DashboardPlanning: React.FC = () => {
         const demoPlanningState = readDemoPlanningState();
         setSiteId(demoWeddingSite.id);
         setWeddingDate(demoWeddingSite.wedding_date);
-        setTasks(demoPlanningTasks as unknown as PlanningTask[]);
+        setTasks(demoPlanningState.tasks);
         setBudgetItems(demoPlanningState.budgetItems);
         setVendors(demoPlanningState.vendors);
         setTotalBudget(demoPlanningState.totalBudget);

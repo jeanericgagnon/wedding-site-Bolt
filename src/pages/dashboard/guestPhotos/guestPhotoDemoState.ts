@@ -439,7 +439,7 @@ export function readDemoGuestPhotoState(storageKey = DEMO_GUEST_PHOTO_STATE_STOR
     const raw = window.localStorage.getItem(storageKey);
     if (!raw) return writeDemoGuestPhotoState(defaults, storageKey);
     const parsed: unknown = JSON.parse(raw);
-    const envelopeValue = isRecord(parsed) && 'value' in parsed ? (parsed as GuestPhotoDemoStateEnvelope).value : parsed;
+    const envelopeValue = isRecord(parsed) && 'value' in parsed ? (parsed as unknown as GuestPhotoDemoStateEnvelope).value : parsed;
     return writeDemoGuestPhotoState(sanitizeSnapshot(envelopeValue), storageKey);
   } catch {
     window.localStorage.removeItem(storageKey);

@@ -1,4 +1,5 @@
-import { demoGuests, demoWeddingSite } from '../../lib/demoData';
+import { demoEvents, demoGuests, demoWeddingSite } from '../../lib/demoData';
+import { buildBudgetPaymentReview } from '../../lib/budgetVendorLedgerReadiness';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
 import { calcOverviewDaysUntil } from './overviewDate';
@@ -6,6 +7,10 @@ import { getOverviewFallbackCoupleValue } from './overviewDraftBrief';
 import { buildNameChangeOverviewInsights, type NameChangeOverviewInsights } from './nameChangeOverviewInsights';
 import { deriveNameChangeLifecycleStatus } from './nameChangeLifecycleStatus';
 import { hydrateNameChangeWorkspace } from './planning/nameChangeService';
+import { buildDefaultDemoGuestPhotoState, readDemoGuestPhotoState } from './guestPhotos/guestPhotoDemoState';
+import { buildDemoMessageSeed, readDemoMessages } from './messages/messageDemoStorage';
+import { readDemoPlanningState } from './planning/planningDemoState';
+import { loadDemoItineraryEventsFromStorage, readDemoSeatingState } from './seating/seatingDemoStorage';
 import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../lib/plannerAccess';
 import type { NotificationPrefs } from '../../lib/notificationPrefs';
@@ -69,6 +74,41 @@ export interface NameChangeOverviewStateValue {
   hasExecutionActivity: boolean;
 }
 
+function buildDemoDigestCounts() {
+  const planningState = readDemoPlanningState();
+  const photoState = typeof window === 'undefined' ? buildDefaultDemoGuestPhotoState() : readDemoGuestPhotoState();
+  const messages = typeof window === 'undefined' ? buildDemoMessageSeed() : readDemoMessages();
+  const messageReviewCount = messages
+    .filter((message) => message.status === 'partial' || message.status === 'failed')
+    .length;
+  const upcomingTaskCount = planningState.tasks.filter((task) => task.status !== 'done').length;
+  const paymentReview = buildBudgetPaymentReview({
+    budgetItems: planningState.budgetItems,
+    vendors: planningState.vendors,
+    today: new Date('2026-05-14T00:00:00.000Z'),
+  });
+  const itineraryEvents = typeof window === 'undefined' ? demoEvents : loadDemoItineraryEventsFromStorage();
+  const seatingEventIds = itineraryEvents.map((event) => event.id).filter(Boolean);
+  const validAssignmentGuestIds = new Set(
+    seatingEventIds.flatMap((eventId) => (typeof window === 'undefined' ? [] : readDemoSeatingState(eventId).assignments))
+      .filter((assignment) => assignment.is_valid !== false)
+      .map((assignment) => assignment.guest_id)
+      .filter(Boolean),
+  );
+  const seatingGapCount = Math.max(
+    0,
+    demoGuests.filter((guest) => isAttendingRsvpStatus(guest.rsvp_status)).length - validAssignmentGuestIds.size,
+  );
+
+  return {
+    messageReviewCount,
+    upcomingTaskCount,
+    upcomingPaymentCount: paymentReview.overdueCount + paymentReview.dueSoonCount,
+    newPhotoUploadCount: photoState.uploads.filter((upload) => !upload.is_hidden).length,
+    seatingGapCount,
+  };
+}
+
 export const DEFAULT_NAME_CHANGE_INSIGHTS: NameChangeOverviewInsights = {
   coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
   followOnLabel: 'Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.',
@@ -108,6 +148,7 @@ export function buildDemoOverviewSnapshotState(): {
       receivedAt: new Date(Date.now() - index * 60 * 60 * 1000).toISOString(),
     }));
   const weddingDate = demoWeddingSite.wedding_date ?? null;
+  const digestCounts = buildDemoDigestCounts();
 
   return {
     stats: {
@@ -135,11 +176,11 @@ export function buildDemoOverviewSnapshotState(): {
       activePhotoAlbumCount: 2,
       vaultCount: 3,
       enabledVaultCount: 3,
-      messageReviewCount: 1,
-      upcomingTaskCount: 4,
-      upcomingPaymentCount: 2,
-      newPhotoUploadCount: 5,
-      seatingGapCount: 2,
+      messageReviewCount: digestCounts.messageReviewCount,
+      upcomingTaskCount: digestCounts.upcomingTaskCount,
+      upcomingPaymentCount: digestCounts.upcomingPaymentCount,
+      newPhotoUploadCount: digestCounts.newPhotoUploadCount,
+      seatingGapCount: digestCounts.seatingGapCount,
       contactableGuestCount: demoGuests.filter((guest) => Boolean(guest.email)).length,
       recentRsvps,
       analyticsEventSummary: {

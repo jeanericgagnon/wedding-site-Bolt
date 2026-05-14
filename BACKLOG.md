@@ -406,7 +406,7 @@ Execution rule for this section:
    - this batch shipped: focused proof is green for settings, overview, and digest email readback staying honest about scheduled preview state versus actual delivery connectivity
    - this batch shipped: a dedicated `proof:v1:notification-digest` lane now reruns digest source-count unit coverage, overview snapshot-to-stats continuity, overview model continuity, settings readback, and build integrity so the digest lane is guarded beyond isolated copy assertions
    - this batch shipped: overview digest proof now explicitly guards that message review, task, payment, photo upload, and seating-gap counts continue coming from the real overview source tables/snapshot path instead of drifting back to placeholders
-   - add deeper proof around digest source-of-truth count continuity after real planning/message/photo/seating writes
+   - this batch shipped: demo/local overview snapshot state now derives digest review counts from the same persisted message, planning, photo, and seating stores that the owner flows mutate, and focused proof now mutates those stores directly before asserting digest readback continuity
    - prove live inbox delivery/readback behavior once the digest-delivery pipeline is connected beyond local schedule/readback truth
 
 9. `ACTIVE`: guest language system

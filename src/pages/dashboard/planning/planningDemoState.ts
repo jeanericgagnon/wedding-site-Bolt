@@ -1,5 +1,6 @@
-import { demoBudgetItems, demoVendors } from '../../../lib/demoData';
+import { demoBudgetItems, demoPlanningTasks, demoVendors } from '../../../lib/demoData';
 import type { PlanningBudgetItem, PlanningVendor } from './planningService';
+import type { PlanningTask } from './planningService';
 import { normalizeVendorMeta, type VendorMetaMap } from './vendorMetaStorage';
 
 export const DEMO_PLANNING_STATE_STORAGE_KEY = 'dayof.demo.planning.state.v1';
@@ -8,6 +9,7 @@ interface PlanningDemoStateEnvelope {
   savedAtISO: string;
   value: {
     totalBudget: number;
+    tasks: PlanningTask[];
     budgetItems: PlanningBudgetItem[];
     vendors: PlanningVendor[];
     vendorMeta: VendorMetaMap;
@@ -16,12 +18,14 @@ interface PlanningDemoStateEnvelope {
 
 export interface PlanningDemoStateSnapshot {
   totalBudget: number;
+  tasks: PlanningTask[];
   budgetItems: PlanningBudgetItem[];
   vendors: PlanningVendor[];
   vendorMeta: VendorMetaMap;
 }
 
 const DEFAULT_TOTAL_BUDGET = 30000;
+const MAX_DEMO_TASKS = 240;
 const MAX_DEMO_BUDGET_ITEMS = 200;
 const MAX_DEMO_VENDORS = 120;
 
@@ -29,6 +33,7 @@ const cloneJson = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
 const defaultPlanningDemoState = (): PlanningDemoStateSnapshot => ({
   totalBudget: DEFAULT_TOTAL_BUDGET,
+  tasks: cloneJson(demoPlanningTasks as unknown as PlanningTask[]),
   budgetItems: cloneJson(demoBudgetItems as unknown as PlanningBudgetItem[]),
   vendors: cloneJson(demoVendors as unknown as PlanningVendor[]),
   vendorMeta: {},
@@ -54,6 +59,35 @@ const normalizeBudgetItems = (value: unknown): PlanningBudgetItem[] => {
       notes: typeof rawItem.notes === 'string' ? rawItem.notes : '',
       created_at: typeof rawItem.created_at === 'string' ? rawItem.created_at : new Date().toISOString(),
       updated_at: typeof rawItem.updated_at === 'string' ? rawItem.updated_at : new Date().toISOString(),
+    }];
+  });
+};
+
+const normalizeTasks = (value: unknown): PlanningTask[] => {
+  if (!Array.isArray(value)) return defaultPlanningDemoState().tasks;
+  return value.slice(0, MAX_DEMO_TASKS).flatMap((rawTask) => {
+    if (!isRecord(rawTask) || typeof rawTask.id !== 'string' || typeof rawTask.title !== 'string') return [];
+    const status = rawTask.status === 'todo' || rawTask.status === 'in_progress' || rawTask.status === 'done'
+      ? rawTask.status
+      : 'todo';
+    const priority = rawTask.priority === 'low' || rawTask.priority === 'medium' || rawTask.priority === 'high'
+      ? rawTask.priority
+      : 'medium';
+    return [{
+      id: rawTask.id,
+      wedding_site_id: typeof rawTask.wedding_site_id === 'string' ? rawTask.wedding_site_id : 'demo-site-id',
+      title: rawTask.title,
+      description: typeof rawTask.description === 'string' ? rawTask.description : '',
+      category: typeof rawTask.category === 'string' && rawTask.category.trim() ? rawTask.category : null,
+      due_date: typeof rawTask.due_date === 'string' && rawTask.due_date.trim() ? rawTask.due_date.trim() : null,
+      status,
+      priority,
+      owner_name: typeof rawTask.owner_name === 'string' ? rawTask.owner_name : '',
+      linked_event_id: typeof rawTask.linked_event_id === 'string' && rawTask.linked_event_id.trim() ? rawTask.linked_event_id.trim() : null,
+      linked_vendor_id: typeof rawTask.linked_vendor_id === 'string' && rawTask.linked_vendor_id.trim() ? rawTask.linked_vendor_id.trim() : null,
+      sort_order: Number(rawTask.sort_order) || 0,
+      created_at: typeof rawTask.created_at === 'string' ? rawTask.created_at : new Date().toISOString(),
+      updated_at: typeof rawTask.updated_at === 'string' ? rawTask.updated_at : new Date().toISOString(),
     }];
   });
 };
@@ -105,12 +139,14 @@ export function readDemoPlanningState(storageKey = DEMO_PLANNING_STATE_STORAGE_K
     }
 
     const totalBudget = Number(parsed.value.totalBudget);
+    const tasks = normalizeTasks(parsed.value.tasks);
     const budgetItems = normalizeBudgetItems(parsed.value.budgetItems);
     const vendors = normalizeVendors(parsed.value.vendors);
     const vendorMeta = normalizeVendorMeta(parsed.value.vendorMeta);
 
     const snapshot: PlanningDemoStateSnapshot = {
       totalBudget: Number.isFinite(totalBudget) && totalBudget >= 0 ? totalBudget : defaults.totalBudget,
+      tasks: tasks.length > 0 ? tasks : defaults.tasks,
       budgetItems: budgetItems.length > 0 ? budgetItems : defaults.budgetItems,
       vendors: vendors.length > 0 ? vendors : defaults.vendors,
       vendorMeta,
@@ -130,6 +166,7 @@ export function writeDemoPlanningState(
 ): PlanningDemoStateSnapshot {
   const snapshot: PlanningDemoStateSnapshot = {
     totalBudget: Math.max(0, Number(input.totalBudget) || 0),
+    tasks: normalizeTasks(input.tasks),
     budgetItems: normalizeBudgetItems(input.budgetItems),
     vendors: normalizeVendors(input.vendors),
     vendorMeta: normalizeVendorMeta(input.vendorMeta),
