@@ -1,10 +1,11 @@
 import { customerSafeErrorMessage } from '../../../lib/customerSafeError';
 import { PLANNER_PERMISSION_GROUPS, type PlannerPermissionKey } from '../../../lib/plannerAccess';
 import type { SettingsSiteUpdates } from './settingsSiteData';
-import { SITE_LANGUAGE_OPTIONS, type RSVPQuestionSetting, type SiteLanguageCode } from './settingsDashboardTypes';
+import { SITE_LANGUAGE_OPTIONS, type AnalyticsRetentionDays, type RSVPQuestionSetting, type SiteLanguageCode } from './settingsDashboardTypes';
 
 export const SETTINGS_SITE_MISSING_COPY = 'Couldn’t find your wedding site right now. Refresh and try again.';
 export type SettingsPrivacyMode = 'public' | 'password_protected' | 'invite_only';
+export const ANALYTICS_RETENTION_OPTIONS: AnalyticsRetentionDays[] = [30, 90, 180];
 
 export const makeQuestion = (): RSVPQuestionSetting => ({
   id: `q_${Math.random().toString(36).slice(2, 10)}`,
@@ -61,6 +62,30 @@ export function normalizeAllowedSiteLanguages(value: unknown, fallback: SiteLang
   return unique.length > 0 ? unique : fallback;
 }
 
+export function normalizeAnalyticsRetentionDays(value: unknown, fallback: AnalyticsRetentionDays = 90): AnalyticsRetentionDays {
+  return ANALYTICS_RETENTION_OPTIONS.includes(value as AnalyticsRetentionDays) ? (value as AnalyticsRetentionDays) : fallback;
+}
+
+export function normalizeAnalyticsGuestNotice(value: unknown): string {
+  return typeof value === 'string' ? value.trim().slice(0, 240) : '';
+}
+
+export function normalizeAnalyticsSettings(
+  value: unknown,
+  fallback?: { enabled?: boolean; retentionDays?: AnalyticsRetentionDays; guestNotice?: string },
+): {
+  enabled: boolean;
+  retentionDays: AnalyticsRetentionDays;
+  guestNotice: string;
+} {
+  const source = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+  return {
+    enabled: typeof source.enabled === 'boolean' ? source.enabled : fallback?.enabled ?? true,
+    retentionDays: normalizeAnalyticsRetentionDays(source.retention_days, fallback?.retentionDays ?? 90),
+    guestNotice: normalizeAnalyticsGuestNotice(source.guest_notice ?? fallback?.guestNotice ?? ''),
+  };
+}
+
 export function splitCoupleNames(coupleNames: string) {
   const parts = coupleNames.split('&').map((part) => part.trim()).filter(Boolean);
   return {
@@ -80,11 +105,22 @@ export function buildPrivacySettingsUpdates(input: {
   hideFromSearch: boolean;
   defaultLanguage: SiteLanguageCode;
   allowedLanguages: SiteLanguageCode[];
+  analyticsEnabled: boolean;
+  analyticsRetentionDays: AnalyticsRetentionDays;
+  analyticsGuestNotice: string;
   weddingData?: Record<string, unknown> | null;
   sitePasswordHash?: string | null;
   guestAccessToken?: string | null;
 }): SettingsSiteUpdates {
   const allowedLanguages = Array.from(new Set([input.defaultLanguage, ...normalizeAllowedSiteLanguages(input.allowedLanguages, [input.defaultLanguage])]));
+  const analyticsSettings = normalizeAnalyticsSettings(
+    ((input.weddingData as Record<string, unknown> | null | undefined)?.analytics_settings as Record<string, unknown> | undefined) ?? {},
+    {
+      enabled: input.analyticsEnabled,
+      retentionDays: input.analyticsRetentionDays,
+      guestNotice: input.analyticsGuestNotice,
+    },
+  );
   const updates: SettingsSiteUpdates = {
     privacy_mode: input.privacyMode,
     hide_from_search: input.hideFromSearch,
@@ -94,6 +130,12 @@ export function buildPrivacySettingsUpdates(input: {
       language_settings: {
         ...(((input.weddingData as Record<string, unknown> | null | undefined)?.language_settings as Record<string, unknown> | undefined) ?? {}),
         allowed_languages: allowedLanguages,
+      },
+      analytics_settings: {
+        ...(((input.weddingData as Record<string, unknown> | null | undefined)?.analytics_settings as Record<string, unknown> | undefined) ?? {}),
+        enabled: analyticsSettings.enabled,
+        retention_days: analyticsSettings.retentionDays,
+        guest_notice: analyticsSettings.guestNotice,
       },
     },
   };

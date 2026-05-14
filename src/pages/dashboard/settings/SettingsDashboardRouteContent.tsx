@@ -7,7 +7,7 @@ import { getPlannerPermissionPreset, type PlannerPermissionKey, type PlannerInvi
 import type { BillingInfo } from '../../../lib/stripeService';
 import type { WeddingIdentityExportKit, WeddingIdentityPrintAsset } from '../../../lib/weddingIdentityExports';
 import type { SettingsCollaboratorInviteRow } from './settingsSiteData';
-import type { RSVPQuestionSetting, SiteLanguageCode, TranslationLanguageCode, TranslationStatusRow } from './settingsDashboardTypes';
+import type { AnalyticsRetentionDays, RSVPQuestionSetting, SiteLanguageCode, TranslationLanguageCode, TranslationStatusRow } from './settingsDashboardTypes';
 import { makeQuestion } from './settingsDashboardUtils';
 import { SettingsAccountPanel } from './SettingsAccountPanel';
 import { SettingsBillingPanel } from './SettingsBillingPanel';
@@ -38,6 +38,9 @@ type Props = {
   currentPassword: string;
   currentTemplate: string;
   allowedLanguages: SiteLanguageCode[];
+  analyticsEnabled: boolean;
+  analyticsRetentionDays: AnalyticsRetentionDays;
+  analyticsGuestNotice: string;
   defaultLanguage: SiteLanguageCode;
   guestAccessToken: string | null;
   hasWeddingIdentityStoryGraphic: boolean;
@@ -106,6 +109,9 @@ type Props = {
   setCoupleNames: (value: string) => void;
   setCurrentPassword: (value: string) => void;
   setHideFromSearch: (value: boolean) => void;
+  setAnalyticsEnabled: (value: boolean) => void;
+  setAnalyticsRetentionDays: (value: AnalyticsRetentionDays) => void;
+  setAnalyticsGuestNotice: (value: string) => void;
   setMusicPlaylistUrl: (value: string) => void;
   setNewPassword: (value: string) => void;
   setNotifDigest: (value: boolean) => void;
@@ -265,6 +271,9 @@ export function SettingsDashboardRouteContent(props: Props) {
             changingTemplate={props.changingTemplate}
             currentTemplate={props.currentTemplate}
             allowedLanguages={props.allowedLanguages}
+            analyticsEnabled={props.analyticsEnabled}
+            analyticsRetentionDays={props.analyticsRetentionDays}
+            analyticsGuestNotice={props.analyticsGuestNotice}
             defaultLanguage={props.defaultLanguage}
             hasWeddingIdentityStoryGraphic={props.hasWeddingIdentityStoryGraphic}
             guestAccessToken={props.guestAccessToken}
@@ -283,6 +292,18 @@ export function SettingsDashboardRouteContent(props: Props) {
             onHideFromSearchChange={(checked) => {
               props.visibilityDraftMarkDirty();
               props.setHideFromSearch(checked);
+            }}
+            onAnalyticsEnabledChange={(checked) => {
+              props.visibilityDraftMarkDirty();
+              props.setAnalyticsEnabled(checked);
+            }}
+            onAnalyticsRetentionDaysChange={(days) => {
+              props.visibilityDraftMarkDirty();
+              props.setAnalyticsRetentionDays(days);
+            }}
+            onAnalyticsGuestNoticeChange={(value) => {
+              props.visibilityDraftMarkDirty();
+              props.setAnalyticsGuestNotice(value);
             }}
             onPrivacyModeChange={(mode) => {
               props.visibilityDraftMarkDirty();

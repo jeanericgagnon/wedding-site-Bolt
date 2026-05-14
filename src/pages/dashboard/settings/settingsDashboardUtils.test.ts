@@ -1,10 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  ANALYTICS_RETENTION_OPTIONS,
   SETTINGS_SITE_MISSING_COPY,
   buildPrivacySettingsUpdates,
   cleanRsvpSettings,
   formatTranslationStatusDate,
   getSiteLanguageLabel,
+  normalizeAnalyticsGuestNotice,
+  normalizeAnalyticsRetentionDays,
+  normalizeAnalyticsSettings,
   makeQuestion,
   normalizeAllowedSiteLanguages,
   normalizeMealOptions,
@@ -68,6 +72,24 @@ describe('settingsDashboardUtils', () => {
     expect(normalizeMealOptions(null)).toEqual(['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan']);
     expect(normalizeAllowedSiteLanguages(['es', 'fr', 'es', 'bad'])).toEqual(['es', 'fr']);
     expect(normalizeAllowedSiteLanguages(null, ['en'])).toEqual(['en']);
+    expect(ANALYTICS_RETENTION_OPTIONS).toEqual([30, 90, 180]);
+    expect(normalizeAnalyticsRetentionDays(30)).toBe(30);
+    expect(normalizeAnalyticsRetentionDays('bad')).toBe(90);
+    expect(normalizeAnalyticsGuestNotice('  Aggregate counts only.  ')).toBe('Aggregate counts only.');
+    expect(normalizeAnalyticsSettings({
+      enabled: false,
+      retention_days: 180,
+      guest_notice: '  Aggregate event counts only. ',
+    })).toEqual({
+      enabled: false,
+      retentionDays: 180,
+      guestNotice: 'Aggregate event counts only.',
+    });
+    expect(normalizeAnalyticsSettings(null, { enabled: false, retentionDays: 30, guestNotice: 'Notice' })).toEqual({
+      enabled: false,
+      retentionDays: 30,
+      guestNotice: 'Notice',
+    });
   });
 
   it('normalizes account names and site slugs before saving', () => {
@@ -83,6 +105,9 @@ describe('settingsDashboardUtils', () => {
       hideFromSearch: true,
       defaultLanguage: 'en',
       allowedLanguages: ['en', 'es'],
+      analyticsEnabled: true,
+      analyticsRetentionDays: 90,
+      analyticsGuestNotice: 'Aggregate guest-hub counts only.',
       sitePasswordHash: 'hash',
       guestAccessToken: 'token',
     })).toEqual({
@@ -93,6 +118,11 @@ describe('settingsDashboardUtils', () => {
         language_settings: {
           allowed_languages: ['en', 'es'],
         },
+        analytics_settings: {
+          enabled: true,
+          retention_days: 90,
+          guest_notice: 'Aggregate guest-hub counts only.',
+        },
       },
     });
 
@@ -101,6 +131,9 @@ describe('settingsDashboardUtils', () => {
       hideFromSearch: false,
       defaultLanguage: 'fr',
       allowedLanguages: ['fr'],
+      analyticsEnabled: true,
+      analyticsRetentionDays: 30,
+      analyticsGuestNotice: '',
       sitePasswordHash: 'hash',
     })).toMatchObject({ site_password_hash: 'hash' });
 
@@ -109,12 +142,20 @@ describe('settingsDashboardUtils', () => {
       hideFromSearch: false,
       defaultLanguage: 'es',
       allowedLanguages: ['fr'],
+      analyticsEnabled: false,
+      analyticsRetentionDays: 180,
+      analyticsGuestNotice: 'Aggregate only.',
       guestAccessToken: 'token',
     })).toMatchObject({
       guest_access_token: 'token',
       wedding_data: {
         language_settings: {
           allowed_languages: ['es', 'fr'],
+        },
+        analytics_settings: {
+          enabled: false,
+          retention_days: 180,
+          guest_notice: 'Aggregate only.',
         },
       },
     });

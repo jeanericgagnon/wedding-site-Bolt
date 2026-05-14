@@ -2,6 +2,7 @@ import { resolveActiveSiteForUser, type ActiveSiteSummary } from '../../lib/acti
 import { buildBudgetPaymentReview, type BudgetLedgerItem, type VendorLedgerItem } from '../../lib/budgetVendorLedgerReadiness';
 import { supabase } from '../../lib/supabase';
 import { buildAnalyticsEventSummary, buildEmptyAnalyticsEventSummary, type AnalyticsEventSummary } from './analyticsEventSummary';
+import { normalizeAnalyticsSettings } from './settings/settingsDashboardUtils';
 
 const OVERVIEW_DISMISSALS_SITE_SELECT = 'wedding_data';
 const OVERVIEW_BUILDER_SITE_SELECT = 'site_json';
@@ -364,6 +365,12 @@ export async function loadOverviewDashboardSnapshot(userId: string): Promise<Ove
   }
 
   const siteId = site.id;
+  const analyticsSettings = normalizeAnalyticsSettings(
+    (site.wedding_data && typeof site.wedding_data === 'object'
+      ? (site.wedding_data as Record<string, unknown>).analytics_settings
+      : null),
+  );
+  const analyticsLookbackDays = analyticsSettings.retentionDays;
   const recentUploadCutoffIso = new Date(Date.now() - OVERVIEW_RECENT_UPLOAD_LOOKBACK_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
   const [
@@ -480,7 +487,7 @@ export async function loadOverviewDashboardSnapshot(userId: string): Promise<Ove
       .from('guest_hub_events')
       .select(OVERVIEW_GUEST_HUB_EVENT_SELECT)
       .eq('wedding_site_id', siteId)
-      .gte('created_at', new Date(Date.now() - OVERVIEW_ANALYTICS_LOOKBACK_DAYS * 24 * 60 * 60 * 1000).toISOString())
+      .gte('created_at', new Date(Date.now() - analyticsLookbackDays * 24 * 60 * 60 * 1000).toISOString())
       .order('created_at', { ascending: false })
       .limit(5000),
   ]);
@@ -563,7 +570,7 @@ export async function loadOverviewDashboardSnapshot(userId: string): Promise<Ove
     seatingGapCount,
     recentRsvps: formatRecentRsvps((recentRsvpsResult.data ?? []) as OverviewRecentRsvpRow[]),
     analyticsEventSummary: buildAnalyticsEventSummary((guestHubEventsResult.data ?? []) as Array<{ event_type: string | null; target: string | null; created_at: string | null }>, {
-      lookbackDays: OVERVIEW_ANALYTICS_LOOKBACK_DAYS,
+      lookbackDays: analyticsLookbackDays,
     }),
   };
 }

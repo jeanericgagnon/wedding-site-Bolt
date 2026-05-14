@@ -1,6 +1,6 @@
 import type { FormEvent } from 'react';
 import type { WeddingIdentityExportKit, WeddingIdentityPrintAsset } from '../../../lib/weddingIdentityExports';
-import type { SiteLanguageCode, TranslationLanguageCode, TranslationStatusRow } from './settingsDashboardTypes';
+import type { AnalyticsRetentionDays, SiteLanguageCode, TranslationLanguageCode, TranslationStatusRow } from './settingsDashboardTypes';
 import { SettingsIdentityExportsPanel } from './SettingsIdentityExportsPanel';
 import { SettingsPrivacyPanel } from './SettingsPrivacyPanel';
 import { SettingsSiteUrlPanel } from './SettingsSiteUrlPanel';
@@ -8,6 +8,9 @@ import { SettingsTemplatePanel } from './SettingsTemplatePanel';
 
 type SettingsSiteTabContentProps = {
   allowedLanguages: SiteLanguageCode[];
+  analyticsEnabled: boolean;
+  analyticsRetentionDays: AnalyticsRetentionDays;
+  analyticsGuestNotice: string;
   currentTemplate: string;
   defaultLanguage: SiteLanguageCode;
   hasWeddingIdentityStoryGraphic: boolean;
@@ -22,6 +25,9 @@ type SettingsSiteTabContentProps = {
   onDownloadIdentityStoryGraphic: () => void;
   onDownloadIdentityPrintPack: () => void;
   onHideFromSearchChange: (checked: boolean) => void;
+  onAnalyticsEnabledChange: (checked: boolean) => void;
+  onAnalyticsRetentionDaysChange: (days: AnalyticsRetentionDays) => void;
+  onAnalyticsGuestNoticeChange: (value: string) => void;
   onPrivacyModeChange: (mode: 'public' | 'password_protected' | 'invite_only') => void;
   onRegenerateToken: () => void;
   onSavePrivacy: (event: FormEvent) => void;
@@ -57,6 +63,9 @@ type SettingsSiteTabContentProps = {
 
 export function SettingsSiteTabContent({
   allowedLanguages,
+  analyticsEnabled,
+  analyticsRetentionDays,
+  analyticsGuestNotice,
   changingTemplate,
   currentTemplate,
   defaultLanguage,
@@ -72,6 +81,9 @@ export function SettingsSiteTabContent({
   onDownloadIdentityStoryGraphic,
   onDownloadIdentityPrintPack,
   onHideFromSearchChange,
+  onAnalyticsEnabledChange,
+  onAnalyticsRetentionDaysChange,
+  onAnalyticsGuestNoticeChange,
   onPrivacyModeChange,
   onRegenerateToken,
   onSavePrivacy,
@@ -127,6 +139,9 @@ export function SettingsSiteTabContent({
 
       <SettingsPrivacyPanel
         allowedLanguages={allowedLanguages}
+        analyticsEnabled={analyticsEnabled}
+        analyticsRetentionDays={analyticsRetentionDays}
+        analyticsGuestNotice={analyticsGuestNotice}
         defaultLanguage={defaultLanguage}
         guestAccessToken={guestAccessToken}
         hideFromSearch={hideFromSearch}
@@ -135,6 +150,9 @@ export function SettingsSiteTabContent({
         onCopyInviteLink={onCopyInviteLink}
         onDefaultLanguageChange={onDefaultLanguageChange}
         onHideFromSearchChange={onHideFromSearchChange}
+        onAnalyticsEnabledChange={onAnalyticsEnabledChange}
+        onAnalyticsRetentionDaysChange={onAnalyticsRetentionDaysChange}
+        onAnalyticsGuestNoticeChange={onAnalyticsGuestNoticeChange}
         onRegenerateToken={onRegenerateToken}
         onSavePrivacy={onSavePrivacy}
         onSitePasswordChange={onSitePasswordChange}

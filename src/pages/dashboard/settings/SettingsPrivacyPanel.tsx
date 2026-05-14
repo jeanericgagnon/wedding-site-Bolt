@@ -2,8 +2,9 @@ import { CheckCheck, Copy, Eye, EyeOff, Loader2, Save, Sparkles } from 'lucide-r
 import type { FormEvent } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui';
 import { getVisibilityModeOptions } from '../../../lib/siteVisibilityState';
-import { formatTranslationStatusDate } from './settingsDashboardUtils';
+import { ANALYTICS_RETENTION_OPTIONS, formatTranslationStatusDate } from './settingsDashboardUtils';
 import {
+  type AnalyticsRetentionDays,
   SITE_LANGUAGE_OPTIONS,
   TRANSLATION_LANGUAGE_OPTIONS,
   type SiteLanguageCode,
@@ -13,6 +14,9 @@ import {
 
 type SettingsPrivacyPanelProps = {
   allowedLanguages: SiteLanguageCode[];
+  analyticsEnabled: boolean;
+  analyticsRetentionDays: AnalyticsRetentionDays;
+  analyticsGuestNotice: string;
   defaultLanguage: SiteLanguageCode;
   guestAccessToken: string | null;
   hideFromSearch: boolean;
@@ -21,6 +25,9 @@ type SettingsPrivacyPanelProps = {
   onAllowedLanguagesChange: (languages: SiteLanguageCode[]) => void;
   onDefaultLanguageChange: (language: SiteLanguageCode) => void;
   onHideFromSearchChange: (checked: boolean) => void;
+  onAnalyticsEnabledChange: (checked: boolean) => void;
+  onAnalyticsRetentionDaysChange: (days: AnalyticsRetentionDays) => void;
+  onAnalyticsGuestNoticeChange: (value: string) => void;
   onRegenerateToken: () => void;
   onSavePrivacy: (event: FormEvent) => void;
   onSitePasswordChange: (value: string) => void;
@@ -42,6 +49,9 @@ type SettingsPrivacyPanelProps = {
 
 export function SettingsPrivacyPanel({
   allowedLanguages,
+  analyticsEnabled,
+  analyticsRetentionDays,
+  analyticsGuestNotice,
   defaultLanguage,
   guestAccessToken,
   hideFromSearch,
@@ -50,6 +60,9 @@ export function SettingsPrivacyPanel({
   onAllowedLanguagesChange,
   onDefaultLanguageChange,
   onHideFromSearchChange,
+  onAnalyticsEnabledChange,
+  onAnalyticsRetentionDaysChange,
+  onAnalyticsGuestNoticeChange,
   onRegenerateToken,
   onSavePrivacy,
   onSitePasswordChange,
@@ -209,6 +222,59 @@ export function SettingsPrivacyPanel({
                 <li>• <span className="font-medium text-text-primary">Protected live access</span> lets you limit who can open the guest-facing site once it is live.</li>
                 <li>• <span className="font-medium text-text-primary">Share with guests</span> makes the site live at your dayof URL.</li>
               </ul>
+            </div>
+
+            <div className="space-y-3 rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+              <div>
+                <p className="text-sm font-medium text-text-primary">Aggregate analytics policy</p>
+                <p className="mt-1 text-xs text-text-secondary">
+                  Guest-hub analytics stay aggregate-only. Owner readback should never expose invite tokens, private URLs, IP addresses, or device-level detail.
+                </p>
+              </div>
+              <label className="flex items-start gap-3 rounded-lg border border-border bg-white px-3 py-3 text-sm text-text-primary">
+                <input
+                  type="checkbox"
+                  checked={analyticsEnabled}
+                  onChange={(event) => onAnalyticsEnabledChange(event.target.checked)}
+                  className="mt-0.5 text-primary focus:ring-primary"
+                />
+                <span>
+                  <span className="block font-medium">Track aggregate guest-hub analytics</span>
+                  <span className="mt-1 block text-xs text-text-secondary">
+                    Use measured website visits, invite opens, and QR entries in owner analytics. Turn this off if you do not want new guest-hub activity counted.
+                  </span>
+                </span>
+              </label>
+              <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
+                <label className="space-y-2 text-sm text-text-primary">
+                  <span className="block font-medium">Retention window</span>
+                  <select
+                    value={analyticsRetentionDays}
+                    onChange={(event) => onAnalyticsRetentionDaysChange(Number(event.target.value) as AnalyticsRetentionDays)}
+                    disabled={!analyticsEnabled}
+                    className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:bg-surface-subtle"
+                  >
+                    {ANALYTICS_RETENTION_OPTIONS.map((days) => (
+                      <option key={days} value={days}>{days} days</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="space-y-2 text-sm text-text-primary">
+                  <span className="block font-medium">Guest-facing notice</span>
+                  <textarea
+                    value={analyticsGuestNotice}
+                    onChange={(event) => onAnalyticsGuestNoticeChange(event.target.value)}
+                    rows={3}
+                    maxLength={240}
+                    disabled={!analyticsEnabled}
+                    placeholder="Aggregate visit, invite, and QR counts help us see what guest resources are being used."
+                    className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:bg-surface-subtle"
+                  />
+                  <span className="block text-xs text-text-secondary">
+                    Save a short disclosure for your planning team. Keep it high-level and guest-safe.
+                  </span>
+                </label>
+              </div>
             </div>
 
             <div className="space-y-3">

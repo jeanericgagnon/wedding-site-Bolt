@@ -30,6 +30,9 @@ const baseStats = {
   pendingGuests: 6,
   photoAlbumCount: 0,
   recentRsvps: [],
+  analyticsEnabled: true,
+  analyticsRetentionDays: 90 as const,
+  analyticsGuestNotice: 'Aggregate visit, invite, and QR counts help us see what guest resources are being used.',
   analyticsEventSummary: {
     lookbackDays: 30,
     totalTrackedEvents: 28,

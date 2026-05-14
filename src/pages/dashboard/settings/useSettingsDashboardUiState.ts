@@ -10,6 +10,7 @@ import {
 } from '../../../lib/plannerAccess';
 import type { SettingsCollaboratorInviteRow } from './settingsSiteData';
 import type {
+  AnalyticsRetentionDays,
   RSVPQuestionSetting,
   SiteLanguageCode,
   TranslationLanguageCode,
@@ -76,6 +77,9 @@ export function useSettingsDashboardUiState({ userId }: Args) {
   const [sitePassword, setSitePassword] = useState('');
   const [showSitePassword, setShowSitePassword] = useState(false);
   const [guestAccessToken, setGuestAccessToken] = useState<string | null>(null);
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
+  const [analyticsRetentionDays, setAnalyticsRetentionDays] = useState<AnalyticsRetentionDays>(90);
+  const [analyticsGuestNotice, setAnalyticsGuestNotice] = useState('');
   const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestionSetting[]>([]);
   const [rsvpQuestionsSaving, setRsvpQuestionsSaving] = useState(false);
   const [rsvpQuestionsSuccess, setRsvpQuestionsSuccess] = useState<string | null>(null);
@@ -181,6 +185,9 @@ export function useSettingsDashboardUiState({ userId }: Args) {
     billingInfo,
     billingLoading,
     changingTemplate,
+    analyticsEnabled,
+    analyticsRetentionDays,
+    analyticsGuestNotice,
     collapsedQuestionIds,
     collaboratorInvites,
     confirmPassword,
@@ -266,6 +273,9 @@ export function useSettingsDashboardUiState({ userId }: Args) {
     setBillingInfo,
     setBillingLoading,
     setChangingTemplate,
+    setAnalyticsEnabled,
+    setAnalyticsRetentionDays,
+    setAnalyticsGuestNotice,
     setCollapsedQuestionIds,
     setCollaboratorInvites,
     setConfirmPassword,

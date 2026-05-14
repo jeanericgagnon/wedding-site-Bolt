@@ -53,7 +53,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: site, error: siteError } = await admin
       .from("wedding_sites")
-      .select("id,site_slug,is_published,privacy_mode,guest_access_token")
+      .select("id,site_slug,is_published,privacy_mode,guest_access_token,wedding_data")
       .eq("site_slug", siteSlug)
       .maybeSingle();
 
@@ -70,6 +70,13 @@ Deno.serve(async (req: Request) => {
         secret: serviceRole,
       }))
     ) {
+      return json({ ok: true, tracked: false });
+    }
+
+    const analyticsSettings = site.wedding_data && typeof site.wedding_data === "object"
+      ? ((site.wedding_data as Record<string, unknown>).analytics_settings as Record<string, unknown> | undefined)
+      : undefined;
+    if (analyticsSettings?.enabled === false) {
       return json({ ok: true, tracked: false });
     }
 

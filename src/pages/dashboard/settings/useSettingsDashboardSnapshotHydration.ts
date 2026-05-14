@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 
-import { safeSettingsError } from './settingsDashboardUtils';
+import { normalizeAnalyticsSettings, safeSettingsError } from './settingsDashboardUtils';
 import { loadSettingsDashboardSnapshot } from './loadSettingsDashboardSnapshot';
 import type { RSVPQuestionSetting, SiteLanguageCode, TranslationStatusRow } from './settingsDashboardTypes';
 import type { SettingsCollaboratorInviteRow } from './settingsSiteData';
@@ -16,6 +16,9 @@ interface UseSettingsDashboardSnapshotHydrationArgs {
   setAccountEmail: React.Dispatch<React.SetStateAction<string>>;
   setAccountError: React.Dispatch<React.SetStateAction<string | null>>;
   setAllowedLanguages: React.Dispatch<React.SetStateAction<SiteLanguageCode[]>>;
+  setAnalyticsEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  setAnalyticsGuestNotice: React.Dispatch<React.SetStateAction<string>>;
+  setAnalyticsRetentionDays: React.Dispatch<React.SetStateAction<30 | 90 | 180>>;
   setCollaboratorInvites: React.Dispatch<React.SetStateAction<SettingsCollaboratorInviteRow[]>>;
   setCoupleNames: React.Dispatch<React.SetStateAction<string>>;
   setCurrentTemplate: React.Dispatch<React.SetStateAction<string>>;
@@ -56,6 +59,9 @@ export function useSettingsDashboardSnapshotHydration({
   setAccountEmail,
   setAccountError,
   setAllowedLanguages,
+  setAnalyticsEnabled,
+  setAnalyticsGuestNotice,
+  setAnalyticsRetentionDays,
   setCollaboratorInvites,
   setCoupleNames,
   setCurrentTemplate,
@@ -110,11 +116,17 @@ export function useSettingsDashboardSnapshotHydration({
       setTranslationStatuses(snapshot.translationStatuses);
 
       if (visibilityDraftGuard.shouldHydrate()) {
+        const analyticsSettings = normalizeAnalyticsSettings(
+          (snapshot.weddingData?.analytics_settings as Record<string, unknown> | undefined) ?? null,
+        );
         setPrivacyMode(snapshot.privacyMode);
         setHideFromSearch(snapshot.hideFromSearch);
         setGuestAccessToken(snapshot.guestAccessToken);
         setDefaultLanguage(snapshot.defaultLanguage);
         setAllowedLanguages(snapshot.allowedLanguages);
+        setAnalyticsEnabled(analyticsSettings.enabled);
+        setAnalyticsRetentionDays(analyticsSettings.retentionDays);
+        setAnalyticsGuestNotice(analyticsSettings.guestNotice);
       }
 
       if (notifDraftGuard.shouldHydrate()) {
@@ -145,6 +157,9 @@ export function useSettingsDashboardSnapshotHydration({
     setAccountEmail,
     setAccountError,
     setAllowedLanguages,
+    setAnalyticsEnabled,
+    setAnalyticsGuestNotice,
+    setAnalyticsRetentionDays,
     setCollaboratorInvites,
     setCoupleNames,
     setCurrentTemplate,

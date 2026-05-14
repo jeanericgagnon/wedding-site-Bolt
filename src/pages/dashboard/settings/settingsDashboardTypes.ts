@@ -7,6 +7,8 @@ export interface RSVPQuestionSetting {
   options?: string[];
 }
 
+export type AnalyticsRetentionDays = 30 | 90 | 180;
+
 export const LOCAL_RSVP_QUESTIONS_KEY = 'dayof_demo_rsvp_custom_questions_v1';
 export const LOCAL_RSVP_MEAL_KEY = 'dayof_demo_rsvp_meal_config_v1';
 

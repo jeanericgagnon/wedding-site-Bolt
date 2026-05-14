@@ -37,6 +37,7 @@ import {
   type SettingsPrivacyMode,
 } from './settingsDashboardUtils';
 import type {
+  AnalyticsRetentionDays,
   SiteLanguageCode,
   TranslationLanguageCode,
 } from './settingsDashboardTypes';
@@ -74,6 +75,9 @@ export type UseSettingsSiteAccessActionsArgs = {
   hideFromSearch: boolean;
   allowedLanguages: SiteLanguageCode[];
   defaultLanguage: SiteLanguageCode;
+  analyticsEnabled: boolean;
+  analyticsRetentionDays: AnalyticsRetentionDays;
+  analyticsGuestNotice: string;
   settingsWeddingData: Record<string, unknown> | null;
   sitePassword: string;
   guestAccessToken: string | null;
@@ -112,6 +116,7 @@ export type UseSettingsSiteAccessActionsArgs = {
   setTranslatingLanguage: SetState<TranslationLanguageCode | null>;
   setAllowedLanguages: SetState<SiteLanguageCode[]>;
   setDefaultLanguage: SetState<SiteLanguageCode>;
+  setSettingsWeddingData: SetState<Record<string, unknown> | null>;
 };
 
 export function useSettingsSiteAccessActions({
@@ -128,6 +133,9 @@ export function useSettingsSiteAccessActions({
   hideFromSearch,
   allowedLanguages,
   defaultLanguage,
+  analyticsEnabled,
+  analyticsRetentionDays,
+  analyticsGuestNotice,
   settingsWeddingData,
   sitePassword,
   guestAccessToken,
@@ -162,6 +170,7 @@ export function useSettingsSiteAccessActions({
   setSlugSuccess,
   setTranslatingLanguage,
   setAllowedLanguages,
+  setSettingsWeddingData,
   setVisibilityError,
   setVisibilitySaving,
   setVisibilitySuccess,
@@ -391,6 +400,9 @@ export function useSettingsSiteAccessActions({
         hideFromSearch,
         allowedLanguages,
         defaultLanguage,
+        analyticsEnabled,
+        analyticsRetentionDays,
+        analyticsGuestNotice,
         weddingData: settingsWeddingData,
         sitePasswordHash,
         guestAccessToken: nextGuestAccessToken,
@@ -398,6 +410,10 @@ export function useSettingsSiteAccessActions({
 
       await updateSettingsSite(targetSiteId, updates);
       if (nextGuestAccessToken) setGuestAccessToken(nextGuestAccessToken);
+      setSettingsWeddingData((current) => ({
+        ...((current && typeof current === 'object') ? current : {}),
+        ...((updates.wedding_data as Record<string, unknown> | undefined) ?? {}),
+      }));
       visibilityDraftGuard.markSaved();
       setSitePassword('');
       logSettingsAction(
@@ -408,6 +424,9 @@ export function useSettingsSiteAccessActions({
           hideFromSearch,
           allowedLanguages,
           defaultLanguage,
+          analyticsEnabled,
+          analyticsRetentionDays,
+          analyticsGuestNoticeSet: analyticsGuestNotice.trim().length > 0,
           passwordChanged: privacyMode === 'password_protected' && Boolean(sitePassword),
           guestAccessTokenCreated: Boolean(nextGuestAccessToken),
         },

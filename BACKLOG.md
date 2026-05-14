@@ -446,8 +446,10 @@ Execution rule for this section:
    - this batch shipped: public guest-hub QR assets now encode a safe `entry=qr` marker in the QR payload itself while keeping the visible printed copy clean, so owner QR analytics can distinguish QR-driven guest-hub entry from ordinary public-link traffic
    - this batch shipped: wedding overview baseline/readiness/funnel cards now show measured website visits, invite-link opens, and QR entries instead of claiming those lanes are still purely planned
    - this batch shipped: focused proof is green for analytics aggregation math, readiness/funnel state, overview model wiring, guest-hub QR safety, identity-export QR payload continuity, and the standard local type/lint/build gate
+   - this batch shipped: owners now have saved aggregate-analytics policy controls inside Settings for enable/pause, retention window, and guest-facing disclosure note, and overview analytics read that policy back instead of acting like tracking is policy-less
+   - this batch shipped: guest-hub tracking now respects the saved analytics policy server-side, so new aggregate guest-hub events stop writing when the owner pauses analytics collection
+   - this batch shipped: overview analytics retention now follows the saved owner retention window instead of a hardcoded lookback
    - rerun the same owner analytics readback against the shipped production runtime after the next approved deploy
-   - add explicit owner retention/consent controls and readback for analytics history policy
    - extend invite-open instrumentation beyond guest-hub/private-link entry into any remaining RSVP-only invite paths before claiming broader invitation analytics coverage
    - add live production proof that public and guest-facing routes still expose no owner analytics detail
 

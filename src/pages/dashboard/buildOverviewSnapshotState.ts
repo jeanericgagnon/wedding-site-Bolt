@@ -10,6 +10,7 @@ import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../lib/plannerAccess';
 import type { NotificationPrefs } from '../../lib/notificationPrefs';
 import type { AnalyticsEventSummary } from './analyticsEventSummary';
+import { normalizeAnalyticsSettings } from './settings/settingsDashboardUtils';
 
 type RecentRsvp = {
   id: string;
@@ -54,6 +55,9 @@ export interface OverviewStatsState {
   contactableGuestCount: number;
   recentRsvps: RecentRsvp[];
   analyticsEventSummary: AnalyticsEventSummary;
+  analyticsEnabled: boolean;
+  analyticsRetentionDays: 30 | 90 | 180;
+  analyticsGuestNotice: string;
   activeSiteRole: PlannerAccessRole;
   activeSitePermissions: PlannerPermissionKey[] | null;
   notificationPrefs: NotificationPrefs;
@@ -157,6 +161,9 @@ export function buildDemoOverviewSnapshotState(): {
         contactClicks: 0,
         lastTrackedAt: new Date().toISOString(),
       },
+      analyticsEnabled: true,
+      analyticsRetentionDays: 90,
+      analyticsGuestNotice: 'Aggregate visit, invite, and QR counts help us see what guest resources are being used.',
       activeSiteRole: 'owner',
       activeSitePermissions: null,
       notificationPrefs: {
@@ -340,7 +347,7 @@ export function buildOverviewStatsFromSnapshot({
   analyticsEventSummary: AnalyticsEventSummary;
   registryItemCount: number;
   seatingGapCount: number;
-  site: { couple_name_1?: string | null; couple_name_2?: string | null; venue_name?: string | null; wedding_location?: string | null } | null;
+  site: { couple_name_1?: string | null; couple_name_2?: string | null; venue_name?: string | null; wedding_location?: string | null; wedding_data?: unknown } | null;
   siteId: string | null;
   siteSlug: string | null;
   siteUpdatedAt: string | null;
@@ -351,6 +358,11 @@ export function buildOverviewStatsFromSnapshot({
   vaultCount: number;
   weddingDate: string | null;
 }): OverviewStatsState {
+  const analyticsSettings = normalizeAnalyticsSettings(
+    (site?.wedding_data && typeof site.wedding_data === 'object'
+      ? (site.wedding_data as Record<string, unknown>).analytics_settings
+      : null),
+  );
   return {
     siteId,
     publishedVersion,
@@ -384,6 +396,9 @@ export function buildOverviewStatsFromSnapshot({
     contactableGuestCount,
     recentRsvps,
     analyticsEventSummary,
+    analyticsEnabled: analyticsSettings.enabled,
+    analyticsRetentionDays: analyticsSettings.retentionDays,
+    analyticsGuestNotice: analyticsSettings.guestNotice,
     activeSiteRole,
     activeSitePermissions,
     notificationPrefs,

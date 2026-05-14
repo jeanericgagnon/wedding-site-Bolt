@@ -1007,7 +1007,9 @@ export function OverviewDashboardLiveContent({
                   ))}
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-secondary/25 px-3 py-2 text-xs leading-5 text-text-secondary">
-                  Analytics shown here stay aggregate-only. Website visits, invite-link opens, and QR entries now come from tracked guest-hub events without exposing IPs, exact devices, guest tokens, or private invite URLs.
+                  {stats?.analyticsEnabled
+                    ? `Aggregate analytics are active with a ${stats.analyticsRetentionDays}-day retention window. ${stats.analyticsGuestNotice || 'Website visits, invite-link opens, and QR entries come from tracked guest-hub events without exposing IPs, exact devices, guest tokens, or private invite URLs.'}`
+                    : 'Aggregate analytics are paused by owner preference. Historical summary stays owner-visible, but new guest-hub visits, invite opens, and QR entries are not tracked while this is off.'}
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface px-3 py-3">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
