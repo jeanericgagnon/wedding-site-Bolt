@@ -1684,8 +1684,20 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
         retryingMessageId={retryingMessageId}
         reviewCandidates={reviewCandidates}
         onRetry={onRetry}
-        onShowNeedsFollowUp={() => { onSetHistoryStatusFilter('partial'); onSetHistoryChannelFilter('all'); }}
-        onShowNeedsReview={() => { onSetHistoryStatusFilter('failed'); onSetHistoryChannelFilter('all'); }}
+        onShowNeedsFollowUp={() => {
+          onSetHistoryStatusFilter('partial');
+          onSetHistoryChannelFilter('all');
+          onSetHistoryDeliveryFilter('all');
+          onSetHistoryCampaignFilter('');
+          onSetHistorySearch('');
+        }}
+        onShowNeedsReview={() => {
+          onSetHistoryStatusFilter('failed');
+          onSetHistoryChannelFilter('all');
+          onSetHistoryDeliveryFilter('failed');
+          onSetHistoryCampaignFilter('');
+          onSetHistorySearch('');
+        }}
         onViewMessage={onViewMessage}
       />
 

@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { MessageCampaignThreadPanels, MessageHistorySummaryPanels, MessageReachSnapshotCard, MessageReviewQueuePanels } from './MessageDashboardComponents';
+import { MessageCampaignThreadPanels, MessageHistoryCard, MessageHistorySummaryPanels, MessageReachSnapshotCard, MessageReviewQueuePanels } from './MessageDashboardComponents';
 
 describe('MessageCampaignThreadPanels', () => {
   it('shows engagement readback on recent campaign rollups when it exists', () => {
@@ -155,5 +155,78 @@ describe('MessageReviewQueuePanels', () => {
     );
 
     expect(screen.getByText('email · delivered 2 · needs review 1 · needs contact 1 · not reached 1')).toBeInTheDocument();
+  });
+});
+
+describe('MessageHistoryCard', () => {
+  it('resets stale filters when jumping from review shortcuts into history', () => {
+    const onSetHistoryStatusFilter = vi.fn();
+    const onSetHistoryChannelFilter = vi.fn();
+    const onSetHistoryDeliveryFilter = vi.fn();
+    const onSetHistoryCampaignFilter = vi.fn();
+    const onSetHistorySearch = vi.fn();
+
+    render(
+      <MessageHistoryCard
+        activeCampaignLatestMessage={null}
+        activeCampaignThread={null}
+        audienceBreakdown={[]}
+        campaignStatusSummary={{ draft: 0, scheduled: 0, sent: 0, partial: 1, failed: 1 }}
+        campaignThreads={[]}
+        canCompose
+        channelBreakdown={{
+          email: { sent: 0, active: 0, scheduled: 0, failed: 0, partial: 1, targeted: 3 },
+          sms: { sent: 0, active: 0, scheduled: 0, failed: 1, partial: 0, targeted: 2 },
+        }}
+        channelDeliveryBreakdown={{
+          email: { delivered: 1, failed: 0, skipped: 1, unreached: 1, targeted: 3 },
+          sms: { delivered: 0, failed: 1, skipped: 0, unreached: 1, targeted: 2 },
+        }}
+        channelEngagementBreakdown={{
+          email: { trackedMessages: 1, deliveredRecipients: 1, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0, openRate: 0, clickRate: 0, replyRate: 0 },
+          sms: { trackedMessages: 0, deliveredRecipients: 0, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0, openRate: 0, clickRate: 0, replyRate: 0 },
+        }}
+        deliveries={[]}
+        deliveryHealth={{ successRate: 50, failRate: 50, skipped: 1, skippedRate: 20, overdueScheduled: 0 }}
+        filteredHistory={[]}
+        historyAudienceFilter="all"
+        historyCampaignFilter="Old thread"
+        historyChannelFilter="sms"
+        historyDeliveryFilter="skipped"
+        historySearch="old query"
+        historyStatusCounts={{ sent: 0, active: 0, scheduled: 0, partial: 1, failed: 1 }}
+        historyStatusFilter="all"
+        messages={[] as any}
+        providerTelemetry={{ attempted: 1, errorTop: [], sent: 0, sentRate: 0, skipped: 0 }}
+        retryCandidates={[]}
+        retryingMessageId={null}
+        reviewCandidates={[{ id: 'review-1', subject: 'Follow-up', status: 'partial', channel: 'email', delivered_count: 1, failed_count: 0, recipient_count: 3, recipient_filter: { skipped_count: 1 } } as any]}
+        onCancelSchedule={vi.fn()}
+        onClearThreadFilter={vi.fn()}
+        onDuplicateLatest={vi.fn()}
+        onEditLatest={vi.fn()}
+        onRescheduleMessage={vi.fn()}
+        onRetry={vi.fn()}
+        onScheduleFollowUp={vi.fn()}
+        onSelectThread={vi.fn()}
+        onSendScheduledNow={vi.fn()}
+        onSetHistoryAudienceFilter={vi.fn()}
+        onSetHistoryCampaignFilter={onSetHistoryCampaignFilter}
+        onSetHistoryChannelFilter={onSetHistoryChannelFilter}
+        onSetHistoryDeliveryFilter={onSetHistoryDeliveryFilter}
+        onSetHistorySearch={onSetHistorySearch}
+        onSetHistoryStatusFilter={onSetHistoryStatusFilter}
+        onStartFollowUp={vi.fn()}
+        onViewMessage={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('View needs follow-up'));
+
+    expect(onSetHistoryStatusFilter).toHaveBeenCalledWith('partial');
+    expect(onSetHistoryChannelFilter).toHaveBeenCalledWith('all');
+    expect(onSetHistoryDeliveryFilter).toHaveBeenCalledWith('all');
+    expect(onSetHistoryCampaignFilter).toHaveBeenCalledWith('');
+    expect(onSetHistorySearch).toHaveBeenCalledWith('');
   });
 });
