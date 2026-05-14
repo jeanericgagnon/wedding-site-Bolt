@@ -15,10 +15,11 @@ describe('guestHubPublicService', () => {
 
   it('exposes runtime-aware public headers', () => {
     expect(hasGuestHubPublicRuntime()).toBe(true);
-    expect(getGuestHubPublicBaseHeaders({ 'x-dayof-invite-token': 'invite' })).toEqual(
+    expect(getGuestHubPublicBaseHeaders({ 'x-dayof-invite-token': 'invite', 'x-dayof-guest-invite-token': 'guest-token' })).toEqual(
       expect.objectContaining({
         apikey: expect.any(String),
         'x-dayof-invite-token': 'invite',
+        'x-dayof-guest-invite-token': 'guest-token',
       }),
     );
   });

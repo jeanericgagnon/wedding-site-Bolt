@@ -3,7 +3,7 @@ import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-dayof-invite-token, x-dayof-password-session",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-dayof-invite-token, x-dayof-password-session, x-dayof-guest-invite-token",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
 
@@ -58,6 +58,30 @@ Deno.serve(async (req: Request) => {
       .eq("wedding_site_id", site.id)
       .maybeSingle();
 
+    const { data: recentMessages } = await admin
+      .from("messages")
+      .select("subject,body,status,sent_at,scheduled_for,recipient_filter,created_at")
+      .eq("wedding_site_id", site.id)
+      .in("status", ["scheduled", "queued", "sending", "sent", "partial"])
+      .order("created_at", { ascending: false })
+      .limit(8);
+
+    const announcementSource = (recentMessages ?? []).find((message) => {
+      const filter = typeof message.recipient_filter === "object" && message.recipient_filter !== null ? message.recipient_filter as Record<string, unknown> : {};
+      const campaignType = typeof filter.campaignType === "string" ? filter.campaignType : "";
+      return campaignType === "day-of-update" || campaignType === "event-reminder";
+    }) ?? null;
+
+    const guestInviteToken = String(req.headers.get("x-dayof-guest-invite-token") ?? "").trim();
+    const { data: guest } = guestInviteToken
+      ? await admin
+          .from("guests")
+          .select("name,rsvp_status,checked_in_at")
+          .eq("wedding_site_id", site.id)
+          .eq("invite_token", guestInviteToken)
+          .maybeSingle()
+      : { data: null };
+
     return json({
       site: {
         slug: site.site_slug,
@@ -75,6 +99,18 @@ Deno.serve(async (req: Request) => {
         custom_message: null,
         language_default: "en",
       },
+      announcement: announcementSource ? {
+        title: announcementSource.subject,
+        detail: announcementSource.body,
+        status: announcementSource.status,
+        scheduledFor: announcementSource.scheduled_for,
+        sentAt: announcementSource.sent_at,
+      } : null,
+      guestState: guest ? {
+        guestName: guest.name,
+        rsvpStatus: guest.rsvp_status,
+        checkedInAt: guest.checked_in_at,
+      } : null,
     });
   } catch {
     return json({ error: GUEST_HUB_LOAD_FAILED_COPY }, 500);

@@ -7,6 +7,7 @@ type GuestHubHeaders = Record<string, string>;
 type GuestHubAccessPayload = {
   inviteToken?: string | null;
   passwordSession?: string | null;
+  guestInviteToken?: string | null;
 };
 
 export function hasGuestHubPublicRuntime() {

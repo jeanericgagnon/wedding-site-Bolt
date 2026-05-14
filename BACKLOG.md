@@ -456,9 +456,10 @@ Execution rule for this section:
    - add live production proof that public and guest-facing routes still expose no owner analytics detail
 
 14. `ACTIVE`: app-like web day-of mode
+   - this batch shipped: guest-hub config now reads the latest owner day-of/event-reminder message into a guest-safe `Latest update` card, keeping `scheduled`, `queued`, `sending`, and `sent` visibly distinct instead of leaving announcements in planned-only status
+   - this batch shipped: guest-scoped invite identity now hydrates RSVP/check-in readback in the guest hub, so invite-linked guests can see their own RSVP status and arrived/not-arrived state without exposing raw tokens in the UI
+   - this batch shipped: the guest-hub status board now promotes announcement readback and guest-state readback to `ready` only when those live surfaces are actually connected, with focused proof green for the new guest-hub readback helpers and live content shell
    - implement true offline caching/service-worker behavior
-   - tie guest-hub announcements to owner messaging instead of planned-only status
-   - add guest-specific RSVP/check-in state on the hub
    - prove directions/map deep links, coordinator/guest handoff, and private-event visibility on the hub
    - add live production guest-hub write/read with cleanup after the day-of web-mode lane is finished
 

@@ -38,6 +38,14 @@ describe('buildGuestHubAccessHeaders', () => {
     });
   });
 
+  it('adds guest identity headers when a guest-scoped invite is present', () => {
+    sessionStorage.setItem('dayof_guest_invite_token_maya-leo', 'guest-invite');
+
+    expect(buildGuestHubAccessHeaders('maya-leo', new URLSearchParams(''))).toEqual({
+      'x-dayof-guest-invite-token': 'guest-invite',
+    });
+  });
+
   it('omits empty access headers for normal public hub config requests', () => {
     expect(buildGuestHubAccessHeaders('maya-leo', new URLSearchParams(''))).toEqual({});
   });
@@ -110,12 +118,15 @@ describe('event hub page boundary', () => {
     expect(page).toContain('<EventHubLiveContent');
     expect(page).toContain('captureGuestInviteTokenFromSearch(slug, searchParams)');
     expect(page).toContain('const guestIdentity = useMemo(() => buildGuestHubIdentityPayload(slug, searchParams)');
+    expect(page).toContain("'x-dayof-guest-invite-token'");
     expect(page).not.toContain('if (!slug) {');
     expect(routeView).toContain('if (!hasSlug) return <>{missingSlugView}</>;');
     expect(liveContent).toContain("from './EventHubConfigStatusCard'");
     expect(liveContent).toContain('<EventHubConfigStatusCard');
     expect(liveContent).toContain("Travel guest path");
     expect(liveContent).toContain("Travel quick plan");
+    expect(liveContent).toContain("Latest update");
+    expect(liveContent).toContain("Your day-of status");
     expect(liveContent).toContain("Hub details");
   });
 });

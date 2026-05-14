@@ -4,25 +4,26 @@ import { useParams } from 'react-router-dom';
 import { Archive, CalendarDays, Camera, ClipboardList, Gift, HeartHandshake, Plane, Sparkles } from 'lucide-react';
 import { copyTextOrDownload, downloadTextFile } from '../lib/copyText';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
+import { buildDayOfHubStatusBoard, buildDayOfWebModeReadiness, type DayOfWebActionId } from '../lib/dayOfWebModeReadiness';
+import { buildGuestHubAnnouncementCard, buildGuestHubGuestStateCard } from '../lib/dayOfGuestHubStatus';
 import { buildGuestHubActions, type GuestHubActionId } from '../lib/guestHubActions';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
-import { buildDayOfHubStatusBoard, buildDayOfWebModeReadiness, type DayOfWebActionId } from '../lib/dayOfWebModeReadiness';
-import { buildTravelGuestJourney, buildTravelHubSpotlight } from '../lib/travelGuestPortal';
 import {
-  buildPublicAccessArtifacts,
   buildGuestIdentityArtifacts,
+  buildPublicAccessArtifacts,
   captureGuestInviteTokenFromSearch,
   capturePublicInviteTokenFromSearch,
 } from '../lib/publicAccessArtifacts';
 import { fetchPublicSiteAccess } from '../lib/publicSiteAccess';
+import { buildTravelGuestJourney, buildTravelHubSpotlight } from '../lib/travelGuestPortal';
+import { EventHubLiveContent } from './EventHubLiveContent';
+import { EventHubRouteView } from './EventHubRouteView';
 import {
   fetchGuestHubConfig,
   hasGuestHubPublicRuntime,
   submitGuestHubProspect,
   trackGuestHubEvent,
 } from './guestHubPublicService';
-import { EventHubLiveContent } from './EventHubLiveContent';
-import { EventHubRouteView } from './EventHubRouteView';
 import { createAlexJordanDemoWeddingData } from './siteViewHelpers';
 
 type HubAction = {
@@ -52,6 +53,20 @@ type HubSiteSummary = {
   weddingDate: string | null;
 };
 
+type HubAnnouncement = {
+  title?: string | null;
+  detail?: string | null;
+  status?: string | null;
+  scheduledFor?: string | null;
+  sentAt?: string | null;
+};
+
+type HubGuestState = {
+  guestName?: string | null;
+  rsvpStatus?: string | null;
+  checkedInAt?: string | null;
+};
+
 type HubWeddingTravelContext = {
   schedule: Array<{ id?: string | null; label?: string | null; startTimeISO?: string | null; venueId?: string | null; notes?: string | null }>;
   venues: Array<{ id?: string | null; name?: string | null; address?: string | null }>;
@@ -71,9 +86,11 @@ function resolveGuestHubViewTarget(searchParams: URLSearchParams) {
 
 export const buildGuestHubAccessHeaders = (slug: string, searchParams: URLSearchParams) => {
   const access = buildGuestHubAccessPayload(slug, searchParams);
+  const identity = buildGuestHubIdentityPayload(slug, searchParams);
   return {
     ...(access.inviteToken ? { 'x-dayof-invite-token': access.inviteToken } : {}),
     ...(access.passwordSession ? { 'x-dayof-password-session': access.passwordSession } : {}),
+    ...(identity.guestInviteToken ? { 'x-dayof-guest-invite-token': identity.guestInviteToken } : {}),
   };
 };
 
@@ -204,6 +221,8 @@ export const EventHub: React.FC = () => {
   const [travelSource, setTravelSource] = useState<unknown>(null);
   const [travelContext, setTravelContext] = useState<HubWeddingTravelContext>({ schedule: [], venues: [] });
   const [travelShareStatus, setTravelShareStatus] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState<HubAnnouncement | null>(null);
+  const [guestState, setGuestState] = useState<HubGuestState | null>(null);
   const guestIdentity = useMemo(() => buildGuestHubIdentityPayload(slug, searchParams), [searchParams, slug]);
   const languagePreference = useMemo(() => resolveGuestLanguagePreference({
     search: searchParams,
@@ -245,16 +264,30 @@ export const EventHub: React.FC = () => {
           schedule: demoWedding.schedule,
           venues: demoWedding.venues,
         });
+        setAnnouncement({
+          title: 'Day-of update',
+          detail: 'Ceremony doors open at 3:30 PM. The shuttle leaves the hotel at 3:00 PM.',
+          status: 'sent',
+          sentAt: new Date().toISOString(),
+        });
+        setGuestState(guestIdentity.guestInviteToken ? {
+          guestName: 'Alex Rivera',
+          rsvpStatus: 'confirmed',
+          checkedInAt: null,
+        } : null);
       }
       setHubConfigStatus('ready');
       return;
     }
+
     let cancelled = false;
     setHubConfigStatus(typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'loading');
     const accessPayload = buildGuestHubAccessPayload(slug, searchParams);
     fetchGuestHubConfig<{
       settings?: Partial<HubSettings>;
       site?: { slug?: string; coupleName1?: string; coupleName2?: string; weddingDate?: string };
+      announcement?: HubAnnouncement | null;
+      guestState?: HubGuestState | null;
     }>(slug, buildGuestHubAccessHeaders(slug, searchParams))
       .then((data) => {
         if (!cancelled && data?.settings) {
@@ -268,6 +301,8 @@ export const EventHub: React.FC = () => {
               weddingDate: typeof data.site.weddingDate === 'string' ? data.site.weddingDate : null,
             });
           }
+          setAnnouncement(data.announcement ?? null);
+          setGuestState(data.guestState ?? null);
           if (languagePreference.language !== i18n.language?.split('-')[0]?.toLowerCase()) {
             void i18n.changeLanguage(languagePreference.language);
           }
@@ -284,6 +319,7 @@ export const EventHub: React.FC = () => {
           setHubConfigStatus(typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'fallback');
         }
       });
+
     fetchPublicSiteAccess({
       slug,
       inviteToken: accessPayload.inviteToken,
@@ -311,15 +347,23 @@ export const EventHub: React.FC = () => {
           });
         }
       });
-    trackGuestHubEvent(slug, 'view', resolveGuestHubViewTarget(searchParams), buildGuestHubAccessPayload(slug, searchParams)).catch(() => {});
+
+    trackGuestHubEvent(slug, 'view', resolveGuestHubViewTarget(searchParams), {
+      ...buildGuestHubAccessPayload(slug, searchParams),
+      guestInviteToken: guestIdentity.guestInviteToken,
+    }).catch(() => {});
+
     return () => {
       cancelled = true;
     };
-  }, [hubConfigRetryKey, i18n, searchParams, slug]);
+  }, [guestIdentity.guestInviteToken, hubConfigRetryKey, i18n, languagePreference.language, languagePreference.source, searchParams, slug]);
 
   const trackClick = (target: string) => {
     if (!slug) return;
-    trackGuestHubEvent(slug, 'click', target, buildGuestHubAccessPayload(slug, new URLSearchParams(window.location.search))).catch(() => {});
+    trackGuestHubEvent(slug, 'click', target, {
+      ...buildGuestHubAccessPayload(slug, new URLSearchParams(window.location.search)),
+      guestInviteToken: guestIdentity.guestInviteToken,
+    }).catch(() => {});
   };
 
   const submitOptIn = async (event: React.FormEvent) => {
@@ -331,7 +375,7 @@ export const EventHub: React.FC = () => {
       return;
     }
     setSavingOptIn(true);
-      setOptInStatus(null);
+    setOptInStatus(null);
     const isEmail = contact.includes('@');
     try {
       await submitGuestHubProspect(
@@ -382,9 +426,13 @@ export const EventHub: React.FC = () => {
   const dayOfActionIds = actions.map((action) => action.id).filter((id): id is DayOfWebActionId => (
     id === 'rsvp' || id === 'schedule' || id === 'travel' || id === 'registry' || id === 'photos' || id === 'guestbook' || id === 'recap'
   ));
+  const announcementCard = buildGuestHubAnnouncementCard(announcement);
+  const guestStateCard = buildGuestHubGuestStateCard(guestState);
   const dayOfHubStatusBoard = buildDayOfHubStatusBoard({
     enabledActionIds: dayOfActionIds,
     hasPoorNetworkFallback: true,
+    announcementsConnected: Boolean(announcementCard),
+    guestSpecificStateConnected: Boolean(guestStateCard),
   });
   const travelGuestJourney = buildTravelGuestJourney({
     siteSlug: slug,
@@ -437,6 +485,8 @@ export const EventHub: React.FC = () => {
       shouldOpenHubDetailsByDefault={shouldOpenHubDetailsByDefault}
       dayOfHubStatusBoard={dayOfHubStatusBoard}
       dayOfModeReadiness={dayOfModeReadiness}
+      announcementCard={announcementCard}
+      guestStateCard={guestStateCard}
       guestName={guestName}
       guestContact={guestContact}
       wantsOwnEventInfo={wantsOwnEventInfo}

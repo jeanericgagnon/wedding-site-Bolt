@@ -53,6 +53,19 @@ describe('EventHubLiveContent', () => {
           shouldOpenHubDetailsByDefault={() => false}
           dayOfHubStatusBoard={{ readyCount: 2, summary: 'Ready for guests.', items: [] }}
           dayOfModeReadiness={{ readyCount: 2, summary: 'Ready as a no-app guest hub.', signals: [] }}
+          announcementCard={{
+            title: 'Ceremony doors open',
+            detail: 'Shuttle leaves the hotel at 3:00 PM.',
+            stateLabel: 'Scheduled',
+            stateExplainer: 'This message is scheduled for later and has not gone out yet.',
+            timingLabel: 'Scheduled for May 14, 3:00 PM',
+          }}
+          guestStateCard={{
+            guestLabel: 'Alex Rivera',
+            rsvpLabel: 'RSVP confirmed',
+            checkInLabel: 'Not checked in yet',
+            summary: 'RSVP confirmed · Use this page for the latest day-of status.',
+          }}
           guestName=""
           guestContact=""
           wantsOwnEventInfo={false}
@@ -69,6 +82,10 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Travel quick plan')).toBeInTheDocument();
     expect(screen.getByText('Riverfront House')).toBeInTheDocument();
     expect(screen.getByText('Travel plan copied.')).toBeInTheDocument();
+    expect(screen.getByText('Latest update')).toBeInTheDocument();
+    expect(screen.getByText('Ceremony doors open')).toBeInTheDocument();
+    expect(screen.getByText('Your day-of status')).toBeInTheDocument();
+    expect(screen.getByText('Alex Rivera')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy travel plan' }));
     expect(onCopyTravelPlan).toHaveBeenCalledTimes(1);
