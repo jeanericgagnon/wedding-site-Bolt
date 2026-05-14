@@ -66,6 +66,14 @@ describe('EventHubLiveContent', () => {
             checkInLabel: 'Not checked in yet',
             summary: 'RSVP confirmed · Use this page for the latest day-of status.',
           }}
+          coordinatorHandoffCard={{
+            eventLabel: 'Ceremony',
+            statusLabel: 'Staffed',
+            staffLabel: 'Morgan · Avery',
+            noteLabel: 'Use the hotel porte-cochere if the main drive is full.',
+            updatedLabel: 'Updated May 14, 2:40 PM',
+            summary: 'Ceremony · Staffed',
+          }}
           guestName=""
           guestContact=""
           wantsOwnEventInfo={false}
@@ -87,6 +95,8 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Ceremony doors open')).toBeInTheDocument();
     expect(screen.getByText('Your day-of status')).toBeInTheDocument();
     expect(screen.getByText('Alex Rivera')).toBeInTheDocument();
+    expect(screen.getByText('Coordinator handoff')).toBeInTheDocument();
+    expect(screen.getByText('Morgan · Avery')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy travel plan' }));
     expect(onCopyTravelPlan).toHaveBeenCalledTimes(1);
@@ -96,5 +106,8 @@ describe('EventHubLiveContent', () => {
 
     fireEvent.click(screen.getByRole('link', { name: 'Open travel page' }));
     expect(onTrackClick).toHaveBeenCalledWith('/site/alex-jordan-demo#travel');
+
+    fireEvent.click(screen.getByRole('link', { name: /Directions · Sunset Gardens Estate/i }));
+    expect(onTrackClick).toHaveBeenCalledWith('https://maps.google.com/?q=Sunset%20Gardens%20Estate%20100%20Harbor%20Road%2C%20Sausalito%2C%20CA');
   });
 });

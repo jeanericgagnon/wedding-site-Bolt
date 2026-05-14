@@ -5,7 +5,7 @@ import { Archive, CalendarDays, Camera, ClipboardList, Gift, HeartHandshake, Pla
 import { copyTextOrDownload, downloadTextFile } from '../lib/copyText';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import { buildDayOfHubStatusBoard, buildDayOfWebModeReadiness, type DayOfWebActionId } from '../lib/dayOfWebModeReadiness';
-import { buildGuestHubAnnouncementCard, buildGuestHubGuestStateCard } from '../lib/dayOfGuestHubStatus';
+import { buildGuestHubAnnouncementCard, buildGuestHubCoordinatorHandoffCard, buildGuestHubGuestStateCard } from '../lib/dayOfGuestHubStatus';
 import { buildGuestHubActions, type GuestHubActionId } from '../lib/guestHubActions';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
 import {
@@ -65,6 +65,15 @@ type HubGuestState = {
   guestName?: string | null;
   rsvpStatus?: string | null;
   checkedInAt?: string | null;
+};
+
+type HubCoordinatorHandoff = {
+  eventName?: string | null;
+  handoffStatus?: string | null;
+  leadName?: string | null;
+  supportName?: string | null;
+  note?: string | null;
+  updatedAt?: string | null;
 };
 
 type HubWeddingTravelContext = {
@@ -223,6 +232,7 @@ export const EventHub: React.FC = () => {
   const [travelShareStatus, setTravelShareStatus] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState<HubAnnouncement | null>(null);
   const [guestState, setGuestState] = useState<HubGuestState | null>(null);
+  const [coordinatorHandoff, setCoordinatorHandoff] = useState<HubCoordinatorHandoff | null>(null);
   const guestIdentity = useMemo(() => buildGuestHubIdentityPayload(slug, searchParams), [searchParams, slug]);
   const languagePreference = useMemo(() => resolveGuestLanguagePreference({
     search: searchParams,
@@ -270,6 +280,14 @@ export const EventHub: React.FC = () => {
           status: 'sent',
           sentAt: new Date().toISOString(),
         });
+        setCoordinatorHandoff({
+          eventName: 'Ceremony',
+          handoffStatus: 'staffed',
+          leadName: 'Morgan',
+          supportName: 'Avery',
+          note: 'Ask the hotel desk for the latest shuttle boarding lane if weather shifts.',
+          updatedAt: new Date().toISOString(),
+        });
         setGuestState(guestIdentity.guestInviteToken ? {
           guestName: 'Alex Rivera',
           rsvpStatus: 'confirmed',
@@ -288,6 +306,7 @@ export const EventHub: React.FC = () => {
       site?: { slug?: string; coupleName1?: string; coupleName2?: string; weddingDate?: string };
       announcement?: HubAnnouncement | null;
       guestState?: HubGuestState | null;
+      coordinatorHandoff?: HubCoordinatorHandoff | null;
     }>(slug, buildGuestHubAccessHeaders(slug, searchParams))
       .then((data) => {
         if (!cancelled && data?.settings) {
@@ -303,6 +322,7 @@ export const EventHub: React.FC = () => {
           }
           setAnnouncement(data.announcement ?? null);
           setGuestState(data.guestState ?? null);
+          setCoordinatorHandoff(data.coordinatorHandoff ?? null);
           if (languagePreference.language !== i18n.language?.split('-')[0]?.toLowerCase()) {
             void i18n.changeLanguage(languagePreference.language);
           }
@@ -428,11 +448,13 @@ export const EventHub: React.FC = () => {
   ));
   const announcementCard = buildGuestHubAnnouncementCard(announcement);
   const guestStateCard = buildGuestHubGuestStateCard(guestState);
+  const coordinatorHandoffCard = buildGuestHubCoordinatorHandoffCard(coordinatorHandoff);
   const dayOfHubStatusBoard = buildDayOfHubStatusBoard({
     enabledActionIds: dayOfActionIds,
     hasPoorNetworkFallback: true,
     announcementsConnected: Boolean(announcementCard),
     guestSpecificStateConnected: Boolean(guestStateCard),
+    coordinatorHandoffConnected: Boolean(coordinatorHandoffCard),
   });
   const travelGuestJourney = buildTravelGuestJourney({
     siteSlug: slug,
@@ -487,6 +509,7 @@ export const EventHub: React.FC = () => {
       dayOfModeReadiness={dayOfModeReadiness}
       announcementCard={announcementCard}
       guestStateCard={guestStateCard}
+      coordinatorHandoffCard={coordinatorHandoffCard}
       guestName={guestName}
       guestContact={guestContact}
       wantsOwnEventInfo={wantsOwnEventInfo}

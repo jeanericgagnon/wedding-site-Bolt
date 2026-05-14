@@ -72,6 +72,29 @@ Deno.serve(async (req: Request) => {
       return campaignType === "day-of-update" || campaignType === "event-reminder";
     }) ?? null;
 
+    const { data: handoffRows } = await admin
+      .from("coordinator_event_handoffs")
+      .select("handoff_status,lead_name,support_name,note,updated_at,itinerary_event_id")
+      .eq("wedding_site_id", site.id)
+      .order("updated_at", { ascending: false })
+      .limit(6);
+
+    const latestHandoff = (handoffRows ?? []).find((handoff) => {
+      const note = typeof handoff.note === "string" ? handoff.note.trim() : "";
+      const lead = typeof handoff.lead_name === "string" ? handoff.lead_name.trim() : "";
+      const support = typeof handoff.support_name === "string" ? handoff.support_name.trim() : "";
+      return note.length > 0 || lead.length > 0 || support.length > 0;
+    }) ?? null;
+
+    const eventNameById = latestHandoff
+      ? await admin
+          .from("itinerary_events")
+          .select("id,event_name")
+          .eq("wedding_site_id", site.id)
+          .eq("id", latestHandoff.itinerary_event_id)
+          .maybeSingle()
+      : { data: null };
+
     const guestInviteToken = String(req.headers.get("x-dayof-guest-invite-token") ?? "").trim();
     const { data: guest } = guestInviteToken
       ? await admin
@@ -110,6 +133,14 @@ Deno.serve(async (req: Request) => {
         guestName: guest.name,
         rsvpStatus: guest.rsvp_status,
         checkedInAt: guest.checked_in_at,
+      } : null,
+      coordinatorHandoff: latestHandoff ? {
+        eventName: eventNameById.data?.event_name ?? null,
+        handoffStatus: latestHandoff.handoff_status,
+        leadName: latestHandoff.lead_name,
+        supportName: latestHandoff.support_name,
+        note: latestHandoff.note,
+        updatedAt: latestHandoff.updated_at,
       } : null,
     });
   } catch {

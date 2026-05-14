@@ -29,6 +29,24 @@ export type GuestHubGuestStateCard = {
   summary: string;
 };
 
+export type GuestHubCoordinatorHandoffInput = {
+  eventName?: string | null;
+  handoffStatus?: string | null;
+  leadName?: string | null;
+  supportName?: string | null;
+  note?: string | null;
+  updatedAt?: string | null;
+};
+
+export type GuestHubCoordinatorHandoffCard = {
+  eventLabel: string;
+  statusLabel: string;
+  staffLabel: string;
+  noteLabel: string;
+  updatedLabel: string | null;
+  summary: string;
+};
+
 function formatDateTime(value?: string | null): string | null {
   if (!value) return null;
   const parsed = new Date(value);
@@ -54,6 +72,14 @@ function formatRsvpLabel(status?: string | null): string {
   if (normalized === 'confirmed' || normalized === 'attending') return 'RSVP confirmed';
   if (normalized === 'declined') return 'RSVP declined';
   return 'RSVP still pending';
+}
+
+function formatHandoffStatusLabel(status?: string | null): string {
+  const normalized = (status ?? '').trim().toLowerCase();
+  if (normalized === 'staffed') return 'Staffed';
+  if (normalized === 'needs-decision') return 'Needs decision';
+  if (normalized === 'complete') return 'Complete';
+  return 'Ready';
 }
 
 export function buildGuestHubAnnouncementCard(input?: GuestHubAnnouncementInput | null): GuestHubAnnouncementCard | null {
@@ -97,5 +123,25 @@ export function buildGuestHubGuestStateCard(input?: GuestHubGuestStateInput | nu
     summary: checkedInAt
       ? `${rsvpLabel} · ${checkInLabel}`
       : `${rsvpLabel} · Use this page for the latest day-of status.`,
+  };
+}
+
+export function buildGuestHubCoordinatorHandoffCard(input?: GuestHubCoordinatorHandoffInput | null): GuestHubCoordinatorHandoffCard | null {
+  if (!input) return null;
+
+  const eventLabel = scrubSensitiveCopy(input.eventName) || 'Event handoff';
+  const statusLabel = formatHandoffStatusLabel(input.handoffStatus);
+  const lead = scrubSensitiveCopy(input.leadName) || 'Team lead pending';
+  const support = scrubSensitiveCopy(input.supportName) || 'Support pending';
+  const note = scrubSensitiveCopy(input.note) || 'No guest-facing handoff note yet.';
+  const updatedAt = formatDateTime(input.updatedAt);
+
+  return {
+    eventLabel,
+    statusLabel,
+    staffLabel: `${lead} · ${support}`,
+    noteLabel: note,
+    updatedLabel: updatedAt ? `Updated ${updatedAt}` : null,
+    summary: `${eventLabel} · ${statusLabel}`,
   };
 }

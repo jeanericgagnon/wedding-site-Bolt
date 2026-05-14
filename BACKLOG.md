@@ -467,8 +467,11 @@ Execution rule for this section:
    - this batch shipped: guest-hub config now reads the latest owner day-of/event-reminder message into a guest-safe `Latest update` card, keeping `scheduled`, `queued`, `sending`, and `sent` visibly distinct instead of leaving announcements in planned-only status
    - this batch shipped: guest-scoped invite identity now hydrates RSVP/check-in readback in the guest hub, so invite-linked guests can see their own RSVP status and arrived/not-arrived state without exposing raw tokens in the UI
    - this batch shipped: the guest-hub status board now promotes announcement readback and guest-state readback to `ready` only when those live surfaces are actually connected, with focused proof green for the new guest-hub readback helpers and live content shell
+   - this batch shipped: the guest hub now reads back the latest guest-safe coordinator handoff summary from the real coordinator handoff table, so guests can see current event staffing status, team names, and a scrubbed handoff note without exposing private tokens or internal operator noise
+   - this batch shipped: travel spotlight route cards now track real direction/map deep-link clicks, including external map URLs, so the guest-facing day-of travel path is not treated like invisible traffic once guests leave the hub shell
+   - this batch shipped: focused proof is green for guest-safe coordinator handoff scrubbing, guest-hub handoff rendering, and external directions-card click tracking inside the real travel quick-plan UI
    - implement true offline caching/service-worker behavior
-   - prove directions/map deep links, coordinator/guest handoff, and private-event visibility on the hub
+   - add live production proof for directions/map deep links, coordinator/guest handoff, and private-event visibility on the hub after the next approved deploy
    - add live production guest-hub write/read with cleanup after the day-of web-mode lane is finished
 
 ### Deferred / Outside This Backlog

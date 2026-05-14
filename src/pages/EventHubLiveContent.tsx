@@ -45,6 +45,15 @@ type GuestHubGuestStateCard = {
   summary: string;
 };
 
+type GuestHubCoordinatorHandoffCard = {
+  eventLabel: string;
+  statusLabel: string;
+  staffLabel: string;
+  noteLabel: string;
+  updatedLabel: string | null;
+  summary: string;
+};
+
 type TravelGuestJourneyStep = {
   id: string;
   label: string;
@@ -100,6 +109,7 @@ type EventHubLiveContentProps = {
   dayOfModeReadiness: DayOfModeReadiness;
   announcementCard: GuestHubAnnouncementCard | null;
   guestStateCard: GuestHubGuestStateCard | null;
+  coordinatorHandoffCard: GuestHubCoordinatorHandoffCard | null;
   guestName: string;
   guestContact: string;
   wantsOwnEventInfo: boolean;
@@ -133,6 +143,7 @@ export function EventHubLiveContent({
   dayOfModeReadiness,
   announcementCard,
   guestStateCard,
+  coordinatorHandoffCard,
   guestName,
   guestContact,
   wantsOwnEventInfo,
@@ -219,8 +230,8 @@ export function EventHubLiveContent({
                 })}
               </div>
 
-              {(announcementCard || guestStateCard) && (
-                <div className="mt-8 grid gap-3 lg:grid-cols-2">
+              {(announcementCard || guestStateCard || coordinatorHandoffCard) && (
+                <div className="mt-8 grid gap-3 lg:grid-cols-3">
                   {announcementCard && (
                     <div className="rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
                       <div className="flex items-start justify-between gap-3">
@@ -255,6 +266,33 @@ export function EventHubLiveContent({
                         <div className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 sm:col-span-2">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Check-in</p>
                           <p className="mt-1 text-sm font-semibold text-[#2f261d]">{guestStateCard.checkInLabel}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {coordinatorHandoffCard && (
+                    <div className="rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-[#2f261d]">Coordinator handoff</p>
+                          <p className="mt-1 text-xs font-medium text-[#8b6f53]">{coordinatorHandoffCard.statusLabel}</p>
+                        </div>
+                        {coordinatorHandoffCard.updatedLabel && (
+                          <span className="rounded-lg bg-[#f3eadf] px-3 py-2 text-[11px] font-semibold text-[#69513f]">
+                            {coordinatorHandoffCard.updatedLabel}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-3 text-sm font-semibold text-[#2f261d]">{coordinatorHandoffCard.eventLabel}</p>
+                      <p className="mt-1 text-sm leading-6 text-[#6f5843]">{coordinatorHandoffCard.summary}</p>
+                      <div className="mt-3 grid gap-2">
+                        <div className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Team</p>
+                          <p className="mt-1 text-sm font-semibold text-[#2f261d]">{coordinatorHandoffCard.staffLabel}</p>
+                        </div>
+                        <div className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Guest note</p>
+                          <p className="mt-1 text-sm leading-6 text-[#2f261d]">{coordinatorHandoffCard.noteLabel}</p>
                         </div>
                       </div>
                     </div>
@@ -341,6 +379,7 @@ export function EventHubLiveContent({
                             href={card.href}
                             target="_blank"
                             rel="noreferrer"
+                            onClick={() => onTrackClick(card.href!)}
                             className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 transition-colors hover:border-[#d8c8b6]"
                           >
                             <p className="text-xs font-semibold text-[#2f261d]">{card.label}</p>

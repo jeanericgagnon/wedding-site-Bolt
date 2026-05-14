@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildGuestHubAnnouncementCard, buildGuestHubGuestStateCard } from './dayOfGuestHubStatus';
+import { buildGuestHubAnnouncementCard, buildGuestHubCoordinatorHandoffCard, buildGuestHubGuestStateCard } from './dayOfGuestHubStatus';
 
 describe('dayOfGuestHubStatus', () => {
   it('builds a guest-safe announcement card without leaking token params', () => {
@@ -30,5 +30,24 @@ describe('dayOfGuestHubStatus', () => {
       rsvpLabel: 'RSVP confirmed',
     });
     expect(card?.checkInLabel).toContain('Checked in');
+  });
+
+  it('builds a guest-safe coordinator handoff card without leaking token params', () => {
+    const card = buildGuestHubCoordinatorHandoffCard({
+      eventName: 'Reception',
+      handoffStatus: 'needs-decision',
+      leadName: 'Sam',
+      supportName: 'Jordan',
+      note: 'Check shuttle hold point and ignore token=secret-value',
+      updatedAt: '2026-05-14T17:20:00.000Z',
+    });
+
+    expect(card).toMatchObject({
+      eventLabel: 'Reception',
+      statusLabel: 'Needs decision',
+      staffLabel: 'Sam · Jordan',
+    });
+    expect(card?.noteLabel).toContain('token=[hidden]');
+    expect(card?.updatedLabel).toContain('Updated');
   });
 });
