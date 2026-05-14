@@ -604,7 +604,7 @@ describe('RegistryDashboardRouteContent', () => {
       />,
     );
 
-    expect(screen.getByText('100% share-ready · 1 already moving · 1 waiting on a first gift')).toBeInTheDocument();
+    expect(screen.getByText('100% share-ready · 1 already moving · 1 waiting on a first gift · 1 missing a goal')).toBeInTheDocument();
     expect(screen.getByText('50% goal-tracked · 1 showing tracked progress · 1 flexible fund already receiving gifts')).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Ready funds already moving: 1 · Waiting on first gift: 1'),

@@ -330,7 +330,7 @@ export function RegistryDashboardRouteContent(props: {
                 {props.fundStats.readyToShare} ready to share{props.fundStats.needsSetup > 0 ? ` · ${props.fundStats.needsSetup} need a payment path` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
-                {fundShareReadyRate}% share-ready · {props.fundStats.readyWithProgress} already moving{props.fundStats.readyAwaitingFirstGift > 0 ? ` · ${props.fundStats.readyAwaitingFirstGift} waiting on a first gift` : ''}
+                {fundShareReadyRate}% share-ready · {props.fundStats.readyWithProgress} already moving{props.fundStats.readyAwaitingFirstGift > 0 ? ` · ${props.fundStats.readyAwaitingFirstGift} waiting on a first gift` : ''}{props.fundStats.missingGoal > 0 ? ` · ${props.fundStats.missingGoal} missing a goal` : ''}
               </p>
             </Card>
             <Card variant="bordered" padding="md">
