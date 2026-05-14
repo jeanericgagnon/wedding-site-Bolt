@@ -7,6 +7,7 @@ import {
   buildAudienceReachability,
   buildCampaignThreads,
   buildChannelBreakdown,
+  buildChannelDeliveryBreakdown,
   buildChannelEngagementBreakdown,
   buildDeliveryHealth,
   buildDeliveryStats,
@@ -108,6 +109,7 @@ export function buildMessageDashboardDerivedState({
   const reviewCandidates = messages.filter((message) => message.status === 'partial').slice(0, 5);
   const historyStatusCounts = buildHistoryStatusCounts(messages);
   const channelBreakdown = buildChannelBreakdown(messages);
+  const channelDeliveryBreakdown = buildChannelDeliveryBreakdown(messages);
   const channelEngagementBreakdown = buildChannelEngagementBreakdown(messages);
   const deliveryHealth = buildDeliveryHealth(messages, deliveries);
   const campaignThreads = buildCampaignThreads(messages, deliveries);
@@ -122,6 +124,7 @@ export function buildMessageDashboardDerivedState({
     audienceBreakdown,
     audienceReachability,
     channelBreakdown,
+    channelDeliveryBreakdown,
     channelEngagementBreakdown,
     deliveryHealth,
     deliveryStats,

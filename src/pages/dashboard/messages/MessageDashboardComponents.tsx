@@ -1032,6 +1032,13 @@ export interface MessageHistorySummaryPanelsProps {
     sent: number;
     targeted: number;
   }>;
+  channelDeliveryBreakdown: Record<'email' | 'sms', {
+    delivered: number;
+    failed: number;
+    skipped: number;
+    targeted: number;
+    unreached: number;
+  }>;
   channelEngagementBreakdown: Record<'email' | 'sms', {
     bounced: number;
     clicked: number;
@@ -1071,6 +1078,7 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
   audienceBreakdown,
   campaignStatusSummary,
   channelBreakdown,
+  channelDeliveryBreakdown,
   channelEngagementBreakdown,
   deliveryHealth,
   historyStatusCounts,
@@ -1148,6 +1156,16 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
           <p className="text-xs text-text-secondary">
             Sent {channelBreakdown[channel].sent} · Active {channelBreakdown[channel].active} · Scheduled {channelBreakdown[channel].scheduled} · Needs follow-up {channelBreakdown[channel].partial} · Needs review {channelBreakdown[channel].failed}
           </p>
+          {channelDeliveryBreakdown[channel].targeted > 0 && (
+            <>
+              <p className="mt-1 text-xs text-text-primary">
+                {channelDeliveryBreakdown[channel].delivered} delivered · {channelDeliveryBreakdown[channel].failed} need review
+              </p>
+              <p className="mt-1 text-[11px] text-text-tertiary">
+                {channelDeliveryBreakdown[channel].skipped} need contact details · {channelDeliveryBreakdown[channel].unreached} not reached yet
+              </p>
+            </>
+          )}
           {channelEngagementBreakdown[channel].trackedMessages > 0 && (
             <>
               <p className="mt-1 text-xs text-text-primary">

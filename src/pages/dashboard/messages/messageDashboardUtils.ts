@@ -169,6 +169,23 @@ export function buildChannelEngagementBreakdown(messages: Message[]) {
   };
 }
 
+export function buildChannelDeliveryBreakdown(messages: Message[]) {
+  const init = {
+    email: { delivered: 0, failed: 0, skipped: 0, unreached: 0, targeted: 0 },
+    sms: { delivered: 0, failed: 0, skipped: 0, unreached: 0, targeted: 0 },
+  };
+  messages.forEach((message) => {
+    if (!isDeliveryCompletedStatus(message.status)) return;
+    const channel = message.channel === 'sms' ? 'sms' : 'email';
+    init[channel].delivered += Math.max(0, Number(message.delivered_count ?? 0));
+    init[channel].failed += Math.max(0, Number(message.failed_count ?? 0));
+    init[channel].skipped += getSkippedCount(message, []);
+    init[channel].unreached += getUnreachedCount(message);
+    init[channel].targeted += getRecipientCount(message);
+  });
+  return init;
+}
+
 export function buildHistoryStatusCounts(messages: Message[]) {
   return {
     sent: messages.filter((message) => message.status === 'sent').length,

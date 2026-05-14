@@ -4,6 +4,7 @@ import {
   buildCampaignStatusSummary,
   buildCampaignThreads,
   buildChannelBreakdown,
+  buildChannelDeliveryBreakdown,
   buildChannelEngagementBreakdown,
   buildDeliveryHealth,
   buildDeliveryBucketSummary,
@@ -299,6 +300,11 @@ describe('messageDashboardUtils', () => {
     expect(buildChannelBreakdown(messages)).toEqual({
       email: { sent: 1, active: 1, scheduled: 1, failed: 0, partial: 0, targeted: 16 },
       sms: { sent: 0, active: 0, scheduled: 0, failed: 1, partial: 1, targeted: 7 },
+    });
+
+    expect(buildChannelDeliveryBreakdown(messages)).toEqual({
+      email: { delivered: 8, failed: 1, skipped: 1, unreached: 0, targeted: 10 },
+      sms: { delivered: 2, failed: 4, skipped: 0, unreached: 2, targeted: 7 },
     });
 
     expect(buildChannelEngagementBreakdown(messages)).toEqual({

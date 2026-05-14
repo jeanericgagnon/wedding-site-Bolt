@@ -20,6 +20,7 @@ export type BuildMessageDashboardViewPropsArgs = {
   campaignThreads: DashboardProps['historyProps']['campaignThreads'];
   canCompose: boolean;
   channelBreakdown: DashboardProps['historyProps']['channelBreakdown'];
+  channelDeliveryBreakdown: DashboardProps['historyProps']['channelDeliveryBreakdown'];
   channelEngagementBreakdown: DashboardProps['historyProps']['channelEngagementBreakdown'];
   composerFormData: DashboardProps['composerProps']['formData'];
   coupleEmail: string | null | undefined;
@@ -182,6 +183,7 @@ export function buildMessageDashboardViewProps(args: BuildMessageDashboardViewPr
       campaignThreads: args.campaignThreads,
       canCompose: args.canCompose,
       channelBreakdown: args.channelBreakdown,
+      channelDeliveryBreakdown: args.channelDeliveryBreakdown,
       channelEngagementBreakdown: args.channelEngagementBreakdown,
       deliveries: args.deliveries,
       deliveryHealth: args.deliveryHealth,

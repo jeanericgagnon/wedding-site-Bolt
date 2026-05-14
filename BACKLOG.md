@@ -299,6 +299,22 @@ Execution rule for this section:
 - do not promote planned/readiness cards to done just because copy or static UI exists
 - keep `DEFERRED` items clearly separate from true product gaps
 
+Paused handoff marker for this broader backlog:
+- 2026-05-14 PT: backlog implementation is paused here after the messaging reach-snapshot delivery-follow-through pass and the vendor-system backlog intake below
+- when backlog work resumes, treat the new vendor lane below as planning scope until a specific phase is explicitly activated; do not silently turn it into a default dashboard tab
+- default couple nav should stay calm: `Home`, `Website`, `Guests`, `Registry`, `Messages`, `Memories`, `More Tools`
+- vendor discovery belongs in `More Tools` as `Find Vendors`; only pinned couples should see the top-level nav label `Vendors`
+
+Paused next-priority bucket when backlog work resumes:
+- guest-specific preview and visibility confidence
+- unified QR guest hub
+- RSVP access modes and question templates
+- status-based messaging and invitation tracking
+- registry polish beyond barcode
+- premium no-app guest photo and memory flow
+- destination/travel guest portal
+- keep these seven lanes ahead of later-value work, vendor-planning work, and keep-green-only lanes unless a new launch blocker reorders the queue
+
 ### Highest-Leverage Open Lanes
 
 1. `ACTIVE`: guest-specific preview and visibility confidence
@@ -353,6 +369,7 @@ Execution rule for this section:
    - this batch shipped: the top-level guest-reach snapshot now also surfaces delivered, needs-review, needs-contact, and not-reached-yet recipient counts from the same normalized delivery helper truth used elsewhere, so owners no longer need to drill into history to understand high-level follow-through gaps
    - this batch shipped: recent campaign-thread rollups now surface opens, views, clicks, replies, and bounces when those counts exist, so owners do not have to open the active thread or latest message detail just to see whether a campaign is getting traction
    - this batch shipped: the per-channel history summary now keeps queued/sending campaigns visible as `Active` instead of flattening those in-flight email/SMS sends out of the channel readback while other messaging surfaces still show them
+   - this batch shipped: the per-channel history summary now also surfaces delivered, needs-review, needs-contact, and not-reached-yet recipient counts for completed email/SMS campaigns, so owners can compare delivery follow-through by channel without drilling into message detail or the top-level snapshot
    - this batch shipped: the per-channel history summary now also surfaces normalized opens, clicks, replies, views, and bounces for completed email/SMS campaigns instead of making owners drill into thread cards or message detail to see channel-level traction
    - this batch shipped: guest-reach, per-channel history, and recent campaign-thread rollups now also show normalized open/click/reply rates against delivered recipients, so engagement traction is no longer only raw totals without any readback of relative performance
    - keep extending normalized delivery/open/view/bounce/replied truth across channels and real live rows
@@ -581,6 +598,131 @@ Execution rule for this section:
    - this batch shipped: focused proof is green for guest-safe access-card helper truth, EventHub render wiring, and offline/mobile browser continuity for the new `Link access` surface
    - rerun live production proof for the new `Link access` surface after the next approved deploy so public vs guest-specific visibility is proven on `https://dayof.love`
    - add live production guest-hub write/read with cleanup after the day-of web-mode lane is finished
+
+15. `PLANNED / PAUSED`: vendor discovery, directory SEO, claims, and distribution loop
+   - status: backlog-added only; do not overbuild this lane until implementation is explicitly resumed
+   - product direction:
+     - vendor pages are primarily a distribution engine, but couples should still be able to find and save vendors they are considering
+     - this should not clutter the main couple dashboard
+     - vendors belong in `More Tools` by default, with an optional pin-to-nav path later
+     - default couple nav should remain `Home`, `Website`, `Guests`, `Registry`, `Messages`, `Memories`, `More Tools`
+     - the `More Tools` entry should read `Find Vendors`
+     - `Find Vendors` description: `Browse and save wedding vendors you're considering.`
+     - if a couple pins the area into main nav later, the nav label should become `Vendors`
+   - backlog item: couple-facing `Find Vendors` area
+     - add `Find Vendors` to `More Tools`
+     - let logged-in couples browse vendor profiles from the existing vendor profile system or a vendor-directory query layer built on top of it
+     - support search by vendor name, category, city, and service area
+     - support category filters for `Photographer`, `Videographer`, `Venue`, `Planner`, `Coordinator`, `Florist`, `Caterer`, `DJ / Band`, `Beauty`, `Rentals`, `Transportation`, `Dessert / Cake`, `Stationery`, `Officiant`, and `Other`
+     - support city/region filtering
+     - show calm vendor cards with vendor name, category, city/service area, hero image, short description, website/Instagram links when available, claimed/unclaimed badge, and saved status
+     - allow logged-in couples to save vendors, add private notes, and mark saved vendors as `Considering`, `Contacted`, `Booked`, or `Passed`
+     - allow couples to add their own vendor manually when the vendor is not already in the directory
+     - acceptance criteria:
+       - `Find Vendors` appears in `More Tools`
+       - the page can list vendors from the existing vendor profile data model or a new vendor directory query layer
+       - users can search/filter vendors
+       - users can save a vendor
+       - saved vendors appear in a `Saved` tab
+       - the page does not appear in default main nav unless pinned
+   - backlog item: public vendor page routing and SEO directory
+     - add public indexed routes for `/vendors`, `/vendors/:city`, `/vendors/:city/:category`, and `/vendors/:city/:category/:slug`
+     - if the current vendor profile route differs, preserve backwards compatibility with redirects or canonical URLs
+     - each directory/profile page should support a unique title, meta description, canonical URL, structured headings, internal links between city/category/vendor pages, related vendors, related categories, city/category intro copy, and an FAQ section on city/category pages
+     - `/vendors` should show popular cities and categories
+     - `/vendors/:city` should show all wedding vendors in that city
+     - `/vendors/:city/:category` should show vendors for that category/city combination
+     - vendor cards should link through to vendor profile pages
+     - vendor profile pages should include breadcrumb links
+     - acceptance criteria:
+       - public vendor directory pages render without login
+       - city/category pages are crawlable and internally linked
+       - vendor profile pages have canonical URLs
+       - existing vendor profile pages still work
+   - backlog item: vendor profile page improvements for distribution
+     - update the existing vendor profile page so it works for both couples and vendors without feeling like an ad
+     - couple-facing CTAs should include `Visit website`, `View Instagram`, `Save vendor`, `Add to my wedding`, and `Send inquiry`
+     - vendor-facing CTAs should include `Claim this profile`, `Share with a couple`, `Get your referral link`, and `Edit this profile` when the viewer is the approved owner
+     - the profile should include vendor name, category, city/service area, description, hero image, gallery, services/packages, price/planning note when available, website, social links, testimonials, FAQ, related vendors, and claimed/unclaimed status
+     - keep the Day of Love CTA visible but secondary to the vendor's own information
+     - acceptance criteria:
+       - logged-in couples can save the vendor from the profile page
+       - unauthenticated users can still view the public profile
+       - vendors see a clear claim CTA
+       - the profile includes a Day of Love CTA without overpowering the vendor information
+   - backlog item: saved vendors workspace
+     - keep this inside the vendor area as `Discover` and `Saved` tabs by default
+     - `Saved` should show all saved vendors, support status changes (`Considering`, `Contacted`, `Booked`, `Passed`), allow private notes, allow manual vendors, allow removing a saved vendor, and show vendor contact links
+     - future-only optional follow-on: connect booked vendors into the wedding-day vendor schedule later
+     - acceptance criteria:
+       - couples can manage saved vendors without leaving the vendor area
+       - manual vendors and directory vendors can coexist
+       - saved vendors are private to that couple/wedding
+   - backlog item: vendor claim flow
+     - add `Claim this profile` to unclaimed public vendor profiles
+     - build a manual-review-first claim request flow that captures vendor profile/name, claimant name, claimant email, business website or matching domain, and an optional message
+     - store claim requests in Supabase
+     - admin review/approval can come later, but the storage and state model should be ready for approve/reject flow
+     - once approved, the vendor owner can edit the profile
+     - acceptance criteria:
+       - unclaimed vendor profiles show a claim CTA
+       - claim requests are submitted and stored
+       - claimed profiles show claimed status
+       - claim flow does not expose private couple data
+   - backlog item: vendor referral/distribution loop
+     - each claimed vendor should eventually get a referral link, referral code, shareable copy, a badge/image asset or simple badge embed, referred-signup tracking, and a dashboard count of referred couples
+     - vendor dashboard referral tools should include `Copy referral link`, `Copy recommended message to send couples`, `View referred signup count`, `Download/share badge`, and profile completeness suggestions
+     - example vendor copy to keep around for later implementation: `Planning with us? We recommend Day of Love for wedding websites, RSVPs, guest updates, registry links, and photo sharing.`
+     - acceptance criteria:
+       - vendor has a unique referral code/link
+       - referral attribution can be captured on signup
+       - vendor dashboard shows basic referral activity
+       - referral language is transparent and not spammy
+   - backlog item: vendor owner dashboard
+     - keep vendor owner surfaces separate from the couple dashboard, with routes such as `/vendor/login`, `/vendor/dashboard`, `/vendor/profile`, and `/vendor/referrals`
+     - after claim approval, vendor owners should be able to edit business name, description, category, city/service area, website, social links, photos, services/packages, FAQ, and testimonials
+     - vendor owners should also have access to referral/share tools, inquiries, and profile completeness
+     - acceptance criteria:
+       - vendor dashboard is not mixed into the couple dashboard
+       - vendor ownership is enforced
+       - vendor can edit only their own claimed profiles
+   - backlog item: admin vendor management
+     - internal admin tooling should support CSV import, manual profile creation, editing any vendor profile, approving/rejecting claim requests, marking profiles claimed/unclaimed, assigning category/city/service area, duplicate management, featured/recommended flags when needed, inquiry review, referral attribution review, and profile status management (`Draft`, `Published`, `Hidden`, `Needs review`)
+     - acceptance criteria:
+       - admin can manage vendor profiles without direct database edits
+       - admin can approve/reject claims
+       - admin can import vendors in bulk
+       - admin can publish/unpublish vendor pages
+   - backlog item: vendor data-model and migration evaluation
+     - evaluate and add the schema needed for public vendor pages, saved vendors, claims, referrals, and inquiries
+     - likely tables: `vendor_profiles`, `vendor_profile_claims`, `vendor_saved_by_couples`, `vendor_referrals`, `vendor_referral_events`, `vendor_profile_inquiries`, `vendor_categories`, and `vendor_service_areas`
+     - saved-vendor relationships should support `wedding_id`, nullable `vendor_profile_id`, nullable manual-vendor fields, `status`, `notes`, `created_at`, and `updated_at`
+     - claim records should support `vendor_profile_id`, `claimant_name`, `claimant_email`, `claimed_business_domain`, `message`, `status`, `reviewed_by`, and `reviewed_at`
+     - referral records should support `vendor_profile_id`, `referral_code`, `referral_url`, `referred_signup_count`, and attribution events
+     - acceptance criteria:
+       - schema supports public vendor pages, saved vendors, claims, and referrals
+       - RLS protects couple-private saved-vendor notes/statuses
+       - public profile data remains readable without login
+       - vendor owners can only edit their own approved profiles
+   - backlog item: vendor UI/UX principles
+     - vendor discovery should not make the main app feel cluttered
+     - `More Tools` is the default entry point
+     - couples can pin `Vendors` only if they want it
+     - vendor pages should help couples, but the strategic purpose is distribution
+     - avoid a spammy marketplace feel
+     - do not use `sponsored` language unless paid placement exists and is clearly disclosed
+     - prefer calm labels like `Find Vendors`, `Saved Vendors`, `Claim this profile`, and `Share with couples`
+     - avoid SaaS-heavy labels like `Vendor CRM`, `Vendor Management System`, or `Marketplace Admin` outside internal admin tooling
+     - public pages should be SEO-friendly and fast
+     - couple-private notes and statuses must never appear publicly
+     - vendor referral tools should be transparent
+   - backlog item: recommended build phases
+     - `Phase 1`: `More Tools` entry for `Find Vendors`, public vendor directory routes, search/filter vendor cards, vendor profile page improvements, save vendor, and the saved-vendors tab
+     - `Phase 2`: manual saved vendors, notes/statuses, claim-this-profile flow, admin claim review, and basic admin vendor management
+     - `Phase 3`: vendor dashboard, referral links/codes, referral attribution, vendor share kit, and profile completeness
+     - `Phase 4`: bulk vendor import, city/category SEO scaleout, duplicate detection, ranking logic, vendor badges, and partner analytics
+   - end-state reminder:
+     - Day of Love should have a public vendor directory that supports SEO and vendor distribution while also giving couples a calm `More Tools` place to discover and save vendors without turning the core wedding dashboard into a marketplace
 
 ### Deferred / Outside This Backlog
 
