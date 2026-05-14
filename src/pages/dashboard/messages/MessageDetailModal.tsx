@@ -85,6 +85,10 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
   const topFailureReasons = buildDeliveryBucketSummary(messageDeliveries, 'failed');
   const topSkipReasons = buildDeliveryBucketSummary(messageDeliveries, 'skipped');
   const engagement = getMessageEngagementStats(message);
+  const deliveredRecipients = Math.max(0, Number(message.delivered_count ?? 0));
+  const openRate = deliveredRecipients > 0 && engagement.opened != null ? Math.round((engagement.opened / deliveredRecipients) * 100) : null;
+  const clickRate = deliveredRecipients > 0 && engagement.clicked != null ? Math.round((engagement.clicked / deliveredRecipients) * 100) : null;
+  const replyRate = deliveredRecipients > 0 && engagement.replied != null ? Math.round((engagement.replied / deliveredRecipients) * 100) : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -178,6 +182,9 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 )}
                 {unreachedCount > 0 && (
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Not reached {unreachedCount}</span>
+                )}
+                {deliveredRecipients > 0 && openRate != null && clickRate != null && replyRate != null && (
+                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{openRate}% open · {clickRate}% click · {replyRate}% reply</span>
                 )}
               </div>
               {(skippedCount > 0 || unreachedCount > 0) && (
@@ -416,6 +423,9 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
               )}
               {engagement.bounced != null && engagement.bounced > 0 && (
                 <span className="text-warning">{engagement.bounced} bounced</span>
+              )}
+              {deliveredRecipients > 0 && openRate != null && clickRate != null && replyRate != null && (
+                <span className="text-text-secondary">{openRate}% open · {clickRate}% click · {replyRate}% reply</span>
               )}
             </div>
           </div>

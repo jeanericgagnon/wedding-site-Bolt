@@ -95,6 +95,7 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('Delivered 1')).toBeInTheDocument();
     expect(screen.getByText('Needs review 2')).toBeInTheDocument();
     expect(screen.getByText('Not reached 1')).toBeInTheDocument();
+    expect(screen.getByText('100% open · 0% click · 0% reply')).toBeInTheDocument();
     expect(screen.getByText('Some guests still were not reached after a valid send attempt.')).toBeInTheDocument();
   });
 
@@ -200,5 +201,6 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('2 clicked')).toBeInTheDocument();
     expect(screen.getByText('1 replied')).toBeInTheDocument();
     expect(screen.getByText('1 bounced')).toBeInTheDocument();
+    expect(screen.getAllByText('100% open · 25% click · 13% reply').length).toBeGreaterThan(0);
   });
 });

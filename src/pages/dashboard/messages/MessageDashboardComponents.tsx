@@ -1369,6 +1369,10 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Not reached {getUnreachedCount(activeCampaignLatestMessage, deliveries)}</span>
               {(() => {
                 const engagement = getMessageEngagementStats(activeCampaignLatestMessage);
+                const deliveredRecipients = Math.max(0, Number(activeCampaignLatestMessage.delivered_count ?? 0));
+                const openRate = deliveredRecipients > 0 && engagement.opened != null ? Math.round((engagement.opened / deliveredRecipients) * 100) : null;
+                const clickRate = deliveredRecipients > 0 && engagement.clicked != null ? Math.round((engagement.clicked / deliveredRecipients) * 100) : null;
+                const replyRate = deliveredRecipients > 0 && engagement.replied != null ? Math.round((engagement.replied / deliveredRecipients) * 100) : null;
                 return (
                   <>
                     {engagement.opened != null && engagement.opened > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Opened {engagement.opened}</span>}
@@ -1376,6 +1380,11 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                     {engagement.clicked != null && engagement.clicked > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Clicked {engagement.clicked}</span>}
                     {engagement.replied != null && engagement.replied > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Replied {engagement.replied}</span>}
                     {engagement.bounced != null && engagement.bounced > 0 && <span className="rounded-lg border border-warning/20 bg-warning-light px-3 py-1 text-warning">Bounced {engagement.bounced}</span>}
+                    {deliveredRecipients > 0 && openRate != null && clickRate != null && replyRate != null && (
+                      <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">
+                        {openRate}% open · {clickRate}% click · {replyRate}% reply
+                      </span>
+                    )}
                   </>
                 );
               })()}

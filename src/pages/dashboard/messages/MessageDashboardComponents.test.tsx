@@ -47,6 +47,69 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('1 recipient needs contact details · 0 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('150% open · 75% click · 25% reply')).toBeInTheDocument();
   });
+
+  it('shows engagement rates on the latest campaign message when delivered recipients exist', () => {
+    render(
+      <MessageCampaignThreadPanels
+        activeCampaignLatestMessage={{
+          id: 'message-1',
+          subject: 'RSVP nudge',
+          body: 'Please reply.',
+          channel: 'email',
+          status: 'partial',
+          recipient_count: 10,
+          delivered_count: 8,
+          failed_count: 1,
+          audience_filter: 'all',
+          recipient_filter: {
+            opened_count: 4,
+            viewed_count: 2,
+            clicked_count: 1,
+            replied_count: 1,
+            bounced_count: 1,
+            skipped_count: 1,
+          },
+        } as any}
+        activeCampaignThread={{
+          key: 'thread-1',
+          name: 'RSVP push',
+          count: 2,
+          delivered: 8,
+          failed: 1,
+          skipped: 1,
+          unreached: 1,
+          opened: 4,
+          viewed: 2,
+          clicked: 1,
+          replied: 1,
+          bounced: 1,
+          deliveredRecipients: 8,
+          openRate: 50,
+          clickRate: 13,
+          replyRate: 13,
+          latestStatus: 'partial',
+          latestAt: 100,
+        }}
+        campaignThreads={[]}
+        canCompose
+        deliveries={[]}
+        onClearThreadFilter={vi.fn()}
+        onDuplicateLatest={vi.fn()}
+        onEditLatest={vi.fn()}
+        onScheduleFollowUp={vi.fn()}
+        onSelectThread={vi.fn()}
+        onStartFollowUp={vi.fn()}
+        onViewLatest={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Opened 4')).toBeInTheDocument();
+    expect(screen.getByText('Viewed 2')).toBeInTheDocument();
+    expect(screen.getByText('Clicked 1')).toBeInTheDocument();
+    expect(screen.getByText('Replied 1')).toBeInTheDocument();
+    expect(screen.getByText('Bounced 1')).toBeInTheDocument();
+    expect(screen.getByText('50% open · 13% click · 13% reply')).toBeInTheDocument();
+  });
 });
 
 describe('MessageHistorySummaryPanels', () => {
