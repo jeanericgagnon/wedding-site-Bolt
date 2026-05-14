@@ -436,8 +436,10 @@ Execution rule for this section:
    - this batch shipped: registry launch readiness and thank-you readiness now use the persisted task ledger honestly instead of claiming future follow-up work without saved state
    - this batch shipped: focused proof is green for owner purchase-state normalization, form save truth, thank-you ledger sync/toggle behavior, route rendering, and guest-facing registry purchase rendering
    - this batch shipped: demo/local registry owner state now persists purchase-state and thank-you follow-up across reloads instead of resetting to seed data, and `npm run proof:v1:registry` now includes a real browser continuity pass for that owner flow
+   - this batch shipped: demo/local registry cleanup now performs a real owner repair flow for bad imported gifts, and the registry proof now verifies repaired titles/store truth survive reloads instead of staying as no-op toasts
+   - this batch shipped: demo/local duplicate-group review now has real merge continuity proof, so the owner cleanup lane covers repeated-gift collapse/readback instead of only purchase-state continuity
    - add live owner add/import/edit persistence proof for broader registry workflows
-   - add owner repair/cleanup runtime proof outside the barcode lane
+   - rerun the stronger owner repair/cleanup runtime proof against the shipped production runtime after the next approved registry deploy
    - rerun the guest-visible purchase-state assertions against the live production runtime after the next approved registry deploy instead of only local/public-component proof
    - keep extending owner claim-state workflows beyond purchased/reset into richer purchaser attribution / fund follow-through / analytics depth
    - add richer public fund-card polish and broader registry analytics

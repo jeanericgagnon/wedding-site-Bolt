@@ -29,7 +29,7 @@ const localSteps = [
   {
     id: 'registry-demo-continuity-tests',
     label: 'Registry demo continuity tests',
-    command: 'npm test -- --run src/pages/dashboard/registry/registryDemoStorage.test.ts src/pages/dashboard/registry/RegistryDashboardRouteContent.test.tsx',
+    command: 'npm test -- --run src/pages/dashboard/registry/registryDemoRepair.test.ts src/pages/dashboard/registry/registryDemoStorage.test.ts src/pages/dashboard/registry/RegistryDashboardRouteContent.test.tsx',
     required: true,
   },
   {
@@ -213,7 +213,7 @@ const output = {
     'Purchased-state normalization and duplicate detection',
     'Metadata confidence / blocked retailer / repair-state attention truth',
     'Barcode normalization, provider breadth, and scanner fallback behavior',
-    'Demo owner purchase-state and thank-you follow-up continuity across reloads',
+    'Demo owner purchase-state, thank-you follow-up, import cleanup, and duplicate-merge continuity across reloads',
     'Registry dashboard guard coverage',
     'Build integrity after registry proof assertions',
     ...(liveEnabled ? ['Live owner registry URL import, duplicate merge collapse/readback, cleanup-queue truth, barcode-backed item persistence, and public registry endpoint readability'] : []),

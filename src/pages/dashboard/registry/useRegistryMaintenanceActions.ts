@@ -8,6 +8,7 @@ import type { RegistryDuplicateGroup } from './duplicateRegistryItems';
 import type { RegistryItem } from './registryTypes';
 import { getRegistryItemMetadataState } from './registryTypes';
 import { buildRegistryRefreshFields, getRegistryRefreshSourceUrl } from './registryRefreshFields';
+import { buildDemoRegistryRepairPatch } from './registryDemoRepair';
 
 const WEEKLY_REFRESH_MS = 1000 * 60 * 60 * 24 * 7;
 const getBackoffMs = (failCount: number) => Math.min(WEEKLY_REFRESH_MS * 4, Math.max(6 * 60 * 60 * 1000, (2 ** Math.min(5, failCount)) * 60 * 60 * 1000));
@@ -61,7 +62,29 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
     const url = getRegistryRefreshSourceUrl(item);
     if (!url) return false;
     if (isDemoMode) {
-      if (!silent) toast(replaceExisting ? 'Demo: sample gift details are already refreshed' : 'Demo: sample gift details are already filled in', 'success');
+      const patch = buildDemoRegistryRepairPatch(item, { replaceExisting });
+      const updated = normalizeOwnerDashboardRegistryItem({
+        ...item,
+        ...patch,
+        id: item.id,
+        wedding_site_id: item.wedding_site_id,
+        created_at: item.created_at,
+      } as RegistryItem);
+      setItems((prev) => prev.map((candidate) => (candidate.id === item.id ? updated : candidate)));
+      logRegistryAction(
+        replaceExisting ? 'registry_metadata_reimported' : 'registry_metadata_refreshed',
+        replaceExisting ? 'Registry item details were refreshed from the source.' : 'Registry item details were refreshed.',
+        {
+          fetchStatus: updated.metadata_fetch_status,
+          hasImage: Boolean(updated.image_url),
+          hasPrice: updated.price_amount != null || Boolean(updated.price_label),
+          replaceExisting,
+          demoMode: true,
+        },
+        updated.id,
+        updated.item_name,
+      );
+      if (!silent) toast(replaceExisting ? 'Gift details refreshed from the link' : 'Gift details refreshed');
       return true;
     }
 
@@ -196,7 +219,7 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
   }
 
   async function handleRepairBadImports() {
-    if (isDemoMode || repairingBadImports) return;
+    if (repairingBadImports) return;
     const candidates = items
       .filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle)
       .filter((item) => !!(item.item_url || item.canonical_url))
