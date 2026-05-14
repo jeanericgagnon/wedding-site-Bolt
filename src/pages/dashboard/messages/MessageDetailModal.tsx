@@ -160,10 +160,35 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
             </div>
           </div>
 
-          {recipientReviewPlan && (
+          {(recipientReviewPlan || (message.delivered_count ?? 0) > 0 || (message.failed_count ?? 0) > 0 || skippedCount > 0 || unreachedCount > 0) && (
             <div className="rounded-lg border border-primary/20 bg-primary-light/30 p-4">
               <p className="text-sm font-semibold text-text-primary">Next-send review plan</p>
-              <p className="mt-1 text-xs text-text-secondary">{recipientReviewPlan}.</p>
+              {recipientReviewPlan && (
+                <p className="mt-1 text-xs text-text-secondary">{recipientReviewPlan}.</p>
+              )}
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
+                {(message.delivered_count ?? 0) > 0 && (
+                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Delivered {message.delivered_count ?? 0}</span>
+                )}
+                {(message.failed_count ?? 0) > 0 && (
+                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs review {message.failed_count ?? 0}</span>
+                )}
+                {skippedCount > 0 && (
+                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs contact {skippedCount}</span>
+                )}
+                {unreachedCount > 0 && (
+                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Not reached {unreachedCount}</span>
+                )}
+              </div>
+              {(skippedCount > 0 || unreachedCount > 0) && (
+                <p className="mt-3 text-[11px] text-text-tertiary">
+                  {skippedCount > 0 && unreachedCount > 0
+                    ? 'Clean up contact details first, then decide whether unreached guests need another send.'
+                    : skippedCount > 0
+                    ? 'Clean up contact details before the next send so these guests are not skipped again.'
+                    : 'Some guests still were not reached after a valid send attempt.'}
+                </p>
+              )}
             </div>
           )}
 

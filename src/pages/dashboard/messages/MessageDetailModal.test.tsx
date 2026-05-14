@@ -92,6 +92,39 @@ describe('MessageDetailModal', () => {
 
     expect(screen.getByText('Next-send review plan')).toBeInTheDocument();
     expect(screen.getByText(/next send targets 2 reviewed guests and excludes 1 guest still missing contact details/i)).toBeInTheDocument();
+    expect(screen.getByText('Delivered 1')).toBeInTheDocument();
+    expect(screen.getByText('Needs review 2')).toBeInTheDocument();
+    expect(screen.getByText('Not reached 1')).toBeInTheDocument();
+    expect(screen.getByText('Some guests still were not reached after a valid send attempt.')).toBeInTheDocument();
+  });
+
+  it('shows contact-cleanup guidance when skipped and unreached recipients both exist', () => {
+    render(
+      <MessageDetailModal
+        message={message({
+          recipient_count: 5,
+          delivered_count: 1,
+          failed_count: 2,
+        })}
+        deliveries={deliveries([
+          { guest_id: 'guest-failed', status: 'failed', recipient_name: 'Jordan Lane', recipient_email: 'jordan@example.com', error_message: 'Resend bounced recipient' },
+          { guest_id: 'guest-skipped', status: 'skipped', recipient_name: 'Sam Vale', recipient_email: '', error_message: 'Skipped: guest is missing a valid email address' },
+        ])}
+        canManageCampaigns
+        onClose={vi.fn()}
+        onRetry={vi.fn().mockResolvedValue(undefined)}
+        onRetryFailedRecipients={vi.fn().mockResolvedValue(undefined)}
+        onExcludeSkippedRecipients={vi.fn().mockResolvedValue(undefined)}
+        onSendScheduledNow={vi.fn().mockResolvedValue(undefined)}
+        onReschedule={vi.fn().mockResolvedValue(undefined)}
+        onCancelSchedule={vi.fn().mockResolvedValue(undefined)}
+        onLoadIntoComposer={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Needs contact 1')).toBeInTheDocument();
+    expect(screen.getByText('Not reached 1')).toBeInTheDocument();
+    expect(screen.getByText('Clean up contact details first, then decide whether unreached guests need another send.')).toBeInTheDocument();
   });
 
   it('keeps queued and partial headers truthful instead of calling them sent', () => {
