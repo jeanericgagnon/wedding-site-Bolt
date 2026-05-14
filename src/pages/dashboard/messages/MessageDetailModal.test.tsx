@@ -95,6 +95,7 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('Delivered 1')).toBeInTheDocument();
     expect(screen.getByText('Needs review 2')).toBeInTheDocument();
     expect(screen.getByText('Not reached 1')).toBeInTheDocument();
+    expect(screen.getByText('25% delivered coverage · 50% review coverage · 25% unreached')).toBeInTheDocument();
     expect(screen.getByText('100% open · 0% click · 0% reply')).toBeInTheDocument();
     expect(screen.getByText('Some guests still were not reached after a valid send attempt.')).toBeInTheDocument();
   });

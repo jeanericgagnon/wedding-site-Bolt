@@ -237,6 +237,7 @@ describe('MessageReachSnapshotCard', () => {
     expect(screen.getByText('50% open rate · 20% click rate · 10% reply rate')).toBeInTheDocument();
     expect(screen.getByText('10 delivered · 2 need review')).toBeInTheDocument();
     expect(screen.getByText('1 need contact details · 1 not reached yet')).toBeInTheDocument();
+    expect(screen.getByText('71% delivered coverage · 14% review coverage · 7% unreached')).toBeInTheDocument();
     expect(screen.getByText('Photo links ready')).toBeInTheDocument();
     expect(screen.getAllByText('3')).toHaveLength(2);
   });

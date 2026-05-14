@@ -227,6 +227,9 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
   const sentCampaignCount = messages.filter((message) => message.status === 'sent').length;
   const followUpCampaignCount = messages.filter((message) => message.status === 'partial').length;
   const reviewCampaignCount = messages.filter((message) => message.status === 'failed').length;
+  const deliveredCoverageRate = deliveryStats.targeted > 0 ? Math.round((deliveryStats.delivered / deliveryStats.targeted) * 100) : null;
+  const reviewCoverageRate = deliveryStats.targeted > 0 ? Math.round((deliveryStats.failed / deliveryStats.targeted) * 100) : null;
+  const unreachedCoverageRate = deliveryStats.targeted > 0 ? Math.round((deliveryStats.unreached / deliveryStats.targeted) * 100) : null;
 
   return (
   <Card variant="bordered" padding="lg" className="border-border-subtle overflow-hidden">
@@ -295,6 +298,11 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
             <p className="mt-1 text-xs text-text-tertiary">
               {deliveryStats.skipped} need contact details · {deliveryStats.unreached} not reached yet
             </p>
+            {deliveredCoverageRate != null && reviewCoverageRate != null && unreachedCoverageRate != null && (
+              <p className="mt-1 text-xs text-text-tertiary">
+                {deliveredCoverageRate}% delivered coverage · {reviewCoverageRate}% review coverage · {unreachedCoverageRate}% unreached
+              </p>
+            )}
           </>
         ) : (
           <p className="mt-2 text-sm text-text-secondary">Shows once completed campaigns have recipient delivery readback.</p>
