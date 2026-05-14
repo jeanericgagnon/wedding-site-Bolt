@@ -518,9 +518,15 @@ export function buildTravelHubSpotlight(input: {
     ...cards.map((card) => `${card.label}: ${card.detail}`),
     `Travel page: ${travelHref}`,
   ].join('\n');
+  const readinessLabels = [
+    stayReady ? 'stay details' : null,
+    weekendTimingReady ? 'weekend timing' : null,
+    arrivalGuidanceReady ? 'arrival guidance' : null,
+  ].filter(Boolean);
+  const readinessSummary = readinessLabels.length > 0 ? ` It covers ${readinessLabels.join(', ')}.` : '';
   const summary = guestScoped && visibleEventCount > 0
-    ? `${cards.length} travel detail${cards.length === 1 ? '' : 's'} ready from the guest hub, including ${visibleEventCount} visible event window${visibleEventCount === 1 ? '' : 's'} for this invitation.`
-    : `${cards.length} travel detail${cards.length === 1 ? '' : 's'} ready from the guest hub.`;
+    ? `${cards.length} travel detail${cards.length === 1 ? '' : 's'} ready from the guest hub, including ${visibleEventCount} visible event window${visibleEventCount === 1 ? '' : 's'} for this invitation.${readinessSummary}`
+    : `${cards.length} travel detail${cards.length === 1 ? '' : 's'} ready from the guest hub.${readinessSummary}`;
   const filename = `${siteSlug.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'dayof'}-travel-guide.html`;
 
   return {
