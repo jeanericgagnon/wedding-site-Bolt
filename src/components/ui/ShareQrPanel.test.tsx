@@ -1,8 +1,12 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ShareQrPanel } from './ShareQrPanel';
 
 describe('ShareQrPanel', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('renders a safe public share link and QR image', () => {
     render(<ShareQrPanel title="Guest hub" url="https://dayof.love/event/maya-and-leo" />);
 
@@ -33,5 +37,39 @@ describe('ShareQrPanel', () => {
       'src',
       expect.stringContaining('data:image/svg+xml'),
     );
+    expect(screen.getByRole('button', { name: 'Save private card' })).toBeInTheDocument();
+  });
+
+  it('downloads a printable private guest qr card without exposing the raw token in visible copy', async () => {
+    const createObjectUrl = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:private-card');
+    const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const click = vi.fn();
+    vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
+      const element = document.createElementNS('http://www.w3.org/1999/xhtml', tagName) as HTMLElement;
+      if (tagName === 'a') {
+        Object.assign(element, { click });
+      }
+      return element;
+    });
+
+    render(
+      <ShareQrPanel
+        title="Private RSVP QR"
+        description="Owner-only guest access"
+        url="https://dayof.love/rsvp?token=secret-token"
+        allowPrivate
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save private card' }));
+
+    expect(createObjectUrl).toHaveBeenCalled();
+    const blob = createObjectUrl.mock.calls[0]?.[0];
+    expect(blob).toBeInstanceOf(Blob);
+    const html = blob instanceof Blob ? await blob.text() : '';
+    expect(html).toContain('private guest link');
+    expect(html).not.toContain('https://dayof.love/rsvp?token=secret-token');
+    expect(click).toHaveBeenCalled();
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:private-card');
   });
 });

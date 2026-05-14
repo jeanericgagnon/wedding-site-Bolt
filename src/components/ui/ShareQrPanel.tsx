@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Copy, ExternalLink, QrCode } from 'lucide-react';
 import { Button } from './Button';
-import { copyTextOrDownload } from '../../lib/copyText';
+import { copyTextOrDownload, downloadTextFile } from '../../lib/copyText';
 import { buildRenderableQrImageUrl, isSafePublicQrAssetUrl } from '../../lib/guestHubQrAssets';
 import { isPrivateQrPayloadForThirdPartyQr } from '../../lib/qr/qrPayload';
 
@@ -12,6 +12,15 @@ interface ShareQrPanelProps {
   copyLabel?: string;
   className?: string;
   allowPrivate?: boolean;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
@@ -49,6 +58,37 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
       return 'Private guest link';
     }
   }, [safeUrl, usesPrivateQr]);
+  const privateCardHtml = useMemo(() => {
+    if (!usesPrivateQr || !qrUrl) return '';
+    const titleText = escapeHtml(title);
+    const descriptionText = description ? `<p class="detail">${escapeHtml(description)}</p>` : '';
+    return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${titleText}</title>
+    <style>
+      body { margin: 0; padding: 32px; font-family: Inter, Arial, sans-serif; background: #fbf7f1; color: #2f261d; }
+      main { max-width: 480px; margin: 0 auto; border: 1px solid #eadfd2; border-radius: 18px; background: #fffdf9; padding: 28px; text-align: center; }
+      .eyebrow { margin: 0 0 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #8b6f53; }
+      h1 { margin: 0; font-size: 28px; }
+      .detail { margin: 12px 0 0; line-height: 1.6; color: #6f5843; }
+      img { width: 240px; height: 240px; margin: 20px auto; display: block; border: 1px solid #eadfd2; border-radius: 14px; background: white; padding: 12px; }
+      .footer { margin: 0; font-size: 12px; color: #6f5843; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">Private guest QR</p>
+      <h1>${titleText}</h1>
+      ${descriptionText}
+      <img src="${escapeHtml(qrUrl)}" alt="${titleText} QR code" />
+      <p class="footer">${escapeHtml(visibleUrl || 'Private guest link')}</p>
+    </main>
+  </body>
+</html>`;
+  }, [description, qrUrl, title, usesPrivateQr, visibleUrl]);
 
   const copyUrl = async () => {
     try {
@@ -59,6 +99,12 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
     } catch {
       setCopyFallback(true);
     }
+  };
+
+  const downloadPrivateCard = () => {
+    if (!privateCardHtml) return;
+    const filenameBase = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'dayof-private-guest-qr';
+    downloadTextFile(`${filenameBase}-card.html`, privateCardHtml, 'text/html;charset=utf-8');
   };
 
   if (!safeUrl) return null;
@@ -105,6 +151,11 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
             >
               Download
             </a>
+            {usesPrivateQr && (
+              <Button type="button" size="sm" variant="outline" onClick={downloadPrivateCard}>
+                Save private card
+              </Button>
+            )}
           </div>
         </div>
       </div>

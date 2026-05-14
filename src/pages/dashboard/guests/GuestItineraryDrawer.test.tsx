@@ -86,6 +86,7 @@ describe('GuestItineraryDrawer', () => {
       'src',
       expect.stringContaining('data:image/svg+xml'),
     );
+    expect(screen.getAllByRole('button', { name: 'Save private card' })).toHaveLength(2);
     expect(screen.getByRole('button', { name: /Open photo upload as guest/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Open guestbook as guest/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Open anniversary vault as guest/i })).toBeInTheDocument();
