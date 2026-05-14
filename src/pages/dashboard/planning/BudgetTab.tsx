@@ -249,7 +249,7 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, to
       : 'border-border-subtle bg-surface';
 
   function exportLedgerCsv() {
-    const csv = budgetVendorLedgerToCsv({ budgetItems: items, vendors });
+    const csv = budgetVendorLedgerToCsv({ budgetItems: items, vendors, vendorMeta });
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
     link.href = url;

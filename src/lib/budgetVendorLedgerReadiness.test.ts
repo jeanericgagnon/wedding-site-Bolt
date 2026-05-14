@@ -109,12 +109,30 @@ describe('budget vendor ledger readiness', () => {
           notes: 'Booked',
         },
       ],
+      vendorMeta: {
+        'vendor-1': {
+          nextFollowUp: '2026-05-18',
+          reminderChannel: 'email',
+          reminderLeadDays: 7,
+          reminderLastQueuedAt: '2026-05-11T12:00:00.000Z',
+          contractFiles: [
+            { id: 'file-1', kind: 'contract', label: 'Signed contract', url: 'https://docs.example.com/photo-contract' },
+          ],
+          paymentMilestones: [
+            { id: 'm1', label: 'Final balance', dueDate: '2026-05-20', amount: 2500, status: 'scheduled' },
+          ],
+        },
+      },
     });
 
     expect(csv).toContain('"Record Type","Name","Category or Type","Vendor"');
+    expect(csv).toContain('"Reminder Channel","Follow Up","Reminder Lead Time","Reminder Last Queued"');
     expect(csv).toContain('"Budget item","Photo deposit","Photography","Photo Studio"');
     expect(csv).toContain('"Vendor","Photo Studio","Photographer","Photo Studio"');
     expect(csv).toContain('"photo@example.com / 555-0101"');
+    expect(csv).toContain('"Email","2026-05-18","7 days before","2026-05-11T12:00:00.000Z"');
+    expect(csv).toContain('"contract: Signed contract"');
+    expect(csv).toContain('"Final balance (scheduled, 2026-05-20, $2,500)"');
   });
 
   it('builds a planner payment review without guest-facing financial exposure', () => {

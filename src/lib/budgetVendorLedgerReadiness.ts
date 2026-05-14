@@ -84,6 +84,11 @@ export interface BudgetPaymentReview {
 }
 
 export interface VendorLedgerMeta {
+  lastContacted?: string | null;
+  nextFollowUp?: string | null;
+  reminderChannel?: string | null;
+  reminderLeadDays?: number | null;
+  reminderLastQueuedAt?: string | null;
   contractFiles?: Array<{
     id?: string;
     kind?: string | null;
@@ -133,6 +138,50 @@ function isOnOrBefore(dateValue: string | null | undefined, target: Date): boole
   const date = new Date(`${dateValue.slice(0, 10)}T00:00:00`);
   if (Number.isNaN(date.getTime())) return false;
   return date <= target;
+}
+
+function formatReminderChannel(value: string | null | undefined): string {
+  if (value === 'email') return 'Email';
+  if (value === 'phone') return 'Phone';
+  if (value === 'none') return 'No reminder';
+  return '';
+}
+
+function formatReminderLeadDays(value: number | null | undefined): string {
+  if (value === 1) return '1 day before';
+  if (value === 3 || value === 7 || value === 14) return `${value} days before`;
+  return '';
+}
+
+function summarizeVendorFiles(meta: VendorLedgerMeta | undefined): string {
+  const entries = Array.isArray(meta?.contractFiles) ? meta.contractFiles : [];
+  return entries
+    .map((entry) => {
+      const label = typeof entry?.label === 'string' ? entry.label.trim() : '';
+      const kind = typeof entry?.kind === 'string' ? entry.kind.trim() : '';
+      if (!label && !kind) return '';
+      return kind && label ? `${kind}: ${label}` : label || kind;
+    })
+    .filter(Boolean)
+    .join(' | ');
+}
+
+function summarizeVendorMilestones(meta: VendorLedgerMeta | undefined): string {
+  const entries = Array.isArray(meta?.paymentMilestones) ? meta.paymentMilestones : [];
+  return entries
+    .map((entry) => {
+      const label = typeof entry?.label === 'string' ? entry.label.trim() : '';
+      const status = typeof entry?.status === 'string' ? entry.status.trim() : '';
+      const dueDate = typeof entry?.dueDate === 'string' ? entry.dueDate.trim().slice(0, 10) : '';
+      const amount = Number.isFinite(Number(entry?.amount))
+        ? Number(entry?.amount).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+        : '';
+      const detail = [status, dueDate, amount].filter(Boolean).join(', ');
+      if (!label && !detail) return '';
+      return detail ? `${label || 'Milestone'} (${detail})` : label;
+    })
+    .filter(Boolean)
+    .join(' | ');
 }
 
 export function buildBudgetVendorLedgerReadiness(input: {
@@ -261,14 +310,17 @@ export function buildBudgetVendorLedgerReadiness(input: {
 export function budgetVendorLedgerToCsv(input: {
   budgetItems: BudgetLedgerItem[];
   vendors: VendorLedgerItem[];
+  vendorMeta?: Record<string, VendorLedgerMeta | undefined> | null;
 }): string {
   const vendorMap = new Map(input.vendors.map((vendor) => [vendor.id, vendor]));
+  const vendorMeta = input.vendorMeta ?? {};
   const rows = [
-    ['Record Type', 'Name', 'Category or Type', 'Vendor', 'Estimated', 'Actual or Contract', 'Paid', 'Open', 'Due Date', 'Contact', 'Document URL', 'Notes'],
+    ['Record Type', 'Name', 'Category or Type', 'Vendor', 'Estimated', 'Actual or Contract', 'Paid', 'Open', 'Due Date', 'Contact', 'Reminder Channel', 'Follow Up', 'Reminder Lead Time', 'Reminder Last Queued', 'Document URL', 'Files', 'Milestones', 'Notes'],
     ...input.budgetItems.map((item) => {
       const total = money(item.actual_amount) || money(item.estimated_amount);
       const paid = money(item.paid_amount);
       const vendor = item.vendor_id ? vendorMap.get(item.vendor_id) : undefined;
+      const meta = item.vendor_id ? vendorMeta[item.vendor_id] : undefined;
       return [
         'Budget item',
         item.item_name,
@@ -280,7 +332,13 @@ export function budgetVendorLedgerToCsv(input: {
         String(Math.max(0, total - paid)),
         item.due_date ?? '',
         vendor ? [vendor.email, vendor.phone].filter(Boolean).join(' / ') : '',
+        formatReminderChannel(meta?.reminderChannel),
+        meta?.nextFollowUp ?? '',
+        formatReminderLeadDays(meta?.reminderLeadDays),
+        meta?.reminderLastQueuedAt ?? '',
         vendor?.document_url ?? '',
+        summarizeVendorFiles(meta),
+        summarizeVendorMilestones(meta),
         item.notes ?? '',
       ];
     }),
@@ -288,6 +346,7 @@ export function budgetVendorLedgerToCsv(input: {
       const total = money(vendor.contract_total);
       const paid = money(vendor.amount_paid);
       const open = vendor.balance_due != null ? money(vendor.balance_due) : Math.max(0, total - paid);
+      const meta = vendorMeta[vendor.id];
       return [
         'Vendor',
         vendor.name,
@@ -299,7 +358,13 @@ export function budgetVendorLedgerToCsv(input: {
         String(open),
         vendor.next_payment_due ?? '',
         [vendor.email, vendor.phone].filter(Boolean).join(' / '),
+        formatReminderChannel(meta?.reminderChannel),
+        meta?.nextFollowUp ?? '',
+        formatReminderLeadDays(meta?.reminderLeadDays),
+        meta?.reminderLastQueuedAt ?? '',
         vendor.document_url ?? '',
+        summarizeVendorFiles(meta),
+        summarizeVendorMilestones(meta),
         vendor.notes ?? '',
       ];
     }),
