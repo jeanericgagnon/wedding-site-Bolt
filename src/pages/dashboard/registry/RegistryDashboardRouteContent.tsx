@@ -327,6 +327,7 @@ export function RegistryDashboardRouteContent(props: {
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
                 {props.registryThankYouStats.readyToSendCount} ready to send{props.registryThankYouStats.blockedByMissingPurchaserCount > 0 ? ` · ${props.registryThankYouStats.blockedByMissingPurchaserCount} blocked by purchaser` : ''}
+                {props.registryThankYouStats.purchasedCount > 0 ? ` · ${props.registryThankYouStats.attributionCoverageRate}% purchasers named` : ''}
               </p>
             </Card>
             <Card variant="bordered" padding="md">
