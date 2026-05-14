@@ -53,11 +53,49 @@ describe('DashboardSeatingLookup', () => {
     expect(screen.getByText(/Data is for/i)).toHaveTextContent('Ceremony');
   });
 
-  it('reloads rows when the selected event changes', async () => {
+  it('opens a guest-view preview from the lookup table when a private RSVP link exists', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     getWeddingSiteId.mockResolvedValue('site-1');
     loadItineraryEvents.mockResolvedValue([
       { id: 'event-1', event_name: 'Ceremony', event_date: '2026-05-13', start_time: '16:00:00', location_name: 'Garden' },
-      { id: 'event-2', event_name: 'Reception', event_date: '2026-05-13', start_time: '19:00:00', location_name: 'Hall' },
+    ]);
+    loadSeatingLookupRowsForUser.mockResolvedValue([
+      {
+        itinerary_event_id: 'event-1',
+        event_name: 'Ceremony',
+        guest_id: 'guest-1',
+        full_name: 'Maya Patel',
+        email: 'maya@example.com',
+        invite_token: 'private-token',
+        preferred_language: 'es-MX',
+        table_name: 'Table 1',
+        seat_index: 2,
+        checked_in_at: null,
+      },
+    ]);
+
+    render(
+      <MemoryRouter>
+        <DashboardSeatingLookup />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText('Maya Patel');
+    fireEvent.click(screen.getByRole('button', { name: 'Guest view' }));
+
+    expect(openSpy).toHaveBeenCalledWith(
+      '/rsvp?token=private-token&previewGuest=guest-1&previewSurface=rsvp&guestLang=es',
+      '_blank',
+      'noopener,noreferrer',
+    );
+    openSpy.mockRestore();
+  });
+
+  it('reloads rows when the selected event changes', async () => {
+    getWeddingSiteId.mockResolvedValue('site-1');
+    loadItineraryEvents.mockResolvedValue([
+      { id: 'event-1', event_name: 'Ceremony', event_date: '2026-05-20', start_time: '16:00:00', location_name: 'Garden' },
+      { id: 'event-2', event_name: 'Reception', event_date: '2026-05-20', start_time: '19:00:00', location_name: 'Hall' },
     ]);
     loadSeatingLookupRowsForUser
       .mockResolvedValueOnce([

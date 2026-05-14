@@ -21,6 +21,7 @@ import {
   isCoordinatorGuestInvitedToCurrentEvent,
   type CoordinatorDoorStatusContext,
 } from '../../../lib/coordinatorCheckInStatus';
+import { buildGuestPreviewRoutes } from '../../../lib/guestPreviewRoutes';
 import type { CoordinatorCommandDeckItem } from '../../../lib/coordinatorCommandDeck';
 import type { CoordinatorCommandSummaryItem } from '../../../lib/coordinatorCommandSummary';
 import type { CoordinatorCommandSummaryLabel } from '../../../lib/coordinatorCommandSummaryTarget';
@@ -359,6 +360,12 @@ export function CoordinatorCheckInQueuePanel({
           const eventCheckedInAt = getCoordinatorEventCheckInAt(guest, checkInStatusContext.currentEventId);
           const eventTableName = getCoordinatorEventTableName(guest, checkInStatusContext.currentEventId);
           const invitedToCurrentEvent = isCoordinatorGuestInvitedToCurrentEvent(guest, checkInStatusContext);
+          const guestPreviewRoutes = buildGuestPreviewRoutes({
+            guestId: guest.id,
+            inviteToken: guest.invite_token ?? null,
+            publicSiteSlug: siteSlug,
+          });
+          const guestViewHref = guestPreviewRoutes.primaryHref;
           const visibleExceptionStates = getCoordinatorDoorExceptionStates(guest, checkInStatusContext)
             .filter((state) => state !== 'already-checked-in')
             .slice(0, 3);
@@ -409,6 +416,18 @@ export function CoordinatorCheckInQueuePanel({
                 )}
               </div>
               <div className="flex items-center gap-2">
+                {guestViewHref && (
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      window.open(guestViewHref, '_blank', 'noopener,noreferrer');
+                    }}
+                    className="rounded-md border border-border bg-white px-3 py-1.5 text-xs text-text-secondary"
+                  >
+                    Guest view
+                  </button>
+                )}
                 {!eventCheckedInAt && canEditQna && (doorStatus === 'watch' || Boolean(guest.door_route)) && (
                   <select
                     value={guest.door_route ?? ''}

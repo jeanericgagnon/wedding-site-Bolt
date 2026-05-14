@@ -310,8 +310,8 @@ Execution rule for this section:
    - this batch shipped: the main Guests dashboard list and household views now expose direct guest-view preview actions, so owners can jump into the real guest-facing site path without opening the itinerary drawer first
    - this batch shipped: the guest visibility drawer now includes the anniversary-vault guest path alongside RSVP, guest update, photos, guestbook, recap, travel, and registry so preview confidence covers another real private guest surface
    - this batch shipped: demo/local guest preview proof now includes structured visible-versus-hidden itinerary variation, routes the drawer through the real guest-specific event set, carries demo site context into guest preview links, and proves in a real browser that owners can open the public-site preview plus the exact guest RSVP route for a hidden-event guest without raw-token UI leakage
+   - this batch shipped: coordinator door-check and seating-lookup surfaces now expose direct guest-view preview actions, so owners/planners can jump from live ops tools into the real guest-facing RSVP/site path without losing event context or exposing raw token copy in the UI
    - finish true route-level personalization beyond the owner preview banner, guest-update path, and demo/local preview proof
-   - wire planner/coordinator role preview controls from dashboard flows
    - extend preview confidence to photo, registry, and travel surfaces in live/mobile proof, not only owner/local preview
    - add cross-surface live tests proving private event visibility is hidden from the wrong guest and visible to the right guest
    - add live/mobile click proof for the Guests drawer preview flow on the shipped runtime

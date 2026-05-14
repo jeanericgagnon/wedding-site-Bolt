@@ -27,7 +27,7 @@ const SEATING_ELIGIBLE_GUEST_SELECT = 'id, name, first_name, last_name, email, r
 const SEATING_LAYOUT_VERSION_SELECT = 'id, wedding_site_id, seating_event_id, itinerary_event_id, label, tables, assignments, created_by, restored_at, created_at' as const;
 const SEATING_LOOKUP_ASSIGNMENT_SELECT = 'guest_id, table_id, seat_index, checked_in_at, is_valid' as const;
 const SEATING_LOOKUP_TABLE_SELECT = 'id, table_name' as const;
-const SEATING_LOOKUP_GUEST_SELECT = 'id, first_name, last_name, name, email, rsvp_status' as const;
+const SEATING_LOOKUP_GUEST_SELECT = 'id, first_name, last_name, name, email, rsvp_status, invite_token, preferred_language' as const;
 export const MAX_SEATING_ITINERARY_EVENTS = 200;
 export const MAX_SEATING_LOOKUP_TABLE_IDS = 500;
 export const MAX_SEATING_LOOKUP_GUEST_IDS = 2000;
@@ -136,6 +136,8 @@ export interface SeatingLookupRow {
   guest_id: string;
   full_name: string;
   email: string | null;
+  invite_token?: string | null;
+  preferred_language?: string | null;
   table_name: string;
   seat_index: number | null;
   checked_in_at: string | null;
@@ -149,6 +151,8 @@ interface SeatingLookupGuest {
   name: string | null;
   email: string | null;
   rsvp_status: string | null;
+  invite_token?: string | null;
+  preferred_language?: string | null;
 }
 
 interface SeatingLookupAssignment {
@@ -239,6 +243,8 @@ export function mapSeatingLookupRows(
       guest_id: assignment.guest_id,
       full_name: fullName,
       email: guest?.email || null,
+      invite_token: guest?.invite_token ?? null,
+      preferred_language: guest?.preferred_language ?? null,
       table_name: assignment.table_id ? (tableNameById.get(assignment.table_id) || 'Unassigned') : 'Unassigned',
       seat_index: assignment.seat_index ?? null,
       checked_in_at: assignment.checked_in_at ?? null,

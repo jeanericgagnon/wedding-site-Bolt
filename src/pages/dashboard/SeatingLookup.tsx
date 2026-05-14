@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { buildGuestPreviewRoutes } from '../../lib/guestPreviewRoutes';
 import { useAuth } from '../../hooks/useAuth';
 import { getCheckInExceptionLabel, getCheckInExceptionStates } from '../../lib/checkInExceptionState';
 import { resolveOperationalEventId } from '../../lib/operationalEvent';
@@ -169,11 +170,27 @@ export const DashboardSeatingLookup: React.FC = () => {
               ) : filtered.length === 0 ? (
                 <tr><td className="px-4 py-4 text-text-tertiary" colSpan={4}>No guests found.</td></tr>
               ) : (
-                filtered.map((r) => (
+                filtered.map((r) => {
+                  const guestPreviewRoutes = buildGuestPreviewRoutes({
+                    guestId: r.guest_id,
+                    inviteToken: r.invite_token ?? null,
+                    preferredLanguage: r.preferred_language ?? null,
+                  });
+                  const guestViewHref = guestPreviewRoutes.primaryHref;
+                  return (
                   <tr key={r.guest_id} className="border-b border-border-subtle/70">
                     <td className="px-4 py-2.5">
                       <p className="text-sm font-medium text-text-primary">{r.full_name}</p>
                       <p className="text-xs text-text-tertiary">{r.email || '—'}</p>
+                      {guestViewHref && (
+                        <button
+                          type="button"
+                          onClick={() => window.open(guestViewHref, '_blank', 'noopener,noreferrer')}
+                          className="mt-1 text-[11px] text-primary hover:underline"
+                        >
+                          Guest view
+                        </button>
+                      )}
                     </td>
                     <td className="px-4 py-2.5">
                       <div className="flex flex-col">
@@ -200,7 +217,8 @@ export const DashboardSeatingLookup: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>

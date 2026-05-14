@@ -107,6 +107,20 @@ function renderPanel(overrides: Partial<React.ComponentProps<typeof CoordinatorC
 }
 
 describe('Coordinator QR scanner integration', () => {
+  it('opens the real guest view from the coordinator queue without exposing a raw token label', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    renderPanel();
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Guest view' })[0]);
+
+    expect(openSpy).toHaveBeenCalledWith(
+      '/site/maya-and-leo?previewGuest=guest-1&previewSurface=public',
+      '_blank',
+      'noopener,noreferrer',
+    );
+    openSpy.mockRestore();
+  });
+
   it('renders the QR scanner inside the coordinator check-in panel', () => {
     renderPanel();
 
