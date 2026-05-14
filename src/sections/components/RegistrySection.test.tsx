@@ -421,6 +421,7 @@ describe('RegistrySection', () => {
     expect(screen.getByText('2 ways to contribute')).toBeInTheDocument();
     expect(screen.getAllByText('25% funded')).toHaveLength(2);
     expect(screen.getByText('Every contribution moves this fund toward its shared goal.')).toBeInTheDocument();
+    expect(screen.getByText('$3000 still needed to reach the goal.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Venmo' })).toHaveAttribute('href', 'https://venmo.com/dayof');
     expect(screen.getByRole('link', { name: 'Contribute' })).toHaveAttribute('href', 'https://example.com/honeymoon');
     expect(screen.queryByRole('link', { name: 'PayPal' })).not.toBeInTheDocument();
@@ -440,6 +441,7 @@ describe('RegistrySection', () => {
     })).toEqual({
       chips: ['1 way to contribute', 'Be the first gift'],
       detail: 'The first contribution starts the visible progress toward this shared goal.',
+      statusNote: '$2500 still needed to reach the goal.',
     });
 
     expect(getFeaturedRegistryFundPublicSignals({
@@ -453,6 +455,23 @@ describe('RegistrySection', () => {
     })).toEqual({
       chips: ['2 ways to contribute', 'Already receiving gifts'],
       detail: 'This fund stays flexible while the couple refines the final goal.',
+      statusNote: 'Flexible fund already receiving gifts.',
+    });
+  });
+
+  it('describes completed fund goals without overstating remaining need', () => {
+    expect(getFeaturedRegistryFundPublicSignals({
+      fund_goal_amount: 1000,
+      fund_received_amount: 1200,
+      fund_custom_url: 'https://example.com/fund',
+      fund_venmo_url: null,
+      fund_paypal_url: null,
+      fund_custom_label: 'Contribute',
+      fund_zelle_handle: null,
+    })).toEqual({
+      chips: ['1 way to contribute', '100% funded'],
+      detail: 'Every contribution moves this fund toward its shared goal.',
+      statusNote: 'Goal reached. Thank you for helping complete it.',
     });
   });
 

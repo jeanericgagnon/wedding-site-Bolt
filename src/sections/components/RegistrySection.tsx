@@ -266,6 +266,7 @@ export function getFeaturedRegistryFundPublicSignals(item: Pick<RegistryItem, 'f
   const methods = getRegistryFundContributionMethods(item);
   const methodCount = methods.length;
   const progressPercent = goal > 0 ? Math.min(100, Math.round((received / goal) * 100)) : null;
+  const remaining = goal > 0 ? Math.max(goal - received, 0) : 0;
   const chips: string[] = [];
 
   if (methodCount > 0) {
@@ -288,9 +289,18 @@ export function getFeaturedRegistryFundPublicSignals(item: Pick<RegistryItem, 'f
       : `The first contribution starts the visible progress toward this shared goal.`
     : `This fund stays flexible while the couple refines the final goal.`;
 
+  const statusNote = goal > 0
+    ? remaining > 0
+      ? `$${remaining.toFixed(0)} still needed to reach the goal.`
+      : 'Goal reached. Thank you for helping complete it.'
+    : received > 0
+      ? 'Flexible fund already receiving gifts.'
+      : 'Flexible fund with no fixed goal yet.';
+
   return {
     chips,
     detail,
+    statusNote,
   };
 }
 
@@ -1016,6 +1026,9 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
                       </div>
                       <p className="mt-2 text-xs text-text-tertiary">{featuredFundPct}% funded</p>
                     </div>
+                  )}
+                  {featuredFundSignals?.statusNote && (
+                    <p className="mt-3 text-xs text-text-tertiary">{featuredFundSignals.statusNote}</p>
                   )}
                 </div>
               </div>
