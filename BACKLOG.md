@@ -375,7 +375,7 @@ Execution rule for this section:
    - this batch shipped: guest records now persist `preferred_language`, owners can edit it in the guest form, and guest list/household views show the saved preference instead of hiding language state in storage-only guest flows
    - this batch shipped: messaging audience segments now include saved-language recipient groups, and composer language previews now derive from the actual selected audience plus the site default instead of a hardcoded `en/es/fr` preview set
    - this batch shipped: the household workspace can now apply one saved language to the current selected guest set in one action instead of forcing guest-by-guest edits
-   - add owner controls for default and allowed languages
+   - this batch shipped: settings now carry both the default public language and the owner-managed allowed guest-facing language set, saved into wedding data instead of living as an implied all-languages default
    - translate RSVP custom questions and review workflows for translated builder/site content
    - add live production proof for owner messaging previews and guest-facing language continuity
 

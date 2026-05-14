@@ -16,10 +16,11 @@ import {
   type SiteLanguageCode,
   type TranslationStatusRow,
 } from './settingsDashboardTypes';
-import { normalizeMealOptions, normalizeRsvpQuestions, type SettingsPrivacyMode } from './settingsDashboardUtils';
+import { normalizeAllowedSiteLanguages, normalizeMealOptions, normalizeRsvpQuestions, type SettingsPrivacyMode } from './settingsDashboardUtils';
 
 export type SettingsDashboardSnapshot = {
   accountEmail: string;
+  allowedLanguages: SiteLanguageCode[];
   collaboratorInvites: SettingsCollaboratorInviteRow[];
   coupleNames: string;
   currentTemplate: string;
@@ -43,6 +44,7 @@ export type SettingsDashboardSnapshot = {
   translationStatuses: TranslationStatusRow[];
   venueName: string | null;
   weddingDate: string | null;
+  weddingData: Record<string, unknown> | null;
   weddingSiteId: string | null;
 };
 
@@ -57,6 +59,7 @@ const DEFAULT_SNAPSHOT: Omit<SettingsDashboardSnapshot, 'accountEmail'> = {
   coupleNames: '',
   currentTemplate: 'base',
   defaultLanguage: 'en',
+  allowedLanguages: SITE_LANGUAGE_OPTIONS.map((option) => option.value),
   guestAccessToken: null,
   hideFromSearch: false,
   musicPlaylistUrl: '',
@@ -76,6 +79,7 @@ const DEFAULT_SNAPSHOT: Omit<SettingsDashboardSnapshot, 'accountEmail'> = {
   translationStatuses: [],
   venueName: null,
   weddingDate: null,
+  weddingData: null,
   weddingSiteId: null,
 };
 
@@ -154,6 +158,11 @@ export async function loadSettingsDashboardSnapshot({
   const loadedLanguage = SITE_LANGUAGE_OPTIONS.some((option) => option.value === data.default_language)
     ? data.default_language as SiteLanguageCode
     : 'en';
+  const weddingData = (data.wedding_data as Record<string, unknown> | null) ?? null;
+  const allowedLanguages = normalizeAllowedSiteLanguages(
+    (weddingData?.language_settings as Record<string, unknown> | undefined)?.allowed_languages,
+    [loadedLanguage, ...TRANSLATION_LANGUAGE_OPTIONS.map((option) => option.value)],
+  );
   const prefs = normalizeNotificationPrefs(data.notification_prefs as Record<string, unknown> | null);
   const mealCfg = (data as { rsvp_meal_config?: unknown }).rsvp_meal_config as { enabled?: boolean; options?: unknown[] } | undefined;
 
@@ -164,6 +173,7 @@ export async function loadSettingsDashboardSnapshot({
     coupleNames: name1 && name2 ? `${name1} & ${name2}` : name1 || name2 || '',
     currentTemplate: (data.active_template_id as string) || 'base',
     defaultLanguage: loadedLanguage,
+    allowedLanguages,
     guestAccessToken: (data.guest_access_token as string | null) ?? null,
     hideFromSearch: !!(data.hide_from_search as boolean | null | undefined),
     musicPlaylistUrl: (data.music_playlist_url as string) ?? '',
@@ -183,6 +193,7 @@ export async function loadSettingsDashboardSnapshot({
     translationStatuses: siteId ? await loadSnapshotTranslationStatuses(siteId) : [],
     venueName: (data.venue_name as string | null) ?? null,
     weddingDate: (data.wedding_date as string | null) ?? null,
+    weddingData,
     weddingSiteId: siteId,
   };
 }

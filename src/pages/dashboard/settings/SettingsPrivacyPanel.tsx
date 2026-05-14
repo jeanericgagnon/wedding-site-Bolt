@@ -12,11 +12,13 @@ import {
 } from './settingsDashboardTypes';
 
 type SettingsPrivacyPanelProps = {
+  allowedLanguages: SiteLanguageCode[];
   defaultLanguage: SiteLanguageCode;
   guestAccessToken: string | null;
   hideFromSearch: boolean;
   onAutoTranslateLanguage: (language: TranslationLanguageCode) => void;
   onCopyInviteLink: () => void;
+  onAllowedLanguagesChange: (languages: SiteLanguageCode[]) => void;
   onDefaultLanguageChange: (language: SiteLanguageCode) => void;
   onHideFromSearchChange: (checked: boolean) => void;
   onRegenerateToken: () => void;
@@ -39,11 +41,13 @@ type SettingsPrivacyPanelProps = {
 };
 
 export function SettingsPrivacyPanel({
+  allowedLanguages,
   defaultLanguage,
   guestAccessToken,
   hideFromSearch,
   onAutoTranslateLanguage,
   onCopyInviteLink,
+  onAllowedLanguagesChange,
   onDefaultLanguageChange,
   onHideFromSearchChange,
   onRegenerateToken,
@@ -115,6 +119,38 @@ export function SettingsPrivacyPanel({
                     <span className="text-sm font-medium text-text-primary">{option.label}</span>
                   </label>
                 ))}
+              </div>
+              <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+                <p className="text-sm font-semibold text-text-primary">Guest-facing language options</p>
+                <p className="mt-1 text-xs text-text-secondary">Choose which languages should show up across translated guest-facing surfaces. Your default language always stays on.</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {SITE_LANGUAGE_OPTIONS.map((option) => {
+                    const checked = allowedLanguages.includes(option.value);
+                    const locked = option.value === defaultLanguage;
+                    return (
+                      <label
+                        key={option.value}
+                        className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                          checked ? 'border-primary bg-primary/5 text-text-primary' : 'border-border bg-white text-text-secondary'
+                        } ${locked ? 'opacity-100' : 'cursor-pointer'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={locked}
+                          onChange={(event) => {
+                            const next = event.target.checked
+                              ? [...allowedLanguages, option.value]
+                              : allowedLanguages.filter((language) => language !== option.value);
+                            onAllowedLanguagesChange(next);
+                          }}
+                          className="text-primary focus:ring-primary"
+                        />
+                        <span>{option.label}{locked ? ' (default)' : ''}</span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
               <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

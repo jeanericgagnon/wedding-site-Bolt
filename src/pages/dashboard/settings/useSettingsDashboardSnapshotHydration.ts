@@ -15,6 +15,7 @@ interface UseSettingsDashboardSnapshotHydrationArgs {
   rsvpDraftGuard: DraftHydrationGuard;
   setAccountEmail: React.Dispatch<React.SetStateAction<string>>;
   setAccountError: React.Dispatch<React.SetStateAction<string | null>>;
+  setAllowedLanguages: React.Dispatch<React.SetStateAction<SiteLanguageCode[]>>;
   setCollaboratorInvites: React.Dispatch<React.SetStateAction<SettingsCollaboratorInviteRow[]>>;
   setCoupleNames: React.Dispatch<React.SetStateAction<string>>;
   setCurrentTemplate: React.Dispatch<React.SetStateAction<string>>;
@@ -35,6 +36,7 @@ interface UseSettingsDashboardSnapshotHydrationArgs {
   setRsvpQuestions: React.Dispatch<React.SetStateAction<RSVPQuestionSetting[]>>;
   setSettingsRole: React.Dispatch<React.SetStateAction<'owner' | 'planner' | 'coordinator' | 'viewer'>>;
   setSiteSlug: React.Dispatch<React.SetStateAction<string>>;
+  setSettingsWeddingData: React.Dispatch<React.SetStateAction<Record<string, unknown> | null>>;
   setTranslationStatuses: React.Dispatch<React.SetStateAction<TranslationStatusRow[]>>;
   setVenueName: React.Dispatch<React.SetStateAction<string | null>>;
   setWeddingDate: React.Dispatch<React.SetStateAction<string | null>>;
@@ -50,6 +52,7 @@ export function useSettingsDashboardSnapshotHydration({
   rsvpDraftGuard,
   setAccountEmail,
   setAccountError,
+  setAllowedLanguages,
   setCollaboratorInvites,
   setCoupleNames,
   setCurrentTemplate,
@@ -70,6 +73,7 @@ export function useSettingsDashboardSnapshotHydration({
   setRsvpQuestions,
   setSettingsRole,
   setSiteSlug,
+  setSettingsWeddingData,
   setTranslationStatuses,
   setVenueName,
   setWeddingDate,
@@ -94,6 +98,7 @@ export function useSettingsDashboardSnapshotHydration({
       setVenueName(snapshot.venueName);
       setCurrentTemplate(snapshot.currentTemplate);
       setSiteSlug(snapshot.siteSlug);
+      setSettingsWeddingData(snapshot.weddingData);
       setMusicPlaylistUrl(snapshot.musicPlaylistUrl);
       setCollaboratorInvites(snapshot.collaboratorInvites);
       setTranslationStatuses(snapshot.translationStatuses);
@@ -103,6 +108,7 @@ export function useSettingsDashboardSnapshotHydration({
         setHideFromSearch(snapshot.hideFromSearch);
         setGuestAccessToken(snapshot.guestAccessToken);
         setDefaultLanguage(snapshot.defaultLanguage);
+        setAllowedLanguages(snapshot.allowedLanguages);
       }
 
       if (notifDraftGuard.shouldHydrate()) {
@@ -129,6 +135,7 @@ export function useSettingsDashboardSnapshotHydration({
     rsvpDraftGuard,
     setAccountEmail,
     setAccountError,
+    setAllowedLanguages,
     setCollaboratorInvites,
     setCoupleNames,
     setCurrentTemplate,
@@ -149,6 +156,7 @@ export function useSettingsDashboardSnapshotHydration({
     setRsvpQuestions,
     setSettingsRole,
     setSiteSlug,
+    setSettingsWeddingData,
     setTranslationStatuses,
     setVenueName,
     setWeddingDate,

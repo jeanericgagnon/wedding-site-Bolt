@@ -6,6 +6,7 @@ import {
   formatTranslationStatusDate,
   getSiteLanguageLabel,
   makeQuestion,
+  normalizeAllowedSiteLanguages,
   normalizeMealOptions,
   normalizeRsvpQuestions,
   normalizeSettingsSlug,
@@ -65,6 +66,8 @@ describe('settingsDashboardUtils', () => {
     expect(normalizeRsvpQuestions({ bad: true })).toEqual([]);
     expect(normalizeMealOptions(['Chicken', '', 3, 'Vegan'])).toEqual(['Chicken', 'Vegan']);
     expect(normalizeMealOptions(null)).toEqual(['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan']);
+    expect(normalizeAllowedSiteLanguages(['es', 'fr', 'es', 'bad'])).toEqual(['es', 'fr']);
+    expect(normalizeAllowedSiteLanguages(null, ['en'])).toEqual(['en']);
   });
 
   it('normalizes account names and site slugs before saving', () => {
@@ -79,18 +82,25 @@ describe('settingsDashboardUtils', () => {
       privacyMode: 'public',
       hideFromSearch: true,
       defaultLanguage: 'en',
+      allowedLanguages: ['en', 'es'],
       sitePasswordHash: 'hash',
       guestAccessToken: 'token',
     })).toEqual({
       privacy_mode: 'public',
       hide_from_search: true,
       default_language: 'en',
+      wedding_data: {
+        language_settings: {
+          allowed_languages: ['en', 'es'],
+        },
+      },
     });
 
     expect(buildPrivacySettingsUpdates({
       privacyMode: 'password_protected',
       hideFromSearch: false,
       defaultLanguage: 'fr',
+      allowedLanguages: ['fr'],
       sitePasswordHash: 'hash',
     })).toMatchObject({ site_password_hash: 'hash' });
 
@@ -98,8 +108,16 @@ describe('settingsDashboardUtils', () => {
       privacyMode: 'invite_only',
       hideFromSearch: false,
       defaultLanguage: 'es',
+      allowedLanguages: ['fr'],
       guestAccessToken: 'token',
-    })).toMatchObject({ guest_access_token: 'token' });
+    })).toMatchObject({
+      guest_access_token: 'token',
+      wedding_data: {
+        language_settings: {
+          allowed_languages: ['es', 'fr'],
+        },
+      },
+    });
   });
 
   it('cleans RSVP settings and preserves validation guardrails outside the page component', () => {

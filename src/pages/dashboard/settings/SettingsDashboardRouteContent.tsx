@@ -35,10 +35,12 @@ type Props = {
   creatingCollaboratorInvite: boolean;
   currentPassword: string;
   currentTemplate: string;
+  allowedLanguages: SiteLanguageCode[];
   defaultLanguage: SiteLanguageCode;
   guestAccessToken: string | null;
   handleCopyCollaboratorInviteLink: (inviteToken: string) => void | Promise<void>;
   handleCreateCollaboratorInvite: () => Promise<void>;
+  handleAllowedLanguagesChange: (languages: SiteLanguageCode[]) => void;
   handleDefaultLanguageChange: (language: SiteLanguageCode) => Promise<void>;
   handleLogout: () => Promise<void>;
   handleRegenerateToken: () => Promise<void>;
@@ -236,10 +238,15 @@ export function SettingsDashboardRouteContent(props: Props) {
           <SettingsSiteTabContent
             changingTemplate={props.changingTemplate}
             currentTemplate={props.currentTemplate}
+            allowedLanguages={props.allowedLanguages}
             defaultLanguage={props.defaultLanguage}
             guestAccessToken={props.guestAccessToken}
             hideFromSearch={props.hideFromSearch}
             onAutoTranslateLanguage={(language) => { void props.onAutoTranslateLanguage(language); }}
+            onAllowedLanguagesChange={(languages) => {
+              props.visibilityDraftMarkDirty();
+              props.handleAllowedLanguagesChange(languages);
+            }}
             onCopyIdentityManifest={() => { void props.onCopyIdentityManifest(); }}
             onCopyInviteLink={props.onCopyInviteLink}
             onDefaultLanguageChange={(language) => { void props.handleDefaultLanguageChange(language); }}

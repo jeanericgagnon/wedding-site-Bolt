@@ -67,6 +67,7 @@ describe('settings site data boundary', () => {
     expect(SETTINGS_SITE_SELECT).toContain('privacy_mode');
     expect(SETTINGS_SITE_SELECT).toContain('hide_from_search');
     expect(SETTINGS_SITE_SELECT).toContain('guest_access_token');
+    expect(SETTINGS_SITE_SELECT).toContain('wedding_data');
     expect(SETTINGS_SITE_SELECT).not.toContain('*');
     expect(SETTINGS_COLLABORATOR_INVITE_SELECT).toBe('id, invite_email, invite_name, role, status, invited_at, expires_at, invite_token, permissions');
     expect(SETTINGS_TRANSLATION_STATUS_SELECT).toBe('language,status,translated_at');

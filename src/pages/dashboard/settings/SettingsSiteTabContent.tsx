@@ -7,11 +7,13 @@ import { SettingsSiteUrlPanel } from './SettingsSiteUrlPanel';
 import { SettingsTemplatePanel } from './SettingsTemplatePanel';
 
 type SettingsSiteTabContentProps = {
+  allowedLanguages: SiteLanguageCode[];
   currentTemplate: string;
   defaultLanguage: SiteLanguageCode;
   guestAccessToken: string | null;
   hideFromSearch: boolean;
   onAutoTranslateLanguage: (language: TranslationLanguageCode) => void;
+  onAllowedLanguagesChange: (languages: SiteLanguageCode[]) => void;
   onCopyIdentityManifest: () => void;
   onCopyInviteLink: () => void;
   onDefaultLanguageChange: (language: SiteLanguageCode) => void;
@@ -51,12 +53,14 @@ type SettingsSiteTabContentProps = {
 };
 
 export function SettingsSiteTabContent({
+  allowedLanguages,
   changingTemplate,
   currentTemplate,
   defaultLanguage,
   guestAccessToken,
   hideFromSearch,
   onAutoTranslateLanguage,
+  onAllowedLanguagesChange,
   onCopyIdentityManifest,
   onCopyInviteLink,
   onDefaultLanguageChange,
@@ -113,10 +117,12 @@ export function SettingsSiteTabContent({
       />
 
       <SettingsPrivacyPanel
+        allowedLanguages={allowedLanguages}
         defaultLanguage={defaultLanguage}
         guestAccessToken={guestAccessToken}
         hideFromSearch={hideFromSearch}
         onAutoTranslateLanguage={onAutoTranslateLanguage}
+        onAllowedLanguagesChange={onAllowedLanguagesChange}
         onCopyInviteLink={onCopyInviteLink}
         onDefaultLanguageChange={onDefaultLanguageChange}
         onHideFromSearchChange={onHideFromSearchChange}

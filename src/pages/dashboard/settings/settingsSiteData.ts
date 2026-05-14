@@ -19,6 +19,7 @@ export const SETTINGS_SITE_SELECT = [
   'hide_from_search',
   'guest_access_token',
   'default_language',
+  'wedding_data',
   'notification_prefs',
 ].join(', ');
 

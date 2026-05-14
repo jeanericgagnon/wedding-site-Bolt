@@ -68,7 +68,9 @@ export type UseSettingsSiteAccessActionsArgs = {
   collaboratorInvites: SettingsCollaboratorInviteRow[];
   privacyMode: SettingsPrivacyMode;
   hideFromSearch: boolean;
+  allowedLanguages: SiteLanguageCode[];
   defaultLanguage: SiteLanguageCode;
+  settingsWeddingData: Record<string, unknown> | null;
   sitePassword: string;
   guestAccessToken: string | null;
   musicPlaylistUrl: string;
@@ -102,6 +104,7 @@ export type UseSettingsSiteAccessActionsArgs = {
   setSitePassword: SetState<string>;
   setPrivacyCopied: SetState<boolean>;
   setTranslatingLanguage: SetState<TranslationLanguageCode | null>;
+  setAllowedLanguages: SetState<SiteLanguageCode[]>;
   setDefaultLanguage: SetState<SiteLanguageCode>;
 };
 
@@ -117,7 +120,9 @@ export function useSettingsSiteAccessActions({
   collaboratorInvites,
   privacyMode,
   hideFromSearch,
+  allowedLanguages,
   defaultLanguage,
+  settingsWeddingData,
   sitePassword,
   guestAccessToken,
   musicPlaylistUrl,
@@ -148,6 +153,7 @@ export function useSettingsSiteAccessActions({
   setSlugSaving,
   setSlugSuccess,
   setTranslatingLanguage,
+  setAllowedLanguages,
   setVisibilityError,
   setVisibilitySaving,
   setVisibilitySuccess,
@@ -375,7 +381,9 @@ export function useSettingsSiteAccessActions({
       const updates: SettingsSiteUpdates = buildPrivacySettingsUpdates({
         privacyMode,
         hideFromSearch,
+        allowedLanguages,
         defaultLanguage,
+        weddingData: settingsWeddingData,
         sitePasswordHash,
         guestAccessToken: nextGuestAccessToken,
       });
@@ -390,6 +398,7 @@ export function useSettingsSiteAccessActions({
         {
           privacyMode,
           hideFromSearch,
+          allowedLanguages,
           defaultLanguage,
           passwordChanged: privacyMode === 'password_protected' && Boolean(sitePassword),
           guestAccessTokenCreated: Boolean(nextGuestAccessToken),
@@ -472,6 +481,7 @@ export function useSettingsSiteAccessActions({
   const handleDefaultLanguageChange = async (next: SiteLanguageCode) => {
     const previous = defaultLanguage;
     setDefaultLanguage(next);
+    setAllowedLanguages((current) => Array.from(new Set([next, ...current])));
     setVisibilityError(null);
     setVisibilitySuccess(null);
     try {
@@ -496,9 +506,16 @@ export function useSettingsSiteAccessActions({
       setVisibilitySuccess(`Default language set to ${getSiteLanguageLabel(next)}.`);
     } catch (err) {
       setDefaultLanguage(previous);
+      setAllowedLanguages((current) => current.includes(previous) ? current : [previous, ...current]);
       visibilityDraftGuard.markSaved();
       setVisibilityError(safeSettingsError(err, 'Couldn’t save default language.'));
     }
+  };
+
+  const handleAllowedLanguagesChange = (languages: SiteLanguageCode[]) => {
+    setAllowedLanguages(Array.from(new Set([defaultLanguage, ...languages])));
+    setVisibilityError(null);
+    setVisibilitySuccess(null);
   };
 
   const handleAutoTranslateLanguage = async (language: TranslationLanguageCode) => {
@@ -560,6 +577,7 @@ export function useSettingsSiteAccessActions({
     copyIdentityManifest,
     copyInviteLink,
     downloadIdentityPrintPack,
+    handleAllowedLanguagesChange,
     handleAutoTranslateLanguage,
     handleCopyCollaboratorInviteLink,
     handleCreateCollaboratorInvite,

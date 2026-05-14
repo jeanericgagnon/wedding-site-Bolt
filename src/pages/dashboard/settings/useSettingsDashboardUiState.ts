@@ -67,6 +67,8 @@ export function useSettingsDashboardUiState({ userId }: Args) {
   const [slugError, setSlugError] = useState<string | null>(null);
 
   const [defaultLanguage, setDefaultLanguage] = useState<SiteLanguageCode>('en');
+  const [allowedLanguages, setAllowedLanguages] = useState<SiteLanguageCode[]>(['en', 'es', 'fr', 'it', 'de', 'pt']);
+  const [settingsWeddingData, setSettingsWeddingData] = useState<Record<string, unknown> | null>(null);
   const [translatingLanguage, setTranslatingLanguage] = useState<TranslationLanguageCode | null>(null);
   const [translationStatuses, setTranslationStatuses] = useState<TranslationStatusRow[]>([]);
   const [privacyMode, setPrivacyMode] = useState<'public' | 'password_protected' | 'invite_only'>('public');
@@ -184,6 +186,7 @@ export function useSettingsDashboardUiState({ userId }: Args) {
     currentPassword,
     currentTemplate,
     defaultLanguage,
+    allowedLanguages,
     guestAccessToken,
     hideFromSearch,
     musicPlaylistUrl,
@@ -240,6 +243,7 @@ export function useSettingsDashboardUiState({ userId }: Args) {
     templateSuccess,
     translatingLanguage,
     translationStatuses,
+    settingsWeddingData,
     venueName,
     visibilityDraftGuard,
     visibilityError,
@@ -264,6 +268,7 @@ export function useSettingsDashboardUiState({ userId }: Args) {
     setCurrentPassword,
     setCurrentTemplate,
     setDefaultLanguage,
+    setAllowedLanguages,
     setGuestAccessToken,
     setHideFromSearch,
     setMusicPlaylistUrl,
@@ -318,6 +323,7 @@ export function useSettingsDashboardUiState({ userId }: Args) {
     setTemplateSuccess,
     setTranslatingLanguage,
     setTranslationStatuses,
+    setSettingsWeddingData,
     setVenueName,
     setVisibilityError,
     setVisibilitySaving,

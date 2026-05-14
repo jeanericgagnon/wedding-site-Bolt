@@ -1,7 +1,7 @@
 import { customerSafeErrorMessage } from '../../../lib/customerSafeError';
 import { PLANNER_PERMISSION_GROUPS, type PlannerPermissionKey } from '../../../lib/plannerAccess';
 import type { SettingsSiteUpdates } from './settingsSiteData';
-import { SITE_LANGUAGE_OPTIONS, type RSVPQuestionSetting } from './settingsDashboardTypes';
+import { SITE_LANGUAGE_OPTIONS, type RSVPQuestionSetting, type SiteLanguageCode } from './settingsDashboardTypes';
 
 export const SETTINGS_SITE_MISSING_COPY = 'Couldn’t find your wedding site right now. Refresh and try again.';
 export type SettingsPrivacyMode = 'public' | 'password_protected' | 'invite_only';
@@ -51,6 +51,16 @@ export function normalizeMealOptions(value: unknown, fallback = ['Chicken', 'Bee
   return Array.isArray(value) ? value.filter((option): option is string => typeof option === 'string' && option.trim().length > 0) : fallback;
 }
 
+export function normalizeAllowedSiteLanguages(value: unknown, fallback: SiteLanguageCode[] = SITE_LANGUAGE_OPTIONS.map((option) => option.value)): SiteLanguageCode[] {
+  const valid = new Set<SiteLanguageCode>(SITE_LANGUAGE_OPTIONS.map((option) => option.value));
+  const normalized = Array.isArray(value)
+    ? value
+        .filter((language): language is SiteLanguageCode => typeof language === 'string' && valid.has(language as SiteLanguageCode))
+    : [];
+  const unique = Array.from(new Set(normalized));
+  return unique.length > 0 ? unique : fallback;
+}
+
 export function splitCoupleNames(coupleNames: string) {
   const parts = coupleNames.split('&').map((part) => part.trim()).filter(Boolean);
   return {
@@ -68,14 +78,24 @@ export function normalizeSettingsSlug(rawSlug: string) {
 export function buildPrivacySettingsUpdates(input: {
   privacyMode: SettingsPrivacyMode;
   hideFromSearch: boolean;
-  defaultLanguage: string;
+  defaultLanguage: SiteLanguageCode;
+  allowedLanguages: SiteLanguageCode[];
+  weddingData?: Record<string, unknown> | null;
   sitePasswordHash?: string | null;
   guestAccessToken?: string | null;
 }): SettingsSiteUpdates {
+  const allowedLanguages = Array.from(new Set([input.defaultLanguage, ...normalizeAllowedSiteLanguages(input.allowedLanguages, [input.defaultLanguage])]));
   const updates: SettingsSiteUpdates = {
     privacy_mode: input.privacyMode,
     hide_from_search: input.hideFromSearch,
     default_language: input.defaultLanguage,
+    wedding_data: {
+      ...((input.weddingData && typeof input.weddingData === 'object') ? input.weddingData : {}),
+      language_settings: {
+        ...(((input.weddingData as Record<string, unknown> | null | undefined)?.language_settings as Record<string, unknown> | undefined) ?? {}),
+        allowed_languages: allowedLanguages,
+      },
+    },
   };
 
   if (input.privacyMode === 'password_protected' && input.sitePasswordHash) {
