@@ -221,6 +221,23 @@ export function buildProviderTelemetry(messages: Message[], deliveries: Delivery
   return { attempted: attempted.length, sent, failed, skipped, sentRate, errorTop };
 }
 
+export function buildDeliveryBucketSummary(
+  deliveries: DeliveryRow[],
+  status: DeliveryRow['status'],
+  limit = 3,
+): Array<[string, number]> {
+  return Array.from(
+    deliveries
+      .filter((delivery) => delivery.status === status)
+      .reduce((map, delivery) => {
+        const key = getCustomerDeliveryBucket(delivery.error_message, delivery.status);
+        map.set(key, (map.get(key) ?? 0) + 1);
+        return map;
+      }, new Map<string, number>())
+      .entries(),
+  ).sort((a, b) => b[1] - a[1]).slice(0, Math.max(1, limit));
+}
+
 export type MessageHistoryStatusFilter = 'all' | 'active' | 'sent' | 'scheduled' | 'draft' | 'failed' | 'partial';
 export type MessageHistoryChannelFilter = 'all' | 'email' | 'sms';
 export type MessageHistoryDeliveryFilter = 'all' | 'delivered' | 'failed' | 'skipped' | 'unreached';

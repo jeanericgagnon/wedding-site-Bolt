@@ -5,6 +5,7 @@ import {
   buildCampaignThreads,
   buildChannelBreakdown,
   buildDeliveryHealth,
+  buildDeliveryBucketSummary,
   buildDeliveryStats,
   buildAudienceBreakdown,
   buildAudienceReachability,
@@ -193,6 +194,25 @@ describe('messageDashboardUtils', () => {
     expect(getRecipientExcludedGuestIds(eventMessage)).toEqual(['g3']);
     expect(getRecipientReviewPlanSummary(eventMessage)).toBe('next send targets 2 reviewed guests and excludes 1 guest still missing contact details');
     expect(describeRecipientReview(1)).toBe('1 recipient needs contact details');
+  });
+
+  it('builds customer-safe delivery review buckets for failed and skipped recipients', () => {
+    const deliveries = [
+      { id: 'd1', message_id: 'm1', status: 'failed', error_message: 'Twilio invalid phone number' },
+      { id: 'd2', message_id: 'm1', status: 'failed', error_message: 'Recipient unsubscribed from updates' },
+      { id: 'd3', message_id: 'm1', status: 'failed', error_message: 'Recipient unsubscribed from updates' },
+      { id: 'd4', message_id: 'm1', status: 'skipped', error_message: 'Skipped: guest is missing a valid email address' },
+      { id: 'd5', message_id: 'm1', status: 'skipped', error_message: 'Skipped: guest is missing phone number or SMS consent' },
+    ] as DeliveryRow[];
+
+    expect(buildDeliveryBucketSummary(deliveries, 'failed')).toEqual([
+      ['Blocked or unsubscribed', 2],
+      ['Phone number needs review', 1],
+    ]);
+    expect(buildDeliveryBucketSummary(deliveries, 'skipped')).toEqual([
+      ['Missing contact details', 1],
+      ['Missing phone number or text consent', 1],
+    ]);
   });
 
   it('builds message dashboard campaign and delivery summaries', () => {

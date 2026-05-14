@@ -7,9 +7,9 @@ import { parseScheduleInputToIso, toScheduleInputValue } from '../messageSchedul
 import type { DeliveryRow, Message } from './messageDashboardTypes';
 import {
   canRetryMessageStatus,
+  buildDeliveryBucketSummary,
   getAudienceLabel,
   getCampaignName,
-  getCustomerDeliveryBucket,
   getCampaignTypeLabel,
   getCustomerDeliveryReason,
   getRecipientReviewPlanSummary,
@@ -81,20 +81,8 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
   const messageDeliveries = deliveries.filter((delivery) => delivery.message_id === message.id);
   const failedDeliveries = messageDeliveries.filter((delivery) => delivery.status === 'failed');
   const skippedDeliveries = messageDeliveries.filter((delivery) => delivery.status === 'skipped');
-  const topFailureReasons = Array.from(
-    failedDeliveries.reduce((map, delivery) => {
-      const key = getCustomerDeliveryBucket(delivery.error_message, delivery.status);
-      map.set(key, (map.get(key) ?? 0) + 1);
-      return map;
-    }, new Map<string, number>()).entries(),
-  ).sort((a, b) => b[1] - a[1]).slice(0, 3);
-  const topSkipReasons = Array.from(
-    skippedDeliveries.reduce((map, delivery) => {
-      const key = getCustomerDeliveryBucket(delivery.error_message, delivery.status);
-      map.set(key, (map.get(key) ?? 0) + 1);
-      return map;
-    }, new Map<string, number>()).entries(),
-  ).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const topFailureReasons = buildDeliveryBucketSummary(messageDeliveries, 'failed');
+  const topSkipReasons = buildDeliveryBucketSummary(messageDeliveries, 'skipped');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">

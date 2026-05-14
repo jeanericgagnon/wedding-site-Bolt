@@ -63,6 +63,9 @@ describe('MessageDetailModal', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Exclude from the next send' }));
     await waitFor(() => expect(onExcludeSkippedRecipients).toHaveBeenCalledTimes(1));
+
+    expect(screen.getByText('Email address needs review')).toBeInTheDocument();
+    expect(screen.getByText('Missing contact details')).toBeInTheDocument();
   });
 
   it('surfaces the saved next-send review plan', () => {

@@ -342,6 +342,8 @@ Execution rule for this section:
    - this batch shipped: dashboard delivery reads now carry `guest_id`, so follow-up review can target or exclude real guest rows without printing raw provider internals in the UI
    - this batch shipped: review buckets now collapse raw provider noise into customer-safe labels like `Missing contact details`, `Phone number needs review`, `Email address needs review`, `Blocked or unsubscribed`, and `Temporary delivery issue`, with the comms proof lane expanded to cover the new workflow
    - this batch shipped: `proof:v1:comms-center` now includes a real local browser pass for the comms dashboard, proving owners can load each operational starting point, save drafts for save-the-date / RSVP reminder / week-of / photo request / day-of / thank-you flows, and create a scheduled campaign without hand-waving over the composer
+   - this batch shipped: message-detail review now uses a shared customer-safe delivery-bucket summary for failed and skipped recipients, so owners see the same normalized review reasons in the detail modal that analytics and telemetry already use instead of slightly different ad hoc groupings
+   - this batch shipped: focused proof is green for shared failed/skipped delivery bucket derivation plus the detail-modal readback of those grouped review reasons
    - normalize delivery/open/view/bounce/replied truth across channels
    - prove customer-safe delivery-failure grouping against live rows
    - add authenticated live browser proof for composing/saving each operational segment on the shipped owner runtime
