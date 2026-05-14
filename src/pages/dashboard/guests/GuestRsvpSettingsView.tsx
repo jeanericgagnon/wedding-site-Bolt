@@ -421,7 +421,7 @@ export function GuestRsvpSettingsView({
               )}
               {formWeightLabel && (
                 <p className="mb-3 text-xs text-text-tertiary">
-                  {formWeightLabel} · {requiredQuestionCount} asked right away for every reply.
+                  {formWeightLabel} · {requiredQuestionCount} asked right away for every reply{eventSpecificQuestionCount > 0 ? ` · ${eventSpecificQuestionCount} event-specific follow-up${eventSpecificQuestionCount === 1 ? '' : 's'}` : ''}.
                 </p>
               )}
               <div className="flex flex-wrap gap-2">
