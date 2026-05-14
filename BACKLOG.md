@@ -455,10 +455,12 @@ Execution rule for this section:
    - this batch shipped: focused proof is green for purchaser-attribution insight derivation, keeping the owner nudge specific to real purchased/partial gifts without overclaiming that thank-you follow-up is already complete
    - this batch shipped: the owner registry dashboard now surfaces missing-purchaser thank-you readiness directly inside the thank-you summary and registry notes, so follow-up gaps are visible where owners actually send and review thank-yous instead of only through a quick-check insight card
    - this batch shipped: focused route proof is green for the thank-you summary chips, missing-purchaser readback, and `Review gift` owner action on gifts that still need purchaser attribution
+   - this batch shipped: the owner registry dashboard now breaks cash-fund follow-through into tracked goals, missing goals, visible progress, and first-gift gaps, so fund analytics no longer collapse setup, fundraising progress, and “still waiting on the first gift” into one total
+   - this batch shipped: focused route proof is green for missing-goal and awaiting-first-gift derivation, including mixed fund sets where only some cash funds are share-ready or actively progressing
    - add live owner add/import/edit persistence proof for broader registry workflows
    - rerun the stronger owner repair/cleanup runtime proof against the shipped production runtime after the next approved registry deploy
    - rerun the guest-visible purchase-state assertions against the live production runtime after the next approved registry deploy instead of only local/public-component proof
-   - keep extending owner claim-state workflows beyond purchased/reset into richer purchaser attribution / fund follow-through / analytics depth
+   - keep extending owner claim-state workflows beyond purchased/reset into broader live claim-state and registry analytics depth
    - add richer public fund-card polish and broader registry analytics
 
 11. `ACTIVE`: seating and catering export polish

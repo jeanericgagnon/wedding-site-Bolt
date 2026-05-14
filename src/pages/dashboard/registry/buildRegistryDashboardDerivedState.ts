@@ -102,14 +102,22 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
   const fundStats = items.reduce((acc, item) => {
     if (item.item_type !== 'cash_fund') return acc;
     const safeMethodCount = countSafeFundMethods(item);
+    const goalAmount = item.fund_goal_amount ?? 0;
+    const receivedAmount = item.fund_received_amount ?? 0;
     acc.count += 1;
-    acc.goal += item.fund_goal_amount ?? 0;
-    acc.received += item.fund_received_amount ?? 0;
+    acc.goal += goalAmount;
+    acc.received += receivedAmount;
     if (safeMethodCount > 0) acc.readyToShare += 1;
     else acc.needsSetup += 1;
-    if ((item.fund_goal_amount ?? 0) > 0) acc.withGoal += 1;
+    if (goalAmount > 0) {
+      acc.withGoal += 1;
+      if (receivedAmount > 0) acc.withProgress += 1;
+      else acc.awaitingFirstGift += 1;
+    } else {
+      acc.missingGoal += 1;
+    }
     return acc;
-  }, { count: 0, goal: 0, received: 0, readyToShare: 0, needsSetup: 0, withGoal: 0 });
+  }, { count: 0, goal: 0, received: 0, readyToShare: 0, needsSetup: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0 });
 
   const fulfillmentRate = counts.total > 0 ? Math.round((counts.purchased / counts.total) * 100) : 0;
   const recentActivity = [...items]

@@ -66,6 +66,9 @@ type FundStats = {
   readyToShare: number;
   needsSetup: number;
   withGoal: number;
+  missingGoal: number;
+  withProgress: number;
+  awaitingFirstGift: number;
 };
 
 type AlertCounts = {
@@ -243,6 +246,9 @@ export function RegistryDashboardRouteContent(props: {
               <p className="mt-1 text-xs text-text-secondary">
                 {props.fundStats.readyToShare} ready to share{props.fundStats.needsSetup > 0 ? ` · ${props.fundStats.needsSetup} need a payment path` : ''}
               </p>
+              <p className="mt-1 text-xs text-text-tertiary">
+                {props.fundStats.withGoal} with goals{props.fundStats.missingGoal > 0 ? ` · ${props.fundStats.missingGoal} missing a goal` : ''}
+              </p>
             </Card>
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Fund gifts</p>
@@ -250,6 +256,9 @@ export function RegistryDashboardRouteContent(props: {
               <p className="mt-1 text-xs text-text-secondary">
                 Received toward ${props.fundStats.goal.toLocaleString('en-US', { maximumFractionDigits: 0 })} goal
                 {props.fundStats.withGoal > 0 ? ` across ${props.fundStats.withGoal} tracked fund${props.fundStats.withGoal === 1 ? '' : 's'}` : ''}
+              </p>
+              <p className="mt-1 text-xs text-text-tertiary">
+                {props.fundStats.withProgress} showing progress{props.fundStats.awaitingFirstGift > 0 ? ` · ${props.fundStats.awaitingFirstGift} waiting on a first gift` : ''}
               </p>
             </Card>
             <Card variant="bordered" padding="md">
@@ -339,6 +348,9 @@ export function RegistryDashboardRouteContent(props: {
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Funds ready to share: <span className="font-semibold text-text-primary">{props.fundStats.readyToShare}</span> · Need payment path: <span className="font-semibold text-text-primary">{props.fundStats.needsSetup}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Goal tracking: <span className="font-semibold text-text-primary">{props.fundStats.withGoal}</span> · Missing goal: <span className="font-semibold text-text-primary">{props.fundStats.missingGoal}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Thank-you ready: <span className="font-semibold text-text-primary">{props.registryThankYouPlan.namedPurchaserCount}</span> · Missing purchaser: <span className="font-semibold text-text-primary">{props.registryThankYouPlan.missingPurchaserCount}</span>

@@ -52,7 +52,7 @@ describe('RegistryDashboardRouteContent', () => {
         filter="all"
         filtered={[makeItem()]}
         fulfillmentRate={100}
-        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, withGoal: 0 }}
+        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0 }}
         handleAddNew={vi.fn()}
         handleAutoRefreshStale={vi.fn(async () => {})}
         handleBulkImport={vi.fn(async () => {})}
@@ -144,7 +144,7 @@ describe('RegistryDashboardRouteContent', () => {
         filter="all"
         filtered={[makeItem({ purchaser_name: null, purchase_status: 'partial' })]}
         fulfillmentRate={0}
-        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, withGoal: 0 }}
+        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0 }}
         handleAddNew={vi.fn()}
         handleAutoRefreshStale={vi.fn(async () => {})}
         handleBulkImport={vi.fn(async () => {})}
@@ -268,8 +268,66 @@ describe('RegistryDashboardRouteContent', () => {
       readyToShare: 1,
       needsSetup: 1,
       withGoal: 2,
+      missingGoal: 0,
+      withProgress: 2,
+      awaitingFirstGift: 0,
       received: 1400,
       goal: 6000,
+    });
+  });
+
+  it('tracks missing fund goals and first-gift gaps separately', () => {
+    const derived = buildRegistryDashboardDerivedState({
+      autoRefreshEnabled: true,
+      items: [
+        makeItem({
+          id: 'fund-no-goal',
+          item_type: 'cash_fund',
+          item_name: 'Honeymoon fund',
+          price_amount: null,
+          purchase_status: 'available',
+          quantity_purchased: 0,
+          quantity_needed: 1,
+          purchaser_name: null,
+          fund_goal_amount: null,
+          fund_received_amount: 150,
+          fund_custom_url: 'https://example.com/fund',
+        }),
+        makeItem({
+          id: 'fund-awaiting-first-gift',
+          item_type: 'cash_fund',
+          item_name: 'New home fund',
+          price_amount: null,
+          purchase_status: 'available',
+          quantity_purchased: 0,
+          quantity_needed: 1,
+          purchaser_name: null,
+          fund_goal_amount: 2500,
+          fund_received_amount: 0,
+          fund_zelle_handle: 'dayof@zelle.test',
+        }),
+      ],
+      monthlyRefreshCap: 50,
+      monthlyRefreshCount: 0,
+      registryThankYouLedger: {},
+      refreshEnabledUntil: null,
+      refreshIncludePurchased: false,
+      search: '',
+      filter: 'all',
+      showAlertsOnly: false,
+      showImageIssuesOnly: false,
+    });
+
+    expect(derived.fundStats).toMatchObject({
+      count: 2,
+      readyToShare: 2,
+      needsSetup: 0,
+      withGoal: 1,
+      missingGoal: 1,
+      withProgress: 0,
+      awaitingFirstGift: 1,
+      received: 150,
+      goal: 2500,
     });
   });
 });
