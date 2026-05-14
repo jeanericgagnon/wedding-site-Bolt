@@ -111,6 +111,20 @@ describe('deriveEligibleGuestDietaryFields', () => {
     });
   });
 
+  it('extracts broader explicit RSVP note labels into structured dietary fields', () => {
+    expect(deriveEligibleGuestDietaryFields('Restrictions: Vegetarian\nFood allergy: Sesame\nCatering note: plated separately')).toEqual({
+      dietary_restrictions: 'Vegetarian',
+      dietary_notes: 'plated separately',
+      allergies: 'Sesame',
+    });
+
+    expect(deriveEligibleGuestDietaryFields('Meal restriction: Vegan\nAllergens: Walnut\nFood note: no garnish')).toEqual({
+      dietary_restrictions: 'Vegan',
+      dietary_notes: 'no garnish',
+      allergies: 'Walnut',
+    });
+  });
+
   it('keeps extra dietary note detail while splitting explicit restriction labels', () => {
     expect(deriveEligibleGuestDietaryFields('Dietary restrictions - Gluten-free\nMeal note: kosher-style plating preferred\nAllergies: Peanut')).toEqual({
       dietary_restrictions: 'Gluten-free',
@@ -133,6 +147,12 @@ describe('deriveEligibleGuestMealPreference', () => {
     expect(deriveEligibleGuestMealPreference('Meal: Vegetarian\nDietary: Gluten-free')).toBe('Vegetarian');
     expect(deriveEligibleGuestMealPreference('Entree: Fish')).toBe('Fish');
     expect(deriveEligibleGuestMealPreference('Entrée: Chicken')).toBe('Chicken');
+  });
+
+  it('extracts broader explicit meal label variants into the seating meal field', () => {
+    expect(deriveEligibleGuestMealPreference('Meal selection: Pasta')).toBe('Pasta');
+    expect(deriveEligibleGuestMealPreference('Entrée choice: Short rib')).toBe('Short rib');
+    expect(deriveEligibleGuestMealPreference('Protein: Salmon')).toBe('Salmon');
   });
 
   it('leaves generic guest notes alone when no explicit meal label exists', () => {

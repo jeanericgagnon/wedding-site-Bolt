@@ -170,19 +170,19 @@ export function deriveEligibleGuestDietaryFields(notes: string | null | undefine
   const dietaryNoteParts: string[] = [];
 
   lines.forEach((line) => {
-    const restrictionMatch = line.match(/^(?:dietary(?:\s+restrictions?)?|dietary)\s*[:\-]\s*(.+)$/i);
+    const restrictionMatch = line.match(/^(?:diet(?:ary)?(?:\s+restrictions?)?|meal\s+restriction|restrictions?)\s*[:\-]\s*(.+)$/i);
     if (restrictionMatch) {
       dietaryRestrictionParts.push(restrictionMatch[1].trim());
       return;
     }
 
-    const allergyMatch = line.match(/^allerg(?:y|ies)\s*[:\-]\s*(.+)$/i);
+    const allergyMatch = line.match(/^(?:food\s+allerg(?:y|ies)|allerg(?:y|ies)|allergen(?:s)?)\s*[:\-]\s*(.+)$/i);
     if (allergyMatch) {
       allergyParts.push(allergyMatch[1].trim());
       return;
     }
 
-    const dietaryNoteMatch = line.match(/^(?:dietary\s+note|meal\s+note|kitchen\s+note)\s*[:\-]\s*(.+)$/i);
+    const dietaryNoteMatch = line.match(/^(?:diet(?:ary)?\s+note|meal\s+note|food\s+note|kitchen\s+note|catering\s+note)\s*[:\-]\s*(.+)$/i);
     if (dietaryNoteMatch) {
       dietaryNoteParts.push(dietaryNoteMatch[1].trim());
     }
@@ -199,7 +199,7 @@ export function deriveEligibleGuestMealPreference(notes: string | null | undefin
   const normalizedNotes = typeof notes === 'string' ? notes.trim() : '';
   if (!normalizedNotes) return null;
 
-  const mealMatch = normalizedNotes.match(/(?:^|\n)\s*(?:meal(?:\s+(?:choice|preference))?|entree|entrée)\s*:\s*(.+)$/im);
+  const mealMatch = normalizedNotes.match(/(?:^|\n)\s*(?:meal(?:\s+(?:choice|preference|selection))?|entree(?:\s+choice)?|entrée(?:\s+choice)?|protein)\s*:\s*(.+)$/im);
   return mealMatch?.[1]?.trim() || null;
 }
 
