@@ -12,13 +12,14 @@ import {
 
 describe('rsvpAccessPlanner', () => {
   it('recommends private guest links when token coverage is high', () => {
-    const plan = buildRsvpAccessModePlan({ guestCount: 100, inviteTokenCount: 94 });
+    const plan = buildRsvpAccessModePlan({ guestCount: 100, inviteTokenCount: 94, householdCount: 32 });
 
     expect(plan.find((mode) => mode.id === 'private_link')).toMatchObject({
       status: 'recommended',
       label: 'Private guest links',
     });
     expect(plan.find((mode) => mode.id === 'private_link')?.selected).toBe(true);
+    expect(plan.find((mode) => mode.id === 'private_link')?.detail).toContain('household');
     expect(plan.find((mode) => mode.id === 'name_lookup')?.status).toBe('ready');
   });
 
@@ -33,6 +34,20 @@ describe('rsvpAccessPlanner', () => {
     const plan = buildRsvpAccessModePlan({ guestCount: 12, inviteTokenCount: 12 });
 
     expect(plan.find((mode) => mode.id === 'open')?.status).toBe('future');
+  });
+
+  it('keeps future access modes visibly blocked on recovery, household, and bad-code proof', () => {
+    const plan = buildRsvpAccessModePlan({
+      guestCount: 24,
+      inviteTokenCount: 24,
+      householdCount: 9,
+      eventCount: 3,
+    });
+
+    expect(plan.find((mode) => mode.id === 'unique_code')?.detail).toContain('replacement-link recovery');
+    expect(plan.find((mode) => mode.id === 'unique_code')?.detail).toContain('household-safe verification');
+    expect(plan.find((mode) => mode.id === 'password')?.detail).toContain('bad-password lockouts');
+    expect(plan.find((mode) => mode.id === 'open')?.detail).toContain('wrong-event');
   });
 
   it('normalizes persisted RSVP access selection from current and legacy shapes', () => {
@@ -102,6 +117,8 @@ describe('rsvpAccessPlanner', () => {
     const checklist = buildRsvpSetupChecklist({
       guestCount: 80,
       inviteTokenCount: 78,
+      householdCount: 28,
+      eventCount: 3,
       mealEnabled: true,
       mealOptionCount: 4,
       questions: [
@@ -112,9 +129,12 @@ describe('rsvpAccessPlanner', () => {
 
     expect(checklist.find((item) => item.id === 'private_links')).toMatchObject({ status: 'ready' });
     expect(checklist.find((item) => item.id === 'name_lookup_backup')).toMatchObject({ status: 'ready' });
+    expect(checklist.find((item) => item.id === 'household_scope')).toMatchObject({ status: 'ready' });
+    expect(checklist.find((item) => item.id === 'household_scope')?.detail).toContain('event invitations');
     expect(checklist.find((item) => item.id === 'question_templates')?.detail).toContain('2 of 7');
     expect(checklist.find((item) => item.id === 'meal_choices')).toMatchObject({ status: 'ready' });
     expect(checklist.find((item) => item.id === 'future_access_modes')).toMatchObject({ status: 'planned' });
+    expect(checklist.find((item) => item.id === 'future_access_modes')?.detail).toContain('bad-code');
   });
 
   it('keeps name lookup backup honest when owners turn it off', () => {
@@ -138,12 +158,14 @@ describe('rsvpAccessPlanner', () => {
     const checklist = buildRsvpSetupChecklist({
       guestCount: 24,
       inviteTokenCount: 4,
+      householdCount: 0,
       mealEnabled: true,
       mealOptionCount: 1,
       questions: [],
     });
 
     expect(checklist.find((item) => item.id === 'private_links')).toMatchObject({ status: 'needs-setup' });
+    expect(checklist.find((item) => item.id === 'household_scope')).toMatchObject({ status: 'needs-setup' });
     expect(checklist.find((item) => item.id === 'question_templates')).toMatchObject({ status: 'needs-setup' });
     expect(checklist.find((item) => item.id === 'meal_choices')).toMatchObject({ status: 'needs-setup' });
   });

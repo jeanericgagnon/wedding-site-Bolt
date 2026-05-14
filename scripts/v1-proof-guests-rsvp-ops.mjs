@@ -9,6 +9,12 @@ const scriptShell =
 
 const steps = [
   {
+    id: 'rsvp-access-truth',
+    label: 'RSVP access truth',
+    command: 'npm test -- --run src/lib/rsvpAccessPlanner.test.ts src/pages/dashboard/guests/GuestRsvpSettingsView.test.tsx',
+    required: true,
+  },
+  {
     id: 'rsvp-strict',
     label: 'RSVP strict smoke',
     command: 'npm run smoke:rsvp:strict',
@@ -49,6 +55,14 @@ function classifyParsedResult(parsed) {
   return { blocked: false, blockerType: null };
 }
 
+function classifyExecutionBlock(stdout, stderr) {
+  const combined = `${stdout ?? ''}\n${stderr ?? ''}`;
+  if (/ENOTFOUND|EAI_AGAIN|getaddrinfo/i.test(combined)) {
+    return { blocked: true, blockerType: 'network_unavailable' };
+  }
+  return { blocked: false, blockerType: null };
+}
+
 function runStep(step) {
   const startedAt = new Date().toISOString();
   try {
@@ -61,7 +75,10 @@ function runStep(step) {
     });
 
     const parsed = extractJsonBlob(stdout);
-    const { blocked, blockerType } = classifyParsedResult(parsed);
+    const parsedClassification = classifyParsedResult(parsed);
+    const fallbackClassification = classifyExecutionBlock(stdout, '');
+    const blocked = parsedClassification.blocked || fallbackClassification.blocked;
+    const blockerType = parsedClassification.blockerType ?? fallbackClassification.blockerType;
 
     return {
       id: step.id,
@@ -81,7 +98,10 @@ function runStep(step) {
     const stderr = typeof error?.stderr === 'string' ? error.stderr : Buffer.isBuffer(error?.stderr) ? error.stderr.toString('utf8') : '';
 
     const parsed = extractJsonBlob(stdout);
-    const { blocked, blockerType } = classifyParsedResult(parsed);
+    const parsedClassification = classifyParsedResult(parsed);
+    const fallbackClassification = classifyExecutionBlock(stdout, stderr);
+    const blocked = parsedClassification.blocked || fallbackClassification.blocked;
+    const blockerType = parsedClassification.blockerType ?? fallbackClassification.blockerType;
 
     return {
       id: step.id,
@@ -117,6 +137,7 @@ const output = {
     blocked: blockedRequired.length,
   },
   automatedCoverage: [
+    'RSVP access-mode recovery + household-scope truth',
     'RSVP token validation + scope guards',
     'CSV mapper guardrail',
     'Check-in mode / guest ops guardrail',

@@ -46,7 +46,7 @@ export interface RsvpQuestionTemplateCoverageItem {
 }
 
 export interface RsvpSetupChecklistItem {
-  id: 'private_links' | 'name_lookup_backup' | 'question_templates' | 'meal_choices' | 'future_access_modes';
+  id: 'private_links' | 'name_lookup_backup' | 'household_scope' | 'question_templates' | 'meal_choices' | 'future_access_modes';
   label: string;
   detail: string;
   status: 'ready' | 'needs-setup' | 'planned';
@@ -61,17 +61,60 @@ export interface RsvpSetupChecklistInput extends RsvpAccessModePlanInput {
 function computeRsvpAccessReadiness(input: RsvpAccessModePlanInput) {
   const guestCount = Math.max(input.guestCount, 0);
   const inviteTokenCount = Math.max(input.inviteTokenCount, 0);
+  const householdCount = Math.max(input.householdCount ?? 0, 0);
+  const eventCount = Math.max(input.eventCount ?? 0, 0);
   const tokenCoverage = guestCount > 0 ? inviteTokenCount / guestCount : 0;
   const hasGuestList = guestCount > 0;
   const privateLinksReady = hasGuestList && tokenCoverage >= 0.8;
 
   return {
+    eventCount,
     guestCount,
     hasGuestList,
+    householdCount,
     inviteTokenCount,
     privateLinksReady,
     tokenCoverage,
   };
+}
+
+function formatHouseholdScopeDetail(householdCount: number, eventCount: number): string {
+  if (householdCount <= 0) {
+    return eventCount > 1
+      ? `Guest-specific event choices are ready, but import or group households before testing shared invite recovery across ${eventCount} events.`
+      : 'Import or group households before you rely on shared invite recovery.';
+  }
+
+  if (eventCount > 1) {
+    return `${householdCount} household${householdCount === 1 ? '' : 's'} can be proven against ${eventCount} event invitations, so shared RSVP recovery stays scoped instead of spilling across the whole weekend.`;
+  }
+
+  return `${householdCount} household${householdCount === 1 ? '' : 's'} are grouped well enough for shared RSVP recovery and plus-one scope checks.`;
+}
+
+function buildFutureAccessModeBlockerDetail(input: {
+  guestCount: number;
+  householdCount: number;
+  eventCount: number;
+}) {
+  const blockers = [
+    'replacement-link recovery when a code or password is lost',
+    'bad-code and bad-password lockouts before guests can brute-force the page',
+  ];
+
+  if (input.householdCount > 0) {
+    blockers.push('household-safe verification so one guest cannot open the wrong shared invite');
+  }
+
+  if (input.eventCount > 1) {
+    blockers.push('event-aware scoping so one recovery path does not unlock the whole wedding weekend');
+  }
+
+  if (input.guestCount > 0) {
+    blockers.push('customer-safe fallback instructions for wrong code, wrong password, and unsupported open RSVP attempts');
+  }
+
+  return blockers.join(', ') + '.';
 }
 
 function toSupportedRsvpAccessModeId(value: unknown): SupportedRsvpAccessModeId | null {
@@ -180,14 +223,16 @@ export function buildRsvpAccessModePlan(
   input: RsvpAccessModePlanInput,
   selection = deriveDefaultRsvpAccessSelection(input),
 ): RsvpAccessModePlan[] {
-  const { guestCount, inviteTokenCount, hasGuestList, privateLinksReady } = computeRsvpAccessReadiness(input);
+  const { eventCount, guestCount, hasGuestList, householdCount, inviteTokenCount, privateLinksReady } = computeRsvpAccessReadiness(input);
 
   return [
     {
       id: 'private_link',
       label: 'Private guest links',
       detail: privateLinksReady
-        ? `${inviteTokenCount} of ${guestCount} guests already have private RSVP links.`
+        ? householdCount > 0
+          ? `${inviteTokenCount} of ${guestCount} guests already have private RSVP links, with ${householdCount} household${householdCount === 1 ? '' : 's'} ready for guest-specific recovery.`
+          : `${inviteTokenCount} of ${guestCount} guests already have private RSVP links.`
         : hasGuestList
           ? `${Math.max(guestCount - inviteTokenCount, 0)} guests still need private links before this is fully ready.`
           : 'Add or import guests before using private RSVP links.',
@@ -199,7 +244,9 @@ export function buildRsvpAccessModePlan(
       id: 'name_lookup',
       label: 'Name lookup',
       detail: hasGuestList
-        ? 'Guests can find their invitation by name or email when they do not have their private link handy.'
+        ? householdCount > 0
+          ? `Guests can find their invitation by name or email when they lose their private link, with ${householdCount} household${householdCount === 1 ? '' : 's'} still requiring careful match review.`
+          : 'Guests can find their invitation by name or email when they do not have their private link handy.'
         : 'Needs a guest list before lookup is useful.',
       tradeoff: 'Helpful backup mode, but names can collide and should be paired with careful household review.',
       status: hasGuestList && !privateLinksReady ? 'recommended' : hasGuestList ? 'ready' : 'needs-setup',
@@ -208,21 +255,31 @@ export function buildRsvpAccessModePlan(
     {
       id: 'unique_code',
       label: 'Unique code',
-      detail: 'A future code can behave like a short password for guests who lose the original invite.',
+      detail: `A future code can behave like a short recovery key for misplaced invites, but it still needs ${buildFutureAccessModeBlockerDetail({
+        guestCount,
+        householdCount,
+        eventCount,
+      })}`,
       tradeoff: 'Useful for paper invites, but it needs code generation and recovery rules before launch.',
       status: 'future',
     },
     {
       id: 'password',
       label: 'Shared password',
-      detail: 'A shared password can protect a simple wedding RSVP page.',
+      detail: `A shared password can protect a simple wedding RSVP page, but it still needs ${buildFutureAccessModeBlockerDetail({
+        guestCount,
+        householdCount,
+        eventCount,
+      })}`,
       tradeoff: 'Easy to explain, but weaker for private events, meal limits, households, and plus-one rules.',
       status: 'future',
     },
     {
       id: 'open',
       label: 'Open RSVP',
-      detail: 'Anyone with the public page can submit an RSVP.',
+      detail: guestCount === 0
+        ? 'Anyone with the public page can submit an RSVP, so only use this when you truly want an open guest list.'
+        : `Anyone with the public page could submit an RSVP, so it stays blocked until wrong-guest, wrong-event, and capacity fallout are fully proven for ${guestCount} guest${guestCount === 1 ? '' : 's'}.`,
       tradeoff: 'Lowest friction, but it is risky for private events, capacity, catering, and guest-list accuracy.',
       status: guestCount === 0 ? 'ready' : 'future',
     },
@@ -259,7 +316,9 @@ export function buildRsvpSetupChecklist(
   selection = deriveDefaultRsvpAccessSelection(input),
 ): RsvpSetupChecklistItem[] {
   const readiness = computeRsvpAccessReadiness(input);
+  const eventCount = readiness.eventCount;
   const guestCount = readiness.guestCount;
+  const householdCount = readiness.householdCount;
   const inviteTokenCount = readiness.inviteTokenCount;
   const tokenCoverage = readiness.tokenCoverage;
   const templateCoverage = buildRsvpQuestionTemplateCoverage(input.questions);
@@ -294,6 +353,12 @@ export function buildRsvpSetupChecklist(
       status: guestCount > 0 && (selection.primaryMode === 'name_lookup' || selection.allowNameLookupBackup) ? 'ready' : 'needs-setup',
     },
     {
+      id: 'household_scope',
+      label: 'Household access proof',
+      detail: formatHouseholdScopeDetail(householdCount, eventCount),
+      status: guestCount > 0 && householdCount > 0 ? 'ready' : 'needs-setup',
+    },
+    {
       id: 'question_templates',
       label: 'Question templates',
       detail: addedTemplateCount > 0
@@ -312,7 +377,11 @@ export function buildRsvpSetupChecklist(
     {
       id: 'future_access_modes',
       label: 'Code, password, and open RSVP',
-      detail: 'These stay planned until recovery, privacy, capacity, and bad-code behavior are fully proven.',
+      detail: `These stay planned until ${buildFutureAccessModeBlockerDetail({
+        guestCount,
+        householdCount,
+        eventCount,
+      })}`,
       status: 'planned',
     },
   ];

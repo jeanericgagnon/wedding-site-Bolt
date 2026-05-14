@@ -23,7 +23,7 @@ function Wrapper() {
     primaryMode: 'private_link',
     allowNameLookupBackup: true,
   });
-  const plan = buildRsvpAccessModePlan({ guestCount: 18, inviteTokenCount: 18 }, selection);
+  const plan = buildRsvpAccessModePlan({ guestCount: 18, inviteTokenCount: 18, householdCount: 7, eventCount: 2 }, selection);
   const recommended = plan.find((mode) => mode.status === 'recommended') ?? plan[0];
 
   return (
@@ -42,6 +42,8 @@ function Wrapper() {
       rsvpSetupChecklist={buildRsvpSetupChecklist({
         guestCount: 18,
         inviteTokenCount: 18,
+        householdCount: 7,
+        eventCount: 2,
         mealEnabled: false,
         mealOptionCount: 0,
         questions: [],
@@ -67,6 +69,9 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText(/Guests reply through private RSVP links/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Selected as primary/i })).toBeInTheDocument();
     expect(screen.getByText(/Guest codes, shared passwords, and open RSVP stay planned/i)).toBeInTheDocument();
+    expect(screen.getByText(/Household access proof/i)).toBeInTheDocument();
+    expect(screen.getByText(/shared RSVP recovery stays scoped/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/bad-code and bad-password lockouts/i).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getAllByRole('button', { name: /Use as primary access/i })[0]);
 

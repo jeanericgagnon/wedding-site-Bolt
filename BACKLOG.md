@@ -346,10 +346,10 @@ Execution rule for this section:
    - this batch shipped: owner RSVP access mode is now persisted and hydrated as real site truth instead of staying planner-only copy, with supported primary modes (`private_link`, `name_lookup`) saved through `wedding_data.rsvp_access`, demo storage, the guest RSVP settings UI, and the owner proof checklist
    - this batch shipped: the RSVP settings surface now shows the active primary mode and explicit name-lookup backup truth, while unsupported code/password/open modes remain visibly planned instead of pretending to be launch-ready
    - this batch shipped: focused proof is green for planner normalization, demo-storage migration, service persistence, owner-facing selection UI, the broader guest RSVP ops smoke lane, and the standard local gate
-   - implement recovery rules for unique-code/password flows
+   - this batch shipped: RSVP access planning now uses real guest, household, and event counts to spell out household-scope readiness plus the exact recovery, bad-code, and wrong-event blockers that keep unique-code, password, and open RSVP out of the launch-ready path
+   - this batch shipped: `proof:v1:guests-rsvp-ops` now includes a dedicated RSVP access-truth lane for planner/checklist/settings proof, so household scope and blocked future modes are enforced beyond the old smoke-only strict token lane
    - design and prove phone/email verification without breaking existing private-link behavior
-   - add household-specific access proof beyond the current strict token lane
-   - add full bad-code/password/open-RSVP proof before any non-private mode is marked ready
+   - if code/password/open RSVP ever moves beyond planned status, add real guest-facing bad-code/password/open runtime proof before any of those modes is marked ready
 
 5. `ACTIVE`: wedding identity exports
    - this batch shipped: wedding identity exports now include a real downloadable story-graphic SVG, a downloadable/copyable style-kit text export, and a `share-graphic` readiness state that turns ready when the public site URL is safe
