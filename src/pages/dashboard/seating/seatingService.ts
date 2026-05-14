@@ -147,7 +147,7 @@ export interface SeatingLookupRow {
 }
 
 function extractLabeledNoteValues(notes: string, labelPattern: RegExp): string[] {
-  const matches = notes.matchAll(new RegExp(`(?:^|[\\n;])\\s*(?:${labelPattern.source})\\s*[:\\-]\\s*([^;\\n]+)`, 'gim'));
+  const matches = notes.matchAll(new RegExp(`(?:^|[\\n;|])\\s*(?:${labelPattern.source})\\s*[:\\-]\\s*([^;\\n|]+)`, 'gim'));
   return [...matches]
     .map((match) => match[1]?.trim() ?? '')
     .filter((value) => value.length > 0);
