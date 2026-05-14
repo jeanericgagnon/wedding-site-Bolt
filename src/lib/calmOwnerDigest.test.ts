@@ -142,4 +142,25 @@ describe('calmOwnerDigest', () => {
     expect(preview.lastReviewedLabel).toContain('Last review saved');
     expect(preview.lastDeliveredLabel).toContain('Last delivered');
   });
+
+  it('keeps scheduled previews honest when digest delivery is not connected yet', () => {
+    const digest = buildCalmOwnerDigest({
+      role: 'owner',
+      newRsvpCount: 2,
+      upcomingTaskCount: 1,
+      isPublished: true,
+    });
+    const preview = buildCalmDigestDeliveryPreview({
+      digest,
+      cadence: 'daily',
+      includePlanner: false,
+      nextDeliveryAt: '2026-05-15T16:00:00.000Z',
+      lastReviewedAt: '2026-05-14T17:15:00.000Z',
+      emailDeliveryEnabled: false,
+    });
+
+    expect(preview.statusLabel).toContain('after delivery is connected');
+    expect(preview.nextDeliveryLabel).toContain('Scheduled for');
+    expect(preview.canSendNow).toBe(false);
+  });
 });

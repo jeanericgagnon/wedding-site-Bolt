@@ -159,7 +159,7 @@ describe('buildOverviewDashboardModel', () => {
       },
     });
 
-    expect(model.calmDigestPreview?.statusLabel).toContain('Scheduled for');
+    expect(model.calmDigestPreview?.statusLabel).toContain('after delivery is connected');
     expect(model.calmDigestPreview?.lastReviewedLabel).toContain('Last review saved');
   });
 });

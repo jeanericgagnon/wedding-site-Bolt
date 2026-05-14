@@ -398,6 +398,8 @@ Execution rule for this section:
    - this batch shipped: digest preferences now persist next-send timing plus saved review/readback timestamps instead of stopping at readiness-only cadence toggles
    - this batch shipped: settings and overview now read back the same scheduled digest truth, including scheduled, paused, quiet, and last-review labels instead of collapsing everything into preview-only copy
    - this batch shipped: a dedicated owner/planner digest email render path now produces safe HTML + plain-text preview output without token/provider leakage
+   - this batch shipped: digest preview status no longer hardcodes delivery as connected, so saved cadence and next-send windows stay explicitly in preview/readback mode until the real inbox delivery pipeline exists
+   - this batch shipped: focused proof is green for settings, overview, and digest email readback staying honest about scheduled preview state versus actual delivery connectivity
    - add deeper proof around digest source-of-truth count continuity after real planning/message/photo/seating writes
    - prove live inbox delivery/readback behavior once the digest-delivery pipeline is connected beyond local schedule/readback truth
 

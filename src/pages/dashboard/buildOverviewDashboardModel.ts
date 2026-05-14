@@ -184,7 +184,7 @@ export function buildOverviewDashboardModel({
     nextDeliveryAt: stats.notificationPrefs.digestNextDeliveryAt,
     lastReviewedAt: stats.notificationPrefs.digestLastReviewedAt,
     lastDeliveredAt: stats.notificationPrefs.digestLastDeliveredAt,
-    emailDeliveryEnabled: true,
+    emailDeliveryEnabled: false,
   }) : null;
 
   return {

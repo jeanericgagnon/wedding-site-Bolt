@@ -17,7 +17,7 @@ describe('SettingsNotificationsPanel', () => {
       includePlanner: true,
       nextDeliveryAt: '2026-05-20T16:00:00.000Z',
       lastReviewedAt: '2026-05-14T17:15:00.000Z',
-      emailDeliveryEnabled: true,
+      emailDeliveryEnabled: false,
     });
 
     render(
@@ -37,7 +37,7 @@ describe('SettingsNotificationsPanel', () => {
         notifSuccess={null}
         notifError={null}
         digestPreview={preview}
-        digestEmailText={'Owner digest\nWeekly digest · Owners and planners · Scheduled for May 20, 4:00 PM UTC'}
+        digestEmailText={'Owner digest\nWeekly digest · Owners and planners · Scheduled for May 20, 4:00 PM UTC after delivery is connected'}
         onToggleVisibility={vi.fn()}
         onRsvpChange={vi.fn()}
         onPhotosChange={vi.fn()}
@@ -53,6 +53,7 @@ describe('SettingsNotificationsPanel', () => {
     expect(screen.getByText(/Digest delivery status/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Scheduled for/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/No scheduled digest yet/i)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/after delivery is connected/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Sample email preview/i)).toBeInTheDocument();
     fireEvent.click(screen.getByText(/Plain-text readback/i));
     expect(screen.getAllByText(/Owners and planners/i).length).toBeGreaterThan(0);

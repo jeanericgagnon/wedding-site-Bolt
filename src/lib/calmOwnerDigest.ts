@@ -273,8 +273,10 @@ export function buildCalmDigestDeliveryPreview(input: CalmDigestDeliveryPreviewI
     ? `Quiet until ${quietLabel}`
     : input.cadence === 'paused'
       ? 'Paused by preference'
-      : nextDeliveryLabel
+      : nextDeliveryLabel && input.emailDeliveryEnabled
         ? nextDeliveryLabel
+        : nextDeliveryLabel
+          ? `${nextDeliveryLabel} after delivery is connected`
         : emailReady
           ? 'Ready for delivery review'
           : 'Preview only until delivery is connected';

@@ -192,7 +192,7 @@ export function SettingsDashboardRouteContent(props: Props) {
     nextDeliveryAt: props.notifDigestNextDeliveryAt,
     lastReviewedAt: props.notifDigestLastReviewedAt,
     lastDeliveredAt: props.notifDigestLastDeliveredAt,
-    emailDeliveryEnabled: true,
+    emailDeliveryEnabled: false,
   });
   const digestEmail = renderCalmDigestEmail(digestPreview);
 
