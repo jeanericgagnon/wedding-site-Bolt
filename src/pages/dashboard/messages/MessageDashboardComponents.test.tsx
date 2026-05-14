@@ -44,8 +44,8 @@ describe('MessageCampaignThreadPanels', () => {
 
     expect(screen.getByText('4 delivered · 1 need review')).toBeInTheDocument();
     expect(screen.getByText('6 opened · 2 viewed · 3 clicked · 1 replied · 1 bounced')).toBeInTheDocument();
+    expect(screen.getByText('1 recipient needs contact details · 0 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('150% open · 75% click · 25% reply')).toBeInTheDocument();
-    expect(screen.getByText('1 recipient needs contact details')).toBeInTheDocument();
   });
 });
 

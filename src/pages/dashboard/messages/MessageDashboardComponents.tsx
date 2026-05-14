@@ -1292,9 +1292,14 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               <div className="text-right text-[11px] text-text-tertiary">
                 <p>{thread.delivered} delivered · {thread.failed} need review</p>
                 {engagementSummary && <p className="text-text-secondary">{engagementSummary}</p>}
+                {(thread.skipped > 0 || thread.unreached > 0) && (
+                  <p className="text-warning">
+                    {thread.skipped > 0 ? describeRecipientReview(thread.skipped) : '0 need contact details'}
+                    {' · '}
+                    {thread.unreached} not reached yet
+                  </p>
+                )}
                 {thread.deliveredRecipients > 0 && <p className="text-text-secondary">{thread.openRate}% open · {thread.clickRate}% click · {thread.replyRate}% reply</p>}
-                {thread.skipped > 0 && <p className="text-warning">{describeRecipientReview(thread.skipped)}</p>}
-                {thread.unreached > 0 && <p className="text-warning">{thread.unreached} not reached yet</p>}
               </div>
             </button>
               );
