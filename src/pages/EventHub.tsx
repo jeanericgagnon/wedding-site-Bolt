@@ -8,6 +8,7 @@ import { buildDayOfHubStatusBoard, buildDayOfWebModeReadiness, type DayOfWebActi
 import { buildGuestHubAnnouncementCard, buildGuestHubCoordinatorHandoffCard, buildGuestHubGuestStateCard } from '../lib/dayOfGuestHubStatus';
 import { buildGuestHubActions, type GuestHubActionId } from '../lib/guestHubActions';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
+import { readGuestHubOfflineSnapshot, writeGuestHubOfflineSnapshot } from '../lib/guestHubOfflineSnapshot';
 import {
   buildGuestIdentityArtifacts,
   buildPublicAccessArtifacts,
@@ -233,6 +234,8 @@ export const EventHub: React.FC = () => {
   const [announcement, setAnnouncement] = useState<HubAnnouncement | null>(null);
   const [guestState, setGuestState] = useState<HubGuestState | null>(null);
   const [coordinatorHandoff, setCoordinatorHandoff] = useState<HubCoordinatorHandoff | null>(null);
+  const [hasOfflineSnapshot, setHasOfflineSnapshot] = useState(false);
+  const [hasServiceWorkerShell, setHasServiceWorkerShell] = useState(false);
   const guestIdentity = useMemo(() => buildGuestHubIdentityPayload(slug, searchParams), [searchParams, slug]);
   const languagePreference = useMemo(() => resolveGuestLanguagePreference({
     search: searchParams,
@@ -256,6 +259,27 @@ export const EventHub: React.FC = () => {
     icon: actionIcons[action.id],
     primary: action.primary,
   })), [guestContactHref, guestIdentity.guestInviteToken, languagePreference.language, settings, slug, t]);
+
+  useEffect(() => {
+    if (typeof navigator === 'undefined') return;
+    setHasServiceWorkerShell('serviceWorker' in navigator);
+  }, []);
+
+  useEffect(() => {
+    if (!slug) return;
+    const snapshot = readGuestHubOfflineSnapshot(slug);
+    setHasOfflineSnapshot(Boolean(snapshot));
+    if (!snapshot) return;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      setSettings(snapshot.settings);
+      setSiteSummary(snapshot.siteSummary);
+      setAnnouncement(snapshot.announcement);
+      setGuestState(snapshot.guestState);
+      setCoordinatorHandoff(snapshot.coordinatorHandoff);
+      setTravelContext(snapshot.travelContext);
+      setHubConfigStatus('offline');
+    }
+  }, [slug]);
 
   useEffect(() => {
     if (!slug) return;
@@ -312,17 +336,27 @@ export const EventHub: React.FC = () => {
         if (!cancelled && data?.settings) {
           const nextSettings = { ...defaultSettings, ...data.settings };
           setSettings(nextSettings);
+          const nextSiteSummary = data.site ? {
+            slug: typeof data.site.slug === 'string' ? data.site.slug : slug,
+            coupleName1: typeof data.site.coupleName1 === 'string' ? data.site.coupleName1 : null,
+            coupleName2: typeof data.site.coupleName2 === 'string' ? data.site.coupleName2 : null,
+            weddingDate: typeof data.site.weddingDate === 'string' ? data.site.weddingDate : null,
+          } : null;
           if (data.site) {
-            setSiteSummary({
-              slug: typeof data.site.slug === 'string' ? data.site.slug : slug,
-              coupleName1: typeof data.site.coupleName1 === 'string' ? data.site.coupleName1 : null,
-              coupleName2: typeof data.site.coupleName2 === 'string' ? data.site.coupleName2 : null,
-              weddingDate: typeof data.site.weddingDate === 'string' ? data.site.weddingDate : null,
-            });
+            setSiteSummary(nextSiteSummary);
           }
           setAnnouncement(data.announcement ?? null);
           setGuestState(data.guestState ?? null);
           setCoordinatorHandoff(data.coordinatorHandoff ?? null);
+          writeGuestHubOfflineSnapshot(slug, {
+            settings: nextSettings,
+            siteSummary: nextSiteSummary,
+            announcement: data.announcement ?? null,
+            guestState: data.guestState ?? null,
+            coordinatorHandoff: data.coordinatorHandoff ?? null,
+            travelContext,
+          });
+          setHasOfflineSnapshot(true);
           if (languagePreference.language !== i18n.language?.split('-')[0]?.toLowerCase()) {
             void i18n.changeLanguage(languagePreference.language);
           }
@@ -348,12 +382,23 @@ export const EventHub: React.FC = () => {
     })
       .then((access) => {
         if (!cancelled) {
-          setSiteSummary((current) => mergeHubSiteSummary(current, buildSiteSummaryFromPublicAccess(slug, access)));
-          setTravelSource(access.site?.render_model.wedding?.travel ?? null);
-          setTravelContext({
+          const mergedSiteSummary = mergeHubSiteSummary(siteSummary, buildSiteSummaryFromPublicAccess(slug, access));
+          const nextTravelContext = {
             schedule: access.site?.render_model.wedding?.schedule ?? [],
             venues: access.site?.render_model.wedding?.venues ?? [],
+          };
+          setSiteSummary((current) => mergeHubSiteSummary(current, buildSiteSummaryFromPublicAccess(slug, access)));
+          setTravelSource(access.site?.render_model.wedding?.travel ?? null);
+          setTravelContext(nextTravelContext);
+          writeGuestHubOfflineSnapshot(slug, {
+            settings,
+            siteSummary: mergedSiteSummary,
+            announcement,
+            guestState,
+            coordinatorHandoff,
+            travelContext: nextTravelContext,
           });
+          setHasOfflineSnapshot(true);
         }
       })
       .catch(() => {
@@ -442,6 +487,8 @@ export const EventHub: React.FC = () => {
     hasWeddingDate: Boolean(siteSummary?.weddingDate),
     hasGuestLanguagePreference: searchParams.has('guestLang') || searchParams.has('lang') || Boolean(readStoredGuestLanguage()),
     hasPoorNetworkFallback: true,
+    hasOfflineSnapshot,
+    hasServiceWorkerShell,
   });
   const dayOfActionIds = actions.map((action) => action.id).filter((id): id is DayOfWebActionId => (
     id === 'rsvp' || id === 'schedule' || id === 'travel' || id === 'registry' || id === 'photos' || id === 'guestbook' || id === 'recap'

@@ -475,7 +475,9 @@ Execution rule for this section:
    - this batch shipped: the guest hub now reads back the latest guest-safe coordinator handoff summary from the real coordinator handoff table, so guests can see current event staffing status, team names, and a scrubbed handoff note without exposing private tokens or internal operator noise
    - this batch shipped: travel spotlight route cards now track real direction/map deep-link clicks, including external map URLs, so the guest-facing day-of travel path is not treated like invisible traffic once guests leave the hub shell
    - this batch shipped: focused proof is green for guest-safe coordinator handoff scrubbing, guest-hub handoff rendering, and external directions-card click tracking inside the real travel quick-plan UI
-   - implement true offline caching/service-worker behavior
+   - this batch shipped: the guest hub now saves a guest-safe offline snapshot of settings, site summary, travel context, latest update, guest state, and coordinator handoff, then rehydrates that snapshot when the hub opens offline instead of dropping guests into an empty shell
+   - this batch shipped: day-of web-mode readiness now distinguishes between simple retry fallback and a real cached offline shell/snapshot path, so the board only claims offline support when the snapshot and service-worker shell are actually present
+   - this batch shipped: focused proof is green for offline snapshot sanitization/retention, EventHub snapshot read-write wiring, and the updated day-of readiness truth
    - add live production proof for directions/map deep links, coordinator/guest handoff, and private-event visibility on the hub after the next approved deploy
    - add live production guest-hub write/read with cleanup after the day-of web-mode lane is finished
 

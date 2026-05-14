@@ -10,14 +10,17 @@ describe('day-of web mode readiness', () => {
       hasWeddingDate: true,
       hasGuestLanguagePreference: true,
       hasPoorNetworkFallback: true,
+      hasOfflineSnapshot: true,
+      hasServiceWorkerShell: true,
     });
 
     expect(model.status).toBe('ready');
     expect(model.summary).toBe('Ready as a no-app guest hub for the wedding day.');
-    expect(model.readyCount).toBe(6);
+    expect(model.readyCount).toBe(7);
     expect(model.plannedCount).toBe(1);
     expect(model.signals.find((signal) => signal.id === 'guest-actions')?.detail).toContain('RSVP, Schedule, Directions and travel');
-    expect(model.signals.find((signal) => signal.id === 'poor-network')?.detail).toContain('retry option');
+    expect(model.signals.find((signal) => signal.id === 'poor-network')?.detail).toContain('last saved update');
+    expect(model.signals.find((signal) => signal.id === 'offline-shell')?.state).toBe('ready');
   });
 
   it('flags missing action coverage without claiming announcements or offline mode exist', () => {
@@ -33,6 +36,7 @@ describe('day-of web mode readiness', () => {
     expect(model.needsContentCount).toBe(2);
     expect(model.signals.find((signal) => signal.id === 'announcements')?.state).toBe('planned');
     expect(model.signals.find((signal) => signal.id === 'poor-network')?.detail).toContain('not built');
+    expect(model.signals.find((signal) => signal.id === 'offline-shell')?.detail).toContain('cached app shell');
   });
 
   it('stays empty when there is no site link or enabled guest action', () => {

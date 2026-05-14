@@ -17,6 +17,8 @@ export interface DayOfWebModeInput {
   hasWeddingDate: boolean;
   hasGuestLanguagePreference: boolean;
   hasPoorNetworkFallback?: boolean;
+  hasOfflineSnapshot?: boolean;
+  hasServiceWorkerShell?: boolean;
 }
 
 export interface DayOfWebModeSignal {
@@ -122,10 +124,20 @@ export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebMo
     {
       id: 'poor-network',
       label: 'Poor network fallback',
-      detail: input.hasPoorNetworkFallback
-        ? 'If live details do not load, guests still see safe hub actions and a retry option.'
-        : 'Offline caching and retry state are not built into the guest hub yet.',
-      state: input.hasPoorNetworkFallback ? 'ready' : 'planned',
+      detail: input.hasOfflineSnapshot
+        ? 'If live details do not load, guests still get the last saved update, travel plan, and safe hub actions from the cached hub.'
+        : input.hasPoorNetworkFallback
+          ? 'If live details do not load, guests still see safe hub actions and a retry option.'
+          : 'Offline caching and retry state are not built into the guest hub yet.',
+      state: input.hasOfflineSnapshot || input.hasPoorNetworkFallback ? 'ready' : 'planned',
+    },
+    {
+      id: 'offline-shell',
+      label: 'Offline app shell',
+      detail: input.hasServiceWorkerShell
+        ? 'The day-of hub shell is cached locally so guests can reopen the page without reloading every asset.'
+        : 'A cached app shell is still needed before the hub behaves more like an install-free day-of app.',
+      state: input.hasServiceWorkerShell ? 'ready' : 'planned',
     },
   ];
 

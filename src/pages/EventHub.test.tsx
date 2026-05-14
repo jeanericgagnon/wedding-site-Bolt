@@ -114,8 +114,11 @@ describe('event hub page boundary', () => {
 
     expect(page).toContain("from './EventHubRouteView'");
     expect(page).toContain("from './EventHubLiveContent'");
+    expect(page).toContain("from '../lib/guestHubOfflineSnapshot'");
     expect(page).toContain('<EventHubRouteView');
     expect(page).toContain('<EventHubLiveContent');
+    expect(page).toContain('readGuestHubOfflineSnapshot(slug)');
+    expect(page).toContain('writeGuestHubOfflineSnapshot(slug, {');
     expect(page).toContain('captureGuestInviteTokenFromSearch(slug, searchParams)');
     expect(page).toContain('const guestIdentity = useMemo(() => buildGuestHubIdentityPayload(slug, searchParams)');
     expect(page).toContain("'x-dayof-guest-invite-token'");
