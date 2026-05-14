@@ -864,7 +864,7 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(screen.getByText('Guest view')).toBeInTheDocument();
     expect(screen.getByText('1 ready now · 1 already claimed')).toBeInTheDocument();
-    expect(screen.getByText('50% visible to guests · 1 hidden when bought · 1 blocked from guests')).toBeInTheDocument();
+    expect(screen.getByText('50% visible to guests · 75% guest-ready · 1 hidden when bought · 1 blocked from guests')).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Guest-visible gifts: 2 · Hidden when purchased: 1'),
     ).toBeInTheDocument();

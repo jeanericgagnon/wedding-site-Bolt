@@ -517,6 +517,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the owner registry dashboard now also surfaces simple coverage rates for purchaser attribution, guest-ready vs guest-visible inventory, share-ready cash funds, and goal-tracked funds, so the higher-level registry readback answers “how complete is this lane?” instead of only listing raw counts
    - this batch shipped: registry launch-readiness details now call out guest-safe product-link coverage, share-ready fund coverage, and thank-you purchaser-attribution coverage directly in the helper readback instead of only listing raw “needs review” counts
    - this batch shipped: the top-level cash-fund summary now also calls out funds still missing a goal, so couples can spot share-ready-but-underdefined funds without dropping into the deeper registry notes first
+   - this batch shipped: the top-level guest-view summary now also calls out guest-ready coverage alongside guest-visible coverage, so couples can tell the difference between items that are fundamentally guest-safe and the smaller subset currently visible right now
    - add live owner add/import/edit persistence proof for broader registry workflows
    - rerun the stronger owner repair/cleanup runtime proof against the shipped production runtime after the next approved registry deploy
    - rerun the guest-visible purchase-state assertions against the live production runtime after the next approved registry deploy instead of only local/public-component proof

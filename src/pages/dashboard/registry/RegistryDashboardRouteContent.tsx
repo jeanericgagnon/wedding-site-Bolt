@@ -307,7 +307,7 @@ export function RegistryDashboardRouteContent(props: {
                 {props.guestVisibilityStats.visibleAvailableItems} ready now · {props.guestVisibilityStats.visibleClaimedItems} already claimed
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
-                {guestVisibleCoverageRate}% visible to guests · {props.guestVisibilityStats.hiddenPurchasedItems} hidden when bought{props.guestVisibilityStats.blockedGuestItems > 0 ? ` · ${props.guestVisibilityStats.blockedGuestItems} blocked from guests` : ''}
+                {guestVisibleCoverageRate}% visible to guests · {guestReadyCoverageRate}% guest-ready · {props.guestVisibilityStats.hiddenPurchasedItems} hidden when bought{props.guestVisibilityStats.blockedGuestItems > 0 ? ` · ${props.guestVisibilityStats.blockedGuestItems} blocked from guests` : ''}
               </p>
             </Card>
             <Card variant="bordered" padding="md">
