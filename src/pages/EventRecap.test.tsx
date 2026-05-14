@@ -45,7 +45,7 @@ vi.mock('../lib/copyText', () => ({
   copyTextOrDownload: vi.fn(async () => 'copied'),
 }));
 
-import { EventRecap, buildEventRecapAccessHeaders, buildEventRecapGuestHubAccessPayload, formatEventRecapAlbumLabel, friendlyEventRecapError, resolveEventRecapViewTarget, safeEventRecapFunctionError } from './EventRecap';
+import { EventRecap, buildDemoEventRecapData, buildEventRecapAccessHeaders, buildEventRecapGuestHubAccessPayload, formatEventRecapAlbumLabel, friendlyEventRecapError, resolveEventRecapViewTarget, safeEventRecapFunctionError } from './EventRecap';
 
 const recapPayload = {
   site: {
@@ -149,6 +149,30 @@ describe('formatEventRecapAlbumLabel', () => {
 
   it('uses a soft fallback for empty values', () => {
     expect(formatEventRecapAlbumLabel('')).toBe('Wedding moment');
+  });
+});
+
+describe('buildDemoEventRecapData', () => {
+  it('builds a guest-facing recap payload from the saved demo photo state when QA proof is enabled', () => {
+    const data = buildDemoEventRecapData('alex-jordan-demo', new URLSearchParams('photoMemoryFlowQa=1'));
+
+    expect(data).toMatchObject({
+      site: {
+        slug: 'alex-jordan-demo',
+        coupleName1: 'Alex Thompson',
+        coupleName2: 'Jordan Rivera',
+      },
+      summary: {
+        uploadCount: 5,
+        chapterCount: 1,
+      },
+    });
+    expect(data?.highlights.length).toBeGreaterThan(0);
+    expect(data?.highlights.some((card) => card.story === true)).toBe(true);
+  });
+
+  it('stays off unless the QA recap proof flag is present', () => {
+    expect(buildDemoEventRecapData('alex-jordan-demo', new URLSearchParams())).toBeNull();
   });
 });
 

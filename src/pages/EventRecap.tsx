@@ -5,12 +5,14 @@ import { Camera, Heart, Share2, Sparkles } from 'lucide-react';
 import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
 import { copyTextOrDownload } from '../lib/copyText';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
+import { demoWeddingSite } from '../lib/demoData';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
 import {
   buildPublicAccessArtifacts,
   captureGuestInviteTokenFromSearch,
   capturePublicInviteTokenFromSearch,
 } from '../lib/publicAccessArtifacts';
+import { readDemoGuestPhotoState } from './dashboard/guestPhotos/guestPhotoDemoState';
 import {
   fetchGuestRecapConfig,
   hasGuestHubPublicRuntime,
@@ -59,6 +61,87 @@ type RecapData = {
   highlights: RecapCard[];
   chapters: Array<{ date: string; count: number; highlights: RecapCard[] }>;
 };
+
+export function buildDemoEventRecapData(slug: string, searchParams: URLSearchParams): RecapData | null {
+  if (!searchParams.has('photoMemoryFlowQa')) return null;
+
+  const snapshot = readDemoGuestPhotoState();
+  if (snapshot.siteSlug !== slug) return null;
+  if (snapshot.hubSettings.recap_status !== 'private_link' && snapshot.hubSettings.recap_status !== 'published') {
+    return null;
+  }
+
+  const bucketById = new Map(snapshot.buckets.map((bucket) => [bucket.id, bucket]));
+  const analysisByUploadId = new Map(snapshot.uploadAnalyses.map((analysis) => [analysis.upload_id, analysis]));
+  const metadataByUploadId = new Map(snapshot.uploadMetadata.map((metadata) => [metadata.upload_id, metadata]));
+
+  const visibleUploads = snapshot.uploads.filter((upload) => !upload.is_hidden && !upload.recap_hidden);
+  const toCard = (upload: typeof visibleUploads[number]): RecapCard => {
+    const analysis = analysisByUploadId.get(upload.id);
+    const metadata = metadataByUploadId.get(upload.id);
+    return {
+      id: upload.id,
+      filename: upload.original_filename,
+      imageUrl: upload.mime_type?.startsWith('image/') ? upload.drive_web_view_link : null,
+      guestName: upload.guest_name ?? null,
+      note: upload.note ?? null,
+      mimeType: upload.mime_type ?? null,
+      uploadedAt: upload.uploaded_at,
+      takenAt: metadata?.taken_at ?? null,
+      bucketName: bucketById.get(upload.photo_album_id)?.name ?? 'Wedding moment',
+      caption: analysis?.caption ?? null,
+      moment: analysis?.detected_moment ?? null,
+      tags: analysis?.tags ?? [],
+      featured: upload.recap_featured,
+      story: upload.recap_story,
+    };
+  };
+
+  const highlights = visibleUploads
+    .filter((upload) => upload.recap_featured || upload.recap_story)
+    .sort((a, b) => {
+      const aAnalysis = analysisByUploadId.get(a.id);
+      const bAnalysis = analysisByUploadId.get(b.id);
+      return (bAnalysis?.slideshow_priority ?? 0) - (aAnalysis?.slideshow_priority ?? 0);
+    })
+    .map(toCard);
+
+  const chapterMap = new Map<string, RecapCard[]>();
+  visibleUploads.forEach((upload) => {
+    const dateKey = (metadataByUploadId.get(upload.id)?.taken_at ?? upload.uploaded_at ?? '').slice(0, 10) || 'undated';
+    const cards = chapterMap.get(dateKey) ?? [];
+    cards.push(toCard(upload));
+    chapterMap.set(dateKey, cards);
+  });
+
+  const chapters = Array.from(chapterMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, cards]) => ({
+      date,
+      count: cards.length,
+      highlights: cards.filter((card) => card.featured || card.story).slice(0, 3),
+    }));
+
+  return {
+    site: {
+      slug,
+      coupleName1: demoWeddingSite.couple_name_1,
+      coupleName2: demoWeddingSite.couple_name_2,
+      weddingDate: demoWeddingSite.wedding_date,
+      recapStatus: snapshot.hubSettings.recap_status,
+      recapPublishedAt: snapshot.hubSettings.recap_published_at ?? null,
+    },
+    summary: {
+      uploadCount: visibleUploads.length,
+      highlightCount: highlights.length,
+      chapterCount: chapters.length,
+      curatedCount: visibleUploads.filter((upload) => upload.recap_featured).length,
+      storyCount: visibleUploads.filter((upload) => upload.recap_story).length,
+    },
+    highlights,
+    chapters,
+  };
+}
 
 const normalizeSiteRef = (value?: string) => (value ?? '').trim().toLowerCase();
 
@@ -137,6 +220,14 @@ export const EventRecap: React.FC = () => {
   }, [i18n, searchParams, slug]);
 
   useEffect(() => {
+    const demoData = slug ? buildDemoEventRecapData(slug, searchParams) : null;
+    if (demoData) {
+      setData(demoData);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     if (!slug || !hasGuestHubPublicRuntime()) return;
     let cancelled = false;
     setLoading(true);

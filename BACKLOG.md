@@ -375,6 +375,8 @@ Execution rule for this section:
    - this batch shipped: local/demo photo memory state is now persisted and hydrated as real dashboard truth, including recap settings, uploads, albums, analyses, guestbook, prospects, and upload links instead of an empty placeholder snapshot
    - this batch shipped: the demo owner export path now saves a real full-resolution download job locally, and recap-status saves now read back correctly after reload instead of collapsing when the owner proof uses demo state
    - this batch shipped: a dedicated `proof:v1:photo-memory-flow` lane is now green for memory-flow readiness, owner slideshow preview, owner full-resolution export download, recap-status save/reload continuity, and the mobile guest upload route without raw-token leakage
+   - this batch shipped: the local/browser photo proof now covers owner moderation readback too, proving a recap-story moderation toggle survives reload instead of stopping at one-session UI state
+   - this batch shipped: the guest-facing recap route now has a QA-only local fallback from the saved demo photo state, so the photo proof lane can verify a published recap page with real shared-moment content instead of only trusting the owner status chip
    - add live guest video upload browser proof
    - add live slideshow publish/display proof beyond owner-draft readiness
    - prove owner moderation readback after real live uploads

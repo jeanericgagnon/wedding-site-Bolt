@@ -75,7 +75,7 @@ describe('public guest surface boundary', () => {
     expect(eventHub).toContain('<EventHubRouteView');
     expect(eventHub).toContain('<EventHubLiveContent');
     expect(eventHub).toContain('fetchGuestHubConfig<');
-    expect(eventHub).toContain("trackGuestHubEvent(slug, 'view', '/event'");
+    expect(eventHub).toMatch(/trackGuestHubEvent\(slug,\s*'view',\s*resolveGuestHubViewTarget\(searchParams\),/);
     expect(eventHub).toContain('submitGuestHubProspect(');
     expect(eventHub).toContain('buildGuestHubAccessPayload(slug, searchParams)');
     expect(eventHub).toContain('guestInviteToken: guestIdentity.guestInviteToken');
@@ -95,7 +95,7 @@ describe('public guest surface boundary', () => {
     expect(eventRecap).toContain('<OwnerPreviewBanner />');
     expect(eventRecap).toContain('captureGuestInviteTokenFromSearch(slug, searchParams);');
     expect(eventRecap).toContain('fetchGuestRecapConfig<RecapData>(');
-    expect(eventRecap).toContain("trackGuestHubEvent(slug, 'view', '/event/recap'");
+    expect(eventRecap).toContain("trackGuestHubEvent(slug, 'view', resolveEventRecapViewTarget(access), access)");
     expect(eventRecap).toContain('submitGuestHubProspect(');
     expect(eventRecap).toContain('buildEventRecapGuestHubAccessPayload(slug)');
     expect(eventRecap).not.toContain("{loading && <div className=\"mt-6 rounded-lg border border-neutral-200 bg-white p-6 text-neutral-600\">");

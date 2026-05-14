@@ -121,6 +121,12 @@ test('demo photo memory flow proves slideshow, export, and recap readback contin
   await expect(slideshowDialog.getByText('aisle-smile.jpg', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Close' }).click();
 
+  await expect(page.getByText('3 story picks')).toBeVisible();
+  await page.getByRole('button', { name: 'Add to story' }).first().click();
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page.getByText('4 story picks')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Remove from story' }).first()).toBeVisible();
+
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save full-res download job' }).click();
   const download = await downloadPromise;
@@ -139,6 +145,13 @@ test('demo photo memory flow proves slideshow, export, and recap readback contin
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.getByText('Current mode: Published')).toBeVisible();
   await expect(page.getByText('The recap is live for guests.')).toBeVisible();
+
+  await page.goto('/event/alex-jordan-demo/recap?photoMemoryFlowQa=1&invite_token=token-c-2', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { name: /alex thompson & jordan rivera/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Wedding recap' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Top moments' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Memory chapters' })).toBeVisible();
+  await expect(page.locator('body')).not.toContainText('token-c-2');
 });
 
 test('mobile guest upload route stays usable for the no-app memory flow', async ({ page }) => {
