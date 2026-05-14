@@ -374,9 +374,12 @@ Execution rule for this section:
    - this batch shipped: public travel rendering now surfaces structured hotel options, room blocks, shuttle timing, and destination notes on the real guest-facing travel section instead of burying them in one travel paragraph
    - this batch shipped: travel portal readiness now recognizes structured lodging, shuttle, and destination guidance as real progress, and the guided-builder readiness card reflects those records instead of staying stuck on freeform copy only
    - this batch shipped: focused proof is green for structured travel sanitization, public render-model/public-access allowlisting, readiness logic, and the public travel section render path
+   - this batch shipped: the guest hub now shows a structured `Travel quick plan` card with copyable guest-safe travel summary text, so invite-to-travel is no longer just a bare link list
+   - this batch shipped: local/demo guest hub fallback now carries structured hotel, room-block, shuttle, and destination-tip data so the travel hub flow can be proven without hand-waving over empty state
+   - this batch shipped: focused proof is green for the guest hub travel spotlight helper plus a real `EventHubLiveContent` render pass that proves the quick-plan card and copy action render in the hub
    - add guest-specific room/shuttle/travel guidance instead of generic shared copy only
    - reuse event/household visibility rules across travel detail surfaces
-   - add export/share views and richer travel-route content inside the guest hub itself, not only the public site section
+   - add deeper export/share views beyond the current copyable quick-plan text and richer travel-route content already in the hub
    - add live mobile guest-path proof from invite to travel to RSVP/photo surfaces
 
 8. `ACTIVE`: reminders, digests, and notification preferences

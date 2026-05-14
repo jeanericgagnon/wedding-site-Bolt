@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTravelGuestJourney, buildTravelGuestPortalReadiness, buildTravelVenueMapLinks } from './travelGuestPortal';
+import { buildTravelGuestJourney, buildTravelGuestPortalReadiness, buildTravelHubSpotlight, buildTravelVenueMapLinks } from './travelGuestPortal';
 
 describe('travelGuestPortal', () => {
   it('marks core travel portal details ready when the owner has enough guest-facing guidance', () => {
@@ -130,5 +130,37 @@ describe('travelGuestPortal', () => {
         href: 'https://maps.google.com/?q=After%20party%20200%20Pier%20Street%2C%20Sausalito%2C%20CA',
       },
     ]);
+  });
+
+  it('builds a guest-hub travel spotlight with share-safe summary text', () => {
+    const spotlight = buildTravelHubSpotlight({
+      siteSlug: 'maya-and-leo',
+      enabledActionIds: ['travel', 'rsvp', 'photos'],
+      travel: {
+        hotels: [{ name: 'Harbor Hotel', bookingCode: 'MAYALEO' }],
+        roomBlocks: [{ hotelName: 'Harbor Hotel', bookingCode: 'MAYALEO' }],
+        shuttles: [{ label: 'Ceremony shuttle', route: 'Harbor Hotel to venue' }],
+        culturalTips: ['Bring a light layer for the waterfront.'],
+      },
+    });
+
+    expect(spotlight).toEqual({
+      summary: '4 travel details ready from the guest hub.',
+      travelHref: '/site/maya-and-leo#travel',
+      cards: [
+        { id: 'hotel', label: 'Harbor Hotel', detail: 'Code MAYALEO' },
+        { id: 'room-block', label: 'Room block', detail: 'Harbor Hotel · Code MAYALEO' },
+        { id: 'shuttle', label: 'Ceremony shuttle', detail: 'Harbor Hotel to venue' },
+        { id: 'cultural-tip', label: 'Local tip', detail: 'Bring a light layer for the waterfront.' },
+      ],
+      shareText: [
+        'DayOf travel quick plan',
+        'Harbor Hotel: Code MAYALEO',
+        'Room block: Harbor Hotel · Code MAYALEO',
+        'Ceremony shuttle: Harbor Hotel to venue',
+        'Local tip: Bring a light layer for the waterfront.',
+        'Travel page: /site/maya-and-leo#travel',
+      ].join('\n'),
+    });
   });
 });

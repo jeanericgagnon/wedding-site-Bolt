@@ -111,6 +111,7 @@ describe('event hub page boundary', () => {
     expect(liveContent).toContain("from './EventHubConfigStatusCard'");
     expect(liveContent).toContain('<EventHubConfigStatusCard');
     expect(liveContent).toContain("Travel guest path");
+    expect(liveContent).toContain("Travel quick plan");
     expect(liveContent).toContain("Hub details");
   });
 });

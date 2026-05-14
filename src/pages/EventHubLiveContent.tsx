@@ -38,6 +38,19 @@ type TravelGuestJourneyStep = {
   status: 'ready' | 'needs-content' | 'needs-info' | 'planned';
 };
 
+type TravelHubSpotlightCard = {
+  id: 'hotel' | 'room-block' | 'shuttle' | 'visa-tip' | 'cultural-tip';
+  label: string;
+  detail: string;
+};
+
+type TravelHubSpotlight = {
+  summary: string;
+  travelHref: string;
+  cards: TravelHubSpotlightCard[];
+  shareText: string;
+};
+
 type HubAction = {
   id: string;
   title: string;
@@ -58,6 +71,9 @@ type EventHubLiveContentProps = {
   actions: HubAction[];
   onTrackClick: (target: string) => void;
   travelGuestJourney: TravelGuestJourneyStep[];
+  travelHubSpotlight: TravelHubSpotlight | null;
+  travelShareStatus: string | null;
+  onCopyTravelPlan: () => void;
   hubUrl: string;
   searchParams: URLSearchParams;
   shouldOpenHubDetailsByDefault: (params: URLSearchParams) => boolean;
@@ -85,6 +101,9 @@ export function EventHubLiveContent({
   actions,
   onTrackClick,
   travelGuestJourney,
+  travelHubSpotlight,
+  travelShareStatus,
+  onCopyTravelPlan,
   hubUrl,
   searchParams,
   shouldOpenHubDetailsByDefault,
@@ -212,6 +231,42 @@ export function EventHubLiveContent({
                   })}
                 </div>
               </div>
+
+              {travelHubSpotlight && (
+                <div className="mt-5 rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-[#2f261d]">Travel quick plan</p>
+                      <p className="mt-1 text-sm leading-6 text-[#6f5843]">{travelHubSpotlight.summary}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Link
+                        to={travelHubSpotlight.travelHref}
+                        onClick={() => onTrackClick(travelHubSpotlight.travelHref)}
+                        className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 text-xs font-semibold text-[#2f261d] transition-colors hover:border-[#d8c8b6]"
+                      >
+                        Open travel page
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={onCopyTravelPlan}
+                        className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 text-xs font-semibold text-[#2f261d] transition-colors hover:border-[#d8c8b6]"
+                      >
+                        Copy travel plan
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {travelHubSpotlight.cards.map((card) => (
+                      <div key={card.id} className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
+                        <p className="text-xs font-semibold text-[#2f261d]">{card.label}</p>
+                        <p className="mt-1 text-xs leading-5 text-[#6f5843]">{card.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {travelShareStatus && <p className="mt-3 text-xs text-[#6f5843]">{travelShareStatus}</p>}
+                </div>
+              )}
 
               <div className="mt-8 rounded-lg border border-[#eadfd2] bg-[#fbf7f1] p-4">
                 <div className="flex gap-3">

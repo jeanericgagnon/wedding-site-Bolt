@@ -2,17 +2,19 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { Archive, CalendarDays, Camera, ClipboardList, Gift, HeartHandshake, Plane, Sparkles } from 'lucide-react';
+import { copyTextOrDownload } from '../lib/copyText';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import { buildGuestHubActions, type GuestHubActionId } from '../lib/guestHubActions';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
 import { buildDayOfHubStatusBoard, buildDayOfWebModeReadiness, type DayOfWebActionId } from '../lib/dayOfWebModeReadiness';
-import { buildTravelGuestJourney } from '../lib/travelGuestPortal';
+import { buildTravelGuestJourney, buildTravelHubSpotlight } from '../lib/travelGuestPortal';
 import {
   buildPublicAccessArtifacts,
   buildGuestIdentityArtifacts,
   captureGuestInviteTokenFromSearch,
   capturePublicInviteTokenFromSearch,
 } from '../lib/publicAccessArtifacts';
+import { fetchPublicSiteAccess } from '../lib/publicSiteAccess';
 import {
   fetchGuestHubConfig,
   hasGuestHubPublicRuntime,
@@ -21,6 +23,7 @@ import {
 } from './guestHubPublicService';
 import { EventHubLiveContent } from './EventHubLiveContent';
 import { EventHubRouteView } from './EventHubRouteView';
+import { createAlexJordanDemoWeddingData } from './siteViewHelpers';
 
 type HubAction = {
   id: GuestHubActionId;
@@ -155,6 +158,8 @@ export const EventHub: React.FC = () => {
   const [optInStatus, setOptInStatus] = useState<string | null>(null);
   const [hubConfigStatus, setHubConfigStatus] = useState<HubConfigStatus>('loading');
   const [hubConfigRetryKey, setHubConfigRetryKey] = useState(0);
+  const [travelSource, setTravelSource] = useState<unknown>(null);
+  const [travelShareStatus, setTravelShareStatus] = useState<string | null>(null);
   const guestIdentity = useMemo(() => buildGuestHubIdentityPayload(slug, searchParams), [searchParams, slug]);
   const languagePreference = useMemo(() => resolveGuestLanguagePreference({
     search: searchParams,
@@ -188,11 +193,15 @@ export const EventHub: React.FC = () => {
       return;
     }
     if (!hasGuestHubPublicRuntime()) {
+      if (slug === 'alex-jordan-demo') {
+        setTravelSource(createAlexJordanDemoWeddingData().travel);
+      }
       setHubConfigStatus('ready');
       return;
     }
     let cancelled = false;
     setHubConfigStatus(typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'loading');
+    const accessPayload = buildGuestHubAccessPayload(slug, searchParams);
     fetchGuestHubConfig<{
       settings?: Partial<HubSettings>;
       site?: { slug?: string; coupleName1?: string; coupleName2?: string; weddingDate?: string };
@@ -223,6 +232,22 @@ export const EventHub: React.FC = () => {
       .catch(() => {
         if (!cancelled) {
           setHubConfigStatus(typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'fallback');
+        }
+      });
+    fetchPublicSiteAccess({
+      slug,
+      inviteToken: accessPayload.inviteToken,
+      passwordSession: accessPayload.passwordSession,
+      language: i18n.language?.split('-')[0] || 'en',
+    })
+      .then((access) => {
+        if (!cancelled) {
+          setTravelSource(access.site?.render_model.wedding?.travel ?? null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled && slug === 'alex-jordan-demo') {
+          setTravelSource(createAlexJordanDemoWeddingData().travel);
         }
       });
     trackGuestHubEvent(slug, 'view', '/event', buildGuestHubAccessPayload(slug, searchParams)).catch(() => {});
@@ -304,6 +329,17 @@ export const EventHub: React.FC = () => {
     siteSlug: slug,
     enabledActionIds: actions.map((action) => action.id),
   });
+  const travelHubSpotlight = buildTravelHubSpotlight({
+    siteSlug: slug,
+    travel: travelSource,
+    enabledActionIds: actions.map((action) => action.id),
+  });
+
+  const handleCopyTravelPlan = async () => {
+    if (!travelHubSpotlight) return;
+    const result = await copyTextOrDownload(travelHubSpotlight.shareText, 'dayof-travel-plan.txt');
+    setTravelShareStatus(result === 'copied' ? 'Travel plan copied.' : 'Travel plan downloaded.');
+  };
 
   const liveContent = (
     <EventHubLiveContent
@@ -317,6 +353,9 @@ export const EventHub: React.FC = () => {
       actions={actions}
       onTrackClick={trackClick}
       travelGuestJourney={travelGuestJourney}
+      travelHubSpotlight={travelHubSpotlight}
+      travelShareStatus={travelShareStatus}
+      onCopyTravelPlan={handleCopyTravelPlan}
       hubUrl={hubUrl}
       searchParams={searchParams}
       shouldOpenHubDetailsByDefault={shouldOpenHubDetailsByDefault}

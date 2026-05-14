@@ -1,5 +1,6 @@
 import { getSafePublicActionHref, getSafePublicMapsUrl } from '../sections/publicLinks';
 import type { GuestHubActionId } from './guestHubActions';
+import { normalizeTravelPortalData } from './travelStructuredData';
 
 export type TravelGuestPortalStepId =
   | 'arrival'
@@ -67,6 +68,19 @@ export interface TravelVenueMapLink {
   id: string;
   label: string;
   href: string;
+}
+
+export interface TravelHubSpotlightCard {
+  id: 'hotel' | 'room-block' | 'shuttle' | 'visa-tip' | 'cultural-tip';
+  label: string;
+  detail: string;
+}
+
+export interface TravelHubSpotlight {
+  summary: string;
+  travelHref: string;
+  cards: TravelHubSpotlightCard[];
+  shareText: string;
 }
 
 const hasUsefulText = (value: string | null | undefined, minLength = 8) => Boolean(value && value.trim().length >= minLength);
@@ -218,4 +232,82 @@ export function buildTravelVenueMapLinks(venues: TravelVenueMapInput[]): TravelV
       };
     })
     .filter((venue): venue is TravelVenueMapLink => Boolean(venue.href));
+}
+
+export function buildTravelHubSpotlight(input: {
+  siteSlug: string;
+  travel: unknown;
+  enabledActionIds: GuestHubActionId[];
+}): TravelHubSpotlight | null {
+  const siteSlug = input.siteSlug.trim().toLowerCase();
+  if (!siteSlug || !hasAction(input.enabledActionIds, 'travel')) return null;
+
+  const structured = normalizeTravelPortalData(input.travel);
+  const cards: TravelHubSpotlightCard[] = [];
+
+  const firstHotel = structured.hotels[0];
+  if (firstHotel) {
+    const detail = [
+      firstHotel.distance,
+      firstHotel.bookingCode ? `Code ${firstHotel.bookingCode}` : null,
+      firstHotel.bookingDeadline ? `Book by ${firstHotel.bookingDeadline}` : null,
+    ].filter(Boolean).join(' · ');
+    cards.push({
+      id: 'hotel',
+      label: firstHotel.name,
+      detail: detail || 'Hotel option ready for guests.',
+    });
+  }
+
+  const firstRoomBlock = structured.roomBlocks[0];
+  if (firstRoomBlock) {
+    cards.push({
+      id: 'room-block',
+      label: 'Room block',
+      detail: [firstRoomBlock.hotelName, firstRoomBlock.bookingCode ? `Code ${firstRoomBlock.bookingCode}` : null, firstRoomBlock.bookingDeadline].filter(Boolean).join(' · '),
+    });
+  }
+
+  const firstShuttle = structured.shuttles[0];
+  if (firstShuttle) {
+    cards.push({
+      id: 'shuttle',
+      label: firstShuttle.label,
+      detail: [firstShuttle.route, firstShuttle.departureTime, firstShuttle.returnTime].filter(Boolean).join(' · ') || 'Shuttle plan ready.',
+    });
+  }
+
+  const firstVisaTip = structured.visaTips[0];
+  if (firstVisaTip) {
+    cards.push({
+      id: 'visa-tip',
+      label: 'Arrival tip',
+      detail: firstVisaTip,
+    });
+  }
+
+  const firstCulturalTip = structured.culturalTips[0];
+  if (firstCulturalTip) {
+    cards.push({
+      id: 'cultural-tip',
+      label: 'Local tip',
+      detail: firstCulturalTip,
+    });
+  }
+
+  if (cards.length === 0) return null;
+
+  const travelHref = getSafePublicActionHref(`/site/${encodeURIComponent(siteSlug)}#travel`, '');
+  const shareText = [
+    'DayOf travel quick plan',
+    ...cards.map((card) => `${card.label}: ${card.detail}`),
+    `Travel page: ${travelHref}`,
+  ].join('\n');
+
+  return {
+    summary: `${cards.length} travel detail${cards.length === 1 ? '' : 's'} ready from the guest hub.`,
+    travelHref,
+    cards,
+    shareText,
+  };
 }

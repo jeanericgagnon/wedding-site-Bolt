@@ -46,6 +46,39 @@ export function createAlexJordanDemoWeddingData(overrides: Partial<typeof demoWe
     notes: 'Napa evenings cool down quickly. Bring a light layer for the garden and plan rideshare pickup near the main estate entrance.',
     parkingInfo: 'Complimentary valet will be available at the venue entrance.',
     hotelInfo: 'A small room block is available nearby under the Thompson Rivera wedding.',
+    hotels: [
+      {
+        id: 'demo-travel-hotel-1',
+        name: 'Riverfront House',
+        distance: '7 minutes from the estate',
+        bookingCode: 'THOMPSONRIVERA',
+        bookingDeadline: 'May 28',
+        url: 'https://dayof.love',
+        shuttleInfo: 'Saturday shuttle pickup starts at 3:45 PM.',
+      },
+    ],
+    roomBlocks: [
+      {
+        id: 'demo-room-block-1',
+        hotelName: 'Riverfront House',
+        bookingCode: 'THOMPSONRIVERA',
+        bookingDeadline: 'May 28',
+        detail: 'Friday to Sunday room block with late checkout available.',
+        url: 'https://dayof.love',
+      },
+    ],
+    shuttles: [
+      {
+        id: 'demo-shuttle-1',
+        label: 'Ceremony shuttle',
+        route: 'Riverfront House to Sunset Gardens Estate',
+        departureTime: '3:45 PM',
+        returnTime: '10:30 PM',
+        notes: 'Pickup begins in the front circle drive.',
+      },
+    ],
+    visaTips: ['Bring the same passport used for your travel booking if you are flying in internationally.'],
+    culturalTips: ['Bring a light layer for the waterfront and shoes you can walk in on garden paths.'],
   };
   data.registry = {
     links: [
