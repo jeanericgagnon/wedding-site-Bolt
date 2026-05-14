@@ -371,9 +371,11 @@ Execution rule for this section:
    - this batch shipped: owners can now save a real full-resolution photo download job from the dashboard, backed by the refreshed owner photo manifest instead of stopping at the CSV handoff sheet
    - this batch shipped: the no-app memory-flow readiness card no longer claims full-resolution packaging is merely planned once reviewed uploads exist; it now reflects the shipped download-job path honestly
    - this batch shipped: focused proof is green for full-resolution job payload generation plus the updated memory-flow readiness truth
+   - this batch shipped: local/demo photo memory state is now persisted and hydrated as real dashboard truth, including recap settings, uploads, albums, analyses, guestbook, prospects, and upload links instead of an empty placeholder snapshot
+   - this batch shipped: the demo owner export path now saves a real full-resolution download job locally, and recap-status saves now read back correctly after reload instead of collapsing when the owner proof uses demo state
+   - this batch shipped: a dedicated `proof:v1:photo-memory-flow` lane is now green for memory-flow readiness, owner slideshow preview, owner full-resolution export download, recap-status save/reload continuity, and the mobile guest upload route without raw-token leakage
    - add live guest video upload browser proof
    - add live slideshow publish/display proof beyond owner-draft readiness
-   - add mobile guest upload proof for the checklist/no-app flow
    - prove owner moderation readback after real live uploads
 
 7. `ACTIVE`: destination/travel guest portal

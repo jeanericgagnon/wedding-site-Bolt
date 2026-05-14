@@ -18,6 +18,7 @@ import {
   type PhotoUploadMetadataRow,
   type PhotoUploadRow,
 } from './guestPhotoSharingUtils';
+import { readDemoGuestPhotoState, writeDemoGuestPhotoState } from './guestPhotos/guestPhotoDemoState';
 
 const GUEST_PHOTO_BUCKET_SITE_SELECT = 'wedding_data, site_json';
 const GUEST_PHOTO_DASHBOARD_SITE_SELECT = 'id, site_slug, wedding_data';
@@ -63,6 +64,17 @@ export async function saveGuestPhotoHubSettings(
   siteId: string,
   hubSettings: GuestHubSettings,
 ): Promise<void> {
+  if (siteId === 'demo-site-id') {
+    const snapshot = readDemoGuestPhotoState();
+    writeDemoGuestPhotoState({
+      ...snapshot,
+      hubSettings: {
+        ...snapshot.hubSettings,
+        ...hubSettings,
+      },
+    });
+    return;
+  }
   const userId = await getGuestPhotoCurrentUserId();
   const now = new Date().toISOString();
   const { error: upsertError } = await supabase.rpc('guest_hub_settings_write', {
@@ -234,6 +246,26 @@ export async function exportGuestPhotoManifest(
   siteId: string,
   includeHidden: boolean,
 ): Promise<{ rows?: Array<Record<string, unknown>> }> {
+  if (siteId === 'demo-site-id') {
+    const snapshot = readDemoGuestPhotoState();
+    const bucketById = new Map(snapshot.buckets.map((bucket) => [bucket.id, bucket]));
+    const rows = snapshot.uploads
+      .filter((upload) => includeHidden || !upload.is_hidden)
+      .map((upload) => ({
+        bucket: bucketById.get(upload.photo_album_id)?.name ?? '',
+        filename: upload.original_filename,
+        guest_name: upload.guest_name ?? null,
+        guest_email: upload.guest_email ?? null,
+        note: upload.note ?? null,
+        mime_type: upload.mime_type ?? null,
+        size_bytes: upload.size_bytes ?? null,
+        uploaded_at: upload.uploaded_at ?? null,
+        download_url: upload.drive_web_view_link ?? null,
+        hidden: upload.is_hidden ? 'yes' : 'no',
+        flagged: upload.is_flagged ? 'yes' : 'no',
+      }));
+    return { rows };
+  }
   return await invokeGuestPhotoOwnerFunction<{ rows?: Array<Record<string, unknown>> }>('photo-export-manifest', {
     siteId,
     includeHidden,
@@ -244,6 +276,19 @@ export async function moderateGuestPhotoUploads(
   uploadIds: string[],
   patch: Partial<Pick<PhotoUploadRow, 'is_hidden' | 'is_flagged' | 'recap_hidden' | 'recap_featured' | 'recap_story'>>,
 ): Promise<void> {
+  if (uploadIds.some((id) => id.startsWith('demo-photo-upload-'))) {
+    const snapshot = readDemoGuestPhotoState();
+    const targetIds = new Set(uploadIds);
+    writeDemoGuestPhotoState({
+      ...snapshot,
+      uploads: snapshot.uploads.map((upload) => (
+        targetIds.has(upload.id)
+          ? { ...upload, ...patch }
+          : upload
+      )),
+    });
+    return;
+  }
   await invokeGuestPhotoOwnerFunction('photo-upload-moderate', { uploadIds, patch });
 }
 

@@ -152,6 +152,25 @@ describe('guestPhotoSharingService', () => {
     );
   });
 
+  it('persists demo guest photo hub settings locally without hitting Supabase', async () => {
+    await expect(saveGuestPhotoHubSettings('demo-site-id', {
+      ...{
+        rsvp_enabled: true,
+        photos_enabled: true,
+        guestbook_enabled: true,
+        registry_enabled: true,
+        schedule_enabled: true,
+        travel_enabled: true,
+        recap_status: 'published',
+        recap_published_at: '2026-06-16T12:00:00.000Z',
+        recap_closed_at: null,
+        custom_message: 'Published for proof',
+        language_default: 'en',
+      },
+    })).resolves.toBeUndefined();
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+
   it('runs guest photo upload analysis through the service helper', async () => {
     invokeFunctionOrThrowMock.mockResolvedValueOnce({ analyzed: 2, results: [] });
 
@@ -174,6 +193,18 @@ describe('guestPhotoSharingService', () => {
     );
   });
 
+  it('exports the demo guest photo manifest locally without invoking the edge function', async () => {
+    await expect(exportGuestPhotoManifest('demo-site-id', false)).resolves.toMatchObject({
+      rows: expect.arrayContaining([
+        expect.objectContaining({
+          bucket: 'Ceremony',
+          filename: 'vows-kiss.jpg',
+        }),
+      ]),
+    });
+    expect(invokeFunctionOrThrowMock).not.toHaveBeenCalled();
+  });
+
   it('moderates guest photo uploads through the service helper', async () => {
     invokeFunctionOrThrowMock.mockResolvedValueOnce({ ok: true });
 
@@ -183,6 +214,11 @@ describe('guestPhotoSharingService', () => {
       'photo-upload-moderate',
       { uploadIds: ['upload-1'], patch: { is_hidden: true } },
     );
+  });
+
+  it('updates demo guest photo uploads locally without invoking the edge function', async () => {
+    await expect(moderateGuestPhotoUploads(['demo-photo-upload-1'], { recap_story: true })).resolves.toBeUndefined();
+    expect(invokeFunctionOrThrowMock).not.toHaveBeenCalled();
   });
 
   it('manages guest photo albums through the service helper', async () => {
