@@ -67,6 +67,7 @@
     "proof:v1:comms-center": "node scripts/v1-proof-comms-center.mjs",
     "proof:v1:coordinator-dayof": "node scripts/v1-proof-coordinator-dayof.mjs",
     "proof:v1:name-change-runtime": "node scripts/v1-proof-name-change-runtime.mjs",
+    "proof:v1:notification-digest": "node scripts/v1-proof-notification-digest.mjs",
     "proof:v1:qr-scanner": "node scripts/v1-proof-qr-scanner.mjs",
     "proof:v1:registry": "node scripts/v1-proof-registry.mjs",
     "proof:v1:full-suite-exit-gate": "node scripts/v1-proof-full-suite-exit-gate.mjs",

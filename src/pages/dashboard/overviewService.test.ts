@@ -51,4 +51,21 @@ describe('overviewService', () => {
     expect(source).not.toContain(".from('wedding_sites')\n    .update({ wedding_data: nextWeddingData })");
     expect(source).not.toContain(".from('wedding_sites')\n    .update({ site_json: nextSiteJson })");
   });
+
+  it('loads digest source counts from the real overview tables instead of placeholders', () => {
+    const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/overviewService.ts'), 'utf8');
+
+    expect(source).toContain(".from('messages')");
+    expect(source).toContain(".or('status.eq.failed,status.eq.partial,failed_count.gt.0')");
+    expect(source).toContain(".from('planning_tasks')");
+    expect(source).toContain(".in('status', ['todo', 'in_progress'])");
+    expect(source).toContain(".from('planning_budget_items')");
+    expect(source).toContain(".from('planning_vendors')");
+    expect(source).toContain('buildBudgetPaymentReview({');
+    expect(source).toContain(".from('photo_uploads')");
+    expect(source).toContain(".gte('uploaded_at', recentUploadCutoffIso)");
+    expect(source).toContain(".from('seating_events')");
+    expect(source).toContain(".from('seating_assignments')");
+    expect(source).toContain(".eq('is_valid', true)");
+  });
 });

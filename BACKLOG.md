@@ -400,6 +400,8 @@ Execution rule for this section:
    - this batch shipped: a dedicated owner/planner digest email render path now produces safe HTML + plain-text preview output without token/provider leakage
    - this batch shipped: digest preview status no longer hardcodes delivery as connected, so saved cadence and next-send windows stay explicitly in preview/readback mode until the real inbox delivery pipeline exists
    - this batch shipped: focused proof is green for settings, overview, and digest email readback staying honest about scheduled preview state versus actual delivery connectivity
+   - this batch shipped: a dedicated `proof:v1:notification-digest` lane now reruns digest source-count unit coverage, overview snapshot-to-stats continuity, overview model continuity, settings readback, and build integrity so the digest lane is guarded beyond isolated copy assertions
+   - this batch shipped: overview digest proof now explicitly guards that message review, task, payment, photo upload, and seating-gap counts continue coming from the real overview source tables/snapshot path instead of drifting back to placeholders
    - add deeper proof around digest source-of-truth count continuity after real planning/message/photo/seating writes
    - prove live inbox delivery/readback behavior once the digest-delivery pipeline is connected beyond local schedule/readback truth
 
