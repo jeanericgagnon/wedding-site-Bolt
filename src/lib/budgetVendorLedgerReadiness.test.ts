@@ -231,6 +231,7 @@ describe('budget vendor ledger readiness', () => {
           id: 'vendor-1',
           name: 'Rose Hall',
           vendor_type: 'Venue',
+          email: 'venue@example.com',
           contract_total: 12000,
           amount_paid: 6000,
           balance_due: 6000,
@@ -277,6 +278,7 @@ describe('budget vendor ledger readiness', () => {
     expect(reconciliation.milestoneReadyCount).toBe(1);
     expect(reconciliation.mismatchedCount).toBe(1);
     expect(reconciliation.rows[0]?.vendorName).toBe('Bloom Floral');
+    expect(reconciliation.rows[0]?.issues).toContain('Open balance has no saved email or phone');
     expect(reconciliation.rows[0]?.issues).toContain('No contract or invoice files saved');
     expect(reconciliation.rows[0]?.issues.some((issue) => issue.includes('Contract differs from linked budget'))).toBe(true);
     expect(reconciliation.rows[0]?.issues.some((issue) => issue.includes('Paid totals differ by'))).toBe(true);

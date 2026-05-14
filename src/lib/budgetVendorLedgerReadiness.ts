@@ -511,15 +511,18 @@ export function buildBudgetVendorReconciliation(input: {
     const comparisonTotal = linkedActualTotal > 0 ? linkedActualTotal : linkedEstimatedTotal;
     const contractGap = Math.abs(contractTotal - comparisonTotal);
     const paidGap = Math.abs(vendorPaid - linkedPaidTotal);
+    const openBalance = vendor.balance_due != null ? money(vendor.balance_due) : Math.max(0, contractTotal - vendorPaid);
     const fileCount = Array.isArray(meta?.contractFiles) ? meta!.contractFiles!.filter((file) => file?.label || file?.url).length : 0;
     const milestoneCount = Array.isArray(meta?.paymentMilestones) ? meta!.paymentMilestones!.filter((milestone) => milestone?.label || milestone?.dueDate || milestone?.amount).length : 0;
     const issues: string[] = [];
+    const hasContact = Boolean(vendor.email || vendor.phone);
 
     if (linkedBudgetItems.length === 0) issues.push('No linked budget lines');
     if (contractTotal > 0 && comparisonTotal > 0 && contractGap >= 1) issues.push(`Contract differs from linked budget by ${money(contractGap).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}`);
     if (vendorPaid > 0 && linkedPaidTotal > 0 && paidGap >= 1) issues.push(`Paid totals differ by ${money(paidGap).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}`);
+    if (openBalance > 0 && !hasContact) issues.push('Open balance has no saved email or phone');
     if (fileCount === 0) issues.push('No contract or invoice files saved');
-    if (milestoneCount === 0 && money(vendor.balance_due) > 0) issues.push('No payment milestones saved');
+    if (milestoneCount === 0 && openBalance > 0) issues.push('No payment milestones saved');
 
     return {
       vendorId: vendor.id,
