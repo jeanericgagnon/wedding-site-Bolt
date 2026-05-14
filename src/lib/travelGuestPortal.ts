@@ -45,6 +45,7 @@ export interface TravelGuestPortalReadiness {
   plannedCount: number;
   coverageBadges: string[];
   summary: string;
+  mainGapLabel: string | null;
   steps: TravelGuestPortalStep[];
   blockers: string[];
 }
@@ -193,6 +194,9 @@ export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): 
   const missingLabels = steps
     .filter((step) => step.status === 'needs-info' || step.status === 'empty')
     .map((step) => step.label);
+  const highestPriorityGap = steps.find((step) => step.status === 'needs-info')
+    ?? steps.find((step) => step.status === 'empty')
+    ?? null;
   const coverageBadges = [
     `${guestFacingReadyCount} of ${guestFacingSections.length} guest sections ready`,
     hasLodging ? 'Stay guidance ready' : 'Stay guidance missing',
@@ -209,6 +213,7 @@ export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): 
     summary: missingLabels.length > 0
       ? `${readyCount} ready · ${needsInfoCount} need info · ${emptyCount} empty${plannedCount > 0 ? ` · ${plannedCount} planned` : ''}. Still missing: ${missingLabels.join(', ')}.`
       : `${readyCount} ready${plannedCount > 0 ? ` · ${plannedCount} planned` : ''}.`,
+    mainGapLabel: highestPriorityGap ? `Main gap: ${highestPriorityGap.label}` : null,
     steps,
     blockers,
   };

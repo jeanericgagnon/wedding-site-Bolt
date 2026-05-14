@@ -31,6 +31,7 @@ describe('travelGuestPortal', () => {
       'Arrival coverage ready',
     ]);
     expect(readiness.summary).toBe('7 ready.');
+    expect(readiness.mainGapLabel).toBeNull();
     expect(readiness.steps.find((step) => step.id === 'guest-specific')?.status).toBe('ready');
   });
 
@@ -58,6 +59,7 @@ describe('travelGuestPortal', () => {
     ]);
     expect(readiness.blockers).toContain('Add airport, train, shuttle, or arrival guidance.');
     expect(readiness.summary).toBe('0 ready · 4 need info · 2 empty · 1 planned. Still missing: Arrival guidance, Lodging, Local transport, Venue addresses, Weekend schedule, Local context.');
+    expect(readiness.mainGapLabel).toBe('Main gap: Arrival guidance');
   });
 
   it('treats structured travel records as guest-ready even when the owner skips long-form summaries', () => {
@@ -84,6 +86,7 @@ describe('travelGuestPortal', () => {
       'Arrival coverage ready',
     ]);
     expect(readiness.summary).toBe('7 ready.');
+    expect(readiness.mainGapLabel).toBeNull();
   });
 
   it('keeps venue and schedule empty states clear before a couple has built those sections', () => {
@@ -103,6 +106,7 @@ describe('travelGuestPortal', () => {
       'Arrival coverage missing',
     ]);
     expect(readiness.summary).toBe('0 ready · 3 need info · 3 empty · 1 planned. Still missing: Arrival guidance, Lodging, Local transport, Venue addresses, Weekend schedule, Local context.');
+    expect(readiness.mainGapLabel).toBe('Main gap: Arrival guidance');
   });
 
   it('builds a safe mobile journey from travel to RSVP to photo upload', () => {

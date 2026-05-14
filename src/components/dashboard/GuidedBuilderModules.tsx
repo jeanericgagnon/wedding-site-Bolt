@@ -644,6 +644,9 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
                       </span>
                     </div>
                     <p className="mt-3 text-xs text-text-tertiary">{travelPortalReadiness.summary}</p>
+                    {travelPortalReadiness.mainGapLabel && (
+                      <p className="mt-1 text-xs text-text-tertiary">{travelPortalReadiness.mainGapLabel}</p>
+                    )}
                     <div className="mt-3 flex flex-wrap gap-2">
                       {travelPortalReadiness.coverageBadges.map((badge) => (
                         <span

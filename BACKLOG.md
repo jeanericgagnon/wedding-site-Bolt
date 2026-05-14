@@ -474,6 +474,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the guest-hub fallback/runtime path now preserves the seeded couple summary and travel context strongly enough for real guest travel continuity proof instead of dropping the hub back to raw slug-only framing
    - this batch shipped: a dedicated `proof:v1:travel-guest-portal` lane now reruns travel helper/render tests plus a real mobile browser flow from invite-scoped guest hub to travel, RSVP, and photo-upload surfaces without raw-token body leakage
    - 2026-05-14 production rerun on `https://dayof.love` failed because the live invite-scoped guest hub did not render the proven `Travel quick plan` card, so live/mobile proof is still open until that shipped runtime picks up the structured travel spotlight
+   - this batch shipped: the owner travel-portal readiness card now also calls out the main gap in plain language, so couples can see whether arrival, lodging, transport, venue addresses, schedule, or local context is the next fix without translating the full missing-section list by hand
    - rerun the same invite-scoped travel hub flow against the shipped production runtime for live/mobile proof after the live guest hub renders the structured travel card again
 
 13. `ACTIVE`: app-like web day-of mode
