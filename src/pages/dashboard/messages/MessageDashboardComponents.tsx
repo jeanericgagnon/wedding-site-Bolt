@@ -1198,6 +1198,16 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
         </div>
         <div className="space-y-2">
           {campaignThreads.map((thread) => (
+            (() => {
+              const engagementSummary = [
+                thread.opened > 0 ? `${thread.opened} opened` : null,
+                thread.viewed > 0 ? `${thread.viewed} viewed` : null,
+                thread.clicked > 0 ? `${thread.clicked} clicked` : null,
+                thread.replied > 0 ? `${thread.replied} replied` : null,
+                thread.bounced > 0 ? `${thread.bounced} bounced` : null,
+              ].filter(Boolean).join(' · ');
+
+              return (
             <button
               key={thread.key}
               type="button"
@@ -1210,10 +1220,13 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               </div>
               <div className="text-right text-[11px] text-text-tertiary">
                 <p>{thread.delivered} delivered · {thread.failed} need review</p>
+                {engagementSummary && <p className="text-text-secondary">{engagementSummary}</p>}
                 {thread.skipped > 0 && <p className="text-warning">{describeRecipientReview(thread.skipped)}</p>}
                 {thread.unreached > 0 && <p className="text-warning">{thread.unreached} not reached yet</p>}
               </div>
             </button>
+              );
+            })()
           ))}
         </div>
       </div>
