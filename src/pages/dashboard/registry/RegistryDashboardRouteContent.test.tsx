@@ -119,11 +119,103 @@ describe('RegistryDashboardRouteContent', () => {
     );
 
     expect(screen.getByText('Thank-you follow-up list')).toBeInTheDocument();
+    expect(screen.getByText('Purchasers named: 1')).toBeInTheDocument();
+    expect(screen.getByText('Missing purchaser: 0')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /save thank-you list/i }));
     fireEvent.click(screen.getByRole('button', { name: /mark sent/i }));
 
     expect(handleSyncRegistryThankYouTasks).toHaveBeenCalled();
     expect(handleToggleRegistryThankYouTask).toHaveBeenCalledWith('gift-1');
+  });
+
+  it('surfaces missing purchaser follow-up state in the owner summary', () => {
+    render(
+      <RegistryDashboardRouteContent
+        actionableBadImportCount={0}
+        alertCounts={{ stale: 0, priceChanged: 0, outOfStock: 0, imageIssues: 0 }}
+        autoRefreshEnabled
+        autoRefreshing={false}
+        bulkImportBusy={false}
+        bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
+        budgetUtilization={0}
+        counts={{ total: 1, available: 0, partial: 1, purchased: 0, totalValue: 80 }}
+        duplicateGroups={[]}
+        editItem={null}
+        filter="all"
+        filtered={[makeItem({ purchaser_name: null, purchase_status: 'partial' })]}
+        fulfillmentRate={0}
+        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, withGoal: 0 }}
+        handleAddNew={vi.fn()}
+        handleAutoRefreshStale={vi.fn(async () => {})}
+        handleBulkImport={vi.fn(async () => {})}
+        handleCopyDuplicateReviewList={vi.fn(async () => {})}
+        handleDelete={vi.fn(async () => {})}
+        handleEdit={vi.fn()}
+        handleMergeDuplicateGroup={vi.fn(async () => {})}
+        handleMarkPurchased={vi.fn(async () => {})}
+        handleResetPurchaseState={vi.fn(async () => {})}
+        handleRefetchMetadata={vi.fn(async () => true)}
+        handleRefreshImageIssues={vi.fn(async () => {})}
+        handleRepairBadImports={vi.fn(async () => {})}
+        handleRunRepairQueueAction={vi.fn(async () => {})}
+        handleSyncRegistryThankYouTasks={vi.fn(async () => {})}
+        handleToggleRegistryThankYouTask={vi.fn(async () => {})}
+        imageRefreshBusy={false}
+        items={[makeItem({ purchaser_name: null, purchase_status: 'partial' })]}
+        loading={false}
+        monthlyRefreshCap={100}
+        monthlyRefreshCount={0}
+        mergingDuplicateGroupId={null}
+        nearBudgetCap={false}
+        normalizedItems={[makeItem({ purchaser_name: null, purchase_status: 'partial' })]}
+        recentActivity={[makeItem({ purchaser_name: null, purchase_status: 'partial' })]}
+        registryActionsOpen={false}
+        registryActionsRef={{ current: null }}
+        registryInsights={[]}
+        registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}
+        registryThankYouPlan={{
+          headline: 'Thank-you follow-up list',
+          summary: '1 purchased gift is in the thank-you list.',
+          purchasedCount: 1,
+          namedPurchaserCount: 0,
+          missingPurchaserCount: 1,
+          completedCount: 0,
+          items: [{
+            id: 'gift-1',
+            giftName: 'Dinner plates',
+            purchaserLabel: 'Purchaser not recorded yet',
+            detail: 'Add the purchaser before you send a thank-you.',
+            status: 'quiet',
+            taskStatus: 'needs-purchaser',
+            completedAt: null,
+          }],
+        }}
+        registryThankYouBusyItemId={null}
+        registryThankYouSyncing={false}
+        repairingBadImports={false}
+        repairQueue={[]}
+        refreshBudgetRemaining={100}
+        refreshWindowOpen={true}
+        search=""
+        setBulkImportOpen={vi.fn()}
+        setFilter={vi.fn()}
+        setRegistryActionsOpen={vi.fn()}
+        setSearch={vi.fn()}
+        setShowAlertsOnly={vi.fn()}
+        setShowImageIssuesOnly={vi.fn()}
+        showAlertsOnly={false}
+        showImageIssuesOnly={false}
+        topRegistryItems={[makeItem({ purchaser_name: null, purchase_status: 'partial' })]}
+        weddingSiteId="site-1"
+      />,
+    );
+
+    expect(screen.getByText('Missing purchaser: 1')).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Thank-you ready: 0 · Missing purchaser: 1'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Add the purchaser before you send a thank-you.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /review gift/i })).toBeInTheDocument();
   });
 
   it('derives fund readiness truth from safe payment methods', () => {

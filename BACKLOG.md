@@ -446,6 +446,8 @@ Execution rule for this section:
    - this batch shipped: focused proof is green for the new registry insight derivation, including fund-setup and fund-goal nudges that stay calm and specific instead of leaking import/metadata jargon into owner copy
    - this batch shipped: registry quick-check insights now also flag purchased gifts that still need purchaser attribution, so thank-you follow-up blockers show up earlier than the final thank-you list itself
    - this batch shipped: focused proof is green for purchaser-attribution insight derivation, keeping the owner nudge specific to real purchased/partial gifts without overclaiming that thank-you follow-up is already complete
+   - this batch shipped: the owner registry dashboard now surfaces missing-purchaser thank-you readiness directly inside the thank-you summary and registry notes, so follow-up gaps are visible where owners actually send and review thank-yous instead of only through a quick-check insight card
+   - this batch shipped: focused route proof is green for the thank-you summary chips, missing-purchaser readback, and `Review gift` owner action on gifts that still need purchaser attribution
    - add live owner add/import/edit persistence proof for broader registry workflows
    - rerun the stronger owner repair/cleanup runtime proof against the shipped production runtime after the next approved registry deploy
    - rerun the guest-visible purchase-state assertions against the live production runtime after the next approved registry deploy instead of only local/public-component proof

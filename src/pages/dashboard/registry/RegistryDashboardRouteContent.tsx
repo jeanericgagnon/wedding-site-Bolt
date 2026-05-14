@@ -341,6 +341,9 @@ export function RegistryDashboardRouteContent(props: {
                   Funds ready to share: <span className="font-semibold text-text-primary">{props.fundStats.readyToShare}</span> · Need payment path: <span className="font-semibold text-text-primary">{props.fundStats.needsSetup}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Thank-you ready: <span className="font-semibold text-text-primary">{props.registryThankYouPlan.namedPurchaserCount}</span> · Missing purchaser: <span className="font-semibold text-text-primary">{props.registryThankYouPlan.missingPurchaserCount}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Image issues: <span className="font-semibold text-text-primary">{props.alertCounts.imageIssues}</span> · Duplicate groups: <span className="font-semibold text-text-primary">{props.duplicateGroups.length}</span>
                 </div>
               </div>
@@ -368,6 +371,9 @@ export function RegistryDashboardRouteContent(props: {
               </span>
               <span className="rounded-lg border border-border px-2 py-1 text-text-tertiary">
                 Purchasers named: {props.registryThankYouPlan.namedPurchaserCount}
+              </span>
+              <span className="rounded-lg border border-border px-2 py-1 text-text-tertiary">
+                Missing purchaser: {props.registryThankYouPlan.missingPurchaserCount}
               </span>
               <span className="rounded-lg border border-border px-2 py-1 text-text-tertiary">
                 Thank-yous sent: {props.registryThankYouPlan.completedCount}
