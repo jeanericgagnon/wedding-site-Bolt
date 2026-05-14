@@ -48,10 +48,12 @@ describe('registryLaunchReadiness', () => {
     expect(readiness.status).toBe('ready');
     expect(readiness.reviewCount).toBe(0);
     expect(readiness.summary).toContain('Guest gift links and fund paths are ready');
+    expect(readiness.items.find((entry) => entry.id === 'external-links')?.detail).toContain('100% coverage');
     expect(readiness.items.find((entry) => entry.id === 'cash-funds')).toMatchObject({
       tone: 'ready',
       count: 0,
     });
+    expect(readiness.items.find((entry) => entry.id === 'cash-funds')?.detail).toContain('100% coverage');
   });
 
   it('flags unsafe product and payment links before a guest share', () => {
@@ -69,7 +71,9 @@ describe('registryLaunchReadiness', () => {
     expect(readiness.status).toBe('needs-review');
     expect(readiness.reviewCount).toBeGreaterThan(0);
     expect(readiness.items.find((entry) => entry.id === 'external-links')?.tone).toBe('review');
+    expect(readiness.items.find((entry) => entry.id === 'external-links')?.detail).toContain('0% coverage');
     expect(readiness.items.find((entry) => entry.id === 'cash-funds')?.tone).toBe('review');
+    expect(readiness.items.find((entry) => entry.id === 'cash-funds')?.detail).toContain('0% coverage');
   });
 
   it('keeps thank-you follow-up planned instead of pretending tasks already exist', () => {
@@ -81,6 +85,7 @@ describe('registryLaunchReadiness', () => {
       tone: 'ready',
       count: 1,
     });
+    expect(readiness.items.find((entry) => entry.id === 'thank-you-follow-up')?.detail).toContain('100% purchaser attribution coverage');
     expect(readiness.items.find((entry) => entry.id === 'hide-purchased')?.detail).toContain('hide after purchase');
   });
 

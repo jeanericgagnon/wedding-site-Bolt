@@ -65,6 +65,11 @@ function plural(count: number, singular: string, pluralLabel = `${singular}s`): 
   return `${count} ${count === 1 ? singular : pluralLabel}`;
 }
 
+function percent(numerator: number, denominator: number): number {
+  if (denominator <= 0) return 0;
+  return Math.round((numerator / denominator) * 100);
+}
+
 function hasSafeLink(value: string | null | undefined): boolean {
   return Boolean(getSafePublicWebUrl(value));
 }
@@ -99,7 +104,12 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
   const cashFundsReady = cashFunds.filter((item) => safePaymentLinkCount(item) > 0 || Boolean((item.fund_zelle_handle ?? '').trim())).length;
   const cashFundsNeedingPayment = cashFunds.length - cashFundsReady;
   const hiddenPurchased = items.filter((item) => item.hide_when_purchased).length;
-  const thankYouFollowUps = Object.values(syncRegistryThankYouLedger(items, ledger)).length;
+  const syncedLedger = syncRegistryThankYouLedger(items, ledger);
+  const thankYouFollowUps = Object.values(syncedLedger).length;
+  const thankYouNamedPurchasers = Object.values(syncedLedger).filter((entry) => Boolean(entry.purchaserName)).length;
+  const productLinkCoverageRate = percent(productLinksReady, productItems.length);
+  const fundShareReadyRate = percent(cashFundsReady, cashFunds.length);
+  const thankYouAttributionCoverageRate = percent(thankYouNamedPurchasers, thankYouFollowUps);
 
   const itemsOut: RegistryLaunchReadinessItem[] = [
     {
@@ -109,8 +119,8 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
       detail: productItems.length === 0
         ? 'No product gifts are listed yet.'
         : productLinksMissing + unsafeProductLinks > 0
-          ? `${plural(productLinksMissing + unsafeProductLinks, 'product gift')} need a safe public link before guests rely on them.`
-          : `${plural(productLinksReady, 'product gift')} have safe public links.`,
+          ? `${plural(productLinksReady, 'product gift')} have safe public links (${productLinkCoverageRate}% coverage). ${plural(productLinksMissing + unsafeProductLinks, 'product gift')} still need a guest-safe link.`
+          : `${plural(productLinksReady, 'product gift')} have safe public links (${productLinkCoverageRate}% coverage).`,
       tone: productLinksMissing + unsafeProductLinks > 0 ? 'review' : 'ready',
     },
     {
@@ -120,8 +130,8 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
       detail: cashFunds.length === 0
         ? 'No cash funds are listed, which is fine for a gift-only registry.'
         : cashFundsNeedingPayment + unsafePaymentLinks > 0
-          ? `${plural(cashFundsNeedingPayment + unsafePaymentLinks, 'cash fund')} need a safe payment path or handle.`
-          : `${plural(cashFundsReady, 'cash fund')} have a guest-facing payment path or handle.`,
+          ? `${plural(cashFundsReady, 'cash fund')} are share-ready (${fundShareReadyRate}% coverage). ${plural(cashFundsNeedingPayment + unsafePaymentLinks, 'cash fund')} still need a safe payment path or handle.`
+          : `${plural(cashFundsReady, 'cash fund')} have a guest-facing payment path or handle (${fundShareReadyRate}% coverage).`,
       tone: cashFundsNeedingPayment + unsafePaymentLinks > 0 ? 'review' : 'ready',
     },
     {
@@ -138,7 +148,7 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
       label: 'Thank-you follow-up',
       count: thankYouFollowUps,
       detail: thankYouFollowUps > 0
-        ? `${plural(thankYouFollowUps, 'gift')} are in the thank-you follow-up list.`
+        ? `${plural(thankYouFollowUps, 'gift')} are in the thank-you follow-up list with ${thankYouAttributionCoverageRate}% purchaser attribution coverage.`
         : 'Thank-you follow-up is quiet until gifts are marked purchased.',
       tone: thankYouFollowUps > 0 ? 'ready' : 'ready',
     },
