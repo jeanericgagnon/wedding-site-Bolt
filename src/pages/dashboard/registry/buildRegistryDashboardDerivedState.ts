@@ -104,20 +104,40 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
     const safeMethodCount = countSafeFundMethods(item);
     const goalAmount = item.fund_goal_amount ?? 0;
     const receivedAmount = item.fund_received_amount ?? 0;
+    const hasProgress = receivedAmount > 0;
     acc.count += 1;
     acc.goal += goalAmount;
     acc.received += receivedAmount;
-    if (safeMethodCount > 0) acc.readyToShare += 1;
-    else acc.needsSetup += 1;
+    if (safeMethodCount > 0) {
+      acc.readyToShare += 1;
+      if (hasProgress) acc.readyWithProgress += 1;
+      else acc.readyAwaitingFirstGift += 1;
+    } else {
+      acc.needsSetup += 1;
+    }
     if (goalAmount > 0) {
       acc.withGoal += 1;
-      if (receivedAmount > 0) acc.withProgress += 1;
+      if (hasProgress) acc.withProgress += 1;
       else acc.awaitingFirstGift += 1;
     } else {
       acc.missingGoal += 1;
+      if (hasProgress) acc.flexibleWithProgress += 1;
     }
     return acc;
-  }, { count: 0, goal: 0, received: 0, readyToShare: 0, needsSetup: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0 });
+  }, {
+    count: 0,
+    goal: 0,
+    received: 0,
+    readyToShare: 0,
+    needsSetup: 0,
+    readyWithProgress: 0,
+    readyAwaitingFirstGift: 0,
+    withGoal: 0,
+    missingGoal: 0,
+    withProgress: 0,
+    awaitingFirstGift: 0,
+    flexibleWithProgress: 0,
+  });
 
   const fulfillmentRate = counts.total > 0 ? Math.round((counts.purchased / counts.total) * 100) : 0;
   const recentActivity = [...items]

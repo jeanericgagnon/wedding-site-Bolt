@@ -265,16 +265,19 @@ export function getFeaturedRegistryFundPublicSignals(item: Pick<RegistryItem, 'f
   const received = safeFundAmount(item.fund_received_amount);
   const methods = getRegistryFundContributionMethods(item);
   const methodCount = methods.length;
+  const progressPercent = goal > 0 ? Math.min(100, Math.round((received / goal) * 100)) : null;
   const chips: string[] = [];
 
   if (methodCount > 0) {
     chips.push(`${methodCount} ${methodCount === 1 ? 'way' : 'ways'} to contribute`);
   }
 
-  if (goal > 0 && received > 0) {
-    chips.push('Fund progress is underway');
+  if (goal > 0 && received > 0 && progressPercent != null) {
+    chips.push(`${progressPercent}% funded`);
   } else if (goal > 0) {
     chips.push('Be the first gift');
+  } else if (received > 0) {
+    chips.push('Already receiving gifts');
   } else {
     chips.push('Flexible fund');
   }

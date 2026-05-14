@@ -52,7 +52,7 @@ describe('RegistryDashboardRouteContent', () => {
         filter="all"
         filtered={[makeItem()]}
         fulfillmentRate={100}
-        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0 }}
+        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
         handleAddNew={vi.fn()}
         handleAutoRefreshStale={vi.fn(async () => {})}
         handleBulkImport={vi.fn(async () => {})}
@@ -144,7 +144,7 @@ describe('RegistryDashboardRouteContent', () => {
         filter="all"
         filtered={[makeItem({ purchaser_name: null, purchase_status: 'partial' })]}
         fulfillmentRate={0}
-        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0 }}
+        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
         handleAddNew={vi.fn()}
         handleAutoRefreshStale={vi.fn(async () => {})}
         handleBulkImport={vi.fn(async () => {})}
@@ -267,10 +267,13 @@ describe('RegistryDashboardRouteContent', () => {
       count: 2,
       readyToShare: 1,
       needsSetup: 1,
+      readyWithProgress: 1,
+      readyAwaitingFirstGift: 0,
       withGoal: 2,
       missingGoal: 0,
       withProgress: 2,
       awaitingFirstGift: 0,
+      flexibleWithProgress: 0,
       received: 1400,
       goal: 6000,
     });
@@ -322,12 +325,91 @@ describe('RegistryDashboardRouteContent', () => {
       count: 2,
       readyToShare: 2,
       needsSetup: 0,
+      readyWithProgress: 1,
+      readyAwaitingFirstGift: 1,
       withGoal: 1,
       missingGoal: 1,
       withProgress: 0,
       awaitingFirstGift: 1,
+      flexibleWithProgress: 1,
       received: 150,
       goal: 2500,
     });
+  });
+
+  it('renders richer fund follow-through notes for moving and waiting funds', () => {
+    render(
+      <RegistryDashboardRouteContent
+        actionableBadImportCount={0}
+        alertCounts={{ stale: 0, priceChanged: 0, outOfStock: 0, imageIssues: 0 }}
+        autoRefreshEnabled
+        autoRefreshing={false}
+        bulkImportBusy={false}
+        bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
+        budgetUtilization={0}
+        counts={{ total: 2, available: 2, partial: 0, purchased: 0, totalValue: 0 }}
+        duplicateGroups={[]}
+        editItem={null}
+        filter="all"
+        filtered={[makeItem({ id: 'fund-1' }), makeItem({ id: 'fund-2' })]}
+        fulfillmentRate={0}
+        fundStats={{ count: 2, received: 1500, goal: 4000, readyToShare: 2, needsSetup: 0, readyWithProgress: 1, readyAwaitingFirstGift: 1, withGoal: 1, missingGoal: 1, withProgress: 1, awaitingFirstGift: 0, flexibleWithProgress: 1 }}
+        handleAddNew={vi.fn()}
+        handleAutoRefreshStale={vi.fn(async () => {})}
+        handleBulkImport={vi.fn(async () => {})}
+        handleCopyDuplicateReviewList={vi.fn(async () => {})}
+        handleDelete={vi.fn(async () => {})}
+        handleEdit={vi.fn()}
+        handleMergeDuplicateGroup={vi.fn(async () => {})}
+        handleMarkPurchased={vi.fn(async () => {})}
+        handleResetPurchaseState={vi.fn(async () => {})}
+        handleRefetchMetadata={vi.fn(async () => true)}
+        handleRefreshImageIssues={vi.fn(async () => {})}
+        handleRepairBadImports={vi.fn(async () => {})}
+        handleRunRepairQueueAction={vi.fn(async () => {})}
+        handleSyncRegistryThankYouTasks={vi.fn(async () => {})}
+        handleToggleRegistryThankYouTask={vi.fn(async () => {})}
+        imageRefreshBusy={false}
+        items={[makeItem({ id: 'fund-1' }), makeItem({ id: 'fund-2' })]}
+        loading={false}
+        monthlyRefreshCap={100}
+        monthlyRefreshCount={0}
+        mergingDuplicateGroupId={null}
+        nearBudgetCap={false}
+        normalizedItems={[makeItem({ id: 'fund-1' }), makeItem({ id: 'fund-2' })]}
+        recentActivity={[makeItem({ id: 'fund-1' })]}
+        registryActionsOpen={false}
+        registryActionsRef={{ current: null }}
+        registryInsights={[]}
+        registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}
+        registryThankYouPlan={{ headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] }}
+        registryThankYouBusyItemId={null}
+        registryThankYouSyncing={false}
+        repairingBadImports={false}
+        repairQueue={[]}
+        refreshBudgetRemaining={100}
+        refreshWindowOpen={true}
+        search=""
+        setBulkImportOpen={vi.fn()}
+        setFilter={vi.fn()}
+        setRegistryActionsOpen={vi.fn()}
+        setSearch={vi.fn()}
+        setShowAlertsOnly={vi.fn()}
+        setShowImageIssuesOnly={vi.fn()}
+        showAlertsOnly={false}
+        showImageIssuesOnly={false}
+        topRegistryItems={[makeItem({ id: 'fund-1' })]}
+        weddingSiteId="site-1"
+      />,
+    );
+
+    expect(screen.getByText('1 already moving · 1 waiting on a first gift')).toBeInTheDocument();
+    expect(screen.getByText('1 showing tracked progress · 1 flexible fund already receiving gifts')).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Ready funds already moving: 1 · Waiting on first gift: 1'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Flexible funds with gifts: 1 · Tracked progress funds: 1'),
+    ).toBeInTheDocument();
   });
 });

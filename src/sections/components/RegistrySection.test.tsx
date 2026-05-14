@@ -419,9 +419,8 @@ describe('RegistrySection', () => {
     expect(screen.getByText('Honeymoon fund')).toBeInTheDocument();
     expect(screen.getByText('Help us celebrate with a few honeymoon memories.')).toBeInTheDocument();
     expect(screen.getByText('2 ways to contribute')).toBeInTheDocument();
-    expect(screen.getByText('Fund progress is underway')).toBeInTheDocument();
+    expect(screen.getAllByText('25% funded')).toHaveLength(2);
     expect(screen.getByText('Every contribution moves this fund toward its shared goal.')).toBeInTheDocument();
-    expect(screen.getByText('25% funded')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Venmo' })).toHaveAttribute('href', 'https://venmo.com/dayof');
     expect(screen.getByRole('link', { name: 'Contribute' })).toHaveAttribute('href', 'https://example.com/honeymoon');
     expect(screen.queryByRole('link', { name: 'PayPal' })).not.toBeInTheDocument();
@@ -452,7 +451,7 @@ describe('RegistrySection', () => {
       fund_custom_label: null,
       fund_zelle_handle: 'dayof@example.com',
     })).toEqual({
-      chips: ['2 ways to contribute', 'Flexible fund'],
+      chips: ['2 ways to contribute', 'Already receiving gifts'],
       detail: 'This fund stays flexible while the couple refines the final goal.',
     });
   });

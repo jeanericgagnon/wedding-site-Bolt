@@ -65,10 +65,13 @@ type FundStats = {
   goal: number;
   readyToShare: number;
   needsSetup: number;
+  readyWithProgress: number;
+  readyAwaitingFirstGift: number;
   withGoal: number;
   missingGoal: number;
   withProgress: number;
   awaitingFirstGift: number;
+  flexibleWithProgress: number;
 };
 
 type AlertCounts = {
@@ -247,7 +250,7 @@ export function RegistryDashboardRouteContent(props: {
                 {props.fundStats.readyToShare} ready to share{props.fundStats.needsSetup > 0 ? ` · ${props.fundStats.needsSetup} need a payment path` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
-                {props.fundStats.withGoal} with goals{props.fundStats.missingGoal > 0 ? ` · ${props.fundStats.missingGoal} missing a goal` : ''}
+                {props.fundStats.readyWithProgress} already moving{props.fundStats.readyAwaitingFirstGift > 0 ? ` · ${props.fundStats.readyAwaitingFirstGift} waiting on a first gift` : ''}
               </p>
             </Card>
             <Card variant="bordered" padding="md">
@@ -258,7 +261,7 @@ export function RegistryDashboardRouteContent(props: {
                 {props.fundStats.withGoal > 0 ? ` across ${props.fundStats.withGoal} tracked fund${props.fundStats.withGoal === 1 ? '' : 's'}` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
-                {props.fundStats.withProgress} showing progress{props.fundStats.awaitingFirstGift > 0 ? ` · ${props.fundStats.awaitingFirstGift} waiting on a first gift` : ''}
+                {props.fundStats.withProgress} showing tracked progress{props.fundStats.flexibleWithProgress > 0 ? ` · ${props.fundStats.flexibleWithProgress} flexible fund${props.fundStats.flexibleWithProgress === 1 ? '' : 's'} already receiving gifts` : ''}
               </p>
             </Card>
             <Card variant="bordered" padding="md">
@@ -350,7 +353,13 @@ export function RegistryDashboardRouteContent(props: {
                   Funds ready to share: <span className="font-semibold text-text-primary">{props.fundStats.readyToShare}</span> · Need payment path: <span className="font-semibold text-text-primary">{props.fundStats.needsSetup}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Ready funds already moving: <span className="font-semibold text-text-primary">{props.fundStats.readyWithProgress}</span> · Waiting on first gift: <span className="font-semibold text-text-primary">{props.fundStats.readyAwaitingFirstGift}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Goal tracking: <span className="font-semibold text-text-primary">{props.fundStats.withGoal}</span> · Missing goal: <span className="font-semibold text-text-primary">{props.fundStats.missingGoal}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Flexible funds with gifts: <span className="font-semibold text-text-primary">{props.fundStats.flexibleWithProgress}</span> · Tracked progress funds: <span className="font-semibold text-text-primary">{props.fundStats.withProgress}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Thank-you ready: <span className="font-semibold text-text-primary">{props.registryThankYouPlan.namedPurchaserCount}</span> · Missing purchaser: <span className="font-semibold text-text-primary">{props.registryThankYouPlan.missingPurchaserCount}</span>
