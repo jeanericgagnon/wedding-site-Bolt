@@ -49,12 +49,39 @@ describe('guestVisibilityPreview', () => {
         href: '/guest-contact/maya-and-rowan?invite_token=private-token&previewGuest=guest-1&previewSurface=contact',
       },
       {
+        kind: 'photos',
+        label: 'Open photo upload as guest',
+        href: '/photos/upload?site=maya-and-rowan&hub=1&invite_token=private-token&previewGuest=guest-1&previewSurface=photos',
+      },
+      {
+        kind: 'guestbook',
+        label: 'Open guestbook as guest',
+        href: '/guestbook/maya-and-rowan?invite_token=private-token&previewGuest=guest-1&previewSurface=guestbook',
+      },
+      {
+        kind: 'recap',
+        label: 'Open recap as guest',
+        href: '/event/maya-and-rowan/recap?invite_token=private-token&previewGuest=guest-1&previewSurface=recap',
+      },
+      {
+        kind: 'travel',
+        label: 'Open travel section as guest',
+        href: '/site/maya-and-rowan?previewGuest=guest-1&previewSurface=travel#travel',
+      },
+      {
+        kind: 'registry',
+        label: 'Open registry section as guest',
+        href: '/site/maya-and-rowan?previewGuest=guest-1&previewSurface=registry#registry',
+      },
+      {
         kind: 'site',
         label: 'Open public site view',
         href: '/site/maya-and-rowan?previewGuest=guest-1&previewSurface=public',
       },
     ]);
     expect(`${preview.bannerLabel} ${preview.accessDetail} ${preview.accessSummary}`).not.toContain('private-token');
+    expect(preview.links.map((link) => link.label)).toContain('Open travel section as guest');
+    expect(preview.links.map((link) => link.label)).toContain('Open registry section as guest');
   });
 
   it('falls back to legacy ceremony and reception visibility when no itinerary events exist', () => {

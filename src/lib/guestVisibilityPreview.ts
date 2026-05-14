@@ -39,7 +39,7 @@ export interface GuestVisibilityPreviewInput {
 export interface GuestVisibilityPreviewLink {
   label: string;
   href: string;
-  kind: 'rsvp' | 'site' | 'contact';
+  kind: 'rsvp' | 'site' | 'contact' | 'photos' | 'guestbook' | 'recap' | 'travel' | 'registry';
 }
 
 export interface GuestVisibilityPreview {
@@ -138,8 +138,33 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
       label: 'Open guest update view',
       href: `/guest-contact/${encodeURIComponent(input.publicSiteSlug)}?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=contact`,
     });
+    links.push({
+      kind: 'photos',
+      label: 'Open photo upload as guest',
+      href: `/photos/upload?site=${encodeURIComponent(input.publicSiteSlug)}&hub=1&invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=photos`,
+    });
+    links.push({
+      kind: 'guestbook',
+      label: 'Open guestbook as guest',
+      href: `/guestbook/${encodeURIComponent(input.publicSiteSlug)}?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=guestbook`,
+    });
+    links.push({
+      kind: 'recap',
+      label: 'Open recap as guest',
+      href: `/event/${encodeURIComponent(input.publicSiteSlug)}/recap?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=recap`,
+    });
   }
   if (input.publicSiteSlug) {
+    links.push({
+      kind: 'travel',
+      label: 'Open travel section as guest',
+      href: `/site/${encodeURIComponent(input.publicSiteSlug)}?previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=travel#travel`,
+    });
+    links.push({
+      kind: 'registry',
+      label: 'Open registry section as guest',
+      href: `/site/${encodeURIComponent(input.publicSiteSlug)}?previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=registry#registry`,
+    });
     links.push({
       kind: 'site',
       label: 'Open public site view',
