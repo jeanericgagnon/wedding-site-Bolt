@@ -126,6 +126,38 @@ describe('invisibleIntelligence', () => {
     expect(registry.map((suggestion) => suggestion.detail).join(' ')).not.toMatch(/broken|failed|metadata/i);
   });
 
+  it('flags purchased gifts that still need purchaser attribution for thank-you follow-up', () => {
+    const registry = buildRegistryInsights([
+      {
+        category: 'kitchen',
+        item_name: 'Dinner plates',
+        image_url: 'https://example.com/plates.jpg',
+        purchaseStatus: 'purchased',
+        quantityPurchased: 1,
+        purchaserName: '',
+      },
+      {
+        category: 'cash funds',
+        item_name: 'Honeymoon fund',
+        image_url: 'https://example.com/fund.jpg',
+        purchaseStatus: 'partial',
+        quantityPurchased: 1,
+        purchaserName: 'Alex',
+        contributionMethodCount: 1,
+        goalAmount: 3000,
+        receivedAmount: 800,
+      },
+    ]);
+
+    expect(registry).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'registry-purchaser-attribution',
+        title: 'Purchaser names missing',
+      }),
+    ]));
+    expect(registry.find((suggestion) => suggestion.id === 'registry-purchaser-attribution')?.detail).toContain('purchaser name');
+  });
+
   it('builds one-click messaging actions while provider sending stays external', () => {
     const actions = buildMessagingActions({
       pendingGuests: 12,

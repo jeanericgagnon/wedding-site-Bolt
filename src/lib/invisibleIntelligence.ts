@@ -254,6 +254,9 @@ export function buildRegistryInsights(items: Array<{
   contributionMethodCount?: number | null;
   goalAmount?: number | null;
   receivedAmount?: number | null;
+  purchaseStatus?: string | null;
+  purchaserName?: string | null;
+  quantityPurchased?: number | null;
 }>): IntelligenceSuggestion[] {
   if (items.length === 0) {
     return [{
@@ -278,6 +281,12 @@ export function buildRegistryInsights(items: Array<{
   const fundItems = items.filter((item) => lower(item.category).includes('cash fund'));
   const fundsMissingSetup = fundItems.filter((item) => Number(item.contributionMethodCount ?? 0) <= 0).length;
   const fundsMissingGoal = fundItems.filter((item) => Number(item.goalAmount ?? 0) <= 0).length;
+  const purchasedItemsMissingAttribution = items.filter((item) => {
+    const purchasedCount = Math.max(0, Number(item.quantityPurchased ?? 0));
+    const status = lower(item.purchaseStatus);
+    const hasPurchase = purchasedCount > 0 || status === 'partial' || status === 'purchased';
+    return hasPurchase && !normalizeText(item.purchaserName);
+  }).length;
   const suggestions: IntelligenceSuggestion[] = [];
   if (top && top[1] >= Math.max(3, items.length * 0.6)) {
     suggestions.push({
@@ -329,6 +338,19 @@ export function buildRegistryInsights(items: Array<{
       href: '/dashboard/registry',
       source: 'deterministic',
       confidence: 0.76,
+    });
+  }
+  if (purchasedItemsMissingAttribution > 0) {
+    suggestions.push({
+      id: 'registry-purchaser-attribution',
+      area: 'registry',
+      priority: 'next',
+      title: 'Purchaser names missing',
+      detail: `${purchasedItemsMissingAttribution} purchased gift${purchasedItemsMissingAttribution === 1 ? '' : 's'} still need a purchaser name before thank-you follow-up is fully ready.`,
+      actionLabel: 'Review purchased gifts',
+      href: '/dashboard/registry',
+      source: 'deterministic',
+      confidence: 0.84,
     });
   }
   return suggestions;

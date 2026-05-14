@@ -444,6 +444,8 @@ Execution rule for this section:
    - this batch shipped: focused proof is green for fund follow-through derivation, counting only safe public contribution methods when deciding whether a cash fund is ready to share or still needs setup
    - this batch shipped: registry quick-check insights now include cash-fund setup and goal-tracking guidance, so owner analytics stop treating all funds as equally ready when some still lack a guest-ready payment path or a clear progress target
    - this batch shipped: focused proof is green for the new registry insight derivation, including fund-setup and fund-goal nudges that stay calm and specific instead of leaking import/metadata jargon into owner copy
+   - this batch shipped: registry quick-check insights now also flag purchased gifts that still need purchaser attribution, so thank-you follow-up blockers show up earlier than the final thank-you list itself
+   - this batch shipped: focused proof is green for purchaser-attribution insight derivation, keeping the owner nudge specific to real purchased/partial gifts without overclaiming that thank-you follow-up is already complete
    - add live owner add/import/edit persistence proof for broader registry workflows
    - rerun the stronger owner repair/cleanup runtime proof against the shipped production runtime after the next approved registry deploy
    - rerun the guest-visible purchase-state assertions against the live production runtime after the next approved registry deploy instead of only local/public-component proof
