@@ -167,6 +167,20 @@ function summarizeLinkedBudgetStatus(item: BudgetLedgerItem): string {
   return 'Partially paid';
 }
 
+function summarizeLinkedBudgetTiming(item: BudgetLedgerItem, today: Date, nextTwoWeeks: Date): string {
+  const total = money(item.actual_amount) || money(item.estimated_amount);
+  const paid = money(item.paid_amount);
+  const open = Math.max(0, total - paid);
+  if (total <= 0) return 'Planned';
+  if (open <= 0) return 'Covered';
+  if (!item.due_date) return 'No due date';
+  const due = new Date(`${item.due_date.slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(due.getTime())) return 'No due date';
+  if (due < today) return 'Overdue';
+  if (due <= nextTwoWeeks) return 'Due soon';
+  return 'Upcoming';
+}
+
 function summarizeVendorFiles(meta: VendorLedgerMeta | undefined): string {
   const entries = Array.isArray(meta?.contractFiles) ? meta.contractFiles : [];
   return entries
@@ -325,7 +339,12 @@ export function budgetVendorLedgerToCsv(input: {
   budgetItems: BudgetLedgerItem[];
   vendors: VendorLedgerItem[];
   vendorMeta?: Record<string, VendorLedgerMeta | undefined> | null;
+  today?: Date;
 }): string {
+  const today = input.today ? new Date(input.today) : new Date();
+  today.setHours(0, 0, 0, 0);
+  const nextTwoWeeks = new Date(today);
+  nextTwoWeeks.setDate(nextTwoWeeks.getDate() + 14);
   const vendorMap = new Map(input.vendors.map((vendor) => [vendor.id, vendor]));
   const vendorMeta = input.vendorMeta ?? {};
   const reconciliation = buildBudgetVendorReconciliation({
@@ -341,7 +360,7 @@ export function budgetVendorLedgerToCsv(input: {
     ]),
   );
   const rows = [
-    ['Record Type', 'Name', 'Category or Type', 'Vendor', 'Estimated', 'Actual or Contract', 'Paid', 'Open', 'Due Date', 'Contact', 'Contact Name', 'Website', 'Reminder Channel', 'Follow Up', 'Reminder Lead Time', 'Reminder Last Queued', 'Document Label', 'Document URL', 'Files', 'Milestones', 'Internal Rating', 'Rating Status', 'Private Rating Notes', 'Contact Ready', 'Due Date Ready', 'File Count', 'Milestone Count', 'Linked Budget Count', 'Linked Budget Lines', 'Linked Budget Categories', 'Linked Budget Due Dates', 'Linked Budget Notes', 'Linked Budget Statuses', 'Linked Budget Estimated', 'Linked Budget Actual', 'Linked Budget Paid', 'Linked Budget Open', 'Contract Gap', 'Paid Gap', 'Ledger Issue Count', 'Ledger Issues', 'Notes'],
+    ['Record Type', 'Name', 'Category or Type', 'Vendor', 'Estimated', 'Actual or Contract', 'Paid', 'Open', 'Due Date', 'Contact', 'Contact Name', 'Website', 'Reminder Channel', 'Follow Up', 'Reminder Lead Time', 'Reminder Last Queued', 'Document Label', 'Document URL', 'Files', 'Milestones', 'Internal Rating', 'Rating Status', 'Private Rating Notes', 'Contact Ready', 'Due Date Ready', 'File Count', 'Milestone Count', 'Linked Budget Count', 'Linked Budget Lines', 'Linked Budget Categories', 'Linked Budget Due Dates', 'Linked Budget Notes', 'Linked Budget Statuses', 'Linked Budget Timing', 'Linked Budget Estimated', 'Linked Budget Actual', 'Linked Budget Paid', 'Linked Budget Open', 'Contract Gap', 'Paid Gap', 'Ledger Issue Count', 'Ledger Issues', 'Notes'],
     ...input.budgetItems.map((item) => {
       const total = money(item.actual_amount) || money(item.estimated_amount);
       const paid = money(item.paid_amount);
@@ -383,6 +402,7 @@ export function budgetVendorLedgerToCsv(input: {
         linkedBudgetItems.map((budgetItem) => budgetItem.due_date ?? '').filter(Boolean).join(' | '),
         linkedBudgetItems.map((budgetItem) => budgetItem.notes ?? '').filter(Boolean).join(' | '),
         linkedBudgetItems.map((budgetItem) => summarizeLinkedBudgetStatus(budgetItem)).filter(Boolean).join(' | '),
+        linkedBudgetItems.map((budgetItem) => summarizeLinkedBudgetTiming(budgetItem, today, nextTwoWeeks)).filter(Boolean).join(' | '),
         reconciliationRow ? String(reconciliationRow.linkedEstimatedTotal) : '',
         reconciliationRow ? String(reconciliationRow.linkedActualTotal) : '',
         reconciliationRow ? String(reconciliationRow.linkedPaidTotal) : '',
@@ -435,6 +455,7 @@ export function budgetVendorLedgerToCsv(input: {
         linkedBudgetItems.map((budgetItem) => budgetItem.due_date ?? '').filter(Boolean).join(' | '),
         linkedBudgetItems.map((budgetItem) => budgetItem.notes ?? '').filter(Boolean).join(' | '),
         linkedBudgetItems.map((budgetItem) => summarizeLinkedBudgetStatus(budgetItem)).filter(Boolean).join(' | '),
+        linkedBudgetItems.map((budgetItem) => summarizeLinkedBudgetTiming(budgetItem, today, nextTwoWeeks)).filter(Boolean).join(' | '),
         reconciliationRow ? String(reconciliationRow.linkedEstimatedTotal) : '',
         reconciliationRow ? String(reconciliationRow.linkedActualTotal) : '',
         reconciliationRow ? String(reconciliationRow.linkedPaidTotal) : '',

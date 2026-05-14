@@ -81,6 +81,7 @@ describe('budget vendor ledger readiness', () => {
 
   it('exports a combined budget and vendor ledger csv', () => {
     const csv = budgetVendorLedgerToCsv({
+      today: new Date('2026-05-04T12:00:00Z'),
       vendors: [
         {
           id: 'vendor-1',
@@ -133,8 +134,8 @@ describe('budget vendor ledger readiness', () => {
 
     expect(csv).toContain('"Record Type","Name","Category or Type","Vendor"');
     expect(csv).toContain('"Reminder Channel","Follow Up","Reminder Lead Time","Reminder Last Queued"');
-    expect(csv).toContain('"Internal Rating","Rating Status","Private Rating Notes","Contact Ready","Due Date Ready","File Count","Milestone Count","Linked Budget Count","Linked Budget Lines","Linked Budget Categories","Linked Budget Due Dates","Linked Budget Notes","Linked Budget Statuses","Linked Budget Estimated","Linked Budget Actual","Linked Budget Paid","Linked Budget Open","Contract Gap","Paid Gap","Ledger Issue Count","Ledger Issues","Notes"');
-    expect(csv).toContain('"Contact Ready","Due Date Ready","File Count","Milestone Count","Linked Budget Count","Linked Budget Lines","Linked Budget Categories","Linked Budget Due Dates","Linked Budget Notes","Linked Budget Statuses","Linked Budget Estimated","Linked Budget Actual","Linked Budget Paid","Linked Budget Open","Contract Gap","Paid Gap","Ledger Issue Count","Ledger Issues"');
+    expect(csv).toContain('"Internal Rating","Rating Status","Private Rating Notes","Contact Ready","Due Date Ready","File Count","Milestone Count","Linked Budget Count","Linked Budget Lines","Linked Budget Categories","Linked Budget Due Dates","Linked Budget Notes","Linked Budget Statuses","Linked Budget Timing","Linked Budget Estimated","Linked Budget Actual","Linked Budget Paid","Linked Budget Open","Contract Gap","Paid Gap","Ledger Issue Count","Ledger Issues","Notes"');
+    expect(csv).toContain('"Contact Ready","Due Date Ready","File Count","Milestone Count","Linked Budget Count","Linked Budget Lines","Linked Budget Categories","Linked Budget Due Dates","Linked Budget Notes","Linked Budget Statuses","Linked Budget Timing","Linked Budget Estimated","Linked Budget Actual","Linked Budget Paid","Linked Budget Open","Contract Gap","Paid Gap","Ledger Issue Count","Ledger Issues"');
     expect(csv).toContain('"Contact Name","Website"');
     expect(csv).toContain('"Document Label","Document URL"');
     expect(csv).toContain('"Budget item","Photo deposit","Photography","Photo Studio"');
@@ -145,11 +146,12 @@ describe('budget vendor ledger readiness', () => {
     expect(csv).toContain('"Signed proposal","https://docs.example.com/photo"');
     expect(csv).toContain('"contract: Signed contract"');
     expect(csv).toContain('"Final balance (scheduled, 2026-05-20, $2,500)"');
-    expect(csv).toContain('"5","Booked","Strong fit","Yes","Yes","1","1","1","Photo deposit","Photography","2026-05-20","Booked","Partially paid","5000","5000","2500","2500","0","0","0","","Booked"');
+    expect(csv).toContain('"5","Booked","Strong fit","Yes","Yes","1","1","1","Photo deposit","Photography","2026-05-20","Booked","Partially paid","Upcoming","5000","5000","2500","2500","0","0","0","","Booked"');
   });
 
   it('exports reconciliation blockers alongside vendor and budget handoff rows', () => {
     const csv = budgetVendorLedgerToCsv({
+      today: new Date('2026-05-21T12:00:00Z'),
       vendors: [
         {
           id: 'vendor-1',
@@ -181,7 +183,7 @@ describe('budget vendor ledger readiness', () => {
 
     expect(csv).toContain('"Budget item","Floral balance","Florals","Bloom Floral"');
     expect(csv).toContain('"Vendor","Bloom Floral","Florist","Bloom Floral"');
-    expect(csv).toContain('"No","No","0","0","1","Floral balance","Florals","2026-05-20","Short by final contract amount","Partially paid","2500","2500","500","2000","500","500","6"');
+    expect(csv).toContain('"No","No","0","0","1","Floral balance","Florals","2026-05-20","Short by final contract amount","Partially paid","Overdue","2500","2500","500","2000","500","500","6"');
     expect(csv).toContain('Contract differs from linked budget by $500');
     expect(csv).toContain('Paid totals differ by $500');
     expect(csv).toContain('Open balance has no saved email or phone');
