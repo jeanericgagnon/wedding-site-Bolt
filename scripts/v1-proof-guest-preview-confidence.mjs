@@ -4,6 +4,11 @@ import { execSync, spawn } from 'node:child_process';
 
 const PREVIEW_URL = 'http://127.0.0.1:4173';
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
+const isLiveBaseUrl = baseUrl !== PREVIEW_URL;
+const desktopSpec = isLiveBaseUrl
+  ? 'tests/e2e/guest-preview-live.spec.ts'
+  : 'tests/e2e/guest-preview-flow.spec.ts';
+const mobileSpec = 'tests/e2e/guest-preview-mobile.spec.ts';
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -62,6 +67,20 @@ function runStep(step) {
   }
 }
 
+function manualStep({ id, label, command, stderr }) {
+  const timestamp = new Date().toISOString();
+  return {
+    id,
+    label,
+    command,
+    required: false,
+    ok: false,
+    startedAt: timestamp,
+    finishedAt: timestamp,
+    stderr,
+  };
+}
+
 const results = [
   runStep({
     id: 'guest-preview-unit-tests',
@@ -99,14 +118,21 @@ try {
   results.push(runStep({
     id: 'guest-preview-browser-proof',
     label: 'Guest drawer desktop preview browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/guest-preview-flow.spec.ts`,
+    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${desktopSpec}`,
   }));
 
-  results.push(runStep({
-    id: 'guest-preview-mobile-browser-proof',
-    label: 'Guest drawer mobile preview browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/guest-preview-mobile.spec.ts`,
-  }));
+  results.push(isLiveBaseUrl
+    ? manualStep({
+      id: 'guest-preview-mobile-browser-proof',
+      label: 'Guest drawer mobile preview browser proof remains local-only until an authenticated mobile live spec lands',
+      command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${mobileSpec}`,
+      stderr: 'Mobile guest-preview proof on the shipped runtime still depends on the local-only drawer fixture path. Use the new authenticated desktop live proof for production reruns until the mobile live fixture path is ported.',
+    })
+    : runStep({
+      id: 'guest-preview-mobile-browser-proof',
+      label: 'Guest drawer mobile preview browser proof',
+      command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${mobileSpec}`,
+    }));
 
   if (previewStdout.trim()) {
     results.push({
@@ -125,7 +151,7 @@ try {
   results.push({
     id: 'guest-preview-browser-proof',
     label: 'Guest drawer browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/guest-preview-flow.spec.ts tests/e2e/guest-preview-mobile.spec.ts`,
+    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${desktopSpec}${isLiveBaseUrl ? '' : ` ${mobileSpec}`}`,
     required: true,
     ok: false,
     startedAt: new Date().toISOString(),
@@ -153,11 +179,15 @@ const output = {
   automatedCoverage: [
     'Guest preview route generation and token-safe visibility summary truth',
     'Guest drawer private QR surfaces without raw-token display leakage',
-    'Desktop browser proof for visible-versus-hidden event access plus RSVP/public site guest-preview routes',
+    isLiveBaseUrl
+      ? 'Authenticated desktop live browser proof for real guest-facing site and RSVP preview routes'
+      : 'Desktop browser proof for visible-versus-hidden event access plus RSVP/public site guest-preview routes',
     'Mobile browser proof for photo upload, travel, registry, and public site guest-preview routes from the drawer',
   ],
   stillManualProofNeeded: [
-    'Rerun guest drawer preview links against the shipped production runtime for live/mobile proof after the next approved guest-preview deploy.',
+    isLiveBaseUrl
+      ? 'Add an authenticated mobile live guest-preview proof so the shipped runtime can be rerun without relying on the localhost-only drawer fixture.'
+      : 'Rerun guest drawer preview links against the shipped production runtime for live/mobile proof after the next approved guest-preview deploy.',
   ],
   results,
 };

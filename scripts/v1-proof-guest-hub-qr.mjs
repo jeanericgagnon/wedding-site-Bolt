@@ -4,6 +4,10 @@ import { execSync, spawn } from 'node:child_process';
 
 const PREVIEW_URL = 'http://127.0.0.1:4173';
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
+const isLiveBaseUrl = baseUrl !== PREVIEW_URL;
+const browserSpec = isLiveBaseUrl
+  ? 'tests/e2e/guest-hub-qr-print-pack-live.spec.ts'
+  : 'tests/e2e/guest-hub-qr-print-pack.spec.ts';
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -99,7 +103,7 @@ try {
   results.push(runStep({
     id: 'guest-hub-qr-browser-proof',
     label: 'Guest hub QR print-pack export browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/guest-hub-qr-print-pack.spec.ts`,
+    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${browserSpec}`,
   }));
 
   if (previewStdout.trim()) {
@@ -119,7 +123,7 @@ try {
   results.push({
     id: 'guest-hub-qr-browser-proof',
     label: 'Guest hub QR print-pack export browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/guest-hub-qr-print-pack.spec.ts`,
+    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${browserSpec}`,
     required: true,
     ok: false,
     startedAt: new Date().toISOString(),
@@ -147,10 +151,14 @@ const output = {
   automatedCoverage: [
     'Safe public guest-hub QR asset generation and private QR vendor blocking truth',
     'Dashboard guest-hub QR controls and print-pack export readiness',
-    'Browser-triggered guest-hub print-pack export with captured nonblank safe HTML output',
+    isLiveBaseUrl
+      ? 'Authenticated live browser proof for guest-hub print-pack export with captured nonblank safe HTML output'
+      : 'Browser-triggered guest-hub print-pack export with captured nonblank safe HTML output',
   ],
   stillManualProofNeeded: [
-    'Rerun the same exported print-pack open/download flow on the shipped production runtime after the next approved guest-hub QR deploy.',
+    isLiveBaseUrl
+      ? 'Extend the live proof to cover mobile guest-hub QR landing once the shipped runtime has a stable mobile QA route for this export surface.'
+      : 'Rerun the same exported print-pack open/download flow on the shipped production runtime after the next approved guest-hub QR deploy.',
   ],
   results,
 };
