@@ -69,6 +69,7 @@ export interface Toast {
 export interface DeliveryRow {
   id: string;
   message_id: string;
+  guest_id?: string | null;
   status: 'pending' | 'sent' | 'failed' | 'skipped';
   provider_message_id: string | null;
   error_message: string | null;

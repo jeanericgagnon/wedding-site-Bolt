@@ -735,6 +735,35 @@ export function getCustomerDeliveryReason(message: string | null | undefined, fa
   });
 }
 
+function readRecipientFilterGuestIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return Array.from(new Set(
+    value
+      .filter((item): item is string => typeof item === 'string')
+      .map((item) => item.trim())
+      .filter(Boolean),
+  ));
+}
+
+export function getRecipientRetryGuestIds(message: Message): string[] {
+  return readRecipientFilterGuestIds(message.recipient_filter?.retry_guest_ids);
+}
+
+export function getRecipientExcludedGuestIds(message: Message): string[] {
+  return readRecipientFilterGuestIds(message.recipient_filter?.excluded_guest_ids);
+}
+
+export function getRecipientReviewPlanSummary(message: Message): string | null {
+  const retryCount = getRecipientRetryGuestIds(message).length;
+  const excludedCount = getRecipientExcludedGuestIds(message).length;
+  if (retryCount <= 0 && excludedCount <= 0) return null;
+
+  const parts: string[] = [];
+  if (retryCount > 0) parts.push(`next send targets ${retryCount} ${retryCount === 1 ? 'reviewed guest' : 'reviewed guests'}`);
+  if (excludedCount > 0) parts.push(`excludes ${excludedCount} ${excludedCount === 1 ? 'guest still missing contact details' : 'guests still missing contact details'}`);
+  return parts.join(' and ');
+}
+
 export function describeRecipientReview(count: number): string {
   return `${count} ${count === 1 ? 'recipient needs' : 'recipients need'} contact details`;
 }

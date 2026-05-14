@@ -10,6 +10,7 @@ import {
   getCampaignName,
   getCampaignTypeLabel,
   getCustomerDeliveryReason,
+  getRecipientReviewPlanSummary,
   getRecipientCount,
   getSkippedCount,
   getUnreachedCount,
@@ -23,6 +24,8 @@ interface MessageDetailModalProps {
   canManageCampaigns: boolean;
   onClose: () => void;
   onRetry: (message: Message) => Promise<void>;
+  onRetryFailedRecipients: (message: Message) => Promise<void>;
+  onExcludeSkippedRecipients: (message: Message) => Promise<void>;
   onSendScheduledNow: (message: Message) => Promise<void>;
   onReschedule: (message: Message, scheduledFor: string) => Promise<void>;
   onCancelSchedule: (message: Message) => Promise<void>;
@@ -35,6 +38,8 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
   canManageCampaigns,
   onClose,
   onRetry,
+  onRetryFailedRecipients,
+  onExcludeSkippedRecipients,
   onSendScheduledNow,
   onReschedule,
   onCancelSchedule,
@@ -50,6 +55,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
   const audienceLabel = getAudienceLabel(message);
   const campaignName = getCampaignName(message);
   const campaignType = getCampaignTypeLabel(message);
+  const recipientReviewPlan = getRecipientReviewPlanSummary(message);
 
   const sentDate = message.sent_at
     ? formatMessageHistoryDateTime(message.sent_at, { dateStyle: 'long', timeStyle: 'short' }, 'Sent time unavailable')
@@ -149,6 +155,13 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
               </div>
             </div>
           </div>
+
+          {recipientReviewPlan && (
+            <div className="rounded-lg border border-primary/20 bg-primary-light/30 p-4">
+              <p className="text-sm font-semibold text-text-primary">Next-send review plan</p>
+              <p className="mt-1 text-xs text-text-secondary">{recipientReviewPlan}.</p>
+            </div>
+          )}
 
           {message.status === 'scheduled' && (
             <div className="rounded-lg border border-border bg-surface-subtle p-4">
@@ -254,6 +267,24 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                   ))}
                 </div>
               </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!canManageCampaigns || retrying}
+                  onClick={async () => {
+                    setRetrying(true);
+                    try {
+                      await onRetryFailedRecipients(message);
+                    } finally {
+                      setRetrying(false);
+                    }
+                  }}
+                >
+                  {retrying ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Preparing…</> : 'Retry reviewed guests only'}
+                </Button>
+              </div>
             </div>
           )}
 
@@ -297,6 +328,19 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!canManageCampaigns}
+                  onClick={async () => {
+                    await onExcludeSkippedRecipients(message);
+                  }}
+                >
+                  Exclude from the next send
+                </Button>
               </div>
             </div>
           )}

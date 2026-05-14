@@ -18,6 +18,9 @@ import {
   getActiveCampaignMessages,
   getActiveCampaignThread,
   getCustomerDeliveryReason,
+  getRecipientExcludedGuestIds,
+  getRecipientRetryGuestIds,
+  getRecipientReviewPlanSummary,
   getDeliveryScopedRows,
   getRecipientCount,
   countStoredPhotoAlbumLinks,
@@ -165,7 +168,14 @@ describe('messageDashboardUtils', () => {
   it('summarizes audience, counts, template, and safe delivery copy', () => {
     const eventMessage = message({
       audience_filter: 'event:ceremony',
-      recipient_filter: { audience_label: 'Ceremony guests', recipient_count: 8, skipped_count: 2, templateKey: 'rsvp-reminder' },
+      recipient_filter: {
+        audience_label: 'Ceremony guests',
+        recipient_count: 8,
+        skipped_count: 2,
+        templateKey: 'rsvp-reminder',
+        retry_guest_ids: ['g1', 'g2', 'g1'],
+        excluded_guest_ids: ['g3'],
+      },
     });
     const skipped = [{ id: 'd1', message_id: 'm1', status: 'skipped' }] as DeliveryRow[];
 
@@ -175,6 +185,9 @@ describe('messageDashboardUtils', () => {
     expect(getUnreachedCount(eventMessage, skipped)).toBe(4);
     expect(getTemplateKey(eventMessage)).toBe('rsvp-reminder');
     expect(getCustomerDeliveryReason('Resend API bounced for recipient', 'Needs review')).toBe('delivery service delivery service bounced for recipient');
+    expect(getRecipientRetryGuestIds(eventMessage)).toEqual(['g1', 'g2']);
+    expect(getRecipientExcludedGuestIds(eventMessage)).toEqual(['g3']);
+    expect(getRecipientReviewPlanSummary(eventMessage)).toBe('next send targets 2 reviewed guests and excludes 1 guest still missing contact details');
     expect(describeRecipientReview(1)).toBe('1 recipient needs contact details');
   });
 

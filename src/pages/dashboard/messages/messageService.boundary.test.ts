@@ -55,9 +55,20 @@ describe('message service query bounds', () => {
   it('keeps delivery history reads bounded for dashboard usage', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/messageService.ts'), 'utf8');
 
+    expect(source).toContain("'guest_id'");
     expect(source).toContain('const scopedMessageIds = Array.from(new Set(messageIds)).slice(0, MAX_MESSAGE_DELIVERY_MESSAGE_IDS);');
     expect(source).toContain(".in('message_id', scopedMessageIds)");
     expect(source).toContain('.limit(MAX_MESSAGE_DELIVERY_ROWS);');
+  });
+
+  it('keeps focused retry and exclusion filters inside the send-bulk runtime', () => {
+    const source = readFileSync(join(process.cwd(), 'supabase/functions/send-bulk-message/index.ts'), 'utf8');
+
+    expect(source).toContain('retry_guest_ids');
+    expect(source).toContain('excluded_guest_ids');
+    expect(source).toContain('const scopedGuests = allGuests');
+    expect(source).toContain('const eligibleGuests = scopedGuests.filter');
+    expect(source).toContain('const skippedGuests = scopedGuests.filter');
   });
 
   it('keeps itinerary audience reads bounded for dashboard usage', () => {

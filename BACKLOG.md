@@ -329,8 +329,9 @@ Execution rule for this section:
 3. `ACTIVE`: status-based messaging and invitation tracking
    - this batch shipped: message audience segmentation now hydrates meal-choice truth from canonical RSVP rows instead of trusting possibly stale guest-table meal fields, so `Missing meal` targeting follows the real RSVP record
    - this batch shipped: owner messaging surfaces now use slightly stricter delivery wording (`delivered`, `queued`, `sending`) instead of flatter “sent or ready” phrasing on the reach snapshot
+   - this batch shipped: message detail review now supports focused retry for reviewed failed recipients and next-send exclusions for recipients still missing contact details, backed by explicit recipient filters instead of provider-specific operator steps
+   - this batch shipped: dashboard delivery reads now carry `guest_id`, so follow-up review can target or exclude real guest rows without printing raw provider internals in the UI
    - normalize delivery/open/view/bounce/replied truth across channels
-   - add recipient retry and exclusion workflow without exposing provider internals
    - prove customer-safe delivery-failure grouping against live rows
    - add live browser proof for composing/saving each operational segment
    - keep SMS/Telnyx live-send behavior deferred until provider/compliance setup is ready

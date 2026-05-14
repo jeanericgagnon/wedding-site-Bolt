@@ -51,6 +51,7 @@ const MESSAGE_SELECT = [
 const DELIVERY_SELECT = [
   'id',
   'message_id',
+  'guest_id',
   'status',
   'provider_message_id',
   'error_message',

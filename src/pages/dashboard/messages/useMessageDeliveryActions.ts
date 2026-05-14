@@ -7,6 +7,8 @@ import {
 } from './messageDashboardTypes';
 import {
   describeRecipientReview,
+  getRecipientExcludedGuestIds,
+  getRecipientRetryGuestIds,
   hasReachableEmail,
   hasReachableSms,
   isPastScheduledTime,
@@ -21,6 +23,7 @@ import {
 
 interface UseMessageDeliveryActionsInput {
   canCompose: boolean;
+  deliveries: Array<{ guest_id?: string | null; message_id: string; status: string }>;
   getRecipients: (audience: string) => Guest[];
   isDemoMode: boolean;
   isSmsProviderEnabled: boolean;
@@ -32,6 +35,7 @@ interface UseMessageDeliveryActionsInput {
 
 export function useMessageDeliveryActions({
   canCompose,
+  deliveries,
   getRecipients,
   isDemoMode,
   isSmsProviderEnabled,
@@ -42,6 +46,34 @@ export function useMessageDeliveryActions({
 }: UseMessageDeliveryActionsInput) {
   const [processingScheduled, setProcessingScheduled] = useState(false);
   const [retryingMessageId, setRetryingMessageId] = useState<string | null>(null);
+
+  function getScopedRecipients(message: Message): Guest[] {
+    const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
+    const recipients = getRecipients(audience);
+    const retryGuestIds = getRecipientRetryGuestIds(message);
+    const excludedGuestIds = new Set(getRecipientExcludedGuestIds(message));
+    const scopedByRetry = retryGuestIds.length > 0
+      ? recipients.filter((guest) => retryGuestIds.includes(guest.id))
+      : recipients;
+    return scopedByRetry.filter((guest) => !excludedGuestIds.has(guest.id));
+  }
+
+  function getDeliveryGuestIds(message: Message, statuses: string[]) {
+    return Array.from(new Set(
+      deliveries
+        .filter((delivery) => delivery.message_id === message.id && statuses.includes(delivery.status) && typeof delivery.guest_id === 'string' && delivery.guest_id.trim())
+        .map((delivery) => String(delivery.guest_id).trim()),
+    ));
+  }
+
+  async function updateMessageRecipientFilter(message: Message, patch: Record<string, unknown>) {
+    await updateDashboardMessage(message.id, {
+      recipient_filter: {
+        ...(message.recipient_filter ?? {}),
+        ...patch,
+      },
+    });
+  }
 
   async function handleRetry(message: Message) {
     if (!canCompose) {
@@ -64,8 +96,7 @@ export function useMessageDeliveryActions({
     setRetryingMessageId(message.id);
     try {
       if (isDemoMode) {
-        const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
-        const recipients = getRecipients(audience);
+        const recipients = getScopedRecipients(message);
         const deliveredCount = message.channel === 'sms'
           ? recipients.filter((guest) => hasReachableSms(guest)).length
           : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
@@ -85,6 +116,8 @@ export function useMessageDeliveryActions({
                   recipient_count: recipients.length,
                   reachable_count: deliveredCount,
                   skipped_count: skippedCount,
+                  retry_guest_ids: getRecipientRetryGuestIds(message),
+                  excluded_guest_ids: getRecipientExcludedGuestIds(message),
                 },
               }
             : item
@@ -132,6 +165,125 @@ export function useMessageDeliveryActions({
     }
   }
 
+  async function handleRetryFailedRecipients(message: Message) {
+    if (!canCompose) {
+      toast('Your collaborator role cannot retry campaign sends.', 'info');
+      return;
+    }
+
+    if (message.channel === 'sms' && !isSmsProviderEnabled) {
+      toast('Text sending is not ready yet. Finish provider setup first.', 'info');
+      return;
+    }
+
+    const failedGuestIds = getDeliveryGuestIds(message, ['failed']);
+    if (failedGuestIds.length === 0) {
+      toast('No reviewed recipients are waiting for a focused retry here.', 'info');
+      return;
+    }
+
+    setRetryingMessageId(message.id);
+    try {
+      if (isDemoMode) {
+        const nextMessage = {
+          ...message,
+          recipient_filter: {
+            ...(message.recipient_filter ?? {}),
+            retry_guest_ids: failedGuestIds,
+          },
+        } as Message;
+        const recipients = getScopedRecipients(nextMessage);
+        const deliveredCount = message.channel === 'sms'
+          ? recipients.filter((guest) => hasReachableSms(guest)).length
+          : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
+        const skippedCount = Math.max(recipients.length - deliveredCount, 0);
+
+        setMessages((prev) => prev.map((item) => (
+          item.id === message.id
+            ? {
+                ...item,
+                status: skippedCount > 0 ? 'partial' : 'sent',
+                sent_at: new Date().toISOString(),
+                delivered_count: deliveredCount,
+                failed_count: 0,
+                recipient_count: recipients.length,
+                recipient_filter: {
+                  ...(item.recipient_filter ?? {}),
+                  retry_guest_ids: failedGuestIds,
+                  recipient_count: recipients.length,
+                  reachable_count: deliveredCount,
+                  skipped_count: skippedCount,
+                },
+              }
+            : item
+        )));
+
+        toast(
+          skippedCount > 0
+            ? `Focused retry finished in demo: delivered ${deliveredCount} • ${describeRecipientReview(skippedCount)}.`
+            : `Focused retry finished in demo: delivered ${deliveredCount}.`,
+          skippedCount > 0 ? 'info' : 'success',
+        );
+        return;
+      }
+
+      await updateMessageRecipientFilter(message, { retry_guest_ids: failedGuestIds });
+      await handleRetry({
+        ...message,
+        recipient_filter: {
+          ...(message.recipient_filter ?? {}),
+          retry_guest_ids: failedGuestIds,
+        },
+      });
+    } catch {
+      toast('Couldn’t prepare a focused retry right now. Please try again.', 'error');
+    } finally {
+      setRetryingMessageId(null);
+    }
+  }
+
+  async function handleExcludeSkippedRecipients(message: Message) {
+    if (!canCompose) {
+      toast('Your collaborator role cannot change recipient review rules here.', 'info');
+      return;
+    }
+
+    const skippedGuestIds = getDeliveryGuestIds(message, ['skipped']);
+    if (skippedGuestIds.length === 0) {
+      toast('Everyone in this send already has usable contact details.', 'info');
+      return;
+    }
+
+    const excludedGuestIds = Array.from(new Set([
+      ...getRecipientExcludedGuestIds(message),
+      ...skippedGuestIds,
+    ]));
+
+    try {
+      if (isDemoMode) {
+        setMessages((prev) => prev.map((item) => (
+          item.id === message.id
+            ? {
+                ...item,
+                recipient_filter: {
+                  ...(item.recipient_filter ?? {}),
+                  excluded_guest_ids: excludedGuestIds,
+                },
+              }
+            : item
+        )));
+        toast(`Next send will skip ${skippedGuestIds.length} ${skippedGuestIds.length === 1 ? 'recipient' : 'recipients'} still missing contact details.`, 'info');
+        return;
+      }
+
+      await updateMessageRecipientFilter(message, { excluded_guest_ids: excludedGuestIds });
+      await fetchMessages();
+      toast(`Next send will skip ${skippedGuestIds.length} ${skippedGuestIds.length === 1 ? 'recipient' : 'recipients'} still missing contact details.`, 'info');
+    } catch {
+      toast('Couldn’t update that review rule right now. Please try again.', 'error');
+    }
+  }
+
   async function handleSendScheduledNow(message: Message) {
     if (!canCompose) {
       toast('Your collaborator role cannot send campaigns from Messaging.', 'info');
@@ -143,9 +295,8 @@ export function useMessageDeliveryActions({
       return;
     }
 
-    if (isDemoMode) {
-      const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
-      const recipients = getRecipients(audience);
+      if (isDemoMode) {
+      const recipients = getScopedRecipients(message);
       const deliveredCount = message.channel === 'sms'
         ? recipients.filter((guest) => hasReachableSms(guest)).length
         : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
@@ -244,8 +395,7 @@ export function useMessageDeliveryActions({
     }
 
     try {
-      const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
-      const recipients = getRecipients(audience);
+      const recipients = getScopedRecipients(message);
       const reachableCount = message.channel === 'sms'
         ? recipients.filter((guest) => hasReachableSms(guest)).length
         : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
@@ -360,8 +510,7 @@ export function useMessageDeliveryActions({
         setMessages((prev) => prev.map((message) => {
           if (!dueIds.includes(message.id)) return message;
 
-          const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
-          const recipients = getRecipients(audience);
+          const recipients = getScopedRecipients(message);
           const deliveredCount = message.channel === 'sms'
             ? recipients.filter((guest) => hasReachableSms(guest)).length
             : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
@@ -413,8 +562,10 @@ export function useMessageDeliveryActions({
 
   return {
     handleCancelSchedule,
+    handleExcludeSkippedRecipients,
     handleRescheduleMessage,
     handleRetry,
+    handleRetryFailedRecipients,
     handleRunDueScheduledMessages,
     handleSendScheduledNow,
     processingScheduled,

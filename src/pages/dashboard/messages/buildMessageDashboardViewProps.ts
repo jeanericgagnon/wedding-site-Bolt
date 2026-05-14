@@ -93,6 +93,8 @@ export type BuildMessageDashboardViewPropsArgs = {
   onRescheduleHistoryMessage: DashboardProps['historyProps']['onRescheduleMessage'];
   onRetry: DashboardProps['historyProps']['onRetry'];
   onRetryDetailMessage: ComponentProps<typeof MessageDetailModal>['onRetry'];
+  onRetryFailedRecipientsDetailMessage: ComponentProps<typeof MessageDetailModal>['onRetryFailedRecipients'];
+  onExcludeSkippedRecipientsDetailMessage: ComponentProps<typeof MessageDetailModal>['onExcludeSkippedRecipients'];
   onRunDueScheduledMessages: DashboardProps['onRunDueScheduledMessages'];
   onSaveCurrentComposerAsTemplate: DashboardProps['composerProps']['onSaveCurrentComposerAsTemplate'];
   onScheduleFollowUp: DashboardProps['historyProps']['onScheduleFollowUp'];
@@ -123,6 +125,8 @@ export function buildMessageDashboardViewProps(args: BuildMessageDashboardViewPr
         canManageCampaigns: args.canCompose,
         onClose: args.onCloseDetailModal,
         onRetry: args.onRetryDetailMessage,
+        onRetryFailedRecipients: args.onRetryFailedRecipientsDetailMessage,
+        onExcludeSkippedRecipients: args.onExcludeSkippedRecipientsDetailMessage,
         onSendScheduledNow: args.onSendScheduledNowDetailMessage,
         onReschedule: args.onRescheduleDetailMessage,
         onCancelSchedule: args.onCancelScheduleDetailMessage,

@@ -61,6 +61,16 @@ function safeDeliveryFailureMessage(channel: string): string {
     : "Email delivery did not complete. Please review the recipient and try again.";
 }
 
+function normalizeRecipientFilterGuestIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return Array.from(new Set(
+    value
+      .filter((item): item is string => typeof item === "string")
+      .map((item) => item.trim())
+      .filter(Boolean),
+  ));
+}
+
 function countSmsSegments(body: string): number {
   const length = body.trim().length;
   if (length <= 0) return 0;
@@ -321,11 +331,16 @@ async function deliverMessage(opts: {
   }
 
   const allGuests = guests ?? [];
-  const eligibleGuests = allGuests.filter((g) => {
+  const retryGuestIds = normalizeRecipientFilterGuestIds(message.recipient_filter?.retry_guest_ids);
+  const excludedGuestIds = new Set(normalizeRecipientFilterGuestIds(message.recipient_filter?.excluded_guest_ids));
+  const scopedGuests = allGuests
+    .filter((guest) => retryGuestIds.length === 0 || retryGuestIds.includes(guest.id))
+    .filter((guest) => !excludedGuestIds.has(guest.id));
+  const eligibleGuests = scopedGuests.filter((g) => {
     if (channel === "sms") return !!g.phone && g.sms_consent === true;
     return g.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(g.email);
   });
-  const skippedGuests = allGuests.filter((g) => {
+  const skippedGuests = scopedGuests.filter((g) => {
     if (channel === "sms") return !g.phone || g.sms_consent !== true;
     return !(g.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(g.email));
   });
@@ -377,9 +392,11 @@ async function deliverMessage(opts: {
   const refreshedRecipientFilter = {
     ...(message.recipient_filter ?? {}),
     audience,
-    recipient_count: allGuests.length,
+    recipient_count: scopedGuests.length,
     reachable_count: eligibleGuests.length,
     skipped_count: skippedGuests.length,
+    retry_guest_ids: retryGuestIds,
+    excluded_guest_ids: Array.from(excludedGuestIds),
     sms_segment_count: channel === "sms" ? countSmsSegments(message.body ?? "") : null,
     sms_credit_cost: channel === "sms" ? eligibleGuests.length * countSmsSegments(message.body ?? "") : null,
   };

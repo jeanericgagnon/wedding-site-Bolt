@@ -303,14 +303,17 @@ export const DashboardMessages: React.FC = () => {
   const canCompose = canComposeDashboardMessages(messagesRole, messagesPermissions);
   const {
     handleCancelSchedule,
+    handleExcludeSkippedRecipients,
     handleRescheduleMessage,
     handleRetry,
+    handleRetryFailedRecipients,
     handleRunDueScheduledMessages,
     handleSendScheduledNow,
     processingScheduled,
     retryingMessageId,
   } = useMessageDeliveryActions({
     canCompose,
+    deliveries,
     fetchMessages,
     getRecipients,
     isDemoMode,
@@ -424,6 +427,8 @@ export const DashboardMessages: React.FC = () => {
     },
     onRetry: (message: Message) => { void handleRetry(message); },
     onRetryDetailMessage: handleRetry,
+    onRetryFailedRecipientsDetailMessage: handleRetryFailedRecipients,
+    onExcludeSkippedRecipientsDetailMessage: handleExcludeSkippedRecipients,
     onRunDueScheduledMessages: handleRunDueScheduledMessages,
     onSaveCurrentComposerAsTemplate: saveCurrentComposerAsTemplate,
     onScheduleFollowUp: startScheduledFollowUpFromCampaignThread,
