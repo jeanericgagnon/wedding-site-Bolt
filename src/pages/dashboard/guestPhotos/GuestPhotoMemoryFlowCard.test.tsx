@@ -8,6 +8,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
       <GuestPhotoMemoryFlowCard
         memoryFlowReadiness={{
           readyCount: 5,
+          summaryBadges: ['12 uploads live', 'Private recap link', 'Handoff ready', '1 opt-in captured'],
           lanes: [
             { id: 'collection', label: 'Collection', detail: '12 uploads across 1 active album, including 1 video.', status: 'ready' },
             { id: 'curation', label: 'Curation', detail: '3 curated picks and 6 slideshow frames are ready for recap review.', status: 'ready' },
@@ -32,6 +33,10 @@ describe('GuestPhotoMemoryFlowCard', () => {
 
     expect(screen.getByText('Collection')).toBeInTheDocument();
     expect(screen.getByText('Sharing')).toBeInTheDocument();
+    expect(screen.getByText('12 uploads live')).toBeInTheDocument();
+    expect(screen.getByText('Private recap link')).toBeInTheDocument();
+    expect(screen.getByText('Handoff ready')).toBeInTheDocument();
+    expect(screen.getByText('1 opt-in captured')).toBeInTheDocument();
     expect(screen.getByText('12 uploads across 1 active album, including 1 video.')).toBeInTheDocument();
     expect(screen.getByText('Recap is private-link ready with 3 curated picks, including 1 story pick (33% story coverage).')).toBeInTheDocument();
     expect(screen.getByText('Owner handoff export and full-resolution download are ready from 12 reviewed uploads.')).toBeInTheDocument();

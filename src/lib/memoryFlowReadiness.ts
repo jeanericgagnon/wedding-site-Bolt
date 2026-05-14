@@ -35,6 +35,7 @@ export interface MemoryFlowReadinessLane {
 
 export interface MemoryFlowReadiness {
   readyCount: number;
+  summaryBadges: string[];
   lanes: MemoryFlowReadinessLane[];
   steps: MemoryFlowReadinessStep[];
   blockers: string[];
@@ -201,9 +202,34 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
   const blockers = steps
     .filter((step) => step.status === 'needs-action')
     .map((step) => step.detail);
+  const summaryBadges = [
+    hasActiveAlbum && input.photoUploadEnabled
+      ? `${countLabel(input.uploadCount, 'upload')} live`
+      : hasAlbums
+        ? 'Upload lane needs setup'
+        : 'No live upload lane',
+    recapShareable
+      ? input.recapStatus === 'published'
+        ? 'Published recap'
+        : 'Private recap link'
+      : recapHasPicks
+        ? 'Recap saved, not shareable'
+        : 'Recap not shareable',
+    handoffExportReady
+      ? 'Handoff ready'
+      : needsReview
+        ? 'Review queue active'
+        : hasUploads
+          ? 'Handoff not ready'
+          : 'No handoff yet',
+    input.guestProspectCount > 0
+      ? `${countLabel(input.guestProspectCount, 'opt-in')} captured`
+      : 'No follow-up opt-ins',
+  ];
 
   return {
     readyCount: steps.filter((step) => step.status === 'ready').length,
+    summaryBadges,
     lanes,
     steps,
     blockers,

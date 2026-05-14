@@ -21,6 +21,13 @@ export function GuestPhotoMemoryFlowCard({ memoryFlowReadiness }: GuestPhotoMemo
         </span>
       </div>
       <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {memoryFlowReadiness.summaryBadges.map((badge) => (
+          <div key={badge} className="rounded-lg border border-border-subtle bg-white px-3 py-2">
+            <p className="text-xs font-medium text-text-secondary">{badge}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {memoryFlowReadiness.lanes.map((lane) => (
           <div key={lane.id} className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
             <div className="flex items-start justify-between gap-3">
