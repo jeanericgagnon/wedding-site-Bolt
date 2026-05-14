@@ -49,6 +49,7 @@ export interface GuestVisibilityPreview {
   bannerLabel: string;
   accessSummary: string;
   accessDetail: string;
+  pathCoverageSummary: string;
   visibleEvents: VisibilityPreviewEvent[];
   hiddenEvents: VisibilityPreviewEvent[];
   householdSummary: string;
@@ -125,9 +126,10 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
   }
 
   const totalEventCount = hasStructuredEvents ? input.events.length : visibleEvents.length + hiddenEvents.length;
+  const hasPrivateInviteAccess = Boolean(input.guest.inviteToken);
 
   const links: GuestVisibilityPreviewLink[] = [];
-  if (input.guest.inviteToken) {
+  if (hasPrivateInviteAccess) {
     links.push({
       kind: 'rsvp',
       label: 'Open RSVP as guest',
@@ -137,7 +139,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
       ),
     });
   }
-  if (input.guest.inviteToken && input.publicSiteSlug) {
+  if (hasPrivateInviteAccess && input.publicSiteSlug) {
     links.push({
       kind: 'contact',
       label: 'Open guest update view',
@@ -206,6 +208,14 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
     });
   }
 
+  const pathCoverageSummary = visibleEvents.length > 0
+    ? hasPrivateInviteAccess
+      ? `${visibleEvents.length} visible event${visibleEvents.length === 1 ? '' : 's'} have a private guest path ready.`
+      : `${visibleEvents.length} visible event${visibleEvents.length === 1 ? '' : 's'} exist, but private guest-link coverage still needs setup.`
+    : input.publicSiteSlug
+      ? 'Public shell preview is ready, but this guest still has no visible private event access.'
+      : 'No guest-facing preview path is fully ready yet.';
+
   return {
     guestLabel,
     bannerLabel: `Previewing as ${guestLabel}`,
@@ -215,6 +225,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
     accessDetail: visibleEvents.length > 0
       ? `${eventState.summary}: ${guestLabel} should see ${formatEventList(visibleEvents)}.`
       : `${guestLabel} needs at least one event invitation before this guest path is ready.`,
+    pathCoverageSummary,
     visibleEvents,
     hiddenEvents,
     householdSummary: otherHouseholdMembers.length > 0

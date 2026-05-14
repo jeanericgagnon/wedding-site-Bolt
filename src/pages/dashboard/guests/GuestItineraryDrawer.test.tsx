@@ -88,6 +88,7 @@ describe('GuestItineraryDrawer', () => {
     );
     expect(screen.getAllByRole('button', { name: 'Save private card' })).toHaveLength(2);
     expect(screen.getByText('9 guest routes ready · 6 invite-only · 3 public shell · 1 visible event')).toBeInTheDocument();
+    expect(screen.getByText('1 visible event has a private guest path ready.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Open photo upload as guest/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Open guestbook as guest/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Open anniversary vault as guest/i })).toBeInTheDocument();

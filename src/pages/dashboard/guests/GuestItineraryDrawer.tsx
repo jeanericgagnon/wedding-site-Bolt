@@ -262,13 +262,16 @@ function GuestDrawerDetails({
         <p className="text-sm text-text-secondary">{visibilityPreview.accessDetail}</p>
         <p className="text-xs text-text-tertiary">{visibilityPreview.householdSummary}</p>
         {visibilityPreview.links.length > 0 && (
-          <p className="text-xs text-text-tertiary">
-            {visibilityPreview.links.length} guest route{visibilityPreview.links.length === 1 ? '' : 's'} ready
-            {privatePreviewRouteCount > 0 ? ` · ${privatePreviewRouteCount} invite-only` : ''}
-            {publicPreviewRouteCount > 0 ? ` · ${publicPreviewRouteCount} public shell` : ''}
-            {visibleEventCount > 0 ? ` · ${visibleEventCount} visible event${visibleEventCount === 1 ? '' : 's'}` : ''}
-            {hiddenEventCount > 0 ? ` · ${hiddenEventCount} hidden event${hiddenEventCount === 1 ? '' : 's'}` : ''}
-          </p>
+          <div className="space-y-1">
+            <p className="text-xs text-text-tertiary">
+              {visibilityPreview.links.length} guest route{visibilityPreview.links.length === 1 ? '' : 's'} ready
+              {privatePreviewRouteCount > 0 ? ` · ${privatePreviewRouteCount} invite-only` : ''}
+              {publicPreviewRouteCount > 0 ? ` · ${publicPreviewRouteCount} public shell` : ''}
+              {visibleEventCount > 0 ? ` · ${visibleEventCount} visible event${visibleEventCount === 1 ? '' : 's'}` : ''}
+              {hiddenEventCount > 0 ? ` · ${hiddenEventCount} hidden event${hiddenEventCount === 1 ? '' : 's'}` : ''}
+            </p>
+            <p className="text-xs text-text-tertiary">{visibilityPreview.pathCoverageSummary}</p>
+          </div>
         )}
         {visibilityPreview.visibleEvents.length > 0 && (
           <div className="flex flex-wrap gap-1.5">

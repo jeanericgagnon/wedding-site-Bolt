@@ -21,6 +21,7 @@ describe('guestVisibilityPreview', () => {
     });
 
     expect(preview.accessSummary).toBe('2 of 3 events visible');
+    expect(preview.pathCoverageSummary).toBe('2 visible events exist, but private guest-link coverage still needs setup.');
     expect(preview.visibleEvents.map((event) => event.eventName)).toEqual(['Ceremony', 'Farewell Brunch']);
     expect(preview.hiddenEvents.map((event) => event.eventName)).toEqual(['Welcome Drinks']);
   });
@@ -86,6 +87,7 @@ describe('guestVisibilityPreview', () => {
       },
     ]);
     expect(`${preview.bannerLabel} ${preview.accessDetail} ${preview.accessSummary}`).not.toContain('private-token');
+    expect(preview.pathCoverageSummary).toBe('2 visible events have a private guest path ready.');
     expect(preview.links.map((link) => link.label)).toContain('Open travel section as guest');
     expect(preview.links.map((link) => link.label)).toContain('Open registry section as guest');
   });
@@ -102,6 +104,7 @@ describe('guestVisibilityPreview', () => {
     });
 
     expect(preview.accessSummary).toBe('1 of 2 events visible');
+    expect(preview.pathCoverageSummary).toBe('1 visible event exists, but private guest-link coverage still needs setup.');
     expect(preview.visibleEvents.map((event) => event.eventName)).toEqual(['Ceremony']);
     expect(preview.hiddenEvents.map((event) => event.eventName)).toEqual(['Reception']);
   });
@@ -123,5 +126,20 @@ describe('guestVisibilityPreview', () => {
     expect(preview.warnings).toContain('No private RSVP link exists yet for this guest.');
     expect(preview.warnings).toContain('This guest is not invited to any visible event yet.');
     expect(preview.warnings).toContain('Household RSVP states are mixed, so preview this guest before sending reminders.');
+    expect(preview.pathCoverageSummary).toBe('No guest-facing preview path is fully ready yet.');
+  });
+
+  it('treats the public shell as ready even when private event access is still missing', () => {
+    const preview = buildGuestVisibilityPreview({
+      guest: {
+        id: 'guest-1',
+        name: 'Maya Lee',
+      },
+      events: [{ id: 'welcome', eventName: 'Welcome Drinks' }],
+      invitedEventIds: [],
+      publicSiteSlug: 'maya-and-rowan',
+    });
+
+    expect(preview.pathCoverageSummary).toBe('Public shell preview is ready, but this guest still has no visible private event access.');
   });
 });
