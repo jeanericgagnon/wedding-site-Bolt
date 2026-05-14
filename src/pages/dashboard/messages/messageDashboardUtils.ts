@@ -82,6 +82,28 @@ export function buildDeliveryStats(messages: Message[]) {
   };
 }
 
+export function buildMessageEngagementSummary(messages: Message[]) {
+  return messages
+    .filter((message) => isDeliveryCompletedStatus(message.status))
+    .reduce((summary, message) => {
+      const engagement = getMessageEngagementStats(message);
+      summary.trackedMessages += 1;
+      summary.opened += engagement.opened ?? 0;
+      summary.viewed += engagement.viewed ?? 0;
+      summary.clicked += engagement.clicked ?? 0;
+      summary.replied += engagement.replied ?? 0;
+      summary.bounced += engagement.bounced ?? 0;
+      return summary;
+    }, {
+      trackedMessages: 0,
+      opened: 0,
+      viewed: 0,
+      clicked: 0,
+      replied: 0,
+      bounced: 0,
+    });
+}
+
 export function buildChannelBreakdown(messages: Message[]) {
   const init = {
     email: { sent: 0, scheduled: 0, failed: 0, partial: 0, targeted: 0 },

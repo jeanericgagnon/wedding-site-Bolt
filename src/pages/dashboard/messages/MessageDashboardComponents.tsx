@@ -9,6 +9,7 @@ import { hasReachableEmail } from './messageDashboardUtils';
 import { formatMessageHistoryDate, formatMessageHistoryDateTime } from '../messageHistoryTime';
 import type { AudienceOption, ChannelType, DeliveryRow, Guest, Message, MessageTemplateKey, SavedComposerTemplate, SmsCreditTransaction, Toast } from './messageDashboardTypes';
 import {
+  buildMessageEngagementSummary,
   canRetryMessageStatus,
   COMPOSER_TEMPLATES,
   type CampaignThreadSummary,
@@ -218,7 +219,10 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
   onApplySaveTheDatePreset,
   onNavigatePhotos,
   onQuickCreateSaveTheDateCampaign,
-}) => (
+}) => {
+  const engagementSummary = buildMessageEngagementSummary(messages);
+
+  return (
   <Card variant="bordered" padding="lg" className="border-border-subtle overflow-hidden">
     <div className="-mx-6 -mt-6 mb-5 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
       <p className="text-xs font-semibold text-text-tertiary">Snapshot</p>
@@ -253,6 +257,21 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
           </p>
           <p className="text-sm text-text-secondary">Sent, queued, sending, or needs follow-up</p>
         </div>
+      </div>
+      <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3">
+        <p className="text-xs font-semibold text-text-tertiary">Engagement signals</p>
+        {engagementSummary.trackedMessages > 0 ? (
+          <>
+            <p className="mt-2 text-sm text-text-primary">
+              {engagementSummary.opened} opened · {engagementSummary.clicked} clicked · {engagementSummary.replied} replied
+            </p>
+            <p className="mt-1 text-xs text-text-tertiary">
+              {engagementSummary.viewed} viewed across guest pages{engagementSummary.bounced > 0 ? ` · ${engagementSummary.bounced} bounced` : ''}
+            </p>
+          </>
+        ) : (
+          <p className="mt-2 text-sm text-text-secondary">Shows once completed campaigns start collecting opens, clicks, replies, or bounces.</p>
+        )}
       </div>
       <div className="flex items-center gap-3">
         <div className="p-2 bg-primary-light rounded-lg">
@@ -314,7 +333,8 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
       </div>
     </div>
   </Card>
-);
+  );
+};
 
 export interface ComposerFormState {
   audience: string;

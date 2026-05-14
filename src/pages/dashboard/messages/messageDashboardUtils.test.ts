@@ -7,6 +7,7 @@ import {
   buildDeliveryHealth,
   buildDeliveryBucketSummary,
   buildDeliveryStats,
+  buildMessageEngagementSummary,
   buildAudienceBreakdown,
   buildAudienceReachability,
   buildHistoryStatusCounts,
@@ -255,6 +256,15 @@ describe('messageDashboardUtils', () => {
       active: 1,
     });
 
+    expect(buildMessageEngagementSummary(messages)).toEqual({
+      trackedMessages: 3,
+      opened: 0,
+      viewed: 0,
+      clicked: 0,
+      replied: 0,
+      bounced: 0,
+    });
+
     expect(buildChannelBreakdown(messages)).toEqual({
       email: { sent: 1, scheduled: 1, failed: 0, partial: 0, targeted: 16 },
       sms: { sent: 0, scheduled: 0, failed: 1, partial: 1, targeted: 7 },
@@ -349,6 +359,53 @@ describe('messageDashboardUtils', () => {
     });
     expect(buildProviderTelemetry(messages, deliveries).errorTop[0][0]).toContain('delivery service');
     vi.useRealTimers();
+  });
+
+  it('sums engagement only across completed campaigns', () => {
+    const messages = [
+      message({
+        id: 'sent-email',
+        status: 'sent',
+        recipient_filter: {
+          opened_count: 7,
+          viewed_count: 4,
+          clicked_count: 2,
+          replied_count: 1,
+          bounced_count: 1,
+        },
+      }),
+      message({
+        id: 'partial-sms',
+        status: 'partial',
+        recipient_filter: {
+          opened_count: 3,
+          viewed_count: 0,
+          clicked_count: 1,
+          replied_count: 0,
+          bounced_count: 0,
+        },
+      }),
+      message({
+        id: 'scheduled-email',
+        status: 'scheduled',
+        recipient_filter: {
+          opened_count: 99,
+          viewed_count: 99,
+          clicked_count: 99,
+          replied_count: 99,
+          bounced_count: 99,
+        },
+      }),
+    ];
+
+    expect(buildMessageEngagementSummary(messages)).toEqual({
+      trackedMessages: 2,
+      opened: 10,
+      viewed: 4,
+      clicked: 3,
+      replied: 1,
+      bounced: 1,
+    });
   });
 
   it('filters message history by status, channel, audience, delivery state, campaign, and search', () => {
