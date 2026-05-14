@@ -85,7 +85,7 @@ const results = [];
 results.push(runStep({
   id: 'analytics-unit-tests',
   label: 'Website and invite analytics unit tests',
-  command: 'npm test -- --run src/pages/dashboard/analyticsEventSummary.test.ts src/lib/websiteInviteAnalyticsReadiness.test.ts src/pages/dashboard/buildOverviewDashboardModel.test.ts src/pages/SiteView.test.ts src/pages/EventHub.test.tsx src/pages/RSVP.test.tsx src/pages/PhotoUpload.test.ts',
+  command: 'npm test -- --run src/pages/dashboard/analyticsEventSummary.test.ts src/lib/websiteInviteAnalyticsReadiness.test.ts src/pages/dashboard/buildOverviewDashboardModel.test.ts src/pages/SiteView.test.ts src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx src/pages/RSVP.test.tsx src/pages/PhotoUpload.test.ts',
 }));
 
 results.push(runStep({
@@ -178,11 +178,11 @@ const output = {
   ],
   stillManualProofNeeded: shouldRunLiveOwnerProof
     ? [
-        'Review whether any remaining invite-entry routes outside hub, RSVP, site, guest contact, guestbook, photo upload, and vault still need aggregate instrumentation before claiming broader invitation analytics coverage.',
+        'Review whether any remaining invite-entry routes outside hub, RSVP, site, guest contact, guestbook, photo upload, vault, and recap still need aggregate instrumentation before claiming broader invitation analytics coverage.',
       ]
     : [
         'Rerun the owner analytics readback against a live authenticated runtime once V1_OWNER_EMAIL, V1_OWNER_PASSWORD, and a live PLAYWRIGHT_BASE_URL are available.',
-        'Review whether any remaining invite-entry routes outside hub, RSVP, site, guest contact, guestbook, photo upload, and vault still need aggregate instrumentation before claiming broader invitation analytics coverage.',
+        'Review whether any remaining invite-entry routes outside hub, RSVP, site, guest contact, guestbook, photo upload, vault, and recap still need aggregate instrumentation before claiming broader invitation analytics coverage.',
       ],
   results,
 };

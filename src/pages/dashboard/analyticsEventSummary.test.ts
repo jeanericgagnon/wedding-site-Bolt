@@ -7,6 +7,7 @@ describe('analyticsEventSummary', () => {
       { event_type: 'view', target: '/event', created_at: '2026-05-14T10:00:00.000Z' },
       { event_type: 'view', target: '/site', created_at: '2026-05-14T10:02:00.000Z' },
       { event_type: 'view', target: '/event/invite', created_at: '2026-05-14T10:05:00.000Z' },
+      { event_type: 'view', target: '/event/recap/invite', created_at: '2026-05-14T10:05:10.000Z' },
       { event_type: 'view', target: '/site/invite', created_at: '2026-05-14T10:05:30.000Z' },
       { event_type: 'view', target: '/rsvp/invite', created_at: '2026-05-14T10:06:00.000Z' },
       { event_type: 'view', target: '/rsvp-event/invite', created_at: '2026-05-14T10:07:00.000Z' },
@@ -26,12 +27,12 @@ describe('analyticsEventSummary', () => {
     });
 
     expect(summary).toMatchObject({
-      totalTrackedEvents: 17,
-      pageViews: 12,
+      totalTrackedEvents: 18,
+      pageViews: 13,
       siteVisits: 2,
-      inviteOpens: 8,
+      inviteOpens: 9,
       qrScans: 2,
-      recapViews: 1,
+      recapViews: 2,
       totalClicks: 4,
       rsvpClicks: 1,
       registryClicks: 1,

@@ -45,7 +45,7 @@ vi.mock('../lib/copyText', () => ({
   copyTextOrDownload: vi.fn(async () => 'copied'),
 }));
 
-import { EventRecap, buildEventRecapAccessHeaders, buildEventRecapGuestHubAccessPayload, formatEventRecapAlbumLabel, friendlyEventRecapError, safeEventRecapFunctionError } from './EventRecap';
+import { EventRecap, buildEventRecapAccessHeaders, buildEventRecapGuestHubAccessPayload, formatEventRecapAlbumLabel, friendlyEventRecapError, resolveEventRecapViewTarget, safeEventRecapFunctionError } from './EventRecap';
 
 const recapPayload = {
   site: {
@@ -122,6 +122,22 @@ describe('buildEventRecapAccessHeaders', () => {
 
   it('omits empty access headers for normal public recap requests', () => {
     expect(buildEventRecapAccessHeaders('ericandkaras')).toEqual({});
+  });
+});
+
+describe('resolveEventRecapViewTarget', () => {
+  it('counts gated recap entry as an invite-open route', () => {
+    expect(resolveEventRecapViewTarget({
+      inviteToken: 'current-invite',
+      passwordSession: null,
+    })).toBe('/event/recap/invite');
+  });
+
+  it('keeps ungated recap entry on the plain recap route', () => {
+    expect(resolveEventRecapViewTarget({
+      inviteToken: null,
+      passwordSession: null,
+    })).toBe('/event/recap');
   });
 });
 
@@ -203,5 +219,12 @@ describe('event recap page boundary', () => {
     expect(liveContent).toContain('{t(\'event_recap.back_hub\')}');
     expect(routeView).toContain('if (loadingState) return <>{loading}</>;');
     expect(routeView).toContain('if (!hasData) return <>{error}</>;');
+  });
+
+  it('tracks invite-scoped recap entry through aggregate invite analytics without leaking the token', () => {
+    const page = readFileSync(join(process.cwd(), 'src/pages/EventRecap.tsx'), 'utf8');
+
+    expect(page).toContain("trackGuestHubEvent(slug, 'view', resolveEventRecapViewTarget(access), access)");
+    expect(page).not.toContain("/event/recap?token=");
   });
 });

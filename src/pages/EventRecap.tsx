@@ -24,6 +24,10 @@ export const buildEventRecapGuestHubAccessPayload = (slug: string) => {
   return buildPublicAccessArtifacts(slug, searchParams);
 };
 
+export const resolveEventRecapViewTarget = (access: ReturnType<typeof buildEventRecapGuestHubAccessPayload>) => (
+  access.inviteToken ? '/event/recap/invite' : '/event/recap'
+);
+
 export const buildEventRecapAccessHeaders = (slug: string) => {
   const access = buildEventRecapGuestHubAccessPayload(slug);
   return {
@@ -153,7 +157,8 @@ export const EventRecap: React.FC = () => {
 
   useEffect(() => {
     if (!slug) return;
-    trackGuestHubEvent(slug, 'view', '/event/recap', buildEventRecapGuestHubAccessPayload(slug)).catch(() => {});
+    const access = buildEventRecapGuestHubAccessPayload(slug);
+    trackGuestHubEvent(slug, 'view', resolveEventRecapViewTarget(access), access).catch(() => {});
   }, [slug]);
 
   const coupleLabel = useMemo(() => {
