@@ -4,11 +4,13 @@ type LookupTransport = (body: object) => Promise<{ data?: unknown; error?: strin
 export async function lookupRsvpToken({
   callValidateRsvpToken,
   demoLookup,
+  language = null,
   token,
   useDemoRsvp,
 }: {
   callValidateRsvpToken: LookupTransport;
   demoLookup: DemoLookup;
+  language?: string | null;
   token: string;
   useDemoRsvp: boolean;
 }): Promise<{ data?: unknown; error?: string; status?: number }> {
@@ -19,5 +21,5 @@ export async function lookupRsvpToken({
     };
   }
 
-  return callValidateRsvpToken({ action: 'lookup', searchValue: token });
+  return callValidateRsvpToken({ action: 'lookup', language, searchValue: token });
 }

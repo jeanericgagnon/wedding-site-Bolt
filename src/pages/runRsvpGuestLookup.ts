@@ -15,6 +15,7 @@ export async function runRsvpGuestLookup({
   fallbackGuest,
   lookupErrorMessage = 'Something interrupted the search. Please try again.',
   guestId,
+  language,
   lookupSource,
   normalizeRsvpGuestError,
   requestId,
@@ -66,6 +67,7 @@ export async function runRsvpGuestLookup({
   demoLookup: DemoLookup;
   fallbackGuest?: Guest;
   guestId?: string;
+  language?: string | null;
   lookupErrorMessage?: string;
   lookupSource: 'search' | 'pick';
   normalizeRsvpGuestError: (value: string | undefined) => string;
@@ -101,6 +103,7 @@ export async function runRsvpGuestLookup({
       callValidateRsvpToken,
       demoLookup,
       guestId,
+      language,
       rsvpSessionToken,
       searchValue,
       useDemoRsvp,

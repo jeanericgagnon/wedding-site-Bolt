@@ -376,7 +376,7 @@ Execution rule for this section:
    - this batch shipped: messaging audience segments now include saved-language recipient groups, and composer language previews now derive from the actual selected audience plus the site default instead of a hardcoded `en/es/fr` preview set
    - this batch shipped: the household workspace can now apply one saved language to the current selected guest set in one action instead of forcing guest-by-guest edits
    - this batch shipped: settings now carry both the default public language and the owner-managed allowed guest-facing language set, saved into wedding data instead of living as an implied all-languages default
-   - translate RSVP custom questions and review workflows for translated builder/site content
+   - this batch shipped: generated site translations now carry RSVP custom questions and meal-choice wording into the guest RSVP lookup flow, so guests who arrive in an allowed translated language stop falling back to English-only prompts while owners keep a review reminder in RSVP settings
    - add live production proof for owner messaging previews and guest-facing language continuity
 
 ### Later-Value Lanes Still Open

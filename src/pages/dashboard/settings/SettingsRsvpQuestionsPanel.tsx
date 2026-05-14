@@ -82,6 +82,9 @@ export function SettingsRsvpQuestionsPanel({
             )}
 
             <div className="space-y-3">
+              <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-3 text-sm text-text-secondary">
+                Generated guest-facing translations now carry these custom questions and meal-choice wording into RSVP too. Review the live RSVP page after you generate a language.
+              </div>
               {questions.length === 0 && (
                 <p className="text-sm text-text-secondary">No custom questions yet. Add one below if you need something beyond the standard RSVP flow.</p>
               )}

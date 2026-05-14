@@ -15,6 +15,7 @@ export async function runRsvpTokenLookup({
   normalizeRsvpGuestError,
   requestId,
   selectGuest,
+  language,
   setAmbiguousGuests,
   setApplyToHousehold,
   setError,
@@ -39,6 +40,7 @@ export async function runRsvpTokenLookup({
   loadInFlightRef: React.MutableRefObject<boolean>;
   normalizeRsvpGuestError: (value: string | undefined) => string;
   requestId: number;
+  language?: string | null;
   selectGuest: (
     foundGuest: Guest,
     foundRsvp?: ExistingRSVP | null,
@@ -71,6 +73,7 @@ export async function runRsvpTokenLookup({
     const { data, error } = await lookupRsvpToken({
       callValidateRsvpToken,
       demoLookup,
+      language,
       token,
       useDemoRsvp,
     });

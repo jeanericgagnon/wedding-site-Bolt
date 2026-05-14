@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { demoGuests, demoRSVPs } from '../lib/demoData';
 import { DEMO_MODE, SUPABASE_CONFIGURED } from '../config/env';
 import { getSafePublicWebUrl } from '../sections/publicLinks';
-import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
+import { normalizeGuestLanguageCode, readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
 import {
   DEFAULT_MEAL_CONFIG,
   RSVP_CONTINUITY_EVENT,
@@ -392,6 +392,7 @@ export default function RSVP() {
   const [householdGuests, setHouseholdGuests] = useState<HouseholdGuest[]>([]);
   const [applyToHousehold, setApplyToHousehold] = useState(true);
   const [selectedHouseholdGuestIds, setSelectedHouseholdGuestIds] = useState<string[]>([]);
+  const currentGuestLanguage = normalizeGuestLanguageCode(i18n.resolvedLanguage ?? i18n.language) ?? 'en';
 
   useEffect(() => {
     const languagePreference = resolveGuestLanguagePreference({
@@ -588,6 +589,7 @@ export default function RSVP() {
       applyTokenRsvpLookupResult,
       callValidateRsvpToken,
       demoLookup,
+      language: currentGuestLanguage,
       loadInFlightRef,
       normalizeRsvpGuestError,
       requestId,
@@ -610,7 +612,7 @@ export default function RSVP() {
       useDemoRsvp: USE_DEMO_RSVP,
     })
       .catch(() => undefined);
-  }, []);
+  }, [currentGuestLanguage]);
 
   const refreshTokenLinkedRsvpForContinuity = useCallback(() => {
     if (!activeToken || !tokenLinkedSessionRef.current) return;
@@ -703,6 +705,7 @@ export default function RSVP() {
       applyManualRsvpLookupResult,
       callValidateRsvpToken,
       demoLookup,
+      language: currentGuestLanguage,
       lookupSource: 'search',
       normalizeRsvpGuestError,
       requestId,
@@ -803,6 +806,7 @@ export default function RSVP() {
       demoLookup,
       fallbackGuest: picked,
       guestId: picked.id,
+      language: currentGuestLanguage,
       lookupSource: 'pick',
       normalizeRsvpGuestError,
       requestId,

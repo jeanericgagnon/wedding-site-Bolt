@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { getPublicSessionSecretSource } from "../_shared/publicSessionSecrets.ts";
 import { sha256Hex, signSessionToken, verifySessionToken } from "../_shared/signedSession.ts";
+import { resolveLocalizedRsvpConfig } from "../../../src/lib/rsvpTranslationAssets.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,7 @@ const corsHeaders = {
 interface LookupPayload {
   action: "lookup";
   searchValue: string;
+  language?: string | null;
 }
 
 interface EventLookupPayload {
@@ -23,6 +25,7 @@ interface GuestLookupPayload {
   action: "lookup_guest";
   guestId: string;
   rsvpSession?: string | null;
+  language?: string | null;
 }
 
 interface SubmitPayload {
@@ -308,7 +311,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (payload.action === "lookup") {
-      const { searchValue } = payload;
+      const { searchValue, language: requestedLanguage } = payload;
       if (!searchValue?.trim()) return json({ error: RSVP_SEARCH_REQUIRED_COPY }, 400);
 
       const trimmed = searchValue.trim();
@@ -361,24 +364,45 @@ Deno.serve(async (req: Request) => {
       const fetchRsvpConfig = async (siteId: string): Promise<{ rsvpDeadline: string | null; rsvpQuestions: unknown[]; rsvpMealConfig: { enabled: boolean; options: string[] }; musicPlaylistUrl: string | null }> => {
         const { data, error } = await adminClient
           .from("wedding_sites")
-          .select("rsvp_custom_questions, rsvp_meal_config, music_playlist_url")
+          .select("rsvp_custom_questions, rsvp_meal_config, music_playlist_url, default_language, wedding_data")
           .eq("id", siteId)
           .maybeSingle();
 
         if (error) throw error;
 
-        const typed = data as { rsvp_custom_questions?: unknown; rsvp_meal_config?: unknown; music_playlist_url?: string | null } | null;
-        const parsedQuestions = Array.isArray(typed?.rsvp_custom_questions) ? typed.rsvp_custom_questions : [];
-        const mealRaw = typed?.rsvp_meal_config as { enabled?: unknown; options?: unknown } | undefined;
+        const typed = data as {
+          rsvp_custom_questions?: unknown;
+          rsvp_meal_config?: unknown;
+          music_playlist_url?: string | null;
+          default_language?: string | null;
+          wedding_data?: unknown;
+        } | null;
+        let translatedWeddingData: unknown = null;
+
+        if (typeof requestedLanguage === "string" && requestedLanguage.trim().length > 0 && requestedLanguage !== typed?.default_language) {
+          const { data: translationRow } = await adminClient
+            .from("site_translations")
+            .select("translated_wedding_data")
+            .eq("wedding_site_id", siteId)
+            .eq("language", requestedLanguage)
+            .eq("status", "ready")
+            .maybeSingle();
+          translatedWeddingData = (translationRow as { translated_wedding_data?: unknown } | null)?.translated_wedding_data ?? null;
+        }
+
+        const localized = resolveLocalizedRsvpConfig({
+          baseQuestions: typed?.rsvp_custom_questions,
+          baseMealConfig: typed?.rsvp_meal_config,
+          requestedLanguage,
+          siteDefaultLanguage: typed?.default_language,
+          weddingData: typed?.wedding_data,
+          translatedWeddingData,
+        });
+
         return {
           rsvpDeadline: null,
-          rsvpQuestions: parsedQuestions,
-          rsvpMealConfig: {
-            enabled: typeof mealRaw?.enabled === "boolean" ? mealRaw.enabled : true,
-            options: Array.isArray(mealRaw?.options)
-              ? mealRaw.options.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
-              : ["Chicken", "Beef", "Fish", "Vegetarian", "Vegan"],
-          },
+          rsvpQuestions: localized.questions,
+          rsvpMealConfig: localized.mealConfig,
           musicPlaylistUrl: typed?.music_playlist_url ?? null,
         };
       };
@@ -403,7 +427,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (payload.action === "lookup_guest") {
-      const { guestId, rsvpSession } = payload;
+      const { guestId, rsvpSession, language: requestedLanguage } = payload;
       if (!guestId?.trim() || !rsvpSession?.trim()) {
         return json({ error: "Please use the private RSVP link or code from your invitation." }, 403);
       }
@@ -420,24 +444,45 @@ Deno.serve(async (req: Request) => {
       const fetchRsvpConfig = async (siteId: string): Promise<{ rsvpDeadline: string | null; rsvpQuestions: unknown[]; rsvpMealConfig: { enabled: boolean; options: string[] }; musicPlaylistUrl: string | null }> => {
         const { data, error } = await adminClient
           .from("wedding_sites")
-          .select("rsvp_custom_questions, rsvp_meal_config, music_playlist_url")
+          .select("rsvp_custom_questions, rsvp_meal_config, music_playlist_url, default_language, wedding_data")
           .eq("id", siteId)
           .maybeSingle();
 
         if (error) throw error;
 
-        const typed = data as { rsvp_custom_questions?: unknown; rsvp_meal_config?: unknown; music_playlist_url?: string | null } | null;
-        const parsedQuestions = Array.isArray(typed?.rsvp_custom_questions) ? typed.rsvp_custom_questions : [];
-        const mealRaw = typed?.rsvp_meal_config as { enabled?: unknown; options?: unknown } | undefined;
+        const typed = data as {
+          rsvp_custom_questions?: unknown;
+          rsvp_meal_config?: unknown;
+          music_playlist_url?: string | null;
+          default_language?: string | null;
+          wedding_data?: unknown;
+        } | null;
+        let translatedWeddingData: unknown = null;
+
+        if (typeof requestedLanguage === "string" && requestedLanguage.trim().length > 0 && requestedLanguage !== typed?.default_language) {
+          const { data: translationRow } = await adminClient
+            .from("site_translations")
+            .select("translated_wedding_data")
+            .eq("wedding_site_id", siteId)
+            .eq("language", requestedLanguage)
+            .eq("status", "ready")
+            .maybeSingle();
+          translatedWeddingData = (translationRow as { translated_wedding_data?: unknown } | null)?.translated_wedding_data ?? null;
+        }
+
+        const localized = resolveLocalizedRsvpConfig({
+          baseQuestions: typed?.rsvp_custom_questions,
+          baseMealConfig: typed?.rsvp_meal_config,
+          requestedLanguage,
+          siteDefaultLanguage: typed?.default_language,
+          weddingData: typed?.wedding_data,
+          translatedWeddingData,
+        });
+
         return {
           rsvpDeadline: null,
-          rsvpQuestions: parsedQuestions,
-          rsvpMealConfig: {
-            enabled: typeof mealRaw?.enabled === "boolean" ? mealRaw.enabled : true,
-            options: Array.isArray(mealRaw?.options)
-              ? mealRaw.options.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
-              : ["Chicken", "Beef", "Fish", "Vegetarian", "Vegan"],
-          },
+          rsvpQuestions: localized.questions,
+          rsvpMealConfig: localized.mealConfig,
           musicPlaylistUrl: typed?.music_playlist_url ?? null,
         };
       };

@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
+import { embedTranslatedRsvpAssets } from "../../../src/lib/rsvpTranslationAssets.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -80,7 +81,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: site, error: siteError } = await admin
       .from("wedding_sites")
-      .select("id,user_id,site_json,published_json,wedding_data,layout_config,couple_name_1,couple_name_2")
+      .select("id,user_id,site_json,published_json,wedding_data,layout_config,couple_name_1,couple_name_2,rsvp_custom_questions,rsvp_meal_config")
       .eq("id", siteId)
       .maybeSingle();
 
@@ -107,6 +108,10 @@ Deno.serve(async (req: Request) => {
       published_json: site.published_json ?? null,
       wedding_data: site.wedding_data ?? null,
       layout_config: site.layout_config ?? null,
+      rsvp_custom_questions: Array.isArray((site as { rsvp_custom_questions?: unknown }).rsvp_custom_questions)
+        ? (site as { rsvp_custom_questions?: unknown[] }).rsvp_custom_questions ?? []
+        : [],
+      rsvp_meal_config: ((site as { rsvp_meal_config?: unknown }).rsvp_meal_config ?? null),
     };
     const sourceHash = await sha256Hex(JSON.stringify(source));
 
@@ -144,7 +149,7 @@ Deno.serve(async (req: Request) => {
 
     const prompt = [
       `Translate this DayOf public wedding site content into ${languageLabel}.`,
-      "Return valid JSON with exactly these keys: site_json, published_json, wedding_data, layout_config.",
+      "Return valid JSON with exactly these keys: site_json, published_json, wedding_data, layout_config, rsvp_custom_questions, rsvp_meal_config.",
       "Preserve all IDs, URLs, image paths, dates, times, colors, booleans, numbers, enum values, object keys, and array structure.",
       "Translate only guest-facing natural-language strings. Keep couple names, venue names, addresses, product URLs, email addresses, registry URLs, and proper nouns unchanged unless clearly grammatical context requires otherwise.",
       "If a field is null, return null.",
@@ -197,7 +202,12 @@ Deno.serve(async (req: Request) => {
         status: "ready",
         translated_site_json: translated.site_json ?? null,
         translated_published_json: translated.published_json ?? null,
-        translated_wedding_data: translated.wedding_data ?? null,
+        translated_wedding_data: embedTranslatedRsvpAssets(translated.wedding_data ?? null, {
+          questions: Array.isArray(translated.rsvp_custom_questions) ? translated.rsvp_custom_questions as Array<Record<string, unknown>> : [],
+          mealConfig: translated.rsvp_meal_config && typeof translated.rsvp_meal_config === "object"
+            ? translated.rsvp_meal_config as { enabled: boolean; options: string[] }
+            : { enabled: true, options: [] },
+        }),
         translated_layout_config: translated.layout_config ?? null,
         translated_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

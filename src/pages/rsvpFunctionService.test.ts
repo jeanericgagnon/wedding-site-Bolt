@@ -49,4 +49,31 @@ describe('rsvpFunctionService', () => {
       }),
     );
   });
+
+  it('passes guest language context through the shared RSVP transport', async () => {
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://example.supabase.co');
+    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'anon-key');
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    vi.resetModules();
+    const mod = await import('./rsvpFunctionService');
+    await mod.callValidateRsvpToken({ action: 'lookup_guest', guestId: 'guest-1', rsvpSession: 'session-1', language: 'es' });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://example.supabase.co/functions/v1/validate-rsvp-token',
+      expect.objectContaining({
+        body: JSON.stringify({
+          action: 'lookup_guest',
+          guestId: 'guest-1',
+          rsvpSession: 'session-1',
+          language: 'es',
+        }),
+      }),
+    );
+  });
 });
