@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   REGISTRY_PURCHASE_MEMORY_RETENTION_MS,
   RegistryFundHighlight,
+  getRegistryFundContributionMethods,
+  pickFeaturedRegistryFund,
   RegistryGrid,
   RegistrySection,
   readRegistryPurchaseMemory,
@@ -14,6 +16,21 @@ import {
 import type { SectionInstance } from '../../types/layoutConfig';
 import { createEmptyWeddingData } from '../../types/weddingData';
 import type { RegistryItem } from '../../pages/dashboard/registry/registryTypes';
+
+const mockUseSiteView = vi.fn(() => ({ weddingSiteId: null, inviteToken: null, passwordSession: null }));
+const mockPublicFetchRegistryItems = vi.fn(async () => []);
+
+vi.mock('../../contexts/SiteViewContext', () => ({
+  useSiteView: () => mockUseSiteView(),
+}));
+
+vi.mock('../../pages/dashboard/registry/registryService', async () => {
+  const actual = await vi.importActual<typeof import('../../pages/dashboard/registry/registryService')>('../../pages/dashboard/registry/registryService');
+  return {
+    ...actual,
+    publicFetchRegistryItems: (...args: Parameters<typeof actual.publicFetchRegistryItems>) => mockPublicFetchRegistryItems(...args),
+  };
+});
 
 function makeInstance(settings: SectionInstance['settings'], bindings?: SectionInstance['bindings']): SectionInstance {
   return {
@@ -31,6 +48,9 @@ describe('RegistrySection', () => {
     window.localStorage.clear();
     document.cookie = 'dayof_registry_purchases_v1=; Max-Age=0; Path=/; SameSite=Lax';
     vi.useRealTimers();
+    mockUseSiteView.mockReturnValue({ weddingSiteId: null, inviteToken: null, passwordSession: null });
+    mockPublicFetchRegistryItems.mockReset();
+    mockPublicFetchRegistryItems.mockResolvedValue([]);
   });
 
   it('filters broken imported product metadata before guest-facing registry display', () => {
@@ -260,6 +280,149 @@ describe('RegistrySection', () => {
 
     expect(message).toBe('Could not save that purchase right now. Please try again.');
     expect(message).not.toMatch(/database|provider|storage|bucket|token|policy|service role|permission/i);
+  });
+
+  it('prefers the safest most complete live cash fund for the featured fund surface', () => {
+    const featured = pickFeaturedRegistryFund([
+      {
+        id: 'fund-a',
+        wedding_site_id: 'site-1',
+        item_type: 'cash_fund',
+        item_name: 'Dinner fund',
+        price_label: null,
+        price_amount: null,
+        store_name: null,
+        merchant: null,
+        item_url: null,
+        canonical_url: null,
+        image_url: null,
+        description: null,
+        notes: null,
+        quantity_needed: 1,
+        quantity_purchased: 0,
+        purchaser_name: null,
+        purchase_status: 'available',
+        hide_when_purchased: false,
+        sort_order: 0,
+        priority: 'medium',
+        fund_goal_amount: 1500,
+        fund_received_amount: 100,
+        fund_custom_url: 'https://example.com/fund-a',
+        created_at: new Date(0).toISOString(),
+        updated_at: new Date(0).toISOString(),
+      },
+      {
+        id: 'fund-b',
+        wedding_site_id: 'site-1',
+        item_type: 'cash_fund',
+        item_name: 'Honeymoon fund',
+        price_label: null,
+        price_amount: null,
+        store_name: null,
+        merchant: null,
+        item_url: null,
+        canonical_url: null,
+        image_url: null,
+        description: null,
+        notes: null,
+        quantity_needed: 1,
+        quantity_purchased: 0,
+        purchaser_name: null,
+        purchase_status: 'available',
+        hide_when_purchased: false,
+        sort_order: 1,
+        priority: 'high',
+        fund_goal_amount: 4000,
+        fund_received_amount: 250,
+        fund_venmo_url: 'https://venmo.com/dayof',
+        fund_paypal_url: 'https://paypal.me/dayof',
+        fund_zelle_handle: 'dayof@example.com',
+        created_at: new Date(0).toISOString(),
+        updated_at: new Date(0).toISOString(),
+      },
+    ] as RegistryItem[]);
+
+    expect(featured?.id).toBe('fund-b');
+    expect(getRegistryFundContributionMethods(featured!)).toHaveLength(3);
+  });
+
+  it('renders a live featured fund card with safe contribution methods and no duplicate card below it', async () => {
+    mockUseSiteView.mockReturnValue({ weddingSiteId: 'site-1', inviteToken: null, passwordSession: null });
+    mockPublicFetchRegistryItems.mockResolvedValue([
+      {
+        id: 'fund-live',
+        wedding_site_id: 'site-1',
+        item_type: 'cash_fund',
+        item_name: 'Honeymoon fund',
+        price_label: null,
+        price_amount: null,
+        store_name: null,
+        merchant: null,
+        item_url: null,
+        canonical_url: null,
+        image_url: null,
+        description: null,
+        notes: 'Help us celebrate with a few honeymoon memories.',
+        quantity_needed: 1,
+        quantity_purchased: 0,
+        purchaser_name: null,
+        purchase_status: 'available',
+        hide_when_purchased: false,
+        sort_order: 0,
+        priority: 'high',
+        fund_goal_amount: 4000,
+        fund_received_amount: 1000,
+        fund_venmo_url: 'https://venmo.com/dayof',
+        fund_paypal_url: 'javascript:alert(1)',
+        fund_custom_url: 'https://example.com/honeymoon',
+        fund_custom_label: 'Contribute',
+        created_at: new Date(0).toISOString(),
+        updated_at: new Date(0).toISOString(),
+      },
+      {
+        id: 'gift-live',
+        wedding_site_id: 'site-1',
+        item_type: 'product',
+        item_name: 'Dinner plates',
+        price_label: '$80.00',
+        price_amount: 80,
+        store_name: 'Home Store',
+        merchant: 'Home Store',
+        item_url: 'https://example.com/dinner-plates',
+        canonical_url: 'https://example.com/dinner-plates',
+        image_url: null,
+        description: null,
+        notes: null,
+        quantity_needed: 1,
+        quantity_purchased: 0,
+        purchaser_name: null,
+        purchase_status: 'available',
+        hide_when_purchased: false,
+        sort_order: 1,
+        priority: 'medium',
+        created_at: new Date(0).toISOString(),
+        updated_at: new Date(0).toISOString(),
+      },
+    ] satisfies RegistryItem[]);
+
+    const data = createEmptyWeddingData();
+
+    render(
+      <RegistryFundHighlight
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(await screen.findByText('Featured fund')).toBeInTheDocument();
+    expect(screen.getByText('Honeymoon fund')).toBeInTheDocument();
+    expect(screen.getByText('Help us celebrate with a few honeymoon memories.')).toBeInTheDocument();
+    expect(screen.getByText('25% funded')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Venmo' })).toHaveAttribute('href', 'https://venmo.com/dayof');
+    expect(screen.getByRole('link', { name: 'Contribute' })).toHaveAttribute('href', 'https://example.com/honeymoon');
+    expect(screen.queryByRole('link', { name: 'PayPal' })).not.toBeInTheDocument();
+    expect(screen.getAllByText('Honeymoon fund')).toHaveLength(1);
+    expect(screen.getAllByText('Dinner plates').length).toBeGreaterThan(0);
   });
 
   it('wraps public registry purchase memory in a timestamped bounded envelope', () => {

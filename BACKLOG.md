@@ -438,6 +438,8 @@ Execution rule for this section:
    - this batch shipped: demo/local registry owner state now persists purchase-state and thank-you follow-up across reloads instead of resetting to seed data, and `npm run proof:v1:registry` now includes a real browser continuity pass for that owner flow
    - this batch shipped: demo/local registry cleanup now performs a real owner repair flow for bad imported gifts, and the registry proof now verifies repaired titles/store truth survive reloads instead of staying as no-op toasts
    - this batch shipped: demo/local duplicate-group review now has real merge continuity proof, so the owner cleanup lane covers repeated-gift collapse/readback instead of only purchase-state continuity
+   - this batch shipped: the public registry fund highlight now prefers the strongest real live cash-fund item when one exists, showing the actual fund title, note, goal, raised amount, funded progress, and only safe public contribution methods instead of falling back to a generic honeymoon placeholder
+   - this batch shipped: focused proof is green for featured-fund selection, safe public Venmo/custom contribution method rendering, unsafe fund-link rejection, and de-duplicated guest-facing rendering so the highlighted fund does not repeat below the hero card
    - add live owner add/import/edit persistence proof for broader registry workflows
    - rerun the stronger owner repair/cleanup runtime proof against the shipped production runtime after the next approved registry deploy
    - rerun the guest-visible purchase-state assertions against the live production runtime after the next approved registry deploy instead of only local/public-component proof

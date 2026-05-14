@@ -14,6 +14,10 @@ interface Props {
   instance: SectionInstance;
 }
 
+function safeFundAmount(value: number | null | undefined): number {
+  return Number.isFinite(value) ? Math.max(0, Number(value)) : 0;
+}
+
 const REGISTRY_PURCHASE_MEMORY_KEY = 'dayof_registry_purchase_memory_v1';
 const REGISTRY_PURCHASE_COOKIE = 'dayof_registry_purchases_v1';
 export const REGISTRY_PURCHASE_MEMORY_RETENTION_MS = 1000 * 60 * 60 * 24 * 30;
@@ -242,6 +246,32 @@ export function sanitizePublicRegistryItems(items: RegistryItem[]): RegistryItem
   return items
     .filter(isGuestReadyRegistryItem)
     .map(normalizePublicRegistryItemState);
+}
+
+export function getRegistryFundContributionMethods(item: Pick<RegistryItem, 'fund_venmo_url' | 'fund_paypal_url' | 'fund_custom_url' | 'fund_custom_label' | 'fund_zelle_handle'>) {
+  const methods: Array<{ id: string; label: string; url?: string | null; value?: string | null }> = [];
+  const venmoUrl = getSafePublicRegistryUrl(item.fund_venmo_url);
+  const paypalUrl = getSafePublicRegistryUrl(item.fund_paypal_url);
+  const customFundUrl = getSafePublicRegistryUrl(item.fund_custom_url);
+  if (venmoUrl) methods.push({ id: 'venmo', label: 'Venmo', url: venmoUrl });
+  if (paypalUrl) methods.push({ id: 'paypal', label: 'PayPal', url: paypalUrl });
+  if (customFundUrl) methods.push({ id: 'custom', label: item.fund_custom_label || 'Contribute', url: customFundUrl });
+  if (item.fund_zelle_handle) methods.push({ id: 'zelle', label: `Zelle: ${item.fund_zelle_handle}`, value: item.fund_zelle_handle });
+  return methods;
+}
+
+export function pickFeaturedRegistryFund(items: RegistryItem[]): RegistryItem | null {
+  const funds = sanitizePublicRegistryItems(items).filter((item) => item.item_type === 'cash_fund');
+  if (funds.length === 0) return null;
+  return [...funds].sort((a, b) => {
+    const methodsA = getRegistryFundContributionMethods(a).length;
+    const methodsB = getRegistryFundContributionMethods(b).length;
+    if (methodsA !== methodsB) return methodsB - methodsA;
+    const goalA = safeFundAmount(a.fund_goal_amount);
+    const goalB = safeFundAmount(b.fund_goal_amount);
+    if (goalA !== goalB) return goalB - goalA;
+    return safeFundAmount(b.fund_received_amount) - safeFundAmount(a.fund_received_amount);
+  })[0];
 }
 
 interface PurchaseModalProps {
@@ -570,11 +600,12 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase, remembere
   );
 };
 
-export function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
+export function RegistryItemsDisplay({ items, settings, notes, updateItem, excludeItemIds = [] }: {
   items: RegistryItem[];
   settings: SectionInstance['settings'];
   notes?: string;
   updateItem: (item: RegistryItem) => void;
+  excludeItemIds?: string[];
 }) {
   const normalizedItems = sanitizePublicRegistryItems(items);
   const [purchasingItem, setPurchasingItem] = useState<RegistryItem | null>(null);
@@ -584,7 +615,9 @@ export function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
   const [rememberedPurchaseIds, setRememberedPurchaseIds] = useState<string[]>(() => readRegistryPurchaseMemory());
   const rememberedPurchaseSet = new Set(rememberedPurchaseIds);
 
+  const excludedIds = new Set(excludeItemIds);
   const visibleItems = normalizedItems.filter(item => {
+    if (excludedIds.has(item.id)) return false;
     if (item.hide_when_purchased && item.purchase_status === 'purchased') return false;
     if (groupMode === 'funds') return item.item_type === 'cash_fund';
     if (groupMode === 'stores') return item.item_type !== 'cash_fund';
@@ -865,6 +898,13 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
   }
 
   if (shouldUseLiveRegistryItems(items)) {
+    const featuredFund = pickFeaturedRegistryFund(items);
+    const featuredFundMethods = featuredFund ? getRegistryFundContributionMethods(featuredFund) : [];
+    const featuredFundGoal = featuredFund ? safeFundAmount(featuredFund.fund_goal_amount) : 0;
+    const featuredFundReceived = featuredFund ? safeFundAmount(featuredFund.fund_received_amount) : 0;
+    const featuredFundPct = featuredFund && featuredFundGoal > 0
+      ? Math.min(100, Math.round((featuredFundReceived / featuredFundGoal) * 100))
+      : null;
     return (
       <section className="py-20 px-4 bg-surface">
         <div className="max-w-6xl mx-auto">
@@ -878,14 +918,74 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
             {registry.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto leading-relaxed">{registry.notes}</p>}
           </div>
 
-          <div className="mb-8 rounded-2xl border border-primary/20 bg-primary/5 p-6 md:p-8 text-center">
-            <h3 className="text-xl font-semibold text-text-primary">Honeymoon & Experiences Fund</h3>
-            <p className="text-sm text-text-secondary leading-relaxed mt-2 max-w-2xl mx-auto">
-              Your love and support means so much. If you’d like, you can also contribute toward future plans and shared experiences.
-            </p>
-          </div>
+          {featuredFund ? (
+            <div className="mb-8 rounded-2xl border border-primary/20 bg-primary/5 p-6 md:p-8">
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-2xl">
+                  <p className="text-sm text-primary font-light mb-2">Featured fund</p>
+                  <h3 className="text-2xl md:text-3xl font-semibold text-text-primary">{featuredFund.item_name}</h3>
+                  <p className="text-sm text-text-secondary leading-relaxed mt-3">
+                    {featuredFund.notes?.trim() || 'Your love and support means so much. If you’d like, you can contribute toward shared plans and experiences.'}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {featuredFundMethods.map((method) => (
+                      method.url ? (
+                        <a
+                          key={method.id}
+                          href={method.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors"
+                        >
+                          {method.label}
+                        </a>
+                      ) : (
+                        <span key={method.id} className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl text-text-secondary">
+                          {method.label}
+                        </span>
+                      )
+                    ))}
+                  </div>
+                </div>
+                <div className="min-w-[220px] rounded-2xl border border-border bg-surface px-4 py-4 shadow-sm">
+                  <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Fund status</p>
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs text-text-tertiary">Goal</p>
+                      <p className="font-semibold text-text-primary">{featuredFundGoal > 0 ? `$${featuredFundGoal.toFixed(0)}` : 'Flexible'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-text-tertiary">Raised</p>
+                      <p className="font-semibold text-text-primary">${featuredFundReceived.toFixed(0)}</p>
+                    </div>
+                  </div>
+                  {featuredFundPct != null && (
+                    <div className="mt-4">
+                      <div className="h-2 w-full rounded-full bg-surface-subtle border border-border overflow-hidden">
+                        <div className="h-full bg-primary" style={{ width: `${featuredFundPct}%` }} />
+                      </div>
+                      <p className="mt-2 text-xs text-text-tertiary">{featuredFundPct}% funded</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="mb-8 rounded-2xl border border-primary/20 bg-primary/5 p-6 md:p-8 text-center">
+              <h3 className="text-xl font-semibold text-text-primary">Honeymoon & Experiences Fund</h3>
+              <p className="text-sm text-text-secondary leading-relaxed mt-2 max-w-2xl mx-auto">
+                Your love and support means so much. If you’d like, you can also contribute toward future plans and shared experiences.
+              </p>
+            </div>
+          )}
 
-          <RegistryItemsDisplay items={items} settings={{ ...settings, showTitle: false }} notes={undefined} updateItem={updateItem} />
+          <RegistryItemsDisplay
+            items={items}
+            settings={{ ...settings, showTitle: false }}
+            notes={undefined}
+            updateItem={updateItem}
+            excludeItemIds={featuredFund ? [featuredFund.id] : []}
+          />
         </div>
       </section>
     );
