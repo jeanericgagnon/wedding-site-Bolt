@@ -99,6 +99,15 @@ describe('RegistryDashboardRouteContent', () => {
             completedAt: null,
           }],
         }}
+        registryThankYouStats={{
+          purchasedCount: 1,
+          completedCount: 0,
+          pendingCount: 1,
+          readyToSendCount: 1,
+          blockedByMissingPurchaserCount: 0,
+          attributionCoverageRate: 100,
+          completionRate: 0,
+        }}
         registryThankYouBusyItemId={null}
         registryThankYouSyncing={false}
         repairingBadImports={false}
@@ -191,6 +200,15 @@ describe('RegistryDashboardRouteContent', () => {
             taskStatus: 'needs-purchaser',
             completedAt: null,
           }],
+        }}
+        registryThankYouStats={{
+          purchasedCount: 1,
+          completedCount: 0,
+          pendingCount: 1,
+          readyToSendCount: 0,
+          blockedByMissingPurchaserCount: 1,
+          attributionCoverageRate: 0,
+          completionRate: 0,
         }}
         registryThankYouBusyItemId={null}
         registryThankYouSyncing={false}
@@ -333,6 +351,68 @@ describe('RegistryDashboardRouteContent', () => {
     });
   });
 
+  it('derives thank-you follow-through analytics from purchased gifts and saved ledger state', () => {
+    const derived = buildRegistryDashboardDerivedState({
+      autoRefreshEnabled: true,
+      items: [
+        makeItem({
+          id: 'done-gift',
+          item_name: 'Dinner plates',
+          purchaser_name: 'Alex',
+          purchase_status: 'purchased',
+          quantity_needed: 1,
+          quantity_purchased: 1,
+        }),
+        makeItem({
+          id: 'ready-gift',
+          item_name: 'Wine glasses',
+          purchaser_name: 'Jordan',
+          purchase_status: 'partial',
+          quantity_needed: 6,
+          quantity_purchased: 2,
+        }),
+        makeItem({
+          id: 'blocked-gift',
+          item_name: 'Cake stand',
+          purchaser_name: null,
+          purchase_status: 'purchased',
+          quantity_needed: 1,
+          quantity_purchased: 1,
+        }),
+      ],
+      monthlyRefreshCap: 50,
+      monthlyRefreshCount: 0,
+      registryThankYouLedger: {
+        'done-gift': {
+          itemId: 'done-gift',
+          giftName: 'Dinner plates',
+          purchaserName: 'Alex',
+          quantityNeeded: 1,
+          quantityPurchased: 1,
+          status: 'done',
+          generatedAt: '2026-05-10T11:00:00.000Z',
+          completedAt: '2026-05-10T12:00:00.000Z',
+        },
+      },
+      refreshEnabledUntil: null,
+      refreshIncludePurchased: false,
+      search: '',
+      filter: 'all',
+      showAlertsOnly: false,
+      showImageIssuesOnly: false,
+    });
+
+    expect(derived.registryThankYouStats).toEqual({
+      purchasedCount: 3,
+      completedCount: 1,
+      pendingCount: 2,
+      readyToSendCount: 1,
+      blockedByMissingPurchaserCount: 1,
+      attributionCoverageRate: 67,
+      completionRate: 33,
+    });
+  });
+
   it('tracks missing fund goals and first-gift gaps separately', () => {
     const derived = buildRegistryDashboardDerivedState({
       autoRefreshEnabled: true,
@@ -438,6 +518,7 @@ describe('RegistryDashboardRouteContent', () => {
         registryInsights={[]}
         registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}
         registryThankYouPlan={{ headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] }}
+        registryThankYouStats={{ purchasedCount: 0, completedCount: 0, pendingCount: 0, readyToSendCount: 0, blockedByMissingPurchaserCount: 0, attributionCoverageRate: 0, completionRate: 0 }}
         registryThankYouBusyItemId={null}
         registryThankYouSyncing={false}
         repairingBadImports={false}
@@ -515,6 +596,7 @@ describe('RegistryDashboardRouteContent', () => {
         registryInsights={[]}
         registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}
         registryThankYouPlan={{ headline: 'Quiet', summary: 'Quiet', purchasedCount: 1, namedPurchaserCount: 0, missingPurchaserCount: 1, completedCount: 0, items: [] }}
+        registryThankYouStats={{ purchasedCount: 1, completedCount: 0, pendingCount: 1, readyToSendCount: 0, blockedByMissingPurchaserCount: 1, attributionCoverageRate: 0, completionRate: 0 }}
         registryThankYouBusyItemId={null}
         registryThankYouSyncing={false}
         repairingBadImports={false}
@@ -549,6 +631,88 @@ describe('RegistryDashboardRouteContent', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Multi-quantity gifts in progress: 1 · Fully claimed gifts: 1'),
+    ).toBeInTheDocument();
+  });
+
+  it('renders thank-you follow-through analytics for pending and blocked gifts', () => {
+    render(
+      <RegistryDashboardRouteContent
+        actionableBadImportCount={0}
+        alertCounts={{ stale: 0, priceChanged: 0, outOfStock: 0, imageIssues: 0 }}
+        autoRefreshEnabled
+        autoRefreshing={false}
+        bulkImportBusy={false}
+        bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
+        budgetUtilization={0}
+        claimStats={{ claimedItems: 3, claimedQuantity: 4, fullyClaimedItems: 2, partiallyClaimedItems: 1, namedPurchaserItems: 2, missingPurchaserItems: 1, multiQuantityInProgress: 1, remainingQuantity: 2 }}
+        counts={{ total: 4, available: 1, partial: 1, purchased: 2, totalValue: 320 }}
+        duplicateGroups={[]}
+        editItem={null}
+        filter="all"
+        filtered={[makeItem({ id: 'gift-1' })]}
+        fulfillmentRate={50}
+        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
+        handleAddNew={vi.fn()}
+        handleAutoRefreshStale={vi.fn(async () => {})}
+        handleBulkImport={vi.fn(async () => {})}
+        handleCopyDuplicateReviewList={vi.fn(async () => {})}
+        handleDelete={vi.fn(async () => {})}
+        handleEdit={vi.fn()}
+        handleMergeDuplicateGroup={vi.fn(async () => {})}
+        handleMarkPurchased={vi.fn(async () => {})}
+        handleResetPurchaseState={vi.fn(async () => {})}
+        handleRefetchMetadata={vi.fn(async () => true)}
+        handleRefreshImageIssues={vi.fn(async () => {})}
+        handleRepairBadImports={vi.fn(async () => {})}
+        handleRunRepairQueueAction={vi.fn(async () => {})}
+        handleSyncRegistryThankYouTasks={vi.fn(async () => {})}
+        handleToggleRegistryThankYouTask={vi.fn(async () => {})}
+        imageRefreshBusy={false}
+        items={[makeItem({ id: 'gift-1' })]}
+        loading={false}
+        monthlyRefreshCap={100}
+        monthlyRefreshCount={0}
+        mergingDuplicateGroupId={null}
+        nearBudgetCap={false}
+        normalizedItems={[makeItem({ id: 'gift-1' })]}
+        recentActivity={[makeItem({ id: 'gift-1' })]}
+        registryActionsOpen={false}
+        registryActionsRef={{ current: null }}
+        registryInsights={[]}
+        registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}
+        registryThankYouPlan={{ headline: 'Thank-you follow-up list', summary: '1 thank-you marked sent. 2 gifts still need follow-up.', purchasedCount: 3, namedPurchaserCount: 2, missingPurchaserCount: 1, completedCount: 1, items: [] }}
+        registryThankYouStats={{ purchasedCount: 3, completedCount: 1, pendingCount: 2, readyToSendCount: 1, blockedByMissingPurchaserCount: 1, attributionCoverageRate: 67, completionRate: 33 }}
+        registryThankYouBusyItemId={null}
+        registryThankYouSyncing={false}
+        repairingBadImports={false}
+        repairQueue={[]}
+        refreshBudgetRemaining={100}
+        refreshWindowOpen={true}
+        search=""
+        setBulkImportOpen={vi.fn()}
+        setFilter={vi.fn()}
+        setRegistryActionsOpen={vi.fn()}
+        setSearch={vi.fn()}
+        setShowAlertsOnly={vi.fn()}
+        setShowImageIssuesOnly={vi.fn()}
+        showAlertsOnly={false}
+        showImageIssuesOnly={false}
+        topRegistryItems={[makeItem({ id: 'gift-1' })]}
+        weddingSiteId="site-1"
+      />,
+    );
+
+    expect(screen.getByText('Thank-yous')).toBeInTheDocument();
+    expect(screen.getByText('2 still pending · 1 need purchaser')).toBeInTheDocument();
+    expect(screen.getByText('1 ready to send · 33% sent')).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Thank-yous sent: 1 · Still pending: 2'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Ready to send: 1 · Blocked by purchaser: 1'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Attribution coverage: 67% · Follow-up sent: 33%'),
     ).toBeInTheDocument();
   });
 });

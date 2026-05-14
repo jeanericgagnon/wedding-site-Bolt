@@ -85,6 +85,16 @@ type ClaimStats = {
   remainingQuantity: number;
 };
 
+type RegistryThankYouStats = {
+  purchasedCount: number;
+  completedCount: number;
+  pendingCount: number;
+  readyToSendCount: number;
+  blockedByMissingPurchaserCount: number;
+  attributionCoverageRate: number;
+  completionRate: number;
+};
+
 type AlertCounts = {
   stale: number;
   priceChanged: number;
@@ -146,6 +156,7 @@ export function RegistryDashboardRouteContent(props: {
   registryInsights: RegistryInsight[];
   registryLaunchReadiness: RegistryLaunchReadiness;
   registryThankYouPlan: RegistryThankYouPlan;
+  registryThankYouStats: RegistryThankYouStats;
   registryThankYouBusyItemId: string | null;
   registryThankYouSyncing: boolean;
   repairingBadImports: boolean;
@@ -249,7 +260,7 @@ export function RegistryDashboardRouteContent(props: {
             ))}
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Gift progress</p>
               <p className="mt-1 text-2xl font-bold text-text-primary">{props.fulfillmentRate}%</p>
@@ -263,6 +274,16 @@ export function RegistryDashboardRouteContent(props: {
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
                 {props.claimStats.fullyClaimedItems} fully claimed{props.claimStats.partiallyClaimedItems > 0 ? ` · ${props.claimStats.partiallyClaimedItems} partial` : ''}
+              </p>
+            </Card>
+            <Card variant="bordered" padding="md">
+              <p className="text-xs font-medium text-text-tertiary">Thank-yous</p>
+              <p className="mt-1 text-2xl font-bold text-text-primary">{props.registryThankYouStats.completedCount}</p>
+              <p className="mt-1 text-xs text-text-secondary">
+                {props.registryThankYouStats.pendingCount} still pending{props.registryThankYouStats.blockedByMissingPurchaserCount > 0 ? ` · ${props.registryThankYouStats.blockedByMissingPurchaserCount} need purchaser` : ''}
+              </p>
+              <p className="mt-1 text-xs text-text-tertiary">
+                {props.registryThankYouStats.readyToSendCount} ready to send · {props.registryThankYouStats.completionRate}% sent
               </p>
             </Card>
             <Card variant="bordered" padding="md">
@@ -376,6 +397,15 @@ export function RegistryDashboardRouteContent(props: {
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Claimed quantity: <span className="font-semibold text-text-primary">{props.claimStats.claimedQuantity}</span> · Still needed: <span className="font-semibold text-text-primary">{props.claimStats.remainingQuantity}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Thank-yous sent: <span className="font-semibold text-text-primary">{props.registryThankYouStats.completedCount}</span> · Still pending: <span className="font-semibold text-text-primary">{props.registryThankYouStats.pendingCount}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Ready to send: <span className="font-semibold text-text-primary">{props.registryThankYouStats.readyToSendCount}</span> · Blocked by purchaser: <span className="font-semibold text-text-primary">{props.registryThankYouStats.blockedByMissingPurchaserCount}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Attribution coverage: <span className="font-semibold text-text-primary">{props.registryThankYouStats.attributionCoverageRate}%</span> · Follow-up sent: <span className="font-semibold text-text-primary">{props.registryThankYouStats.completionRate}%</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Cash funds received: <span className="font-semibold text-text-primary">${props.fundStats.received.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>

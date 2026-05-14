@@ -197,6 +197,7 @@ export const DashboardRegistry: React.FC = () => {
     registryInsights,
     registryLaunchReadiness,
     registryThankYouPlan,
+    registryThankYouStats,
     topRegistryItems,
   } = buildRegistryDashboardDerivedState({
     autoRefreshEnabled,
@@ -399,6 +400,7 @@ export const DashboardRegistry: React.FC = () => {
         registryInsights={registryInsights}
         registryLaunchReadiness={registryLaunchReadiness}
         registryThankYouPlan={registryThankYouPlan}
+        registryThankYouStats={registryThankYouStats}
         registryThankYouBusyItemId={registryThankYouBusyItemId}
         registryThankYouSyncing={registryThankYouSyncing}
         repairingBadImports={repairingBadImports}

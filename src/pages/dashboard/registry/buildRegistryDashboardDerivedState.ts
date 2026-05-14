@@ -37,6 +37,16 @@ interface BuildRegistryDashboardDerivedStateArgs {
   showImageIssuesOnly: boolean;
 }
 
+type RegistryThankYouStats = {
+  purchasedCount: number;
+  completedCount: number;
+  pendingCount: number;
+  readyToSendCount: number;
+  blockedByMissingPurchaserCount: number;
+  attributionCoverageRate: number;
+  completionRate: number;
+};
+
 export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardDerivedStateArgs) {
   const {
     autoRefreshEnabled,
@@ -200,6 +210,19 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
   }))).slice(0, 3);
   const registryLaunchReadiness = buildRegistryLaunchReadiness(items, registryThankYouLedger);
   const registryThankYouPlan = buildRegistryThankYouPlanWithLedger(items, registryThankYouLedger);
+  const registryThankYouStats: RegistryThankYouStats = {
+    purchasedCount: registryThankYouPlan.purchasedCount,
+    completedCount: registryThankYouPlan.completedCount,
+    pendingCount: Math.max(registryThankYouPlan.purchasedCount - registryThankYouPlan.completedCount, 0),
+    readyToSendCount: Math.max(registryThankYouPlan.namedPurchaserCount - registryThankYouPlan.completedCount, 0),
+    blockedByMissingPurchaserCount: registryThankYouPlan.missingPurchaserCount,
+    attributionCoverageRate: registryThankYouPlan.purchasedCount > 0
+      ? Math.round((registryThankYouPlan.namedPurchaserCount / registryThankYouPlan.purchasedCount) * 100)
+      : 0,
+    completionRate: registryThankYouPlan.purchasedCount > 0
+      ? Math.round((registryThankYouPlan.completedCount / registryThankYouPlan.purchasedCount) * 100)
+      : 0,
+  };
 
   const alertCounts = {
     stale: items.filter((item) => ageExceedsMs(item.metadata_last_checked_at, 1000 * 60 * 60 * 24)).length,
@@ -234,6 +257,7 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
     registryInsights,
     registryLaunchReadiness,
     registryThankYouPlan,
+    registryThankYouStats,
     topRegistryItems,
   };
 }

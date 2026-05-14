@@ -469,6 +469,7 @@ Execution rule for this section:
    - this batch shipped: owner registry analytics now distinguish share-ready funds that are already moving from share-ready funds still waiting on a first gift, and they separately call out flexible funds that are already receiving gifts without a fixed goal
    - this batch shipped: the public featured-fund card now uses clearer guest-facing progress chips like `25% funded` and `Already receiving gifts`, so fund momentum reads more honestly than the old generic “progress is underway” wording
    - this batch shipped: the owner registry dashboard now surfaces claim-state analytics for claimed gifts, purchaser attribution, partial claims, claimed quantity, remaining quantity, and multi-quantity progress instead of leaving broader purchase-state truth buried across individual gifts and thank-you lists
+   - this batch shipped: the owner registry dashboard now also surfaces thank-you follow-through analytics for sent vs pending notes, ready-to-send coverage, missing-purchaser blockers, attribution coverage, and follow-up completion rate instead of leaving broader thank-you status buried inside the saved list itself
    - add live owner add/import/edit persistence proof for broader registry workflows
    - rerun the stronger owner repair/cleanup runtime proof against the shipped production runtime after the next approved registry deploy
    - rerun the guest-visible purchase-state assertions against the live production runtime after the next approved registry deploy instead of only local/public-component proof
