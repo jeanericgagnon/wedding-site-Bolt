@@ -52,6 +52,11 @@ type HubSiteSummary = {
   weddingDate: string | null;
 };
 
+type HubWeddingTravelContext = {
+  schedule: Array<{ id?: string | null; label?: string | null; startTimeISO?: string | null; venueId?: string | null; notes?: string | null }>;
+  venues: Array<{ id?: string | null; name?: string | null; address?: string | null }>;
+};
+
 type HubConfigStatus = 'loading' | 'ready' | 'fallback' | 'offline';
 
 const normalizeSiteRef = (value?: string) => (value ?? '').trim().toLowerCase();
@@ -72,6 +77,38 @@ const formatHubWeddingDate = (value: string | null | undefined) => {
   if (Number.isNaN(date.getTime())) return null;
   return date.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
 };
+
+function buildDemoSiteSummary(slug: string, wedding = createAlexJordanDemoWeddingData()): HubSiteSummary {
+  return {
+    slug,
+    coupleName1: wedding.couple.partner1Name?.trim() || null,
+    coupleName2: wedding.couple.partner2Name?.trim() || null,
+    weddingDate: typeof wedding.event.weddingDateISO === 'string' ? wedding.event.weddingDateISO.slice(0, 10) : null,
+  };
+}
+
+function buildSiteSummaryFromPublicAccess(slug: string, access: Awaited<ReturnType<typeof fetchPublicSiteAccess>>): HubSiteSummary | null {
+  const site = access.site;
+  if (!site) return null;
+  const wedding = site.render_model.wedding;
+  return {
+    slug: typeof site.site_slug === 'string' && site.site_slug.trim() ? site.site_slug : slug,
+    coupleName1: site.couple_name_1?.trim() || wedding?.couple?.partner1Name?.trim() || null,
+    coupleName2: site.couple_name_2?.trim() || wedding?.couple?.partner2Name?.trim() || null,
+    weddingDate: site.wedding_date?.trim() || wedding?.event?.weddingDateISO?.slice(0, 10) || null,
+  };
+}
+
+function mergeHubSiteSummary(current: HubSiteSummary | null, next: HubSiteSummary | null): HubSiteSummary | null {
+  if (!next) return current;
+  if (!current) return next;
+  return {
+    slug: current.slug || next.slug,
+    coupleName1: current.coupleName1?.trim() || next.coupleName1?.trim() || null,
+    coupleName2: current.coupleName2?.trim() || next.coupleName2?.trim() || null,
+    weddingDate: current.weddingDate?.trim() || next.weddingDate?.trim() || null,
+  };
+}
 
 export const friendlyGuestHubError = (err: unknown, fallback: string) => {
   return customerSafeErrorMessage(err, fallback, {
@@ -159,6 +196,7 @@ export const EventHub: React.FC = () => {
   const [hubConfigStatus, setHubConfigStatus] = useState<HubConfigStatus>('loading');
   const [hubConfigRetryKey, setHubConfigRetryKey] = useState(0);
   const [travelSource, setTravelSource] = useState<unknown>(null);
+  const [travelContext, setTravelContext] = useState<HubWeddingTravelContext>({ schedule: [], venues: [] });
   const [travelShareStatus, setTravelShareStatus] = useState<string | null>(null);
   const guestIdentity = useMemo(() => buildGuestHubIdentityPayload(slug, searchParams), [searchParams, slug]);
   const languagePreference = useMemo(() => resolveGuestLanguagePreference({
@@ -194,7 +232,13 @@ export const EventHub: React.FC = () => {
     }
     if (!hasGuestHubPublicRuntime()) {
       if (slug === 'alex-jordan-demo') {
-        setTravelSource(createAlexJordanDemoWeddingData().travel);
+        const demoWedding = createAlexJordanDemoWeddingData();
+        setSiteSummary(buildDemoSiteSummary(slug, demoWedding));
+        setTravelSource(demoWedding.travel);
+        setTravelContext({
+          schedule: demoWedding.schedule,
+          venues: demoWedding.venues,
+        });
       }
       setHubConfigStatus('ready');
       return;
@@ -242,12 +286,23 @@ export const EventHub: React.FC = () => {
     })
       .then((access) => {
         if (!cancelled) {
+          setSiteSummary((current) => mergeHubSiteSummary(current, buildSiteSummaryFromPublicAccess(slug, access)));
           setTravelSource(access.site?.render_model.wedding?.travel ?? null);
+          setTravelContext({
+            schedule: access.site?.render_model.wedding?.schedule ?? [],
+            venues: access.site?.render_model.wedding?.venues ?? [],
+          });
         }
       })
       .catch(() => {
         if (!cancelled && slug === 'alex-jordan-demo') {
-          setTravelSource(createAlexJordanDemoWeddingData().travel);
+          const demoWedding = createAlexJordanDemoWeddingData();
+          setSiteSummary((current) => mergeHubSiteSummary(current, buildDemoSiteSummary(slug, demoWedding)));
+          setTravelSource(demoWedding.travel);
+          setTravelContext({
+            schedule: demoWedding.schedule,
+            venues: demoWedding.venues,
+          });
         }
       });
     trackGuestHubEvent(slug, 'view', '/event', buildGuestHubAccessPayload(slug, searchParams)).catch(() => {});
@@ -334,6 +389,8 @@ export const EventHub: React.FC = () => {
   const travelHubSpotlight = buildTravelHubSpotlight({
     siteSlug: slug,
     travel: travelSource,
+    schedule: travelContext.schedule,
+    venues: travelContext.venues,
     enabledActionIds: actions.map((action) => action.id),
     guestInviteToken: guestIdentity.guestInviteToken,
     guestLanguage: languagePreference.language,

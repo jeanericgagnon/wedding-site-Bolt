@@ -39,7 +39,7 @@ type TravelGuestJourneyStep = {
 };
 
 type TravelHubSpotlightCard = {
-  id: 'hotel' | 'room-block' | 'shuttle' | 'visa-tip' | 'cultural-tip';
+  id: 'hotel' | 'room-block' | 'shuttle' | 'visa-tip' | 'cultural-tip' | 'event-window' | 'venue-route';
   label: string;
   detail: string;
 };

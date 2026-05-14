@@ -68,6 +68,10 @@ describe('formatEventHubCoupleLabel', () => {
   it('title-cases single-name or non-couple slugs', () => {
     expect(formatEventHubCoupleLabel('spring-wedding-weekend')).toBe('Spring Wedding Weekend');
   });
+
+  it('keeps demo guest-hub couple labels aligned with the seeded couple names instead of the raw demo slug', () => {
+    expect(formatEventHubCoupleLabel('alex-jordan-demo', 'Alex', 'Jordan')).toBe('Alex & Jordan');
+  });
 });
 
 describe('friendlyGuestHubError', () => {

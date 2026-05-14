@@ -75,7 +75,7 @@ export interface TravelVenueMapLink {
 }
 
 export interface TravelHubSpotlightCard {
-  id: 'hotel' | 'room-block' | 'shuttle' | 'visa-tip' | 'cultural-tip';
+  id: 'hotel' | 'room-block' | 'shuttle' | 'visa-tip' | 'cultural-tip' | 'event-window' | 'venue-route';
   label: string;
   detail: string;
 }
@@ -253,15 +253,33 @@ function escapeHtml(value: string): string {
     .replaceAll("'", '&#39;');
 }
 
+function formatTravelEventTime(value: string | null | undefined): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString('en-US', {
+    timeZone: 'UTC',
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 function buildTravelHubSpotlightHtml(input: {
   summary: string;
   travelHref: string;
   cards: TravelHubSpotlightCard[];
   coupleLabel?: string | null;
   weddingDateLabel?: string | null;
+  guestScoped?: boolean;
 }): string {
   const title = input.coupleLabel?.trim() || 'DayOf travel guide';
   const dateLine = input.weddingDateLabel?.trim();
+  const guestScopeCopy = input.guestScoped
+    ? '<p>This guide reflects the events visible for this invitation.</p>'
+    : '';
   const cardsMarkup = input.cards.map((card) => `
       <li>
         <strong>${escapeHtml(card.label)}</strong><br />
@@ -292,6 +310,7 @@ function buildTravelHubSpotlightHtml(input: {
       <h1>${escapeHtml(title)}</h1>
       ${dateLine ? `<p>${escapeHtml(dateLine)}</p>` : ''}
       <p class="summary">${escapeHtml(input.summary)}</p>
+      ${guestScopeCopy}
       <ul>${cardsMarkup}
       </ul>
       <p><a href="${escapeHtml(input.travelHref)}">Open the live travel page</a></p>
@@ -308,12 +327,15 @@ export function buildTravelHubSpotlight(input: {
   guestLanguage?: string | null;
   coupleLabel?: string | null;
   weddingDateLabel?: string | null;
+  schedule?: Array<{ id?: string | null; label?: string | null; startTimeISO?: string | null; venueId?: string | null; notes?: string | null }>;
+  venues?: Array<{ id?: string | null; name?: string | null; address?: string | null; mapUrl?: string | null }>;
 }): TravelHubSpotlight | null {
   const siteSlug = input.siteSlug.trim().toLowerCase();
   if (!siteSlug || !hasAction(input.enabledActionIds, 'travel')) return null;
 
   const structured = normalizeTravelPortalData(input.travel);
   const cards: TravelHubSpotlightCard[] = [];
+  const guestScoped = Boolean(input.guestInviteToken?.trim());
 
   const firstHotel = structured.hotels[0];
   if (firstHotel) {
@@ -365,6 +387,37 @@ export function buildTravelHubSpotlight(input: {
     });
   }
 
+  const visibleVenues = (input.venues ?? []).filter((venue) => venue && (venue.name?.trim() || venue.address?.trim()));
+  const firstScheduledStep = (input.schedule ?? []).find((item) => item?.label?.trim());
+  if (firstScheduledStep) {
+    const venueName = visibleVenues.find((venue) => venue.id && venue.id === firstScheduledStep.venueId)?.name?.trim() || '';
+    const timeLabel = formatTravelEventTime(firstScheduledStep.startTimeISO);
+    const detail = [timeLabel, venueName, firstScheduledStep.notes?.trim() || null].filter(Boolean).join(' · ');
+    cards.push({
+      id: 'event-window',
+      label: firstScheduledStep.label?.trim() || 'Visible event timing',
+      detail: detail || 'Visible event timing is ready for this invitation.',
+    });
+  }
+
+  const venueMapLinks = buildTravelVenueMapLinks(
+    visibleVenues.map((venue, index) => ({
+      id: venue.id?.trim() || `venue-${index}`,
+      label: venue.name?.trim() || `Venue ${index + 1}`,
+      address: venue.address?.trim() || null,
+      mapUrl: venue.mapUrl?.trim() || null,
+    })),
+  );
+  const firstVenueLink = venueMapLinks[0];
+  if (firstVenueLink) {
+    const venue = visibleVenues.find((candidate) => (candidate.id?.trim() || '') === firstVenueLink.id);
+    cards.push({
+      id: 'venue-route',
+      label: `Directions · ${firstVenueLink.label}`,
+      detail: venue?.address?.trim() || 'Guest-safe map directions are ready from the hub.',
+    });
+  }
+
   if (cards.length === 0) return null;
 
   const travelHref = appendGuestLanguageToInternalHref(
@@ -376,6 +429,7 @@ export function buildTravelHubSpotlight(input: {
   );
   const shareText = [
     'DayOf travel quick plan',
+    ...(guestScoped ? ['Guide reflects the events visible for this invitation.'] : []),
     ...cards.map((card) => `${card.label}: ${card.detail}`),
     `Travel page: ${travelHref}`,
   ].join('\n');
@@ -393,6 +447,7 @@ export function buildTravelHubSpotlight(input: {
       cards,
       coupleLabel: input.coupleLabel,
       weddingDateLabel: input.weddingDateLabel,
+      guestScoped,
     }),
     filename,
   };

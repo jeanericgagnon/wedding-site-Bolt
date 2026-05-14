@@ -380,8 +380,10 @@ Execution rule for this section:
    - this batch shipped: focused proof is green for the guest hub travel spotlight helper plus a real `EventHubLiveContent` render pass that proves the quick-plan card and copy action render in the hub
    - this batch shipped: guest-hub `travel`, `schedule`, `rsvp`, and `registry` actions now preserve private guest invite context and guest language instead of dropping travel/detail surfaces back to generic site-shell state
    - this batch shipped: the guest-hub travel quick plan now saves a real downloadable HTML travel guide instead of stopping at copy-only summary text
-   - add guest-specific room/shuttle/travel guidance instead of generic shared copy only
-   - add live mobile guest-path proof from invite to travel to RSVP/photo surfaces
+   - this batch shipped: the guest-hub travel spotlight now adds invite-scoped event timing and venue-direction cards when private guest context, schedule, and venue data are available instead of stopping at generic hotel/shuttle notes only
+   - this batch shipped: the guest-hub fallback/runtime path now preserves the seeded couple summary and travel context strongly enough for real guest travel continuity proof instead of dropping the hub back to raw slug-only framing
+   - this batch shipped: a dedicated `proof:v1:travel-guest-portal` lane now reruns travel helper/render tests plus a real mobile browser flow from invite-scoped guest hub to travel, RSVP, and photo-upload surfaces without raw-token body leakage
+   - rerun the same invite-scoped travel hub flow against the shipped production runtime for live/mobile proof, not only local preview
 
 8. `ACTIVE`: reminders, digests, and notification preferences
    - persist digest cadence, planner audience, and quiet-state preferences across settings + overview digest preview

@@ -140,6 +140,22 @@ describe('travelGuestPortal', () => {
       enabledActionIds: ['travel', 'rsvp', 'photos'],
       guestInviteToken: 'guest-token-123',
       guestLanguage: 'fr',
+      schedule: [
+        {
+          id: 'evt-ceremony',
+          label: 'Ceremony',
+          startTimeISO: '2026-06-14T16:00:00.000Z',
+          venueId: 'venue-1',
+          notes: 'Arrive 15 minutes early.',
+        },
+      ],
+      venues: [
+        {
+          id: 'venue-1',
+          name: 'Sunset Gardens Estate',
+          address: '123 Garden Lane, Napa Valley, CA 94558',
+        },
+      ],
       travel: {
         hotels: [{ name: 'Harbor Hotel', bookingCode: 'MAYALEO' }],
         roomBlocks: [{ hotelName: 'Harbor Hotel', bookingCode: 'MAYALEO' }],
@@ -151,26 +167,32 @@ describe('travelGuestPortal', () => {
     });
 
     expect(spotlight).toEqual({
-      summary: '4 travel details ready from the guest hub.',
+      summary: '6 travel details ready from the guest hub.',
       travelHref: '/site/maya-and-leo?invite_token=guest-token-123&guestLang=fr#travel',
       cards: [
         { id: 'hotel', label: 'Harbor Hotel', detail: 'Code MAYALEO' },
         { id: 'room-block', label: 'Room block', detail: 'Harbor Hotel · Code MAYALEO' },
         { id: 'shuttle', label: 'Ceremony shuttle', detail: 'Harbor Hotel to venue' },
         { id: 'cultural-tip', label: 'Local tip', detail: 'Bring a light layer for the waterfront.' },
+        { id: 'event-window', label: 'Ceremony', detail: 'Sun, Jun 14, 4:00 PM · Sunset Gardens Estate · Arrive 15 minutes early.' },
+        { id: 'venue-route', label: 'Directions · Sunset Gardens Estate', detail: '123 Garden Lane, Napa Valley, CA 94558' },
       ],
       shareText: [
         'DayOf travel quick plan',
+        'Guide reflects the events visible for this invitation.',
         'Harbor Hotel: Code MAYALEO',
         'Room block: Harbor Hotel · Code MAYALEO',
         'Ceremony shuttle: Harbor Hotel to venue',
         'Local tip: Bring a light layer for the waterfront.',
+        'Ceremony: Sun, Jun 14, 4:00 PM · Sunset Gardens Estate · Arrive 15 minutes early.',
+        'Directions · Sunset Gardens Estate: 123 Garden Lane, Napa Valley, CA 94558',
         'Travel page: /site/maya-and-leo?invite_token=guest-token-123&guestLang=fr#travel',
       ].join('\n'),
       htmlDocument: expect.stringContaining('<title>Maya &amp; Leo travel guide</title>'),
       filename: 'maya-and-leo-travel-guide.html',
     });
     expect(spotlight?.htmlDocument).toContain('Open the live travel page');
+    expect(spotlight?.htmlDocument).toContain('This guide reflects the events visible for this invitation.');
     expect(spotlight?.htmlDocument).not.toContain('guest-token-123</');
   });
 });
