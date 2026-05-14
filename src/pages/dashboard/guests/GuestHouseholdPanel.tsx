@@ -1,6 +1,7 @@
 import React from 'react';
 import { ExternalLink, Home, Merge, Users } from 'lucide-react';
 import { Button } from '../../../components/ui';
+import { GUEST_LANGUAGE_LABELS, normalizeGuestLanguageCode } from '../../../lib/guestLanguagePreference';
 import { buildGuestPreviewRoutes } from '../../../lib/guestPreviewRoutes';
 import type { GuestHouseholdGroups } from './guestDashboardUtils';
 
@@ -55,6 +56,7 @@ export function GuestHouseholdPanel({
           <div className="divide-y divide-border-subtle/60 bg-white">
             {members.map((guest) => {
               const name = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
+              const preferredLanguage = normalizeGuestLanguageCode(guest.preferred_language);
               const guestPreviewRoutes = buildGuestPreviewRoutes({
                 guestId: guest.id,
                 inviteToken: guest.invite_token,
@@ -65,6 +67,9 @@ export function GuestHouseholdPanel({
                   <div>
                     <p className="text-sm font-medium text-text-primary">{name}</p>
                     <p className="text-xs text-text-tertiary break-words">{guest.email || 'No email'}</p>
+                    {preferredLanguage && (
+                      <p className="text-xs text-text-tertiary">Prefers {GUEST_LANGUAGE_LABELS[preferredLanguage]}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-3">
                     {guestPreviewRoutes.primaryHref && (
@@ -101,6 +106,7 @@ export function GuestHouseholdPanel({
             {households.ungrouped.map((guest) => {
               const name = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
               const isSelected = selectedGuestIds.has(guest.id);
+              const preferredLanguage = normalizeGuestLanguageCode(guest.preferred_language);
               const guestPreviewRoutes = buildGuestPreviewRoutes({
                 guestId: guest.id,
                 inviteToken: guest.invite_token,
@@ -130,6 +136,9 @@ export function GuestHouseholdPanel({
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-text-primary">{name}</p>
                     <p className="text-xs text-text-tertiary break-words">{guest.email || 'No email'}</p>
+                    {preferredLanguage && (
+                      <p className="text-xs text-text-tertiary">Prefers {GUEST_LANGUAGE_LABELS[preferredLanguage]}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     {guestPreviewRoutes.primaryHref && (

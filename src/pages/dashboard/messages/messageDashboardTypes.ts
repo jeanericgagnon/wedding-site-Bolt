@@ -18,6 +18,7 @@ export interface Guest {
   email: string | null;
   phone?: string | null;
   sms_consent?: boolean | null;
+  preferred_language?: string | null;
   rsvp_status: string;
   invitation_sent_at?: string | null;
   reminder_last_sent_at?: string | null;
@@ -34,6 +35,7 @@ export interface Guest {
 export interface WeddingSite {
   id: string;
   site_slug?: string | null;
+  default_language?: string | null;
   couple_first_name: string | null;
   couple_second_name: string | null;
   couple_email: string | null;

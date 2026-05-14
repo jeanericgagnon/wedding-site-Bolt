@@ -1,6 +1,14 @@
 export const GUEST_LANGUAGE_STORAGE_KEY = 'dayof_language';
 export const GUEST_LANGUAGE_QUERY_KEYS = ['guestLang', 'lang', 'locale', 'language'] as const;
 export const SUPPORTED_GUEST_LANGUAGES = ['en', 'es', 'fr', 'it', 'de', 'pt'] as const;
+export const GUEST_LANGUAGE_LABELS: Record<GuestLanguageCode, string> = {
+  en: 'English',
+  es: 'Spanish',
+  fr: 'French',
+  it: 'Italian',
+  de: 'German',
+  pt: 'Portuguese',
+};
 const GUEST_LANGUAGE_RETENTION_MS = 180 * 24 * 60 * 60 * 1000;
 
 export type GuestLanguageCode = typeof SUPPORTED_GUEST_LANGUAGES[number];

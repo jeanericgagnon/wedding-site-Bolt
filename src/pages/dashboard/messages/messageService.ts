@@ -64,6 +64,7 @@ const GUEST_SELECT = [
   'email',
   'phone',
   'sms_consent',
+  'preferred_language',
   'rsvp_status',
   'invitation_sent_at',
   'reminder_last_sent_at',
@@ -80,6 +81,7 @@ const GUEST_SELECT = [
 const WEDDING_SITE_SELECT = [
   'id',
   'site_slug',
+  'default_language',
   'couple_first_name',
   'couple_second_name',
   'couple_email',

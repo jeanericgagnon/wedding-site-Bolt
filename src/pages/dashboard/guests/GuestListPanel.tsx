@@ -1,6 +1,7 @@
 import React from 'react';
 import { CalendarDays, CheckCircle2, ChevronRight, ExternalLink, Mail, Users } from 'lucide-react';
 import { Button } from '../../../components/ui';
+import { GUEST_LANGUAGE_LABELS, normalizeGuestLanguageCode } from '../../../lib/guestLanguagePreference';
 import { buildGuestPreviewRoutes } from '../../../lib/guestPreviewRoutes';
 import { getInviteLifecycleState } from '../../../lib/inviteLifecycle';
 import { getPlusOneState } from '../../../lib/plusOneState';
@@ -67,6 +68,7 @@ export function GuestListPanel({
               const guestName = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
               const checkedInAt = guest.checked_in_at ?? null;
               const thankYouSentAt = guest.thank_you_sent_at ?? null;
+              const preferredLanguage = normalizeGuestLanguageCode(guest.preferred_language);
               const guestPreviewRoutes = buildGuestPreviewRoutes({
                 guestId: guest.id,
                 inviteToken: guest.invite_token,
@@ -84,6 +86,11 @@ export function GuestListPanel({
                       <div>
                         <p className="text-sm font-medium text-text-primary">{guestName}</p>
                         <p className="text-sm text-text-secondary">{guest.email || '—'}</p>
+                        {preferredLanguage && (
+                          <p className="text-xs text-text-tertiary">
+                            Prefers {GUEST_LANGUAGE_LABELS[preferredLanguage]}
+                          </p>
+                        )}
                         {checkInMode && checkedInAt && (
                           <p className="text-xs text-success">Checked in {formatGuestOpsDateTime(checkedInAt, { hour: 'numeric', minute: '2-digit' })}</p>
                         )}

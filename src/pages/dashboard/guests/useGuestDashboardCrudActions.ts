@@ -21,6 +21,7 @@ interface GuestFormData {
   last_name: string;
   email: string;
   phone: string;
+  preferred_language: string;
   plus_one_allowed: boolean;
   require_plus_one_name: boolean;
   invited_to_ceremony: boolean;
@@ -76,6 +77,7 @@ export function useGuestDashboardCrudActions({
       last_name: '',
       email: '',
       phone: '',
+      preferred_language: '',
       plus_one_allowed: false,
       require_plus_one_name: false,
       invited_to_ceremony: true,
@@ -95,6 +97,7 @@ export function useGuestDashboardCrudActions({
       last_name: guest.last_name || '',
       email: guest.email || '',
       phone: guest.phone || '',
+      preferred_language: guest.preferred_language || '',
       plus_one_allowed: guest.plus_one_allowed,
       require_plus_one_name: false,
       invited_to_ceremony: guest.invited_to_ceremony,
@@ -129,6 +132,7 @@ export function useGuestDashboardCrudActions({
           name: `${formData.first_name} ${formData.last_name}`.trim(),
           email: formData.email || null,
           phone: formData.phone || null,
+          preferred_language: formData.preferred_language || null,
           plus_one_allowed: formData.plus_one_allowed,
           plus_one_name: null,
           invited_to_ceremony: formData.invited_to_ceremony,
@@ -158,6 +162,7 @@ export function useGuestDashboardCrudActions({
         lastName: formData.last_name,
         email: formData.email || null,
         phone: formData.phone || null,
+        preferredLanguage: formData.preferred_language || null,
         plusOneAllowed: formData.plus_one_allowed,
         invitedToCeremony,
         invitedToReception,
@@ -191,6 +196,7 @@ export function useGuestDashboardCrudActions({
       name: editingGuest.name ?? null,
       email: editingGuest.email ?? null,
       phone: editingGuest.phone ?? null,
+      preferred_language: editingGuest.preferred_language ?? null,
       plus_one_allowed: editingGuest.plus_one_allowed,
       invited_to_ceremony: editingGuest.invited_to_ceremony,
       invited_to_reception: editingGuest.invited_to_reception,
@@ -210,6 +216,7 @@ export function useGuestDashboardCrudActions({
                 name: `${formData.first_name} ${formData.last_name}`.trim(),
                 email: formData.email || null,
                 phone: formData.phone || null,
+                preferred_language: formData.preferred_language || null,
                 plus_one_allowed: formData.plus_one_allowed,
                 invited_to_ceremony: formData.invited_to_ceremony,
                 invited_to_reception: formData.invited_to_reception,
@@ -234,6 +241,7 @@ export function useGuestDashboardCrudActions({
         name: `${formData.first_name} ${formData.last_name}`,
         email: formData.email || null,
         phone: formData.phone || null,
+        preferredLanguage: formData.preferred_language || null,
         plusOneAllowed: formData.plus_one_allowed,
         invitedToCeremony,
         invitedToReception,
@@ -260,6 +268,7 @@ export function useGuestDashboardCrudActions({
             name: previousGuestValues.name,
             email: previousGuestValues.email,
             phone: previousGuestValues.phone,
+            preferredLanguage: previousGuestValues.preferred_language,
             plusOneAllowed: previousGuestValues.plus_one_allowed,
             invitedToCeremony: previousGuestValues.invited_to_ceremony,
             invitedToReception: previousGuestValues.invited_to_reception,

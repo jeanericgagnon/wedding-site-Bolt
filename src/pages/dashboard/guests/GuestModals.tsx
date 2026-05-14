@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { Button, Input, Select, Textarea } from '../../../components/ui';
+import { GUEST_LANGUAGE_LABELS, SUPPORTED_GUEST_LANGUAGES } from '../../../lib/guestLanguagePreference';
 import type { GuestWithRSVP, ItineraryEvent } from './guestDashboardTypes';
 
 export type AssistedRsvpSource = 'phone' | 'text' | 'family' | 'in-person';
@@ -11,6 +12,7 @@ export interface GuestFormData {
   last_name: string;
   email: string;
   phone: string;
+  preferred_language: string;
   plus_one_allowed: boolean;
   require_plus_one_name: boolean;
   invited_to_ceremony: boolean;
@@ -84,6 +86,20 @@ export function GuestFormModal({
                 type="tel"
                 value={formData.phone}
                 onChange={(event) => onSetFormData({ ...formData, phone: event.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-1">Guest language</label>
+              <Select
+                value={formData.preferred_language}
+                onChange={(event) => onSetFormData({ ...formData, preferred_language: event.target.value })}
+                options={[
+                  { value: '', label: 'Use site default' },
+                  ...SUPPORTED_GUEST_LANGUAGES.map((language) => ({
+                    value: language,
+                    label: GUEST_LANGUAGE_LABELS[language],
+                  })),
+                ]}
               />
             </div>
             <div className="space-y-2">

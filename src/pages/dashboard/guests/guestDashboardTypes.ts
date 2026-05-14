@@ -12,6 +12,7 @@ export interface Guest {
   name: string;
   email: string | null;
   phone: string | null;
+  preferred_language?: string | null;
   plus_one_allowed: boolean;
   plus_one_name: string | null;
   invited_to_ceremony: boolean;

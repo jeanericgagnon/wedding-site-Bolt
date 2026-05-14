@@ -66,6 +66,7 @@ export function useMessageDashboardData({
     if (isDemoMode) {
       setWeddingSite({
         id: demoWeddingSite.id,
+        default_language: (demoWeddingSite as any).default_language ?? 'en',
         couple_first_name: (demoWeddingSite as any).couple_first_name ?? (demoWeddingSite as any).couple_name_1 ?? null,
         couple_second_name: (demoWeddingSite as any).couple_second_name ?? (demoWeddingSite as any).couple_name_2 ?? null,
         couple_email: (demoWeddingSite as any).couple_email ?? null,
@@ -160,6 +161,7 @@ export function useMessageDashboardData({
         email: g.email ?? null,
         phone: (g as any).phone ?? null,
         sms_consent: true,
+        preferred_language: (g as any).preferred_language ?? null,
         rsvp_status: g.rsvp_status ?? 'pending',
         invitation_sent_at: (g as any).invitation_sent_at ?? null,
         reminder_last_sent_at: (g as any).reminder_last_sent_at ?? null,

@@ -234,7 +234,7 @@ export async function persistGuestDashboardRsvpConfig(input: PersistGuestDashboa
 export async function loadGuestDashboardSnapshot(weddingSiteId: string): Promise<GuestDashboardRecordsSnapshot> {
   const { data: guestsData, error: guestsError } = await supabase
     .from('guests')
-    .select('id, first_name, last_name, name, email, phone, plus_one_allowed, plus_one_name, children_allowed, max_children, max_additional_guests, invited_to_ceremony, invited_to_reception, invite_token, rsvp_status, rsvp_received_at, checked_in_at, checkin_notes, thank_you_sent_at, thank_you_notes, household_id, group_name, notes, mailing_address_line1, mailing_address_line2, mailing_city, mailing_state, mailing_postal_code, mailing_country')
+    .select('id, first_name, last_name, name, email, phone, preferred_language, plus_one_allowed, plus_one_name, children_allowed, max_children, max_additional_guests, invited_to_ceremony, invited_to_reception, invite_token, rsvp_status, rsvp_received_at, checked_in_at, checkin_notes, thank_you_sent_at, thank_you_notes, household_id, group_name, notes, mailing_address_line1, mailing_address_line2, mailing_city, mailing_state, mailing_postal_code, mailing_country')
     .eq('wedding_site_id', weddingSiteId)
     .order('created_at', { ascending: false })
     .limit(MAX_GUEST_DASHBOARD_ROWS);
@@ -428,6 +428,7 @@ export interface CreateGuestInput {
   lastName: string;
   email: string | null;
   phone: string | null;
+  preferredLanguage: string | null;
   plusOneAllowed: boolean;
   invitedToCeremony: boolean;
   invitedToReception: boolean;
@@ -441,6 +442,7 @@ export interface UpdateGuestInput {
   name: string | null;
   email: string | null;
   phone: string | null;
+  preferredLanguage: string | null;
   plusOneAllowed: boolean | null;
   invitedToCeremony: boolean | null;
   invitedToReception: boolean | null;
@@ -488,6 +490,7 @@ export async function createGuest(input: CreateGuestInput): Promise<string> {
       name: `${input.firstName} ${input.lastName}`,
       email: input.email,
       phone: input.phone,
+      preferred_language: input.preferredLanguage,
       plus_one_allowed: input.plusOneAllowed,
       invited_to_ceremony: input.invitedToCeremony,
       invited_to_reception: input.invitedToReception,
@@ -510,6 +513,7 @@ export async function updateGuest(input: UpdateGuestInput): Promise<void> {
       name: input.name,
       email: input.email,
       phone: input.phone,
+      preferred_language: input.preferredLanguage,
       plus_one_allowed: input.plusOneAllowed,
       invited_to_ceremony: input.invitedToCeremony,
       invited_to_reception: input.invitedToReception,

@@ -61,6 +61,7 @@ export function useGuestDashboardUiState() {
     last_name: '',
     email: '',
     phone: '',
+    preferred_language: '',
     plus_one_allowed: false,
     require_plus_one_name: false,
     invited_to_ceremony: true,

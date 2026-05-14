@@ -1,4 +1,4 @@
-import type { GuestLanguageCode } from './guestLanguagePreference';
+import { normalizeGuestLanguageCode, type GuestLanguageCode } from './guestLanguagePreference';
 
 export type MessageLanguageTemplateKey =
   | 'blank'
@@ -35,6 +35,10 @@ const LANGUAGE_LABELS: Record<GuestLanguageCode, string> = {
   de: 'German',
   pt: 'Portuguese',
 };
+
+export interface MessagePreviewAudienceGuest {
+  preferred_language?: string | null;
+}
 
 const TEMPLATE_VARIANTS: Partial<Record<MessageLanguageTemplateKey, Partial<Record<GuestLanguageCode, { subject: string; body: string }>>>> = {
   'save-the-date': {
@@ -103,6 +107,27 @@ function normalizeTemplateKey(value: string): MessageLanguageTemplateKey {
   return (['blank', 'save-the-date', 'rsvp-reminder', 'event-reminder', 'day-of-update', 'photo-request', 'thank-you'].includes(value)
     ? value
     : 'blank') as MessageLanguageTemplateKey;
+}
+
+export function deriveGuestMessagePreviewLanguages(
+  guests: MessagePreviewAudienceGuest[],
+  siteDefaultLanguage?: string | null
+): GuestLanguageCode[] {
+  const seen = new Set<GuestLanguageCode>();
+  const ordered: GuestLanguageCode[] = ['en'];
+
+  const addLanguage = (value?: string | null) => {
+    const normalized = normalizeGuestLanguageCode(value);
+    if (!normalized || seen.has(normalized)) return;
+    seen.add(normalized);
+    if (normalized !== 'en') ordered.push(normalized);
+  };
+
+  seen.add('en');
+  guests.forEach((guest) => addLanguage(guest.preferred_language));
+  addLanguage(siteDefaultLanguage);
+
+  return ordered;
 }
 
 export function buildGuestMessageLanguagePreviews(input: MessageLanguagePreviewInput): MessageLanguagePreview[] {

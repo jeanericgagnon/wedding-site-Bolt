@@ -19,6 +19,7 @@ const guests = [
   { id: 'guest-5', rsvp_status: 'declined', invitation_sent_at: '2026-04-01T10:00:00Z', reminder_last_sent_at: null },
   {
     id: 'guest-6',
+    preferred_language: 'es-MX',
     rsvp_status: 'confirmed',
     invitation_sent_at: '2026-04-01T10:00:00Z',
     reminder_last_sent_at: null,
@@ -44,6 +45,7 @@ describe('messageAudienceSegments', () => {
     expect(byValue.get('declined')).toBe(1);
     expect(byValue.get('missing_address')).toBe(5);
     expect(byValue.get('missing_meal')).toBe(1);
+    expect(byValue.get('language:es')).toBe(1);
   });
 
   it('filters event audiences without treating event ids as public segments', () => {
@@ -51,6 +53,7 @@ describe('messageAudienceSegments', () => {
 
     expect(filterMessageAudienceGuests(guests, 'event:event_1', eventGuestIds).map((guest) => guest.id)).toEqual(['guest-2', 'guest-4']);
     expect(filterMessageAudienceGuests(guests, 'event:missing', eventGuestIds)).toEqual([]);
+    expect(filterMessageAudienceGuests(guests, 'language:es').map((guest) => guest.id)).toEqual(['guest-6']);
   });
 
   it('describes selected audiences for recipient confidence copy', () => {
@@ -59,6 +62,7 @@ describe('messageAudienceSegments', () => {
     expect(getMessageAudienceDetail('invited_pending', options)).toContain('invitation has gone out');
     expect(getMessageAudienceDetail('missing_address', options)).toContain('mailing address');
     expect(getMessageAudienceDetail('missing_meal', options)).toContain('meal choice');
+    expect(getMessageAudienceDetail('language:es', options)).toContain('Spanish');
     expect(getMessageAudienceDetail('event:event_1', options)).toBe('Guests assigned to this itinerary event.');
   });
 });

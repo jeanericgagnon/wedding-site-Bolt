@@ -12,6 +12,7 @@ describe('GuestListPanel', () => {
       last_name: 'Lee',
       name: 'Maya Lee',
       email: 'maya@example.com',
+      preferred_language: 'fr',
       invite_token: 'private-token',
       rsvp_status: 'pending',
       rsvp: null,
@@ -40,6 +41,7 @@ describe('GuestListPanel', () => {
     );
 
     screen.getByRole('button', { name: /guest view/i }).click();
+    expect(screen.getByText('Prefers French')).toBeInTheDocument();
 
     expect(openSpy).toHaveBeenCalledWith('/site/maya-and-rowan?previewGuest=guest-1&previewSurface=public', '_blank', 'noopener,noreferrer');
     openSpy.mockRestore();

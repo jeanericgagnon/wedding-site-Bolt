@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { canComposeDashboardMessages } from '../../lib/plannerAccess';
 import { getMessageTemplateCoupleLabel } from './messageTemplateVariables';
 import { buildMessageAudienceOptions, filterMessageAudienceGuests, getMessageAudienceDetail } from '../../lib/messageAudienceSegments';
-import { buildGuestMessageLanguagePreviews } from '../../lib/guestMessageLanguagePreview';
+import { buildGuestMessageLanguagePreviews, deriveGuestMessagePreviewLanguages } from '../../lib/guestMessageLanguagePreview';
 import {
   type Guest,
   type Message,
@@ -154,12 +154,16 @@ export const DashboardMessages: React.FC = () => {
   };
 
   const selectedTemplate = COMPOSER_TEMPLATES.find((tpl) => tpl.key === formData.templateKey) ?? COMPOSER_TEMPLATES[0];
+  const previewLanguages = useMemo(() => deriveGuestMessagePreviewLanguages(
+    filterMessageAudienceGuests(guests, formData.audience, eventGuestIds),
+    weddingSite?.default_language ?? null,
+  ), [eventGuestIds, formData.audience, guests, weddingSite?.default_language]);
   const languagePreviews = useMemo(() => buildGuestMessageLanguagePreviews({
     templateKey: formData.templateKey,
     subject: formData.subject,
     body: formData.body,
-    languages: ['en', 'es', 'fr'],
-  }), [formData.body, formData.subject, formData.templateKey]);
+    languages: previewLanguages,
+  }), [formData.body, formData.subject, formData.templateKey, previewLanguages]);
 
   const campaignStatusSummary = useMemo(() => buildCampaignStatusSummary(messages), [messages]);
 

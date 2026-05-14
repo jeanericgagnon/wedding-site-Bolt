@@ -387,6 +387,7 @@ describe('guestService', () => {
       lastName: 'Jordan',
       email: 'alex@example.com',
       phone: '555-0100',
+      preferredLanguage: 'es',
       plusOneAllowed: true,
       invitedToCeremony: true,
       invitedToReception: false,
@@ -400,6 +401,7 @@ describe('guestService', () => {
       name: 'Alex Jordan',
       email: 'alex@example.com',
       phone: '555-0100',
+      preferredLanguage: 'fr',
       plusOneAllowed: false,
       invitedToCeremony: true,
       invitedToReception: true,
@@ -412,10 +414,12 @@ describe('guestService', () => {
     expect(rpcMock).toHaveBeenNthCalledWith(1, 'guest_dashboard_guest_write', expect.objectContaining({
       p_wedding_site_id: 'site-1',
       p_guest_id: null,
+      p_payload: expect.objectContaining({ preferred_language: 'es' }),
     }));
     expect(rpcMock).toHaveBeenNthCalledWith(2, 'guest_dashboard_guest_write', expect.objectContaining({
       p_wedding_site_id: null,
       p_guest_id: 'guest-1',
+      p_payload: expect.objectContaining({ preferred_language: 'fr' }),
     }));
     expect(rpcMock).toHaveBeenNthCalledWith(3, 'guest_dashboard_guest_delete', {
       p_guest_id: 'guest-1',

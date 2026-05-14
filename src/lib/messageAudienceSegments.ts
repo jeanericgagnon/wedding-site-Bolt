@@ -1,4 +1,5 @@
 import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from './rsvpStatus';
+import { GUEST_LANGUAGE_LABELS, normalizeGuestLanguageCode, SUPPORTED_GUEST_LANGUAGES, type GuestLanguageCode } from './guestLanguagePreference';
 
 export type MessageAudienceSegmentId =
   | 'all'
@@ -9,13 +10,15 @@ export type MessageAudienceSegmentId =
   | 'invited_pending'
   | 'reminder_sent_pending'
   | 'missing_address'
-  | 'missing_meal';
+  | 'missing_meal'
+  | `language:${GuestLanguageCode}`;
 
 export interface MessageAudienceGuest {
   id: string;
   rsvp_status?: string | null;
   invitation_sent_at?: string | null;
   reminder_last_sent_at?: string | null;
+  preferred_language?: string | null;
   mailing_address_line1?: string | null;
   mailing_city?: string | null;
   mailing_state?: string | null;
@@ -91,6 +94,10 @@ function hasMealChoice(guest: MessageAudienceGuest): boolean {
   return Boolean(guest.meal_choice?.trim());
 }
 
+function isLanguageAudience(audience: string): audience is `language:${GuestLanguageCode}` {
+  return audience.startsWith('language:') && normalizeGuestLanguageCode(audience.slice('language:'.length)) !== null;
+}
+
 export function filterMessageAudienceGuests<T extends MessageAudienceGuest>(
   guests: T[],
   audience: string,
@@ -101,6 +108,12 @@ export function filterMessageAudienceGuests<T extends MessageAudienceGuest>(
     const ids = eventGuestIds?.[eventId];
     if (!ids) return [];
     return guests.filter((guest) => ids.has(guest.id));
+  }
+
+  if (isLanguageAudience(audience)) {
+    const language = normalizeGuestLanguageCode(audience.slice('language:'.length));
+    if (!language) return [];
+    return guests.filter((guest) => normalizeGuestLanguageCode(guest.preferred_language) === language);
   }
 
   switch (audience as MessageAudienceSegmentId) {
@@ -127,13 +140,28 @@ export function filterMessageAudienceGuests<T extends MessageAudienceGuest>(
 }
 
 export function buildMessageAudienceOptions(guests: MessageAudienceGuest[]): MessageAudienceOption[] {
-  return MESSAGE_AUDIENCE_SEGMENTS.map((segment) => ({
+  const baseOptions = MESSAGE_AUDIENCE_SEGMENTS.map((segment) => ({
     ...segment,
     count: filterMessageAudienceGuests(guests, segment.value).length,
   }));
+
+  const languageOptions = SUPPORTED_GUEST_LANGUAGES
+    .map((language) => ({
+      value: `language:${language}` as const,
+      label: `${GUEST_LANGUAGE_LABELS[language]} preference`,
+      detail: `Guests who prefer updates in ${GUEST_LANGUAGE_LABELS[language]}.`,
+      count: filterMessageAudienceGuests(guests, `language:${language}`).length,
+    }))
+    .filter((option) => option.count > 0);
+
+  return [...baseOptions, ...languageOptions];
 }
 
 export function getMessageAudienceDetail(audience: string, options: Array<{ value: string; detail?: string }>): string {
   if (audience.startsWith('event:')) return 'Guests assigned to this itinerary event.';
+  if (isLanguageAudience(audience)) {
+    const language = normalizeGuestLanguageCode(audience.slice('language:'.length));
+    return language ? `Guests with ${GUEST_LANGUAGE_LABELS[language]} saved as their preferred language.` : 'Guests grouped by preferred language.';
+  }
   return options.find((option) => option.value === audience)?.detail ?? 'Selected guest audience.';
 }

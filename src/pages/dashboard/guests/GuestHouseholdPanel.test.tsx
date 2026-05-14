@@ -11,6 +11,7 @@ describe('GuestHouseholdPanel', () => {
       last_name: 'Lee',
       name: 'Maya Lee',
       email: 'maya@example.com',
+      preferred_language: 'es',
       invite_token: 'private-token',
       rsvp_status: 'pending',
     };
@@ -20,6 +21,7 @@ describe('GuestHouseholdPanel', () => {
       last_name: 'Lee',
       name: 'Rowan Lee',
       email: 'rowan@example.com',
+      preferred_language: 'fr',
       invite_token: 'private-token-2',
       rsvp_status: 'confirmed',
     };
@@ -42,6 +44,8 @@ describe('GuestHouseholdPanel', () => {
 
     const buttons = screen.getAllByRole('button', { name: /guest view/i });
     expect(buttons).toHaveLength(2);
+    expect(screen.getByText('Prefers Spanish')).toBeInTheDocument();
+    expect(screen.getByText('Prefers French')).toBeInTheDocument();
     buttons[0].click();
     buttons[1].click();
 

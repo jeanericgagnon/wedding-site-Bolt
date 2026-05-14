@@ -371,9 +371,10 @@ Execution rule for this section:
    - prove owner/planner email rendering and safe delivered-readback behavior
 
 9. `ACTIVE`: guest language system
-   - persist guest/household language fields
+   - this batch shipped: guest records now persist `preferred_language`, owners can edit it in the guest form, and guest list/household views show the saved preference instead of hiding language state in storage-only guest flows
+   - this batch shipped: messaging audience segments now include saved-language recipient groups, and composer language previews now derive from the actual selected audience plus the site default instead of a hardcoded `en/es/fr` preview set
+   - finish household-level language assignment instead of guest-by-guest only
    - add owner controls for default and allowed languages
-   - add true per-recipient language targeting in message sends
    - translate RSVP custom questions and review workflows for translated builder/site content
    - add live production proof for owner messaging previews and guest-facing language continuity
 
