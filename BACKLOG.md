@@ -353,6 +353,7 @@ Execution rule for this section:
    - this batch shipped: recent campaign-thread rollups now surface opens, views, clicks, replies, and bounces when those counts exist, so owners do not have to open the active thread or latest message detail just to see whether a campaign is getting traction
    - this batch shipped: the per-channel history summary now keeps queued/sending campaigns visible as `Active` instead of flattening those in-flight email/SMS sends out of the channel readback while other messaging surfaces still show them
    - this batch shipped: the per-channel history summary now also surfaces normalized opens, clicks, replies, views, and bounces for completed email/SMS campaigns instead of making owners drill into thread cards or message detail to see channel-level traction
+   - this batch shipped: guest-reach, per-channel history, and recent campaign-thread rollups now also show normalized open/click/reply rates against delivered recipients, so engagement traction is no longer only raw totals without any readback of relative performance
    - keep extending normalized delivery/open/view/bounce/replied truth across channels and real live rows
    - prove customer-safe delivery-failure grouping against live rows
    - add authenticated live browser proof for composing/saving each operational segment on the shipped owner runtime

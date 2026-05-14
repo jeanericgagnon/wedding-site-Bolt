@@ -274,6 +274,9 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
             <p className="mt-1 text-xs text-text-tertiary">
               {engagementSummary.viewed} viewed across guest pages{engagementSummary.bounced > 0 ? ` · ${engagementSummary.bounced} bounced` : ''}
             </p>
+            <p className="mt-1 text-xs text-text-tertiary">
+              {engagementSummary.openRate}% open rate · {engagementSummary.clickRate}% click rate · {engagementSummary.replyRate}% reply rate
+            </p>
           </>
         ) : (
           <p className="mt-2 text-sm text-text-secondary">Shows once completed campaigns start collecting opens, clicks, replies, or bounces.</p>
@@ -1015,8 +1018,12 @@ export interface MessageHistorySummaryPanelsProps {
   channelEngagementBreakdown: Record<'email' | 'sms', {
     bounced: number;
     clicked: number;
+    clickRate: number;
+    deliveredRecipients: number;
     opened: number;
+    openRate: number;
     replied: number;
+    replyRate: number;
     trackedMessages: number;
     viewed: number;
   }>;
@@ -1131,6 +1138,9 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
               </p>
               <p className="mt-1 text-[11px] text-text-tertiary">
                 {channelEngagementBreakdown[channel].viewed} viewed{channelEngagementBreakdown[channel].bounced > 0 ? ` · ${channelEngagementBreakdown[channel].bounced} bounced` : ''} across {channelEngagementBreakdown[channel].trackedMessages} completed campaign{channelEngagementBreakdown[channel].trackedMessages === 1 ? '' : 's'}
+              </p>
+              <p className="mt-1 text-[11px] text-text-tertiary">
+                {channelEngagementBreakdown[channel].openRate}% open rate · {channelEngagementBreakdown[channel].clickRate}% click rate · {channelEngagementBreakdown[channel].replyRate}% reply rate
               </p>
             </>
           )}
@@ -1247,6 +1257,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               <div className="text-right text-[11px] text-text-tertiary">
                 <p>{thread.delivered} delivered · {thread.failed} need review</p>
                 {engagementSummary && <p className="text-text-secondary">{engagementSummary}</p>}
+                {thread.deliveredRecipients > 0 && <p className="text-text-secondary">{thread.openRate}% open · {thread.clickRate}% click · {thread.replyRate}% reply</p>}
                 {thread.skipped > 0 && <p className="text-warning">{describeRecipientReview(thread.skipped)}</p>}
                 {thread.unreached > 0 && <p className="text-warning">{thread.unreached} not reached yet</p>}
               </div>

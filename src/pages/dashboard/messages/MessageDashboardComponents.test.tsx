@@ -22,6 +22,10 @@ describe('MessageCampaignThreadPanels', () => {
             clicked: 3,
             replied: 1,
             bounced: 1,
+            deliveredRecipients: 4,
+            openRate: 150,
+            clickRate: 75,
+            replyRate: 25,
             latestStatus: 'partial',
             latestAt: 100,
           },
@@ -40,6 +44,7 @@ describe('MessageCampaignThreadPanels', () => {
 
     expect(screen.getByText('4 delivered · 1 need review')).toBeInTheDocument();
     expect(screen.getByText('6 opened · 2 viewed · 3 clicked · 1 replied · 1 bounced')).toBeInTheDocument();
+    expect(screen.getByText('150% open · 75% click · 25% reply')).toBeInTheDocument();
     expect(screen.getByText('1 recipient needs contact details')).toBeInTheDocument();
   });
 });
@@ -55,8 +60,8 @@ describe('MessageHistorySummaryPanels', () => {
           sms: { sent: 0, active: 0, scheduled: 0, failed: 1, partial: 1, targeted: 7 },
         }}
         channelEngagementBreakdown={{
-          email: { trackedMessages: 2, opened: 7, viewed: 3, clicked: 4, replied: 1, bounced: 0 },
-          sms: { trackedMessages: 1, opened: 2, viewed: 0, clicked: 1, replied: 0, bounced: 1 },
+          email: { trackedMessages: 2, deliveredRecipients: 10, opened: 7, viewed: 3, clicked: 4, replied: 1, bounced: 0, openRate: 70, clickRate: 40, replyRate: 10 },
+          sms: { trackedMessages: 1, deliveredRecipients: 4, opened: 2, viewed: 0, clicked: 1, replied: 0, bounced: 1, openRate: 50, clickRate: 25, replyRate: 0 },
         }}
         deliveryHealth={{ successRate: 75, failRate: 25, skipped: 1, skippedRate: 10, overdueScheduled: 0 }}
         historyStatusCounts={{ sent: 1, active: 2, scheduled: 1, partial: 1, failed: 1 }}
@@ -68,8 +73,10 @@ describe('MessageHistorySummaryPanels', () => {
     expect(screen.getByText('Sent 0 · Active 0 · Scheduled 0 · Needs follow-up 1 · Needs review 1')).toBeInTheDocument();
     expect(screen.getByText('7 opened · 4 clicked · 1 replied')).toBeInTheDocument();
     expect(screen.getByText('3 viewed across 2 completed campaigns')).toBeInTheDocument();
+    expect(screen.getByText('70% open rate · 40% click rate · 10% reply rate')).toBeInTheDocument();
     expect(screen.getByText('2 opened · 1 clicked · 0 replied')).toBeInTheDocument();
     expect(screen.getByText('0 viewed · 1 bounced across 1 completed campaign')).toBeInTheDocument();
+    expect(screen.getByText('50% open rate · 25% click rate · 0% reply rate')).toBeInTheDocument();
   });
 });
 
@@ -90,9 +97,9 @@ describe('MessageReachSnapshotCard', () => {
         ] as any}
         knownPhotoLinksCount={3}
         messages={[
-          { id: 'message-sent', status: 'sent' },
+          { id: 'message-sent', status: 'sent', delivered_count: 8, recipient_filter: { opened_count: 4, clicked_count: 2, replied_count: 1, viewed_count: 3 } },
           { id: 'message-queued', status: 'queued' },
-          { id: 'message-partial', status: 'partial' },
+          { id: 'message-partial', status: 'partial', delivered_count: 2, recipient_filter: { opened_count: 1, clicked_count: 0, replied_count: 0, viewed_count: 0 } },
         ] as any}
         onApplyComposerTemplate={vi.fn()}
         onApplyDayOfAlertPreset={vi.fn()}
@@ -104,6 +111,7 @@ describe('MessageReachSnapshotCard', () => {
 
     expect(screen.getByText('Sent, active, or needs follow-up')).toBeInTheDocument();
     expect(screen.getByText('Sent 1 · Active 1 · Needs follow-up 1')).toBeInTheDocument();
+    expect(screen.getByText('50% open rate · 20% click rate · 10% reply rate')).toBeInTheDocument();
     expect(screen.getByText('Photo links ready')).toBeInTheDocument();
     expect(screen.getAllByText('3')).toHaveLength(2);
   });

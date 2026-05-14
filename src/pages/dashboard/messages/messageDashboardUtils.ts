@@ -83,11 +83,12 @@ export function buildDeliveryStats(messages: Message[]) {
 }
 
 export function buildMessageEngagementSummary(messages: Message[]) {
-  return messages
+  const summary = messages
     .filter((message) => isDeliveryCompletedStatus(message.status))
     .reduce((summary, message) => {
       const engagement = getMessageEngagementStats(message);
       summary.trackedMessages += 1;
+      summary.deliveredRecipients += Math.max(0, Number(message.delivered_count ?? 0));
       summary.opened += engagement.opened ?? 0;
       summary.viewed += engagement.viewed ?? 0;
       summary.clicked += engagement.clicked ?? 0;
@@ -96,12 +97,20 @@ export function buildMessageEngagementSummary(messages: Message[]) {
       return summary;
     }, {
       trackedMessages: 0,
+      deliveredRecipients: 0,
       opened: 0,
       viewed: 0,
       clicked: 0,
       replied: 0,
       bounced: 0,
     });
+
+  return {
+    ...summary,
+    openRate: summary.deliveredRecipients > 0 ? Math.round((summary.opened / summary.deliveredRecipients) * 100) : 0,
+    clickRate: summary.deliveredRecipients > 0 ? Math.round((summary.clicked / summary.deliveredRecipients) * 100) : 0,
+    replyRate: summary.deliveredRecipients > 0 ? Math.round((summary.replied / summary.deliveredRecipients) * 100) : 0,
+  };
 }
 
 export function buildChannelBreakdown(messages: Message[]) {
@@ -125,21 +134,35 @@ export function buildChannelBreakdown(messages: Message[]) {
 
 export function buildChannelEngagementBreakdown(messages: Message[]) {
   const init = {
-    email: { trackedMessages: 0, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0 },
-    sms: { trackedMessages: 0, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0 },
+    email: { trackedMessages: 0, deliveredRecipients: 0, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0 },
+    sms: { trackedMessages: 0, deliveredRecipients: 0, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0 },
   };
   messages.forEach((message) => {
     if (!isDeliveryCompletedStatus(message.status)) return;
     const channel = message.channel === 'sms' ? 'sms' : 'email';
     const engagement = getMessageEngagementStats(message);
     init[channel].trackedMessages += 1;
+    init[channel].deliveredRecipients += Math.max(0, Number(message.delivered_count ?? 0));
     init[channel].opened += engagement.opened ?? 0;
     init[channel].viewed += engagement.viewed ?? 0;
     init[channel].clicked += engagement.clicked ?? 0;
     init[channel].replied += engagement.replied ?? 0;
     init[channel].bounced += engagement.bounced ?? 0;
   });
-  return init;
+  return {
+    email: {
+      ...init.email,
+      openRate: init.email.deliveredRecipients > 0 ? Math.round((init.email.opened / init.email.deliveredRecipients) * 100) : 0,
+      clickRate: init.email.deliveredRecipients > 0 ? Math.round((init.email.clicked / init.email.deliveredRecipients) * 100) : 0,
+      replyRate: init.email.deliveredRecipients > 0 ? Math.round((init.email.replied / init.email.deliveredRecipients) * 100) : 0,
+    },
+    sms: {
+      ...init.sms,
+      openRate: init.sms.deliveredRecipients > 0 ? Math.round((init.sms.opened / init.sms.deliveredRecipients) * 100) : 0,
+      clickRate: init.sms.deliveredRecipients > 0 ? Math.round((init.sms.clicked / init.sms.deliveredRecipients) * 100) : 0,
+      replyRate: init.sms.deliveredRecipients > 0 ? Math.round((init.sms.replied / init.sms.deliveredRecipients) * 100) : 0,
+    },
+  };
 }
 
 export function buildHistoryStatusCounts(messages: Message[]) {
@@ -182,6 +205,10 @@ export type CampaignThreadSummary = {
   clicked: number;
   replied: number;
   bounced: number;
+  deliveredRecipients: number;
+  openRate: number;
+  clickRate: number;
+  replyRate: number;
   latestStatus: string;
   latestAt: number;
 };
@@ -236,11 +263,15 @@ export function buildCampaignThreads(messages: Message[], deliveries: DeliveryRo
       failed: 0,
       skipped: 0,
       unreached: 0,
+      deliveredRecipients: 0,
       opened: 0,
       viewed: 0,
       clicked: 0,
       replied: 0,
       bounced: 0,
+      openRate: 0,
+      clickRate: 0,
+      replyRate: 0,
       latestStatus: message.status,
       latestAt,
     };
@@ -248,6 +279,7 @@ export function buildCampaignThreads(messages: Message[], deliveries: DeliveryRo
 
     prev.count += 1;
     prev.delivered += Number(message.delivered_count ?? 0);
+    prev.deliveredRecipients += Math.max(0, Number(message.delivered_count ?? 0));
     prev.failed += Number(message.failed_count ?? 0);
     prev.skipped += getSkippedCount(message, deliveries);
     prev.unreached += getUnreachedCount(message, deliveries);
@@ -256,6 +288,9 @@ export function buildCampaignThreads(messages: Message[], deliveries: DeliveryRo
     prev.clicked += engagement.clicked ?? 0;
     prev.replied += engagement.replied ?? 0;
     prev.bounced += engagement.bounced ?? 0;
+    prev.openRate = prev.deliveredRecipients > 0 ? Math.round((prev.opened / prev.deliveredRecipients) * 100) : 0;
+    prev.clickRate = prev.deliveredRecipients > 0 ? Math.round((prev.clicked / prev.deliveredRecipients) * 100) : 0;
+    prev.replyRate = prev.deliveredRecipients > 0 ? Math.round((prev.replied / prev.deliveredRecipients) * 100) : 0;
     if (latestAt >= prev.latestAt) {
       prev.latestAt = latestAt;
       prev.latestStatus = message.status;

@@ -283,11 +283,15 @@ describe('messageDashboardUtils', () => {
 
     expect(buildMessageEngagementSummary(messages)).toEqual({
       trackedMessages: 3,
+      deliveredRecipients: 10,
       opened: 17,
       viewed: 4,
       clicked: 6,
       replied: 1,
       bounced: 1,
+      openRate: 170,
+      clickRate: 60,
+      replyRate: 10,
     });
 
     expect(buildChannelBreakdown(messages)).toEqual({
@@ -296,8 +300,8 @@ describe('messageDashboardUtils', () => {
     });
 
     expect(buildChannelEngagementBreakdown(messages)).toEqual({
-      email: { trackedMessages: 1, opened: 15, viewed: 4, clicked: 5, replied: 1, bounced: 1 },
-      sms: { trackedMessages: 2, opened: 2, viewed: 0, clicked: 1, replied: 0, bounced: 0 },
+      email: { trackedMessages: 1, deliveredRecipients: 8, opened: 15, viewed: 4, clicked: 5, replied: 1, bounced: 1, openRate: 188, clickRate: 63, replyRate: 13 },
+      sms: { trackedMessages: 2, deliveredRecipients: 2, opened: 2, viewed: 0, clicked: 1, replied: 0, bounced: 0, openRate: 100, clickRate: 50, replyRate: 0 },
     });
 
     expect(buildHistoryStatusCounts(messages)).toEqual({
@@ -360,6 +364,7 @@ describe('messageDashboardUtils', () => {
     expect(threads.find((thread) => thread.name === 'RSVP push')).toMatchObject({
       count: 2,
       delivered: 4,
+      deliveredRecipients: 4,
       failed: 2,
       skipped: 2,
       opened: 6,
@@ -367,6 +372,9 @@ describe('messageDashboardUtils', () => {
       clicked: 2,
       replied: 1,
       bounced: 1,
+      openRate: 150,
+      clickRate: 50,
+      replyRate: 25,
     });
 
     const activeThread = getActiveCampaignThread({ campaignThreads: threads, historyCampaignFilter: 'RSVP push', historySearch: '' });
@@ -430,11 +438,15 @@ describe('messageDashboardUtils', () => {
 
     expect(buildMessageEngagementSummary(messages)).toEqual({
       trackedMessages: 2,
+      deliveredRecipients: 8,
       opened: 10,
       viewed: 4,
       clicked: 3,
       replied: 1,
       bounced: 1,
+      openRate: 125,
+      clickRate: 38,
+      replyRate: 13,
     });
   });
 
