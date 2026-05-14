@@ -1,5 +1,7 @@
 import React from 'react';
 import type { FormEvent } from 'react';
+import { renderCalmDigestEmail } from '../../../lib/calmDigestEmail';
+import { buildCalmDigestDeliveryPreview, buildCalmOwnerDigest } from '../../../lib/calmOwnerDigest';
 import type { DigestCadence } from '../../../lib/notificationPrefs';
 import { getPlannerPermissionPreset, type PlannerPermissionKey, type PlannerInviteRecord, type PlannerRoleOption } from '../../../lib/plannerAccess';
 import type { BillingInfo } from '../../../lib/stripeService';
@@ -65,6 +67,9 @@ type Props = {
   notifDigestCadence: DigestCadence;
   notifDigestIncludePlanner: boolean;
   notifDigestQuietUntilLabel: string;
+  notifDigestNextDeliveryAt: string | null;
+  notifDigestLastReviewedAt: string | null;
+  notifDigestLastDeliveredAt: string | null;
   notifDraftMarkDirty: () => void;
   notifError: string | null;
   notifPhotos: boolean;
@@ -167,6 +172,24 @@ type Props = {
 };
 
 export function SettingsDashboardRouteContent(props: Props) {
+  const digestPreview = buildCalmDigestDeliveryPreview({
+    digest: buildCalmOwnerDigest({
+      role: 'owner',
+      newRsvpCount: 2,
+      upcomingTaskCount: 1,
+      newPhotoUploadCount: 1,
+      isPublished: Boolean(props.publicSiteUrl),
+    }),
+    cadence: props.notifDigest ? props.notifDigestCadence : 'paused',
+    includePlanner: props.notifDigestIncludePlanner,
+    quietUntilLabel: props.notifDigestQuietUntilLabel,
+    nextDeliveryAt: props.notifDigestNextDeliveryAt,
+    lastReviewedAt: props.notifDigestLastReviewedAt,
+    lastDeliveredAt: props.notifDigestLastDeliveredAt,
+    emailDeliveryEnabled: true,
+  });
+  const digestEmail = renderCalmDigestEmail(digestPreview);
+
   return (
     <SettingsDashboardShell
       activeTab={props.activeTab}
@@ -426,10 +449,15 @@ export function SettingsDashboardRouteContent(props: Props) {
             notifDigestCadence={props.notifDigestCadence}
             notifDigestIncludePlanner={props.notifDigestIncludePlanner}
             notifDigestQuietUntilLabel={props.notifDigestQuietUntilLabel}
+            notifDigestNextDeliveryAt={props.notifDigestNextDeliveryAt}
+            notifDigestLastReviewedAt={props.notifDigestLastReviewedAt}
+            notifDigestLastDeliveredAt={props.notifDigestLastDeliveredAt}
             notifUpdates={props.notifUpdates}
             notifSaving={props.notifSaving}
             notifSuccess={props.notifSuccess}
             notifError={props.notifError}
+            digestPreview={digestPreview}
+            digestEmailText={digestEmail.text}
             onToggleVisibility={() => props.setShowNotificationSettings((value) => !value)}
             onRsvpChange={(value) => { props.notifDraftMarkDirty(); props.setNotifRsvp(value); }}
             onPhotosChange={(value) => { props.notifDraftMarkDirty(); props.setNotifPhotos(value); }}

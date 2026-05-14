@@ -173,7 +173,10 @@ export function buildOverviewDashboardModel({
     cadence: stats.notificationPrefs.digest ? stats.notificationPrefs.digestCadence : 'paused',
     includePlanner: stats.notificationPrefs.digestIncludePlanner,
     quietUntilLabel: stats.notificationPrefs.digestQuietUntilLabel,
-    emailDeliveryEnabled: false,
+    nextDeliveryAt: stats.notificationPrefs.digestNextDeliveryAt,
+    lastReviewedAt: stats.notificationPrefs.digestLastReviewedAt,
+    lastDeliveredAt: stats.notificationPrefs.digestLastDeliveredAt,
+    emailDeliveryEnabled: true,
   }) : null;
 
   return {

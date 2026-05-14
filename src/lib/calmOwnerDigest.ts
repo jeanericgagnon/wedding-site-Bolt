@@ -55,6 +55,9 @@ export interface CalmDigestDeliveryPreviewInput {
   cadence: CalmDigestCadence;
   includePlanner: boolean;
   quietUntilLabel?: string | null;
+  nextDeliveryAt?: string | null;
+  lastReviewedAt?: string | null;
+  lastDeliveredAt?: string | null;
   emailDeliveryEnabled?: boolean;
 }
 
@@ -64,6 +67,9 @@ export interface CalmDigestDeliveryPreview {
   cadenceLabel: string;
   statusLabel: string;
   canSendNow: boolean;
+  nextDeliveryLabel: string | null;
+  lastReviewedLabel: string | null;
+  lastDeliveredLabel: string | null;
   previewLines: string[];
   reviewHref: string;
   safetyNotes: string[];
@@ -104,6 +110,20 @@ function priorityFor(count: number, fallback: CalmDigestPriority = 'quiet'): Cal
   if (count >= 5) return 'now';
   if (count > 0) return 'soon';
   return fallback;
+}
+
+function formatDigestTimestamp(value: string | null | undefined, label: string): string | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return `${label} ${new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: 'UTC',
+    timeZoneName: 'short',
+  }).format(parsed)}`;
 }
 
 export function buildCalmOwnerDigest(input: CalmOwnerDigestInput): CalmOwnerDigest {
@@ -245,7 +265,19 @@ export function buildCalmDigestDeliveryPreview(input: CalmDigestDeliveryPreviewI
       ? 'Weekly digest'
       : 'Paused';
   const quietLabel = input.quietUntilLabel?.trim();
+  const nextDeliveryLabel = formatDigestTimestamp(input.nextDeliveryAt ?? null, 'Scheduled for');
+  const lastReviewedLabel = formatDigestTimestamp(input.lastReviewedAt ?? null, 'Last review saved');
+  const lastDeliveredLabel = formatDigestTimestamp(input.lastDeliveredAt ?? null, 'Last delivered');
   const emailReady = Boolean(input.emailDeliveryEnabled && input.cadence !== 'paused' && !quietLabel && topItems.length > 0);
+  const statusLabel = quietLabel
+    ? `Quiet until ${quietLabel}`
+    : input.cadence === 'paused'
+      ? 'Paused by preference'
+      : nextDeliveryLabel
+        ? nextDeliveryLabel
+        : emailReady
+          ? 'Ready for delivery review'
+          : 'Preview only until delivery is connected';
 
   return {
     subject: input.digest.attentionCount > 0
@@ -253,14 +285,11 @@ export function buildCalmDigestDeliveryPreview(input: CalmDigestDeliveryPreviewI
       : 'Wedding digest is quiet today',
     audienceLabel: input.includePlanner ? 'Owners and planners' : 'Owners only',
     cadenceLabel,
-    statusLabel: quietLabel
-      ? `Quiet until ${quietLabel}`
-      : input.cadence === 'paused'
-        ? 'Paused by preference'
-        : emailReady
-          ? 'Ready for delivery review'
-          : 'Preview only until delivery is connected',
+    statusLabel,
     canSendNow: emailReady,
+    nextDeliveryLabel,
+    lastReviewedLabel,
+    lastDeliveredLabel,
     previewLines: topItems.map((item) => `${item.label}: ${item.detail}`),
     reviewHref: '/dashboard/settings?tab=notifications#digest',
     safetyNotes: [

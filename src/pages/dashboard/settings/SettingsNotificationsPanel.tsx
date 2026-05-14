@@ -1,5 +1,6 @@
 import { Loader2, Save } from 'lucide-react';
 import type { FormEvent } from 'react';
+import type { CalmDigestDeliveryPreview } from '../../../lib/calmOwnerDigest';
 import type { DigestCadence } from '../../../lib/notificationPrefs';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui';
 
@@ -11,10 +12,15 @@ type SettingsNotificationsPanelProps = {
   notifDigestCadence: DigestCadence;
   notifDigestIncludePlanner: boolean;
   notifDigestQuietUntilLabel: string;
+  notifDigestNextDeliveryAt: string | null;
+  notifDigestLastReviewedAt: string | null;
+  notifDigestLastDeliveredAt: string | null;
   notifUpdates: boolean;
   notifSaving: boolean;
   notifSuccess: string | null;
   notifError: string | null;
+  digestPreview: CalmDigestDeliveryPreview;
+  digestEmailText: string;
   onToggleVisibility: () => void;
   onRsvpChange: (value: boolean) => void;
   onPhotosChange: (value: boolean) => void;
@@ -34,10 +40,15 @@ export function SettingsNotificationsPanel({
   notifDigestCadence,
   notifDigestIncludePlanner,
   notifDigestQuietUntilLabel,
+  notifDigestNextDeliveryAt,
+  notifDigestLastReviewedAt,
+  notifDigestLastDeliveredAt,
   notifUpdates,
   notifSaving,
   notifSuccess,
   notifError,
+  digestPreview,
+  digestEmailText,
   onToggleVisibility,
   onRsvpChange,
   onPhotosChange,
@@ -130,7 +141,7 @@ export function SettingsNotificationsPanel({
                   <option value="paused">Paused</option>
                 </select>
                 <p className="text-xs leading-5 text-text-secondary">
-                  This saves your review preference now. Delivery stays in preview mode until a sending provider is connected.
+                  This saves cadence, next-send timing, and review state now. Live inbox delivery still depends on the connected email pipeline.
                 </p>
               </div>
 
@@ -164,6 +175,45 @@ export function SettingsNotificationsPanel({
                 <p className="text-xs leading-5 text-text-secondary">
                   Use a plain-language note so the overview can reflect when you want this lane to stay quiet.
                 </p>
+              </div>
+
+              <div className="rounded-lg border border-border-subtle bg-white p-4 space-y-3">
+                <div>
+                  <p className="text-sm font-medium text-text-primary">Digest delivery status</p>
+                  <p className="mt-1 text-sm text-text-secondary">{digestPreview.statusLabel}</p>
+                </div>
+                <div className="grid gap-2 md:grid-cols-2">
+                  <p className="rounded-lg border border-border-subtle bg-surface-subtle/35 px-3 py-2 text-xs leading-5 text-text-secondary">
+                    {digestPreview.nextDeliveryLabel ?? 'No scheduled digest yet.'}
+                  </p>
+                  <p className="rounded-lg border border-border-subtle bg-surface-subtle/35 px-3 py-2 text-xs leading-5 text-text-secondary">
+                    {digestPreview.lastReviewedLabel ?? 'No saved review yet.'}
+                  </p>
+                </div>
+                {notifDigestLastDeliveredAt && digestPreview.lastDeliveredLabel && (
+                  <p className="text-xs leading-5 text-text-secondary">{digestPreview.lastDeliveredLabel}</p>
+                )}
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/35 p-3">
+                  <p className="text-xs font-medium text-text-tertiary">Sample email preview</p>
+                  <p className="mt-2 text-sm font-medium text-text-primary">{digestPreview.subject}</p>
+                  <p className="mt-1 text-xs leading-5 text-text-secondary">
+                    {digestPreview.cadenceLabel} · {digestPreview.audienceLabel}
+                  </p>
+                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    {digestPreview.previewLines.slice(0, 4).map((line) => (
+                      <p key={line} className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-xs leading-5 text-text-secondary">{line}</p>
+                    ))}
+                  </div>
+                  <details className="mt-3">
+                    <summary className="cursor-pointer text-xs font-medium text-text-secondary">Plain-text readback</summary>
+                    <pre className="mt-2 whitespace-pre-wrap rounded-lg border border-border-subtle bg-white p-3 text-[11px] leading-5 text-text-secondary">{digestEmailText}</pre>
+                  </details>
+                </div>
+                {(notifDigestNextDeliveryAt || notifDigestLastReviewedAt) && (
+                  <p className="text-xs leading-5 text-text-tertiary">
+                    Saved schedule and review state stay with this wedding so overview and settings read back the same digest timing.
+                  </p>
+                )}
               </div>
             </div>
 

@@ -3,7 +3,7 @@ import { createSubscriptionSession, type BillingInfo } from '../../../lib/stripe
 import { logAppAction } from '../../../lib/actionAudit';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../../lib/aiBuilderProjectPatch';
 import { regenerateLayout } from '../../../lib/generateInitialLayout';
-import { buildNotificationPrefsPatch, type DigestCadence } from '../../../lib/notificationPrefs';
+import { buildNotificationPrefsPatch, computeNextDigestDeliveryAt, type DigestCadence } from '../../../lib/notificationPrefs';
 import { fromExistingLayoutToBuilderProject } from '../../../builder/adapters/layoutAdapter';
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
 import type { LayoutConfigV1 } from '../../../types/layoutConfig';
@@ -41,6 +41,7 @@ export type UseSettingsExperienceActionsArgs = {
   notifDigestCadence: DigestCadence;
   notifDigestIncludePlanner: boolean;
   notifDigestQuietUntilLabel: string;
+  notifDigestLastDeliveredAt: string | null;
   notifUpdates: boolean;
   billingInfo: BillingInfo | null;
   resolveSettingsSiteId: () => Promise<string | null>;
@@ -56,6 +57,8 @@ export type UseSettingsExperienceActionsArgs = {
   setNotifSaving: SetState<boolean>;
   setNotifSuccess: SetState<string | null>;
   setNotifError: SetState<string | null>;
+  setNotifDigestNextDeliveryAt: SetState<string | null>;
+  setNotifDigestLastReviewedAt: SetState<string | null>;
   setSubscribeLoading: SetState<boolean>;
   setSubscribeError: SetState<string | null>;
   setChangingTemplate: SetState<boolean>;
@@ -77,6 +80,7 @@ export function useSettingsExperienceActions({
   notifDigestCadence,
   notifDigestIncludePlanner,
   notifDigestQuietUntilLabel,
+  notifDigestLastDeliveredAt,
   notifUpdates,
   billingInfo,
   resolveSettingsSiteId,
@@ -92,6 +96,8 @@ export function useSettingsExperienceActions({
   setNotifSaving,
   setNotifSuccess,
   setNotifError,
+  setNotifDigestNextDeliveryAt,
+  setNotifDigestLastReviewedAt,
   setSubscribeLoading,
   setSubscribeError,
   setChangingTemplate,
@@ -172,6 +178,10 @@ export function useSettingsExperienceActions({
       }
 
       const quietUntilLabel = notifDigestQuietUntilLabel.trim();
+      const reviewedAt = new Date().toISOString();
+      const nextDeliveryAt = notifDigest && !quietUntilLabel && notifDigestCadence !== 'paused'
+        ? computeNextDigestDeliveryAt(notifDigestCadence, new Date(reviewedAt))
+        : null;
       await updateSettingsSite(targetSiteId, {
         notification_prefs: buildNotificationPrefsPatch({
           rsvp: notifRsvp,
@@ -180,9 +190,14 @@ export function useSettingsExperienceActions({
           digestCadence: notifDigest ? notifDigestCadence : 'paused',
           digestIncludePlanner: notifDigest && notifDigestIncludePlanner,
           digestQuietUntilLabel: notifDigest ? (quietUntilLabel || null) : null,
+          digestNextDeliveryAt: nextDeliveryAt,
+          digestLastReviewedAt: reviewedAt,
+          digestLastDeliveredAt: notifDigestLastDeliveredAt,
           updates: notifUpdates,
         }),
       });
+      setNotifDigestNextDeliveryAt(nextDeliveryAt);
+      setNotifDigestLastReviewedAt(reviewedAt);
       notifDraftGuard.markSaved();
       logSettingsAction('notification_preferences_saved', 'Notification preferences were updated.', {
         rsvp: notifRsvp,
@@ -191,6 +206,8 @@ export function useSettingsExperienceActions({
         digestCadence: notifDigest ? notifDigestCadence : 'paused',
         digestIncludePlanner: notifDigest && notifDigestIncludePlanner,
         digestQuietUntilLabel: notifDigest ? (quietUntilLabel || null) : null,
+        digestNextDeliveryAt: nextDeliveryAt,
+        digestLastReviewedAt: reviewedAt,
         updates: notifUpdates,
       }, targetSiteId, 'Notification preferences', targetSiteId);
       setNotifSuccess('Preferences saved.');

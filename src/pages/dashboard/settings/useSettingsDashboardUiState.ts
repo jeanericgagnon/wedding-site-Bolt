@@ -123,6 +123,9 @@ export function useSettingsDashboardUiState({ userId }: Args) {
   const [notifDigestCadence, setNotifDigestCadence] = useState<DigestCadence>('paused');
   const [notifDigestIncludePlanner, setNotifDigestIncludePlanner] = useState(false);
   const [notifDigestQuietUntilLabel, setNotifDigestQuietUntilLabel] = useState('');
+  const [notifDigestNextDeliveryAt, setNotifDigestNextDeliveryAt] = useState<string | null>(null);
+  const [notifDigestLastReviewedAt, setNotifDigestLastReviewedAt] = useState<string | null>(null);
+  const [notifDigestLastDeliveredAt, setNotifDigestLastDeliveredAt] = useState<string | null>(null);
   const [notifUpdates, setNotifUpdates] = useState(false);
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifSuccess, setNotifSuccess] = useState<string | null>(null);
@@ -195,6 +198,9 @@ export function useSettingsDashboardUiState({ userId }: Args) {
     notifDigestCadence,
     notifDigestIncludePlanner,
     notifDigestQuietUntilLabel,
+    notifDigestNextDeliveryAt,
+    notifDigestLastReviewedAt,
+    notifDigestLastDeliveredAt,
     notifDraftGuard,
     notifError,
     notifPhotos,
@@ -277,6 +283,9 @@ export function useSettingsDashboardUiState({ userId }: Args) {
     setNotifDigestCadence,
     setNotifDigestIncludePlanner,
     setNotifDigestQuietUntilLabel,
+    setNotifDigestNextDeliveryAt,
+    setNotifDigestLastReviewedAt,
+    setNotifDigestLastDeliveredAt,
     setNotifError,
     setNotifPhotos,
     setNotifRsvp,

@@ -389,9 +389,11 @@ Execution rule for this section:
    - persist digest cadence, planner audience, and quiet-state preferences across settings + overview digest preview
    - keep snooze/quiet controls backed by saved preference state instead of local-only UI
    - this batch shipped: the overview digest now pulls real message-review, open-task, due-payment, recent-photo-upload, and seating-gap counts from source-of-truth dashboard data instead of hardcoded zero placeholders
-   - add scheduled email delivery instead of readiness-only framing
+   - this batch shipped: digest preferences now persist next-send timing plus saved review/readback timestamps instead of stopping at readiness-only cadence toggles
+   - this batch shipped: settings and overview now read back the same scheduled digest truth, including scheduled, paused, quiet, and last-review labels instead of collapsing everything into preview-only copy
+   - this batch shipped: a dedicated owner/planner digest email render path now produces safe HTML + plain-text preview output without token/provider leakage
    - add deeper proof around digest source-of-truth count continuity after real planning/message/photo/seating writes
-   - prove owner/planner email rendering and safe delivered-readback behavior
+   - prove live inbox delivery/readback behavior once the digest-delivery pipeline is connected beyond local schedule/readback truth
 
 9. `ACTIVE`: guest language system
    - this batch shipped: guest records now persist `preferred_language`, owners can edit it in the guest form, and guest list/household views show the saved preference instead of hiding language state in storage-only guest flows

@@ -335,6 +335,20 @@ export function OverviewDashboardLiveContent({
                       </p>
                     ))}
                   </div>
+                  {(calmDigestPreview.lastReviewedLabel || calmDigestPreview.lastDeliveredLabel) && (
+                    <div className="mt-3 grid gap-2 md:grid-cols-2">
+                      {calmDigestPreview.lastReviewedLabel && (
+                        <p className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-xs leading-5 text-text-secondary">
+                          {calmDigestPreview.lastReviewedLabel}
+                        </p>
+                      )}
+                      {calmDigestPreview.lastDeliveredLabel && (
+                        <p className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-xs leading-5 text-text-secondary">
+                          {calmDigestPreview.lastDeliveredLabel}
+                        </p>
+                      )}
+                    </div>
+                  )}
                   <p className="mt-3 text-xs leading-5 text-text-tertiary">{calmDigestPreview.safetyNotes.join(' ')}</p>
                 </div>
               )}

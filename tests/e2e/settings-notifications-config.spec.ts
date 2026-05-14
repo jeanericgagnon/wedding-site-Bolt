@@ -108,13 +108,18 @@ test('owner can save notification preferences from settings', async ({ page }) =
       limit: '1',
     }));
     expect(savedResponse.ok).toBeTruthy();
-    const [saved] = await savedResponse.json() as Array<{ notification_prefs: Record<string, boolean> }>;
-    expect(saved.notification_prefs).toEqual({
+    const [saved] = await savedResponse.json() as Array<{ notification_prefs: Record<string, unknown> }>;
+    expect(saved.notification_prefs).toMatchObject({
       rsvp: true,
       photos: false,
       digest: true,
       updates: true,
+      digest_cadence: 'weekly',
+      digest_include_planner: false,
+      digest_quiet_until_label: null,
     });
+    expect(typeof saved.notification_prefs.digest_last_reviewed_at).toBe('string');
+    expect(typeof saved.notification_prefs.digest_next_delivery_at).toBe('string');
   } finally {
     await restoreOriginalSettings();
   }

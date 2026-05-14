@@ -20,6 +20,9 @@ const baseStats = {
     digestCadence: 'daily' as const,
     digestIncludePlanner: true,
     digestQuietUntilLabel: 'after brunch',
+    digestNextDeliveryAt: null,
+    digestLastReviewedAt: null,
+    digestLastDeliveredAt: null,
     photos: true,
     rsvp: true,
     updates: false,
@@ -94,5 +97,25 @@ describe('buildOverviewDashboardModel', () => {
     expect(model.calmDigest?.items.find((item) => item.id === 'payments')?.count).toBe(5);
     expect(model.calmDigest?.items.find((item) => item.id === 'photo-memory')?.count).toBe(3);
     expect(model.calmDigest?.items.find((item) => item.id === 'seating')?.count).toBe(1);
+  });
+
+  it('shows scheduled digest truth when a next delivery is saved', () => {
+    const model = buildOverviewDashboardModel({
+      dismissedIntelligenceIds: [],
+      interactiveSuggestions: [],
+      interactiveVoteSummaries: [],
+      stats: {
+        ...baseStats,
+        notificationPrefs: {
+          ...baseStats.notificationPrefs,
+          digestQuietUntilLabel: null,
+          digestNextDeliveryAt: '2026-05-15T16:00:00.000Z',
+          digestLastReviewedAt: '2026-05-14T17:15:00.000Z',
+        },
+      },
+    });
+
+    expect(model.calmDigestPreview?.statusLabel).toContain('Scheduled for');
+    expect(model.calmDigestPreview?.lastReviewedLabel).toContain('Last review saved');
   });
 });

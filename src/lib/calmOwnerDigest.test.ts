@@ -95,6 +95,7 @@ describe('calmOwnerDigest', () => {
     expect(preview.cadenceLabel).toBe('Weekly digest');
     expect(preview.statusLabel).toBe('Preview only until delivery is connected');
     expect(preview.canSendNow).toBe(false);
+    expect(preview.nextDeliveryLabel).toBeNull();
     expect(preview.previewLines.join(' ')).toContain('RSVPs');
     expect(preview.reviewHref).toBe('/dashboard/settings?tab=notifications#digest');
     expect(preview.safetyNotes.join(' ')).not.toMatch(/provider|supabase|bucket|function|diagnostic|token|secret|failed/i);
@@ -117,5 +118,28 @@ describe('calmOwnerDigest', () => {
     expect(preview.statusLabel).toBe('Quiet until Monday morning');
     expect(preview.canSendNow).toBe(false);
     expect(preview.audienceLabel).toBe('Owners only');
+  });
+
+  it('shows scheduled and readback labels when digest delivery has a saved run window', () => {
+    const digest = buildCalmOwnerDigest({
+      role: 'owner',
+      newRsvpCount: 2,
+      upcomingTaskCount: 1,
+      isPublished: true,
+    });
+    const preview = buildCalmDigestDeliveryPreview({
+      digest,
+      cadence: 'daily',
+      includePlanner: false,
+      nextDeliveryAt: '2026-05-15T16:00:00.000Z',
+      lastReviewedAt: '2026-05-14T17:15:00.000Z',
+      lastDeliveredAt: '2026-05-13T16:00:00.000Z',
+      emailDeliveryEnabled: true,
+    });
+
+    expect(preview.statusLabel).toContain('Scheduled for');
+    expect(preview.nextDeliveryLabel).toContain('Scheduled for');
+    expect(preview.lastReviewedLabel).toContain('Last review saved');
+    expect(preview.lastDeliveredLabel).toContain('Last delivered');
   });
 });

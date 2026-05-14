@@ -27,6 +27,9 @@ interface UseSettingsDashboardSnapshotHydrationArgs {
   setNotifDigestCadence: React.Dispatch<React.SetStateAction<'daily' | 'weekly' | 'paused'>>;
   setNotifDigestIncludePlanner: React.Dispatch<React.SetStateAction<boolean>>;
   setNotifDigestQuietUntilLabel: React.Dispatch<React.SetStateAction<string>>;
+  setNotifDigestNextDeliveryAt: React.Dispatch<React.SetStateAction<string | null>>;
+  setNotifDigestLastReviewedAt: React.Dispatch<React.SetStateAction<string | null>>;
+  setNotifDigestLastDeliveredAt: React.Dispatch<React.SetStateAction<string | null>>;
   setNotifPhotos: React.Dispatch<React.SetStateAction<boolean>>;
   setNotifRsvp: React.Dispatch<React.SetStateAction<boolean>>;
   setNotifUpdates: React.Dispatch<React.SetStateAction<boolean>>;
@@ -64,6 +67,9 @@ export function useSettingsDashboardSnapshotHydration({
   setNotifDigestCadence,
   setNotifDigestIncludePlanner,
   setNotifDigestQuietUntilLabel,
+  setNotifDigestNextDeliveryAt,
+  setNotifDigestLastReviewedAt,
+  setNotifDigestLastDeliveredAt,
   setNotifPhotos,
   setNotifRsvp,
   setNotifUpdates,
@@ -118,6 +124,9 @@ export function useSettingsDashboardSnapshotHydration({
         setNotifDigestCadence(snapshot.notifDigestCadence);
         setNotifDigestIncludePlanner(snapshot.notifDigestIncludePlanner);
         setNotifDigestQuietUntilLabel(snapshot.notifDigestQuietUntilLabel ?? '');
+        setNotifDigestNextDeliveryAt(snapshot.notifDigestNextDeliveryAt);
+        setNotifDigestLastReviewedAt(snapshot.notifDigestLastReviewedAt);
+        setNotifDigestLastDeliveredAt(snapshot.notifDigestLastDeliveredAt);
         setNotifUpdates(snapshot.notifUpdates);
       }
 
@@ -147,6 +156,9 @@ export function useSettingsDashboardSnapshotHydration({
     setNotifDigestCadence,
     setNotifDigestIncludePlanner,
     setNotifDigestQuietUntilLabel,
+    setNotifDigestNextDeliveryAt,
+    setNotifDigestLastReviewedAt,
+    setNotifDigestLastDeliveredAt,
     setNotifPhotos,
     setNotifRsvp,
     setNotifUpdates,

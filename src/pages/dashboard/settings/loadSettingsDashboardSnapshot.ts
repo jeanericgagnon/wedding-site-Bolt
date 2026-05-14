@@ -32,6 +32,9 @@ export type SettingsDashboardSnapshot = {
   notifDigestCadence: DigestCadence;
   notifDigestIncludePlanner: boolean;
   notifDigestQuietUntilLabel: string | null;
+  notifDigestNextDeliveryAt: string | null;
+  notifDigestLastReviewedAt: string | null;
+  notifDigestLastDeliveredAt: string | null;
   notifPhotos: boolean;
   notifRsvp: boolean;
   notifUpdates: boolean;
@@ -67,6 +70,9 @@ const DEFAULT_SNAPSHOT: Omit<SettingsDashboardSnapshot, 'accountEmail'> = {
   notifDigestCadence: 'paused',
   notifDigestIncludePlanner: false,
   notifDigestQuietUntilLabel: null,
+  notifDigestNextDeliveryAt: null,
+  notifDigestLastReviewedAt: null,
+  notifDigestLastDeliveredAt: null,
   notifPhotos: true,
   notifRsvp: true,
   notifUpdates: false,
@@ -181,6 +187,9 @@ export async function loadSettingsDashboardSnapshot({
     notifDigestCadence: prefs.digestCadence,
     notifDigestIncludePlanner: prefs.digestIncludePlanner,
     notifDigestQuietUntilLabel: prefs.digestQuietUntilLabel,
+    notifDigestNextDeliveryAt: prefs.digestNextDeliveryAt,
+    notifDigestLastReviewedAt: prefs.digestLastReviewedAt,
+    notifDigestLastDeliveredAt: prefs.digestLastDeliveredAt,
     notifPhotos: prefs.photos,
     notifRsvp: prefs.rsvp,
     notifUpdates: prefs.updates,
