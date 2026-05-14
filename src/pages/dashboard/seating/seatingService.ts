@@ -4,6 +4,7 @@ import { demoGuests } from '../../../lib/demoData';
 import { resolveOperationalEventId } from '../../../lib/operationalEvent';
 import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../../lib/rsvpStatus';
 import { toSafeCsv } from '../../../lib/csvExport';
+import { extractDietaryNote } from '../../../lib/dietaryNotes';
 import { loadDemoItineraryEventsFromStorage, readDemoSeatingState } from './seatingDemoStorage';
 
 function requireRpcRecord<T>(data: unknown, functionName: string): T {
@@ -144,6 +145,28 @@ export interface SeatingLookupRow {
   seat_index: number | null;
   checked_in_at: string | null;
   rsvp_status?: string | null;
+}
+
+export function deriveEligibleGuestDietaryFields(notes: string | null | undefined): {
+  dietary_notes: string | null;
+  allergies: string | null;
+} {
+  const normalizedNotes = typeof notes === 'string' ? notes.trim() : '';
+  if (!normalizedNotes) {
+    return {
+      dietary_notes: null,
+      allergies: null,
+    };
+  }
+
+  const dietaryNote = extractDietaryNote(null, normalizedNotes);
+  const allergyMatch = normalizedNotes.match(/\ballerg(?:y|ies)\s*:\s*(.+)$/i);
+  const allergies = allergyMatch?.[1]?.trim() || null;
+
+  return {
+    dietary_notes: dietaryNote,
+    allergies,
+  };
 }
 
 interface SeatingLookupGuest {
@@ -542,6 +565,8 @@ export async function getEligibleGuests(
       eventRsvp,
       rsvpStatus: g.rsvp_status,
     });
+    const notes = (g.notes as string | null) ?? null;
+    const dietaryFields = deriveEligibleGuestDietaryFields(notes);
 
     return {
       id: g.id,
@@ -556,9 +581,9 @@ export async function getEligibleGuests(
       meal_choice: null,
       meal_preference: (g.meal_preference as string | null) ?? null,
       dietary_restrictions: null,
-      dietary_notes: null,
-      allergies: null,
-      notes: (g.notes as string | null) ?? null,
+      dietary_notes: dietaryFields.dietary_notes,
+      allergies: dietaryFields.allergies,
+      notes,
     };
   });
 }

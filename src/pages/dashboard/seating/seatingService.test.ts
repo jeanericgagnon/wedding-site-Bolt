@@ -8,6 +8,7 @@ import {
   createTable,
   markSeatingVersionRestored,
   deriveEventCountersFromGuests,
+  deriveEligibleGuestDietaryFields,
   deriveGuestEventAttendance,
   exportPlaceCardsCSV,
   exportSeatingCSV,
@@ -96,6 +97,22 @@ describe('deriveGuestEventAttendance', () => {
       eventRsvp: true,
       rsvpStatus: 'declined',
     })).toBe(false);
+  });
+});
+
+describe('deriveEligibleGuestDietaryFields', () => {
+  it('extracts explicit dietary and allergy notes into dedicated seating fields', () => {
+    expect(deriveEligibleGuestDietaryFields('Dietary: Gluten-free\nAllergy: Peanut')).toEqual({
+      dietary_notes: 'Gluten-free\nAllergy: Peanut',
+      allergies: 'Peanut',
+    });
+  });
+
+  it('leaves generic guest notes alone when no explicit dietary labels exist', () => {
+    expect(deriveEligibleGuestDietaryFields('Prefers aisle seat')).toEqual({
+      dietary_notes: null,
+      allergies: null,
+    });
   });
 });
 
