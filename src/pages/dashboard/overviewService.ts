@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 const OVERVIEW_DISMISSALS_SITE_SELECT = 'wedding_data';
 const OVERVIEW_BUILDER_SITE_SELECT = 'site_json';
 const OVERVIEW_DRAFT_REFRESH_SITE_SELECT = 'onboarding_answers, site_json, wedding_data';
-const OVERVIEW_SITE_SELECT = 'id, site_slug, site_url, is_published, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location';
+const OVERVIEW_SITE_SELECT = 'id, site_slug, site_url, is_published, site_json, notification_prefs, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location';
 const OVERVIEW_INTERACTIVE_SUGGESTION_SELECT = 'id, suggestion_text, created_at';
 const OVERVIEW_INTERACTIVE_VOTE_SELECT = 'id, widget_kind, widget_id, option_id, created_at';
 
@@ -50,6 +50,7 @@ export interface OverviewSiteRecord {
   site_url: string | null;
   is_published: boolean | null;
   site_json: Record<string, unknown> | null;
+  notification_prefs: Record<string, unknown> | null;
   updated_at: string | null;
   template_id: string | null;
   wedding_data: Record<string, unknown> | null;

@@ -8,6 +8,7 @@ import { deriveNameChangeLifecycleStatus } from './nameChangeLifecycleStatus';
 import { hydrateNameChangeWorkspace } from './planning/nameChangeService';
 import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../lib/plannerAccess';
+import type { NotificationPrefs } from '../../lib/notificationPrefs';
 
 type RecentRsvp = {
   id: string;
@@ -48,6 +49,7 @@ export interface OverviewStatsState {
   recentRsvps: RecentRsvp[];
   activeSiteRole: PlannerAccessRole;
   activeSitePermissions: PlannerPermissionKey[] | null;
+  notificationPrefs: NotificationPrefs;
 }
 
 export interface NameChangeOverviewStateValue {
@@ -126,6 +128,15 @@ export function buildDemoOverviewSnapshotState(): {
       recentRsvps,
       activeSiteRole: 'owner',
       activeSitePermissions: null,
+      notificationPrefs: {
+        digest: false,
+        digestCadence: 'paused',
+        digestIncludePlanner: false,
+        digestQuietUntilLabel: null,
+        photos: true,
+        rsvp: true,
+        updates: false,
+      },
     },
     nameChangeOverviewState: { hasWorkspace: true, workflowStatus: 'in_progress', hasExecutionActivity: true },
     nameChangeInsights: {
@@ -254,6 +265,7 @@ export function buildOverviewStatsFromSnapshot({
   hideFromSearch,
   isPublished,
   lastPublishedAt,
+  notificationPrefs,
   pendingGuests,
   photoAlbumCount,
   publishedVersion,
@@ -278,6 +290,7 @@ export function buildOverviewStatsFromSnapshot({
   hideFromSearch: boolean;
   isPublished: boolean;
   lastPublishedAt: string | null;
+  notificationPrefs: NotificationPrefs;
   pendingGuests: number;
   photoAlbumCount: number;
   publishedVersion: number | null;
@@ -321,5 +334,6 @@ export function buildOverviewStatsFromSnapshot({
     recentRsvps,
     activeSiteRole,
     activeSitePermissions,
+    notificationPrefs,
   };
 }

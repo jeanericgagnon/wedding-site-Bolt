@@ -3,6 +3,7 @@ import { createSubscriptionSession, type BillingInfo } from '../../../lib/stripe
 import { logAppAction } from '../../../lib/actionAudit';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../../lib/aiBuilderProjectPatch';
 import { regenerateLayout } from '../../../lib/generateInitialLayout';
+import { buildNotificationPrefsPatch, type DigestCadence } from '../../../lib/notificationPrefs';
 import { fromExistingLayoutToBuilderProject } from '../../../builder/adapters/layoutAdapter';
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
 import type { LayoutConfigV1 } from '../../../types/layoutConfig';
@@ -37,6 +38,9 @@ export type UseSettingsExperienceActionsArgs = {
   notifRsvp: boolean;
   notifPhotos: boolean;
   notifDigest: boolean;
+  notifDigestCadence: DigestCadence;
+  notifDigestIncludePlanner: boolean;
+  notifDigestQuietUntilLabel: string;
   notifUpdates: boolean;
   billingInfo: BillingInfo | null;
   resolveSettingsSiteId: () => Promise<string | null>;
@@ -70,6 +74,9 @@ export function useSettingsExperienceActions({
   notifRsvp,
   notifPhotos,
   notifDigest,
+  notifDigestCadence,
+  notifDigestIncludePlanner,
+  notifDigestQuietUntilLabel,
   notifUpdates,
   billingInfo,
   resolveSettingsSiteId,
@@ -164,14 +171,26 @@ export function useSettingsExperienceActions({
         return;
       }
 
+      const quietUntilLabel = notifDigestQuietUntilLabel.trim();
       await updateSettingsSite(targetSiteId, {
-        notification_prefs: { rsvp: notifRsvp, photos: notifPhotos, digest: notifDigest, updates: notifUpdates },
+        notification_prefs: buildNotificationPrefsPatch({
+          rsvp: notifRsvp,
+          photos: notifPhotos,
+          digest: notifDigest,
+          digestCadence: notifDigest ? notifDigestCadence : 'paused',
+          digestIncludePlanner: notifDigest && notifDigestIncludePlanner,
+          digestQuietUntilLabel: notifDigest ? (quietUntilLabel || null) : null,
+          updates: notifUpdates,
+        }),
       });
       notifDraftGuard.markSaved();
       logSettingsAction('notification_preferences_saved', 'Notification preferences were updated.', {
         rsvp: notifRsvp,
         photos: notifPhotos,
         digest: notifDigest,
+        digestCadence: notifDigest ? notifDigestCadence : 'paused',
+        digestIncludePlanner: notifDigest && notifDigestIncludePlanner,
+        digestQuietUntilLabel: notifDigest ? (quietUntilLabel || null) : null,
         updates: notifUpdates,
       }, targetSiteId, 'Notification preferences', targetSiteId);
       setNotifSuccess('Preferences saved.');

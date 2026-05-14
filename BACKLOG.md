@@ -364,8 +364,8 @@ Execution rule for this section:
    - add live mobile guest-path proof from invite to travel to RSVP/photo surfaces
 
 8. `ACTIVE`: reminders, digests, and notification preferences
-   - persist digest cadence and real notification preferences
-   - add snooze/quiet controls backed by saved preference state
+   - persist digest cadence, planner audience, and quiet-state preferences across settings + overview digest preview
+   - keep snooze/quiet controls backed by saved preference state instead of local-only UI
    - add scheduled email delivery instead of readiness-only framing
    - connect digest counts to real source-of-truth task/payment/message/photo/seating state
    - prove owner/planner email rendering and safe delivered-readback behavior

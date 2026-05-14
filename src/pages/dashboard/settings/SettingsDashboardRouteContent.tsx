@@ -1,5 +1,6 @@
 import React from 'react';
 import type { FormEvent } from 'react';
+import type { DigestCadence } from '../../../lib/notificationPrefs';
 import { getPlannerPermissionPreset, type PlannerPermissionKey, type PlannerInviteRecord, type PlannerRoleOption } from '../../../lib/plannerAccess';
 import type { BillingInfo } from '../../../lib/stripeService';
 import type { WeddingIdentityExportKit, WeddingIdentityPrintAsset } from '../../../lib/weddingIdentityExports';
@@ -58,6 +59,9 @@ type Props = {
   musicPlaylistUrl: string;
   newPassword: string;
   notifDigest: boolean;
+  notifDigestCadence: DigestCadence;
+  notifDigestIncludePlanner: boolean;
+  notifDigestQuietUntilLabel: string;
   notifDraftMarkDirty: () => void;
   notifError: string | null;
   notifPhotos: boolean;
@@ -97,6 +101,9 @@ type Props = {
   setMusicPlaylistUrl: (value: string) => void;
   setNewPassword: (value: string) => void;
   setNotifDigest: (value: boolean) => void;
+  setNotifDigestCadence: (value: DigestCadence) => void;
+  setNotifDigestIncludePlanner: (value: boolean) => void;
+  setNotifDigestQuietUntilLabel: (value: string) => void;
   setNotifPhotos: (value: boolean) => void;
   setNotifRsvp: (value: boolean) => void;
   setNotifUpdates: (value: boolean) => void;
@@ -403,6 +410,9 @@ export function SettingsDashboardRouteContent(props: Props) {
             notifRsvp={props.notifRsvp}
             notifPhotos={props.notifPhotos}
             notifDigest={props.notifDigest}
+            notifDigestCadence={props.notifDigestCadence}
+            notifDigestIncludePlanner={props.notifDigestIncludePlanner}
+            notifDigestQuietUntilLabel={props.notifDigestQuietUntilLabel}
             notifUpdates={props.notifUpdates}
             notifSaving={props.notifSaving}
             notifSuccess={props.notifSuccess}
@@ -410,7 +420,15 @@ export function SettingsDashboardRouteContent(props: Props) {
             onToggleVisibility={() => props.setShowNotificationSettings((value) => !value)}
             onRsvpChange={(value) => { props.notifDraftMarkDirty(); props.setNotifRsvp(value); }}
             onPhotosChange={(value) => { props.notifDraftMarkDirty(); props.setNotifPhotos(value); }}
-            onDigestChange={(value) => { props.notifDraftMarkDirty(); props.setNotifDigest(value); }}
+            onDigestChange={(value) => {
+              props.notifDraftMarkDirty();
+              props.setNotifDigest(value);
+              if (value && props.notifDigestCadence === 'paused') props.setNotifDigestCadence('weekly');
+              if (!value) props.setNotifDigestCadence('paused');
+            }}
+            onDigestCadenceChange={(value) => { props.notifDraftMarkDirty(); props.setNotifDigestCadence(value); }}
+            onDigestIncludePlannerChange={(value) => { props.notifDraftMarkDirty(); props.setNotifDigestIncludePlanner(value); }}
+            onDigestQuietUntilLabelChange={(value) => { props.notifDraftMarkDirty(); props.setNotifDigestQuietUntilLabel(value); }}
             onUpdatesChange={(value) => { props.notifDraftMarkDirty(); props.setNotifUpdates(value); }}
             onSaveNotifications={props.handleSaveNotifications}
           />

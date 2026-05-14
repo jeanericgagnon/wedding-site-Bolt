@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { DigestCadence } from '../../../lib/notificationPrefs';
 import { fetchBillingInfo, type BillingInfo } from '../../../lib/stripeService';
 import {
   getPlannerPermissionPreset,
@@ -117,6 +118,9 @@ export function useSettingsDashboardUiState({ userId }: Args) {
   const [notifRsvp, setNotifRsvp] = useState(true);
   const [notifPhotos, setNotifPhotos] = useState(true);
   const [notifDigest, setNotifDigest] = useState(false);
+  const [notifDigestCadence, setNotifDigestCadence] = useState<DigestCadence>('paused');
+  const [notifDigestIncludePlanner, setNotifDigestIncludePlanner] = useState(false);
+  const [notifDigestQuietUntilLabel, setNotifDigestQuietUntilLabel] = useState('');
   const [notifUpdates, setNotifUpdates] = useState(false);
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifSuccess, setNotifSuccess] = useState<string | null>(null);
@@ -185,6 +189,9 @@ export function useSettingsDashboardUiState({ userId }: Args) {
     musicPlaylistUrl,
     newPassword,
     notifDigest,
+    notifDigestCadence,
+    notifDigestIncludePlanner,
+    notifDigestQuietUntilLabel,
     notifDraftGuard,
     notifError,
     notifPhotos,
@@ -262,6 +269,9 @@ export function useSettingsDashboardUiState({ userId }: Args) {
     setMusicPlaylistUrl,
     setNewPassword,
     setNotifDigest,
+    setNotifDigestCadence,
+    setNotifDigestIncludePlanner,
+    setNotifDigestQuietUntilLabel,
     setNotifError,
     setNotifPhotos,
     setNotifRsvp,

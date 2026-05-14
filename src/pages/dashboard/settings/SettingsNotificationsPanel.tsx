@@ -1,5 +1,6 @@
 import { Loader2, Save } from 'lucide-react';
 import type { FormEvent } from 'react';
+import type { DigestCadence } from '../../../lib/notificationPrefs';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui';
 
 type SettingsNotificationsPanelProps = {
@@ -7,6 +8,9 @@ type SettingsNotificationsPanelProps = {
   notifRsvp: boolean;
   notifPhotos: boolean;
   notifDigest: boolean;
+  notifDigestCadence: DigestCadence;
+  notifDigestIncludePlanner: boolean;
+  notifDigestQuietUntilLabel: string;
   notifUpdates: boolean;
   notifSaving: boolean;
   notifSuccess: string | null;
@@ -15,6 +19,9 @@ type SettingsNotificationsPanelProps = {
   onRsvpChange: (value: boolean) => void;
   onPhotosChange: (value: boolean) => void;
   onDigestChange: (value: boolean) => void;
+  onDigestCadenceChange: (value: DigestCadence) => void;
+  onDigestIncludePlannerChange: (value: boolean) => void;
+  onDigestQuietUntilLabelChange: (value: string) => void;
   onUpdatesChange: (value: boolean) => void;
   onSaveNotifications: (event: FormEvent) => void;
 };
@@ -24,6 +31,9 @@ export function SettingsNotificationsPanel({
   notifRsvp,
   notifPhotos,
   notifDigest,
+  notifDigestCadence,
+  notifDigestIncludePlanner,
+  notifDigestQuietUntilLabel,
   notifUpdates,
   notifSaving,
   notifSuccess,
@@ -32,6 +42,9 @@ export function SettingsNotificationsPanel({
   onRsvpChange,
   onPhotosChange,
   onDigestChange,
+  onDigestCadenceChange,
+  onDigestIncludePlannerChange,
+  onDigestQuietUntilLabelChange,
   onUpdatesChange,
   onSaveNotifications,
 }: SettingsNotificationsPanelProps) {
@@ -96,9 +109,63 @@ export function SettingsNotificationsPanel({
               />
               <div className="flex-1">
                 <p className="font-medium text-text-primary">Weekly digest</p>
-                <p className="text-sm text-text-secondary">Summary of activity on your site</p>
+                <p className="text-sm text-text-secondary">A calm recap of RSVPs, guests, photos, and publishing details</p>
               </div>
             </label>
+
+            <div id="digest" className={`space-y-4 rounded-lg border border-border-subtle bg-surface-subtle/35 p-4 ${notifDigest ? '' : 'opacity-70'}`}>
+              <div className="space-y-2">
+                <label htmlFor="digest-cadence" className="text-sm font-medium text-text-primary">
+                  Digest cadence
+                </label>
+                <select
+                  id="digest-cadence"
+                  value={notifDigest ? notifDigestCadence : 'paused'}
+                  disabled={!notifDigest}
+                  onChange={(e) => onDigestCadenceChange(e.target.value as DigestCadence)}
+                  className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="paused">Paused</option>
+                </select>
+                <p className="text-xs leading-5 text-text-secondary">
+                  This saves your review preference now. Delivery stays in preview mode until a sending provider is connected.
+                </p>
+              </div>
+
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notifDigestIncludePlanner}
+                  disabled={!notifDigest}
+                  onChange={(e) => onDigestIncludePlannerChange(e.target.checked)}
+                  className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                />
+                <div className="flex-1">
+                  <p className="font-medium text-text-primary">Include planners and coordinators</p>
+                  <p className="text-sm text-text-secondary">Keep your shared team on the same digest when that helps.</p>
+                </div>
+              </label>
+
+              <div className="space-y-2">
+                <label htmlFor="digest-quiet-until" className="text-sm font-medium text-text-primary">
+                  Quiet until
+                </label>
+                <input
+                  id="digest-quiet-until"
+                  type="text"
+                  value={notifDigestQuietUntilLabel}
+                  disabled={!notifDigest}
+                  onChange={(e) => onDigestQuietUntilLabelChange(e.target.value)}
+                  placeholder="After the rehearsal dinner"
+                  className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+                />
+                <p className="text-xs leading-5 text-text-secondary">
+                  Use a plain-language note so the overview can reflect when you want this lane to stay quiet.
+                </p>
+              </div>
+            </div>
 
             <label className="flex items-start gap-3 cursor-pointer">
               <input

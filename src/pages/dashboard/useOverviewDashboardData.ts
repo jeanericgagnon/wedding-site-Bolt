@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { readSetupDraft, setupDraftProgress } from '../../lib/setupDraft';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
+import { normalizeNotificationPrefs } from '../../lib/notificationPrefs';
 import { listBuilderRevisions, type BuilderRevision } from '../../builder/services/versionHistory';
 import { loadNameChangeWorkspace } from './planning/nameChangeService';
 import {
@@ -114,6 +115,7 @@ export function useOverviewDashboardData({
         hideFromSearch,
         isPublished,
         lastPublishedAt: typeof siteJson?.lastPublishedAt === 'string' ? (siteJson.lastPublishedAt as string) : null,
+        notificationPrefs: normalizeNotificationPrefs((site?.notification_prefs as Record<string, unknown> | null) ?? null),
         pendingGuests: overviewSnapshot.pendingGuests,
         photoAlbumCount: overviewSnapshot.photoAlbumCount,
         publishedVersion: typeof siteJson?.publishedVersion === 'number' ? (siteJson.publishedVersion as number) : null,

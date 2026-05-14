@@ -176,7 +176,7 @@ describe('settings error safety', () => {
     expect(pageSource).toContain('useSettingsExperienceActions({');
     expect(experienceSource).toContain('updateSettingsSite(targetSiteId');
     expect(experienceSource).toContain('rsvp_custom_questions: cleanedQuestions');
-    expect(experienceSource).toContain('notification_prefs: { rsvp: notifRsvp');
+    expect(experienceSource).toContain('notification_prefs: buildNotificationPrefsPatch({');
   });
 
   it('keeps wedding_site_settings_patch text fields as text in the RPC migration', () => {

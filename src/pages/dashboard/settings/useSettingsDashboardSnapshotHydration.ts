@@ -23,6 +23,9 @@ interface UseSettingsDashboardSnapshotHydrationArgs {
   setHideFromSearch: React.Dispatch<React.SetStateAction<boolean>>;
   setMusicPlaylistUrl: React.Dispatch<React.SetStateAction<string>>;
   setNotifDigest: React.Dispatch<React.SetStateAction<boolean>>;
+  setNotifDigestCadence: React.Dispatch<React.SetStateAction<'daily' | 'weekly' | 'paused'>>;
+  setNotifDigestIncludePlanner: React.Dispatch<React.SetStateAction<boolean>>;
+  setNotifDigestQuietUntilLabel: React.Dispatch<React.SetStateAction<string>>;
   setNotifPhotos: React.Dispatch<React.SetStateAction<boolean>>;
   setNotifRsvp: React.Dispatch<React.SetStateAction<boolean>>;
   setNotifUpdates: React.Dispatch<React.SetStateAction<boolean>>;
@@ -55,6 +58,9 @@ export function useSettingsDashboardSnapshotHydration({
   setHideFromSearch,
   setMusicPlaylistUrl,
   setNotifDigest,
+  setNotifDigestCadence,
+  setNotifDigestIncludePlanner,
+  setNotifDigestQuietUntilLabel,
   setNotifPhotos,
   setNotifRsvp,
   setNotifUpdates,
@@ -103,6 +109,9 @@ export function useSettingsDashboardSnapshotHydration({
         setNotifRsvp(snapshot.notifRsvp);
         setNotifPhotos(snapshot.notifPhotos);
         setNotifDigest(snapshot.notifDigest);
+        setNotifDigestCadence(snapshot.notifDigestCadence);
+        setNotifDigestIncludePlanner(snapshot.notifDigestIncludePlanner);
+        setNotifDigestQuietUntilLabel(snapshot.notifDigestQuietUntilLabel ?? '');
         setNotifUpdates(snapshot.notifUpdates);
       }
 
@@ -128,6 +137,9 @@ export function useSettingsDashboardSnapshotHydration({
     setHideFromSearch,
     setMusicPlaylistUrl,
     setNotifDigest,
+    setNotifDigestCadence,
+    setNotifDigestIncludePlanner,
+    setNotifDigestQuietUntilLabel,
     setNotifPhotos,
     setNotifRsvp,
     setNotifUpdates,

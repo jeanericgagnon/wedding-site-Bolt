@@ -230,7 +230,7 @@ describe('settings site data boundary', () => {
     expect(routeContent).toContain('<SettingsSiteTabContent');
     expect(routeContent).toContain('<SettingsRsvpTabContent');
     expect(page).not.toContain('createSubscriptionSession(');
-    expect(page).not.toContain('notification_prefs: { rsvp: notifRsvp');
+    expect(page).not.toContain('notification_prefs: buildNotificationPrefsPatch({');
     expect(page).not.toContain('rsvp_custom_questions: cleanedQuestions');
 
     expect(tabContent).toContain('switch (activeTab)');
@@ -305,7 +305,7 @@ describe('settings site data boundary', () => {
 
     expect(experienceHook).toContain('loadSettingsTemplateChangeSite(weddingSiteId)');
     expect(experienceHook).toContain('createSubscriptionSession(');
-    expect(experienceHook).toContain('notification_prefs: { rsvp: notifRsvp');
+    expect(experienceHook).toContain('notification_prefs: buildNotificationPrefsPatch({');
     expect(experienceHook).toContain('rsvp_custom_questions: cleanedQuestions');
     expect(experienceHook).not.toContain("from('wedding_site_collaborator_invites')");
     expect(experienceHook).not.toContain("from('site_translations')");

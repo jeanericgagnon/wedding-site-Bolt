@@ -7,6 +7,7 @@ import { buildLaunchReadiness } from '../../lib/launchReadiness';
 import { buildPlanningAssistantModel } from '../../lib/aiPlanningAssistant';
 import { buildInvisibleIntelligenceSuggestions, type IntelligenceSuggestion } from '../../lib/invisibleIntelligence';
 import { buildCalmDigestDeliveryPreview, buildCalmOwnerDigest } from '../../lib/calmOwnerDigest';
+import type { NotificationPrefs } from '../../lib/notificationPrefs';
 import { buildWebsiteInviteAnalyticsFunnelReview, buildWebsiteInviteAnalyticsReadiness } from '../../lib/websiteInviteAnalyticsReadiness';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../lib/plannerAccess';
 
@@ -40,6 +41,7 @@ type OverviewStatsLike = {
   venueLocation: string | null;
   venueName: string | null;
   weddingDate: string | null;
+  notificationPrefs: NotificationPrefs;
 };
 
 type OverviewChecklistItem = ReturnType<typeof buildPublishReadinessItems>[number];
@@ -161,10 +163,11 @@ export function buildOverviewDashboardModel({
     publishBlockerCount: publishBlockers.length,
   }) : null;
 
-  const calmDigestPreview = calmDigest ? buildCalmDigestDeliveryPreview({
+  const calmDigestPreview = calmDigest && stats ? buildCalmDigestDeliveryPreview({
     digest: calmDigest,
-    cadence: 'weekly',
-    includePlanner: stats?.activeSiteRole === 'owner',
+    cadence: stats.notificationPrefs.digest ? stats.notificationPrefs.digestCadence : 'paused',
+    includePlanner: stats.notificationPrefs.digestIncludePlanner,
+    quietUntilLabel: stats.notificationPrefs.digestQuietUntilLabel,
     emailDeliveryEnabled: false,
   }) : null;
 

@@ -1,5 +1,6 @@
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
 import { demoWeddingSite } from '../../../lib/demoData';
+import { normalizeNotificationPrefs, type DigestCadence } from '../../../lib/notificationPrefs';
 import type { PlannerAccessRole } from '../../../lib/plannerAccess';
 import { readDemoRsvpSettings } from './settingsDemoStorage';
 import {
@@ -27,6 +28,9 @@ export type SettingsDashboardSnapshot = {
   hideFromSearch: boolean;
   musicPlaylistUrl: string;
   notifDigest: boolean;
+  notifDigestCadence: DigestCadence;
+  notifDigestIncludePlanner: boolean;
+  notifDigestQuietUntilLabel: string | null;
   notifPhotos: boolean;
   notifRsvp: boolean;
   notifUpdates: boolean;
@@ -57,6 +61,9 @@ const DEFAULT_SNAPSHOT: Omit<SettingsDashboardSnapshot, 'accountEmail'> = {
   hideFromSearch: false,
   musicPlaylistUrl: '',
   notifDigest: false,
+  notifDigestCadence: 'paused',
+  notifDigestIncludePlanner: false,
+  notifDigestQuietUntilLabel: null,
   notifPhotos: true,
   notifRsvp: true,
   notifUpdates: false,
@@ -147,7 +154,7 @@ export async function loadSettingsDashboardSnapshot({
   const loadedLanguage = SITE_LANGUAGE_OPTIONS.some((option) => option.value === data.default_language)
     ? data.default_language as SiteLanguageCode
     : 'en';
-  const prefs = data.notification_prefs as Record<string, boolean> | null;
+  const prefs = normalizeNotificationPrefs(data.notification_prefs as Record<string, unknown> | null);
   const mealCfg = (data as { rsvp_meal_config?: unknown }).rsvp_meal_config as { enabled?: boolean; options?: unknown[] } | undefined;
 
   return {
@@ -160,10 +167,13 @@ export async function loadSettingsDashboardSnapshot({
     guestAccessToken: (data.guest_access_token as string | null) ?? null,
     hideFromSearch: !!(data.hide_from_search as boolean | null | undefined),
     musicPlaylistUrl: (data.music_playlist_url as string) ?? '',
-    notifDigest: prefs?.digest ?? false,
-    notifPhotos: prefs?.photos ?? true,
-    notifRsvp: prefs?.rsvp ?? true,
-    notifUpdates: prefs?.updates ?? false,
+    notifDigest: prefs.digest,
+    notifDigestCadence: prefs.digestCadence,
+    notifDigestIncludePlanner: prefs.digestIncludePlanner,
+    notifDigestQuietUntilLabel: prefs.digestQuietUntilLabel,
+    notifPhotos: prefs.photos,
+    notifRsvp: prefs.rsvp,
+    notifUpdates: prefs.updates,
     privacyMode: (data.privacy_mode as SettingsPrivacyMode) ?? 'public',
     rsvpMealEnabled: mealCfg?.enabled ?? true,
     rsvpMealOptions: normalizeMealOptions(mealCfg?.options),
