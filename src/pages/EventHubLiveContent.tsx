@@ -165,6 +165,8 @@ export function EventHubLiveContent({
   onSubmitOptIn,
 }: EventHubLiveContentProps) {
   const isExternalHref = (href: string) => /^https?:\/\//i.test(href);
+  const travelJourneyReadyCount = travelGuestJourney.filter((step) => step.status === 'ready').length;
+  const travelJourneyNeedsInfoCount = travelGuestJourney.filter((step) => step.status !== 'ready').length;
 
   return (
     <div className="min-h-screen bg-[#fbf7f1] text-neutral-950">
@@ -330,16 +332,27 @@ export function EventHubLiveContent({
                     <p className="mt-1 text-sm leading-6 text-[#6f5843]">
                       Start with travel details, then reply and share photos from the same mobile hub.
                     </p>
+                    {travelJourneyNeedsInfoCount > 0 && (
+                      <p className="mt-2 text-xs text-[#8b6f53]">
+                        {travelJourneyNeedsInfoCount} step{travelJourneyNeedsInfoCount === 1 ? '' : 's'} still need setup before this path feels complete.
+                      </p>
+                    )}
                   </div>
                   <div className="rounded-lg bg-[#f3eadf] px-3 py-2 text-xs font-semibold text-[#69513f]">
-                    {travelGuestJourney.filter((step) => step.status === 'ready').length} ready
+                    {travelJourneyReadyCount} ready{travelJourneyNeedsInfoCount > 0 ? ` · ${travelJourneyNeedsInfoCount} needs setup` : ''}
                   </div>
                 </div>
                 <div className="mt-3 grid gap-2 sm:grid-cols-3">
                   {travelGuestJourney.map((step) => {
+                    const statusLabel = step.status === 'ready' ? 'Ready now' : 'Needs setup';
                     const stepContent = (
                       <>
-                        <span className="block text-xs font-semibold text-[#2f261d]">{step.label}</span>
+                        <span className="flex items-center justify-between gap-3">
+                          <span className="block text-xs font-semibold text-[#2f261d]">{step.label}</span>
+                          <span className="rounded-lg bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">
+                            {statusLabel}
+                          </span>
+                        </span>
                         <span className="mt-1 block text-xs leading-5 text-[#6f5843]">{step.detail}</span>
                       </>
                     );

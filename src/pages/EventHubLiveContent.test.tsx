@@ -39,6 +39,7 @@ describe('EventHubLiveContent', () => {
           onTrackClick={onTrackClick}
           travelGuestJourney={[
             { id: 'travel', label: 'Travel details', detail: 'Open the travel section.', href: '/site/alex-jordan-demo#travel', status: 'ready' },
+            { id: 'rsvp', label: 'Reply', detail: 'Confirm attendance and any event-specific details from the same hub.', href: '', status: 'needs-info' },
           ]}
           travelHubSpotlight={{
             summary: '4 travel details ready from the guest hub, including 1 visible event window for this invitation.',
@@ -103,6 +104,10 @@ describe('EventHubLiveContent', () => {
     );
 
     expect(screen.getByText('Travel quick plan')).toBeInTheDocument();
+    expect(screen.getByText('1 ready · 1 needs setup')).toBeInTheDocument();
+    expect(screen.getByText('1 step still need setup before this path feels complete.')).toBeInTheDocument();
+    expect(screen.getByText('Ready now')).toBeInTheDocument();
+    expect(screen.getByText('Needs setup')).toBeInTheDocument();
     expect(screen.getByText('Invite-scoped')).toBeInTheDocument();
     expect(screen.getByText('1 event window')).toBeInTheDocument();
     expect(screen.getByText('1 route card')).toBeInTheDocument();
