@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { budgetVendorLedgerToCsv, buildBudgetPaymentReview, buildBudgetVendorLedgerReadiness } from './budgetVendorLedgerReadiness';
+import { budgetVendorLedgerToCsv, buildBudgetPaymentReview, buildBudgetVendorLedgerReadiness, buildBudgetVendorReconciliation } from './budgetVendorLedgerReadiness';
 
 describe('budget vendor ledger readiness', () => {
   it('marks a complete ledger ready for planner handoff', () => {
@@ -192,5 +192,63 @@ describe('budget vendor ledger readiness', () => {
     expect(review.status).toBe('ready');
     expect(review.summary).toBe('Open payments have contact details and no near-term due dates.');
     expect(review.rows).toHaveLength(1);
+  });
+
+  it('reconciles vendor totals, files, and milestones against linked budget rows', () => {
+    const reconciliation = buildBudgetVendorReconciliation({
+      vendors: [
+        {
+          id: 'vendor-1',
+          name: 'Rose Hall',
+          vendor_type: 'Venue',
+          contract_total: 12000,
+          amount_paid: 6000,
+          balance_due: 6000,
+        },
+        {
+          id: 'vendor-2',
+          name: 'Bloom Floral',
+          vendor_type: 'Florist',
+          contract_total: 3000,
+          amount_paid: 1000,
+          balance_due: 2000,
+        },
+      ],
+      budgetItems: [
+        {
+          id: 'budget-1',
+          category: 'Venue',
+          item_name: 'Venue balance',
+          estimated_amount: 12000,
+          actual_amount: 12000,
+          paid_amount: 6000,
+          vendor_id: 'vendor-1',
+        },
+        {
+          id: 'budget-2',
+          category: 'Florals',
+          item_name: 'Florals',
+          estimated_amount: 2500,
+          actual_amount: 2500,
+          paid_amount: 500,
+          vendor_id: 'vendor-2',
+        },
+      ],
+      vendorMeta: {
+        'vendor-1': {
+          contractFiles: [{ id: 'file-1', kind: 'contract', label: 'Signed contract', url: 'https://docs.example.com/venue' }],
+          paymentMilestones: [{ id: 'm1', label: 'Final balance', dueDate: '2026-06-10', amount: 6000, status: 'scheduled' }],
+        },
+      },
+    });
+
+    expect(reconciliation.status).toBe('needs-review');
+    expect(reconciliation.fileReadyCount).toBe(1);
+    expect(reconciliation.milestoneReadyCount).toBe(1);
+    expect(reconciliation.mismatchedCount).toBe(1);
+    expect(reconciliation.rows[0]?.vendorName).toBe('Bloom Floral');
+    expect(reconciliation.rows[0]?.issues).toContain('No contract or invoice files saved');
+    expect(reconciliation.rows[0]?.issues.some((issue) => issue.includes('Contract differs from linked budget'))).toBe(true);
+    expect(reconciliation.rows[0]?.issues.some((issue) => issue.includes('Paid totals differ by'))).toBe(true);
   });
 });

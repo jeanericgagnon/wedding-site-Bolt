@@ -51,6 +51,12 @@ describe('BudgetTab', () => {
       <BudgetTab
         items={budgetItems}
         vendors={vendors}
+        vendorMeta={{
+          'vendor-1': {
+            contractFiles: [{ id: 'file-1', kind: 'contract', label: 'Venue contract', url: 'https://docs.example.com/venue' }],
+            paymentMilestones: [{ id: 'm1', label: 'Final balance', amount: 2500, dueDate: '2026-06-15', status: 'scheduled' }],
+          },
+        }}
         totalBudget={12000}
         onTotalBudgetChange={vi.fn().mockResolvedValue(undefined)}
         onAdd={vi.fn().mockResolvedValue(undefined)}
@@ -63,6 +69,8 @@ describe('BudgetTab', () => {
     expect(screen.getByText('Owner and planner financial details')).toBeInTheDocument();
     expect(screen.getByText(/guest-facing surfaces do not expose these financial details/i)).toBeInTheDocument();
     expect(screen.getByText('Budget and vendor ledger')).toBeInTheDocument();
+    expect(screen.getByText('Vendor balance reconciliation')).toBeInTheDocument();
+    expect(screen.getByText(/Totals, files, and milestones are lined up/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Export ledger/i })).toBeEnabled();
     expect(screen.getByRole('button', { name: /Add expense/i })).toBeDisabled();
     expect(screen.getByDisplayValue('12000')).toBeDisabled();

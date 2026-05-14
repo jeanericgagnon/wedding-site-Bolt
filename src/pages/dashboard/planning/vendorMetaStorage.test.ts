@@ -25,6 +25,13 @@ describe('vendorMetaStorage', () => {
         reminderChannel: 'email',
         reminderLeadDays: 3,
         reminderLastQueuedAt: '2026-05-05T09:30:00.000Z',
+        contractFiles: [
+          { id: 'contract-1', kind: 'contract', label: 'Signed contract', url: 'https://docs.example.com/contract' },
+          { id: 'empty', kind: 'invoice', label: '', url: '' },
+        ],
+        paymentMilestones: [
+          { id: 'm1', label: 'Final balance', amount: 2400, dueDate: '2026-06-02T08:00:00.000Z', status: 'scheduled' },
+        ],
       },
       empty: {},
       bad: { lastContacted: 'not-a-date', nextFollowUp: 'also-bad', reminderChannel: 'fax', reminderLeadDays: 99 } as unknown as {
@@ -42,6 +49,12 @@ describe('vendorMetaStorage', () => {
         reminderChannel: 'email',
         reminderLeadDays: 3,
         reminderLastQueuedAt: '2026-05-05T09:30:00.000Z',
+        contractFiles: [
+          { id: 'contract-1', kind: 'contract', label: 'Signed contract', url: 'https://docs.example.com/contract' },
+        ],
+        paymentMilestones: [
+          { id: 'm1', label: 'Final balance', amount: 2400, dueDate: '2026-06-02', status: 'scheduled' },
+        ],
       },
     });
     expect(JSON.parse(window.localStorage.getItem(VENDOR_META_STORAGE_KEY) || '{}')).toMatchObject({

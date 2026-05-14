@@ -446,8 +446,10 @@ Execution rule for this section:
    - this batch shipped: vendor follow-up metadata now persists as real site-backed planning state instead of local-only browser storage, including next follow-up date, reminder channel, lead time, and queued-readback timestamps
    - this batch shipped: vendor and payment ledger exports now include reminder preference/readback columns, and the planning ledger shows a real reminder-readiness summary instead of treating reminders as side notes
    - this batch shipped: focused proof is green for vendor reminder metadata normalization, site-meta persistence/readback through `wedding_site_settings_patch`, and reminder-readiness summary logic
-   - add richer contract/invoice file storage and payment-schedule subtasks
-   - reconcile vendor contract balances against budget line balances
+   - this batch shipped: vendor meta now supports multiple saved contract/invoice/proposal files plus named payment milestones, all persisted in site-backed planning state instead of a single document field or handwritten notes
+   - this batch shipped: vendors export now carries those richer file and milestone readbacks so owner/planner handoff packets preserve contract proof and payment schedule detail
+   - this batch shipped: budget review now includes a real vendor reconciliation surface that compares vendor contract and paid totals against linked budget rows, flags mismatches, and shows whether files and milestones are saved
+   - this batch shipped: focused proof is green for vendor-meta normalization, reconciliation math, and the expanded budget/vendor readback UI
 
 13. `ACTIVE`: website and invite analytics
    - this batch shipped: owner overview analytics now read from the real `guest_hub_events` table instead of review-model-only placeholders, with a 30-day aggregate summary for website visits, private invite-link opens, QR entries, recap views, and guest-hub action clicks

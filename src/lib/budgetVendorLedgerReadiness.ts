@@ -83,6 +83,47 @@ export interface BudgetPaymentReview {
   privacyNote: string;
 }
 
+export interface VendorLedgerMeta {
+  contractFiles?: Array<{
+    id?: string;
+    kind?: string | null;
+    label?: string | null;
+    url?: string | null;
+  }>;
+  paymentMilestones?: Array<{
+    id?: string;
+    label?: string | null;
+    amount?: number | null;
+    dueDate?: string | null;
+    status?: string | null;
+  }>;
+}
+
+export interface BudgetVendorReconciliationRow {
+  vendorId: string;
+  vendorName: string;
+  contractTotal: number;
+  vendorPaid: number;
+  linkedEstimatedTotal: number;
+  linkedActualTotal: number;
+  linkedPaidTotal: number;
+  milestoneCount: number;
+  fileCount: number;
+  contractGap: number;
+  paidGap: number;
+  issueCount: number;
+  issues: string[];
+}
+
+export interface BudgetVendorReconciliation {
+  status: 'ready' | 'needs-review' | 'empty';
+  summary: string;
+  mismatchedCount: number;
+  milestoneReadyCount: number;
+  fileReadyCount: number;
+  rows: BudgetVendorReconciliationRow[];
+}
+
 function money(value: number | null | undefined): number {
   return Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
 }
@@ -360,5 +401,75 @@ export function buildBudgetPaymentReview(input: {
     missingDocumentCount,
     rows,
     privacyNote: 'Planner review stays owner/planner-only; public and guest surfaces must not expose financial details.',
+  };
+}
+
+export function buildBudgetVendorReconciliation(input: {
+  budgetItems: BudgetLedgerItem[];
+  vendors: VendorLedgerItem[];
+  vendorMeta?: Record<string, VendorLedgerMeta | undefined> | null;
+}): BudgetVendorReconciliation {
+  if (input.vendors.length === 0) {
+    return {
+      status: 'empty',
+      summary: 'Add vendors before reconciling contracts and payment schedules.',
+      mismatchedCount: 0,
+      milestoneReadyCount: 0,
+      fileReadyCount: 0,
+      rows: [],
+    };
+  }
+
+  const rows = input.vendors.map((vendor) => {
+    const linkedBudgetItems = input.budgetItems.filter((item) => item.vendor_id === vendor.id);
+    const meta = input.vendorMeta?.[vendor.id];
+    const contractTotal = money(vendor.contract_total);
+    const vendorPaid = money(vendor.amount_paid);
+    const linkedEstimatedTotal = linkedBudgetItems.reduce((sum, item) => sum + money(item.estimated_amount), 0);
+    const linkedActualTotal = linkedBudgetItems.reduce((sum, item) => sum + money(item.actual_amount), 0);
+    const linkedPaidTotal = linkedBudgetItems.reduce((sum, item) => sum + money(item.paid_amount), 0);
+    const comparisonTotal = linkedActualTotal > 0 ? linkedActualTotal : linkedEstimatedTotal;
+    const contractGap = Math.abs(contractTotal - comparisonTotal);
+    const paidGap = Math.abs(vendorPaid - linkedPaidTotal);
+    const fileCount = Array.isArray(meta?.contractFiles) ? meta!.contractFiles!.filter((file) => file?.label || file?.url).length : 0;
+    const milestoneCount = Array.isArray(meta?.paymentMilestones) ? meta!.paymentMilestones!.filter((milestone) => milestone?.label || milestone?.dueDate || milestone?.amount).length : 0;
+    const issues: string[] = [];
+
+    if (linkedBudgetItems.length === 0) issues.push('No linked budget lines');
+    if (contractTotal > 0 && comparisonTotal > 0 && contractGap >= 1) issues.push(`Contract differs from linked budget by ${money(contractGap).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}`);
+    if (vendorPaid > 0 && linkedPaidTotal > 0 && paidGap >= 1) issues.push(`Paid totals differ by ${money(paidGap).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}`);
+    if (fileCount === 0) issues.push('No contract or invoice files saved');
+    if (milestoneCount === 0 && money(vendor.balance_due) > 0) issues.push('No payment milestones saved');
+
+    return {
+      vendorId: vendor.id,
+      vendorName: vendor.name,
+      contractTotal,
+      vendorPaid,
+      linkedEstimatedTotal,
+      linkedActualTotal,
+      linkedPaidTotal,
+      milestoneCount,
+      fileCount,
+      contractGap,
+      paidGap,
+      issueCount: issues.length,
+      issues,
+    };
+  }).sort((a, b) => b.issueCount - a.issueCount || b.contractGap - a.contractGap || a.vendorName.localeCompare(b.vendorName));
+
+  const mismatchedCount = rows.filter((row) => row.issueCount > 0).length;
+  const milestoneReadyCount = rows.filter((row) => row.milestoneCount > 0).length;
+  const fileReadyCount = rows.filter((row) => row.fileCount > 0).length;
+
+  return {
+    status: mismatchedCount > 0 ? 'needs-review' : 'ready',
+    summary: mismatchedCount > 0
+      ? `${mismatchedCount} vendor ledger row${mismatchedCount === 1 ? '' : 's'} still need contract, milestone, or balance reconciliation.`
+      : 'Vendor contracts, files, and payment milestones line up with linked budget rows.',
+    mismatchedCount,
+    milestoneReadyCount,
+    fileReadyCount,
+    rows,
   };
 }

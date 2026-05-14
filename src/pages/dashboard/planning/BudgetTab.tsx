@@ -4,11 +4,13 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { PlanningBudgetItem, PlanningVendor } from './planningService';
 import { buildBudgetQuickCheck } from '../../../lib/invisibleIntelligence';
-import { budgetVendorLedgerToCsv, buildBudgetPaymentReview, buildBudgetVendorLedgerReadiness } from '../../../lib/budgetVendorLedgerReadiness';
+import { budgetVendorLedgerToCsv, buildBudgetPaymentReview, buildBudgetVendorLedgerReadiness, buildBudgetVendorReconciliation } from '../../../lib/budgetVendorLedgerReadiness';
+import type { VendorMetaMap } from './vendorMetaStorage';
 
 interface Props {
   items: PlanningBudgetItem[];
   vendors: PlanningVendor[];
+  vendorMeta?: VendorMetaMap;
   totalBudget: number;
   onTotalBudgetChange: (value: number) => Promise<void>;
   onAdd: (item: Partial<PlanningBudgetItem>) => Promise<void>;
@@ -166,7 +168,7 @@ function BudgetForm({ initial, vendors, onSave, onCancel }: {
   );
 }
 
-export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTotalBudgetChange, onAdd, onUpdate, onDelete, canEdit = true }) => {
+export const BudgetTab: React.FC<Props> = ({ items, vendors, vendorMeta = {}, totalBudget, onTotalBudgetChange, onAdd, onUpdate, onDelete, canEdit = true }) => {
   const [showAdd, setShowAdd] = useState(false);
   const [editingItem, setEditingItem] = useState<PlanningBudgetItem | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'sheet'>('cards');
@@ -225,6 +227,11 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
   const paymentReview = buildBudgetPaymentReview({
     budgetItems: items,
     vendors,
+  });
+  const reconciliation = buildBudgetVendorReconciliation({
+    budgetItems: items,
+    vendors,
+    vendorMeta,
   });
   const ledgerTone = ledgerReadiness.status === 'ready'
     ? 'border-success/25 bg-success/5'
@@ -393,6 +400,59 @@ export const BudgetTab: React.FC<Props> = ({ items, vendors, totalBudget, onTota
           <p className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-secondary">Add vendor contracts or budget payment rows to review reminders.</p>
         )}
         <p className="text-[11px] text-text-tertiary">{paymentReview.privacyNote}</p>
+      </Card>
+
+      <Card padding="sm" className="space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-text-primary">Vendor balance reconciliation</p>
+            <p className="mt-1 text-xs text-text-secondary">{reconciliation.summary}</p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center sm:min-w-[300px]">
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-2 py-2">
+              <p className="text-sm font-semibold text-text-primary">{reconciliation.mismatchedCount}</p>
+              <p className="text-[11px] text-text-tertiary">Need review</p>
+            </div>
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-2 py-2">
+              <p className="text-sm font-semibold text-text-primary">{reconciliation.fileReadyCount}/{vendors.length}</p>
+              <p className="text-[11px] text-text-tertiary">Files saved</p>
+            </div>
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-2 py-2">
+              <p className="text-sm font-semibold text-text-primary">{reconciliation.milestoneReadyCount}/{vendors.length}</p>
+              <p className="text-[11px] text-text-tertiary">Milestones</p>
+            </div>
+          </div>
+        </div>
+        {reconciliation.rows.length > 0 ? (
+          <div className="space-y-2">
+            {reconciliation.rows.slice(0, 4).map((row) => (
+              <div key={row.vendorId} className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-text-primary">{row.vendorName}</p>
+                  <p className="text-[11px] text-text-tertiary">{fmt(row.contractTotal)} contract</p>
+                </div>
+                <p className="mt-1 text-[11px] text-text-secondary">
+                  Linked budget {fmt(row.linkedActualTotal || row.linkedEstimatedTotal)} · paid {fmt(row.vendorPaid)} vs {fmt(row.linkedPaidTotal)} in budget
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {row.issues.length > 0 ? row.issues.map((issue) => (
+                    <span key={issue} className="rounded-md border border-border-subtle bg-surface px-2 py-0.5 text-[11px] text-text-secondary">
+                      {issue}
+                    </span>
+                  )) : (
+                    <span className="rounded-md border border-success/20 bg-success/5 px-2 py-0.5 text-[11px] text-success">
+                      Totals, files, and milestones are lined up
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-secondary">
+            Add vendors before reviewing contract and payment-schedule continuity.
+          </p>
+        )}
       </Card>
 
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">

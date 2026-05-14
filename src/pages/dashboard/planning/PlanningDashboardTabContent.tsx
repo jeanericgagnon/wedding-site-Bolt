@@ -169,6 +169,7 @@ export function PlanningDashboardTabContent({
         <BudgetTab
           items={budgetItems}
           vendors={vendors}
+          vendorMeta={vendorMeta}
           totalBudget={totalBudget}
           onTotalBudgetChange={onSaveTotalBudget}
           onAdd={onAddBudgetItem}

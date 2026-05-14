@@ -37,6 +37,12 @@ const vendorMeta: VendorMetaMap = {
     reminderChannel: 'email',
     reminderLeadDays: 7,
     reminderLastQueuedAt: '2026-05-11T12:00:00.000Z',
+    contractFiles: [
+      { id: 'file-1', kind: 'contract', label: 'Signed contract', url: 'https://docs.example.com/contract' },
+    ],
+    paymentMilestones: [
+      { id: 'milestone-1', label: 'Final balance', dueDate: '2026-05-30', amount: 2500, status: 'scheduled' },
+    ],
   },
 };
 
@@ -66,6 +72,10 @@ describe('VendorsTab', () => {
     fireEvent.click(container.querySelector('.lucide-chevron-down')?.closest('button') as HTMLButtonElement);
 
     expect(screen.getByText(/Saved reminder:/i)).toBeInTheDocument();
+    expect(screen.getByText('Contract and invoice files')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Signed contract')).toBeDisabled();
+    expect(screen.getByText('Payment milestones')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Final balance')).toBeDisabled();
     expect(screen.getByRole('button', { name: /Mark as contacted/i })).toBeDisabled();
     expect(screen.getByDisplayValue('2026-05-18')).toBeDisabled();
     expect(screen.getByRole('button', { name: /Mark reminder queued/i })).toBeDisabled();

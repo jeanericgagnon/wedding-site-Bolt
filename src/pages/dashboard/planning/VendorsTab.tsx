@@ -7,7 +7,7 @@ import { useToast } from '../../../components/ui/Toast';
 import { PlanningVendor } from './planningService';
 import { formatVendorDate, isVendorDateOnOrBefore } from './vendorDate';
 import { buildVendorReminderLedgerSummary, formatVendorReminderChannel, formatVendorReminderLeadDays } from './vendorReminderLedger';
-import type { VendorMetaMap } from './vendorMetaStorage';
+import type { VendorContractFileEntry, VendorMetaMap, VendorPaymentMilestoneEntry } from './vendorMetaStorage';
 import { copyTextOrDownload } from '../../../lib/copyText';
 import { getSafePublicEmailHref, getSafePublicTelHref, getSafePublicWebUrl } from '../../../sections/publicLinks';
 import { isVendorProfileCreationEnabled } from '../../../lib/vendorProfileLaunch';
@@ -32,6 +32,33 @@ const VENDOR_RATING_STATUSES = ['Researching', 'Reached out', 'Proposal received
 
 function fmt(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+}
+
+function nextVendorFileEntries(patch: VendorContractFileEntry[]): VendorContractFileEntry[] | undefined {
+  const next = patch
+    .map((entry, index) => ({
+      id: entry.id || `file-${index + 1}`,
+      kind: entry.kind || 'contract',
+      label: entry.label?.trim() ?? '',
+      url: entry.url?.trim() ?? '',
+    }))
+    .filter((entry) => entry.label || entry.url)
+    .slice(0, 8);
+  return next.length > 0 ? next : undefined;
+}
+
+function nextVendorMilestoneEntries(patch: VendorPaymentMilestoneEntry[]): VendorPaymentMilestoneEntry[] | undefined {
+  const next = patch
+    .map((entry, index) => ({
+      id: entry.id || `milestone-${index + 1}`,
+      label: entry.label?.trim() ?? '',
+      amount: Number.isFinite(Number(entry.amount)) ? Math.max(0, Number(entry.amount)) : undefined,
+      dueDate: entry.dueDate?.trim() ? entry.dueDate.trim().slice(0, 10) : undefined,
+      status: entry.status || 'todo',
+    }))
+    .filter((entry) => entry.label || entry.amount || entry.dueDate)
+    .slice(0, 8);
+  return next.length > 0 ? next : undefined;
 }
 
 function vendorProfileCreateUrl(vendor: Partial<PlanningVendor>) {
@@ -300,6 +327,14 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
     void onSaveVendorMeta(nextMeta);
   };
 
+  const saveVendorContractFiles = (vendorId: string, files: VendorContractFileEntry[]) => {
+    saveVendorMetaEntry(vendorId, { contractFiles: nextVendorFileEntries(files) });
+  };
+
+  const saveVendorPaymentMilestones = (vendorId: string, milestones: VendorPaymentMilestoneEntry[]) => {
+    saveVendorMetaEntry(vendorId, { paymentMilestones: nextVendorMilestoneEntries(milestones) });
+  };
+
   const filteredVendors = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return vendors;
@@ -343,7 +378,7 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
 
   function exportVendors() {
     const csvRows = [
-      ['Name', 'Type', 'Contact', 'Email', 'Phone', 'Website', 'Internal rating', 'Rating status', 'Rating notes', 'Contract total', 'Paid', 'Balance', 'Next due', 'Next follow-up', 'Reminder channel', 'Reminder lead days', 'Last reminder queued', 'Document label', 'Document URL'],
+      ['Name', 'Type', 'Contact', 'Email', 'Phone', 'Website', 'Internal rating', 'Rating status', 'Rating notes', 'Contract total', 'Paid', 'Balance', 'Next due', 'Next follow-up', 'Reminder channel', 'Reminder lead days', 'Last reminder queued', 'Document label', 'Document URL', 'Saved files', 'Payment milestones'],
       ...vendors.map((vendor) => {
         const meta = vendorMeta[vendor.id] ?? {};
         return [
@@ -366,6 +401,8 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
         meta.reminderLastQueuedAt ?? '',
         vendor.document_label ?? '',
         vendor.document_url ?? '',
+        (meta.contractFiles ?? []).map((file) => `${file.kind}: ${file.label || file.url}`).join(' | '),
+        (meta.paymentMilestones ?? []).map((milestone) => [milestone.label, milestone.dueDate, milestone.amount ? fmt(milestone.amount) : null, milestone.status].filter(Boolean).join(' / ')).join(' | '),
       ];
       }),
     ];
@@ -502,6 +539,8 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
             const safePhoneHref = getSafePublicTelHref(vendor.phone);
             const safeWebsiteUrl = getSafePublicWebUrl(vendor.website);
             const safeDocumentUrl = getSafePublicWebUrl(vendor.document_url);
+            const contractFiles = vendorMeta[vendor.id]?.contractFiles ?? [];
+            const paymentMilestones = vendorMeta[vendor.id]?.paymentMilestones ?? [];
 
             return (
               <div key={vendor.id}>
@@ -667,6 +706,146 @@ export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSave
                               </span>
                             )}
                           </div>
+                        </div>
+                        <div className="rounded-lg border border-border/35 bg-surface-subtle/40 px-2.5 py-2 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[11px] text-text-tertiary">Contract and invoice files</p>
+                            {canEdit && (
+                              <button
+                                onClick={() => saveVendorContractFiles(vendor.id, [
+                                  ...contractFiles,
+                                  { id: `file-${Date.now()}`, kind: 'contract', label: '', url: '' },
+                                ])}
+                                className="text-[11px] px-2 py-1 rounded border border-border bg-white text-text-secondary"
+                              >
+                                Add file
+                              </button>
+                            )}
+                          </div>
+                          {contractFiles.length > 0 ? (
+                            <div className="space-y-2">
+                              {contractFiles.map((file, index) => (
+                                <div key={file.id} className="grid gap-2 sm:grid-cols-[0.8fr_1fr_1.6fr_auto]">
+                                  <select
+                                    value={file.kind}
+                                    onChange={(event) => canEdit && saveVendorContractFiles(vendor.id, contractFiles.map((entry, entryIndex) => (
+                                      entryIndex === index ? { ...entry, kind: event.target.value as VendorContractFileEntry['kind'] } : entry
+                                    )))}
+                                    disabled={!canEdit}
+                                    className="rounded border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
+                                  >
+                                    <option value="contract">Contract</option>
+                                    <option value="invoice">Invoice</option>
+                                    <option value="proposal">Proposal</option>
+                                  </select>
+                                  <input
+                                    value={file.label}
+                                    onChange={(event) => canEdit && saveVendorContractFiles(vendor.id, contractFiles.map((entry, entryIndex) => (
+                                      entryIndex === index ? { ...entry, label: event.target.value } : entry
+                                    )))}
+                                    disabled={!canEdit}
+                                    placeholder="Label"
+                                    className="rounded border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
+                                  />
+                                  <input
+                                    value={file.url}
+                                    onChange={(event) => canEdit && saveVendorContractFiles(vendor.id, contractFiles.map((entry, entryIndex) => (
+                                      entryIndex === index ? { ...entry, url: event.target.value } : entry
+                                    )))}
+                                    disabled={!canEdit}
+                                    placeholder="https://..."
+                                    className="rounded border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
+                                  />
+                                  {canEdit && (
+                                    <button
+                                      onClick={() => saveVendorContractFiles(vendor.id, contractFiles.filter((_, entryIndex) => entryIndex !== index))}
+                                      className="text-[11px] px-2 py-1 rounded border border-border bg-white text-text-secondary"
+                                    >
+                                      Remove
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-[11px] text-text-secondary">Save contract, invoice, or proposal links here so the ledger handoff is not stuck on one document field.</p>
+                          )}
+                        </div>
+                        <div className="rounded-lg border border-border/35 bg-surface-subtle/40 px-2.5 py-2 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[11px] text-text-tertiary">Payment milestones</p>
+                            {canEdit && (
+                              <button
+                                onClick={() => saveVendorPaymentMilestones(vendor.id, [
+                                  ...paymentMilestones,
+                                  { id: `milestone-${Date.now()}`, label: '', dueDate: '', amount: undefined, status: 'todo' },
+                                ])}
+                                className="text-[11px] px-2 py-1 rounded border border-border bg-white text-text-secondary"
+                              >
+                                Add milestone
+                              </button>
+                            )}
+                          </div>
+                          {paymentMilestones.length > 0 ? (
+                            <div className="space-y-2">
+                              {paymentMilestones.map((milestone, index) => (
+                                <div key={milestone.id} className="grid gap-2 sm:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr_auto]">
+                                  <input
+                                    value={milestone.label}
+                                    onChange={(event) => canEdit && saveVendorPaymentMilestones(vendor.id, paymentMilestones.map((entry, entryIndex) => (
+                                      entryIndex === index ? { ...entry, label: event.target.value } : entry
+                                    )))}
+                                    disabled={!canEdit}
+                                    placeholder="Balance, installment, final invoice"
+                                    className="rounded border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
+                                  />
+                                  <input
+                                    type="date"
+                                    value={milestone.dueDate ?? ''}
+                                    onChange={(event) => canEdit && saveVendorPaymentMilestones(vendor.id, paymentMilestones.map((entry, entryIndex) => (
+                                      entryIndex === index ? { ...entry, dueDate: event.target.value } : entry
+                                    )))}
+                                    disabled={!canEdit}
+                                    className="rounded border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
+                                  />
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    value={milestone.amount ?? ''}
+                                    onChange={(event) => canEdit && saveVendorPaymentMilestones(vendor.id, paymentMilestones.map((entry, entryIndex) => (
+                                      entryIndex === index ? { ...entry, amount: event.target.value ? Number(event.target.value) : undefined } : entry
+                                    )))}
+                                    disabled={!canEdit}
+                                    placeholder="Amount"
+                                    className="rounded border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
+                                  />
+                                  <select
+                                    value={milestone.status}
+                                    onChange={(event) => canEdit && saveVendorPaymentMilestones(vendor.id, paymentMilestones.map((entry, entryIndex) => (
+                                      entryIndex === index ? { ...entry, status: event.target.value as VendorPaymentMilestoneEntry['status'] } : entry
+                                    )))}
+                                    disabled={!canEdit}
+                                    className="rounded border border-border bg-white px-2 py-1 text-[11px] text-text-secondary disabled:opacity-40"
+                                  >
+                                    <option value="todo">To do</option>
+                                    <option value="scheduled">Scheduled</option>
+                                    <option value="paid">Paid</option>
+                                  </select>
+                                  {canEdit && (
+                                    <button
+                                      onClick={() => saveVendorPaymentMilestones(vendor.id, paymentMilestones.filter((_, entryIndex) => entryIndex !== index))}
+                                      className="text-[11px] px-2 py-1 rounded border border-border bg-white text-text-secondary"
+                                    >
+                                      Remove
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-[11px] text-text-secondary">Break deposits and balances into named milestones so the owner and planner can track what is still due.</p>
+                          )}
                         </div>
                         {vendor.notes && (
                           <p className="text-xs text-text-tertiary">{vendor.notes}</p>
