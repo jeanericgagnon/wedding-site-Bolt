@@ -95,6 +95,38 @@ export function GuestListPanel({
                         {checkInMode && checkedInAt && (
                           <p className="text-xs text-success">Checked in {formatGuestOpsDateTime(checkedInAt, { hour: 'numeric', minute: '2-digit' })}</p>
                         )}
+                        {!checkInMode && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 py-1 text-xs"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onOpenItineraryDrawer(guest);
+                              }}
+                              title="Manage event invitations"
+                            >
+                              <CalendarDays className="mr-1 h-3.5 w-3.5" />
+                              Events
+                            </Button>
+                            {guestPreviewRoutes.primaryHref && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 py-1 text-xs"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  window.open(guestPreviewRoutes.primaryHref ?? '', '_blank', 'noopener,noreferrer');
+                                }}
+                                title={guestPreviewRoutes.publicSiteHref ? 'Preview the guest-facing site as this guest' : 'Preview the RSVP flow as this guest'}
+                              >
+                                <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                                Guest view
+                              </Button>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <ChevronRight className="w-3.5 h-3.5 text-text-tertiary ml-1 opacity-0 group-hover:opacity-100" />
                     </div>

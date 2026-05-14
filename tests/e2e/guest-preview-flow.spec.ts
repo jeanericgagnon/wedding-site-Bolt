@@ -36,7 +36,7 @@ test('guests drawer preview shows visible vs hidden event access and opens real 
   await searchInput.fill('Emma Waters');
   const emmaRow = page.locator('tr', { hasText: 'emma.waters+0@dayof.demo' }).first();
   await expect(emmaRow).toBeVisible();
-  await emmaRow.getByRole('button', { name: 'Events' }).click();
+  await emmaRow.getByRole('button', { name: 'Events' }).first().click();
 
   const emmaDrawer = page.getByRole('dialog', { name: 'Emma Waters guest drawer' });
   await expect(emmaDrawer.getByText('Previewing as Emma Waters')).toBeVisible();
@@ -62,7 +62,7 @@ test('guests drawer preview shows visible vs hidden event access and opens real 
   await searchInput.fill('Noah Waters');
   const noahRow = page.locator('tr', { hasText: 'noah.waters+1@dayof.demo' }).first();
   await expect(noahRow).toBeVisible();
-  await noahRow.getByRole('button', { name: 'Events' }).click();
+  await noahRow.getByRole('button', { name: 'Events' }).first().click();
 
   const noahDrawer = page.getByRole('dialog', { name: 'Noah Waters guest drawer' });
   await expect(noahDrawer.getByText('Previewing as Noah Waters')).toBeVisible();

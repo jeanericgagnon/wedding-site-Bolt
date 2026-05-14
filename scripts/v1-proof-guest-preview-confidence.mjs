@@ -85,7 +85,7 @@ const results = [
   runStep({
     id: 'guest-preview-unit-tests',
     label: 'Guest preview confidence unit tests',
-    command: 'npm test -- --run src/lib/guestPreviewRoutes.test.ts src/lib/guestVisibilityPreview.test.ts src/pages/dashboard/guests/GuestItineraryDrawer.test.tsx src/pages/dashboard/guests/demoGuestItinerary.test.ts',
+    command: 'npm test -- --run src/lib/guestPreviewRoutes.test.ts src/lib/guestVisibilityPreview.test.ts src/pages/dashboard/guests/GuestItineraryDrawer.test.tsx src/pages/dashboard/guests/demoGuestItinerary.test.ts src/pages/dashboard/guests/GuestListPanel.test.tsx src/pages/dashboard/guests/GuestHouseholdPanel.test.tsx',
   }),
   runStep({
     id: 'build',

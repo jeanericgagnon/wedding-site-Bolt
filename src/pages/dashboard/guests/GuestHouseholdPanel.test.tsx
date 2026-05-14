@@ -54,8 +54,8 @@ describe('GuestHouseholdPanel', () => {
     buttons[0].click();
     buttons[1].click();
 
-    expect(openSpy).toHaveBeenNthCalledWith(1, '/site/maya-and-rowan?previewGuest=guest-1&previewSurface=public', '_blank', 'noopener,noreferrer');
-    expect(openSpy).toHaveBeenNthCalledWith(2, '/site/maya-and-rowan?previewGuest=guest-2&previewSurface=public', '_blank', 'noopener,noreferrer');
+    expect(openSpy).toHaveBeenNthCalledWith(1, '/site/maya-and-rowan?previewGuest=guest-1&previewSurface=public&guestLang=es', '_blank', 'noopener,noreferrer');
+    expect(openSpy).toHaveBeenNthCalledWith(2, '/site/maya-and-rowan?previewGuest=guest-2&previewSurface=public&guestLang=fr', '_blank', 'noopener,noreferrer');
     openSpy.mockRestore();
   });
 

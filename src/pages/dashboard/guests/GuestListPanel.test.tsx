@@ -6,6 +6,7 @@ import type { GuestWithRSVP } from './guestDashboardTypes';
 describe('GuestListPanel', () => {
   it('uses the public guest-view preview when a public site slug exists', () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const openItineraryDrawer = vi.fn();
     const guest = {
       id: 'guest-1',
       first_name: 'Maya',
@@ -27,6 +28,7 @@ describe('GuestListPanel', () => {
         filteredGuestCount={1}
         getStatusBadge={() => <span>Status</span>}
         isGuestsReadOnly={false}
+        onOpenItineraryDrawer={openItineraryDrawer}
         publicSiteSlug="maya-and-rowan"
         searchQuery=""
         sendingInviteId={null}
@@ -34,16 +36,17 @@ describe('GuestListPanel', () => {
         onMarkThankYouSent={vi.fn()}
         onOpenAssistedRsvpModal={vi.fn()}
         onOpenEditModal={vi.fn()}
-        onOpenItineraryDrawer={vi.fn()}
         onSendInvitation={vi.fn()}
         onToggleCheckIn={vi.fn()}
       />,
     );
 
-    screen.getByRole('button', { name: /guest view/i }).click();
+    screen.getAllByRole('button', { name: /guest view/i })[0].click();
     expect(screen.getByText('Prefers French')).toBeInTheDocument();
+    screen.getAllByRole('button', { name: 'Events' })[0].click();
 
-    expect(openSpy).toHaveBeenCalledWith('/site/maya-and-rowan?previewGuest=guest-1&previewSurface=public', '_blank', 'noopener,noreferrer');
+    expect(openSpy).toHaveBeenCalledWith('/site/maya-and-rowan?previewGuest=guest-1&previewSurface=public&guestLang=fr', '_blank', 'noopener,noreferrer');
+    expect(openItineraryDrawer).toHaveBeenCalledWith(guest);
     openSpy.mockRestore();
   });
 });

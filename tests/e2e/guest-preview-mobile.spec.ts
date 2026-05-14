@@ -45,7 +45,7 @@ test('mobile guest drawer preview opens photo, travel, registry, and site routes
 
   const noahRow = page.locator('tr', { hasText: 'noah.waters+1@dayof.demo' }).first();
   await expect(noahRow).toBeVisible();
-  await noahRow.getByRole('button', { name: 'Events' }).click();
+  await noahRow.getByRole('button', { name: 'Events' }).first().click();
 
   const noahDrawer = page.getByRole('dialog', { name: 'Noah Waters guest drawer' });
   await expect(noahDrawer.getByText('2 of 4 events visible')).toBeVisible();
