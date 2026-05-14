@@ -1172,7 +1172,12 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
                 {channelDeliveryBreakdown[channel].delivered} delivered · {channelDeliveryBreakdown[channel].failed} need review
               </p>
               <p className="mt-1 text-[11px] text-text-tertiary">
-                {channelDeliveryBreakdown[channel].deliveredRate}% delivered coverage · {channelDeliveryBreakdown[channel].skippedRate}% needs contact
+                {(() => {
+                  const targeted = channelDeliveryBreakdown[channel].targeted;
+                  const reviewRate = targeted > 0 ? Math.round((channelDeliveryBreakdown[channel].failed / targeted) * 100) : 0;
+                  const unreachedRate = targeted > 0 ? Math.round((channelDeliveryBreakdown[channel].unreached / targeted) * 100) : 0;
+                  return `${channelDeliveryBreakdown[channel].deliveredRate}% delivered coverage · ${reviewRate}% review coverage · ${channelDeliveryBreakdown[channel].skippedRate}% needs contact · ${unreachedRate}% unreached`;
+                })()}
               </p>
               <p className="mt-1 text-[11px] text-text-tertiary">
                 {channelDeliveryBreakdown[channel].skipped} need contact details · {channelDeliveryBreakdown[channel].unreached} not reached yet
@@ -1306,10 +1311,12 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                 {(() => {
                   const targeted = thread.delivered + thread.failed + thread.skipped + thread.unreached;
                   const skippedRate = targeted > 0 ? Math.round((thread.skipped / targeted) * 100) : null;
+                  const reviewRate = targeted > 0 ? Math.round((thread.failed / targeted) * 100) : null;
+                  const unreachedRate = targeted > 0 ? Math.round((thread.unreached / targeted) * 100) : null;
                   return (
                     <>
                 <p>{thread.delivered} delivered · {thread.failed} need review</p>
-                {thread.deliveredRecipients > 0 && <p className="text-text-secondary">{thread.deliveredRate}% delivered coverage{skippedRate != null ? ` · ${skippedRate}% needs contact` : ''}</p>}
+                {thread.deliveredRecipients > 0 && <p className="text-text-secondary">{thread.deliveredRate}% delivered coverage{reviewRate != null ? ` · ${reviewRate}% review coverage` : ''}{skippedRate != null ? ` · ${skippedRate}% needs contact` : ''}{unreachedRate != null ? ` · ${unreachedRate}% unreached` : ''}</p>}
                 {engagementSummary && <p className="text-text-secondary">{engagementSummary}</p>}
                 {(thread.skipped > 0 || thread.unreached > 0) && (
                   <p className="text-warning">
@@ -1352,6 +1359,8 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
           {(() => {
             const activeThreadTargeted = activeCampaignThread.delivered + activeCampaignThread.failed + activeCampaignThread.skipped + activeCampaignThread.unreached;
             const activeThreadSkippedRate = activeThreadTargeted > 0 ? Math.round((activeCampaignThread.skipped / activeThreadTargeted) * 100) : null;
+            const activeThreadReviewRate = activeThreadTargeted > 0 ? Math.round((activeCampaignThread.failed / activeThreadTargeted) * 100) : null;
+            const activeThreadUnreachedRate = activeThreadTargeted > 0 ? Math.round((activeCampaignThread.unreached / activeThreadTargeted) * 100) : null;
             return (
               <>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Delivered {activeCampaignThread.delivered}</span>
@@ -1360,9 +1369,19 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               {activeCampaignThread.deliveredRate}% delivered coverage
             </span>
           )}
+          {activeThreadReviewRate != null && (
+            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+              {activeThreadReviewRate}% review coverage
+            </span>
+          )}
           {activeThreadSkippedRate != null && (
             <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
               {activeThreadSkippedRate}% needs contact
+            </span>
+          )}
+          {activeThreadUnreachedRate != null && (
+            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+              {activeThreadUnreachedRate}% unreached
             </span>
           )}
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs review {activeCampaignThread.failed}</span>
