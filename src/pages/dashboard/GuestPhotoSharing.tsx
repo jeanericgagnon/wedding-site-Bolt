@@ -223,6 +223,7 @@ export const GuestPhotoSharing: React.FC = () => {
     guestbookEntries,
     hubSettings,
     metadataByUploadId,
+    photoMemoryFlowQaEnabled: searchParams.has('photoMemoryFlowQa'),
     showFlaggedOnly,
     showHidden,
     siteSlug,

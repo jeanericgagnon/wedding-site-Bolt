@@ -146,11 +146,29 @@ test('demo photo memory flow proves slideshow, export, and recap readback contin
   await expect(page.getByText('Current mode: Published')).toBeVisible();
   await expect(page.getByText('The recap is live for guests.')).toBeVisible();
 
+  const recapPreviewPagePromise = page.context().waitForEvent('page');
+  await page.getByRole('button', { name: 'Preview recap' }).click();
+  const recapPreviewPage = await recapPreviewPagePromise;
+  await recapPreviewPage.waitForLoadState('domcontentloaded');
+  await expect(recapPreviewPage).toHaveURL(/\/event\/alex-jordan-demo\/recap/);
+  await expect(recapPreviewPage.getByRole('heading', { name: /alex thompson & jordan rivera/i })).toBeVisible();
+  await expect(recapPreviewPage.getByRole('heading', { name: 'Top moments' })).toBeVisible();
+  await expect(recapPreviewPage.getByText('Story pick').first()).toBeVisible();
+  await expect(recapPreviewPage.getByText('Featured').first()).toBeVisible();
+  await expect(recapPreviewPage.getByText('Short motion clip from the first big reception toast.')).toBeVisible();
+  await expect(recapPreviewPage.getByText('Shared by Emma Waters')).toBeVisible();
+  await expect(recapPreviewPage.locator('body')).not.toContainText('token-c-2');
+  await recapPreviewPage.close();
+
   await page.goto('/event/alex-jordan-demo/recap?photoMemoryFlowQa=1&invite_token=token-c-2', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: /alex thompson & jordan rivera/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Wedding recap' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Top moments' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Memory chapters' })).toBeVisible();
+  await expect(page.getByText('Story pick').first()).toBeVisible();
+  await expect(page.getByText('Featured').first()).toBeVisible();
+  await expect(page.getByText('Short motion clip from the first big reception toast.')).toBeVisible();
+  await expect(page.getByText('Shared by Emma Waters')).toBeVisible();
   await expect(page.locator('body')).not.toContainText('token-c-2');
 });
 

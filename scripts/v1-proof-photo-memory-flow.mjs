@@ -147,13 +147,13 @@ const output = {
   automatedCoverage: [
     'Memory-flow readiness truth for slideshow, recap, video, follow-up, and export lanes',
     'Demo/local dashboard continuity for recap-status readback and full-resolution download-job export',
-    'Owner moderation readback plus guest-facing published recap display in the local browser proof',
+    'Owner-side recap preview handoff plus guest-facing published recap display with story/video moment readback in the local browser proof',
     'Mobile guest photo-upload route proof for the no-app memory flow without raw-token leakage',
   ],
   stillManualProofNeeded: [
     'Add live guest video upload browser proof.',
     'Prove owner moderation readback after real live uploads.',
-    'Add live slideshow publish/display proof beyond local QA fallback.',
+    'Rerun the strengthened owner preview plus guest-facing published recap proof against the shipped production runtime after the next approved deploy.',
   ],
   results,
 };

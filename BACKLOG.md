@@ -379,8 +379,9 @@ Execution rule for this section:
    - this batch shipped: a dedicated `proof:v1:photo-memory-flow` lane is now green for memory-flow readiness, owner slideshow preview, owner full-resolution export download, recap-status save/reload continuity, and the mobile guest upload route without raw-token leakage
    - this batch shipped: the local/browser photo proof now covers owner moderation readback too, proving a recap-story moderation toggle survives reload instead of stopping at one-session UI state
    - this batch shipped: the guest-facing recap route now has a QA-only local fallback from the saved demo photo state, so the photo proof lane can verify a published recap page with real shared-moment content instead of only trusting the owner status chip
+   - this batch shipped: the photo proof lane now covers the real owner `Preview recap` handoff plus guest-facing published recap readback for featured picks, story picks, and the saved video moment caption, so the slideshow/recap lane no longer stops at owner-draft readiness or a direct URL-only guest check
    - add live guest video upload browser proof
-   - add live slideshow publish/display proof beyond owner-draft readiness
+   - rerun the strengthened owner preview plus guest-facing published recap proof against the shipped production runtime after the next approved deploy
    - prove owner moderation readback after real live uploads
 
 7. `ACTIVE`: destination/travel guest portal

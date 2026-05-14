@@ -32,6 +32,7 @@ type BuildGuestPhotoDashboardDerivedStateArgs = {
   guestbookEntries: GuestbookEntryRow[];
   hubSettings: GuestHubSettings;
   metadataByUploadId: Map<string, PhotoUploadMetadataRow>;
+  photoMemoryFlowQaEnabled?: boolean;
   showFlaggedOnly: boolean;
   showHidden: boolean;
   siteSlug: string | null;
@@ -57,6 +58,7 @@ export function buildGuestPhotoDashboardDerivedState({
   guestbookEntries,
   hubSettings,
   metadataByUploadId,
+  photoMemoryFlowQaEnabled = false,
   showFlaggedOnly,
   showHidden,
   siteSlug,
@@ -92,7 +94,12 @@ export function buildGuestPhotoDashboardDerivedState({
 
   const publicSiteUrl = buildPublicSiteUrl(siteSlug);
   const guestHubUrl = publicSiteUrl ? `${publicSiteUrl}/event/${encodeURIComponent(siteSlug ?? '')}` : '';
-  const guestRecapUrl = publicSiteUrl ? `${publicSiteUrl}/event/${encodeURIComponent(siteSlug ?? '')}/recap` : '';
+  const guestRecapBaseUrl = photoMemoryFlowQaEnabled && typeof window !== 'undefined'
+    ? window.location.origin
+    : publicSiteUrl;
+  const guestRecapUrl = guestRecapBaseUrl
+    ? `${guestRecapBaseUrl}/event/${encodeURIComponent(siteSlug ?? '')}/recap${photoMemoryFlowQaEnabled ? '?photoMemoryFlowQa=1' : ''}`
+    : '';
   const guestHubActions = siteSlug ? buildGuestHubActions(siteSlug, hubSettings) : [];
   const guestHubActionSummary = summarizeGuestHubActions(guestHubActions);
   const guestHubQrAssets = buildGuestHubQrAssets({

@@ -165,6 +165,7 @@ describe('buildDemoEventRecapData', () => {
       summary: {
         uploadCount: 5,
         chapterCount: 1,
+        storyCount: 3,
       },
     });
     expect(data?.highlights.length).toBeGreaterThan(0);
@@ -206,6 +207,25 @@ describe('EventRecap opt-in form', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Get recap' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Add an email or phone so we can send the recap.');
+  });
+
+  it('renders the QA recap with featured, story, and video-backed guest moments', async () => {
+    window.history.replaceState({}, '', '/event/alex-jordan-demo/recap?photoMemoryFlowQa=1&invite_token=token-c-2');
+
+    render(
+      <MemoryRouter initialEntries={['/event/alex-jordan-demo/recap?photoMemoryFlowQa=1&invite_token=token-c-2']}>
+        <Routes>
+          <Route path="/event/:siteRef/recap" element={<EventRecap />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole('heading', { name: /alex thompson & jordan rivera/i })).toBeInTheDocument();
+    expect(screen.getAllByText('Story pick').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Featured').length).toBeGreaterThan(0);
+    expect(screen.getByText('Short motion clip from the first big reception toast.')).toBeInTheDocument();
+    expect(screen.getByText('Shared by Emma Waters')).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain('token-c-2');
   });
 
   it('announces saved opt-in status after a successful submit', async () => {
