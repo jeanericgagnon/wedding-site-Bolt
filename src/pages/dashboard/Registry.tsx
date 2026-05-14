@@ -184,11 +184,14 @@ export const DashboardRegistry: React.FC = () => {
     budgetUtilization,
     bulkReviewCounts,
     claimStats,
+    claimAttributionCoverageRate,
     counts,
     duplicateGroups,
     filtered,
     fulfillmentRate,
     fundStats,
+    fundGoalCoverageRate,
+    fundShareReadyRate,
     guestVisibilityStats,
     nearBudgetCap,
     recentActivity,
@@ -363,6 +366,7 @@ export const DashboardRegistry: React.FC = () => {
         bulkReviewCounts={bulkReviewCounts}
         budgetUtilization={budgetUtilization}
         claimStats={claimStats}
+        claimAttributionCoverageRate={claimAttributionCoverageRate}
         counts={counts}
         duplicateGroups={duplicateGroups}
         editItem={editItem}
@@ -370,6 +374,8 @@ export const DashboardRegistry: React.FC = () => {
         filtered={filtered}
         fulfillmentRate={fulfillmentRate}
         fundStats={fundStats}
+        fundGoalCoverageRate={fundGoalCoverageRate}
+        fundShareReadyRate={fundShareReadyRate}
         guestVisibilityStats={guestVisibilityStats}
         handleAddNew={handleAddNew}
         handleAutoRefreshStale={handleAutoRefreshStale}

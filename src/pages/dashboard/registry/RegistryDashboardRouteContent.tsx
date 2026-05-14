@@ -102,6 +102,8 @@ type GuestVisibilityStats = {
   visibleClaimedItems: number;
   hiddenPurchasedItems: number;
   blockedGuestItems: number;
+  guestReadyCoverageRate?: number;
+  guestVisibleCoverageRate?: number;
 };
 
 type AlertCounts = {
@@ -126,6 +128,7 @@ export function RegistryDashboardRouteContent(props: {
   bulkReviewCounts: BulkReviewCounts;
   budgetUtilization: number;
   claimStats: ClaimStats;
+  claimAttributionCoverageRate?: number;
   counts: Counts;
   duplicateGroups: RegistryDuplicateGroup[];
   editItem: RegistryItem | null;
@@ -133,6 +136,8 @@ export function RegistryDashboardRouteContent(props: {
   filtered: RegistryItem[];
   fulfillmentRate: number;
   fundStats: FundStats;
+  fundGoalCoverageRate?: number;
+  fundShareReadyRate?: number;
   guestVisibilityStats: GuestVisibilityStats;
   handleAddNew: () => void;
   handleAutoRefreshStale: (silent?: boolean, alertsOnly?: boolean) => Promise<void>;
@@ -182,6 +187,12 @@ export function RegistryDashboardRouteContent(props: {
   topRegistryItems: TopRegistryItem[];
   weddingSiteId: string | null;
 }) {
+  const claimAttributionCoverageRate = props.claimAttributionCoverageRate ?? 0;
+  const fundGoalCoverageRate = props.fundGoalCoverageRate ?? 0;
+  const fundShareReadyRate = props.fundShareReadyRate ?? 0;
+  const guestReadyCoverageRate = props.guestVisibilityStats.guestReadyCoverageRate ?? 0;
+  const guestVisibleCoverageRate = props.guestVisibilityStats.guestVisibleCoverageRate ?? 0;
+
   const tabCount = (key: RegistryFilter) => {
     if (key === 'all') return props.counts.total;
     if (key === 'available') return props.counts.available;
@@ -283,7 +294,7 @@ export function RegistryDashboardRouteContent(props: {
                 {props.claimStats.namedPurchaserItems} attributed{props.claimStats.missingPurchaserItems > 0 ? ` · ${props.claimStats.missingPurchaserItems} need purchaser` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
-                {props.claimStats.fullyClaimedItems} fully claimed{props.claimStats.partiallyClaimedItems > 0 ? ` · ${props.claimStats.partiallyClaimedItems} partial` : ''}
+                {claimAttributionCoverageRate}% purchaser coverage · {props.claimStats.fullyClaimedItems} fully claimed{props.claimStats.partiallyClaimedItems > 0 ? ` · ${props.claimStats.partiallyClaimedItems} partial` : ''}
               </p>
             </Card>
             <Card variant="bordered" padding="md">
@@ -293,7 +304,7 @@ export function RegistryDashboardRouteContent(props: {
                 {props.guestVisibilityStats.visibleAvailableItems} ready now · {props.guestVisibilityStats.visibleClaimedItems} already claimed
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
-                {props.guestVisibilityStats.hiddenPurchasedItems} hidden when bought{props.guestVisibilityStats.blockedGuestItems > 0 ? ` · ${props.guestVisibilityStats.blockedGuestItems} blocked from guests` : ''}
+                {guestVisibleCoverageRate}% visible to guests · {props.guestVisibilityStats.hiddenPurchasedItems} hidden when bought{props.guestVisibilityStats.blockedGuestItems > 0 ? ` · ${props.guestVisibilityStats.blockedGuestItems} blocked from guests` : ''}
               </p>
             </Card>
             <Card variant="bordered" padding="md">
@@ -313,7 +324,7 @@ export function RegistryDashboardRouteContent(props: {
                 {props.fundStats.readyToShare} ready to share{props.fundStats.needsSetup > 0 ? ` · ${props.fundStats.needsSetup} need a payment path` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
-                {props.fundStats.readyWithProgress} already moving{props.fundStats.readyAwaitingFirstGift > 0 ? ` · ${props.fundStats.readyAwaitingFirstGift} waiting on a first gift` : ''}
+                {fundShareReadyRate}% share-ready · {props.fundStats.readyWithProgress} already moving{props.fundStats.readyAwaitingFirstGift > 0 ? ` · ${props.fundStats.readyAwaitingFirstGift} waiting on a first gift` : ''}
               </p>
             </Card>
             <Card variant="bordered" padding="md">
@@ -324,7 +335,7 @@ export function RegistryDashboardRouteContent(props: {
                 {props.fundStats.withGoal > 0 ? ` across ${props.fundStats.withGoal} tracked fund${props.fundStats.withGoal === 1 ? '' : 's'}` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
-                {props.fundStats.withProgress} showing tracked progress{props.fundStats.flexibleWithProgress > 0 ? ` · ${props.fundStats.flexibleWithProgress} flexible fund${props.fundStats.flexibleWithProgress === 1 ? '' : 's'} already receiving gifts` : ''}
+                {fundGoalCoverageRate}% goal-tracked · {props.fundStats.withProgress} showing tracked progress{props.fundStats.flexibleWithProgress > 0 ? ` · ${props.fundStats.flexibleWithProgress} flexible fund${props.fundStats.flexibleWithProgress === 1 ? '' : 's'} already receiving gifts` : ''}
               </p>
             </Card>
             <Card variant="bordered" padding="md">
@@ -413,6 +424,9 @@ export function RegistryDashboardRouteContent(props: {
                   Claimed gifts: <span className="font-semibold text-text-primary">{props.claimStats.claimedItems}</span> · Attributed: <span className="font-semibold text-text-primary">{props.claimStats.namedPurchaserItems}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Purchaser coverage: <span className="font-semibold text-text-primary">{claimAttributionCoverageRate}%</span> · Fully claimed gifts: <span className="font-semibold text-text-primary">{props.claimStats.fullyClaimedItems}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Partial claims: <span className="font-semibold text-text-primary">{props.claimStats.partiallyClaimedItems}</span> · Missing purchaser: <span className="font-semibold text-text-primary">{props.claimStats.missingPurchaserItems}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
@@ -420,6 +434,9 @@ export function RegistryDashboardRouteContent(props: {
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Guest-visible gifts: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.guestVisibleItems}</span> · Hidden when purchased: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.hiddenPurchasedItems}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Guest-ready coverage: <span className="font-semibold text-text-primary">{guestReadyCoverageRate}%</span> · Visible coverage: <span className="font-semibold text-text-primary">{guestVisibleCoverageRate}%</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Guest-ready gifts: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.guestReadyItems}</span> · Blocked from guests: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.blockedGuestItems}</span>
@@ -441,6 +458,9 @@ export function RegistryDashboardRouteContent(props: {
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Funds ready to share: <span className="font-semibold text-text-primary">{props.fundStats.readyToShare}</span> · Need payment path: <span className="font-semibold text-text-primary">{props.fundStats.needsSetup}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Share-ready coverage: <span className="font-semibold text-text-primary">{fundShareReadyRate}%</span> · Goal-tracked funds: <span className="font-semibold text-text-primary">{fundGoalCoverageRate}%</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Ready funds already moving: <span className="font-semibold text-text-primary">{props.fundStats.readyWithProgress}</span> · Waiting on first gift: <span className="font-semibold text-text-primary">{props.fundStats.readyAwaitingFirstGift}</span>

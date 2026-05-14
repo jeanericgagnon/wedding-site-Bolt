@@ -467,6 +467,8 @@ describe('RegistryDashboardRouteContent', () => {
       visibleClaimedItems: 1,
       hiddenPurchasedItems: 1,
       blockedGuestItems: 1,
+      guestReadyCoverageRate: 75,
+      guestVisibleCoverageRate: 50,
     });
   });
 
@@ -526,6 +528,8 @@ describe('RegistryDashboardRouteContent', () => {
       received: 150,
       goal: 2500,
     });
+    expect(derived.fundShareReadyRate).toBe(100);
+    expect(derived.fundGoalCoverageRate).toBe(50);
   });
 
   it('renders richer fund follow-through notes for moving and waiting funds', () => {
@@ -539,6 +543,7 @@ describe('RegistryDashboardRouteContent', () => {
         bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
         budgetUtilization={0}
         claimStats={{ claimedItems: 2, claimedQuantity: 3, fullyClaimedItems: 0, partiallyClaimedItems: 0, namedPurchaserItems: 2, missingPurchaserItems: 0, multiQuantityInProgress: 0, remainingQuantity: 0 }}
+        claimAttributionCoverageRate={100}
         counts={{ total: 2, available: 2, partial: 0, purchased: 0, totalValue: 0 }}
         duplicateGroups={[]}
         editItem={null}
@@ -546,7 +551,9 @@ describe('RegistryDashboardRouteContent', () => {
         filtered={[makeItem({ id: 'fund-1' }), makeItem({ id: 'fund-2' })]}
         fulfillmentRate={0}
         fundStats={{ count: 2, received: 1500, goal: 4000, readyToShare: 2, needsSetup: 0, readyWithProgress: 1, readyAwaitingFirstGift: 1, withGoal: 1, missingGoal: 1, withProgress: 1, awaitingFirstGift: 0, flexibleWithProgress: 1 }}
-        guestVisibilityStats={{ guestReadyItems: 2, guestVisibleItems: 2, visibleAvailableItems: 2, visibleClaimedItems: 0, hiddenPurchasedItems: 0, blockedGuestItems: 0 }}
+        fundGoalCoverageRate={50}
+        fundShareReadyRate={100}
+        guestVisibilityStats={{ guestReadyItems: 2, guestVisibleItems: 2, visibleAvailableItems: 2, visibleClaimedItems: 0, hiddenPurchasedItems: 0, blockedGuestItems: 0, guestReadyCoverageRate: 100, guestVisibleCoverageRate: 100 }}
         handleAddNew={vi.fn()}
         handleAutoRefreshStale={vi.fn(async () => {})}
         handleBulkImport={vi.fn(async () => {})}
@@ -597,13 +604,16 @@ describe('RegistryDashboardRouteContent', () => {
       />,
     );
 
-    expect(screen.getByText('1 already moving · 1 waiting on a first gift')).toBeInTheDocument();
-    expect(screen.getByText('1 showing tracked progress · 1 flexible fund already receiving gifts')).toBeInTheDocument();
+    expect(screen.getByText('100% share-ready · 1 already moving · 1 waiting on a first gift')).toBeInTheDocument();
+    expect(screen.getByText('50% goal-tracked · 1 showing tracked progress · 1 flexible fund already receiving gifts')).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Ready funds already moving: 1 · Waiting on first gift: 1'),
     ).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Flexible funds with gifts: 1 · Tracked progress funds: 1'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Share-ready coverage: 100% · Goal-tracked funds: 50%'),
     ).toBeInTheDocument();
   });
 
@@ -618,6 +628,7 @@ describe('RegistryDashboardRouteContent', () => {
         bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
         budgetUtilization={0}
         claimStats={{ claimedItems: 3, claimedQuantity: 5, fullyClaimedItems: 1, partiallyClaimedItems: 2, namedPurchaserItems: 2, missingPurchaserItems: 1, multiQuantityInProgress: 1, remainingQuantity: 4 }}
+        claimAttributionCoverageRate={67}
         counts={{ total: 4, available: 1, partial: 2, purchased: 1, totalValue: 240 }}
         duplicateGroups={[]}
         editItem={null}
@@ -625,7 +636,7 @@ describe('RegistryDashboardRouteContent', () => {
         filtered={[makeItem({ id: 'gift-1' })]}
         fulfillmentRate={25}
         fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
-        guestVisibilityStats={{ guestReadyItems: 3, guestVisibleItems: 2, visibleAvailableItems: 1, visibleClaimedItems: 1, hiddenPurchasedItems: 1, blockedGuestItems: 1 }}
+        guestVisibilityStats={{ guestReadyItems: 3, guestVisibleItems: 2, visibleAvailableItems: 1, visibleClaimedItems: 1, hiddenPurchasedItems: 1, blockedGuestItems: 1, guestReadyCoverageRate: 75, guestVisibleCoverageRate: 50 }}
         handleAddNew={vi.fn()}
         handleAutoRefreshStale={vi.fn(async () => {})}
         handleBulkImport={vi.fn(async () => {})}
@@ -678,9 +689,12 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(screen.getByText('Claimed gifts')).toBeInTheDocument();
     expect(screen.getByText('2 attributed · 1 need purchaser')).toBeInTheDocument();
-    expect(screen.getByText('1 fully claimed · 2 partial')).toBeInTheDocument();
+    expect(screen.getByText('67% purchaser coverage · 1 fully claimed · 2 partial')).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Claimed gifts: 3 · Attributed: 2'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Purchaser coverage: 67% · Fully claimed gifts: 1'),
     ).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Partial claims: 2 · Missing purchaser: 1'),
@@ -704,6 +718,7 @@ describe('RegistryDashboardRouteContent', () => {
         bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
         budgetUtilization={0}
         claimStats={{ claimedItems: 3, claimedQuantity: 4, fullyClaimedItems: 2, partiallyClaimedItems: 1, namedPurchaserItems: 2, missingPurchaserItems: 1, multiQuantityInProgress: 1, remainingQuantity: 2 }}
+        claimAttributionCoverageRate={67}
         counts={{ total: 4, available: 1, partial: 1, purchased: 2, totalValue: 320 }}
         duplicateGroups={[]}
         editItem={null}
@@ -711,7 +726,7 @@ describe('RegistryDashboardRouteContent', () => {
         filtered={[makeItem({ id: 'gift-1' })]}
         fulfillmentRate={50}
         fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
-        guestVisibilityStats={{ guestReadyItems: 3, guestVisibleItems: 2, visibleAvailableItems: 1, visibleClaimedItems: 1, hiddenPurchasedItems: 1, blockedGuestItems: 0 }}
+        guestVisibilityStats={{ guestReadyItems: 3, guestVisibleItems: 2, visibleAvailableItems: 1, visibleClaimedItems: 1, hiddenPurchasedItems: 1, blockedGuestItems: 0, guestReadyCoverageRate: 75, guestVisibleCoverageRate: 50 }}
         handleAddNew={vi.fn()}
         handleAutoRefreshStale={vi.fn(async () => {})}
         handleBulkImport={vi.fn(async () => {})}
@@ -787,6 +802,7 @@ describe('RegistryDashboardRouteContent', () => {
         bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
         budgetUtilization={0}
         claimStats={{ claimedItems: 3, claimedQuantity: 4, fullyClaimedItems: 2, partiallyClaimedItems: 1, namedPurchaserItems: 2, missingPurchaserItems: 1, multiQuantityInProgress: 1, remainingQuantity: 2 }}
+        claimAttributionCoverageRate={67}
         counts={{ total: 4, available: 1, partial: 1, purchased: 2, totalValue: 320 }}
         duplicateGroups={[]}
         editItem={null}
@@ -794,7 +810,7 @@ describe('RegistryDashboardRouteContent', () => {
         filtered={[makeItem({ id: 'gift-1' })]}
         fulfillmentRate={50}
         fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
-        guestVisibilityStats={{ guestReadyItems: 3, guestVisibleItems: 2, visibleAvailableItems: 1, visibleClaimedItems: 1, hiddenPurchasedItems: 1, blockedGuestItems: 1 }}
+        guestVisibilityStats={{ guestReadyItems: 3, guestVisibleItems: 2, visibleAvailableItems: 1, visibleClaimedItems: 1, hiddenPurchasedItems: 1, blockedGuestItems: 1, guestReadyCoverageRate: 75, guestVisibleCoverageRate: 50 }}
         handleAddNew={vi.fn()}
         handleAutoRefreshStale={vi.fn(async () => {})}
         handleBulkImport={vi.fn(async () => {})}
@@ -847,9 +863,12 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(screen.getByText('Guest view')).toBeInTheDocument();
     expect(screen.getByText('1 ready now · 1 already claimed')).toBeInTheDocument();
-    expect(screen.getByText('1 hidden when bought · 1 blocked from guests')).toBeInTheDocument();
+    expect(screen.getByText('50% visible to guests · 1 hidden when bought · 1 blocked from guests')).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Guest-visible gifts: 2 · Hidden when purchased: 1'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Guest-ready coverage: 75% · Visible coverage: 50%'),
     ).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Guest-ready gifts: 3 · Blocked from guests: 1'),

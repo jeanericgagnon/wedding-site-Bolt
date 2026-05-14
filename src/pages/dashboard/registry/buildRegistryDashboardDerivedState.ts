@@ -55,6 +55,8 @@ type GuestVisibilityStats = {
   visibleClaimedItems: number;
   hiddenPurchasedItems: number;
   blockedGuestItems: number;
+  guestReadyCoverageRate: number;
+  guestVisibleCoverageRate: number;
 };
 
 export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardDerivedStateArgs) {
@@ -152,6 +154,9 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
     multiQuantityInProgress: 0,
     remainingQuantity: 0,
   });
+  const claimAttributionCoverageRate = claimStats.claimedItems > 0
+    ? Math.round((claimStats.namedPurchaserItems / claimStats.claimedItems) * 100)
+    : 0;
 
   const fundStats = items.reduce((acc, item) => {
     if (item.item_type !== 'cash_fund') return acc;
@@ -192,6 +197,12 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
     awaitingFirstGift: 0,
     flexibleWithProgress: 0,
   });
+  const fundShareReadyRate = fundStats.count > 0
+    ? Math.round((fundStats.readyToShare / fundStats.count) * 100)
+    : 0;
+  const fundGoalCoverageRate = fundStats.count > 0
+    ? Math.round((fundStats.withGoal / fundStats.count) * 100)
+    : 0;
 
   const fulfillmentRate = counts.total > 0 ? Math.round((counts.purchased / counts.total) * 100) : 0;
   const recentActivity = [...items]
@@ -242,6 +253,8 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
     visibleClaimedItems: guestVisibleItems.filter((item) => item.purchase_status !== 'available').length,
     hiddenPurchasedItems: guestReadyItems.filter((item) => item.hide_when_purchased && item.purchase_status === 'purchased').length,
     blockedGuestItems: Math.max(items.length - guestReadyItems.length, 0),
+    guestReadyCoverageRate: items.length > 0 ? Math.round((guestReadyItems.length / items.length) * 100) : 0,
+    guestVisibleCoverageRate: items.length > 0 ? Math.round((guestVisibleItems.length / items.length) * 100) : 0,
   };
 
   const alertCounts = {
@@ -259,6 +272,7 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
     budgetUtilization,
     bulkReviewCounts,
     claimStats,
+    claimAttributionCoverageRate,
     counts,
     daysUntilRefreshWindowEnd,
     duplicateGroups,
@@ -266,6 +280,8 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
     filtered,
     fulfillmentRate,
     fundStats,
+    fundGoalCoverageRate,
+    fundShareReadyRate,
     guestVisibilityStats,
     nearBudgetCap,
     projectedMonthlyCalls,
