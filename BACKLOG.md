@@ -344,7 +344,10 @@ Execution rule for this section:
    - this batch shipped: `proof:v1:comms-center` now includes a real local browser pass for the comms dashboard, proving owners can load each operational starting point, save drafts for save-the-date / RSVP reminder / week-of / photo request / day-of / thank-you flows, and create a scheduled campaign without hand-waving over the composer
    - this batch shipped: message-detail review now uses a shared customer-safe delivery-bucket summary for failed and skipped recipients, so owners see the same normalized review reasons in the detail modal that analytics and telemetry already use instead of slightly different ad hoc groupings
    - this batch shipped: focused proof is green for shared failed/skipped delivery bucket derivation plus the detail-modal readback of those grouped review reasons
-   - normalize delivery/open/view/bounce/replied truth across channels
+   - this batch shipped: safe engagement counts for `opened`, `viewed`, `clicked`, `replied`, and `bounced` now persist through demo message storage and read back through the shared messaging helpers instead of disappearing after a local save/reload
+   - this batch shipped: owner history, active campaign thread, latest campaign message, and detail modal surfaces now show the same normalized engagement truth when those counts exist, rather than leaving review-only surfaces stuck on delivered/failed totals
+   - focused proof is green for engagement-count normalization in demo storage plus shared helper readback and detail-modal rendering
+   - keep extending normalized delivery/open/view/bounce/replied truth across channels and real live rows
    - prove customer-safe delivery-failure grouping against live rows
    - add authenticated live browser proof for composing/saving each operational segment on the shipped owner runtime
    - keep SMS/Telnyx live-send behavior deferred until provider/compliance setup is ready

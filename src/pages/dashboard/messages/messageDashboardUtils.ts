@@ -135,9 +135,43 @@ export type CampaignThreadSummary = {
   failed: number;
   skipped: number;
   unreached: number;
+  opened: number;
+  viewed: number;
+  clicked: number;
+  replied: number;
+  bounced: number;
   latestStatus: string;
   latestAt: number;
 };
+
+export type MessageEngagementStats = {
+  opened: number | null;
+  viewed: number | null;
+  clicked: number | null;
+  replied: number | null;
+  bounced: number | null;
+};
+
+function readRecipientMetricCount(filter: Message['recipient_filter'], keys: string[]): number | null {
+  for (const key of keys) {
+    const raw = filter?.[key];
+    if (typeof raw === 'number' && Number.isFinite(raw)) {
+      return Math.max(0, Math.floor(raw));
+    }
+  }
+  return null;
+}
+
+export function getMessageEngagementStats(message: Message): MessageEngagementStats {
+  const filter = message.recipient_filter;
+  return {
+    opened: readRecipientMetricCount(filter, ['opened_count', 'open_count', 'unique_open_count']),
+    viewed: readRecipientMetricCount(filter, ['viewed_count', 'view_count', 'page_view_count']),
+    clicked: readRecipientMetricCount(filter, ['clicked_count', 'click_count']),
+    replied: readRecipientMetricCount(filter, ['replied_count', 'reply_count']),
+    bounced: readRecipientMetricCount(filter, ['bounced_count', 'bounce_count']),
+  };
+}
 
 function getMessageActivityTimestamp(message: Message): number {
   return Math.max(
@@ -160,15 +194,26 @@ export function buildCampaignThreads(messages: Message[], deliveries: DeliveryRo
       failed: 0,
       skipped: 0,
       unreached: 0,
+      opened: 0,
+      viewed: 0,
+      clicked: 0,
+      replied: 0,
+      bounced: 0,
       latestStatus: message.status,
       latestAt,
     };
+    const engagement = getMessageEngagementStats(message);
 
     prev.count += 1;
     prev.delivered += Number(message.delivered_count ?? 0);
     prev.failed += Number(message.failed_count ?? 0);
     prev.skipped += getSkippedCount(message, deliveries);
     prev.unreached += getUnreachedCount(message, deliveries);
+    prev.opened += engagement.opened ?? 0;
+    prev.viewed += engagement.viewed ?? 0;
+    prev.clicked += engagement.clicked ?? 0;
+    prev.replied += engagement.replied ?? 0;
+    prev.bounced += engagement.bounced ?? 0;
     if (latestAt >= prev.latestAt) {
       prev.latestAt = latestAt;
       prev.latestStatus = message.status;

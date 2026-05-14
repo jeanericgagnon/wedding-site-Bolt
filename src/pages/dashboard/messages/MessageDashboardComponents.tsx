@@ -17,6 +17,7 @@ import {
   getCampaignName,
   getCampaignTypeLabel,
   getCustomerDeliveryReason,
+  getMessageEngagementStats,
   getRecipientCount,
   getSkippedCount,
   getUnreachedCount,
@@ -1220,6 +1221,11 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs review {activeCampaignThread.failed}</span>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs contact {activeCampaignThread.skipped}</span>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Not reached {activeCampaignThread.unreached}</span>
+          {activeCampaignThread.opened > 0 && <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Opened {activeCampaignThread.opened}</span>}
+          {activeCampaignThread.viewed > 0 && <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Viewed {activeCampaignThread.viewed}</span>}
+          {activeCampaignThread.clicked > 0 && <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Clicked {activeCampaignThread.clicked}</span>}
+          {activeCampaignThread.replied > 0 && <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Replied {activeCampaignThread.replied}</span>}
+          {activeCampaignThread.bounced > 0 && <span className="rounded-lg border border-warning/20 bg-warning-light px-3 py-1 text-warning">Bounced {activeCampaignThread.bounced}</span>}
         </div>
         {activeCampaignLatestMessage && (
           <div className="mt-4 rounded-lg border border-border-subtle bg-white px-4 py-4">
@@ -1249,6 +1255,18 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Delivered {activeCampaignLatestMessage.delivered_count ?? 0}</span>
               <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Needs review {activeCampaignLatestMessage.failed_count ?? 0}</span>
               <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Needs contact {getSkippedCount(activeCampaignLatestMessage, deliveries)}</span>
+              {(() => {
+                const engagement = getMessageEngagementStats(activeCampaignLatestMessage);
+                return (
+                  <>
+                    {engagement.opened != null && engagement.opened > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Opened {engagement.opened}</span>}
+                    {engagement.viewed != null && engagement.viewed > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Viewed {engagement.viewed}</span>}
+                    {engagement.clicked != null && engagement.clicked > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Clicked {engagement.clicked}</span>}
+                    {engagement.replied != null && engagement.replied > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Replied {engagement.replied}</span>}
+                    {engagement.bounced != null && engagement.bounced > 0 && <span className="rounded-lg border border-warning/20 bg-warning-light px-3 py-1 text-warning">Bounced {engagement.bounced}</span>}
+                  </>
+                );
+              })()}
             </div>
           </div>
         )}
@@ -1570,6 +1588,7 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
             const skippedCount = getSkippedCount(message, deliveries);
             const unreachedCount = getUnreachedCount(message, deliveries);
             const campaignName = getCampaignName(message);
+            const engagement = getMessageEngagementStats(message);
             return (
               <div
                 key={message.id}
@@ -1599,6 +1618,21 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
                       </span>
                       {typeof message.delivered_count === 'number' && typeof message.failed_count === 'number' && (
                         <span>{message.delivered_count} delivered · {message.failed_count} need review</span>
+                      )}
+                      {engagement.opened != null && engagement.opened > 0 && (
+                        <span>{engagement.opened} opened</span>
+                      )}
+                      {engagement.viewed != null && engagement.viewed > 0 && (
+                        <span>{engagement.viewed} viewed</span>
+                      )}
+                      {engagement.clicked != null && engagement.clicked > 0 && (
+                        <span>{engagement.clicked} clicked</span>
+                      )}
+                      {engagement.replied != null && engagement.replied > 0 && (
+                        <span>{engagement.replied} replied</span>
+                      )}
+                      {engagement.bounced != null && engagement.bounced > 0 && (
+                        <span>{engagement.bounced} bounced</span>
                       )}
                       {skippedCount > 0 && (
                         <span>{describeRecipientReview(skippedCount)}</span>

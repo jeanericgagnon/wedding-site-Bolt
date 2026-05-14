@@ -133,4 +133,39 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('Needs follow-up — some guests still need attention')).toBeInTheDocument();
     expect(screen.queryByText(/^Sent /)).not.toBeInTheDocument();
   });
+
+  it('shows normalized engagement counters when the message metadata includes them', () => {
+    render(
+      <MessageDetailModal
+        message={message({
+          status: 'sent',
+          recipient_filter: {
+            opened_count: 8,
+            viewed_count: 3,
+            clicked_count: 2,
+            replied_count: 1,
+            bounced_count: 1,
+          },
+          delivered_count: 8,
+          failed_count: 1,
+        })}
+        deliveries={deliveries([])}
+        canManageCampaigns
+        onClose={vi.fn()}
+        onRetry={vi.fn().mockResolvedValue(undefined)}
+        onRetryFailedRecipients={vi.fn().mockResolvedValue(undefined)}
+        onExcludeSkippedRecipients={vi.fn().mockResolvedValue(undefined)}
+        onSendScheduledNow={vi.fn().mockResolvedValue(undefined)}
+        onReschedule={vi.fn().mockResolvedValue(undefined)}
+        onCancelSchedule={vi.fn().mockResolvedValue(undefined)}
+        onLoadIntoComposer={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('8 opened')).toBeInTheDocument();
+    expect(screen.getByText('3 viewed')).toBeInTheDocument();
+    expect(screen.getByText('2 clicked')).toBeInTheDocument();
+    expect(screen.getByText('1 replied')).toBeInTheDocument();
+    expect(screen.getByText('1 bounced')).toBeInTheDocument();
+  });
 });

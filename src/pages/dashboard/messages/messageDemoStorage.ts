@@ -68,9 +68,39 @@ function normalizeDemoRecipientFilter(value: unknown): Record<string, unknown> |
   const filter = value as Record<string, unknown>;
   const normalized: Record<string, unknown> = {};
   const audience = normalizeDemoMessageText(filter.audience, MAX_DEMO_MESSAGE_SHORT_TEXT_LENGTH);
+  const audienceLabel = normalizeDemoMessageText(filter.audience_label, MAX_DEMO_MESSAGE_SHORT_TEXT_LENGTH);
+  const campaignName = normalizeDemoMessageText(filter.campaignName, MAX_DEMO_MESSAGE_SHORT_TEXT_LENGTH);
+  const campaignType = normalizeDemoMessageText(filter.campaignType, MAX_DEMO_MESSAGE_SHORT_TEXT_LENGTH);
+  const templateKey = normalizeDemoMessageText(filter.templateKey, MAX_DEMO_MESSAGE_SHORT_TEXT_LENGTH);
   const recipientCount = normalizeDemoCount(filter.recipient_count);
+  const reachableCount = normalizeDemoCount(filter.reachable_count);
+  const skippedCount = normalizeDemoCount(filter.skipped_count);
+  const openedCount = normalizeDemoCount(filter.opened_count ?? filter.open_count);
+  const viewedCount = normalizeDemoCount(filter.viewed_count ?? filter.view_count);
+  const clickedCount = normalizeDemoCount(filter.clicked_count ?? filter.click_count);
+  const repliedCount = normalizeDemoCount(filter.replied_count ?? filter.reply_count);
+  const bouncedCount = normalizeDemoCount(filter.bounced_count ?? filter.bounce_count);
+  const retryGuestIds = Array.isArray(filter.retry_guest_ids)
+    ? Array.from(new Set(filter.retry_guest_ids.filter((item): item is string => typeof item === 'string').map((item) => item.trim()).filter(Boolean))).slice(0, 50)
+    : [];
+  const excludedGuestIds = Array.isArray(filter.excluded_guest_ids)
+    ? Array.from(new Set(filter.excluded_guest_ids.filter((item): item is string => typeof item === 'string').map((item) => item.trim()).filter(Boolean))).slice(0, 50)
+    : [];
   if (audience) normalized.audience = audience;
+  if (audienceLabel) normalized.audience_label = audienceLabel;
+  if (campaignName) normalized.campaignName = campaignName;
+  if (campaignType) normalized.campaignType = campaignType;
+  if (templateKey) normalized.templateKey = templateKey;
   if (recipientCount !== null) normalized.recipient_count = recipientCount;
+  if (reachableCount !== null) normalized.reachable_count = reachableCount;
+  if (skippedCount !== null) normalized.skipped_count = skippedCount;
+  if (openedCount !== null) normalized.opened_count = openedCount;
+  if (viewedCount !== null) normalized.viewed_count = viewedCount;
+  if (clickedCount !== null) normalized.clicked_count = clickedCount;
+  if (repliedCount !== null) normalized.replied_count = repliedCount;
+  if (bouncedCount !== null) normalized.bounced_count = bouncedCount;
+  if (retryGuestIds.length > 0) normalized.retry_guest_ids = retryGuestIds;
+  if (excludedGuestIds.length > 0) normalized.excluded_guest_ids = excludedGuestIds;
   return Object.keys(normalized).length > 0 ? normalized : null;
 }
 
@@ -124,7 +154,16 @@ export function buildDemoMessageSeed(now = Date.now()): Message[] {
       status: 'sent',
       channel: 'email',
       audience_filter: 'all',
-      recipient_filter: { audience: 'all', recipient_count: 120 },
+      recipient_filter: {
+        audience: 'all',
+        campaignName: 'Wedding week welcome',
+        campaignType: 'save-the-date',
+        templateKey: 'save-the-date',
+        recipient_count: 120,
+        reachable_count: 120,
+        opened_count: 84,
+        clicked_count: 19,
+      },
       recipient_count: 120,
       delivered_count: 117,
       failed_count: 3,
@@ -138,7 +177,17 @@ export function buildDemoMessageSeed(now = Date.now()): Message[] {
       status: 'partial',
       channel: 'email',
       audience_filter: 'not_responded',
-      recipient_filter: { audience: 'not_responded', recipient_count: 34 },
+      recipient_filter: {
+        audience: 'not_responded',
+        campaignName: 'RSVP reminder',
+        campaignType: 'reminder',
+        templateKey: 'rsvp-reminder',
+        recipient_count: 34,
+        reachable_count: 34,
+        opened_count: 17,
+        clicked_count: 6,
+        bounced_count: 1,
+      },
       recipient_count: 34,
       delivered_count: 31,
       failed_count: 3,
@@ -152,7 +201,14 @@ export function buildDemoMessageSeed(now = Date.now()): Message[] {
       status: 'scheduled',
       channel: 'email',
       audience_filter: 'all',
-      recipient_filter: { audience: 'all', recipient_count: 120 },
+      recipient_filter: {
+        audience: 'all',
+        campaignName: 'Ceremony timing',
+        campaignType: 'day-of',
+        templateKey: 'day-of-update',
+        recipient_count: 120,
+        reachable_count: 120,
+      },
       recipient_count: 120,
       delivered_count: 0,
       failed_count: 0,

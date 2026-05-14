@@ -12,6 +12,7 @@ import {
   getCampaignName,
   getCampaignTypeLabel,
   getCustomerDeliveryReason,
+  getMessageEngagementStats,
   getRecipientReviewPlanSummary,
   getRecipientCount,
   getSkippedCount,
@@ -83,6 +84,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
   const skippedDeliveries = messageDeliveries.filter((delivery) => delivery.status === 'skipped');
   const topFailureReasons = buildDeliveryBucketSummary(messageDeliveries, 'failed');
   const topSkipReasons = buildDeliveryBucketSummary(messageDeliveries, 'skipped');
+  const engagement = getMessageEngagementStats(message);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -350,7 +352,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
 
         {(message.delivered_count != null || message.failed_count != null) && (
           <div className="px-6 py-3 border-t border-border flex-shrink-0 bg-surface-subtle">
-            <div className="flex gap-6 text-sm">
+            <div className="flex flex-wrap gap-6 text-sm">
               {message.delivered_count != null && message.delivered_count > 0 && (
                 <span className="flex items-center gap-1.5 text-success">
                   <CheckCircle size={13} />
@@ -374,6 +376,21 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                   <AlertCircle size={13} />
                   {skippedDeliveries.length} need contact
                 </span>
+              )}
+              {engagement.opened != null && engagement.opened > 0 && (
+                <span className="text-text-secondary">{engagement.opened} opened</span>
+              )}
+              {engagement.viewed != null && engagement.viewed > 0 && (
+                <span className="text-text-secondary">{engagement.viewed} viewed</span>
+              )}
+              {engagement.clicked != null && engagement.clicked > 0 && (
+                <span className="text-text-secondary">{engagement.clicked} clicked</span>
+              )}
+              {engagement.replied != null && engagement.replied > 0 && (
+                <span className="text-text-secondary">{engagement.replied} replied</span>
+              )}
+              {engagement.bounced != null && engagement.bounced > 0 && (
+                <span className="text-warning">{engagement.bounced} bounced</span>
               )}
             </div>
           </div>

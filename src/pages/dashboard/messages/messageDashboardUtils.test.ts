@@ -21,6 +21,7 @@ import {
   getCustomerDeliveryReason,
   getCustomerDeliveryBucket,
   getRecipientExcludedGuestIds,
+  getMessageEngagementStats,
   getRecipientRetryGuestIds,
   getRecipientReviewPlanSummary,
   getDeliveryScopedRows,
@@ -174,6 +175,11 @@ describe('messageDashboardUtils', () => {
         audience_label: 'Ceremony guests',
         recipient_count: 8,
         skipped_count: 2,
+        opened_count: 6,
+        viewed_count: 4,
+        clicked_count: 3,
+        replied_count: 1,
+        bounced_count: 1,
         templateKey: 'rsvp-reminder',
         retry_guest_ids: ['g1', 'g2', 'g1'],
         excluded_guest_ids: ['g3'],
@@ -186,6 +192,13 @@ describe('messageDashboardUtils', () => {
     expect(getSkippedCount(eventMessage, skipped)).toBe(1);
     expect(getUnreachedCount(eventMessage, skipped)).toBe(4);
     expect(getTemplateKey(eventMessage)).toBe('rsvp-reminder');
+    expect(getMessageEngagementStats(eventMessage)).toEqual({
+      opened: 6,
+      viewed: 4,
+      clicked: 3,
+      replied: 1,
+      bounced: 1,
+    });
     expect(getCustomerDeliveryReason('Resend API bounced for recipient', 'Needs review')).toBe('delivery service delivery service bounced for recipient');
     expect(getCustomerDeliveryBucket('Twilio invalid phone number', 'failed')).toBe('Phone number needs review');
     expect(getCustomerDeliveryBucket('Recipient unsubscribed from updates', 'failed')).toBe('Blocked or unsubscribed');
@@ -264,7 +277,7 @@ describe('messageDashboardUtils', () => {
         id: 'm1',
         subject: 'Reminder',
         status: 'sent',
-        recipient_filter: { campaignName: 'RSVP push', skipped_count: 1, recipient_count: 5 },
+        recipient_filter: { campaignName: 'RSVP push', skipped_count: 1, recipient_count: 5, opened_count: 4, clicked_count: 2, bounced_count: 1 },
         recipient_count: 5,
         delivered_count: 3,
         failed_count: 1,
@@ -274,7 +287,7 @@ describe('messageDashboardUtils', () => {
         id: 'm2',
         subject: 'Reminder 2',
         status: 'partial',
-        recipient_filter: { campaignName: 'RSVP push', recipient_count: 4 },
+        recipient_filter: { campaignName: 'RSVP push', recipient_count: 4, opened_count: 2, viewed_count: 1, replied_count: 1 },
         recipient_count: 4,
         delivered_count: 1,
         failed_count: 1,
@@ -309,6 +322,11 @@ describe('messageDashboardUtils', () => {
       delivered: 4,
       failed: 2,
       skipped: 2,
+      opened: 6,
+      viewed: 1,
+      clicked: 2,
+      replied: 1,
+      bounced: 1,
     });
 
     const activeThread = getActiveCampaignThread({ campaignThreads: threads, historyCampaignFilter: 'RSVP push', historySearch: '' });
