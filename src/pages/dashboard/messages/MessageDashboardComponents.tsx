@@ -1365,6 +1365,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Delivered {activeCampaignLatestMessage.delivered_count ?? 0}</span>
               <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Needs review {activeCampaignLatestMessage.failed_count ?? 0}</span>
               <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Needs contact {getSkippedCount(activeCampaignLatestMessage, deliveries)}</span>
+              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Not reached {getUnreachedCount(activeCampaignLatestMessage, deliveries)}</span>
               {(() => {
                 const engagement = getMessageEngagementStats(activeCampaignLatestMessage);
                 return (
@@ -1456,7 +1457,7 @@ export const MessageReviewQueuePanels: React.FC<MessageReviewQueuePanelsProps> =
             <div key={message.id} className="flex items-center justify-between gap-2 rounded-lg border border-border-subtle px-3 py-3 bg-white">
               <div className="min-w-0">
                 <p className="text-sm font-medium text-text-primary truncate">{message.subject}</p>
-                <p className="text-[11px] text-text-tertiary">{message.channel} · delivered {message.delivered_count ?? 0} · needs review {message.failed_count ?? 0} · needs contact {getSkippedCount(message, deliveries)}</p>
+                <p className="text-[11px] text-text-tertiary">{message.channel} · delivered {message.delivered_count ?? 0} · needs review {message.failed_count ?? 0} · needs contact {getSkippedCount(message, deliveries)} · not reached {getUnreachedCount(message, deliveries)}</p>
               </div>
               <div className="text-right">
                 <button

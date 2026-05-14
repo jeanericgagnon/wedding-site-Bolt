@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { MessageCampaignThreadPanels, MessageHistorySummaryPanels, MessageReachSnapshotCard } from './MessageDashboardComponents';
+import { MessageCampaignThreadPanels, MessageHistorySummaryPanels, MessageReachSnapshotCard, MessageReviewQueuePanels } from './MessageDashboardComponents';
 
 describe('MessageCampaignThreadPanels', () => {
   it('shows engagement readback on recent campaign rollups when it exists', () => {
@@ -124,5 +124,36 @@ describe('MessageReachSnapshotCard', () => {
     expect(screen.getByText('1 need contact details · 1 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Photo links ready')).toBeInTheDocument();
     expect(screen.getAllByText('3')).toHaveLength(2);
+  });
+});
+
+describe('MessageReviewQueuePanels', () => {
+  it('keeps not-reached follow-through visible in the review queue', () => {
+    render(
+      <MessageReviewQueuePanels
+        canCompose
+        deliveries={[]}
+        onRetry={vi.fn()}
+        onShowNeedsFollowUp={vi.fn()}
+        onShowNeedsReview={vi.fn()}
+        onViewMessage={vi.fn()}
+        retryCandidates={[]}
+        retryingMessageId={null}
+        reviewCandidates={[
+          {
+            id: 'review-1',
+            subject: 'Weekend reminder',
+            channel: 'email',
+            delivered_count: 2,
+            failed_count: 1,
+            recipient_count: 5,
+            recipient_filter: { skipped_count: 1 },
+            status: 'partial',
+          },
+        ] as any}
+      />,
+    );
+
+    expect(screen.getByText('email · delivered 2 · needs review 1 · needs contact 1 · not reached 1')).toBeInTheDocument();
   });
 });
