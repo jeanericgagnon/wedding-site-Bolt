@@ -3,10 +3,17 @@ export const VENDOR_META_STORAGE_KEY = 'dayof.vendor.meta.v1';
 const VENDOR_META_RETENTION_MS = 180 * 24 * 60 * 60 * 1000;
 const MAX_VENDOR_META_ROWS = 200;
 const MAX_VENDOR_ID_LENGTH = 120;
+const REMINDER_CHANNELS = new Set(['none', 'email', 'phone']);
+const REMINDER_LEAD_DAYS = new Set([1, 3, 7, 14]);
+
+export type VendorReminderChannel = 'none' | 'email' | 'phone';
 
 export interface VendorMetaEntry {
   lastContacted?: string;
   nextFollowUp?: string;
+  reminderChannel?: VendorReminderChannel;
+  reminderLeadDays?: 1 | 3 | 7 | 14;
+  reminderLastQueuedAt?: string;
 }
 
 export type VendorMetaMap = Record<string, VendorMetaEntry>;
@@ -25,6 +32,12 @@ const isValidDateString = (value: unknown): value is string => {
   return Boolean(trimmed) && Number.isFinite(new Date(trimmed).getTime());
 };
 
+const isReminderChannel = (value: unknown): value is VendorReminderChannel =>
+  typeof value === 'string' && REMINDER_CHANNELS.has(value);
+
+const isReminderLeadDays = (value: unknown): value is 1 | 3 | 7 | 14 =>
+  typeof value === 'number' && REMINDER_LEAD_DAYS.has(value);
+
 export const normalizeVendorMeta = (value: unknown): VendorMetaMap => {
   if (!isRecord(value)) return {};
   const normalized: VendorMetaMap = {};
@@ -34,7 +47,10 @@ export const normalizeVendorMeta = (value: unknown): VendorMetaMap => {
     const entry: VendorMetaEntry = {};
     if (isValidDateString(rawMeta.lastContacted)) entry.lastContacted = rawMeta.lastContacted.trim();
     if (isValidDateString(rawMeta.nextFollowUp)) entry.nextFollowUp = rawMeta.nextFollowUp.trim().slice(0, 10);
-    if (entry.lastContacted || entry.nextFollowUp) normalized[vendorId] = entry;
+    if (isReminderChannel(rawMeta.reminderChannel)) entry.reminderChannel = rawMeta.reminderChannel;
+    if (isReminderLeadDays(rawMeta.reminderLeadDays)) entry.reminderLeadDays = rawMeta.reminderLeadDays;
+    if (isValidDateString(rawMeta.reminderLastQueuedAt)) entry.reminderLastQueuedAt = rawMeta.reminderLastQueuedAt.trim();
+    if (entry.lastContacted || entry.nextFollowUp || entry.reminderChannel || entry.reminderLeadDays || entry.reminderLastQueuedAt) normalized[vendorId] = entry;
   });
   return normalized;
 };

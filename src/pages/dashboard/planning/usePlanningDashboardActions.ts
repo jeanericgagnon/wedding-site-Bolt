@@ -15,7 +15,9 @@ import {
   deleteVendor,
   generateMilestoneTasks,
   updatePlanningTotalBudget,
+  updatePlanningVendorMeta,
 } from './planningService';
+import type { VendorMetaMap } from './vendorMetaStorage';
 
 type ToastFn = (message: string, variant?: 'success' | 'error' | 'info') => void;
 
@@ -26,6 +28,7 @@ interface UsePlanningDashboardActionsArgs {
   setBudgetItems: React.Dispatch<React.SetStateAction<PlanningBudgetItem[]>>;
   setTasks: React.Dispatch<React.SetStateAction<PlanningTask[]>>;
   setTotalBudget: React.Dispatch<React.SetStateAction<number>>;
+  setVendorMeta: React.Dispatch<React.SetStateAction<VendorMetaMap>>;
   setVendors: React.Dispatch<React.SetStateAction<PlanningVendor[]>>;
   siteId: string | null;
   toast: ToastFn;
@@ -39,6 +42,7 @@ export function usePlanningDashboardActions({
   setBudgetItems,
   setTasks,
   setTotalBudget,
+  setVendorMeta,
   setVendors,
   siteId,
   toast,
@@ -300,6 +304,20 @@ export function usePlanningDashboardActions({
     }
   }, [isDemoMode, planningPermissions, planningRole, setVendors, toast]);
 
+  const handleSaveVendorMeta = useCallback(async (meta: VendorMetaMap) => {
+    if (!canEditPlanningVendors(planningRole, planningPermissions)) {
+      toast('Your collaborator role cannot update vendor reminders.', 'info');
+      return;
+    }
+    if (!siteId) return;
+    setVendorMeta(meta);
+    try {
+      if (!isDemoMode) await updatePlanningVendorMeta(siteId, meta);
+    } catch {
+      toast('Couldn’t save vendor reminder details. Please try again.', 'error');
+    }
+  }, [isDemoMode, planningPermissions, planningRole, setVendorMeta, siteId, toast]);
+
   const handleDeleteVendor = useCallback(async (id: string) => {
     if (!canEditPlanningVendors(planningRole, planningPermissions)) {
       toast('Your collaborator role cannot delete vendors.', 'info');
@@ -324,6 +342,7 @@ export function usePlanningDashboardActions({
     handleDeleteTask,
     handleDeleteVendor,
     handleSaveTotalBudget,
+    handleSaveVendorMeta,
     handleUpdateBudgetItem,
     handleUpdateTask,
     handleUpdateVendor,

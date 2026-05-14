@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
+import { normalizeVendorMeta, type VendorMetaMap } from './vendorMetaStorage';
 
 function requireRpcRecord<T>(data: unknown, functionName: string): T {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
@@ -114,6 +115,7 @@ export interface PlanningSiteMeta {
   venueName: string | null;
   destinationWedding: boolean;
   totalBudget: number;
+  vendorMeta: VendorMetaMap;
 }
 
 export interface PlanningSeatingReadiness {
@@ -194,7 +196,42 @@ export async function loadPlanningSiteMeta(weddingSiteId: string): Promise<Plann
     venueName: (data?.venue_name as string | null) ?? null,
     destinationWedding: Boolean(data?.is_destination_wedding),
     totalBudget: Number(planningMeta.totalBudget) || 0,
+    vendorMeta: normalizeVendorMeta(planningMeta.vendorMeta),
   };
+}
+
+export async function updatePlanningVendorMeta(weddingSiteId: string, vendorMeta: VendorMetaMap): Promise<void> {
+  const { data: siteData, error: loadError } = await supabase
+    .from('wedding_sites')
+    .select(PLANNING_TOTAL_BUDGET_SELECT)
+    .eq('id', weddingSiteId)
+    .maybeSingle();
+  if (loadError) throw loadError;
+
+  const weddingData = (siteData?.wedding_data as Record<string, unknown> | null) ?? {};
+  const planning = (weddingData.planning as Record<string, unknown> | undefined) ?? {};
+  const nextWeddingData = {
+    ...weddingData,
+    planning: {
+      ...planning,
+      vendorMeta: normalizeVendorMeta(vendorMeta),
+    },
+  };
+
+  let { error } = await supabase.rpc('wedding_site_settings_patch', {
+    p_wedding_site_id: weddingSiteId,
+    p_patch: { wedding_data: nextWeddingData },
+  });
+
+  if (error?.message?.includes('wedding_data')) {
+    const fallback = await supabase.rpc('wedding_site_settings_patch', {
+      p_wedding_site_id: weddingSiteId,
+      p_patch: {},
+    });
+    error = fallback.error;
+  }
+
+  if (error) throw error;
 }
 
 export async function loadPlanningGuestCount(weddingSiteId: string): Promise<number> {

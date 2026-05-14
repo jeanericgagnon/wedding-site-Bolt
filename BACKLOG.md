@@ -429,7 +429,9 @@ Execution rule for this section:
 12. `ACTIVE`: budget and vendor ledger
    - add live owner add/edit/delete proof with cleanup for vendor/payment/budget rows
    - prove collaborator/planner allowed-view readback and guest non-exposure for financial details
-   - persist reminder delivery/preferences for the ledger
+   - this batch shipped: vendor follow-up metadata now persists as real site-backed planning state instead of local-only browser storage, including next follow-up date, reminder channel, lead time, and queued-readback timestamps
+   - this batch shipped: vendor and payment ledger exports now include reminder preference/readback columns, and the planning ledger shows a real reminder-readiness summary instead of treating reminders as side notes
+   - this batch shipped: focused proof is green for vendor reminder metadata normalization, site-meta persistence/readback through `wedding_site_settings_patch`, and reminder-readiness summary logic
    - add richer contract/invoice file storage and payment-schedule subtasks
    - reconcile vendor contract balances against budget line balances
 

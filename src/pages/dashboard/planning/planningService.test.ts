@@ -7,6 +7,7 @@ import {
   generateMilestoneTasks,
   hasPlanningSongQuestion,
   loadBudgetItems,
+  loadPlanningSiteMeta,
   loadVendors,
   MAX_PLANNING_ADDRESS_GUEST_ROWS,
   MAX_PLANNING_BUDGET_ITEM_ROWS,
@@ -15,6 +16,7 @@ import {
   MAX_PLANNING_TASK_ROWS,
   MAX_PLANNING_VENDOR_ROWS,
   readPlanningSongAnswer,
+  updatePlanningVendorMeta,
   updateTask,
 } from './planningService';
 
@@ -50,6 +52,16 @@ function makePlanningBudgetQuery(result: { data: unknown; error: { message?: str
     eq: vi.fn(() => chain),
     order: vi.fn(() => chain),
     limit: vi.fn(async () => result),
+  };
+
+  return chain;
+}
+
+function makePlanningSiteMetaQuery(result: { data: unknown; error: { message?: string } | null }) {
+  const chain = {
+    select: vi.fn(() => chain),
+    eq: vi.fn(() => chain),
+    maybeSingle: vi.fn(async () => result),
   };
 
   return chain;
@@ -240,5 +252,87 @@ describe('planning song request helpers', () => {
 
     expect(initialQuery.select).toHaveBeenCalledWith(expect.stringContaining('due_date'));
     expect(fallbackQuery.select).toHaveBeenCalledWith(expect.not.stringContaining('due_date'));
+  });
+
+  it('loads vendor reminder metadata from planning wedding data safely', async () => {
+    const siteMetaQuery = makePlanningSiteMetaQuery({
+      data: {
+        venue_name: 'Harbor House',
+        is_destination_wedding: true,
+        wedding_data: {
+          planning: {
+            totalBudget: 42000,
+            vendorMeta: {
+              ' vendor-1 ': {
+                nextFollowUp: '2026-05-20T00:00:00.000Z',
+                reminderChannel: 'email',
+                reminderLeadDays: 7,
+                reminderLastQueuedAt: '2026-05-10T18:00:00.000Z',
+              },
+              broken: {
+                reminderChannel: 'fax',
+              },
+            },
+          },
+        },
+      },
+      error: null,
+    });
+    fromMock.mockReturnValueOnce(siteMetaQuery);
+
+    await expect(loadPlanningSiteMeta('site-1')).resolves.toEqual({
+      venueName: 'Harbor House',
+      destinationWedding: true,
+      totalBudget: 42000,
+      vendorMeta: {
+        'vendor-1': {
+          nextFollowUp: '2026-05-20',
+          reminderChannel: 'email',
+          reminderLeadDays: 7,
+          reminderLastQueuedAt: '2026-05-10T18:00:00.000Z',
+        },
+      },
+    });
+  });
+
+  it('persists vendor reminder metadata through wedding site settings patch RPC', async () => {
+    const siteMetaQuery = makePlanningSiteMetaQuery({
+      data: {
+        wedding_data: {
+          planning: {
+            totalBudget: 24000,
+          },
+        },
+      },
+      error: null,
+    });
+    fromMock.mockReturnValueOnce(siteMetaQuery);
+    rpcMock.mockResolvedValueOnce({ error: null });
+
+    await expect(updatePlanningVendorMeta('site-1', {
+      ' vendor-1 ': {
+        nextFollowUp: '2026-05-22T00:00:00.000Z',
+        reminderChannel: 'phone',
+        reminderLeadDays: 3,
+      },
+    })).resolves.toBeUndefined();
+
+    expect(rpcMock).toHaveBeenCalledWith('wedding_site_settings_patch', {
+      p_wedding_site_id: 'site-1',
+      p_patch: {
+        wedding_data: {
+          planning: {
+            totalBudget: 24000,
+            vendorMeta: {
+              'vendor-1': {
+                nextFollowUp: '2026-05-22',
+                reminderChannel: 'phone',
+                reminderLeadDays: 3,
+              },
+            },
+          },
+        },
+      },
+    });
   });
 });

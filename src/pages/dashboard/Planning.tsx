@@ -14,6 +14,7 @@ import {
   loadPlanningSeatingReadiness,
   loadPlanningSiteMeta,
 } from './planning/planningService';
+import type { VendorMetaMap } from './planning/vendorMetaStorage';
 import { buildNameChangePlan } from '../../lib/nameChange/engine';
 import { syncNameChangeRemindersWithStepExecution } from '../../lib/nameChange/reminders';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput, NameChangePlan, NameChangeReminderInput } from '../../lib/nameChange/types';
@@ -72,6 +73,7 @@ export const DashboardPlanning: React.FC = () => {
   const [guestCount, setGuestCount] = useState(0);
   const [venueName, setVenueName] = useState<string | null>(null);
   const [destinationWedding, setDestinationWedding] = useState(false);
+  const [vendorMeta, setVendorMeta] = useState<VendorMetaMap>({});
   const [planningRole, setPlanningRole] = useState<PlannerAccessRole>('owner');
   const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
   const [planningPermissions, setPlanningPermissions] = useState<PlannerPermissionKey[] | null>(null);
@@ -194,6 +196,7 @@ export const DashboardPlanning: React.FC = () => {
       setVenueName(siteMeta.venueName);
       setDestinationWedding(siteMeta.destinationWedding);
       setTotalBudget(siteMeta.totalBudget);
+      setVendorMeta(siteMeta.vendorMeta);
 
       await loadSeatingReadiness(id);
 
@@ -229,6 +232,7 @@ export const DashboardPlanning: React.FC = () => {
     handleDeleteTask,
     handleDeleteVendor,
     handleSaveTotalBudget,
+    handleSaveVendorMeta,
     handleUpdateBudgetItem,
     handleUpdateTask,
     handleUpdateVendor,
@@ -241,6 +245,7 @@ export const DashboardPlanning: React.FC = () => {
     setBudgetItems,
     setTasks,
     setTotalBudget,
+    setVendorMeta,
     setVendors,
     siteId,
     toast,
@@ -305,6 +310,7 @@ export const DashboardPlanning: React.FC = () => {
           starterSuite={starterSuite}
           tasks={tasks}
           totalBudget={totalBudget}
+          vendorMeta={vendorMeta}
           undoingStarterSuite={undoingStarterSuite}
           vendors={vendors}
           weddingDate={weddingDate}
@@ -322,6 +328,7 @@ export const DashboardPlanning: React.FC = () => {
           onRemindersChange={handleRemindersChange}
           onSaveNameChange={handleSaveNameChange}
           onSaveTotalBudget={handleSaveTotalBudget}
+          onSaveVendorMeta={handleSaveVendorMeta}
           onStepExecutionNoteChange={handleStepExecutionNoteChange}
           onStepExecutionStatusChange={handleStepExecutionStatusChange}
           onStructuredIntakeChange={handleStructuredIntakeChange}

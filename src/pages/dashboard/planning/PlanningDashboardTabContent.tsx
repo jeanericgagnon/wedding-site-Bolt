@@ -10,6 +10,7 @@ import { PlanningOverviewTab } from './PlanningOverviewTab';
 import { SongRequestsTab } from './SongRequestsTab';
 import { TasksTab } from './TasksTab';
 import { VendorsTab } from './VendorsTab';
+import type { VendorMetaMap } from './vendorMetaStorage';
 
 type Tab = 'overview' | 'tasks' | 'budget' | 'payments' | 'vendors' | 'songs' | 'addresses' | 'nameChange';
 
@@ -44,6 +45,7 @@ type Props = {
   starterSuite: StarterPlannerSuite | null;
   tasks: PlanningTask[];
   totalBudget: number;
+  vendorMeta: VendorMetaMap;
   undoingStarterSuite: boolean;
   vendors: PlanningVendor[];
   weddingDate: string | null;
@@ -61,6 +63,7 @@ type Props = {
   onRemindersChange: (nextReminders: NameChangeReminderInput[], context?: { action: 'single-update' | 'bulk-update' | 'schedule-stale' }) => void;
   onSaveNameChange: () => Promise<void>;
   onSaveTotalBudget: (value: number) => Promise<void>;
+  onSaveVendorMeta: (meta: VendorMetaMap) => Promise<void>;
   onStepExecutionNoteChange: (stepId: string, note: string) => void;
   onStepExecutionStatusChange: (stepId: string, executionStatus: 'todo' | 'in_progress' | 'complete') => void;
   onStructuredIntakeChange: (key: string, value: unknown) => void;
@@ -91,6 +94,7 @@ export function PlanningDashboardTabContent({
   starterSuite,
   tasks,
   totalBudget,
+  vendorMeta,
   undoingStarterSuite,
   vendors,
   weddingDate,
@@ -108,6 +112,7 @@ export function PlanningDashboardTabContent({
   onRemindersChange,
   onSaveNameChange,
   onSaveTotalBudget,
+  onSaveVendorMeta,
   onStepExecutionNoteChange,
   onStepExecutionStatusChange,
   onStructuredIntakeChange,
@@ -175,6 +180,7 @@ export function PlanningDashboardTabContent({
       {activeTab === 'payments' && (
         <PaymentsTab
           items={budgetItems}
+          vendorMeta={vendorMeta}
           vendors={vendors}
           onUpdateBudgetItem={onUpdateBudgetItem}
           onUpdateVendor={onUpdateVendor}
@@ -183,8 +189,10 @@ export function PlanningDashboardTabContent({
       )}
       {activeTab === 'vendors' && (
         <VendorsTab
+          vendorMeta={vendorMeta}
           vendors={vendors}
           onAdd={onAddVendor}
+          onSaveVendorMeta={onSaveVendorMeta}
           onUpdate={onUpdateVendor}
           onDelete={onDeleteVendor}
           canEdit={canEditPlanningVendors(planningRole, planningPermissions)}

@@ -22,15 +22,26 @@ describe('vendorMetaStorage', () => {
       ' vendor-1 ': {
         lastContacted: ' 2026-05-01T12:00:00.000Z ',
         nextFollowUp: '2026-05-12T08:00:00.000Z',
+        reminderChannel: 'email',
+        reminderLeadDays: 3,
+        reminderLastQueuedAt: '2026-05-05T09:30:00.000Z',
       },
       empty: {},
-      bad: { lastContacted: 'not-a-date', nextFollowUp: 'also-bad' },
-    });
+      bad: { lastContacted: 'not-a-date', nextFollowUp: 'also-bad', reminderChannel: 'fax', reminderLeadDays: 99 } as unknown as {
+        lastContacted: string;
+        nextFollowUp: string;
+        reminderChannel: 'none';
+        reminderLeadDays: 1;
+      },
+    } as any);
 
     expect(normalized).toEqual({
       'vendor-1': {
         lastContacted: '2026-05-01T12:00:00.000Z',
         nextFollowUp: '2026-05-12',
+        reminderChannel: 'email',
+        reminderLeadDays: 3,
+        reminderLastQueuedAt: '2026-05-05T09:30:00.000Z',
       },
     });
     expect(JSON.parse(window.localStorage.getItem(VENDOR_META_STORAGE_KEY) || '{}')).toMatchObject({
@@ -41,11 +52,11 @@ describe('vendorMetaStorage', () => {
 
   it('migrates legacy vendor metadata and clears stale or malformed payloads', () => {
     window.localStorage.setItem(VENDOR_META_STORAGE_KEY, JSON.stringify({
-      'vendor-1': { lastContacted: '2026-05-01T12:00:00.000Z' },
+      'vendor-1': { lastContacted: '2026-05-01T12:00:00.000Z', reminderChannel: 'phone', reminderLeadDays: 7 },
       bad: { nextFollowUp: 'nope' },
     }));
     expect(readVendorMetaStorage()).toEqual({
-      'vendor-1': { lastContacted: '2026-05-01T12:00:00.000Z' },
+      'vendor-1': { lastContacted: '2026-05-01T12:00:00.000Z', reminderChannel: 'phone', reminderLeadDays: 7 },
     });
     expect(JSON.parse(window.localStorage.getItem(VENDOR_META_STORAGE_KEY) || '{}')).toHaveProperty('savedAtISO');
 

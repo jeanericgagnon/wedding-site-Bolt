@@ -5,11 +5,14 @@ import { Button } from '../../../components/ui/Button';
 import { useToast } from '../../../components/ui/Toast';
 import type { PlanningBudgetItem, PlanningVendor } from './planningService';
 import { formatVendorDate, isVendorDateOnOrBefore } from './vendorDate';
+import { buildVendorReminderLedgerSummary, formatVendorReminderChannel, formatVendorReminderLeadDays } from './vendorReminderLedger';
+import type { VendorMetaMap } from './vendorMetaStorage';
 import { copyTextOrDownload } from '../../../lib/copyText';
 import { getSafePublicWebUrl } from '../../../sections/publicLinks';
 
 interface Props {
   items: PlanningBudgetItem[];
+  vendorMeta: VendorMetaMap;
   vendors: PlanningVendor[];
   onUpdateBudgetItem: (id: string, updates: Partial<PlanningBudgetItem>) => Promise<void>;
   onUpdateVendor: (id: string, updates: Partial<PlanningVendor>) => Promise<void>;
@@ -34,7 +37,7 @@ function fmt(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 }
 
-export const PaymentsTab: React.FC<Props> = ({ items, vendors, onUpdateBudgetItem, onUpdateVendor, canEdit = true }) => {
+export const PaymentsTab: React.FC<Props> = ({ items, vendorMeta, vendors, onUpdateBudgetItem, onUpdateVendor, canEdit = true }) => {
   const { toast } = useToast();
   const [filter, setFilter] = useState<PaymentFilter>('open');
   const today = new Date();
@@ -87,6 +90,11 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendors, onUpdateBudgetIte
   const overdue = rows.filter((row) => row.remaining > 0 && isVendorDateOnOrBefore(row.dueDate, today)).length;
   const totalCommitted = rows.reduce((sum, row) => sum + row.total, 0);
   const paidPct = totalCommitted > 0 ? Math.round((paidTotal / totalCommitted) * 100) : 0;
+  const reminderSummary = useMemo(() => buildVendorReminderLedgerSummary({
+    vendors,
+    vendorMeta,
+    compareDate: today,
+  }), [today, vendorMeta, vendors]);
   const filteredRows = rows.filter((row) => {
     if (filter === 'all') return true;
     if (filter === 'paid') return row.remaining <= 0;
@@ -126,8 +134,23 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendors, onUpdateBudgetIte
 
   function exportCsv() {
     const csvRows = [
-      ['Payment', 'Owner', 'Source', 'Due date', 'Total', 'Paid', 'Open', 'Document URL'],
-      ...rows.map((row) => [row.label, row.owner, row.source, row.dueDate ?? '', String(row.total), String(row.paid), String(row.remaining), row.documentUrl ?? '']),
+      ['Payment', 'Owner', 'Source', 'Due date', 'Total', 'Paid', 'Open', 'Reminder channel', 'Reminder lead days', 'Last reminder queued', 'Document URL'],
+      ...rows.map((row) => {
+        const meta = row.source === 'vendor' ? vendorMeta[row.id] : undefined;
+        return [
+          row.label,
+          row.owner,
+          row.source,
+          row.dueDate ?? '',
+          String(row.total),
+          String(row.paid),
+          String(row.remaining),
+          formatVendorReminderChannel(meta?.reminderChannel),
+          formatVendorReminderLeadDays(meta?.reminderLeadDays),
+          meta?.reminderLastQueuedAt ?? '',
+          row.documentUrl ?? '',
+        ];
+      }),
     ];
     const csv = csvRows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
@@ -152,6 +175,10 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendors, onUpdateBudgetIte
         <Card padding="sm" className={overdue > 0 ? 'border-warning/40' : ''}>
           <p className="text-xs text-text-tertiary mb-0.5">Due now</p>
           <p className="text-xl font-bold text-text-primary">{overdue}</p>
+        </Card>
+        <Card padding="sm">
+          <p className="text-xs text-text-tertiary mb-0.5">Reminder-ready</p>
+          <p className="text-xl font-bold text-text-primary">{reminderSummary.reminderReadyCount}</p>
         </Card>
       </div>
 
@@ -189,6 +216,9 @@ export const PaymentsTab: React.FC<Props> = ({ items, vendors, onUpdateBudgetIte
         <div className="h-2 overflow-hidden rounded-lg bg-surface-subtle">
           <div className="h-full rounded-lg bg-success" style={{ width: `${Math.min(100, paidPct)}%` }} />
         </div>
+        <p className="text-xs text-text-tertiary">
+          {reminderSummary.summary}
+        </p>
       </Card>
 
       {rows.length === 0 ? (

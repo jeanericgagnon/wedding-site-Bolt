@@ -6,13 +6,17 @@ import { Badge } from '../../../components/ui/Badge';
 import { useToast } from '../../../components/ui/Toast';
 import { PlanningVendor } from './planningService';
 import { formatVendorDate, isVendorDateOnOrBefore } from './vendorDate';
+import { buildVendorReminderLedgerSummary, formatVendorReminderChannel, formatVendorReminderLeadDays } from './vendorReminderLedger';
+import type { VendorMetaMap } from './vendorMetaStorage';
 import { copyTextOrDownload } from '../../../lib/copyText';
 import { getSafePublicEmailHref, getSafePublicTelHref, getSafePublicWebUrl } from '../../../sections/publicLinks';
 import { isVendorProfileCreationEnabled } from '../../../lib/vendorProfileLaunch';
 
 interface Props {
+  vendorMeta: VendorMetaMap;
   vendors: PlanningVendor[];
   onAdd: (v: Partial<PlanningVendor>) => Promise<void>;
+  onSaveVendorMeta: (meta: VendorMetaMap) => Promise<void>;
   onUpdate: (id: string, updates: Partial<PlanningVendor>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   canEdit?: boolean;
@@ -261,26 +265,14 @@ function VendorForm({ initial, onSave, onCancel }: {
   );
 }
 
-export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete, canEdit = true }) => {
+export const VendorsTab: React.FC<Props> = ({ vendorMeta, vendors, onAdd, onSaveVendorMeta, onUpdate, onDelete, canEdit = true }) => {
   const { toast } = useToast();
   const [showAdd, setShowAdd] = useState(false);
   const [editingVendor, setEditingVendor] = useState<PlanningVendor | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('list');
-  const [vendorMeta, setVendorMeta] = useState<Record<string, { lastContacted?: string; nextFollowUp?: string }>>({});
   const vendorProfileCreationEnabled = isVendorProfileCreationEnabled();
-
-  React.useEffect(() => {
-    try {
-      const raw = localStorage.getItem('dayof.vendor.meta.v1');
-      if (raw) setVendorMeta(JSON.parse(raw));
-    } catch {}
-  }, []);
-
-  React.useEffect(() => {
-    try { localStorage.setItem('dayof.vendor.meta.v1', JSON.stringify(vendorMeta)); } catch {}
-  }, [vendorMeta]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -290,10 +282,23 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
   const totalBalance = vendors.reduce((s, v) => s + (v.balance_due || 0), 0);
   const documentedCount = vendors.filter((vendor) => Boolean(vendor.document_url)).length;
   const contactableCount = vendors.filter((vendor) => Boolean(vendor.email || vendor.phone)).length;
-  const followUpDueCount = vendors.filter((v) => {
-    const dt = vendorMeta[v.id]?.nextFollowUp;
-    return isVendorDateOnOrBefore(dt, in7Days);
-  }).length;
+  const reminderSummary = useMemo(() => buildVendorReminderLedgerSummary({
+    vendors,
+    vendorMeta,
+    compareDate: in7Days,
+  }), [in7Days, vendorMeta, vendors]);
+  const followUpDueCount = reminderSummary.followUpDueCount;
+
+  const saveVendorMetaEntry = (vendorId: string, patch: Partial<VendorMetaMap[string]>) => {
+    const nextMeta = {
+      ...vendorMeta,
+      [vendorId]: {
+        ...(vendorMeta[vendorId] ?? {}),
+        ...patch,
+      },
+    };
+    void onSaveVendorMeta(nextMeta);
+  };
 
   const filteredVendors = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -338,8 +343,10 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
 
   function exportVendors() {
     const csvRows = [
-      ['Name', 'Type', 'Contact', 'Email', 'Phone', 'Website', 'Internal rating', 'Rating status', 'Rating notes', 'Contract total', 'Paid', 'Balance', 'Next due', 'Document label', 'Document URL'],
-      ...vendors.map((vendor) => [
+      ['Name', 'Type', 'Contact', 'Email', 'Phone', 'Website', 'Internal rating', 'Rating status', 'Rating notes', 'Contract total', 'Paid', 'Balance', 'Next due', 'Next follow-up', 'Reminder channel', 'Reminder lead days', 'Last reminder queued', 'Document label', 'Document URL'],
+      ...vendors.map((vendor) => {
+        const meta = vendorMeta[vendor.id] ?? {};
+        return [
         vendor.name,
         vendor.vendor_type,
         vendor.contact_name,
@@ -353,9 +360,14 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
         String(vendor.amount_paid || 0),
         String(vendor.balance_due || 0),
         vendor.next_payment_due ?? '',
+        meta.nextFollowUp ?? '',
+        formatVendorReminderChannel(meta.reminderChannel),
+        formatVendorReminderLeadDays(meta.reminderLeadDays),
+        meta.reminderLastQueuedAt ?? '',
         vendor.document_label ?? '',
         vendor.document_url ?? '',
-      ]),
+      ];
+      }),
     ];
     const csv = csvRows.map((row) => row.map((cell) => `"${String(cell ?? '').replaceAll('"', '""')}"`).join(',')).join('\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
@@ -369,7 +381,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
   return (
     <div className="space-y-4">
       {(vendors.length > 0 || totalBalance > 0 || followUpDueCount > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
           <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-white p-3 transition-colors hover:border-primary/25">
             <span className="text-sm text-text-secondary">Still to pay vendors</span>
             <span className="font-bold text-text-primary">{fmt(totalBalance)}</span>
@@ -386,7 +398,23 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
             <span className="text-sm text-text-secondary">Reachable</span>
             <span className="font-bold text-text-primary">{contactableCount}/{vendors.length}</span>
           </div>
+          <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-white p-3">
+            <span className="text-sm text-text-secondary">Reminder-ready</span>
+            <span className="font-bold text-text-primary">{reminderSummary.reminderReadyCount}/{vendors.length}</span>
+          </div>
         </div>
+      )}
+
+      {vendors.length > 0 && (
+        <Card padding="sm" className="space-y-1.5">
+          <p className="text-sm font-semibold text-text-primary">Vendor reminder ledger</p>
+          <p className="text-sm text-text-secondary">{reminderSummary.summary}</p>
+          <p className="text-xs text-text-tertiary">
+            {reminderSummary.queuedCount > 0
+              ? `${reminderSummary.queuedCount} vendor reminder${reminderSummary.queuedCount === 1 ? '' : 's'} already have queued readback saved.`
+              : 'Queue readback appears here after you prepare a reminder.'}
+          </p>
+        </Card>
       )}
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
@@ -565,7 +593,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                           </p>
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => canEdit && setVendorMeta((prev) => ({ ...prev, [vendor.id]: { ...(prev[vendor.id] ?? {}), lastContacted: new Date().toISOString() } }))}
+                              onClick={() => canEdit && saveVendorMetaEntry(vendor.id, { lastContacted: new Date().toISOString() })}
                               disabled={!canEdit}
                               className="text-[11px] px-2 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-40"
                             >
@@ -574,10 +602,61 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                             <input
                               type="date"
                               value={vendorMeta[vendor.id]?.nextFollowUp ? String(vendorMeta[vendor.id]?.nextFollowUp).slice(0, 10) : ''}
-                              onChange={(e) => canEdit && setVendorMeta((prev) => ({ ...prev, [vendor.id]: { ...(prev[vendor.id] ?? {}), nextFollowUp: e.target.value || undefined } }))}
+                              onChange={(e) => canEdit && saveVendorMetaEntry(vendor.id, { nextFollowUp: e.target.value || undefined })}
                               disabled={!canEdit}
                               className="text-[11px] rounded border border-border bg-white px-2 py-1 text-text-secondary disabled:opacity-40"
                             />
+                          </div>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            <label className="space-y-1 text-[11px] text-text-tertiary">
+                              <span className="block">Reminder channel</span>
+                              <select
+                                value={vendorMeta[vendor.id]?.reminderChannel ?? 'none'}
+                                onChange={(event) => canEdit && saveVendorMetaEntry(vendor.id, {
+                                  reminderChannel: event.target.value as 'none' | 'email' | 'phone',
+                                })}
+                                disabled={!canEdit}
+                                className="w-full rounded border border-border bg-white px-2 py-1 text-text-secondary disabled:opacity-40"
+                              >
+                                <option value="none">No reminder</option>
+                                <option value="email">Email</option>
+                                <option value="phone">Phone</option>
+                              </select>
+                            </label>
+                            <label className="space-y-1 text-[11px] text-text-tertiary">
+                              <span className="block">Lead time</span>
+                              <select
+                                value={String(vendorMeta[vendor.id]?.reminderLeadDays ?? '')}
+                                onChange={(event) => canEdit && saveVendorMetaEntry(vendor.id, {
+                                  reminderLeadDays: event.target.value ? Number(event.target.value) as 1 | 3 | 7 | 14 : undefined,
+                                })}
+                                disabled={!canEdit}
+                                className="w-full rounded border border-border bg-white px-2 py-1 text-text-secondary disabled:opacity-40"
+                              >
+                                <option value="">Not set</option>
+                                <option value="1">1 day before</option>
+                                <option value="3">3 days before</option>
+                                <option value="7">7 days before</option>
+                                <option value="14">14 days before</option>
+                              </select>
+                            </label>
+                          </div>
+                          <p className="text-[11px] text-text-secondary">
+                            Saved reminder: {formatVendorReminderChannel(vendorMeta[vendor.id]?.reminderChannel)} · {formatVendorReminderLeadDays(vendorMeta[vendor.id]?.reminderLeadDays)}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              onClick={() => canEdit && saveVendorMetaEntry(vendor.id, { reminderLastQueuedAt: new Date().toISOString() })}
+                              disabled={!canEdit}
+                              className="text-[11px] px-2 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-40"
+                            >
+                              Mark reminder queued
+                            </button>
+                            {vendorMeta[vendor.id]?.reminderLastQueuedAt && (
+                              <span className="text-[11px] text-text-tertiary">
+                                Last queued: {formatVendorDate(vendorMeta[vendor.id]?.reminderLastQueuedAt ?? '')}
+                              </span>
+                            )}
                           </div>
                         </div>
                         {vendor.notes && (
