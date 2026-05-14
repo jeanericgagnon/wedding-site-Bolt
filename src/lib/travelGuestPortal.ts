@@ -451,6 +451,7 @@ export function buildTravelHubSpotlight(input: {
   );
   const limitedVenueMapLinks = venueMapLinks.slice(0, 2);
   const routeCardCount = limitedVenueMapLinks.length;
+  const arrivalGuidanceReady = Boolean(structured.parkingInfo || structured.flightInfo || firstVisaTip);
   limitedVenueMapLinks.forEach((venueLink, index) => {
     const venue = visibleVenues.find((candidate) => (candidate.id?.trim() || '') === venueLink.id);
     cards.push({
@@ -469,6 +470,7 @@ export function buildTravelHubSpotlight(input: {
     ...(visibleEventCount > 0 ? [`${visibleEventCount} event window${visibleEventCount === 1 ? '' : 's'}`] : []),
     ...(routeCardCount > 0 ? [`${routeCardCount} route card${routeCardCount === 1 ? '' : 's'}`] : []),
     ...(bookingLinkCount > 0 ? [`${bookingLinkCount} booking link${bookingLinkCount === 1 ? '' : 's'}`] : []),
+    ...(arrivalGuidanceReady ? ['Arrival ready'] : []),
   ];
 
   const travelHref = appendGuestLanguageToInternalHref(

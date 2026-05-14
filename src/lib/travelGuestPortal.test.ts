@@ -171,7 +171,7 @@ describe('travelGuestPortal', () => {
     expect(spotlight).toEqual({
       summary: '8 travel details ready from the guest hub, including 1 visible event window for this invitation.',
       travelHref: '/site/maya-and-leo?invite_token=guest-token-123&guestLang=fr#travel',
-      badges: ['Invite-scoped', '1 event window', '1 route card', '2 booking links'],
+      badges: ['Invite-scoped', '1 event window', '1 route card', '2 booking links', 'Arrival ready'],
       cards: [
         { id: 'hotel', label: 'Harbor Hotel', detail: 'Code MAYALEO', href: 'https://harbor.example.com/stay' },
         { id: 'room-block', label: 'Room block', detail: 'Harbor Hotel · Code MAYALEO', href: 'https://harbor.example.com/block' },
@@ -190,7 +190,7 @@ describe('travelGuestPortal', () => {
       shareText: [
         'DayOf travel quick plan',
         'Guide reflects the events visible for this invitation.',
-        'Coverage: Invite-scoped · 1 event window · 1 route card · 2 booking links',
+        'Coverage: Invite-scoped · 1 event window · 1 route card · 2 booking links · Arrival ready',
         'Harbor Hotel: Code MAYALEO',
         'Room block: Harbor Hotel · Code MAYALEO',
         'Ceremony shuttle: Harbor Hotel to venue · Board near the lobby fireplace.',
@@ -206,7 +206,7 @@ describe('travelGuestPortal', () => {
     });
     expect(spotlight?.htmlDocument).toContain('Open the live travel page');
     expect(spotlight?.htmlDocument).toContain('This guide reflects the events visible for this invitation.');
-    expect(spotlight?.htmlDocument).toContain('Invite-scoped · 1 event window · 1 route card · 2 booking links');
+    expect(spotlight?.htmlDocument).toContain('Invite-scoped · 1 event window · 1 route card · 2 booking links · Arrival ready');
     expect(spotlight?.htmlDocument).toContain('https://harbor.example.com/stay');
     expect(spotlight?.htmlDocument).toContain('Valet opens at 3:15 PM at the garden gate.');
     expect(spotlight?.htmlDocument).not.toContain('guest-token-123</');
