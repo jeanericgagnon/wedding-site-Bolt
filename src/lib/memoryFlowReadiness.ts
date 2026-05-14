@@ -55,6 +55,9 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
   const slideshowReadyAlbumCount = Math.max(input.slideshowReadyAlbumCount ?? 0, 0);
   const handoffExportReady = hasUploads && !needsReview;
   const curatedPickCount = input.recapFeaturedCount + input.recapStoryCount;
+  const storyPickCoverageRate = curatedPickCount > 0
+    ? Math.round((input.recapStoryCount / curatedPickCount) * 100)
+    : 0;
   const curationCounts = [curatedPickCount > 0 ? countLabel(curatedPickCount, 'curated pick') : null, slideshowFrameCount >= 3 ? countLabel(slideshowFrameCount, 'slideshow frame') : null]
     .filter(Boolean)
     .join(' and ');
@@ -88,7 +91,7 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
       id: 'sharing',
       label: 'Sharing',
       detail: recapShareable && recapHasPicks
-        ? `Recap is ${input.recapStatus === 'private_link' ? 'private-link ready' : 'published'} with ${countLabel(curatedPickCount, 'curated pick')}${input.recapStoryCount > 0 ? `, including ${countLabel(input.recapStoryCount, 'story pick')}` : ''}.`
+        ? `Recap is ${input.recapStatus === 'private_link' ? 'private-link ready' : 'published'} with ${countLabel(curatedPickCount, 'curated pick')}${input.recapStoryCount > 0 ? `, including ${countLabel(input.recapStoryCount, 'story pick')} (${storyPickCoverageRate}% story coverage)` : ''}.`
         : recapHasPicks
           ? `${countLabel(curatedPickCount, 'curated pick')} saved, but the recap is not shareable yet.`
           : hasUploads
@@ -169,7 +172,7 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
       id: 'recap',
       label: 'Guest recap',
       detail: recapShareable && recapHasPicks
-        ? `Recap is ${input.recapStatus === 'private_link' ? 'private-link ready' : 'published'} with curated picks.`
+        ? `Recap is ${input.recapStatus === 'private_link' ? 'private-link ready' : 'published'} with curated picks${input.recapStoryCount > 0 ? ` and ${countLabel(input.recapStoryCount, 'story pick')}` : ''}.`
         : recapHasPicks
           ? 'Curated picks exist, but the recap is not shareable yet.'
           : 'Feature photos or mark story picks before sharing the recap.',
