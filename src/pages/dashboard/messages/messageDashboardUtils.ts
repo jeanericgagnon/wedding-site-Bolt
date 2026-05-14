@@ -735,6 +735,21 @@ export function getCustomerDeliveryReason(message: string | null | undefined, fa
   });
 }
 
+export function getCustomerDeliveryBucket(message: string | null | undefined, status: DeliveryRow['status'] | string): string {
+  const normalized = (message ?? '').toLowerCase();
+
+  if (status === 'skipped') {
+    if (/\b(phone|sms consent|number)\b/.test(normalized)) return 'Missing phone number or text consent';
+    return 'Missing contact details';
+  }
+
+  if (/\b(unsubscribed|opt.?out|blocked|spam complaint)\b/.test(normalized)) return 'Blocked or unsubscribed';
+  if (/\b(bounced|invalid email|mailbox|recipient address rejected)\b/.test(normalized)) return 'Email address needs review';
+  if (/\b(invalid phone|invalid number|line type|undeliverable handset)\b/.test(normalized)) return 'Phone number needs review';
+  if (/\b(rate limit|timeout|temporar|try again later|service unavailable|network)\b/.test(normalized)) return 'Temporary delivery issue';
+  return status === 'skipped' ? 'Missing contact details' : 'Delivery needs review';
+}
+
 function readRecipientFilterGuestIds(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return Array.from(new Set(

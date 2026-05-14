@@ -6,7 +6,7 @@ const steps = [
   {
     id: 'message-delivery-state-tests',
     label: 'Message delivery-state truth tests',
-    command: 'npm test -- src/lib/messageDeliveryState.test.ts',
+    command: 'npm test -- --run src/lib/messageDeliveryState.test.ts src/pages/dashboard/messages/messageDashboardUtils.test.ts src/pages/dashboard/messages/messageService.boundary.test.ts src/pages/dashboard/messages/MessageDetailModal.test.tsx',
     required: true,
   },
   {
@@ -76,6 +76,7 @@ const output = {
   },
   automatedCoverage: [
     'Draft/queued/sent/failed message-state truth',
+    'Focused retry, next-send exclusion, and customer-safe delivery review grouping coverage',
     'Compose/send/retry/reschedule permission guard coverage',
     'Build integrity after comms-center proof assertions',
   ],

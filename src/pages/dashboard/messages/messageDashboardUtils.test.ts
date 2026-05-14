@@ -18,6 +18,7 @@ import {
   getActiveCampaignMessages,
   getActiveCampaignThread,
   getCustomerDeliveryReason,
+  getCustomerDeliveryBucket,
   getRecipientExcludedGuestIds,
   getRecipientRetryGuestIds,
   getRecipientReviewPlanSummary,
@@ -185,6 +186,9 @@ describe('messageDashboardUtils', () => {
     expect(getUnreachedCount(eventMessage, skipped)).toBe(4);
     expect(getTemplateKey(eventMessage)).toBe('rsvp-reminder');
     expect(getCustomerDeliveryReason('Resend API bounced for recipient', 'Needs review')).toBe('delivery service delivery service bounced for recipient');
+    expect(getCustomerDeliveryBucket('Twilio invalid phone number', 'failed')).toBe('Phone number needs review');
+    expect(getCustomerDeliveryBucket('Recipient unsubscribed from updates', 'failed')).toBe('Blocked or unsubscribed');
+    expect(getCustomerDeliveryBucket('Skipped: guest is missing a valid email address', 'skipped')).toBe('Missing contact details');
     expect(getRecipientRetryGuestIds(eventMessage)).toEqual(['g1', 'g2']);
     expect(getRecipientExcludedGuestIds(eventMessage)).toEqual(['g3']);
     expect(getRecipientReviewPlanSummary(eventMessage)).toBe('next send targets 2 reviewed guests and excludes 1 guest still missing contact details');

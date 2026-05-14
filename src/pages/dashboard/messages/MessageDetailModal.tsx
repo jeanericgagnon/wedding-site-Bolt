@@ -8,6 +8,7 @@ import {
   canRetryMessageStatus,
   getAudienceLabel,
   getCampaignName,
+  getCustomerDeliveryBucket,
   getCampaignTypeLabel,
   getCustomerDeliveryReason,
   getRecipientReviewPlanSummary,
@@ -77,14 +78,14 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
   const skippedDeliveries = messageDeliveries.filter((delivery) => delivery.status === 'skipped');
   const topFailureReasons = Array.from(
     failedDeliveries.reduce((map, delivery) => {
-      const key = getCustomerDeliveryReason(delivery.error_message, 'Unknown delivery issue');
+      const key = getCustomerDeliveryBucket(delivery.error_message, delivery.status);
       map.set(key, (map.get(key) ?? 0) + 1);
       return map;
     }, new Map<string, number>()).entries(),
   ).sort((a, b) => b[1] - a[1]).slice(0, 3);
   const topSkipReasons = Array.from(
     skippedDeliveries.reduce((map, delivery) => {
-      const key = getCustomerDeliveryReason(delivery.error_message, 'Needs contact details');
+      const key = getCustomerDeliveryBucket(delivery.error_message, delivery.status);
       map.set(key, (map.get(key) ?? 0) + 1);
       return map;
     }, new Map<string, number>()).entries(),
