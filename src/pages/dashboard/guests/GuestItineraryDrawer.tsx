@@ -223,6 +223,14 @@ function GuestDrawerDetails({
   const guestRsvpUrl = guest.invite_token
     ? `${window.location.origin}/rsvp?token=${encodeURIComponent(guest.invite_token)}`
     : '';
+  const privatePreviewRouteCount = visibilityPreview.links.filter((link) => (
+    link.kind === 'rsvp'
+    || link.kind === 'contact'
+    || link.kind === 'photos'
+    || link.kind === 'guestbook'
+    || link.kind === 'vault'
+    || link.kind === 'recap'
+  )).length;
   const guestContactUrl = visibilityPreview.links.find((link) => link.kind === 'contact')
     ? `${window.location.origin}${visibilityPreview.links.find((link) => link.kind === 'contact')?.href ?? ''}`
     : '';
@@ -246,6 +254,12 @@ function GuestDrawerDetails({
         </div>
         <p className="text-sm text-text-secondary">{visibilityPreview.accessDetail}</p>
         <p className="text-xs text-text-tertiary">{visibilityPreview.householdSummary}</p>
+        {visibilityPreview.links.length > 0 && (
+          <p className="text-xs text-text-tertiary">
+            {visibilityPreview.links.length} guest route{visibilityPreview.links.length === 1 ? '' : 's'} ready
+            {privatePreviewRouteCount > 0 ? ` · ${privatePreviewRouteCount} invite-only` : ''}
+          </p>
+        )}
         {visibilityPreview.visibleEvents.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {visibilityPreview.visibleEvents.slice(0, 4).map((event) => (
