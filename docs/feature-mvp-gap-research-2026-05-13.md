@@ -162,7 +162,7 @@ DayOf should count this feature as MVP-complete when it does all of the followin
 - Deployed/live now:
   - current fuller-suite runtime is Vercel production `dpl_EgkU34BQxP2sibkgpcwaqiZTUJNW`
   - reminder compatibility migration `20260513193000_fix_name_change_reminders_replace_runtime.sql` applied remotely
-  - `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live` reran green on the current deploy, including saved reload, state playbook depth, institution handoff packets, dual-partner rollout, export/handoff surfaces, and the reopened TSA / DMV / travel / template dependency truth
+  - `V1_NAME_CHANGE_RUNTIME_LIVE=1 npm run proof:v1:name-change-runtime -- --require-live` reran green again on the current deploy during final closeout, including saved reload, state playbook depth, institution handoff packets, dual-partner rollout, export/handoff surfaces, and the reopened TSA / DMV / travel / template dependency truth
 
 ### Active deeper scope
 
