@@ -147,6 +147,7 @@ const output = {
   automatedCoverage: [
     'Memory-flow readiness truth for slideshow, recap, video, follow-up, and export lanes',
     'Demo/local dashboard continuity for recap-status readback and full-resolution download-job export',
+    'Guest-side QA video upload now persists into the shared demo memory-flow state and is read back by the owner dashboard in browser proof',
     'Owner-side recap preview handoff plus guest-facing published recap display with story/video moment readback in the local browser proof',
     'Mobile guest photo-upload route proof for the no-app memory flow without raw-token leakage',
   ],

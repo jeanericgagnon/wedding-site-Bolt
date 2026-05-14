@@ -461,3 +461,121 @@ export function writeDemoGuestPhotoState(
   }
   return snapshot;
 }
+
+const safeDemoFileToken = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48) || 'upload';
+
+function resolveDemoBucketIdForInviteToken(snapshot: GuestPhotoDemoStateSnapshot, inviteToken: string | null): string {
+  const normalizedToken = inviteToken?.trim() || null;
+  if (!normalizedToken) return snapshot.buckets[0]?.id ?? 'demo-photo-album-ceremony';
+
+  const matchedLink = Object.entries(snapshot.bucketUploadLinks).find(([, href]) => {
+    try {
+      const url = new URL(href, window.location.origin);
+      return url.searchParams.get('invite_token') === normalizedToken;
+    } catch {
+      return false;
+    }
+  });
+
+  return matchedLink?.[0] ?? snapshot.buckets[0]?.id ?? 'demo-photo-album-ceremony';
+}
+
+export function appendDemoGuestPhotoUploads(input: {
+  siteSlug: string;
+  inviteToken?: string | null;
+  guestName?: string | null;
+  guestEmail?: string | null;
+  note?: string | null;
+  files: Array<{
+    name: string;
+    type: string;
+    size: number;
+  }>;
+}, storageKey = DEMO_GUEST_PHOTO_STATE_STORAGE_KEY): GuestPhotoDemoStateSnapshot {
+  const snapshot = readDemoGuestPhotoState(storageKey);
+  if (input.siteSlug.trim().toLowerCase() !== snapshot.siteSlug.trim().toLowerCase()) {
+    return snapshot;
+  }
+
+  const now = new Date().toISOString();
+  const bucketId = resolveDemoBucketIdForInviteToken(snapshot, input.inviteToken ?? null);
+  const bucket = snapshot.buckets.find((entry) => entry.id === bucketId) ?? snapshot.buckets[0];
+  const bucketName = bucket?.name ?? 'Wedding moment';
+  const eventId = bucket?.itinerary_event_id ?? null;
+
+  const newUploads: PhotoUploadRow[] = [];
+  const newAnalyses: PhotoUploadAiAnalysisRow[] = [];
+  const newMetadata: PhotoUploadMetadataRow[] = [];
+
+  input.files.forEach((file, index) => {
+    const fileToken = safeDemoFileToken(file.name);
+    const uploadId = `demo-photo-upload-local-${Date.now()}-${index}-${fileToken}`;
+    const analysisId = `demo-photo-analysis-local-${Date.now()}-${index}-${fileToken}`;
+    const mimeType = file.type?.trim() || null;
+    const isVideo = Boolean(mimeType?.startsWith('video/'));
+
+    newUploads.push({
+      id: uploadId,
+      photo_album_id: bucketId,
+      original_filename: file.name,
+      guest_name: input.guestName?.trim() || null,
+      guest_email: input.guestEmail?.trim() || null,
+      note: input.note?.trim() || null,
+      mime_type: mimeType,
+      size_bytes: Number.isFinite(file.size) ? file.size : null,
+      drive_web_view_link: `https://drive.google.com/file/d/${uploadId}/view?safe=demo-upload`,
+      is_hidden: false,
+      is_flagged: false,
+      recap_hidden: false,
+      recap_featured: false,
+      recap_story: false,
+      uploaded_at: now,
+    });
+
+    newAnalyses.push({
+      id: analysisId,
+      upload_id: uploadId,
+      wedding_site_id: snapshot.siteId,
+      photo_album_id: bucketId,
+      status: 'ready',
+      detected_moment: bucketName,
+      suggested_bucket_id: bucketId,
+      suggested_bucket_name: bucketName,
+      bucket_confidence: 0.86,
+      quality_score: isVideo ? 0.78 : 0.82,
+      blur_score: isVideo ? 0.12 : 0.08,
+      people_count_range: isVideo ? '2-4' : '0-1',
+      is_video: isVideo,
+      slideshow_priority: isVideo ? 72 : 68,
+      caption: isVideo
+        ? (input.note?.trim() || `New guest video from ${input.guestName?.trim() || 'a guest'}.`)
+        : (input.note?.trim() || `New guest photo from ${input.guestName?.trim() || 'a guest'}.`),
+      tags: isVideo ? ['video', bucketName.toLowerCase()] : [bucketName.toLowerCase()],
+      warnings: [],
+      error_message: null,
+      analyzed_at: now,
+    });
+
+    newMetadata.push({
+      upload_id: uploadId,
+      taken_at: now,
+      width: isVideo ? 1920 : 3024,
+      height: isVideo ? 1080 : 4032,
+      has_exif: !isVideo,
+      has_gps: false,
+      file_sha256: `demo-photo-upload-sha-${fileToken}-${index}`,
+      perceptual_hash: `demo-photo-upload-hash-${fileToken}-${index}`,
+      location_label: bucketName,
+      event_match_id: eventId,
+      event_match_confidence: eventId ? 0.88 : null,
+      event_match_reason: eventId ? `Captured for the ${bucketName} guest upload lane.` : null,
+    });
+  });
+
+  return writeDemoGuestPhotoState({
+    ...snapshot,
+    uploads: [...snapshot.uploads, ...newUploads],
+    uploadAnalyses: [...snapshot.uploadAnalyses, ...newAnalyses],
+    uploadMetadata: [...snapshot.uploadMetadata, ...newMetadata],
+  }, storageKey);
+}

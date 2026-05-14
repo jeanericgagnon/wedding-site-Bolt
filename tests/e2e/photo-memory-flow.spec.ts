@@ -111,6 +111,24 @@ test('demo photo memory flow proves slideshow, export, and recap readback contin
   await expect(page.getByText(/1 video captured for the memory flow\./i)).toBeVisible();
   await expect(page.getByText(/Owner handoff sheets and full-resolution download jobs can be saved/i)).toBeVisible();
 
+  const guestUploadPage = await page.context().newPage();
+  await guestUploadPage.goto('/photos/upload?site=alex-jordan-demo&hub=1&invite_token=token-c-2&guestLang=fr&photoMemoryFlowQa=1', { waitUntil: 'domcontentloaded' });
+  await guestUploadPage.locator('#photo-upload-guest-name').fill('Taylor Guest');
+  await guestUploadPage.locator('#photo-upload-guest-email').fill('taylor@example.com');
+  await guestUploadPage.locator('#photo-upload-note').fill('Short welcome toast clip.');
+  await guestUploadPage.setInputFiles('input[type="file"]', {
+    name: 'welcome-toast.mp4',
+    mimeType: 'video/mp4',
+    buffer: Buffer.from('demo-video-bytes'),
+  });
+  await guestUploadPage.getByRole('button', { name: /upload files|envoyer les fichiers/i }).click();
+  await expect(guestUploadPage.getByText(/1 file uploaded\.|1 fichier\(s\) envoyé\(s\)\. Merci\./i)).toBeVisible();
+  await expect(guestUploadPage.locator('body')).not.toContainText('token-c-2');
+  await guestUploadPage.close();
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page.getByText(/2 videos captured for the memory flow\./i)).toBeVisible();
+
   const slideshowCard = page.locator('section, div').filter({ has: page.getByRole('heading', { name: 'Slideshow draft' }) }).first();
   const slideshowPreviewButton = slideshowCard.getByRole('button', { name: 'Preview', exact: true });
   await slideshowPreviewButton.scrollIntoViewIfNeeded();
@@ -152,23 +170,23 @@ test('demo photo memory flow proves slideshow, export, and recap readback contin
   await recapPreviewPage.waitForLoadState('domcontentloaded');
   await expect(recapPreviewPage).toHaveURL(/\/event\/alex-jordan-demo\/recap/);
   await expect(recapPreviewPage.getByRole('heading', { name: /alex thompson & jordan rivera/i })).toBeVisible();
-  await expect(recapPreviewPage.getByRole('heading', { name: 'Top moments' })).toBeVisible();
+  await expect(recapPreviewPage.getByRole('heading', { name: /Top moments|Moments forts/i })).toBeVisible();
   await expect(recapPreviewPage.getByText('Story pick').first()).toBeVisible();
   await expect(recapPreviewPage.getByText('Featured').first()).toBeVisible();
   await expect(recapPreviewPage.getByText('Short motion clip from the first big reception toast.')).toBeVisible();
-  await expect(recapPreviewPage.getByText('Shared by Emma Waters')).toBeVisible();
+  await expect(recapPreviewPage.getByText(/Emma Waters/i)).toBeVisible();
   await expect(recapPreviewPage.locator('body')).not.toContainText('token-c-2');
   await recapPreviewPage.close();
 
   await page.goto('/event/alex-jordan-demo/recap?photoMemoryFlowQa=1&invite_token=token-c-2', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: /alex thompson & jordan rivera/i })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Wedding recap' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Top moments' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Memory chapters' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Wedding recap|Récap du mariage/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Top moments|Moments forts/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Memory chapters|Chapitres de souvenirs/i })).toBeVisible();
   await expect(page.getByText('Story pick').first()).toBeVisible();
   await expect(page.getByText('Featured').first()).toBeVisible();
   await expect(page.getByText('Short motion clip from the first big reception toast.')).toBeVisible();
-  await expect(page.getByText('Shared by Emma Waters')).toBeVisible();
+  await expect(page.getByText(/Emma Waters/i)).toBeVisible();
   await expect(page.locator('body')).not.toContainText('token-c-2');
 });
 

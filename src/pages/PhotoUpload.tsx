@@ -13,6 +13,7 @@ import {
 import { submitGuestHubProspect, trackGuestHubEvent } from './guestHubPublicService';
 import { hasGuestPublicSubmissionRuntime, uploadGuestPhotos } from './guestPublicSubmissionService';
 import { PhotoUploadStatusPanel } from './PhotoUploadStatusPanel';
+import { appendDemoGuestPhotoUploads } from './dashboard/guestPhotos/guestPhotoDemoState';
 
 export const mapUploadError = (code?: string): string => {
   switch (code) {
@@ -58,6 +59,8 @@ export const safePhotoUploadMessage = (message?: string): string => {
 export const buildPhotoUploadAccessPayload = (slug: string) => buildPublicAccessArtifacts(slug, new URLSearchParams(window.location.search));
 export const buildPhotoUploadIdentityPayload = (slug: string) => buildGuestIdentityArtifacts(slug, new URLSearchParams(window.location.search));
 
+const DEMO_PHOTO_MEMORY_FLOW_SITE_SLUG = 'alex-jordan-demo';
+
 export const PhotoUpload: React.FC = () => {
   const { t, i18n } = useTranslation();
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
@@ -65,6 +68,7 @@ export const PhotoUpload: React.FC = () => {
   const siteSlug = params.get('site')?.trim().toLowerCase() ?? '';
   const fromHub = params.get('hub') === '1';
   const mode = params.get('mode')?.trim().toLowerCase() ?? '';
+  const photoMemoryFlowQaEnabled = params.get('photoMemoryFlowQa') === '1';
 
   const [token, setToken] = useState(initialToken);
   const [guestName, setGuestName] = useState('');
@@ -114,7 +118,11 @@ export const PhotoUpload: React.FC = () => {
     setFailedNames([]);
     setError(null);
 
-    if (!hasGuestPublicSubmissionRuntime()) {
+    const useLocalDemoUpload =
+      photoMemoryFlowQaEnabled
+      && siteSlug === DEMO_PHOTO_MEMORY_FLOW_SITE_SLUG;
+
+    if (!useLocalDemoUpload && !hasGuestPublicSubmissionRuntime()) {
       setError(t('photo_upload.not_configured'));
       return;
     }
@@ -133,6 +141,7 @@ export const PhotoUpload: React.FC = () => {
       setIsUploading(true);
       const form = new FormData();
       const access = siteSlug ? buildPhotoUploadAccessPayload(siteSlug) : null;
+      const identity = siteSlug ? buildPhotoUploadIdentityPayload(siteSlug) : null;
       if (token.trim()) form.append('token', token.trim());
       if (siteSlug) form.append('siteSlug', siteSlug);
       if (siteSlug && access) {
@@ -145,9 +154,28 @@ export const PhotoUpload: React.FC = () => {
       form.append('website', ''); // honeypot field for basic bot filtering
       files.forEach((file) => form.append('files', file));
 
-      const data = await uploadGuestPhotos(form).catch((err) => {
-        throw new Error(mapUploadError(err instanceof Error ? err.message : undefined));
-      });
+      const data = useLocalDemoUpload
+        ? (() => {
+            appendDemoGuestPhotoUploads({
+              siteSlug,
+              inviteToken: identity?.guestInviteToken ?? access?.inviteToken ?? (token.trim() || null),
+              guestName,
+              guestEmail,
+              note,
+              files: files.map((file) => ({
+                name: file.name,
+                type: file.type,
+                size: file.size,
+              })),
+            });
+            return {
+              uploaded: files.map((file) => ({ name: file.name })),
+              failed: [],
+            };
+          })()
+        : await uploadGuestPhotos(form).catch((err) => {
+            throw new Error(mapUploadError(err instanceof Error ? err.message : undefined));
+          });
 
       const uploaded = Array.isArray(data.uploaded) ? data.uploaded : [];
       const failed = Array.isArray(data.failed) ? data.failed : [];

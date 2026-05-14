@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildPhotoUploadAccessPayload, buildPhotoUploadIdentityPayload, mapUploadError, PhotoUpload, safePhotoUploadMessage } from './PhotoUpload';
+import * as guestPhotoDemoState from './dashboard/guestPhotos/guestPhotoDemoState';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -31,6 +32,11 @@ vi.mock('react-i18next', () => ({
         'photo_upload.limits': 'Up to 10 files per upload, 30MB per file, 120MB total.',
         'photo_upload.upload_files': 'Upload files',
         'photo_upload.uploading': 'Uploading...',
+        'photo_upload.upload_success': `${params?.count} file uploaded.`,
+        'photo_upload.upload_partial': `${params?.uploaded} uploaded, ${params?.failed} failed.`,
+        'photo_upload.see_recap': 'See the recap',
+        'photo_upload.back_hub': 'Back to the hub',
+        'photo_upload.create_own': 'Create your own',
       };
       return translations[key] ?? key;
     },
@@ -132,5 +138,60 @@ describe('photo upload guest error copy', () => {
     });
 
     expect(screen.getByRole('status')).toHaveTextContent('1 file(s) selected');
+  });
+
+  it('uses the local demo upload path for photo memory QA guest video uploads', async () => {
+    const appendDemoGuestPhotoUploadsSpy = vi.spyOn(guestPhotoDemoState, 'appendDemoGuestPhotoUploads').mockReturnValue(
+      guestPhotoDemoState.buildDefaultDemoGuestPhotoState(),
+    );
+
+    const originalFetch = global.fetch;
+    global.fetch = vi.fn();
+    window.history.pushState({}, '', '/photos/upload?site=alex-jordan-demo&hub=1&invite_token=token-c-2&photoMemoryFlowQa=1');
+
+    render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(PhotoUpload),
+      ),
+    );
+
+    fireEvent.change(screen.getByLabelText('Your name (optional)'), {
+      target: { value: 'Taylor Guest' },
+    });
+    fireEvent.change(screen.getByLabelText('Email (optional)'), {
+      target: { value: 'taylor@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('Note (optional)'), {
+      target: { value: 'Short welcome toast clip.' },
+    });
+    fireEvent.change(screen.getByLabelText('Files'), {
+      target: {
+        files: [new File(['video-bytes'], 'welcome-toast.mp4', { type: 'video/mp4' })],
+      },
+    });
+
+    fireEvent.submit(screen.getByRole('button', { name: 'Upload files' }).closest('form')!);
+
+    await screen.findByText('1 file uploaded.');
+    expect(appendDemoGuestPhotoUploadsSpy).toHaveBeenCalledWith({
+      siteSlug: 'alex-jordan-demo',
+      inviteToken: 'token-c-2',
+      guestName: 'Taylor Guest',
+      guestEmail: 'taylor@example.com',
+      note: 'Short welcome toast clip.',
+      files: [
+        {
+          name: 'welcome-toast.mp4',
+          type: 'video/mp4',
+          size: 11,
+        },
+      ],
+    });
+    expect(global.fetch).not.toHaveBeenCalledWith(expect.stringContaining('/functions/v1/photo-upload'), expect.anything());
+
+    appendDemoGuestPhotoUploadsSpy.mockRestore();
+    global.fetch = originalFetch;
   });
 });
