@@ -1,6 +1,7 @@
 import { buildGuestHubActions, summarizeGuestHubActions } from '../../../lib/guestHubActions';
 import { buildGuestHubQrAssets } from '../../../lib/guestHubQrAssets';
 import { buildMemoryFlowReadiness } from '../../../lib/memoryFlowReadiness';
+import { buildPublicSiteUrl } from '../../../lib/publicSiteSlug';
 import {
   buildPhotoDashboardCounts,
   buildPhotoMemoryCollections,
@@ -89,8 +90,9 @@ export function buildGuestPhotoDashboardDerivedState({
   } = photoDashboardCounts;
   const { reviewUploads } = photoMemoryCollections;
 
-  const guestHubUrl = siteSlug ? `${window.location.origin}/event/${encodeURIComponent(siteSlug)}` : '';
-  const guestRecapUrl = siteSlug ? `${window.location.origin}/event/${encodeURIComponent(siteSlug)}/recap` : '';
+  const publicSiteUrl = buildPublicSiteUrl(siteSlug);
+  const guestHubUrl = publicSiteUrl ? `${publicSiteUrl}/event/${encodeURIComponent(siteSlug ?? '')}` : '';
+  const guestRecapUrl = publicSiteUrl ? `${publicSiteUrl}/event/${encodeURIComponent(siteSlug ?? '')}/recap` : '';
   const guestHubActions = siteSlug ? buildGuestHubActions(siteSlug, hubSettings) : [];
   const guestHubActionSummary = summarizeGuestHubActions(guestHubActions);
   const guestHubQrAssets = buildGuestHubQrAssets({

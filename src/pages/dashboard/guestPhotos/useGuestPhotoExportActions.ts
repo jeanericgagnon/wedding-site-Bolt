@@ -121,8 +121,10 @@ export function useGuestPhotoExportActions({
     anchor.download = filename;
     document.body.appendChild(anchor);
     anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => {
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    }, 0);
   };
 
   const copyText = async (value: string, key: string) => {
