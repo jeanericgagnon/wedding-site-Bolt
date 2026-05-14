@@ -229,6 +229,7 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
   const reviewCampaignCount = messages.filter((message) => message.status === 'failed').length;
   const deliveredCoverageRate = deliveryStats.targeted > 0 ? Math.round((deliveryStats.delivered / deliveryStats.targeted) * 100) : null;
   const reviewCoverageRate = deliveryStats.targeted > 0 ? Math.round((deliveryStats.failed / deliveryStats.targeted) * 100) : null;
+  const contactCoverageRate = deliveryStats.targeted > 0 ? Math.round((deliveryStats.skipped / deliveryStats.targeted) * 100) : null;
   const unreachedCoverageRate = deliveryStats.targeted > 0 ? Math.round((deliveryStats.unreached / deliveryStats.targeted) * 100) : null;
 
   return (
@@ -298,9 +299,9 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
             <p className="mt-1 text-xs text-text-tertiary">
               {deliveryStats.skipped} need contact details · {deliveryStats.unreached} not reached yet
             </p>
-            {deliveredCoverageRate != null && reviewCoverageRate != null && unreachedCoverageRate != null && (
+            {deliveredCoverageRate != null && reviewCoverageRate != null && contactCoverageRate != null && unreachedCoverageRate != null && (
               <p className="mt-1 text-xs text-text-tertiary">
-                {deliveredCoverageRate}% delivered coverage · {reviewCoverageRate}% review coverage · {unreachedCoverageRate}% unreached
+                {deliveredCoverageRate}% delivered coverage · {reviewCoverageRate}% review coverage · {contactCoverageRate}% needs contact · {unreachedCoverageRate}% unreached
               </p>
             )}
           </>
@@ -1171,7 +1172,7 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
                 {channelDeliveryBreakdown[channel].delivered} delivered · {channelDeliveryBreakdown[channel].failed} need review
               </p>
               <p className="mt-1 text-[11px] text-text-tertiary">
-                {channelDeliveryBreakdown[channel].deliveredRate}% delivered coverage
+                {channelDeliveryBreakdown[channel].deliveredRate}% delivered coverage · {channelDeliveryBreakdown[channel].skippedRate}% needs contact
               </p>
               <p className="mt-1 text-[11px] text-text-tertiary">
                 {channelDeliveryBreakdown[channel].skipped} need contact details · {channelDeliveryBreakdown[channel].unreached} not reached yet
@@ -1302,8 +1303,13 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                 <p className="text-[11px] text-text-tertiary">{thread.count} send{thread.count !== 1 ? 's' : ''} · latest {thread.latestStatus} · click to filter history</p>
               </div>
               <div className="text-right text-[11px] text-text-tertiary">
+                {(() => {
+                  const targeted = thread.delivered + thread.failed + thread.skipped + thread.unreached;
+                  const skippedRate = targeted > 0 ? Math.round((thread.skipped / targeted) * 100) : null;
+                  return (
+                    <>
                 <p>{thread.delivered} delivered · {thread.failed} need review</p>
-                {thread.deliveredRecipients > 0 && <p className="text-text-secondary">{thread.deliveredRate}% delivered coverage</p>}
+                {thread.deliveredRecipients > 0 && <p className="text-text-secondary">{thread.deliveredRate}% delivered coverage{skippedRate != null ? ` · ${skippedRate}% needs contact` : ''}</p>}
                 {engagementSummary && <p className="text-text-secondary">{engagementSummary}</p>}
                 {(thread.skipped > 0 || thread.unreached > 0) && (
                   <p className="text-warning">
@@ -1313,6 +1319,9 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                   </p>
                 )}
                 {thread.deliveredRecipients > 0 && <p className="text-text-secondary">{thread.openRate}% open · {thread.clickRate}% click · {thread.replyRate}% reply</p>}
+                    </>
+                  );
+                })()}
               </div>
             </button>
               );
@@ -1340,10 +1349,20 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
           </div>
         </div>
         <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
+          {(() => {
+            const activeThreadTargeted = activeCampaignThread.delivered + activeCampaignThread.failed + activeCampaignThread.skipped + activeCampaignThread.unreached;
+            const activeThreadSkippedRate = activeThreadTargeted > 0 ? Math.round((activeCampaignThread.skipped / activeThreadTargeted) * 100) : null;
+            return (
+              <>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Delivered {activeCampaignThread.delivered}</span>
           {activeCampaignThread.deliveredRecipients > 0 && (
             <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
               {activeCampaignThread.deliveredRate}% delivered coverage
+            </span>
+          )}
+          {activeThreadSkippedRate != null && (
+            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+              {activeThreadSkippedRate}% needs contact
             </span>
           )}
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs review {activeCampaignThread.failed}</span>
@@ -1354,6 +1373,9 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
           {activeCampaignThread.clicked > 0 && <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Clicked {activeCampaignThread.clicked}</span>}
           {activeCampaignThread.replied > 0 && <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Replied {activeCampaignThread.replied}</span>}
           {activeCampaignThread.bounced > 0 && <span className="rounded-lg border border-warning/20 bg-warning-light px-3 py-1 text-warning">Bounced {activeCampaignThread.bounced}</span>}
+              </>
+            );
+          })()}
         </div>
         {activeCampaignLatestMessage && (
           <div className="mt-4 rounded-lg border border-border-subtle bg-white px-4 py-4">
@@ -1395,12 +1417,14 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                   0,
                 );
                 const deliveredRate = targetedRecipients > 0 ? Math.round((deliveredRecipients / targetedRecipients) * 100) : null;
+                const skippedRate = targetedRecipients > 0 ? Math.round((getSkippedCount(activeCampaignLatestMessage, deliveries) / targetedRecipients) * 100) : null;
                 const openRate = deliveredRecipients > 0 && engagement.opened != null ? Math.round((engagement.opened / deliveredRecipients) * 100) : null;
                 const clickRate = deliveredRecipients > 0 && engagement.clicked != null ? Math.round((engagement.clicked / deliveredRecipients) * 100) : null;
                 const replyRate = deliveredRecipients > 0 && engagement.replied != null ? Math.round((engagement.replied / deliveredRecipients) * 100) : null;
                 return (
                   <>
                     {deliveredRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{deliveredRate}% delivered coverage</span>}
+                    {skippedRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{skippedRate}% needs contact</span>}
                     {engagement.opened != null && engagement.opened > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Opened {engagement.opened}</span>}
                     {engagement.viewed != null && engagement.viewed > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Viewed {engagement.viewed}</span>}
                     {engagement.clicked != null && engagement.clicked > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Clicked {engagement.clicked}</span>}

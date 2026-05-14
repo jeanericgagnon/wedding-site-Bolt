@@ -385,6 +385,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: per-channel history summaries, recent campaign-thread rollups, and the latest campaign message summary now also surface delivered coverage rates, so follow-through coverage stays visible beside engagement rates instead of making owners infer delivery health from raw counts alone
    - this batch shipped: the active campaign thread badge row now also surfaces delivered coverage, so owners keep delivery-completeness readback when they focus a thread instead of dropping back to counts-only chips
    - this batch shipped: the top-level guest-reach snapshot and the message detail next-send plan now also surface review and unreached coverage percentages beside delivered coverage, so owners can judge cleanup effort from the main snapshot and the drilldown modal without mentally converting raw counts into follow-through risk
+   - this batch shipped: the top-level guest-reach snapshot, per-channel history, active campaign thread, latest campaign summary, and message detail review plan now also surface needs-contact coverage, so contact cleanup no longer disappears from the normalized follow-through story once owners move between summary and drilldown surfaces
    - keep extending normalized delivery/open/view/bounce/replied truth across channels and real live rows
    - prove customer-safe delivery-failure grouping against live rows
    - add authenticated live browser proof for composing/saving each operational segment on the shipped owner runtime

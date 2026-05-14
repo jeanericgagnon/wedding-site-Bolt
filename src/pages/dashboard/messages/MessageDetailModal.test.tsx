@@ -95,7 +95,7 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('Delivered 1')).toBeInTheDocument();
     expect(screen.getByText('Needs review 2')).toBeInTheDocument();
     expect(screen.getByText('Not reached 1')).toBeInTheDocument();
-    expect(screen.getByText('25% delivered coverage · 50% review coverage · 25% unreached')).toBeInTheDocument();
+    expect(screen.getByText('25% delivered coverage · 50% review coverage · 0% needs contact · 25% unreached')).toBeInTheDocument();
     expect(screen.getByText('100% open · 0% click · 0% reply')).toBeInTheDocument();
     expect(screen.getByText('Some guests still were not reached after a valid send attempt.')).toBeInTheDocument();
   });
@@ -126,6 +126,7 @@ describe('MessageDetailModal', () => {
 
     expect(screen.getByText('Needs contact 1')).toBeInTheDocument();
     expect(screen.getByText('Not reached 1')).toBeInTheDocument();
+    expect(screen.getByText('20% delivered coverage · 40% review coverage · 20% needs contact · 20% unreached')).toBeInTheDocument();
     expect(screen.getByText('Clean up contact details first, then decide whether unreached guests need another send.')).toBeInTheDocument();
   });
 
