@@ -464,6 +464,8 @@ Execution rule for this section:
    - this batch shipped: direct guest invite-entry routes now feed aggregate invite-open analytics too, so guest contact update, guestbook, photo upload, and vault contribution views no longer sit outside the measured invitation-open lane when guests skip the top-level hub
    - this batch shipped: focused proof is green for RSVP-route invite-open tracking, event RSVP invite-open tracking, and analytics summary aggregation for those new RSVP targets
    - this batch shipped: focused proof is green for direct guest-route invite-open instrumentation and analytics summary aggregation across those new guest-contact, guestbook, photo-upload, and vault targets
+   - this batch shipped: direct public site routes now feed aggregate analytics too, so plain `/site/:slug` visits, invite-token site entries, and QR-tagged site entries no longer disappear from the owner funnel when guests land on the site shell before the hub
+   - this batch shipped: focused proof is green for site-route analytics target classification plus summary aggregation across `/site`, `/site/invite`, and `/site/qr`
    - rerun the same owner analytics readback against the shipped production runtime after the next approved deploy
    - review whether any remaining non-hub, non-RSVP, non-guest-route invite entry surfaces still need aggregate instrumentation before claiming broader invitation analytics coverage
    - add live production proof that public and guest-facing routes still expose no owner analytics detail

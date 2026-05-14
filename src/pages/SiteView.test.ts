@@ -64,6 +64,7 @@ vi.mock('../lib/publicSiteProject', () => ({
 
 import { combineDateAndTime, createAlexJordanDemoWeddingData, toIsoDateOrUndefined } from './siteViewHelpers';
 import { getUrlWithoutPublicAccessToken } from '../lib/publicAccessArtifacts';
+import { resolveSiteViewAnalyticsTarget } from './SiteView';
 
 describe('createAlexJordanDemoWeddingData', () => {
   it('skips invalid demo wedding dates instead of crashing public demo hydration', () => {
@@ -101,5 +102,15 @@ describe('getUrlWithoutPublicAccessToken', () => {
   it('preserves token-free URLs unchanged', () => {
     expect(getUrlWithoutPublicAccessToken('/site/maya-leo?lang=es#schedule', 'https://dayof.love'))
       .toBe('/site/maya-leo?lang=es#schedule');
+  });
+});
+
+describe('resolveSiteViewAnalyticsTarget', () => {
+  it('classifies QR and invite entry separately from ordinary public site visits', () => {
+    expect(resolveSiteViewAnalyticsTarget(new URLSearchParams('entry=qr'))).toBe('/site/qr');
+    expect(resolveSiteViewAnalyticsTarget(new URLSearchParams('token=private-invite'))).toBe('/site/invite');
+    expect(resolveSiteViewAnalyticsTarget(new URLSearchParams('invite_token=guest-invite'))).toBe('/site/invite');
+    expect(resolveSiteViewAnalyticsTarget(new URLSearchParams('passwordSession=session-1'))).toBe('/site/invite');
+    expect(resolveSiteViewAnalyticsTarget(new URLSearchParams('lang=es'))).toBe('/site');
   });
 });

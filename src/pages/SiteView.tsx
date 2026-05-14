@@ -26,6 +26,7 @@ import { fetchPublicItineraryRows, hasLiveRegistryItems } from './siteViewServic
 import { combineDateAndTime, createAlexJordanDemoWeddingData, toIsoDateOrUndefined } from './siteViewHelpers';
 import { SiteViewRouteView } from './SiteViewRouteView';
 import type { PublicSectionDTO } from '../lib/publicRenderContract';
+import { trackGuestHubEvent } from './guestHubPublicService';
 
 type GuestRenderableSection = Pick<BuilderSectionInstance, 'id' | 'type' | 'variant' | 'enabled' | 'orderIndex' | 'settings' | 'bindings' | 'styleOverrides'> | PublicSectionDTO;
 
@@ -241,6 +242,12 @@ function hasGuestReadyContentForSection(
     default:
       return true;
   }
+}
+
+export function resolveSiteViewAnalyticsTarget(searchParams: URLSearchParams) {
+  if (searchParams.get('entry') === 'qr') return '/site/qr';
+  if (searchParams.has('token') || searchParams.has('invite_token') || searchParams.has('passwordSession')) return '/site/invite';
+  return '/site';
 }
 
 function filterGuestReadyBuilderSections(sections: GuestRenderableSection[], data: WeddingDataV1): GuestRenderableSection[] {
@@ -599,6 +606,12 @@ export const SiteView: React.FC = () => {
 
         if (urlToken) capturePublicInviteTokenFromSearch(resolvedSlug, searchParams);
         setPublicSubresourceAccess(subresourceAccess);
+        trackGuestHubEvent(
+          resolvedSlug,
+          'view',
+          resolveSiteViewAnalyticsTarget(searchParams),
+          subresourceAccess,
+        ).catch(() => {});
 
         const data = access.site;
         setWeddingSiteId(data.id as string);

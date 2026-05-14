@@ -49,6 +49,7 @@ export function buildEmptyAnalyticsEventSummary(lookbackDays = 30): AnalyticsEve
 function isInviteOpenTarget(target: string | null): boolean {
   if (!target) return false;
   return target === '/event/invite'
+    || target === '/site/invite'
     || target === '/rsvp/invite'
     || target === '/rsvp-event/invite'
     || target === '/guest-contact/invite'
@@ -99,13 +100,13 @@ export function buildAnalyticsEventSummary(
     }
 
     if (eventType === 'view') {
-      if (target === '/event') {
+      if (target === '/event' || target === '/site') {
         summary.pageViews += 1;
         summary.siteVisits += 1;
       } else if (isInviteOpenTarget(target)) {
         summary.pageViews += 1;
         summary.inviteOpens += 1;
-      } else if (target === '/event/qr') {
+      } else if (target === '/event/qr' || target === '/site/qr') {
         summary.pageViews += 1;
         summary.qrScans += 1;
       } else if (target === '/event/recap' || target === '/event/recap/invite') {
