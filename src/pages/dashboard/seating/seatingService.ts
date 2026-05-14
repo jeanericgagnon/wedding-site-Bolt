@@ -795,7 +795,22 @@ export function exportSeatingCSV(
   const tableMap = new Map(tables.map(t => [t.id, t]));
   const assignmentMap = new Map(assignments.map(a => [a.guest_id, a]));
 
-  const rows = [['Event', 'Guest Name', 'Email', 'Household / Group', 'RSVP Status', 'Table', 'Seat', 'Checked In', 'Checked In At', 'Exception Flags']];
+  const rows = [[
+    'Event',
+    'Guest Name',
+    'Email',
+    'Household / Group',
+    'RSVP Status',
+    'Meal Choice',
+    'Dietary Restrictions',
+    'Allergies',
+    'Dietary Notes',
+    'Table',
+    'Seat',
+    'Checked In',
+    'Checked In At',
+    'Exception Flags',
+  ]];
   for (const guest of guests) {
     if (!guest.is_attending) continue;
     const assignment = assignmentMap.get(guest.id);
@@ -811,6 +826,10 @@ export function exportSeatingCSV(
       guest.email ?? '',
       guest.household_id ?? guest.group_name ?? '',
       guest.rsvp_status ?? '',
+      guest.meal_choice ?? guest.meal_preference ?? 'No meal recorded',
+      guest.dietary_restrictions ?? '',
+      guest.allergies ?? '',
+      guest.dietary_notes ?? '',
       table?.table_name ?? 'Unassigned',
       assignment?.seat_index != null ? String(assignment.seat_index) : '',
       assignment?.checked_in_at ? 'Yes' : 'No',

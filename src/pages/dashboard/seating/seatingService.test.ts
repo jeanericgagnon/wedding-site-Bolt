@@ -468,6 +468,53 @@ describe('getEligibleGuests', () => {
 });
 
 describe('seating CSV exports', () => {
+  it('includes structured meal and dietary fields in the seating csv export', () => {
+    const guests: EligibleGuest[] = [
+      {
+        id: 'g1',
+        full_name: 'Avery Guest',
+        email: 'avery@example.com',
+        rsvp_status: 'attending',
+        household_id: 'Avery household',
+        group_name: null,
+        is_attending: true,
+        is_invited_to_event: true,
+        meal_preference: 'Pasta',
+        dietary_restrictions: 'Gluten-free',
+        allergies: 'Peanut',
+        dietary_notes: 'Sauce on side',
+      },
+    ];
+    const tables: SeatingTable[] = [
+      {
+        id: 't1',
+        seating_event_id: 'se1',
+        table_name: 'Head Table',
+        capacity: 8,
+        sort_order: 1,
+        notes: '',
+      },
+    ];
+    const assignments: SeatingAssignment[] = [
+      {
+        id: 'a1',
+        seating_event_id: 'se1',
+        table_id: 't1',
+        guest_id: 'g1',
+        seat_index: 1,
+        is_valid: true,
+      },
+    ];
+
+    const csv = exportSeatingCSV(guests, tables, assignments, 'Reception');
+
+    expect(csv).toContain('"Meal Choice"');
+    expect(csv).toContain('"Dietary Restrictions"');
+    expect(csv).toContain('"Allergies"');
+    expect(csv).toContain('"Dietary Notes"');
+    expect(csv).toContain('"Reception","Avery Guest","avery@example.com","Avery household","attending","Pasta","Gluten-free","Peanut","Sauce on side","Head Table","1","No","",""');
+  });
+
   it('neutralizes spreadsheet formulas in guest and table fields', () => {
     const guests: EligibleGuest[] = [
       {
@@ -504,6 +551,7 @@ describe('seating CSV exports', () => {
 
     expect(exportSeatingCSV(guests, tables, assignments, '-Ceremony')).toContain('"\'=HYPERLINK(""https://bad.example"")"');
     expect(exportSeatingCSV(guests, tables, assignments, '-Ceremony')).toContain('"\'@Head Table"');
+    expect(exportSeatingCSV(guests, tables, assignments, '-Ceremony')).toContain('"No meal recorded"');
     expect(exportPlaceCardsCSV(guests, tables, assignments)).toContain('"\'@Head Table"');
   });
 });
