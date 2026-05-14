@@ -60,6 +60,7 @@ export interface GuestDashboardOverlaysProps {
   itineraryEvents: ItineraryEvent[];
   itineraryFilterEventCount: number;
   loadingDrawer: boolean;
+  rotatingInviteToken: boolean;
   showAddModal: boolean;
   showDeleteAllModal: boolean;
   togglingEventId: string | null;
@@ -75,7 +76,9 @@ export interface GuestDashboardOverlaysProps {
   onConfirmDeleteAllGuests: () => void;
   onCopyContactRequestLink: () => void;
   onFocusGuestSearch: (query: string) => void;
+  onRevokeGuestInviteToken: () => void;
   onResetCsvReview: () => void;
+  onRotateGuestInviteToken: () => void;
   onSaveAssistedRsvp: () => void;
   onSetAssistedRsvpNotes: React.Dispatch<React.SetStateAction<string>>;
   onSetAssistedRsvpSource: React.Dispatch<React.SetStateAction<AssistedRsvpSource>>;
@@ -125,6 +128,7 @@ export function GuestDashboardOverlays({
   itineraryEvents,
   itineraryFilterEventCount,
   loadingDrawer,
+  rotatingInviteToken,
   showAddModal,
   showDeleteAllModal,
   togglingEventId,
@@ -140,7 +144,9 @@ export function GuestDashboardOverlays({
   onConfirmDeleteAllGuests,
   onCopyContactRequestLink,
   onFocusGuestSearch,
+  onRevokeGuestInviteToken,
   onResetCsvReview,
+  onRotateGuestInviteToken,
   onSaveAssistedRsvp,
   onSetAssistedRsvpNotes,
   onSetAssistedRsvpSource,
@@ -210,12 +216,15 @@ export function GuestDashboardOverlays({
           guests={guests}
           itineraryEvents={itineraryEvents}
           loadingDrawer={loadingDrawer}
+          rotatingInviteToken={rotatingInviteToken}
           togglingEventId={togglingEventId}
           weddingSiteInfo={weddingSiteInfo}
           onAddFollowUpTask={onAddFollowUpTask}
           onClose={onCloseItineraryDrawer}
           onCopyContactRequestLink={onCopyContactRequestLink}
           onFocusGuestSearch={onFocusGuestSearch}
+          onRevokeGuestInviteToken={onRevokeGuestInviteToken}
+          onRotateGuestInviteToken={onRotateGuestInviteToken}
           onToast={onToast}
           onToggleEventInvite={onToggleEventInvite}
         />

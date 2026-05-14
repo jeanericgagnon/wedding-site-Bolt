@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { GuestItineraryDrawer } from './GuestItineraryDrawer';
 import type { GuestWithRSVP, ItineraryEvent, WeddingSiteInfo } from './guestDashboardTypes';
@@ -58,12 +58,15 @@ describe('GuestItineraryDrawer', () => {
         guests={[guest]}
         itineraryEvents={events}
         loadingDrawer={false}
+        rotatingInviteToken={false}
         togglingEventId={null}
         weddingSiteInfo={siteInfo}
         onAddFollowUpTask={vi.fn()}
         onClose={vi.fn()}
         onCopyContactRequestLink={vi.fn()}
         onFocusGuestSearch={vi.fn()}
+        onRevokeGuestInviteToken={vi.fn()}
+        onRotateGuestInviteToken={vi.fn()}
         onToast={vi.fn()}
         onToggleEventInvite={vi.fn()}
       />,
@@ -89,5 +92,66 @@ describe('GuestItineraryDrawer', () => {
     expect(screen.getByRole('button', { name: /Open recap as guest/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Open travel section as guest/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Open registry section as guest/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Rotate private RSVP access/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Revoke private RSVP access/i })).toBeInTheDocument();
+  });
+
+  it('fires rotate and revoke callbacks from the private access controls', () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const onRotateGuestInviteToken = vi.fn();
+    const onRevokeGuestInviteToken = vi.fn();
+
+    const guest: GuestWithRSVP = {
+      id: 'guest-1',
+      first_name: 'Maya',
+      last_name: 'Lee',
+      name: 'Maya Lee',
+      email: 'maya@example.com',
+      phone: null,
+      plus_one_allowed: false,
+      plus_one_name: null,
+      invited_to_ceremony: true,
+      invited_to_reception: true,
+      invite_token: 'secret-token',
+      rsvp_status: 'pending',
+      rsvp_received_at: null,
+      household_id: null,
+      invited_event_ids: ['event-1'],
+      rsvp: {
+        attending: true,
+        meal_choice: null,
+        plus_one_name: null,
+        notes: null,
+      },
+    };
+
+    render(
+      <GuestItineraryDrawer
+        guest={guest}
+        guestAuditEntries={[]}
+        guestEventIds={new Set(['event-1'])}
+        guests={[guest]}
+        itineraryEvents={[{ id: 'event-1', event_name: 'Ceremony', event_date: '2026-06-20', start_time: '16:00:00', location_name: 'Garden' }]}
+        loadingDrawer={false}
+        rotatingInviteToken={false}
+        togglingEventId={null}
+        weddingSiteInfo={null}
+        onAddFollowUpTask={vi.fn()}
+        onClose={vi.fn()}
+        onCopyContactRequestLink={vi.fn()}
+        onFocusGuestSearch={vi.fn()}
+        onRevokeGuestInviteToken={onRevokeGuestInviteToken}
+        onRotateGuestInviteToken={onRotateGuestInviteToken}
+        onToast={vi.fn()}
+        onToggleEventInvite={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Rotate private RSVP access/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Revoke private RSVP access/i }));
+
+    expect(onRotateGuestInviteToken).toHaveBeenCalledTimes(1);
+    expect(onRevokeGuestInviteToken).toHaveBeenCalledTimes(1);
+    confirmSpy.mockRestore();
   });
 });

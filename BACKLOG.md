@@ -321,8 +321,8 @@ Execution rule for this section:
    - this batch shipped: the guest hub action model now supports a guest-specific update path that can ride the same private guest identity captured from the link instead of falling back to only public hub actions
    - this batch shipped: guest-specific QR/hub flows now preserve private guest identity across the next-step guest routes instead of only into the first contact-update page
    - this batch shipped: the guest hub action model now includes the anniversary-vault guest path when a private guest invite path exists, so the shared QR/hub surface covers another real private guest workflow without exposing it in the generic public hub
-   - add guest-specific QR mode that never prints private invite access in public assets
-   - add QR revocation/rotation model for guest-specific QR links
+   - this batch shipped: owner guest drawers now expose rotate/revoke controls for private RSVP access, so private guest QR/link sharing is no longer effectively permanent once created
+   - add guest-specific QR mode that never prints private invite access in public assets beyond the owner-controlled private surfaces
    - finish day-of update deep links and any remaining private guest-surface routing in the shared hub model
    - prove generated print-pack assets are nonblank and route correctly after real download
    - add live production mobile proof that public and guest-specific QR modes land on the right actions without private leakage

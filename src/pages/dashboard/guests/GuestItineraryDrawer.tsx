@@ -24,12 +24,15 @@ export interface GuestItineraryDrawerProps {
   guests: GuestWithRSVP[];
   itineraryEvents: ItineraryEvent[];
   loadingDrawer: boolean;
+  rotatingInviteToken: boolean;
   togglingEventId: string | null;
   weddingSiteInfo: WeddingSiteInfo | null;
   onAddFollowUpTask: (task: string) => void;
   onClose: () => void;
   onCopyContactRequestLink: () => void;
   onFocusGuestSearch: (query: string) => void;
+  onRevokeGuestInviteToken: () => void;
+  onRotateGuestInviteToken: () => void;
   onToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   onToggleEventInvite: (eventId: string, currentlyInvited: boolean) => void;
 }
@@ -41,12 +44,15 @@ export function GuestItineraryDrawer({
   guests,
   itineraryEvents,
   loadingDrawer,
+  rotatingInviteToken,
   togglingEventId,
   weddingSiteInfo,
   onAddFollowUpTask,
   onClose,
   onCopyContactRequestLink,
   onFocusGuestSearch,
+  onRevokeGuestInviteToken,
+  onRotateGuestInviteToken,
   onToast,
   onToggleEventInvite,
 }: GuestItineraryDrawerProps) {
@@ -104,9 +110,12 @@ export function GuestItineraryDrawer({
             guestEventIds={guestEventIds}
             guests={guests}
             itineraryEvents={itineraryEvents}
+            rotatingInviteToken={rotatingInviteToken}
             weddingSiteInfo={weddingSiteInfo}
             onAddFollowUpTask={onAddFollowUpTask}
             onFocusGuestSearch={onFocusGuestSearch}
+            onRevokeGuestInviteToken={onRevokeGuestInviteToken}
+            onRotateGuestInviteToken={onRotateGuestInviteToken}
             onToast={onToast}
           />
 
@@ -149,18 +158,24 @@ function GuestDrawerDetails({
   guestEventIds,
   guests,
   itineraryEvents,
+  rotatingInviteToken,
   weddingSiteInfo,
   onAddFollowUpTask,
   onFocusGuestSearch,
+  onRevokeGuestInviteToken,
+  onRotateGuestInviteToken,
   onToast,
 }: {
   guest: GuestWithRSVP;
   guestEventIds: Set<string>;
   guests: GuestWithRSVP[];
   itineraryEvents: ItineraryEvent[];
+  rotatingInviteToken: boolean;
   weddingSiteInfo: WeddingSiteInfo | null;
   onAddFollowUpTask: (task: string) => void;
   onFocusGuestSearch: (query: string) => void;
+  onRevokeGuestInviteToken: () => void;
+  onRotateGuestInviteToken: () => void;
   onToast: (message: string, type?: 'success' | 'error' | 'info') => void;
 }) {
   const entries = getCustomAnswerEntries(guest.rsvp?.custom_answers || null);
@@ -311,6 +326,30 @@ function GuestDrawerDetails({
             )}
           </div>
         )}
+        <div className="flex flex-wrap gap-2 pt-1">
+          <button
+            onClick={() => void onRotateGuestInviteToken()}
+            disabled={rotatingInviteToken}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border bg-white hover:border-primary hover:text-primary transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {rotatingInviteToken ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ExternalLink className="w-3.5 h-3.5" />}
+            Rotate private RSVP access
+          </button>
+          {guest.invite_token && (
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined' && !window.confirm('Revoke this guest RSVP link and QR? Existing copies will stop working until you rotate a new one.')) {
+                  return;
+                }
+                void onRevokeGuestInviteToken();
+              }}
+              disabled={rotatingInviteToken}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border bg-white hover:border-primary hover:text-primary transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              Revoke private RSVP access
+            </button>
+          )}
+        </div>
         {visibilityPreview.warnings.length > 0 && (
           <div className="space-y-1">
             {visibilityPreview.warnings.map((warning) => (

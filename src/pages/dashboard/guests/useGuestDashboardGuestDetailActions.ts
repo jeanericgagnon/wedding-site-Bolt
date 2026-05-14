@@ -13,6 +13,8 @@ import {
   setGuestsPreferredLanguageForSite,
   updateGuestCheckInForSite,
   updateGuestHouseholdForSite,
+  updateGuestForSite,
+  generateSecureGuestInviteToken,
   type AssistedRsvpSource,
   type AssistedRsvpStatus,
 } from './guestService';
@@ -51,6 +53,22 @@ export function useGuestDashboardGuestDetailActions({
   const [assistedRsvpNotes, setAssistedRsvpNotes] = useState('');
   const [assistedRsvpSaving, setAssistedRsvpSaving] = useState(false);
   const [lastCheckIn, setLastCheckIn] = useState<{ guestId: string; guestName: string; at: number } | null>(null);
+  const [rotatingInviteToken, setRotatingInviteToken] = useState(false);
+
+  function applyInviteTokenLocally(guestId: string, inviteToken: string | null) {
+    setGuests((prev) =>
+      prev.map((guest) => (
+        guest.id === guestId
+          ? { ...guest, invite_token: inviteToken }
+          : guest
+      )),
+    );
+    setItineraryDrawerGuest((prev) => (
+      prev?.id === guestId
+        ? { ...prev, invite_token: inviteToken }
+        : prev
+    ));
+  }
 
   async function handleMergeIntoHousehold(selectedGuestIds: Set<string>, onMerged?: () => void) {
     if (selectedGuestIds.size < 2 || !weddingSiteId || isDemoMode) return;
@@ -166,6 +184,62 @@ export function useGuestDashboardGuestDetailActions({
       toast('Couldn’t update that event invite.', 'error');
     } finally {
       setTogglingEventId(null);
+    }
+  }
+
+  async function handleRotateGuestInviteToken() {
+    if (!itineraryDrawerGuest) return;
+    if (isGuestsReadOnly) {
+      toast('Your collaborator role cannot rotate guest access links.', 'info');
+      return;
+    }
+    if (!weddingSiteId && !isDemoMode) return;
+
+    setRotatingInviteToken(true);
+    try {
+      const nextToken = isDemoMode
+        ? `demo-guest-${itineraryDrawerGuest.id}-${Date.now().toString(36)}`
+        : await generateSecureGuestInviteToken();
+
+      if (isDemoMode) {
+        applyInviteTokenLocally(itineraryDrawerGuest.id, nextToken);
+      } else if (weddingSiteId) {
+        await updateGuestForSite(weddingSiteId, itineraryDrawerGuest.id, { invite_token: nextToken });
+        await fetchGuests();
+        applyInviteTokenLocally(itineraryDrawerGuest.id, nextToken);
+      }
+
+      toast('Private RSVP access rotated for this guest', 'success');
+    } catch {
+      toast('Couldn’t rotate guest access right now.', 'error');
+    } finally {
+      setRotatingInviteToken(false);
+    }
+  }
+
+  async function handleRevokeGuestInviteToken() {
+    if (!itineraryDrawerGuest) return;
+    if (isGuestsReadOnly) {
+      toast('Your collaborator role cannot revoke guest access links.', 'info');
+      return;
+    }
+    if (!weddingSiteId && !isDemoMode) return;
+
+    setRotatingInviteToken(true);
+    try {
+      if (isDemoMode) {
+        applyInviteTokenLocally(itineraryDrawerGuest.id, null);
+      } else if (weddingSiteId) {
+        await updateGuestForSite(weddingSiteId, itineraryDrawerGuest.id, { invite_token: null });
+        await fetchGuests();
+        applyInviteTokenLocally(itineraryDrawerGuest.id, null);
+      }
+
+      toast('Private RSVP access revoked for this guest', 'success');
+    } catch {
+      toast('Couldn’t revoke guest access right now.', 'error');
+    } finally {
+      setRotatingInviteToken(false);
     }
   }
 
@@ -306,6 +380,9 @@ export function useGuestDashboardGuestDetailActions({
     loadingDrawer,
     openAssistedRsvpModal,
     openItineraryDrawer,
+    handleRevokeGuestInviteToken,
+    handleRotateGuestInviteToken,
+    rotatingInviteToken,
     setAssistedRsvpGuest,
     setAssistedRsvpNotes,
     setAssistedRsvpSource,
