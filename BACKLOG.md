@@ -412,11 +412,13 @@ Execution rule for this section:
    - add owner claim-state workflows, richer public fund-card polish, and broader registry analytics
 
 11. `ACTIVE`: seating and catering export polish
+   - this batch shipped: catering packet rows now include richer structured household/group, dietary-restriction, allergy, and guest-note columns instead of flattening everything into one generic note field
+   - this batch shipped: seating exports now include a dedicated kitchen-summary CSV that groups meal counts plus dietary/allergy highlights for catering prep beyond the existing row CSV, table summary, PDF, and image packet
+   - this batch shipped: focused proof is green for the richer catering packet rows, grouped kitchen-summary export, and handoff review file inventory
    - add live production seating write/read with cleanup for packet/export flows
    - inspect real downloaded CSV/PDF/image packets against RSVP source data
    - prove seating lookup readback after assignment edits and itinerary/seating drift after RSVP changes
-   - persist richer structured meal/dietary/venue-note fields where schema is still thin
-   - add catering-specific exports beyond the current CSV/PDF/image packet set
+   - keep extending source-of-truth meal/dietary fields wherever real RSVP schemas still flatten too much detail upstream
 
 12. `ACTIVE`: budget and vendor ledger
    - add live owner add/edit/delete proof with cleanup for vendor/payment/budget rows

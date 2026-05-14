@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildCateringKitchenSummaryCsv,
+  buildCateringKitchenSummaryRows,
   buildSeatingCateringPacket,
   buildSeatingCateringHandoffReview,
   buildSeatingCateringReadiness,
@@ -94,14 +96,20 @@ describe('seating catering export readiness', () => {
         guestName: 'Sam Reed',
         tableName: 'Unassigned',
         mealChoice: 'No meal recorded',
+        dietaryRestrictions: '',
+        allergies: '',
         dietaryNotes: 'Nut allergy',
+        guestNotes: 'Nut allergy',
         assignmentStatus: 'invalid',
       }),
       expect.objectContaining({
         guestName: 'Ari Lane',
         tableName: 'Unassigned',
         mealChoice: 'No meal recorded',
+        dietaryRestrictions: '',
+        allergies: '',
         dietaryNotes: '',
+        guestNotes: '',
         assignmentStatus: 'unassigned',
       }),
     ]);
@@ -110,6 +118,73 @@ describe('seating catering export readiness', () => {
     expect(csv).toContain('"No meal recorded"');
     expect(csv).toContain('"invalid"');
     expect(csv).toContain('"unassigned"');
+    expect(csv).toContain('"Household / Group"');
+    expect(csv).toContain('"Dietary Restrictions"');
+    expect(csv).toContain('"Allergies"');
+  });
+
+  it('builds a grouped kitchen summary with dietary and allergy highlights', () => {
+    const packet = buildSeatingCateringPacket({
+      tables,
+      guests: [
+        {
+          id: 'guest-1',
+          full_name: 'Maya Stone',
+          email: 'maya@example.com',
+          household_id: 'Stone household',
+          is_attending: true,
+          meal_choice: 'Fish',
+          dietary_restrictions: 'No shellfish',
+          allergies: 'Peanut',
+        },
+        {
+          id: 'guest-2',
+          full_name: 'Leo North',
+          email: 'leo@example.com',
+          group_name: 'College friends',
+          is_attending: true,
+          mealChoice: 'Fish',
+          notes: 'Gluten sensitive',
+        },
+        {
+          id: 'guest-3',
+          full_name: 'Ari Lane',
+          email: 'ari@example.com',
+          is_attending: true,
+          mealChoice: 'Vegetarian',
+        },
+      ],
+      assignments: [
+        { guest_id: 'guest-1', table_id: 'table-1', seat_index: 1, is_valid: true },
+        { guest_id: 'guest-2', table_id: 'table-1', seat_index: 2, is_valid: true },
+        { guest_id: 'guest-3', table_id: 'table-2', seat_index: 1, is_valid: true },
+      ],
+    });
+
+    expect(buildCateringKitchenSummaryRows(packet, 'Reception')).toEqual([
+      {
+        eventName: 'Reception',
+        mealChoice: 'Fish',
+        guestCount: 2,
+        dietaryGuestCount: 2,
+        allergyGuestCount: 1,
+        tables: 'Table 1',
+        dietaryHighlights: 'No shellfish; Peanut; Gluten sensitive',
+      },
+      {
+        eventName: 'Reception',
+        mealChoice: 'Vegetarian',
+        guestCount: 1,
+        dietaryGuestCount: 0,
+        allergyGuestCount: 0,
+        tables: 'Table 2',
+        dietaryHighlights: '',
+      },
+    ]);
+
+    const csv = buildCateringKitchenSummaryCsv(packet, 'Reception');
+    expect(csv).toContain('"Event","Meal Choice","Guest Count","Guests With Dietary Notes","Guests With Allergies","Tables","Dietary Highlights"');
+    expect(csv).toContain('"Reception","Fish","2","2","1","Table 1","No shellfish; Peanut; Gluten sensitive"');
   });
 
   it('builds a venue handoff review from packet source counts and export files', () => {
@@ -151,6 +226,7 @@ describe('seating catering export readiness', () => {
     });
     expect(review.files.map((file) => file.id)).toEqual([
       'catering-csv',
+      'kitchen-summary',
       'table-summary',
       'seating-pdf',
       'floor-plan-image',

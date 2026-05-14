@@ -86,6 +86,7 @@ export function SeatingDashboardRouteContent(props: {
   handleDragStart: (event: DragStartEvent) => void;
   handleExportCSV: () => void;
   handleExportCateringCSV: () => void;
+  handleExportKitchenSummaryCSV: () => void;
   handleExportImage: () => void;
   handleExportPDF: () => void;
   handleExportTableSummaryCSV: () => void;
@@ -162,6 +163,9 @@ export function SeatingDashboardRouteContent(props: {
           </Button>
           <Button variant="outline" size="sm" onClick={props.handleExportCateringCSV}>
             <Download className="w-4 h-4 mr-1" /> Catering CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={props.handleExportKitchenSummaryCSV}>
+            <Download className="w-4 h-4 mr-1" /> Kitchen summary
           </Button>
           <Button variant="outline" size="sm" onClick={props.handleExportPDF}>
             <Download className="w-4 h-4 mr-1" /> PDF

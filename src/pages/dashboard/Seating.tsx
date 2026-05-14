@@ -153,6 +153,7 @@ export const DashboardSeating: React.FC = () => {
   const {
     handleExportCSV,
     handleExportCateringCSV,
+    handleExportKitchenSummaryCSV,
     handleExportImage,
     handleExportPDF,
     handleExportPlaceCards,
@@ -285,6 +286,7 @@ export const DashboardSeating: React.FC = () => {
         handleDragStart={handleDragStart}
         handleExportCSV={handleExportCSV}
         handleExportCateringCSV={handleExportCateringCSV}
+        handleExportKitchenSummaryCSV={handleExportKitchenSummaryCSV}
         handleExportImage={handleExportImage}
         handleExportPDF={handleExportPDF}
         handleExportTableSummaryCSV={handleExportTableSummaryCSV}

@@ -6,6 +6,10 @@ export interface SeatingCateringGuest {
   id: string;
   full_name: string;
   email?: string | null;
+  household_id?: string | null;
+  householdId?: string | null;
+  group_name?: string | null;
+  groupName?: string | null;
   is_attending: boolean;
   meal_choice?: string | null;
   mealChoice?: string | null;
@@ -38,10 +42,14 @@ export interface CateringPacketRow {
   guestId: string;
   guestName: string;
   email: string;
+  householdGroup: string;
   tableName: string;
   seat: string;
   mealChoice: string;
+  dietaryRestrictions: string;
+  allergies: string;
   dietaryNotes: string;
+  guestNotes: string;
   checkedIn: 'Yes' | 'No';
   assignmentStatus: CateringAssignmentStatus;
 }
@@ -106,6 +114,16 @@ export interface SeatingCateringHandoffReview {
   warnings: string[];
 }
 
+export interface CateringKitchenSummaryRow {
+  eventName: string;
+  mealChoice: string;
+  guestCount: number;
+  dietaryGuestCount: number;
+  allergyGuestCount: number;
+  tables: string;
+  dietaryHighlights: string;
+}
+
 function normalizeText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
@@ -125,6 +143,26 @@ export function getGuestDietaryNotes(guest: SeatingCateringGuest): string {
     || normalizeText(guest.dietaryNotes)
     || normalizeText(guest.allergies)
     || normalizeText(guest.notes);
+}
+
+export function getGuestDietaryRestrictions(guest: SeatingCateringGuest): string {
+  return normalizeText(guest.dietary_restrictions)
+    || normalizeText(guest.dietaryRestrictions);
+}
+
+export function getGuestAllergies(guest: SeatingCateringGuest): string {
+  return normalizeText(guest.allergies);
+}
+
+export function getGuestNotes(guest: SeatingCateringGuest): string {
+  return normalizeText(guest.notes);
+}
+
+export function getGuestHouseholdGroup(guest: SeatingCateringGuest): string {
+  return normalizeText(guest.household_id)
+    || normalizeText(guest.householdId)
+    || normalizeText(guest.group_name)
+    || normalizeText(guest.groupName);
 }
 
 export function buildSeatingCateringPacket(input: {
@@ -150,10 +188,14 @@ export function buildSeatingCateringPacket(input: {
       guestId: guest.id,
       guestName: guest.full_name || 'Guest',
       email: guest.email ?? '',
+      householdGroup: getGuestHouseholdGroup(guest),
       tableName: table?.table_name ?? 'Unassigned',
       seat: assignment?.seat_index != null ? String(assignment.seat_index) : '',
       mealChoice: getGuestMealChoice(guest),
+      dietaryRestrictions: getGuestDietaryRestrictions(guest),
+      allergies: getGuestAllergies(guest),
       dietaryNotes: getGuestDietaryNotes(guest),
+      guestNotes: getGuestNotes(guest),
       checkedIn: assignment?.checked_in_at ? 'Yes' : 'No',
       assignmentStatus,
     };
@@ -315,16 +357,81 @@ export function buildSeatingCateringReadiness(input: {
 
 export function cateringRowsToCsv(rows: CateringPacketRow[]): string {
   const csvRows = [
-    ['Guest Name', 'Email', 'Table', 'Seat', 'Meal Choice', 'Dietary Notes', 'Checked In', 'Assignment Status'],
+    ['Guest Name', 'Email', 'Household / Group', 'Table', 'Seat', 'Meal Choice', 'Dietary Restrictions', 'Allergies', 'Dietary Notes', 'Guest Notes', 'Checked In', 'Assignment Status'],
     ...rows.map((row) => [
       row.guestName,
       row.email,
+      row.householdGroup,
       row.tableName,
       row.seat,
       row.mealChoice,
+      row.dietaryRestrictions,
+      row.allergies,
       row.dietaryNotes,
+      row.guestNotes,
       row.checkedIn,
       row.assignmentStatus,
+    ]),
+  ];
+
+  return csvRows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+}
+
+export function buildCateringKitchenSummaryRows(packet: SeatingCateringPacket, eventName: string): CateringKitchenSummaryRow[] {
+  const safeEventName = normalizeText(eventName) || 'Event';
+  const mealMap = new Map<string, {
+    guestCount: number;
+    dietaryGuestCount: number;
+    allergyGuestCount: number;
+    tables: Set<string>;
+    dietaryHighlights: Set<string>;
+  }>();
+
+  packet.rows.forEach((row) => {
+    const key = row.mealChoice || 'No meal recorded';
+    const entry = mealMap.get(key) ?? {
+      guestCount: 0,
+      dietaryGuestCount: 0,
+      allergyGuestCount: 0,
+      tables: new Set<string>(),
+      dietaryHighlights: new Set<string>(),
+    };
+    entry.guestCount += 1;
+    if (row.dietaryRestrictions || row.dietaryNotes) entry.dietaryGuestCount += 1;
+    if (row.allergies) entry.allergyGuestCount += 1;
+    if (row.tableName && row.tableName !== 'Unassigned') entry.tables.add(row.tableName);
+    [row.dietaryRestrictions, row.allergies, row.dietaryNotes]
+      .map((value) => normalizeText(value))
+      .filter(Boolean)
+      .forEach((value) => entry.dietaryHighlights.add(value));
+    mealMap.set(key, entry);
+  });
+
+  return Array.from(mealMap.entries())
+    .map(([mealChoice, entry]) => ({
+      eventName: safeEventName,
+      mealChoice,
+      guestCount: entry.guestCount,
+      dietaryGuestCount: entry.dietaryGuestCount,
+      allergyGuestCount: entry.allergyGuestCount,
+      tables: Array.from(entry.tables).sort((a, b) => a.localeCompare(b)).join('; '),
+      dietaryHighlights: Array.from(entry.dietaryHighlights).slice(0, 6).join('; '),
+    }))
+    .sort((a, b) => b.guestCount - a.guestCount || a.mealChoice.localeCompare(b.mealChoice));
+}
+
+export function buildCateringKitchenSummaryCsv(packet: SeatingCateringPacket, eventName: string): string {
+  const rows = buildCateringKitchenSummaryRows(packet, eventName);
+  const csvRows = [
+    ['Event', 'Meal Choice', 'Guest Count', 'Guests With Dietary Notes', 'Guests With Allergies', 'Tables', 'Dietary Highlights'],
+    ...rows.map((row) => [
+      row.eventName,
+      row.mealChoice,
+      String(row.guestCount),
+      String(row.dietaryGuestCount),
+      String(row.allergyGuestCount),
+      row.tables,
+      row.dietaryHighlights,
     ]),
   ];
 
@@ -346,9 +453,18 @@ export function buildSeatingCateringHandoffReview(packet: SeatingCateringPacket)
       label: 'Catering CSV',
       format: 'CSV',
       detail: hasRows
-        ? `${packet.rows.length} attending guest row${packet.rows.length === 1 ? '' : 's'} with meal, dietary, table, seat, and check-in columns.`
+        ? `${packet.rows.length} attending guest row${packet.rows.length === 1 ? '' : 's'} with household, meal, dietary, allergy, table, seat, and check-in columns.`
         : 'Add attending guests before exporting a catering row file.',
       status: hasRows && !needsAssignmentReview ? 'ready' : 'review',
+    },
+    {
+      id: 'kitchen-summary',
+      label: 'Kitchen summary',
+      format: 'CSV',
+      detail: hasRows
+        ? 'Grouped meal counts plus dietary and allergy highlights for kitchen prep.'
+        : 'Add attending guests before exporting a kitchen summary.',
+      status: hasRows ? 'ready' : 'review',
     },
     {
       id: 'table-summary',

@@ -1,4 +1,4 @@
-import { cateringRowsToCsv } from '../../../lib/seatingCateringExportReadiness';
+import { buildCateringKitchenSummaryCsv, cateringRowsToCsv } from '../../../lib/seatingCateringExportReadiness';
 import type { SeatingLayoutVersion, EligibleGuest, SeatingAssignment, SeatingTable } from './seatingService';
 import { createSeatingVersion, downloadCSV, exportPlaceCardsCSV, exportSeatingCSV, markSeatingVersionRestored } from './seatingService';
 import { buildSeatingLayoutSvg, buildSeatingReportHtml, buildTableSummaryCsv, safeExportSlug } from './seatingDashboardUtils';
@@ -48,6 +48,12 @@ export function useSeatingDashboardArtifacts(args: {
     const selectedEvent = getSelectedEvent();
     const eventName = selectedEvent?.event_name ?? 'Event';
     downloadCSV(cateringRowsToCsv(args.cateringPacket.rows), `catering-packet-${safeExportSlug(eventName)}.csv`);
+  }
+
+  function handleExportKitchenSummaryCSV() {
+    const selectedEvent = getSelectedEvent();
+    const eventName = selectedEvent?.event_name ?? 'Event';
+    downloadCSV(buildCateringKitchenSummaryCsv(args.cateringPacket, eventName), `kitchen-summary-${safeExportSlug(eventName)}.csv`);
   }
 
   function handlePrint() {
@@ -158,6 +164,7 @@ export function useSeatingDashboardArtifacts(args: {
   return {
     handleExportCSV,
     handleExportCateringCSV,
+    handleExportKitchenSummaryCSV,
     handleExportImage,
     handleExportPDF,
     handleExportPlaceCards,
