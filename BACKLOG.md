@@ -354,6 +354,8 @@ Execution rule for this section:
    - this batch shipped: RSVP access planning now uses real guest, household, and event counts to spell out household-scope readiness plus the exact recovery, bad-code, and wrong-event blockers that keep unique-code, password, and open RSVP out of the launch-ready path
    - this batch shipped: `proof:v1:guests-rsvp-ops` now includes a dedicated RSVP access-truth lane for planner/checklist/settings proof, so household scope and blocked future modes are enforced beyond the old smoke-only strict token lane
    - this batch shipped: RSVP setup truth now models phone/email recovery inputs from real guest contact counts, with owner-facing verification planning that shows when a safer recovery step can be designed without replacing private guest links or overstating unsupported code/password/open modes
+   - this batch shipped: `proof:v1:guests-rsvp-ops` now also includes a real browser pass for the owner RSVP settings route, proving supported primary-mode switching, persisted name-lookup backup truth, template add/readback continuity, and the continued `planned` status of code/password/open modes instead of relying only on planner-unit truth
+   - rerun the same owner RSVP-settings browser flow against the shipped production runtime after the next approved guests deploy so the local proof stays matched to the live dashboard shell
    - if code/password/open RSVP ever moves beyond planned status, add real guest-facing bad-code/password/open runtime proof before any of those modes is marked ready
 
 5. `ACTIVE`: wedding identity exports

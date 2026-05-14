@@ -1,17 +1,35 @@
 #!/usr/bin/env node
 
-import { execSync } from 'node:child_process';
+import { execSync, spawn } from 'node:child_process';
 
 const scriptShell =
   process.platform === 'win32'
     ? process.env.ComSpec || 'cmd.exe'
     : process.env.SHELL || '/bin/bash';
 
+const PREVIEW_URL = 'http://127.0.0.1:4178';
+const baseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
+const isLiveBaseUrl = baseUrl !== PREVIEW_URL;
+
 const steps = [
   {
     id: 'rsvp-access-truth',
     label: 'RSVP access truth',
     command: 'npm test -- --run src/lib/rsvpAccessPlanner.test.ts src/pages/dashboard/guests/GuestRsvpSettingsView.test.tsx',
+    required: true,
+  },
+  {
+    id: 'rsvp-access-browser-proof',
+    label: isLiveBaseUrl
+      ? 'Live guest RSVP settings continuity browser proof'
+      : 'Guest RSVP settings continuity browser proof',
+    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/guests-rsvp-access.spec.ts`,
+    required: true,
+  },
+  {
+    id: 'build',
+    label: 'Build integrity check',
+    command: 'npm run build',
     required: true,
   },
   {
@@ -33,6 +51,24 @@ const steps = [
     required: true,
   },
 ];
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForPreview(url, timeoutMs = 20_000) {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
+      if (response.ok) return;
+    } catch {
+      // keep waiting
+    }
+    await sleep(500);
+  }
+  throw new Error(`Preview server did not become ready at ${url} within ${timeoutMs}ms`);
+}
 
 function extractJsonBlob(text) {
   if (!text || typeof text !== 'string') return null;
@@ -121,7 +157,57 @@ function runStep(step) {
   }
 }
 
-const results = steps.map(runStep);
+const initialSteps = steps.filter((step) => step.id !== 'rsvp-access-browser-proof');
+const browserStep = steps.find((step) => step.id === 'rsvp-access-browser-proof');
+const results = initialSteps.map(runStep);
+
+let previewProcess = null;
+let previewStdout = '';
+let previewStderr = '';
+
+try {
+  if (baseUrl === PREVIEW_URL) {
+    previewProcess = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', '4178'], {
+      cwd: process.cwd(),
+      env: process.env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    previewProcess.stdout.on('data', (chunk) => {
+      previewStdout += chunk.toString('utf8');
+    });
+    previewProcess.stderr.on('data', (chunk) => {
+      previewStderr += chunk.toString('utf8');
+    });
+
+    await waitForPreview(PREVIEW_URL);
+  }
+
+  if (!browserStep) {
+    throw new Error('RSVP browser proof step is missing.');
+  }
+  results.splice(1, 0, runStep(browserStep));
+} catch (error) {
+  results.splice(1, 0, {
+    id: 'rsvp-access-browser-proof',
+    label: isLiveBaseUrl
+      ? 'Live guest RSVP settings continuity browser proof'
+      : 'Guest RSVP settings continuity browser proof',
+    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/guests-rsvp-access.spec.ts`,
+    required: true,
+    ok: false,
+    startedAt: new Date().toISOString(),
+    finishedAt: new Date().toISOString(),
+    stderr: [previewStderr.trim(), error instanceof Error ? error.message : 'RSVP settings preview server failed to start.'].filter(Boolean).join('\n'),
+  });
+} finally {
+  if (previewProcess) {
+    previewProcess.kill('SIGTERM');
+    await sleep(300);
+    if (!previewProcess.killed) previewProcess.kill('SIGKILL');
+  }
+}
+
 const blockedRequired = results.filter((result) => result.required && result.blocked);
 const failedRequired = results.filter((result) => result.required && !result.ok && !result.blocked);
 
@@ -138,11 +224,15 @@ const output = {
   },
   automatedCoverage: [
     'RSVP access-mode recovery + household-scope + verification-input truth',
+    isLiveBaseUrl
+      ? 'Live owner browser proof for RSVP settings mode selection, persisted backup truth, and future-mode planning copy'
+      : 'Owner browser proof for RSVP settings mode selection, persisted backup truth, and future-mode planning copy',
     'RSVP token validation + scope guards',
     'CSV mapper guardrail',
     'Check-in mode / guest ops guardrail',
   ],
   stillManualProofNeeded: [
+    ...(isLiveBaseUrl ? [] : ['Rerun the same owner RSVP-settings browser proof against the shipped production runtime after the next approved guests deploy.']),
     'Create/edit/review guest + household state in the dashboard',
     'Submit or update RSVP through the guest-facing flow',
     'Verify dashboard/event readback stays aligned after the RSVP change',
