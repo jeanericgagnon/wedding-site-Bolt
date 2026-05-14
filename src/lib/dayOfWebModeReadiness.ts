@@ -71,6 +71,14 @@ const actionLabels: Record<DayOfWebActionId, string> = {
   recap: 'Photo recap',
 };
 
+function summarizeDayOfActions(actionIds: DayOfWebActionId[]): string {
+  const labels = actionIds.map((id) => actionLabels[id]).filter(Boolean);
+  if (labels.length === 0) return 'No guest actions';
+  if (labels.length === 1) return labels[0];
+  if (labels.length === 2) return `${labels[0]} and ${labels[1]}`;
+  return `${labels.slice(0, -1).join(', ')}, and ${labels[labels.length - 1]}`;
+}
+
 export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebModeReadiness {
   const enabled = new Set(input.enabledActionIds);
   const visibleActions = input.enabledActionIds.map((id) => actionLabels[id]).filter(Boolean);
@@ -219,7 +227,9 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
       id: 'link-access',
       label: 'Private event visibility',
       detail: input.privateEventVisibilityConnected
-        ? 'Guests can tell whether this hub link is public, invite-only, or guest-specific before they rely on it.'
+        ? input.enabledActionIds.length > 0
+          ? `Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are unlocked from it: ${summarizeDayOfActions(input.enabledActionIds)}.`
+          : 'Guests can tell whether this hub link is public, invite-only, or guest-specific before they rely on it.'
         : 'Guests still need to infer whether this hub link is public or private.',
       state: input.privateEventVisibilityConnected ? 'ready' : 'planned',
     },
