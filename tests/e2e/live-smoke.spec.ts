@@ -9,10 +9,10 @@ test.describe('public v1 trust smoke', () => {
     await page.goto(baseURL || 'https://dayof.love', { waitUntil: 'domcontentloaded' });
 
     await expect(page).toHaveTitle(/WeddingSite|Dayof|DayOf/i);
-    await expect(page.getByRole('heading', { name: /beautiful wedding website with RSVP and guest tools built in/i })).toBeVisible();
-    await expect(page.getByText(/Wedding core today/i)).toBeVisible();
-    await expect(page.getByText(/Included/i).first()).toBeVisible();
-    await expect(page.getByText(/Future or limited today/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /your wedding is one of the biggest moments of your life\./i })).toBeVisible();
+    await expect(page.getByText(/Most wedding websites stop at publish\./i)).toBeVisible();
+    await expect(page.getByText(/One place for the details, people, and memories that matter\./i)).toBeVisible();
+    await expect(page.getByText(/Simple, honest pricing\./i)).toBeVisible();
     await expect(page.getByRole('button', { name: /sign up for your wedding site|start your wedding site draft|start your draft/i }).first()).toBeVisible();
   });
 
