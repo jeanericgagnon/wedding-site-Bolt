@@ -4,6 +4,10 @@ import { execSync, spawn } from 'node:child_process';
 
 const PREVIEW_URL = 'http://127.0.0.1:4178';
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
+const isLiveBaseUrl = baseUrl !== PREVIEW_URL;
+const browserCommand = isLiveBaseUrl
+  ? `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/dayof-web-mode-live.spec.ts`
+  : `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/dayof-web-mode-offline.spec.ts`;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -102,8 +106,10 @@ try {
 
   results.push(runStep({
     id: 'dayof-web-mode-browser-proof',
-    label: 'Day-of web-mode offline browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/dayof-web-mode-offline.spec.ts`,
+    label: isLiveBaseUrl
+      ? 'Live guest-hub day-of browser proof'
+      : 'Day-of web-mode offline browser proof',
+    command: browserCommand,
     required: true,
   }));
 
@@ -123,8 +129,10 @@ try {
 } catch (error) {
   results.push({
     id: 'dayof-web-mode-browser-proof',
-    label: 'Day-of web-mode offline browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/dayof-web-mode-offline.spec.ts`,
+    label: isLiveBaseUrl
+      ? 'Live guest-hub day-of browser proof'
+      : 'Day-of web-mode offline browser proof',
+    command: browserCommand,
     required: true,
     ok: false,
     startedAt: new Date().toISOString(),
@@ -153,13 +161,21 @@ const output = {
   automatedCoverage: [
     'Guest-hub offline snapshot sanitization and readiness truth',
     'Service-worker guest-hub shell safety and EventHub render wiring',
-    'Real browser offline proof for saved in-app guest-hub readback after reload',
-    'Real browser offline proof for cached event-hub offline shell navigation',
+    isLiveBaseUrl
+      ? 'Authenticated live browser proof for invite-scoped guest-state visibility, latest update, coordinator handoff, and map deep links'
+      : 'Real browser offline proof for saved in-app guest-hub readback after reload',
+    isLiveBaseUrl
+      ? 'Read-only live proof stays separate from the standalone guest-hub write/read-with-cleanup production lane'
+      : 'Real browser offline proof for cached event-hub offline shell navigation',
     'Build integrity after day-of web-mode proof assertions',
   ],
   stillManualProofNeeded: [
-    'Rerun the same offline guest-hub paths against the shipped production runtime after the next approved guest-hub deploy.',
-    'Confirm live owner day-of updates and guest-specific state rehydrate credibly for a real invite-linked guest on the shipped runtime.',
+    isLiveBaseUrl
+      ? 'Keep the standalone guest-hub write/read-with-cleanup lane green on future deploys because that production mutation proof remains intentionally separate from this read-only day-of browser proof.'
+      : 'Rerun the same offline guest-hub paths against the shipped production runtime after the next approved guest-hub deploy.',
+    isLiveBaseUrl
+      ? 'None for the current read-only day-of web-mode lane beyond keeping this live proof green on future deploys.'
+      : 'Confirm live owner day-of updates and guest-specific state rehydrate credibly for a real invite-linked guest on the shipped runtime.',
   ],
   results,
 };

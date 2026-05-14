@@ -4,6 +4,10 @@ import { execSync, spawn } from 'node:child_process';
 
 const PREVIEW_URL = 'http://127.0.0.1:4173';
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
+const isLiveBaseUrl = baseUrl !== PREVIEW_URL;
+const browserSpec = isLiveBaseUrl
+  ? 'tests/e2e/travel-guest-hub-live.spec.ts'
+  : 'tests/e2e/travel-guest-hub-mobile.spec.ts';
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -98,8 +102,10 @@ try {
 
   results.push(runStep({
     id: 'travel-portal-mobile-browser-proof',
-    label: 'Mobile guest travel hub continuity browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/travel-guest-hub-mobile.spec.ts`,
+    label: isLiveBaseUrl
+      ? 'Live invite-scoped guest travel hub continuity browser proof'
+      : 'Mobile guest travel hub continuity browser proof',
+    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${browserSpec}`,
   }));
 
   if (previewStdout.trim()) {
@@ -118,8 +124,10 @@ try {
 } catch (error) {
   results.push({
     id: 'travel-portal-mobile-browser-proof',
-    label: 'Mobile guest travel hub continuity browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/travel-guest-hub-mobile.spec.ts`,
+    label: isLiveBaseUrl
+      ? 'Live invite-scoped guest travel hub continuity browser proof'
+      : 'Mobile guest travel hub continuity browser proof',
+    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${browserSpec}`,
     required: true,
     ok: false,
     startedAt: new Date().toISOString(),
@@ -148,10 +156,14 @@ const output = {
     'Travel portal readiness and guest-hub spotlight helper truth',
     'Public render-model and public-access sanitization for structured travel records',
     'Guest-hub live content render path for travel quick plan surfaces',
-    'Mobile browser proof from invite-scoped guest hub to travel, RSVP, and photo routes without raw-token body leakage',
+    isLiveBaseUrl
+      ? 'Authenticated live mobile browser proof from invite-scoped guest hub to travel, RSVP, and photo routes without raw-token body leakage'
+      : 'Mobile browser proof from invite-scoped guest hub to travel, RSVP, and photo routes without raw-token body leakage',
   ],
   stillManualProofNeeded: [
-    'Rerun the same invite-scoped travel hub flow against the shipped production runtime for live/mobile proof after the next approved travel-portal deploy.',
+    isLiveBaseUrl
+      ? 'None for the current travel guest portal lane beyond keeping this live proof green on future deploys.'
+      : 'Rerun the same invite-scoped travel hub flow against the shipped production runtime for live/mobile proof after the next approved travel-portal deploy.',
   ],
   results,
 };
