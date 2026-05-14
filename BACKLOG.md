@@ -404,6 +404,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the RSVP settings readback now also surfaces question-template coverage and meal-choice readiness percentages, so owners can gauge optional RSVP setup completeness at a glance instead of inferring it from raw counts alone
    - this batch shipped: the RSVP settings readback now also calls out the total live question count beside custom-question totals, so owners can judge overall RSVP form weight at a glance instead of mentally adding structured counts together
    - this batch shipped: the RSVP settings readback now also labels the current form weight as lightweight, balanced, or detailed based on the live question set, so owners can sanity-check how demanding the RSVP feels before they publish changes
+   - this batch shipped: the RSVP settings readback now also surfaces one combined optional-setup coverage card across templates and meal choices, so owners can judge the shape of the optional RSVP lane in one glance instead of mentally combining separate percentages
    - rerun the same owner RSVP-settings browser flow against the shipped production runtime after the next approved guests deploy so the local proof stays matched to the live dashboard shell
    - if code/password/open RSVP ever moves beyond planned status, add real guest-facing bad-code/password/open runtime proof before any of those modes is marked ready
 

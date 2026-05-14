@@ -137,6 +137,9 @@ export function GuestRsvpSettingsView({
   const mealChoiceReadinessRate = rsvpMealEnabled
     ? (safeRsvpMealOptions.length >= 2 ? 100 : Math.round((safeRsvpMealOptions.length / 2) * 100))
     : null;
+  const optionalSetupCoverageRate = rsvpMealEnabled
+    ? Math.round((templateCoverageRate + (mealChoiceReadinessRate ?? 0)) / 2)
+    : templateCoverageRate;
   const formWeightLabel = safeRsvpQuestions.length === 0
     ? null
     : safeRsvpQuestions.length <= 3
@@ -362,7 +365,14 @@ export function GuestRsvpSettingsView({
                 <p className="text-sm font-semibold text-text-primary">Question templates</p>
                 <p className="text-sm text-text-secondary">Add common wedding questions, then edit the wording before guests see them.</p>
               </div>
-              <div className="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-6">
+              <div className="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-7">
+                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Optional setup</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{optionalSetupCoverageRate}% covered</p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">
+                    {rsvpMealEnabled ? 'templates and meals' : 'templates only · meals off'}
+                  </p>
+                </div>
                 <div className="rounded-md border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Templates added</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">
