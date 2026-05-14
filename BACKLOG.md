@@ -482,6 +482,8 @@ Execution rule for this section:
    - this batch shipped: seating eligible guests now promote explicit `Dietary:` and `Allergy:` note text into dedicated dietary/allergy fields before catering export, so kitchen summaries can count structured restrictions without flattening everything into one generic guest note
    - this batch shipped: focused proof is green for the new seating dietary/allergy extraction helper plus the existing catering-packet and kitchen-summary readback lanes
    - this batch shipped: seating eligible guests now also promote explicit `Meal:`, `Meal preference:`, `Meal choice:`, and `Entree:` note text into structured meal preference fields when the saved meal field is blank, so catering packets stop losing owner-entered meal picks that were flattened into notes upstream
+   - this batch shipped: explicit `Dietary:` / `Dietary restrictions:` lines now populate structured dietary restriction fields, while `Allergy:` / `Allergies:` and labeled kitchen-note lines stay separated instead of collapsing into one generic dietary note string
+   - this batch shipped: focused proof is green for the richer restriction/allergy/kitchen-note split plus the existing seating export/readiness lanes, so source-of-truth catering detail is less dependent on flattened guest-note text
    - add live production seating write/read with cleanup for packet/export flows
    - rerun the same packet export/download assertions against the shipped production runtime after the next approved seating deploy
    - rerun seating lookup readback after real assignment edits against the shipped production runtime after the next approved seating deploy instead of only local browser proof

@@ -4,7 +4,6 @@ import { demoGuests } from '../../../lib/demoData';
 import { resolveOperationalEventId } from '../../../lib/operationalEvent';
 import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../../lib/rsvpStatus';
 import { toSafeCsv } from '../../../lib/csvExport';
-import { extractDietaryNote } from '../../../lib/dietaryNotes';
 import { loadDemoItineraryEventsFromStorage, readDemoSeatingState } from './seatingDemoStorage';
 
 function requireRpcRecord<T>(data: unknown, functionName: string): T {
@@ -148,24 +147,51 @@ export interface SeatingLookupRow {
 }
 
 export function deriveEligibleGuestDietaryFields(notes: string | null | undefined): {
+  dietary_restrictions: string | null;
   dietary_notes: string | null;
   allergies: string | null;
 } {
   const normalizedNotes = typeof notes === 'string' ? notes.trim() : '';
   if (!normalizedNotes) {
     return {
+      dietary_restrictions: null,
       dietary_notes: null,
       allergies: null,
     };
   }
 
-  const dietaryNote = extractDietaryNote(null, normalizedNotes);
-  const allergyMatch = normalizedNotes.match(/\ballerg(?:y|ies)\s*:\s*(.+)$/i);
-  const allergies = allergyMatch?.[1]?.trim() || null;
+  const lines = normalizedNotes
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  const dietaryRestrictionParts: string[] = [];
+  const allergyParts: string[] = [];
+  const dietaryNoteParts: string[] = [];
+
+  lines.forEach((line) => {
+    const restrictionMatch = line.match(/^(?:dietary(?:\s+restrictions?)?|dietary)\s*[:\-]\s*(.+)$/i);
+    if (restrictionMatch) {
+      dietaryRestrictionParts.push(restrictionMatch[1].trim());
+      return;
+    }
+
+    const allergyMatch = line.match(/^allerg(?:y|ies)\s*[:\-]\s*(.+)$/i);
+    if (allergyMatch) {
+      allergyParts.push(allergyMatch[1].trim());
+      return;
+    }
+
+    const dietaryNoteMatch = line.match(/^(?:dietary\s+note|meal\s+note|kitchen\s+note)\s*[:\-]\s*(.+)$/i);
+    if (dietaryNoteMatch) {
+      dietaryNoteParts.push(dietaryNoteMatch[1].trim());
+    }
+  });
 
   return {
-    dietary_notes: dietaryNote,
-    allergies,
+    dietary_restrictions: dietaryRestrictionParts.join('; ').trim() || null,
+    dietary_notes: dietaryNoteParts.join('\n').trim() || null,
+    allergies: allergyParts.join('; ').trim() || null,
   };
 }
 
@@ -589,7 +615,7 @@ export async function getEligibleGuests(
       event_rsvp_attending: hasEventInvitations ? (eventRsvp ?? null) : undefined,
       meal_choice: null,
       meal_preference: (g.meal_preference as string | null) ?? noteMealPreference ?? null,
-      dietary_restrictions: null,
+      dietary_restrictions: dietaryFields.dietary_restrictions,
       dietary_notes: dietaryFields.dietary_notes,
       allergies: dietaryFields.allergies,
       notes,

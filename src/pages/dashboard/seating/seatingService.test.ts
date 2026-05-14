@@ -105,13 +105,23 @@ describe('deriveGuestEventAttendance', () => {
 describe('deriveEligibleGuestDietaryFields', () => {
   it('extracts explicit dietary and allergy notes into dedicated seating fields', () => {
     expect(deriveEligibleGuestDietaryFields('Dietary: Gluten-free\nAllergy: Peanut')).toEqual({
-      dietary_notes: 'Gluten-free\nAllergy: Peanut',
+      dietary_restrictions: 'Gluten-free',
+      dietary_notes: null,
+      allergies: 'Peanut',
+    });
+  });
+
+  it('keeps extra dietary note detail while splitting explicit restriction labels', () => {
+    expect(deriveEligibleGuestDietaryFields('Dietary restrictions - Gluten-free\nMeal note: kosher-style plating preferred\nAllergies: Peanut')).toEqual({
+      dietary_restrictions: 'Gluten-free',
+      dietary_notes: 'kosher-style plating preferred',
       allergies: 'Peanut',
     });
   });
 
   it('leaves generic guest notes alone when no explicit dietary labels exist', () => {
     expect(deriveEligibleGuestDietaryFields('Prefers aisle seat')).toEqual({
+      dietary_restrictions: null,
       dietary_notes: null,
       allergies: null,
     });
@@ -359,7 +369,8 @@ describe('getEligibleGuests', () => {
       expect.objectContaining({
         id: 'guest-1',
         meal_preference: 'Vegetarian',
-        dietary_notes: 'Gluten-free',
+        dietary_restrictions: 'Gluten-free',
+        dietary_notes: null,
       }),
     ]);
   });
