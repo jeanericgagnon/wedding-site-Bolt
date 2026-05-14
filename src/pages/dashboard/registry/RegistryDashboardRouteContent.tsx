@@ -201,6 +201,23 @@ export function RegistryDashboardRouteContent(props: {
   const fundReceivingCoverageRate = props.fundStats.count > 0
     ? Math.round((props.fundStats.withProgress / props.fundStats.count) * 100)
     : 0;
+  const guestVisibilityGapLabel = props.guestVisibilityStats.blockedGuestItems > 0
+    ? `Main gap: ${props.guestVisibilityStats.blockedGuestItems} still blocked from guests`
+    : props.guestVisibilityStats.hiddenPurchasedItems > 0
+      ? `Main gap: ${props.guestVisibilityStats.hiddenPurchasedItems} hidden after purchase`
+      : 'Main gap: no guest-visibility blockers';
+  const thankYouGapLabel = props.registryThankYouStats.blockedByMissingPurchaserCount > 0
+    ? `Main gap: ${props.registryThankYouStats.blockedByMissingPurchaserCount} waiting on purchaser attribution`
+    : props.registryThankYouStats.pendingCount > 0
+      ? `Main gap: ${props.registryThankYouStats.pendingCount} still need a send`
+      : 'Main gap: no thank-you blockers';
+  const fundSetupGapLabel = props.fundStats.needsSetup > 0
+    ? `Main gap: ${props.fundStats.needsSetup} still need a payment path`
+    : props.fundStats.missingGoal > 0
+      ? `Main gap: ${props.fundStats.missingGoal} still missing a goal`
+      : props.fundStats.readyAwaitingFirstGift > 0
+        ? `Main gap: ${props.fundStats.readyAwaitingFirstGift} waiting on a first gift`
+        : 'Main gap: no fund setup blockers';
 
   const tabCount = (key: RegistryFilter) => {
     if (key === 'all') return props.counts.total;
@@ -315,6 +332,7 @@ export function RegistryDashboardRouteContent(props: {
               <p className="mt-1 text-xs text-text-tertiary">
                 {guestVisibleCoverageRate}% visible to guests · {guestReadyCoverageRate}% guest-ready · {props.guestVisibilityStats.hiddenPurchasedItems} hidden when bought{props.guestVisibilityStats.blockedGuestItems > 0 ? ` · ${props.guestVisibilityStats.blockedGuestItems} blocked from guests` : ''}
               </p>
+              <p className="mt-1 text-xs text-text-tertiary">{guestVisibilityGapLabel}</p>
             </Card>
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Thank-yous</p>
@@ -329,6 +347,7 @@ export function RegistryDashboardRouteContent(props: {
                 {props.registryThankYouStats.readyToSendCount} ready to send{props.registryThankYouStats.blockedByMissingPurchaserCount > 0 ? ` · ${props.registryThankYouStats.blockedByMissingPurchaserCount} blocked by purchaser` : ''}
                 {props.registryThankYouStats.purchasedCount > 0 ? ` · ${props.registryThankYouStats.attributionCoverageRate}% purchasers named` : ''}
               </p>
+              <p className="mt-1 text-xs text-text-tertiary">{thankYouGapLabel}</p>
             </Card>
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Cash funds</p>
@@ -339,6 +358,7 @@ export function RegistryDashboardRouteContent(props: {
               <p className="mt-1 text-xs text-text-tertiary">
                 {fundShareReadyRate}% share-ready · {props.fundStats.readyWithProgress} already moving{props.fundStats.readyAwaitingFirstGift > 0 ? ` · ${props.fundStats.readyAwaitingFirstGift} waiting on a first gift` : ''}{props.fundStats.missingGoal > 0 ? ` · ${props.fundStats.missingGoal} missing a goal` : ''}
               </p>
+              <p className="mt-1 text-xs text-text-tertiary">{fundSetupGapLabel}</p>
             </Card>
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Fund gifts</p>

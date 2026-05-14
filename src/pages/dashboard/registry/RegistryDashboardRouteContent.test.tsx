@@ -605,6 +605,7 @@ describe('RegistryDashboardRouteContent', () => {
     );
 
     expect(screen.getByText('100% share-ready · 1 already moving · 1 waiting on a first gift · 1 missing a goal')).toBeInTheDocument();
+    expect(screen.getByText('Main gap: 1 still missing a goal')).toBeInTheDocument();
     expect(screen.getByText('50% goal-tracked · 50% already receiving gifts · 1 showing tracked progress · 1 flexible fund already receiving gifts')).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Ready funds already moving: 1 · Waiting on first gift: 1'),
@@ -784,6 +785,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('2 still pending · 1 need purchaser')).toBeInTheDocument();
     expect(screen.getByText('33% ready now · 33% sent · 33% blocked')).toBeInTheDocument();
     expect(screen.getByText('1 ready to send · 1 blocked by purchaser · 67% purchasers named')).toBeInTheDocument();
+    expect(screen.getByText('Main gap: 1 waiting on purchaser attribution')).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Thank-yous sent: 1 · Still pending: 2'),
     ).toBeInTheDocument();
@@ -868,6 +870,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Guest view')).toBeInTheDocument();
     expect(screen.getByText('1 ready now · 1 already claimed')).toBeInTheDocument();
     expect(screen.getByText('50% visible to guests · 75% guest-ready · 1 hidden when bought · 1 blocked from guests')).toBeInTheDocument();
+    expect(screen.getByText('Main gap: 1 still blocked from guests')).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Guest-visible gifts: 2 · Hidden when purchased: 1'),
     ).toBeInTheDocument();
