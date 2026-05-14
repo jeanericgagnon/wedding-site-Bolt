@@ -1,4 +1,5 @@
 import { resolveActiveSiteForUser, type ActiveSiteSummary } from '../../lib/activeSite';
+import { buildBudgetPaymentReview, type BudgetLedgerItem, type VendorLedgerItem } from '../../lib/budgetVendorLedgerReadiness';
 import { supabase } from '../../lib/supabase';
 
 const OVERVIEW_DISMISSALS_SITE_SELECT = 'wedding_data';
@@ -12,7 +13,12 @@ export const MAX_OVERVIEW_RECENT_RSVPS = 5;
 export const MAX_OVERVIEW_INTERACTIVE_SUGGESTIONS = 8;
 export const MAX_OVERVIEW_INTERACTIVE_VOTES = 500;
 export const MAX_OVERVIEW_COLLABORATOR_LINK_ROWS = 1;
+export const MAX_OVERVIEW_BUDGET_ITEMS = 1000;
+export const MAX_OVERVIEW_VENDORS = 500;
+export const OVERVIEW_RECENT_UPLOAD_LOOKBACK_DAYS = 7;
 export const OVERVIEW_GUEST_SELECT = 'id, rsvp_status, rsvp_received_at, first_name, last_name, name';
+export const OVERVIEW_BUDGET_ITEM_SELECT = 'id, estimated_amount, actual_amount, paid_amount, due_date, vendor_id';
+export const OVERVIEW_VENDOR_SELECT = 'id, name, email, phone, contract_total, amount_paid, balance_due, next_payment_due, document_url';
 
 export interface OverviewInteractiveSuggestion {
   id: string;
@@ -76,6 +82,11 @@ export interface OverviewDashboardSnapshot {
   activePhotoAlbumCount: number;
   vaultCount: number;
   enabledVaultCount: number;
+  messageReviewCount: number;
+  upcomingTaskCount: number;
+  upcomingPaymentCount: number;
+  newPhotoUploadCount: number;
+  seatingGapCount: number;
   recentRsvps: OverviewRecentRsvp[];
 }
 
@@ -338,11 +349,17 @@ export async function loadOverviewDashboardSnapshot(userId: string): Promise<Ove
       activePhotoAlbumCount: 0,
       vaultCount: 0,
       enabledVaultCount: 0,
+      messageReviewCount: 0,
+      upcomingTaskCount: 0,
+      upcomingPaymentCount: 0,
+      newPhotoUploadCount: 0,
+      seatingGapCount: 0,
       recentRsvps: [],
     };
   }
 
   const siteId = site.id;
+  const recentUploadCutoffIso = new Date(Date.now() - OVERVIEW_RECENT_UPLOAD_LOOKBACK_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
   const [
     totalGuestsResult,
@@ -356,6 +373,13 @@ export async function loadOverviewDashboardSnapshot(userId: string): Promise<Ove
     activePhotoAlbumCountResult,
     vaultCountResult,
     enabledVaultCountResult,
+    messageReviewCountResult,
+    upcomingTaskCountResult,
+    budgetItemsResult,
+    vendorsResult,
+    recentUploadCountResult,
+    seatingAttendingCountResult,
+    seatingEventsResult,
   ] = await Promise.all([
     supabase
       .from('guests')
@@ -411,6 +435,41 @@ export async function loadOverviewDashboardSnapshot(userId: string): Promise<Ove
       .select('id', { count: 'exact', head: true })
       .eq('wedding_site_id', siteId)
       .eq('is_enabled', true),
+    supabase
+      .from('messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('wedding_site_id', siteId)
+      .or('status.eq.failed,status.eq.partial,failed_count.gt.0'),
+    supabase
+      .from('planning_tasks')
+      .select('id', { count: 'exact', head: true })
+      .eq('wedding_site_id', siteId)
+      .in('status', ['todo', 'in_progress']),
+    supabase
+      .from('planning_budget_items')
+      .select(OVERVIEW_BUDGET_ITEM_SELECT)
+      .eq('wedding_site_id', siteId)
+      .limit(MAX_OVERVIEW_BUDGET_ITEMS),
+    supabase
+      .from('planning_vendors')
+      .select(OVERVIEW_VENDOR_SELECT)
+      .eq('wedding_site_id', siteId)
+      .limit(MAX_OVERVIEW_VENDORS),
+    supabase
+      .from('photo_uploads')
+      .select('id', { count: 'exact', head: true })
+      .eq('wedding_site_id', siteId)
+      .eq('is_hidden', false)
+      .gte('uploaded_at', recentUploadCutoffIso),
+    supabase
+      .from('guests')
+      .select('id', { count: 'exact', head: true })
+      .eq('wedding_site_id', siteId)
+      .in('rsvp_status', ['confirmed', 'attending']),
+    supabase
+      .from('seating_events')
+      .select('id')
+      .eq('wedding_site_id', siteId),
   ]);
 
   if (totalGuestsResult.error) throw totalGuestsResult.error;
@@ -424,6 +483,51 @@ export async function loadOverviewDashboardSnapshot(userId: string): Promise<Ove
   if (activePhotoAlbumCountResult.error) throw activePhotoAlbumCountResult.error;
   if (vaultCountResult.error) throw vaultCountResult.error;
   if (enabledVaultCountResult.error) throw enabledVaultCountResult.error;
+  if (messageReviewCountResult.error) throw messageReviewCountResult.error;
+  if (upcomingTaskCountResult.error) throw upcomingTaskCountResult.error;
+  if (budgetItemsResult.error) throw budgetItemsResult.error;
+  if (vendorsResult.error) throw vendorsResult.error;
+  if (recentUploadCountResult.error) throw recentUploadCountResult.error;
+  if (seatingAttendingCountResult.error) throw seatingAttendingCountResult.error;
+  if (seatingEventsResult.error) throw seatingEventsResult.error;
+
+  const paymentReview = buildBudgetPaymentReview({
+    budgetItems: ((budgetItemsResult.data ?? []) as Array<Record<string, unknown>>).map((row) => ({
+      id: String(row.id ?? ''),
+      category: '',
+      item_name: '',
+      estimated_amount: typeof row.estimated_amount === 'number' ? row.estimated_amount : null,
+      actual_amount: typeof row.actual_amount === 'number' ? row.actual_amount : null,
+      paid_amount: typeof row.paid_amount === 'number' ? row.paid_amount : null,
+      due_date: typeof row.due_date === 'string' ? row.due_date : null,
+      vendor_id: typeof row.vendor_id === 'string' ? row.vendor_id : null,
+    })) as BudgetLedgerItem[],
+    vendors: ((vendorsResult.data ?? []) as Array<Record<string, unknown>>).map((row) => ({
+      id: String(row.id ?? ''),
+      name: typeof row.name === 'string' ? row.name : '',
+      email: typeof row.email === 'string' ? row.email : null,
+      phone: typeof row.phone === 'string' ? row.phone : null,
+      contract_total: typeof row.contract_total === 'number' ? row.contract_total : null,
+      amount_paid: typeof row.amount_paid === 'number' ? row.amount_paid : null,
+      balance_due: typeof row.balance_due === 'number' ? row.balance_due : null,
+      next_payment_due: typeof row.next_payment_due === 'string' ? row.next_payment_due : null,
+      document_url: typeof row.document_url === 'string' ? row.document_url : null,
+    })) as VendorLedgerItem[],
+  });
+
+  let seatingGapCount = 0;
+  const seatingEventIds = (seatingEventsResult.data ?? []).map((row) => String((row as { id: string }).id)).filter(Boolean);
+  if (seatingEventIds.length > 0) {
+    const { count: seatedCount, error: seatingAssignmentsError } = await supabase
+      .from('seating_assignments')
+      .select('id', { count: 'exact', head: true })
+      .in('seating_event_id', seatingEventIds)
+      .eq('is_valid', true);
+    if (seatingAssignmentsError) throw seatingAssignmentsError;
+    seatingGapCount = Math.max(0, (seatingAttendingCountResult.count ?? 0) - (seatedCount ?? 0));
+  } else {
+    seatingGapCount = seatingAttendingCountResult.count ?? 0;
+  }
 
   return {
     activeSite,
@@ -438,6 +542,11 @@ export async function loadOverviewDashboardSnapshot(userId: string): Promise<Ove
     activePhotoAlbumCount: activePhotoAlbumCountResult.count ?? 0,
     vaultCount: vaultCountResult.count ?? 0,
     enabledVaultCount: enabledVaultCountResult.count ?? 0,
+    messageReviewCount: messageReviewCountResult.count ?? 0,
+    upcomingTaskCount: upcomingTaskCountResult.count ?? 0,
+    upcomingPaymentCount: paymentReview.overdueCount + paymentReview.dueSoonCount,
+    newPhotoUploadCount: recentUploadCountResult.count ?? 0,
+    seatingGapCount,
     recentRsvps: formatRecentRsvps((recentRsvpsResult.data ?? []) as OverviewRecentRsvpRow[]),
   };
 }

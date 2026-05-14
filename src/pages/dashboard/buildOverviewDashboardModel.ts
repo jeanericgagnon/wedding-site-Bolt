@@ -33,6 +33,11 @@ type OverviewStatsLike = {
   photoAlbumCount: number;
   recentRsvps: RecentRsvp[];
   registryItemCount: number;
+  messageReviewCount: number;
+  upcomingTaskCount: number;
+  upcomingPaymentCount: number;
+  newPhotoUploadCount: number;
+  seatingGapCount: number;
   siteSlug: string | null;
   siteUpdatedAt: string | null;
   lastPublishedAt: string | null;
@@ -152,12 +157,12 @@ export function buildOverviewDashboardModel({
     newRsvpCount: stats.recentRsvps.length,
     pendingRsvpCount: stats.pendingGuests,
     missingContactCount: Math.max(0, stats.totalGuests - stats.contactableGuestCount),
-    messageFailureCount: 0,
-    upcomingTaskCount: 0,
-    upcomingPaymentCount: 0,
-    newPhotoUploadCount: 0,
+    messageFailureCount: stats.messageReviewCount,
+    upcomingTaskCount: stats.upcomingTaskCount,
+    upcomingPaymentCount: stats.upcomingPaymentCount,
+    newPhotoUploadCount: stats.newPhotoUploadCount,
     activePhotoAlbumCount: stats.activePhotoAlbumCount,
-    seatingGapCount: 0,
+    seatingGapCount: stats.seatingGapCount,
     registryItemCount: stats.registryItemCount,
     isPublished: stats.isPublished,
     publishBlockerCount: publishBlockers.length,

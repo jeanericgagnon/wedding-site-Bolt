@@ -45,6 +45,11 @@ export interface OverviewStatsState {
   activePhotoAlbumCount: number;
   vaultCount: number;
   enabledVaultCount: number;
+  messageReviewCount: number;
+  upcomingTaskCount: number;
+  upcomingPaymentCount: number;
+  newPhotoUploadCount: number;
+  seatingGapCount: number;
   contactableGuestCount: number;
   recentRsvps: RecentRsvp[];
   activeSiteRole: PlannerAccessRole;
@@ -124,6 +129,11 @@ export function buildDemoOverviewSnapshotState(): {
       activePhotoAlbumCount: 2,
       vaultCount: 3,
       enabledVaultCount: 3,
+      messageReviewCount: 1,
+      upcomingTaskCount: 4,
+      upcomingPaymentCount: 2,
+      newPhotoUploadCount: 5,
+      seatingGapCount: 2,
       contactableGuestCount: demoGuests.filter((guest) => Boolean(guest.email)).length,
       recentRsvps,
       activeSiteRole: 'owner',
@@ -265,18 +275,23 @@ export function buildOverviewStatsFromSnapshot({
   hideFromSearch,
   isPublished,
   lastPublishedAt,
+  messageReviewCount,
   notificationPrefs,
+  newPhotoUploadCount,
   pendingGuests,
   photoAlbumCount,
   publishedVersion,
   recentRsvps,
   registryItemCount,
+  seatingGapCount,
   site,
   siteId,
   siteSlug,
   siteUpdatedAt,
   templateName,
   totalGuests,
+  upcomingPaymentCount,
+  upcomingTaskCount,
   vaultCount,
   weddingDate,
 }: {
@@ -290,18 +305,23 @@ export function buildOverviewStatsFromSnapshot({
   hideFromSearch: boolean;
   isPublished: boolean;
   lastPublishedAt: string | null;
+  messageReviewCount: number;
   notificationPrefs: NotificationPrefs;
+  newPhotoUploadCount: number;
   pendingGuests: number;
   photoAlbumCount: number;
   publishedVersion: number | null;
   recentRsvps: RecentRsvp[];
   registryItemCount: number;
+  seatingGapCount: number;
   site: { couple_name_1?: string | null; couple_name_2?: string | null; venue_name?: string | null; wedding_location?: string | null } | null;
   siteId: string | null;
   siteSlug: string | null;
   siteUpdatedAt: string | null;
   templateName: string | null;
   totalGuests: number;
+  upcomingPaymentCount: number;
+  upcomingTaskCount: number;
   vaultCount: number;
   weddingDate: string | null;
 }): OverviewStatsState {
@@ -330,6 +350,11 @@ export function buildOverviewStatsFromSnapshot({
     activePhotoAlbumCount,
     vaultCount,
     enabledVaultCount,
+    messageReviewCount,
+    upcomingTaskCount,
+    upcomingPaymentCount,
+    newPhotoUploadCount,
+    seatingGapCount,
     contactableGuestCount,
     recentRsvps,
     activeSiteRole,

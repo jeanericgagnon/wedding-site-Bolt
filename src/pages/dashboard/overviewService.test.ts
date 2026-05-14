@@ -2,10 +2,13 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  MAX_OVERVIEW_BUDGET_ITEMS,
   MAX_OVERVIEW_COLLABORATOR_LINK_ROWS,
   MAX_OVERVIEW_INTERACTIVE_SUGGESTIONS,
   MAX_OVERVIEW_INTERACTIVE_VOTES,
   MAX_OVERVIEW_RECENT_RSVPS,
+  MAX_OVERVIEW_VENDORS,
+  OVERVIEW_RECENT_UPLOAD_LOOKBACK_DAYS,
   buildOverviewDismissalsWeddingData,
 } from './overviewService';
 
@@ -15,6 +18,9 @@ describe('overviewService', () => {
     expect(MAX_OVERVIEW_INTERACTIVE_SUGGESTIONS).toBe(8);
     expect(MAX_OVERVIEW_INTERACTIVE_VOTES).toBe(500);
     expect(MAX_OVERVIEW_COLLABORATOR_LINK_ROWS).toBe(1);
+    expect(MAX_OVERVIEW_BUDGET_ITEMS).toBe(1000);
+    expect(MAX_OVERVIEW_VENDORS).toBe(500);
+    expect(OVERVIEW_RECENT_UPLOAD_LOOKBACK_DAYS).toBe(7);
   });
 
   it('preserves existing wedding data while setting intelligence dismissals', () => {

@@ -13,6 +13,8 @@ const baseStats = {
   hideFromSearch: false,
   isPublished: true,
   lastPublishedAt: '2026-05-12T08:00:00.000Z',
+  messageReviewCount: 2,
+  newPhotoUploadCount: 3,
   notificationPrefs: {
     digest: true,
     digestCadence: 'daily' as const,
@@ -26,10 +28,13 @@ const baseStats = {
   photoAlbumCount: 0,
   recentRsvps: [],
   registryItemCount: 4,
+  seatingGapCount: 1,
   siteSlug: 'avery-and-jordan',
   siteUpdatedAt: '2026-05-13T08:00:00.000Z',
   templateName: 'classic',
   totalGuests: 20,
+  upcomingPaymentCount: 5,
+  upcomingTaskCount: 4,
   venueLocation: 'San Francisco',
   venueName: 'City Hall',
   weddingDate: '2026-09-14',
@@ -74,5 +79,20 @@ describe('buildOverviewDashboardModel', () => {
       audienceLabel: 'Owners only',
       statusLabel: 'Paused by preference',
     });
+  });
+
+  it('feeds real digest counts into the overview digest instead of zero placeholders', () => {
+    const model = buildOverviewDashboardModel({
+      dismissedIntelligenceIds: [],
+      interactiveSuggestions: [],
+      interactiveVoteSummaries: [],
+      stats: baseStats,
+    });
+
+    expect(model.calmDigest?.items.find((item) => item.id === 'message-review')?.count).toBe(2);
+    expect(model.calmDigest?.items.find((item) => item.id === 'tasks')?.count).toBe(4);
+    expect(model.calmDigest?.items.find((item) => item.id === 'payments')?.count).toBe(5);
+    expect(model.calmDigest?.items.find((item) => item.id === 'photo-memory')?.count).toBe(3);
+    expect(model.calmDigest?.items.find((item) => item.id === 'seating')?.count).toBe(1);
   });
 });
