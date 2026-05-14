@@ -100,8 +100,8 @@ export const DashboardSeatingLookup: React.FC = () => {
           <h1 className="text-2xl font-semibold text-text-primary">Find a guest seat</h1>
           <p className="text-sm text-text-secondary mt-1">Search a guest’s table and seat when someone asks.</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Link to="/dashboard/seating" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open seating chart</Link>
-            <Link to="/dashboard/coordinator" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open day-of view</Link>
+            <Link to="/dashboard/seating" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Seating chart</Link>
+            <Link to="/dashboard/coordinator" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Day-of view</Link>
           </div>
           <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
             <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-2">
@@ -193,7 +193,7 @@ export const DashboardSeatingLookup: React.FC = () => {
                           const states = getCheckInExceptionStates({ checkedInAt: r.checked_in_at, rsvpStatus: r.rsvp_status, tableName: r.table_name });
                           if (!states.length) return null;
                           return <div className="flex flex-wrap gap-2 pt-1">
-                            <Link to="/dashboard/coordinator" className="text-[11px] text-primary hover:underline">Open day-of view</Link>
+                            <Link to="/dashboard/coordinator" className="text-[11px] text-primary hover:underline">Day-of view</Link>
                             <Link to="/dashboard/seating" className="text-[11px] text-primary hover:underline">Open seating</Link>
                           </div>;
                         })()}

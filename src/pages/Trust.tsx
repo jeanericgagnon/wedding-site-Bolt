@@ -223,10 +223,10 @@ export const Trust: React.FC = () => {
                 onClick={handleStartDraft}
                 className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
               >
-                {user ? 'Review your draft' : 'Start your draft'}
+                {user ? 'Continue your site' : 'Start your draft'}
               </button>
               <Link to={user ? '/dashboard/planning' : '/product'} className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary">
-                {user ? 'Open planner space' : 'See product tour'}
+                {user ? 'Continue planning' : 'See product tour'}
               </Link>
             </div>
 
@@ -280,42 +280,42 @@ export const Trust: React.FC = () => {
                     onClick={() => navigate('/settings')}
                     className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
                   >
-                    Open account settings
+                    Account settings
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/builder')}
                     className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
-                    Open site editor
+                    Edit your site
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/planning')}
                     className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
-                    Open planner space
+                    Continue planning
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/coordinator')}
                     className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
-                    Open coordinator view
+                    Day-of view
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/guests')}
                     className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
-                    Open guest list
+                    Manage guests
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/messages')}
                     className="rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
-                    Open message drafts
+                    Guest messages
                   </button>
                   <button
                     type="button"

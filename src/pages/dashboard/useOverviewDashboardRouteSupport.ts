@@ -45,12 +45,12 @@ export function buildOverviewDashboardRouteSupport({
       ? 'Follow up with guests still awaiting RSVP'
       : stats?.isPublished
         ? 'Review recent activity before the next guest update'
-        : 'Review your draft website before sharing');
+        : 'Review your site before sharing');
   const nextStepActionLabel = firstPublishBlocker
     ? 'Fix next setup item'
     : stats?.isPublished
       ? 'Open guests'
-      : 'Open site builder';
+      : 'Edit site';
   const nextStepAction = firstPublishBlocker
     ? () => navigate(firstPublishBlocker.route)
     : () => navigate(stats?.isPublished ? '/dashboard/guests' : '/dashboard/builder?publishNow=1');

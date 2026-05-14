@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 const INCLUDED_SMS_CREDITS = 1000;
-const CHECKOUT_VERIFY_SIGNIN_REQUIRED_COPY = "Please sign in to confirm this checkout.";
+const CHECKOUT_VERIFY_SIGNIN_REQUIRED_COPY = "Please sign in to confirm checkout.";
 const CHECKOUT_VERIFY_SESSION_REQUIRED_COPY = "Choose a checkout session to confirm payment.";
 const CHECKOUT_VERIFY_SESSION_UNAVAILABLE_COPY = "This checkout session is not available.";
 const CHECKOUT_VERIFY_SESSION_NOT_READY_COPY = "This checkout session is not ready to confirm yet.";

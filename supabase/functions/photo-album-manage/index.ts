@@ -14,7 +14,7 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-const PHOTO_ALBUM_MANAGE_SIGNIN_REQUIRED_COPY = "Please sign in to manage photo albums for this site.";
+const PHOTO_ALBUM_MANAGE_SIGNIN_REQUIRED_COPY = "Please sign in to manage photo albums.";
 const PHOTO_ALBUM_MANAGE_ALBUM_REQUIRED_COPY = "Choose a photo album before updating it.";
 const PHOTO_ALBUM_MANAGE_ALBUM_UNAVAILABLE_COPY = "This photo album is not available.";
 const PHOTO_ALBUM_MANAGE_ACCESS_UNAVAILABLE_COPY = "You do not have access to manage this photo album.";

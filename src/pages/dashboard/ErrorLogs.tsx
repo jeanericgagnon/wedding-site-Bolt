@@ -203,7 +203,7 @@ export const DashboardErrorLogs: React.FC = () => {
           <Card padding="lg">
             <h1 className="text-xl font-semibold text-text-primary mb-2">Restricted</h1>
             <p className="text-sm text-text-secondary mb-4">This admin page is available only to the designated admin account.</p>
-            <Link to="/dashboard/overview" className="text-sm text-primary hover:text-primary-hover">Back to wedding home</Link>
+            <Link to="/dashboard/overview" className="text-sm text-primary hover:text-primary-hover">Back to your wedding</Link>
           </Card>
         </div>
       </div>

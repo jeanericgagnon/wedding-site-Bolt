@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 const HOSTED_BUCKET = "photo-uploads";
-const PHOTO_EXPORT_SIGNIN_REQUIRED_COPY = "Please sign in to export this photo manifest.";
+const PHOTO_EXPORT_SIGNIN_REQUIRED_COPY = "Please sign in to export these photos.";
 const PHOTO_EXPORT_SITE_REQUIRED_COPY = "Choose a site before exporting this photo manifest.";
 const PHOTO_EXPORT_SITE_UNAVAILABLE_COPY = "This photo manifest is not available.";
 const PHOTO_EXPORT_ACCESS_UNAVAILABLE_COPY = "You do not have access to this photo manifest.";

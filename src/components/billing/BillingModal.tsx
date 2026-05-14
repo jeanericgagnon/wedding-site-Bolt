@@ -85,10 +85,10 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
         <div className="flex items-center justify-between p-6 border-b border-border-subtle">
           <div>
             <h2 id="billing-modal-title" className="text-xl font-bold text-text-primary">
-              Unlock full access
+              Everything included
             </h2>
             <p className="text-sm text-text-secondary mt-0.5">
-              Get the full wedding site, guest tools, memories, and planning suite for one flat payment.
+              Get the full wedding site, guest tools, memories, and planning suite in one payment.
             </p>
           </div>
           <button
@@ -105,14 +105,14 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
               <span className="flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                 <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-                One-time payment
+                One payment
               </span>
             </div>
             <div className="flex items-baseline gap-1 mb-1 mt-2">
               <span className="text-4xl font-bold text-text-primary">$49</span>
-              <span className="text-text-secondary text-sm">one-time · 2-year access</span>
+              <span className="text-text-secondary text-sm">two years included</span>
             </div>
-            <p className="text-sm text-text-secondary mb-4">No subscription. Pay once, use for 2 years.</p>
+            <p className="text-sm text-text-secondary mb-4">No subscription. One payment. Two years included.</p>
             <ul className="space-y-2.5">
               {PRO_FEATURES.map((f) => (
                 <li key={f} className="flex items-start gap-2 text-sm text-text-secondary">
@@ -149,19 +149,19 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
               ) : currentPlan === 'pro' ? (
                 <>
                   <Check className="w-4 h-4 mr-2" aria-hidden="true" />
-                  Already active
+                  Included already
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 mr-2" aria-hidden="true" />
-                  Get full access for $49
+                  Continue for $49
                 </>
               )}
             </Button>
           </div>
 
           <p className="text-center text-xs text-text-tertiary">
-            Secure checkout. No subscription required.
+            Secure checkout. No subscription.
           </p>
         </div>
       </div>

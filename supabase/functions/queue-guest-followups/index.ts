@@ -14,7 +14,7 @@ const json = (body: Record<string, unknown>, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-const FOLLOWUP_SIGNIN_REQUIRED_COPY = "Please sign in to queue guest follow-ups.";
+const FOLLOWUP_SIGNIN_REQUIRED_COPY = "Please sign in to schedule guest follow-ups.";
 const FOLLOWUP_SITE_REQUIRED_COPY = "Choose a site before queueing guest follow-ups.";
 const FOLLOWUP_KIND_INVALID_COPY = "Choose a valid follow-up type.";
 const FOLLOWUP_SITE_UNAVAILABLE_COPY = "This site is not available for guest follow-ups.";

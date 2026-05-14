@@ -80,7 +80,7 @@ describe('signupService', () => {
     signInWithPasswordMock.mockResolvedValue({ data: { user: null }, error: { message: 'email_not_confirmed' } });
 
     await expect(createSignupAccount('test@example.com', 'password-123')).rejects.toThrow(
-      'Account created! Check your email to confirm your address, then sign in.',
+      'Account created. Check your email to confirm your address, then sign in.',
     );
   });
 

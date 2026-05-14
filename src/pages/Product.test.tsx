@@ -68,8 +68,8 @@ describe('Product starter draft truth', () => {
     render(<Product />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Step 6 Plan day-of' }));
-    expect(screen.getAllByRole('button', { name: 'Open collaboration settings' }).length).toBe(2);
-    fireEvent.click(screen.getAllByRole('button', { name: 'Open collaboration settings' })[0]);
+    expect(screen.getAllByRole('button', { name: 'Manage collaborators' }).length).toBe(2);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Manage collaborators' })[0]);
 
     expect(navigateMock).toHaveBeenCalledWith('/settings');
     expect(screen.queryByRole('button', { name: 'Invite planner' })).not.toBeInTheDocument();
@@ -117,23 +117,23 @@ describe('Product starter draft truth', () => {
     authState.user = { id: 'user-1' };
     render(<Product />);
 
-    expect(screen.getAllByRole('button', { name: 'Review your draft' }).length).toBe(2);
+    expect(screen.getAllByRole('button', { name: 'Continue your site' }).length).toBe(2);
     expect(screen.queryByRole('button', { name: 'Start your draft' })).not.toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Open site editor' }).length).toBe(3);
-    expect(screen.getByText('Ready to keep shaping your draft?')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Edit your site' }).length).toBe(3);
+    expect(screen.getByText('Ready to keep shaping your wedding?')).toBeInTheDocument();
     expect(screen.queryByText('Want to see the full flow in action?')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'open site editor' })).toHaveAttribute('href', '/dashboard/builder');
+    expect(screen.getByRole('link', { name: 'edit your site' })).toHaveAttribute('href', '/dashboard/builder');
     expect(screen.queryByRole('button', { name: 'Try full demo' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Open your dashboard' })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Review your draft' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Continue your site' })[0]);
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Open site editor' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Edit your site' })[0]);
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
-    fireEvent.click(screen.getByRole('button', { name: 'Open guest list' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Manage guests' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/guests');
-    fireEvent.click(screen.getByRole('button', { name: 'Open message drafts' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guest messages' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/messages');
     fireEvent.click(screen.getByRole('button', { name: 'Open RSVP board' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/rsvp-board');
@@ -154,7 +154,7 @@ describe('Product starter draft truth', () => {
     authState.user = { id: 'user-1' };
     render(<Product />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open collaboration settings' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Manage collaborators' }));
 
     expect(navigateMock).toHaveBeenCalledWith('/settings');
   });
@@ -163,7 +163,7 @@ describe('Product starter draft truth', () => {
     authState.user = { id: 'user-1' };
     render(<Product />);
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Open planner space' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Continue planning' })[0]);
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/planning');
   });
@@ -172,7 +172,7 @@ describe('Product starter draft truth', () => {
     authState.user = { id: 'user-1' };
     render(<Product />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open planner space' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue planning' }));
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/planning');
   });
@@ -181,7 +181,7 @@ describe('Product starter draft truth', () => {
     authState.user = { id: 'user-1' };
     render(<Product />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open coordinator view' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Day-of view' }));
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/coordinator');
   });

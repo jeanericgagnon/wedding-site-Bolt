@@ -1166,7 +1166,7 @@ export const Onboarding: React.FC = () => {
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Button variant="outline" size="lg" onClick={() => navigate('/dashboard')}>
-          Go to wedding home
+          Continue to your wedding
         </Button>
       </div>
     </div>

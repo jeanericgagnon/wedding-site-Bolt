@@ -1056,7 +1056,7 @@ export const GuidedSetup: React.FC = () => {
               onClick={handleComplete}
               disabled={loading}
             >
-              {loading ? 'Creating your starter site...' : 'Go to wedding home'}
+              {loading ? 'Creating your wedding site...' : 'Continue to your wedding'}
             </Button>
           </div>
         );

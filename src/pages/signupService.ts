@@ -36,7 +36,7 @@ export async function createSignupAccount(email: string, password: string): Prom
     if (signInRes.error) {
       const message = signInRes.error.message.toLowerCase();
       if (message.includes('email not confirmed') || message.includes('email_not_confirmed')) {
-        throw new Error('Account created! Check your email to confirm your address, then sign in.');
+        throw new Error('Account created. Check your email to confirm your address, then sign in.');
       }
       throw signInRes.error;
     }
@@ -45,7 +45,7 @@ export async function createSignupAccount(email: string, password: string): Prom
   }
 
   if (!userId) {
-    throw new Error('Account created! Please sign in to continue.');
+    throw new Error('Account created. Please sign in to continue.');
   }
 
   return userId;

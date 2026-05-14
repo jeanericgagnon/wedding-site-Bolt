@@ -241,14 +241,14 @@ export const Product: React.FC = () => {
             onClick={user ? () => navigate('/dashboard/planning') : handleSignUp}
             className="px-4 py-2 rounded-lg border border-brand/40 hover:bg-brand/5"
           >
-            {user ? 'Open planner space' : 'Start your draft'}
+            {user ? 'Continue planning' : 'Start your draft'}
           </button>
           {user && (
             <button
               onClick={() => navigate('/settings')}
               className="px-4 py-2 rounded-lg border border-brand/40 hover:bg-brand/5"
             >
-              Open collaboration settings
+              Manage collaborators
             </button>
           )}
         </div>
@@ -262,13 +262,13 @@ export const Product: React.FC = () => {
 
       <section className="py-3 border-b border-border-subtle bg-brand text-paper">
         <div className="container-custom max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-2 text-sm">
-          <p className="font-medium">{user ? 'Ready to keep shaping your draft?' : 'Want to see the full flow in action?'}</p>
+          <p className="font-medium">{user ? 'Ready to keep shaping your wedding?' : 'Want to see the full flow in action?'}</p>
           {user ? (
             <button
               onClick={() => navigate('/dashboard/builder')}
               className="px-4 py-1.5 rounded-lg bg-white text-brand font-semibold hover:bg-white/90"
             >
-              Open site editor
+              Edit your site
             </button>
           ) : (
             <button
@@ -316,10 +316,10 @@ export const Product: React.FC = () => {
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <button onClick={handleSignUp} className="px-5 py-2.5 bg-brand text-paper rounded-lg font-semibold">{user ? 'Review your draft' : 'Start your draft'}</button>
+                <button onClick={handleSignUp} className="px-5 py-2.5 bg-brand text-paper rounded-lg font-semibold">{user ? 'Continue your site' : 'Start your draft'}</button>
                 {user ? (
                   <button onClick={() => navigate('/dashboard/builder')} className="group px-5 py-2.5 border-2 border-brand text-brand rounded-lg font-semibold inline-flex items-center gap-2">
-                    Open site editor
+                    Edit your site
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                   </button>
                 ) : (
@@ -401,21 +401,21 @@ export const Product: React.FC = () => {
                     onClick={() => navigate('/settings')}
                     className="rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-paper transition hover:bg-brand/90"
                   >
-                    Open collaboration settings
+                    Manage collaborators
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/planning')}
                     className="rounded-lg border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink transition hover:border-brand/30 hover:text-brand"
                   >
-                    Open planner space
+                    Continue planning
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate('/dashboard/coordinator')}
                     className="rounded-lg border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink transition hover:border-brand/30 hover:text-brand"
                   >
-                    Open coordinator view
+                    Day-of view
                   </button>
                 </>
               ) : (
@@ -553,19 +553,19 @@ export const Product: React.FC = () => {
         <div className="container-custom max-w-4xl text-center">
           <h2 className="section-title mb-3">A beautiful website first. Calm planning underneath.</h2>
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-4 w-full max-w-xl mx-auto">
-            <button onClick={handleSignUp} className="w-full sm:w-auto px-7 py-3.5 bg-brand text-paper font-semibold rounded-lg hover:bg-brand/90 transition-all">{user ? 'Review your draft' : 'Start your draft'}</button>
+            <button onClick={handleSignUp} className="w-full sm:w-auto px-7 py-3.5 bg-brand text-paper font-semibold rounded-lg hover:bg-brand/90 transition-all">{user ? 'Continue your site' : 'Start your draft'}</button>
             {user ? (
               <>
                 <button onClick={() => navigate('/dashboard/builder')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
-                  Open site editor
+                  Edit your site
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
                 <button onClick={() => navigate('/dashboard/guests')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
-                  Open guest list
+                  Manage guests
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
                 <button onClick={() => navigate('/dashboard/messages')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
-                  Open message drafts
+                  Guest messages
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                 </button>
                 <button onClick={() => navigate('/dashboard/rsvp-board')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
@@ -583,7 +583,7 @@ export const Product: React.FC = () => {
           <p className="text-sm text-ink/65">
             Or{' '}
             <Link to={user ? '/dashboard/builder' : '/templates'} className="text-brand font-semibold hover:underline">
-              {user ? 'open site editor' : 'browse templates'}
+              {user ? 'edit your site' : 'browse templates'}
             </Link>
           </p>
         </div>

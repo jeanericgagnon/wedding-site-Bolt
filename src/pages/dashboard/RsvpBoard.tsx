@@ -101,7 +101,7 @@ export const DashboardRsvpBoard: React.FC = () => {
             <p className="text-xs text-text-tertiary mt-2">Last refreshed: {lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}</p>
           )}
           <div className="mt-3 flex flex-wrap gap-2">
-            <Link to="/dashboard/coordinator" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open day-of view</Link>
+            <Link to="/dashboard/coordinator" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Day-of view</Link>
             <Link to="/dashboard/guests" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open guests</Link>
             <button onClick={() => setFilter((prev) => prev === 'pending' ? 'all' : 'pending')} className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">{filter === 'pending' ? 'Show everyone' : 'Show guests waiting to reply'}</button>
           </div>

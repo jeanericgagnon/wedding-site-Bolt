@@ -413,7 +413,7 @@ export const WeddingStatus: React.FC = () => {
               fullWidth
               disabled={loading || !selectedStatus}
             >
-              {loading ? 'Saving...' : 'Continue to your wedding home'}
+              {loading ? 'Saving...' : 'Continue to your wedding'}
             </Button>
           </form>
         </Card>

@@ -113,7 +113,7 @@ export const PaymentRequired: React.FC = () => {
             <Heart className="w-8 h-8 text-accent" />
           </div>
           <h1 className="text-4xl font-semibold leading-tight text-text-primary">
-            {isBillingUnavailable ? 'We could not verify billing right now' : isExpired ? 'Keep your wedding space open' : 'Start with the full wedding suite'}
+            {isBillingUnavailable ? 'We couldn’t confirm payment right now' : isExpired ? 'Keep your wedding open' : 'Start with everything included'}
           </h1>
           <p className="mt-4 text-base leading-7 text-text-secondary">
             {isBillingUnavailable
@@ -128,16 +128,16 @@ export const PaymentRequired: React.FC = () => {
           <div className="p-6 sm:p-8">
             <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border-subtle pb-6">
               <div>
-                <p className="text-sm font-medium text-text-secondary">dayof full access</p>
+                <p className="text-sm font-medium text-text-secondary">dayof</p>
                 <p className="mt-2 text-4xl font-semibold text-text-primary">$49</p>
-                <p className="mt-1 text-sm text-text-secondary">One payment for two years of access.</p>
+                <p className="mt-1 text-sm text-text-secondary">One payment. Two years included.</p>
               </div>
               <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1.5 text-sm text-text-secondary">
                 No surprise renewals
               </span>
             </div>
 
-            <p className="mt-6 text-sm font-medium text-text-secondary">Included from the start</p>
+            <p className="mt-6 text-sm font-medium text-text-secondary">Everything included</p>
             <ul className="mt-3 grid gap-3 sm:grid-cols-2">
               {FEATURES.map(f => (
                 <li key={f} className="flex items-start gap-3 rounded-lg border border-border-subtle bg-surface-subtle/60 px-4 py-3 text-sm leading-6 text-text-primary">
@@ -199,7 +199,7 @@ export const PaymentRequired: React.FC = () => {
               ) : (
                 <>
                   <CreditCard className="w-5 h-5 mr-2" />
-                  Pay $49 and continue
+                  Continue for $49
                 </>
               )}
             </Button>

@@ -187,10 +187,10 @@ export const Home: React.FC = () => {
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <button
                     onClick={handleSignUp}
-                    aria-label={user ? 'Review your wedding site draft' : 'Start your wedding site draft'}
+                    aria-label={user ? 'Continue your wedding site' : 'Start your wedding site draft'}
                     className="inline-flex min-h-[54px] items-center justify-center rounded-md bg-brand px-7 py-3.5 text-base font-semibold text-paper transition hover:bg-brand/90"
                   >
-                    {user ? 'Review your draft' : 'Start your draft'}
+                    {user ? 'Continue your site' : 'Start your draft'}
                   </button>
                   <Link
                     to="/templates"
@@ -497,10 +497,10 @@ export const Home: React.FC = () => {
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                   <button
                     onClick={handleSignUp}
-                    aria-label={user ? 'Review your wedding site draft' : 'Start your wedding site draft'}
+                    aria-label={user ? 'Continue your wedding site' : 'Start your wedding site draft'}
                     className="inline-flex min-h-[54px] items-center justify-center rounded-md bg-brand px-7 py-3.5 text-base font-semibold text-paper transition hover:bg-brand/90"
                   >
-                    {user ? 'Review your draft' : 'Start your draft'}
+                    {user ? 'Continue your site' : 'Start your draft'}
                   </button>
                   <Link
                     to="/templates"
@@ -519,32 +519,32 @@ export const Home: React.FC = () => {
             <div className="container-custom">
               <Reveal>
                 <div className="rounded-2xl border border-brand/15 bg-white p-6">
-                  <p className="text-sm font-medium text-brand">Already inside?</p>
+                  <p className="text-sm font-medium text-brand">Already started?</p>
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                     <Link
                       to="/dashboard/builder"
                       onClick={() => navigate('/dashboard/builder')}
                       className="inline-flex min-h-[48px] items-center justify-center rounded-md border border-border px-5 py-3 text-sm font-semibold text-ink"
                     >
-                      Open site editor
+                      Edit your site
                     </Link>
                     <Link
                       to="/dashboard/planning"
                       className="inline-flex min-h-[48px] items-center justify-center rounded-md border border-border px-5 py-3 text-sm font-semibold text-ink"
                     >
-                      Open planner space
+                      Continue planning
                     </Link>
                     <button
                       onClick={() => navigate('/dashboard/guests')}
                       className="inline-flex min-h-[48px] items-center justify-center rounded-md border border-border px-5 py-3 text-sm font-semibold text-ink"
                     >
-                      Open your guest list
+                      Manage guests
                     </button>
                     <button
                       onClick={() => navigate('/dashboard/messages')}
                       className="inline-flex min-h-[48px] items-center justify-center rounded-md border border-border px-5 py-3 text-sm font-semibold text-ink"
                     >
-                      Open message drafts
+                      Guest messages
                     </button>
                   </div>
                 </div>

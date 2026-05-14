@@ -10,7 +10,7 @@ function safePhotoModerationError(code: "LOAD" | "PERMISSION" | "SAVE" | "INTERN
   return "Could not update selected photos. Please try again.";
 }
 
-const PHOTO_MODERATION_SIGNIN_REQUIRED_COPY = "Please sign in to update selected photos.";
+const PHOTO_MODERATION_SIGNIN_REQUIRED_COPY = "Please sign in to update these photos.";
 const PHOTO_MODERATION_SELECTION_REQUIRED_COPY = "Choose at least one photo to update.";
 const PHOTO_MODERATION_SELECTION_LIMIT_COPY = "Choose 500 photos or fewer at a time.";
 const PHOTO_MODERATION_SELECTION_UNAVAILABLE_COPY = "One or more selected photos are not available.";

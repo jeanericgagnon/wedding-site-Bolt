@@ -13,7 +13,7 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-const VAULT_RESOLVE_SIGNIN_REQUIRED_COPY = "Please sign in to open this vault attachment.";
+const VAULT_RESOLVE_SIGNIN_REQUIRED_COPY = "Please sign in to open this Vault file.";
 const VAULT_RESOLVE_ENTRY_REQUIRED_COPY = "Choose a vault attachment to open.";
 const VAULT_RESOLVE_ENTRY_UNAVAILABLE_COPY = "This vault attachment is not available.";
 const VAULT_RESOLVE_ACCESS_UNAVAILABLE_COPY = "This vault attachment is not available from this account.";

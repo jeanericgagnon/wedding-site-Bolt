@@ -46,12 +46,12 @@ describe('overviewUtils', () => {
   it('builds setup checklist publish item with correct action label/route', () => {
     const draftItems = buildSetupChecklist(base);
     const draftPublish = draftItems.find((i) => i.id === 'publish');
-    expect(draftPublish?.actionLabel).toBe('Go live');
+    expect(draftPublish?.actionLabel).toBe('Publish site');
     expect(draftPublish?.route).toBe('/dashboard/builder?publishNow=1');
 
     const liveItems = buildSetupChecklist({ ...base, isPublished: true });
     const livePublish = liveItems.find((i) => i.id === 'publish');
-    expect(livePublish?.actionLabel).toBe('Open site editor');
+    expect(livePublish?.actionLabel).toBe('Edit site');
     expect(livePublish?.route).toBe('/dashboard/builder');
   });
 
@@ -100,11 +100,11 @@ describe('overviewUtils', () => {
 
   it('switches published readiness route/action once published toggles true', () => {
     const draftPublishedItem = buildPublishReadinessItems(base).find((i) => i.id === 'published');
-    expect(draftPublishedItem?.actionLabel).toBe('Go live');
+    expect(draftPublishedItem?.actionLabel).toBe('Publish site');
     expect(draftPublishedItem?.route).toBe('/dashboard/builder?publishNow=1');
 
     const livePublishedItem = buildPublishReadinessItems({ ...base, isPublished: true }).find((i) => i.id === 'published');
-    expect(livePublishedItem?.actionLabel).toBe('Open site editor');
+    expect(livePublishedItem?.actionLabel).toBe('Edit site');
     expect(livePublishedItem?.route).toBe('/dashboard/builder');
   });
 

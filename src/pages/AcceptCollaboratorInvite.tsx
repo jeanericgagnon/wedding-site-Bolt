@@ -169,8 +169,8 @@ export const AcceptCollaboratorInvite: React.FC = () => {
       await claimInvite(authUser, currentInvite);
       trace('finishClaim:accepted');
       setInviteState('accepted');
-      setClaimStep('Invite accepted. Redirecting…');
-      setClaimMessage('Invite accepted. Redirecting to your wedding home…');
+      setClaimStep('Invite accepted. Opening…');
+      setClaimMessage('Invite accepted. Opening your wedding…');
       trace(`finishClaim:navigate:${getCollaboratorRedirectPath(currentInvite.role)}`);
       navigate(getCollaboratorRedirectPath(currentInvite.role), { replace: true });
     } catch (err) {
@@ -307,10 +307,10 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                 <ShieldCheck className="h-6 w-6" aria-hidden="true" />
               </div>
               <div>
-                <p className="text-sm text-text-tertiary">Invite-only access</p>
-                <h1 className="mt-3 text-3xl font-bold text-text-primary">Join this wedding team</h1>
+                <p className="text-sm text-text-tertiary">Wedding invite</p>
+                <h1 className="mt-3 text-3xl font-bold text-text-primary">Join this wedding</h1>
                 <p className="mt-3 max-w-2xl text-text-secondary">
-                  This page is only for invited collaborators like planners, coordinators, and support teammates. No payment. No demo mode. Just the right wedding access.
+                  You’ve been invited to help with this wedding. Sign in or create an account to continue. No payment needed.
                 </p>
               </div>
             </div>
@@ -319,17 +319,17 @@ export const AcceptCollaboratorInvite: React.FC = () => {
               <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
                 <p className="text-xs font-medium text-text-tertiary">Step 1</p>
                 <p className="mt-2 text-sm font-semibold text-text-primary">Check invite</p>
-                <p className="mt-2 text-sm text-text-secondary">We validate the invite link and lock to the invited email.</p>
+                <p className="mt-2 text-sm text-text-secondary">We’ll confirm the invite and invited email.</p>
               </div>
               <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
                 <p className="text-xs font-medium text-text-tertiary">Step 2</p>
                 <p className="mt-2 text-sm font-semibold text-text-primary">Sign in or create account</p>
-                <p className="mt-2 text-sm text-text-secondary">Use the invited email to join this wedding team in a minute.</p>
+                <p className="mt-2 text-sm text-text-secondary">Use the invited email to join this wedding.</p>
               </div>
               <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
                 <p className="text-xs font-medium text-text-tertiary">Step 3</p>
-                <p className="mt-2 text-sm font-semibold text-text-primary">Get access</p>
-                <p className="mt-2 text-sm text-text-secondary">We attach your access and send you straight to the wedding home.</p>
+                <p className="mt-2 text-sm font-semibold text-text-primary">Join wedding</p>
+                <p className="mt-2 text-sm text-text-secondary">We’ll add you to the wedding and take you there.</p>
               </div>
             </div>
 
@@ -368,7 +368,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
               )}
               {inviteState === 'accepted' && (
                 <div className="space-y-2">
-                  <p className="text-sm text-text-primary">This invite has already been claimed. If you already joined, head to your wedding home.</p>
+                  <p className="text-sm text-text-primary">This invite has already been claimed. If you already joined, we’ll open your wedding.</p>
                   {showInviteDebug && inviteLookupDebug && <p className="text-xs text-text-tertiary">Invite check: {inviteLookupDebug}</p>}
                 </div>
               )}
@@ -425,11 +425,11 @@ export const AcceptCollaboratorInvite: React.FC = () => {
             <div className="mt-6 flex flex-wrap gap-3">
               {inviteState === 'accepted' && (
                 <Button type="button" variant="accent" onClick={() => navigate(getCollaboratorRedirectPath(inviteInfo?.role))}>
-                  Go to wedding home
+                  Continue to your wedding
                 </Button>
               )}
               <Link to="/" className="inline-flex items-center rounded-lg border border-border-subtle px-4 py-2 text-sm font-medium text-text-primary hover:bg-surface-subtle">
-                Back to home
+                Back to dayof
               </Link>
             </div>
           </Card>
@@ -453,11 +453,11 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                 <div>
                   <h2 className="text-2xl font-bold text-text-primary">You’re in</h2>
                   <p className="mt-2 text-text-secondary">
-                    Signed in as <span className="font-medium text-text-primary">{user.email}</span>. We’ll finish claiming the invite automatically.
+                    Signed in as <span className="font-medium text-text-primary">{user.email}</span>. We’ll finish joining automatically.
                   </p>
                 </div>
                 <Button type="button" variant="accent" fullWidth disabled>
-                  {claiming ? 'Claiming access…' : 'Redirecting…'}
+                  {claiming ? 'Joining…' : 'Opening…'}
                 </Button>
               </div>
             ) : (
@@ -467,8 +467,8 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                     {authMode === 'signin' ? <ShieldCheck className="h-5 w-5" aria-hidden="true" /> : <UserPlus className="h-5 w-5" aria-hidden="true" />}
                   </div>
                   <div>
-                    <p className="text-sm text-text-tertiary">Collaborator access only</p>
-                    <h2 className="text-2xl font-bold text-text-primary">{authMode === 'signin' ? 'Sign in to join' : 'Create collaborator account'}</h2>
+                    <p className="text-sm text-text-tertiary">Collaborator invite</p>
+                    <h2 className="text-2xl font-bold text-text-primary">{authMode === 'signin' ? 'Sign in and join' : 'Create account to join'}</h2>
                   </div>
                 </div>
 
@@ -492,8 +492,8 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                 <div className="mb-5 rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
                   <p className="text-sm text-text-secondary">
                     {authMode === 'signin'
-                      ? 'Use the invited email and password below. We’ll attach access right away.'
-                      : 'Create a lightweight collaborator account. This path skips pricing, demo mode, and owner setup.'}
+                      ? 'Use the invited email and password below. We’ll add you to the wedding right away.'
+                      : 'Create an account to help with this wedding. No payment needed.'}
                   </p>
                   {showInviteDebug && <div className="mt-4 text-[11px] text-text-tertiary">{debugFlags}</div>}
                   {inviteIsClaimable && inviteInfo && (
@@ -535,7 +535,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       disabled={authLoading || claiming}
                     />
                     <Button type="submit" variant="accent" size="lg" fullWidth disabled={authLoading || claiming}>
-                      {authLoading || claiming ? 'Signing in…' : 'Sign in and join team'}
+                      {authLoading || claiming ? 'Signing in…' : 'Sign in and join'}
                     </Button>
                   </form>
                 ) : (
@@ -582,7 +582,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
                       disabled={authLoading || claiming}
                     />
                     <Button type="submit" variant="accent" size="lg" fullWidth disabled={authLoading || claiming}>
-                      {authLoading || claiming ? 'Creating account…' : 'Create account and join team'}
+                      {authLoading || claiming ? 'Creating account…' : 'Create account and continue'}
                     </Button>
                   </form>
                 )}

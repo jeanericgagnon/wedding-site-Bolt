@@ -280,20 +280,20 @@ export const Login: React.FC = () => {
           </Link>
           <h1 className="text-3xl font-semibold text-text-primary mb-2">Welcome back</h1>
           <p className="text-text-secondary">
-            {hasInviteContext ? 'Sign in with the invited email to join this wedding.' : 'Pick up where you left off.'}
+            {hasInviteContext ? 'Use the invited email to join this wedding.' : 'Continue where you left off.'}
           </p>
         </div>
 
         <Card variant="default" padding="lg">
           {hasInviteContext && (
             <div className="mb-5 rounded-lg border border-border-subtle bg-surface-subtle/30 p-4 text-left">
-              <p className="text-xs font-medium text-text-tertiary">Collaborator invite</p>
+              <p className="text-xs font-medium text-text-tertiary">Wedding invite</p>
               <p className="mt-2 text-base font-semibold text-text-primary">{inviteSite || 'Wedding access'}</p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-secondary">
                 {inviteRole && <span className="rounded-full bg-white px-3 py-1">{inviteRole.replace(/_/g, ' ')}</span>}
                 {inviteEmail && <span className="rounded-full bg-white px-3 py-1">{inviteEmail}</span>}
               </div>
-              <p className="mt-3 text-xs text-text-tertiary">After sign-in, we’ll send you straight back to the invite so you can finish joining.</p>
+              <p className="mt-3 text-xs text-text-tertiary">After you sign in, we’ll take you back to the invite.</p>
             </div>
           )}
 
@@ -320,7 +320,7 @@ export const Login: React.FC = () => {
               <div className="w-full border-t border-border-subtle" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-surface text-text-secondary">or use email</span>
+              <span className="px-2 bg-surface text-text-secondary">or sign in with email</span>
             </div>
           </div>
 
@@ -371,7 +371,7 @@ export const Login: React.FC = () => {
               fullWidth
               disabled={loading || demoLoading }
             >
-              {loading ? 'Signing in...' : hasInviteContext ? 'Sign in and continue invite' : 'Sign in'}
+              {loading ? 'Signing in...' : hasInviteContext ? 'Sign in and continue' : 'Sign in'}
             </Button>
           </form>
 
@@ -410,7 +410,7 @@ export const Login: React.FC = () => {
                 } : undefined}
                 className="text-primary hover:text-primary-hover font-medium transition-colors"
               >
-                {hasInviteContext ? 'Create collaborator account' : 'Get started for $49'}
+                {hasInviteContext ? 'Create account to join' : 'Get started for $49'}
               </Link>
             </p>
           </div>

@@ -173,7 +173,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
       title: 'Pinned',
       items: [
         { id: 'builder', label: 'Website', icon: Globe, path: '/dashboard/builder' },
-        { id: 'guests', label: 'Guests & RSVP', icon: Users, path: '/dashboard/guests' },
+        { id: 'guests', label: 'Guests', icon: Users, path: '/dashboard/guests' },
         { id: 'itinerary', label: 'Schedule', icon: Calendar, path: '/dashboard/itinerary' },
         { id: 'photos', label: 'Memories', icon: Archive, path: '/dashboard/photos' },
       ],
@@ -181,13 +181,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     {
       title: 'More',
       items: [
-        { id: 'planning', label: 'Planner', icon: ClipboardList, path: '/dashboard/planning' },
-        { id: 'messages', label: 'Messaging', icon: Mail, path: '/dashboard/messages' },
+        { id: 'planning', label: 'Planning', icon: ClipboardList, path: '/dashboard/planning' },
+        { id: 'messages', label: 'Messages', icon: Mail, path: '/dashboard/messages' },
         { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry' },
         { id: 'vendor-templates', label: 'Vendor pages', icon: Palette, path: '/vendor-templates' },
         { id: 'seating', label: 'Seating', icon: Armchair, path: '/dashboard/seating' },
-        { id: 'coordinator', label: 'Day-of view', icon: Radio, path: '/dashboard/coordinator' },
-        { id: 'vault', label: 'Vaults', icon: Image, path: '/dashboard/vault' },
+        { id: 'coordinator', label: 'Day-of', icon: Radio, path: '/dashboard/coordinator' },
+        { id: 'vault', label: 'Vault', icon: Image, path: '/dashboard/vault' },
         { id: 'audit-logs', label: 'Activity', icon: ScrollText, path: '/dashboard/audit-logs' },
         { id: 'settings', label: 'Settings', icon: Settings, path: '/dashboard/settings' },
       ],

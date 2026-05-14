@@ -813,7 +813,7 @@ export function OverviewDashboardLiveContent({
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button variant="accent" size="md" onClick={() => navigate('/dashboard/coordinator')}>
                     <Radio className="w-4 h-4 mr-2" aria-hidden="true" />
-                    Open day-of view
+                    Day-of view
                   </Button>
                   <Button variant="outline" size="md" onClick={() => navigate('/dashboard/planning')}>
                     <Radio className="w-4 h-4 mr-2" aria-hidden="true" />

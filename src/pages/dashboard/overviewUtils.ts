@@ -140,7 +140,7 @@ export const buildSetupChecklist = (stats: OverviewChecklistStats): ChecklistIte
     id: 'publish',
     label: 'Go live once',
     done: stats.isPublished,
-    actionLabel: stats.isPublished ? 'Open site editor' : 'Go live',
+    actionLabel: stats.isPublished ? 'Edit site' : 'Publish site',
     route: getPublishBuilderRoute(stats.isPublished),
   },
 ];
@@ -185,7 +185,7 @@ export const buildPublishReadinessItems = (stats: OverviewChecklistStats): Check
     id: 'published',
     label: 'Website has gone live once',
     done: Boolean(stats.isPublished),
-    actionLabel: stats.isPublished ? 'Open site editor' : 'Go live',
+    actionLabel: stats.isPublished ? 'Edit site' : 'Publish site',
     route: getPublishBuilderRoute(stats.isPublished),
   },
 ];

@@ -124,22 +124,22 @@ export const Signup: React.FC = () => {
             <Heart className="w-8 h-8 text-accent" aria-hidden="true" />
             <span className="text-2xl font-semibold text-text-primary">dayof</span>
           </Link>
-          <h1 className="text-3xl font-semibold text-text-primary mb-2">Start your wedding space</h1>
+          <h1 className="text-3xl font-semibold text-text-primary mb-2">Start your wedding</h1>
           <p className="text-text-secondary">
-            {hasInviteContext ? 'Create a collaborator account, then return to this invite.' : (paymentGateEnabled ? 'Create your account first. We’ll help with the wedding details next.' : 'Create your account, then we’ll help shape the first version.')}
+            {hasInviteContext ? 'Create your collaborator account, then return to the invite.' : (paymentGateEnabled ? 'Create your account first. Then we’ll help you start your wedding site.' : 'Create your account, then we’ll help you start the first version.')}
           </p>
         </div>
 
         <Card variant="default" padding="lg">
           {hasInviteContext && (
             <div className="mb-5 rounded-lg border border-border-subtle bg-surface-subtle/30 p-4 text-left">
-              <p className="text-xs font-medium text-text-tertiary">Collaborator invite</p>
+              <p className="text-xs font-medium text-text-tertiary">Wedding invite</p>
               <p className="mt-2 text-base font-semibold text-text-primary">{inviteSite || 'Wedding access'}</p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-secondary">
                 {inviteRole && <span className="rounded-full bg-white px-3 py-1">{inviteRole.replace(/_/g, ' ')}</span>}
                 {inviteEmail && <span className="rounded-full bg-white px-3 py-1">{inviteEmail}</span>}
               </div>
-              <p className="mt-3 text-xs text-text-tertiary">This path skips owner checkout. We’ll send you back to the invite after account creation.</p>
+              <p className="mt-3 text-xs text-text-tertiary">No payment needed. We’ll take you back to the invite after your account is created.</p>
             </div>
           )}
 
@@ -160,7 +160,7 @@ export const Signup: React.FC = () => {
               <div className="w-full border-t border-border-subtle" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-surface text-text-secondary">or use email</span>
+              <span className="px-2 bg-surface text-text-secondary">or sign in with email</span>
             </div>
           </div>
 
@@ -209,7 +209,7 @@ export const Signup: React.FC = () => {
               fullWidth
               disabled={loading}
             >
-              {loading ? 'Creating account...' : hasInviteContext ? 'Create account and continue invite' : 'Create account'}
+              {loading ? 'Creating account...' : hasInviteContext ? 'Create account and continue' : 'Create account'}
             </Button>
           </form>
 

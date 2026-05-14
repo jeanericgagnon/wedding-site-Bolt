@@ -169,13 +169,13 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
 
           <div className="hidden md:flex items-center gap-3">
             <Button variant="ghost" size="sm" onClick={handleLogin}>
-              Login
+              Sign in
             </Button>
             <Button variant="outline" size="sm" onClick={handleViewDemo} disabled={demoLoading}>
               {demoLoading ? 'Loading...' : 'View demo'}
             </Button>
             <Button variant="accent" size="sm" onClick={handleSignUp}>
-              Sign up
+              Start your wedding
             </Button>
           </div>
 

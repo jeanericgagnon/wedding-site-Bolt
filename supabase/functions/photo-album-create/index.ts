@@ -13,7 +13,7 @@ const slugify = (value: string) =>
 
 function safePhotoAlbumCreateError(code: "CONFIG" | "AUTH" | "PARENT" | "SAVE" | "INTERNAL"): string {
   if (code === "CONFIG") return "Photo albums are not ready yet. Please try again in a few minutes.";
-  if (code === "AUTH") return "Please sign in to manage photo albums for this site.";
+  if (code === "AUTH") return "Please sign in to manage photo albums.";
   if (code === "PARENT") return "Could not load the parent album. Please try again.";
   if (code === "SAVE") return "Could not create this photo album. Please try again.";
   return "Could not create this photo album. Please try again.";

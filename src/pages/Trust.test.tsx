@@ -47,21 +47,21 @@ describe('Trust page draft-first CTA', () => {
     authState.user = { id: 'user-1' };
     render(<Trust />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Review your draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue your site' }));
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
-    expect(screen.getByRole('link', { name: 'Open planner space' })).toHaveAttribute('href', '/dashboard/planning');
-    fireEvent.click(screen.getByRole('button', { name: 'Open site editor' }));
+    expect(screen.getByRole('link', { name: 'Continue planning' })).toHaveAttribute('href', '/dashboard/planning');
+    fireEvent.click(screen.getByRole('button', { name: 'Edit your site' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
-    fireEvent.click(screen.getByRole('button', { name: 'Open planner space' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue planning' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/planning');
-    fireEvent.click(screen.getByRole('button', { name: 'Open account settings' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Account settings' }));
     expect(navigateMock).toHaveBeenCalledWith('/settings');
-    fireEvent.click(screen.getByRole('button', { name: 'Open coordinator view' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Day-of view' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/coordinator');
-    fireEvent.click(screen.getByRole('button', { name: 'Open guest list' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Manage guests' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/guests');
-    fireEvent.click(screen.getByRole('button', { name: 'Open message drafts' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guest messages' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/messages');
     fireEvent.click(screen.getByRole('button', { name: 'Open RSVP board' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/rsvp-board');
