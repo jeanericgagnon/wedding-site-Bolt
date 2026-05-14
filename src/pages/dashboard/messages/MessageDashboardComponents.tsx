@@ -226,6 +226,7 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
   const activeCampaignCount = messages.filter((message) => message.status === 'queued' || message.status === 'sending').length;
   const sentCampaignCount = messages.filter((message) => message.status === 'sent').length;
   const followUpCampaignCount = messages.filter((message) => message.status === 'partial').length;
+  const reviewCampaignCount = messages.filter((message) => message.status === 'failed').length;
 
   return (
   <Card variant="bordered" padding="lg" className="border-border-subtle overflow-hidden">
@@ -258,11 +259,11 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
         </div>
         <div>
           <p className="text-2xl font-bold text-text-primary">
-            {sentCampaignCount + activeCampaignCount + followUpCampaignCount}
+            {sentCampaignCount + activeCampaignCount + followUpCampaignCount + reviewCampaignCount}
           </p>
-          <p className="text-sm text-text-secondary">Sent, active, or needs follow-up</p>
+          <p className="text-sm text-text-secondary">Sent, active, follow-up, or review</p>
           <p className="text-xs text-text-tertiary">
-            Sent {sentCampaignCount} · Active {activeCampaignCount} · Needs follow-up {followUpCampaignCount}
+            Sent {sentCampaignCount} · Active {activeCampaignCount} · Needs follow-up {followUpCampaignCount} · Needs review {reviewCampaignCount}
           </p>
         </div>
       </div>
