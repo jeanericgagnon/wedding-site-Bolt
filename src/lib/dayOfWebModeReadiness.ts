@@ -74,6 +74,9 @@ const actionLabels: Record<DayOfWebActionId, string> = {
 export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebModeReadiness {
   const enabled = new Set(input.enabledActionIds);
   const visibleActions = input.enabledActionIds.map((id) => actionLabels[id]).filter(Boolean);
+  const missingCoreActions = (['schedule', 'travel', 'photos'] as const)
+    .filter((id) => !enabled.has(id))
+    .map((id) => actionLabels[id]);
 
   const signals: DayOfWebModeSignal[] = [
     {
@@ -151,10 +154,12 @@ export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebMo
       ? 'needs-content'
       : 'ready';
   const summary = status === 'ready'
-    ? 'Ready as a no-app guest hub for the wedding day.'
+    ? `Ready as a no-app guest hub for the wedding day with ${visibleActions.length} guest action${visibleActions.length === 1 ? '' : 's'} live.`
     : status === 'empty'
       ? 'Add a site link and guest actions before sharing this as day-of mode.'
-      : `${needsContentCount} item${needsContentCount === 1 ? '' : 's'} need content before this feels day-of ready.`;
+      : missingCoreActions.length > 0
+        ? `${needsContentCount} item${needsContentCount === 1 ? '' : 's'} need content before this feels day-of ready. Still missing from day-of coverage: ${missingCoreActions.join(', ')}.`
+        : `${needsContentCount} item${needsContentCount === 1 ? '' : 's'} need content before this feels day-of ready.`;
 
   return {
     status,

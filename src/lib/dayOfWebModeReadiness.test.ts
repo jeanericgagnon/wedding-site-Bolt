@@ -15,7 +15,7 @@ describe('day-of web mode readiness', () => {
     });
 
     expect(model.status).toBe('ready');
-    expect(model.summary).toBe('Ready as a no-app guest hub for the wedding day.');
+    expect(model.summary).toBe('Ready as a no-app guest hub for the wedding day with 6 guest actions live.');
     expect(model.readyCount).toBe(7);
     expect(model.plannedCount).toBe(1);
     expect(model.signals.find((signal) => signal.id === 'guest-actions')?.detail).toContain('RSVP, Schedule, Directions and travel');
@@ -34,6 +34,7 @@ describe('day-of web mode readiness', () => {
 
     expect(model.status).toBe('needs-content');
     expect(model.needsContentCount).toBe(2);
+    expect(model.summary).toBe('2 items need content before this feels day-of ready. Still missing from day-of coverage: Schedule, Directions and travel, Photo upload.');
     expect(model.signals.find((signal) => signal.id === 'announcements')?.state).toBe('planned');
     expect(model.signals.find((signal) => signal.id === 'poor-network')?.detail).toContain('not built');
     expect(model.signals.find((signal) => signal.id === 'offline-shell')?.detail).toContain('cached app shell');

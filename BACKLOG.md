@@ -448,6 +448,9 @@ Paused next-priority bucket when backlog work resumes:
    - 2026-05-14 production rerun on `https://dayof.love` failed because the live invite-scoped guest hub did not render the proven `Travel quick plan` card, so live/mobile proof is still open until that shipped runtime picks up the structured travel spotlight
    - rerun the same invite-scoped travel hub flow against the shipped production runtime for live/mobile proof after the live guest hub renders the structured travel card again
 
+13. `ACTIVE`: app-like web day-of mode
+   - this batch shipped: the no-app guest-hub readiness summary now reads back how many guest actions are actually live, and when the day-of lane is incomplete it names the missing core coverage (`schedule`, `directions and travel`, `photo upload`) instead of stopping at a generic “needs content” summary
+
 8. `ACTIVE`: reminders, digests, and notification preferences
    - persist digest cadence, planner audience, and quiet-state preferences across settings + overview digest preview
    - keep snooze/quiet controls backed by saved preference state instead of local-only UI
