@@ -23,6 +23,7 @@ describe('MessageCampaignThreadPanels', () => {
             replied: 1,
             bounced: 1,
             deliveredRecipients: 4,
+            deliveredRate: 67,
             openRate: 150,
             clickRate: 75,
             replyRate: 25,
@@ -43,6 +44,7 @@ describe('MessageCampaignThreadPanels', () => {
     );
 
     expect(screen.getByText('4 delivered · 1 need review')).toBeInTheDocument();
+    expect(screen.getByText('67% delivered coverage')).toBeInTheDocument();
     expect(screen.getByText('6 opened · 2 viewed · 3 clicked · 1 replied · 1 bounced')).toBeInTheDocument();
     expect(screen.getByText('1 recipient needs contact details · 0 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('150% open · 75% click · 25% reply')).toBeInTheDocument();
@@ -84,6 +86,7 @@ describe('MessageCampaignThreadPanels', () => {
           replied: 1,
           bounced: 1,
           deliveredRecipients: 8,
+          deliveredRate: 73,
           openRate: 50,
           clickRate: 13,
           replyRate: 13,
@@ -103,6 +106,7 @@ describe('MessageCampaignThreadPanels', () => {
       />,
     );
 
+    expect(screen.getByText('73% delivered coverage')).toBeInTheDocument();
     expect(screen.getByText('Opened 4')).toBeInTheDocument();
     expect(screen.getByText('Viewed 2')).toBeInTheDocument();
     expect(screen.getByText('Clicked 1')).toBeInTheDocument();
@@ -123,8 +127,8 @@ describe('MessageHistorySummaryPanels', () => {
           sms: { sent: 0, active: 0, scheduled: 0, failed: 1, partial: 1, targeted: 7 },
         }}
         channelDeliveryBreakdown={{
-          email: { delivered: 10, failed: 1, skipped: 2, unreached: 3, targeted: 16 },
-          sms: { delivered: 4, failed: 2, skipped: 1, unreached: 0, targeted: 7 },
+          email: { delivered: 10, failed: 1, skipped: 2, unreached: 3, targeted: 16, deliveredRate: 63 },
+          sms: { delivered: 4, failed: 2, skipped: 1, unreached: 0, targeted: 7, deliveredRate: 57 },
         }}
         channelEngagementBreakdown={{
           email: { trackedMessages: 2, deliveredRecipients: 10, opened: 7, viewed: 3, clicked: 4, replied: 1, bounced: 0, openRate: 70, clickRate: 40, replyRate: 10 },
@@ -138,9 +142,11 @@ describe('MessageHistorySummaryPanels', () => {
 
     expect(screen.getByText('Sent 1 · Active 2 · Scheduled 1 · Needs follow-up 0 · Needs review 0')).toBeInTheDocument();
     expect(screen.getByText('10 delivered · 1 need review')).toBeInTheDocument();
+    expect(screen.getByText('63% delivered coverage')).toBeInTheDocument();
     expect(screen.getByText('2 need contact details · 3 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Sent 0 · Active 0 · Scheduled 0 · Needs follow-up 1 · Needs review 1')).toBeInTheDocument();
     expect(screen.getByText('4 delivered · 2 need review')).toBeInTheDocument();
+    expect(screen.getByText('57% delivered coverage')).toBeInTheDocument();
     expect(screen.getByText('1 need contact details · 0 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('7 opened · 4 clicked · 1 replied')).toBeInTheDocument();
     expect(screen.getByText('3 viewed across 2 completed campaigns')).toBeInTheDocument();
@@ -243,8 +249,8 @@ describe('MessageHistoryCard', () => {
           sms: { sent: 0, active: 0, scheduled: 0, failed: 1, partial: 0, targeted: 2 },
         }}
         channelDeliveryBreakdown={{
-          email: { delivered: 1, failed: 0, skipped: 1, unreached: 1, targeted: 3 },
-          sms: { delivered: 0, failed: 1, skipped: 0, unreached: 1, targeted: 2 },
+          email: { delivered: 1, failed: 0, skipped: 1, unreached: 1, targeted: 3, deliveredRate: 33 },
+          sms: { delivered: 0, failed: 1, skipped: 0, unreached: 1, targeted: 2, deliveredRate: 0 },
         }}
         channelEngagementBreakdown={{
           email: { trackedMessages: 1, deliveredRecipients: 1, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0, openRate: 0, clickRate: 0, replyRate: 0 },

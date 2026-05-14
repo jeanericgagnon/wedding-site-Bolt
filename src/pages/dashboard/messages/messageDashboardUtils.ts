@@ -171,8 +171,8 @@ export function buildChannelEngagementBreakdown(messages: Message[]) {
 
 export function buildChannelDeliveryBreakdown(messages: Message[]) {
   const init = {
-    email: { delivered: 0, failed: 0, skipped: 0, unreached: 0, targeted: 0 },
-    sms: { delivered: 0, failed: 0, skipped: 0, unreached: 0, targeted: 0 },
+    email: { delivered: 0, failed: 0, skipped: 0, unreached: 0, targeted: 0, deliveredRate: 0 },
+    sms: { delivered: 0, failed: 0, skipped: 0, unreached: 0, targeted: 0, deliveredRate: 0 },
   };
   messages.forEach((message) => {
     if (!isDeliveryCompletedStatus(message.status)) return;
@@ -183,6 +183,8 @@ export function buildChannelDeliveryBreakdown(messages: Message[]) {
     init[channel].unreached += getUnreachedCount(message);
     init[channel].targeted += getRecipientCount(message);
   });
+  init.email.deliveredRate = init.email.targeted > 0 ? Math.round((init.email.delivered / init.email.targeted) * 100) : 0;
+  init.sms.deliveredRate = init.sms.targeted > 0 ? Math.round((init.sms.delivered / init.sms.targeted) * 100) : 0;
   return init;
 }
 
@@ -227,6 +229,7 @@ export type CampaignThreadSummary = {
   replied: number;
   bounced: number;
   deliveredRecipients: number;
+  deliveredRate: number;
   openRate: number;
   clickRate: number;
   replyRate: number;
@@ -290,6 +293,7 @@ export function buildCampaignThreads(messages: Message[], deliveries: DeliveryRo
       clicked: 0,
       replied: 0,
       bounced: 0,
+      deliveredRate: 0,
       openRate: 0,
       clickRate: 0,
       replyRate: 0,
@@ -309,6 +313,8 @@ export function buildCampaignThreads(messages: Message[], deliveries: DeliveryRo
     prev.clicked += engagement.clicked ?? 0;
     prev.replied += engagement.replied ?? 0;
     prev.bounced += engagement.bounced ?? 0;
+    const targetedRecipients = Math.max(prev.deliveredRecipients + prev.failed + prev.skipped + prev.unreached, 0);
+    prev.deliveredRate = targetedRecipients > 0 ? Math.round((prev.deliveredRecipients / targetedRecipients) * 100) : 0;
     prev.openRate = prev.deliveredRecipients > 0 ? Math.round((prev.opened / prev.deliveredRecipients) * 100) : 0;
     prev.clickRate = prev.deliveredRecipients > 0 ? Math.round((prev.clicked / prev.deliveredRecipients) * 100) : 0;
     prev.replyRate = prev.deliveredRecipients > 0 ? Math.round((prev.replied / prev.deliveredRecipients) * 100) : 0;

@@ -378,6 +378,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the per-channel history summary now also surfaces normalized opens, clicks, replies, views, and bounces for completed email/SMS campaigns instead of making owners drill into thread cards or message detail to see channel-level traction
    - this batch shipped: guest-reach, per-channel history, and recent campaign-thread rollups now also show normalized open/click/reply rates against delivered recipients, so engagement traction is no longer only raw totals without any readback of relative performance
    - this batch shipped: the latest campaign message card and the message detail modal now also surface normalized open/click/reply rates beside engagement counts, so owners do not lose relative-performance readback as soon as they drill past the summary rollups
+   - this batch shipped: per-channel history summaries, recent campaign-thread rollups, and the latest campaign message summary now also surface delivered coverage rates, so follow-through coverage stays visible beside engagement rates instead of making owners infer delivery health from raw counts alone
    - keep extending normalized delivery/open/view/bounce/replied truth across channels and real live rows
    - prove customer-safe delivery-failure grouping against live rows
    - add authenticated live browser proof for composing/saving each operational segment on the shipped owner runtime

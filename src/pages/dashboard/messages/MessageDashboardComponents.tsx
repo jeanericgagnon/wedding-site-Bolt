@@ -1163,6 +1163,9 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
                 {channelDeliveryBreakdown[channel].delivered} delivered · {channelDeliveryBreakdown[channel].failed} need review
               </p>
               <p className="mt-1 text-[11px] text-text-tertiary">
+                {channelDeliveryBreakdown[channel].deliveredRate}% delivered coverage
+              </p>
+              <p className="mt-1 text-[11px] text-text-tertiary">
                 {channelDeliveryBreakdown[channel].skipped} need contact details · {channelDeliveryBreakdown[channel].unreached} not reached yet
               </p>
             </>
@@ -1292,6 +1295,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               </div>
               <div className="text-right text-[11px] text-text-tertiary">
                 <p>{thread.delivered} delivered · {thread.failed} need review</p>
+                {thread.deliveredRecipients > 0 && <p className="text-text-secondary">{thread.deliveredRate}% delivered coverage</p>}
                 {engagementSummary && <p className="text-text-secondary">{engagementSummary}</p>}
                 {(thread.skipped > 0 || thread.unreached > 0) && (
                   <p className="text-warning">
@@ -1370,11 +1374,20 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               {(() => {
                 const engagement = getMessageEngagementStats(activeCampaignLatestMessage);
                 const deliveredRecipients = Math.max(0, Number(activeCampaignLatestMessage.delivered_count ?? 0));
+                const targetedRecipients = Math.max(
+                  deliveredRecipients
+                  + Math.max(0, Number(activeCampaignLatestMessage.failed_count ?? 0))
+                  + getSkippedCount(activeCampaignLatestMessage, deliveries)
+                  + getUnreachedCount(activeCampaignLatestMessage, deliveries),
+                  0,
+                );
+                const deliveredRate = targetedRecipients > 0 ? Math.round((deliveredRecipients / targetedRecipients) * 100) : null;
                 const openRate = deliveredRecipients > 0 && engagement.opened != null ? Math.round((engagement.opened / deliveredRecipients) * 100) : null;
                 const clickRate = deliveredRecipients > 0 && engagement.clicked != null ? Math.round((engagement.clicked / deliveredRecipients) * 100) : null;
                 const replyRate = deliveredRecipients > 0 && engagement.replied != null ? Math.round((engagement.replied / deliveredRecipients) * 100) : null;
                 return (
                   <>
+                    {deliveredRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{deliveredRate}% delivered coverage</span>}
                     {engagement.opened != null && engagement.opened > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Opened {engagement.opened}</span>}
                     {engagement.viewed != null && engagement.viewed > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Viewed {engagement.viewed}</span>}
                     {engagement.clicked != null && engagement.clicked > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Clicked {engagement.clicked}</span>}
