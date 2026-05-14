@@ -71,11 +71,15 @@ export function buildDeliveryStats(messages: Message[]) {
   const delivered = sentish.reduce((sum, message) => sum + (message.delivered_count ?? 0), 0);
   const failed = sentish.reduce((sum, message) => sum + (message.failed_count ?? 0), 0);
   const targeted = sentish.reduce((sum, message) => sum + getRecipientCount(message), 0);
+  const skipped = sentish.reduce((sum, message) => sum + getSkippedCount(message, []), 0);
+  const unreached = sentish.reduce((sum, message) => sum + getUnreachedCount(message), 0);
   const rate = targeted > 0 ? Math.round((delivered / targeted) * 100) : 0;
   return {
     delivered,
     failed,
     targeted,
+    skipped,
+    unreached,
     rate,
     scheduled: messages.filter((message) => message.status === 'scheduled').length,
     active: messages.filter((message) => message.status === 'queued' || message.status === 'sending').length,

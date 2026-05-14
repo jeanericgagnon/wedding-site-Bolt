@@ -9,6 +9,7 @@ import { hasReachableEmail } from './messageDashboardUtils';
 import { formatMessageHistoryDate, formatMessageHistoryDateTime } from '../messageHistoryTime';
 import type { AudienceOption, ChannelType, DeliveryRow, Guest, Message, MessageTemplateKey, SavedComposerTemplate, SmsCreditTransaction, Toast } from './messageDashboardTypes';
 import {
+  buildDeliveryStats,
   buildMessageEngagementSummary,
   canRetryMessageStatus,
   COMPOSER_TEMPLATES,
@@ -221,6 +222,7 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
   onQuickCreateSaveTheDateCampaign,
 }) => {
   const engagementSummary = buildMessageEngagementSummary(messages);
+  const deliveryStats = buildDeliveryStats(messages);
   const activeCampaignCount = messages.filter((message) => message.status === 'queued' || message.status === 'sending').length;
   const sentCampaignCount = messages.filter((message) => message.status === 'sent').length;
   const followUpCampaignCount = messages.filter((message) => message.status === 'partial').length;
@@ -280,6 +282,21 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
           </>
         ) : (
           <p className="mt-2 text-sm text-text-secondary">Shows once completed campaigns start collecting opens, clicks, replies, or bounces.</p>
+        )}
+      </div>
+      <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3">
+        <p className="text-xs font-semibold text-text-tertiary">Delivery follow-through</p>
+        {deliveryStats.targeted > 0 ? (
+          <>
+            <p className="mt-2 text-sm text-text-primary">
+              {deliveryStats.delivered} delivered · {deliveryStats.failed} need review
+            </p>
+            <p className="mt-1 text-xs text-text-tertiary">
+              {deliveryStats.skipped} need contact details · {deliveryStats.unreached} not reached yet
+            </p>
+          </>
+        ) : (
+          <p className="mt-2 text-sm text-text-secondary">Shows once completed campaigns have recipient delivery readback.</p>
         )}
       </div>
       <div className="flex items-center gap-3">

@@ -276,6 +276,8 @@ describe('messageDashboardUtils', () => {
       delivered: 10,
       failed: 5,
       targeted: 17,
+      skipped: 0,
+      unreached: 2,
       rate: 59,
       scheduled: 1,
       active: 1,

@@ -97,9 +97,9 @@ describe('MessageReachSnapshotCard', () => {
         ] as any}
         knownPhotoLinksCount={3}
         messages={[
-          { id: 'message-sent', status: 'sent', delivered_count: 8, recipient_filter: { opened_count: 4, clicked_count: 2, replied_count: 1, viewed_count: 3 } },
+          { id: 'message-sent', status: 'sent', recipient_count: 10, delivered_count: 8, failed_count: 1, recipient_filter: { opened_count: 4, clicked_count: 2, replied_count: 1, viewed_count: 3, skipped_count: 1 } },
           { id: 'message-queued', status: 'queued' },
-          { id: 'message-partial', status: 'partial', delivered_count: 2, recipient_filter: { opened_count: 1, clicked_count: 0, replied_count: 0, viewed_count: 0 } },
+          { id: 'message-partial', status: 'partial', recipient_count: 4, delivered_count: 2, failed_count: 1, recipient_filter: { opened_count: 1, clicked_count: 0, replied_count: 0, viewed_count: 0 } },
         ] as any}
         onApplyComposerTemplate={vi.fn()}
         onApplyDayOfAlertPreset={vi.fn()}
@@ -112,6 +112,8 @@ describe('MessageReachSnapshotCard', () => {
     expect(screen.getByText('Sent, active, or needs follow-up')).toBeInTheDocument();
     expect(screen.getByText('Sent 1 · Active 1 · Needs follow-up 1')).toBeInTheDocument();
     expect(screen.getByText('50% open rate · 20% click rate · 10% reply rate')).toBeInTheDocument();
+    expect(screen.getByText('10 delivered · 2 need review')).toBeInTheDocument();
+    expect(screen.getByText('1 need contact details · 1 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Photo links ready')).toBeInTheDocument();
     expect(screen.getAllByText('3')).toHaveLength(2);
   });
