@@ -167,6 +167,8 @@ export function EventHubLiveContent({
   const isExternalHref = (href: string) => /^https?:\/\//i.test(href);
   const travelJourneyReadyCount = travelGuestJourney.filter((step) => step.status === 'ready').length;
   const travelJourneyNeedsInfoCount = travelGuestJourney.filter((step) => step.status !== 'ready').length;
+  const travelJourneyReadyLabels = travelGuestJourney.filter((step) => step.status === 'ready').map((step) => step.label);
+  const travelJourneyNeedsInfoLabels = travelGuestJourney.filter((step) => step.status !== 'ready').map((step) => step.label);
 
   return (
     <div className="min-h-screen bg-[#fbf7f1] text-neutral-950">
@@ -335,6 +337,16 @@ export function EventHubLiveContent({
                     {travelJourneyNeedsInfoCount > 0 && (
                       <p className="mt-2 text-xs text-[#8b6f53]">
                         {travelJourneyNeedsInfoCount} step{travelJourneyNeedsInfoCount === 1 ? '' : 's'} still need setup before this path feels complete.
+                      </p>
+                    )}
+                    {travelJourneyReadyLabels.length > 0 && (
+                      <p className="mt-2 text-xs text-[#8b6f53]">
+                        Ready now: {travelJourneyReadyLabels.join(', ')}.
+                      </p>
+                    )}
+                    {travelJourneyNeedsInfoLabels.length > 0 && (
+                      <p className="mt-1 text-xs text-[#8b6f53]">
+                        Still missing: {travelJourneyNeedsInfoLabels.join(', ')}.
                       </p>
                     )}
                   </div>

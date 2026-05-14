@@ -106,6 +106,8 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Travel quick plan')).toBeInTheDocument();
     expect(screen.getByText('1 ready · 1 needs setup')).toBeInTheDocument();
     expect(screen.getByText('1 step still need setup before this path feels complete.')).toBeInTheDocument();
+    expect(screen.getByText('Ready now: Travel details.')).toBeInTheDocument();
+    expect(screen.getByText('Still missing: Reply.')).toBeInTheDocument();
     expect(screen.getByText('Ready now')).toBeInTheDocument();
     expect(screen.getByText('Needs setup')).toBeInTheDocument();
     expect(screen.getByText('Invite-scoped')).toBeInTheDocument();

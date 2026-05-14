@@ -236,6 +236,8 @@ function GuestDrawerDetails({
     || link.kind === 'registry'
     || link.kind === 'site'
   )).length;
+  const visibleEventCount = visibilityPreview.visibleEvents.length;
+  const hiddenEventCount = visibilityPreview.hiddenEvents.length;
   const guestContactUrl = visibilityPreview.links.find((link) => link.kind === 'contact')
     ? `${window.location.origin}${visibilityPreview.links.find((link) => link.kind === 'contact')?.href ?? ''}`
     : '';
@@ -264,6 +266,8 @@ function GuestDrawerDetails({
             {visibilityPreview.links.length} guest route{visibilityPreview.links.length === 1 ? '' : 's'} ready
             {privatePreviewRouteCount > 0 ? ` · ${privatePreviewRouteCount} invite-only` : ''}
             {publicPreviewRouteCount > 0 ? ` · ${publicPreviewRouteCount} public shell` : ''}
+            {visibleEventCount > 0 ? ` · ${visibleEventCount} visible event${visibleEventCount === 1 ? '' : 's'}` : ''}
+            {hiddenEventCount > 0 ? ` · ${hiddenEventCount} hidden event${hiddenEventCount === 1 ? '' : 's'}` : ''}
           </p>
         )}
         {visibilityPreview.visibleEvents.length > 0 && (

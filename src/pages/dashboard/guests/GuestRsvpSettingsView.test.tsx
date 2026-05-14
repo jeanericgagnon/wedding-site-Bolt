@@ -163,6 +163,7 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText(/Choice questions/i)).toBeInTheDocument();
     expect(screen.getAllByText(/^2$/i).length).toBeGreaterThanOrEqual(3);
     expect(screen.getByText('2 required · 2 event-specific · 2 choice-based questions.')).toBeInTheDocument();
+    expect(screen.getByText('Lightweight RSVP form · 2 asked right away for every reply.')).toBeInTheDocument();
     expect(screen.getByText('2 saved')).toBeInTheDocument();
     expect(screen.getByText('0% coverage')).toBeInTheDocument();
     expect(screen.getByText('3 total live questions')).toBeInTheDocument();

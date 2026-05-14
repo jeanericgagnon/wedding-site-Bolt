@@ -137,6 +137,13 @@ export function GuestRsvpSettingsView({
   const mealChoiceReadinessRate = rsvpMealEnabled
     ? (safeRsvpMealOptions.length >= 2 ? 100 : Math.round((safeRsvpMealOptions.length / 2) * 100))
     : null;
+  const formWeightLabel = safeRsvpQuestions.length === 0
+    ? null
+    : safeRsvpQuestions.length <= 3
+      ? 'Lightweight RSVP form'
+      : safeRsvpQuestions.length <= 6
+        ? 'Balanced RSVP form'
+        : 'Detailed RSVP form';
   const markRsvpConfigDirty = () => onSetRsvpConfigDirty(true);
   const rsvpAccessSummary = safeRsvpAccessSelection.primaryMode === 'private_link'
     ? safeRsvpAccessSelection.allowNameLookupBackup
@@ -400,6 +407,11 @@ export function GuestRsvpSettingsView({
               {(requiredQuestionCount > 0 || eventSpecificQuestionCount > 0 || choiceQuestionCount > 0) && (
                 <p className="mb-3 text-xs text-text-tertiary">
                   {requiredQuestionCount} required · {eventSpecificQuestionCount} event-specific · {choiceQuestionCount} choice-based question{choiceQuestionCount === 1 ? '' : 's'}.
+                </p>
+              )}
+              {formWeightLabel && (
+                <p className="mb-3 text-xs text-text-tertiary">
+                  {formWeightLabel} · {requiredQuestionCount} asked right away for every reply.
                 </p>
               )}
               <div className="flex flex-wrap gap-2">
