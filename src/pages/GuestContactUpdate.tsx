@@ -9,6 +9,7 @@ import {
   captureGuestInviteTokenFromSearch,
   capturePublicInviteTokenFromSearch,
 } from '../lib/publicAccessArtifacts';
+import { trackGuestHubEvent } from './guestHubPublicService';
 import { callGuestContactFunction } from './guestPublicSubmissionService';
 import { GuestContactLookupPanel } from './GuestContactLookupPanel';
 
@@ -104,6 +105,14 @@ export const GuestContactUpdate: React.FC = () => {
       capturePublicInviteTokenFromSearch(siteRef, searchParams);
       captureGuestInviteTokenFromSearch(siteRef, searchParams);
     }
+  }, [siteRef]);
+
+  useEffect(() => {
+    if (!siteRef) return;
+    trackGuestHubEvent(siteRef, 'view', '/guest-contact/invite', {
+      ...buildGuestContactAccessPayload(siteRef),
+      ...buildGuestContactIdentityPayload(siteRef),
+    }).catch(() => {});
   }, [siteRef]);
 
   async function handleSearch() {

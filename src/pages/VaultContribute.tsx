@@ -8,9 +8,11 @@ import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import { fetchPublicSiteAccess } from '../lib/publicSiteAccess';
 import {
   buildPublicAccessArtifacts,
+  buildGuestIdentityArtifacts,
   captureGuestInviteTokenFromSearch,
   capturePublicInviteTokenFromSearch,
 } from '../lib/publicAccessArtifacts';
+import { trackGuestHubEvent } from './guestHubPublicService';
 import {
   listEnabledVaultContributionConfigs,
   loadEnabledVaultContributionConfig,
@@ -46,6 +48,11 @@ const DEMO_WEDDING_DATE = '2026-02-23';
 export const buildVaultAccessPayload = (slug: string) => {
   const searchParams = new URLSearchParams(window.location.search);
   return buildPublicAccessArtifacts(slug, searchParams);
+};
+
+export const buildVaultIdentityPayload = (slug: string) => {
+  const searchParams = new URLSearchParams(window.location.search);
+  return buildGuestIdentityArtifacts(slug, searchParams);
 };
 
 export function safeVaultUploadError(err: unknown): string {
@@ -171,6 +178,15 @@ export const VaultContribute: React.FC = () => {
     capturePublicInviteTokenFromSearch(siteSlug, searchParams);
     captureGuestInviteTokenFromSearch(siteSlug, searchParams);
   }, [siteSlug]);
+
+  useEffect(() => {
+    if (!siteSlug) return;
+    const target = vaultYear ? '/vault/invite/year' : '/vault/invite';
+    trackGuestHubEvent(siteSlug, 'view', target, {
+      ...buildVaultAccessPayload(siteSlug),
+      ...buildVaultIdentityPayload(siteSlug),
+    }).catch(() => {});
+  }, [siteSlug, vaultYear]);
 
   function loadSubmittedYears() {
     setSubmittedYears(readSubmittedVaultYears(submittedKey));

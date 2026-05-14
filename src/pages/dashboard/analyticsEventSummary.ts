@@ -46,6 +46,18 @@ export function buildEmptyAnalyticsEventSummary(lookbackDays = 30): AnalyticsEve
   };
 }
 
+function isInviteOpenTarget(target: string | null): boolean {
+  if (!target) return false;
+  return target === '/event/invite'
+    || target === '/rsvp/invite'
+    || target === '/rsvp-event/invite'
+    || target === '/guest-contact/invite'
+    || target === '/guestbook/invite'
+    || target === '/photos/upload/invite'
+    || target === '/vault/invite'
+    || target === '/vault/invite/year';
+}
+
 function normalizeInternalTarget(value: string | null): string | null {
   const trimmed = value?.trim();
   if (!trimmed) return null;
@@ -90,7 +102,7 @@ export function buildAnalyticsEventSummary(
       if (target === '/event') {
         summary.pageViews += 1;
         summary.siteVisits += 1;
-      } else if (target === '/event/invite' || target === '/rsvp/invite' || target === '/rsvp-event/invite') {
+      } else if (isInviteOpenTarget(target)) {
         summary.pageViews += 1;
         summary.inviteOpens += 1;
       } else if (target === '/event/qr') {

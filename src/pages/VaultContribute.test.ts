@@ -21,7 +21,7 @@ vi.mock('../lib/publicSiteAccess', () => ({
   fetchPublicSiteAccess: vi.fn(async () => ({ status: 'unavailable', site: null })),
 }));
 
-import { VaultContribute, buildVaultAccessPayload, getContributionWindow, getVaultCoupleName, getVaultUnlockAtIso, getVaultUnlockYear, safeVaultUploadError } from './VaultContribute';
+import { VaultContribute, buildVaultAccessPayload, buildVaultIdentityPayload, getContributionWindow, getVaultCoupleName, getVaultUnlockAtIso, getVaultUnlockYear, safeVaultUploadError } from './VaultContribute';
 
 describe('buildVaultAccessPayload', () => {
   it('packages invite and password artifacts for gated vault contribution submits', () => {
@@ -45,6 +45,15 @@ describe('buildVaultAccessPayload', () => {
       passwordSession: null,
     });
   });
+
+  it('captures guest invite identity for vault contribution links', () => {
+    sessionStorage.setItem('dayof_guest_invite_token_ericandkaras', 'stored-guest-invite');
+    window.history.replaceState({}, '', '/vault/ericandkaras/5?invite_token=current-guest-invite');
+
+    expect(buildVaultIdentityPayload('ericandkaras')).toEqual({
+      guestInviteToken: 'current-guest-invite',
+    });
+  });
 });
 
 describe('vault contribution guest identity capture', () => {
@@ -53,6 +62,8 @@ describe('vault contribution guest identity capture', () => {
 
     expect(page).toContain('capturePublicInviteTokenFromSearch(siteSlug, searchParams);');
     expect(page).toContain('captureGuestInviteTokenFromSearch(siteSlug, searchParams);');
+    expect(page).toContain("const target = vaultYear ? '/vault/invite/year' : '/vault/invite';");
+    expect(page).toContain("trackGuestHubEvent(siteSlug, 'view', target");
   });
 });
 

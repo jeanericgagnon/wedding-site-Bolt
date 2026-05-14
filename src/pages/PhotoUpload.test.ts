@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildPhotoUploadAccessPayload, mapUploadError, PhotoUpload, safePhotoUploadMessage } from './PhotoUpload';
+import { buildPhotoUploadAccessPayload, buildPhotoUploadIdentityPayload, mapUploadError, PhotoUpload, safePhotoUploadMessage } from './PhotoUpload';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -81,6 +81,23 @@ describe('photo upload guest error copy', () => {
     expect(source).toContain("...(access ?? {}),");
     expect(source).toContain("uploadToken: token.trim() || null,");
     expect(source).toContain('captureGuestInviteTokenFromSearch(siteSlug, params);');
+  });
+
+  it('packages guest identity artifacts for invite-scoped photo tracking', () => {
+    sessionStorage.setItem('dayof_guest_invite_token_ericandkaras', 'guest-invite');
+    window.history.replaceState({}, '', '/photos/upload?site=ericandkaras&invite_token=current-guest-invite');
+
+    expect(buildPhotoUploadIdentityPayload('ericandkaras')).toEqual({
+      guestInviteToken: 'current-guest-invite',
+    });
+  });
+
+  it('tracks direct photo-upload invite views through aggregate guest analytics', () => {
+    const source = readFileSync('src/pages/PhotoUpload.tsx', 'utf8');
+
+    expect(source).toContain("trackGuestHubEvent(siteSlug, 'view', '/photos/upload/invite'");
+    expect(source).toContain('...buildPhotoUploadAccessPayload(siteSlug)');
+    expect(source).toContain('...buildPhotoUploadIdentityPayload(siteSlug)');
   });
 
   it('routes upload feedback and post-upload CTAs through the shared status panel', () => {

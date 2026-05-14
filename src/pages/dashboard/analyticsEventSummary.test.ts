@@ -8,6 +8,10 @@ describe('analyticsEventSummary', () => {
       { event_type: 'view', target: '/event/invite', created_at: '2026-05-14T10:05:00.000Z' },
       { event_type: 'view', target: '/rsvp/invite', created_at: '2026-05-14T10:06:00.000Z' },
       { event_type: 'view', target: '/rsvp-event/invite', created_at: '2026-05-14T10:07:00.000Z' },
+      { event_type: 'view', target: '/guest-contact/invite', created_at: '2026-05-14T10:07:30.000Z' },
+      { event_type: 'view', target: '/guestbook/invite', created_at: '2026-05-14T10:08:00.000Z' },
+      { event_type: 'view', target: '/photos/upload/invite', created_at: '2026-05-14T10:08:30.000Z' },
+      { event_type: 'view', target: '/vault/invite/year', created_at: '2026-05-14T10:09:00.000Z' },
       { event_type: 'view', target: '/event/qr', created_at: '2026-05-14T10:10:00.000Z' },
       { event_type: 'view', target: '/event/recap', created_at: '2026-05-14T10:12:00.000Z' },
       { event_type: 'click', target: '/site/maya-and-leo#rsvp', created_at: '2026-05-14T10:15:00.000Z' },
@@ -19,10 +23,10 @@ describe('analyticsEventSummary', () => {
     });
 
     expect(summary).toMatchObject({
-      totalTrackedEvents: 10,
-      pageViews: 5,
+      totalTrackedEvents: 14,
+      pageViews: 9,
       siteVisits: 1,
-      inviteOpens: 3,
+      inviteOpens: 7,
       qrScans: 1,
       recapViews: 1,
       totalClicks: 4,

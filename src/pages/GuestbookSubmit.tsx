@@ -5,9 +5,11 @@ import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import {
   buildPublicAccessArtifacts,
+  buildGuestIdentityArtifacts,
   captureGuestInviteTokenFromSearch,
   capturePublicInviteTokenFromSearch,
 } from '../lib/publicAccessArtifacts';
+import { trackGuestHubEvent } from './guestHubPublicService';
 import { hasGuestPublicSubmissionRuntime, submitGuestbookEntry } from './guestPublicSubmissionService';
 import { GuestbookSubmitFormPanel } from './GuestbookSubmitFormPanel';
 
@@ -24,6 +26,11 @@ export const safeGuestbookFunctionError = (value: unknown) => {
 export const buildGuestbookAccessPayload = (slug: string) => {
   const searchParams = new URLSearchParams(window.location.search);
   return buildPublicAccessArtifacts(slug, searchParams);
+};
+
+export const buildGuestbookIdentityPayload = (slug: string) => {
+  const searchParams = new URLSearchParams(window.location.search);
+  return buildGuestIdentityArtifacts(slug, searchParams);
 };
 
 export const GuestbookSubmit: React.FC = () => {
@@ -45,6 +52,14 @@ export const GuestbookSubmit: React.FC = () => {
       capturePublicInviteTokenFromSearch(siteSlug, searchParams);
       captureGuestInviteTokenFromSearch(siteSlug, searchParams);
     }
+  }, [siteSlug]);
+
+  useEffect(() => {
+    if (!siteSlug) return;
+    trackGuestHubEvent(siteSlug, 'view', '/guestbook/invite', {
+      ...buildGuestbookAccessPayload(siteSlug),
+      ...buildGuestbookIdentityPayload(siteSlug),
+    }).catch(() => {});
   }, [siteSlug]);
 
   async function onSubmit(event: React.FormEvent) {

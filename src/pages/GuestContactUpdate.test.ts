@@ -81,4 +81,13 @@ describe('friendlyGuestContactError', () => {
     expect(panelSource).toContain('id="guest-contact-match"');
     expect(pageSource).toContain('buildGuestContactIdentityPayload');
   });
+
+  it('tracks direct guest-contact invite views through aggregate guest analytics', () => {
+    const pageSource = readFileSync('src/pages/GuestContactUpdate.tsx', 'utf8');
+
+    expect(pageSource).toContain("from './guestHubPublicService'");
+    expect(pageSource).toContain("trackGuestHubEvent(siteRef, 'view', '/guest-contact/invite'");
+    expect(pageSource).toContain('...buildGuestContactAccessPayload(siteRef)');
+    expect(pageSource).toContain('...buildGuestContactIdentityPayload(siteRef)');
+  });
 });

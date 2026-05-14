@@ -6,10 +6,11 @@ import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
 import {
   buildPublicAccessArtifacts,
+  buildGuestIdentityArtifacts,
   captureGuestInviteTokenFromSearch,
   capturePublicInviteTokenFromSearch,
 } from '../lib/publicAccessArtifacts';
-import { submitGuestHubProspect } from './guestHubPublicService';
+import { submitGuestHubProspect, trackGuestHubEvent } from './guestHubPublicService';
 import { hasGuestPublicSubmissionRuntime, uploadGuestPhotos } from './guestPublicSubmissionService';
 import { PhotoUploadStatusPanel } from './PhotoUploadStatusPanel';
 
@@ -55,6 +56,7 @@ export const safePhotoUploadMessage = (message?: string): string => {
 };
 
 export const buildPhotoUploadAccessPayload = (slug: string) => buildPublicAccessArtifacts(slug, new URLSearchParams(window.location.search));
+export const buildPhotoUploadIdentityPayload = (slug: string) => buildGuestIdentityArtifacts(slug, new URLSearchParams(window.location.search));
 
 export const PhotoUpload: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -96,6 +98,14 @@ export const PhotoUpload: React.FC = () => {
       writeStoredGuestLanguage(languagePreference.language);
     }
   }, [i18n, params, siteSlug]);
+
+  useEffect(() => {
+    if (!siteSlug) return;
+    trackGuestHubEvent(siteSlug, 'view', '/photos/upload/invite', {
+      ...buildPhotoUploadAccessPayload(siteSlug),
+      ...buildPhotoUploadIdentityPayload(siteSlug),
+    }).catch(() => {});
+  }, [siteSlug]);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();

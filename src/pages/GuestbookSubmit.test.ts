@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it } from 'vitest';
-import { buildGuestbookAccessPayload, friendlyGuestbookError, GuestbookSubmit, safeGuestbookFunctionError } from './GuestbookSubmit';
+import { buildGuestbookAccessPayload, buildGuestbookIdentityPayload, friendlyGuestbookError, GuestbookSubmit, safeGuestbookFunctionError } from './GuestbookSubmit';
 
 afterEach(() => {
   sessionStorage.clear();
@@ -88,5 +88,23 @@ describe('buildGuestbookAccessPayload', () => {
       inviteToken: 'stored-invite',
       passwordSession: null,
     });
+  });
+
+  it('captures guest invite identity for guestbook links', () => {
+    window.history.replaceState({}, '', '/guestbook/ericandkaras?invite_token=current-guest-invite');
+    sessionStorage.setItem('dayof_guest_invite_token_ericandkaras', 'stored-guest-invite');
+
+    expect(buildGuestbookIdentityPayload('ericandkaras')).toEqual({
+      guestInviteToken: 'current-guest-invite',
+    });
+  });
+
+  it('tracks direct guestbook invite views through aggregate guest analytics', () => {
+    const pageSource = readFileSync('src/pages/GuestbookSubmit.tsx', 'utf8');
+
+    expect(pageSource).toContain("from './guestHubPublicService'");
+    expect(pageSource).toContain("trackGuestHubEvent(siteSlug, 'view', '/guestbook/invite'");
+    expect(pageSource).toContain('...buildGuestbookAccessPayload(siteSlug)');
+    expect(pageSource).toContain('...buildGuestbookIdentityPayload(siteSlug)');
   });
 });
