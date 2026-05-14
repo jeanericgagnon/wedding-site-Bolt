@@ -93,6 +93,39 @@ describe('invisibleIntelligence', () => {
     expect(budget[0].detail).not.toMatch(/warning|alert|over budget/i);
   });
 
+  it('flags cash funds that are missing setup or goal tracking without overclaiming', () => {
+    const registry = buildRegistryInsights([
+      {
+        category: 'cash funds',
+        item_name: 'Honeymoon fund',
+        image_url: 'https://example.com/fund.jpg',
+        contributionMethodCount: 0,
+        goalAmount: 0,
+        receivedAmount: 0,
+      },
+      {
+        category: 'cash funds',
+        item_name: 'New home fund',
+        image_url: 'https://example.com/home.jpg',
+        contributionMethodCount: 2,
+        goalAmount: 2000,
+        receivedAmount: 400,
+      },
+    ]);
+
+    expect(registry).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'registry-fund-setup',
+        title: 'Cash fund setup',
+      }),
+      expect.objectContaining({
+        id: 'registry-fund-goals',
+        title: 'Track one simple goal',
+      }),
+    ]));
+    expect(registry.map((suggestion) => suggestion.detail).join(' ')).not.toMatch(/broken|failed|metadata/i);
+  });
+
   it('builds one-click messaging actions while provider sending stays external', () => {
     const actions = buildMessagingActions({
       pendingGuests: 12,

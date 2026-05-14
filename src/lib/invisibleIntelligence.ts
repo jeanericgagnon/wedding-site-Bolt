@@ -245,7 +245,16 @@ export function shiftTimelineCascade(events: TimelineEventInput[], changedEventI
   });
 }
 
-export function buildRegistryInsights(items: Array<{ category?: string | null; store_name?: string | null; item_name?: string | null; image_url?: string | null; price?: number | null }>): IntelligenceSuggestion[] {
+export function buildRegistryInsights(items: Array<{
+  category?: string | null;
+  store_name?: string | null;
+  item_name?: string | null;
+  image_url?: string | null;
+  price?: number | null;
+  contributionMethodCount?: number | null;
+  goalAmount?: number | null;
+  receivedAmount?: number | null;
+}>): IntelligenceSuggestion[] {
   if (items.length === 0) {
     return [{
       id: 'registry-empty',
@@ -266,6 +275,9 @@ export function buildRegistryInsights(items: Array<{ category?: string | null; s
   }, {});
   const top = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0];
   const missingImages = items.filter((item) => !item.image_url).length;
+  const fundItems = items.filter((item) => lower(item.category).includes('cash fund'));
+  const fundsMissingSetup = fundItems.filter((item) => Number(item.contributionMethodCount ?? 0) <= 0).length;
+  const fundsMissingGoal = fundItems.filter((item) => Number(item.goalAmount ?? 0) <= 0).length;
   const suggestions: IntelligenceSuggestion[] = [];
   if (top && top[1] >= Math.max(3, items.length * 0.6)) {
     suggestions.push({
@@ -291,6 +303,32 @@ export function buildRegistryInsights(items: Array<{ category?: string | null; s
       href: '/dashboard/registry',
       source: 'deterministic',
       confidence: 0.82,
+    });
+  }
+  if (fundsMissingSetup > 0) {
+    suggestions.push({
+      id: 'registry-fund-setup',
+      area: 'registry',
+      priority: 'next',
+      title: 'Cash fund setup',
+      detail: `${fundsMissingSetup} cash fund${fundsMissingSetup === 1 ? '' : 's'} still need a guest-ready payment path before they are easy to share.`,
+      actionLabel: 'Review cash funds',
+      href: '/dashboard/registry',
+      source: 'deterministic',
+      confidence: 0.88,
+    });
+  }
+  if (fundItems.length > 0 && fundsMissingGoal > 0) {
+    suggestions.push({
+      id: 'registry-fund-goals',
+      area: 'registry',
+      priority: 'polish',
+      title: 'Track one simple goal',
+      detail: `${fundsMissingGoal} cash fund${fundsMissingGoal === 1 ? '' : 's'} could use a simple goal so progress reads clearly for you and your guests.`,
+      actionLabel: 'Add fund goals',
+      href: '/dashboard/registry',
+      source: 'deterministic',
+      confidence: 0.76,
     });
   }
   return suggestions;

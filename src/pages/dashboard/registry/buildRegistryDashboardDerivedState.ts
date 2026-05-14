@@ -129,6 +129,9 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
     item_name: item.item_name,
     image_url: item.image_url,
     price: item.price_amount,
+    contributionMethodCount: item.item_type === 'cash_fund' ? countSafeFundMethods(item) : 0,
+    goalAmount: item.item_type === 'cash_fund' ? item.fund_goal_amount ?? 0 : 0,
+    receivedAmount: item.item_type === 'cash_fund' ? item.fund_received_amount ?? 0 : 0,
   }))).slice(0, 3);
   const registryLaunchReadiness = buildRegistryLaunchReadiness(items, registryThankYouLedger);
   const registryThankYouPlan = buildRegistryThankYouPlanWithLedger(items, registryThankYouLedger);

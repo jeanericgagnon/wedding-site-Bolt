@@ -442,6 +442,8 @@ Execution rule for this section:
    - this batch shipped: focused proof is green for featured-fund selection, safe public Venmo/custom contribution method rendering, unsafe fund-link rejection, and de-duplicated guest-facing rendering so the highlighted fund does not repeat below the hero card
    - this batch shipped: the owner registry dashboard now distinguishes cash funds that are actually ready to share from funds that still need a payment path, so follow-through truth is no longer buried inside raw goal/received totals
    - this batch shipped: focused proof is green for fund follow-through derivation, counting only safe public contribution methods when deciding whether a cash fund is ready to share or still needs setup
+   - this batch shipped: registry quick-check insights now include cash-fund setup and goal-tracking guidance, so owner analytics stop treating all funds as equally ready when some still lack a guest-ready payment path or a clear progress target
+   - this batch shipped: focused proof is green for the new registry insight derivation, including fund-setup and fund-goal nudges that stay calm and specific instead of leaking import/metadata jargon into owner copy
    - add live owner add/import/edit persistence proof for broader registry workflows
    - rerun the stronger owner repair/cleanup runtime proof against the shipped production runtime after the next approved registry deploy
    - rerun the guest-visible purchase-state assertions against the live production runtime after the next approved registry deploy instead of only local/public-component proof
