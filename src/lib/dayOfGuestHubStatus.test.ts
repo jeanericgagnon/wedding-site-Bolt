@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildGuestHubAnnouncementCard, buildGuestHubCoordinatorHandoffCard, buildGuestHubGuestStateCard } from './dayOfGuestHubStatus';
+import { buildGuestHubAnnouncementCard, buildGuestHubCoordinatorHandoffCard, buildGuestHubGuestStateCard, buildGuestHubLinkAccessCard } from './dayOfGuestHubStatus';
 
 describe('dayOfGuestHubStatus', () => {
   it('builds a guest-safe announcement card without leaking token params', () => {
@@ -49,5 +49,34 @@ describe('dayOfGuestHubStatus', () => {
     });
     expect(card?.noteLabel).toContain('token=[hidden]');
     expect(card?.updatedLabel).toContain('Updated');
+  });
+
+  it('builds a guest-specific private link access card without leaking raw token details', () => {
+    const card = buildGuestHubLinkAccessCard({
+      hasGuestInviteToken: true,
+      guestName: 'Alex Rivera',
+    });
+
+    expect(card).toMatchObject({
+      title: 'Private guest link',
+      badgeLabel: 'Guest-specific',
+      summary: 'Guest-specific access is active for this link.',
+    });
+    expect(card?.detail).toContain('Alex Rivera');
+  });
+
+  it('builds a public-only link access card when no invite artifacts are present', () => {
+    const card = buildGuestHubLinkAccessCard({
+      hasGuestInviteToken: false,
+      hasInviteToken: false,
+      hasPasswordSession: false,
+    });
+
+    expect(card).toMatchObject({
+      title: 'Public site view',
+      badgeLabel: 'Public',
+      summary: 'Public-only access is active for this link.',
+    });
+    expect(card?.detail).toContain('public wedding hub');
   });
 });

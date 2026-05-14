@@ -137,6 +137,12 @@
           <p class="muted" id="handoff-detail">Reconnect for the newest staffing note.</p>
         </section>
 
+        <section class="card">
+          <p class="label">Link access</p>
+          <p class="value" id="link-access-title">Saved guest link state</p>
+          <p class="muted" id="link-access-detail">Reconnect online if you need a newer private or guest-specific link.</p>
+        </section>
+
         <section class="card" id="travel">
           <p class="label">Travel quick plan</p>
           <p class="value" id="travel-title">Saved travel details</p>
@@ -180,6 +186,7 @@
           const announcement = parsed && typeof parsed === 'object' ? parsed.announcement || null : null;
           const guestState = parsed && typeof parsed === 'object' ? parsed.guestState || null : null;
           const coordinatorHandoff = parsed && typeof parsed === 'object' ? parsed.coordinatorHandoff || null : null;
+          const linkAccess = parsed && typeof parsed === 'object' ? parsed.linkAccess || null : null;
           const travelContext = parsed && typeof parsed === 'object' ? parsed.travelContext || null : null;
           const savedAt = parsed && typeof parsed === 'object' ? parsed.savedAt || null : null;
 
@@ -219,6 +226,11 @@
             if (coordinatorHandoff.supportName) detailParts.push('Support: ' + coordinatorHandoff.supportName);
             if (coordinatorHandoff.note) detailParts.push(coordinatorHandoff.note);
             setText('handoff-detail', detailParts.join(' · ') || 'Reconnect for the newest staffing note.');
+          }
+
+          if (linkAccess) {
+            setText('link-access-title', linkAccess.title || 'Saved guest link state');
+            setText('link-access-detail', linkAccess.detail || linkAccess.summary || 'Reconnect online if you need a newer private or guest-specific link.');
           }
 
           const travelList = document.getElementById('travel-list');

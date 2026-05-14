@@ -503,7 +503,10 @@ Execution rule for this section:
    - this batch shipped: a dedicated `proof:v1:dayof-web-mode` lane now reruns offline snapshot, readiness, service-worker, and EventHub render truth before a real browser pass, so this lane is no longer guarded only by unit/helper tests
    - this batch shipped: real browser proof is now green for the two distinct offline day-of guest paths: degraded-network `Showing the saved guest hub` fallback inside the live EventHub app and the cached `/event/...` offline shell returned by the service worker
    - this batch shipped: the new browser proof explicitly checks that both offline guest paths stay token-safe, mobile-safe, and still expose the travel/day-of hub actions guests need instead of collapsing into a blank error or raw-token fallback
-   - add live production proof for directions/map deep links, coordinator/guest handoff, and private-event visibility on the hub after the next approved deploy
+   - this batch shipped: the guest hub now shows an explicit `Link access` status card so guests can tell whether the current hub link is public-only, invite-only, or guest-specific before relying on day-of schedule/travel details
+   - this batch shipped: the day-of hub status board now treats private-event visibility as its own connected signal instead of leaving guests to infer public-vs-private access from surrounding copy
+   - this batch shipped: focused proof is green for guest-safe access-card helper truth, EventHub render wiring, and offline/mobile browser continuity for the new `Link access` surface
+   - rerun live production proof for the new `Link access` surface after the next approved deploy so public vs guest-specific visibility is proven on `https://dayof.love`
    - add live production guest-hub write/read with cleanup after the day-of web-mode lane is finished
 
 ### Deferred / Outside This Backlog

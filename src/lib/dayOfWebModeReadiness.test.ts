@@ -60,13 +60,14 @@ describe('day-of web mode readiness', () => {
 
     expect(board.status).toBe('planned');
     expect(board.readyCount).toBe(2);
-    expect(board.plannedCount).toBe(3);
-    expect(board.summary).toBe('2 day-of status items are usable now; 3 stay planned or need setup.');
+    expect(board.plannedCount).toBe(4);
+    expect(board.summary).toBe('2 day-of status items are usable now; 4 stay planned or need setup.');
     expect(board.items.find((item) => item.id === 'announcements')).toMatchObject({
       state: 'planned',
       detail: 'Live updates still belong in owner messaging until announcement readback is connected.',
     });
     expect(board.items.find((item) => item.id === 'guest-state')?.detail).toContain('dedicated flows');
+    expect(board.items.find((item) => item.id === 'link-access')?.detail).toContain('infer whether this hub link is public or private');
   });
 
   it('marks status board ready only when live handoff pieces are connected', () => {
@@ -76,10 +77,11 @@ describe('day-of web mode readiness', () => {
       announcementsConnected: true,
       guestSpecificStateConnected: true,
       coordinatorHandoffConnected: true,
+      privateEventVisibilityConnected: true,
     });
 
     expect(board.status).toBe('ready');
-    expect(board.readyCount).toBe(5);
+    expect(board.readyCount).toBe(6);
     expect(board.plannedCount).toBe(0);
   });
 });

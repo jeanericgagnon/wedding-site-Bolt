@@ -5,7 +5,7 @@ import { Archive, CalendarDays, Camera, ClipboardList, Gift, HeartHandshake, Pla
 import { copyTextOrDownload, downloadTextFile } from '../lib/copyText';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import { buildDayOfHubStatusBoard, buildDayOfWebModeReadiness, type DayOfWebActionId } from '../lib/dayOfWebModeReadiness';
-import { buildGuestHubAnnouncementCard, buildGuestHubCoordinatorHandoffCard, buildGuestHubGuestStateCard } from '../lib/dayOfGuestHubStatus';
+import { buildGuestHubAnnouncementCard, buildGuestHubCoordinatorHandoffCard, buildGuestHubGuestStateCard, buildGuestHubLinkAccessCard } from '../lib/dayOfGuestHubStatus';
 import { buildGuestHubActions, type GuestHubActionId } from '../lib/guestHubActions';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
 import { readGuestHubOfflineSnapshot, writeGuestHubOfflineSnapshot } from '../lib/guestHubOfflineSnapshot';
@@ -242,6 +242,7 @@ export const EventHub: React.FC = () => {
     storedLanguage: readStoredGuestLanguage(),
     siteDefaultLanguage: settings.language_default,
   }), [searchParams, settings.language_default]);
+  const accessPayload = useMemo(() => buildGuestHubAccessPayload(slug, searchParams), [searchParams, slug]);
   const guestContactHref = useMemo(() => {
     if (!slug || !guestIdentity.guestInviteToken) return null;
     return `/guest-contact/${encodeURIComponent(slug)}`;
@@ -354,6 +355,12 @@ export const EventHub: React.FC = () => {
             announcement: data.announcement ?? null,
             guestState: data.guestState ?? null,
             coordinatorHandoff: data.coordinatorHandoff ?? null,
+            linkAccess: buildGuestHubLinkAccessCard({
+              hasGuestInviteToken: Boolean(guestIdentity.guestInviteToken),
+              hasInviteToken: Boolean(accessPayload.inviteToken),
+              hasPasswordSession: Boolean(accessPayload.passwordSession),
+              guestName: data.guestState?.guestName,
+            }),
             travelContext,
           });
           setHasOfflineSnapshot(true);
@@ -396,6 +403,12 @@ export const EventHub: React.FC = () => {
             announcement,
             guestState,
             coordinatorHandoff,
+            linkAccess: buildGuestHubLinkAccessCard({
+              hasGuestInviteToken: Boolean(guestIdentity.guestInviteToken),
+              hasInviteToken: Boolean(accessPayload.inviteToken),
+              hasPasswordSession: Boolean(accessPayload.passwordSession),
+              guestName: guestState?.guestName,
+            }),
             travelContext: nextTravelContext,
           });
           setHasOfflineSnapshot(true);
@@ -414,14 +427,14 @@ export const EventHub: React.FC = () => {
       });
 
     trackGuestHubEvent(slug, 'view', resolveGuestHubViewTarget(searchParams), {
-      ...buildGuestHubAccessPayload(slug, searchParams),
+      ...accessPayload,
       guestInviteToken: guestIdentity.guestInviteToken,
     }).catch(() => {});
 
     return () => {
       cancelled = true;
     };
-  }, [guestIdentity.guestInviteToken, hubConfigRetryKey, i18n, languagePreference.language, languagePreference.source, searchParams, slug]);
+  }, [accessPayload, guestIdentity.guestInviteToken, hubConfigRetryKey, i18n, languagePreference.language, languagePreference.source, searchParams, slug]);
 
   const trackClick = (target: string) => {
     if (!slug) return;
@@ -452,7 +465,7 @@ export const EventHub: React.FC = () => {
           wantsPhotoUpdates: true,
           wantsOwnEventInfo,
           source: 'guest_hub',
-          ...buildGuestHubAccessPayload(slug, searchParams),
+          ...accessPayload,
         },
         t('guest_hub.could_not_save'),
       );
@@ -496,12 +509,19 @@ export const EventHub: React.FC = () => {
   const announcementCard = buildGuestHubAnnouncementCard(announcement);
   const guestStateCard = buildGuestHubGuestStateCard(guestState);
   const coordinatorHandoffCard = buildGuestHubCoordinatorHandoffCard(coordinatorHandoff);
+  const linkAccessCard = buildGuestHubLinkAccessCard({
+    hasGuestInviteToken: Boolean(guestIdentity.guestInviteToken),
+    hasInviteToken: Boolean(accessPayload.inviteToken),
+    hasPasswordSession: Boolean(accessPayload.passwordSession),
+    guestName: guestState?.guestName,
+  });
   const dayOfHubStatusBoard = buildDayOfHubStatusBoard({
     enabledActionIds: dayOfActionIds,
     hasPoorNetworkFallback: true,
     announcementsConnected: Boolean(announcementCard),
     guestSpecificStateConnected: Boolean(guestStateCard),
     coordinatorHandoffConnected: Boolean(coordinatorHandoffCard),
+    privateEventVisibilityConnected: Boolean(linkAccessCard),
   });
   const travelGuestJourney = buildTravelGuestJourney({
     siteSlug: slug,
@@ -557,6 +577,7 @@ export const EventHub: React.FC = () => {
       announcementCard={announcementCard}
       guestStateCard={guestStateCard}
       coordinatorHandoffCard={coordinatorHandoffCard}
+      linkAccessCard={linkAccessCard}
       guestName={guestName}
       guestContact={guestContact}
       wantsOwnEventInfo={wantsOwnEventInfo}

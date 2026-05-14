@@ -40,6 +40,12 @@ describe('guestHubOfflineSnapshot', () => {
         handoffStatus: 'staffed',
         leadName: 'Morgan',
       },
+      linkAccess: {
+        title: 'Private guest link',
+        badgeLabel: 'Guest-specific',
+        detail: 'This link includes invite-only event details plus RSVP and check-in readback for Alex.',
+        summary: 'Guest-specific access is active for this link.',
+      },
       travelContext: {
         schedule: [{ id: 'event-1', label: 'Ceremony', startTimeISO: '2026-06-15T15:30:00.000Z' }],
         venues: [{ id: 'venue-1', name: 'Harbor Hall', address: '100 Harbor Road' }],
@@ -51,6 +57,7 @@ describe('guestHubOfflineSnapshot', () => {
       settings: expect.objectContaining({ photos_enabled: true }),
       siteSummary: expect.objectContaining({ slug: 'maya-and-leo' }),
       guestState: expect.objectContaining({ guestName: 'Alex' }),
+      linkAccess: expect.objectContaining({ title: 'Private guest link' }),
     });
   });
 

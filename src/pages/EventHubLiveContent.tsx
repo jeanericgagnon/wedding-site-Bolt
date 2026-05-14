@@ -54,6 +54,13 @@ type GuestHubCoordinatorHandoffCard = {
   summary: string;
 };
 
+type GuestHubLinkAccessCard = {
+  title: string;
+  badgeLabel: string;
+  detail: string;
+  summary: string;
+};
+
 type TravelGuestJourneyStep = {
   id: string;
   label: string;
@@ -110,6 +117,7 @@ type EventHubLiveContentProps = {
   announcementCard: GuestHubAnnouncementCard | null;
   guestStateCard: GuestHubGuestStateCard | null;
   coordinatorHandoffCard: GuestHubCoordinatorHandoffCard | null;
+  linkAccessCard: GuestHubLinkAccessCard | null;
   guestName: string;
   guestContact: string;
   wantsOwnEventInfo: boolean;
@@ -144,6 +152,7 @@ export function EventHubLiveContent({
   announcementCard,
   guestStateCard,
   coordinatorHandoffCard,
+  linkAccessCard,
   guestName,
   guestContact,
   wantsOwnEventInfo,
@@ -230,8 +239,8 @@ export function EventHubLiveContent({
                 })}
               </div>
 
-              {(announcementCard || guestStateCard || coordinatorHandoffCard) && (
-                <div className="mt-8 grid gap-3 lg:grid-cols-3">
+              {(announcementCard || guestStateCard || coordinatorHandoffCard || linkAccessCard) && (
+                <div className="mt-8 grid gap-3 lg:grid-cols-2 2xl:grid-cols-4">
                   {announcementCard && (
                     <div className="rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
                       <div className="flex items-start justify-between gap-3">
@@ -295,6 +304,19 @@ export function EventHubLiveContent({
                           <p className="mt-1 text-sm leading-6 text-[#2f261d]">{coordinatorHandoffCard.noteLabel}</p>
                         </div>
                       </div>
+                    </div>
+                  )}
+                  {linkAccessCard && (
+                    <div className="rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-[#2f261d]">Link access</p>
+                          <p className="mt-1 text-xs font-medium text-[#8b6f53]">{linkAccessCard.badgeLabel}</p>
+                        </div>
+                      </div>
+                      <p className="mt-3 text-sm font-semibold text-[#2f261d]">{linkAccessCard.title}</p>
+                      <p className="mt-1 text-sm leading-6 text-[#6f5843]">{linkAccessCard.detail}</p>
+                      <p className="mt-2 text-xs leading-5 text-[#8b6f53]">{linkAccessCard.summary}</p>
                     </div>
                   )}
                 </div>

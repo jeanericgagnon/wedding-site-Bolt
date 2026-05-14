@@ -131,6 +131,7 @@ describe('event hub page boundary', () => {
     expect(liveContent).toContain("Latest update");
     expect(liveContent).toContain("Your day-of status");
     expect(liveContent).toContain("Coordinator handoff");
+    expect(liveContent).toContain("Link access");
     expect(liveContent).toContain("Hub details");
   });
 });

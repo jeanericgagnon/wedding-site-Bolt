@@ -39,6 +39,13 @@ type GuestHubOfflineCoordinatorHandoff = {
   updatedAt?: string | null;
 };
 
+type GuestHubOfflineLinkAccess = {
+  title?: string | null;
+  badgeLabel?: string | null;
+  detail?: string | null;
+  summary?: string | null;
+};
+
 type GuestHubOfflineTravelContext = {
   schedule: Array<{ id?: string | null; label?: string | null; startTimeISO?: string | null; venueId?: string | null; notes?: string | null }>;
   venues: Array<{ id?: string | null; name?: string | null; address?: string | null }>;
@@ -50,6 +57,7 @@ export interface GuestHubOfflineSnapshot {
   announcement: GuestHubOfflineAnnouncement | null;
   guestState: GuestHubOfflineGuestState | null;
   coordinatorHandoff: GuestHubOfflineCoordinatorHandoff | null;
+  linkAccess: GuestHubOfflineLinkAccess | null;
   travelContext: GuestHubOfflineTravelContext;
   savedAt: string;
 }
@@ -153,12 +161,22 @@ export function sanitizeGuestHubOfflineSnapshot(value: unknown): GuestHubOffline
       }
     : null;
 
+  const linkAccess = isRecord(value.linkAccess)
+    ? {
+        title: trimString(value.linkAccess.title, 80),
+        badgeLabel: trimString(value.linkAccess.badgeLabel, 40),
+        detail: trimString(value.linkAccess.detail, 220),
+        summary: trimString(value.linkAccess.summary, 160),
+      }
+    : null;
+
   return {
     settings,
     siteSummary,
     announcement,
     guestState,
     coordinatorHandoff,
+    linkAccess,
     travelContext: sanitizeTravelContext(value.travelContext),
     savedAt,
   };

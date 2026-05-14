@@ -13,12 +13,15 @@ test('live guest hub proves private day-of visibility, coordinator handoff, and 
   await page.goto(publicHubPath, { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: /Everything guests need in one place\./i })).toBeVisible();
   await expect(page.getByText('Travel quick plan')).toBeVisible();
+  await expect(page.getByText('Link access')).toBeVisible();
+  await expect(page.getByText('Public site view')).toBeVisible();
   await expect(page.getByText('Your day-of status')).toHaveCount(0);
   await expect(page.locator('body')).not.toContainText(proofContext.guestInviteToken);
 
   await page.goto(privateHubPath, { waitUntil: 'domcontentloaded' });
   await expect(page.getByText('Latest update')).toBeVisible();
   await expect(page.getByText('Coordinator handoff')).toBeVisible();
+  await expect(page.getByText('Private guest link')).toBeVisible();
   await expect(page.getByText('Your day-of status')).toBeVisible();
   await expect(page.getByText(proofContext.guestName)).toBeVisible();
   await expect(page.locator('body')).not.toContainText(proofContext.guestInviteToken);

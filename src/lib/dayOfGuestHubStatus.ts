@@ -47,6 +47,20 @@ export type GuestHubCoordinatorHandoffCard = {
   summary: string;
 };
 
+export type GuestHubLinkAccessInput = {
+  hasGuestInviteToken?: boolean;
+  hasInviteToken?: boolean;
+  hasPasswordSession?: boolean;
+  guestName?: string | null;
+};
+
+export type GuestHubLinkAccessCard = {
+  title: string;
+  badgeLabel: string;
+  detail: string;
+  summary: string;
+};
+
 function formatDateTime(value?: string | null): string | null {
   if (!value) return null;
   const parsed = new Date(value);
@@ -143,5 +157,35 @@ export function buildGuestHubCoordinatorHandoffCard(input?: GuestHubCoordinatorH
     noteLabel: note,
     updatedLabel: updatedAt ? `Updated ${updatedAt}` : null,
     summary: `${eventLabel} · ${statusLabel}`,
+  };
+}
+
+export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | null): GuestHubLinkAccessCard | null {
+  if (!input) return null;
+
+  const guestLabel = scrubSensitiveCopy(input.guestName) || 'your guest details';
+  if (input.hasGuestInviteToken) {
+    return {
+      title: 'Private guest link',
+      badgeLabel: 'Guest-specific',
+      detail: `This link includes invite-only event details plus RSVP and check-in readback for ${guestLabel}.`,
+      summary: 'Guest-specific access is active for this link.',
+    };
+  }
+
+  if (input.hasInviteToken || input.hasPasswordSession) {
+    return {
+      title: 'Private event access',
+      badgeLabel: 'Invite-only',
+      detail: 'This link includes invite-only wedding details that do not appear on the public site shell.',
+      summary: 'Invite-only access is active for this link.',
+    };
+  }
+
+  return {
+    title: 'Public site view',
+    badgeLabel: 'Public',
+    detail: 'This link shows the public wedding hub. Invite-only event details stay on the private link from the couple.',
+    summary: 'Public-only access is active for this link.',
   };
 }

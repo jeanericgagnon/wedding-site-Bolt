@@ -43,6 +43,7 @@ export interface DayOfHubStatusInput {
   announcementsConnected?: boolean;
   guestSpecificStateConnected?: boolean;
   coordinatorHandoffConnected?: boolean;
+  privateEventVisibilityConnected?: boolean;
 }
 
 export interface DayOfHubStatusItem {
@@ -208,6 +209,14 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
         ? 'Coordinator updates are connected to the guest hub.'
         : 'Coordinator queue and Q&A stay in the coordinator surface until a guest-safe handoff is proven.',
       state: input.coordinatorHandoffConnected ? 'ready' : 'planned',
+    },
+    {
+      id: 'link-access',
+      label: 'Private event visibility',
+      detail: input.privateEventVisibilityConnected
+        ? 'Guests can tell whether this hub link is public, invite-only, or guest-specific before they rely on it.'
+        : 'Guests still need to infer whether this hub link is public or private.',
+      state: input.privateEventVisibilityConnected ? 'ready' : 'planned',
     },
   ];
 
