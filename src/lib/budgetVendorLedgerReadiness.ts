@@ -521,6 +521,7 @@ export function buildBudgetVendorReconciliation(input: {
     if (contractTotal > 0 && comparisonTotal > 0 && contractGap >= 1) issues.push(`Contract differs from linked budget by ${money(contractGap).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}`);
     if (vendorPaid > 0 && linkedPaidTotal > 0 && paidGap >= 1) issues.push(`Paid totals differ by ${money(paidGap).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}`);
     if (openBalance > 0 && !hasContact) issues.push('Open balance has no saved email or phone');
+    if (openBalance > 0 && !vendor.next_payment_due) issues.push('Open balance has no saved due date');
     if (fileCount === 0) issues.push('No contract or invoice files saved');
     if (milestoneCount === 0 && openBalance > 0) issues.push('No payment milestones saved');
 
