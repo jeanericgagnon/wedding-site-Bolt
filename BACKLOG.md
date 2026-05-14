@@ -486,7 +486,8 @@ Execution rule for this section:
    - this batch shipped: focused proof is green for recap invite-route classification and analytics summary aggregation, and the dedicated website/invite analytics proof lane now includes the recap route tests
    - this batch shipped: a dedicated `proof:v1:website-invite-analytics` lane now reruns analytics aggregation/readiness tests, build integrity, a real public-route browser proof for `/site`, `/event`, RSVP, and photo upload privacy, and an authenticated live owner overview readback on [dayof.love](https://dayof.love)
    - this batch shipped: live production proof is now green that public and guest-facing routes still do not expose owner analytics detail while the owner overview still reads back the aggregate analytics card and guardrails on the shipped runtime
-   - review whether any remaining non-hub, non-RSVP, non-guest-route invite entry surfaces still need aggregate instrumentation before claiming broader invitation analytics coverage
+   - this batch shipped: audited invite-entry coverage is now codified in a shared aggregate-target list plus a source-backed route audit, so hub, site, RSVP, recap, guest contact, guestbook, photo upload, and vault invite entries cannot silently drift out of owner analytics coverage without breaking proof
+   - active remaining work: none beyond keeping the live owner analytics and public-route privacy proof green on future deploys
 
 14. `ACTIVE`: app-like web day-of mode
    - this batch shipped: guest-hub config now reads the latest owner day-of/event-reminder message into a guest-safe `Latest update` card, keeping `scheduled`, `queued`, `sending`, and `sent` visibly distinct instead of leaving announcements in planned-only status

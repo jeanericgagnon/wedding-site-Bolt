@@ -24,6 +24,27 @@ export interface AnalyticsEventSummary {
   lastTrackedAt: string | null;
 }
 
+export const AGGREGATE_INVITE_OPEN_VIEW_TARGETS = [
+  '/event/invite',
+  '/site/invite',
+  '/event/recap/invite',
+  '/rsvp/invite',
+  '/rsvp-event/invite',
+  '/guest-contact/invite',
+  '/guestbook/invite',
+  '/photos/upload/invite',
+  '/vault/invite',
+  '/vault/invite/year',
+] as const;
+
+export const AGGREGATE_QR_VIEW_TARGETS = [
+  '/event/qr',
+  '/site/qr',
+] as const;
+
+const inviteOpenTargetSet = new Set<string>(AGGREGATE_INVITE_OPEN_VIEW_TARGETS);
+const qrTargetSet = new Set<string>(AGGREGATE_QR_VIEW_TARGETS);
+
 export function buildEmptyAnalyticsEventSummary(lookbackDays = 30): AnalyticsEventSummary {
   return {
     lookbackDays,
@@ -47,17 +68,7 @@ export function buildEmptyAnalyticsEventSummary(lookbackDays = 30): AnalyticsEve
 }
 
 function isInviteOpenTarget(target: string | null): boolean {
-  if (!target) return false;
-  return target === '/event/invite'
-    || target === '/site/invite'
-    || target === '/event/recap/invite'
-    || target === '/rsvp/invite'
-    || target === '/rsvp-event/invite'
-    || target === '/guest-contact/invite'
-    || target === '/guestbook/invite'
-    || target === '/photos/upload/invite'
-    || target === '/vault/invite'
-    || target === '/vault/invite/year';
+  return Boolean(target && inviteOpenTargetSet.has(target));
 }
 
 function normalizeInternalTarget(value: string | null): string | null {
@@ -110,7 +121,7 @@ export function buildAnalyticsEventSummary(
         if (target === '/event/recap/invite') {
           summary.recapViews += 1;
         }
-      } else if (target === '/event/qr' || target === '/site/qr') {
+      } else if (target && qrTargetSet.has(target)) {
         summary.pageViews += 1;
         summary.qrScans += 1;
       } else if (target === '/event/recap' || target === '/event/recap/invite') {

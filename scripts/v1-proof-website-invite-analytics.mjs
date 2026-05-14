@@ -85,7 +85,7 @@ const results = [];
 results.push(runStep({
   id: 'analytics-unit-tests',
   label: 'Website and invite analytics unit tests',
-  command: 'npm test -- --run src/pages/dashboard/analyticsEventSummary.test.ts src/lib/websiteInviteAnalyticsReadiness.test.ts src/pages/dashboard/buildOverviewDashboardModel.test.ts src/pages/SiteView.test.ts src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx src/pages/RSVP.test.tsx src/pages/PhotoUpload.test.ts',
+  command: 'npm test -- --run src/pages/dashboard/analyticsEventSummary.test.ts src/pages/dashboard/analyticsCoverageAudit.test.ts src/lib/websiteInviteAnalyticsReadiness.test.ts src/pages/dashboard/buildOverviewDashboardModel.test.ts src/pages/SiteView.test.ts src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx src/pages/RSVP.test.tsx src/pages/PhotoUpload.test.ts',
 }));
 
 results.push(runStep({
@@ -173,16 +173,17 @@ const output = {
   },
   automatedCoverage: [
     'Aggregate analytics math, readiness wiring, and retention/guardrail truth',
+    'Audited invite-entry and QR-entry route coverage staying aligned with the owner aggregate summary targets',
     'Public site, RSVP, guest hub, and photo-upload routes staying free of owner analytics detail',
     'Authenticated owner overview analytics readback on the shipped runtime when live credentials are available',
   ],
   stillManualProofNeeded: shouldRunLiveOwnerProof
     ? [
-        'Review whether any remaining invite-entry routes outside hub, RSVP, site, guest contact, guestbook, photo upload, vault, and recap still need aggregate instrumentation before claiming broader invitation analytics coverage.',
+        'Keep the live owner analytics and public-route privacy proof green on future deploys.',
       ]
     : [
         'Rerun the owner analytics readback against a live authenticated runtime once V1_OWNER_EMAIL, V1_OWNER_PASSWORD, and a live PLAYWRIGHT_BASE_URL are available.',
-        'Review whether any remaining invite-entry routes outside hub, RSVP, site, guest contact, guestbook, photo upload, vault, and recap still need aggregate instrumentation before claiming broader invitation analytics coverage.',
+        'Keep the local/public analytics coverage audit green while waiting for the next live owner proof rerun.',
       ],
   results,
 };
