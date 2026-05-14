@@ -1,6 +1,27 @@
 #!/usr/bin/env node
 
-import { execSync } from 'node:child_process';
+import { execSync, spawn } from 'node:child_process';
+
+const PREVIEW_URL = 'http://127.0.0.1:4173';
+const baseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForPreview(url, timeoutMs = 20_000) {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
+      if (response.ok) return;
+    } catch {
+      // keep waiting
+    }
+    await sleep(500);
+  }
+  throw new Error(`Preview server did not become ready at ${url} within ${timeoutMs}ms`);
+}
 
 const steps = [
   {
@@ -63,6 +84,67 @@ function runStep(step) {
 }
 
 const results = steps.map(runStep);
+
+let previewProcess = null;
+let previewStdout = '';
+let previewStderr = '';
+try {
+  if (baseUrl === PREVIEW_URL) {
+    previewProcess = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', '4173'], {
+      cwd: process.cwd(),
+      env: process.env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    previewProcess.stdout.on('data', (chunk) => {
+      previewStdout += chunk.toString('utf8');
+    });
+    previewProcess.stderr.on('data', (chunk) => {
+      previewStderr += chunk.toString('utf8');
+    });
+
+    await waitForPreview(PREVIEW_URL);
+  }
+
+  results.push(runStep({
+    id: 'messages-browser-proof',
+    label: 'Messages local browser proof',
+    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/messages-comms-center.spec.ts`,
+    required: true,
+  }));
+
+  if (previewStdout.trim()) {
+    results.push({
+      id: 'preview-server-log',
+      label: 'Preview server log',
+      command: 'npm run preview -- --host 127.0.0.1 --port 4173',
+      required: false,
+      ok: true,
+      startedAt: new Date().toISOString(),
+      finishedAt: new Date().toISOString(),
+      stdout: previewStdout.trim(),
+      stderr: previewStderr.trim() || undefined,
+    });
+  }
+} catch (error) {
+  results.push({
+    id: 'messages-browser-proof',
+    label: 'Messages local browser proof',
+    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/messages-comms-center.spec.ts`,
+    required: true,
+    ok: false,
+    startedAt: new Date().toISOString(),
+    finishedAt: new Date().toISOString(),
+    stderr: [previewStderr.trim(), error instanceof Error ? error.message : 'Messages preview server failed to start.'].filter(Boolean).join('\n'),
+  });
+} finally {
+  if (previewProcess) {
+    previewProcess.kill('SIGTERM');
+    await sleep(300);
+    if (!previewProcess.killed) previewProcess.kill('SIGKILL');
+  }
+}
+
 const failedRequired = results.filter((result) => result.required && !result.ok);
 
 const output = {
@@ -78,11 +160,11 @@ const output = {
     'Draft/queued/sent/failed message-state truth',
     'Focused retry, next-send exclusion, and customer-safe delivery review grouping coverage',
     'Compose/send/retry/reschedule permission guard coverage',
+    'Local browser proof for composing and saving message starting points plus scheduled campaign wording',
     'Build integrity after comms-center proof assertions',
   ],
   stillManualProofNeeded: [
-    'Create or inspect a real draft',
-    'Schedule or send a real message',
+    'Rerun compose/save/send flows against an authenticated live owner runtime after the next approved messaging deploy.',
     'Verify history state reads credibly after runtime delivery attempt',
   ],
   results,

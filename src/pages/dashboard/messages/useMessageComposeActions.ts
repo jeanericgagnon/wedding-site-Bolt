@@ -218,13 +218,17 @@ export function useMessageComposeActions({
 
       if (saveAsDraft) {
         toast(isEditingExistingMessage ? 'Draft updated' : 'Saved as draft', 'info');
-        await fetchMessages();
+        if (!isDemoMode) {
+          await fetchMessages();
+        }
         return;
       }
 
       if (isScheduled) {
         toast(`${isEditingExistingMessage ? 'Updated' : 'Scheduled'} for ${formatScheduledMessageDateTime(scheduledFor)} — ${recipientCount} recipient${recipientCount !== 1 ? 's' : ''}`, 'info');
-        await fetchMessages();
+        if (!isDemoMode) {
+          await fetchMessages();
+        }
         return;
       }
 
