@@ -35,6 +35,7 @@ const PLANNER_ROLE_OPTIONS: { value: PlannerAccessRole; label: string }[] = [
   { value: 'owner', label: 'Owner view' },
   { value: 'planner', label: 'Planner view' },
   { value: 'coordinator', label: 'Coordinator view' },
+  { value: 'viewer', label: 'Read-only view' },
 ];
 
 export function PlanningDashboardShell({
@@ -110,6 +111,11 @@ export function PlanningDashboardShell({
         {planningRole === 'coordinator' && (
           <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-secondary">
             Day-of helper view is on. Schedule-related tasks stay editable here, while budget and vendor details stay with the couple or planner.
+          </div>
+        )}
+        {planningRole === 'viewer' && (
+          <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-secondary">
+            Read-only view is on. Budget and vendor details stay visible for review, while editing stays with the couple or planner.
           </div>
         )}
 

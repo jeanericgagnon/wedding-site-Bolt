@@ -102,3 +102,28 @@ test('demo planning ledger keeps owner vendor and budget CRUD changes across rel
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('button', { name: `Edit budget item ${budgetName}` })).toHaveCount(0);
 });
+
+test('demo planning ledger keeps read-only collaborator visibility while guest routes stay free of financial details', async ({ page }) => {
+  await enableLocalDemo(page);
+
+  await enterPlanningRoute(page, 'budget', `viewer-${Date.now()}`);
+  await page.locator('select').nth(1).selectOption({ label: 'Read-only view' });
+  await expect(page.getByText('Owner and planner financial details')).toBeVisible();
+  await expect(page.getByText(/guest-facing surfaces do not expose these financial details/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: /Export ledger/i })).toBeEnabled();
+  await expect(page.getByRole('button', { name: /Add expense/i })).toBeDisabled();
+  await expect(page.getByText('Read only in this role')).toBeVisible();
+
+  await enterPlanningRoute(page, 'vendors', `viewer-${Date.now()}`);
+  await page.locator('select').nth(1).selectOption({ label: 'Read-only view' });
+  await expect(page.getByText('Owner and planner financial details')).toBeVisible();
+  await expect(page.getByText(/guest-facing pages do not expose vendor financial details/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: /Copy brief/i })).toBeEnabled();
+  await expect(page.getByRole('button', { name: /Export/i })).toBeEnabled();
+  await expect(page.getByRole('button', { name: /Add vendor/i })).toBeDisabled();
+
+  await page.goto('/site/alex-jordan-demo?budgetVendorLedgerQa=public', { waitUntil: 'networkidle' });
+  await expect(page.getByText(/Alex Thompson.*Jordan Rivera|Alex Thompson & Jordan Rivera/i).first()).toBeVisible();
+  await expect(page.locator('body')).not.toContainText(/Owner and planner financial details|Budget and vendor ledger|Vendor balance reconciliation|Contract Total|Amount Paid|Read only in this role/i);
+  await expect(page.locator('body')).not.toContainText(/Final payment due 2 weeks prior\.|Second shooter \+ 4 week gallery delivery\.|Includes ceremony chairs \+ basic lighting\./i);
+});

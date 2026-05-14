@@ -146,11 +146,13 @@ const output = {
     'Demo planning ledger persistence for budget, vendors, and vendor reminder metadata',
     'Role-safe budget and vendor readback surfaces',
     'Browser add/edit/delete continuity across reloads for owner budget and vendor flows',
+    'Read-only collaborator browser visibility plus guest-facing public non-exposure for financial details',
     'Build integrity after ledger proof assertions',
   ],
   stillManualProofNeeded: [
     'Live owner add/edit/delete proof with cleanup on the shipped production runtime after the next approved planning deploy',
     'Planner collaborator runtime CRUD/readback confirmation on a real shared site',
+    'Live guest-facing production rerun confirming financial terms stay absent after the next approved planning deploy',
   ],
   results,
 };

@@ -150,8 +150,12 @@ export const DashboardPlanning: React.FC = () => {
     try {
       if (isDemoMode) {
         const demoPlanningState = readDemoPlanningState();
+        const demoSiteId = demoWeddingSite.id;
+        const storedRole = readPlannerAccessRole('planning', demoSiteId);
         setSiteId(demoWeddingSite.id);
         setWeddingDate(demoWeddingSite.wedding_date);
+        setActiveSiteRole('owner');
+        setPlanningRole(storedRole ?? 'owner');
         setTasks(demoPlanningState.tasks);
         setBudgetItems(demoPlanningState.budgetItems);
         setVendors(demoPlanningState.vendors);
