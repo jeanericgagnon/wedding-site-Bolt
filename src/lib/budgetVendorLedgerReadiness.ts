@@ -318,7 +318,7 @@ export function budgetVendorLedgerToCsv(input: {
   const vendorMap = new Map(input.vendors.map((vendor) => [vendor.id, vendor]));
   const vendorMeta = input.vendorMeta ?? {};
   const rows = [
-    ['Record Type', 'Name', 'Category or Type', 'Vendor', 'Estimated', 'Actual or Contract', 'Paid', 'Open', 'Due Date', 'Contact', 'Reminder Channel', 'Follow Up', 'Reminder Lead Time', 'Reminder Last Queued', 'Document URL', 'Files', 'Milestones', 'Internal Rating', 'Rating Status', 'Private Rating Notes', 'Notes'],
+    ['Record Type', 'Name', 'Category or Type', 'Vendor', 'Estimated', 'Actual or Contract', 'Paid', 'Open', 'Due Date', 'Contact', 'Contact Name', 'Website', 'Reminder Channel', 'Follow Up', 'Reminder Lead Time', 'Reminder Last Queued', 'Document Label', 'Document URL', 'Files', 'Milestones', 'Internal Rating', 'Rating Status', 'Private Rating Notes', 'Notes'],
     ...input.budgetItems.map((item) => {
       const total = money(item.actual_amount) || money(item.estimated_amount);
       const paid = money(item.paid_amount);
@@ -335,10 +335,13 @@ export function budgetVendorLedgerToCsv(input: {
         String(Math.max(0, total - paid)),
         item.due_date ?? '',
         vendor ? [vendor.email, vendor.phone].filter(Boolean).join(' / ') : '',
+        vendor?.contact_name ?? '',
+        vendor?.website ?? '',
         formatReminderChannel(meta?.reminderChannel),
         meta?.nextFollowUp ?? '',
         formatReminderLeadDays(meta?.reminderLeadDays),
         meta?.reminderLastQueuedAt ?? '',
+        vendor?.document_label ?? '',
         vendor?.document_url ?? '',
         summarizeVendorFiles(meta),
         summarizeVendorMilestones(meta),
@@ -364,10 +367,13 @@ export function budgetVendorLedgerToCsv(input: {
         String(open),
         vendor.next_payment_due ?? '',
         [vendor.email, vendor.phone].filter(Boolean).join(' / '),
+        vendor.contact_name ?? '',
+        vendor.website ?? '',
         formatReminderChannel(meta?.reminderChannel),
         meta?.nextFollowUp ?? '',
         formatReminderLeadDays(meta?.reminderLeadDays),
         meta?.reminderLastQueuedAt ?? '',
+        vendor.document_label ?? '',
         vendor.document_url ?? '',
         summarizeVendorFiles(meta),
         summarizeVendorMilestones(meta),

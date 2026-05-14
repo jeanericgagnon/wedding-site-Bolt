@@ -86,12 +86,15 @@ describe('budget vendor ledger readiness', () => {
           id: 'vendor-1',
           name: 'Photo Studio',
           vendor_type: 'Photographer',
+          contact_name: 'Mia Lens',
           email: 'photo@example.com',
           phone: '555-0101',
+          website: 'https://photo.example.com',
           contract_total: 5000,
           amount_paid: 2500,
           balance_due: 2500,
           next_payment_due: '2026-05-20',
+          document_label: 'Signed proposal',
           document_url: 'https://docs.example.com/photo',
           notes: 'Needs final shot list',
           internal_rating: 5,
@@ -131,10 +134,14 @@ describe('budget vendor ledger readiness', () => {
     expect(csv).toContain('"Record Type","Name","Category or Type","Vendor"');
     expect(csv).toContain('"Reminder Channel","Follow Up","Reminder Lead Time","Reminder Last Queued"');
     expect(csv).toContain('"Internal Rating","Rating Status","Private Rating Notes","Notes"');
+    expect(csv).toContain('"Contact Name","Website"');
+    expect(csv).toContain('"Document Label","Document URL"');
     expect(csv).toContain('"Budget item","Photo deposit","Photography","Photo Studio"');
     expect(csv).toContain('"Vendor","Photo Studio","Photographer","Photo Studio"');
     expect(csv).toContain('"photo@example.com / 555-0101"');
+    expect(csv).toContain('"Mia Lens","https://photo.example.com"');
     expect(csv).toContain('"Email","2026-05-18","7 days before","2026-05-11T12:00:00.000Z"');
+    expect(csv).toContain('"Signed proposal","https://docs.example.com/photo"');
     expect(csv).toContain('"contract: Signed contract"');
     expect(csv).toContain('"Final balance (scheduled, 2026-05-20, $2,500)"');
     expect(csv).toContain('"5","Booked","Strong fit","Booked"');
