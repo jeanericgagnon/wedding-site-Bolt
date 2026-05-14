@@ -307,6 +307,7 @@ Execution rule for this section:
    - this batch shipped: owner preview context now follows through on guest-facing contact update, photo upload, guestbook, vault, and recap routes instead of stopping at the site or RSVP shell
    - this batch shipped: guest-specific hub links now carry private guest identity into photo upload, guestbook, vault, and recap routes, and those routes now capture and preserve that identity instead of dropping back to purely public context on the next click
    - this batch shipped: owner guest preview now exposes direct guest-surface links for photo upload, guestbook, recap, travel, and registry instead of limiting preview confidence to RSVP, contact update, or the top-level site shell
+   - this batch shipped: the main Guests dashboard list and household views now expose direct guest-view preview actions, so owners can jump into the real guest-facing site path without opening the itinerary drawer first
    - finish true route-level personalization beyond the owner preview banner and guest-update path
    - wire planner/coordinator role preview controls from dashboard flows
    - extend preview confidence to photo, registry, and travel surfaces

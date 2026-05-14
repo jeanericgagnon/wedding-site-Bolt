@@ -1,6 +1,7 @@
 import React from 'react';
 import { CalendarDays, CheckCircle2, ChevronRight, ExternalLink, Mail, Users } from 'lucide-react';
 import { Button } from '../../../components/ui';
+import { buildGuestPreviewRoutes } from '../../../lib/guestPreviewRoutes';
 import { getInviteLifecycleState } from '../../../lib/inviteLifecycle';
 import { getPlusOneState } from '../../../lib/plusOneState';
 import { hasRespondedRsvpStatus } from '../../../lib/rsvpStatus';
@@ -16,6 +17,7 @@ export interface GuestListPanelProps {
   displayedGuests: GuestWithRSVP[];
   filteredGuestCount: number;
   isGuestsReadOnly: boolean;
+  publicSiteSlug: string | null;
   searchQuery: string;
   sendingInviteId: string | null;
   getStatusBadge: (status: string) => React.ReactNode;
@@ -35,6 +37,7 @@ export function GuestListPanel({
   displayedGuests,
   filteredGuestCount,
   isGuestsReadOnly,
+  publicSiteSlug,
   searchQuery,
   sendingInviteId,
   getStatusBadge,
@@ -64,6 +67,11 @@ export function GuestListPanel({
               const guestName = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
               const checkedInAt = guest.checked_in_at ?? null;
               const thankYouSentAt = guest.thank_you_sent_at ?? null;
+              const guestPreviewRoutes = buildGuestPreviewRoutes({
+                guestId: guest.id,
+                inviteToken: guest.invite_token,
+                publicSiteSlug,
+              });
 
               return (
                 <tr
@@ -117,16 +125,16 @@ export function GuestListPanel({
                             <CalendarDays className="w-4 h-4 mr-1" />
                             Events
                           </Button>
-                          {guest.invite_token && (
+                          {guestPreviewRoutes.primaryHref && (
                             <Button
                               variant="ghost"
                               size="sm"
                               className="px-2 py-1 text-xs"
-                              onClick={() => window.open(`/rsvp?token=${encodeURIComponent(guest.invite_token ?? '')}&previewGuest=${encodeURIComponent(guest.id)}`, '_blank', 'noopener,noreferrer')}
-                              title="Preview the RSVP flow as this guest"
+                              onClick={() => window.open(guestPreviewRoutes.primaryHref ?? '', '_blank', 'noopener,noreferrer')}
+                              title={guestPreviewRoutes.publicSiteHref ? 'Preview the guest-facing site as this guest' : 'Preview the RSVP flow as this guest'}
                             >
                               <ExternalLink className="w-4 h-4 mr-1" />
-                              Preview
+                              Guest view
                             </Button>
                           )}
                           {guest.email && (

@@ -394,6 +394,10 @@ export const DashboardGuests: React.FC = () => {
     sortByPriority,
     weddingDate: weddingSiteInfo?.wedding_date,
   });
+  const publicSiteSlug = resolvePublicSiteSlugFromRow({
+    site_slug: weddingSiteInfo?.site_slug ?? null,
+    site_url: weddingSiteInfo?.site_url ?? null,
+  });
 
   const segmentLabelMap = GUEST_SEGMENT_LABELS;
 
@@ -631,6 +635,7 @@ export const DashboardGuests: React.FC = () => {
     nextUnresolvedGuest,
     opsQueue,
     plannerHandoff,
+    publicSiteSlug,
     recommendedAction,
     reminderCandidates,
     resolvingConflictId,

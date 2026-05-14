@@ -1,12 +1,14 @@
 import React from 'react';
-import { Home, Merge, Users } from 'lucide-react';
+import { ExternalLink, Home, Merge, Users } from 'lucide-react';
 import { Button } from '../../../components/ui';
+import { buildGuestPreviewRoutes } from '../../../lib/guestPreviewRoutes';
 import type { GuestHouseholdGroups } from './guestDashboardUtils';
 
 export interface GuestHouseholdPanelProps {
   householdBusy: boolean;
   households: GuestHouseholdGroups;
   isDemoMode: boolean;
+  publicSiteSlug: string | null;
   selectedGuestIds: Set<string>;
   getStatusBadge: (status: string) => React.ReactNode;
   onMergeIntoHousehold: () => void;
@@ -17,6 +19,7 @@ export function GuestHouseholdPanel({
   householdBusy,
   households,
   isDemoMode,
+  publicSiteSlug,
   selectedGuestIds,
   getStatusBadge,
   onMergeIntoHousehold,
@@ -52,6 +55,11 @@ export function GuestHouseholdPanel({
           <div className="divide-y divide-border-subtle/60 bg-white">
             {members.map((guest) => {
               const name = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
+              const guestPreviewRoutes = buildGuestPreviewRoutes({
+                guestId: guest.id,
+                inviteToken: guest.invite_token,
+                publicSiteSlug,
+              });
               return (
                 <div key={guest.id} className="flex items-center justify-between px-5 py-3.5">
                   <div>
@@ -59,6 +67,17 @@ export function GuestHouseholdPanel({
                     <p className="text-xs text-text-tertiary break-words">{guest.email || 'No email'}</p>
                   </div>
                   <div className="flex items-center gap-3">
+                    {guestPreviewRoutes.primaryHref && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="px-2 py-1 text-xs"
+                        onClick={() => window.open(guestPreviewRoutes.primaryHref ?? '', '_blank', 'noopener,noreferrer')}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 mr-1" />
+                        Guest view
+                      </Button>
+                    )}
                     {getStatusBadge(guest.rsvp_status)}
                   </div>
                 </div>
@@ -82,6 +101,11 @@ export function GuestHouseholdPanel({
             {households.ungrouped.map((guest) => {
               const name = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
               const isSelected = selectedGuestIds.has(guest.id);
+              const guestPreviewRoutes = buildGuestPreviewRoutes({
+                guestId: guest.id,
+                inviteToken: guest.invite_token,
+                publicSiteSlug,
+              });
               return (
                 <div
                   key={guest.id}
@@ -107,7 +131,23 @@ export function GuestHouseholdPanel({
                     <p className="text-sm font-medium text-text-primary">{name}</p>
                     <p className="text-xs text-text-tertiary break-words">{guest.email || 'No email'}</p>
                   </div>
-                  {getStatusBadge(guest.rsvp_status)}
+                  <div className="flex items-center gap-2">
+                    {guestPreviewRoutes.primaryHref && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="px-2 py-1 text-xs"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          window.open(guestPreviewRoutes.primaryHref ?? '', '_blank', 'noopener,noreferrer');
+                        }}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 mr-1" />
+                        Guest view
+                      </Button>
+                    )}
+                    {getStatusBadge(guest.rsvp_status)}
+                  </div>
                 </div>
               );
             })}
