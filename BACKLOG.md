@@ -425,6 +425,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the local proof now promotes that newly uploaded guest clip through owner moderation too, proving the exact upload can be featured and added to story, survives reload, and appears in both owner recap preview and the guest-facing recap with the saved guest attribution
    - this batch shipped: the no-app memory-flow checklist now keeps guestbook notes as an optional `planned` step when that control is intentionally off, so couples using uploads, recap, moderation, and export without guestbook do not see a false blocker in the launch readback
    - this batch shipped: the no-app memory-flow card now exposes top-level `Collection`, `Curation`, `Sharing`, and `Handoff` summaries before the deeper checklist, so owners can tell whether guest uploads, recap sharing, and handoff/export are truly ready without mentally stitching together nine separate tiles
+   - this batch shipped: the top-level memory-flow `Sharing` summary now also calls out saved story-pick coverage when recap sharing is ready, so recap readback no longer flattens every published/private-link recap into one generic curated-pick count
    - add live guest video upload browser proof
    - rerun the strengthened owner preview plus guest-facing published recap proof against the shipped production runtime after the next approved deploy
    - prove owner moderation readback after real live uploads

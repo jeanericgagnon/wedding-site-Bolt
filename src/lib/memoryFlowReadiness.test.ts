@@ -27,7 +27,7 @@ describe('memoryFlowReadiness', () => {
     expect(readiness.lanes).toEqual([
       { id: 'collection', label: 'Collection', detail: '24 uploads across 2 active albums, including 2 videos.', status: 'ready' },
       { id: 'curation', label: 'Curation', detail: '7 curated picks and 12 slideshow frames are ready for recap review.', status: 'ready' },
-      { id: 'sharing', label: 'Sharing', detail: 'Recap is published with 7 curated picks.', status: 'ready' },
+      { id: 'sharing', label: 'Sharing', detail: 'Recap is published with 7 curated picks, including 3 story picks.', status: 'ready' },
       { id: 'handoff', label: 'Handoff', detail: 'Owner handoff export is ready from 24 reviewed uploads, with 8 guest opt-ins saved for follow-up.', status: 'ready' },
     ]);
     expect(readiness.steps.find((step) => step.id === 'video-capture')?.status).toBe('ready');
@@ -107,7 +107,7 @@ describe('memoryFlowReadiness', () => {
     });
     expect(readiness.lanes.find((lane) => lane.id === 'sharing')).toMatchObject({
       status: 'ready',
-      detail: 'Recap is private-link ready with 3 curated picks.',
+      detail: 'Recap is private-link ready with 3 curated picks, including 1 story pick.',
     });
     expect(readiness.blockers).not.toContain('Guestbook notes are optional and currently off in the guest hub controls.');
   });

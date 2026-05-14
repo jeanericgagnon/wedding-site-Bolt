@@ -88,7 +88,7 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
       id: 'sharing',
       label: 'Sharing',
       detail: recapShareable && recapHasPicks
-        ? `Recap is ${input.recapStatus === 'private_link' ? 'private-link ready' : 'published'} with ${countLabel(curatedPickCount, 'curated pick')}.`
+        ? `Recap is ${input.recapStatus === 'private_link' ? 'private-link ready' : 'published'} with ${countLabel(curatedPickCount, 'curated pick')}${input.recapStoryCount > 0 ? `, including ${countLabel(input.recapStoryCount, 'story pick')}` : ''}.`
         : recapHasPicks
           ? `${countLabel(curatedPickCount, 'curated pick')} saved, but the recap is not shareable yet.`
           : hasUploads
