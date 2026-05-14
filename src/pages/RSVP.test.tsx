@@ -3,6 +3,9 @@ import { join } from 'node:path';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
+const { trackGuestHubEventMock } = vi.hoisted(() => ({
+  trackGuestHubEventMock: vi.fn(),
+}));
 
 vi.mock('../config/env', () => ({ DEMO_MODE: false }));
 vi.mock('react-i18next', () => ({
@@ -20,6 +23,9 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 vi.mock('../components/ui/LanguageSwitcher', () => ({ LanguageSwitcher: () => <div>LanguageSwitcher</div> }));
+vi.mock('./guestHubPublicService', () => ({
+  trackGuestHubEvent: trackGuestHubEventMock,
+}));
 
 import RSVP from './RSVP';
 import { normalizeRsvpGuestError, normalizeRsvpSubmitError } from './rsvpTypes';
@@ -39,6 +45,8 @@ describe('RSVP stale submit protection', () => {
 
   beforeEach(() => {
     fetchMock.mockReset();
+    trackGuestHubEventMock.mockReset();
+    trackGuestHubEventMock.mockResolvedValue(undefined);
     vi.stubGlobal('fetch', fetchMock);
   });
 
@@ -245,6 +253,46 @@ describe('RSVP stale submit protection', () => {
     expect(normalizeRsvpSubmitError('Failed to submit RSVP. Please try again.')).toBe('Couldn’t send your RSVP. Please try again.');
     expect(normalizeRsvpSubmitError('request failed at functions/v1/validate-rsvp-token')).toBe('Couldn’t send your RSVP. Please try again.');
     expect(normalizeRsvpGuestError('The RSVP deadline has passed.')).toBe('The RSVP deadline has passed.');
+  });
+
+  it('tracks private RSVP route opens as aggregate invite analytics without leaking the token', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        guest: {
+          id: 'guest-1',
+          first_name: 'Taylor',
+          last_name: 'Rivera',
+          name: 'Taylor Rivera',
+          plus_one_allowed: false,
+          invited_to_ceremony: true,
+          invited_to_reception: true,
+        },
+        existingRsvp: null,
+        guests: null,
+        siteSlug: 'taylor-and-rivera',
+        rsvpDeadline: null,
+        rsvpQuestions: [],
+        rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+        rsvpSession: 'session-1',
+      }),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp?token=invite-token-1']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
+    expect(trackGuestHubEventMock).toHaveBeenCalledWith(
+      'taylor-and-rivera',
+      'view',
+      '/rsvp/invite',
+      { inviteToken: 'invite-token-1' },
+    );
   });
 
   it('does not switch into success after the guest backs out of an in-flight submit', async () => {

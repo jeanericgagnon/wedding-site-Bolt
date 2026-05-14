@@ -77,6 +77,7 @@ export interface LookupResponse {
   guest: Guest | null;
   existingRsvp: ExistingRSVP | null;
   guests: Guest[] | null;
+  siteSlug?: string | null;
   rsvpDeadline: string | null;
   rsvpQuestions?: RSVPQuestion[] | null;
   rsvpMealConfig?: RSVPMealConfig | null;

@@ -90,7 +90,7 @@ export function buildAnalyticsEventSummary(
       if (target === '/event') {
         summary.pageViews += 1;
         summary.siteVisits += 1;
-      } else if (target === '/event/invite') {
+      } else if (target === '/event/invite' || target === '/rsvp/invite' || target === '/rsvp-event/invite') {
         summary.pageViews += 1;
         summary.inviteOpens += 1;
       } else if (target === '/event/qr') {

@@ -4,6 +4,9 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let currentToken = 'invite-token-1';
+const { trackGuestHubEventMock } = vi.hoisted(() => ({
+  trackGuestHubEventMock: vi.fn(),
+}));
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -16,6 +19,10 @@ vi.mock('react-router-dom', async () => {
 vi.mock('../components/layout', () => ({
   Header: () => <div>Header</div>,
   Footer: () => <div>Footer</div>,
+}));
+
+vi.mock('./guestHubPublicService', () => ({
+  trackGuestHubEvent: trackGuestHubEventMock,
 }));
 
 function jsonResponse(body: unknown, init?: { ok?: boolean; status?: number }) {
@@ -37,6 +44,8 @@ async function renderEventRsvp() {
 describe('EventRSVP secure flow', () => {
   beforeEach(() => {
     currentToken = 'invite-token-1';
+    trackGuestHubEventMock.mockReset();
+    trackGuestHubEventMock.mockResolvedValue(undefined);
     vi.unstubAllEnvs();
     vi.stubGlobal('fetch', vi.fn());
   });
@@ -65,6 +74,7 @@ describe('EventRSVP secure flow', () => {
   it('loads guest event invitations from the server-side lookup flow', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({
       guest: { id: 'guest-1', name: 'Taylor' },
+      siteSlug: 'taylor-and-rivera',
       eventRsvpSupport: true,
       rsvpSession: 'session-1',
       invitations: [
@@ -94,6 +104,12 @@ describe('EventRSVP secure flow', () => {
     expect(screen.getByRole('button', { name: 'RSVP for this event' })).toBeInTheDocument();
 
     expect(fetch).toHaveBeenCalledTimes(1);
+    expect(trackGuestHubEventMock).toHaveBeenCalledWith(
+      'taylor-and-rivera',
+      'view',
+      '/rsvp-event/invite',
+      { inviteToken: 'invite-token-1' },
+    );
     expect(fetch).toHaveBeenCalledWith(
       'https://example.supabase.co/functions/v1/validate-rsvp-token',
       expect.objectContaining({

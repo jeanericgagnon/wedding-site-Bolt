@@ -35,6 +35,7 @@ import { buildRsvpPageViewModel } from './buildRsvpPageViewModel';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { buildRsvpLiveContentViewProps } from './buildRsvpLiveContentViewProps';
 import { callValidateRsvpToken } from './rsvpFunctionService';
+import { trackGuestHubEvent } from './guestHubPublicService';
 import { prepareRsvpTokenLookupState } from './prepareRsvpTokenLookupState';
 import { resetRsvpLookupFlow } from './resetRsvpLookupFlow';
 import { resetRsvpPageState } from './resetRsvpPageState';
@@ -384,6 +385,7 @@ export default function RSVP() {
   const ignoreNextLocalContinuityEventRef = useRef(false);
   const tokenLinkedSessionRef = useRef(false);
   const loadInFlightRef = useRef(false);
+  const trackedInviteAnalyticsKeyRef = useRef<string | null>(null);
   const [activePredictionIndex, setActivePredictionIndex] = useState(-1);
   const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
   const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestion[]>([]);
@@ -592,6 +594,12 @@ export default function RSVP() {
       language: currentGuestLanguage,
       loadInFlightRef,
       normalizeRsvpGuestError,
+      onInviteRouteResolved: (siteSlug) => {
+        const analyticsKey = `${siteSlug}:${token}`;
+        if (trackedInviteAnalyticsKeyRef.current === analyticsKey) return;
+        trackedInviteAnalyticsKeyRef.current = analyticsKey;
+        trackGuestHubEvent(siteSlug, 'view', '/rsvp/invite', { inviteToken: token }).catch(() => {});
+      },
       requestId,
       selectGuest,
       setAmbiguousGuests,
@@ -626,6 +634,7 @@ export default function RSVP() {
   }, [activeToken, hasPendingLocalRsvpEdits, loadInvitationForToken, loading, step, submitting, tokenAutoLoading]);
 
   useEffect(() => {
+    trackedInviteAnalyticsKeyRef.current = null;
     loadInvitationForToken(activeToken ?? '');
   }, [activeToken, loadInvitationForToken]);
 

@@ -15,6 +15,7 @@ export async function runRsvpTokenLookup({
   normalizeRsvpGuestError,
   requestId,
   selectGuest,
+  onInviteRouteResolved,
   language,
   setAmbiguousGuests,
   setApplyToHousehold,
@@ -52,6 +53,7 @@ export async function runRsvpTokenLookup({
     source?: 'manual' | 'token',
     sessionToken?: string | null,
   ) => void;
+  onInviteRouteResolved?: (siteSlug: string) => void;
   setAmbiguousGuests: React.Dispatch<React.SetStateAction<Guest[]>>;
   setApplyToHousehold: React.Dispatch<React.SetStateAction<boolean>>;
   setError: React.Dispatch<React.SetStateAction<string>>;
@@ -79,6 +81,13 @@ export async function runRsvpTokenLookup({
     });
 
     if (activeLookupRequestRef.current !== requestId) return;
+
+    const trackedSiteSlug = !error && data && typeof (data as { siteSlug?: unknown }).siteSlug === 'string'
+      ? String((data as { siteSlug?: string }).siteSlug).trim()
+      : '';
+    if (trackedSiteSlug) {
+      onInviteRouteResolved?.(trackedSiteSlug);
+    }
 
     applyTokenRsvpLookupResult({
       data,

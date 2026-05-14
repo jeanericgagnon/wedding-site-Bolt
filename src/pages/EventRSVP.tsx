@@ -10,6 +10,7 @@ import { formatEventRsvpDate } from './eventRsvpDate';
 import { isFreshRsvpContinuityStorageValue, writeRsvpContinuityStoragePing } from './rsvpContinuityStorage';
 import { isInternalCustomerErrorMessage } from '../lib/customerSafeError';
 import { callValidateRsvpToken, hasRsvpFunctionRuntime } from './rsvpFunctionService';
+import { trackGuestHubEvent } from './guestHubPublicService';
 import { EventRsvpRouteView } from './EventRsvpRouteView';
 import { EventRsvpLiveContent } from './EventRsvpLiveContent';
 
@@ -55,6 +56,7 @@ interface EventLookupResponse {
   invitations?: unknown[];
   eventRsvpSupport?: boolean;
   rsvpSession?: string | null;
+  siteSlug?: string | null;
 }
 
 function buildDefaultEventRsvpFormState(): EventRsvpFormState {
@@ -138,9 +140,11 @@ export default function EventRSVP() {
   const ignoreNextLocalContinuityEventRef = useRef(false);
   const tokenLinkedSessionRef = useRef(false);
   const loadInFlightRef = useRef(false);
+  const trackedInviteAnalyticsKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (token) {
+      trackedInviteAnalyticsKeyRef.current = null;
       loadGuestAndEvents();
     } else {
       activeLoadRequestRef.current += 1;
@@ -252,6 +256,14 @@ export default function EventRSVP() {
       const lookupData = data as EventLookupResponse;
       const guestData = lookupData.guest as Guest;
       const invitationsData = Array.isArray(data.invitations) ? data.invitations : [];
+      const trackedSiteSlug = typeof lookupData.siteSlug === 'string' ? lookupData.siteSlug.trim() : '';
+      if (trackedSiteSlug) {
+        const analyticsKey = `${trackedSiteSlug}:${token}`;
+        if (trackedInviteAnalyticsKeyRef.current !== analyticsKey) {
+          trackedInviteAnalyticsKeyRef.current = analyticsKey;
+          trackGuestHubEvent(trackedSiteSlug, 'view', '/rsvp-event/invite', { inviteToken: token }).catch(() => {});
+        }
+      }
       setGuest(guestData);
       setRsvpSessionToken(lookupData.rsvpSession ?? null);
 

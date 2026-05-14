@@ -449,8 +449,10 @@ Execution rule for this section:
    - this batch shipped: owners now have saved aggregate-analytics policy controls inside Settings for enable/pause, retention window, and guest-facing disclosure note, and overview analytics read that policy back instead of acting like tracking is policy-less
    - this batch shipped: guest-hub tracking now respects the saved analytics policy server-side, so new aggregate guest-hub events stop writing when the owner pauses analytics collection
    - this batch shipped: overview analytics retention now follows the saved owner retention window instead of a hardcoded lookback
+   - this batch shipped: private RSVP token routes now feed aggregate invite-open analytics too, so `/rsvp?token=...` and event RSVP invite routes no longer sit outside the measured invitation-open lane
+   - this batch shipped: focused proof is green for RSVP-route invite-open tracking, event RSVP invite-open tracking, and analytics summary aggregation for those new RSVP targets
    - rerun the same owner analytics readback against the shipped production runtime after the next approved deploy
-   - extend invite-open instrumentation beyond guest-hub/private-link entry into any remaining RSVP-only invite paths before claiming broader invitation analytics coverage
+   - review whether any remaining non-hub, non-RSVP invite entry surfaces still need aggregate instrumentation before claiming broader invitation analytics coverage
    - add live production proof that public and guest-facing routes still expose no owner analytics detail
 
 14. `ACTIVE`: app-like web day-of mode

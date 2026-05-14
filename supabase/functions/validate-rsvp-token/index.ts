@@ -499,17 +499,19 @@ Deno.serve(async (req: Request) => {
         return (data || []) as Array<{ id: string; first_name: string | null; last_name: string | null; name: string; invited_to_ceremony: boolean; invited_to_reception: boolean }>;
       };
 
-      const [existingRsvpResult, config, householdGuests, nextRsvpSession] = await Promise.all([
+      const [existingRsvpResult, config, householdGuests, nextRsvpSession, siteRow] = await Promise.all([
         adminClient.from("rsvps").select("id, attending, attending_ceremony, attending_reception, meal_choice, plus_one_name, plus_one_count, children_count, notes, custom_answers").eq("guest_id", guest.id).maybeSingle(),
         fetchRsvpConfig(guest.wedding_site_id),
         fetchHouseholdGuests(guest.wedding_site_id, guest.household_id, guest.id),
         issueRsvpSession(guest.id, guest.invite_token),
+        adminClient.from("wedding_sites").select("site_slug").eq("id", guest.wedding_site_id).maybeSingle(),
       ]);
 
       return json({
         guest: sanitizeGuest(guest),
         existingRsvp: existingRsvpResult.data,
         guests: null,
+        siteSlug: siteRow.data?.site_slug ?? null,
         rsvpDeadline: config.rsvpDeadline,
         rsvpQuestions: config.rsvpQuestions,
         rsvpMealConfig: config.rsvpMealConfig,
@@ -588,9 +590,16 @@ Deno.serve(async (req: Request) => {
         rsvpsByInvitationId.set(rsvp.event_invitation_id, existing);
       });
 
+      const { data: siteRow } = await adminClient
+        .from("wedding_sites")
+        .select("site_slug")
+        .eq("id", guest.wedding_site_id)
+        .maybeSingle();
+
       return json({
         guest: { id: guest.id, name: guest.name },
         eventRsvpSupport: hasEventRsvpSupport,
+        siteSlug: siteRow?.site_slug ?? null,
         rsvpSession,
         invitations: invitationRows.map((invitation: { id: string }) => ({
           ...invitation,
