@@ -272,7 +272,13 @@ function GuestDrawerDetails({
             </p>
             <p className="text-xs font-medium text-text-secondary">{visibilityPreview.routeReadinessLabel}</p>
             <p className="text-xs text-text-tertiary">{visibilityPreview.pathCoverageSummary}</p>
+            {visibilityPreview.mainGapLabel && (
+              <p className="text-xs text-text-tertiary">{visibilityPreview.mainGapLabel}</p>
+            )}
           </div>
+        )}
+        {visibilityPreview.links.length === 0 && visibilityPreview.mainGapLabel && (
+          <p className="text-xs text-text-tertiary">{visibilityPreview.mainGapLabel}</p>
         )}
         {visibilityPreview.visibleEvents.length > 0 && (
           <div className="flex flex-wrap gap-1.5">

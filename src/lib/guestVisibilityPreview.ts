@@ -51,6 +51,7 @@ export interface GuestVisibilityPreview {
   accessDetail: string;
   routeReadinessLabel: string;
   pathCoverageSummary: string;
+  mainGapLabel: string | null;
   visibleEvents: VisibilityPreviewEvent[];
   hiddenEvents: VisibilityPreviewEvent[];
   householdSummary: string;
@@ -226,6 +227,11 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
     : hasPublicShellPreview
       ? 'Public shell only'
       : 'No guest path ready';
+  const mainGapLabel = visibleEvents.length === 0
+    ? 'Main gap: Invite this guest to at least one visible event'
+    : hasPrivateInviteAccess
+      ? null
+      : 'Main gap: Rotate or create a private RSVP link';
 
   return {
     guestLabel,
@@ -238,6 +244,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
       : `${guestLabel} needs at least one event invitation before this guest path is ready.`,
     routeReadinessLabel,
     pathCoverageSummary,
+    mainGapLabel,
     visibleEvents,
     hiddenEvents,
     householdSummary: otherHouseholdMembers.length > 0
