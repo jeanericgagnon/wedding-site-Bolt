@@ -1,5 +1,6 @@
 import { buildRegistryInsights } from '../../../lib/invisibleIntelligence';
 import { buildRegistryLaunchReadiness, buildRegistryThankYouPlanWithLedger, type RegistryThankYouLedger } from '../../../lib/registryLaunchReadiness';
+import { getSafePublicWebUrl } from '../../../sections/publicLinks';
 import { ageExceedsMs, getRegistryItemTimestamp } from '../registryItemTime';
 import { buildRegistryDuplicateGroups } from './duplicateRegistryItems';
 import { getRegistryItemMetadataState } from './registryTypes';
@@ -11,6 +12,15 @@ const WEEKLY_REFRESH_MS = 1000 * 60 * 60 * 24 * 7;
 function hasImageIssue(item: RegistryItem) {
   const src = (item.image_url || '').toLowerCase();
   return !item.image_url || src.includes('thum.io') || src.includes('weserv.nl') || src.includes('ui-avatars');
+}
+
+function countSafeFundMethods(item: RegistryItem) {
+  let count = 0;
+  if (getSafePublicWebUrl(item.fund_venmo_url)) count += 1;
+  if (getSafePublicWebUrl(item.fund_paypal_url)) count += 1;
+  if (getSafePublicWebUrl(item.fund_custom_url)) count += 1;
+  if (String(item.fund_zelle_handle ?? '').trim()) count += 1;
+  return count;
 }
 
 interface BuildRegistryDashboardDerivedStateArgs {
@@ -91,11 +101,15 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
 
   const fundStats = items.reduce((acc, item) => {
     if (item.item_type !== 'cash_fund') return acc;
+    const safeMethodCount = countSafeFundMethods(item);
     acc.count += 1;
     acc.goal += item.fund_goal_amount ?? 0;
     acc.received += item.fund_received_amount ?? 0;
+    if (safeMethodCount > 0) acc.readyToShare += 1;
+    else acc.needsSetup += 1;
+    if ((item.fund_goal_amount ?? 0) > 0) acc.withGoal += 1;
     return acc;
-  }, { count: 0, goal: 0, received: 0 });
+  }, { count: 0, goal: 0, received: 0, readyToShare: 0, needsSetup: 0, withGoal: 0 });
 
   const fulfillmentRate = counts.total > 0 ? Math.round((counts.purchased / counts.total) * 100) : 0;
   const recentActivity = [...items]

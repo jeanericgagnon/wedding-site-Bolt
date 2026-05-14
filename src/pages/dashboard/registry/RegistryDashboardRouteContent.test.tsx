@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { RegistryDashboardRouteContent } from './RegistryDashboardRouteContent';
+import { buildRegistryDashboardDerivedState } from './buildRegistryDashboardDerivedState';
 import type { RegistryItem } from './registryTypes';
 
 function makeItem(overrides: Partial<RegistryItem> = {}): RegistryItem {
@@ -51,7 +52,7 @@ describe('RegistryDashboardRouteContent', () => {
         filter="all"
         filtered={[makeItem()]}
         fulfillmentRate={100}
-        fundStats={{ count: 0, received: 0, goal: 0 }}
+        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, withGoal: 0 }}
         handleAddNew={vi.fn()}
         handleAutoRefreshStale={vi.fn(async () => {})}
         handleBulkImport={vi.fn(async () => {})}
@@ -124,5 +125,59 @@ describe('RegistryDashboardRouteContent', () => {
     expect(handleSyncRegistryThankYouTasks).toHaveBeenCalled();
     expect(handleToggleRegistryThankYouTask).toHaveBeenCalledWith('gift-1');
   });
-});
 
+  it('derives fund readiness truth from safe payment methods', () => {
+    const derived = buildRegistryDashboardDerivedState({
+      autoRefreshEnabled: true,
+      items: [
+        makeItem({
+          id: 'fund-ready',
+          item_type: 'cash_fund',
+          item_name: 'Honeymoon fund',
+          price_amount: null,
+          purchase_status: 'available',
+          quantity_purchased: 0,
+          quantity_needed: 1,
+          purchaser_name: null,
+          fund_goal_amount: 4000,
+          fund_received_amount: 1200,
+          fund_venmo_url: 'https://venmo.com/dayof',
+        }),
+        makeItem({
+          id: 'fund-needs-setup',
+          item_type: 'cash_fund',
+          item_name: 'New home fund',
+          price_amount: null,
+          purchase_status: 'available',
+          quantity_purchased: 0,
+          quantity_needed: 1,
+          purchaser_name: null,
+          fund_goal_amount: 2000,
+          fund_received_amount: 200,
+          fund_venmo_url: 'javascript:alert(1)',
+          fund_paypal_url: null,
+          fund_custom_url: null,
+          fund_zelle_handle: '   ',
+        }),
+      ],
+      monthlyRefreshCap: 50,
+      monthlyRefreshCount: 0,
+      registryThankYouLedger: {},
+      refreshEnabledUntil: null,
+      refreshIncludePurchased: false,
+      search: '',
+      filter: 'all',
+      showAlertsOnly: false,
+      showImageIssuesOnly: false,
+    });
+
+    expect(derived.fundStats).toMatchObject({
+      count: 2,
+      readyToShare: 1,
+      needsSetup: 1,
+      withGoal: 2,
+      received: 1400,
+      goal: 6000,
+    });
+  });
+});

@@ -63,6 +63,9 @@ type FundStats = {
   count: number;
   received: number;
   goal: number;
+  readyToShare: number;
+  needsSetup: number;
+  withGoal: number;
 };
 
 type AlertCounts = {
@@ -237,12 +240,17 @@ export function RegistryDashboardRouteContent(props: {
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Cash funds</p>
               <p className="mt-1 text-2xl font-bold text-text-primary">{props.fundStats.count}</p>
-              <p className="mt-1 text-xs text-text-secondary">Funds visible to guests</p>
+              <p className="mt-1 text-xs text-text-secondary">
+                {props.fundStats.readyToShare} ready to share{props.fundStats.needsSetup > 0 ? ` · ${props.fundStats.needsSetup} need a payment path` : ''}
+              </p>
             </Card>
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Fund gifts</p>
               <p className="mt-1 text-2xl font-bold text-text-primary">${props.fundStats.received.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
-              <p className="mt-1 text-xs text-text-secondary">Received toward ${props.fundStats.goal.toLocaleString('en-US', { maximumFractionDigits: 0 })} goal</p>
+              <p className="mt-1 text-xs text-text-secondary">
+                Received toward ${props.fundStats.goal.toLocaleString('en-US', { maximumFractionDigits: 0 })} goal
+                {props.fundStats.withGoal > 0 ? ` across ${props.fundStats.withGoal} tracked fund${props.fundStats.withGoal === 1 ? '' : 's'}` : ''}
+              </p>
             </Card>
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Worth checking</p>
@@ -328,6 +336,9 @@ export function RegistryDashboardRouteContent(props: {
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Cash funds received: <span className="font-semibold text-text-primary">${props.fundStats.received.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Funds ready to share: <span className="font-semibold text-text-primary">{props.fundStats.readyToShare}</span> · Need payment path: <span className="font-semibold text-text-primary">{props.fundStats.needsSetup}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Image issues: <span className="font-semibold text-text-primary">{props.alertCounts.imageIssues}</span> · Duplicate groups: <span className="font-semibold text-text-primary">{props.duplicateGroups.length}</span>
