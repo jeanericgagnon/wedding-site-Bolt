@@ -99,6 +99,40 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
     totalValue: items.reduce((sum, item) => sum + (item.price_amount ?? 0), 0),
   };
 
+  const claimStats = items.reduce((acc, item) => {
+    const quantityNeeded = Math.max(item.quantity_needed ?? 1, 1);
+    const quantityPurchased = Math.max(item.quantity_purchased ?? 0, 0);
+    const isClaimed = item.purchase_status === 'purchased' || item.purchase_status === 'partial' || quantityPurchased > 0;
+
+    if (!isClaimed) {
+      acc.remainingQuantity += quantityNeeded;
+      return acc;
+    }
+
+    acc.claimedItems += 1;
+    acc.claimedQuantity += quantityPurchased;
+    acc.remainingQuantity += Math.max(quantityNeeded - quantityPurchased, 0);
+
+    if (item.purchase_status === 'purchased') acc.fullyClaimedItems += 1;
+    if (item.purchase_status === 'partial') acc.partiallyClaimedItems += 1;
+    if (String(item.purchaser_name ?? '').trim()) acc.namedPurchaserItems += 1;
+    else acc.missingPurchaserItems += 1;
+    if (quantityNeeded > 1 && quantityPurchased > 0 && quantityPurchased < quantityNeeded) {
+      acc.multiQuantityInProgress += 1;
+    }
+
+    return acc;
+  }, {
+    claimedItems: 0,
+    claimedQuantity: 0,
+    fullyClaimedItems: 0,
+    partiallyClaimedItems: 0,
+    namedPurchaserItems: 0,
+    missingPurchaserItems: 0,
+    multiQuantityInProgress: 0,
+    remainingQuantity: 0,
+  });
+
   const fundStats = items.reduce((acc, item) => {
     if (item.item_type !== 'cash_fund') return acc;
     const safeMethodCount = countSafeFundMethods(item);
@@ -181,6 +215,7 @@ export function buildRegistryDashboardDerivedState(args: BuildRegistryDashboardD
     baseRecommendedPreset,
     budgetUtilization,
     bulkReviewCounts,
+    claimStats,
     counts,
     daysUntilRefreshWindowEnd,
     duplicateGroups,

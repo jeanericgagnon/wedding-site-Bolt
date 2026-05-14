@@ -183,6 +183,7 @@ export const DashboardRegistry: React.FC = () => {
     alertCounts,
     budgetUtilization,
     bulkReviewCounts,
+    claimStats,
     counts,
     duplicateGroups,
     filtered,
@@ -359,6 +360,7 @@ export const DashboardRegistry: React.FC = () => {
         bulkImportBusy={bulkImportBusy}
         bulkReviewCounts={bulkReviewCounts}
         budgetUtilization={budgetUtilization}
+        claimStats={claimStats}
         counts={counts}
         duplicateGroups={duplicateGroups}
         editItem={editItem}

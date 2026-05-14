@@ -46,6 +46,7 @@ describe('RegistryDashboardRouteContent', () => {
         bulkImportBusy={false}
         bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
         budgetUtilization={0}
+        claimStats={{ claimedItems: 1, claimedQuantity: 1, fullyClaimedItems: 1, partiallyClaimedItems: 0, namedPurchaserItems: 1, missingPurchaserItems: 0, multiQuantityInProgress: 0, remainingQuantity: 0 }}
         counts={{ total: 1, available: 0, partial: 0, purchased: 1, totalValue: 80 }}
         duplicateGroups={[]}
         editItem={null}
@@ -138,6 +139,7 @@ describe('RegistryDashboardRouteContent', () => {
         bulkImportBusy={false}
         bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
         budgetUtilization={0}
+        claimStats={{ claimedItems: 1, claimedQuantity: 1, fullyClaimedItems: 0, partiallyClaimedItems: 1, namedPurchaserItems: 0, missingPurchaserItems: 1, multiQuantityInProgress: 0, remainingQuantity: 0 }}
         counts={{ total: 1, available: 0, partial: 1, purchased: 0, totalValue: 80 }}
         duplicateGroups={[]}
         editItem={null}
@@ -279,6 +281,58 @@ describe('RegistryDashboardRouteContent', () => {
     });
   });
 
+  it('derives claim-state analytics from purchased and partial gifts', () => {
+    const derived = buildRegistryDashboardDerivedState({
+      autoRefreshEnabled: true,
+      items: [
+        makeItem({
+          id: 'partial-set',
+          item_name: 'Wine glasses',
+          quantity_needed: 6,
+          quantity_purchased: 2,
+          purchaser_name: 'Jordan',
+          purchase_status: 'partial',
+        }),
+        makeItem({
+          id: 'purchased-missing-purchaser',
+          item_name: 'Serving bowls',
+          quantity_needed: 1,
+          quantity_purchased: 1,
+          purchaser_name: null,
+          purchase_status: 'purchased',
+        }),
+        makeItem({
+          id: 'available-gift',
+          item_name: 'Cake stand',
+          quantity_needed: 2,
+          quantity_purchased: 0,
+          purchaser_name: null,
+          purchase_status: 'available',
+        }),
+      ],
+      monthlyRefreshCap: 50,
+      monthlyRefreshCount: 0,
+      registryThankYouLedger: {},
+      refreshEnabledUntil: null,
+      refreshIncludePurchased: false,
+      search: '',
+      filter: 'all',
+      showAlertsOnly: false,
+      showImageIssuesOnly: false,
+    });
+
+    expect(derived.claimStats).toEqual({
+      claimedItems: 2,
+      claimedQuantity: 3,
+      fullyClaimedItems: 1,
+      partiallyClaimedItems: 1,
+      namedPurchaserItems: 1,
+      missingPurchaserItems: 1,
+      multiQuantityInProgress: 1,
+      remainingQuantity: 6,
+    });
+  });
+
   it('tracks missing fund goals and first-gift gaps separately', () => {
     const derived = buildRegistryDashboardDerivedState({
       autoRefreshEnabled: true,
@@ -347,6 +401,7 @@ describe('RegistryDashboardRouteContent', () => {
         bulkImportBusy={false}
         bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
         budgetUtilization={0}
+        claimStats={{ claimedItems: 2, claimedQuantity: 3, fullyClaimedItems: 0, partiallyClaimedItems: 0, namedPurchaserItems: 2, missingPurchaserItems: 0, multiQuantityInProgress: 0, remainingQuantity: 0 }}
         counts={{ total: 2, available: 2, partial: 0, purchased: 0, totalValue: 0 }}
         duplicateGroups={[]}
         editItem={null}
@@ -410,6 +465,90 @@ describe('RegistryDashboardRouteContent', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Flexible funds with gifts: 1 · Tracked progress funds: 1'),
+    ).toBeInTheDocument();
+  });
+
+  it('renders claim-state analytics for attribution and partial gifts', () => {
+    render(
+      <RegistryDashboardRouteContent
+        actionableBadImportCount={0}
+        alertCounts={{ stale: 0, priceChanged: 0, outOfStock: 0, imageIssues: 0 }}
+        autoRefreshEnabled
+        autoRefreshing={false}
+        bulkImportBusy={false}
+        bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
+        budgetUtilization={0}
+        claimStats={{ claimedItems: 3, claimedQuantity: 5, fullyClaimedItems: 1, partiallyClaimedItems: 2, namedPurchaserItems: 2, missingPurchaserItems: 1, multiQuantityInProgress: 1, remainingQuantity: 4 }}
+        counts={{ total: 4, available: 1, partial: 2, purchased: 1, totalValue: 240 }}
+        duplicateGroups={[]}
+        editItem={null}
+        filter="all"
+        filtered={[makeItem({ id: 'gift-1' })]}
+        fulfillmentRate={25}
+        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
+        handleAddNew={vi.fn()}
+        handleAutoRefreshStale={vi.fn(async () => {})}
+        handleBulkImport={vi.fn(async () => {})}
+        handleCopyDuplicateReviewList={vi.fn(async () => {})}
+        handleDelete={vi.fn(async () => {})}
+        handleEdit={vi.fn()}
+        handleMergeDuplicateGroup={vi.fn(async () => {})}
+        handleMarkPurchased={vi.fn(async () => {})}
+        handleResetPurchaseState={vi.fn(async () => {})}
+        handleRefetchMetadata={vi.fn(async () => true)}
+        handleRefreshImageIssues={vi.fn(async () => {})}
+        handleRepairBadImports={vi.fn(async () => {})}
+        handleRunRepairQueueAction={vi.fn(async () => {})}
+        handleSyncRegistryThankYouTasks={vi.fn(async () => {})}
+        handleToggleRegistryThankYouTask={vi.fn(async () => {})}
+        imageRefreshBusy={false}
+        items={[makeItem({ id: 'gift-1' })]}
+        loading={false}
+        monthlyRefreshCap={100}
+        monthlyRefreshCount={0}
+        mergingDuplicateGroupId={null}
+        nearBudgetCap={false}
+        normalizedItems={[makeItem({ id: 'gift-1' })]}
+        recentActivity={[makeItem({ id: 'gift-1' })]}
+        registryActionsOpen={false}
+        registryActionsRef={{ current: null }}
+        registryInsights={[]}
+        registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}
+        registryThankYouPlan={{ headline: 'Quiet', summary: 'Quiet', purchasedCount: 1, namedPurchaserCount: 0, missingPurchaserCount: 1, completedCount: 0, items: [] }}
+        registryThankYouBusyItemId={null}
+        registryThankYouSyncing={false}
+        repairingBadImports={false}
+        repairQueue={[]}
+        refreshBudgetRemaining={100}
+        refreshWindowOpen={true}
+        search=""
+        setBulkImportOpen={vi.fn()}
+        setFilter={vi.fn()}
+        setRegistryActionsOpen={vi.fn()}
+        setSearch={vi.fn()}
+        setShowAlertsOnly={vi.fn()}
+        setShowImageIssuesOnly={vi.fn()}
+        showAlertsOnly={false}
+        showImageIssuesOnly={false}
+        topRegistryItems={[makeItem({ id: 'gift-1' })]}
+        weddingSiteId="site-1"
+      />,
+    );
+
+    expect(screen.getByText('Claimed gifts')).toBeInTheDocument();
+    expect(screen.getByText('2 attributed · 1 need purchaser')).toBeInTheDocument();
+    expect(screen.getByText('1 fully claimed · 2 partial')).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Claimed gifts: 3 · Attributed: 2'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Partial claims: 2 · Missing purchaser: 1'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Claimed quantity: 5 · Still needed: 4'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Multi-quantity gifts in progress: 1 · Fully claimed gifts: 1'),
     ).toBeInTheDocument();
   });
 });

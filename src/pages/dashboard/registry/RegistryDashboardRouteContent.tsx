@@ -74,6 +74,17 @@ type FundStats = {
   flexibleWithProgress: number;
 };
 
+type ClaimStats = {
+  claimedItems: number;
+  claimedQuantity: number;
+  fullyClaimedItems: number;
+  partiallyClaimedItems: number;
+  namedPurchaserItems: number;
+  missingPurchaserItems: number;
+  multiQuantityInProgress: number;
+  remainingQuantity: number;
+};
+
 type AlertCounts = {
   stale: number;
   priceChanged: number;
@@ -95,6 +106,7 @@ export function RegistryDashboardRouteContent(props: {
   bulkImportBusy: boolean;
   bulkReviewCounts: BulkReviewCounts;
   budgetUtilization: number;
+  claimStats: ClaimStats;
   counts: Counts;
   duplicateGroups: RegistryDuplicateGroup[];
   editItem: RegistryItem | null;
@@ -244,6 +256,16 @@ export function RegistryDashboardRouteContent(props: {
               <p className="mt-1 text-xs text-text-secondary">Items already marked purchased</p>
             </Card>
             <Card variant="bordered" padding="md">
+              <p className="text-xs font-medium text-text-tertiary">Claimed gifts</p>
+              <p className="mt-1 text-2xl font-bold text-text-primary">{props.claimStats.claimedItems}</p>
+              <p className="mt-1 text-xs text-text-secondary">
+                {props.claimStats.namedPurchaserItems} attributed{props.claimStats.missingPurchaserItems > 0 ? ` · ${props.claimStats.missingPurchaserItems} need purchaser` : ''}
+              </p>
+              <p className="mt-1 text-xs text-text-tertiary">
+                {props.claimStats.fullyClaimedItems} fully claimed{props.claimStats.partiallyClaimedItems > 0 ? ` · ${props.claimStats.partiallyClaimedItems} partial` : ''}
+              </p>
+            </Card>
+            <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Cash funds</p>
               <p className="mt-1 text-2xl font-bold text-text-primary">{props.fundStats.count}</p>
               <p className="mt-1 text-xs text-text-secondary">
@@ -347,6 +369,15 @@ export function RegistryDashboardRouteContent(props: {
                   Purchased: <span className="font-semibold text-text-primary">{props.counts.purchased}</span> · Remaining: <span className="font-semibold text-text-primary">{props.counts.available + props.counts.partial}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Claimed gifts: <span className="font-semibold text-text-primary">{props.claimStats.claimedItems}</span> · Attributed: <span className="font-semibold text-text-primary">{props.claimStats.namedPurchaserItems}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Partial claims: <span className="font-semibold text-text-primary">{props.claimStats.partiallyClaimedItems}</span> · Missing purchaser: <span className="font-semibold text-text-primary">{props.claimStats.missingPurchaserItems}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Claimed quantity: <span className="font-semibold text-text-primary">{props.claimStats.claimedQuantity}</span> · Still needed: <span className="font-semibold text-text-primary">{props.claimStats.remainingQuantity}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Cash funds received: <span className="font-semibold text-text-primary">${props.fundStats.received.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
@@ -360,6 +391,9 @@ export function RegistryDashboardRouteContent(props: {
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Flexible funds with gifts: <span className="font-semibold text-text-primary">{props.fundStats.flexibleWithProgress}</span> · Tracked progress funds: <span className="font-semibold text-text-primary">{props.fundStats.withProgress}</span>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  Multi-quantity gifts in progress: <span className="font-semibold text-text-primary">{props.claimStats.multiQuantityInProgress}</span> · Fully claimed gifts: <span className="font-semibold text-text-primary">{props.claimStats.fullyClaimedItems}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Thank-you ready: <span className="font-semibold text-text-primary">{props.registryThankYouPlan.namedPurchaserCount}</span> · Missing purchaser: <span className="font-semibold text-text-primary">{props.registryThankYouPlan.missingPurchaserCount}</span>
