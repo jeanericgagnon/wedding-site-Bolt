@@ -174,8 +174,13 @@ describe('travelGuestPortal', () => {
         { id: 'room-block', label: 'Room block', detail: 'Harbor Hotel · Code MAYALEO' },
         { id: 'shuttle', label: 'Ceremony shuttle', detail: 'Harbor Hotel to venue' },
         { id: 'cultural-tip', label: 'Local tip', detail: 'Bring a light layer for the waterfront.' },
-        { id: 'event-window', label: 'Ceremony', detail: 'Sun, Jun 14, 4:00 PM · Sunset Gardens Estate · Arrive 15 minutes early.' },
-        { id: 'venue-route', label: 'Directions · Sunset Gardens Estate', detail: '123 Garden Lane, Napa Valley, CA 94558' },
+        { id: 'event-window-0', label: 'Ceremony', detail: 'Sun, Jun 14, 4:00 PM · Sunset Gardens Estate · Arrive 15 minutes early.' },
+        {
+          id: 'venue-route-0',
+          label: 'Directions · Sunset Gardens Estate',
+          detail: '123 Garden Lane, Napa Valley, CA 94558',
+          href: 'https://maps.google.com/?q=Sunset%20Gardens%20Estate%20123%20Garden%20Lane%2C%20Napa%20Valley%2C%20CA%2094558',
+        },
       ],
       shareText: [
         'DayOf travel quick plan',
@@ -194,5 +199,51 @@ describe('travelGuestPortal', () => {
     expect(spotlight?.htmlDocument).toContain('Open the live travel page');
     expect(spotlight?.htmlDocument).toContain('This guide reflects the events visible for this invitation.');
     expect(spotlight?.htmlDocument).not.toContain('guest-token-123</');
+  });
+
+  it('keeps multiple visible events and route cards in the guest travel spotlight', () => {
+    const spotlight = buildTravelHubSpotlight({
+      siteSlug: 'maya-and-leo',
+      enabledActionIds: ['travel'],
+      guestInviteToken: 'guest-token-123',
+      schedule: [
+        {
+          id: 'evt-welcome',
+          label: 'Welcome drinks',
+          startTimeISO: '2026-06-13T23:00:00.000Z',
+          venueId: 'venue-1',
+        },
+        {
+          id: 'evt-ceremony',
+          label: 'Ceremony',
+          startTimeISO: '2026-06-14T16:00:00.000Z',
+          venueId: 'venue-2',
+        },
+      ],
+      venues: [
+        {
+          id: 'venue-1',
+          name: 'Harbor Lounge',
+          address: '1 Dock Road, Sausalito, CA',
+        },
+        {
+          id: 'venue-2',
+          name: 'Sunset Gardens Estate',
+          address: '123 Garden Lane, Napa Valley, CA 94558',
+        },
+      ],
+      travel: {},
+    });
+
+    expect(spotlight?.cards.map((card) => card.label)).toEqual([
+      'Welcome drinks',
+      'Ceremony',
+      'Directions · Harbor Lounge',
+      'Directions · Sunset Gardens Estate',
+    ]);
+    expect(spotlight?.cards.filter((card) => card.href).length).toBe(2);
+    expect(spotlight?.shareText).toContain('Welcome drinks: Sat, Jun 13, 11:00 PM · Harbor Lounge');
+    expect(spotlight?.shareText).toContain('Directions · Harbor Lounge: 1 Dock Road, Sausalito, CA');
+    expect(spotlight?.htmlDocument).toContain('Directions · Sunset Gardens Estate');
   });
 });

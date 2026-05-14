@@ -39,7 +39,7 @@ describe('EventHubLiveContent', () => {
             cards: [
               { id: 'hotel', label: 'Riverfront House', detail: 'Code THOMPSONRIVERA' },
               { id: 'shuttle', label: 'Ceremony shuttle', detail: 'Riverfront House to Sunset Gardens Estate · 3:45 PM' },
-              { id: 'cultural-tip', label: 'Local tip', detail: 'Bring a light layer for the waterfront.' },
+              { id: 'venue-route-0', label: 'Directions · Sunset Gardens Estate', detail: '100 Harbor Road, Sausalito, CA', href: 'https://maps.google.com/?q=Sunset%20Gardens%20Estate%20100%20Harbor%20Road%2C%20Sausalito%2C%20CA' },
             ],
             shareText: 'DayOf travel quick plan',
             htmlDocument: '<!doctype html><html><body>Travel guide</body></html>',
@@ -81,6 +81,7 @@ describe('EventHubLiveContent', () => {
 
     expect(screen.getByText('Travel quick plan')).toBeInTheDocument();
     expect(screen.getByText('Riverfront House')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Directions · Sunset Gardens Estate/i })).toHaveAttribute('href', 'https://maps.google.com/?q=Sunset%20Gardens%20Estate%20100%20Harbor%20Road%2C%20Sausalito%2C%20CA');
     expect(screen.getByText('Travel plan copied.')).toBeInTheDocument();
     expect(screen.getByText('Latest update')).toBeInTheDocument();
     expect(screen.getByText('Ceremony doors open')).toBeInTheDocument();

@@ -54,9 +54,10 @@ type TravelGuestJourneyStep = {
 };
 
 type TravelHubSpotlightCard = {
-  id: 'hotel' | 'room-block' | 'shuttle' | 'visa-tip' | 'cultural-tip' | 'event-window' | 'venue-route';
+  id: string;
   label: string;
   detail: string;
+  href?: string;
 };
 
 type TravelHubSpotlight = {
@@ -142,6 +143,8 @@ export function EventHubLiveContent({
   onToggleOwnEventInfo,
   onSubmitOptIn,
 }: EventHubLiveContentProps) {
+  const isExternalHref = (href: string) => /^https?:\/\//i.test(href);
+
   return (
     <div className="min-h-screen bg-[#fbf7f1] text-neutral-950">
       <OwnerPreviewBanner />
@@ -331,10 +334,35 @@ export function EventHubLiveContent({
                   </div>
                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
                     {travelHubSpotlight.cards.map((card) => (
-                      <div key={card.id} className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
-                        <p className="text-xs font-semibold text-[#2f261d]">{card.label}</p>
-                        <p className="mt-1 text-xs leading-5 text-[#6f5843]">{card.detail}</p>
-                      </div>
+                      card.href ? (
+                        isExternalHref(card.href) ? (
+                          <a
+                            key={card.id}
+                            href={card.href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 transition-colors hover:border-[#d8c8b6]"
+                          >
+                            <p className="text-xs font-semibold text-[#2f261d]">{card.label}</p>
+                            <p className="mt-1 text-xs leading-5 text-[#6f5843]">{card.detail}</p>
+                          </a>
+                        ) : (
+                          <Link
+                            key={card.id}
+                            to={card.href}
+                            onClick={() => onTrackClick(card.href!)}
+                            className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 transition-colors hover:border-[#d8c8b6]"
+                          >
+                            <p className="text-xs font-semibold text-[#2f261d]">{card.label}</p>
+                            <p className="mt-1 text-xs leading-5 text-[#6f5843]">{card.detail}</p>
+                          </Link>
+                        )
+                      ) : (
+                        <div key={card.id} className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
+                          <p className="text-xs font-semibold text-[#2f261d]">{card.label}</p>
+                          <p className="mt-1 text-xs leading-5 text-[#6f5843]">{card.detail}</p>
+                        </div>
+                      )
                     ))}
                   </div>
                   {travelShareStatus && <p className="mt-3 text-xs text-[#6f5843]">{travelShareStatus}</p>}

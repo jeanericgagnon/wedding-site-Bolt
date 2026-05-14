@@ -75,9 +75,10 @@ export interface TravelVenueMapLink {
 }
 
 export interface TravelHubSpotlightCard {
-  id: 'hotel' | 'room-block' | 'shuttle' | 'visa-tip' | 'cultural-tip' | 'event-window' | 'venue-route';
+  id: string;
   label: string;
   detail: string;
+  href?: string;
 }
 
 export interface TravelHubSpotlight {
@@ -388,17 +389,19 @@ export function buildTravelHubSpotlight(input: {
   }
 
   const visibleVenues = (input.venues ?? []).filter((venue) => venue && (venue.name?.trim() || venue.address?.trim()));
-  const firstScheduledStep = (input.schedule ?? []).find((item) => item?.label?.trim());
-  if (firstScheduledStep) {
-    const venueName = visibleVenues.find((venue) => venue.id && venue.id === firstScheduledStep.venueId)?.name?.trim() || '';
-    const timeLabel = formatTravelEventTime(firstScheduledStep.startTimeISO);
-    const detail = [timeLabel, venueName, firstScheduledStep.notes?.trim() || null].filter(Boolean).join(' · ');
+  const visibleSchedule = (input.schedule ?? [])
+    .filter((item) => item?.label?.trim())
+    .slice(0, 3);
+  visibleSchedule.forEach((scheduledStep, index) => {
+    const venueName = visibleVenues.find((venue) => venue.id && venue.id === scheduledStep.venueId)?.name?.trim() || '';
+    const timeLabel = formatTravelEventTime(scheduledStep.startTimeISO);
+    const detail = [timeLabel, venueName, scheduledStep.notes?.trim() || null].filter(Boolean).join(' · ');
     cards.push({
-      id: 'event-window',
-      label: firstScheduledStep.label?.trim() || 'Visible event timing',
+      id: `event-window-${index}`,
+      label: scheduledStep.label?.trim() || 'Visible event timing',
       detail: detail || 'Visible event timing is ready for this invitation.',
     });
-  }
+  });
 
   const venueMapLinks = buildTravelVenueMapLinks(
     visibleVenues.map((venue, index) => ({
@@ -408,15 +411,15 @@ export function buildTravelHubSpotlight(input: {
       mapUrl: venue.mapUrl?.trim() || null,
     })),
   );
-  const firstVenueLink = venueMapLinks[0];
-  if (firstVenueLink) {
-    const venue = visibleVenues.find((candidate) => (candidate.id?.trim() || '') === firstVenueLink.id);
+  venueMapLinks.slice(0, 2).forEach((venueLink, index) => {
+    const venue = visibleVenues.find((candidate) => (candidate.id?.trim() || '') === venueLink.id);
     cards.push({
-      id: 'venue-route',
-      label: `Directions · ${firstVenueLink.label}`,
+      id: `venue-route-${index}`,
+      label: `Directions · ${venueLink.label}`,
       detail: venue?.address?.trim() || 'Guest-safe map directions are ready from the hub.',
+      href: venueLink.href,
     });
-  }
+  });
 
   if (cards.length === 0) return null;
 
