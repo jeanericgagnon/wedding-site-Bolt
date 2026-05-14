@@ -6,6 +6,7 @@ import {
   buildBucketUploadsCsv,
   buildCurationCsv,
   buildCuratedRecapExportPayload,
+  buildPhotoFullResolutionDownloadJobPayload,
   buildGuestProspectsCsv,
   buildGuestbookCsv,
   buildMemoryChaptersExportPayload,
@@ -221,6 +222,43 @@ describe('guestPhotoSharingUtils', () => {
     expect(csv).toContain('"Main / Ceremony"');
     expect(csv).toContain('"low confidence; dim lighting"');
     expect(csv).toContain('"Ready to review"');
+  });
+
+  it('builds a full-resolution download job payload from owner export rows', () => {
+    const payload = buildPhotoFullResolutionDownloadJobPayload({
+      generatedAt: '2026-05-14T17:00:00.000Z',
+      siteSlug: 'alex-and-jordan',
+      rows: [
+        {
+          album: 'Ceremony',
+          filename: 'vows.jpg',
+          guest_name: 'Ava Stone',
+          guest_email: 'ava@example.com',
+          note: 'From the front row',
+          mime_type: 'image/jpeg',
+          size_bytes: 2048,
+          uploaded_at: '2026-05-14T16:30:00.000Z',
+          download_url: 'https://storage.example/vows.jpg',
+          hidden: 'no',
+          flagged: 'false',
+        },
+      ],
+    });
+
+    expect(payload).toMatchObject({
+      generatedAt: '2026-05-14T17:00:00.000Z',
+      siteSlug: 'alex-and-jordan',
+      assetCount: 1,
+      readyAssetCount: 1,
+    });
+    expect(payload.assets[0]).toMatchObject({
+      album: 'Ceremony',
+      filename: 'vows.jpg',
+      guestName: 'Ava Stone',
+      downloadUrl: 'https://storage.example/vows.jpg',
+      hidden: false,
+      flagged: false,
+    });
   });
 
   it('builds memory chapter export payloads without dropping curation details', () => {

@@ -18,6 +18,7 @@ type GuestPhotoAlbumControlsProps = {
   onSendAllActiveBucketRequests: () => void;
   onRegenerateAllKnownBucketLinks: () => void;
   onExportBucketLinksCsv: () => void;
+  onExportFullResolutionDownloadJob: () => void;
   onExportSharePackCsv: () => void;
   onExportMediaManifestCsv: () => void;
   onShowFlaggedOnlyChange: (next: boolean) => void;
@@ -46,6 +47,7 @@ export function GuestPhotoAlbumControls({
   onSendAllActiveBucketRequests,
   onRegenerateAllKnownBucketLinks,
   onExportBucketLinksCsv,
+  onExportFullResolutionDownloadJob,
   onExportSharePackCsv,
   onExportMediaManifestCsv,
   onShowFlaggedOnlyChange,
@@ -88,6 +90,7 @@ export function GuestPhotoAlbumControls({
               <Button size="sm" variant="outline" onClick={onExportBucketLinksCsv}>Save album link sheet</Button>
               <Button size="sm" variant="outline" onClick={onExportSharePackCsv}>Save sharing notes</Button>
               <Button size="sm" variant="outline" onClick={onExportMediaManifestCsv} disabled={totalUploadCount === 0}>Save photo handoff sheet</Button>
+              <Button size="sm" variant="outline" onClick={onExportFullResolutionDownloadJob} disabled={totalUploadCount === 0}>Save full-res download job</Button>
               <Button size="sm" variant="outline" onClick={() => onShowFlaggedOnlyChange(!showFlaggedOnly)}>
                 {showFlaggedOnly ? 'Show all uploads' : 'Show flagged only'}
               </Button>

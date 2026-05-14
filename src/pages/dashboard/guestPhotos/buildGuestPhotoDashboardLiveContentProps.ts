@@ -133,6 +133,7 @@ type BuildGuestPhotoDashboardLiveContentPropsParams = {
   onDownloadGuestHubPrintPack: () => void;
   onExportBucketCsv: LiveContentProps['bucketListProps']['onExportBucketCsv'];
   onExportBucketLinksCsv: () => void;
+  onExportFullResolutionDownloadJob: () => void;
   onExportCuratedRecap: () => void;
   onExportCurationCsv: () => void;
   onExportGuestbookCsv: () => void;
@@ -266,6 +267,7 @@ export function buildGuestPhotoDashboardLiveContentProps({
   onDownloadGuestHubPrintPack,
   onExportBucketCsv,
   onExportBucketLinksCsv,
+  onExportFullResolutionDownloadJob,
   onExportCuratedRecap,
   onExportCurationCsv,
   onExportGuestbookCsv,
@@ -371,6 +373,7 @@ export function buildGuestPhotoDashboardLiveContentProps({
       onSendAllActiveBucketRequests,
       onRegenerateAllKnownBucketLinks,
       onExportBucketLinksCsv,
+      onExportFullResolutionDownloadJob,
       onExportSharePackCsv,
       onExportMediaManifestCsv,
       onShowFlaggedOnlyChange,

@@ -12,6 +12,7 @@ import {
   buildGuestProspectsCsv,
   buildGuestbookCsv,
   buildMemoryChaptersExportPayload,
+  buildPhotoFullResolutionDownloadJobPayload,
   buildPhotoBucketLinksCsv,
   buildPhotoKnownLinks,
   buildPhotoShareMessageLines,
@@ -251,6 +252,46 @@ export function useGuestPhotoExportActions({
     }
   };
 
+  const exportFullResolutionDownloadJob = async () => {
+    if (uploads.length === 0) return;
+
+    try {
+      if (!siteId) throw new Error('Choose a wedding site before exporting photos.');
+      const data = await exportGuestPhotoManifest(siteId, showHidden);
+      const rows = Array.isArray(data?.rows) ? (data.rows as Array<Record<string, unknown>>) : [];
+      const payload = buildPhotoFullResolutionDownloadJobPayload({
+        generatedAt: new Date().toISOString(),
+        siteSlug,
+        rows: rows.map((row) => ({
+          album: typeof row.bucket === 'string' ? row.bucket : null,
+          filename: typeof row.filename === 'string' ? row.filename : '',
+          guest_name: typeof row.guest_name === 'string' ? row.guest_name : null,
+          guest_email: typeof row.guest_email === 'string' ? row.guest_email : null,
+          note: typeof row.note === 'string' ? row.note : null,
+          mime_type: typeof row.mime_type === 'string' ? row.mime_type : null,
+          size_bytes: typeof row.size_bytes === 'number' ? row.size_bytes : null,
+          uploaded_at: typeof row.uploaded_at === 'string' ? row.uploaded_at : null,
+          download_url: typeof row.download_url === 'string' ? row.download_url : null,
+          hidden: row.hidden as string | boolean | null | undefined,
+          flagged: row.flagged as string | boolean | null | undefined,
+        })),
+      });
+      downloadTextFile(
+        'photo-full-resolution-download-job.json',
+        JSON.stringify(payload, null, 2),
+        'application/json;charset=utf-8'
+      );
+      logPhotoAction('full_resolution_download_job_exported', 'Full-resolution photo download job was saved.', {
+        rowCount: payload.assetCount,
+        readyAssetCount: payload.readyAssetCount,
+        includeHidden: showHidden,
+      });
+      setSuccess('Saved a full-resolution photo download job with refreshed private links.');
+    } catch (err) {
+      setError(safePhotoOwnerError(err, 'Couldn’t save the full-resolution download job right now.'));
+    }
+  };
+
   const exportGuestbookCsv = () => {
     if (guestbookEntries.length === 0) return;
     downloadTextFile('guestbook-notes.csv', buildGuestbookCsv(guestbookEntries));
@@ -383,6 +424,7 @@ export function useGuestPhotoExportActions({
     exportBucketLinksCsv,
     exportCuratedRecapJson,
     exportCurationCsv,
+    exportFullResolutionDownloadJob,
     exportGuestbookCsv,
     exportMediaManifestCsv,
     exportMemoryChaptersJson,

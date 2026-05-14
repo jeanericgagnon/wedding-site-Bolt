@@ -124,10 +124,10 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
       id: 'export',
       label: 'Photo handoff export',
       detail: handoffExportReady
-        ? 'Owner handoff sheets can be saved from reviewed guest uploads; full-resolution job packaging remains planned.'
+        ? 'Owner handoff sheets and full-resolution download jobs can be saved from reviewed guest uploads.'
         : needsReview
           ? 'Review flagged uploads before relying on photo handoff exports.'
-          : 'Guest uploads will unlock owner handoff exports; full-resolution job packaging remains planned.',
+          : 'Guest uploads will unlock owner handoff exports and full-resolution download jobs.',
       status: handoffExportReady ? 'ready' : needsReview ? 'needs-action' : 'empty',
     },
   ];

@@ -26,7 +26,7 @@ describe('memoryFlowReadiness', () => {
     expect(readiness.blockers).toEqual([]);
     expect(readiness.steps.find((step) => step.id === 'video-capture')?.status).toBe('ready');
     expect(readiness.steps.find((step) => step.id === 'slideshow')?.status).toBe('ready');
-    expect(readiness.steps.find((step) => step.id === 'export')?.detail).toContain('full-resolution job packaging remains planned');
+    expect(readiness.steps.find((step) => step.id === 'export')?.detail).toContain('full-resolution download jobs can be saved');
   });
 
   it('surfaces concrete actions when sharing or moderation is not ready', () => {
@@ -83,6 +83,7 @@ describe('memoryFlowReadiness', () => {
     expect(readiness.steps.find((step) => step.id === 'moderation')?.status).toBe('empty');
     expect(readiness.steps.find((step) => step.id === 'slideshow')?.status).toBe('empty');
     expect(readiness.steps.find((step) => step.id === 'follow-up')?.status).toBe('empty');
+    expect(readiness.steps.find((step) => step.id === 'export')?.detail).toContain('full-resolution download jobs');
     expect(readiness.blockers).toEqual([]);
   });
 

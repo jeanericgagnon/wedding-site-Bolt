@@ -368,7 +368,9 @@ Execution rule for this section:
 ### Strong-Differentiator Lanes Still Open
 
 6. `ACTIVE`: premium no-app guest photo and memory flow
-   - ship true full-resolution export/download jobs
+   - this batch shipped: owners can now save a real full-resolution photo download job from the dashboard, backed by the refreshed owner photo manifest instead of stopping at the CSV handoff sheet
+   - this batch shipped: the no-app memory-flow readiness card no longer claims full-resolution packaging is merely planned once reviewed uploads exist; it now reflects the shipped download-job path honestly
+   - this batch shipped: focused proof is green for full-resolution job payload generation plus the updated memory-flow readiness truth
    - add live guest video upload browser proof
    - add live slideshow publish/display proof beyond owner-draft readiness
    - add mobile guest upload proof for the checklist/no-app flow

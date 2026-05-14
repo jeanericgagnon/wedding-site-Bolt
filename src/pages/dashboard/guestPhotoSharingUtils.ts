@@ -511,6 +511,59 @@ export function buildCuratedRecapExportPayload(input: {
   };
 }
 
+export interface PhotoFullResolutionDownloadJobRow {
+  album: string | null;
+  filename: string;
+  guest_name: string | null;
+  guest_email: string | null;
+  note: string | null;
+  mime_type: string | null;
+  size_bytes: number | null;
+  uploaded_at: string | null;
+  download_url: string | null;
+  hidden?: string | boolean | null;
+  flagged?: string | boolean | null;
+}
+
+function normalizeManifestBoolean(value: string | boolean | null | undefined): boolean {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return normalized === 'true' || normalized === 'yes' || normalized === '1';
+  }
+  return false;
+}
+
+export function buildPhotoFullResolutionDownloadJobPayload(input: {
+  generatedAt: string;
+  siteSlug: string | null;
+  rows: PhotoFullResolutionDownloadJobRow[];
+}) {
+  const readyRows = input.rows
+    .filter((row) => typeof row.filename === 'string' && row.filename.trim().length > 0)
+    .map((row) => ({
+      album: row.album ?? '',
+      filename: row.filename,
+      guestName: row.guest_name ?? '',
+      guestEmail: row.guest_email ?? '',
+      note: row.note ?? '',
+      mimeType: row.mime_type ?? '',
+      sizeBytes: typeof row.size_bytes === 'number' ? row.size_bytes : null,
+      uploadedAt: row.uploaded_at ? toGuestPhotoCsvTimestamp(row.uploaded_at) : '',
+      downloadUrl: row.download_url ?? '',
+      hidden: normalizeManifestBoolean(row.hidden),
+      flagged: normalizeManifestBoolean(row.flagged),
+    }));
+
+  return {
+    generatedAt: input.generatedAt,
+    siteSlug: input.siteSlug,
+    assetCount: readyRows.length,
+    readyAssetCount: readyRows.filter((row) => row.downloadUrl.length > 0).length,
+    assets: readyRows,
+  };
+}
+
 export function buildPhotoDashboardCounts(input: {
   uploads: PhotoUploadRow[];
   buckets: PhotoBucketRow[];
