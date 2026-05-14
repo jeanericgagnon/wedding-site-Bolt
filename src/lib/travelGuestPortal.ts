@@ -283,7 +283,7 @@ function buildTravelHubSpotlightHtml(input: {
     : '';
   const cardsMarkup = input.cards.map((card) => `
       <li>
-        <strong>${escapeHtml(card.label)}</strong><br />
+        <strong>${card.href ? `<a href="${escapeHtml(card.href)}">${escapeHtml(card.label)}</a>` : escapeHtml(card.label)}</strong><br />
         <span>${escapeHtml(card.detail)}</span>
       </li>`).join('');
 
@@ -349,6 +349,13 @@ export function buildTravelHubSpotlight(input: {
       id: 'hotel',
       label: firstHotel.name,
       detail: detail || 'Hotel option ready for guests.',
+      href: firstHotel.url,
+    });
+  } else if (structured.hotelInfo) {
+    cards.push({
+      id: 'hotel-note',
+      label: 'Stay notes',
+      detail: structured.hotelInfo,
     });
   }
 
@@ -358,6 +365,7 @@ export function buildTravelHubSpotlight(input: {
       id: 'room-block',
       label: 'Room block',
       detail: [firstRoomBlock.hotelName, firstRoomBlock.bookingCode ? `Code ${firstRoomBlock.bookingCode}` : null, firstRoomBlock.bookingDeadline].filter(Boolean).join(' · '),
+      href: firstRoomBlock.url,
     });
   }
 
@@ -366,7 +374,24 @@ export function buildTravelHubSpotlight(input: {
     cards.push({
       id: 'shuttle',
       label: firstShuttle.label,
-      detail: [firstShuttle.route, firstShuttle.departureTime, firstShuttle.returnTime].filter(Boolean).join(' · ') || 'Shuttle plan ready.',
+      detail: [firstShuttle.route, firstShuttle.departureTime, firstShuttle.returnTime, firstShuttle.notes].filter(Boolean).join(' · ') || 'Shuttle plan ready.',
+    });
+  }
+
+  if (structured.parkingInfo) {
+    const parkingLabel = firstShuttle ? 'Parking' : 'Parking and arrival';
+    cards.push({
+      id: 'parking',
+      label: parkingLabel,
+      detail: structured.parkingInfo,
+    });
+  }
+
+  if (structured.flightInfo) {
+    cards.push({
+      id: 'flight-info',
+      label: 'Arrival guidance',
+      detail: structured.flightInfo,
     });
   }
 
@@ -385,6 +410,12 @@ export function buildTravelHubSpotlight(input: {
       id: 'cultural-tip',
       label: 'Local tip',
       detail: firstCulturalTip,
+    });
+  } else if (structured.notes) {
+    cards.push({
+      id: 'guest-note',
+      label: 'Guest note',
+      detail: structured.notes,
     });
   }
 

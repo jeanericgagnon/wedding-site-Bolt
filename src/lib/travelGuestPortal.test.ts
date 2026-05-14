@@ -157,22 +157,26 @@ describe('travelGuestPortal', () => {
         },
       ],
       travel: {
-        hotels: [{ name: 'Harbor Hotel', bookingCode: 'MAYALEO' }],
-        roomBlocks: [{ hotelName: 'Harbor Hotel', bookingCode: 'MAYALEO' }],
-        shuttles: [{ label: 'Ceremony shuttle', route: 'Harbor Hotel to venue' }],
+        flightInfo: 'Fly into SFO and expect a 75 minute drive to wine country.',
+        hotels: [{ name: 'Harbor Hotel', bookingCode: 'MAYALEO', url: 'https://harbor.example.com/stay' }],
+        roomBlocks: [{ hotelName: 'Harbor Hotel', bookingCode: 'MAYALEO', url: 'https://harbor.example.com/block' }],
+        shuttles: [{ label: 'Ceremony shuttle', route: 'Harbor Hotel to venue', notes: 'Board near the lobby fireplace.' }],
         culturalTips: ['Bring a light layer for the waterfront.'],
+        parkingInfo: 'Valet opens at 3:15 PM at the garden gate.',
       },
       coupleLabel: 'Maya & Leo',
       weddingDateLabel: 'June 14, 2026',
     });
 
     expect(spotlight).toEqual({
-      summary: '6 travel details ready from the guest hub.',
+      summary: '8 travel details ready from the guest hub.',
       travelHref: '/site/maya-and-leo?invite_token=guest-token-123&guestLang=fr#travel',
       cards: [
-        { id: 'hotel', label: 'Harbor Hotel', detail: 'Code MAYALEO' },
-        { id: 'room-block', label: 'Room block', detail: 'Harbor Hotel · Code MAYALEO' },
-        { id: 'shuttle', label: 'Ceremony shuttle', detail: 'Harbor Hotel to venue' },
+        { id: 'hotel', label: 'Harbor Hotel', detail: 'Code MAYALEO', href: 'https://harbor.example.com/stay' },
+        { id: 'room-block', label: 'Room block', detail: 'Harbor Hotel · Code MAYALEO', href: 'https://harbor.example.com/block' },
+        { id: 'shuttle', label: 'Ceremony shuttle', detail: 'Harbor Hotel to venue · Board near the lobby fireplace.' },
+        { id: 'parking', label: 'Parking', detail: 'Valet opens at 3:15 PM at the garden gate.' },
+        { id: 'flight-info', label: 'Arrival guidance', detail: 'Fly into SFO and expect a 75 minute drive to wine country.' },
         { id: 'cultural-tip', label: 'Local tip', detail: 'Bring a light layer for the waterfront.' },
         { id: 'event-window-0', label: 'Ceremony', detail: 'Sun, Jun 14, 4:00 PM · Sunset Gardens Estate · Arrive 15 minutes early.' },
         {
@@ -187,7 +191,9 @@ describe('travelGuestPortal', () => {
         'Guide reflects the events visible for this invitation.',
         'Harbor Hotel: Code MAYALEO',
         'Room block: Harbor Hotel · Code MAYALEO',
-        'Ceremony shuttle: Harbor Hotel to venue',
+        'Ceremony shuttle: Harbor Hotel to venue · Board near the lobby fireplace.',
+        'Parking: Valet opens at 3:15 PM at the garden gate.',
+        'Arrival guidance: Fly into SFO and expect a 75 minute drive to wine country.',
         'Local tip: Bring a light layer for the waterfront.',
         'Ceremony: Sun, Jun 14, 4:00 PM · Sunset Gardens Estate · Arrive 15 minutes early.',
         'Directions · Sunset Gardens Estate: 123 Garden Lane, Napa Valley, CA 94558',
@@ -198,6 +204,8 @@ describe('travelGuestPortal', () => {
     });
     expect(spotlight?.htmlDocument).toContain('Open the live travel page');
     expect(spotlight?.htmlDocument).toContain('This guide reflects the events visible for this invitation.');
+    expect(spotlight?.htmlDocument).toContain('https://harbor.example.com/stay');
+    expect(spotlight?.htmlDocument).toContain('Valet opens at 3:15 PM at the garden gate.');
     expect(spotlight?.htmlDocument).not.toContain('guest-token-123</');
   });
 
@@ -245,5 +253,25 @@ describe('travelGuestPortal', () => {
     expect(spotlight?.shareText).toContain('Welcome drinks: Sat, Jun 13, 11:00 PM · Harbor Lounge');
     expect(spotlight?.shareText).toContain('Directions · Harbor Lounge: 1 Dock Road, Sausalito, CA');
     expect(spotlight?.htmlDocument).toContain('Directions · Sunset Gardens Estate');
+  });
+
+  it('falls back to owner-written hotel, parking, and guest notes when structured records are sparse', () => {
+    const spotlight = buildTravelHubSpotlight({
+      siteSlug: 'maya-and-leo',
+      enabledActionIds: ['travel'],
+      guestInviteToken: 'guest-token-123',
+      travel: {
+        hotelInfo: 'Stay near the square if you are turning this into a long weekend.',
+        parkingInfo: 'Street parking is limited after 4 PM, so rideshare is the easier option.',
+        notes: 'Most guests dress for sun at ceremony and a cooler breeze by dinner.',
+      },
+    });
+
+    expect(spotlight?.cards).toEqual([
+      { id: 'hotel-note', label: 'Stay notes', detail: 'Stay near the square if you are turning this into a long weekend.' },
+      { id: 'parking', label: 'Parking and arrival', detail: 'Street parking is limited after 4 PM, so rideshare is the easier option.' },
+      { id: 'guest-note', label: 'Guest note', detail: 'Most guests dress for sun at ceremony and a cooler breeze by dinner.' },
+    ]);
+    expect(spotlight?.shareText).toContain('Guest note: Most guests dress for sun at ceremony and a cooler breeze by dinner.');
   });
 });

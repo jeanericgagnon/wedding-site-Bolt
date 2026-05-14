@@ -41,10 +41,11 @@ describe('EventHubLiveContent', () => {
             { id: 'travel', label: 'Travel details', detail: 'Open the travel section.', href: '/site/alex-jordan-demo#travel', status: 'ready' },
           ]}
           travelHubSpotlight={{
-            summary: '3 travel details ready from the guest hub.',
+            summary: '4 travel details ready from the guest hub.',
             travelHref: '/site/alex-jordan-demo#travel',
             cards: [
-              { id: 'hotel', label: 'Riverfront House', detail: 'Code THOMPSONRIVERA' },
+              { id: 'hotel', label: 'Riverfront House', detail: 'Code THOMPSONRIVERA', href: 'https://riverfront.example.com/stay' },
+              { id: 'flight-info', label: 'Arrival guidance', detail: 'Fly into OAK or SFO and leave time for bridge traffic.' },
               { id: 'shuttle', label: 'Ceremony shuttle', detail: 'Riverfront House to Sunset Gardens Estate · 3:45 PM' },
               { id: 'venue-route-0', label: 'Directions · Sunset Gardens Estate', detail: '100 Harbor Road, Sausalito, CA', href: 'https://maps.google.com/?q=Sunset%20Gardens%20Estate%20100%20Harbor%20Road%2C%20Sausalito%2C%20CA' },
             ],
@@ -101,7 +102,8 @@ describe('EventHubLiveContent', () => {
     );
 
     expect(screen.getByText('Travel quick plan')).toBeInTheDocument();
-    expect(screen.getByText('Riverfront House')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Riverfront House/i })).toHaveAttribute('href', 'https://riverfront.example.com/stay');
+    expect(screen.getByText('Arrival guidance')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Directions · Sunset Gardens Estate/i })).toHaveAttribute('href', 'https://maps.google.com/?q=Sunset%20Gardens%20Estate%20100%20Harbor%20Road%2C%20Sausalito%2C%20CA');
     expect(screen.getByText('Travel plan copied.')).toBeInTheDocument();
     expect(screen.getAllByText('Latest update')).toHaveLength(2);

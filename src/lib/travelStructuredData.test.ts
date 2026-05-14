@@ -66,7 +66,11 @@ describe('travelStructuredData', () => {
 
   it('builds a normalized structured travel payload for guest-facing surfaces', () => {
     const data = normalizeTravelPortalData({
+      flightInfo: 'Fly into SFO and allow 90 minutes to reach the venue.',
       hotels: [{ name: 'Harbor Hotel', bookingDeadline: 'May 20' }],
+      hotelInfo: 'Extra overflow rooms are nearby if the block fills.',
+      parkingInfo: 'Valet opens at 3:00 PM at the north entrance.',
+      notes: 'Bring a layer for the waterfront breeze.',
       roomBlocks: [{ hotelName: 'Harbor Hotel', bookingCode: 'MAYALEO' }],
       shuttles: [{ label: 'Ceremony shuttle' }],
       visaTips: ['Bring the passport you used for the booking.'],
@@ -75,7 +79,11 @@ describe('travelStructuredData', () => {
     });
 
     expect(data).toEqual({
+      flightInfo: 'Fly into SFO and allow 90 minutes to reach the venue.',
       hotels: [{ id: 'hotel-0', name: 'Harbor Hotel', bookingDeadline: 'May 20' }],
+      hotelInfo: 'Extra overflow rooms are nearby if the block fills.',
+      parkingInfo: 'Valet opens at 3:00 PM at the north entrance.',
+      notes: 'Bring a layer for the waterfront breeze.',
       roomBlocks: [{ id: 'room-block-0', hotelName: 'Harbor Hotel', bookingCode: 'MAYALEO' }],
       shuttles: [{ id: 'shuttle-0', label: 'Ceremony shuttle' }],
       visaTips: ['Bring the passport you used for the booking.'],

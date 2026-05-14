@@ -38,6 +38,10 @@ export interface NormalizedTravelPortalData {
   shuttles: TravelShuttleRecord[];
   visaTips: string[];
   culturalTips: string[];
+  flightInfo?: string;
+  hotelInfo?: string;
+  parkingInfo?: string;
+  notes?: string;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -121,6 +125,10 @@ export function normalizeTravelPortalData(value: unknown): NormalizedTravelPorta
     shuttles: sanitizeTravelShuttles(travel?.shuttles),
     visaTips: asTipList(travel?.visaTips),
     culturalTips: asTipList(travel?.culturalTips),
+    ...(asText(travel?.flightInfo) ? { flightInfo: asText(travel?.flightInfo) } : {}),
+    ...(asText(travel?.hotelInfo) ? { hotelInfo: asText(travel?.hotelInfo) } : {}),
+    ...(asText(travel?.parkingInfo) ? { parkingInfo: asText(travel?.parkingInfo) } : {}),
+    ...(asText(travel?.notes) ? { notes: asText(travel?.notes) } : {}),
   };
 }
 
