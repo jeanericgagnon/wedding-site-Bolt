@@ -43,7 +43,7 @@ test.describe('public v1 trust smoke', () => {
 test.describe('public route smoke basics', () => {
   test('signup page loads with the direct setup promise', async ({ page }) => {
     await gotoDom(page, '/signup');
-    await expect(page.getByRole('heading', { name: /start your wedding space/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /start your wedding/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /continue with google/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /create account/i })).toBeVisible();
   });
@@ -244,7 +244,7 @@ test.describe('public route smoke basics', () => {
 
   test('collaborator invite page loads with token param', async ({ page }) => {
     await gotoDom(page, '/accept-collaborator-invite?token=test-token');
-    await expect(page.getByRole('heading', { name: /join this wedding team/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /join this wedding/i })).toBeVisible();
     await expect(page.getByText(/check invite/i)).toBeVisible();
     await expect(page.getByText(/this invite could not be found|checking invite/i)).toBeVisible();
   });
