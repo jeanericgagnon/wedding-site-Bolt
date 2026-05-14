@@ -79,6 +79,7 @@ type TravelHubSpotlightCard = {
 type TravelHubSpotlight = {
   summary: string;
   travelHref: string;
+  badges: string[];
   cards: TravelHubSpotlightCard[];
   shareText: string;
   htmlDocument: string;
@@ -426,6 +427,18 @@ export function EventHubLiveContent({
                       )
                     ))}
                   </div>
+                  {travelHubSpotlight.badges.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {travelHubSpotlight.badges.map((badge) => (
+                        <span
+                          key={badge}
+                          className="rounded-lg bg-[#f3eadf] px-3 py-2 text-[11px] font-semibold text-[#69513f]"
+                        >
+                          {badge}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   {travelShareStatus && <p className="mt-3 text-xs text-[#6f5843]">{travelShareStatus}</p>}
                 </div>
               )}

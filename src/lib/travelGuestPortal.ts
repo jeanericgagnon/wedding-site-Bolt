@@ -84,6 +84,7 @@ export interface TravelHubSpotlightCard {
 export interface TravelHubSpotlight {
   summary: string;
   travelHref: string;
+  badges: string[];
   cards: TravelHubSpotlightCard[];
   shareText: string;
   htmlDocument: string;
@@ -271,6 +272,7 @@ function formatTravelEventTime(value: string | null | undefined): string {
 function buildTravelHubSpotlightHtml(input: {
   summary: string;
   travelHref: string;
+  badges: string[];
   cards: TravelHubSpotlightCard[];
   coupleLabel?: string | null;
   weddingDateLabel?: string | null;
@@ -280,6 +282,9 @@ function buildTravelHubSpotlightHtml(input: {
   const dateLine = input.weddingDateLabel?.trim();
   const guestScopeCopy = input.guestScoped
     ? '<p>This guide reflects the events visible for this invitation.</p>'
+    : '';
+  const badgeCopy = input.badges.length > 0
+    ? `<p>${escapeHtml(input.badges.join(' · '))}</p>`
     : '';
   const cardsMarkup = input.cards.map((card) => `
       <li>
@@ -312,6 +317,7 @@ function buildTravelHubSpotlightHtml(input: {
       ${dateLine ? `<p>${escapeHtml(dateLine)}</p>` : ''}
       <p class="summary">${escapeHtml(input.summary)}</p>
       ${guestScopeCopy}
+      ${badgeCopy}
       <ul>${cardsMarkup}
       </ul>
       <p><a href="${escapeHtml(input.travelHref)}">Open the live travel page</a></p>
@@ -423,6 +429,7 @@ export function buildTravelHubSpotlight(input: {
   const visibleSchedule = (input.schedule ?? [])
     .filter((item) => item?.label?.trim())
     .slice(0, 3);
+  const visibleEventCount = visibleSchedule.length;
   visibleSchedule.forEach((scheduledStep, index) => {
     const venueName = visibleVenues.find((venue) => venue.id && venue.id === scheduledStep.venueId)?.name?.trim() || '';
     const timeLabel = formatTravelEventTime(scheduledStep.startTimeISO);
@@ -442,7 +449,9 @@ export function buildTravelHubSpotlight(input: {
       mapUrl: venue.mapUrl?.trim() || null,
     })),
   );
-  venueMapLinks.slice(0, 2).forEach((venueLink, index) => {
+  const limitedVenueMapLinks = venueMapLinks.slice(0, 2);
+  const routeCardCount = limitedVenueMapLinks.length;
+  limitedVenueMapLinks.forEach((venueLink, index) => {
     const venue = visibleVenues.find((candidate) => (candidate.id?.trim() || '') === venueLink.id);
     cards.push({
       id: `venue-route-${index}`,
@@ -454,6 +463,14 @@ export function buildTravelHubSpotlight(input: {
 
   if (cards.length === 0) return null;
 
+  const bookingLinkCount = [firstHotel?.url, firstRoomBlock?.url].filter(Boolean).length;
+  const badges = [
+    ...(guestScoped ? ['Invite-scoped'] : []),
+    ...(visibleEventCount > 0 ? [`${visibleEventCount} event window${visibleEventCount === 1 ? '' : 's'}`] : []),
+    ...(routeCardCount > 0 ? [`${routeCardCount} route card${routeCardCount === 1 ? '' : 's'}`] : []),
+    ...(bookingLinkCount > 0 ? [`${bookingLinkCount} booking link${bookingLinkCount === 1 ? '' : 's'}`] : []),
+  ];
+
   const travelHref = appendGuestLanguageToInternalHref(
     appendGuestInviteTokenToInternalHref(
       getSafePublicActionHref(`/site/${encodeURIComponent(siteSlug)}#travel`, ''),
@@ -464,20 +481,25 @@ export function buildTravelHubSpotlight(input: {
   const shareText = [
     'DayOf travel quick plan',
     ...(guestScoped ? ['Guide reflects the events visible for this invitation.'] : []),
+    ...(badges.length > 0 ? [`Coverage: ${badges.join(' · ')}`] : []),
     ...cards.map((card) => `${card.label}: ${card.detail}`),
     `Travel page: ${travelHref}`,
   ].join('\n');
-  const summary = `${cards.length} travel detail${cards.length === 1 ? '' : 's'} ready from the guest hub.`;
+  const summary = guestScoped && visibleEventCount > 0
+    ? `${cards.length} travel detail${cards.length === 1 ? '' : 's'} ready from the guest hub, including ${visibleEventCount} visible event window${visibleEventCount === 1 ? '' : 's'} for this invitation.`
+    : `${cards.length} travel detail${cards.length === 1 ? '' : 's'} ready from the guest hub.`;
   const filename = `${siteSlug.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'dayof'}-travel-guide.html`;
 
   return {
     summary,
     travelHref,
+    badges,
     cards,
     shareText,
     htmlDocument: buildTravelHubSpotlightHtml({
       summary,
       travelHref,
+      badges,
       cards,
       coupleLabel: input.coupleLabel,
       weddingDateLabel: input.weddingDateLabel,
