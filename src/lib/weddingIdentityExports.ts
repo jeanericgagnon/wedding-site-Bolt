@@ -1,4 +1,5 @@
 import { buildQrImageUrl, isSafePublicQrAssetUrl } from './guestHubQrAssets';
+import { buildLocalQrSvgDataUrl } from './qr/localQrImage';
 
 export type WeddingIdentityExportId =
   | 'public-qr-card'
@@ -49,6 +50,11 @@ export interface WeddingIdentityPrintAsset {
 }
 
 export interface WeddingIdentityStoryGraphic {
+  filename: string;
+  svg: string;
+}
+
+export interface WeddingIdentityPrintSheet {
   filename: string;
   svg: string;
 }
@@ -339,7 +345,7 @@ export function buildWeddingIdentityStoryGraphic(input: WeddingIdentityExportKit
   const monogram = buildWeddingMonogram(coupleNames);
   const dateLabel = formatWeddingDate(input.weddingDate);
   const venueName = cleanPrintText(input.venueName, 'Wedding details');
-  const qrUrl = buildQrImageUrl(publicSiteUrl, 420);
+  const qrUrl = buildLocalQrSvgDataUrl(publicSiteUrl, 420);
   if (!qrUrl) return null;
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
@@ -417,6 +423,74 @@ function escapeHtml(value: string): string {
 
 function escapeXml(value: string): string {
   return escapeHtml(value);
+}
+
+function wrapSvgTextLines(value: string, maxChars: number): string[] {
+  const words = value.replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
+  if (words.length === 0) return [];
+
+  const lines: string[] = [];
+  let current = '';
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length <= maxChars || !current) {
+      current = candidate;
+      continue;
+    }
+    lines.push(current);
+    current = word;
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+export function renderWeddingIdentityPrintSvg(assets: WeddingIdentityPrintAsset[]): WeddingIdentityPrintSheet | null {
+  const safeAssets = assets.filter((asset) => isSafePublicQrAssetUrl(asset.url));
+  if (safeAssets.length === 0) return null;
+
+  const cardWidth = 1080;
+  const cardHeight = 720;
+  const gap = 48;
+  const columns = 2;
+  const padding = 72;
+  const rows = Math.max(1, Math.ceil(safeAssets.length / columns));
+  const width = padding * 2 + columns * cardWidth + (columns - 1) * gap;
+  const height = padding * 2 + rows * cardHeight + (rows - 1) * gap;
+
+  const cards = safeAssets.map((asset, index) => {
+    const qrUrl = buildLocalQrSvgDataUrl(asset.url, 420);
+    const instructionLines = wrapSvgTextLines(asset.instruction, 34);
+    const urlLines = wrapSvgTextLines(asset.url, 58);
+    const column = index % columns;
+    const row = Math.floor(index / columns);
+    const x = padding + column * (cardWidth + gap);
+    const y = padding + row * (cardHeight + gap);
+
+    return `
+  <g transform="translate(${x} ${y})">
+    <rect width="${cardWidth}" height="${cardHeight}" rx="28" fill="#fffaf4" stroke="#d7c8b7" stroke-width="4"/>
+    <text x="64" y="72" fill="#7d654d" font-family="Arial, sans-serif" font-size="24" font-weight="700">${escapeXml(asset.label)} · ${escapeXml(asset.sizeLabel)}</text>
+    <text x="64" y="160" fill="#2d241d" font-family="Georgia, 'Times New Roman', serif" font-size="64">${escapeXml(asset.title)}</text>
+    <text x="64" y="220" fill="#695540" font-family="Arial, sans-serif" font-size="28">${escapeXml(asset.subtitle)}</text>
+    <rect x="648" y="108" width="300" height="300" rx="20" fill="#ffffff" stroke="#eadfd2" stroke-width="4"/>
+    <image x="690" y="150" width="216" height="216" href="${escapeXml(qrUrl)}"/>
+    <text x="64" y="340" fill="#403328" font-family="Arial, sans-serif" font-size="28" font-weight="700">
+      ${instructionLines.map((line, lineIndex) => `<tspan x="64" dy="${lineIndex === 0 ? 0 : 38}">${escapeXml(line)}</tspan>`).join('')}
+    </text>
+    <text x="64" y="560" fill="#755f48" font-family="Arial, sans-serif" font-size="20">
+      ${urlLines.map((line, lineIndex) => `<tspan x="64" dy="${lineIndex === 0 ? 0 : 28}">${escapeXml(line)}</tspan>`).join('')}
+    </text>
+  </g>`;
+  }).join('\n');
+
+  return {
+    filename: 'dayof-wedding-identity-print-pack.svg',
+    svg: `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="${width}" height="${height}" fill="#fbf8f3"/>
+${cards}
+</svg>`,
+  };
 }
 
 export function renderWeddingIdentityPrintHtml(assets: WeddingIdentityPrintAsset[]): string {

@@ -99,8 +99,9 @@ test('settings identity exports copy and download safe wedding assets', async ({
       __dayofCopiedTexts?: string[];
       __dayofCapturedDownloads?: Array<{ filename: string; href: string }>;
     };
-    return (runtime.__dayofCopiedTexts?.length ?? 0) >= 2 && (runtime.__dayofCapturedDownloads?.length ?? 0) >= 2;
+    return (runtime.__dayofCopiedTexts?.length ?? 0) >= 2 && (runtime.__dayofCapturedDownloads?.length ?? 0) >= 3;
   });
+  await page.waitForTimeout(1500);
 
   const capture = await page.evaluate(async () => {
     const runtime = window as typeof window & {
@@ -111,6 +112,8 @@ test('settings identity exports copy and download safe wedding assets', async ({
     const files = await Promise.all(
       (runtime.__dayofCapturedDownloads ?? []).map(async (entry) => ({
         filename: entry.filename,
+        type: runtime.__dayofCapturedBlobStore?.get(entry.href)?.type ?? null,
+        size: runtime.__dayofCapturedBlobStore?.get(entry.href)?.size ?? 0,
         text: await runtime.__dayofCapturedBlobStore?.get(entry.href)?.text(),
       })),
     );
@@ -122,8 +125,11 @@ test('settings identity exports copy and download safe wedding assets', async ({
 
   const manifest = capture.copiedTexts[0] ?? '';
   const styleKit = capture.copiedTexts[1] ?? '';
-  const printPack = capture.files.find((file) => file.filename === 'dayof-wedding-identity-print-pack.html')?.text ?? '';
-  const storyGraphic = capture.files.find((file) => file.filename === 'dayof-wedding-story-graphic.svg')?.text ?? '';
+  const printPackHtml = capture.files.find((file) => file.filename === 'dayof-wedding-identity-print-pack.html')?.text ?? '';
+  const printPackSvg = capture.files.find((file) => file.filename === 'dayof-wedding-identity-print-pack.svg')?.text ?? '';
+  const storyGraphicSvg = capture.files.find((file) => file.filename === 'dayof-wedding-story-graphic.svg')?.text ?? '';
+  const printPackPng = capture.files.find((file) => file.filename === 'dayof-wedding-identity-print-pack.png');
+  const storyGraphicPng = capture.files.find((file) => file.filename === 'dayof-wedding-story-graphic.png');
 
   expect(manifest).toContain('identity export kit');
   expect(manifest).toContain('Public site: https://alex-jordan-demo.dayof.love');
@@ -133,14 +139,31 @@ test('settings identity exports copy and download safe wedding assets', async ({
   expect(styleKit).toContain('Do not add guest-specific or private invite URLs to shared print assets.');
   expect(styleKit).not.toMatch(/token|invite_token|guest_access|secret/i);
 
-  expect(printPack).toContain('DayOf wedding identity print pack');
-  expect(printPack).toContain('https://api.qrserver.com/v1/create-qr-code/');
-  expect(printPack).toContain('https://alex-jordan-demo.dayof.love/rsvp');
-  expect(printPack).not.toContain('token=');
-  expect(printPack).not.toContain('invite_token=');
+  expect(printPackHtml).toContain('DayOf wedding identity print pack');
+  expect(printPackHtml).toContain('https://api.qrserver.com/v1/create-qr-code/');
+  expect(printPackHtml).toContain('https://alex-jordan-demo.dayof.love/rsvp');
+  expect(printPackHtml).not.toContain('token=');
+  expect(printPackHtml).not.toContain('invite_token=');
 
-  expect(storyGraphic).toContain('<svg');
-  expect(storyGraphic).toMatch(/[A-Z] · [A-Z]/);
-  expect(storyGraphic).toContain('https://alex-jordan-demo.dayof.love');
-  expect(storyGraphic).not.toMatch(/token|invite_token|guest_access|secret/i);
+  expect(printPackSvg).toContain('<svg');
+  expect(printPackSvg).toContain('Public site QR card');
+  expect(printPackSvg).toContain('https://alex-jordan-demo.dayof.love/rsvp');
+  expect(printPackSvg).not.toMatch(/token=|invite_token=|guest_access|secret/i);
+
+  expect(storyGraphicSvg).toContain('<svg');
+  expect(storyGraphicSvg).toMatch(/[A-Z] · [A-Z]/);
+  expect(storyGraphicSvg).toContain('https://alex-jordan-demo.dayof.love');
+  expect(storyGraphicSvg).not.toMatch(/token|invite_token|guest_access|secret/i);
+
+  const pngMetadata = [printPackPng, storyGraphicPng].map((file) => ({
+    filename: file?.filename ?? '',
+    type: file?.type ?? null,
+    size: file?.size ?? 0,
+  }));
+
+  expect(pngMetadata).toEqual([
+    expect.objectContaining({ filename: 'dayof-wedding-identity-print-pack.png', type: 'image/png', size: expect.any(Number) }),
+    expect.objectContaining({ filename: 'dayof-wedding-story-graphic.png', type: 'image/png', size: expect.any(Number) }),
+  ]);
+  expect(pngMetadata.every((item) => item.size > 5000)).toBe(true);
 });

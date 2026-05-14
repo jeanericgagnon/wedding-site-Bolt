@@ -20,12 +20,14 @@ import {
 } from '../../../lib/plannerAccess';
 import {
   buildWeddingIdentityManifestText,
+  renderWeddingIdentityPrintSvg,
   buildWeddingIdentityStoryGraphic,
   buildWeddingIdentityStyleKit,
   renderWeddingIdentityPrintHtml,
   type WeddingIdentityExportKit,
   type WeddingIdentityPrintAsset,
 } from '../../../lib/weddingIdentityExports';
+import { downloadBlob, rasterizeSvgToPngBlob } from '../../../lib/svgRaster';
 import {
   SETTINGS_SITE_MISSING_COPY,
   buildPrivacySettingsUpdates,
@@ -469,32 +471,59 @@ export function useSettingsSiteAccessActions({
     toast(result === 'copied' ? 'Wedding identity style kit copied.' : 'Wedding identity style kit downloaded.', 'success');
   };
 
-  const downloadIdentityPrintPack = () => {
+  const downloadIdentityPrintPack = async () => {
     if (weddingIdentityPrintAssets.length === 0) {
       toast('Set a public site URL before saving the identity print pack.', 'error');
       return;
     }
 
-    downloadTextFile(
-      'dayof-wedding-identity-print-pack.html',
-      renderWeddingIdentityPrintHtml(weddingIdentityPrintAssets),
-      'text/html;charset=utf-8',
-    );
-    toast('Wedding identity print pack saved.', 'success');
+    const printSheet = renderWeddingIdentityPrintSvg(weddingIdentityPrintAssets);
+    if (!printSheet) {
+      toast('Set a public site URL before saving the identity print pack.', 'error');
+      return;
+    }
+
+    try {
+      downloadTextFile(
+        'dayof-wedding-identity-print-pack.html',
+        renderWeddingIdentityPrintHtml(weddingIdentityPrintAssets),
+        'text/html;charset=utf-8',
+      );
+      downloadTextFile(
+        printSheet.filename,
+        printSheet.svg,
+        'image/svg+xml;charset=utf-8',
+      );
+      downloadBlob(
+        'dayof-wedding-identity-print-pack.png',
+        await rasterizeSvgToPngBlob(printSheet.svg),
+      );
+      toast('Wedding identity print pack saved as HTML, SVG, and PNG.', 'success');
+    } catch (err) {
+      toast(safeSettingsError(err, 'Couldn’t save the identity print pack.'), 'error');
+    }
   };
 
-  const downloadIdentityStoryGraphic = () => {
+  const downloadIdentityStoryGraphic = async () => {
     if (!weddingIdentityStoryGraphic) {
       toast('Set a public site URL before saving the story graphic.', 'error');
       return;
     }
 
-    downloadTextFile(
-      weddingIdentityStoryGraphic.filename,
-      weddingIdentityStoryGraphic.svg,
-      'image/svg+xml;charset=utf-8',
-    );
-    toast('Wedding story graphic saved.', 'success');
+    try {
+      downloadTextFile(
+        weddingIdentityStoryGraphic.filename,
+        weddingIdentityStoryGraphic.svg,
+        'image/svg+xml;charset=utf-8',
+      );
+      downloadBlob(
+        'dayof-wedding-story-graphic.png',
+        await rasterizeSvgToPngBlob(weddingIdentityStoryGraphic.svg),
+      );
+      toast('Wedding story graphic saved as SVG and PNG.', 'success');
+    } catch (err) {
+      toast(safeSettingsError(err, 'Couldn’t save the story graphic.'), 'error');
+    }
   };
 
   const togglePlannerPermission = (key: PlannerPermissionKey) => {

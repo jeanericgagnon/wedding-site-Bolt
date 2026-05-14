@@ -3,6 +3,7 @@ import {
   buildWeddingIdentityExportKit,
   buildWeddingIdentityManifestText,
   buildWeddingIdentityPrintAssets,
+  renderWeddingIdentityPrintSvg,
   buildWeddingIdentityStoryGraphic,
   buildWeddingIdentityStyleKit,
   renderWeddingIdentityPrintHtml,
@@ -103,6 +104,23 @@ describe('weddingIdentityExports', () => {
     expect(html).not.toMatch(/guest_access|service-role|secret/i);
   });
 
+  it('builds a printable SVG sheet for safe public print assets', () => {
+    const assets = buildWeddingIdentityPrintAssets({
+      coupleNames: 'Maya & Leo',
+      publicSiteUrl: 'https://maya-leo.dayof.love',
+      weddingDate: '2026-09-12',
+      venueName: 'Garden House',
+    });
+
+    const sheet = renderWeddingIdentityPrintSvg(assets);
+
+    expect(sheet?.filename).toBe('dayof-wedding-identity-print-pack.svg');
+    expect(sheet?.svg).toContain('<svg');
+    expect(sheet?.svg).toContain('Public site QR card');
+    expect(sheet?.svg).toContain('https://maya-leo.dayof.love/rsvp');
+    expect(sheet?.svg).not.toMatch(/guest_access|invite_token|service-role|secret/i);
+  });
+
   it('builds a downloadable story graphic svg for safe public site URLs', () => {
     const graphic = buildWeddingIdentityStoryGraphic({
       coupleNames: 'Maya & Leo',
@@ -117,7 +135,7 @@ describe('weddingIdentityExports', () => {
     expect(graphic?.svg).toContain('<svg');
     expect(graphic?.svg).toContain('M · L');
     expect(graphic?.svg).toContain('https://maya-leo.dayof.love');
-    expect(graphic?.svg).toContain('api.qrserver.com');
+    expect(graphic?.svg).toContain('data:image/svg+xml');
     expect(graphic?.svg).not.toMatch(/token|invite_token|guest_access/i);
   });
 
@@ -161,6 +179,17 @@ describe('weddingIdentityExports', () => {
     ]);
     expect(html).not.toContain('<script>alert(1)</script>');
     expect(html).not.toContain('invite_token=abc');
+    expect(renderWeddingIdentityPrintSvg([
+      {
+        id: 'public-qr-card',
+        label: 'Unsafe',
+        sizeLabel: '3 x 2 in',
+        title: 'Bad URL',
+        subtitle: 'Do not render',
+        instruction: 'Unsafe URLs should be dropped.',
+        url: 'https://maya-leo.dayof.love?invite_token=abc',
+      },
+    ])).toBeNull();
     expect(buildWeddingIdentityStoryGraphic({
       coupleNames: 'Maya & Leo',
       publicSiteUrl: 'https://maya-leo.dayof.love?invite_token=abc',
