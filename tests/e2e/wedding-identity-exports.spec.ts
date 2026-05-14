@@ -99,7 +99,7 @@ test('settings identity exports copy and download safe wedding assets', async ({
       __dayofCopiedTexts?: string[];
       __dayofCapturedDownloads?: Array<{ filename: string; href: string }>;
     };
-    return (runtime.__dayofCopiedTexts?.length ?? 0) >= 2 && (runtime.__dayofCapturedDownloads?.length ?? 0) >= 3;
+    return (runtime.__dayofCopiedTexts?.length ?? 0) >= 2 && (runtime.__dayofCapturedDownloads?.length ?? 0) >= 4;
   });
   await page.waitForTimeout(1500);
 
@@ -129,6 +129,7 @@ test('settings identity exports copy and download safe wedding assets', async ({
   const printPackSvg = capture.files.find((file) => file.filename === 'dayof-wedding-identity-print-pack.svg')?.text ?? '';
   const storyGraphicSvg = capture.files.find((file) => file.filename === 'dayof-wedding-story-graphic.svg')?.text ?? '';
   const printPackPng = capture.files.find((file) => file.filename === 'dayof-wedding-identity-print-pack.png');
+  const printPackPdf = capture.files.find((file) => file.filename === 'dayof-wedding-identity-print-pack.pdf');
   const storyGraphicPng = capture.files.find((file) => file.filename === 'dayof-wedding-story-graphic.png');
 
   expect(manifest).toContain('identity export kit');
@@ -155,15 +156,16 @@ test('settings identity exports copy and download safe wedding assets', async ({
   expect(storyGraphicSvg).toContain('https://alex-jordan-demo.dayof.love');
   expect(storyGraphicSvg).not.toMatch(/token|invite_token|guest_access|secret/i);
 
-  const pngMetadata = [printPackPng, storyGraphicPng].map((file) => ({
+  const fileMetadata = [printPackPng, printPackPdf, storyGraphicPng].map((file) => ({
     filename: file?.filename ?? '',
     type: file?.type ?? null,
     size: file?.size ?? 0,
   }));
 
-  expect(pngMetadata).toEqual([
+  expect(fileMetadata).toEqual([
     expect.objectContaining({ filename: 'dayof-wedding-identity-print-pack.png', type: 'image/png', size: expect.any(Number) }),
+    expect.objectContaining({ filename: 'dayof-wedding-identity-print-pack.pdf', type: 'application/pdf', size: expect.any(Number) }),
     expect.objectContaining({ filename: 'dayof-wedding-story-graphic.png', type: 'image/png', size: expect.any(Number) }),
   ]);
-  expect(pngMetadata.every((item) => item.size > 5000)).toBe(true);
+  expect(fileMetadata.every((item) => item.size > 5000)).toBe(true);
 });

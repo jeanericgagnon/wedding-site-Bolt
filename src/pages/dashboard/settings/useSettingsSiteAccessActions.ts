@@ -27,7 +27,7 @@ import {
   type WeddingIdentityExportKit,
   type WeddingIdentityPrintAsset,
 } from '../../../lib/weddingIdentityExports';
-import { downloadBlob, rasterizeSvgToPngBlob } from '../../../lib/svgRaster';
+import { downloadBlob, rasterizeSvgToPdfBlob, rasterizeSvgToPngBlob } from '../../../lib/svgRaster';
 import {
   SETTINGS_SITE_MISSING_COPY,
   buildPrivacySettingsUpdates,
@@ -498,7 +498,11 @@ export function useSettingsSiteAccessActions({
         'dayof-wedding-identity-print-pack.png',
         await rasterizeSvgToPngBlob(printSheet.svg),
       );
-      toast('Wedding identity print pack saved as HTML, SVG, and PNG.', 'success');
+      downloadBlob(
+        'dayof-wedding-identity-print-pack.pdf',
+        await rasterizeSvgToPdfBlob(printSheet.svg),
+      );
+      toast('Wedding identity print pack saved as HTML, SVG, PNG, and PDF.', 'success');
     } catch (err) {
       toast(safeSettingsError(err, 'Couldn’t save the identity print pack.'), 'error');
     }

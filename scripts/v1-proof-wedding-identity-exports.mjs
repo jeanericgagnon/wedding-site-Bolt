@@ -147,7 +147,7 @@ const output = {
   automatedCoverage: [
     'Wedding identity readiness truth, planner-safe manifest output, and safe story/style export generation',
     'Settings identity export controls for manifest copy, style-kit copy, print-pack download, and story-graphic download',
-    'Browser-triggered identity export capture with nonblank HTML/SVG output and no private token leakage',
+    'Browser-triggered identity export capture with nonblank HTML/SVG/PNG/PDF output and no private token leakage',
   ],
   stillManualProofNeeded: [
     'Rerun the same copy/download flow against the shipped production runtime after the next approved identity-export deploy.',
