@@ -52,6 +52,9 @@ export interface RsvpSetupChecklistItem {
   label: string;
   detail: string;
   status: 'ready' | 'needs-setup' | 'planned';
+  emailCount?: number;
+  phoneCount?: number;
+  supportLabel?: string;
 }
 
 export interface RsvpRecoveryVerificationReadiness {
@@ -441,6 +444,9 @@ export function buildRsvpSetupChecklist(
       label: 'Phone or email recovery inputs',
       detail: verificationReadiness.detail,
       status: verificationReadiness.status,
+      emailCount: readiness.emailCount,
+      phoneCount: readiness.phoneCount,
+      supportLabel: verificationReadiness.supportLabel,
     },
     {
       id: 'question_templates',

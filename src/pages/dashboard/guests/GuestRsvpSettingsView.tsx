@@ -119,6 +119,12 @@ export function GuestRsvpSettingsView({
   const safeRsvpMealOptions = Array.isArray(rsvpMealOptions) ? rsvpMealOptions : [];
   const safeRsvpSetupChecklist = Array.isArray(rsvpSetupChecklist) ? rsvpSetupChecklist : [];
   const verificationInputsChecklistItem = safeRsvpSetupChecklist.find((item) => item.id === 'verification_inputs') ?? null;
+  const verificationEmailCount = Math.max(verificationInputsChecklistItem?.emailCount ?? 0, 0);
+  const verificationPhoneCount = Math.max(verificationInputsChecklistItem?.phoneCount ?? 0, 0);
+  const verificationSupportCount = verificationEmailCount + verificationPhoneCount;
+  const verificationReadyLabel = verificationSupportCount > 0
+    ? `${verificationSupportCount} saved recovery input${verificationSupportCount === 1 ? '' : 's'}`
+    : 'No saved recovery inputs yet';
   const addedTemplateCount = safeRsvpQuestionTemplateCoverage.filter((item) => item.added).length;
   const missingTemplateCount = Math.max(safeRsvpQuestionTemplateCoverage.length - addedTemplateCount, 0);
   const normalizedTemplateLabels = new Set(
@@ -317,6 +323,25 @@ export function GuestRsvpSettingsView({
                   }`}>
                     {verificationInputsChecklistItem.status === 'ready' ? 'Ready to design' : 'Needs setup'}
                   </span>
+                </div>
+                <div className="mb-3 grid gap-2 sm:grid-cols-3">
+                  <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Recovery inputs</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{verificationReadyLabel}</p>
+                    {verificationInputsChecklistItem.supportLabel && (
+                      <p className="mt-1 text-[11px] text-text-tertiary">{verificationInputsChecklistItem.supportLabel}</p>
+                    )}
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Guest emails</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{verificationEmailCount}</p>
+                    <p className="mt-1 text-[11px] text-text-tertiary">{verificationEmailCount > 0 ? 'Ready for email recovery' : 'Still missing'}</p>
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Phone numbers</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{verificationPhoneCount}</p>
+                    <p className="mt-1 text-[11px] text-text-tertiary">{verificationPhoneCount > 0 ? 'Ready for text recovery' : 'Still missing'}</p>
+                  </div>
                 </div>
                 <p className="text-sm text-text-secondary">{verificationInputsChecklistItem.detail}</p>
               </div>

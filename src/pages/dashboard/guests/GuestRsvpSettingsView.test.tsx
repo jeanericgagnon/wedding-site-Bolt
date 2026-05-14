@@ -80,6 +80,11 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText(/Guest codes, shared passwords, and open RSVP stay planned/i)).toBeInTheDocument();
     expect(screen.getByText(/Phone or email recovery plan/i)).toBeInTheDocument();
     expect(screen.getAllByText(/14 guest emails and 5 phone numbers are saved/i).length).toBeGreaterThan(0);
+    expect(screen.getByText('19 saved recovery inputs')).toBeInTheDocument();
+    expect(screen.getByText(/^14$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^5$/i)).toBeInTheDocument();
+    expect(screen.getByText(/Ready for email recovery/i)).toBeInTheDocument();
+    expect(screen.getByText(/Ready for text recovery/i)).toBeInTheDocument();
     expect(screen.getByText(/This does not turn code, password, or open RSVP on/i)).toBeInTheDocument();
     expect(screen.getByText(/Household access proof/i)).toBeInTheDocument();
     expect(screen.getByText(/shared RSVP recovery stays scoped/i)).toBeInTheDocument();
