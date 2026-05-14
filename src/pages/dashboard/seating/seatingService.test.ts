@@ -125,6 +125,20 @@ describe('deriveEligibleGuestDietaryFields', () => {
     });
   });
 
+  it('extracts semicolon-separated meal and dietary labels from flattened RSVP notes', () => {
+    expect(deriveEligibleGuestDietaryFields('Diet: Gluten-free; Allergy: Peanut; Service note: sauce on side')).toEqual({
+      dietary_restrictions: 'Gluten-free',
+      dietary_notes: 'sauce on side',
+      allergies: 'Peanut',
+    });
+
+    expect(deriveEligibleGuestDietaryFields('Food restriction: Dairy-free; Allergens: Walnut; Chef note: no garnish')).toEqual({
+      dietary_restrictions: 'Dairy-free',
+      dietary_notes: 'no garnish',
+      allergies: 'Walnut',
+    });
+  });
+
   it('keeps extra dietary note detail while splitting explicit restriction labels', () => {
     expect(deriveEligibleGuestDietaryFields('Dietary restrictions - Gluten-free\nMeal note: kosher-style plating preferred\nAllergies: Peanut')).toEqual({
       dietary_restrictions: 'Gluten-free',
@@ -153,6 +167,12 @@ describe('deriveEligibleGuestMealPreference', () => {
     expect(deriveEligibleGuestMealPreference('Meal selection: Pasta')).toBe('Pasta');
     expect(deriveEligibleGuestMealPreference('Entrée choice: Short rib')).toBe('Short rib');
     expect(deriveEligibleGuestMealPreference('Protein: Salmon')).toBe('Salmon');
+  });
+
+  it('extracts semicolon-separated and broader meal labels into the seating meal field', () => {
+    expect(deriveEligibleGuestMealPreference('Menu: Pasta; Allergy: Peanut')).toBe('Pasta');
+    expect(deriveEligibleGuestMealPreference('Main: Short rib; Service note: split plate')).toBe('Short rib');
+    expect(deriveEligibleGuestMealPreference('Dish: Salmon')).toBe('Salmon');
   });
 
   it('leaves generic guest notes alone when no explicit meal label exists', () => {
@@ -391,6 +411,57 @@ describe('getEligibleGuests', () => {
         meal_preference: 'Vegetarian',
         dietary_restrictions: 'Gluten-free',
         dietary_notes: null,
+      }),
+    ]);
+  });
+
+  it('promotes flattened semicolon-separated meal and dietary labels when guest fields are blank', async () => {
+    const selectMock = vi.fn();
+    const eqGuestsMock = vi.fn();
+    const limitGuestsMock = vi.fn();
+    const eqInvitesMock = vi.fn();
+    const limitInvitesMock = vi.fn();
+
+    fromMock
+      .mockReturnValueOnce({ select: selectMock })
+      .mockReturnValueOnce({ select: selectMock });
+
+    selectMock
+      .mockReturnValueOnce({ eq: eqGuestsMock })
+      .mockReturnValueOnce({ eq: eqInvitesMock });
+
+    eqGuestsMock.mockReturnValueOnce({ limit: limitGuestsMock });
+    limitGuestsMock.mockResolvedValueOnce({
+      data: [
+        {
+          id: 'guest-1',
+          name: 'Jordan Guest',
+          first_name: null,
+          last_name: null,
+          email: null,
+          rsvp_status: 'attending',
+          household_id: null,
+          group_name: null,
+          meal_preference: null,
+          notes: 'Menu: Pasta; Diet: Gluten-free; Allergy: Peanut; Service note: sauce on side',
+        },
+      ],
+      error: null,
+    });
+
+    eqInvitesMock.mockReturnValueOnce({ limit: limitInvitesMock });
+    limitInvitesMock.mockResolvedValueOnce({
+      data: [],
+      error: null,
+    });
+
+    await expect(getEligibleGuests('site-1', 'event-1')).resolves.toEqual([
+      expect.objectContaining({
+        id: 'guest-1',
+        meal_preference: 'Pasta',
+        dietary_restrictions: 'Gluten-free',
+        dietary_notes: 'sauce on side',
+        allergies: 'Peanut',
       }),
     ]);
   });

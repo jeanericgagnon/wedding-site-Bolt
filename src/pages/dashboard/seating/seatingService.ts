@@ -146,6 +146,13 @@ export interface SeatingLookupRow {
   rsvp_status?: string | null;
 }
 
+function extractLabeledNoteValues(notes: string, labelPattern: RegExp): string[] {
+  const matches = notes.matchAll(new RegExp(`(?:^|[\\n;])\\s*(?:${labelPattern.source})\\s*[:\\-]\\s*([^;\\n]+)`, 'gim'));
+  return [...matches]
+    .map((match) => match[1]?.trim() ?? '')
+    .filter((value) => value.length > 0);
+}
+
 export function deriveEligibleGuestDietaryFields(notes: string | null | undefined): {
   dietary_restrictions: string | null;
   dietary_notes: string | null;
@@ -160,33 +167,18 @@ export function deriveEligibleGuestDietaryFields(notes: string | null | undefine
     };
   }
 
-  const lines = normalizedNotes
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-
-  const dietaryRestrictionParts: string[] = [];
-  const allergyParts: string[] = [];
-  const dietaryNoteParts: string[] = [];
-
-  lines.forEach((line) => {
-    const restrictionMatch = line.match(/^(?:diet(?:ary)?(?:\s+restrictions?)?|meal\s+restriction|restrictions?)\s*[:\-]\s*(.+)$/i);
-    if (restrictionMatch) {
-      dietaryRestrictionParts.push(restrictionMatch[1].trim());
-      return;
-    }
-
-    const allergyMatch = line.match(/^(?:food\s+allerg(?:y|ies)|allerg(?:y|ies)|allergen(?:s)?)\s*[:\-]\s*(.+)$/i);
-    if (allergyMatch) {
-      allergyParts.push(allergyMatch[1].trim());
-      return;
-    }
-
-    const dietaryNoteMatch = line.match(/^(?:diet(?:ary)?\s+note|meal\s+note|food\s+note|kitchen\s+note|catering\s+note)\s*[:\-]\s*(.+)$/i);
-    if (dietaryNoteMatch) {
-      dietaryNoteParts.push(dietaryNoteMatch[1].trim());
-    }
-  });
+  const dietaryRestrictionParts = extractLabeledNoteValues(
+    normalizedNotes,
+    /diet(?:ary)?(?:\s+(?:restrictions?|preference))?|meal\s+restriction|food\s+restriction|restrictions?/i,
+  );
+  const allergyParts = extractLabeledNoteValues(
+    normalizedNotes,
+    /food\s+allerg(?:y|ies)|allerg(?:y|ies)|allergen(?:s)?/i,
+  );
+  const dietaryNoteParts = extractLabeledNoteValues(
+    normalizedNotes,
+    /diet(?:ary)?\s+note|meal\s+note|food\s+note|kitchen\s+note|catering\s+note|chef\s+note|service\s+note|plating\s+note/i,
+  );
 
   return {
     dietary_restrictions: dietaryRestrictionParts.join('; ').trim() || null,
@@ -199,8 +191,11 @@ export function deriveEligibleGuestMealPreference(notes: string | null | undefin
   const normalizedNotes = typeof notes === 'string' ? notes.trim() : '';
   if (!normalizedNotes) return null;
 
-  const mealMatch = normalizedNotes.match(/(?:^|\n)\s*(?:meal(?:\s+(?:choice|preference|selection))?|entree(?:\s+choice)?|entrée(?:\s+choice)?|protein)\s*:\s*(.+)$/im);
-  return mealMatch?.[1]?.trim() || null;
+  const [mealPreference] = extractLabeledNoteValues(
+    normalizedNotes,
+    /meal(?:\s+(?:choice|preference|selection))?|menu|dish|main|entree(?:\s+(?:choice|selection))?|entrée(?:\s+(?:choice|selection))?|protein/i,
+  );
+  return mealPreference || null;
 }
 
 interface SeatingLookupGuest {
