@@ -459,6 +459,8 @@ Execution rule for this section:
    - this batch shipped: focused route proof is green for the thank-you summary chips, missing-purchaser readback, and `Review gift` owner action on gifts that still need purchaser attribution
    - this batch shipped: the owner registry dashboard now breaks cash-fund follow-through into tracked goals, missing goals, visible progress, and first-gift gaps, so fund analytics no longer collapse setup, fundraising progress, and “still waiting on the first gift” into one total
    - this batch shipped: focused route proof is green for missing-goal and awaiting-first-gift derivation, including mixed fund sets where only some cash funds are share-ready or actively progressing
+   - this batch shipped: the public featured-fund card now shows guest-facing fund-state signals for contribution-method count, active progress, first-gift waiting state, and flexible no-goal funds instead of flattening every cash fund into the same honeymoon-style pitch
+   - this batch shipped: focused proof is green for safe featured-fund signal derivation plus the live featured-fund render path, including correct safe-method counting when some contribution URLs are rejected
    - add live owner add/import/edit persistence proof for broader registry workflows
    - rerun the stronger owner repair/cleanup runtime proof against the shipped production runtime after the next approved registry deploy
    - rerun the guest-visible purchase-state assertions against the live production runtime after the next approved registry deploy instead of only local/public-component proof

@@ -260,6 +260,37 @@ export function getRegistryFundContributionMethods(item: Pick<RegistryItem, 'fun
   return methods;
 }
 
+export function getFeaturedRegistryFundPublicSignals(item: Pick<RegistryItem, 'fund_goal_amount' | 'fund_received_amount' | 'fund_venmo_url' | 'fund_paypal_url' | 'fund_custom_url' | 'fund_custom_label' | 'fund_zelle_handle'>) {
+  const goal = safeFundAmount(item.fund_goal_amount);
+  const received = safeFundAmount(item.fund_received_amount);
+  const methods = getRegistryFundContributionMethods(item);
+  const methodCount = methods.length;
+  const chips: string[] = [];
+
+  if (methodCount > 0) {
+    chips.push(`${methodCount} ${methodCount === 1 ? 'way' : 'ways'} to contribute`);
+  }
+
+  if (goal > 0 && received > 0) {
+    chips.push('Fund progress is underway');
+  } else if (goal > 0) {
+    chips.push('Be the first gift');
+  } else {
+    chips.push('Flexible fund');
+  }
+
+  const detail = goal > 0
+    ? received > 0
+      ? `Every contribution moves this fund toward its shared goal.`
+      : `The first contribution starts the visible progress toward this shared goal.`
+    : `This fund stays flexible while the couple refines the final goal.`;
+
+  return {
+    chips,
+    detail,
+  };
+}
+
 export function pickFeaturedRegistryFund(items: RegistryItem[]): RegistryItem | null {
   const funds = sanitizePublicRegistryItems(items).filter((item) => item.item_type === 'cash_fund');
   if (funds.length === 0) return null;
@@ -902,6 +933,7 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
     const featuredFundMethods = featuredFund ? getRegistryFundContributionMethods(featuredFund) : [];
     const featuredFundGoal = featuredFund ? safeFundAmount(featuredFund.fund_goal_amount) : 0;
     const featuredFundReceived = featuredFund ? safeFundAmount(featuredFund.fund_received_amount) : 0;
+    const featuredFundSignals = featuredFund ? getFeaturedRegistryFundPublicSignals(featuredFund) : null;
     const featuredFundPct = featuredFund && featuredFundGoal > 0
       ? Math.min(100, Math.round((featuredFundReceived / featuredFundGoal) * 100))
       : null;
@@ -927,6 +959,21 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
                   <p className="text-sm text-text-secondary leading-relaxed mt-3">
                     {featuredFund.notes?.trim() || 'Your love and support means so much. If you’d like, you can contribute toward shared plans and experiences.'}
                   </p>
+                  {featuredFundSignals && (
+                    <div className="mt-4">
+                      <div className="flex flex-wrap gap-2">
+                        {featuredFundSignals.chips.map((chip) => (
+                          <span
+                            key={chip}
+                            className="inline-flex items-center rounded-full border border-primary/20 bg-white px-3 py-1 text-[11px] font-medium text-primary"
+                          >
+                            {chip}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="mt-3 text-xs text-text-tertiary">{featuredFundSignals.detail}</p>
+                    </div>
+                  )}
                   <div className="mt-4 flex flex-wrap gap-2">
                     {featuredFundMethods.map((method) => (
                       method.url ? (

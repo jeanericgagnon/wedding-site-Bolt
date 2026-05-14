@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   REGISTRY_PURCHASE_MEMORY_RETENTION_MS,
   RegistryFundHighlight,
+  getFeaturedRegistryFundPublicSignals,
   getRegistryFundContributionMethods,
   pickFeaturedRegistryFund,
   RegistryGrid,
@@ -417,12 +418,43 @@ describe('RegistrySection', () => {
     expect(await screen.findByText('Featured fund')).toBeInTheDocument();
     expect(screen.getByText('Honeymoon fund')).toBeInTheDocument();
     expect(screen.getByText('Help us celebrate with a few honeymoon memories.')).toBeInTheDocument();
+    expect(screen.getByText('2 ways to contribute')).toBeInTheDocument();
+    expect(screen.getByText('Fund progress is underway')).toBeInTheDocument();
+    expect(screen.getByText('Every contribution moves this fund toward its shared goal.')).toBeInTheDocument();
     expect(screen.getByText('25% funded')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Venmo' })).toHaveAttribute('href', 'https://venmo.com/dayof');
     expect(screen.getByRole('link', { name: 'Contribute' })).toHaveAttribute('href', 'https://example.com/honeymoon');
     expect(screen.queryByRole('link', { name: 'PayPal' })).not.toBeInTheDocument();
     expect(screen.getAllByText('Honeymoon fund')).toHaveLength(1);
     expect(screen.getAllByText('Dinner plates').length).toBeGreaterThan(0);
+  });
+
+  it('describes first-gift and flexible-fund states without overstating progress', () => {
+    expect(getFeaturedRegistryFundPublicSignals({
+      fund_goal_amount: 2500,
+      fund_received_amount: 0,
+      fund_custom_url: 'https://example.com/fund',
+      fund_venmo_url: null,
+      fund_paypal_url: null,
+      fund_custom_label: 'Contribute',
+      fund_zelle_handle: null,
+    })).toEqual({
+      chips: ['1 way to contribute', 'Be the first gift'],
+      detail: 'The first contribution starts the visible progress toward this shared goal.',
+    });
+
+    expect(getFeaturedRegistryFundPublicSignals({
+      fund_goal_amount: null,
+      fund_received_amount: 125,
+      fund_custom_url: null,
+      fund_venmo_url: 'https://venmo.com/dayof',
+      fund_paypal_url: null,
+      fund_custom_label: null,
+      fund_zelle_handle: 'dayof@example.com',
+    })).toEqual({
+      chips: ['2 ways to contribute', 'Flexible fund'],
+      detail: 'This fund stays flexible while the couple refines the final goal.',
+    });
   });
 
   it('wraps public registry purchase memory in a timestamped bounded envelope', () => {
