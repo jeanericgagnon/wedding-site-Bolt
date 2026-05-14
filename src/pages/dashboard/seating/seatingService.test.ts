@@ -9,9 +9,11 @@ import {
   markSeatingVersionRestored,
   deriveEventCountersFromGuests,
   deriveEligibleGuestDietaryFields,
+  deriveEligibleGuestMealPreference,
   deriveGuestEventAttendance,
   exportPlaceCardsCSV,
   exportSeatingCSV,
+  getEligibleGuests,
   getOrCreateSeatingEvent,
   invalidateDriftedAssignments,
   loadDemoSeatingLookupRows,
@@ -113,6 +115,18 @@ describe('deriveEligibleGuestDietaryFields', () => {
       dietary_notes: null,
       allergies: null,
     });
+  });
+});
+
+describe('deriveEligibleGuestMealPreference', () => {
+  it('extracts explicit meal notes into a dedicated seating meal field', () => {
+    expect(deriveEligibleGuestMealPreference('Meal: Vegetarian\nDietary: Gluten-free')).toBe('Vegetarian');
+    expect(deriveEligibleGuestMealPreference('Entree: Fish')).toBe('Fish');
+    expect(deriveEligibleGuestMealPreference('Entrée: Chicken')).toBe('Chicken');
+  });
+
+  it('leaves generic guest notes alone when no explicit meal label exists', () => {
+    expect(deriveEligibleGuestMealPreference('Prefers aisle seat')).toBeNull();
   });
 });
 
@@ -297,6 +311,57 @@ describe('deriveEventCountersFromGuests', () => {
       seated: 0,
       unassigned: 1,
     });
+  });
+});
+
+describe('getEligibleGuests', () => {
+  it('promotes explicit meal notes into seating meal preference when the guest meal field is blank', async () => {
+    const selectMock = vi.fn();
+    const eqGuestsMock = vi.fn();
+    const limitGuestsMock = vi.fn();
+    const eqInvitesMock = vi.fn();
+    const limitInvitesMock = vi.fn();
+
+    fromMock
+      .mockReturnValueOnce({ select: selectMock })
+      .mockReturnValueOnce({ select: selectMock });
+
+    selectMock
+      .mockReturnValueOnce({ eq: eqGuestsMock })
+      .mockReturnValueOnce({ eq: eqInvitesMock });
+
+    eqGuestsMock.mockReturnValueOnce({ limit: limitGuestsMock });
+    limitGuestsMock.mockResolvedValueOnce({
+      data: [
+        {
+          id: 'guest-1',
+          name: 'Avery Guest',
+          first_name: null,
+          last_name: null,
+          email: null,
+          rsvp_status: 'attending',
+          household_id: null,
+          group_name: null,
+          meal_preference: null,
+          notes: 'Meal: Vegetarian\nDietary: Gluten-free',
+        },
+      ],
+      error: null,
+    });
+
+    eqInvitesMock.mockReturnValueOnce({ limit: limitInvitesMock });
+    limitInvitesMock.mockResolvedValueOnce({
+      data: [],
+      error: null,
+    });
+
+    await expect(getEligibleGuests('site-1', 'event-1')).resolves.toEqual([
+      expect.objectContaining({
+        id: 'guest-1',
+        meal_preference: 'Vegetarian',
+        dietary_notes: 'Gluten-free',
+      }),
+    ]);
   });
 });
 

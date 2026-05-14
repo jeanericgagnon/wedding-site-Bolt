@@ -169,6 +169,14 @@ export function deriveEligibleGuestDietaryFields(notes: string | null | undefine
   };
 }
 
+export function deriveEligibleGuestMealPreference(notes: string | null | undefined): string | null {
+  const normalizedNotes = typeof notes === 'string' ? notes.trim() : '';
+  if (!normalizedNotes) return null;
+
+  const mealMatch = normalizedNotes.match(/(?:^|\n)\s*(?:meal(?:\s+(?:choice|preference))?|entree|entrée)\s*:\s*(.+)$/im);
+  return mealMatch?.[1]?.trim() || null;
+}
+
 interface SeatingLookupGuest {
   id: string;
   first_name: string | null;
@@ -567,6 +575,7 @@ export async function getEligibleGuests(
     });
     const notes = (g.notes as string | null) ?? null;
     const dietaryFields = deriveEligibleGuestDietaryFields(notes);
+    const noteMealPreference = deriveEligibleGuestMealPreference(notes);
 
     return {
       id: g.id,
@@ -579,7 +588,7 @@ export async function getEligibleGuests(
       is_invited_to_event: hasEventInvitations ? isInvitedToEvent : true,
       event_rsvp_attending: hasEventInvitations ? (eventRsvp ?? null) : undefined,
       meal_choice: null,
-      meal_preference: (g.meal_preference as string | null) ?? null,
+      meal_preference: (g.meal_preference as string | null) ?? noteMealPreference ?? null,
       dietary_restrictions: null,
       dietary_notes: dietaryFields.dietary_notes,
       allergies: dietaryFields.allergies,
