@@ -54,6 +54,8 @@
     "qr_target": "Hochzeitslink",
     "action_rsvp": "RSVP",
     "action_rsvp_detail": "Finde deine Einladung und antworte für die Hochzeitsereignisse.",
+    "action_updates": "Letztes Update",
+    "action_updates_detail": "Springe direkt zum neuesten Tagesupdate, deinem Gaststatus und den Zugangshinweisen in diesem Hub.",
     "action_contact": "Deine Angaben aktualisieren",
     "action_contact_detail": "Prüfe deine Gastdaten, aktualisiere Kontaktangaben und korrigiere Adresse oder RSVP über denselben privaten Zugang.",
     "action_schedule": "Zeitplan",

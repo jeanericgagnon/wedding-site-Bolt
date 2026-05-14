@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
-import { Archive, CalendarDays, Camera, ClipboardList, Gift, HeartHandshake, Plane, Sparkles } from 'lucide-react';
+import { Archive, Bell, CalendarDays, Camera, ClipboardList, Gift, HeartHandshake, Plane, Sparkles } from 'lucide-react';
 import { copyTextOrDownload, downloadTextFile } from '../lib/copyText';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 import { buildDayOfHubStatusBoard, buildDayOfWebModeReadiness, type DayOfWebActionId } from '../lib/dayOfWebModeReadiness';
@@ -194,6 +194,7 @@ const defaultSettings: HubSettings = {
 const actionIcons: Record<GuestHubActionId, React.ComponentType<{ className?: string }>> = {
   rsvp: ClipboardList,
   contact: ClipboardList,
+  updates: Bell,
   schedule: CalendarDays,
   travel: Plane,
   registry: Gift,
@@ -247,11 +248,26 @@ export const EventHub: React.FC = () => {
     if (!slug || !guestIdentity.guestInviteToken) return null;
     return `/guest-contact/${encodeURIComponent(slug)}`;
   }, [guestIdentity.guestInviteToken, slug]);
+  const announcementCard = buildGuestHubAnnouncementCard(announcement);
+  const guestStateCard = buildGuestHubGuestStateCard(guestState);
+  const coordinatorHandoffCard = buildGuestHubCoordinatorHandoffCard(coordinatorHandoff);
+  const linkAccessCard = buildGuestHubLinkAccessCard({
+    hasGuestInviteToken: Boolean(guestIdentity.guestInviteToken),
+    hasInviteToken: Boolean(accessPayload.inviteToken),
+    hasPasswordSession: Boolean(accessPayload.passwordSession),
+    guestName: guestState?.guestName,
+  });
+  const dayOfUpdatesHref = useMemo(() => {
+    if (!slug) return null;
+    if (!announcementCard && !guestStateCard && !coordinatorHandoffCard && !linkAccessCard) return null;
+    return `/event/${encodeURIComponent(slug)}#day-of-updates`;
+  }, [announcementCard, coordinatorHandoffCard, guestStateCard, linkAccessCard, slug]);
 
   const actions = useMemo<HubAction[]>(() => buildGuestHubActions(slug, settings, {
     guestContactHref,
     guestInviteToken: guestIdentity.guestInviteToken,
     guestLanguage: languagePreference.language,
+    dayOfUpdatesHref,
   }).map((action) => ({
     id: action.id,
     title: t(action.titleKey),
@@ -259,7 +275,7 @@ export const EventHub: React.FC = () => {
     href: action.href,
     icon: actionIcons[action.id],
     primary: action.primary,
-  })), [guestContactHref, guestIdentity.guestInviteToken, languagePreference.language, settings, slug, t]);
+  })), [dayOfUpdatesHref, guestContactHref, guestIdentity.guestInviteToken, languagePreference.language, settings, slug, t]);
 
   useEffect(() => {
     if (typeof navigator === 'undefined') return;
@@ -506,15 +522,6 @@ export const EventHub: React.FC = () => {
   const dayOfActionIds = actions.map((action) => action.id).filter((id): id is DayOfWebActionId => (
     id === 'rsvp' || id === 'schedule' || id === 'travel' || id === 'registry' || id === 'photos' || id === 'guestbook' || id === 'recap'
   ));
-  const announcementCard = buildGuestHubAnnouncementCard(announcement);
-  const guestStateCard = buildGuestHubGuestStateCard(guestState);
-  const coordinatorHandoffCard = buildGuestHubCoordinatorHandoffCard(coordinatorHandoff);
-  const linkAccessCard = buildGuestHubLinkAccessCard({
-    hasGuestInviteToken: Boolean(guestIdentity.guestInviteToken),
-    hasInviteToken: Boolean(accessPayload.inviteToken),
-    hasPasswordSession: Boolean(accessPayload.passwordSession),
-    guestName: guestState?.guestName,
-  });
   const dayOfHubStatusBoard = buildDayOfHubStatusBoard({
     enabledActionIds: dayOfActionIds,
     hasPoorNetworkFallback: true,

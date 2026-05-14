@@ -54,6 +54,8 @@
     "qr_target": "Wedding link",
     "action_rsvp": "RSVP",
     "action_rsvp_detail": "Find your invitation and reply for the wedding events.",
+    "action_updates": "Latest update",
+    "action_updates_detail": "Jump to the newest day-of update, guest status, and access notes from the same hub.",
     "action_contact": "Update your details",
     "action_contact_detail": "Check your guest details, update contact info, and fix mailing or RSVP details from the same guest path.",
     "action_schedule": "Schedule",

@@ -1,7 +1,7 @@
 import { appendGuestInviteTokenToInternalHref } from './publicAccessArtifacts';
 import { appendGuestLanguageToInternalHref } from './guestLanguagePreference';
 
-export type GuestHubActionId = 'rsvp' | 'schedule' | 'travel' | 'registry' | 'photos' | 'guestbook' | 'vault' | 'recap' | 'contact';
+export type GuestHubActionId = 'rsvp' | 'updates' | 'schedule' | 'travel' | 'registry' | 'photos' | 'guestbook' | 'vault' | 'recap' | 'contact';
 
 export interface GuestHubActionSettings {
   rsvp_enabled?: boolean | null;
@@ -16,6 +16,7 @@ export interface GuestHubActionOptions {
   guestContactHref?: string | null;
   guestInviteToken?: string | null;
   guestLanguage?: string | null;
+  dayOfUpdatesHref?: string | null;
 }
 
 export interface GuestHubAction {
@@ -32,6 +33,7 @@ export function buildGuestHubActions(slug: string, settings: GuestHubActionSetti
   const encodedSlug = encodeURIComponent(slug);
   const guestInviteToken = options.guestInviteToken?.trim() || null;
   const guestLanguage = options.guestLanguage?.trim() || null;
+  const dayOfUpdatesHref = options.dayOfUpdatesHref?.trim() || null;
   const withGuestContext = (href: string) => appendGuestLanguageToInternalHref(
     appendGuestInviteTokenToInternalHref(href, guestInviteToken),
     guestLanguage,
@@ -113,6 +115,15 @@ export function buildGuestHubActions(slug: string, settings: GuestHubActionSetti
     });
   }
 
+  if (dayOfUpdatesHref) {
+    actions.splice(1, 0, {
+      id: 'updates',
+      titleKey: 'guest_hub.action_updates',
+      detailKey: 'guest_hub.action_updates_detail',
+      href: withGuestContext(dayOfUpdatesHref),
+    });
+  }
+
   return actions.filter((action) => {
     if (action.id === 'rsvp') return isEnabled(settings.rsvp_enabled);
     if (action.id === 'schedule') return isEnabled(settings.schedule_enabled);
@@ -128,6 +139,7 @@ export function buildGuestHubActions(slug: string, settings: GuestHubActionSetti
 export function summarizeGuestHubActions(actions: Pick<GuestHubAction, 'id'>[]): string {
   const labels: Record<GuestHubActionId, string> = {
     rsvp: 'RSVP',
+    updates: 'day-of updates',
     schedule: 'schedule',
     travel: 'travel',
     registry: 'registry',

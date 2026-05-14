@@ -325,12 +325,13 @@ Execution rule for this section:
    - this batch shipped: the guest hub action model now supports a guest-specific update path that can ride the same private guest identity captured from the link instead of falling back to only public hub actions
    - this batch shipped: guest-specific QR/hub flows now preserve private guest identity across the next-step guest routes instead of only into the first contact-update page
    - this batch shipped: the guest hub action model now includes the anniversary-vault guest path when a private guest invite path exists, so the shared QR/hub surface covers another real private guest workflow without exposing it in the generic public hub
+   - this batch shipped: the shared guest hub now includes a direct `Latest update` action when day-of cards are present, and that deep link preserves private guest invite + language context all the way into the in-hub day-of update/status/access section instead of forcing guests to hunt for the current update after scanning or opening a private QR path
    - this batch shipped: owner guest drawers now expose rotate/revoke controls for private RSVP access, so private guest QR/link sharing is no longer effectively permanent once created
    - this batch shipped: a dedicated `proof:v1:guest-hub-qr` lane now reruns safe public QR asset generation, dashboard print-card readiness, and a browser-triggered export capture that verifies the saved guest-hub print pack is nonblank HTML with safe public QR payloads and no private token leakage
+   - this batch shipped: the guest-hub QR proof lane now also guards the shared guest-hub action model and the EventHub live-content route anchor for the `Latest update` deep link, so day-of routing cannot silently drift out of the QR hub model
    - this batch shipped: private RSVP and guest-update QR panels now save owner-controlled printable HTML cards that keep raw token URLs out of normal visible copy while still rendering the local private QR artifact
    - this batch shipped: the guest-hub QR proof lane now has a real authenticated live export spec for the shipped owner runtime instead of relying on the localhost-only demo-auth dashboard harness for production evidence
    - 2026-05-14 authenticated production rerun on `https://dayof.love` passed for the owner photos dashboard print-pack export, confirming the shipped owner runtime saves a nonblank token-safe guest-hub QR HTML pack on the real site
-   - finish day-of update deep links and any remaining private guest-surface routing in the shared hub model
    - add live production mobile proof that public and guest-specific QR modes land on the right actions without private leakage
 
 3. `ACTIVE`: status-based messaging and invitation tracking

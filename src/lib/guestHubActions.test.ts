@@ -34,6 +34,19 @@ describe('guestHubActions', () => {
     });
   });
 
+  it('adds a day-of updates action when the shared hub exposes an updates section', () => {
+    const actions = buildGuestHubActions('maya-and-leo', {}, {
+      dayOfUpdatesHref: '/event/maya-and-leo#day-of-updates',
+      guestInviteToken: 'guest-token-123',
+      guestLanguage: 'fr-CA',
+    });
+
+    expect(actions.map((action) => action.id)).toContain('updates');
+    expect(actions.find((action) => action.id === 'updates')).toMatchObject({
+      href: '/event/maya-and-leo?invite_token=guest-token-123&guestLang=fr#day-of-updates',
+    });
+  });
+
   it('carries guest-specific identity through private guest-path actions and same-site anchors', () => {
     const actions = buildGuestHubActions('maya-and-leo', {}, {
       guestContactHref: '/guest-contact/maya-and-leo',
@@ -76,6 +89,7 @@ describe('guestHubActions', () => {
 
   it('summarizes enabled actions for owner QR confidence copy', () => {
     expect(summarizeGuestHubActions(buildGuestHubActions('maya-and-leo', { photos_enabled: false }).slice(0, 3))).toBe('RSVP, schedule, and travel');
+    expect(summarizeGuestHubActions([{ id: 'updates' }])).toBe('day-of updates');
     expect(summarizeGuestHubActions(buildGuestHubActions('maya-and-leo', {}, { guestContactHref: '/guest-contact/maya-and-leo' }).slice(0, 2))).toBe('RSVP and guest update');
     expect(summarizeGuestHubActions([{ id: 'vault' }])).toBe('anniversary vault');
     expect(summarizeGuestHubActions([])).toBe('No guest actions are enabled yet');

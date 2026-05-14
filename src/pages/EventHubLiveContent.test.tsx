@@ -22,6 +22,13 @@ describe('EventHubLiveContent', () => {
           onRetryConfig={() => {}}
           actions={[
             {
+              id: 'updates',
+              title: 'Latest update',
+              description: 'Jump to the latest day-of guidance.',
+              href: '/event/alex-jordan-demo#day-of-updates',
+              icon: Camera,
+            },
+            {
               id: 'photos',
               title: 'Upload photos',
               description: 'Share the weekend',
@@ -97,7 +104,7 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Riverfront House')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Directions · Sunset Gardens Estate/i })).toHaveAttribute('href', 'https://maps.google.com/?q=Sunset%20Gardens%20Estate%20100%20Harbor%20Road%2C%20Sausalito%2C%20CA');
     expect(screen.getByText('Travel plan copied.')).toBeInTheDocument();
-    expect(screen.getByText('Latest update')).toBeInTheDocument();
+    expect(screen.getAllByText('Latest update')).toHaveLength(2);
     expect(screen.getByText('Ceremony doors open')).toBeInTheDocument();
     expect(screen.getByText('Your day-of status')).toBeInTheDocument();
     expect(screen.getByText('Alex Rivera')).toBeInTheDocument();
@@ -106,6 +113,7 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Link access')).toBeInTheDocument();
     expect(screen.getByText('Private guest link')).toBeInTheDocument();
     expect(screen.getByText('Guest-specific access is active for this link.')).toBeInTheDocument();
+    expect(document.getElementById('day-of-updates')).not.toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy travel plan' }));
     expect(onCopyTravelPlan).toHaveBeenCalledTimes(1);
@@ -115,6 +123,9 @@ describe('EventHubLiveContent', () => {
 
     fireEvent.click(screen.getByRole('link', { name: 'Open travel page' }));
     expect(onTrackClick).toHaveBeenCalledWith('/site/alex-jordan-demo#travel');
+
+    fireEvent.click(screen.getByRole('link', { name: /Latest update/i }));
+    expect(onTrackClick).toHaveBeenCalledWith('/event/alex-jordan-demo#day-of-updates');
 
     fireEvent.click(screen.getByRole('link', { name: /Directions · Sunset Gardens Estate/i }));
     expect(onTrackClick).toHaveBeenCalledWith('https://maps.google.com/?q=Sunset%20Gardens%20Estate%20100%20Harbor%20Road%2C%20Sausalito%2C%20CA');

@@ -70,7 +70,7 @@ const results = [
   runStep({
     id: 'guest-hub-qr-unit-tests',
     label: 'Guest hub QR asset and dashboard tests',
-    command: 'npm test -- --run src/lib/guestHubQrAssets.test.ts src/components/ui/ShareQrPanel.test.tsx src/pages/dashboard/guestPhotos/GuestPhotoHubQrCard.test.tsx',
+    command: 'npm test -- --run src/lib/guestHubQrAssets.test.ts src/lib/guestHubActions.test.ts src/components/ui/ShareQrPanel.test.tsx src/pages/dashboard/guestPhotos/GuestPhotoHubQrCard.test.tsx src/pages/EventHubLiveContent.test.tsx src/pages/EventHub.test.tsx',
   }),
   runStep({
     id: 'build',
@@ -150,7 +150,7 @@ const output = {
   },
   automatedCoverage: [
     'Safe public guest-hub QR asset generation and private QR vendor blocking truth',
-    'Dashboard guest-hub QR controls and print-pack export readiness',
+    'Dashboard guest-hub QR controls, guest-hub action routing, and print-pack export readiness',
     isLiveBaseUrl
       ? 'Authenticated live browser proof for guest-hub print-pack export with captured nonblank safe HTML output'
       : 'Browser-triggered guest-hub print-pack export with captured nonblank safe HTML output',

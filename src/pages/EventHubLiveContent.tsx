@@ -240,7 +240,7 @@ export function EventHubLiveContent({
               </div>
 
               {(announcementCard || guestStateCard || coordinatorHandoffCard || linkAccessCard) && (
-                <div className="mt-8 grid gap-3 lg:grid-cols-2 2xl:grid-cols-4">
+                <div id="day-of-updates" className="mt-8 scroll-mt-24 grid gap-3 lg:grid-cols-2 2xl:grid-cols-4">
                   {announcementCard && (
                     <div className="rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
                       <div className="flex items-start justify-between gap-3">

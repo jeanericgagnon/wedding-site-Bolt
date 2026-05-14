@@ -54,6 +54,8 @@
     "qr_target": "Enlace de la boda",
     "action_rsvp": "Confirmar asistencia",
     "action_rsvp_detail": "Encuentra tu invitación y responde para los eventos de la boda.",
+    "action_updates": "Última actualización",
+    "action_updates_detail": "Ve directo a la actualización más reciente del día, tu estado como invitado y las notas de acceso desde este mismo hub.",
     "action_contact": "Actualiza tus datos",
     "action_contact_detail": "Revisa tus datos de invitado, actualiza contacto y corrige dirección o RSVP desde el mismo acceso privado.",
     "action_schedule": "Programa",
