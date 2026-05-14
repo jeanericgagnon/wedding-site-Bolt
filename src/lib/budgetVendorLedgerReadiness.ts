@@ -319,13 +319,20 @@ export function budgetVendorLedgerToCsv(input: {
 }): string {
   const vendorMap = new Map(input.vendors.map((vendor) => [vendor.id, vendor]));
   const vendorMeta = input.vendorMeta ?? {};
+  const reconciliation = buildBudgetVendorReconciliation({
+    budgetItems: input.budgetItems,
+    vendors: input.vendors,
+    vendorMeta,
+  });
+  const reconciliationMap = new Map(reconciliation.rows.map((row) => [row.vendorId, row]));
   const rows = [
-    ['Record Type', 'Name', 'Category or Type', 'Vendor', 'Estimated', 'Actual or Contract', 'Paid', 'Open', 'Due Date', 'Contact', 'Contact Name', 'Website', 'Reminder Channel', 'Follow Up', 'Reminder Lead Time', 'Reminder Last Queued', 'Document Label', 'Document URL', 'Files', 'Milestones', 'Internal Rating', 'Rating Status', 'Private Rating Notes', 'Notes'],
+    ['Record Type', 'Name', 'Category or Type', 'Vendor', 'Estimated', 'Actual or Contract', 'Paid', 'Open', 'Due Date', 'Contact', 'Contact Name', 'Website', 'Reminder Channel', 'Follow Up', 'Reminder Lead Time', 'Reminder Last Queued', 'Document Label', 'Document URL', 'Files', 'Milestones', 'Internal Rating', 'Rating Status', 'Private Rating Notes', 'Contact Ready', 'Due Date Ready', 'File Count', 'Milestone Count', 'Ledger Issue Count', 'Ledger Issues', 'Notes'],
     ...input.budgetItems.map((item) => {
       const total = money(item.actual_amount) || money(item.estimated_amount);
       const paid = money(item.paid_amount);
       const vendor = item.vendor_id ? vendorMap.get(item.vendor_id) : undefined;
       const meta = item.vendor_id ? vendorMeta[item.vendor_id] : undefined;
+      const reconciliationRow = item.vendor_id ? reconciliationMap.get(item.vendor_id) : undefined;
       return [
         'Budget item',
         item.item_name,
@@ -350,6 +357,12 @@ export function budgetVendorLedgerToCsv(input: {
         vendor?.internal_rating != null ? String(vendor.internal_rating) : '',
         vendor?.rating_status ?? '',
         vendor?.rating_notes ?? '',
+        vendor ? (vendor.email || vendor.phone ? 'Yes' : 'No') : '',
+        vendor ? ((reconciliationRow ? reconciliationRow.issues.includes('Open balance has no saved due date') : false) ? 'No' : 'Yes') : '',
+        reconciliationRow ? String(reconciliationRow.fileCount) : '',
+        reconciliationRow ? String(reconciliationRow.milestoneCount) : '',
+        reconciliationRow ? String(reconciliationRow.issueCount) : '',
+        reconciliationRow ? reconciliationRow.issues.join(' | ') : '',
         item.notes ?? '',
       ];
     }),
@@ -358,6 +371,7 @@ export function budgetVendorLedgerToCsv(input: {
       const paid = money(vendor.amount_paid);
       const open = vendor.balance_due != null ? money(vendor.balance_due) : Math.max(0, total - paid);
       const meta = vendorMeta[vendor.id];
+      const reconciliationRow = reconciliationMap.get(vendor.id);
       return [
         'Vendor',
         vendor.name,
@@ -382,6 +396,12 @@ export function budgetVendorLedgerToCsv(input: {
         vendor.internal_rating != null ? String(vendor.internal_rating) : '',
         vendor.rating_status ?? '',
         vendor.rating_notes ?? '',
+        vendor.email || vendor.phone ? 'Yes' : 'No',
+        reconciliationRow?.issues.includes('Open balance has no saved due date') ? 'No' : 'Yes',
+        reconciliationRow ? String(reconciliationRow.fileCount) : '',
+        reconciliationRow ? String(reconciliationRow.milestoneCount) : '',
+        reconciliationRow ? String(reconciliationRow.issueCount) : '',
+        reconciliationRow ? reconciliationRow.issues.join(' | ') : '',
         vendor.notes ?? '',
       ];
     }),

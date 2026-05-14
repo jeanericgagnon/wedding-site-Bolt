@@ -133,7 +133,8 @@ describe('budget vendor ledger readiness', () => {
 
     expect(csv).toContain('"Record Type","Name","Category or Type","Vendor"');
     expect(csv).toContain('"Reminder Channel","Follow Up","Reminder Lead Time","Reminder Last Queued"');
-    expect(csv).toContain('"Internal Rating","Rating Status","Private Rating Notes","Notes"');
+    expect(csv).toContain('"Internal Rating","Rating Status","Private Rating Notes","Contact Ready","Due Date Ready","File Count","Milestone Count","Ledger Issue Count","Ledger Issues","Notes"');
+    expect(csv).toContain('"Contact Ready","Due Date Ready","File Count","Milestone Count","Ledger Issue Count","Ledger Issues"');
     expect(csv).toContain('"Contact Name","Website"');
     expect(csv).toContain('"Document Label","Document URL"');
     expect(csv).toContain('"Budget item","Photo deposit","Photography","Photo Studio"');
@@ -144,7 +145,49 @@ describe('budget vendor ledger readiness', () => {
     expect(csv).toContain('"Signed proposal","https://docs.example.com/photo"');
     expect(csv).toContain('"contract: Signed contract"');
     expect(csv).toContain('"Final balance (scheduled, 2026-05-20, $2,500)"');
-    expect(csv).toContain('"5","Booked","Strong fit","Booked"');
+    expect(csv).toContain('"5","Booked","Strong fit","Yes","Yes","1","1","0","","Booked"');
+  });
+
+  it('exports reconciliation blockers alongside vendor and budget handoff rows', () => {
+    const csv = budgetVendorLedgerToCsv({
+      vendors: [
+        {
+          id: 'vendor-1',
+          name: 'Bloom Floral',
+          vendor_type: 'Florist',
+          contract_total: 3000,
+          amount_paid: 1000,
+          balance_due: 2000,
+          notes: 'Need revised install timing',
+        },
+      ],
+      budgetItems: [
+        {
+          id: 'budget-1',
+          category: 'Florals',
+          item_name: 'Floral balance',
+          estimated_amount: 2500,
+          actual_amount: 2500,
+          paid_amount: 500,
+          due_date: '2026-05-20',
+          vendor_id: 'vendor-1',
+          notes: 'Short by final contract amount',
+        },
+      ],
+      vendorMeta: {
+        'vendor-1': {},
+      },
+    });
+
+    expect(csv).toContain('"Budget item","Floral balance","Florals","Bloom Floral"');
+    expect(csv).toContain('"Vendor","Bloom Floral","Florist","Bloom Floral"');
+    expect(csv).toContain('"No","No","0","0","6"');
+    expect(csv).toContain('Contract differs from linked budget by $500');
+    expect(csv).toContain('Paid totals differ by $500');
+    expect(csv).toContain('Open balance has no saved email or phone');
+    expect(csv).toContain('Open balance has no saved due date');
+    expect(csv).toContain('No contract or invoice files saved');
+    expect(csv).toContain('No payment milestones saved');
   });
 
   it('builds a planner payment review without guest-facing financial exposure', () => {
