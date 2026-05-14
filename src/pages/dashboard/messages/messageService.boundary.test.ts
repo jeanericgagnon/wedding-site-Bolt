@@ -73,6 +73,9 @@ describe('message service query bounds', () => {
     expect(source).toContain('.limit(MAX_DASHBOARD_MESSAGES);');
     expect(source).toContain('.limit(MAX_MESSAGE_GUESTS);');
     expect(source).toContain('.limit(MAX_SMS_CREDIT_TRANSACTIONS);');
+    expect(source).toContain(".from('rsvps')");
+    expect(source).toContain(".select('guest_id, meal_choice')");
+    expect(source).toContain('mergeGuestsWithCanonicalMealChoices');
   });
 
   it('routes dashboard message writes through RPCs', () => {

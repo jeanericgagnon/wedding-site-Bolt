@@ -249,7 +249,7 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
           <p className="text-2xl font-bold text-text-primary">
             {messages.filter((message) => message.status === 'sent' || message.status === 'queued' || message.status === 'sending').length}
           </p>
-          <p className="text-sm text-text-secondary">Sent or ready</p>
+          <p className="text-sm text-text-secondary">Delivered, queued, or sending</p>
         </div>
       </div>
       <div className="flex items-center gap-3">
@@ -1049,7 +1049,7 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
         {
           label: 'Sent successfully',
           value: providerTelemetry.sent,
-          detail: 'Guest messages marked as sent',
+          detail: 'Delivery rows marked sent',
         },
         {
           label: 'Needs attention',

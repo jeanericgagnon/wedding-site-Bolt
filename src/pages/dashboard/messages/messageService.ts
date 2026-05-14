@@ -1,4 +1,5 @@
 import { resolveActiveSiteForUser, type ActiveSiteSummary } from '../../../lib/activeSite';
+import { mergeGuestsWithCanonicalMealChoices } from '../../../lib/messageGuestMealChoices';
 import { supabase } from '../../../lib/supabase';
 import { safeMessagesError } from './messageDashboardUtils';
 import type {
@@ -211,7 +212,18 @@ export async function loadMessageGuests(weddingSiteId: string): Promise<Guest[]>
     .limit(MAX_MESSAGE_GUESTS);
 
   if (error) throw error;
-  return (data ?? []) as unknown as Guest[];
+  const guests = (data ?? []) as unknown as Guest[];
+  if (guests.length === 0) return guests;
+
+  const guestIds = guests.map((guest) => guest.id).filter(Boolean).slice(0, MAX_MESSAGE_GUESTS);
+  const { data: rsvps, error: rsvpError } = await supabase
+    .from('rsvps')
+    .select('guest_id, meal_choice')
+    .in('guest_id', guestIds)
+    .limit(MAX_MESSAGE_GUESTS);
+
+  if (rsvpError) throw rsvpError;
+  return mergeGuestsWithCanonicalMealChoices(guests, (rsvps ?? []) as Array<{ guest_id?: unknown; meal_choice?: unknown }>);
 }
 
 export async function loadMessageDeliveries(messageIds: string[]): Promise<DeliveryRow[]> {
