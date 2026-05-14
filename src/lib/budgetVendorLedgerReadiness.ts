@@ -326,7 +326,7 @@ export function budgetVendorLedgerToCsv(input: {
   });
   const reconciliationMap = new Map(reconciliation.rows.map((row) => [row.vendorId, row]));
   const rows = [
-    ['Record Type', 'Name', 'Category or Type', 'Vendor', 'Estimated', 'Actual or Contract', 'Paid', 'Open', 'Due Date', 'Contact', 'Contact Name', 'Website', 'Reminder Channel', 'Follow Up', 'Reminder Lead Time', 'Reminder Last Queued', 'Document Label', 'Document URL', 'Files', 'Milestones', 'Internal Rating', 'Rating Status', 'Private Rating Notes', 'Contact Ready', 'Due Date Ready', 'File Count', 'Milestone Count', 'Ledger Issue Count', 'Ledger Issues', 'Notes'],
+    ['Record Type', 'Name', 'Category or Type', 'Vendor', 'Estimated', 'Actual or Contract', 'Paid', 'Open', 'Due Date', 'Contact', 'Contact Name', 'Website', 'Reminder Channel', 'Follow Up', 'Reminder Lead Time', 'Reminder Last Queued', 'Document Label', 'Document URL', 'Files', 'Milestones', 'Internal Rating', 'Rating Status', 'Private Rating Notes', 'Contact Ready', 'Due Date Ready', 'File Count', 'Milestone Count', 'Contract Gap', 'Paid Gap', 'Ledger Issue Count', 'Ledger Issues', 'Notes'],
     ...input.budgetItems.map((item) => {
       const total = money(item.actual_amount) || money(item.estimated_amount);
       const paid = money(item.paid_amount);
@@ -361,6 +361,8 @@ export function budgetVendorLedgerToCsv(input: {
         vendor ? ((reconciliationRow ? reconciliationRow.issues.includes('Open balance has no saved due date') : false) ? 'No' : 'Yes') : '',
         reconciliationRow ? String(reconciliationRow.fileCount) : '',
         reconciliationRow ? String(reconciliationRow.milestoneCount) : '',
+        reconciliationRow ? String(reconciliationRow.contractGap) : '',
+        reconciliationRow ? String(reconciliationRow.paidGap) : '',
         reconciliationRow ? String(reconciliationRow.issueCount) : '',
         reconciliationRow ? reconciliationRow.issues.join(' | ') : '',
         item.notes ?? '',
@@ -400,6 +402,8 @@ export function budgetVendorLedgerToCsv(input: {
         reconciliationRow?.issues.includes('Open balance has no saved due date') ? 'No' : 'Yes',
         reconciliationRow ? String(reconciliationRow.fileCount) : '',
         reconciliationRow ? String(reconciliationRow.milestoneCount) : '',
+        reconciliationRow ? String(reconciliationRow.contractGap) : '',
+        reconciliationRow ? String(reconciliationRow.paidGap) : '',
         reconciliationRow ? String(reconciliationRow.issueCount) : '',
         reconciliationRow ? reconciliationRow.issues.join(' | ') : '',
         vendor.notes ?? '',
