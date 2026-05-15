@@ -438,7 +438,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
           )}
         </div>
 
-        {(message.delivered_count != null || message.failed_count != null) && (
+        {(recipientCount > 0 || message.delivered_count != null || message.failed_count != null) && (
           <div className="px-6 py-3 border-t border-border flex-shrink-0 bg-surface-subtle">
             <div className="flex flex-wrap gap-6 text-sm">
               <span className="flex items-center gap-1.5 text-success">
