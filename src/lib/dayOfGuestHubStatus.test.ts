@@ -59,11 +59,11 @@ describe('dayOfGuestHubStatus', () => {
     });
 
     expect(card).toMatchObject({
-      title: 'Private guest link',
+      title: 'Guest-specific link',
       badgeLabel: 'Guest-specific',
       summary: 'Guest-specific access is active for this link, including RSVP and check-in readback.',
       actionCountLabel: '4 guest actions are ready from this link.',
-      actionSummaryLabel: 'RSVP, day-of updates, travel, and photo upload',
+      actionSummaryLabel: 'RSVP, latest updates, travel details, and photo upload',
       readyCoreActionCountLabel: '3 of 4 core day-of actions are already ready from this link.',
       coreActionCoverageLabel: '75% core day-of coverage is ready from this link (3 of 4).',
       coreActionSummaryLabel: '1 of 4 core day-of actions is still missing from this link: schedule.',
@@ -101,7 +101,7 @@ describe('dayOfGuestHubStatus', () => {
     });
 
     expect(card).toMatchObject({
-      title: 'Private guest link',
+      title: 'Guest-specific link',
       badgeLabel: 'Guest-specific',
       actionCountLabel: '4 guest actions are ready from this link.',
       actionSummaryLabel: 'RSVP, schedule, travel, and photo upload',

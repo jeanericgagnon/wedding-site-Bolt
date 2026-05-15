@@ -41,7 +41,7 @@ describe('guestHubOfflineSnapshot', () => {
         leadName: 'Morgan',
       },
       linkAccess: {
-        title: 'Private guest link',
+        title: 'Guest-specific link',
         badgeLabel: 'Guest-specific',
         detail: 'This link includes invite-only event details plus RSVP and check-in readback for Alex.',
         summary: 'Guest-specific access is active for this link.',
@@ -57,7 +57,7 @@ describe('guestHubOfflineSnapshot', () => {
       settings: expect.objectContaining({ photos_enabled: true }),
       siteSummary: expect.objectContaining({ slug: 'maya-and-leo' }),
       guestState: expect.objectContaining({ guestName: 'Alex' }),
-      linkAccess: expect.objectContaining({ title: 'Private guest link' }),
+      linkAccess: expect.objectContaining({ title: 'Guest-specific link' }),
     });
   });
 

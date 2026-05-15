@@ -199,7 +199,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
     : null;
   if (input.hasGuestInviteToken) {
     return {
-      title: 'Private guest link',
+      title: 'Guest-specific link',
       badgeLabel: 'Guest-specific',
       detail: `This link includes invite-only event details plus RSVP and check-in readback for ${guestLabel}.`,
       summary: 'Guest-specific access is active for this link, including RSVP and check-in readback.',
