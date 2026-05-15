@@ -81,6 +81,16 @@ function summarizeDayOfActions(actionIds: DayOfWebActionId[]): string {
   return `${labels.slice(0, -1).join(', ')}, and ${labels[labels.length - 1]}`;
 }
 
+function buildCoreCoverageSummary(readyCount: number, totalCount: number): string {
+  if (readyCount === totalCount) {
+    return `Core link coverage: 100% ready (${readyCount} of ${totalCount}).`;
+  }
+
+  const rate = Math.round((readyCount / totalCount) * 100);
+  const missingCount = totalCount - readyCount;
+  return `Core link coverage: ${rate}% ready (${readyCount} of ${totalCount}; ${missingCount} still missing).`;
+}
+
 export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebModeReadiness {
   const enabled = new Set(input.enabledActionIds);
   const visibleActions = input.enabledActionIds.map((id) => actionLabels[id]).filter(Boolean);
@@ -248,9 +258,7 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
     ?? items.find((item) => item.state === 'planned')
     ?? null;
   const coreCoverageSummary = input.privateEventVisibilityConnected
-    ? readyCoreActionIds.length === coreDayOfActionIds.length
-      ? 'Core link coverage: 100% ready.'
-      : `Core link coverage: ${coreCoverageRate}% ready.`
+    ? buildCoreCoverageSummary(readyCoreActionIds.length, coreDayOfActionIds.length)
     : null;
 
   return {

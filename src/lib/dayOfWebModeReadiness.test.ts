@@ -84,7 +84,7 @@ describe('day-of web mode readiness', () => {
     expect(board.status).toBe('ready');
     expect(board.readyCount).toBe(6);
     expect(board.plannedCount).toBe(0);
-    expect(board.summary).toBe('Guest hub status is connected for live day-of use. Core link coverage: 100% ready.');
+    expect(board.summary).toBe('Guest hub status is connected for live day-of use. Core link coverage: 100% ready (4 of 4).');
     expect(board.items.find((item) => item.id === 'link-access')?.detail).toBe(
       'Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are unlocked from it: RSVP, Schedule, Directions and travel, and Photo upload. Core day-of coverage from this link is 100% ready: RSVP, Schedule, Directions and travel, and Photo upload.'
     );
@@ -97,7 +97,7 @@ describe('day-of web mode readiness', () => {
       privateEventVisibilityConnected: true,
     });
 
-    expect(board.summary).toBe('1 day-of status item is usable now; 5 stay planned or need setup. Core link coverage: 50% ready. First blocker: Announcements.');
+    expect(board.summary).toBe('1 day-of status item is usable now; 5 stay planned or need setup. Core link coverage: 50% ready (2 of 4; 2 still missing). First blocker: Announcements.');
     expect(board.items.find((item) => item.id === 'link-access')?.detail).toBe(
       'Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are unlocked from it: RSVP and Directions and travel. Core day-of coverage from this link is 50% ready (2 of 4). Main gap: Schedule. Still missing: Schedule, Photo upload.'
     );
