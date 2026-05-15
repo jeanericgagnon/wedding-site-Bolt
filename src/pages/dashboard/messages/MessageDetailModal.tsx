@@ -94,7 +94,8 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
     deliveredRecipients
     + Math.max(0, Number(message.failed_count ?? 0))
     + skippedCount
-    + unreachedCount,
+    + unreachedCount
+    + recipientCount,
     0,
   );
   const deliveredCoverageRate = targetedRecipients > 0 ? Math.round((deliveredRecipients / targetedRecipients) * 100) : null;
@@ -202,7 +203,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
             </div>
           </div>
 
-          {(recipientReviewPlan || (message.delivered_count ?? 0) > 0 || (message.failed_count ?? 0) > 0 || skippedCount > 0 || unreachedCount > 0) && (
+          {(recipientCount > 0 || recipientReviewPlan || (message.delivered_count ?? 0) > 0 || (message.failed_count ?? 0) > 0 || skippedCount > 0 || unreachedCount > 0) && (
             <div className="rounded-lg border border-primary/20 bg-primary-light/30 p-4">
               <p className="text-sm font-semibold text-text-primary">Next-send review plan</p>
               {recipientReviewPlan && (
@@ -212,12 +213,8 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
                   {deliveredRecipients > 0 ? `${deliveredRecipients} recipients delivered` : '0 recipients delivered'}
                 </span>
-                {targetedRecipients > 0 && (
-                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{targetedRecipients} targeted recipients</span>
-                )}
-                {targetedRecipients > 0 && (
-                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Targeted {targetedRecipients}</span>
-                )}
+                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{targetedRecipients} targeted recipients</span>
+                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Targeted {targetedRecipients}</span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Delivered {message.delivered_count ?? 0}</span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs review {message.failed_count ?? 0}</span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs contact {skippedCount}</span>

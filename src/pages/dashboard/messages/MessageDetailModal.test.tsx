@@ -255,6 +255,14 @@ describe('MessageDetailModal', () => {
 
     expect(screen.getByText('Queued — waiting to start')).toBeInTheDocument();
     expect(screen.queryByText(/^Sent /)).not.toBeInTheDocument();
+    expect(screen.getByText('Next-send review plan')).toBeInTheDocument();
+    expect(screen.getByText('4 targeted recipients')).toBeInTheDocument();
+    expect(screen.getByText('Targeted 4')).toBeInTheDocument();
+    expect(screen.getByText('0% delivered coverage · 0% review coverage · 0% needs contact · 0% unreached')).toBeInTheDocument();
+    expect(screen.getByText('0% cleanup still pending')).toBeInTheDocument();
+    expect(screen.getByText('100% follow-through ready')).toBeInTheDocument();
+    expect(screen.getByText('4 recipients already closed out')).toBeInTheDocument();
+    expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
 
     rerender(
       <MessageDetailModal

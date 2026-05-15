@@ -1625,7 +1625,8 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                   deliveredRecipients
                   + failedRecipients
                   + skippedRecipients
-                  + unreachedRecipients,
+                  + unreachedRecipients
+                  + getRecipientCount(activeCampaignLatestMessage),
                   0,
                 );
                 const deliveredRate = targetedRecipients > 0 ? Math.round((deliveredRecipients / targetedRecipients) * 100) : null;
@@ -1662,16 +1663,16 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                     <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">
                       {deliveredRecipients > 0 ? `${deliveredRecipients} recipients delivered` : '0 recipients delivered'}
                     </span>
-                    {targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{targetedRecipients} targeted recipients</span>}
-                    {targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Targeted {targetedRecipients}</span>}
-                    {deliveredRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{deliveredRate}% delivered coverage</span>}
-                    {reviewRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{reviewRate}% review coverage</span>}
-                    {skippedRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{skippedRate}% needs contact</span>}
-                    {unreachedRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{unreachedRate}% unreached</span>}
-                    {cleanupRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupRate}% cleanup still pending</span>}
-                    {cleanupRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{Math.max(0, 100 - cleanupRate)}% follow-through ready</span>}
-                    {targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughReadyCount > 0 ? `${followThroughReadyCount} recipients already closed out` : 'No recipients are already closed out'}</span>}
-                    {targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupCount > 0 ? `${cleanupCount} recipients still need cleanup` : 'No recipients still need cleanup'}</span>}
+                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{targetedRecipients} targeted recipients</span>
+                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Targeted {targetedRecipients}</span>
+                    {deliveredRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{deliveredRate}% delivered coverage</span>}
+                    {reviewRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{reviewRate}% review coverage</span>}
+                    {skippedRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{skippedRate}% needs contact</span>}
+                    {unreachedRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{unreachedRate}% unreached</span>}
+                    {cleanupRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupRate}% cleanup still pending</span>}
+                    {cleanupRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{Math.max(0, 100 - cleanupRate)}% follow-through ready</span>}
+                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughReadyCount > 0 ? `${followThroughReadyCount} recipients already closed out` : 'No recipients are already closed out'}</span>
+                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupCount > 0 ? `${cleanupCount} recipients still need cleanup` : 'No recipients still need cleanup'}</span>
                     {followThroughFocusLabel && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughFocusLabel}</span>}
                     {engagement.opened != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Opened {engagement.opened}</span>}
                     {engagement.viewed != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Viewed {engagement.viewed}</span>}
