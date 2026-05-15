@@ -817,6 +817,121 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('No gifts are waiting in the cleanup queue right now.')).toBeInTheDocument();
   });
 
+  it('summarizes cleanup queue severity before listing repair items', () => {
+    render(
+      <RegistryDashboardRouteContent
+        actionableBadImportCount={0}
+        alertCounts={{ stale: 0, priceChanged: 0, outOfStock: 0, imageIssues: 0 }}
+        autoRefreshEnabled
+        autoRefreshing={false}
+        bulkImportBusy={false}
+        bulkReviewCounts={{ repair: 2, duplicates: 0, imageIssues: 1 }}
+        budgetUtilization={0}
+        claimStats={{ claimedItems: 0, claimedQuantity: 0, fullyClaimedItems: 0, partiallyClaimedItems: 0, namedPurchaserItems: 0, missingPurchaserItems: 0, multiQuantityInProgress: 0, remainingQuantity: 0 }}
+        counts={{ total: 3, available: 3, partial: 0, purchased: 0, totalValue: 240 }}
+        duplicateGroups={[]}
+        editItem={null}
+        filter="all"
+        filtered={[makeItem({ id: 'gift-1' }), makeItem({ id: 'gift-2' }), makeItem({ id: 'gift-3' })]}
+        fulfillmentRate={0}
+        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
+        guestVisibilityStats={{ guestReadyItems: 0, guestVisibleItems: 0, visibleAvailableItems: 0, visibleClaimedItems: 0, hiddenPurchasedItems: 0, blockedGuestItems: 0, guestReadyCoverageRate: 0, guestVisibleCoverageRate: 0 }}
+        handleAddNew={vi.fn()}
+        handleAutoRefreshStale={vi.fn(async () => {})}
+        handleBulkImport={vi.fn(async () => {})}
+        handleCopyDuplicateReviewList={vi.fn(async () => {})}
+        handleDelete={vi.fn(async () => {})}
+        handleEdit={vi.fn()}
+        handleMergeDuplicateGroup={vi.fn(async () => {})}
+        handleMarkPurchased={vi.fn(async () => {})}
+        handleResetPurchaseState={vi.fn(async () => {})}
+        handleRefetchMetadata={vi.fn(async () => true)}
+        handleRefreshImageIssues={vi.fn(async () => {})}
+        handleRepairBadImports={vi.fn(async () => {})}
+        handleRunRepairQueueAction={vi.fn(async () => {})}
+        handleSyncRegistryThankYouTasks={vi.fn(async () => {})}
+        handleToggleRegistryThankYouTask={vi.fn(async () => {})}
+        imageRefreshBusy={false}
+        items={[makeItem({ id: 'gift-1' }), makeItem({ id: 'gift-2' }), makeItem({ id: 'gift-3' })]}
+        loading={false}
+        monthlyRefreshCap={100}
+        monthlyRefreshCount={0}
+        mergingDuplicateGroupId={null}
+        nearBudgetCap={false}
+        normalizedItems={[makeItem({ id: 'gift-1' }), makeItem({ id: 'gift-2' }), makeItem({ id: 'gift-3' })]}
+        recentActivity={[]}
+        registryActionsOpen={false}
+        registryActionsRef={{ current: null }}
+        registryInsights={[]}
+        registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}
+        registryThankYouPlan={{ headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] }}
+        registryThankYouStats={{ purchasedCount: 0, completedCount: 0, pendingCount: 0, readyToSendCount: 0, blockedByMissingPurchaserCount: 0, attributionCoverageRate: 0, completionRate: 0 }}
+        registryThankYouBusyItemId={null}
+        registryThankYouSyncing={false}
+        repairingBadImports={false}
+        repairQueue={[
+          {
+            id: 'gift-1-broken-import',
+            item: makeItem({ id: 'gift-1', item_name: 'Dinner plates' }),
+            states: ['broken-import'],
+            severity: 'high',
+            summary: 'Re-import weak product details',
+            detail: 'This gift imported with a broken title or a failed product fetch. Re-import from the source, then review what guests will see.',
+            primaryAction: 'reimport-source',
+            primaryActionLabel: 'Re-import source',
+            secondaryAction: 'review-item',
+            secondaryActionLabel: 'Review item',
+          },
+          {
+            id: 'gift-2-partial-import',
+            item: makeItem({ id: 'gift-2', item_name: 'Cake stand' }),
+            states: ['partial-import', 'proxy-image'],
+            severity: 'medium',
+            summary: 'Upgrade the guest-facing image',
+            detail: 'This gift is still leaning on a fallback preview image. Review it now so guests see a real product photo.',
+            primaryAction: 'review-item',
+            primaryActionLabel: 'Review item',
+            secondaryAction: 'refresh-details',
+            secondaryActionLabel: 'Refresh details',
+          },
+          {
+            id: 'gift-3-stale-details',
+            item: makeItem({ id: 'gift-3', item_name: 'Serving bowls' }),
+            states: ['stale-details'],
+            severity: 'low',
+            summary: 'Refresh stale registry details',
+            detail: 'This gift is due for a freshness check. Refresh it now so price, stock, and merchant details do not drift.',
+            primaryAction: 'refresh-details',
+            primaryActionLabel: 'Refresh details',
+            secondaryAction: 'review-item',
+            secondaryActionLabel: 'Review item',
+          },
+        ]}
+        refreshBudgetRemaining={100}
+        refreshWindowOpen={true}
+        search=""
+        setBulkImportOpen={vi.fn()}
+        setFilter={vi.fn()}
+        setRegistryActionsOpen={vi.fn()}
+        setSearch={vi.fn()}
+        setShowAlertsOnly={vi.fn()}
+        setShowImageIssuesOnly={vi.fn()}
+        showAlertsOnly={false}
+        showImageIssuesOnly={false}
+        topRegistryItems={[makeItem({ id: 'gift-1' })]}
+        weddingSiteId="site-1"
+      />,
+    );
+
+    expect(screen.getByText('Cleanup queue')).toBeInTheDocument();
+    expect(screen.getByText('1 needs attention · 1 review soon · 1 keep fresh.')).toBeInTheDocument();
+    expect(screen.getByText('3 gifts still need stronger detail truth, store repair, or fresher guest-facing media.')).toBeInTheDocument();
+    expect(screen.getByText('3 waiting')).toBeInTheDocument();
+    expect(screen.getByText('Re-import weak product details')).toBeInTheDocument();
+    expect(screen.getByText('Upgrade the guest-facing image')).toBeInTheDocument();
+    expect(screen.getByText('Refresh stale registry details')).toBeInTheDocument();
+  });
+
   it('renders claim-state analytics for attribution and partial gifts', () => {
     render(
       <RegistryDashboardRouteContent

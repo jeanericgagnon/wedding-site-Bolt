@@ -377,6 +377,16 @@ export function RegistryDashboardRouteContent(props: {
   const cleanupQueueSummary = props.repairQueue.length === 0
     ? 'No gifts are waiting in the cleanup queue right now.'
     : `${props.repairQueue.length} gift${props.repairQueue.length === 1 ? '' : 's'} still need stronger detail truth, store repair, or fresher guest-facing media.`;
+  const cleanupHighCount = props.repairQueue.filter((item) => item.severity === 'high').length;
+  const cleanupMediumCount = props.repairQueue.filter((item) => item.severity === 'medium').length;
+  const cleanupLowCount = props.repairQueue.filter((item) => item.severity === 'low').length;
+  const cleanupQueueLeadSummary = props.repairQueue.length === 0
+    ? 'No quick registry cleanup work is waiting right now.'
+    : `${[
+        cleanupHighCount > 0 ? `${cleanupHighCount} needs attention` : null,
+        cleanupMediumCount > 0 ? `${cleanupMediumCount} review soon` : null,
+        cleanupLowCount > 0 ? `${cleanupLowCount} keep fresh` : null,
+      ].filter(Boolean).join(' · ')}.`;
   const cleanupToolsAllClearLabel = props.bulkReviewCounts.repair === 0
     && props.bulkReviewCounts.duplicates === 0
     && props.bulkReviewCounts.imageIssues === 0
@@ -984,7 +994,8 @@ export function RegistryDashboardRouteContent(props: {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-text-primary">Cleanup queue</p>
-                <p className="mt-1 text-xs text-text-secondary">Work through the gifts that still need stronger detail truth, store repair, or fresher guest-facing media.</p>
+                <p className="mt-1 text-sm text-text-secondary">{cleanupQueueLeadSummary}</p>
+                <p className="mt-1 text-xs text-text-tertiary">{cleanupQueueSummary}</p>
               </div>
               <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
                 {props.repairQueue.length} waiting
