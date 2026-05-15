@@ -91,6 +91,11 @@ function buildCoreCoverageSummary(readyCount: number, totalCount: number): strin
   return `Core link coverage: ${rate}% ready (${readyCount} of ${totalCount}; ${missingCount} still missing).`;
 }
 
+function buildUnlockedActionSummary(actionCount: number): string | null {
+  if (actionCount === 0) return null;
+  return `${actionCount} guest action${actionCount === 1 ? ' is' : 's are'} unlocked from this link.`;
+}
+
 export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebModeReadiness {
   const enabled = new Set(input.enabledActionIds);
   const visibleActions = input.enabledActionIds.map((id) => actionLabels[id]).filter(Boolean);
@@ -257,6 +262,9 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
   const firstBlockingItem = items.find((item) => item.state === 'needs-content')
     ?? items.find((item) => item.state === 'planned')
     ?? null;
+  const unlockedActionSummary = input.privateEventVisibilityConnected
+    ? buildUnlockedActionSummary(input.enabledActionIds.length)
+    : null;
   const coreCoverageSummary = input.privateEventVisibilityConnected
     ? buildCoreCoverageSummary(readyCoreActionIds.length, coreDayOfActionIds.length)
     : null;
@@ -264,8 +272,8 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
   return {
     status,
     summary: status === 'ready'
-      ? `Guest hub status is connected for live day-of use.${coreCoverageSummary ? ` ${coreCoverageSummary}` : ''}`
-      : `${readyCount} day-of status item${readyCount === 1 ? '' : 's'} are usable now; ${plannedCount + needsContentCount} stay planned or need setup.${coreCoverageSummary ? ` ${coreCoverageSummary}` : ''}${firstBlockingItem ? ` First blocker: ${firstBlockingItem.label}.` : ''}`,
+      ? `Guest hub status is connected for live day-of use.${unlockedActionSummary ? ` ${unlockedActionSummary}` : ''}${coreCoverageSummary ? ` ${coreCoverageSummary}` : ''}`
+      : `${readyCount} day-of status item${readyCount === 1 ? '' : 's'} are usable now; ${plannedCount + needsContentCount} stay planned or need setup.${unlockedActionSummary ? ` ${unlockedActionSummary}` : ''}${coreCoverageSummary ? ` ${coreCoverageSummary}` : ''}${firstBlockingItem ? ` First blocker: ${firstBlockingItem.label}.` : ''}`,
     readyCount,
     plannedCount: plannedCount + needsContentCount,
     items,
