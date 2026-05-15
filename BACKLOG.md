@@ -451,6 +451,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the RSVP optional-setup card now also reads back how many optional layers are already ready, so owners can see whether templates and meal choices are both in place or only partly covered without relying on percentages alone
    - this batch shipped: the RSVP optional-setup card now also surfaces the concrete template count beside optional-layer readiness, so owners can tell how much reusable RSVP question coverage is actually live instead of reading only percentages and gap labels
    - this batch shipped: the RSVP meal-choices card now also reads back how many launch-ready meal options are already in place and whether more are still recommended, so the optional RSVP lane stays as explicit on the meal side as it is on the template side
+   - this batch shipped: the RSVP access section now also states how many access paths are actually supported today versus still planned, so owners can judge launch-ready RSVP path coverage without scanning every mode card by hand
    - rerun the same owner RSVP-settings browser flow against the shipped production runtime after the next approved guests deploy so the local proof stays matched to the live dashboard shell
    - if code/password/open RSVP ever moves beyond planned status, add real guest-facing bad-code/password/open runtime proof before any of those modes is marked ready
 

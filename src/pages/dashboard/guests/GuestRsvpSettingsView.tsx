@@ -118,6 +118,8 @@ export function GuestRsvpSettingsView({
   const safeRsvpQuestions = Array.isArray(rsvpQuestions) ? rsvpQuestions : [];
   const safeRsvpMealOptions = Array.isArray(rsvpMealOptions) ? rsvpMealOptions : [];
   const safeRsvpSetupChecklist = Array.isArray(rsvpSetupChecklist) ? rsvpSetupChecklist : [];
+  const supportedRsvpAccessModeCount = safeRsvpAccessModePlan.filter((mode) => mode.status !== 'future').length;
+  const plannedRsvpAccessModeCount = safeRsvpAccessModePlan.filter((mode) => mode.status === 'future').length;
   const verificationInputsChecklistItem = safeRsvpSetupChecklist.find((item) => item.id === 'verification_inputs') ?? null;
   const verificationEmailCount = Math.max(verificationInputsChecklistItem?.emailCount ?? 0, 0);
   const verificationPhoneCount = Math.max(verificationInputsChecklistItem?.phoneCount ?? 0, 0);
@@ -339,6 +341,11 @@ export function GuestRsvpSettingsView({
 
             <p className="text-xs text-text-tertiary">
               Guest codes, shared passwords, and open RSVP stay planned until recovery, privacy, and capacity rules are fully proven.
+            </p>
+            <p className="text-xs text-text-tertiary">
+              {plannedRsvpAccessModeCount === 0
+                ? 'All RSVP access paths are supported today.'
+                : `${supportedRsvpAccessModeCount} of ${safeRsvpAccessModePlan.length} RSVP access path${safeRsvpAccessModePlan.length === 1 ? '' : 's'} supported today · ${plannedRsvpAccessModeCount} still planned.`}
             </p>
 
             {verificationInputsChecklistItem ? (
