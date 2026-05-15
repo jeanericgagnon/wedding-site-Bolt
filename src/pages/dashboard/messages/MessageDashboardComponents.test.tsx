@@ -95,6 +95,7 @@ describe('MessageCampaignThreadPanels', () => {
     );
 
     expect(screen.getByText('Delivered 8')).toBeInTheDocument();
+    expect(screen.getByText('11 targeted recipients')).toBeInTheDocument();
     expect(screen.getByText('Targeted 11')).toBeInTheDocument();
     expect(screen.getByText('73% delivered coverage')).toBeInTheDocument();
     expect(screen.getByText('9% review coverage')).toBeInTheDocument();
@@ -166,6 +167,7 @@ describe('MessageCampaignThreadPanels', () => {
       />,
     );
 
+    expect(screen.getByText('11 targeted recipients')).toBeInTheDocument();
     expect(screen.getByText('73% delivered coverage')).toBeInTheDocument();
     expect(screen.getByText('Targeted 11')).toBeInTheDocument();
     expect(screen.getByText('9% review coverage')).toBeInTheDocument();
