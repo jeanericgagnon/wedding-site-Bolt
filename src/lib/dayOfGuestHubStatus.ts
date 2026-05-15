@@ -177,14 +177,15 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
   const actionCount = enabledActionIds.length;
   const readyCoreActionIds = coreGuestHubActionIds.filter((id) => enabledActionIds.includes(id));
   const missingCoreActionIds = coreGuestHubActionIds.filter((id) => !enabledActionIds.includes(id));
+  const coreActionCoverageRate = Math.round((readyCoreActionIds.length / coreGuestHubActionIds.length) * 100);
   const actionCountLabel = actionCount > 0
     ? `${actionCount} guest action${actionCount === 1 ? ' is' : 's are'} ready from this link.`
     : 'No guest actions are ready from this link yet.';
   const actionSummaryLabel = actionCount > 0 ? summarizeGuestHubActions(enabledActionIds.map((id) => ({ id }))) : null;
   const coreActionCoverageLabel = readyCoreActionIds.length === coreGuestHubActionIds.length
-    ? `Core day-of actions are ready from this link: ${summarizeGuestHubActions(readyCoreActionIds.map((id) => ({ id })))}.`
+    ? `100% of core day-of actions are ready from this link: ${summarizeGuestHubActions(readyCoreActionIds.map((id) => ({ id })))}.`
     : readyCoreActionIds.length > 0
-      ? `${readyCoreActionIds.length} of ${coreGuestHubActionIds.length} core day-of actions are ready from this link.`
+      ? `${coreActionCoverageRate}% core day-of coverage is ready from this link (${readyCoreActionIds.length} of ${coreGuestHubActionIds.length}).`
       : 'Core day-of actions are not ready from this link yet.';
   const coreActionSummaryLabel = missingCoreActionIds.length > 0
     ? `Still missing from this link: ${summarizeGuestHubActions(missingCoreActionIds.map((id) => ({ id })))}.`

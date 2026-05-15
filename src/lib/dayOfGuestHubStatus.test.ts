@@ -64,7 +64,7 @@ describe('dayOfGuestHubStatus', () => {
       summary: 'Guest-specific access is active for this link, including RSVP and check-in readback.',
       actionCountLabel: '4 guest actions are ready from this link.',
       actionSummaryLabel: 'RSVP, day-of updates, travel, and photo upload',
-      coreActionCoverageLabel: '3 of 4 core day-of actions are ready from this link.',
+      coreActionCoverageLabel: '75% core day-of coverage is ready from this link (3 of 4).',
       coreActionSummaryLabel: 'Still missing from this link: schedule.',
       mainGapLabel: 'Main gap: Add schedule to this link.',
     });
