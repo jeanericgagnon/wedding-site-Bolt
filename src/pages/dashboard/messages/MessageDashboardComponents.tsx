@@ -1517,11 +1517,9 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
             });
             return (
               <>
-          {activeCampaignThread.delivered > 0 && (
-            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
-              {activeCampaignThread.delivered} recipients delivered
-            </span>
-          )}
+          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+            {activeCampaignThread.delivered > 0 ? `${activeCampaignThread.delivered} recipients delivered` : '0 recipients delivered'}
+          </span>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Delivered {activeCampaignThread.delivered}</span>
           {activeThreadTargeted > 0 && (
             <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">

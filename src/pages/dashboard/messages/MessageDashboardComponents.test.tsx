@@ -162,6 +162,51 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('Not reached 1')).toBeInTheDocument();
   });
 
+  it('keeps the active campaign thread explicit when zero recipients were delivered', () => {
+    render(
+      <MessageCampaignThreadPanels
+        activeCampaignLatestMessage={null}
+        activeCampaignThread={{
+          key: 'thread-1',
+          name: 'RSVP push',
+          count: 1,
+          delivered: 0,
+          failed: 3,
+          skipped: 0,
+          unreached: 0,
+          opened: 0,
+          viewed: 0,
+          clicked: 0,
+          replied: 0,
+          bounced: 0,
+          deliveredRecipients: 0,
+          deliveredRate: 0,
+          openRate: 0,
+          clickRate: 0,
+          replyRate: 0,
+          latestStatus: 'failed',
+          latestAt: 100,
+        }}
+        campaignThreads={[]}
+        canCompose
+        deliveries={[]}
+        onClearThreadFilter={vi.fn()}
+        onDuplicateLatest={vi.fn()}
+        onEditLatest={vi.fn()}
+        onScheduleFollowUp={vi.fn()}
+        onSelectThread={vi.fn()}
+        onStartFollowUp={vi.fn()}
+        onViewLatest={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('0 recipients delivered')).toBeInTheDocument();
+    expect(screen.getByText('Targeted 3')).toBeInTheDocument();
+    expect(screen.getByText('0% follow-through ready')).toBeInTheDocument();
+    expect(screen.getByText('No recipients are already closed out')).toBeInTheDocument();
+    expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
+  });
+
   it('shows engagement rates on the latest campaign message when delivered recipients exist', () => {
     render(
       <MessageCampaignThreadPanels
