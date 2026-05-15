@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 10:52 AM PDT`
-- Latest shipped batch: `0c1fc759` `Clarify guest-hub panel labels`
+- Last updated: `2026-05-15 10:54 AM PDT`
+- Latest shipped batch: `pending local batch` `Clarify guest-hub panel labels`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `pending local batch` `Clarify guest-hub panel labels`
   - `0c1fc759` `Clarify guest-hub panel labels`
   - `af76bf34` `Clarify guest-hub detail counters`
   - `03692b75` `Clarify guest-hub detail status chips`
@@ -81,7 +82,7 @@
   - rerun the guest preview strip/drawer on the shipped runtime
   - prove wrong-guest/right-guest visibility on live auth flows
 - `unified QR guest hub`
-  - latest shipped: the guest-hub support panels now use clearer section labels like `Available from this link`, `Core day-of actions`, and `Hub readiness details`, so the details area no longer mixes plain-language summaries with older internal headings
+  - latest shipped: the guest-hub support panels now use clearer section labels like `Available from this link`, `Core day-of actions`, and `Hub readiness details`, and the hub-details section now uses that same clearer heading in the shipped runtime, so the details area no longer mixes plain-language summaries with older internal headings
   - rerun mobile live proof for public vs guest-specific QR landings
 - `RSVP access modes and question templates`
   - rerun owner RSVP settings proof on the shipped runtime
@@ -108,7 +109,7 @@ These are the active product-completion lanes still open after the current launc
    - wrong-guest/right-guest live visibility proof is still open
    - authenticated mobile live proof is still open
 2. `unified QR guest hub`
-   - latest shipped: the guest-hub support panels now use clearer section labels like `Available from this link`, `Core day-of actions`, and `Hub readiness details`, so the details section keeps the same guest-safe truth style as the newer chip and counter cleanup instead of mixing in older internal headings
+   - latest shipped: the guest-hub support panels now use clearer section labels like `Available from this link`, `Core day-of actions`, and `Hub readiness details`, and the hub-details section now uses that same clearer heading in the shipped runtime, so the details section keeps the same guest-safe truth style as the newer chip and counter cleanup instead of mixing in older internal headings
    - live production mobile proof is still open for public versus guest-specific QR landing behavior
 3. `RSVP access modes and question templates`
    - latest shipped: the optional RSVP setup summary now also says `0 optional improvements still open` and `No optional layers need action` in the all-clear state, so the optional lane closes with both the same count-based language and the same all-clear wording family it uses when optional layers still need work
@@ -159,7 +160,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 10:52 AM PDT` |
+| Current date/time | `2026-05-15 10:54 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |

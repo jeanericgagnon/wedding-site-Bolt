@@ -168,6 +168,7 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('3 of 4 core day-of actions are ready from this link.')).toBeInTheDocument();
     expect(screen.getByText('Still missing from this link: schedule.')).toBeInTheDocument();
     expect(screen.getByText('Main gap: Add schedule to this link.')).toBeInTheDocument();
+    expect(screen.getByText('Hub readiness details')).toBeInTheDocument();
     expect(document.getElementById('day-of-updates')).not.toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy travel plan' }));
