@@ -1191,6 +1191,19 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
               <p className="mt-1 text-[11px] text-text-tertiary">
                 {channelDeliveryBreakdown[channel].skipped} need contact details · {channelDeliveryBreakdown[channel].unreached} not reached yet
               </p>
+              {getFollowThroughFocusLabel({
+                failed: channelDeliveryBreakdown[channel].failed,
+                skipped: channelDeliveryBreakdown[channel].skipped,
+                unreached: channelDeliveryBreakdown[channel].unreached,
+              }) && (
+                <p className="mt-1 text-[11px] text-text-tertiary">
+                  {getFollowThroughFocusLabel({
+                    failed: channelDeliveryBreakdown[channel].failed,
+                    skipped: channelDeliveryBreakdown[channel].skipped,
+                    unreached: channelDeliveryBreakdown[channel].unreached,
+                  })}
+                </p>
+              )}
             </>
           )}
           {channelEngagementBreakdown[channel].trackedMessages > 0 && (
@@ -1456,22 +1469,35 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               {(() => {
                 const engagement = getMessageEngagementStats(activeCampaignLatestMessage);
                 const deliveredRecipients = Math.max(0, Number(activeCampaignLatestMessage.delivered_count ?? 0));
+                const failedRecipients = Math.max(0, Number(activeCampaignLatestMessage.failed_count ?? 0));
+                const skippedRecipients = getSkippedCount(activeCampaignLatestMessage, deliveries);
+                const unreachedRecipients = getUnreachedCount(activeCampaignLatestMessage, deliveries);
                 const targetedRecipients = Math.max(
                   deliveredRecipients
-                  + Math.max(0, Number(activeCampaignLatestMessage.failed_count ?? 0))
-                  + getSkippedCount(activeCampaignLatestMessage, deliveries)
-                  + getUnreachedCount(activeCampaignLatestMessage, deliveries),
+                  + failedRecipients
+                  + skippedRecipients
+                  + unreachedRecipients,
                   0,
                 );
                 const deliveredRate = targetedRecipients > 0 ? Math.round((deliveredRecipients / targetedRecipients) * 100) : null;
-                const skippedRate = targetedRecipients > 0 ? Math.round((getSkippedCount(activeCampaignLatestMessage, deliveries) / targetedRecipients) * 100) : null;
+                const reviewRate = targetedRecipients > 0 ? Math.round((failedRecipients / targetedRecipients) * 100) : null;
+                const skippedRate = targetedRecipients > 0 ? Math.round((skippedRecipients / targetedRecipients) * 100) : null;
+                const unreachedRate = targetedRecipients > 0 ? Math.round((unreachedRecipients / targetedRecipients) * 100) : null;
+                const followThroughFocusLabel = getFollowThroughFocusLabel({
+                  failed: failedRecipients,
+                  skipped: skippedRecipients,
+                  unreached: unreachedRecipients,
+                });
                 const openRate = deliveredRecipients > 0 && engagement.opened != null ? Math.round((engagement.opened / deliveredRecipients) * 100) : null;
                 const clickRate = deliveredRecipients > 0 && engagement.clicked != null ? Math.round((engagement.clicked / deliveredRecipients) * 100) : null;
                 const replyRate = deliveredRecipients > 0 && engagement.replied != null ? Math.round((engagement.replied / deliveredRecipients) * 100) : null;
                 return (
                   <>
                     {deliveredRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{deliveredRate}% delivered coverage</span>}
+                    {reviewRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{reviewRate}% review coverage</span>}
                     {skippedRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{skippedRate}% needs contact</span>}
+                    {unreachedRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{unreachedRate}% unreached</span>}
+                    {followThroughFocusLabel && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughFocusLabel}</span>}
                     {engagement.opened != null && engagement.opened > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Opened {engagement.opened}</span>}
                     {engagement.viewed != null && engagement.viewed > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Viewed {engagement.viewed}</span>}
                     {engagement.clicked != null && engagement.clicked > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Clicked {engagement.clicked}</span>}

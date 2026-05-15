@@ -157,7 +157,10 @@ describe('MessageCampaignThreadPanels', () => {
     );
 
     expect(screen.getByText('73% delivered coverage')).toBeInTheDocument();
+    expect(screen.getByText('9% review coverage')).toBeInTheDocument();
     expect(screen.getByText('9% needs contact')).toBeInTheDocument();
+    expect(screen.getByText('9% unreached')).toBeInTheDocument();
+    expect(screen.getByText('Main cleanup: delivery review')).toBeInTheDocument();
     expect(screen.getByText('Opened 4')).toBeInTheDocument();
     expect(screen.getByText('Viewed 2')).toBeInTheDocument();
     expect(screen.getByText('Clicked 1')).toBeInTheDocument();
@@ -195,10 +198,12 @@ describe('MessageHistorySummaryPanels', () => {
     expect(screen.getByText('10 delivered · 1 need review')).toBeInTheDocument();
     expect(screen.getByText('63% delivered coverage · 6% review coverage · 13% needs contact · 19% unreached')).toBeInTheDocument();
     expect(screen.getByText('2 need contact details · 3 not reached yet')).toBeInTheDocument();
+    expect(screen.getByText('Main cleanup: unreached guests')).toBeInTheDocument();
     expect(screen.getByText('Sent 0 · Active 0 · Scheduled 0 · Needs follow-up 1 · Needs review 1')).toBeInTheDocument();
     expect(screen.getByText('4 delivered · 2 need review')).toBeInTheDocument();
     expect(screen.getByText('57% delivered coverage · 29% review coverage · 14% needs contact · 0% unreached')).toBeInTheDocument();
     expect(screen.getByText('1 need contact details · 0 not reached yet')).toBeInTheDocument();
+    expect(screen.getByText('Main cleanup: delivery review')).toBeInTheDocument();
     expect(screen.getByText('7 opened · 4 clicked · 1 replied')).toBeInTheDocument();
     expect(screen.getByText('3 viewed across 2 completed campaigns')).toBeInTheDocument();
     expect(screen.getByText('70% open rate · 40% click rate · 10% reply rate')).toBeInTheDocument();
