@@ -218,6 +218,7 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
   const summaryBadges = [
     `${readyLaneCount} of ${lanes.length} memory lanes ready`,
     `${stepCoverageRate}% step coverage`,
+    `${readyStepCount} of ${steps.length} memory steps ready`,
     hasActiveAlbum && input.photoUploadEnabled
       ? `${countLabel(input.uploadCount, 'upload')} live`
       : hasAlbums
