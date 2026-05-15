@@ -1998,8 +1998,8 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Registry share readiness')).toBeInTheDocument();
     expect(screen.getByText('Registry share setup looks ready to share.')).toBeInTheDocument();
     expect(screen.getByText('No registry share blockers right now.')).toBeInTheDocument();
-    expect(screen.getByText('0 to review')).toBeInTheDocument();
-    expect(screen.getAllByText('Ready').length).toBeGreaterThan(0);
+    expect(screen.getByText('0 to check')).toBeInTheDocument();
+    expect(screen.getAllByText('Ready to share').length).toBeGreaterThan(0);
   });
 
   it('surfaces registry share readiness review details when follow-through is still open', () => {
@@ -2049,13 +2049,13 @@ describe('RegistryDashboardRouteContent', () => {
         registryActionsRef={{ current: null }}
         registryInsights={[]}
         registryLaunchReadiness={{
-          headline: 'A few registry share details still need review.',
-          summary: '2 link or fund setup items still need a quick share-readiness check.',
+          headline: 'A few registry share details still need a look.',
+          summary: '2 registry share details still need a quick pass before sharing.',
           status: 'needs-review',
           reviewCount: 2,
           items: [
-            { id: 'external-links', label: 'Gift links ready to share', detail: '0 product gifts are ready to share (0% coverage). 1 product gift still need a share-safe link.', tone: 'review' },
-            { id: 'cash-funds', label: 'Fund links ready to share', detail: '0 cash funds are ready to share (0% coverage). 1 cash fund still need a share path or handle.', tone: 'review' },
+            { id: 'external-links', label: 'Gift links ready to share', detail: '0 product gifts are ready to share (0% coverage). 1 product gift still need a share link.', tone: 'review' },
+            { id: 'cash-funds', label: 'Fund links ready to share', detail: '0 cash funds are ready to share (0% coverage). 1 cash fund still need a share link or handle.', tone: 'review' },
           ],
         }}
         registryThankYouPlan={{ headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] }}
@@ -2080,10 +2080,10 @@ describe('RegistryDashboardRouteContent', () => {
       />,
     );
 
-    expect(screen.getByText('A few registry share details still need review.')).toBeInTheDocument();
-    expect(screen.getByText('2 registry share details still need review.')).toBeInTheDocument();
-    expect(screen.getByText('2 to review')).toBeInTheDocument();
-    expect(screen.getAllByText('Needs review').length).toBeGreaterThan(0);
+    expect(screen.getByText('A few registry share details still need a look.')).toBeInTheDocument();
+    expect(screen.getByText('2 registry share details still need a quick pass before sharing.')).toBeInTheDocument();
+    expect(screen.getByText('2 to check')).toBeInTheDocument();
+    expect(screen.getAllByText('Needs a look').length).toBeGreaterThan(0);
     expect(screen.getByText('Fund links ready to share')).toBeInTheDocument();
   });
 

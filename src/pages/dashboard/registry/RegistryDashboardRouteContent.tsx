@@ -625,7 +625,7 @@ export function RegistryDashboardRouteContent(props: {
                   <p className="mt-1 text-sm text-text-secondary">{props.registryLaunchReadiness.headline}</p>
                 </div>
                 <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
-                  {props.registryLaunchReadiness.reviewCount} to review
+                  {props.registryLaunchReadiness.reviewCount} to check
                 </span>
               </div>
               <p className="mt-3 text-sm text-text-secondary">{props.registryLaunchReadiness.summary}</p>
@@ -644,7 +644,7 @@ export function RegistryDashboardRouteContent(props: {
                             ? 'border-border bg-white text-text-secondary'
                             : 'border-border bg-white text-text-tertiary'
                       }`}>
-                        {item.tone === 'review' ? 'Needs review' : item.tone === 'planned' ? 'Planned' : 'Ready'}
+                        {item.tone === 'review' ? 'Needs a look' : item.tone === 'planned' ? 'Planned' : 'Ready to share'}
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-text-secondary">{item.detail}</p>
