@@ -561,8 +561,13 @@ export function buildTravelHubSpotlight(input: {
   const readinessSummary = readinessLabels.length > 0
     ? ` Core travel coverage is ${coreTravelCoverageRate}%. It covers ${readinessLabels.join(', ')}.`
     : ` Core travel coverage is ${coreTravelCoverageRate}%.`;
-  const summary = guestScoped && visibleEventCount > 0
-    ? `${cards.length} travel detail${cards.length === 1 ? '' : 's'} ready from the guest hub, including ${visibleEventCount} visible event window${visibleEventCount === 1 ? '' : 's'} for this invitation.${readinessSummary}`
+  const coverageSummaryParts = [
+    ...(guestScoped && visibleEventCount > 0 ? [`${visibleEventCount} visible event window${visibleEventCount === 1 ? '' : 's'} for this invitation`] : []),
+    ...(routeCardCount > 0 ? [`${routeCardCount} route card${routeCardCount === 1 ? '' : 's'}`] : []),
+    ...(bookingLinkCount > 0 ? [`${bookingLinkCount} booking link${bookingLinkCount === 1 ? '' : 's'}`] : []),
+  ];
+  const summary = coverageSummaryParts.length > 0
+    ? `${cards.length} travel detail${cards.length === 1 ? '' : 's'} ready from the guest hub, including ${coverageSummaryParts.join(', ')}.${readinessSummary}`
     : `${cards.length} travel detail${cards.length === 1 ? '' : 's'} ready from the guest hub.${readinessSummary}`;
   const filename = `${siteSlug.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'dayof'}-travel-guide.html`;
 
