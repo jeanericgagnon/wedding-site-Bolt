@@ -694,7 +694,7 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(screen.getByText('Claimed gifts')).toBeInTheDocument();
     expect(screen.getByText('2 attributed · 1 need purchaser')).toBeInTheDocument();
-    expect(screen.getByText('67% purchaser coverage · 33% fully closed · 67% partial (2) · 56% quantity claimed · 4 still unclaimed')).toBeInTheDocument();
+    expect(screen.getByText('67% purchaser coverage · 33% fully closed · 67% partial (2) · 56% quantity claimed · 44% still unclaimed (4)')).toBeInTheDocument();
     expect(screen.getByText('Main gap: 1 still need purchaser attribution')).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Claimed gifts: 3 · Attributed: 2'),
