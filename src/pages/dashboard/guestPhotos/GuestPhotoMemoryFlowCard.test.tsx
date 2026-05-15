@@ -87,6 +87,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
     expect(screen.getByText('4 memory lanes still empty')).toBeInTheDocument();
     expect(screen.getByText('6 memory steps still empty')).toBeInTheDocument();
     expect(screen.getByText('2 memory steps still planned')).toBeInTheDocument();
+    expect(screen.getByText('1 active blocker before sharing broadly.')).toBeInTheDocument();
     expect(screen.getByText('Turn on at least one guest action before printing the hub QR.')).toBeInTheDocument();
   });
 
@@ -130,6 +131,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
     expect(screen.getByText('2 memory steps still empty')).toBeInTheDocument();
     expect(screen.getByText('2 memory steps still planned')).toBeInTheDocument();
     expect(screen.getByText('First blocker: No-app guest hub')).toBeInTheDocument();
+    expect(screen.getByText('2 active blockers before sharing broadly.')).toBeInTheDocument();
     expect(screen.getByText('Albums exist, but none are active for guest uploads.')).toBeInTheDocument();
     expect(screen.queryByText('memory lanes still empty')).not.toBeInTheDocument();
   });
