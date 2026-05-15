@@ -768,7 +768,7 @@ export function RegistryDashboardRouteContent(props: {
             </div>
             <div className="mt-4 space-y-3">
               {props.registryThankYouPlan.items.length === 0 ? (
-                <p className="text-sm text-text-secondary">Purchased gifts will show up here once you save the thank-you list.</p>
+                <p className="text-sm text-text-secondary">No purchased gifts are in the thank-you list yet.</p>
               ) : props.registryThankYouPlan.items.map((item) => (
                 <div key={item.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">

@@ -423,6 +423,34 @@ describe('RegistryDashboardRouteContent', () => {
     });
   });
 
+  it('derives a quiet thank-you plan when no purchased gifts need follow-up yet', () => {
+    const derived = buildRegistryDashboardDerivedState({
+      autoRefreshEnabled: true,
+      items: [
+        makeItem({
+          id: 'available-gift',
+          item_name: 'Dinner plates',
+          purchaser_name: null,
+          purchase_status: 'available',
+          quantity_needed: 1,
+          quantity_purchased: 0,
+        }),
+      ],
+      monthlyRefreshCap: 50,
+      monthlyRefreshCount: 0,
+      registryThankYouLedger: {},
+      refreshEnabledUntil: null,
+      refreshIncludePurchased: false,
+      search: '',
+      filter: 'all',
+      showAlertsOnly: false,
+      showImageIssuesOnly: false,
+    });
+
+    expect(derived.registryThankYouPlan.headline).toBe('Thank-you follow-up is quiet right now');
+    expect(derived.registryThankYouPlan.summary).toBe('No purchased gifts need thank-you follow-up yet.');
+  });
+
   it('derives guest-visible registry analytics from hidden purchased and blocked guest items', () => {
     const derived = buildRegistryDashboardDerivedState({
       autoRefreshEnabled: true,
@@ -719,6 +747,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('No funds are already receiving gifts yet')).toBeInTheDocument();
     expect(screen.getByText('No goal-tracked fund setup is open right now')).toBeInTheDocument();
     expect(screen.getByText('No flexible or tracked funds are already receiving gifts yet')).toBeInTheDocument();
+    expect(screen.getByText('No purchased gifts are in the thank-you list yet.')).toBeInTheDocument();
     expect(screen.getByText('No image issues or duplicate groups')).toBeInTheDocument();
   });
 

@@ -149,7 +149,7 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
       count: thankYouFollowUps,
       detail: thankYouFollowUps > 0
         ? `${plural(thankYouFollowUps, 'gift')} are in the thank-you follow-up list with ${thankYouAttributionCoverageRate}% purchaser attribution coverage.`
-        : 'Thank-you follow-up is quiet until gifts are marked purchased.',
+        : 'No purchased gifts need thank-you follow-up yet.',
       tone: thankYouFollowUps > 0 ? 'ready' : 'ready',
     },
     {
@@ -300,12 +300,12 @@ export function buildRegistryThankYouPlanWithLedger(items: RegistryItem[], ledge
   });
 
   return {
-    headline: purchasedItems.length > 0 ? 'Thank-you follow-up list' : 'Thank-you follow-up is quiet',
+    headline: purchasedItems.length > 0 ? 'Thank-you follow-up list' : 'Thank-you follow-up is quiet right now',
     summary: purchasedItems.length > 0
       ? completedCount > 0
         ? `${plural(completedCount, 'thank-you')} marked sent. ${plural(purchasedItems.length - completedCount, 'gift')} still need follow-up.`
         : `${plural(purchasedItems.length, 'purchased gift')} are in the thank-you list.`
-      : 'Purchased gifts will appear here once they become thank-you follow-up work.',
+      : 'No purchased gifts need thank-you follow-up yet.',
     purchasedCount: purchasedItems.length,
     namedPurchaserCount: namedPurchasers.length,
     missingPurchaserCount: missingPurchasers,
