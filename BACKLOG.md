@@ -2,16 +2,16 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 05:25 PM PDT`
-- Latest shipped batch: `add live photo memory video proof path`
+- Last updated: `2026-05-15 05:31 PM PDT`
+- Latest shipped batch: `defer photo memory live rerun lane`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry active-proof-lane closure batch
-- Open backlog lanes: `1`
+- Open backlog lanes: `0`
 - Current session blocker: even a minimal `chromium.launch()` plus `/login` navigation now goes silent in this saturated session, and the same silent hang now blocks the remaining guest-preview live rerun too, so the remaining browser-proof gaps are currently isolated to generic headless browser startup in this session
 - Current transport blocker: none active right now
 - Blocked this session:
   - `npx vitest run src/pages/dashboard/registry/RegistryDashboardRouteContent.test.tsx` still stalls without producing useful output in this session
 - Work source-code next:
-  - `premium no-app guest photo and memory flow`: continue the remaining active owner-readback lane while guest-preview and QR wait on a fresh browser-capable session and messaging waits on a safe provider-backed live-send lane
+  - `none active`: guest-preview and QR wait on a fresh browser-capable session, messaging waits on a safe provider-backed live-send lane, travel waits by request, and photo memory now waits on the next approved deploy before the final live rerun
 - First code retry after the current guest-preview session defer batch:
   - keep the guest-preview and QR lanes deferred until a fresh session can launch headless browser proof cleanly
   - treat the guest-preview desktop/mobile rerun and the QR live day-of update/status/handoff/map readback as the remaining browser-proof gaps once browser startup is usable again
@@ -146,7 +146,7 @@
 
 These are the active product-completion lanes still open after the current launch-hardening scope:
 
-- Total open lanes: `1`
+- Total open lanes: `0`
 
 1. `DEFERRED THIS SESSION`: guest-specific preview and visibility confidence
    - latest shipped: `proof:v1:guest-preview-confidence` now includes a real authenticated mobile live guest-preview spec for photo upload, travel, registry, and public-site drawer routes on the shipped runtime, while the desktop live spec now proves the real guest drawer path instead of only the lighter public-site open, so the lane no longer has a missing mobile live proof path in repo
@@ -216,7 +216,7 @@ These are the active product-completion lanes still open after the current launc
   - latest shipped: the registry share-readiness lane now stays in one `ready to share` wording family, with all-clear copy like `Registry share setup looks ready to share`, `Gift links, fund links, and purchase-state basics look ready to share right now`, `100% ready to share`, and deeper fund follow-through copy like `No fund links are waiting on a share path right now` and `Need share path`, so the share-readiness card and fund note rows no longer mix older `guest-facing`, `guest-ready`, and `payment path` phrasing into the same owner summary surface
   - latest shipped: registry share-readiness items now use clearer owner-facing labels like `Gift links ready to share`, `Fund links ready to share`, `Thank-you list`, and `Hide after purchase`, with matching copy like `No product gifts are listed yet, so there are no gift links to share right now`, `No purchased gifts need thank-you follow-up right now`, and `No registry links or funds are ready to share yet`, so the share-readiness panel now reads like owner product truth instead of older setup-audit terminology
   - latest shipped: `Registry quick check` now stays explicit in both mixed and all-clear states with lead readback like `1 next-step fix · 1 polish cleanup worth a quick pass.` or `No quick registry fixes worth flagging right now.`, so that last big registry card now scans like a summary first instead of a raw prompt list
-6. `premium no-app guest photo and memory flow`
+6. `DEFERRED THIS SESSION`: premium no-app guest photo and memory flow
    - latest shipped: the no-app memory-flow card now also labels every lane and step chip explicitly as `Lane ready`, `Lane needs action`, `Step ready`, `Step planned`, or `Step empty`, so the detailed checklist keeps the same owner-facing truth style as the stronger lead summary instead of falling back to generic pills
    - this lane remains active and unfinished
 7. `DEFERRED`: destination/travel guest portal
@@ -771,7 +771,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the top-level photo-memory upload badge now also reads back the active-album count beside live upload volume, so owners can tell whether upload momentum is concentrated in one album or spread across the real active capture surface
    - latest shipped: the production `photo-upload-write-read` lane now also uploads a real video file, proves owner feature/story moderation on that live clip, verifies the guest-facing published recap renders the uploaded video plus guest attribution, and confirms the owner can still flag/hide the same clip after recap review, so the memory-flow lane no longer has a missing live guest video upload browser path
    - latest shipped: the production `photo-upload-write-read` lane already covers owner moderation readback after a real live upload and also proves the guest-facing published recap path on the shipped runtime, so those two old memory-flow bullets were overlapping with a live proof lane that is already green
-   - rerun the owner-side `Preview recap` handoff against the shipped production runtime after the next approved deploy
+   - deferred for this session because the only remaining work is rerunning the owner-side `Preview recap` handoff against the shipped production runtime after the next approved deploy, and this queue is currently running under `no deploy`
 
 7. `ACTIVE`: destination/travel guest portal
    - the guest-hub `Travel quick plan` now keeps the `Main gap` line explicit even in the all-clear state, so guests get a plain “none right now” readback instead of inferring it from a missing label
