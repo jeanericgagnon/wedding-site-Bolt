@@ -176,6 +176,8 @@ export function EventHubLiveContent({
   const travelJourneyNeedsInfoCount = travelGuestJourney.filter((step) => step.status !== 'ready').length;
   const travelJourneyReadyLabels = travelGuestJourney.filter((step) => step.status === 'ready').map((step) => step.label);
   const travelJourneyNeedsInfoLabels = travelGuestJourney.filter((step) => step.status !== 'ready').map((step) => step.label);
+  const getTravelJourneyStatusLabel = (status: TravelGuestJourneyStep['status']) =>
+    status === 'ready' ? 'Travel step ready' : 'Travel step needs setup';
 
   return (
     <div className="min-h-screen bg-[#fbf7f1] text-neutral-950">
@@ -391,7 +393,7 @@ export function EventHubLiveContent({
                 </div>
                 <div className="mt-3 grid gap-2 sm:grid-cols-3">
                   {travelGuestJourney.map((step) => {
-                    const statusLabel = step.status === 'ready' ? 'Ready now' : 'Needs setup';
+                    const statusLabel = getTravelJourneyStatusLabel(step.status);
                     const stepContent = (
                       <>
                         <span className="flex items-center justify-between gap-3">

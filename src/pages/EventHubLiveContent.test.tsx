@@ -115,8 +115,8 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('1 step still need setup before this path feels complete.')).toBeInTheDocument();
     expect(screen.getByText('Ready now: Travel details.')).toBeInTheDocument();
     expect(screen.getByText('Still missing: Reply.')).toBeInTheDocument();
-    expect(screen.getByText('Ready now')).toBeInTheDocument();
-    expect(screen.getByText('Needs setup')).toBeInTheDocument();
+    expect(screen.getByText('Travel step ready')).toBeInTheDocument();
+    expect(screen.getByText('Travel step needs setup')).toBeInTheDocument();
     expect(screen.getByText('Invite-scoped')).toBeInTheDocument();
     expect(screen.getByText('1 event window')).toBeInTheDocument();
     expect(screen.getByText('1 route card')).toBeInTheDocument();

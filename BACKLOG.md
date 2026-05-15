@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 10:39 AM PDT`
-- Latest shipped batch: `f67be865` `Clarify memory flow status chips`
+- Last updated: `2026-05-15 10:41 AM PDT`
+- Latest shipped batch: `pending local batch` `Clarify travel guest-path status chips`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `pending local batch` `Clarify travel guest-path status chips`
   - `f67be865` `Clarify memory flow status chips`
   - `f8b9d4fd` `Clarify registry top-strip labels`
   - `372aa01a` `Clarify registry empty-state readback`
@@ -65,7 +66,7 @@
 - `premium no-app guest photo and memory flow`
   - latest shipped: the no-app memory-flow card now also labels every lane and step chip explicitly as `Lane ready`, `Lane needs action`, `Step ready`, `Step planned`, or `Step empty`, so the detailed checklist no longer falls back to abstract generic status pills after the stronger lead summary
 - `destination/travel guest portal`
-  - latest shipped: the owner travel-portal readiness summary now also says `No guest sections incomplete`, and the guest-hub `Travel quick plan` summary now also says `All 3 core travel layers are ready`, so those all-clear truths no longer live only in the smaller badge rows
+  - latest shipped: the guest-hub travel path now labels each detail card explicitly as `Travel step ready` or `Travel step needs setup`, so the detailed mobile path no longer falls back to vague generic pills after the stronger summary readback
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 - `registry polish beyond barcode`
@@ -135,8 +136,7 @@ These are the active product-completion lanes still open after the current launc
    - latest shipped: the no-app memory-flow card now also labels every lane and step chip explicitly as `Lane ready`, `Lane needs action`, `Step ready`, `Step planned`, or `Step empty`, so the detailed checklist keeps the same owner-facing truth style as the stronger lead summary instead of falling back to generic pills
    - this lane remains active and unfinished
 7. `destination/travel guest portal`
-   - latest shipped: the guest-hub `Travel quick plan` badge row now stays explicit with `No core travel gaps` in the all-clear state instead of leaving that truth only in the prose summary
-   - latest shipped: the owner travel-portal readiness summary now also says `No guest sections incomplete`, and the guest-hub `Travel quick plan` summary now also says `All 3 core travel layers are ready`, so the all-clear truth is explicit in the lead readback instead of living only in badge rows
+   - latest shipped: the guest-hub travel path now labels each detail card explicitly as `Travel step ready` or `Travel step needs setup`, so the detailed mobile flow keeps the same owner-safe truth style as the newer travel summary readback instead of dropping back to generic pills
    - this lane remains active and unfinished
 
 Archive for deferred/history detail:
