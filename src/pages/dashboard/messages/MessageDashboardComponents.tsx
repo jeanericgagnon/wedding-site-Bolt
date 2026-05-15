@@ -1676,10 +1676,10 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                     {targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughReadyCount > 0 ? `${followThroughReadyCount} recipients already closed out` : 'No recipients are already closed out'}</span>}
                     {targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupCount > 0 ? `${cleanupCount} recipients still need cleanup` : 'No recipients still need cleanup'}</span>}
                     {followThroughFocusLabel && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughFocusLabel}</span>}
-                    {engagement.opened != null && engagement.opened > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Opened {engagement.opened}</span>}
-                    {engagement.viewed != null && engagement.viewed > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Viewed {engagement.viewed}</span>}
-                    {engagement.clicked != null && engagement.clicked > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Clicked {engagement.clicked}</span>}
-                    {engagement.replied != null && engagement.replied > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Replied {engagement.replied}</span>}
+                    {engagement.opened != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Opened {engagement.opened}</span>}
+                    {engagement.viewed != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Viewed {engagement.viewed}</span>}
+                    {engagement.clicked != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Clicked {engagement.clicked}</span>}
+                    {engagement.replied != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Replied {engagement.replied}</span>}
                     {engagement.bounced != null && engagement.bounced > 0 && <span className="rounded-lg border border-warning/20 bg-warning-light px-3 py-1 text-warning">Bounced {engagement.bounced}</span>}
                     {deliveredRecipients > 0 && openRate != null && clickRate != null && replyRate != null && (
                       <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">
