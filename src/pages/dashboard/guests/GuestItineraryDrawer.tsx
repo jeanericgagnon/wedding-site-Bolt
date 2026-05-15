@@ -352,10 +352,11 @@ function GuestDrawerDetails({
             </p>
           </>
         )}
-        {visibilityPreview.hiddenEvents.length > 0 && (
+        {visibilityPreview.hiddenEventSummary && (
           <p className="text-xs text-text-tertiary">
-            Hidden from this guest: {visibilityPreview.hiddenEvents.slice(0, 3).map((event) => event.eventName).join(', ')}
-            {visibilityPreview.hiddenEvents.length > 3 ? `, and ${visibilityPreview.hiddenEvents.length - 3} more` : ''}
+            {visibilityPreview.hiddenEvents.length > 0
+              ? `Hidden from this guest: ${visibilityPreview.hiddenEvents.slice(0, 3).map((event) => event.eventName).join(', ')}${visibilityPreview.hiddenEvents.length > 3 ? `, and ${visibilityPreview.hiddenEvents.length - 3} more` : ''}`
+              : 'No hidden events for this guest.'}
           </p>
         )}
         {visibilityPreview.links.length > 0 && (

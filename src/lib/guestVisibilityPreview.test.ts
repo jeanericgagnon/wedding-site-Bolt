@@ -94,7 +94,7 @@ describe('guestVisibilityPreview', () => {
     expect(preview.routeReadinessLabel).toBe('Private guest path ready');
     expect(preview.pathCoverageSummary).toBe('2 visible events have a private guest path ready.');
     expect(preview.visibleEventSummary).toBe('Visible to this guest: Ceremony and Reception.');
-    expect(preview.hiddenEventSummary).toBeNull();
+    expect(preview.hiddenEventSummary).toBe('No hidden events for this guest.');
     expect(preview.mainGapLabel).toBeNull();
     expect(preview.links.map((link) => link.label)).toContain('Open travel section as guest');
     expect(preview.links.map((link) => link.label)).toContain('Open registry section as guest');

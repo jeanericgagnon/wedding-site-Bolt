@@ -93,10 +93,10 @@ describe('GuestItineraryDrawer', () => {
     expect(screen.getByText('100% event visibility coverage · 0% still hidden')).toBeInTheDocument();
     expect(screen.getByText('Visible to this guest: Ceremony.')).toBeInTheDocument();
     expect(screen.getAllByText('Visible to this guest: Ceremony.').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText('No hidden events for this guest.')).toBeInTheDocument();
     expect(screen.getByText('100% preview-route coverage · 9 routes ready · No preview routes missing')).toBeInTheDocument();
     expect(screen.getByText('Private guest path ready')).toBeInTheDocument();
     expect(screen.getByText('1 visible event has a private guest path ready.')).toBeInTheDocument();
-    expect(screen.queryByText(/^Hidden from this guest:/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Main gap:/i)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Open photo upload as guest/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Open guestbook as guest/i })).toBeInTheDocument();
@@ -226,6 +226,7 @@ describe('GuestItineraryDrawer', () => {
     expect(screen.getByText('Public shell plus visible events')).toBeInTheDocument();
     expect(screen.getByText('1 of 1 event visible · 0 hidden')).toBeInTheDocument();
     expect(screen.getByText('100% event visibility coverage · 0% still hidden')).toBeInTheDocument();
+    expect(screen.getByText('No hidden events for this guest.')).toBeInTheDocument();
     expect(screen.getByText('33% preview-route coverage · 3 routes ready · 6 preview routes still missing')).toBeInTheDocument();
     expect(screen.getByText('Main gap: Rotate or create a private RSVP link')).toBeInTheDocument();
   });

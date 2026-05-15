@@ -251,7 +251,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
       : 'No visible events for this guest yet.',
     hiddenEventSummary: hiddenEvents.length > 0
       ? `Hidden from this guest: ${formatEventList(hiddenEvents)}.`
-      : null,
+      : 'No hidden events for this guest.',
     mainGapLabel,
     visibleEvents,
     hiddenEvents,
