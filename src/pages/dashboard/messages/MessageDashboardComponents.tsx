@@ -2056,19 +2056,19 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
                       {typeof message.delivered_count === 'number' && typeof message.failed_count === 'number' && (
                         <span>{message.delivered_count} delivered · {message.failed_count} need review</span>
                       )}
-                      {engagement.opened != null && engagement.opened > 0 && (
+                      {engagement.opened != null && (
                         <span>{engagement.opened} opened</span>
                       )}
-                      {engagement.viewed != null && engagement.viewed > 0 && (
+                      {engagement.viewed != null && (
                         <span>{engagement.viewed} viewed</span>
                       )}
-                      {engagement.clicked != null && engagement.clicked > 0 && (
+                      {engagement.clicked != null && (
                         <span>{engagement.clicked} clicked</span>
                       )}
-                      {engagement.replied != null && engagement.replied > 0 && (
+                      {engagement.replied != null && (
                         <span>{engagement.replied} replied</span>
                       )}
-                      {engagement.bounced != null && engagement.bounced > 0 && (
+                      {engagement.bounced != null && (
                         <span>{engagement.bounced} bounced</span>
                       )}
                       {skippedCount > 0 && (

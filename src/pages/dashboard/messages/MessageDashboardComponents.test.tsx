@@ -656,4 +656,89 @@ describe('MessageHistoryCard', () => {
     expect(onSetHistoryCampaignFilter).toHaveBeenCalledWith('');
     expect(onSetHistorySearch).toHaveBeenCalledWith('');
   });
+
+  it('keeps history-row engagement explicit when all engagement counts are zero', () => {
+    render(
+      <MessageHistoryCard
+        activeCampaignLatestMessage={null}
+        activeCampaignThread={null}
+        audienceBreakdown={[]}
+        campaignStatusSummary={{ draft: 0, scheduled: 0, sent: 0, partial: 0, failed: 1 }}
+        campaignThreads={[]}
+        canCompose
+        channelBreakdown={{
+          email: { sent: 0, active: 0, scheduled: 0, failed: 1, partial: 0, targeted: 3 },
+          sms: { sent: 0, active: 0, scheduled: 0, failed: 0, partial: 0, targeted: 0 },
+        }}
+        channelDeliveryBreakdown={{
+          email: { delivered: 0, failed: 3, skipped: 0, unreached: 0, targeted: 3, deliveredRate: 0 },
+          sms: { delivered: 0, failed: 0, skipped: 0, unreached: 0, targeted: 0, deliveredRate: 0 },
+        }}
+        channelEngagementBreakdown={{
+          email: { trackedMessages: 1, deliveredRecipients: 0, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0, openRate: 0, clickRate: 0, replyRate: 0 },
+          sms: { trackedMessages: 0, deliveredRecipients: 0, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0, openRate: 0, clickRate: 0, replyRate: 0 },
+        }}
+        deliveries={[]}
+        deliveryHealth={{ successRate: 0, failRate: 100, skipped: 0, skippedRate: 0, overdueScheduled: 0 }}
+        filteredHistory={[
+          {
+            id: 'message-1',
+            subject: 'Quiet failed send',
+            body: 'No one got this one.',
+            sent_at: '2026-05-13T12:00:00.000Z',
+            scheduled_for: null,
+            status: 'failed',
+            channel: 'email',
+            audience_filter: 'all',
+            recipient_filter: {
+              opened_count: 0,
+              viewed_count: 0,
+              clicked_count: 0,
+              replied_count: 0,
+              bounced_count: 0,
+              skipped_count: 0,
+            },
+            recipient_count: 3,
+            delivered_count: 0,
+            failed_count: 3,
+          },
+        ] as any}
+        historyAudienceFilter="all"
+        historyCampaignFilter=""
+        historyChannelFilter="all"
+        historyDeliveryFilter="all"
+        historySearch=""
+        historyStatusCounts={{ sent: 0, active: 0, scheduled: 0, partial: 0, failed: 1 }}
+        historyStatusFilter="all"
+        messages={[] as any}
+        providerTelemetry={{ attempted: 1, errorTop: [], sent: 0, sentRate: 0, skipped: 0 }}
+        retryCandidates={[]}
+        retryingMessageId={null}
+        reviewCandidates={[]}
+        onCancelSchedule={vi.fn()}
+        onClearThreadFilter={vi.fn()}
+        onDuplicateLatest={vi.fn()}
+        onEditLatest={vi.fn()}
+        onRescheduleMessage={vi.fn()}
+        onRetry={vi.fn()}
+        onScheduleFollowUp={vi.fn()}
+        onSelectThread={vi.fn()}
+        onSendScheduledNow={vi.fn()}
+        onSetHistoryAudienceFilter={vi.fn()}
+        onSetHistoryCampaignFilter={vi.fn()}
+        onSetHistoryChannelFilter={vi.fn()}
+        onSetHistoryDeliveryFilter={vi.fn()}
+        onSetHistorySearch={vi.fn()}
+        onSetHistoryStatusFilter={vi.fn()}
+        onStartFollowUp={vi.fn()}
+        onViewMessage={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('0 opened')).toBeInTheDocument();
+    expect(screen.getByText('0 viewed')).toBeInTheDocument();
+    expect(screen.getByText('0 clicked')).toBeInTheDocument();
+    expect(screen.getByText('0 replied')).toBeInTheDocument();
+    expect(screen.getByText('0 bounced')).toBeInTheDocument();
+  });
 });
