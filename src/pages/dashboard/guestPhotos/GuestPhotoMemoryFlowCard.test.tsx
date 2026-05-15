@@ -8,7 +8,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
       <GuestPhotoMemoryFlowCard
         memoryFlowReadiness={{
           readyCount: 5,
-          summaryBadges: ['12 uploads live', 'Private recap link', '33% story coverage', 'Handoff ready', '1 opt-in captured'],
+          summaryBadges: ['4 of 4 memory lanes ready', '12 uploads live', 'Private recap link', '33% story coverage', 'Handoff ready', '1 opt-in captured'],
           mainGapLabel: null,
           lanes: [
             { id: 'collection', label: 'Collection', detail: '12 uploads across 1 active album, including 1 video.', status: 'ready' },
@@ -34,6 +34,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
 
     expect(screen.getByText('Collection')).toBeInTheDocument();
     expect(screen.getByText('Sharing')).toBeInTheDocument();
+    expect(screen.getByText('4 of 4 memory lanes ready')).toBeInTheDocument();
     expect(screen.getByText('12 uploads live')).toBeInTheDocument();
     expect(screen.getByText('Private recap link')).toBeInTheDocument();
     expect(screen.getByText('33% story coverage')).toBeInTheDocument();
@@ -83,7 +84,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
       <GuestPhotoMemoryFlowCard
         memoryFlowReadiness={{
           readyCount: 3,
-          summaryBadges: ['Upload lane needs setup', 'Recap saved, not shareable', 'No story picks yet', '5 review items need attention', 'No follow-up opt-ins', 'First blocker: No-app guest hub'],
+          summaryBadges: ['0 of 4 memory lanes ready', 'Upload lane needs setup', 'Recap saved, not shareable', 'No story picks yet', '5 review items need attention', 'No follow-up opt-ins', '4 memory lanes still need action', 'First blocker: No-app guest hub'],
           mainGapLabel: 'Main gap: Collection',
           lanes: [
             { id: 'collection', label: 'Collection', detail: 'Albums exist, but guest uploads still need at least one active album.', status: 'needs-action' },
@@ -110,6 +111,8 @@ describe('GuestPhotoMemoryFlowCard', () => {
       />,
     );
 
+    expect(screen.getByText('0 of 4 memory lanes ready')).toBeInTheDocument();
+    expect(screen.getByText('4 memory lanes still need action')).toBeInTheDocument();
     expect(screen.getByText('First blocker: No-app guest hub')).toBeInTheDocument();
   });
 });

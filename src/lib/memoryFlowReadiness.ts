@@ -208,7 +208,10 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
   const highestPriorityGap = lanes.find((lane) => lane.status === 'needs-action')
     ?? lanes.find((lane) => lane.status === 'empty')
     ?? null;
+  const readyLaneCount = lanes.filter((lane) => lane.status === 'ready').length;
+  const actionLaneCount = lanes.filter((lane) => lane.status === 'needs-action').length;
   const summaryBadges = [
+    `${readyLaneCount} of ${lanes.length} memory lanes ready`,
     hasActiveAlbum && input.photoUploadEnabled
       ? `${countLabel(input.uploadCount, 'upload')} live`
       : hasAlbums
@@ -236,6 +239,7 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
     input.guestProspectCount > 0
       ? `${countLabel(input.guestProspectCount, 'opt-in')} captured`
       : 'No follow-up opt-ins',
+    ...(actionLaneCount > 0 ? [`${actionLaneCount} memory lane${actionLaneCount === 1 ? '' : 's'} still need action`] : []),
     ...(firstBlockingStep ? [`First blocker: ${firstBlockingStep.label}`] : []),
   ];
 
