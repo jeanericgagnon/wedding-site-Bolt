@@ -51,6 +51,7 @@ export interface GuestVisibilityPreview {
   accessDetail: string;
   routeReadinessLabel: string;
   pathCoverageSummary: string;
+  visibleEventSummary: string | null;
   hiddenEventSummary: string | null;
   mainGapLabel: string | null;
   visibleEvents: VisibilityPreviewEvent[];
@@ -245,6 +246,9 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
       : `${guestLabel} needs at least one event invitation before this guest path is ready.`,
     routeReadinessLabel,
     pathCoverageSummary,
+    visibleEventSummary: visibleEvents.length > 0
+      ? `Visible to this guest: ${formatEventList(visibleEvents)}.`
+      : 'No visible events for this guest yet.',
     hiddenEventSummary: hiddenEvents.length > 0
       ? `Hidden from this guest: ${formatEventList(hiddenEvents)}.`
       : null,

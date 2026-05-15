@@ -305,6 +305,9 @@ function GuestDrawerDetails({
                 {hiddenEventCoverageRate != null ? ` · ${hiddenEventCoverageRate}% still hidden` : ''}
               </p>
             )}
+            {visibilityPreview.visibleEventSummary && (
+              <p className="text-xs text-text-tertiary">{visibilityPreview.visibleEventSummary}</p>
+            )}
             {visibilityPreview.hiddenEventSummary && (
               <p className="text-xs text-text-tertiary">{visibilityPreview.hiddenEventSummary}</p>
             )}

@@ -23,6 +23,7 @@ describe('guestVisibilityPreview', () => {
     expect(preview.accessSummary).toBe('2 of 3 events visible · 1 hidden');
     expect(preview.routeReadinessLabel).toBe('Visible events without private link');
     expect(preview.pathCoverageSummary).toBe('2 visible events exist, but private guest-link coverage still needs setup.');
+    expect(preview.visibleEventSummary).toBe('Visible to this guest: Ceremony and Farewell Brunch.');
     expect(preview.hiddenEventSummary).toBe('Hidden from this guest: Welcome Drinks.');
     expect(preview.mainGapLabel).toBe('Main gap: Rotate or create a private RSVP link');
     expect(preview.visibleEvents.map((event) => event.eventName)).toEqual(['Ceremony', 'Farewell Brunch']);
@@ -92,6 +93,7 @@ describe('guestVisibilityPreview', () => {
     expect(`${preview.bannerLabel} ${preview.accessDetail} ${preview.accessSummary}`).not.toContain('private-token');
     expect(preview.routeReadinessLabel).toBe('Private guest path ready');
     expect(preview.pathCoverageSummary).toBe('2 visible events have a private guest path ready.');
+    expect(preview.visibleEventSummary).toBe('Visible to this guest: Ceremony and Reception.');
     expect(preview.hiddenEventSummary).toBeNull();
     expect(preview.mainGapLabel).toBeNull();
     expect(preview.links.map((link) => link.label)).toContain('Open travel section as guest');
@@ -112,6 +114,7 @@ describe('guestVisibilityPreview', () => {
     expect(preview.accessSummary).toBe('1 of 2 events visible · 1 hidden');
     expect(preview.routeReadinessLabel).toBe('Visible events without private link');
     expect(preview.pathCoverageSummary).toBe('1 visible event exists, but private guest-link coverage still needs setup.');
+    expect(preview.visibleEventSummary).toBe('Visible to this guest: Ceremony.');
     expect(preview.hiddenEventSummary).toBe('Hidden from this guest: Reception.');
     expect(preview.mainGapLabel).toBe('Main gap: Rotate or create a private RSVP link');
     expect(preview.visibleEvents.map((event) => event.eventName)).toEqual(['Ceremony']);
@@ -137,6 +140,7 @@ describe('guestVisibilityPreview', () => {
     expect(preview.warnings).toContain('Household RSVP states are mixed, so preview this guest before sending reminders.');
     expect(preview.routeReadinessLabel).toBe('No guest path ready');
     expect(preview.pathCoverageSummary).toBe('No guest-facing preview path is fully ready yet.');
+    expect(preview.visibleEventSummary).toBe('No visible events for this guest yet.');
     expect(preview.hiddenEventSummary).toBe('Hidden from this guest: Welcome Drinks.');
     expect(preview.mainGapLabel).toBe('Main gap: Invite this guest to at least one visible event');
   });
@@ -154,6 +158,7 @@ describe('guestVisibilityPreview', () => {
 
     expect(preview.routeReadinessLabel).toBe('Public shell only');
     expect(preview.pathCoverageSummary).toBe('Public shell preview is ready, but this guest still has no visible private event access.');
+    expect(preview.visibleEventSummary).toBe('No visible events for this guest yet.');
     expect(preview.hiddenEventSummary).toBe('Hidden from this guest: Welcome Drinks.');
     expect(preview.mainGapLabel).toBe('Main gap: Invite this guest to at least one visible event');
   });
