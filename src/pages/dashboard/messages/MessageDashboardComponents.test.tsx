@@ -781,6 +781,10 @@ describe('MessageReviewQueuePanels', () => {
     );
 
     expect(screen.getByText('email · delivered 2 · needs review 1 · needs contact 1 · not reached 1')).toBeInTheDocument();
+    expect(screen.getByText('5 targeted recipients · 40% delivered coverage · 20% review coverage · 20% needs contact · 20% unreached')).toBeInTheDocument();
+    expect(screen.getByText('60% cleanup still pending · 40% follow-through ready')).toBeInTheDocument();
+    expect(screen.getByText('2 recipients already closed out · 3 recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.getByText('Main cleanup: delivery review')).toBeInTheDocument();
   });
 });
 
@@ -1152,11 +1156,19 @@ describe('MessageHistoryCard', () => {
     );
 
     expect(screen.getAllByText('0 delivered · 0 need review')).not.toHaveLength(0);
+    expect(screen.getByText('4 targeted recipients')).toBeInTheDocument();
+    expect(screen.getByText('0% delivered coverage · 0% review coverage · 0% needs contact · 0% unreached')).toBeInTheDocument();
+    expect(screen.getByText('0% cleanup still pending')).toBeInTheDocument();
+    expect(screen.getByText('100% follow-through ready')).toBeInTheDocument();
+    expect(screen.getByText('4 recipients already closed out')).toBeInTheDocument();
+    expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.getByText('Main cleanup: all clear')).toBeInTheDocument();
     expect(screen.getByText('0 opened')).toBeInTheDocument();
     expect(screen.getByText('0 viewed')).toBeInTheDocument();
     expect(screen.getByText('0 clicked')).toBeInTheDocument();
     expect(screen.getByText('0 replied')).toBeInTheDocument();
     expect(screen.getByText('0 bounced')).toBeInTheDocument();
+    expect(screen.getByText('0% open · 0% click · 0% reply')).toBeInTheDocument();
     expect(screen.getByText('0 need contact details')).toBeInTheDocument();
     expect(screen.getByText('0 not reached yet')).toBeInTheDocument();
   });

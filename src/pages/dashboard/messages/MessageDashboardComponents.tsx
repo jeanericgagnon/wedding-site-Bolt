@@ -23,6 +23,7 @@ import {
   getCleanupCoverageRate,
   getFollowThroughReadyRecipientCount,
   getFollowThroughFocusLabel,
+  isDeliveryCompletedStatus,
   getMessageEngagementStats,
   getRecipientCount,
   getSkippedCount,
@@ -1780,23 +1781,42 @@ export const MessageReviewQueuePanels: React.FC<MessageReviewQueuePanelsProps> =
           <button onClick={onShowNeedsFollowUp} className="text-xs text-primary">View needs follow-up</button>
         </div>
         <div className="space-y-2">
-          {reviewCandidates.map((message) => (
-            <div key={message.id} className="flex items-center justify-between gap-2 rounded-lg border border-border-subtle px-3 py-3 bg-white">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-text-primary truncate">{message.subject}</p>
-                <p className="text-[11px] text-text-tertiary">{message.channel} · delivered {message.delivered_count ?? 0} · needs review {message.failed_count ?? 0} · needs contact {getSkippedCount(message, deliveries)} · not reached {getUnreachedCount(message, deliveries)}</p>
+          {reviewCandidates.map((message) => {
+            const rowSummary = getMessageRowFollowThroughSummary(message, deliveries);
+            return (
+              <div key={message.id} className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle px-3 py-3 bg-white">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-text-primary truncate">{message.subject}</p>
+                  <p className="text-[11px] text-text-tertiary">
+                    {message.channel} · delivered {rowSummary.deliveredRecipients} · needs review {rowSummary.failedRecipients} · needs contact {rowSummary.skippedRecipients} · not reached {rowSummary.unreachedRecipients}
+                  </p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">
+                    {rowSummary.targetedRecipients} targeted recipients · {rowSummary.deliveredCoverageRate}% delivered coverage · {rowSummary.reviewCoverageRate}% review coverage · {rowSummary.contactCoverageRate}% needs contact · {rowSummary.unreachedCoverageRate}% unreached
+                  </p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">
+                    {rowSummary.cleanupCoverageRate}% cleanup still pending · {Math.max(0, 100 - rowSummary.cleanupCoverageRate)}% follow-through ready
+                  </p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">
+                    {rowSummary.followThroughReadyRecipientCount > 0 ? `${rowSummary.followThroughReadyRecipientCount} recipients already closed out` : 'No recipients are already closed out'}
+                    {' · '}
+                    {rowSummary.cleanupRecipientCount > 0 ? `${rowSummary.cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}
+                  </p>
+                  {rowSummary.followThroughFocusLabel && (
+                    <p className="mt-1 text-[11px] text-text-tertiary">{rowSummary.followThroughFocusLabel}</p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <button
+                    onClick={() => onViewMessage(message)}
+                    className="text-xs px-2 py-1 rounded border border-border bg-white text-text-secondary"
+                  >
+                    Review
+                  </button>
+                  <p className="mt-1 text-[11px] text-text-tertiary max-w-[220px]">Review who missed it, then duplicate if you need a follow-up.</p>
+                </div>
               </div>
-              <div className="text-right">
-                <button
-                  onClick={() => onViewMessage(message)}
-                  className="text-xs px-2 py-1 rounded border border-border bg-white text-text-secondary"
-                >
-                  Review
-                </button>
-                <p className="mt-1 text-[11px] text-text-tertiary max-w-[220px]">Review who missed it, then duplicate if you need a follow-up.</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     )}
@@ -1824,6 +1844,70 @@ export function getStatusBadge(message: Message) {
     return <span className={`px-2 py-1 rounded text-xs border flex items-center gap-1 ${toneClasses}`}><Loader2 size={10} className="animate-spin" />Sending…</span>;
   }
   return <span className={`px-2 py-1 rounded text-xs border ${toneClasses}`}>{deliveryState.label}</span>;
+}
+
+function getMessageRowFollowThroughSummary(message: Message, deliveries: DeliveryRow[]) {
+  const recipientCount = getRecipientCount(message);
+  const deliveredRecipients = Math.max(0, Number(message.delivered_count ?? 0));
+  const failedRecipients = Math.max(0, Number(message.failed_count ?? 0));
+  const skippedRecipients = getSkippedCount(message, deliveries);
+  const hasDeliveryActivity = isDeliveryCompletedStatus(message.status) || !!message.sent_at || deliveredRecipients > 0 || failedRecipients > 0 || skippedRecipients > 0;
+  const unreachedRecipients = hasDeliveryActivity ? getUnreachedCount(message, deliveries) : 0;
+  const targetedRecipients = Math.max(
+    recipientCount,
+    deliveredRecipients + failedRecipients + skippedRecipients + unreachedRecipients,
+    0,
+  );
+  const deliveredCoverageRate = targetedRecipients > 0 ? Math.round((deliveredRecipients / targetedRecipients) * 100) : 0;
+  const reviewCoverageRate = targetedRecipients > 0 ? Math.round((failedRecipients / targetedRecipients) * 100) : 0;
+  const contactCoverageRate = targetedRecipients > 0 ? Math.round((skippedRecipients / targetedRecipients) * 100) : 0;
+  const unreachedCoverageRate = targetedRecipients > 0 ? Math.round((unreachedRecipients / targetedRecipients) * 100) : 0;
+  const cleanupCoverageRate = getCleanupCoverageRate({
+    failed: failedRecipients,
+    skipped: skippedRecipients,
+    unreached: unreachedRecipients,
+    targeted: targetedRecipients,
+  }) ?? 0;
+  const cleanupRecipientCount = getCleanupRecipientCount({
+    failed: failedRecipients,
+    skipped: skippedRecipients,
+    unreached: unreachedRecipients,
+  });
+  const followThroughReadyRecipientCount = getFollowThroughReadyRecipientCount({
+    failed: failedRecipients,
+    skipped: skippedRecipients,
+    unreached: unreachedRecipients,
+    targeted: targetedRecipients,
+  });
+  const followThroughFocusLabel = getFollowThroughFocusLabel({
+    failed: failedRecipients,
+    skipped: skippedRecipients,
+    unreached: unreachedRecipients,
+  });
+  const engagement = getMessageEngagementStats(message);
+  const openRate = deliveredRecipients > 0 && engagement.opened != null ? Math.round((engagement.opened / deliveredRecipients) * 100) : 0;
+  const clickRate = deliveredRecipients > 0 && engagement.clicked != null ? Math.round((engagement.clicked / deliveredRecipients) * 100) : 0;
+  const replyRate = deliveredRecipients > 0 && engagement.replied != null ? Math.round((engagement.replied / deliveredRecipients) * 100) : 0;
+
+  return {
+    deliveredRecipients,
+    failedRecipients,
+    skippedRecipients,
+    unreachedRecipients,
+    targetedRecipients,
+    deliveredCoverageRate,
+    reviewCoverageRate,
+    contactCoverageRate,
+    unreachedCoverageRate,
+    cleanupCoverageRate,
+    cleanupRecipientCount,
+    followThroughReadyRecipientCount,
+    followThroughFocusLabel,
+    engagement,
+    openRate,
+    clickRate,
+    replyRate,
+  };
 }
 
 export interface MessageHistoryCardProps {
@@ -2038,10 +2122,8 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
         <div className="space-y-4">
           {filteredHistory.map((message) => {
             const recipientCount = getRecipientCount(message);
-            const skippedCount = getSkippedCount(message, deliveries);
-            const unreachedCount = getUnreachedCount(message, deliveries);
             const campaignName = getCampaignName(message);
-            const engagement = getMessageEngagementStats(message);
+            const rowSummary = getMessageRowFollowThroughSummary(message, deliveries);
             return (
               <div
                 key={message.id}
@@ -2070,25 +2152,49 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
                         {recipientCount} {recipientCount === 1 ? 'recipient' : 'recipients'}
                       </span>
                       {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
-                        <span>{message.delivered_count ?? 0} delivered · {message.failed_count ?? 0} need review</span>
+                        <span>{rowSummary.deliveredRecipients} delivered · {rowSummary.failedRecipients} need review</span>
                       )}
-                      {engagement.opened != null && (
-                        <span>{engagement.opened} opened</span>
+                      {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
+                        <span>{rowSummary.targetedRecipients} targeted recipients</span>
                       )}
-                      {engagement.viewed != null && (
-                        <span>{engagement.viewed} viewed</span>
+                      {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
+                        <span>{rowSummary.deliveredCoverageRate}% delivered coverage · {rowSummary.reviewCoverageRate}% review coverage · {rowSummary.contactCoverageRate}% needs contact · {rowSummary.unreachedCoverageRate}% unreached</span>
                       )}
-                      {engagement.clicked != null && (
-                        <span>{engagement.clicked} clicked</span>
+                      {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
+                        <span>{rowSummary.cleanupCoverageRate}% cleanup still pending</span>
                       )}
-                      {engagement.replied != null && (
-                        <span>{engagement.replied} replied</span>
+                      {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
+                        <span>{Math.max(0, 100 - rowSummary.cleanupCoverageRate)}% follow-through ready</span>
                       )}
-                      {engagement.bounced != null && (
-                        <span>{engagement.bounced} bounced</span>
+                      {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
+                        <span>{rowSummary.followThroughReadyRecipientCount > 0 ? `${rowSummary.followThroughReadyRecipientCount} recipients already closed out` : 'No recipients are already closed out'}</span>
                       )}
-                      <span>{describeRecipientReview(skippedCount)}</span>
-                      <span>{unreachedCount} not reached yet</span>
+                      {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
+                        <span>{rowSummary.cleanupRecipientCount > 0 ? `${rowSummary.cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}</span>
+                      )}
+                      {rowSummary.followThroughFocusLabel && (
+                        <span>{rowSummary.followThroughFocusLabel}</span>
+                      )}
+                      {rowSummary.engagement.opened != null && (
+                        <span>{rowSummary.engagement.opened} opened</span>
+                      )}
+                      {rowSummary.engagement.viewed != null && (
+                        <span>{rowSummary.engagement.viewed} viewed</span>
+                      )}
+                      {rowSummary.engagement.clicked != null && (
+                        <span>{rowSummary.engagement.clicked} clicked</span>
+                      )}
+                      {rowSummary.engagement.replied != null && (
+                        <span>{rowSummary.engagement.replied} replied</span>
+                      )}
+                      {rowSummary.engagement.bounced != null && (
+                        <span>{rowSummary.engagement.bounced} bounced</span>
+                      )}
+                      {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
+                        <span>{rowSummary.openRate}% open · {rowSummary.clickRate}% click · {rowSummary.replyRate}% reply</span>
+                      )}
+                      <span>{describeRecipientReview(rowSummary.skippedRecipients)}</span>
+                      <span>{rowSummary.unreachedRecipients} not reached yet</span>
                       {getCampaignTypeLabel(message) && (
                         <span className="px-2 py-0.5 bg-surface-subtle text-text-secondary rounded border border-border-subtle">
                           {getCampaignTypeLabel(message)}
@@ -2110,13 +2216,13 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
                       {(recipientCount > 0 || message.delivered_count != null || message.failed_count != null) && (
                         <span className="flex items-center gap-1 text-success font-medium">
                           <CheckCircle size={10} />
-                          {message.delivered_count ?? 0} delivered
+                          {rowSummary.deliveredRecipients} delivered
                         </span>
                       )}
                       {(recipientCount > 0 || message.delivered_count != null || message.failed_count != null) && (
                         <span className="flex items-center gap-1 text-error font-medium">
                           <AlertCircle size={10} />
-                          {message.failed_count ?? 0} need review
+                          {rowSummary.failedRecipients} need review
                         </span>
                       )}
                     </div>
