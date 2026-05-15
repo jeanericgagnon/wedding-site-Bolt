@@ -236,6 +236,12 @@ function GuestDrawerDetails({
     || link.kind === 'registry'
     || link.kind === 'site'
   )).length;
+  const guestSpecificCoverageRate = visibilityPreview.links.length > 0
+    ? Math.round((guestSpecificPreviewRouteCount / visibilityPreview.links.length) * 100)
+    : null;
+  const publicShellCoverageRate = visibilityPreview.links.length > 0
+    ? Math.round((publicPreviewRouteCount / visibilityPreview.links.length) * 100)
+    : null;
   const visibleEventCount = visibilityPreview.visibleEvents.length;
   const hiddenEventCount = visibilityPreview.hiddenEvents.length;
   const guestContactUrl = visibilityPreview.links.find((link) => link.kind === 'contact')
@@ -270,6 +276,13 @@ function GuestDrawerDetails({
               {visibleEventCount > 0 ? ` · ${visibleEventCount} visible event${visibleEventCount === 1 ? '' : 's'}` : ''}
               {hiddenEventCount > 0 ? ` · ${hiddenEventCount} hidden event${hiddenEventCount === 1 ? '' : 's'}` : ''}
             </p>
+            {(guestSpecificCoverageRate != null || publicShellCoverageRate != null) && (
+              <p className="text-xs text-text-tertiary">
+                {guestSpecificCoverageRate != null ? `${guestSpecificCoverageRate}% guest-specific coverage` : ''}
+                {guestSpecificCoverageRate != null && publicShellCoverageRate != null ? ' · ' : ''}
+                {publicShellCoverageRate != null ? `${publicShellCoverageRate}% public-shell coverage` : ''}
+              </p>
+            )}
             <p className="text-xs font-medium text-text-secondary">{visibilityPreview.routeReadinessLabel}</p>
             <p className="text-xs text-text-tertiary">{visibilityPreview.pathCoverageSummary}</p>
             {visibilityPreview.mainGapLabel && (
