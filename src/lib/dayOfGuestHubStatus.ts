@@ -195,7 +195,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
     ? `${missingCoreActionIds.length} of ${coreGuestHubActionIds.length} core day-of action${missingCoreActionIds.length === 1 ? ' is' : 's are'} still missing from this link: ${summarizeGuestHubActions(missingCoreActionIds.map((id) => ({ id })))}.`
     : `0 of ${coreGuestHubActionIds.length} core day-of actions are still missing from this link. This link covers RSVP, timing, travel, and photo follow-through.`;
   const mainGapLabel = missingCoreActionIds.length > 0
-    ? `Main gap: ${actionCount === 0 ? 'Turn on RSVP, schedule, travel, and photo upload' : `Add ${summarizeGuestHubActions(missingCoreActionIds.map((id) => ({ id })))} to this link`}.`
+    ? `Main gap: ${actionCount === 0 ? 'Add RSVP, schedule, travel details, and photo upload to this link' : `Add ${summarizeGuestHubActions(missingCoreActionIds.map((id) => ({ id })))} to this link`}.`
     : null;
   if (input.hasGuestInviteToken) {
     return {
@@ -214,7 +214,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
 
   if (input.hasInviteToken || input.hasPasswordSession) {
     return {
-      title: 'Private event access',
+      title: 'Invite-only event link',
       badgeLabel: 'Invite-only',
       detail: 'This link includes invite-only wedding details that do not appear on the public site shell.',
       summary: 'Invite-only access is active for this link, without guest-specific RSVP or check-in readback.',
@@ -228,7 +228,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
   }
 
   return {
-    title: 'Public site view',
+    title: 'Public wedding link',
     badgeLabel: 'Public',
     detail: 'This link shows the public wedding hub. Invite-only event details stay on the private link from the couple.',
     summary: 'Public-only access is active for this link, without private event or guest-specific readback.',

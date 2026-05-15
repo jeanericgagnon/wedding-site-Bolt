@@ -139,9 +139,9 @@ export function buildGuestHubActions(slug: string, settings: GuestHubActionSetti
 export function summarizeGuestHubActions(actions: Pick<GuestHubAction, 'id'>[]): string {
   const labels: Record<GuestHubActionId, string> = {
     rsvp: 'RSVP',
-    updates: 'day-of updates',
+    updates: 'latest updates',
     schedule: 'schedule',
-    travel: 'travel',
+    travel: 'travel details',
     registry: 'registry',
     photos: 'photo upload',
     guestbook: 'guestbook',

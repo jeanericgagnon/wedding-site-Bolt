@@ -80,15 +80,15 @@ describe('dayOfGuestHubStatus', () => {
     });
 
     expect(card).toMatchObject({
-      title: 'Private event access',
+      title: 'Invite-only event link',
       badgeLabel: 'Invite-only',
       summary: 'Invite-only access is active for this link, without guest-specific RSVP or check-in readback.',
       actionCountLabel: 'No guest actions are ready from this link yet.',
       actionSummaryLabel: null,
       readyCoreActionCountLabel: null,
       coreActionCoverageLabel: 'Core day-of actions are not ready from this link yet.',
-      coreActionSummaryLabel: '4 of 4 core day-of actions are still missing from this link: RSVP, schedule, travel, and photo upload.',
-      mainGapLabel: 'Main gap: Turn on RSVP, schedule, travel, and photo upload.',
+      coreActionSummaryLabel: '4 of 4 core day-of actions are still missing from this link: RSVP, schedule, travel details, and photo upload.',
+      mainGapLabel: 'Main gap: Add RSVP, schedule, travel details, and photo upload to this link.',
     });
     expect(card?.detail).toContain('invite-only wedding details');
   });
@@ -104,9 +104,9 @@ describe('dayOfGuestHubStatus', () => {
       title: 'Guest-specific link',
       badgeLabel: 'Guest-specific',
       actionCountLabel: '4 guest actions are ready from this link.',
-      actionSummaryLabel: 'RSVP, schedule, travel, and photo upload',
+      actionSummaryLabel: 'RSVP, schedule, travel details, and photo upload',
       readyCoreActionCountLabel: '4 of 4 core day-of actions are already ready from this link.',
-      coreActionCoverageLabel: '100% of core day-of actions are ready from this link: RSVP, schedule, travel, and photo upload.',
+      coreActionCoverageLabel: '100% of core day-of actions are ready from this link: RSVP, schedule, travel details, and photo upload.',
       coreActionSummaryLabel: '0 of 4 core day-of actions are still missing from this link. This link covers RSVP, timing, travel, and photo follow-through.',
       mainGapLabel: null,
     });
@@ -120,15 +120,15 @@ describe('dayOfGuestHubStatus', () => {
     });
 
     expect(card).toMatchObject({
-      title: 'Public site view',
+      title: 'Public wedding link',
       badgeLabel: 'Public',
       summary: 'Public-only access is active for this link, without private event or guest-specific readback.',
       actionCountLabel: 'No guest actions are ready from this link yet.',
       actionSummaryLabel: null,
       readyCoreActionCountLabel: null,
       coreActionCoverageLabel: 'Core day-of actions are not ready from this link yet.',
-      coreActionSummaryLabel: '4 of 4 core day-of actions are still missing from this link: RSVP, schedule, travel, and photo upload.',
-      mainGapLabel: 'Main gap: Turn on RSVP, schedule, travel, and photo upload.',
+      coreActionSummaryLabel: '4 of 4 core day-of actions are still missing from this link: RSVP, schedule, travel details, and photo upload.',
+      mainGapLabel: 'Main gap: Add RSVP, schedule, travel details, and photo upload to this link.',
     });
     expect(card?.detail).toContain('public wedding hub');
   });
