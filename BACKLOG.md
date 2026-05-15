@@ -363,6 +363,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the guest-hub `Link access` card now also spells out how many guest actions the current link unlocks and which actions those are, so QR/day-of link truth no longer stops at `Public`, `Invite-only`, or `Guest-specific`
    - this batch shipped: the guest-hub `Link access` card now also reads back core day-of coverage from that exact link, including what is still missing from RSVP, schedule, travel, and photo follow-through, so couples can tell whether a QR path is merely private or actually complete enough to rely on
    - this batch shipped: the guest-facing `Link access` card and owner `Guest hub status` summary now also normalize core day-of link coverage as a percentage, so couples can judge QR/day-of completeness at a glance instead of translating `2 of 4` or `3 of 4` coverage by hand
+   - this batch shipped: the guest-hub `Link access` card now also reads back how many of the four core day-of actions are already ready, so guests can pair the QR/day-of coverage percentage with a concrete ready-action count instead of translating the link math by hand
    - this batch shipped: the owner-facing `Guest hub status` board now also reads back which guest actions the current link unlocks when link-access truth is connected, so the day-of readiness summary stays aligned with the guest-facing QR/hub access card
    - add live production mobile proof that public and guest-specific QR modes land on the right actions without private leakage
 

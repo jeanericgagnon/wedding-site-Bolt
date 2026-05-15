@@ -61,6 +61,7 @@ type GuestHubLinkAccessCard = {
   summary: string;
   actionCountLabel?: string | null;
   actionSummaryLabel?: string | null;
+  readyCoreActionCountLabel?: string | null;
   coreActionCoverageLabel?: string | null;
   coreActionSummaryLabel?: string | null;
   mainGapLabel?: string | null;
@@ -339,9 +340,12 @@ export function EventHubLiveContent({
                           )}
                         </div>
                       )}
-                      {(linkAccessCard.coreActionCoverageLabel || linkAccessCard.coreActionSummaryLabel) && (
+                      {(linkAccessCard.readyCoreActionCountLabel || linkAccessCard.coreActionCoverageLabel || linkAccessCard.coreActionSummaryLabel) && (
                         <div className="mt-3 rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Core day-of coverage</p>
+                          {linkAccessCard.readyCoreActionCountLabel && (
+                            <p className="mt-1 text-sm font-semibold text-[#2f261d]">{linkAccessCard.readyCoreActionCountLabel}</p>
+                          )}
                           {linkAccessCard.coreActionCoverageLabel && (
                             <p className="mt-1 text-sm font-semibold text-[#2f261d]">{linkAccessCard.coreActionCoverageLabel}</p>
                           )}

@@ -63,6 +63,7 @@ export type GuestHubLinkAccessCard = {
   summary: string;
   actionCountLabel: string | null;
   actionSummaryLabel: string | null;
+  readyCoreActionCountLabel: string | null;
   coreActionCoverageLabel: string | null;
   coreActionSummaryLabel: string | null;
   mainGapLabel: string | null;
@@ -182,6 +183,9 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
     ? `${actionCount} guest action${actionCount === 1 ? ' is' : 's are'} ready from this link.`
     : 'No guest actions are ready from this link yet.';
   const actionSummaryLabel = actionCount > 0 ? summarizeGuestHubActions(enabledActionIds.map((id) => ({ id }))) : null;
+  const readyCoreActionCountLabel = readyCoreActionIds.length > 0
+    ? `${readyCoreActionIds.length} of ${coreGuestHubActionIds.length} core day-of action${readyCoreActionIds.length === 1 ? ' is' : 's are'} already ready from this link.`
+    : null;
   const coreActionCoverageLabel = readyCoreActionIds.length === coreGuestHubActionIds.length
     ? `100% of core day-of actions are ready from this link: ${summarizeGuestHubActions(readyCoreActionIds.map((id) => ({ id })))}.`
     : readyCoreActionIds.length > 0
@@ -201,6 +205,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
       summary: 'Guest-specific access is active for this link, including RSVP and check-in readback.',
       actionCountLabel,
       actionSummaryLabel,
+      readyCoreActionCountLabel,
       coreActionCoverageLabel,
       coreActionSummaryLabel,
       mainGapLabel,
@@ -215,6 +220,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
       summary: 'Invite-only access is active for this link, without guest-specific RSVP or check-in readback.',
       actionCountLabel,
       actionSummaryLabel,
+      readyCoreActionCountLabel,
       coreActionCoverageLabel,
       coreActionSummaryLabel,
       mainGapLabel,
@@ -228,6 +234,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
     summary: 'Public-only access is active for this link, without private event or guest-specific readback.',
     actionCountLabel,
     actionSummaryLabel,
+    readyCoreActionCountLabel,
     coreActionCoverageLabel,
     coreActionSummaryLabel,
     mainGapLabel,
