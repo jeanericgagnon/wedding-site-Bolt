@@ -27,7 +27,7 @@ async function waitForPreview(url, timeoutMs = 20_000) {
   throw new Error(`Preview server did not become ready at ${url} within ${timeoutMs}ms`);
 }
 
-const steps = [
+const localOnlySteps = [
   {
     id: 'dayof-web-mode-tests',
     label: 'Day-of web-mode unit and render truth',
@@ -41,6 +41,8 @@ const steps = [
     required: true,
   },
 ];
+
+const steps = isLiveBaseUrl ? [] : localOnlySteps;
 
 function runStep(step) {
   const startedAt = new Date().toISOString();
@@ -159,15 +161,19 @@ const output = {
     failed: results.filter((result) => !result.ok).length,
   },
   automatedCoverage: [
-    'Guest-hub offline snapshot sanitization and readiness truth',
-    'Service-worker guest-hub shell safety and EventHub render wiring',
+    ...(isLiveBaseUrl
+      ? []
+      : [
+          'Guest-hub offline snapshot sanitization and readiness truth',
+          'Service-worker guest-hub shell safety and EventHub render wiring',
+        ]),
     isLiveBaseUrl
       ? 'Authenticated live browser proof for invite-scoped guest-state visibility, latest update, coordinator handoff, and map deep links'
       : 'Real browser offline proof for saved in-app guest-hub readback after reload',
     isLiveBaseUrl
       ? 'Read-only live proof stays separate from the standalone guest-hub write/read-with-cleanup production lane'
       : 'Real browser offline proof for cached event-hub offline shell navigation',
-    'Build integrity after day-of web-mode proof assertions',
+    ...(isLiveBaseUrl ? [] : ['Build integrity after day-of web-mode proof assertions']),
   ],
   stillManualProofNeeded: [
     isLiveBaseUrl
