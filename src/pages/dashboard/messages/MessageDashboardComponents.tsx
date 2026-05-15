@@ -1580,10 +1580,10 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs review {activeCampaignThread.failed}</span>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs contact {activeCampaignThread.skipped}</span>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Not reached {activeCampaignThread.unreached}</span>
-          {activeCampaignThread.opened > 0 && <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Opened {activeCampaignThread.opened}</span>}
-          {activeCampaignThread.viewed > 0 && <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Viewed {activeCampaignThread.viewed}</span>}
-          {activeCampaignThread.clicked > 0 && <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Clicked {activeCampaignThread.clicked}</span>}
-          {activeCampaignThread.replied > 0 && <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Replied {activeCampaignThread.replied}</span>}
+          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Opened {activeCampaignThread.opened}</span>
+          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Viewed {activeCampaignThread.viewed}</span>
+          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Clicked {activeCampaignThread.clicked}</span>
+          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Replied {activeCampaignThread.replied}</span>
           {activeCampaignThread.bounced > 0 && <span className="rounded-lg border border-warning/20 bg-warning-light px-3 py-1 text-warning">Bounced {activeCampaignThread.bounced}</span>}
               </>
             );

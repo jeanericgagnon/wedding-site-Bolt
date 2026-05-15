@@ -255,6 +255,10 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('0% follow-through ready')).toBeInTheDocument();
     expect(screen.getByText('No recipients are already closed out')).toBeInTheDocument();
     expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.getByText('Opened 0')).toBeInTheDocument();
+    expect(screen.getByText('Viewed 0')).toBeInTheDocument();
+    expect(screen.getByText('Clicked 0')).toBeInTheDocument();
+    expect(screen.getByText('Replied 0')).toBeInTheDocument();
   });
 
   it('shows engagement rates on the latest campaign message when delivered recipients exist', () => {
