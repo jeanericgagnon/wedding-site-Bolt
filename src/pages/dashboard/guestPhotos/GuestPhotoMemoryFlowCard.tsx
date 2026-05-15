@@ -15,6 +15,7 @@ export function GuestPhotoMemoryFlowCard({ memoryFlowReadiness }: GuestPhotoMemo
           <p className="mt-2 max-w-3xl text-sm leading-6 text-text-secondary">
             This keeps upload links, guestbook notes, moderation, recap, and follow-up in one launch checklist instead of scattered album controls.
           </p>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-text-secondary">{memoryFlowReadiness.summary}</p>
         </div>
         <span className="inline-flex w-fit items-center rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1.5 text-sm font-medium text-text-primary">
           {memoryFlowReadiness.readyCount} of {memoryFlowReadiness.steps.length} memory steps ready

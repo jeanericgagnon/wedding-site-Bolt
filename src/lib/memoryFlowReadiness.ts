@@ -35,6 +35,7 @@ export interface MemoryFlowReadinessLane {
 
 export interface MemoryFlowReadiness {
   readyCount: number;
+  summary: string;
   summaryBadges: string[];
   mainGapLabel: string | null;
   lanes: MemoryFlowReadinessLane[];
@@ -263,9 +264,13 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
     ...(plannedStepCount > 0 ? [`${plannedStepCount} memory step${plannedStepCount === 1 ? '' : 's'} still planned`] : []),
     ...(firstBlockingStep ? [`First blocker: ${firstBlockingStep.label}`] : []),
   ];
+  const summary = highestPriorityGap
+    ? `${readyStepCount} ready · ${actionStepCount} need action · ${emptyStepCount} empty${plannedStepCount > 0 ? ` · ${plannedStepCount} planned` : ''}.${firstBlockingStep ? ` First blocker: ${firstBlockingStep.label}.` : ''}`
+    : `${readyStepCount} ready. No memory gaps right now.${actionLaneCount === 0 && emptyLaneCount === 0 ? ' No memory lanes need action.' : ''}${actionStepCount === 0 && emptyStepCount === 0 ? ' No memory steps need action.' : ''}${plannedStepCount > 0 ? ` ${plannedStepCount} memory step${plannedStepCount === 1 ? '' : 's'} still planned.` : ''}${blockerCount === 0 ? ' No active blockers before sharing.' : ''}`;
 
   return {
     readyCount: readyStepCount,
+    summary,
     summaryBadges,
     mainGapLabel: highestPriorityGap ? `Main gap: ${highestPriorityGap.label}` : 'Main gap: none right now',
     lanes,

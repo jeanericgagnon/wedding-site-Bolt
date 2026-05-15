@@ -8,6 +8,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
       <GuestPhotoMemoryFlowCard
         memoryFlowReadiness={{
           readyCount: 5,
+          summary: '8 ready. No memory gaps right now. No memory lanes need action. No memory steps need action. 1 memory step still planned. No active blockers before sharing.',
           summaryBadges: ['4 of 4 memory lanes ready', '89% step coverage', '8 of 9 memory steps ready', '12 uploads live across 1 active album', 'Private recap link', '33% story coverage', 'Handoff ready', '1 opt-in captured', 'No blockers before sharing', 'No memory gaps right now', 'No memory lanes need action', 'No memory steps need action', '1 memory step still planned'],
           mainGapLabel: 'Main gap: none right now',
           lanes: [
@@ -46,6 +47,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
     expect(screen.getByText('No memory gaps right now')).toBeInTheDocument();
     expect(screen.getByText('No memory lanes need action')).toBeInTheDocument();
     expect(screen.getByText('No memory steps need action')).toBeInTheDocument();
+    expect(screen.getByText('8 ready. No memory gaps right now. No memory lanes need action. No memory steps need action. 1 memory step still planned. No active blockers before sharing.')).toBeInTheDocument();
     expect(screen.getByText('1 memory step still planned')).toBeInTheDocument();
     expect(screen.getByText('Main gap: none right now')).toBeInTheDocument();
     expect(screen.getByText('No active blockers before sharing broadly.')).toBeInTheDocument();
@@ -61,6 +63,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
       <GuestPhotoMemoryFlowCard
         memoryFlowReadiness={{
           readyCount: 1,
+          summary: '1 ready · 1 need action · 6 empty · 2 planned. First blocker: No-app guest hub.',
           summaryBadges: ['11% step coverage', '1 of 9 memory steps ready', 'No live upload lane', 'Recap not shareable', 'No story curation yet', 'No handoff yet', 'No follow-up opt-ins', '1 active blocker before sharing', '1 memory step still needs action', '4 memory lanes still empty', '6 memory steps still empty', '2 memory steps still planned'],
           mainGapLabel: 'Main gap: Collection',
           lanes: [
@@ -87,6 +90,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
 
     expect(screen.getByText('Main gap: Collection')).toBeInTheDocument();
     expect(screen.getByText('1 of 9 memory steps ready')).toBeInTheDocument();
+    expect(screen.getByText('1 ready · 1 need action · 6 empty · 2 planned. First blocker: No-app guest hub.')).toBeInTheDocument();
     expect(screen.getByText('11% step coverage')).toBeInTheDocument();
     expect(screen.getByText('1 active blocker before sharing')).toBeInTheDocument();
     expect(screen.getByText('1 memory step still needs action')).toBeInTheDocument();
@@ -102,6 +106,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
       <GuestPhotoMemoryFlowCard
         memoryFlowReadiness={{
           readyCount: 3,
+          summary: '3 ready · 6 need action · 1 empty · 2 planned. First blocker: No-app guest hub.',
           summaryBadges: ['0 of 4 memory lanes ready', '0% step coverage', '3 of 9 memory steps ready', 'Upload lane needs setup', 'Recap saved, not shareable', 'No story picks yet', '5 review items need attention', 'No follow-up opt-ins', '2 active blockers before sharing', '4 memory lanes still need action', '6 memory steps still need action', '2 memory steps still empty', '2 memory steps still planned', 'First blocker: No-app guest hub'],
           mainGapLabel: 'Main gap: Collection',
           lanes: [
@@ -131,6 +136,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
 
     expect(screen.getByText('0 of 4 memory lanes ready')).toBeInTheDocument();
     expect(screen.getByText('3 of 9 memory steps ready')).toBeInTheDocument();
+    expect(screen.getByText('3 ready · 6 need action · 1 empty · 2 planned. First blocker: No-app guest hub.')).toBeInTheDocument();
     expect(screen.getByText('0% step coverage')).toBeInTheDocument();
     expect(screen.getByText('2 active blockers before sharing')).toBeInTheDocument();
     expect(screen.getByText('4 memory lanes still need action')).toBeInTheDocument();
