@@ -373,7 +373,9 @@ export function RegistryDashboardRouteContent(props: {
               <p className="text-xs font-medium text-text-tertiary">Claimed gifts</p>
               <p className="mt-1 text-2xl font-bold text-text-primary">{props.claimStats.claimedItems}</p>
               <p className="mt-1 text-xs text-text-secondary">
-                {props.claimStats.namedPurchaserItems} attributed{props.claimStats.missingPurchaserItems > 0 ? ` · ${props.claimStats.missingPurchaserItems} need purchaser` : ''}
+                {props.claimStats.claimedItems === 0
+                  ? 'No claimed gifts yet'
+                  : `${props.claimStats.namedPurchaserItems} attributed${props.claimStats.missingPurchaserItems > 0 ? ` · ${props.claimStats.missingPurchaserItems} need purchaser` : ''}`}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
                 {claimAttributionCoverageRate}% purchaser coverage · {fullyClaimedCoverageRate}% fully closed{props.claimStats.partiallyClaimedItems > 0 ? ` · ${partialClaimCoverageRate}% partial (${props.claimStats.partiallyClaimedItems})` : ''}{totalClaimQuantityScope > 0 ? ` · ${claimedQuantityCoverageRate}% quantity claimed (${props.claimStats.claimedQuantity}) · ${unclaimedQuantityCoverageRate}% still unclaimed (${props.claimStats.remainingQuantity})` : ''}
@@ -397,7 +399,9 @@ export function RegistryDashboardRouteContent(props: {
               <p className="text-xs font-medium text-text-tertiary">Thank-yous</p>
               <p className="mt-1 text-2xl font-bold text-text-primary">{props.registryThankYouStats.completedCount}</p>
               <p className="mt-1 text-xs text-text-secondary">
-                {props.registryThankYouStats.pendingCount} still pending{props.registryThankYouStats.blockedByMissingPurchaserCount > 0 ? ` · ${props.registryThankYouStats.blockedByMissingPurchaserCount} need purchaser` : ''}
+                {props.registryThankYouStats.purchasedCount === 0
+                  ? 'No thank-you follow-up open yet'
+                  : `${props.registryThankYouStats.pendingCount} still pending${props.registryThankYouStats.blockedByMissingPurchaserCount > 0 ? ` · ${props.registryThankYouStats.blockedByMissingPurchaserCount} need purchaser` : ''}`}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
                 {thankYouReadyCoverageRate}% ready now · {props.registryThankYouStats.completionRate}% sent{props.registryThankYouStats.blockedByMissingPurchaserCount > 0 ? ` · ${thankYouBlockedCoverageRate}% blocked` : ''}
@@ -413,7 +417,9 @@ export function RegistryDashboardRouteContent(props: {
               <p className="text-xs font-medium text-text-tertiary">Cash funds</p>
               <p className="mt-1 text-2xl font-bold text-text-primary">{props.fundStats.count}</p>
               <p className="mt-1 text-xs text-text-secondary">
-                {props.fundStats.readyToShare} ready to share{props.fundStats.needsSetup > 0 ? ` · ${props.fundStats.needsSetup} need a payment path` : ''}
+                {props.fundStats.count === 0
+                  ? 'No cash funds added yet'
+                  : `${props.fundStats.readyToShare} ready to share${props.fundStats.needsSetup > 0 ? ` · ${props.fundStats.needsSetup} need a payment path` : ''}`}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
                 {fundShareReadyRate}% share-ready · {props.fundStats.readyWithProgress} already moving{props.fundStats.readyAwaitingFirstGift > 0 ? ` · ${props.fundStats.readyAwaitingFirstGift} waiting on a first gift` : ''}{props.fundStats.missingGoal > 0 ? ` · ${props.fundStats.missingGoal} missing a goal` : ''}
@@ -425,8 +431,9 @@ export function RegistryDashboardRouteContent(props: {
               <p className="text-xs font-medium text-text-tertiary">Fund gifts</p>
               <p className="mt-1 text-2xl font-bold text-text-primary">${props.fundStats.received.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
               <p className="mt-1 text-xs text-text-secondary">
-                Received toward ${props.fundStats.goal.toLocaleString('en-US', { maximumFractionDigits: 0 })} goal
-                {props.fundStats.withGoal > 0 ? ` across ${props.fundStats.withGoal} tracked fund${props.fundStats.withGoal === 1 ? '' : 's'}` : ''}
+                {props.fundStats.count === 0
+                  ? 'No fund gifts moving yet'
+                  : `Received toward $${props.fundStats.goal.toLocaleString('en-US', { maximumFractionDigits: 0 })} goal${props.fundStats.withGoal > 0 ? ` across ${props.fundStats.withGoal} tracked fund${props.fundStats.withGoal === 1 ? '' : 's'}` : ''}`}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
                 {fundGoalCoverageRate}% goal-tracked · {fundReceivingCoverageRate}% already receiving gifts · {props.fundStats.withProgress} showing tracked progress{props.fundStats.flexibleWithProgress > 0 ? ` · ${props.fundStats.flexibleWithProgress} flexible fund${props.fundStats.flexibleWithProgress === 1 ? '' : 's'} already receiving gifts` : ''}

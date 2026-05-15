@@ -704,6 +704,10 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Next gift gap: no fund momentum blockers right now')).toBeInTheDocument();
     expect(screen.getByText('All cash funds are fully set up right now.')).toBeInTheDocument();
     expect(screen.getByText('All fund momentum blockers are clear right now.')).toBeInTheDocument();
+    expect(screen.getByText('No claimed gifts yet')).toBeInTheDocument();
+    expect(screen.getByText('No thank-you follow-up open yet')).toBeInTheDocument();
+    expect(screen.getByText('No cash funds added yet')).toBeInTheDocument();
+    expect(screen.getByText('No fund gifts moving yet')).toBeInTheDocument();
   });
 
   it('renders claim-state analytics for attribution and partial gifts', () => {
