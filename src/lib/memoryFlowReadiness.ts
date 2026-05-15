@@ -220,7 +220,7 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
     `${stepCoverageRate}% step coverage`,
     `${readyStepCount} of ${steps.length} memory steps ready`,
     hasActiveAlbum && input.photoUploadEnabled
-      ? `${countLabel(input.uploadCount, 'upload')} live`
+      ? `${countLabel(input.uploadCount, 'upload')} live across ${countLabel(input.activeAlbumCount, 'active album')}`
       : hasAlbums
         ? 'Upload lane needs setup'
         : 'No live upload lane',

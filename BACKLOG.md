@@ -476,6 +476,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the top-level photo-memory badge row now also calls out how many memory lanes are still completely empty, so owners can distinguish “needs cleanup” from “not built yet” without opening the deeper tiles
    - this batch shipped: the top-level photo-memory badge row now also normalizes overall step coverage, so owners can judge how much of the no-app memory flow is truly wired up without converting raw ready-step counts by hand
    - this batch shipped: the top-level photo-memory badge row now also reads back the concrete ready-step count beside step coverage, so owners can see how many memory steps are actually wired without converting the percentage by hand
+   - this batch shipped: the top-level photo-memory upload badge now also reads back the active-album count beside live upload volume, so owners can tell whether upload momentum is concentrated in one album or spread across the real active capture surface
    - add live guest video upload browser proof
    - rerun the strengthened owner preview plus guest-facing published recap proof against the shipped production runtime after the next approved deploy
    - prove owner moderation readback after real live uploads

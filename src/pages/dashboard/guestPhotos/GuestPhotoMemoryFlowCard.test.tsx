@@ -8,7 +8,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
       <GuestPhotoMemoryFlowCard
         memoryFlowReadiness={{
           readyCount: 5,
-          summaryBadges: ['4 of 4 memory lanes ready', '89% step coverage', '8 of 9 memory steps ready', '12 uploads live', 'Private recap link', '33% story coverage', 'Handoff ready', '1 opt-in captured'],
+          summaryBadges: ['4 of 4 memory lanes ready', '89% step coverage', '8 of 9 memory steps ready', '12 uploads live across 1 active album', 'Private recap link', '33% story coverage', 'Handoff ready', '1 opt-in captured'],
           mainGapLabel: null,
           lanes: [
             { id: 'collection', label: 'Collection', detail: '12 uploads across 1 active album, including 1 video.', status: 'ready' },
@@ -37,7 +37,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
     expect(screen.getByText('4 of 4 memory lanes ready')).toBeInTheDocument();
     expect(screen.getByText('89% step coverage')).toBeInTheDocument();
     expect(screen.getByText('8 of 9 memory steps ready')).toBeInTheDocument();
-    expect(screen.getByText('12 uploads live')).toBeInTheDocument();
+    expect(screen.getByText('12 uploads live across 1 active album')).toBeInTheDocument();
     expect(screen.getByText('Private recap link')).toBeInTheDocument();
     expect(screen.getByText('33% story coverage')).toBeInTheDocument();
     expect(screen.getByText('Handoff ready')).toBeInTheDocument();
