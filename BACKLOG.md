@@ -29,6 +29,26 @@
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 
+## Work This Next
+
+- `guest-specific preview and visibility confidence`
+  - rerun the guest preview strip/drawer on the shipped runtime
+  - prove wrong-guest/right-guest visibility on live auth flows
+- `unified QR guest hub`
+  - rerun mobile live proof for public vs guest-specific QR landings
+- `RSVP access modes and question templates`
+  - rerun owner RSVP settings proof on the shipped runtime
+- `status-based messaging and invitation tracking`
+  - add authenticated live browser proof for composing and saving each segment on the shipped runtime
+  - keep live-row delivery and failure grouping proof moving
+- `registry polish beyond barcode`
+  - rerun owner add/import/edit persistence proof
+  - rerun guest-visible purchase-state assertions on production
+- `premium no-app guest photo and memory flow`
+  - continue the no-app guest photo flow lane from the current owner-readback cleanup
+- `destination/travel guest portal`
+  - continue guest-hub and owner travel runtime proof after the current all-clear readback cleanup
+
 ## What's Left Now
 
 These are the active product-completion lanes still open after the current launch-hardening scope:
