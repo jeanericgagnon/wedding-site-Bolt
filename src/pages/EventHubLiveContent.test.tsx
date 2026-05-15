@@ -129,8 +129,8 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Travel plan from this link')).toBeInTheDocument();
     expect(screen.getByText('1 ready · 1 needs setup')).toBeInTheDocument();
     expect(screen.getByText('1 step still need setup before this path feels complete.')).toBeInTheDocument();
-    expect(screen.getByText('Ready now: Travel details.')).toBeInTheDocument();
-    expect(screen.getByText('Still missing: Reply.')).toBeInTheDocument();
+    expect(screen.getByText('Ready from this link: Travel details.')).toBeInTheDocument();
+    expect(screen.getByText('Still missing from this link: Reply.')).toBeInTheDocument();
     expect(screen.getByText('Travel step ready')).toBeInTheDocument();
     expect(screen.getByText('Travel step needs setup')).toBeInTheDocument();
     expect(screen.getByText('Mode ready')).toBeInTheDocument();

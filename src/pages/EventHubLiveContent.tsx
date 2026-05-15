@@ -382,12 +382,12 @@ export function EventHubLiveContent({
                     )}
                     {travelJourneyReadyLabels.length > 0 && (
                       <p className="mt-2 text-xs text-[#8b6f53]">
-                        Ready now: {travelJourneyReadyLabels.join(', ')}.
+                        Ready from this link: {travelJourneyReadyLabels.join(', ')}.
                       </p>
                     )}
                     {travelJourneyNeedsInfoLabels.length > 0 && (
                       <p className="mt-1 text-xs text-[#8b6f53]">
-                        Still missing: {travelJourneyNeedsInfoLabels.join(', ')}.
+                        Still missing from this link: {travelJourneyNeedsInfoLabels.join(', ')}.
                       </p>
                     )}
                   </div>
