@@ -152,6 +152,9 @@ export function GuestRsvpSettingsView({
   const mealChoiceReadinessRate = rsvpMealEnabled
     ? (safeRsvpMealOptions.length >= 2 ? 100 : Math.round((safeRsvpMealOptions.length / 2) * 100))
     : null;
+  const mealChoiceTargetCount = rsvpMealEnabled ? 2 : 0;
+  const readyMealChoiceCount = rsvpMealEnabled ? Math.min(safeRsvpMealOptions.length, mealChoiceTargetCount) : 0;
+  const missingMealChoiceCount = rsvpMealEnabled ? Math.max(mealChoiceTargetCount - safeRsvpMealOptions.length, 0) : 0;
   const optionalSetupCoverageRate = rsvpMealEnabled
     ? Math.round((templateCoverageRate + (mealChoiceReadinessRate ?? 0)) / 2)
     : templateCoverageRate;
@@ -507,6 +510,18 @@ export function GuestRsvpSettingsView({
                   <p className="mt-1 text-[11px] text-text-tertiary">
                     {mealChoiceReadinessRate == null ? 'Planned until meal collection is on' : `${mealChoiceReadinessRate}% ready`}
                   </p>
+                  {rsvpMealEnabled && (
+                    <>
+                      <p className="mt-1 text-[11px] text-text-tertiary">
+                        {readyMealChoiceCount} of {mealChoiceTargetCount} meal choice{mealChoiceTargetCount === 1 ? '' : 's'} ready
+                      </p>
+                      <p className="mt-1 text-[11px] text-text-tertiary">
+                        {missingMealChoiceCount === 0
+                          ? 'Meal choices are launch-ready'
+                          : `${missingMealChoiceCount} more meal choice${missingMealChoiceCount === 1 ? '' : 's'} recommended`}
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
               <p className="mb-3 text-xs text-text-tertiary">

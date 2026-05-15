@@ -190,6 +190,8 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('1 of 2 optional layers ready')).toBeInTheDocument();
     expect(screen.getByText('0 of 7 templates live')).toBeInTheDocument();
     expect(screen.getByText('7 templates still available')).toBeInTheDocument();
+    expect(screen.getByText('2 of 2 meal choices ready')).toBeInTheDocument();
+    expect(screen.getByText('Meal choices are launch-ready')).toBeInTheDocument();
     expect(screen.getByText('1 optional improvement still open')).toBeInTheDocument();
     expect(screen.getByText('Optional upgrades can keep improving after launch')).toBeInTheDocument();
     expect(screen.getByText('First optional gap: Question templates')).toBeInTheDocument();
@@ -258,6 +260,8 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('100% covered')).toBeInTheDocument();
     expect(screen.getByText('2 of 2 optional layers ready')).toBeInTheDocument();
     expect(screen.getByText('7 of 7 templates live')).toBeInTheDocument();
+    expect(screen.getByText('2 of 2 meal choices ready')).toBeInTheDocument();
+    expect(screen.getByText('Meal choices are launch-ready')).toBeInTheDocument();
     expect(screen.getByText('No optional gaps open')).toBeInTheDocument();
     expect(screen.getByText('All optional RSVP upgrades are ready')).toBeInTheDocument();
     expect(screen.getByText('All core templates are live')).toBeInTheDocument();
@@ -324,6 +328,8 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('0 of 2 optional layers ready')).toBeInTheDocument();
     expect(screen.getByText('0 of 7 templates live')).toBeInTheDocument();
     expect(screen.getByText('7 templates still available')).toBeInTheDocument();
+    expect(screen.getByText('1 of 2 meal choices ready')).toBeInTheDocument();
+    expect(screen.getByText('1 more meal choice recommended')).toBeInTheDocument();
     expect(screen.getByText('50% ready')).toBeInTheDocument();
     expect(screen.getByText('email only')).toBeInTheDocument();
   });
