@@ -2,9 +2,9 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 10:06 AM PDT`
-- Latest shipped batch: `9a90e9a1` `Clarify registry thank-you quiet state`
-- Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry thank-you quiet-state batch
+- Last updated: `2026-05-15 10:09 AM PDT`
+- Latest shipped batch: `fb108199` `Clarify registry cleanup all-clear`
+- Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry cleanup all-clear batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
 - Current transport blocker: none active right now
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `fb108199` `Clarify registry cleanup all-clear`
   - `9a90e9a1` `Clarify registry thank-you quiet state`
   - `4a819edd` `Clarify registry zero-state analytics rows`
   - `ff15d92e` `Clarify registry snapshot summaries`
@@ -60,7 +61,7 @@
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 - `registry polish beyond barcode`
-  - latest shipped: the thank-you helper and card now keep the quiet state explicit with readback like `Thank-you follow-up is quiet right now`, `No purchased gifts need thank-you follow-up yet.`, and `No purchased gifts are in the thank-you list yet.`, so the owner follow-through lane no longer falls back to workflow-ish placeholder copy when nothing has been purchased
+  - latest shipped: the cleanup/review tools area now keeps the all-clear state explicit with readback like `No imported-gift cleanup work is open right now.` and `No gifts are waiting in the cleanup queue right now.`, so the owner cleanup lane no longer drops into vague silence when imported-gift repair work is actually clear
 
 ## Work This Next
 
@@ -145,7 +146,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 10:06 AM PDT` |
+| Current date/time | `2026-05-15 10:09 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |
