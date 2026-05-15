@@ -326,6 +326,9 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
             {deliveryStats.targeted} targeted recipients
           </p>
           <p className="mt-1 text-xs text-text-tertiary">
+            {deliveryStats.delivered} of {deliveryStats.targeted} targeted recipients have been delivered
+          </p>
+          <p className="mt-1 text-xs text-text-tertiary">
             {deliveryStats.skipped} need contact details · {deliveryStats.unreached} not reached yet
           </p>
           {deliveredCoverageRate != null && reviewCoverageRate != null && contactCoverageRate != null && unreachedCoverageRate != null && (
@@ -340,7 +343,13 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
             <p className="mt-1 text-xs text-text-tertiary">{cleanupReadyCoverageRate}% follow-through ready</p>
           )}
           <p className="mt-1 text-xs text-text-tertiary">
+            {followThroughReadyRecipientCount} of {deliveryStats.targeted} targeted recipients are already closed out
+          </p>
+          <p className="mt-1 text-xs text-text-tertiary">
             {followThroughReadyRecipientCount > 0 ? `${followThroughReadyRecipientCount} recipients already closed out` : 'No recipients are already closed out'}
+          </p>
+          <p className="mt-1 text-xs text-text-tertiary">
+            {cleanupRecipientCount} of {deliveryStats.targeted} targeted recipients still need cleanup
           </p>
           <p className="mt-1 text-xs text-text-tertiary">
             {cleanupRecipientCount > 0 ? `${cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}
@@ -1224,6 +1233,9 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
                 {channelDeliveryBreakdown[channel].targeted} targeted recipients
               </p>
               <p className="mt-1 text-[11px] text-text-tertiary">
+                {channelDeliveryBreakdown[channel].delivered} of {channelDeliveryBreakdown[channel].targeted} targeted recipients have been delivered
+              </p>
+              <p className="mt-1 text-[11px] text-text-tertiary">
                 {(() => {
                   const targeted = channelDeliveryBreakdown[channel].targeted;
                   const reviewRate = targeted > 0 ? Math.round((channelDeliveryBreakdown[channel].failed / targeted) * 100) : 0;
@@ -1255,6 +1267,18 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
               </p>
               <p className="mt-1 text-[11px] text-text-tertiary">
                 {(() => {
+                  const targeted = channelDeliveryBreakdown[channel].targeted;
+                  const closedOutCount = getFollowThroughReadyRecipientCount({
+                    failed: channelDeliveryBreakdown[channel].failed,
+                    skipped: channelDeliveryBreakdown[channel].skipped,
+                    unreached: channelDeliveryBreakdown[channel].unreached,
+                    targeted: channelDeliveryBreakdown[channel].targeted,
+                  });
+                  return `${closedOutCount} of ${targeted} targeted recipients are already closed out`;
+                })()}
+              </p>
+              <p className="mt-1 text-[11px] text-text-tertiary">
+                {(() => {
                   const closedOutCount = getFollowThroughReadyRecipientCount({
                     failed: channelDeliveryBreakdown[channel].failed,
                     skipped: channelDeliveryBreakdown[channel].skipped,
@@ -1262,6 +1286,17 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
                     targeted: channelDeliveryBreakdown[channel].targeted,
                   });
                   return closedOutCount > 0 ? `${closedOutCount} recipient${closedOutCount === 1 ? '' : 's'} already closed out` : 'No recipients are already closed out';
+                })()}
+              </p>
+              <p className="mt-1 text-[11px] text-text-tertiary">
+                {(() => {
+                  const targeted = channelDeliveryBreakdown[channel].targeted;
+                  const cleanupCount = getCleanupRecipientCount({
+                    failed: channelDeliveryBreakdown[channel].failed,
+                    skipped: channelDeliveryBreakdown[channel].skipped,
+                    unreached: channelDeliveryBreakdown[channel].unreached,
+                  });
+                  return `${cleanupCount} of ${targeted} targeted recipients still need cleanup`;
                 })()}
               </p>
               <p className="mt-1 text-[11px] text-text-tertiary">

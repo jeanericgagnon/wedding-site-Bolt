@@ -594,10 +594,13 @@ describe('MessageHistorySummaryPanels', () => {
     expect(screen.getByText('10 delivered · 1 need review')).toBeInTheDocument();
     expect(screen.getByText('10 recipients delivered')).toBeInTheDocument();
     expect(screen.getByText('16 targeted recipients')).toBeInTheDocument();
+    expect(screen.getByText('10 of 16 targeted recipients have been delivered')).toBeInTheDocument();
     expect(screen.getByText('63% delivered coverage · 6% review coverage · 13% needs contact · 19% unreached')).toBeInTheDocument();
     expect(screen.getByText('38% cleanup still pending')).toBeInTheDocument();
     expect(screen.getByText('63% follow-through ready')).toBeInTheDocument();
+    expect(screen.getByText('10 of 16 targeted recipients are already closed out')).toBeInTheDocument();
     expect(screen.getByText('10 recipients already closed out')).toBeInTheDocument();
+    expect(screen.getByText('6 of 16 targeted recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('6 recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('2 need contact details · 3 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: unreached guests')).toBeInTheDocument();
@@ -605,10 +608,13 @@ describe('MessageHistorySummaryPanels', () => {
     expect(screen.getByText('4 delivered · 2 need review')).toBeInTheDocument();
     expect(screen.getByText('4 recipients delivered')).toBeInTheDocument();
     expect(screen.getByText('7 targeted recipients')).toBeInTheDocument();
+    expect(screen.getByText('4 of 7 targeted recipients have been delivered')).toBeInTheDocument();
     expect(screen.getByText('57% delivered coverage · 29% review coverage · 14% needs contact · 0% unreached')).toBeInTheDocument();
     expect(screen.getByText('43% cleanup still pending')).toBeInTheDocument();
     expect(screen.getByText('57% follow-through ready')).toBeInTheDocument();
+    expect(screen.getByText('4 of 7 targeted recipients are already closed out')).toBeInTheDocument();
     expect(screen.getByText('4 recipients already closed out')).toBeInTheDocument();
+    expect(screen.getByText('3 of 7 targeted recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('1 need contact details · 0 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: delivery review')).toBeInTheDocument();
