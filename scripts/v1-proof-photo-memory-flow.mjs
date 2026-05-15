@@ -153,8 +153,7 @@ const output = {
   ],
   stillManualProofNeeded: [
     'Add live guest video upload browser proof.',
-    'Prove owner moderation readback after real live uploads.',
-    'Rerun the strengthened owner preview plus guest-facing published recap proof against the shipped production runtime after the next approved deploy.',
+    'Rerun the owner-side "Preview recap" handoff against the shipped production runtime after the next approved deploy.',
   ],
   results,
 };
