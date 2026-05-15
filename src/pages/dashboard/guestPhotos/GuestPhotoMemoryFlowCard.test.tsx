@@ -52,7 +52,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
       <GuestPhotoMemoryFlowCard
         memoryFlowReadiness={{
           readyCount: 1,
-          summaryBadges: ['No live upload lane', 'Recap not shareable', 'No story curation yet', 'No handoff yet', 'No follow-up opt-ins'],
+          summaryBadges: ['No live upload lane', 'Recap not shareable', 'No story curation yet', 'No handoff yet', 'No follow-up opt-ins', '4 memory lanes still empty'],
           mainGapLabel: 'Main gap: Collection',
           lanes: [
             { id: 'collection', label: 'Collection', detail: 'Create an active album and leave uploads on before sharing the memory-flow QR.', status: 'empty' },
@@ -77,6 +77,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
     );
 
     expect(screen.getByText('Main gap: Collection')).toBeInTheDocument();
+    expect(screen.getByText('4 memory lanes still empty')).toBeInTheDocument();
   });
 
   it('shows the first blocker in the top badge row when the lane needs action', () => {
@@ -114,5 +115,6 @@ describe('GuestPhotoMemoryFlowCard', () => {
     expect(screen.getByText('0 of 4 memory lanes ready')).toBeInTheDocument();
     expect(screen.getByText('4 memory lanes still need action')).toBeInTheDocument();
     expect(screen.getByText('First blocker: No-app guest hub')).toBeInTheDocument();
+    expect(screen.queryByText('memory lanes still empty')).not.toBeInTheDocument();
   });
 });

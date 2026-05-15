@@ -463,6 +463,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the no-app memory-flow card now also calls out the main gap in plain language, so owners can see whether collection, curation, sharing, or handoff is the next fix without translating the lane tiles by hand
    - this batch shipped: the top-level photo-memory badge row now also surfaces the first real blocker, so owners can tell whether the first operational fix is the guest hub, moderation, album activation, or another blocked step without scanning the full memory checklist
    - this batch shipped: the top-level photo-memory badge row now also reads back how many of the four memory lanes are ready versus still needing action, so owners can judge overall lane closure without scanning every collection/curation/sharing/handoff panel
+   - this batch shipped: the top-level photo-memory badge row now also calls out how many memory lanes are still completely empty, so owners can distinguish “needs cleanup” from “not built yet” without opening the deeper tiles
    - add live guest video upload browser proof
    - rerun the strengthened owner preview plus guest-facing published recap proof against the shipped production runtime after the next approved deploy
    - prove owner moderation readback after real live uploads
