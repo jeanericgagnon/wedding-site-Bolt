@@ -25,6 +25,7 @@ describe('travelGuestPortal', () => {
     expect(readiness.plannedCount).toBe(0);
     expect(readiness.blockers).toEqual([]);
     expect(readiness.coverageBadges).toEqual([
+      '7 of 7 travel sections ready',
       '6 of 6 guest sections ready',
       '100% guest-section coverage',
       'Stay guidance ready',
@@ -53,6 +54,7 @@ describe('travelGuestPortal', () => {
     expect(readiness.steps.find((step) => step.id === 'transport')?.status).toBe('needs-info');
     expect(readiness.steps.find((step) => step.id === 'local-context')?.status).toBe('empty');
     expect(readiness.coverageBadges).toEqual([
+      '0 of 7 travel sections ready',
       '0 of 6 guest sections ready',
       '0% guest-section coverage',
       '6 guest sections still incomplete',
@@ -83,6 +85,7 @@ describe('travelGuestPortal', () => {
     expect(readiness.steps.find((step) => step.id === 'local-context')?.status).toBe('ready');
     expect(readiness.steps.find((step) => step.id === 'guest-specific')?.status).toBe('ready');
     expect(readiness.coverageBadges).toEqual([
+      '7 of 7 travel sections ready',
       '5 of 6 guest sections ready',
       '83% guest-section coverage',
       'Stay guidance ready',
@@ -104,6 +107,7 @@ describe('travelGuestPortal', () => {
     expect(readiness.steps.find((step) => step.id === 'venues')?.status).toBe('empty');
     expect(readiness.steps.find((step) => step.id === 'schedule')?.status).toBe('empty');
     expect(readiness.coverageBadges).toEqual([
+      '0 of 7 travel sections ready',
       '0 of 6 guest sections ready',
       '0% guest-section coverage',
       '6 guest sections still incomplete',

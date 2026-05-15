@@ -200,6 +200,7 @@ export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): 
     ?? steps.find((step) => step.status === 'empty')
     ?? null;
   const coverageBadges = [
+    `${readyCount} of ${steps.length} travel sections ready`,
     `${guestFacingReadyCount} of ${guestFacingSections.length} guest sections ready`,
     `${guestFacingCoverageRate}% guest-section coverage`,
     ...(missingLabels.length > 0 ? [`${missingLabels.length} guest section${missingLabels.length === 1 ? '' : 's'} still incomplete`] : []),
