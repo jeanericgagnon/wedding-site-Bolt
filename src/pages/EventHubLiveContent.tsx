@@ -178,6 +178,10 @@ export function EventHubLiveContent({
   const travelJourneyNeedsInfoLabels = travelGuestJourney.filter((step) => step.status !== 'ready').map((step) => step.label);
   const getTravelJourneyStatusLabel = (status: TravelGuestJourneyStep['status']) =>
     status === 'ready' ? 'Travel step ready' : 'Travel step needs setup';
+  const getDayOfSignalStatusLabel = (state: DayOfModeSignal['state']) =>
+    state === 'ready' ? 'Mode ready' : state === 'needs-content' ? 'Mode needs info' : 'Mode planned';
+  const getHubStatusLabel = (state: DayOfHubStatusItem['state']) =>
+    state === 'ready' ? 'Hub item ready' : state === 'needs-content' ? 'Hub item needs info' : 'Hub item planned';
 
   return (
     <div className="min-h-screen bg-[#fbf7f1] text-neutral-950">
@@ -548,7 +552,7 @@ export function EventHubLiveContent({
                           <div className="flex items-center justify-between gap-2">
                             <p className="text-xs font-semibold text-[#2f261d]">{signal.label}</p>
                             <span className="text-[11px] font-medium text-[#8b6f53]">
-                              {signal.state === 'ready' ? 'Ready' : signal.state === 'needs-content' ? 'Needs info' : 'Planned'}
+                              {getDayOfSignalStatusLabel(signal.state)}
                             </span>
                           </div>
                           <p className="mt-1 text-xs leading-5 text-[#6f5843]">{signal.detail}</p>
@@ -570,7 +574,7 @@ export function EventHubLiveContent({
                           <div className="flex items-center justify-between gap-2">
                             <p className="text-xs font-semibold text-[#2f261d]">{item.label}</p>
                             <span className="text-[11px] font-medium text-[#8b6f53]">
-                              {item.state === 'ready' ? 'Ready' : item.state === 'needs-content' ? 'Needs info' : 'Planned'}
+                              {getHubStatusLabel(item.state)}
                             </span>
                           </div>
                           <p className="mt-1 text-xs leading-5 text-[#6f5843]">{item.detail}</p>

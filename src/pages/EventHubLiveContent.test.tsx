@@ -62,8 +62,24 @@ describe('EventHubLiveContent', () => {
           hubUrl="https://dayof.love/event/alex-jordan-demo"
           searchParams={new URLSearchParams('')}
           shouldOpenHubDetailsByDefault={() => false}
-          dayOfHubStatusBoard={{ readyCount: 2, summary: 'Ready for guests.', items: [] }}
-          dayOfModeReadiness={{ readyCount: 2, summary: 'Ready as a no-app guest hub.', signals: [] }}
+          dayOfHubStatusBoard={{
+            readyCount: 2,
+            summary: 'Ready for guests.',
+            items: [
+              { id: 'photos', label: 'Photo upload', detail: 'Uploads are live from this guest hub.', state: 'ready' },
+              { id: 'schedule', label: 'Schedule detail', detail: 'A few timing notes still need guest-safe copy.', state: 'needs-content' },
+              { id: 'transport', label: 'Transport reminder', detail: 'Shuttle reminders stay planned until the final route is locked.', state: 'planned' },
+            ],
+          }}
+          dayOfModeReadiness={{
+            readyCount: 2,
+            summary: 'Ready as a no-app guest hub.',
+            signals: [
+              { id: 'hub', label: 'Guest hub', detail: 'The live guest hub can already be shared.', state: 'ready' },
+              { id: 'copy', label: 'Guest-safe copy', detail: 'A few help-desk notes still need guest-safe wording.', state: 'needs-content' },
+              { id: 'fallback', label: 'Printed fallback', detail: 'Printed fallback cards stay planned until export is finalized.', state: 'planned' },
+            ],
+          }}
           announcementCard={{
             title: 'Ceremony doors open',
             detail: 'Shuttle leaves the hotel at 3:00 PM.',
@@ -117,6 +133,12 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Still missing: Reply.')).toBeInTheDocument();
     expect(screen.getByText('Travel step ready')).toBeInTheDocument();
     expect(screen.getByText('Travel step needs setup')).toBeInTheDocument();
+    expect(screen.getByText('Mode ready')).toBeInTheDocument();
+    expect(screen.getByText('Mode needs info')).toBeInTheDocument();
+    expect(screen.getByText('Mode planned')).toBeInTheDocument();
+    expect(screen.getByText('Hub item ready')).toBeInTheDocument();
+    expect(screen.getByText('Hub item needs info')).toBeInTheDocument();
+    expect(screen.getByText('Hub item planned')).toBeInTheDocument();
     expect(screen.getByText('Invite-scoped')).toBeInTheDocument();
     expect(screen.getByText('1 event window')).toBeInTheDocument();
     expect(screen.getByText('1 route card')).toBeInTheDocument();

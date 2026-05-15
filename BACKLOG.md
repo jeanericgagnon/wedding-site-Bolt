@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 10:41 AM PDT`
-- Latest shipped batch: `07c10204` `Clarify travel guest-path status chips`
+- Last updated: `2026-05-15 10:44 AM PDT`
+- Latest shipped batch: `pending local batch` `Clarify guest-hub detail status chips`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `pending local batch` `Clarify guest-hub detail status chips`
   - `07c10204` `Clarify travel guest-path status chips`
   - `f67be865` `Clarify memory flow status chips`
   - `f8b9d4fd` `Clarify registry top-strip labels`
@@ -78,6 +79,7 @@
   - rerun the guest preview strip/drawer on the shipped runtime
   - prove wrong-guest/right-guest visibility on live auth flows
 - `unified QR guest hub`
+  - latest shipped: the guest-hub detail cards now label day-of mode and hub-status items explicitly as `Mode ready`, `Mode needs info`, `Mode planned`, `Hub item ready`, `Hub item needs info`, or `Hub item planned`, so the details drawer no longer falls back to generic status labels after the stronger summary copy
   - rerun mobile live proof for public vs guest-specific QR landings
 - `RSVP access modes and question templates`
   - rerun owner RSVP settings proof on the shipped runtime
@@ -104,6 +106,7 @@ These are the active product-completion lanes still open after the current launc
    - wrong-guest/right-guest live visibility proof is still open
    - authenticated mobile live proof is still open
 2. `unified QR guest hub`
+   - latest shipped: the guest-hub detail cards now label day-of mode and hub-status items explicitly as `Mode ready`, `Mode needs info`, `Mode planned`, `Hub item ready`, `Hub item needs info`, or `Hub item planned`, so the details section keeps the same guest-safe truth style as the newer travel-path and link-access cleanup
    - live production mobile proof is still open for public versus guest-specific QR landing behavior
 3. `RSVP access modes and question templates`
    - latest shipped: the optional RSVP setup summary now also says `0 optional improvements still open` and `No optional layers need action` in the all-clear state, so the optional lane closes with both the same count-based language and the same all-clear wording family it uses when optional layers still need work
