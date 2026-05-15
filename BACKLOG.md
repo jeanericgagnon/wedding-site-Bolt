@@ -4,6 +4,7 @@
 
 - Last updated: `2026-05-15 07:58 AM PDT`
 - Latest shipped batch: `ddcaa550` `Clarify RSVP optional all-clear`
+- Latest backlog-cleanup batch: `80a1ff75` `Clean backlog top scan`
 - Open backlog lanes: `7`
 - Best place to scan after each batch:
   - `Quick Read` for the newest timestamp and latest shipped batch
@@ -12,6 +13,13 @@
 
 ## Recent Shipped Work
 
+- `Latest batch list`
+  - `ddcaa550` `Clarify RSVP optional all-clear`
+  - `fd613b37` `Clarify memory step all-clear`
+  - `7a272467` `Clarify memory lane all-clear`
+  - `7be6bf11` `Clarify memory no-gap badge`
+  - `8c59e667` `Clarify travel badge all-clear`
+  - `132d89cd` `Clarify travel no-gap badge`
 - `RSVP access modes and question templates`
   - latest shipped: the optional RSVP setup summary now also says `0 optional improvements still open` in the all-clear state
 - `premium no-app guest photo and memory flow`
@@ -24,6 +32,8 @@
 ## What's Left Now
 
 These are the active product-completion lanes still open after the current launch-hardening scope:
+
+- Total open lanes: `7`
 
 1. `guest-specific preview and visibility confidence`
    - production reruns are still open for the newer guest preview strip and drawer on the shipped runtime
