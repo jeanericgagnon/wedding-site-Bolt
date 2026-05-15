@@ -300,7 +300,7 @@ describe('travelGuestPortal', () => {
     ]);
     expect(spotlight?.badges).toEqual(['Invite-scoped', '2 event windows', '2 route cards', '1 of 3 core travel layers ready', '33% core travel coverage', '2 core travel layers still missing', 'Weekend timing ready']);
     expect(spotlight?.mainGapLabel).toBe('Main gap: Stay details');
-    expect(spotlight?.summary).toBe('4 travel details ready from the guest hub, including 2 visible event windows for this invitation, 2 route cards. It covers weekend timing. Still missing: Stay details.');
+    expect(spotlight?.summary).toBe('4 travel details ready from the guest hub, including 2 visible event windows for this invitation, 2 route cards. It covers weekend timing. 2 of 3 core travel layers still need setup. Still missing: Stay details.');
     expect(spotlight?.cards.filter((card) => card.href).length).toBe(2);
     expect(spotlight?.shareText).toContain('Coverage: Invite-scoped · 2 event windows · 2 route cards · 1 of 3 core travel layers ready · 33% core travel coverage · 2 core travel layers still missing · Weekend timing ready');
     expect(spotlight?.shareText).toContain('Welcome drinks: Sat, Jun 13, 11:00 PM · Harbor Lounge');
@@ -327,7 +327,7 @@ describe('travelGuestPortal', () => {
     ]);
     expect(spotlight?.badges).toEqual(['1 of 3 core travel layers ready', '33% core travel coverage', '2 core travel layers still missing', 'Stay ready']);
     expect(spotlight?.mainGapLabel).toBe('Main gap: Weekend timing');
-    expect(spotlight?.summary).toBe('3 travel details ready from the guest hub. It covers stay details, arrival guidance. Still missing: Weekend timing.');
+    expect(spotlight?.summary).toBe('3 travel details ready from the guest hub. It covers stay details, arrival guidance. 2 of 3 core travel layers still need setup. Still missing: Weekend timing.');
     expect(spotlight?.shareText).toContain('Guest note: Most guests dress for sun at ceremony and a cooler breeze by dinner.');
   });
 });

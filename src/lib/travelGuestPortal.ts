@@ -559,7 +559,7 @@ export function buildTravelHubSpotlight(input: {
     arrivalGuidanceReady ? 'arrival guidance' : null,
   ].filter(Boolean);
   const readinessSummary = readinessLabels.length > 0
-    ? ` Core travel coverage is ${coreTravelCoverageRate}%. It covers ${readinessLabels.join(', ')}.`
+    ? ` Core travel coverage is ${coreTravelCoverageRate}%. It covers ${readinessLabels.join(', ')}.${missingCoreTravelCount > 0 ? ` ${missingCoreTravelCount} of 3 core travel layers still need setup.` : ''}`
     : ` Core travel coverage is ${coreTravelCoverageRate}%.`;
   const coverageSummaryParts = [
     ...(guestScoped && visibleEventCount > 0 ? [`${visibleEventCount} visible event window${visibleEventCount === 1 ? '' : 's'} for this invitation`] : []),
