@@ -80,6 +80,7 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText(/Guest codes, shared passwords, and open RSVP stay planned/i)).toBeInTheDocument();
     expect(screen.getByText('2 of 5 RSVP access paths supported today · 3 still planned.')).toBeInTheDocument();
     expect(screen.getByText('2 RSVP access paths are ready today.')).toBeInTheDocument();
+    expect(screen.getByText('3 RSVP access paths are still planned.')).toBeInTheDocument();
     expect(screen.getByText(/Phone or email recovery plan/i)).toBeInTheDocument();
     expect(screen.getAllByText(/14 guest emails and 5 phone numbers are saved/i).length).toBeGreaterThan(0);
     expect(screen.getByText('19 saved recovery inputs')).toBeInTheDocument();
@@ -336,5 +337,6 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('email only')).toBeInTheDocument();
     expect(screen.getByText('2 of 5 RSVP access paths supported today · 3 still planned.')).toBeInTheDocument();
     expect(screen.getByText('2 RSVP access paths are ready today.')).toBeInTheDocument();
+    expect(screen.getByText('3 RSVP access paths are still planned.')).toBeInTheDocument();
   });
 });

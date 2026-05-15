@@ -456,6 +456,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: recent campaign rollups and the message detail review plan now also keep zero review/contact/unreached counts explicit, so owners can distinguish a true all-clear from hidden chips when those follow-through lanes are at `0`
    - this batch shipped: the RSVP optional-setup card now speaks more plainly in both directions, calling out `All optional RSVP upgrades are ready` and `All core templates are live` when that lane is complete, while also spelling out how many templates are still available when it is not
    - this batch shipped: the RSVP access section now also says how many access paths are already ready today in plain language, so owners can read the launch-ready side without mentally translating the supported-versus-planned split
+   - this batch shipped: the RSVP access section now also says how many access paths are still planned in the same plain language, so the ready-versus-planned split reads as a balanced pair instead of only one side being spelled out
    - keep extending normalized delivery/open/view/bounce/replied truth across channels and real live rows
    - prove customer-safe delivery-failure grouping against live rows
    - add authenticated live browser proof for composing/saving each operational segment on the shipped owner runtime
