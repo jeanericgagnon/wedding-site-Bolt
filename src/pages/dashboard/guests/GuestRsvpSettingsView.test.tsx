@@ -98,6 +98,7 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText(/Optional setup/i)).toBeInTheDocument();
     expect(screen.getByText('0% covered')).toBeInTheDocument();
     expect(screen.getByText('templates only · meals off')).toBeInTheDocument();
+    expect(screen.getByText('First optional gap: Question templates')).toBeInTheDocument();
     expect(screen.getByText(/^Optional$/i)).toBeInTheDocument();
     expect(screen.queryByText(/Main gap:/i)).not.toBeInTheDocument();
 
@@ -175,6 +176,7 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('Lightweight RSVP form · 2 asked right away for every reply · 2 event-specific follow-ups.')).toBeInTheDocument();
     expect(screen.getByText('50% covered')).toBeInTheDocument();
     expect(screen.getByText('templates and meals')).toBeInTheDocument();
+    expect(screen.getByText('First optional gap: Question templates')).toBeInTheDocument();
     expect(screen.getByText('2 saved')).toBeInTheDocument();
     expect(screen.getByText('0% coverage')).toBeInTheDocument();
     expect(screen.getByText('3 total live questions')).toBeInTheDocument();
@@ -235,5 +237,6 @@ describe('GuestRsvpSettingsView', () => {
     );
 
     expect(screen.getByText('Main gap: Meal choices')).toBeInTheDocument();
+    expect(screen.getByText('First optional gap: Question templates')).toBeInTheDocument();
   });
 });

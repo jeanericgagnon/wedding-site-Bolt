@@ -146,6 +146,11 @@ export function GuestRsvpSettingsView({
   const optionalSetupCoverageRate = rsvpMealEnabled
     ? Math.round((templateCoverageRate + (mealChoiceReadinessRate ?? 0)) / 2)
     : templateCoverageRate;
+  const optionalSetupGapLabel = missingTemplateCount > 0
+    ? 'Question templates'
+    : rsvpMealEnabled && (mealChoiceReadinessRate ?? 0) < 100
+      ? 'Meal choices'
+      : null;
   const formWeightLabel = safeRsvpQuestions.length === 0
     ? null
     : safeRsvpQuestions.length <= 3
@@ -401,6 +406,9 @@ export function GuestRsvpSettingsView({
                   <p className="mt-1 text-[11px] text-text-tertiary">
                     {rsvpMealEnabled ? 'templates and meals' : 'templates only · meals off'}
                   </p>
+                  {optionalSetupGapLabel && (
+                    <p className="mt-1 text-[11px] text-text-tertiary">First optional gap: {optionalSetupGapLabel}</p>
+                  )}
                 </div>
                 <div className="rounded-md border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Templates added</p>
