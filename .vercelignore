@@ -1,0 +1,17 @@
+.git
+.git/**
+.vercel
+.vercel/**
+node_modules
+dist
+dist-ssr
+.tmp
+.tmp/**
+backups
+backups/**
+supabase/.temp
+supabase/.temp/**
+assets/photos/raw-*/
+assets/photos/raw-engagement-*/
+*.zip
+*.log
