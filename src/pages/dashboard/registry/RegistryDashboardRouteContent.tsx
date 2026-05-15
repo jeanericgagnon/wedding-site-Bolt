@@ -223,6 +223,13 @@ export function RegistryDashboardRouteContent(props: {
       : props.fundStats.readyAwaitingFirstGift > 0
         ? `Main gap: ${props.fundStats.readyAwaitingFirstGift} waiting on a first gift`
         : 'Main gap: no fund setup blockers';
+  const fundMomentumGapLabel = props.fundStats.missingGoal > 0
+    ? `Next gift gap: ${props.fundStats.missingGoal} still missing a goal`
+    : props.fundStats.readyAwaitingFirstGift > 0
+      ? `Next gift gap: ${props.fundStats.readyAwaitingFirstGift} waiting on a first gift`
+      : props.fundStats.needsSetup > 0
+        ? `Next gift gap: ${props.fundStats.needsSetup} still need a payment path`
+        : 'Next gift gap: no fund momentum blockers';
 
   const tabCount = (key: RegistryFilter) => {
     if (key === 'all') return props.counts.total;
@@ -376,6 +383,7 @@ export function RegistryDashboardRouteContent(props: {
               <p className="mt-1 text-xs text-text-tertiary">
                 {fundGoalCoverageRate}% goal-tracked · {fundReceivingCoverageRate}% already receiving gifts · {props.fundStats.withProgress} showing tracked progress{props.fundStats.flexibleWithProgress > 0 ? ` · ${props.fundStats.flexibleWithProgress} flexible fund${props.fundStats.flexibleWithProgress === 1 ? '' : 's'} already receiving gifts` : ''}
               </p>
+              <p className="mt-1 text-xs text-text-tertiary">{fundMomentumGapLabel}</p>
             </Card>
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Worth checking</p>
