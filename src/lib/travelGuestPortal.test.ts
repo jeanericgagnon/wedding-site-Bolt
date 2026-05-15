@@ -53,6 +53,7 @@ describe('travelGuestPortal', () => {
     expect(readiness.steps.find((step) => step.id === 'local-context')?.status).toBe('empty');
     expect(readiness.coverageBadges).toEqual([
       '0 of 6 guest sections ready',
+      '6 guest sections still incomplete',
       'Stay guidance missing',
       'Weekend routing missing',
       'Arrival coverage missing',
@@ -101,6 +102,7 @@ describe('travelGuestPortal', () => {
     expect(readiness.steps.find((step) => step.id === 'schedule')?.status).toBe('empty');
     expect(readiness.coverageBadges).toEqual([
       '0 of 6 guest sections ready',
+      '6 guest sections still incomplete',
       'Stay guidance missing',
       'Weekend routing missing',
       'Arrival coverage missing',

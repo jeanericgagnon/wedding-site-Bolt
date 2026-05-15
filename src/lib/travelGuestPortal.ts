@@ -200,6 +200,7 @@ export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): 
     ?? null;
   const coverageBadges = [
     `${guestFacingReadyCount} of ${guestFacingSections.length} guest sections ready`,
+    ...(missingLabels.length > 0 ? [`${missingLabels.length} guest section${missingLabels.length === 1 ? '' : 's'} still incomplete`] : []),
     hasLodging ? 'Stay guidance ready' : 'Stay guidance missing',
     venuesAddressed && hasSchedule ? 'Weekend routing ready' : 'Weekend routing missing',
     hasArrival || hasTransport ? 'Arrival coverage ready' : 'Arrival coverage missing',
