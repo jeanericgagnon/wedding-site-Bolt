@@ -617,16 +617,16 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('50% goal-tracked · 50% already receiving gifts · 1 showing tracked progress · 1 flexible fund already receiving gifts')).toBeInTheDocument();
     expect(screen.getByText('Next gift gap: 1 still missing a goal')).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Ready funds already moving: 1 · Waiting on first gift: 1'),
+      screen.getByText((_, element) => element?.textContent === 'Ready funds already receiving gifts: 1 · Waiting on first gift: 1'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Flexible funds with gifts: 1 · Tracked progress funds: 1'),
+      screen.getByText((_, element) => element?.textContent === 'Flexible funds already receiving gifts: 1 · Tracked progress funds: 1'),
     ).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Share-ready coverage: 100% · Goal-tracked funds: 50%'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Receiving-gift coverage: 50% · Funds already moving: 1'),
+      screen.getByText((_, element) => element?.textContent === 'Receiving-gift coverage: 50% · Already receiving gifts: 1'),
     ).toBeInTheDocument();
   });
 
@@ -798,7 +798,7 @@ describe('RegistryDashboardRouteContent', () => {
       screen.getByText((_, element) => element?.textContent === 'Partial claims: 2 · Missing purchaser: 1'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Claimed quantity: 5 · Still needed: 4'),
+      screen.getByText((_, element) => element?.textContent === 'Claimed quantity: 5 · Still open: 4'),
     ).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Multi-quantity gifts in progress: 1 · Fully claimed gifts: 1'),
@@ -887,7 +887,7 @@ describe('RegistryDashboardRouteContent', () => {
       screen.getByText((_, element) => element?.textContent === 'Ready to send: 1 · Blocked by purchaser: 1'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Attribution coverage: 67% · Follow-up sent: 33%'),
+      screen.getByText((_, element) => element?.textContent === 'Purchaser coverage: 67% · Thank-yous sent: 33%'),
     ).toBeInTheDocument();
   });
 
@@ -973,7 +973,7 @@ describe('RegistryDashboardRouteContent', () => {
       screen.getByText((_, element) => element?.textContent === 'Guest-ready coverage: 75% · Visible coverage: 50%'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Guest-ready gifts: 3 · Blocked from guests: 1'),
+      screen.getByText((_, element) => element?.textContent === 'Guest-ready items: 3 · Blocked from guests: 1'),
     ).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Ready for guests now: 1 · Claimed but still visible: 1'),

@@ -2,9 +2,9 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 09:31 AM PDT`
-- Latest shipped batch: `969dadbf` `Clarify registry note labels`
-- Latest backlog-cleanup state: top-of-file scan is current through the pending local registry note-label batch
+- Last updated: `2026-05-15 09:35 AM PDT`
+- Latest shipped batch: `pending local batch` `Clarify registry analytics wording`
+- Latest backlog-cleanup state: top-of-file scan is current through the pending local registry analytics-wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
 - Current transport blocker: none active right now
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `pending local batch` `Clarify registry analytics wording`
   - `969dadbf` `Clarify registry note labels`
   - `522524ca` `Clarify registry supporting cards`
   - `2d3bdc56` `Clarify registry guest and review summaries`
@@ -52,7 +53,7 @@
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 - `registry polish beyond barcode`
-  - latest shipped: the lower `Registry notes` rows now use cleaner owner labels like `Purchased gifts`, `Visible to guests`, `Purchasers named`, and `No image issues or duplicate groups`, so those supporting analytics no longer mix misleading labels with zero-state noise
+  - latest shipped: the lower registry analytics now also use clearer owner wording like `Still open`, `Guest-ready items`, `Purchaser coverage`, `Ready to share`, and `Already receiving gifts`, so those deeper support rows read like product guidance instead of internal metric labels
 
 ## Work This Next
 
@@ -137,7 +138,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 09:31 AM PDT` |
+| Current date/time | `2026-05-15 09:35 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |
