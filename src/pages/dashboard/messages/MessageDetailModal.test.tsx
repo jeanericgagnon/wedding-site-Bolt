@@ -216,6 +216,7 @@ describe('MessageDetailModal', () => {
     );
 
     expect(screen.getByText('0% follow-through ready')).toBeInTheDocument();
+    expect(screen.getByText('0 recipients delivered')).toBeInTheDocument();
     expect(screen.getByText('No recipients are already closed out')).toBeInTheDocument();
     expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
   });

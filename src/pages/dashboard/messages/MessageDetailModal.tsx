@@ -209,9 +209,9 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 <p className="mt-1 text-xs text-text-secondary">{recipientReviewPlan}.</p>
               )}
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
-                {deliveredRecipients > 0 && (
-                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{deliveredRecipients} recipients delivered</span>
-                )}
+                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+                  {deliveredRecipients > 0 ? `${deliveredRecipients} recipients delivered` : '0 recipients delivered'}
+                </span>
                 {targetedRecipients > 0 && (
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{targetedRecipients} targeted recipients</span>
                 )}
