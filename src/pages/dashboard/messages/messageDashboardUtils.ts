@@ -258,6 +258,21 @@ export function getCleanupRecipientCount(input: {
   return Math.max(0, input.failed) + Math.max(0, input.skipped) + Math.max(0, input.unreached);
 }
 
+export function getFollowThroughReadyRecipientCount(input: {
+  failed: number;
+  skipped: number;
+  unreached: number;
+  targeted: number;
+}): number {
+  const targeted = Math.max(0, input.targeted);
+  const pendingCleanup = getCleanupRecipientCount({
+    failed: input.failed,
+    skipped: input.skipped,
+    unreached: input.unreached,
+  });
+  return Math.max(0, targeted - pendingCleanup);
+}
+
 export type CampaignThreadSummary = {
   key: string;
   name: string;

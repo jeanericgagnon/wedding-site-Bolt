@@ -98,6 +98,7 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('25% delivered coverage · 50% review coverage · 0% needs contact · 25% unreached')).toBeInTheDocument();
     expect(screen.getByText('75% cleanup still pending')).toBeInTheDocument();
     expect(screen.getByText('25% follow-through ready')).toBeInTheDocument();
+    expect(screen.getByText('1 recipient already closed out')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: delivery review')).toBeInTheDocument();
     expect(screen.getByText('100% open · 0% click · 0% reply')).toBeInTheDocument();
     expect(screen.getByText('Some guests still were not reached after a valid send attempt.')).toBeInTheDocument();
@@ -132,6 +133,7 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('20% delivered coverage · 40% review coverage · 20% needs contact · 20% unreached')).toBeInTheDocument();
     expect(screen.getByText('80% cleanup still pending')).toBeInTheDocument();
     expect(screen.getByText('20% follow-through ready')).toBeInTheDocument();
+    expect(screen.getByText('1 recipient already closed out')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: delivery review')).toBeInTheDocument();
     expect(screen.getByText('Clean up contact details first, then decide whether unreached guests need another send.')).toBeInTheDocument();
   });

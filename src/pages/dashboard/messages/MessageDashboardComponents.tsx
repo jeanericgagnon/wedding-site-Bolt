@@ -21,6 +21,7 @@ import {
   getCleanupRecipientCount,
   getCustomerDeliveryReason,
   getCleanupCoverageRate,
+  getFollowThroughReadyRecipientCount,
   getFollowThroughFocusLabel,
   getMessageEngagementStats,
   getRecipientCount,
@@ -246,6 +247,12 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
     skipped: deliveryStats.skipped,
     unreached: deliveryStats.unreached,
   });
+  const followThroughReadyRecipientCount = getFollowThroughReadyRecipientCount({
+    failed: deliveryStats.failed,
+    skipped: deliveryStats.skipped,
+    unreached: deliveryStats.unreached,
+    targeted: deliveryStats.targeted,
+  });
   const followThroughFocusLabel = getFollowThroughFocusLabel({
     failed: deliveryStats.failed,
     skipped: deliveryStats.skipped,
@@ -329,6 +336,9 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
             )}
             {cleanupReadyCoverageRate != null && (
               <p className="mt-1 text-xs text-text-tertiary">{cleanupReadyCoverageRate}% follow-through ready</p>
+            )}
+            {followThroughReadyRecipientCount > 0 && (
+              <p className="mt-1 text-xs text-text-tertiary">{followThroughReadyRecipientCount} recipients already closed out</p>
             )}
             {cleanupRecipientCount > 0 && (
               <p className="mt-1 text-xs text-text-tertiary">{cleanupRecipientCount} recipients still need cleanup</p>

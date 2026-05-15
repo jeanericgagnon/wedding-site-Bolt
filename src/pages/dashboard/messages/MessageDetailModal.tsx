@@ -14,6 +14,7 @@ import {
   getCleanupRecipientCount,
   getCustomerDeliveryReason,
   getCleanupCoverageRate,
+  getFollowThroughReadyRecipientCount,
   getFollowThroughFocusLabel,
   getMessageEngagementStats,
   getRecipientReviewPlanSummary,
@@ -111,6 +112,12 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
     failed: Math.max(0, Number(message.failed_count ?? 0)),
     skipped: skippedCount,
     unreached: unreachedCount,
+  });
+  const followThroughReadyRecipientCount = getFollowThroughReadyRecipientCount({
+    failed: Math.max(0, Number(message.failed_count ?? 0)),
+    skipped: skippedCount,
+    unreached: unreachedCount,
+    targeted: targetedRecipients,
   });
   const followThroughFocusLabel = getFollowThroughFocusLabel({
     failed: Math.max(0, Number(message.failed_count ?? 0)),
@@ -224,6 +231,9 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 )}
                 {cleanupReadyCoverageRate != null && (
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{cleanupReadyCoverageRate}% follow-through ready</span>
+                )}
+                {followThroughReadyRecipientCount > 0 && (
+                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{followThroughReadyRecipientCount} recipients already closed out</span>
                 )}
                 {cleanupRecipientCount > 0 && (
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{cleanupRecipientCount} recipients still need cleanup</span>
