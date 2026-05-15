@@ -2,9 +2,9 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 09:56 AM PDT`
-- Latest shipped batch: `dcc3d69c` `Clarify registry quick-check summaries`
-- Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry quick-check batch
+- Last updated: `2026-05-15 10:00 AM PDT`
+- Latest shipped batch: `ff15d92e` `Clarify registry snapshot summaries`
+- Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry snapshot batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
 - Current transport blocker: none active right now
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `ff15d92e` `Clarify registry snapshot summaries`
   - `dcc3d69c` `Clarify registry quick-check summaries`
   - `913b7124` `Clarify registry supporting-card clean states`
   - `a0eb64d4` `Clarify registry supporting-card summaries`
@@ -57,7 +58,7 @@
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 - `registry polish beyond barcode`
-  - latest shipped: `Registry quick check` now stays explicit in both mixed and all-clear states with lead readback like `1 next-step fix · 1 polish cleanup worth a quick pass.` or `No quick registry fixes worth flagging right now.`, so that last big registry card now scans like a summary first instead of a raw prompt list
+  - latest shipped: the expanded `Gift snapshot and review details` panel now opens with summary-first readback like `Registry snapshot looks clean right now.` or `Snapshot focus: 1 gift missing a purchaser · 1 blocked from guests · 1 thank-you still pending · 3 items worth checking.`, so the owner detail panel no longer drops straight into metric cards without first saying what matters
 
 ## Work This Next
 
@@ -142,7 +143,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 09:56 AM PDT` |
+| Current date/time | `2026-05-15 10:00 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |
