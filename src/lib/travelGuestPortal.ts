@@ -531,6 +531,7 @@ export function buildTravelHubSpotlight(input: {
     `${readyCoreTravelCount} of 3 core travel layers ready`,
     `${coreTravelCoverageRate}% core travel coverage`,
     ...(missingCoreTravelCount > 0 ? [`${missingCoreTravelCount} core travel layer${missingCoreTravelCount === 1 ? '' : 's'} still missing`] : []),
+    ...(missingCoreTravelCount === 0 ? ['No core travel gaps'] : []),
     ...(stayReady ? ['Stay ready'] : []),
     ...(weekendTimingReady ? ['Weekend timing ready'] : []),
     ...(arrivalGuidanceReady ? ['Arrival ready'] : []),

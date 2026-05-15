@@ -220,7 +220,7 @@ describe('travelGuestPortal', () => {
     expect(spotlight).toEqual({
       summary: '8 travel details ready from the guest hub, including 1 visible event window for this invitation, 1 route card, 2 booking links. Core travel coverage is 100%. It covers stay details, weekend timing, arrival guidance. No core travel gaps right now.',
       travelHref: '/site/maya-and-leo?invite_token=guest-token-123&guestLang=fr#travel',
-      badges: ['Invite-scoped', '1 event window', '1 route card', '2 booking links', '3 of 3 core travel layers ready', '100% core travel coverage', 'Stay ready', 'Weekend timing ready', 'Arrival ready'],
+      badges: ['Invite-scoped', '1 event window', '1 route card', '2 booking links', '3 of 3 core travel layers ready', '100% core travel coverage', 'No core travel gaps', 'Stay ready', 'Weekend timing ready', 'Arrival ready'],
       mainGapLabel: 'Main gap: none right now',
       cards: [
         { id: 'hotel', label: 'Harbor Hotel', detail: 'Code MAYALEO', href: 'https://harbor.example.com/stay' },
@@ -240,7 +240,7 @@ describe('travelGuestPortal', () => {
       shareText: [
         'DayOf travel quick plan',
         'Guide reflects the events visible for this invitation.',
-        'Coverage: Invite-scoped · 1 event window · 1 route card · 2 booking links · 3 of 3 core travel layers ready · 100% core travel coverage · Stay ready · Weekend timing ready · Arrival ready',
+        'Coverage: Invite-scoped · 1 event window · 1 route card · 2 booking links · 3 of 3 core travel layers ready · 100% core travel coverage · No core travel gaps · Stay ready · Weekend timing ready · Arrival ready',
         'Harbor Hotel: Code MAYALEO',
         'Room block: Harbor Hotel · Code MAYALEO',
         'Ceremony shuttle: Harbor Hotel to venue · Board near the lobby fireplace.',
@@ -256,7 +256,7 @@ describe('travelGuestPortal', () => {
     });
     expect(spotlight?.htmlDocument).toContain('Open the live travel page');
     expect(spotlight?.htmlDocument).toContain('This guide reflects the events visible for this invitation.');
-    expect(spotlight?.htmlDocument).toContain('Invite-scoped · 1 event window · 1 route card · 2 booking links · 3 of 3 core travel layers ready · 100% core travel coverage · Stay ready · Weekend timing ready · Arrival ready');
+    expect(spotlight?.htmlDocument).toContain('Invite-scoped · 1 event window · 1 route card · 2 booking links · 3 of 3 core travel layers ready · 100% core travel coverage · No core travel gaps · Stay ready · Weekend timing ready · Arrival ready');
     expect(spotlight?.htmlDocument).toContain('No core travel gaps right now.');
     expect(spotlight?.htmlDocument).toContain('https://harbor.example.com/stay');
     expect(spotlight?.htmlDocument).toContain('Valet opens at 3:15 PM at the garden gate.');
