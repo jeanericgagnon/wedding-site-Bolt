@@ -441,45 +441,27 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
         {(message.delivered_count != null || message.failed_count != null) && (
           <div className="px-6 py-3 border-t border-border flex-shrink-0 bg-surface-subtle">
             <div className="flex flex-wrap gap-6 text-sm">
-              {message.delivered_count != null && message.delivered_count > 0 && (
-                <span className="flex items-center gap-1.5 text-success">
-                  <CheckCircle size={13} />
-                  {message.delivered_count} delivered
-                </span>
-              )}
-              {message.failed_count != null && message.failed_count > 0 && (
-                <span className="flex items-center gap-1.5 text-error">
-                  <AlertCircle size={13} />
-                  {message.failed_count} need review
-                </span>
-              )}
-              {unreachedCount > 0 && (
-                <span className="flex items-center gap-1.5 text-warning">
-                  <AlertCircle size={13} />
-                  {unreachedCount} not reached yet
-                </span>
-              )}
-              {skippedDeliveries.length > 0 && (
-                <span className="flex items-center gap-1.5 text-warning">
-                  <AlertCircle size={13} />
-                  {skippedDeliveries.length} need contact
-                </span>
-              )}
-              {engagement.opened != null && (
-                <span className="text-text-secondary">{engagement.opened} opened</span>
-              )}
-              {engagement.viewed != null && (
-                <span className="text-text-secondary">{engagement.viewed} viewed</span>
-              )}
-              {engagement.clicked != null && (
-                <span className="text-text-secondary">{engagement.clicked} clicked</span>
-              )}
-              {engagement.replied != null && (
-                <span className="text-text-secondary">{engagement.replied} replied</span>
-              )}
-              {engagement.bounced != null && (
-                <span className="text-warning">{engagement.bounced} bounced</span>
-              )}
+              <span className="flex items-center gap-1.5 text-success">
+                <CheckCircle size={13} />
+                {message.delivered_count ?? 0} delivered
+              </span>
+              <span className="flex items-center gap-1.5 text-error">
+                <AlertCircle size={13} />
+                {message.failed_count ?? 0} need review
+              </span>
+              <span className="flex items-center gap-1.5 text-warning">
+                <AlertCircle size={13} />
+                {unreachedCount} not reached yet
+              </span>
+              <span className="flex items-center gap-1.5 text-warning">
+                <AlertCircle size={13} />
+                {skippedDeliveries.length} need contact
+              </span>
+              {engagement.opened != null && <span className="text-text-secondary">{engagement.opened} opened</span>}
+              {engagement.viewed != null && <span className="text-text-secondary">{engagement.viewed} viewed</span>}
+              {engagement.clicked != null && <span className="text-text-secondary">{engagement.clicked} clicked</span>}
+              {engagement.replied != null && <span className="text-text-secondary">{engagement.replied} replied</span>}
+              {engagement.bounced != null && <span className="text-warning">{engagement.bounced} bounced</span>}
               {deliveredRecipients > 0 && openRate != null && clickRate != null && replyRate != null && (
                 <span className="text-text-secondary">{openRate}% open · {clickRate}% click · {replyRate}% reply</span>
               )}

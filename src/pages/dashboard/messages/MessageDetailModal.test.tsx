@@ -234,6 +234,10 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('0 clicked')).toBeInTheDocument();
     expect(screen.getByText('0 replied')).toBeInTheDocument();
     expect(screen.getByText('0 bounced')).toBeInTheDocument();
+    expect(screen.getByText('0 delivered')).toBeInTheDocument();
+    expect(screen.getByText('0 need review')).toBeInTheDocument();
+    expect(screen.getAllByText('0 not reached yet')).not.toHaveLength(0);
+    expect(screen.getByText('0 need contact')).toBeInTheDocument();
   });
 
   it('keeps queued and partial headers truthful instead of calling them sent', () => {
