@@ -161,10 +161,10 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Link access')).toBeInTheDocument();
     expect(screen.getByText('Private guest link')).toBeInTheDocument();
     expect(screen.getByText('Guest-specific access is active for this link, including RSVP and check-in readback.')).toBeInTheDocument();
-    expect(screen.getByText('Unlocked here')).toBeInTheDocument();
+    expect(screen.getByText('Available from this link')).toBeInTheDocument();
     expect(screen.getByText('4 guest actions are ready from this link.')).toBeInTheDocument();
     expect(screen.getByText('RSVP, day-of updates, travel, and photo upload')).toBeInTheDocument();
-    expect(screen.getByText('Core day-of coverage')).toBeInTheDocument();
+    expect(screen.getByText('Core day-of actions')).toBeInTheDocument();
     expect(screen.getByText('3 of 4 core day-of actions are ready from this link.')).toBeInTheDocument();
     expect(screen.getByText('Still missing from this link: schedule.')).toBeInTheDocument();
     expect(screen.getByText('Main gap: Add schedule to this link.')).toBeInTheDocument();

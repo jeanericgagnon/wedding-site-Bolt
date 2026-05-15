@@ -337,7 +337,7 @@ export function EventHubLiveContent({
                       <p className="mt-2 text-xs leading-5 text-[#8b6f53]">{linkAccessCard.summary}</p>
                       {(linkAccessCard.actionCountLabel || linkAccessCard.actionSummaryLabel) && (
                         <div className="mt-3 rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Unlocked here</p>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Available from this link</p>
                           {linkAccessCard.actionCountLabel && (
                             <p className="mt-1 text-sm font-semibold text-[#2f261d]">{linkAccessCard.actionCountLabel}</p>
                           )}
@@ -348,7 +348,7 @@ export function EventHubLiveContent({
                       )}
                       {(linkAccessCard.readyCoreActionCountLabel || linkAccessCard.coreActionCoverageLabel || linkAccessCard.coreActionSummaryLabel) && (
                         <div className="mt-3 rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Core day-of coverage</p>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Core day-of actions</p>
                           {linkAccessCard.readyCoreActionCountLabel && (
                             <p className="mt-1 text-sm font-semibold text-[#2f261d]">{linkAccessCard.readyCoreActionCountLabel}</p>
                           )}
@@ -527,7 +527,7 @@ export function EventHubLiveContent({
                 <summary className="cursor-pointer list-none">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-[#2f261d]">Hub details</p>
+                      <p className="text-sm font-semibold text-[#2f261d]">Hub readiness details</p>
                       <p className="mt-1 text-sm leading-6 text-[#6f5843]">Check what is ready before relying on the hub at the venue.</p>
                     </div>
                     <span className="rounded-lg bg-[#f3eadf] px-3 py-2 text-xs font-semibold text-[#69513f]">
