@@ -8,7 +8,9 @@ const isLiveBaseUrl = baseUrl !== PREVIEW_URL;
 const desktopSpec = isLiveBaseUrl
   ? 'tests/e2e/guest-preview-live.spec.ts'
   : 'tests/e2e/guest-preview-flow.spec.ts';
-const mobileSpec = 'tests/e2e/guest-preview-mobile.spec.ts';
+const mobileSpec = isLiveBaseUrl
+  ? 'tests/e2e/guest-preview-mobile-live.spec.ts'
+  : 'tests/e2e/guest-preview-mobile.spec.ts';
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -121,18 +123,13 @@ try {
     command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${desktopSpec}`,
   }));
 
-  results.push(isLiveBaseUrl
-    ? manualStep({
-      id: 'guest-preview-mobile-browser-proof',
-      label: 'Guest drawer mobile preview browser proof remains local-only until an authenticated mobile live spec lands',
-      command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${mobileSpec}`,
-      stderr: 'Mobile guest-preview proof on the shipped runtime still depends on the local-only drawer fixture path. Use the new authenticated desktop live proof for production reruns until the mobile live fixture path is ported.',
-    })
-    : runStep({
-      id: 'guest-preview-mobile-browser-proof',
-      label: 'Guest drawer mobile preview browser proof',
-      command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${mobileSpec}`,
-    }));
+  results.push(runStep({
+    id: 'guest-preview-mobile-browser-proof',
+    label: isLiveBaseUrl
+      ? 'Guest drawer mobile live preview browser proof'
+      : 'Guest drawer mobile preview browser proof',
+    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${mobileSpec}`,
+  }));
 
   if (previewStdout.trim()) {
     results.push({
@@ -180,14 +177,14 @@ const output = {
     'Guest preview route generation and token-safe visibility summary truth',
     'Guest drawer private QR surfaces without raw-token display leakage',
     isLiveBaseUrl
-      ? 'Authenticated desktop live browser proof for real guest-facing site and RSVP preview routes'
+      ? 'Authenticated desktop live browser proof for real guest-facing site and RSVP preview routes through the shipped guest drawer'
       : 'Desktop browser proof for visible-versus-hidden event access plus RSVP/public site guest-preview routes',
-    'Mobile browser proof for photo upload, travel, registry, and public site guest-preview routes from the drawer',
+    isLiveBaseUrl
+      ? 'Authenticated mobile live browser proof for photo upload, travel, registry, and public-site guest-preview routes from the shipped guest drawer'
+      : 'Mobile browser proof for photo upload, travel, registry, and public site guest-preview routes from the drawer',
   ],
   stillManualProofNeeded: [
-    isLiveBaseUrl
-      ? 'Add an authenticated mobile live guest-preview proof so the shipped runtime can be rerun without relying on the localhost-only drawer fixture.'
-      : 'Rerun guest drawer preview links against the shipped production runtime for live/mobile proof after the next approved guest-preview deploy.',
+    'Rerun guest drawer preview links against the shipped production runtime after the next approved guest-preview deploy.',
   ],
   results,
 };
