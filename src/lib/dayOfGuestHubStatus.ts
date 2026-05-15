@@ -184,7 +184,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
     : 'No guest actions are ready from this link yet.';
   const actionSummaryLabel = actionCount > 0 ? summarizeGuestHubActions(enabledActionIds.map((id) => ({ id }))) : null;
   const readyCoreActionCountLabel = readyCoreActionIds.length > 0
-    ? `${readyCoreActionIds.length} of ${coreGuestHubActionIds.length} core day-of action${readyCoreActionIds.length === 1 ? ' is' : 's are'} already ready from this link.`
+    ? `${readyCoreActionIds.length} of ${coreGuestHubActionIds.length} core day-of action${readyCoreActionIds.length === 1 ? ' is' : 's are'} ready from this link.`
     : null;
   const coreActionCoverageLabel = readyCoreActionIds.length === coreGuestHubActionIds.length
     ? `100% of core day-of actions are ready from this link: ${summarizeGuestHubActions(readyCoreActionIds.map((id) => ({ id })))}.`
@@ -193,7 +193,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
       : 'No core day-of actions are ready from this link yet.';
   const coreActionSummaryLabel = missingCoreActionIds.length > 0
     ? `${missingCoreActionIds.length} of ${coreGuestHubActionIds.length} core day-of action${missingCoreActionIds.length === 1 ? ' is' : 's are'} still missing from this link: ${summarizeGuestHubActions(missingCoreActionIds.map((id) => ({ id })))}.`
-    : `0 of ${coreGuestHubActionIds.length} core day-of actions are still missing from this link. This link covers RSVP, schedule details, travel details, and photo follow-through.`;
+    : `All ${coreGuestHubActionIds.length} core day-of actions are ready from this link. This link covers RSVP, schedule details, travel details, and photo follow-through.`;
   const mainGapLabel = missingCoreActionIds.length > 0
     ? `Main gap: ${actionCount === 0 ? 'Add RSVP, schedule, travel details, and photo upload to this link' : `Add ${summarizeGuestHubActions(missingCoreActionIds.map((id) => ({ id })))} to this link`}.`
     : null;
@@ -202,7 +202,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
       title: 'Guest-specific link',
       badgeLabel: 'Guest-specific',
       detail: `This link includes invite-only event details plus RSVP and check-in readback for ${guestLabel}.`,
-      summary: 'Guest-specific access is active for this link, including RSVP and check-in readback.',
+      summary: 'This link is ready for guest-specific RSVP and check-in readback.',
       actionCountLabel,
       actionSummaryLabel,
       readyCoreActionCountLabel,
@@ -217,7 +217,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
       title: 'Invite-only event link',
       badgeLabel: 'Invite-only',
       detail: 'This link includes invite-only wedding details that do not appear on the public site shell.',
-      summary: 'Invite-only access is active for this link, without guest-specific RSVP or check-in readback.',
+      summary: 'This link is ready for invite-only event details without guest-specific RSVP or check-in readback.',
       actionCountLabel,
       actionSummaryLabel,
       readyCoreActionCountLabel,
@@ -231,7 +231,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
     title: 'Public wedding link',
     badgeLabel: 'Public',
     detail: 'This link shows the public wedding hub. Invite-only event details stay on the private link from the couple.',
-    summary: 'Public-only access is active for this link, without private event or guest-specific readback.',
+    summary: 'This link is public only and does not include private event details or guest-specific readback.',
     actionCountLabel,
     actionSummaryLabel,
     readyCoreActionCountLabel,

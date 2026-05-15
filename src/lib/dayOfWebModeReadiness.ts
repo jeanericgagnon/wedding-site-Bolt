@@ -99,7 +99,7 @@ function buildUnlockedActionSummary(actionCount: number): string | null {
 function buildMissingCoreActionSummary(readyCount: number, totalCount: number): string | null {
   const missingCount = totalCount - readyCount;
   if (missingCount <= 0) {
-    return `0 of ${totalCount} core day-of actions are still missing from this link.`;
+    return `All ${totalCount} core day-of actions are ready from this link.`;
   }
   return `${missingCount} core day-of action${missingCount === 1 ? ' is' : 's are'} still missing from this link.`;
 }
@@ -256,7 +256,7 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
       label: 'Private event visibility',
       detail: input.privateEventVisibilityConnected
         ? input.enabledActionIds.length > 0
-          ? `Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are unlocked from it: ${summarizeDayOfActions(input.enabledActionIds)}. ${readyCoreActionIds.length === coreDayOfActionIds.length ? `Core day-of coverage from this link is 100% ready: ${summarizeDayOfActions(readyCoreActionIds)}.` : readyCoreActionIds.length > 0 ? `Core day-of coverage from this link is ${coreCoverageRate}% ready (${readyCoreActionIds.length} of ${coreDayOfActionIds.length}). Main gap: ${missingCoreActionLabels[0]}. Still missing: ${missingCoreActionLabels.join(', ')}.` : 'Core day-of coverage is still missing from this link. Main gap: RSVP.'}`
+          ? `Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are unlocked from it: ${summarizeDayOfActions(input.enabledActionIds)}. ${readyCoreActionIds.length === coreDayOfActionIds.length ? `All core day-of coverage from this link is ready: ${summarizeDayOfActions(readyCoreActionIds)}.` : readyCoreActionIds.length > 0 ? `Core day-of coverage from this link is ${coreCoverageRate}% ready (${readyCoreActionIds.length} of ${coreDayOfActionIds.length}). Main gap: ${missingCoreActionLabels[0]}. Still missing: ${missingCoreActionLabels.join(', ')}.` : 'Core day-of coverage is still missing from this link. Main gap: RSVP.'}`
           : 'Guests can tell whether this hub link is public, invite-only, or guest-specific before they rely on it.'
         : 'Guests still need to infer whether this hub link is public or private.',
       state: input.privateEventVisibilityConnected ? 'ready' : 'planned',
