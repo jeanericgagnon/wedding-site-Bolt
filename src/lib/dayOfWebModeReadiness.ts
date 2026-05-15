@@ -246,12 +246,17 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
   const firstBlockingItem = items.find((item) => item.state === 'needs-content')
     ?? items.find((item) => item.state === 'planned')
     ?? null;
+  const coreCoverageSummary = input.privateEventVisibilityConnected
+    ? readyCoreActionIds.length === coreDayOfActionIds.length
+      ? 'Core link coverage: ready.'
+      : `Core link coverage: ${readyCoreActionIds.length} of ${coreDayOfActionIds.length} ready.`
+    : null;
 
   return {
     status,
     summary: status === 'ready'
-      ? 'Guest hub status is connected for live day-of use.'
-      : `${readyCount} day-of status item${readyCount === 1 ? '' : 's'} are usable now; ${plannedCount + needsContentCount} stay planned or need setup.${firstBlockingItem ? ` First blocker: ${firstBlockingItem.label}.` : ''}`,
+      ? `Guest hub status is connected for live day-of use.${coreCoverageSummary ? ` ${coreCoverageSummary}` : ''}`
+      : `${readyCount} day-of status item${readyCount === 1 ? '' : 's'} are usable now; ${plannedCount + needsContentCount} stay planned or need setup.${coreCoverageSummary ? ` ${coreCoverageSummary}` : ''}${firstBlockingItem ? ` First blocker: ${firstBlockingItem.label}.` : ''}`,
     readyCount,
     plannedCount: plannedCount + needsContentCount,
     items,
