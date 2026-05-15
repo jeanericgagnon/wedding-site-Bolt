@@ -829,7 +829,7 @@ export function RegistryDashboardRouteContent(props: {
                 onClick={() => void props.handleSyncRegistryThankYouTasks()}
                 disabled={props.registryThankYouSyncing}
               >
-                {props.registryThankYouSyncing ? 'Saving…' : 'Save thank-you list'}
+                {props.registryThankYouSyncing ? 'Saving…' : 'Save thank-you updates'}
               </Button>
             </div>
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
@@ -848,7 +848,7 @@ export function RegistryDashboardRouteContent(props: {
             </div>
             <div className="mt-4 space-y-3">
               {props.registryThankYouPlan.items.length === 0 ? (
-                <p className="text-sm text-text-secondary">No purchased gifts are in the thank-you list yet.</p>
+                <p className="text-sm text-text-secondary">No purchased gifts need a thank-you yet.</p>
               ) : props.registryThankYouPlan.items.map((item) => (
                 <div key={item.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -867,7 +867,7 @@ export function RegistryDashboardRouteContent(props: {
                             if (targetItem) props.handleEdit(targetItem);
                           }}
                         >
-                          Review gift
+                          Open gift
                         </Button>
                       ) : (
                         <Button
@@ -1033,7 +1033,7 @@ export function RegistryDashboardRouteContent(props: {
                           ? 'border-border bg-white text-text-secondary'
                           : 'border-border bg-white text-text-tertiary'
                       }`}>
-                        {queueItem.severity === 'high' ? 'Needs attention' : queueItem.severity === 'medium' ? 'Review soon' : 'Keep fresh'}
+                        {queueItem.severity === 'high' ? 'Fix now' : queueItem.severity === 'medium' ? 'Look soon' : 'Keep fresh'}
                       </span>
                     </div>
                     <p className="text-sm text-text-secondary">{queueItem.summary}</p>
@@ -1091,7 +1091,7 @@ export function RegistryDashboardRouteContent(props: {
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-2">
                     <div>
-                      <p className="text-sm font-medium text-text-primary">Possible duplicate group</p>
+                      <p className="text-sm font-medium text-text-primary">Possible repeat group</p>
                       <p className="mt-1 text-xs text-text-secondary">
                         Keep <span className="font-medium text-text-primary">{group.primaryItem.item_name}</span> and merge {group.secondaryItems.length} repeat{group.secondaryItems.length === 1 ? '' : 's'} into it.
                       </p>
@@ -1103,7 +1103,7 @@ export function RegistryDashboardRouteContent(props: {
                         </span>
                       ))}
                       <span className="rounded-lg border border-border bg-white px-2 py-1 text-text-tertiary">
-                        Merge result: {group.mergedQuantityPurchased}/{group.mergedQuantityNeeded}
+                        Merged quantity: {group.mergedQuantityPurchased}/{group.mergedQuantityNeeded}
                       </span>
                     </div>
                     <div className="space-y-1 text-xs text-text-secondary">
@@ -1122,7 +1122,7 @@ export function RegistryDashboardRouteContent(props: {
                       onClick={() => props.handleEdit(group.primaryItem)}
                       className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary"
                     >
-                      Review keep item
+                      Open keep item
                     </button>
                     <button
                       onClick={() => void props.handleMergeDuplicateGroup(group)}

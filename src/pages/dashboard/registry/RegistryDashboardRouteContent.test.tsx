@@ -140,7 +140,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('All claimed gifts already have a purchaser name and are fully closed out.')).toBeInTheDocument();
     expect(screen.getAllByText('All gifts ready for guests are visible right now.')).not.toHaveLength(0);
     expect(screen.getByText('All thank-you follow-up is already closed out right now.')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /save thank-you list/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save thank-you updates/i }));
     fireEvent.click(screen.getByRole('button', { name: /mark sent/i }));
 
     expect(handleSyncRegistryThankYouTasks).toHaveBeenCalled();
@@ -798,7 +798,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('All fund links are ready to share right now.')).toBeInTheDocument();
     expect(screen.getByText('All fund momentum blockers are clear right now.')).toBeInTheDocument();
     expect(screen.getByText('No gifts purchased yet')).toBeInTheDocument();
-    expect(screen.getByText('Nothing needs review right now')).toBeInTheDocument();
+    expect(screen.getByText('Nothing needs a closer look right now')).toBeInTheDocument();
     expect(screen.getByText('No claimed gifts yet')).toBeInTheDocument();
     expect(screen.getByText('No thank-you follow-up open yet')).toBeInTheDocument();
     expect(screen.getByText('No cash funds added yet')).toBeInTheDocument();
@@ -806,12 +806,12 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Registry snapshot looks clean right now.')).toBeInTheDocument();
     expect(screen.getByText('No active registry watchouts inside this snapshot.')).toBeInTheDocument();
     expect(screen.getByText('No active registry follow-through gaps right now.')).toBeInTheDocument();
-    expect(screen.getByText('No gifts are waiting on send or purchaser cleanup right now')).toBeInTheDocument();
+    expect(screen.getByText('No gifts are waiting on send or a missing purchaser name right now')).toBeInTheDocument();
     expect(screen.getByText('No fund links are waiting on a share path right now')).toBeInTheDocument();
     expect(screen.getByText('No funds are already receiving gifts yet')).toBeInTheDocument();
     expect(screen.getByText('No goal-tracked fund setup is open right now')).toBeInTheDocument();
     expect(screen.getByText('No flexible or tracked funds are already receiving gifts yet')).toBeInTheDocument();
-    expect(screen.getByText('No purchased gifts are in the thank-you list yet.')).toBeInTheDocument();
+    expect(screen.getByText('No purchased gifts need a thank-you yet.')).toBeInTheDocument();
     expect(screen.getByText('No image issues or duplicate groups')).toBeInTheDocument();
     expect(screen.getByText('No imported-gift cleanup work is open right now.')).toBeInTheDocument();
     expect(screen.getByText('No gifts are waiting in the cleanup queue right now.')).toBeInTheDocument();
@@ -1024,8 +1024,8 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Duplicate checks')).toBeInTheDocument();
     expect(screen.getByText('1 merge candidate covering 2 repeated gifts.')).toBeInTheDocument();
     expect(screen.getByText('2 match clues are already grouped to compare.')).toBeInTheDocument();
-    expect(screen.getByText('Possible duplicate group')).toBeInTheDocument();
-    expect(screen.getByText('Merge result: 1/7')).toBeInTheDocument();
+    expect(screen.getByText('Possible repeat group')).toBeInTheDocument();
+    expect(screen.getByText('Merged quantity: 1/7')).toBeInTheDocument();
   });
 
   it('summarizes cleanup tools before the repair actions', () => {
