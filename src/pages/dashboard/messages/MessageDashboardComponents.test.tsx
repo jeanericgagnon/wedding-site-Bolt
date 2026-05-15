@@ -103,6 +103,7 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('3 recipients already closed out')).toBeInTheDocument();
     expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('0 need contact details · 0 not reached yet')).toBeInTheDocument();
+    expect(screen.getByText('Main cleanup: all clear')).toBeInTheDocument();
   });
 
   it('shows delivered coverage inside the active campaign thread chip row', () => {
@@ -360,6 +361,7 @@ describe('MessageReachSnapshotCard', () => {
     expect(screen.getByText('100% follow-through ready')).toBeInTheDocument();
     expect(screen.getByText('3 recipients already closed out')).toBeInTheDocument();
     expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.getByText('Main cleanup: all clear')).toBeInTheDocument();
   });
 
   it('keeps the top reach snapshot explicit when no recipients are closed out yet', () => {

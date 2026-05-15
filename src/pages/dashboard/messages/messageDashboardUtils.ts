@@ -226,7 +226,7 @@ export function getFollowThroughFocusLabel(input: {
     { key: 'unreached', count: Math.max(0, input.unreached), label: 'unreached guests' },
   ].filter((bucket) => bucket.count > 0);
 
-  if (buckets.length === 0) return null;
+  if (buckets.length === 0) return 'Main cleanup: all clear';
 
   buckets.sort((left, right) => {
     if (right.count !== left.count) return right.count - left.count;

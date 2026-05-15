@@ -183,6 +183,7 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('100% follow-through ready')).toBeInTheDocument();
     expect(screen.getByText('3 recipients already closed out')).toBeInTheDocument();
     expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.getByText('Main cleanup: all clear')).toBeInTheDocument();
   });
 
   it('keeps zero closed-out readback explicit when no recipients are closed out yet', () => {
