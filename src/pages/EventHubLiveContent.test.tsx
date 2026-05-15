@@ -178,6 +178,16 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Travel path from this link')).toBeInTheDocument();
     expect(screen.getByText('Readiness from this link')).toBeInTheDocument();
     expect(screen.getByText('No-app guest-hub readiness')).toBeInTheDocument();
+    expect(screen.getByText('No-app guest hub')).toBeInTheDocument();
+    expect(screen.getByText('One day-of link')).toBeInTheDocument();
+    expect(screen.getByText('Guest actions ready')).toBeInTheDocument();
+    expect(screen.getByText('Guest language links')).toBeInTheDocument();
+    expect(screen.getByText('Saved guest actions')).toBeInTheDocument();
+    expect(screen.getByText('Core day-of actions')).toBeInTheDocument();
+    expect(screen.getByText('Live updates')).toBeInTheDocument();
+    expect(screen.getByText('Guest status from this link')).toBeInTheDocument();
+    expect(screen.getByText('Coordinator handoff from this link')).toBeInTheDocument();
+    expect(screen.getByText('Link access from this page')).toBeInTheDocument();
     expect(document.getElementById('day-of-updates')).not.toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy travel details' }));

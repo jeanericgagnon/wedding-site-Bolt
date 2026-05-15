@@ -62,7 +62,7 @@ describe('day-of web mode readiness', () => {
     expect(board.status).toBe('planned');
     expect(board.readyCount).toBe(2);
     expect(board.plannedCount).toBe(4);
-    expect(board.summary).toBe('2 day-of status items are usable now; 4 stay planned or need setup. First blocker: Announcements.');
+    expect(board.summary).toBe('2 day-of status items are usable now; 4 stay planned or need setup. First blocker: Live updates.');
     expect(board.items.find((item) => item.id === 'announcements')).toMatchObject({
       state: 'planned',
       detail: 'Live updates still belong in owner messaging until announcement readback is connected.',
@@ -97,7 +97,7 @@ describe('day-of web mode readiness', () => {
       privateEventVisibilityConnected: true,
     });
 
-    expect(board.summary).toBe('1 day-of status item is usable now; 5 stay planned or need setup. 2 guest actions are ready from this link. Core link coverage: 50% ready (2 of 4; 2 still missing). 2 core day-of actions are still missing from this link. First blocker: Announcements.');
+    expect(board.summary).toBe('1 day-of status item is usable now; 5 stay planned or need setup. 2 guest actions are ready from this link. Core link coverage: 50% ready (2 of 4; 2 still missing). 2 core day-of actions are still missing from this link. First blocker: Live updates.');
     expect(board.items.find((item) => item.id === 'link-access')?.detail).toBe(
       'Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are ready from it: RSVP and Directions and travel. Core day-of coverage from this link is 50% ready (2 of 4). Main gap: Schedule. Still missing: Schedule, Photo upload.'
     );
@@ -110,6 +110,6 @@ describe('day-of web mode readiness', () => {
       privateEventVisibilityConnected: false,
     });
 
-    expect(board.summary).toBe('0 day-of status items are usable now; 6 stay planned or need setup. First blocker: Saved hub actions.');
+    expect(board.summary).toBe('0 day-of status items are usable now; 6 stay planned or need setup. First blocker: Saved guest actions.');
   });
 });

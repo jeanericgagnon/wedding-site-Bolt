@@ -114,7 +114,7 @@ export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebMo
   const signals: DayOfWebModeSignal[] = [
     {
       id: 'mobile-hub',
-      label: 'Install-free mobile hub',
+      label: 'No-app guest hub',
       detail: input.siteSlug
         ? 'Guests can use the wedding hub in a mobile browser without an app or account.'
         : 'Add a site link before this can become the guest hub.',
@@ -122,7 +122,7 @@ export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebMo
     },
     {
       id: 'same-link',
-      label: 'One link for the day',
+      label: 'One day-of link',
       detail: input.hasCustomMessage || input.hasWeddingDate
         ? 'The hub has enough wedding context to feel like the right day-of link.'
         : 'Add a date or message so guests know they are in the right place.',
@@ -130,7 +130,7 @@ export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebMo
     },
     {
       id: 'guest-actions',
-      label: 'Guest actions',
+      label: 'Guest actions ready',
       detail: visibleActions.length > 0
         ? `Available now: ${visibleActions.join(', ')}.`
         : 'Turn on at least one guest action before sharing the hub.',
@@ -138,7 +138,7 @@ export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebMo
     },
     {
       id: 'guest-language',
-      label: 'Language-aware links',
+      label: 'Guest language links',
       detail: input.hasGuestLanguagePreference
         ? 'Guest language links are honored before the hub renders.'
         : 'Guest language links can be added when multilingual invitations are used.',
@@ -146,7 +146,7 @@ export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebMo
     },
     {
       id: 'day-of-coverage',
-      label: 'Day-of coverage',
+      label: 'Core day-of actions',
       detail: enabled.has('schedule') && enabled.has('travel') && enabled.has('photos')
         ? 'Schedule, directions, and photo upload are available from the hub.'
         : 'Schedule, directions, and photo upload should all be enabled for a stronger day-of mode.',
@@ -154,13 +154,13 @@ export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebMo
     },
     {
       id: 'announcements',
-      label: 'Announcements',
+      label: 'Live updates',
       detail: 'Live day-of announcements are still handled from owner messaging, not this guest hub.',
       state: 'planned',
     },
     {
       id: 'poor-network',
-      label: 'Poor network fallback',
+      label: 'Low-signal fallback',
       detail: input.hasOfflineSnapshot
         ? 'If live details do not load, guests still get the last saved update, travel plan, and safe hub actions from the cached hub.'
         : input.hasPoorNetworkFallback
@@ -170,7 +170,7 @@ export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebMo
     },
     {
       id: 'offline-shell',
-      label: 'Offline app shell',
+      label: 'Offline reopen',
       detail: input.hasServiceWorkerShell
         ? 'The day-of hub shell is cached locally so guests can reopen the page without reloading every asset.'
         : 'A cached app shell is still needed before the hub behaves more like an install-free day-of app.',
@@ -213,7 +213,7 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
   const items: DayOfHubStatusItem[] = [
     {
       id: 'saved-hub',
-      label: 'Saved hub actions',
+      label: 'Saved guest actions',
       detail: input.hasPoorNetworkFallback
         ? 'Guests still see schedule, travel, RSVP, and photo links if the newest details do not load.'
         : 'Add a retry/fallback state before depending on this in a crowded venue.',
@@ -221,7 +221,7 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
     },
     {
       id: 'day-of-essentials',
-      label: 'Day-of essentials',
+      label: 'Core day-of actions',
       detail: hasCoreGuestActions
         ? 'Schedule, travel, and photo upload are present from the same mobile link.'
         : 'Schedule, travel, and photo upload should all be enabled before sharing this as the wedding-day hub.',
@@ -229,7 +229,7 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
     },
     {
       id: 'announcements',
-      label: 'Announcements',
+      label: 'Live updates',
       detail: input.announcementsConnected
         ? 'Owner messages are connected to the guest hub announcement surface.'
         : 'Live updates still belong in owner messaging until announcement readback is connected.',
@@ -237,7 +237,7 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
     },
     {
       id: 'guest-state',
-      label: 'Guest-specific status',
+      label: 'Guest status from this link',
       detail: input.guestSpecificStateConnected
         ? 'Guests can see their own RSVP or check-in status from the hub.'
         : 'RSVP and check-in status stay in their dedicated flows until guest-specific hub state is wired.',
@@ -245,7 +245,7 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
     },
     {
       id: 'coordinator-handoff',
-      label: 'Coordinator handoff',
+      label: 'Coordinator handoff from this link',
       detail: input.coordinatorHandoffConnected
         ? 'Coordinator updates are connected to the guest hub.'
         : 'Coordinator queue and Q&A stay in the coordinator surface until a guest-safe handoff is proven.',
@@ -253,7 +253,7 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
     },
     {
       id: 'link-access',
-      label: 'Private event visibility',
+      label: 'Link access from this page',
       detail: input.privateEventVisibilityConnected
         ? input.enabledActionIds.length > 0
           ? `Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are ready from it: ${summarizeDayOfActions(input.enabledActionIds)}. ${readyCoreActionIds.length === coreDayOfActionIds.length ? `All core day-of coverage from this link is ready: ${summarizeDayOfActions(readyCoreActionIds)}.` : readyCoreActionIds.length > 0 ? `Core day-of coverage from this link is ${coreCoverageRate}% ready (${readyCoreActionIds.length} of ${coreDayOfActionIds.length}). Main gap: ${missingCoreActionLabels[0]}. Still missing: ${missingCoreActionLabels.join(', ')}.` : 'Core day-of coverage is still missing from this link. Main gap: RSVP.'}`
