@@ -99,6 +99,7 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('0% covered')).toBeInTheDocument();
     expect(screen.getByText('templates only · meals off')).toBeInTheDocument();
     expect(screen.getByText(/^Optional$/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Main gap:/i)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: /Use as primary access/i })[0]);
 
@@ -178,5 +179,61 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('0% coverage')).toBeInTheDocument();
     expect(screen.getByText('3 total live questions')).toBeInTheDocument();
     expect(screen.getByText('100% ready')).toBeInTheDocument();
+    expect(screen.queryByText(/Main gap:/i)).not.toBeInTheDocument();
+  });
+
+  it('calls out the first real RSVP setup blocker without treating optional items as blockers', () => {
+    const selection: PersistedRsvpAccessSelection = {
+      primaryMode: 'private_link',
+      allowNameLookupBackup: true,
+    };
+    const plan = buildRsvpAccessModePlan({
+      guestCount: 18,
+      inviteTokenCount: 18,
+      householdCount: 7,
+      eventCount: 2,
+      emailCount: 14,
+      phoneCount: 5,
+    }, selection);
+    const recommended = plan.find((mode) => mode.status === 'recommended') ?? plan[0];
+
+    render(
+      <GuestRsvpSettingsView
+        recommendedRsvpAccessMode={recommended}
+        rsvpAccessModePlan={plan}
+        rsvpAccessSelection={selection}
+        rsvpAuditFeed={[]}
+        rsvpAuditLoading={false}
+        rsvpAutoSaveState="idle"
+        rsvpConfigSaving={false}
+        rsvpMealEnabled={true}
+        rsvpMealOptions={['Chicken']}
+        rsvpQuestionTemplateCoverage={[]}
+        rsvpQuestions={[]}
+        rsvpSetupChecklist={buildRsvpSetupChecklist({
+          guestCount: 18,
+          inviteTokenCount: 18,
+          householdCount: 7,
+          eventCount: 2,
+          emailCount: 14,
+          phoneCount: 5,
+          mealEnabled: true,
+          mealOptionCount: 1,
+          questions: [],
+        }, selection)}
+        stats={{ confirmed: 10, declined: 2, pending: 6 }}
+        onAddRsvpQuestionTemplate={vi.fn()}
+        onSaveRsvpConfig={vi.fn()}
+        onSetConfirmDialog={vi.fn()}
+        onSetGuestsTab={vi.fn()}
+        onSetRsvpAccessSelection={vi.fn()}
+        onSetRsvpConfigDirty={vi.fn()}
+        onSetRsvpMealEnabled={vi.fn()}
+        onSetRsvpMealOptions={vi.fn()}
+        onSetRsvpQuestions={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Main gap: Meal choices')).toBeInTheDocument();
   });
 });

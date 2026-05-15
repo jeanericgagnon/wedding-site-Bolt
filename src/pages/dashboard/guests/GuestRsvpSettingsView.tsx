@@ -153,6 +153,7 @@ export function GuestRsvpSettingsView({
       : safeRsvpQuestions.length <= 6
         ? 'Balanced RSVP form'
         : 'Detailed RSVP form';
+  const rsvpSetupMainGapLabel = safeRsvpSetupChecklist.find((item) => item.status === 'needs-setup')?.label ?? null;
   const markRsvpConfigDirty = () => onSetRsvpConfigDirty(true);
   const rsvpAccessSummary = safeRsvpAccessSelection.primaryMode === 'private_link'
     ? safeRsvpAccessSelection.allowNameLookupBackup
@@ -383,6 +384,9 @@ export function GuestRsvpSettingsView({
                   </div>
                 ))}
               </div>
+              {rsvpSetupMainGapLabel && (
+                <p className="mt-3 text-xs text-text-tertiary">Main gap: {rsvpSetupMainGapLabel}</p>
+              )}
             </div>
 
             <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
