@@ -335,6 +335,31 @@ test('guest photo upload stores hosted media and owner reads it back', async ({ 
     await expect(page.locator('video[src*="/storage/v1/object/sign/photo-uploads/"]').first()).toBeVisible();
 
     await page.goto('/dashboard/photos?bypassPayment=1&photoUploadQa=' + runId + '&afterRecap=1', { waitUntil: 'domcontentloaded' });
+    await page.locator('select.h-11.rounded-lg.border.border-border-subtle.bg-white').first().selectOption('published');
+    await page.getByRole('button', { name: 'Save status' }).click();
+    await expect(page.getByText('Guest hub settings saved.')).toBeVisible();
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.getByText('Current mode: Published')).toBeVisible();
+    await expect(page.getByText('The recap is live for guests.')).toBeVisible();
+
+    const recapPreviewPagePromise = page.context().waitForEvent('page');
+    await page.getByRole('button', { name: 'Preview recap' }).click();
+    const recapPreviewPage = await recapPreviewPagePromise;
+    await recapPreviewPage.waitForLoadState('domcontentloaded');
+    await expect(recapPreviewPage).toHaveURL(new RegExp(`/event/${proofSiteSlug}/recap`));
+    await expect(recapPreviewPage.getByRole('heading', { name: /Maya.*Leo|maya.*leo/i }).first()).toBeVisible();
+    await expect(recapPreviewPage.getByRole('heading', { name: 'Top moments' })).toBeVisible();
+    await expect(recapPreviewPage.getByText(note)).toBeVisible();
+    await expect(recapPreviewPage.getByText(`Shared by ${guestName}`)).toBeVisible();
+    await expect(recapPreviewPage.getByText(videoNote)).toBeVisible();
+    await expect(recapPreviewPage.getByText(`Shared by ${videoGuestName}`)).toBeVisible();
+    await expect(recapPreviewPage.getByText('Featured')).toBeVisible();
+    await expect(recapPreviewPage.getByText('Story pick')).toBeVisible();
+    await expect(recapPreviewPage.locator('img[src*="/storage/v1/object/sign/photo-uploads/"]').first()).toBeVisible();
+    await expect(recapPreviewPage.locator('video[src*="/storage/v1/object/sign/photo-uploads/"]').first()).toBeVisible();
+    await expect(recapPreviewPage.locator('body')).not.toContainText('token=');
+    await recapPreviewPage.close();
+
     const uploadedRowAfterRecap = page.locator('li').filter({ hasText: `photo-upload-qa-${runId}.png` }).first();
     await expect(uploadedRowAfterRecap).toBeVisible();
     await uploadedRowAfterRecap.getByRole('button', { name: 'Flag' }).click();

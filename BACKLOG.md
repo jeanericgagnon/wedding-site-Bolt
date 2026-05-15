@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 05:31 PM PDT`
-- Latest shipped batch: `defer photo memory live rerun lane`
+- Last updated: `2026-05-15 06:02 PM PDT`
+- Latest shipped batch: `add live photo preview proof path`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry active-proof-lane closure batch
 - Open backlog lanes: `0`
 - Current session blocker: even a minimal `chromium.launch()` plus `/login` navigation now goes silent in this saturated session, and the same silent hang now blocks the remaining guest-preview live rerun too, so the remaining browser-proof gaps are currently isolated to generic headless browser startup in this session
@@ -771,7 +771,8 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the top-level photo-memory upload badge now also reads back the active-album count beside live upload volume, so owners can tell whether upload momentum is concentrated in one album or spread across the real active capture surface
    - latest shipped: the production `photo-upload-write-read` lane now also uploads a real video file, proves owner feature/story moderation on that live clip, verifies the guest-facing published recap renders the uploaded video plus guest attribution, and confirms the owner can still flag/hide the same clip after recap review, so the memory-flow lane no longer has a missing live guest video upload browser path
    - latest shipped: the production `photo-upload-write-read` lane already covers owner moderation readback after a real live upload and also proves the guest-facing published recap path on the shipped runtime, so those two old memory-flow bullets were overlapping with a live proof lane that is already green
-   - deferred for this session because the only remaining work is rerunning the owner-side `Preview recap` handoff against the shipped production runtime after the next approved deploy, and this queue is currently running under `no deploy`
+   - latest shipped: the live production `photo-upload-write-read` lane now also includes the owner-side `Preview recap` handoff path in repo, so the final photo-memory gap is no longer “missing live proof coverage” but only rerunning that strengthened live lane against the shipped runtime
+   - deferred for now because today's approved production deploy attempt hit Vercel's daily deploy quota for `wedding-site-bolt`, and the fallback live Playwright rerun against the current `dayof.love` runtime went silent in this saturated session before first test output, so the remaining work is now isolated to deploy quota reset plus a fresh browser-capable proof session
 
 7. `ACTIVE`: destination/travel guest portal
    - the guest-hub `Travel quick plan` now keeps the `Main gap` line explicit even in the all-clear state, so guests get a plain “none right now” readback instead of inferring it from a missing label

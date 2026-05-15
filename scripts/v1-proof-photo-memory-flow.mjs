@@ -152,7 +152,7 @@ const output = {
     'Mobile guest photo-upload route proof for the no-app memory flow without raw-token leakage',
   ],
   stillManualProofNeeded: [
-    'Rerun the owner-side "Preview recap" handoff against the shipped production runtime after the next approved deploy.',
+    'Rerun the strengthened live photo-memory production lane, including the owner-side "Preview recap" handoff, against the shipped runtime after the next approved deploy.',
   ],
   results,
 };
