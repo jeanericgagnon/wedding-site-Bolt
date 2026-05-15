@@ -1,7 +1,15 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildGuestHubAccessHeaders, buildGuestHubAccessPayload, buildGuestHubIdentityPayload, formatEventHubCoupleLabel, friendlyGuestHubError, safeGuestHubFunctionError, shouldOpenHubDetailsByDefault } from './EventHub';
+import {
+  buildGuestHubAccessHeaders,
+  buildGuestHubAccessPayload,
+  buildGuestHubIdentityPayload,
+  formatEventHubCoupleLabel,
+  friendlyGuestHubError,
+  safeGuestHubFunctionError,
+  shouldOpenHubDetailsByDefault,
+} from './eventHubPageHelpers';
 
 afterEach(() => {
   sessionStorage.clear();

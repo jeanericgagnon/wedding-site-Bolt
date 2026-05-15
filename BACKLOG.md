@@ -2,11 +2,11 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 01:41 PM PDT`
+- Last updated: `2026-05-15 01:52 PM PDT`
 - Latest shipped batch: `pending local batch`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
-- Current session blocker: the minimal guest-hub Vitest slice still idles in this saturated session even after clearing duplicate runners, restoring real timers, isolating the i18n-backed guest-hub child components from the large render test, and removing the redundant EventHub render bundle from the QR proof lane, so the local runner environment remains the current proof blocker after those in-repo blockers were removed
+- Current session blocker: the minimal guest-hub Vitest slice still idles in this saturated session even after clearing duplicate runners, restoring real timers, isolating the i18n-backed guest-hub child components from the large render test, removing the redundant EventHub render bundle from the QR proof lane, and extracting the pure EventHub helper functions away from the heavy page module, so the local runner environment remains the current proof blocker after those in-repo blockers were removed
 - Current transport blocker: none active right now
 - Blocked this session:
   - `npx vitest run src/pages/dashboard/registry/RegistryDashboardRouteContent.test.tsx` still stalls without producing useful output in this session
@@ -157,6 +157,7 @@ These are the active product-completion lanes still open after the current launc
    - wrong-guest/right-guest live visibility proof is still open
    - authenticated mobile live proof is still open
 2. `unified QR guest hub`
+   - latest shipped: the pure EventHub guest-hub helper functions now live in a dedicated `eventHubPageHelpers` module, so `EventHub.test.tsx` no longer needs to import the full `EventHub` page runtime just to prove access/header/couple-label/detail-open behavior; that removes another concrete proof blocker from the day-of web-mode slice and narrows the remaining local blocker further to the idle Vitest runner environment
    - latest shipped: `proof:v1:guest-hub-qr` now stays on QR asset, action, share-panel, and QR-card tests instead of redundantly pulling the heavyweight `EventHubLiveContent` and `EventHub` render slice that already belongs to `proof:v1:dayof-web-mode`, so another concrete guest-hub proof blocker is removed and the QR closure lane no longer drags overlapping day-of hub render state into its local proof path
    - latest shipped: the large `EventHubLiveContent` guest-hub render test now stubs the i18n-backed `LanguageSwitcher` plus the nonessential preview/status child components, so another concrete in-repo proof blocker is removed and the remaining local closure blocker is narrowed further to the idle Vitest runner environment instead of shared i18n/localStorage side effects inside the guest-hub slice
    - latest shipped: the guest-hub offline snapshot test now restores real timers after each run, so one concrete in-repo proof blocker is removed and the remaining local closure blocker is narrowed to the idle Vitest runner environment instead of a known fake-timer leak inside the guest-hub slice
@@ -233,7 +234,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 01:41 PM PDT` |
+| Current date/time | `2026-05-15 01:52 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |
