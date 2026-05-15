@@ -1220,4 +1220,155 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Top gifts are already fully claimed right now.')).toBeInTheDocument();
     expect(screen.getByText('No recent registry changes yet.')).toBeInTheDocument();
   });
+
+  it('keeps registry quick check explicit in the all-clear state', () => {
+    render(
+      <RegistryDashboardRouteContent
+        actionableBadImportCount={0}
+        alertCounts={{ stale: 0, priceChanged: 0, outOfStock: 0, imageIssues: 0 }}
+        autoRefreshEnabled
+        autoRefreshing={false}
+        bulkImportBusy={false}
+        bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
+        budgetUtilization={0}
+        claimStats={{ claimedItems: 0, claimedQuantity: 0, fullyClaimedItems: 0, partiallyClaimedItems: 0, namedPurchaserItems: 0, missingPurchaserItems: 0, multiQuantityInProgress: 0, remainingQuantity: 0 }}
+        counts={{ total: 1, available: 0, partial: 0, purchased: 1, totalValue: 80 }}
+        duplicateGroups={[]}
+        editItem={null}
+        filter="all"
+        filtered={[makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'purchased', quantity_needed: 1, quantity_purchased: 1, purchaser_name: 'Alex' })]}
+        fulfillmentRate={100}
+        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
+        guestVisibilityStats={{ guestReadyItems: 1, guestVisibleItems: 1, visibleAvailableItems: 0, visibleClaimedItems: 1, hiddenPurchasedItems: 0, blockedGuestItems: 0, guestReadyCoverageRate: 100, guestVisibleCoverageRate: 100 }}
+        handleAddNew={vi.fn()}
+        handleAutoRefreshStale={vi.fn(async () => {})}
+        handleBulkImport={vi.fn(async () => {})}
+        handleCopyDuplicateReviewList={vi.fn(async () => {})}
+        handleDelete={vi.fn(async () => {})}
+        handleEdit={vi.fn()}
+        handleMergeDuplicateGroup={vi.fn(async () => {})}
+        handleMarkPurchased={vi.fn(async () => {})}
+        handleResetPurchaseState={vi.fn(async () => {})}
+        handleRefetchMetadata={vi.fn(async () => true)}
+        handleRefreshImageIssues={vi.fn(async () => {})}
+        handleRepairBadImports={vi.fn(async () => {})}
+        handleRunRepairQueueAction={vi.fn(async () => {})}
+        handleSyncRegistryThankYouTasks={vi.fn(async () => {})}
+        handleToggleRegistryThankYouTask={vi.fn(async () => {})}
+        imageRefreshBusy={false}
+        items={[makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'purchased', quantity_needed: 1, quantity_purchased: 1, purchaser_name: 'Alex' })]}
+        loading={false}
+        monthlyRefreshCap={100}
+        monthlyRefreshCount={0}
+        mergingDuplicateGroupId={null}
+        nearBudgetCap={false}
+        normalizedItems={[makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'purchased', quantity_needed: 1, quantity_purchased: 1, purchaser_name: 'Alex' })]}
+        recentActivity={[]}
+        registryActionsOpen={false}
+        registryActionsRef={{ current: null }}
+        registryInsights={[]}
+        registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}
+        registryThankYouPlan={{ headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] }}
+        registryThankYouStats={{ purchasedCount: 0, completedCount: 0, pendingCount: 0, readyToSendCount: 0, blockedByMissingPurchaserCount: 0, attributionCoverageRate: 0, completionRate: 0 }}
+        registryThankYouBusyItemId={null}
+        registryThankYouSyncing={false}
+        repairingBadImports={false}
+        repairQueue={[]}
+        refreshBudgetRemaining={100}
+        refreshWindowOpen={true}
+        search=""
+        setBulkImportOpen={vi.fn()}
+        setFilter={vi.fn()}
+        setRegistryActionsOpen={vi.fn()}
+        setSearch={vi.fn()}
+        setShowAlertsOnly={vi.fn()}
+        setShowImageIssuesOnly={vi.fn()}
+        showAlertsOnly={false}
+        showImageIssuesOnly={false}
+        topRegistryItems={[makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'purchased', quantity_needed: 1, quantity_purchased: 1, purchaser_name: 'Alex' })]}
+        weddingSiteId="site-1"
+      />,
+    );
+
+    expect(screen.getByText('Registry quick check')).toBeInTheDocument();
+    expect(screen.getByText('No quick registry fixes worth flagging right now.')).toBeInTheDocument();
+    expect(screen.getByText('No quick cleanup prompts right now.')).toBeInTheDocument();
+  });
+
+  it('summarizes mixed registry quick-check prompts before the cards', () => {
+    render(
+      <RegistryDashboardRouteContent
+        actionableBadImportCount={0}
+        alertCounts={{ stale: 0, priceChanged: 0, outOfStock: 0, imageIssues: 0 }}
+        autoRefreshEnabled
+        autoRefreshing={false}
+        bulkImportBusy={false}
+        bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
+        budgetUtilization={0}
+        claimStats={{ claimedItems: 1, claimedQuantity: 1, fullyClaimedItems: 0, partiallyClaimedItems: 1, namedPurchaserItems: 0, missingPurchaserItems: 1, multiQuantityInProgress: 0, remainingQuantity: 0 }}
+        counts={{ total: 1, available: 0, partial: 1, purchased: 0, totalValue: 80 }}
+        duplicateGroups={[]}
+        editItem={null}
+        filter="all"
+        filtered={[makeItem({ id: 'fund-1', purchaser_name: null, purchase_status: 'partial', item_type: 'cash_fund', fund_goal_amount: null, fund_received_amount: 0, fund_custom_url: null, fund_paypal_url: null, fund_venmo_url: null, fund_zelle_handle: null })]}
+        fulfillmentRate={0}
+        fundStats={{ count: 1, received: 0, goal: 0, readyToShare: 0, needsSetup: 1, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 1, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
+        guestVisibilityStats={{ guestReadyItems: 0, guestVisibleItems: 0, visibleAvailableItems: 0, visibleClaimedItems: 0, hiddenPurchasedItems: 0, blockedGuestItems: 1, guestReadyCoverageRate: 0, guestVisibleCoverageRate: 0 }}
+        handleAddNew={vi.fn()}
+        handleAutoRefreshStale={vi.fn(async () => {})}
+        handleBulkImport={vi.fn(async () => {})}
+        handleCopyDuplicateReviewList={vi.fn(async () => {})}
+        handleDelete={vi.fn(async () => {})}
+        handleEdit={vi.fn()}
+        handleMergeDuplicateGroup={vi.fn(async () => {})}
+        handleMarkPurchased={vi.fn(async () => {})}
+        handleResetPurchaseState={vi.fn(async () => {})}
+        handleRefetchMetadata={vi.fn(async () => true)}
+        handleRefreshImageIssues={vi.fn(async () => {})}
+        handleRepairBadImports={vi.fn(async () => {})}
+        handleRunRepairQueueAction={vi.fn(async () => {})}
+        handleSyncRegistryThankYouTasks={vi.fn(async () => {})}
+        handleToggleRegistryThankYouTask={vi.fn(async () => {})}
+        imageRefreshBusy={false}
+        items={[makeItem({ id: 'fund-1', purchaser_name: null, purchase_status: 'partial', item_type: 'cash_fund', fund_goal_amount: null, fund_received_amount: 0, fund_custom_url: null, fund_paypal_url: null, fund_venmo_url: null, fund_zelle_handle: null })]}
+        loading={false}
+        monthlyRefreshCap={100}
+        monthlyRefreshCount={0}
+        mergingDuplicateGroupId={null}
+        nearBudgetCap={false}
+        normalizedItems={[makeItem({ id: 'fund-1', purchaser_name: null, purchase_status: 'partial', item_type: 'cash_fund', fund_goal_amount: null, fund_received_amount: 0, fund_custom_url: null, fund_paypal_url: null, fund_venmo_url: null, fund_zelle_handle: null })]}
+        recentActivity={[]}
+        registryActionsOpen={false}
+        registryActionsRef={{ current: null }}
+        registryInsights={[
+          { id: 'registry-fund-setup', area: 'registry', priority: 'next', title: 'Cash fund setup', detail: '1 cash fund still needs a guest-ready payment path before it is easy to share.', actionLabel: 'Review cash funds', source: 'deterministic', confidence: 0.88 },
+          { id: 'registry-fund-goals', area: 'registry', priority: 'polish', title: 'Track one simple goal', detail: '1 cash fund could use a simple goal so progress reads clearly for you and your guests.', actionLabel: 'Add fund goals', source: 'deterministic', confidence: 0.76 },
+        ]}
+        registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}
+        registryThankYouPlan={{ headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] }}
+        registryThankYouStats={{ purchasedCount: 0, completedCount: 0, pendingCount: 0, readyToSendCount: 0, blockedByMissingPurchaserCount: 0, attributionCoverageRate: 0, completionRate: 0 }}
+        registryThankYouBusyItemId={null}
+        registryThankYouSyncing={false}
+        repairingBadImports={false}
+        repairQueue={[]}
+        refreshBudgetRemaining={100}
+        refreshWindowOpen={true}
+        search=""
+        setBulkImportOpen={vi.fn()}
+        setFilter={vi.fn()}
+        setRegistryActionsOpen={vi.fn()}
+        setSearch={vi.fn()}
+        setShowAlertsOnly={vi.fn()}
+        setShowImageIssuesOnly={vi.fn()}
+        showAlertsOnly={false}
+        showImageIssuesOnly={false}
+        topRegistryItems={[makeItem({ id: 'fund-1', purchaser_name: null, purchase_status: 'partial' })]}
+        weddingSiteId="site-1"
+      />,
+    );
+
+    expect(screen.getByText('1 next-step fix · 1 polish cleanup worth a quick pass.')).toBeInTheDocument();
+    expect(screen.getByText('Cash fund setup')).toBeInTheDocument();
+    expect(screen.getByText('Track one simple goal')).toBeInTheDocument();
+  });
 });

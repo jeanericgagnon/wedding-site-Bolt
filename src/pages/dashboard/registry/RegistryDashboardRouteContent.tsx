@@ -345,6 +345,18 @@ export function RegistryDashboardRouteContent(props: {
         `${props.recentActivity.filter((item) => item.purchase_status === 'partial').length} partially claimed`,
         `${props.recentActivity.filter((item) => item.purchase_status === 'available').length} still available`,
       ].join(' · ');
+  const registryQuickCheckNextCount = props.registryInsights.filter((insight) => insight.priority === 'next').length;
+  const registryQuickCheckPolishCount = props.registryInsights.filter((insight) => insight.priority === 'polish').length;
+  const registryQuickCheckSummary = props.registryInsights.length === 0
+    ? 'No quick registry fixes worth flagging right now.'
+    : `${[
+        registryQuickCheckNextCount > 0
+          ? `${registryQuickCheckNextCount} next-step ${registryQuickCheckNextCount === 1 ? 'fix' : 'fixes'}`
+          : null,
+        registryQuickCheckPolishCount > 0
+          ? `${registryQuickCheckPolishCount} polish ${registryQuickCheckPolishCount === 1 ? 'cleanup' : 'cleanups'}`
+          : null,
+      ].filter(Boolean).join(' · ')} worth a quick pass.`;
 
   const tabCount = (key: RegistryFilter) => {
     if (key === 'all') return props.counts.total;
@@ -517,34 +529,35 @@ export function RegistryDashboardRouteContent(props: {
             </Card>
           </div>
 
-          {props.registryInsights.length > 0 && (
-            <Card variant="bordered" padding="lg">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" />
-                <h2 className="text-base font-semibold text-text-primary">Registry quick check</h2>
-              </div>
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
-                {props.registryInsights.map((insight) => (
-                  <div key={insight.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
-                    <p className="text-sm font-semibold text-text-primary">{insight.title}</p>
-                    <p className="mt-1 text-sm leading-6 text-text-secondary">{insight.detail}</p>
-                    <button
-                      type="button"
-                      className="mt-3 text-xs font-semibold text-primary hover:underline"
-                      onClick={() => {
-                        if (insight.id === 'registry-metadata-images') {
-                          props.setShowImageIssuesOnly(true);
-                          props.setShowAlertsOnly(false);
-                        }
-                      }}
-                    >
-                      {insight.actionLabel}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
+          <Card variant="bordered" padding="lg">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" />
+              <h2 className="text-base font-semibold text-text-primary">Registry quick check</h2>
+            </div>
+            <p className="mt-1 text-sm text-text-secondary">{registryQuickCheckSummary}</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              {props.registryInsights.length === 0 ? (
+                <p className="text-sm text-text-secondary">No quick cleanup prompts right now.</p>
+              ) : props.registryInsights.map((insight) => (
+                <div key={insight.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
+                  <p className="text-sm font-semibold text-text-primary">{insight.title}</p>
+                  <p className="mt-1 text-sm leading-6 text-text-secondary">{insight.detail}</p>
+                  <button
+                    type="button"
+                    className="mt-3 text-xs font-semibold text-primary hover:underline"
+                    onClick={() => {
+                      if (insight.id === 'registry-metadata-images') {
+                        props.setShowImageIssuesOnly(true);
+                        props.setShowAlertsOnly(false);
+                      }
+                    }}
+                  >
+                    {insight.actionLabel}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </Card>
 
           <div className="grid gap-4 lg:grid-cols-3">
             <Card variant="bordered" padding="lg">
