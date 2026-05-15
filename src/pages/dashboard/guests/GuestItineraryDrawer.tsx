@@ -309,6 +309,8 @@ function GuestDrawerDetails({
               <p className="text-xs text-text-tertiary">
                 {previewRouteCoverageRate != null ? `${previewRouteCoverageRate}% preview-route coverage` : ''}
                 {previewRouteCoverageRate != null ? ' · ' : ''}
+                {visibilityPreview.links.length} route{visibilityPreview.links.length === 1 ? '' : 's'} ready
+                {' · '}
                 {missingPreviewRouteCount === 0
                   ? 'No preview routes missing'
                   : `${missingPreviewRouteCount} preview route${missingPreviewRouteCount === 1 ? '' : 's'} still missing`}
