@@ -221,7 +221,7 @@ export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): 
     coverageBadges,
     summary: missingLabels.length > 0
       ? `${readyCount} ready · ${needsInfoCount} need info · ${emptyCount} empty${plannedCount > 0 ? ` · ${plannedCount} planned` : ''}.${highestPriorityGap ? ` First blocker: ${highestPriorityGap.label}.` : ''} Still missing: ${missingLabels.join(', ')}.`
-      : `${readyCount} ready${plannedCount > 0 ? ` · ${plannedCount} planned` : ''}. No travel gaps right now.`,
+      : `${readyCount} ready${plannedCount > 0 ? ` · ${plannedCount} planned` : ''}. No travel gaps right now. No active blockers.`,
     mainGapLabel: highestPriorityGap ? `Main gap: ${highestPriorityGap.label}` : 'Main gap: none right now',
     steps,
     blockers,
