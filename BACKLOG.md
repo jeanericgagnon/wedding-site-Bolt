@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 12:29 PM PDT`
-- Latest shipped batch: `3037c8ff` `Clarify registry task action wording`
+- Last updated: `2026-05-15 12:32 PM PDT`
+- Latest shipped batch: `fa2e59b9` `Clarify registry metric label wording`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `fa2e59b9` `Clarify registry metric label wording`
   - `3037c8ff` `Clarify registry task action wording`
   - `359392b9` `Clarify registry cleanup and watchouts wording`
   - `ec2d6459` `Clarify registry claim and thank-you wording`
@@ -96,6 +97,7 @@
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 - `registry polish beyond barcode`
+  - latest shipped: the deeper metric rows now use clearer owner-facing labels like `Ready for guests`, `Visible to guests`, `Ready to share`, `Funds with a goal`, `Receiving gifts`, and `Flexible or goal-based funds`, so the registry notes and fund/guest visibility rows no longer fall back to dense internal compound labels after the rest of the registry cleanup
   - latest shipped: the deeper task and action rows now use calmer owner-facing wording like `Save thank-you updates`, `Open gift`, `Fix now`, `Look soon`, `Possible repeat group`, `Merged quantity`, and `Open keep item`, so the thank-you list, cleanup queue, and duplicate-merge task surfaces no longer drop back into older operational action labels after the registry summaries were cleaned up
   - latest shipped: the cleanup and watchouts family now uses calmer owner-facing wording like `Watchouts`, `detail touchups`, `duplicate checks`, `photo refresh`, `older links`, and `price shifts`, so the registry toolbar, cleanup tools, duplicate lane, and watchout summaries no longer slip back into sharper internal review/ops wording after the rest of the registry owner surface was cleaned up
   - latest shipped: the claim and thank-you family now uses clearer owner-facing wording like `purchaser name`, `Purchasers named`, `Ready for a thank-you`, and `Missing purchaser names`, so the claimed-gift card, thank-you summary card, thank-you list, and registry notes no longer slip back into older attribution and workflow-tool phrasing after the rest of the registry owner summaries were cleaned up
@@ -189,6 +191,7 @@ These are the active product-completion lanes still open after the current launc
    - add authenticated live browser proof for composing and saving each operational segment on the shipped runtime
    - keep SMS/Telnyx live-send behavior deferred until provider/compliance setup is ready
 5. `registry polish beyond barcode`
+  - latest shipped: the deeper metric rows now use clearer owner-facing labels like `Ready for guests`, `Visible to guests`, `Ready to share`, `Funds with a goal`, `Receiving gifts`, and `Flexible or goal-based funds`, so the registry notes and fund/guest visibility rows no longer fall back to dense internal compound labels after the rest of the registry cleanup
   - latest shipped: the deeper task and action rows now use calmer owner-facing wording like `Save thank-you updates`, `Open gift`, `Fix now`, `Look soon`, `Possible repeat group`, `Merged quantity`, and `Open keep item`, so the thank-you list, cleanup queue, and duplicate-merge task surfaces no longer drop back into older operational action labels after the registry summaries were cleaned up
   - latest shipped: the cleanup and watchouts family now uses calmer owner-facing wording like `Watchouts`, `detail touchups`, `duplicate checks`, `photo refresh`, `older links`, and `price shifts`, so the registry toolbar, cleanup tools, duplicate lane, and watchout summaries no longer slip back into sharper internal review/ops wording after the rest of the registry owner surface was cleaned up
   - latest shipped: the claim and thank-you family now uses clearer owner-facing wording like `purchaser name`, `Purchasers named`, `Ready for a thank-you`, and `Missing purchaser names`, so the claimed-gift card, thank-you summary card, thank-you list, and registry notes no longer slip back into older attribution and workflow-tool phrasing after the rest of the registry owner summaries were cleaned up
@@ -224,7 +227,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 12:29 PM PDT` |
+| Current date/time | `2026-05-15 12:32 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |
