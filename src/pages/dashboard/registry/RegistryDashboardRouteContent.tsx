@@ -563,7 +563,7 @@ export function RegistryDashboardRouteContent(props: {
               <p className="text-sm font-semibold text-text-primary">Registry notes</p>
               <div className="mt-3 space-y-2.5 text-sm text-text-secondary">
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Purchased: <span className="font-semibold text-text-primary">{props.counts.purchased}</span> · Remaining: <span className="font-semibold text-text-primary">{props.counts.available + props.counts.partial}</span>
+                  Purchased gifts: <span className="font-semibold text-text-primary">{props.counts.purchased}</span> · Still open: <span className="font-semibold text-text-primary">{props.counts.available + props.counts.partial}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Claimed gifts: <span className="font-semibold text-text-primary">{props.claimStats.claimedItems}</span> · Attributed: <span className="font-semibold text-text-primary">{props.claimStats.namedPurchaserItems}</span>
@@ -578,7 +578,7 @@ export function RegistryDashboardRouteContent(props: {
                   Claimed quantity: <span className="font-semibold text-text-primary">{props.claimStats.claimedQuantity}</span> · Still needed: <span className="font-semibold text-text-primary">{props.claimStats.remainingQuantity}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Guest-visible gifts: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.guestVisibleItems}</span> · Hidden when purchased: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.hiddenPurchasedItems}</span>
+                  Visible to guests: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.guestVisibleItems}</span> · Hidden when purchased: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.hiddenPurchasedItems}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Guest-ready coverage: <span className="font-semibold text-text-primary">{guestReadyCoverageRate}%</span> · Visible coverage: <span className="font-semibold text-text-primary">{guestVisibleCoverageRate}%</span>
@@ -623,10 +623,16 @@ export function RegistryDashboardRouteContent(props: {
                   Multi-quantity gifts in progress: <span className="font-semibold text-text-primary">{props.claimStats.multiQuantityInProgress}</span> · Fully claimed gifts: <span className="font-semibold text-text-primary">{props.claimStats.fullyClaimedItems}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Thank-you ready: <span className="font-semibold text-text-primary">{props.registryThankYouPlan.namedPurchaserCount}</span> · Missing purchaser: <span className="font-semibold text-text-primary">{props.registryThankYouPlan.missingPurchaserCount}</span>
+                  Purchasers named: <span className="font-semibold text-text-primary">{props.registryThankYouPlan.namedPurchaserCount}</span> · Missing purchaser: <span className="font-semibold text-text-primary">{props.registryThankYouPlan.missingPurchaserCount}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Image issues: <span className="font-semibold text-text-primary">{props.alertCounts.imageIssues}</span> · Duplicate groups: <span className="font-semibold text-text-primary">{props.duplicateGroups.length}</span>
+                  {props.alertCounts.imageIssues === 0 && props.duplicateGroups.length === 0 ? (
+                    <>No image issues or duplicate groups</>
+                  ) : (
+                    <>
+                      Image issues: <span className="font-semibold text-text-primary">{props.alertCounts.imageIssues}</span> · Duplicate groups: <span className="font-semibold text-text-primary">{props.duplicateGroups.length}</span>
+                    </>
+                  )}
                 </div>
               </div>
             </Card>

@@ -242,7 +242,7 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(screen.getByText('Missing purchaser: 1')).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Thank-you ready: 0 · Missing purchaser: 1'),
+      screen.getByText((_, element) => element?.textContent === 'Purchasers named: 0 · Missing purchaser: 1'),
     ).toBeInTheDocument();
     expect(screen.getByText('Add the purchaser before you send a thank-you.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /review gift/i })).toBeInTheDocument();
@@ -711,6 +711,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('No thank-you follow-up open yet')).toBeInTheDocument();
     expect(screen.getByText('No cash funds added yet')).toBeInTheDocument();
     expect(screen.getByText('No fund gifts moving yet')).toBeInTheDocument();
+    expect(screen.getByText('No image issues or duplicate groups')).toBeInTheDocument();
   });
 
   it('renders claim-state analytics for attribution and partial gifts', () => {
@@ -966,7 +967,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('50% visible to guests · 75% guest-ready · 1 hidden when bought · 1 blocked from guests')).toBeInTheDocument();
     expect(screen.getByText('Main gap: 1 still blocked from guests')).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Guest-visible gifts: 2 · Hidden when purchased: 1'),
+      screen.getByText((_, element) => element?.textContent === 'Visible to guests: 2 · Hidden when purchased: 1'),
     ).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Guest-ready coverage: 75% · Visible coverage: 50%'),
