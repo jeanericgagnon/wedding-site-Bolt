@@ -2071,12 +2071,8 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
                       {engagement.bounced != null && (
                         <span>{engagement.bounced} bounced</span>
                       )}
-                      {skippedCount > 0 && (
-                        <span>{describeRecipientReview(skippedCount)}</span>
-                      )}
-                      {unreachedCount > 0 && (
-                        <span>{unreachedCount} not reached yet</span>
-                      )}
+                      <span>{describeRecipientReview(skippedCount)}</span>
+                      <span>{unreachedCount} not reached yet</span>
                       {getCampaignTypeLabel(message) && (
                         <span className="px-2 py-0.5 bg-surface-subtle text-text-secondary rounded border border-border-subtle">
                           {getCampaignTypeLabel(message)}

@@ -741,5 +741,7 @@ describe('MessageHistoryCard', () => {
     expect(screen.getByText('0 clicked')).toBeInTheDocument();
     expect(screen.getByText('0 replied')).toBeInTheDocument();
     expect(screen.getByText('0 bounced')).toBeInTheDocument();
+    expect(screen.getByText('0 need contact details')).toBeInTheDocument();
+    expect(screen.getByText('0 not reached yet')).toBeInTheDocument();
   });
 });
