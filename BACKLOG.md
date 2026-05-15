@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 10:33 AM PDT`
-- Latest shipped batch: `372aa01a` `Clarify registry empty-state readback`
+- Last updated: `2026-05-15 10:35 AM PDT`
+- Latest shipped batch: `TBD` `Clarify registry top-strip labels`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `TBD` `Clarify registry top-strip labels`
   - `372aa01a` `Clarify registry empty-state readback`
   - `7a7fea5a` `Clarify registry cleanup-tools summaries`
   - `9c7f3dba` `Clarify registry duplicate-review summaries`
@@ -67,7 +68,7 @@
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 - `registry polish beyond barcode`
-  - latest shipped: the empty and filter-empty registry states now say `No registry gifts added yet.` or `No registry gifts match this filter right now.`, so even the no-data surfaces stay in the newer owner-facing summary voice
+  - latest shipped: the top registry status strip now uses clearer owner labels like `Weekly refresh running`, `Refresh budget 12/100 this month`, `Worth checking`, `Cleanup queue`, and `Duplicate review groups`, so the first scan reads like product truth instead of older internal utility labels
 
 ## Work This Next
 
@@ -152,7 +153,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 10:33 AM PDT` |
+| Current date/time | `2026-05-15 10:35 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |

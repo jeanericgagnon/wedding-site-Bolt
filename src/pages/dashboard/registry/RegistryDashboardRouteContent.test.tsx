@@ -1107,6 +1107,87 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Clean up imported gifts')).toBeInTheDocument();
   });
 
+  it('uses owner-facing labels in the registry toolbar and refresh strip', () => {
+    render(
+      <RegistryDashboardRouteContent
+        actionableBadImportCount={1}
+        alertCounts={{ stale: 1, priceChanged: 1, outOfStock: 0, imageIssues: 2 }}
+        autoRefreshEnabled
+        autoRefreshing={false}
+        bulkImportBusy={false}
+        bulkReviewCounts={{ repair: 2, duplicates: 1, imageIssues: 2 }}
+        budgetUtilization={0.34}
+        claimStats={{ claimedItems: 0, claimedQuantity: 0, fullyClaimedItems: 0, partiallyClaimedItems: 0, namedPurchaserItems: 0, missingPurchaserItems: 0, multiQuantityInProgress: 0, remainingQuantity: 0 }}
+        counts={{ total: 3, available: 3, partial: 0, purchased: 0, totalValue: 240 }}
+        duplicateGroups={[]}
+        editItem={null}
+        filter="all"
+        filtered={[makeItem({ id: 'gift-1' }), makeItem({ id: 'gift-2' }), makeItem({ id: 'gift-3' })]}
+        fulfillmentRate={0}
+        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
+        guestVisibilityStats={{ guestReadyItems: 0, guestVisibleItems: 0, visibleAvailableItems: 0, visibleClaimedItems: 0, hiddenPurchasedItems: 0, blockedGuestItems: 0, guestReadyCoverageRate: 0, guestVisibleCoverageRate: 0 }}
+        handleAddNew={vi.fn()}
+        handleAutoRefreshStale={vi.fn(async () => {})}
+        handleBulkImport={vi.fn(async () => {})}
+        handleCopyDuplicateReviewList={vi.fn(async () => {})}
+        handleDelete={vi.fn(async () => {})}
+        handleEdit={vi.fn()}
+        handleMergeDuplicateGroup={vi.fn(async () => {})}
+        handleMarkPurchased={vi.fn(async () => {})}
+        handleResetPurchaseState={vi.fn(async () => {})}
+        handleRefetchMetadata={vi.fn(async () => true)}
+        handleRefreshImageIssues={vi.fn(async () => {})}
+        handleRepairBadImports={vi.fn(async () => {})}
+        handleRunRepairQueueAction={vi.fn(async () => {})}
+        handleSyncRegistryThankYouTasks={vi.fn(async () => {})}
+        handleToggleRegistryThankYouTask={vi.fn(async () => {})}
+        imageRefreshBusy={false}
+        items={[makeItem({ id: 'gift-1' }), makeItem({ id: 'gift-2' }), makeItem({ id: 'gift-3' })]}
+        loading={false}
+        monthlyRefreshCap={100}
+        monthlyRefreshCount={12}
+        mergingDuplicateGroupId={null}
+        nearBudgetCap={false}
+        normalizedItems={[makeItem({ id: 'gift-1' }), makeItem({ id: 'gift-2' }), makeItem({ id: 'gift-3' })]}
+        recentActivity={[]}
+        registryActionsOpen={false}
+        registryActionsRef={{ current: null }}
+        registryInsights={[]}
+        registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}
+        registryThankYouPlan={{ headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] }}
+        registryThankYouStats={{ purchasedCount: 0, completedCount: 0, pendingCount: 0, readyToSendCount: 0, blockedByMissingPurchaserCount: 0, attributionCoverageRate: 0, completionRate: 0 }}
+        registryThankYouBusyItemId={null}
+        registryThankYouSyncing={false}
+        repairingBadImports={false}
+        repairQueue={[]}
+        refreshBudgetRemaining={88}
+        refreshWindowOpen={true}
+        search=""
+        setBulkImportOpen={vi.fn()}
+        setFilter={vi.fn()}
+        setRegistryActionsOpen={vi.fn()}
+        setSearch={vi.fn()}
+        setShowAlertsOnly={vi.fn()}
+        setShowImageIssuesOnly={vi.fn()}
+        showAlertsOnly={false}
+        showImageIssuesOnly={false}
+        topRegistryItems={[makeItem({ id: 'gift-1' })]}
+        weddingSiteId="site-1"
+      />,
+    );
+
+    expect(screen.getByText('Weekly refresh running')).toBeInTheDocument();
+    expect(screen.getByText('Refresh budget 12/100 this month')).toBeInTheDocument();
+    expect(screen.getByText('Focus review items')).toBeInTheDocument();
+    expect(screen.getByText('Focus image issues')).toBeInTheDocument();
+    expect(screen.getByText('Worth checking: 2')).toBeInTheDocument();
+    expect(screen.getByText('Image issues: 2')).toBeInTheDocument();
+    expect(screen.getByText('Cleanup queue: 0')).toBeInTheDocument();
+    expect(screen.getByText('Gifts with cleanup flags: 0')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate review groups: 0')).toBeInTheDocument();
+    expect(screen.getByText('Refresh budget used: 34%')).toBeInTheDocument();
+  });
+
   it('renders owner-facing empty registry copy', () => {
     render(
       <RegistryDashboardRouteContent
