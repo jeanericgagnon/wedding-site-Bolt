@@ -62,7 +62,7 @@ describe('day-of web mode readiness', () => {
     expect(board.status).toBe('planned');
     expect(board.readyCount).toBe(2);
     expect(board.plannedCount).toBe(4);
-    expect(board.summary).toBe('2 day-of status items are usable now; 4 stay planned or need setup.');
+    expect(board.summary).toBe('2 day-of status items are usable now; 4 stay planned or need setup. First blocker: Announcements.');
     expect(board.items.find((item) => item.id === 'announcements')).toMatchObject({
       state: 'planned',
       detail: 'Live updates still belong in owner messaging until announcement readback is connected.',
@@ -99,5 +99,15 @@ describe('day-of web mode readiness', () => {
     expect(board.items.find((item) => item.id === 'link-access')?.detail).toBe(
       'Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are unlocked from it: RSVP and Directions and travel. Core day-of coverage from this link is 2 of 4 ready. Main gap: Schedule. Still missing: Schedule, Photo upload.'
     );
+  });
+
+  it('surfaces the first owner-facing blocker in the hub-status summary', () => {
+    const board = buildDayOfHubStatusBoard({
+      enabledActionIds: ['rsvp'],
+      hasPoorNetworkFallback: false,
+      privateEventVisibilityConnected: false,
+    });
+
+    expect(board.summary).toBe('0 day-of status items are usable now; 6 stay planned or need setup. First blocker: Saved hub actions.');
   });
 });

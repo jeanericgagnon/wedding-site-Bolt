@@ -486,6 +486,7 @@ Paused next-priority bucket when backlog work resumes:
 13. `ACTIVE`: app-like web day-of mode
    - this batch shipped: the no-app guest-hub readiness summary now reads back how many guest actions are actually live, and when the day-of lane is incomplete it names the missing core coverage (`schedule`, `directions and travel`, `photo upload`) instead of stopping at a generic “needs content” summary
    - this batch shipped: the guest-facing `Link access` card and owner `Guest hub status` board now also call out the main core day-of gap in plain language when a link is missing key actions, so couples and guests can see the next fix immediately instead of translating partial coverage by hand
+   - this batch shipped: the owner-facing `Guest hub status` summary now also calls out the first blocker directly, so owners can see whether the next hold-up is announcements, saved fallback behavior, or another planned handoff without scanning the whole day-of status board
 
 8. `ACTIVE`: reminders, digests, and notification preferences
    - persist digest cadence, planner audience, and quiet-state preferences across settings + overview digest preview

@@ -243,12 +243,15 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
   const plannedCount = items.filter((item) => item.state === 'planned').length;
   const needsContentCount = items.filter((item) => item.state === 'needs-content').length;
   const status = plannedCount === 0 && needsContentCount === 0 ? 'ready' : 'planned';
+  const firstBlockingItem = items.find((item) => item.state === 'needs-content')
+    ?? items.find((item) => item.state === 'planned')
+    ?? null;
 
   return {
     status,
     summary: status === 'ready'
       ? 'Guest hub status is connected for live day-of use.'
-      : `${readyCount} day-of status item${readyCount === 1 ? '' : 's'} are usable now; ${plannedCount + needsContentCount} stay planned or need setup.`,
+      : `${readyCount} day-of status item${readyCount === 1 ? '' : 's'} are usable now; ${plannedCount + needsContentCount} stay planned or need setup.${firstBlockingItem ? ` First blocker: ${firstBlockingItem.label}.` : ''}`,
     readyCount,
     plannedCount: plannedCount + needsContentCount,
     items,
