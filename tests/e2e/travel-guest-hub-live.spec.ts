@@ -1,5 +1,4 @@
 import { expect, test, type Page } from '@playwright/test';
-import { signInAsOwner } from './liveOwnerSession';
 import { resolveLiveGuestHubProofContext } from './liveGuestHubProofContext';
 
 const mobileViewport = { width: 390, height: 844 };
@@ -15,8 +14,7 @@ async function expectNoMeaningfulHorizontalOverflow(page: Page) {
 test('live invite-scoped guest hub keeps travel, RSVP, and photos continuity mobile-safe', async ({ page }) => {
   test.setTimeout(180_000);
 
-  await signInAsOwner(page);
-  const proofContext = await resolveLiveGuestHubProofContext(page);
+  const proofContext = await resolveLiveGuestHubProofContext();
   const hubPath = `/event/${encodeURIComponent(proofContext.siteSlug)}?invite_token=${encodeURIComponent(proofContext.guestInviteToken)}&guestLang=fr&mobileSmoke=1`;
 
   await page.setViewportSize(mobileViewport);

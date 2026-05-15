@@ -66,6 +66,11 @@ function runStep(step) {
   }
 }
 
+function browserProofCommand(baseUrl, browserSpec, isLiveBaseUrl) {
+  const reporterArg = isLiveBaseUrl ? ' --reporter=line' : '';
+  return `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1${reporterArg} ${browserSpec}`;
+}
+
 const results = [
   runStep({
     id: 'travel-portal-unit-tests',
@@ -105,7 +110,7 @@ try {
     label: isLiveBaseUrl
       ? 'Live invite-scoped guest travel hub continuity browser proof'
       : 'Mobile guest travel hub continuity browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${browserSpec}`,
+    command: browserProofCommand(baseUrl, browserSpec, isLiveBaseUrl),
   }));
 
   if (previewStdout.trim()) {
@@ -127,7 +132,7 @@ try {
     label: isLiveBaseUrl
       ? 'Live invite-scoped guest travel hub continuity browser proof'
       : 'Mobile guest travel hub continuity browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${browserSpec}`,
+    command: browserProofCommand(baseUrl, browserSpec, isLiveBaseUrl),
     required: true,
     ok: false,
     startedAt: new Date().toISOString(),

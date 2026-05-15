@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 06:16 PM PDT`
-- Latest shipped batch: `tighten photo memory live blocker truth`
+- Last updated: `2026-05-15 03:18 PM PDT`
+- Latest shipped batch: `narrow travel live proof blocker`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry active-proof-lane closure batch
 - Open backlog lanes: `0`
 - Current session blocker: even a minimal `chromium.launch()` plus `/login` navigation now goes silent in this saturated session, and the same silent hang now blocks the remaining guest-preview live rerun too, so the remaining browser-proof gaps are currently isolated to generic headless browser startup in this session
@@ -11,7 +11,7 @@
 - Blocked this session:
   - `npx vitest run src/pages/dashboard/registry/RegistryDashboardRouteContent.test.tsx` still stalls without producing useful output in this session
 - Work source-code next:
-  - `none active`: guest-preview and QR wait on a fresh browser-capable session, messaging waits on a safe provider-backed live-send lane, travel waits by request, and photo memory now waits on the next approved deploy before the final live rerun
+  - `none active`: guest-preview, QR, and travel now wait on a fresh browser-capable session, messaging waits on a safe provider-backed live-send lane, and photo memory now waits on the next approved deploy before the final live rerun
 - First code retry after the current guest-preview session defer batch:
   - keep the guest-preview and QR lanes deferred until a fresh session can launch headless browser proof cleanly
   - treat the guest-preview desktop/mobile rerun and the QR live day-of update/status/handoff/map readback as the remaining browser-proof gaps once browser startup is usable again
@@ -96,7 +96,7 @@
 - `premium no-app guest photo and memory flow`
   - latest shipped: the no-app memory-flow card now also labels every lane and step chip explicitly as `Lane ready`, `Lane needs action`, `Step ready`, `Step planned`, or `Step empty`, so the detailed checklist no longer falls back to abstract generic status pills after the stronger lead summary
 - `destination/travel guest portal`
-  - latest shipped: the guest-hub travel path now labels each detail card explicitly as `Travel step ready` or `Travel step needs setup`, so the detailed mobile path no longer falls back to vague generic pills after the stronger summary readback
+  - latest shipped: the live travel proof path no longer depends on browser owner sign-in or browser-local auth-state scraping, because `travel-guest-hub-live.spec.ts` now resolves the invite-scoped proof guest through direct API owner auth and `proof:v1:travel-guest-portal` now runs the live browser leg with line reporting, so the remaining travel blocker is narrowed from the whole auth-plus-browser path to generic headless browser startup in this saturated session
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 - `registry polish beyond barcode`
@@ -220,8 +220,8 @@ These are the active product-completion lanes still open after the current launc
    - latest shipped: the no-app memory-flow card now also labels every lane and step chip explicitly as `Lane ready`, `Lane needs action`, `Step ready`, `Step planned`, or `Step empty`, so the detailed checklist keeps the same owner-facing truth style as the stronger lead summary instead of falling back to generic pills
    - this lane remains active and unfinished
 7. `DEFERRED`: destination/travel guest portal
-   - latest shipped: the guest-hub travel path now labels each detail card explicitly as `Travel step ready` or `Travel step needs setup`, so the detailed mobile flow keeps the same owner-safe truth style as the newer travel summary readback instead of dropping back to generic pills
-   - deferred for now at user request; keep the shipped travel cleanup and wait on the next runtime-proof push before reactivating
+   - latest shipped: the live travel proof path no longer depends on browser owner sign-in or browser-local auth-state scraping, because `travel-guest-hub-live.spec.ts` now resolves the invite-scoped proof guest through direct API owner auth and `proof:v1:travel-guest-portal` now runs the live browser leg with line reporting, so the remaining travel blocker is narrowed from the whole auth-plus-browser path to generic headless browser startup in this saturated session
+   - deferred for now because the rerun still went silent in this saturated session even after removing browser owner auth dependency, so the remaining work is now isolated to a fresh browser-capable session that can launch the live travel proof cleanly
 
 Archive for deferred/history detail:
 - [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md)
