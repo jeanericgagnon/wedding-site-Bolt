@@ -72,6 +72,11 @@ function browserProofCommand(baseUrl, browserSpec, isLiveBaseUrl) {
 }
 
 const results = [
+  ...(isLiveBaseUrl ? [runStep({
+    id: 'travel-portal-live-data-proof',
+    label: 'Live public travel data proof',
+    command: 'node scripts/proof-travel-live-data.mjs',
+  })] : []),
   runStep({
     id: 'travel-portal-unit-tests',
     label: 'Travel portal unit and render tests',
@@ -158,6 +163,7 @@ const output = {
     failed: results.filter((result) => !result.ok).length,
   },
   automatedCoverage: [
+    'Live public-site-access travel data continuity for the proof guest',
     'Travel portal readiness and guest-hub spotlight helper truth',
     'Public render-model and public-access sanitization for structured travel records',
     'Guest-hub live content render path for travel quick plan surfaces',
@@ -167,7 +173,7 @@ const output = {
   ],
   stillManualProofNeeded: [
     isLiveBaseUrl
-      ? 'None for the current travel guest portal lane beyond keeping this live proof green on future deploys.'
+      ? 'Rerun the final live browser/mobile guest-hub continuity leg in a fresh browser-capable session once headless startup is usable again.'
       : 'Rerun the same invite-scoped travel hub flow against the shipped production runtime for live/mobile proof after the next approved travel-portal deploy.',
   ],
   results,

@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 03:18 PM PDT`
-- Latest shipped batch: `narrow travel live proof blocker`
+- Last updated: `2026-05-15 03:27 PM PDT`
+- Latest shipped batch: `prove live travel data continuity`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry active-proof-lane closure batch
 - Open backlog lanes: `0`
 - Current session blocker: even a minimal `chromium.launch()` plus `/login` navigation now goes silent in this saturated session, and the same silent hang now blocks the remaining guest-preview live rerun too, so the remaining browser-proof gaps are currently isolated to generic headless browser startup in this session
@@ -96,7 +96,7 @@
 - `premium no-app guest photo and memory flow`
   - latest shipped: the no-app memory-flow card now also labels every lane and step chip explicitly as `Lane ready`, `Lane needs action`, `Step ready`, `Step planned`, or `Step empty`, so the detailed checklist no longer falls back to abstract generic status pills after the stronger lead summary
 - `destination/travel guest portal`
-  - latest shipped: the live travel proof path no longer depends on browser owner sign-in or browser-local auth-state scraping, because `travel-guest-hub-live.spec.ts` now resolves the invite-scoped proof guest through direct API owner auth and `proof:v1:travel-guest-portal` now runs the live browser leg with line reporting, so the remaining travel blocker is narrowed from the whole auth-plus-browser path to generic headless browser startup in this saturated session
+  - latest shipped: the live public travel data proof is now green on the shipped runtime for the real proof guest, because `proof-travel-live-data.mjs` resolves the production guest context through direct API owner auth and proves `public-site-access` still opens the proof site with enough guest-safe travel/venue/schedule data to build the travel spotlight, so the remaining travel gap is now narrowed from the whole data-plus-browser path to the final guest-hub browser/config/render leg in a fresh browser-capable session
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 - `registry polish beyond barcode`
@@ -220,8 +220,8 @@ These are the active product-completion lanes still open after the current launc
    - latest shipped: the no-app memory-flow card now also labels every lane and step chip explicitly as `Lane ready`, `Lane needs action`, `Step ready`, `Step planned`, or `Step empty`, so the detailed checklist keeps the same owner-facing truth style as the stronger lead summary instead of falling back to generic pills
    - this lane remains active and unfinished
 7. `DEFERRED`: destination/travel guest portal
-   - latest shipped: the live travel proof path no longer depends on browser owner sign-in or browser-local auth-state scraping, because `travel-guest-hub-live.spec.ts` now resolves the invite-scoped proof guest through direct API owner auth and `proof:v1:travel-guest-portal` now runs the live browser leg with line reporting, so the remaining travel blocker is narrowed from the whole auth-plus-browser path to generic headless browser startup in this saturated session
-   - deferred for now because the rerun still went silent in this saturated session even after removing browser owner auth dependency, so the remaining work is now isolated to a fresh browser-capable session that can launch the live travel proof cleanly
+   - latest shipped: the live public travel data proof is now green on the shipped runtime for the real proof guest, because `proof-travel-live-data.mjs` resolves the production guest context through direct API owner auth and proves `public-site-access` still opens the proof site with enough guest-safe travel/venue/schedule data to build the travel spotlight, so the remaining travel gap is now narrowed from the whole data-plus-browser path to the final guest-hub browser/config/render leg in a fresh browser-capable session
+   - deferred for now because the final browser/mobile guest-hub rerun still needs a fresh browser-capable session; the travel data leg is proven, but the live guest-hub browser/config/render leg is not yet rerun cleanly here
 
 Archive for deferred/history detail:
 - [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md)
