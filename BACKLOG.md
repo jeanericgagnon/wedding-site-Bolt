@@ -1,5 +1,26 @@
 # Production Hardening Backlog
 
+## Quick Read
+
+- Last updated: `2026-05-15 07:58 AM PDT`
+- Latest shipped batch: `ddcaa550` `Clarify RSVP optional all-clear`
+- Open backlog lanes: `7`
+- Best place to scan after each batch:
+  - `Quick Read` for the newest timestamp and latest shipped batch
+  - `Recent Shipped Work` for the most recent visible progress by lane
+  - `What's Left Now` for the real open work
+
+## Recent Shipped Work
+
+- `RSVP access modes and question templates`
+  - latest shipped: the optional RSVP setup summary now also says `0 optional improvements still open` in the all-clear state
+- `premium no-app guest photo and memory flow`
+  - latest shipped: the top-level photo/memory badge row now stays explicit with `No memory gaps right now`, `No memory lanes need action`, and `No memory steps need action` in the all-clear state
+- `destination/travel guest portal`
+  - latest shipped: the guest-hub `Travel quick plan` badge row now stays explicit with `No core travel gaps`, and the owner travel-portal readiness badge row now also stays explicit with `No travel gaps`
+- `status-based messaging and invitation tracking`
+  - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
+
 ## What's Left Now
 
 These are the active product-completion lanes still open after the current launch-hardening scope:
@@ -62,7 +83,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-13 05:34 PM PDT` |
+| Current date/time | `2026-05-15 07:58 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |
