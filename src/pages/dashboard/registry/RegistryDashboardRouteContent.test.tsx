@@ -924,7 +924,7 @@ describe('RegistryDashboardRouteContent', () => {
     );
 
     expect(screen.getByText('Cleanup queue')).toBeInTheDocument();
-    expect(screen.getByText('1 needs attention · 1 review soon · 1 keep fresh.')).toBeInTheDocument();
+    expect(screen.getByText('1 fix now · 1 look soon · 1 keep fresh.')).toBeInTheDocument();
     expect(screen.getByText('3 gifts still need stronger detail truth, store repair, or fresher product photos.')).toBeInTheDocument();
     expect(screen.getByText('3 waiting')).toBeInTheDocument();
     expect(screen.getByText('Re-import weak product details')).toBeInTheDocument();
@@ -932,7 +932,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Refresh stale registry details')).toBeInTheDocument();
   });
 
-  it('summarizes duplicate review before listing merge groups', () => {
+  it('summarizes duplicate checks before listing merge groups', () => {
     render(
       <RegistryDashboardRouteContent
         actionableBadImportCount={0}
@@ -1021,9 +1021,9 @@ describe('RegistryDashboardRouteContent', () => {
       />,
     );
 
-    expect(screen.getByText('Duplicate review')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate checks')).toBeInTheDocument();
     expect(screen.getByText('1 merge candidate covering 2 repeated gifts.')).toBeInTheDocument();
-    expect(screen.getByText('2 match signals are already grouped for review.')).toBeInTheDocument();
+    expect(screen.getByText('2 match clues are already grouped to compare.')).toBeInTheDocument();
     expect(screen.getByText('Possible duplicate group')).toBeInTheDocument();
     expect(screen.getByText('Merge result: 1/7')).toBeInTheDocument();
   });
@@ -1097,12 +1097,12 @@ describe('RegistryDashboardRouteContent', () => {
       />,
     );
 
-    expect(screen.getByText('Detail cleanup')).toBeInTheDocument();
-    expect(screen.getByText('Duplicate review')).toBeInTheDocument();
-    expect(screen.getByText('Image refresh')).toBeInTheDocument();
-    expect(screen.getByText('2 detail cleanups · 1 duplicate review · 2 image refreshes still worth a pass.')).toBeInTheDocument();
+    expect(screen.getByText('Detail touchups')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate checks')).toBeInTheDocument();
+    expect(screen.getByText('Photo refresh')).toBeInTheDocument();
+    expect(screen.getByText('2 detail touchups · 1 duplicate check · 2 photo refreshes still worth a pass.')).toBeInTheDocument();
     expect(screen.getByText('These tools help tidy imported links, repeated gifts, and product photos without merging or deleting anything unless you choose it.')).toBeInTheDocument();
-    expect(screen.getByText('Review details')).toBeInTheDocument();
+    expect(screen.getByText('Refresh details')).toBeInTheDocument();
     expect(screen.getByText('Refresh image issues')).toBeInTheDocument();
     expect(screen.getByText('Clean up imported gifts')).toBeInTheDocument();
   });
@@ -1178,13 +1178,13 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(screen.getByText('Weekly refresh running')).toBeInTheDocument();
     expect(screen.getByText('Refresh budget 12/100 this month')).toBeInTheDocument();
-    expect(screen.getByText('Focus review items')).toBeInTheDocument();
+    expect(screen.getByText('Focus watchouts')).toBeInTheDocument();
     expect(screen.getByText('Focus image issues')).toBeInTheDocument();
-    expect(screen.getByText('Worth checking: 2')).toBeInTheDocument();
+    expect(screen.getByText('Watchouts: 2')).toBeInTheDocument();
     expect(screen.getByText('Image issues: 2')).toBeInTheDocument();
     expect(screen.getByText('Cleanup queue: 0')).toBeInTheDocument();
-    expect(screen.getByText('Gifts with cleanup flags: 0')).toBeInTheDocument();
-    expect(screen.getByText('Duplicate review groups: 0')).toBeInTheDocument();
+    expect(screen.getByText('Gifts needing touchup: 0')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate groups: 0')).toBeInTheDocument();
     expect(screen.getByText('Refresh budget used: 34%')).toBeInTheDocument();
   });
 
@@ -1585,9 +1585,9 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(screen.getByText('Guest view')).toBeInTheDocument();
     expect(screen.getByText('1 ready now · 1 already claimed')).toBeInTheDocument();
-    expect(screen.getByText('1 stale · 1 price change · 1 out of stock')).toBeInTheDocument();
-    expect(screen.getByText('Snapshot focus: 1 gift still missing a purchaser name · 1 blocked from guests · 1 thank-you still pending · 3 items worth checking.')).toBeInTheDocument();
-    expect(screen.getByText('Main watchouts: 1 gift still missing a purchaser name · 1 blocked from guests · 1 thank-you still pending · 3 items worth checking.')).toBeInTheDocument();
+    expect(screen.getByText('1 older link · 1 price shift · 1 out of stock')).toBeInTheDocument();
+    expect(screen.getByText('Snapshot focus: 1 gift still missing a purchaser name · 1 blocked from guests · 1 thank-you still pending · 3 items worth a closer look.')).toBeInTheDocument();
+    expect(screen.getByText('Main watchouts: 1 gift still missing a purchaser name · 1 blocked from guests · 1 thank-you still pending · 3 items worth a closer look.')).toBeInTheDocument();
     expect(screen.getByText('50% visible to guests · 75% ready for guests · 1 hidden when bought · 1 blocked from guests')).toBeInTheDocument();
     expect(screen.getByText('Main gap: 1 still blocked from guests')).toBeInTheDocument();
     expect(

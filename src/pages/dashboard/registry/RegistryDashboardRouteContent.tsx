@@ -312,10 +312,10 @@ export function RegistryDashboardRouteContent(props: {
     : null;
   const reviewAlertCount = props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock;
   const reviewSummaryLabel = reviewAlertCount === 0
-    ? 'Nothing needs review right now'
+    ? 'Nothing needs a closer look right now'
     : [
-        props.alertCounts.stale > 0 ? `${props.alertCounts.stale} stale` : null,
-        props.alertCounts.priceChanged > 0 ? `${props.alertCounts.priceChanged} price change${props.alertCounts.priceChanged === 1 ? '' : 's'}` : null,
+        props.alertCounts.stale > 0 ? `${props.alertCounts.stale} older link${props.alertCounts.stale === 1 ? '' : 's'}` : null,
+        props.alertCounts.priceChanged > 0 ? `${props.alertCounts.priceChanged} price shift${props.alertCounts.priceChanged === 1 ? '' : 's'}` : null,
         props.alertCounts.outOfStock > 0 ? `${props.alertCounts.outOfStock} out of stock` : null,
       ].filter(Boolean).join(' · ');
   const registryNoteWatchouts = [
@@ -323,7 +323,7 @@ export function RegistryDashboardRouteContent(props: {
     props.guestVisibilityStats.blockedGuestItems > 0 ? `${props.guestVisibilityStats.blockedGuestItems} blocked from guests` : null,
     props.registryThankYouStats.pendingCount > 0 ? `${props.registryThankYouStats.pendingCount} thank-you${props.registryThankYouStats.pendingCount === 1 ? '' : 's'} still pending` : null,
     props.fundStats.needsSetup > 0 ? `${props.fundStats.needsSetup} fund${props.fundStats.needsSetup === 1 ? '' : 's'} need a share path` : null,
-    reviewAlertCount > 0 ? `${reviewAlertCount} item${reviewAlertCount === 1 ? '' : 's'} worth checking` : null,
+    reviewAlertCount > 0 ? `${reviewAlertCount} item${reviewAlertCount === 1 ? '' : 's'} worth a closer look` : null,
   ].filter(Boolean);
   const registryNotesSummary = registryNoteWatchouts.length === 0
     ? 'No active registry follow-through gaps right now.'
@@ -383,22 +383,22 @@ export function RegistryDashboardRouteContent(props: {
   const cleanupQueueLeadSummary = props.repairQueue.length === 0
     ? 'No quick registry cleanup work is waiting right now.'
     : `${[
-        cleanupHighCount > 0 ? `${cleanupHighCount} needs attention` : null,
-        cleanupMediumCount > 0 ? `${cleanupMediumCount} review soon` : null,
+        cleanupHighCount > 0 ? `${cleanupHighCount} fix now` : null,
+        cleanupMediumCount > 0 ? `${cleanupMediumCount} look soon` : null,
         cleanupLowCount > 0 ? `${cleanupLowCount} keep fresh` : null,
       ].filter(Boolean).join(' · ')}.`;
   const duplicateSecondaryItemCount = props.duplicateGroups.reduce((sum, group) => sum + group.secondaryItems.length, 0);
   const duplicateSignalCount = props.duplicateGroups.reduce((sum, group) => sum + group.signals.length, 0);
   const duplicateQueueSummary = props.duplicateGroups.length === 0
-    ? 'No duplicate cleanup groups are waiting right now.'
+    ? 'No duplicate gift groups are waiting right now.'
     : `${props.duplicateGroups.length} merge candidate${props.duplicateGroups.length === 1 ? '' : 's'} covering ${duplicateSecondaryItemCount} repeated gift${duplicateSecondaryItemCount === 1 ? '' : 's'}.`;
   const duplicateQueueDetail = props.duplicateGroups.length === 0
     ? null
-    : `${duplicateSignalCount} match signal${duplicateSignalCount === 1 ? '' : 's'} are already grouped for review.`;
+    : `${duplicateSignalCount} match clue${duplicateSignalCount === 1 ? '' : 's'} are already grouped to compare.`;
   const cleanupToolsSummary = [
-    props.bulkReviewCounts.repair > 0 ? `${props.bulkReviewCounts.repair} detail cleanup${props.bulkReviewCounts.repair === 1 ? '' : 's'}` : null,
-    props.bulkReviewCounts.duplicates > 0 ? `${props.bulkReviewCounts.duplicates} duplicate review${props.bulkReviewCounts.duplicates === 1 ? '' : 's'}` : null,
-    props.bulkReviewCounts.imageIssues > 0 ? `${props.bulkReviewCounts.imageIssues} image refresh${props.bulkReviewCounts.imageIssues === 1 ? '' : 'es'}` : null,
+    props.bulkReviewCounts.repair > 0 ? `${props.bulkReviewCounts.repair} detail touchup${props.bulkReviewCounts.repair === 1 ? '' : 's'}` : null,
+    props.bulkReviewCounts.duplicates > 0 ? `${props.bulkReviewCounts.duplicates} duplicate check${props.bulkReviewCounts.duplicates === 1 ? '' : 's'}` : null,
+    props.bulkReviewCounts.imageIssues > 0 ? `${props.bulkReviewCounts.imageIssues} photo refresh${props.bulkReviewCounts.imageIssues === 1 ? '' : 'es'}` : null,
   ].filter(Boolean).join(' · ');
   const cleanupToolsLeadSummary = props.bulkReviewCounts.repair === 0
     && props.bulkReviewCounts.duplicates === 0
@@ -429,7 +429,7 @@ export function RegistryDashboardRouteContent(props: {
         stats={[
           { label: 'Registry', value: props.counts.total > 0 ? 'Ready for guests' : 'Ready to add', detail: `${props.counts.total} gifts or links` },
           { label: 'Purchased', value: props.counts.purchased > 0 ? `${props.counts.purchased} purchased` : 'No purchases yet', detail: `${props.fulfillmentRate}% complete` },
-          { label: 'Review', value: props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock > 0 ? 'Worth reviewing' : 'Looks steady', detail: 'images and availability' },
+          { label: 'Watchouts', value: props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock > 0 ? 'Worth a closer look' : 'Looks steady', detail: 'photos and availability' },
         ]}
         actions={
           <>
@@ -456,7 +456,7 @@ export function RegistryDashboardRouteContent(props: {
                 {props.autoRefreshing ? 'Refreshing…' : 'Refresh stale gift details'}
               </Button>
               <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void props.handleAutoRefreshStale(false, true); props.setRegistryActionsOpen(false); }} disabled={!props.weddingSiteId || props.autoRefreshing || !props.refreshWindowOpen || props.refreshBudgetRemaining <= 0}>
-                {props.autoRefreshing ? 'Refreshing…' : 'Refresh gifts worth checking'}
+                {props.autoRefreshing ? 'Refreshing…' : 'Refresh flagged gifts'}
               </Button>
             </ActionsMenu>
             <Button variant="primary" size="md" onClick={props.handleAddNew} disabled={!props.weddingSiteId}>
@@ -927,7 +927,7 @@ export function RegistryDashboardRouteContent(props: {
             onClick={() => props.setShowAlertsOnly((value) => !value)}
             className={`rounded-lg border px-2.5 py-1 text-xs font-medium ${props.showAlertsOnly ? 'border-border-subtle bg-primary-light text-primary' : 'border-border text-text-tertiary'}`}
           >
-            {props.showAlertsOnly ? 'Review items on' : 'Focus review items'}
+            {props.showAlertsOnly ? 'Watchouts on' : 'Focus watchouts'}
           </button>
           <button
             onClick={() => props.setShowImageIssuesOnly((value) => !value)}
@@ -953,7 +953,7 @@ export function RegistryDashboardRouteContent(props: {
             </>
           )}
           <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
-            Worth checking: {props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock}
+            Watchouts: {props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock}
           </span>
           <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
             Image issues: {props.alertCounts.imageIssues}
@@ -962,10 +962,10 @@ export function RegistryDashboardRouteContent(props: {
             Cleanup queue: {props.repairQueue.length}
           </span>
           <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
-            Gifts with cleanup flags: {props.normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}
+            Gifts needing touchup: {props.normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}
           </span>
           <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
-            Duplicate review groups: {props.duplicateGroups.length}
+            Duplicate groups: {props.duplicateGroups.length}
           </span>
           {props.actionableBadImportCount > 0 && (
             <button
@@ -983,15 +983,15 @@ export function RegistryDashboardRouteContent(props: {
 
         <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
-            <p className="text-xs text-text-tertiary">Detail cleanup</p>
+            <p className="text-xs text-text-tertiary">Detail touchups</p>
             <p className="mt-1 text-lg font-semibold text-text-primary">{props.bulkReviewCounts.repair}</p>
           </div>
           <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
-            <p className="text-xs text-text-tertiary">Duplicate review</p>
+            <p className="text-xs text-text-tertiary">Duplicate checks</p>
             <p className="mt-1 text-lg font-semibold text-text-primary">{props.bulkReviewCounts.duplicates}</p>
           </div>
           <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
-            <p className="text-xs text-text-tertiary">Image refresh</p>
+            <p className="text-xs text-text-tertiary">Photo refresh</p>
             <p className="mt-1 text-lg font-semibold text-text-primary">{props.bulkReviewCounts.imageIssues}</p>
           </div>
         </div>
@@ -1003,9 +1003,9 @@ export function RegistryDashboardRouteContent(props: {
         </div>
 
         <div className="mb-4 flex flex-wrap gap-2">
-          {props.bulkReviewCounts.repair > 0 && <button onClick={() => void props.handleRepairBadImports()} disabled={props.repairingBadImports} className="rounded-lg border border-border-subtle bg-primary-light px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-60" title="Refresh weaker gift details without deleting items">{props.repairingBadImports ? 'Cleaning up…' : 'Review details'}</button>}
+          {props.bulkReviewCounts.repair > 0 && <button onClick={() => void props.handleRepairBadImports()} disabled={props.repairingBadImports} className="rounded-lg border border-border-subtle bg-primary-light px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-60" title="Refresh weaker gift details without deleting items">{props.repairingBadImports ? 'Cleaning up…' : 'Refresh details'}</button>}
           {props.bulkReviewCounts.imageIssues > 0 && <button onClick={() => void props.handleRefreshImageIssues()} disabled={props.imageRefreshBusy} className="rounded-lg border border-border-subtle bg-primary-light px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-60">{props.imageRefreshBusy ? 'Refreshing…' : 'Refresh image issues'}</button>}
-          {props.duplicateGroups.length > 0 && <button onClick={() => void props.handleCopyDuplicateReviewList()} className="px-3 py-1.5 rounded-lg border border-border text-text-secondary text-xs font-medium" title="Review duplicates before removing anything">Copy duplicate review list</button>}
+          {props.duplicateGroups.length > 0 && <button onClick={() => void props.handleCopyDuplicateReviewList()} className="px-3 py-1.5 rounded-lg border border-border text-text-secondary text-xs font-medium" title="Compare duplicates before removing anything">Copy duplicate list</button>}
         </div>
 
         {props.repairQueue.length > 0 && (
@@ -1082,7 +1082,7 @@ export function RegistryDashboardRouteContent(props: {
         {props.duplicateGroups.length > 0 && (
           <div className="mb-4 space-y-3">
             <div>
-              <p className="text-sm font-semibold text-text-primary">Duplicate review</p>
+              <p className="text-sm font-semibold text-text-primary">Duplicate checks</p>
               <p className="mt-1 text-sm text-text-secondary">{duplicateQueueSummary}</p>
               {duplicateQueueDetail ? <p className="mt-1 text-xs text-text-tertiary">{duplicateQueueDetail}</p> : null}
             </div>
