@@ -580,6 +580,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the top-level `Claimed gifts` card now also reads back how much of the claim lane is fully closed versus still partial, so couples can judge closure progress at a glance instead of translating raw fully-claimed and partial counts by hand
    - this batch shipped: the top-level `Claimed gifts` card now also normalizes partial-claim burden as a percentage, so couples can judge how much of the claim lane is still stuck in-between instead of reading only a raw partial count
    - this batch shipped: the top-level `Claimed gifts` card now also normalizes claimed-quantity coverage, so larger partial gift sets do not disappear into item-only claim summaries
+   - this batch shipped: the top-level `Claimed gifts` card now also calls out remaining unclaimed quantity, so multi-quantity gift drift stays visible in the top registry summary instead of only in the deeper analytics rows
    - this batch shipped: the top-level `Fund gifts` card now also calls out the next gift-momentum gap in plain language, so couples can tell whether the hold-up is a missing goal, waiting on a first gift, or missing payment setup instead of translating fund momentum coverage by hand
    - add live owner add/import/edit persistence proof for broader registry workflows
    - rerun the stronger owner repair/cleanup runtime proof against the shipped production runtime after the next approved registry deploy

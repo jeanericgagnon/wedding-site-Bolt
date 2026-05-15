@@ -342,7 +342,7 @@ export function RegistryDashboardRouteContent(props: {
                 {props.claimStats.namedPurchaserItems} attributed{props.claimStats.missingPurchaserItems > 0 ? ` · ${props.claimStats.missingPurchaserItems} need purchaser` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
-                {claimAttributionCoverageRate}% purchaser coverage · {fullyClaimedCoverageRate}% fully closed{props.claimStats.partiallyClaimedItems > 0 ? ` · ${partialClaimCoverageRate}% partial (${props.claimStats.partiallyClaimedItems})` : ''}{totalClaimQuantityScope > 0 ? ` · ${claimedQuantityCoverageRate}% quantity claimed` : ''}
+                {claimAttributionCoverageRate}% purchaser coverage · {fullyClaimedCoverageRate}% fully closed{props.claimStats.partiallyClaimedItems > 0 ? ` · ${partialClaimCoverageRate}% partial (${props.claimStats.partiallyClaimedItems})` : ''}{totalClaimQuantityScope > 0 ? ` · ${claimedQuantityCoverageRate}% quantity claimed` : ''}{props.claimStats.remainingQuantity > 0 ? ` · ${props.claimStats.remainingQuantity} still unclaimed` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">{claimGapLabel}</p>
             </Card>
