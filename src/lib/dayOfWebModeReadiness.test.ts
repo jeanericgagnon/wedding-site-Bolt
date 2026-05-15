@@ -97,7 +97,7 @@ describe('day-of web mode readiness', () => {
       privateEventVisibilityConnected: true,
     });
 
-    expect(board.summary).toBe('1 day-of status item is usable now; 5 stay planned or need setup. 2 guest actions are unlocked from this link. Core link coverage: 50% ready (2 of 4; 2 still missing). First blocker: Announcements.');
+    expect(board.summary).toBe('1 day-of status item is usable now; 5 stay planned or need setup. 2 guest actions are unlocked from this link. Core link coverage: 50% ready (2 of 4; 2 still missing). 2 core day-of actions are still missing from this link. First blocker: Announcements.');
     expect(board.items.find((item) => item.id === 'link-access')?.detail).toBe(
       'Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are unlocked from it: RSVP and Directions and travel. Core day-of coverage from this link is 50% ready (2 of 4). Main gap: Schedule. Still missing: Schedule, Photo upload.'
     );
