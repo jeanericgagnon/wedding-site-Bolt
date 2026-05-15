@@ -98,7 +98,9 @@ function buildUnlockedActionSummary(actionCount: number): string | null {
 
 function buildMissingCoreActionSummary(readyCount: number, totalCount: number): string | null {
   const missingCount = totalCount - readyCount;
-  if (missingCount <= 0) return null;
+  if (missingCount <= 0) {
+    return `0 of ${totalCount} core day-of actions are still missing from this link.`;
+  }
   return `${missingCount} core day-of action${missingCount === 1 ? ' is' : 's are'} still missing from this link.`;
 }
 
