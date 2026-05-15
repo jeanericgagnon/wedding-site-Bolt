@@ -373,7 +373,7 @@ export function EventHubLiveContent({
                   <div>
                     <p className="text-sm font-semibold text-[#2f261d]">Travel steps from this link</p>
                     <p className="mt-1 text-sm leading-6 text-[#6f5843]">
-                      Start with travel details, then reply and share photos from the same mobile hub.
+                      Start with travel details from this link, then reply and share photos from the same mobile hub.
                     </p>
                     {travelJourneyNeedsInfoCount > 0 && (
                       <p className="mt-2 text-xs text-[#8b6f53]">
@@ -444,21 +444,21 @@ export function EventHubLiveContent({
                         onClick={() => onTrackClick(travelHubSpotlight.travelHref)}
                         className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 text-xs font-semibold text-[#2f261d] transition-colors hover:border-[#d8c8b6]"
                       >
-                        Open travel page
+                        Open travel details
                       </Link>
                       <button
                         type="button"
                         onClick={onCopyTravelPlan}
                         className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 text-xs font-semibold text-[#2f261d] transition-colors hover:border-[#d8c8b6]"
                       >
-                        Copy travel plan
+                        Copy travel details
                       </button>
                       <button
                         type="button"
                         onClick={onDownloadTravelGuide}
                         className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 text-xs font-semibold text-[#2f261d] transition-colors hover:border-[#d8c8b6]"
                       >
-                        Save travel guide
+                        Save travel details
                       </button>
                     </div>
                   </div>
@@ -528,7 +528,7 @@ export function EventHubLiveContent({
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm font-semibold text-[#2f261d]">What is ready on this link</p>
-                      <p className="mt-1 text-sm leading-6 text-[#6f5843]">Check what is ready before relying on the hub at the venue.</p>
+                      <p className="mt-1 text-sm leading-6 text-[#6f5843]">Check what is ready on this link before relying on it at the venue.</p>
                     </div>
                     <span className="rounded-lg bg-[#f3eadf] px-3 py-2 text-xs font-semibold text-[#69513f]">
                       {dayOfHubStatusBoard.readyCount} hub items ready

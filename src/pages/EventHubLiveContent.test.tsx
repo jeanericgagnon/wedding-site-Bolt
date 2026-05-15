@@ -127,6 +127,7 @@ describe('EventHubLiveContent', () => {
     );
 
     expect(screen.getByText('Travel plan from this link')).toBeInTheDocument();
+    expect(screen.getByText('Start with travel details from this link, then reply and share photos from the same mobile hub.')).toBeInTheDocument();
     expect(screen.getByText('1 ready · 1 needs setup')).toBeInTheDocument();
     expect(screen.getByText('1 step still need setup before this path feels complete.')).toBeInTheDocument();
     expect(screen.getByText('Ready from this link: Travel details.')).toBeInTheDocument();
@@ -179,13 +180,13 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('What is ready on this link')).toBeInTheDocument();
     expect(document.getElementById('day-of-updates')).not.toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Copy travel plan' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy travel details' }));
     expect(onCopyTravelPlan).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save travel guide' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save travel details' }));
     expect(onDownloadTravelGuide).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole('link', { name: 'Open travel page' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Open travel details' }));
     expect(onTrackClick).toHaveBeenCalledWith('/site/alex-jordan-demo#travel');
 
     fireEvent.click(screen.getByRole('link', { name: /Latest update/i }));
