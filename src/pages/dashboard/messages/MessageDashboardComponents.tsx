@@ -306,7 +306,7 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
               {engagementSummary.opened} opened · {engagementSummary.clicked} clicked · {engagementSummary.replied} replied
             </p>
             <p className="mt-1 text-xs text-text-tertiary">
-              {engagementSummary.viewed} viewed across guest pages{engagementSummary.bounced > 0 ? ` · ${engagementSummary.bounced} bounced` : ''}
+              {engagementSummary.viewed} viewed across guest pages · {engagementSummary.bounced} bounced
             </p>
             <p className="mt-1 text-xs text-text-tertiary">
               {engagementSummary.openRate}% open rate · {engagementSummary.clickRate}% click rate · {engagementSummary.replyRate}% reply rate
@@ -1300,7 +1300,7 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
                 {channelEngagementBreakdown[channel].opened} opened · {channelEngagementBreakdown[channel].clicked} clicked · {channelEngagementBreakdown[channel].replied} replied
               </p>
               <p className="mt-1 text-[11px] text-text-tertiary">
-                {channelEngagementBreakdown[channel].viewed} viewed{channelEngagementBreakdown[channel].bounced > 0 ? ` · ${channelEngagementBreakdown[channel].bounced} bounced` : ''} across {channelEngagementBreakdown[channel].trackedMessages} completed campaign{channelEngagementBreakdown[channel].trackedMessages === 1 ? '' : 's'}
+                {channelEngagementBreakdown[channel].viewed} viewed · {channelEngagementBreakdown[channel].bounced} bounced across {channelEngagementBreakdown[channel].trackedMessages} completed campaign{channelEngagementBreakdown[channel].trackedMessages === 1 ? '' : 's'}
               </p>
               <p className="mt-1 text-[11px] text-text-tertiary">
                 {channelEngagementBreakdown[channel].openRate}% open rate · {channelEngagementBreakdown[channel].clickRate}% click rate · {channelEngagementBreakdown[channel].replyRate}% reply rate

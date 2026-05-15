@@ -104,6 +104,7 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('0 need contact details · 0 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: all clear')).toBeInTheDocument();
+    expect(screen.getByText('1 viewed across guest pages · 0 bounced')).toBeInTheDocument();
   });
 
   it('keeps recent campaign rollups explicit when zero recipients were delivered', () => {
@@ -454,7 +455,7 @@ describe('MessageHistorySummaryPanels', () => {
     expect(screen.getByText('1 need contact details · 0 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: delivery review')).toBeInTheDocument();
     expect(screen.getByText('7 opened · 4 clicked · 1 replied')).toBeInTheDocument();
-    expect(screen.getByText('3 viewed across 2 completed campaigns')).toBeInTheDocument();
+    expect(screen.getByText('3 viewed · 0 bounced across 2 completed campaigns')).toBeInTheDocument();
     expect(screen.getByText('70% open rate · 40% click rate · 10% reply rate')).toBeInTheDocument();
     expect(screen.getByText('2 opened · 1 clicked · 0 replied')).toBeInTheDocument();
     expect(screen.getByText('0 viewed · 1 bounced across 1 completed campaign')).toBeInTheDocument();
