@@ -133,6 +133,9 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Purchasers named: 1')).toBeInTheDocument();
     expect(screen.getByText('Missing purchaser: 0')).toBeInTheDocument();
     expect(screen.getByText('100% purchaser coverage · 100% fully closed · 100% quantity claimed (1) · 0% still unclaimed (0)')).toBeInTheDocument();
+    expect(screen.getByText('Main gap: no claim attribution blockers right now')).toBeInTheDocument();
+    expect(screen.getByText('Main gap: no guest-visibility blockers right now')).toBeInTheDocument();
+    expect(screen.getByText('Main gap: no thank-you blockers right now')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /save thank-you list/i }));
     fireEvent.click(screen.getByRole('button', { name: /mark sent/i }));
 

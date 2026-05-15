@@ -218,31 +218,31 @@ export function RegistryDashboardRouteContent(props: {
     ? `Main gap: ${props.claimStats.missingPurchaserItems} still need purchaser attribution`
     : props.claimStats.partiallyClaimedItems > 0
       ? `Main gap: ${props.claimStats.partiallyClaimedItems} partial claim${props.claimStats.partiallyClaimedItems === 1 ? '' : 's'} still need follow-through`
-      : 'Main gap: no claim attribution blockers';
+      : 'Main gap: no claim attribution blockers right now';
   const guestVisibilityGapLabel = props.guestVisibilityStats.blockedGuestItems > 0
     ? `Main gap: ${props.guestVisibilityStats.blockedGuestItems} still blocked from guests`
     : props.guestVisibilityStats.hiddenPurchasedItems > 0
       ? `Main gap: ${props.guestVisibilityStats.hiddenPurchasedItems} hidden after purchase`
-      : 'Main gap: no guest-visibility blockers';
+      : 'Main gap: no guest-visibility blockers right now';
   const thankYouGapLabel = props.registryThankYouStats.blockedByMissingPurchaserCount > 0
     ? `Main gap: ${props.registryThankYouStats.blockedByMissingPurchaserCount} waiting on purchaser attribution`
     : props.registryThankYouStats.pendingCount > 0
       ? `Main gap: ${props.registryThankYouStats.pendingCount} still need a send`
-      : 'Main gap: no thank-you blockers';
+      : 'Main gap: no thank-you blockers right now';
   const fundSetupGapLabel = props.fundStats.needsSetup > 0
     ? `Main gap: ${props.fundStats.needsSetup} still need a payment path`
     : props.fundStats.missingGoal > 0
       ? `Main gap: ${props.fundStats.missingGoal} still missing a goal`
       : props.fundStats.readyAwaitingFirstGift > 0
         ? `Main gap: ${props.fundStats.readyAwaitingFirstGift} waiting on a first gift`
-        : 'Main gap: no fund setup blockers';
+        : 'Main gap: no fund setup blockers right now';
   const fundMomentumGapLabel = props.fundStats.missingGoal > 0
     ? `Next gift gap: ${props.fundStats.missingGoal} still missing a goal`
     : props.fundStats.readyAwaitingFirstGift > 0
       ? `Next gift gap: ${props.fundStats.readyAwaitingFirstGift} waiting on a first gift`
       : props.fundStats.needsSetup > 0
         ? `Next gift gap: ${props.fundStats.needsSetup} still need a payment path`
-        : 'Next gift gap: no fund momentum blockers';
+        : 'Next gift gap: no fund momentum blockers right now';
 
   const tabCount = (key: RegistryFilter) => {
     if (key === 'all') return props.counts.total;

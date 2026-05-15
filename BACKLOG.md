@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 08:57 AM PDT`
-- Latest shipped batch: `pending local batch` `Clarify memory flow lead summaries`
+- Last updated: `2026-05-15 09:00 AM PDT`
+- Latest shipped batch: `pending local batch` `Clarify registry all-clear blockers`
 - Latest backlog-cleanup state: current session local-only cleanup is ahead of the last pushed cleanup batch
 - Open backlog lanes: `7`
 - Current session blocker: repeated source-file `Operation timed out` reads are intermittently blocking direct product-code edits in this saturated session
@@ -39,6 +39,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `pending local batch` `Clarify registry all-clear blockers`
   - `pending local batch` `Clarify memory flow lead summaries`
   - `pending local batch` `Clarify travel all-clear summaries`
   - `79e76e63` `Clarify RSVP and travel all-clear follow-through`
@@ -60,6 +61,8 @@
   - latest shipped: the owner travel-portal readiness summary now also says `No guest sections incomplete`, and the guest-hub `Travel quick plan` summary now also says `All 3 core travel layers are ready`, so those all-clear truths no longer live only in the smaller badge rows
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
+- `registry polish beyond barcode`
+  - latest shipped: the top registry cards now say `right now` in their clean blocker readback, so claim attribution, guest visibility, thank-you follow-through, and fund setup all-clear states read like deliberate present-tense truth instead of clipped blocker labels
 
 ## Work This Next
 
@@ -116,6 +119,7 @@ These are the active product-completion lanes still open after the current launc
    - add authenticated live browser proof for composing and saving each operational segment on the shipped runtime
    - keep SMS/Telnyx live-send behavior deferred until provider/compliance setup is ready
 5. `registry polish beyond barcode`
+   - latest shipped: the top registry cards now say `right now` in their clean blocker readback, so claim attribution, guest visibility, thank-you follow-through, and fund setup all-clear states read like deliberate present-tense truth instead of clipped blocker labels
    - live owner add/import/edit persistence proof is still open
    - stronger owner repair/cleanup runtime proof on production is still open
    - guest-visible purchase-state assertions on production are still open
@@ -143,7 +147,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 08:57 AM PDT` |
+| Current date/time | `2026-05-15 09:00 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |
