@@ -80,7 +80,7 @@ const results = [
   runStep({
     id: 'travel-portal-unit-tests',
     label: 'Travel portal unit and render tests',
-    command: 'npm test -- --run src/lib/travelGuestPortal.test.ts src/pages/EventHubLiveContent.test.tsx src/pages/EventHub.test.tsx src/lib/publicSiteAccess.test.ts src/lib/publicSiteRenderModel.test.ts',
+    command: 'npm test -- --run src/lib/travelGuestPortal.test.ts src/pages/SiteView.test.ts src/pages/EventHubLiveContent.test.tsx src/pages/EventHub.test.tsx src/lib/publicSiteAccess.test.ts src/lib/publicSiteRenderModel.test.ts',
   }),
   runStep({
     id: 'build',
@@ -165,6 +165,7 @@ const output = {
   automatedCoverage: [
     'Live public-site-access travel data continuity for the proof guest',
     'Travel portal readiness and guest-hub spotlight helper truth',
+    'SiteView invite-token handoff continuity from guest-hub links into public travel routes',
     'Public render-model and public-access sanitization for structured travel records',
     'Guest-hub live content render path for travel quick plan surfaces',
     isLiveBaseUrl
@@ -173,8 +174,8 @@ const output = {
   ],
   stillManualProofNeeded: [
     isLiveBaseUrl
-      ? 'Deploy the guest-hub invite handoff fix, then rerun the final live browser/mobile guest-hub continuity leg in a fresh browser-capable session once browser startup is usable again.'
-      : 'Rerun the same invite-scoped travel hub flow against the shipped production runtime for live/mobile proof after the next approved travel-portal deploy.',
+      ? 'Deploy the guest-hub invite handoff fix, then confirm the shipped runtime in a fresh browser-capable session once browser startup is usable again.'
+      : 'Confirm the same invite-scoped travel hub flow against the shipped production runtime after the next approved travel-portal deploy.',
   ],
   results,
 };
