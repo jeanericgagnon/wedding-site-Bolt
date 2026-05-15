@@ -3,6 +3,12 @@ import { MapPin, QrCode } from 'lucide-react';
 import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { EventHubConfigStatusCard } from './EventHubConfigStatusCard';
+import {
+  buildTravelJourneySummary,
+  getDayOfSignalStatusLabel,
+  getHubStatusLabel,
+  getTravelJourneyStatusLabel,
+} from './eventHubLiveContentHelpers';
 
 type DayOfModeSignal = {
   id: string;
@@ -172,16 +178,12 @@ export function EventHubLiveContent({
   onSubmitOptIn,
 }: EventHubLiveContentProps) {
   const isExternalHref = (href: string) => /^https?:\/\//i.test(href);
-  const travelJourneyReadyCount = travelGuestJourney.filter((step) => step.status === 'ready').length;
-  const travelJourneyNeedsInfoCount = travelGuestJourney.filter((step) => step.status !== 'ready').length;
-  const travelJourneyReadyLabels = travelGuestJourney.filter((step) => step.status === 'ready').map((step) => step.label);
-  const travelJourneyNeedsInfoLabels = travelGuestJourney.filter((step) => step.status !== 'ready').map((step) => step.label);
-  const getTravelJourneyStatusLabel = (status: TravelGuestJourneyStep['status']) =>
-    status === 'ready' ? 'Travel step ready' : 'Travel step needs setup';
-  const getDayOfSignalStatusLabel = (state: DayOfModeSignal['state']) =>
-    state === 'ready' ? 'Mode ready' : state === 'needs-content' ? 'Mode needs info' : 'Mode planned';
-  const getHubStatusLabel = (state: DayOfHubStatusItem['state']) =>
-    state === 'ready' ? 'Hub item ready' : state === 'needs-content' ? 'Hub item needs info' : 'Hub item planned';
+  const {
+    readyCount: travelJourneyReadyCount,
+    needsInfoCount: travelJourneyNeedsInfoCount,
+    readyLabels: travelJourneyReadyLabels,
+    needsInfoLabels: travelJourneyNeedsInfoLabels,
+  } = buildTravelJourneySummary(travelGuestJourney);
 
   return (
     <div className="min-h-screen bg-[#fbf7f1] text-neutral-950">

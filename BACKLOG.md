@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 02:49 PM PDT`
-- Latest shipped batch: `pending local travel defer batch`
+- Last updated: `2026-05-15 02:55 PM PDT`
+- Latest shipped batch: `pending local guest-hub render-free proof batch`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry active-proof-lane closure batch
 - Open backlog lanes: `5`
 - Current session blocker: the minimal guest-hub Vitest slice still idles in this saturated session even after clearing duplicate runners, removing fake timers from the offline snapshot proof dependency, restoring real timers, isolating the i18n-backed guest-hub child components from the large render test, removing the redundant EventHub render bundle from the QR proof lane, extracting the pure EventHub helper functions away from the heavy page module, replacing the giant EventHubLiveContent proof dependency with a lean dedicated render-smoke test, and splitting pure helper assertions away from the EventHub boundary test, so the local runner environment remains the current proof blocker after those in-repo blockers were removed
@@ -157,6 +157,7 @@ These are the active product-completion lanes still open after the current launc
    - wrong-guest/right-guest live visibility proof is still open
    - authenticated mobile live proof is still open
 2. `unified QR guest hub`
+  - latest shipped: the local day-of proof lane now resolves the guest-hub travel/readiness summary strings through pure helper coverage instead of mounting the full `EventHubLiveContent` render tree, because `eventHubLiveContentHelpers.test.ts` now covers the invite-scoped travel summary and readiness-label logic directly and `proof:v1:dayof-web-mode` no longer depends on `EventHubLiveContent.proof.test.tsx`, so one more concrete local proof dependency is out of the stuck Vitest slice
   - latest shipped: the local day-of proof lane now resolves guest-hub access and identity truth through pure helper coverage instead of browser `sessionStorage` state, because `publicAccessArtifacts.test.ts` now covers the access-token and guest-invite resolution paths directly and `eventHubPageHelpers.test.ts` no longer mutates session storage, so one more concrete local proof dependency is out of the stuck Vitest slice
   - latest shipped: `proof:v1:dayof-web-mode` now runs the new `eventHubPageHelpers` test instead of the broader `EventHub` page-boundary test, so the local proof lane keeps pure guest-hub helper coverage without pulling an extra page-structure assertion into the blocker path
    - latest shipped: the guest-hub offline snapshot proof path no longer uses fake timers; it now writes an explicit saved timestamp through `writeGuestHubOfflineSnapshot`, so another concrete blocker is removed from the `dayof-web-mode` local proof slice instead of relying on timer mocking inside that lane
