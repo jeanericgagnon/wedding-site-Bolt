@@ -1448,7 +1448,9 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                   return (
                     <>
                 <p>{thread.delivered} delivered · {thread.failed} need review</p>
-                {thread.delivered > 0 && <p className="text-text-secondary">{thread.delivered} recipients delivered</p>}
+                <p className="text-text-secondary">
+                  {thread.delivered > 0 ? `${thread.delivered} recipients delivered` : '0 recipients delivered'}
+                </p>
                 {targeted > 0 && <p className="text-text-secondary">{targeted} targeted recipients</p>}
                 {thread.deliveredRecipients > 0 && <p className="text-text-secondary">{thread.deliveredRate}% delivered coverage{reviewRate != null ? ` · ${reviewRate}% review coverage` : ''}{skippedRate != null ? ` · ${skippedRate}% needs contact` : ''}{unreachedRate != null ? ` · ${unreachedRate}% unreached` : ''}</p>}
                 {cleanupRate != null && <p className="text-text-secondary">{cleanupRate}% cleanup still pending</p>}

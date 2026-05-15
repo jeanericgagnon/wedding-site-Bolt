@@ -106,6 +106,53 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('Main cleanup: all clear')).toBeInTheDocument();
   });
 
+  it('keeps recent campaign rollups explicit when zero recipients were delivered', () => {
+    render(
+      <MessageCampaignThreadPanels
+        activeCampaignLatestMessage={null}
+        activeCampaignThread={null}
+        campaignThreads={[
+          {
+            key: 'thread-failed',
+            name: 'Reminder resend',
+            count: 1,
+            delivered: 0,
+            failed: 2,
+            skipped: 1,
+            unreached: 0,
+            opened: 0,
+            viewed: 0,
+            clicked: 0,
+            replied: 0,
+            bounced: 0,
+            deliveredRecipients: 0,
+            deliveredRate: 0,
+            openRate: 0,
+            clickRate: 0,
+            replyRate: 0,
+            latestStatus: 'failed',
+            latestAt: 130,
+          },
+        ]}
+        canCompose
+        deliveries={[]}
+        onClearThreadFilter={vi.fn()}
+        onDuplicateLatest={vi.fn()}
+        onEditLatest={vi.fn()}
+        onScheduleFollowUp={vi.fn()}
+        onSelectThread={vi.fn()}
+        onStartFollowUp={vi.fn()}
+        onViewLatest={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('0 recipients delivered')).toBeInTheDocument();
+    expect(screen.getByText('3 targeted recipients')).toBeInTheDocument();
+    expect(screen.getByText('0% follow-through ready')).toBeInTheDocument();
+    expect(screen.getByText('No recipients are already closed out')).toBeInTheDocument();
+    expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
+  });
+
   it('shows delivered coverage inside the active campaign thread chip row', () => {
     render(
       <MessageCampaignThreadPanels
