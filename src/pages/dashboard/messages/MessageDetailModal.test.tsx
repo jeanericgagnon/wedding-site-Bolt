@@ -92,6 +92,7 @@ describe('MessageDetailModal', () => {
 
     expect(screen.getByText('Next-send review plan')).toBeInTheDocument();
     expect(screen.getByText(/next send targets 2 reviewed guests and excludes 1 guest still missing contact details/i)).toBeInTheDocument();
+    expect(screen.getByText('Targeted 4')).toBeInTheDocument();
     expect(screen.getByText('Delivered 1')).toBeInTheDocument();
     expect(screen.getByText('Needs review 2')).toBeInTheDocument();
     expect(screen.getByText('Not reached 1')).toBeInTheDocument();
@@ -130,6 +131,7 @@ describe('MessageDetailModal', () => {
 
     expect(screen.getByText('Needs contact 1')).toBeInTheDocument();
     expect(screen.getByText('Not reached 1')).toBeInTheDocument();
+    expect(screen.getByText('Targeted 5')).toBeInTheDocument();
     expect(screen.getByText('20% delivered coverage · 40% review coverage · 20% needs contact · 20% unreached')).toBeInTheDocument();
     expect(screen.getByText('80% cleanup still pending')).toBeInTheDocument();
     expect(screen.getByText('20% follow-through ready')).toBeInTheDocument();

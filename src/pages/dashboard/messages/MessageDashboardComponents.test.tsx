@@ -44,6 +44,7 @@ describe('MessageCampaignThreadPanels', () => {
     );
 
     expect(screen.getByText('4 delivered · 1 need review')).toBeInTheDocument();
+    expect(screen.getByText('6 targeted recipients')).toBeInTheDocument();
     expect(screen.getByText('67% delivered coverage · 17% review coverage · 17% needs contact · 0% unreached')).toBeInTheDocument();
     expect(screen.getByText('33% cleanup still pending')).toBeInTheDocument();
     expect(screen.getByText('67% follow-through ready')).toBeInTheDocument();
@@ -94,6 +95,7 @@ describe('MessageCampaignThreadPanels', () => {
     );
 
     expect(screen.getByText('Delivered 8')).toBeInTheDocument();
+    expect(screen.getByText('Targeted 11')).toBeInTheDocument();
     expect(screen.getByText('73% delivered coverage')).toBeInTheDocument();
     expect(screen.getByText('9% review coverage')).toBeInTheDocument();
     expect(screen.getByText('9% needs contact')).toBeInTheDocument();
@@ -165,6 +167,7 @@ describe('MessageCampaignThreadPanels', () => {
     );
 
     expect(screen.getByText('73% delivered coverage')).toBeInTheDocument();
+    expect(screen.getByText('Targeted 11')).toBeInTheDocument();
     expect(screen.getByText('9% review coverage')).toBeInTheDocument();
     expect(screen.getByText('9% needs contact')).toBeInTheDocument();
     expect(screen.getByText('9% unreached')).toBeInTheDocument();

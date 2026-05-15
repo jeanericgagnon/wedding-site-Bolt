@@ -1436,6 +1436,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                   return (
                     <>
                 <p>{thread.delivered} delivered · {thread.failed} need review</p>
+                {targeted > 0 && <p className="text-text-secondary">{targeted} targeted recipients</p>}
                 {thread.deliveredRecipients > 0 && <p className="text-text-secondary">{thread.deliveredRate}% delivered coverage{reviewRate != null ? ` · ${reviewRate}% review coverage` : ''}{skippedRate != null ? ` · ${skippedRate}% needs contact` : ''}{unreachedRate != null ? ` · ${unreachedRate}% unreached` : ''}</p>}
                 {cleanupRate != null && <p className="text-text-secondary">{cleanupRate}% cleanup still pending</p>}
                 {cleanupRate != null && <p className="text-text-secondary">{Math.max(0, 100 - cleanupRate)}% follow-through ready</p>}
@@ -1506,6 +1507,11 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
             return (
               <>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Delivered {activeCampaignThread.delivered}</span>
+          {activeThreadTargeted > 0 && (
+            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+              Targeted {activeThreadTargeted}
+            </span>
+          )}
           {activeCampaignThread.deliveredRecipients > 0 && (
             <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
               {activeCampaignThread.deliveredRate}% delivered coverage
@@ -1644,6 +1650,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                 const replyRate = deliveredRecipients > 0 && engagement.replied != null ? Math.round((engagement.replied / deliveredRecipients) * 100) : null;
                 return (
                   <>
+                    {targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Targeted {targetedRecipients}</span>}
                     {deliveredRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{deliveredRate}% delivered coverage</span>}
                     {reviewRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{reviewRate}% review coverage</span>}
                     {skippedRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{skippedRate}% needs contact</span>}
