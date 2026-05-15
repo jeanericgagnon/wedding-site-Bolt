@@ -58,7 +58,7 @@ describe('travelGuestPortal', () => {
       'Arrival coverage missing',
     ]);
     expect(readiness.blockers).toContain('Add airport, train, shuttle, or arrival guidance.');
-    expect(readiness.summary).toBe('0 ready · 4 need info · 2 empty · 1 planned. Still missing: Arrival guidance, Lodging, Local transport, Venue addresses, Weekend schedule, Local context.');
+    expect(readiness.summary).toBe('0 ready · 4 need info · 2 empty · 1 planned. First blocker: Arrival guidance. Still missing: Arrival guidance, Lodging, Local transport, Venue addresses, Weekend schedule, Local context.');
     expect(readiness.mainGapLabel).toBe('Main gap: Arrival guidance');
   });
 
@@ -105,7 +105,7 @@ describe('travelGuestPortal', () => {
       'Weekend routing missing',
       'Arrival coverage missing',
     ]);
-    expect(readiness.summary).toBe('0 ready · 3 need info · 3 empty · 1 planned. Still missing: Arrival guidance, Lodging, Local transport, Venue addresses, Weekend schedule, Local context.');
+    expect(readiness.summary).toBe('0 ready · 3 need info · 3 empty · 1 planned. First blocker: Arrival guidance. Still missing: Arrival guidance, Lodging, Local transport, Venue addresses, Weekend schedule, Local context.');
     expect(readiness.mainGapLabel).toBe('Main gap: Arrival guidance');
   });
 

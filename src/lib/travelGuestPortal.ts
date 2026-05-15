@@ -212,7 +212,7 @@ export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): 
     plannedCount,
     coverageBadges,
     summary: missingLabels.length > 0
-      ? `${readyCount} ready · ${needsInfoCount} need info · ${emptyCount} empty${plannedCount > 0 ? ` · ${plannedCount} planned` : ''}. Still missing: ${missingLabels.join(', ')}.`
+      ? `${readyCount} ready · ${needsInfoCount} need info · ${emptyCount} empty${plannedCount > 0 ? ` · ${plannedCount} planned` : ''}.${highestPriorityGap ? ` First blocker: ${highestPriorityGap.label}.` : ''} Still missing: ${missingLabels.join(', ')}.`
       : `${readyCount} ready${plannedCount > 0 ? ` · ${plannedCount} planned` : ''}.`,
     mainGapLabel: highestPriorityGap ? `Main gap: ${highestPriorityGap.label}` : null,
     steps,
