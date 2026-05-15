@@ -1399,10 +1399,10 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
           {campaignThreads.map((thread) => (
             (() => {
               const engagementSummary = [
-                thread.opened > 0 ? `${thread.opened} opened` : null,
-                thread.viewed > 0 ? `${thread.viewed} viewed` : null,
-                thread.clicked > 0 ? `${thread.clicked} clicked` : null,
-                thread.replied > 0 ? `${thread.replied} replied` : null,
+                `${thread.opened} opened`,
+                `${thread.viewed} viewed`,
+                `${thread.clicked} clicked`,
+                `${thread.replied} replied`,
                 thread.bounced > 0 ? `${thread.bounced} bounced` : null,
               ].filter(Boolean).join(' · ');
 

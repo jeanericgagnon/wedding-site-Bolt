@@ -152,6 +152,7 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('0% follow-through ready')).toBeInTheDocument();
     expect(screen.getByText('No recipients are already closed out')).toBeInTheDocument();
     expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.getByText('0 opened · 0 viewed · 0 clicked · 0 replied')).toBeInTheDocument();
   });
 
   it('shows delivered coverage inside the active campaign thread chip row', () => {
