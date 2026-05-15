@@ -136,9 +136,11 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Mode ready')).toBeInTheDocument();
     expect(screen.getByText('Mode needs info')).toBeInTheDocument();
     expect(screen.getByText('Mode planned')).toBeInTheDocument();
+    expect(screen.getByText('2 mode items ready')).toBeInTheDocument();
     expect(screen.getByText('Hub item ready')).toBeInTheDocument();
     expect(screen.getByText('Hub item needs info')).toBeInTheDocument();
     expect(screen.getByText('Hub item planned')).toBeInTheDocument();
+    expect(screen.getByText('2 hub items ready')).toBeInTheDocument();
     expect(screen.getByText('Invite-scoped')).toBeInTheDocument();
     expect(screen.getByText('1 event window')).toBeInTheDocument();
     expect(screen.getByText('1 route card')).toBeInTheDocument();

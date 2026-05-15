@@ -531,7 +531,7 @@ export function EventHubLiveContent({
                       <p className="mt-1 text-sm leading-6 text-[#6f5843]">Check what is ready before relying on the hub at the venue.</p>
                     </div>
                     <span className="rounded-lg bg-[#f3eadf] px-3 py-2 text-xs font-semibold text-[#69513f]">
-                      {dayOfHubStatusBoard.readyCount} live-safe
+                      {dayOfHubStatusBoard.readyCount} hub items ready
                     </span>
                   </div>
                 </summary>
@@ -543,7 +543,7 @@ export function EventHubLiveContent({
                         <p className="mt-1 text-sm leading-6 text-[#6f5843]">{dayOfModeReadiness.summary}</p>
                       </div>
                       <div className="rounded-lg bg-[#f3eadf] px-3 py-2 text-xs font-semibold text-[#69513f]">
-                        {dayOfModeReadiness.readyCount} ready
+                        {dayOfModeReadiness.readyCount} mode items ready
                       </div>
                     </div>
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
