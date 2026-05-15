@@ -358,7 +358,7 @@ export function RegistryDashboardRouteContent(props: {
           : null,
       ].filter(Boolean).join(' · ')} worth a quick pass.`;
   const registryShareReadinessSummary = props.registryLaunchReadiness.status === 'empty'
-    ? 'No guest-facing registry share setup is live yet.'
+    ? 'No registry links or funds are ready to share yet.'
     : props.registryLaunchReadiness.reviewCount > 0
       ? `${props.registryLaunchReadiness.reviewCount} registry share detail${props.registryLaunchReadiness.reviewCount === 1 ? '' : 's'} still need review.`
       : 'No registry share blockers right now.';
@@ -424,12 +424,12 @@ export function RegistryDashboardRouteContent(props: {
     <div className="max-w-[1100px] mx-auto space-y-5">
       <DashboardPageHero
         eyebrow="Registry"
-        title="Keep gifts helpful, optional, and easy for guests."
-        description="Add links from any store, keep images and availability fresh, and show gentle registry ideas without making the page feel pushy."
+        title="Gifts and funds, clearly shared."
+        description="Add the places guests should look first. Keep it simple with links, or add individual gifts and funds later."
         stats={[
-          { label: 'Gifts', value: props.counts.total, detail: `${props.counts.available + props.counts.partial} still available` },
-          { label: 'Purchased', value: props.counts.purchased, detail: `${props.fulfillmentRate}% complete` },
-          { label: 'Worth checking', value: props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock, detail: 'quick review items' },
+          { label: 'Registry', value: props.counts.total > 0 ? 'Ready for guests' : 'Ready to add', detail: `${props.counts.total} gifts or links` },
+          { label: 'Purchased', value: props.counts.purchased > 0 ? `${props.counts.purchased} purchased` : 'No purchases yet', detail: `${props.fulfillmentRate}% complete` },
+          { label: 'Review', value: props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock > 0 ? 'Worth reviewing' : 'Looks steady', detail: 'images and availability' },
         ]}
         actions={
           <>
@@ -461,7 +461,7 @@ export function RegistryDashboardRouteContent(props: {
             </ActionsMenu>
             <Button variant="primary" size="md" onClick={props.handleAddNew} disabled={!props.weddingSiteId}>
               <Plus className="w-4 h-4" />
-              Add gift
+              Add registry
             </Button>
           </>
         }

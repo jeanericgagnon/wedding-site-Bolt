@@ -401,7 +401,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(derived.registryLaunchReadiness.headline).toBe('Registry share setup looks guest-ready.');
     expect(derived.registryLaunchReadiness.summary).toBe('Guest-facing links, funds, and purchase-state basics look ready right now.');
     expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'purchase-state')?.detail).toBe('No gifts are marked purchased yet.');
-    expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'hide-purchased')?.detail).toBe('No gifts are set to hide after purchase right now.');
+    expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'hide-purchased')?.detail).toBe('No gifts hide after purchase right now.');
   });
 
   it('derives cleaner registry launch-readiness empty wording', () => {
@@ -421,7 +421,7 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(derived.registryLaunchReadiness.headline).toBe('Registry share setup is still empty.');
     expect(derived.registryLaunchReadiness.summary).toBe('Add product gifts or funds when you want guests to have registry options.');
-    expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'external-links')?.detail).toBe('No product gifts are listed yet, so there are no guest-facing product links to check.');
+    expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'external-links')?.detail).toBe('No product gifts are listed yet, so there are no gift links to share right now.');
     expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'cash-funds')?.detail).toBe('No cash funds are listed right now, which is fine for a gift-only registry.');
   });
 
@@ -512,7 +512,7 @@ describe('RegistryDashboardRouteContent', () => {
     });
 
     expect(derived.registryThankYouPlan.headline).toBe('Thank-you follow-up is quiet right now');
-    expect(derived.registryThankYouPlan.summary).toBe('No purchased gifts need thank-you follow-up yet.');
+    expect(derived.registryThankYouPlan.summary).toBe('No purchased gifts need thank-you follow-up right now.');
   });
 
   it('derives guest-visible registry analytics from hidden purchased and blocked guest items', () => {
@@ -1969,8 +1969,8 @@ describe('RegistryDashboardRouteContent', () => {
           status: 'ready',
           reviewCount: 0,
           items: [
-            { id: 'external-links', label: 'External gift links', detail: '1 product gift have safe public links (100% coverage).', tone: 'ready' },
-            { id: 'hide-purchased', label: 'Guest view after purchase', detail: 'No gifts are set to hide after purchase right now.', tone: 'ready' },
+            { id: 'external-links', label: 'Gift links ready to share', detail: '1 product gift is ready to share (100% coverage).', tone: 'ready' },
+            { id: 'hide-purchased', label: 'Hide after purchase', detail: 'No gifts hide after purchase right now.', tone: 'ready' },
           ],
         }}
         registryThankYouPlan={{ headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] }}
@@ -2054,8 +2054,8 @@ describe('RegistryDashboardRouteContent', () => {
           status: 'needs-review',
           reviewCount: 2,
           items: [
-            { id: 'external-links', label: 'External gift links', detail: '0 product gifts have safe public links (0% coverage). 1 product gift still need a guest-safe link.', tone: 'review' },
-            { id: 'cash-funds', label: 'Cash and fund links', detail: '0 cash funds are share-ready (0% coverage). 1 cash fund still need a safe payment path or handle.', tone: 'review' },
+            { id: 'external-links', label: 'Gift links ready to share', detail: '0 product gifts are ready to share (0% coverage). 1 product gift still need a guest-safe link.', tone: 'review' },
+            { id: 'cash-funds', label: 'Fund links ready to share', detail: '0 cash funds are ready to share (0% coverage). 1 cash fund still need a share-ready payment path or handle.', tone: 'review' },
           ],
         }}
         registryThankYouPlan={{ headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] }}
@@ -2084,7 +2084,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('2 registry share details still need review.')).toBeInTheDocument();
     expect(screen.getByText('2 to review')).toBeInTheDocument();
     expect(screen.getAllByText('Needs review').length).toBeGreaterThan(0);
-    expect(screen.getByText('Cash and fund links')).toBeInTheDocument();
+    expect(screen.getByText('Fund links ready to share')).toBeInTheDocument();
   });
 
   it('summarizes mixed registry quick-check prompts before the cards', () => {
@@ -2133,7 +2133,7 @@ describe('RegistryDashboardRouteContent', () => {
         registryActionsOpen={false}
         registryActionsRef={{ current: null }}
         registryInsights={[
-          { id: 'registry-fund-setup', area: 'registry', priority: 'next', title: 'Cash fund setup', detail: '1 cash fund still needs a guest-ready payment path before it is easy to share.', actionLabel: 'Review cash funds', source: 'deterministic', confidence: 0.88 },
+          { id: 'registry-fund-setup', area: 'registry', priority: 'next', title: 'Cash fund setup', detail: '1 cash fund still needs a share-ready payment path before it is easy to share.', actionLabel: 'Review cash funds', source: 'deterministic', confidence: 0.88 },
           { id: 'registry-fund-goals', area: 'registry', priority: 'polish', title: 'Track one simple goal', detail: '1 cash fund could use a simple goal so progress reads clearly for you and your guests.', actionLabel: 'Add fund goals', source: 'deterministic', confidence: 0.76 },
         ]}
         registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}

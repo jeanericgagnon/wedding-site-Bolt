@@ -70,6 +70,10 @@ function percent(numerator: number, denominator: number): number {
   return Math.round((numerator / denominator) * 100);
 }
 
+function conjugateBe(count: number): 'is' | 'are' {
+  return count === 1 ? 'is' : 'are';
+}
+
 function hasSafeLink(value: string | null | undefined): boolean {
   return Boolean(getSafePublicWebUrl(value));
 }
@@ -114,24 +118,24 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
   const itemsOut: RegistryLaunchReadinessItem[] = [
     {
       id: 'external-links',
-      label: 'External gift links',
+      label: 'Gift links ready to share',
       count: productLinksMissing + unsafeProductLinks,
       detail: productItems.length === 0
-        ? 'No product gifts are listed yet, so there are no guest-facing product links to check.'
+        ? 'No product gifts are listed yet, so there are no gift links to share right now.'
         : productLinksMissing + unsafeProductLinks > 0
-          ? `${plural(productLinksReady, 'product gift')} have safe public links (${productLinkCoverageRate}% coverage). ${plural(productLinksMissing + unsafeProductLinks, 'product gift')} still need a guest-safe link.`
-          : `${plural(productLinksReady, 'product gift')} have safe public links (${productLinkCoverageRate}% coverage).`,
+          ? `${plural(productLinksReady, 'product gift')} ${conjugateBe(productLinksReady)} ready to share (${productLinkCoverageRate}% coverage). ${plural(productLinksMissing + unsafeProductLinks, 'product gift')} still need a guest-safe link.`
+          : `${plural(productLinksReady, 'product gift')} ${conjugateBe(productLinksReady)} ready to share (${productLinkCoverageRate}% coverage).`,
       tone: productLinksMissing + unsafeProductLinks > 0 ? 'review' : 'ready',
     },
     {
       id: 'cash-funds',
-      label: 'Cash and fund links',
+      label: 'Fund links ready to share',
       count: cashFundsNeedingPayment + unsafePaymentLinks,
       detail: cashFunds.length === 0
         ? 'No cash funds are listed right now, which is fine for a gift-only registry.'
         : cashFundsNeedingPayment + unsafePaymentLinks > 0
-          ? `${plural(cashFundsReady, 'cash fund')} are share-ready (${fundShareReadyRate}% coverage). ${plural(cashFundsNeedingPayment + unsafePaymentLinks, 'cash fund')} still need a safe payment path or handle.`
-          : `${plural(cashFundsReady, 'cash fund')} have a guest-facing payment path or handle (${fundShareReadyRate}% coverage).`,
+          ? `${plural(cashFundsReady, 'cash fund')} ${conjugateBe(cashFundsReady)} ready to share (${fundShareReadyRate}% coverage). ${plural(cashFundsNeedingPayment + unsafePaymentLinks, 'cash fund')} still need a share-ready payment path or handle.`
+          : `${plural(cashFundsReady, 'cash fund')} ${conjugateBe(cashFundsReady)} ready to share with a share-ready payment path or handle (${fundShareReadyRate}% coverage).`,
       tone: cashFundsNeedingPayment + unsafePaymentLinks > 0 ? 'review' : 'ready',
     },
     {
@@ -145,20 +149,20 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
     },
     {
       id: 'thank-you-follow-up',
-      label: 'Thank-you follow-up',
+      label: 'Thank-you list',
       count: thankYouFollowUps,
       detail: thankYouFollowUps > 0
         ? `${plural(thankYouFollowUps, 'gift')} are in the thank-you follow-up list with ${thankYouAttributionCoverageRate}% purchaser attribution coverage.`
-        : 'No purchased gifts need thank-you follow-up yet.',
+        : 'No purchased gifts need thank-you follow-up right now.',
       tone: thankYouFollowUps > 0 ? 'ready' : 'ready',
     },
     {
       id: 'hide-purchased',
-      label: 'Guest view after purchase',
+      label: 'Hide after purchase',
       count: hiddenPurchased,
       detail: hiddenPurchased > 0
         ? `${plural(hiddenPurchased, 'gift')} will hide after purchase so guests do not chase unavailable items.`
-        : 'No gifts are set to hide after purchase right now.',
+        : 'No gifts hide after purchase right now.',
       tone: 'ready',
     },
   ];
@@ -305,7 +309,7 @@ export function buildRegistryThankYouPlanWithLedger(items: RegistryItem[], ledge
       ? completedCount > 0
         ? `${plural(completedCount, 'thank-you')} marked sent. ${plural(purchasedItems.length - completedCount, 'gift')} still need follow-up.`
         : `${plural(purchasedItems.length, 'purchased gift')} are in the thank-you list.`
-      : 'No purchased gifts need thank-you follow-up yet.',
+      : 'No purchased gifts need thank-you follow-up right now.',
     purchasedCount: purchasedItems.length,
     namedPurchaserCount: namedPurchasers.length,
     missingPurchaserCount: missingPurchasers,
