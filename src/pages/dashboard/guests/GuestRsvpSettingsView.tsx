@@ -155,6 +155,11 @@ export function GuestRsvpSettingsView({
   const optionalSetupCoverageRate = rsvpMealEnabled
     ? Math.round((templateCoverageRate + (mealChoiceReadinessRate ?? 0)) / 2)
     : templateCoverageRate;
+  const optionalLayerCount = rsvpMealEnabled ? 2 : 1;
+  const optionalReadyCount = [
+    templateCoverageRate === 100,
+    rsvpMealEnabled ? (mealChoiceReadinessRate ?? 0) === 100 : null,
+  ].filter(Boolean).length;
   const optionalOpenCount = [
     missingTemplateCount > 0,
     rsvpMealEnabled && (mealChoiceReadinessRate ?? 0) < 100,
@@ -446,6 +451,9 @@ export function GuestRsvpSettingsView({
                   <p className="mt-1 text-sm font-semibold text-text-primary">{optionalSetupCoverageRate}% covered</p>
                   <p className="mt-1 text-[11px] text-text-tertiary">
                     {rsvpMealEnabled ? 'templates and meals' : 'templates only · meals off'}
+                  </p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">
+                    {optionalReadyCount} of {optionalLayerCount} optional layer{optionalLayerCount === 1 ? '' : 's'} ready
                   </p>
                   <p className="mt-1 text-[11px] text-text-tertiary">
                     {optionalOpenCount === 0 ? 'No optional gaps open' : `${optionalOpenCount} optional improvement${optionalOpenCount === 1 ? '' : 's'} still open`}

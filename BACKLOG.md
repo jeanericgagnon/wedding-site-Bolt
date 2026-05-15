@@ -432,6 +432,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the RSVP recovery-plan card now also normalizes recovery-channel readiness across email and text, so owners can tell in one glance whether safer misplaced-invite recovery is grounded in both contact paths or only one
    - this batch shipped: the RSVP setup proof checklist now also calls out the main real setup blocker in plain language while leaving planned/optional items calm, so owners can see the next RSVP fix immediately without misreading optional templates or meal collection as launch blockers
    - this batch shipped: the RSVP setup proof checklist now also normalizes setup coverage plus real blocker count, so owners can tell how close the RSVP lane is before publishing instead of reading only the first blocker line item
+   - this batch shipped: the RSVP optional-setup card now also reads back how many optional layers are already ready, so owners can see whether templates and meal choices are both in place or only partly covered without relying on percentages alone
    - rerun the same owner RSVP-settings browser flow against the shipped production runtime after the next approved guests deploy so the local proof stays matched to the live dashboard shell
    - if code/password/open RSVP ever moves beyond planned status, add real guest-facing bad-code/password/open runtime proof before any of those modes is marked ready
 

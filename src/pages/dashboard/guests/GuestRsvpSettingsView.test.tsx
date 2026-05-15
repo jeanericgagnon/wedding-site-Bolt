@@ -104,6 +104,7 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText(/Optional setup/i)).toBeInTheDocument();
     expect(screen.getByText('0% covered')).toBeInTheDocument();
     expect(screen.getByText('templates only · meals off')).toBeInTheDocument();
+    expect(screen.getByText('0 of 1 optional layer ready')).toBeInTheDocument();
     expect(screen.getByText('1 optional improvement still open')).toBeInTheDocument();
     expect(screen.getByText('First optional gap: Question templates')).toBeInTheDocument();
     expect(screen.getByText(/^Optional$/i)).toBeInTheDocument();
@@ -183,6 +184,7 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('Lightweight RSVP form · 2 asked right away for every reply · 2 event-specific follow-ups.')).toBeInTheDocument();
     expect(screen.getByText('50% covered')).toBeInTheDocument();
     expect(screen.getByText('templates and meals')).toBeInTheDocument();
+    expect(screen.getByText('1 of 2 optional layers ready')).toBeInTheDocument();
     expect(screen.getByText('1 optional improvement still open')).toBeInTheDocument();
     expect(screen.getByText('First optional gap: Question templates')).toBeInTheDocument();
     expect(screen.getAllByText('100% ready').length).toBeGreaterThanOrEqual(3);
@@ -253,6 +255,7 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('1 blocker open')).toBeInTheDocument();
     expect(screen.getByText('2 optional improvements still open')).toBeInTheDocument();
     expect(screen.getByText('First optional gap: Question templates')).toBeInTheDocument();
+    expect(screen.getByText('0 of 2 optional layers ready')).toBeInTheDocument();
     expect(screen.getByText('50% ready')).toBeInTheDocument();
     expect(screen.getByText('email only')).toBeInTheDocument();
   });
