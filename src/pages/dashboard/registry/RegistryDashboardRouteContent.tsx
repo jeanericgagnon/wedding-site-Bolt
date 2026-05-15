@@ -243,19 +243,19 @@ export function RegistryDashboardRouteContent(props: {
     ? Math.round((props.fundStats.withProgress / props.fundStats.count) * 100)
     : 0;
   const claimGapLabel = props.claimStats.missingPurchaserItems > 0
-    ? `Main gap: ${props.claimStats.missingPurchaserItems} still need purchaser attribution`
+    ? `Main gap: ${props.claimStats.missingPurchaserItems} still need a purchaser name`
     : props.claimStats.partiallyClaimedItems > 0
-      ? `Main gap: ${props.claimStats.partiallyClaimedItems} partial claim${props.claimStats.partiallyClaimedItems === 1 ? '' : 's'} still need follow-through`
-      : 'Main gap: no claim attribution blockers right now';
+      ? `Main gap: ${props.claimStats.partiallyClaimedItems} partial claim${props.claimStats.partiallyClaimedItems === 1 ? '' : 's'} still need a final gift`
+      : 'Main gap: no purchaser-name blockers right now';
   const guestVisibilityGapLabel = props.guestVisibilityStats.blockedGuestItems > 0
     ? `Main gap: ${props.guestVisibilityStats.blockedGuestItems} still blocked from guests`
     : props.guestVisibilityStats.hiddenPurchasedItems > 0
       ? `Main gap: ${props.guestVisibilityStats.hiddenPurchasedItems} hidden after purchase`
       : 'Main gap: no guest-visibility blockers right now';
   const thankYouGapLabel = props.registryThankYouStats.blockedByMissingPurchaserCount > 0
-    ? `Main gap: ${props.registryThankYouStats.blockedByMissingPurchaserCount} waiting on purchaser attribution`
+    ? `Main gap: ${props.registryThankYouStats.blockedByMissingPurchaserCount} still missing a purchaser name`
     : props.registryThankYouStats.pendingCount > 0
-      ? `Main gap: ${props.registryThankYouStats.pendingCount} still need a send`
+      ? `Main gap: ${props.registryThankYouStats.pendingCount} still need a thank-you`
       : 'Main gap: no thank-you blockers right now';
   const fundSetupGapLabel = props.fundStats.needsSetup > 0
     ? `Main gap: ${props.fundStats.needsSetup} still need a share path`
@@ -275,7 +275,7 @@ export function RegistryDashboardRouteContent(props: {
     && props.claimStats.missingPurchaserItems === 0
     && props.claimStats.partiallyClaimedItems === 0
     && props.claimStats.remainingQuantity === 0
-    ? 'All claimed gifts are fully attributed and closed out right now.'
+    ? 'All claimed gifts already have a purchaser name and are fully closed out.'
     : null;
   const giftProgressSummaryLabel = props.counts.purchased === 0
     ? 'No gifts purchased yet'
@@ -294,7 +294,7 @@ export function RegistryDashboardRouteContent(props: {
   const thankYouAllClearLabel = props.registryThankYouStats.purchasedCount > 0
     && props.registryThankYouStats.pendingCount === 0
     && props.registryThankYouStats.blockedByMissingPurchaserCount === 0
-    ? 'All thank-you follow-up is fully closed out right now.'
+    ? 'All thank-you follow-up is already closed out right now.'
     : props.registryThankYouStats.purchasedCount === 0
       ? 'No thank-you follow-up is open right now.'
       : null;
@@ -319,7 +319,7 @@ export function RegistryDashboardRouteContent(props: {
         props.alertCounts.outOfStock > 0 ? `${props.alertCounts.outOfStock} out of stock` : null,
       ].filter(Boolean).join(' · ');
   const registryNoteWatchouts = [
-    props.claimStats.missingPurchaserItems > 0 ? `${props.claimStats.missingPurchaserItems} gift${props.claimStats.missingPurchaserItems === 1 ? '' : 's'} missing a purchaser` : null,
+    props.claimStats.missingPurchaserItems > 0 ? `${props.claimStats.missingPurchaserItems} gift${props.claimStats.missingPurchaserItems === 1 ? '' : 's'} still missing a purchaser name` : null,
     props.guestVisibilityStats.blockedGuestItems > 0 ? `${props.guestVisibilityStats.blockedGuestItems} blocked from guests` : null,
     props.registryThankYouStats.pendingCount > 0 ? `${props.registryThankYouStats.pendingCount} thank-you${props.registryThankYouStats.pendingCount === 1 ? '' : 's'} still pending` : null,
     props.fundStats.needsSetup > 0 ? `${props.fundStats.needsSetup} fund${props.fundStats.needsSetup === 1 ? '' : 's'} need a share path` : null,
@@ -516,10 +516,10 @@ export function RegistryDashboardRouteContent(props: {
               <p className="mt-1 text-xs text-text-secondary">
                 {props.claimStats.claimedItems === 0
                   ? 'No claimed gifts yet'
-                  : `${props.claimStats.namedPurchaserItems} attributed${props.claimStats.missingPurchaserItems > 0 ? ` · ${props.claimStats.missingPurchaserItems} need purchaser` : ''}`}
+                  : `${props.claimStats.namedPurchaserItems} with purchaser named${props.claimStats.missingPurchaserItems > 0 ? ` · ${props.claimStats.missingPurchaserItems} still missing purchaser` : ''}`}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
-                {claimAttributionCoverageRate}% purchaser coverage · {fullyClaimedCoverageRate}% fully closed{props.claimStats.partiallyClaimedItems > 0 ? ` · ${partialClaimCoverageRate}% partial (${props.claimStats.partiallyClaimedItems})` : ''}{totalClaimQuantityScope > 0 ? ` · ${claimedQuantityCoverageRate}% quantity claimed (${props.claimStats.claimedQuantity}) · ${unclaimedQuantityCoverageRate}% still unclaimed (${props.claimStats.remainingQuantity})` : ''}
+                {claimAttributionCoverageRate}% purchaser named · {fullyClaimedCoverageRate}% fully claimed{props.claimStats.partiallyClaimedItems > 0 ? ` · ${partialClaimCoverageRate}% partial (${props.claimStats.partiallyClaimedItems})` : ''}{totalClaimQuantityScope > 0 ? ` · ${claimedQuantityCoverageRate}% quantity claimed (${props.claimStats.claimedQuantity}) · ${unclaimedQuantityCoverageRate}% still open (${props.claimStats.remainingQuantity})` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">{claimGapLabel}</p>
               {claimAllClearLabel ? <p className="mt-1 text-xs text-text-tertiary">{claimAllClearLabel}</p> : null}
@@ -540,14 +540,14 @@ export function RegistryDashboardRouteContent(props: {
               <p className="mt-1 text-xs text-text-secondary">
                 {props.registryThankYouStats.purchasedCount === 0
                   ? 'No thank-you follow-up open yet'
-                  : `${props.registryThankYouStats.pendingCount} still pending${props.registryThankYouStats.blockedByMissingPurchaserCount > 0 ? ` · ${props.registryThankYouStats.blockedByMissingPurchaserCount} need purchaser` : ''}`}
+                  : `${props.registryThankYouStats.pendingCount} still need a thank-you${props.registryThankYouStats.blockedByMissingPurchaserCount > 0 ? ` · ${props.registryThankYouStats.blockedByMissingPurchaserCount} still missing purchaser` : ''}`}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
-                {thankYouReadyCoverageRate}% ready now · {props.registryThankYouStats.completionRate}% sent{props.registryThankYouStats.blockedByMissingPurchaserCount > 0 ? ` · ${thankYouBlockedCoverageRate}% blocked` : ''}
+                {thankYouReadyCoverageRate}% ready to send · {props.registryThankYouStats.completionRate}% already sent{props.registryThankYouStats.blockedByMissingPurchaserCount > 0 ? ` · ${thankYouBlockedCoverageRate}% still missing purchaser` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
-                {props.registryThankYouStats.readyToSendCount} ready to send{props.registryThankYouStats.blockedByMissingPurchaserCount > 0 ? ` · ${props.registryThankYouStats.blockedByMissingPurchaserCount} blocked by purchaser` : ''}
-                {props.registryThankYouStats.purchasedCount > 0 ? ` · ${props.registryThankYouStats.attributionCoverageRate}% purchasers named` : ''}
+                {props.registryThankYouStats.readyToSendCount} ready to send{props.registryThankYouStats.blockedByMissingPurchaserCount > 0 ? ` · ${props.registryThankYouStats.blockedByMissingPurchaserCount} still missing purchaser` : ''}
+                {props.registryThankYouStats.purchasedCount > 0 ? ` · ${props.registryThankYouStats.attributionCoverageRate}% with purchaser named` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">{thankYouGapLabel}</p>
               {thankYouAllClearLabel ? <p className="mt-1 text-xs text-text-tertiary">{thankYouAllClearLabel}</p> : null}
@@ -661,13 +661,13 @@ export function RegistryDashboardRouteContent(props: {
                   Purchased gifts: <span className="font-semibold text-text-primary">{props.counts.purchased}</span> · Still open: <span className="font-semibold text-text-primary">{props.counts.available + props.counts.partial}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Claimed gifts: <span className="font-semibold text-text-primary">{props.claimStats.claimedItems}</span> · Attributed: <span className="font-semibold text-text-primary">{props.claimStats.namedPurchaserItems}</span>
+                  Claimed gifts: <span className="font-semibold text-text-primary">{props.claimStats.claimedItems}</span> · Purchasers named: <span className="font-semibold text-text-primary">{props.claimStats.namedPurchaserItems}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Purchaser coverage: <span className="font-semibold text-text-primary">{claimAttributionCoverageRate}%</span> · Fully claimed gifts: <span className="font-semibold text-text-primary">{props.claimStats.fullyClaimedItems}</span>
+                  Purchasers named: <span className="font-semibold text-text-primary">{claimAttributionCoverageRate}%</span> · Fully claimed gifts: <span className="font-semibold text-text-primary">{props.claimStats.fullyClaimedItems}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Partial claims: <span className="font-semibold text-text-primary">{props.claimStats.partiallyClaimedItems}</span> · Missing purchaser: <span className="font-semibold text-text-primary">{props.claimStats.missingPurchaserItems}</span>
+                  Partial claims: <span className="font-semibold text-text-primary">{props.claimStats.partiallyClaimedItems}</span> · Missing purchaser names: <span className="font-semibold text-text-primary">{props.claimStats.missingPurchaserItems}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Claimed quantity: <span className="font-semibold text-text-primary">{props.claimStats.claimedQuantity}</span> · Still open: <span className="font-semibold text-text-primary">{props.claimStats.remainingQuantity}</span>
@@ -689,15 +689,15 @@ export function RegistryDashboardRouteContent(props: {
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   {props.registryThankYouStats.readyToSendCount === 0 && props.registryThankYouStats.blockedByMissingPurchaserCount === 0 ? (
-                    <>No gifts are waiting on send or purchaser cleanup right now</>
+                    <>No gifts are waiting on send or a missing purchaser name right now</>
                   ) : (
                     <>
-                      Ready to send: <span className="font-semibold text-text-primary">{props.registryThankYouStats.readyToSendCount}</span> · Blocked by purchaser: <span className="font-semibold text-text-primary">{props.registryThankYouStats.blockedByMissingPurchaserCount}</span>
+                      Ready to send: <span className="font-semibold text-text-primary">{props.registryThankYouStats.readyToSendCount}</span> · Missing purchaser names: <span className="font-semibold text-text-primary">{props.registryThankYouStats.blockedByMissingPurchaserCount}</span>
                     </>
                   )}
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Purchaser coverage: <span className="font-semibold text-text-primary">{props.registryThankYouStats.attributionCoverageRate}%</span> · Thank-yous sent: <span className="font-semibold text-text-primary">{props.registryThankYouStats.completionRate}%</span>
+                  Purchasers named: <span className="font-semibold text-text-primary">{props.registryThankYouStats.attributionCoverageRate}%</span> · Thank-yous sent: <span className="font-semibold text-text-primary">{props.registryThankYouStats.completionRate}%</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Cash funds received: <span className="font-semibold text-text-primary">${props.fundStats.received.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
@@ -748,7 +748,7 @@ export function RegistryDashboardRouteContent(props: {
                   Multi-quantity gifts in progress: <span className="font-semibold text-text-primary">{props.claimStats.multiQuantityInProgress}</span> · Fully claimed gifts: <span className="font-semibold text-text-primary">{props.claimStats.fullyClaimedItems}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Purchasers named: <span className="font-semibold text-text-primary">{props.registryThankYouPlan.namedPurchaserCount}</span> · Missing purchaser: <span className="font-semibold text-text-primary">{props.registryThankYouPlan.missingPurchaserCount}</span>
+                  Purchasers named: <span className="font-semibold text-text-primary">{props.registryThankYouPlan.namedPurchaserCount}</span> · Missing purchaser names: <span className="font-semibold text-text-primary">{props.registryThankYouPlan.missingPurchaserCount}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   {props.alertCounts.imageIssues === 0 && props.duplicateGroups.length === 0 ? (
@@ -840,7 +840,7 @@ export function RegistryDashboardRouteContent(props: {
                 Purchasers named: {props.registryThankYouPlan.namedPurchaserCount}
               </span>
               <span className="rounded-lg border border-border px-2 py-1 text-text-tertiary">
-                Missing purchaser: {props.registryThankYouPlan.missingPurchaserCount}
+                Missing purchaser names: {props.registryThankYouPlan.missingPurchaserCount}
               </span>
               <span className="rounded-lg border border-border px-2 py-1 text-text-tertiary">
                 Thank-yous sent: {props.registryThankYouPlan.completedCount}

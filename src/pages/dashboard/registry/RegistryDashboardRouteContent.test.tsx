@@ -93,8 +93,8 @@ describe('RegistryDashboardRouteContent', () => {
           items: [{
             id: 'gift-1',
             giftName: 'Dinner plates',
-            purchaserLabel: 'Purchased by Alex',
-            detail: 'Ready for thank-you follow-up.',
+            purchaserLabel: 'Purchaser: Alex',
+            detail: 'Ready for a thank-you.',
             status: 'ready',
             taskStatus: 'todo',
             completedAt: null,
@@ -131,15 +131,15 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(screen.getByText('Thank-you follow-up list')).toBeInTheDocument();
     expect(screen.getByText('Purchasers named: 1')).toBeInTheDocument();
-    expect(screen.getByText('Missing purchaser: 0')).toBeInTheDocument();
+    expect(screen.getByText('Missing purchaser names: 0')).toBeInTheDocument();
     expect(screen.getByText('All gifts already marked purchased')).toBeInTheDocument();
-    expect(screen.getByText('100% purchaser coverage · 100% fully closed · 100% quantity claimed (1) · 0% still unclaimed (0)')).toBeInTheDocument();
-    expect(screen.getByText('Main gap: no claim attribution blockers right now')).toBeInTheDocument();
+    expect(screen.getByText('100% purchaser named · 100% fully claimed · 100% quantity claimed (1) · 0% still open (0)')).toBeInTheDocument();
+    expect(screen.getByText('Main gap: no purchaser-name blockers right now')).toBeInTheDocument();
     expect(screen.getByText('Main gap: no guest-visibility blockers right now')).toBeInTheDocument();
     expect(screen.getByText('Main gap: no thank-you blockers right now')).toBeInTheDocument();
-    expect(screen.getByText('All claimed gifts are fully attributed and closed out right now.')).toBeInTheDocument();
+    expect(screen.getByText('All claimed gifts already have a purchaser name and are fully closed out.')).toBeInTheDocument();
     expect(screen.getAllByText('All gifts ready for guests are visible right now.')).not.toHaveLength(0);
-    expect(screen.getByText('All thank-you follow-up is fully closed out right now.')).toBeInTheDocument();
+    expect(screen.getByText('All thank-you follow-up is already closed out right now.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /save thank-you list/i }));
     fireEvent.click(screen.getByRole('button', { name: /mark sent/i }));
 
@@ -204,7 +204,7 @@ describe('RegistryDashboardRouteContent', () => {
           items: [{
             id: 'gift-1',
             giftName: 'Dinner plates',
-            purchaserLabel: 'Purchaser not recorded yet',
+            purchaserLabel: 'Purchaser still missing',
             detail: 'Add the purchaser before you send a thank-you.',
             status: 'quiet',
             taskStatus: 'needs-purchaser',
@@ -240,9 +240,9 @@ describe('RegistryDashboardRouteContent', () => {
       />,
     );
 
-    expect(screen.getByText('Missing purchaser: 1')).toBeInTheDocument();
+    expect(screen.getByText('Missing purchaser names: 1')).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Purchasers named: 0 · Missing purchaser: 1'),
+      screen.getByText((_, element) => element?.textContent === 'Purchasers named: 0 · Missing purchaser names: 1'),
     ).toBeInTheDocument();
     expect(screen.getByText('Add the purchaser before you send a thank-you.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /review gift/i })).toBeInTheDocument();
@@ -1406,17 +1406,17 @@ describe('RegistryDashboardRouteContent', () => {
     );
 
     expect(screen.getByText('Claimed gifts')).toBeInTheDocument();
-    expect(screen.getByText('2 attributed · 1 need purchaser')).toBeInTheDocument();
-    expect(screen.getByText('67% purchaser coverage · 33% fully closed · 67% partial (2) · 56% quantity claimed (5) · 44% still unclaimed (4)')).toBeInTheDocument();
-    expect(screen.getByText('Main gap: 1 still need purchaser attribution')).toBeInTheDocument();
+    expect(screen.getByText('2 with purchaser named · 1 still missing purchaser')).toBeInTheDocument();
+    expect(screen.getByText('67% purchaser named · 33% fully claimed · 67% partial (2) · 56% quantity claimed (5) · 44% still open (4)')).toBeInTheDocument();
+    expect(screen.getByText('Main gap: 1 still need a purchaser name')).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Claimed gifts: 3 · Attributed: 2'),
+      screen.getByText((_, element) => element?.textContent === 'Claimed gifts: 3 · Purchasers named: 2'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Purchaser coverage: 67% · Fully claimed gifts: 1'),
+      screen.getByText((_, element) => element?.textContent === 'Purchasers named: 67% · Fully claimed gifts: 1'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Partial claims: 2 · Missing purchaser: 1'),
+      screen.getByText((_, element) => element?.textContent === 'Partial claims: 2 · Missing purchaser names: 1'),
     ).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Claimed quantity: 5 · Still open: 4'),
@@ -1497,19 +1497,19 @@ describe('RegistryDashboardRouteContent', () => {
     );
 
     expect(screen.getByText('Thank-yous')).toBeInTheDocument();
-    expect(screen.getByText('2 still pending · 1 need purchaser')).toBeInTheDocument();
-    expect(screen.getByText('33% ready now · 33% sent · 33% blocked')).toBeInTheDocument();
-    expect(screen.getByText('1 ready to send · 1 blocked by purchaser · 67% purchasers named')).toBeInTheDocument();
-    expect(screen.getByText('Main gap: 1 waiting on purchaser attribution')).toBeInTheDocument();
-    expect(screen.getByText('Main watchouts: 1 gift missing a purchaser · 2 thank-yous still pending.')).toBeInTheDocument();
+    expect(screen.getByText('2 still need a thank-you · 1 still missing purchaser')).toBeInTheDocument();
+    expect(screen.getByText('33% ready to send · 33% already sent · 33% still missing purchaser')).toBeInTheDocument();
+    expect(screen.getByText('1 ready to send · 1 still missing purchaser · 67% with purchaser named')).toBeInTheDocument();
+    expect(screen.getByText('Main gap: 1 still missing a purchaser name')).toBeInTheDocument();
+    expect(screen.getByText('Main watchouts: 1 gift still missing a purchaser name · 2 thank-yous still pending.')).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Thank-yous sent: 1 · Still pending: 2'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Ready to send: 1 · Blocked by purchaser: 1'),
+      screen.getByText((_, element) => element?.textContent === 'Ready to send: 1 · Missing purchaser names: 1'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Purchaser coverage: 67% · Thank-yous sent: 33%'),
+      screen.getByText((_, element) => element?.textContent === 'Purchasers named: 67% · Thank-yous sent: 33%'),
     ).toBeInTheDocument();
   });
 
@@ -1586,8 +1586,8 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Guest view')).toBeInTheDocument();
     expect(screen.getByText('1 ready now · 1 already claimed')).toBeInTheDocument();
     expect(screen.getByText('1 stale · 1 price change · 1 out of stock')).toBeInTheDocument();
-    expect(screen.getByText('Snapshot focus: 1 gift missing a purchaser · 1 blocked from guests · 1 thank-you still pending · 3 items worth checking.')).toBeInTheDocument();
-    expect(screen.getByText('Main watchouts: 1 gift missing a purchaser · 1 blocked from guests · 1 thank-you still pending · 3 items worth checking.')).toBeInTheDocument();
+    expect(screen.getByText('Snapshot focus: 1 gift still missing a purchaser name · 1 blocked from guests · 1 thank-you still pending · 3 items worth checking.')).toBeInTheDocument();
+    expect(screen.getByText('Main watchouts: 1 gift still missing a purchaser name · 1 blocked from guests · 1 thank-you still pending · 3 items worth checking.')).toBeInTheDocument();
     expect(screen.getByText('50% visible to guests · 75% ready for guests · 1 hidden when bought · 1 blocked from guests')).toBeInTheDocument();
     expect(screen.getByText('Main gap: 1 still blocked from guests')).toBeInTheDocument();
     expect(

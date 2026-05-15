@@ -152,7 +152,7 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
       label: 'Thank-you list',
       count: thankYouFollowUps,
       detail: thankYouFollowUps > 0
-        ? `${plural(thankYouFollowUps, 'gift')} are in the thank-you follow-up list with ${thankYouAttributionCoverageRate}% purchaser attribution coverage.`
+        ? `${plural(thankYouFollowUps, 'gift')} are in the thank-you list, and ${thankYouAttributionCoverageRate}% already have a purchaser named.`
         : 'No purchased gifts need thank-you follow-up right now.',
       tone: thankYouFollowUps > 0 ? 'ready' : 'ready',
     },
@@ -287,15 +287,15 @@ export function buildRegistryThankYouPlanWithLedger(items: RegistryItem[], ledge
       ? `Thank-you marked sent${entry.completedAt ? ` on ${new Date(entry.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}.`
       : purchaser
         ? partiallyPurchased
-          ? `${entry.quantityPurchased} of ${entry.quantityNeeded} marked purchased. Ready for thank-you follow-up.`
-          : 'Ready for thank-you follow-up.'
+          ? `${entry.quantityPurchased} of ${entry.quantityNeeded} marked purchased. Ready for a thank-you.`
+          : 'Ready for a thank-you.'
         : partiallyPurchased
           ? `${entry.quantityPurchased} of ${entry.quantityNeeded} marked purchased. Add the purchaser before you send a thank-you.`
           : 'Add the purchaser before you send a thank-you.';
     return {
       id: entry.itemId,
       giftName: entry.giftName,
-      purchaserLabel: purchaser ? `Purchased by ${purchaser}` : 'Purchaser not recorded yet',
+      purchaserLabel: purchaser ? `Purchaser: ${purchaser}` : 'Purchaser still missing',
       detail,
       status: entry.status === 'done' ? 'planned' : entry.status === 'todo' ? 'ready' : 'quiet',
       taskStatus: entry.status,
