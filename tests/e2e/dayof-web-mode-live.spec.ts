@@ -1,12 +1,10 @@
 import { expect, test } from '@playwright/test';
-import { signInAsOwner } from './liveOwnerSession';
 import { resolveLiveGuestHubProofContext } from './liveGuestHubProofContext';
 
-test('live guest hub owner auth resolves a real invite-scoped proof context', async ({ page }) => {
+test('live guest hub owner auth resolves a real invite-scoped proof context', async () => {
   test.setTimeout(180_000);
 
-  await signInAsOwner(page);
-  const proofContext = await resolveLiveGuestHubProofContext(page);
+  const proofContext = await resolveLiveGuestHubProofContext();
 
   expect(proofContext.siteId).toBeTruthy();
   expect(proofContext.siteSlug).toBeTruthy();
@@ -17,8 +15,7 @@ test('live guest hub owner auth resolves a real invite-scoped proof context', as
 test('live guest hub proves private day-of visibility, coordinator handoff, and map deep links without token leakage', async ({ page, context }) => {
   test.setTimeout(180_000);
 
-  await signInAsOwner(page);
-  const proofContext = await resolveLiveGuestHubProofContext(page);
+  const proofContext = await resolveLiveGuestHubProofContext();
   const publicHubPath = `/event/${encodeURIComponent(proofContext.siteSlug)}?guestLang=fr&dayofLive=1`;
   const privateHubPath = `/event/${encodeURIComponent(proofContext.siteSlug)}?invite_token=${encodeURIComponent(proofContext.guestInviteToken)}&guestLang=fr&dayofLive=1`;
 

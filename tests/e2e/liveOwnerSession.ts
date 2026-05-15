@@ -2,6 +2,11 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, type Page } from '@playwright/test';
 
+export type OwnerApiSession = {
+  accessToken: string;
+  userId: string;
+};
+
 export function envValue(key: string, fallback = '') {
   if (process.env[key]) return String(process.env[key]);
   const envPath = join(process.cwd(), '.env');
@@ -16,13 +21,50 @@ export function envValue(key: string, fallback = '') {
 }
 
 export async function signInAsOwner(page: Page) {
-  const email = process.env.V1_OWNER_EMAIL || 'test@gmail.com';
-  const password = process.env.V1_OWNER_PASSWORD || '12345678';
+  const { email, password } = ownerCredentials();
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
   await page.getByPlaceholder('your@email.com').fill(email);
   await page.getByPlaceholder('Enter your password').fill(password);
   await page.getByRole('button', { name: /^sign in$/i }).click();
   await expect(page).toHaveURL(/\/dashboard/);
+}
+
+export function ownerCredentials() {
+  return {
+    email: process.env.V1_OWNER_EMAIL || 'test@gmail.com',
+    password: process.env.V1_OWNER_PASSWORD || '12345678',
+  };
+}
+
+export async function signInOwnerViaApi(): Promise<OwnerApiSession> {
+  const supabaseUrl = envValue('VITE_SUPABASE_URL', 'https://atuzuobpprjstfmdnwso.supabase.co');
+  const supabaseAnonKey = envValue('VITE_SUPABASE_ANON_KEY');
+  const { email, password } = ownerCredentials();
+  const signInUrl = new URL('/auth/v1/token', supabaseUrl);
+  signInUrl.searchParams.set('grant_type', 'password');
+
+  const response = await fetch(signInUrl, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseAnonKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  const text = await response.text();
+  expect(response.ok, text).toBeTruthy();
+  const parsed = JSON.parse(text) as {
+    access_token?: string;
+    user?: { id?: string };
+  };
+  expect(parsed.access_token).toBeTruthy();
+  expect(parsed.user?.id).toBeTruthy();
+
+  return {
+    accessToken: parsed.access_token!,
+    userId: parsed.user!.id!,
+  };
 }
 
 export async function readOwnerAuthState(page: Page) {

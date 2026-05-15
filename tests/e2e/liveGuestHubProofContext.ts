@@ -5,6 +5,7 @@ import {
   readOwnerAuthState,
   restFetch,
   restUrl,
+  signInOwnerViaApi,
 } from './liveOwnerSession';
 
 type SiteRow = {
@@ -34,13 +35,18 @@ function formatGuestName(guest: GuestRow): string {
   return guest.name?.trim() || [guest.first_name, guest.last_name].filter(Boolean).join(' ').trim() || 'Guest';
 }
 
-export async function resolveLiveGuestHubProofContext(page: Page): Promise<LiveGuestHubProofContext> {
+export async function resolveLiveGuestHubProofContext(page?: Page): Promise<LiveGuestHubProofContext> {
   const supabaseUrl = envValue('VITE_SUPABASE_URL', 'https://atuzuobpprjstfmdnwso.supabase.co');
   const supabaseAnonKey = envValue('VITE_SUPABASE_ANON_KEY');
   const proofSiteSlug = envValue('V1_PROOF_SITE_SLUG', '').trim().toLowerCase();
-  const authState = await readOwnerAuthState(page);
+  const apiSession = await signInOwnerViaApi();
+  const authState = page
+    ? await readOwnerAuthState(page)
+    : { token: '', userId: '', activeSiteId: '' };
+  const accessToken = authState.token || apiSession.accessToken;
+  const ownerUserId = authState.userId || apiSession.userId;
 
-  expect(authState.token || supabaseAnonKey).toBeTruthy();
+  expect(accessToken || supabaseAnonKey).toBeTruthy();
 
   let siteRow: SiteRow | null = null;
 
@@ -51,7 +57,7 @@ export async function resolveLiveGuestHubProofContext(page: Page): Promise<LiveG
         site_slug: `eq.${proofSiteSlug}`,
         limit: '1',
       }),
-      authHeaders(authState.token, supabaseAnonKey),
+      authHeaders(accessToken, supabaseAnonKey),
     );
     const text = await response.text();
     expect(response.ok, text).toBeTruthy();
@@ -66,7 +72,7 @@ export async function resolveLiveGuestHubProofContext(page: Page): Promise<LiveG
         id: `eq.${authState.activeSiteId}`,
         limit: '1',
       }),
-      authHeaders(authState.token, supabaseAnonKey),
+      authHeaders(accessToken, supabaseAnonKey),
     );
     const text = await response.text();
     expect(response.ok, text).toBeTruthy();
@@ -74,15 +80,15 @@ export async function resolveLiveGuestHubProofContext(page: Page): Promise<LiveG
     siteRow = row ?? null;
   }
 
-  if (!siteRow && authState.userId) {
+  if (!siteRow && ownerUserId) {
     const response = await restFetch(
       restUrl(supabaseUrl, 'wedding_sites', {
         select: 'id,site_slug,user_id',
-        user_id: `eq.${authState.userId}`,
+        user_id: `eq.${ownerUserId}`,
         order: 'created_at.asc',
         limit: '1',
       }),
-      authHeaders(authState.token, supabaseAnonKey),
+      authHeaders(accessToken, supabaseAnonKey),
     );
     const text = await response.text();
     expect(response.ok, text).toBeTruthy();
@@ -101,7 +107,7 @@ export async function resolveLiveGuestHubProofContext(page: Page): Promise<LiveG
       order: 'created_at.asc',
       limit: '250',
     }),
-    authHeaders(authState.token, supabaseAnonKey),
+    authHeaders(accessToken, supabaseAnonKey),
   );
   const guestText = await guestResponse.text();
   expect(guestResponse.ok, guestText).toBeTruthy();
