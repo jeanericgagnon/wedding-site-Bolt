@@ -180,6 +180,40 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
   });
 
+  it('keeps zero closed-out readback explicit when no recipients are closed out yet', () => {
+    render(
+      <MessageDetailModal
+        message={message({
+          recipient_count: 3,
+          delivered_count: 0,
+          failed_count: 3,
+          recipient_filter: {
+            opened_count: 0,
+            viewed_count: 0,
+            clicked_count: 0,
+            replied_count: 0,
+            bounced_count: 0,
+            skipped_count: 0,
+          },
+        })}
+        deliveries={deliveries([])}
+        canManageCampaigns
+        onClose={vi.fn()}
+        onRetry={vi.fn().mockResolvedValue(undefined)}
+        onRetryFailedRecipients={vi.fn().mockResolvedValue(undefined)}
+        onExcludeSkippedRecipients={vi.fn().mockResolvedValue(undefined)}
+        onSendScheduledNow={vi.fn().mockResolvedValue(undefined)}
+        onReschedule={vi.fn().mockResolvedValue(undefined)}
+        onCancelSchedule={vi.fn().mockResolvedValue(undefined)}
+        onLoadIntoComposer={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('0% follow-through ready')).toBeInTheDocument();
+    expect(screen.getByText('No recipients are already closed out')).toBeInTheDocument();
+    expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
+  });
+
   it('keeps queued and partial headers truthful instead of calling them sent', () => {
     const { rerender } = render(
       <MessageDetailModal

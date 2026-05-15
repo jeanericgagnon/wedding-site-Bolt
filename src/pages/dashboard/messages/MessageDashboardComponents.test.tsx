@@ -360,6 +360,27 @@ describe('MessageReachSnapshotCard', () => {
     expect(screen.getByText('3 recipients already closed out')).toBeInTheDocument();
     expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
   });
+
+  it('keeps the top reach snapshot explicit when no recipients are closed out yet', () => {
+    render(
+      <MessageReachSnapshotCard
+        canCompose
+        guests={[{ id: 'guest-1', email: 'alex@example.com' }] as any}
+        knownPhotoLinksCount={0}
+        messages={[
+          { id: 'message-failed', status: 'failed', recipient_count: 3, delivered_count: 0, failed_count: 3, recipient_filter: { skipped_count: 0 } },
+        ] as any}
+        onApplyComposerTemplate={vi.fn()}
+        onApplyDayOfAlertPreset={vi.fn()}
+        onApplySaveTheDatePreset={vi.fn()}
+        onNavigatePhotos={vi.fn()}
+        onQuickCreateSaveTheDateCampaign={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('No recipients are already closed out')).toBeInTheDocument();
+    expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
+  });
 });
 
 describe('MessageReviewQueuePanels', () => {

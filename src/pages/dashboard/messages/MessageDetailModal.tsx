@@ -241,9 +241,9 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 {cleanupReadyCoverageRate != null && (
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{cleanupReadyCoverageRate}% follow-through ready</span>
                 )}
-                {followThroughReadyRecipientCount > 0 && (
-                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{followThroughReadyRecipientCount} recipients already closed out</span>
-                )}
+                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+                  {followThroughReadyRecipientCount > 0 ? `${followThroughReadyRecipientCount} recipients already closed out` : 'No recipients are already closed out'}
+                </span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
                   {cleanupRecipientCount > 0 ? `${cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}
                 </span>
