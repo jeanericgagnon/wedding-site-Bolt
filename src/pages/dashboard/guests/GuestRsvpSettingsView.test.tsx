@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useState, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { buildRsvpAccessModePlan, buildRsvpSetupChecklist, type PersistedRsvpAccessSelection } from '../../../lib/rsvpAccessPlanner';
+import { RSVP_QUESTION_TEMPLATES, buildRsvpAccessModePlan, buildRsvpSetupChecklist, type PersistedRsvpAccessSelection } from '../../../lib/rsvpAccessPlanner';
 import { GuestRsvpSettingsView } from './GuestRsvpSettingsView';
 
 vi.mock('../../../components/dashboard/DashboardLayout', () => ({
@@ -106,7 +106,9 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('templates only · meals off')).toBeInTheDocument();
     expect(screen.getByText('0 of 1 optional layer ready')).toBeInTheDocument();
     expect(screen.getByText('0 of 7 templates live')).toBeInTheDocument();
+    expect(screen.getByText('7 templates still available')).toBeInTheDocument();
     expect(screen.getByText('1 optional improvement still open')).toBeInTheDocument();
+    expect(screen.getByText('Optional upgrades can keep improving after launch')).toBeInTheDocument();
     expect(screen.getByText('First optional gap: Question templates')).toBeInTheDocument();
     expect(screen.getByText(/^Optional$/i)).toBeInTheDocument();
     expect(screen.queryByText(/Main gap:/i)).not.toBeInTheDocument();
@@ -187,7 +189,9 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('templates and meals')).toBeInTheDocument();
     expect(screen.getByText('1 of 2 optional layers ready')).toBeInTheDocument();
     expect(screen.getByText('0 of 7 templates live')).toBeInTheDocument();
+    expect(screen.getByText('7 templates still available')).toBeInTheDocument();
     expect(screen.getByText('1 optional improvement still open')).toBeInTheDocument();
+    expect(screen.getByText('Optional upgrades can keep improving after launch')).toBeInTheDocument();
     expect(screen.getByText('First optional gap: Question templates')).toBeInTheDocument();
     expect(screen.getAllByText('100% ready').length).toBeGreaterThanOrEqual(3);
     expect(screen.getByText('4 of 4 checklist items ready')).toBeInTheDocument();
@@ -197,6 +201,66 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('0% coverage')).toBeInTheDocument();
     expect(screen.getByText('3 total live questions')).toBeInTheDocument();
     expect(screen.queryByText(/Main gap:/i)).not.toBeInTheDocument();
+  });
+
+  it('keeps the optional RSVP lane explicit when every optional upgrade is already ready', () => {
+    const selection: PersistedRsvpAccessSelection = {
+      primaryMode: 'private_link',
+      allowNameLookupBackup: true,
+    };
+    const plan = buildRsvpAccessModePlan({
+      guestCount: 18,
+      inviteTokenCount: 18,
+      householdCount: 7,
+      eventCount: 2,
+      emailCount: 14,
+      phoneCount: 5,
+    }, selection);
+    const recommended = plan.find((mode) => mode.status === 'recommended') ?? plan[0];
+
+    render(
+      <GuestRsvpSettingsView
+        recommendedRsvpAccessMode={recommended}
+        rsvpAccessModePlan={plan}
+        rsvpAccessSelection={selection}
+        rsvpAuditFeed={[]}
+        rsvpAuditLoading={false}
+        rsvpAutoSaveState="idle"
+        rsvpConfigSaving={false}
+        rsvpMealEnabled={true}
+        rsvpMealOptions={['Chicken', 'Vegetarian']}
+        rsvpQuestionTemplateCoverage={RSVP_QUESTION_TEMPLATES.map((template) => ({ key: template.key, added: true }))}
+        rsvpQuestions={[]}
+        rsvpSetupChecklist={buildRsvpSetupChecklist({
+          guestCount: 18,
+          inviteTokenCount: 18,
+          householdCount: 7,
+          eventCount: 2,
+          emailCount: 14,
+          phoneCount: 5,
+          mealEnabled: true,
+          mealOptionCount: 2,
+          questions: [],
+        }, selection)}
+        stats={{ confirmed: 10, declined: 2, pending: 6 }}
+        onAddRsvpQuestionTemplate={vi.fn()}
+        onSaveRsvpConfig={vi.fn()}
+        onSetConfirmDialog={vi.fn()}
+        onSetGuestsTab={vi.fn()}
+        onSetRsvpAccessSelection={vi.fn()}
+        onSetRsvpConfigDirty={vi.fn()}
+        onSetRsvpMealEnabled={vi.fn()}
+        onSetRsvpMealOptions={vi.fn()}
+        onSetRsvpQuestions={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('100% covered')).toBeInTheDocument();
+    expect(screen.getByText('2 of 2 optional layers ready')).toBeInTheDocument();
+    expect(screen.getByText('7 of 7 templates live')).toBeInTheDocument();
+    expect(screen.getByText('No optional gaps open')).toBeInTheDocument();
+    expect(screen.getByText('All optional RSVP upgrades are ready')).toBeInTheDocument();
+    expect(screen.getByText('All core templates are live')).toBeInTheDocument();
   });
 
   it('calls out the first real RSVP setup blocker without treating optional items as blockers', () => {
@@ -259,6 +323,7 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('First optional gap: Question templates')).toBeInTheDocument();
     expect(screen.getByText('0 of 2 optional layers ready')).toBeInTheDocument();
     expect(screen.getByText('0 of 7 templates live')).toBeInTheDocument();
+    expect(screen.getByText('7 templates still available')).toBeInTheDocument();
     expect(screen.getByText('50% ready')).toBeInTheDocument();
     expect(screen.getByText('email only')).toBeInTheDocument();
   });

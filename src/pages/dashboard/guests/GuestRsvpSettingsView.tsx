@@ -461,6 +461,9 @@ export function GuestRsvpSettingsView({
                   <p className="mt-1 text-[11px] text-text-tertiary">
                     {optionalOpenCount === 0 ? 'No optional gaps open' : `${optionalOpenCount} optional improvement${optionalOpenCount === 1 ? '' : 's'} still open`}
                   </p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">
+                    {optionalOpenCount === 0 ? 'All optional RSVP upgrades are ready' : 'Optional upgrades can keep improving after launch'}
+                  </p>
                   {optionalSetupGapLabel && (
                     <p className="mt-1 text-[11px] text-text-tertiary">First optional gap: {optionalSetupGapLabel}</p>
                   )}
@@ -475,6 +478,9 @@ export function GuestRsvpSettingsView({
                 <div className="rounded-md border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Still available</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{missingTemplateCount}</p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">
+                    {missingTemplateCount === 0 ? 'All core templates are live' : `${missingTemplateCount} template${missingTemplateCount === 1 ? '' : 's'} still available`}
+                  </p>
                 </div>
                 <div className="rounded-md border border-border-subtle bg-white/80 p-3">
                   <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Custom questions</p>
