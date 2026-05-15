@@ -367,7 +367,9 @@ export function RegistryDashboardRouteContent(props: {
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Gift progress</p>
               <p className="mt-1 text-2xl font-bold text-text-primary">{props.fulfillmentRate}%</p>
-              <p className="mt-1 text-xs text-text-secondary">Items already marked purchased</p>
+              <p className="mt-1 text-xs text-text-secondary">
+                {props.counts.purchased === 0 ? 'No gifts purchased yet' : 'Items already marked purchased'}
+              </p>
             </Card>
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Claimed gifts</p>
@@ -444,7 +446,11 @@ export function RegistryDashboardRouteContent(props: {
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Worth checking</p>
               <p className="mt-1 text-2xl font-bold text-text-primary">{props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock}</p>
-              <p className="mt-1 text-xs text-text-secondary">Items that may need a quick review</p>
+              <p className="mt-1 text-xs text-text-secondary">
+                {props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock === 0
+                  ? 'Nothing needs review right now'
+                  : 'Items that may need a quick review'}
+              </p>
             </Card>
           </div>
 

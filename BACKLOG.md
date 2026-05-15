@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 09:07 AM PDT`
-- Latest shipped batch: `838be5c8` `Clarify registry zero-state summaries`
+- Last updated: `2026-05-15 09:14 AM PDT`
+- Latest shipped batch: `pending local batch` `Clarify registry quiet summary cards`
 - Latest backlog-cleanup state: current session local-only cleanup is ahead of the last pushed cleanup batch
 - Open backlog lanes: `7`
 - Current session blocker: repeated source-file `Operation timed out` reads are intermittently blocking direct product-code edits in this saturated session
@@ -39,6 +39,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `pending local batch` `Clarify registry quiet summary cards`
   - `838be5c8` `Clarify registry zero-state summaries`
   - `b2ed7c14` `Clarify registry clean-state readback`
   - `pending local batch` `Clarify memory flow lead summaries`
@@ -63,7 +64,7 @@
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 - `registry polish beyond barcode`
-  - latest shipped: the top registry cards now also use direct zero-state readback like `No claimed gifts yet`, `No thank-you follow-up open yet`, `No cash funds added yet`, and `No fund gifts moving yet`, so empty owner states read like intentional product truth instead of count math
+  - latest shipped: the top registry cards now also use quiet-state readback like `No gifts purchased yet` and `Nothing needs review right now`, so empty owner summaries stop sounding like active-state progress cards when nothing has happened yet
 
 ## Work This Next
 
@@ -120,7 +121,7 @@ These are the active product-completion lanes still open after the current launc
    - add authenticated live browser proof for composing and saving each operational segment on the shipped runtime
    - keep SMS/Telnyx live-send behavior deferred until provider/compliance setup is ready
 5. `registry polish beyond barcode`
-   - latest shipped: the top registry cards now also use direct zero-state readback like `No claimed gifts yet`, `No thank-you follow-up open yet`, `No cash funds added yet`, and `No fund gifts moving yet`, so empty owner states read like intentional product truth instead of count math
+   - latest shipped: the top registry cards now also use quiet-state readback like `No gifts purchased yet` and `Nothing needs review right now`, so empty owner summaries stop sounding like active-state progress cards when nothing has happened yet
    - live owner add/import/edit persistence proof is still open
    - stronger owner repair/cleanup runtime proof on production is still open
    - guest-visible purchase-state assertions on production are still open
@@ -148,7 +149,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 09:07 AM PDT` |
+| Current date/time | `2026-05-15 09:14 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |
