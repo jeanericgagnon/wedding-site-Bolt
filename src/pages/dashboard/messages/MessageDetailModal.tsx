@@ -235,6 +235,9 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                   {deliveredRecipients > 0 ? `${deliveredRecipients} recipients delivered` : '0 recipients delivered'}
                 </span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{targetedRecipients} targeted recipients</span>
+                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+                  {deliveredRecipients} of {targetedRecipients} targeted recipients have been delivered
+                </span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Targeted {targetedRecipients}</span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Delivered {message.delivered_count ?? 0}</span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs review {message.failed_count ?? 0}</span>
@@ -252,7 +255,13 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{cleanupReadyCoverageRate}% follow-through ready</span>
                 )}
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+                  {followThroughReadyRecipientCount} of {targetedRecipients} targeted recipients are already closed out
+                </span>
+                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
                   {followThroughReadyRecipientCount > 0 ? `${followThroughReadyRecipientCount} recipients already closed out` : 'No recipients are already closed out'}
+                </span>
+                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+                  {cleanupRecipientCount} of {targetedRecipients} targeted recipients still need cleanup
                 </span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
                   {cleanupRecipientCount > 0 ? `${cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}

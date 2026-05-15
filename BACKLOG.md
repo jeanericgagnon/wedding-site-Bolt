@@ -19,6 +19,7 @@ These are the active product-completion lanes still open after the current launc
    - message-detail header readback now mirrors the same explicit targeting and follow-through truth instead of hiding it below the fold
    - message-detail footer now keeps targeted and cleanup truth explicit too, so the bottom summary no longer drops those lanes in quiet or pre-send cases
    - message-detail review buckets now read back review/contact counts against the total targeted audience, not just as isolated raw counts
+   - message-detail `Next-send review plan` now also reads delivered, closed-out, and still-needs-cleanup states back against the full targeted audience, so modal follow-through truth no longer mixes raw counts with audience-scaled review buckets
    - keep extending normalized delivery and engagement truth across real/live rows
    - prove customer-safe failure grouping against live rows
    - add authenticated live browser proof for composing and saving each operational segment on the shipped runtime
@@ -430,6 +431,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the per-channel history summary now also surfaces delivered, needs-review, needs-contact, and not-reached-yet recipient counts for completed email/SMS campaigns, so owners can compare delivery follow-through by channel without drilling into message detail or the top-level snapshot
    - this batch shipped: recent campaign-thread rollups now also keep needs-contact and not-reached-yet recipient truth together in the same compact warning line, so owners can judge whether a thread needs cleanup or a second send without mentally merging separate badges
    - this batch shipped: active campaign thread chips, latest campaign message chips, and review-queue rows now also surface not-reached-yet recipient counts, so follow-up judgment stays aligned from the summary panels into the thread and review views instead of hiding one delivery gap until deeper message detail
+   - this batch shipped: the message-detail `Next-send review plan` now also reads delivered, closed-out, and still-needs-cleanup states back against the full targeted audience, so modal follow-through truth no longer mixes raw counts with audience-scaled review buckets
    - this batch shipped: the `View needs review` and `View needs follow-up` shortcuts now reset stale thread/search context and carry the right delivery-filter intent into history, so owners land on the queue they meant to inspect instead of a confusing leftover filter combination
    - this batch shipped: the message detail modal now turns the next-send review plan into a concrete follow-through snapshot with delivered, needs-review, needs-contact, and not-reached counts plus cleanup guidance, so owners can choose retry vs exclusion from one place instead of stitching the answer together across separate modal sections
    - this batch shipped: the per-channel history summary now also surfaces normalized opens, clicks, replies, views, and bounces for completed email/SMS campaigns instead of making owners drill into thread cards or message detail to see channel-level traction
