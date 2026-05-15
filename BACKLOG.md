@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 11:17 AM PDT`
-- Latest shipped batch: `221badf9` `Clarify invite-only and public link labels`
+- Last updated: `2026-05-15 11:23 AM PDT`
+- Latest shipped batch: `pending local batch` `Clarify core action all-clear wording`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,6 +24,8 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `pending local batch` `Clarify core action all-clear wording`
+  - `pending local batch` `Clarify invite-only and public link labels`
   - `221badf9` `Clarify invite-only and public link labels`
   - `c01ca92c` `Clarify guest-specific link labels`
   - `18e76e72` `Clarify guest-hub travel action wording`
@@ -89,6 +91,7 @@
   - rerun the guest preview strip/drawer on the shipped runtime
   - prove wrong-guest/right-guest visibility on live auth flows
 - `unified QR guest hub`
+  - latest shipped: the link-access helper now says `No core day-of actions are ready from this link yet` in the true zero-ready state and `This link covers RSVP, schedule details, travel details, and photo follow-through` in the all-clear state, so the no-ready and fully-ready summaries now stay aligned with the newer guest-safe wording instead of mixing in older `timing` and abstract readiness phrasing
   - latest shipped: the shared guest-hub action-label helper now reads `latest updates` and `travel details`, while the non-guest variants now read `Invite-only event link` and `Public wedding link` with `Add RSVP, schedule, travel details, and photo upload to this link` in the all-missing fallback, so all three link-access variants now stay in the same guest-safe wording family instead of mixing product truth with older ops-style labels
   - latest shipped: the real guest-hub link-access generator now reads `Guest-specific link` plus `RSVP, latest updates, travel details, and photo upload`, so the invite-scoped link card, its live EventHub render, and the offline snapshot expectations all stay aligned with the newer guest-safe wording instead of mixing older admin-style labels into the QR hub path
   - latest shipped: the remaining travel action copy now reads more plainly as `Open travel details`, `Copy travel details`, `Save travel details`, and `Check what is ready on this link before relying on it at the venue`, so the travel CTA row and readiness explainer no longer slip back into generic utility wording
@@ -122,6 +125,7 @@ These are the active product-completion lanes still open after the current launc
    - wrong-guest/right-guest live visibility proof is still open
    - authenticated mobile live proof is still open
 2. `unified QR guest hub`
+   - latest shipped: the link-access helper now says `No core day-of actions are ready from this link yet` in the true zero-ready state and `This link covers RSVP, schedule details, travel details, and photo follow-through` in the all-clear state, so the no-ready and fully-ready summaries now match the newer guest-safe wording instead of mixing in older `timing` and abstract readiness phrasing
    - latest shipped: the shared guest-hub action-label helper now reads `latest updates` and `travel details`, while the non-guest variants now read `Invite-only event link` and `Public wedding link` with `Add RSVP, schedule, travel details, and photo upload to this link` in the all-missing fallback, so the invite-only and public QR paths now match the same guest-safe wording family as the guest-specific link path
    - latest shipped: the real guest-hub link-access generator now reads `Guest-specific link` plus `RSVP, latest updates, travel details, and photo upload`, so the invite-scoped link card, its EventHub render, and the offline snapshot expectations now match the newer guest-safe wording instead of mixing older admin-style labels into the QR hub path
    - latest shipped: the remaining travel action copy now reads more plainly as `Open travel details`, `Copy travel details`, `Save travel details`, and `Check what is ready on this link before relying on it at the venue`, so the travel CTA row and readiness explainer now match the newer invite-scoped guest-hub wording instead of older utility copy
@@ -179,7 +183,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 11:17 AM PDT` |
+| Current date/time | `2026-05-15 11:23 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |

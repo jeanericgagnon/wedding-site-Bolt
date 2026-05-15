@@ -86,7 +86,7 @@ describe('dayOfGuestHubStatus', () => {
       actionCountLabel: 'No guest actions are ready from this link yet.',
       actionSummaryLabel: null,
       readyCoreActionCountLabel: null,
-      coreActionCoverageLabel: 'Core day-of actions are not ready from this link yet.',
+      coreActionCoverageLabel: 'No core day-of actions are ready from this link yet.',
       coreActionSummaryLabel: '4 of 4 core day-of actions are still missing from this link: RSVP, schedule, travel details, and photo upload.',
       mainGapLabel: 'Main gap: Add RSVP, schedule, travel details, and photo upload to this link.',
     });
@@ -107,7 +107,7 @@ describe('dayOfGuestHubStatus', () => {
       actionSummaryLabel: 'RSVP, schedule, travel details, and photo upload',
       readyCoreActionCountLabel: '4 of 4 core day-of actions are already ready from this link.',
       coreActionCoverageLabel: '100% of core day-of actions are ready from this link: RSVP, schedule, travel details, and photo upload.',
-      coreActionSummaryLabel: '0 of 4 core day-of actions are still missing from this link. This link covers RSVP, timing, travel, and photo follow-through.',
+      coreActionSummaryLabel: '0 of 4 core day-of actions are still missing from this link. This link covers RSVP, schedule details, travel details, and photo follow-through.',
       mainGapLabel: null,
     });
   });
@@ -126,7 +126,7 @@ describe('dayOfGuestHubStatus', () => {
       actionCountLabel: 'No guest actions are ready from this link yet.',
       actionSummaryLabel: null,
       readyCoreActionCountLabel: null,
-      coreActionCoverageLabel: 'Core day-of actions are not ready from this link yet.',
+      coreActionCoverageLabel: 'No core day-of actions are ready from this link yet.',
       coreActionSummaryLabel: '4 of 4 core day-of actions are still missing from this link: RSVP, schedule, travel details, and photo upload.',
       mainGapLabel: 'Main gap: Add RSVP, schedule, travel details, and photo upload to this link.',
     });

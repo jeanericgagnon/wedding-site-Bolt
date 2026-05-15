@@ -190,10 +190,10 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
     ? `100% of core day-of actions are ready from this link: ${summarizeGuestHubActions(readyCoreActionIds.map((id) => ({ id })))}.`
     : readyCoreActionIds.length > 0
       ? `${coreActionCoverageRate}% core day-of coverage is ready from this link (${readyCoreActionIds.length} of ${coreGuestHubActionIds.length}).`
-      : 'Core day-of actions are not ready from this link yet.';
+      : 'No core day-of actions are ready from this link yet.';
   const coreActionSummaryLabel = missingCoreActionIds.length > 0
     ? `${missingCoreActionIds.length} of ${coreGuestHubActionIds.length} core day-of action${missingCoreActionIds.length === 1 ? ' is' : 's are'} still missing from this link: ${summarizeGuestHubActions(missingCoreActionIds.map((id) => ({ id })))}.`
-    : `0 of ${coreGuestHubActionIds.length} core day-of actions are still missing from this link. This link covers RSVP, timing, travel, and photo follow-through.`;
+    : `0 of ${coreGuestHubActionIds.length} core day-of actions are still missing from this link. This link covers RSVP, schedule details, travel details, and photo follow-through.`;
   const mainGapLabel = missingCoreActionIds.length > 0
     ? `Main gap: ${actionCount === 0 ? 'Add RSVP, schedule, travel details, and photo upload to this link' : `Add ${summarizeGuestHubActions(missingCoreActionIds.map((id) => ({ id })))} to this link`}.`
     : null;
