@@ -256,6 +256,9 @@ function GuestDrawerDetails({
     + (weddingSiteInfo?.site_slug ? 3 : 0)
   );
   const missingPreviewRouteCount = Math.max(totalPotentialPreviewRouteCount - visibilityPreview.links.length, 0);
+  const previewRouteCoverageRate = totalPotentialPreviewRouteCount > 0
+    ? Math.round((visibilityPreview.links.length / totalPotentialPreviewRouteCount) * 100)
+    : null;
 
   return (
     <>
@@ -291,6 +294,8 @@ function GuestDrawerDetails({
             )}
             {totalPotentialPreviewRouteCount > 0 && (
               <p className="text-xs text-text-tertiary">
+                {previewRouteCoverageRate != null ? `${previewRouteCoverageRate}% preview-route coverage` : ''}
+                {previewRouteCoverageRate != null ? ' · ' : ''}
                 {missingPreviewRouteCount === 0
                   ? 'No preview routes missing'
                   : `${missingPreviewRouteCount} preview route${missingPreviewRouteCount === 1 ? '' : 's'} still missing`}
