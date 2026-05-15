@@ -3,7 +3,7 @@
 ## Quick Read
 
 - Last updated: `2026-05-15 12:14 PM PDT`
-- Latest shipped batch: `pending local batch` `Clarify registry guest visibility wording`
+- Latest shipped batch: `ef41ca4e` `Clarify registry guest visibility wording`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,7 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
-  - `pending local batch` `Clarify registry guest visibility wording`
+  - `ef41ca4e` `Clarify registry guest visibility wording`
   - `ce9c2fcc` `Clarify registry fund share wording`
   - `1753e144` `Clarify registry share-readiness wording`
   - `b5112407` `Clarify registry share-readiness labels`
