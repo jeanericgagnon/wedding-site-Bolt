@@ -357,6 +357,11 @@ export function RegistryDashboardRouteContent(props: {
           ? `${registryQuickCheckPolishCount} polish ${registryQuickCheckPolishCount === 1 ? 'cleanup' : 'cleanups'}`
           : null,
       ].filter(Boolean).join(' · ')} worth a quick pass.`;
+  const registryShareReadinessSummary = props.registryLaunchReadiness.status === 'empty'
+    ? 'No guest-facing registry share setup is live yet.'
+    : props.registryLaunchReadiness.reviewCount > 0
+      ? `${props.registryLaunchReadiness.reviewCount} registry share detail${props.registryLaunchReadiness.reviewCount === 1 ? '' : 's'} still need review.`
+      : 'No registry share blockers right now.';
   const giftSnapshotLeadSummary = props.counts.total === 0
     ? 'No registry gifts added yet.'
     : registryNoteWatchouts.length > 0
@@ -584,53 +589,37 @@ export function RegistryDashboardRouteContent(props: {
             </div>
           </Card>
 
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-4 lg:grid-cols-2">
             <Card variant="bordered" padding="lg">
-              <p className="text-sm font-semibold text-text-primary">Top registry progress</p>
-              <p className="mt-1 text-sm text-text-secondary">{topRegistryProgressSummary}</p>
-              <div className="mt-3 space-y-2.5">
-                {props.topRegistryItems.length === 0 ? (
-                  <p className="text-sm text-text-secondary">No top registry gifts to track yet.</p>
-                ) : props.topRegistryItems.map((item) => {
-                  const quantityNeeded = Math.max(item.quantity_needed ?? 1, 1);
-                  const quantityPurchased = item.quantity_purchased ?? 0;
-                  const progress = Math.min(100, Math.round((quantityPurchased / quantityNeeded) * 100));
-                  const remainingQuantity = Math.max(quantityNeeded - quantityPurchased, 0);
-                  return (
-                    <div key={item.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-medium text-text-primary">{item.item_name}</p>
-                        <span className="text-xs text-text-tertiary">{quantityPurchased}/{quantityNeeded}</span>
-                      </div>
-                      <div className="mt-2 h-2 overflow-hidden rounded-lg bg-surface-subtle">
-                        <div className="h-full rounded-lg bg-primary" style={{ width: `${progress}%` }} />
-                      </div>
-                      <p className="mt-2 text-xs text-text-secondary">
-                        {quantityPurchased === 0
-                          ? 'Still fully open'
-                          : remainingQuantity === 0
-                            ? 'Fully claimed'
-                            : `${remainingQuantity} still open`}
-                      </p>
-                    </div>
-                  );
-                })}
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">Registry share readiness</p>
+                  <p className="mt-1 text-sm text-text-secondary">{props.registryLaunchReadiness.headline}</p>
+                </div>
+                <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
+                  {props.registryLaunchReadiness.reviewCount} to review
+                </span>
               </div>
-            </Card>
-
-            <Card variant="bordered" padding="lg">
-              <p className="text-sm font-semibold text-text-primary">Recent registry activity</p>
-              <p className="mt-1 text-sm text-text-secondary">{recentActivitySummary}</p>
-              <div className="mt-3 space-y-2.5">
-                {props.recentActivity.length === 0 ? (
-                  <p className="text-sm text-text-secondary">No recent registry changes yet.</p>
-                ) : props.recentActivity.map((item) => (
+              <p className="mt-3 text-sm text-text-secondary">{props.registryLaunchReadiness.summary}</p>
+              <p className="mt-2 text-xs text-text-tertiary">{registryShareReadinessSummary}</p>
+              <div className="mt-4 space-y-2.5">
+                {props.registryLaunchReadiness.items.length === 0 ? (
+                  <p className="text-sm text-text-secondary">No share-readiness details are listed yet.</p>
+                ) : props.registryLaunchReadiness.items.map((item) => (
                   <div key={item.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-medium text-text-primary">{item.item_name}</p>
-                      <span className="text-xs text-text-tertiary">{formatRegistryPurchaseStatusLabel(item.purchase_status)}</span>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-text-primary">{item.label}</p>
+                      <span className={`rounded-lg border px-2 py-1 text-[11px] ${
+                        item.tone === 'review'
+                          ? 'border-border-subtle bg-primary-light text-primary'
+                          : item.tone === 'planned'
+                            ? 'border-border bg-white text-text-secondary'
+                            : 'border-border bg-white text-text-tertiary'
+                      }`}>
+                        {item.tone === 'review' ? 'Needs review' : item.tone === 'planned' ? 'Planned' : 'Ready'}
+                      </span>
                     </div>
-                    <p className="mt-1 text-xs text-text-secondary">{formatRegistryActivityDetail(item)} · Updated {formatRegistryItemDate(item.updated_at ?? item.created_at)}</p>
+                    <p className="mt-1 text-xs text-text-secondary">{item.detail}</p>
                   </div>
                 ))}
               </div>
@@ -744,6 +733,60 @@ export function RegistryDashboardRouteContent(props: {
                 </div>
               </div>
             </Card>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card variant="bordered" padding="lg">
+              <p className="text-sm font-semibold text-text-primary">Top registry progress</p>
+              <p className="mt-1 text-sm text-text-secondary">{topRegistryProgressSummary}</p>
+              <div className="mt-3 space-y-2.5">
+                {props.topRegistryItems.length === 0 ? (
+                  <p className="text-sm text-text-secondary">No top registry gifts to track yet.</p>
+                ) : props.topRegistryItems.map((item) => {
+                  const quantityNeeded = Math.max(item.quantity_needed ?? 1, 1);
+                  const quantityPurchased = item.quantity_purchased ?? 0;
+                  const progress = Math.min(100, Math.round((quantityPurchased / quantityNeeded) * 100));
+                  const remainingQuantity = Math.max(quantityNeeded - quantityPurchased, 0);
+                  return (
+                    <div key={item.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-text-primary">{item.item_name}</p>
+                        <span className="text-xs text-text-tertiary">{quantityPurchased}/{quantityNeeded}</span>
+                      </div>
+                      <div className="mt-2 h-2 overflow-hidden rounded-lg bg-surface-subtle">
+                        <div className="h-full rounded-lg bg-primary" style={{ width: `${progress}%` }} />
+                      </div>
+                      <p className="mt-2 text-xs text-text-secondary">
+                        {quantityPurchased === 0
+                          ? 'Still fully open'
+                          : remainingQuantity === 0
+                            ? 'Fully claimed'
+                            : `${remainingQuantity} still open`}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+
+            <Card variant="bordered" padding="lg">
+              <p className="text-sm font-semibold text-text-primary">Recent registry activity</p>
+              <p className="mt-1 text-sm text-text-secondary">{recentActivitySummary}</p>
+              <div className="mt-3 space-y-2.5">
+                {props.recentActivity.length === 0 ? (
+                  <p className="text-sm text-text-secondary">No recent registry changes yet.</p>
+                ) : props.recentActivity.map((item) => (
+                  <div key={item.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium text-text-primary">{item.item_name}</p>
+                      <span className="text-xs text-text-tertiary">{formatRegistryPurchaseStatusLabel(item.purchase_status)}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-text-secondary">{formatRegistryActivityDetail(item)} · Updated {formatRegistryItemDate(item.updated_at ?? item.created_at)}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
           </div>
 
           <Card variant="bordered" padding="lg">
