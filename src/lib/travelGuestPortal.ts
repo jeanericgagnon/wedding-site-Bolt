@@ -192,6 +192,7 @@ export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): 
   const plannedCount = steps.filter((step) => step.status === 'planned').length;
   const guestFacingSections = steps.filter((step) => step.id !== 'guest-specific');
   const guestFacingReadyCount = guestFacingSections.filter((step) => step.status === 'ready').length;
+  const guestFacingCoverageRate = Math.round((guestFacingReadyCount / guestFacingSections.length) * 100);
   const missingLabels = steps
     .filter((step) => step.status === 'needs-info' || step.status === 'empty')
     .map((step) => step.label);
@@ -200,6 +201,7 @@ export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): 
     ?? null;
   const coverageBadges = [
     `${guestFacingReadyCount} of ${guestFacingSections.length} guest sections ready`,
+    `${guestFacingCoverageRate}% guest-section coverage`,
     ...(missingLabels.length > 0 ? [`${missingLabels.length} guest section${missingLabels.length === 1 ? '' : 's'} still incomplete`] : []),
     hasLodging ? 'Stay guidance ready' : 'Stay guidance missing',
     venuesAddressed && hasSchedule ? 'Weekend routing ready' : 'Weekend routing missing',
@@ -501,11 +503,17 @@ export function buildTravelHubSpotlight(input: {
   const bookingLinkCount = [firstHotel?.url, firstRoomBlock?.url].filter(Boolean).length;
   const stayReady = Boolean(firstHotel || firstRoomBlock || structured.hotelInfo);
   const weekendTimingReady = visibleEventCount > 0;
+  const coreTravelCoverageRate = Math.round(([
+    stayReady,
+    weekendTimingReady,
+    arrivalGuidanceReady,
+  ].filter(Boolean).length / 3) * 100);
   const badges = [
     ...(guestScoped ? ['Invite-scoped'] : []),
     ...(visibleEventCount > 0 ? [`${visibleEventCount} event window${visibleEventCount === 1 ? '' : 's'}`] : []),
     ...(routeCardCount > 0 ? [`${routeCardCount} route card${routeCardCount === 1 ? '' : 's'}`] : []),
     ...(bookingLinkCount > 0 ? [`${bookingLinkCount} booking link${bookingLinkCount === 1 ? '' : 's'}`] : []),
+    `${coreTravelCoverageRate}% core travel coverage`,
     ...(stayReady ? ['Stay ready'] : []),
     ...(weekendTimingReady ? ['Weekend timing ready'] : []),
     ...(arrivalGuidanceReady ? ['Arrival ready'] : []),
@@ -537,7 +545,9 @@ export function buildTravelHubSpotlight(input: {
     weekendTimingReady ? 'weekend timing' : null,
     arrivalGuidanceReady ? 'arrival guidance' : null,
   ].filter(Boolean);
-  const readinessSummary = readinessLabels.length > 0 ? ` It covers ${readinessLabels.join(', ')}.` : '';
+  const readinessSummary = readinessLabels.length > 0
+    ? ` Core travel coverage is ${coreTravelCoverageRate}%. It covers ${readinessLabels.join(', ')}.`
+    : ` Core travel coverage is ${coreTravelCoverageRate}%.`;
   const summary = guestScoped && visibleEventCount > 0
     ? `${cards.length} travel detail${cards.length === 1 ? '' : 's'} ready from the guest hub, including ${visibleEventCount} visible event window${visibleEventCount === 1 ? '' : 's'} for this invitation.${readinessSummary}`
     : `${cards.length} travel detail${cards.length === 1 ? '' : 's'} ready from the guest hub.${readinessSummary}`;

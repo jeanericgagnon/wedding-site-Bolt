@@ -26,6 +26,7 @@ describe('travelGuestPortal', () => {
     expect(readiness.blockers).toEqual([]);
     expect(readiness.coverageBadges).toEqual([
       '6 of 6 guest sections ready',
+      '100% guest-section coverage',
       'Stay guidance ready',
       'Weekend routing ready',
       'Arrival coverage ready',
@@ -53,6 +54,7 @@ describe('travelGuestPortal', () => {
     expect(readiness.steps.find((step) => step.id === 'local-context')?.status).toBe('empty');
     expect(readiness.coverageBadges).toEqual([
       '0 of 6 guest sections ready',
+      '0% guest-section coverage',
       '6 guest sections still incomplete',
       'Stay guidance missing',
       'Weekend routing missing',
@@ -82,6 +84,7 @@ describe('travelGuestPortal', () => {
     expect(readiness.steps.find((step) => step.id === 'guest-specific')?.status).toBe('ready');
     expect(readiness.coverageBadges).toEqual([
       '5 of 6 guest sections ready',
+      '83% guest-section coverage',
       'Stay guidance ready',
       'Weekend routing ready',
       'Arrival coverage ready',
@@ -102,6 +105,7 @@ describe('travelGuestPortal', () => {
     expect(readiness.steps.find((step) => step.id === 'schedule')?.status).toBe('empty');
     expect(readiness.coverageBadges).toEqual([
       '0 of 6 guest sections ready',
+      '0% guest-section coverage',
       '6 guest sections still incomplete',
       'Stay guidance missing',
       'Weekend routing missing',
@@ -206,9 +210,9 @@ describe('travelGuestPortal', () => {
     });
 
     expect(spotlight).toEqual({
-      summary: '8 travel details ready from the guest hub, including 1 visible event window for this invitation. It covers stay details, weekend timing, arrival guidance.',
+      summary: '8 travel details ready from the guest hub, including 1 visible event window for this invitation. Core travel coverage is 100%. It covers stay details, weekend timing, arrival guidance.',
       travelHref: '/site/maya-and-leo?invite_token=guest-token-123&guestLang=fr#travel',
-      badges: ['Invite-scoped', '1 event window', '1 route card', '2 booking links', 'Stay ready', 'Weekend timing ready', 'Arrival ready'],
+      badges: ['Invite-scoped', '1 event window', '1 route card', '2 booking links', '100% core travel coverage', 'Stay ready', 'Weekend timing ready', 'Arrival ready'],
       mainGapLabel: null,
       cards: [
         { id: 'hotel', label: 'Harbor Hotel', detail: 'Code MAYALEO', href: 'https://harbor.example.com/stay' },
@@ -228,7 +232,7 @@ describe('travelGuestPortal', () => {
       shareText: [
         'DayOf travel quick plan',
         'Guide reflects the events visible for this invitation.',
-        'Coverage: Invite-scoped · 1 event window · 1 route card · 2 booking links · Stay ready · Weekend timing ready · Arrival ready',
+        'Coverage: Invite-scoped · 1 event window · 1 route card · 2 booking links · 100% core travel coverage · Stay ready · Weekend timing ready · Arrival ready',
         'Harbor Hotel: Code MAYALEO',
         'Room block: Harbor Hotel · Code MAYALEO',
         'Ceremony shuttle: Harbor Hotel to venue · Board near the lobby fireplace.',
@@ -244,7 +248,7 @@ describe('travelGuestPortal', () => {
     });
     expect(spotlight?.htmlDocument).toContain('Open the live travel page');
     expect(spotlight?.htmlDocument).toContain('This guide reflects the events visible for this invitation.');
-    expect(spotlight?.htmlDocument).toContain('Invite-scoped · 1 event window · 1 route card · 2 booking links · Stay ready · Weekend timing ready · Arrival ready');
+    expect(spotlight?.htmlDocument).toContain('Invite-scoped · 1 event window · 1 route card · 2 booking links · 100% core travel coverage · Stay ready · Weekend timing ready · Arrival ready');
     expect(spotlight?.htmlDocument).toContain('https://harbor.example.com/stay');
     expect(spotlight?.htmlDocument).toContain('Valet opens at 3:15 PM at the garden gate.');
     expect(spotlight?.htmlDocument).not.toContain('guest-token-123</');
