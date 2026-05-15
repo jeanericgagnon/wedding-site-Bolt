@@ -2,9 +2,9 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 10:09 AM PDT`
-- Latest shipped batch: `fb108199` `Clarify registry cleanup all-clear`
-- Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry cleanup all-clear batch
+- Last updated: `2026-05-15 10:13 AM PDT`
+- Latest shipped batch: `58c399a5` `Clarify registry launch-readiness wording`
+- Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
 - Current transport blocker: none active right now
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `58c399a5` `Clarify registry launch-readiness wording`
   - `fb108199` `Clarify registry cleanup all-clear`
   - `9a90e9a1` `Clarify registry thank-you quiet state`
   - `4a819edd` `Clarify registry zero-state analytics rows`
@@ -61,7 +62,7 @@
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 - `registry polish beyond barcode`
-  - latest shipped: the cleanup/review tools area now keeps the all-clear state explicit with readback like `No imported-gift cleanup work is open right now.` and `No gifts are waiting in the cleanup queue right now.`, so the owner cleanup lane no longer drops into vague silence when imported-gift repair work is actually clear
+  - latest shipped: the registry launch-readiness helper now uses cleaner owner wording like `Registry share setup looks guest-ready.`, `A few registry share details still need review.`, `No gifts are marked purchased yet.`, and `No gifts are set to hide after purchase right now.`, so the next owner surfaces that use this helper inherit the same explicit readback style as the rest of the lane
 
 ## Work This Next
 
@@ -146,7 +147,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 10:09 AM PDT` |
+| Current date/time | `2026-05-15 10:13 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |
