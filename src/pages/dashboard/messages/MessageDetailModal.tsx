@@ -345,6 +345,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 <div>
                   <p className="text-sm font-semibold text-text-primary">Delivery needs attention</p>
                   <p className="mt-1 text-xs text-text-secondary">These recipients need a closer look before another send.</p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">{failedDeliveries.length} of {targetedRecipients} targeted recipients currently need review.</p>
                 </div>
                 <span className="rounded-lg border border-border-subtle bg-white px-2 py-0.5 text-[11px] font-medium text-primary">{failedDeliveries.length} need review</span>
               </div>
@@ -407,6 +408,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 <div>
                   <p className="text-sm font-semibold text-primary">Needs contact details</p>
                   <p className="mt-1 text-xs text-text-secondary">These recipients were part of the audience but still need usable contact details.</p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">{skippedDeliveries.length} of {targetedRecipients} targeted recipients still need contact details.</p>
                 </div>
                 <span className="rounded-lg border border-border-subtle bg-white px-2 py-0.5 text-[11px] font-medium text-text-secondary">{skippedDeliveries.length} need contact</span>
               </div>
