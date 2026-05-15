@@ -324,6 +324,9 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
               {deliveryStats.delivered} delivered · {deliveryStats.failed} need review
             </p>
             <p className="mt-1 text-xs text-text-tertiary">
+              {deliveryStats.delivered} recipients delivered
+            </p>
+            <p className="mt-1 text-xs text-text-tertiary">
               {deliveryStats.targeted} targeted recipients
             </p>
             <p className="mt-1 text-xs text-text-tertiary">

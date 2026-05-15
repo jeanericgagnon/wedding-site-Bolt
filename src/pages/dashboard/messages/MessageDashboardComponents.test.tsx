@@ -44,6 +44,7 @@ describe('MessageCampaignThreadPanels', () => {
     );
 
     expect(screen.getByText('4 delivered · 1 need review')).toBeInTheDocument();
+    expect(screen.getByText('4 recipients delivered')).toBeInTheDocument();
     expect(screen.getByText('6 targeted recipients')).toBeInTheDocument();
     expect(screen.getByText('67% delivered coverage · 17% review coverage · 17% needs contact · 0% unreached')).toBeInTheDocument();
     expect(screen.getByText('33% cleanup still pending')).toBeInTheDocument();
@@ -278,6 +279,7 @@ describe('MessageReachSnapshotCard', () => {
     expect(screen.getByText('Sent 1 · Active 1 · Needs follow-up 1 · Needs review 1')).toBeInTheDocument();
     expect(screen.getByText('50% open rate · 20% click rate · 10% reply rate')).toBeInTheDocument();
     expect(screen.getByText('10 delivered · 2 need review')).toBeInTheDocument();
+    expect(screen.getByText('10 recipients delivered')).toBeInTheDocument();
     expect(screen.getByText('14 targeted recipients')).toBeInTheDocument();
     expect(screen.getByText('1 need contact details · 1 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('71% delivered coverage · 14% review coverage · 7% needs contact · 7% unreached')).toBeInTheDocument();
