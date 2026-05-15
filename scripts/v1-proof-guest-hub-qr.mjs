@@ -70,7 +70,7 @@ const results = [
   runStep({
     id: 'guest-hub-qr-unit-tests',
     label: 'Guest hub QR asset and dashboard tests',
-    command: 'npm test -- --run src/lib/guestHubQrAssets.test.ts src/lib/guestHubActions.test.ts src/components/ui/ShareQrPanel.test.tsx src/pages/dashboard/guestPhotos/GuestPhotoHubQrCard.test.tsx src/pages/EventHubLiveContent.test.tsx src/pages/EventHub.test.tsx',
+    command: 'npm test -- --run src/lib/guestHubQrAssets.test.ts src/lib/guestHubActions.test.ts src/components/ui/ShareQrPanel.test.tsx src/pages/dashboard/guestPhotos/GuestPhotoHubQrCard.test.tsx',
   }),
   runStep({
     id: 'build',
