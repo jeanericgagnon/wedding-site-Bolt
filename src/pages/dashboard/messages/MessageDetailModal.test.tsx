@@ -243,6 +243,8 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('0 bounced')).toBeInTheDocument();
     expect(screen.getByText('0 delivered')).toBeInTheDocument();
     expect(screen.getByText('0 need review')).toBeInTheDocument();
+    expect(screen.getByText('3 targeted recipients')).toBeInTheDocument();
+    expect(screen.getByText('100% cleanup still pending')).toBeInTheDocument();
     expect(screen.getAllByText('0 not reached yet')).not.toHaveLength(0);
     expect(screen.getByText('0 need contact')).toBeInTheDocument();
   });
@@ -277,6 +279,7 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('0 delivered')).toBeInTheDocument();
     expect(screen.getByText('0 need review')).toBeInTheDocument();
+    expect(screen.getByText('4 targeted recipients')).toBeInTheDocument();
     expect(screen.getAllByText('0 not reached yet')).not.toHaveLength(0);
     expect(screen.getByText('0 need contact')).toBeInTheDocument();
     expect(screen.getAllByText('0% open · 0% click · 0% reply')).not.toHaveLength(0);

@@ -462,6 +462,9 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
         {(recipientCount > 0 || message.delivered_count != null || message.failed_count != null) && (
           <div className="px-6 py-3 border-t border-border flex-shrink-0 bg-surface-subtle">
             <div className="flex flex-wrap gap-6 text-sm">
+              <span className="text-text-secondary">
+                {targetedRecipients} targeted recipients
+              </span>
               <span className="flex items-center gap-1.5 text-success">
                 <CheckCircle size={13} />
                 {message.delivered_count ?? 0} delivered
@@ -477,6 +480,18 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
               <span className="flex items-center gap-1.5 text-warning">
                 <AlertCircle size={13} />
                 {skippedDeliveries.length} need contact
+              </span>
+              {cleanupCoverageRate != null && (
+                <span className="text-text-secondary">{cleanupCoverageRate}% cleanup still pending</span>
+              )}
+              {cleanupReadyCoverageRate != null && (
+                <span className="text-text-secondary">{cleanupReadyCoverageRate}% follow-through ready</span>
+              )}
+              <span className="text-text-secondary">
+                {followThroughReadyRecipientCount > 0 ? `${followThroughReadyRecipientCount} recipients already closed out` : 'No recipients are already closed out'}
+              </span>
+              <span className="text-text-secondary">
+                {cleanupRecipientCount > 0 ? `${cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}
               </span>
               {engagement.opened != null && <span className="text-text-secondary">{engagement.opened} opened</span>}
               {engagement.viewed != null && <span className="text-text-secondary">{engagement.viewed} viewed</span>}
