@@ -221,7 +221,7 @@ These are the active product-completion lanes still open after the current launc
    - this lane remains active and unfinished
 7. `DEFERRED`: destination/travel guest portal
    - latest shipped: Safari proved the real guest-hub travel handoff was dropping invite access on the public site route, landing on `This wedding site is not ready to view yet` from the guest-hub travel card; the branch now fixes that shared handoff by treating `invite_token` as a valid public access token in `publicAccessArtifacts` and `SiteView`, the exact `SiteView` load path now has an invite-token regression proof, the live public travel data proof stays green for the production proof guest, and `.vercelignore` now excludes giant local zip/git payload junk that was blocking a real production deploy attempt with `File size ... is greater than 2 GiB`
-   - deferred for now because the remaining travel work is now only to get a clean production deploy/build run in a fresh session and then confirm the shipped runtime in a browser-capable session
+   - deferred for now because deploy is explicitly paused right now; the remaining travel work is only to deploy the invite-handoff fix once deploy is allowed again and then confirm the shipped runtime in a browser-capable session
 
 Archive for deferred/history detail:
 - [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md)
