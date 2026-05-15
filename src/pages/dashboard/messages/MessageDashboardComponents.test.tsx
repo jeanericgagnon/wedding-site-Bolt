@@ -1001,4 +1001,92 @@ describe('MessageHistoryCard', () => {
     expect(screen.getAllByText('0 need contact details · 0 not reached yet')).not.toHaveLength(0);
     expect(screen.getAllByText('Main cleanup: all clear')).not.toHaveLength(0);
   });
+
+  it('keeps history-row delivery summaries explicit before delivery counters land', () => {
+    render(
+      <MessageHistoryCard
+        activeCampaignLatestMessage={null}
+        activeCampaignThread={null}
+        audienceBreakdown={[]}
+        campaignStatusSummary={{ draft: 0, scheduled: 1, sent: 0, partial: 0, failed: 0 }}
+        campaignThreads={[]}
+        canCompose
+        channelBreakdown={{
+          email: { sent: 0, active: 0, scheduled: 1, failed: 0, partial: 0, targeted: 0 },
+          sms: { sent: 0, active: 0, scheduled: 0, failed: 0, partial: 0, targeted: 0 },
+        }}
+        channelDeliveryBreakdown={{
+          email: { delivered: 0, failed: 0, skipped: 0, unreached: 0, targeted: 0, deliveredRate: 0, skippedRate: 0 },
+          sms: { delivered: 0, failed: 0, skipped: 0, unreached: 0, targeted: 0, deliveredRate: 0, skippedRate: 0 },
+        }}
+        channelEngagementBreakdown={{
+          email: { trackedMessages: 0, deliveredRecipients: 0, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0, openRate: 0, clickRate: 0, replyRate: 0 },
+          sms: { trackedMessages: 0, deliveredRecipients: 0, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0, openRate: 0, clickRate: 0, replyRate: 0 },
+        }}
+        deliveries={[]}
+        deliveryHealth={{ successRate: 0, failRate: 0, skipped: 0, skippedRate: 0, overdueScheduled: 0 }}
+        filteredHistory={[
+          {
+            id: 'message-queued',
+            subject: 'Queued save the date',
+            body: 'Waiting to go out.',
+            sent_at: null,
+            scheduled_for: '2026-05-16T18:00:00.000Z',
+            status: 'scheduled',
+            channel: 'email',
+            audience_filter: 'all',
+            recipient_filter: {
+              opened_count: 0,
+              viewed_count: 0,
+              clicked_count: 0,
+              replied_count: 0,
+              bounced_count: 0,
+              skipped_count: 0,
+            },
+            recipient_count: 4,
+            delivered_count: null,
+            failed_count: null,
+          },
+        ] as any}
+        historyAudienceFilter="all"
+        historyCampaignFilter=""
+        historyChannelFilter="all"
+        historyDeliveryFilter="all"
+        historySearch=""
+        historyStatusCounts={{ sent: 0, active: 0, scheduled: 1, partial: 0, failed: 0 }}
+        historyStatusFilter="all"
+        messages={[] as any}
+        providerTelemetry={{ attempted: 0, errorTop: [], sent: 0, sentRate: 0, skipped: 0 }}
+        retryCandidates={[]}
+        retryingMessageId={null}
+        reviewCandidates={[]}
+        onCancelSchedule={vi.fn()}
+        onClearThreadFilter={vi.fn()}
+        onDuplicateLatest={vi.fn()}
+        onEditLatest={vi.fn()}
+        onRescheduleMessage={vi.fn()}
+        onRetry={vi.fn()}
+        onScheduleFollowUp={vi.fn()}
+        onSelectThread={vi.fn()}
+        onSendScheduledNow={vi.fn()}
+        onSetHistoryAudienceFilter={vi.fn()}
+        onSetHistoryCampaignFilter={vi.fn()}
+        onSetHistoryChannelFilter={vi.fn()}
+        onSetHistoryDeliveryFilter={vi.fn()}
+        onSetHistorySearch={vi.fn()}
+        onSetHistoryStatusFilter={vi.fn()}
+        onStartFollowUp={vi.fn()}
+        onViewMessage={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByText('0 delivered · 0 need review')).not.toHaveLength(0);
+    expect(screen.getByText('0 opened')).toBeInTheDocument();
+    expect(screen.getByText('0 viewed')).toBeInTheDocument();
+    expect(screen.getByText('0 clicked')).toBeInTheDocument();
+    expect(screen.getByText('0 replied')).toBeInTheDocument();
+    expect(screen.getByText('0 bounced')).toBeInTheDocument();
+    expect(screen.getByText('0 need contact details')).toBeInTheDocument();
+    expect(screen.getByText('0 not reached yet')).toBeInTheDocument();
+  });
 });

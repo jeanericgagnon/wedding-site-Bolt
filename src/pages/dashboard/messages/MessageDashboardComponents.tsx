@@ -2051,7 +2051,7 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
                         <Users className="w-3 h-3" />
                         {recipientCount} {recipientCount === 1 ? 'recipient' : 'recipients'}
                       </span>
-                      {(typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
+                      {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
                         <span>{message.delivered_count ?? 0} delivered · {message.failed_count ?? 0} need review</span>
                       )}
                       {engagement.opened != null && (
@@ -2089,13 +2089,13 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
                           ? formatMessageHistoryDate(message.sent_at)
                           : 'Draft'}
                       </span>
-                      {(message.delivered_count != null || message.failed_count != null) && (
+                      {(recipientCount > 0 || message.delivered_count != null || message.failed_count != null) && (
                         <span className="flex items-center gap-1 text-success font-medium">
                           <CheckCircle size={10} />
                           {message.delivered_count ?? 0} delivered
                         </span>
                       )}
-                      {(message.delivered_count != null || message.failed_count != null) && (
+                      {(recipientCount > 0 || message.delivered_count != null || message.failed_count != null) && (
                         <span className="flex items-center gap-1 text-error font-medium">
                           <AlertCircle size={10} />
                           {message.failed_count ?? 0} need review
