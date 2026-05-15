@@ -2,19 +2,19 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 02:55 PM PDT`
-- Latest shipped batch: `pending local guest-hub render-free proof batch`
+- Last updated: `2026-05-15 03:00 PM PDT`
+- Latest shipped batch: `pending local guest-hub lane-collapse batch`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry active-proof-lane closure batch
 - Open backlog lanes: `5`
-- Current session blocker: the minimal guest-hub Vitest slice still idles in this saturated session even after clearing duplicate runners, removing fake timers from the offline snapshot proof dependency, restoring real timers, isolating the i18n-backed guest-hub child components from the large render test, removing the redundant EventHub render bundle from the QR proof lane, extracting the pure EventHub helper functions away from the heavy page module, replacing the giant EventHubLiveContent proof dependency with a lean dedicated render-smoke test, and splitting pure helper assertions away from the EventHub boundary test, so the local runner environment remains the current proof blocker after those in-repo blockers were removed
+- Current session blocker: the local runner environment still idles when we try to rerun the narrowed guest-hub proof slice in this saturated session, but the active in-repo proof dependencies have already been reduced to pure helper/unit coverage and the remaining product gap is the live production mobile QR landing proof
 - Current transport blocker: none active right now
 - Blocked this session:
   - `npx vitest run src/pages/dashboard/registry/RegistryDashboardRouteContent.test.tsx` still stalls without producing useful output in this session
 - Work source-code next:
-  - `unified QR guest hub`: keep narrowing the stuck local proof slice until only the live production mobile QR landing proof remains
-- First code retry after the current registry closure batch:
+  - `unified QR guest hub`: rerun the live production mobile proof for public versus guest-specific QR landing behavior when the runner/session path is usable
+- First code retry after the current guest-hub lane-collapse batch:
   - stay on the unified QR guest-hub closure lane
-  - keep removing local proof blockers until the remaining gap is only the live production mobile QR landing proof
+  - treat the live production mobile QR landing proof as the remaining real product gap
 - Best place to scan after each batch:
   - `Quick Read` for the newest timestamp and latest shipped batch
   - `Recent Shipped Work` for the most recent visible progress by lane
@@ -149,7 +149,7 @@
 
 These are the active product-completion lanes still open after the current launch-hardening scope:
 
-- Total open lanes: `7`
+- Total open lanes: `5`
 
 1. `guest-specific preview and visibility confidence`
    - production reruns are still open for the newer guest preview strip and drawer on the shipped runtime
