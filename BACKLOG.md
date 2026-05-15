@@ -2,16 +2,16 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 04:52 PM PDT`
-- Latest shipped batch: `collapse stale messaging live-proof gap`
+- Last updated: `2026-05-15 05:00 PM PDT`
+- Latest shipped batch: `defer messaging live-row lane`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry active-proof-lane closure batch
-- Open backlog lanes: `2`
+- Open backlog lanes: `1`
 - Current session blocker: even a minimal `chromium.launch()` plus `/login` navigation now goes silent in this saturated session, and the same silent hang now blocks the remaining guest-preview live rerun too, so the remaining browser-proof gaps are currently isolated to generic headless browser startup in this session
 - Current transport blocker: none active right now
 - Blocked this session:
   - `npx vitest run src/pages/dashboard/registry/RegistryDashboardRouteContent.test.tsx` still stalls without producing useful output in this session
 - Work source-code next:
-  - `status-based messaging and invitation tracking`: continue the next active live-proof closure lane while guest-preview and QR wait on a fresh browser-capable session
+  - `premium no-app guest photo and memory flow`: continue the remaining active owner-readback lane while guest-preview and QR wait on a fresh browser-capable session and messaging waits on a safe provider-backed live-send lane
 - First code retry after the current guest-preview session defer batch:
   - keep the guest-preview and QR lanes deferred until a fresh session can launch headless browser proof cleanly
   - treat the guest-preview desktop/mobile rerun and the QR live day-of update/status/handoff/map readback as the remaining browser-proof gaps once browser startup is usable again
@@ -133,7 +133,7 @@
   - latest shipped: the owner RSVP settings proof lane is already live-proven through `npm run proof:v1:guests-rsvp-ops` on production, and that lane explicitly includes the owner RSVP settings browser pass for supported primary-mode switching, persisted name-lookup backup truth, template continuity, and the continued `planned` status of code/password/open modes, so the old rerun bullet was stale
 - `status-based messaging and invitation tracking`
   - latest shipped: the authenticated live browser proof for composing and saving each operational segment is already covered by `tests/e2e/messages-comms-center-live.spec.ts` through `npm run proof:v1:comms-center`, which saves real production drafts for save-the-date, RSVP reminder, event reminder, photo request, day-of update, and thank-you flows, so that open bullet was stale
-  - keep live-row delivery and failure grouping proof moving
+  - deferred for now because the only remaining messaging proof theme is customer-safe failure grouping against real live rows, and the proof lane itself says that requires a safe provider-backed live-send lane to be explicitly reopened first
 - `registry polish beyond barcode`
   - rerun owner add/import/edit persistence proof
   - rerun guest-visible purchase-state assertions on production
@@ -146,7 +146,7 @@
 
 These are the active product-completion lanes still open after the current launch-hardening scope:
 
-- Total open lanes: `2`
+- Total open lanes: `1`
 
 1. `DEFERRED THIS SESSION`: guest-specific preview and visibility confidence
    - latest shipped: `proof:v1:guest-preview-confidence` now includes a real authenticated mobile live guest-preview spec for photo upload, travel, registry, and public-site drawer routes on the shipped runtime, while the desktop live spec now proves the real guest drawer path instead of only the lighter public-site open, so the lane no longer has a missing mobile live proof path in repo
@@ -185,7 +185,7 @@ These are the active product-completion lanes still open after the current launc
    - latest shipped: the optional RSVP setup summary now also says `0 optional improvements still open` and `No optional layers need action` in the all-clear state, so the optional lane closes with both the same count-based language and the same all-clear wording family it uses when optional layers still need work
    - latest shipped: the old open rerun note is now removed because the production proof board already records `npm run proof:v1:guests-rsvp-ops` as a `LIVE PASS` on `2026-05-13`, and that proof lane explicitly includes the owner RSVP settings browser pass on the shipped runtime
    - this lane is closed in the active backlog; any future move of code/password/open RSVP beyond `planned` still needs real guest-facing runtime proof before it becomes active work again
-4. `status-based messaging and invitation tracking`
+4. `DEFERRED`: status-based messaging and invitation tracking
    - top-level delivery follow-through and per-channel delivery summaries now also read delivered, closed-out, and still-needs-cleanup states back against the full targeted audience, so the highest-level owner messaging summaries stay aligned with the newer modal and thread follow-through wording
    - recent owner-surface cleanup now keeps row-level pre-send and zero-state targeting, coverage, cleanup, and engagement truth explicit in review/history lists too
    - campaign-thread rollups plus history/review rows now also read delivered, closed-out, and still-needs-cleanup states back against the full targeted audience, so the remaining list surfaces stay aligned with the newer summary, thread, and modal follow-through wording
@@ -199,7 +199,7 @@ These are the active product-completion lanes still open after the current launc
    - message-detail review buckets now read back review/contact counts against the total targeted audience, not just as isolated raw counts
    - message-detail `Next-send review plan` now also reads delivered, closed-out, and still-needs-cleanup states back against the full targeted audience, so modal follow-through truth no longer mixes raw counts with audience-scaled review buckets
    - keep extending normalized delivery and engagement truth across real/live rows
-   - prove customer-safe failure grouping against live rows
+   - deferred for now because the remaining customer-safe failure-grouping proof depends on a real runtime delivery attempt after a safe provider-backed live-send lane is explicitly reopened
    - latest shipped: the old “add authenticated live browser proof for composing and saving each operational segment” note is now removed because the production proof lane already runs `tests/e2e/messages-comms-center-live.spec.ts` through `npm run proof:v1:comms-center`, and that live spec saves real draft rows for save-the-date, RSVP reminder, event reminder, photo request, day-of update, and thank-you flows on the shipped runtime
    - keep SMS/Telnyx live-send behavior deferred until provider/compliance setup is ready
 5. `registry polish beyond barcode`
