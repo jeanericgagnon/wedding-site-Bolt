@@ -201,6 +201,11 @@ export function RegistryDashboardRouteContent(props: {
   const fundReceivingCoverageRate = props.fundStats.count > 0
     ? Math.round((props.fundStats.withProgress / props.fundStats.count) * 100)
     : 0;
+  const claimGapLabel = props.claimStats.missingPurchaserItems > 0
+    ? `Main gap: ${props.claimStats.missingPurchaserItems} still need purchaser attribution`
+    : props.claimStats.partiallyClaimedItems > 0
+      ? `Main gap: ${props.claimStats.partiallyClaimedItems} partial claim${props.claimStats.partiallyClaimedItems === 1 ? '' : 's'} still need follow-through`
+      : 'Main gap: no claim attribution blockers';
   const guestVisibilityGapLabel = props.guestVisibilityStats.blockedGuestItems > 0
     ? `Main gap: ${props.guestVisibilityStats.blockedGuestItems} still blocked from guests`
     : props.guestVisibilityStats.hiddenPurchasedItems > 0
@@ -322,6 +327,7 @@ export function RegistryDashboardRouteContent(props: {
               <p className="mt-1 text-xs text-text-tertiary">
                 {claimAttributionCoverageRate}% purchaser coverage · {props.claimStats.fullyClaimedItems} fully claimed{props.claimStats.partiallyClaimedItems > 0 ? ` · ${props.claimStats.partiallyClaimedItems} partial` : ''}
               </p>
+              <p className="mt-1 text-xs text-text-tertiary">{claimGapLabel}</p>
             </Card>
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Guest view</p>

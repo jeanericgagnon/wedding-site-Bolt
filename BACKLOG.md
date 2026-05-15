@@ -551,6 +551,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the top-level thank-you summary card now also calls out blocked-by-purchaser coverage, so owners can judge how much of the follow-up lane is stalled by missing attribution instead of seeing only sendable and sent coverage
    - this batch shipped: the top-level thank-you summary card now also surfaces purchaser-attribution coverage, so couples can see how much of thank-you follow-up is still blocked by missing giver identity without dropping into the deeper analytics readback
    - this batch shipped: the top-level `Guest view`, `Thank-yous`, and `Cash funds` cards now also call out the main gap in plain language, so couples can tell whether the next fix is blocked guest visibility, missing purchaser attribution, or unfinished fund setup without translating percentages into action by hand
+   - this batch shipped: the top-level `Claimed gifts` card now also calls out the main gap in plain language, so couples can see whether claim cleanup is blocked by missing purchaser attribution or unfinished partial claims without translating attribution and quantity counts by hand
    - add live owner add/import/edit persistence proof for broader registry workflows
    - rerun the stronger owner repair/cleanup runtime proof against the shipped production runtime after the next approved registry deploy
    - rerun the guest-visible purchase-state assertions against the live production runtime after the next approved registry deploy instead of only local/public-component proof
