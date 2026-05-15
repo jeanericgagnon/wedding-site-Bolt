@@ -253,6 +253,7 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
     blockerCount > 0
       ? `${countLabel(blockerCount, 'active blocker')} before sharing`
       : 'No blockers before sharing',
+    ...(highestPriorityGap === null ? ['No memory gaps right now'] : []),
     ...(actionLaneCount > 0 ? [`${actionLaneCount} memory lane${actionLaneCount === 1 ? '' : 's'} still need action`] : []),
     ...(actionStepCount > 0 ? [`${actionStepCount} memory step${actionStepCount === 1 ? '' : 's'} still need action`] : []),
     ...(emptyLaneCount > 0 ? [`${emptyLaneCount} memory lane${emptyLaneCount === 1 ? '' : 's'} still empty`] : []),
