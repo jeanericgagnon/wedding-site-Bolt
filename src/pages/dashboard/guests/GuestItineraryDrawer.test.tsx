@@ -87,7 +87,7 @@ describe('GuestItineraryDrawer', () => {
       expect.stringContaining('data:image/svg+xml'),
     );
     expect(screen.getAllByRole('button', { name: 'Save private card' })).toHaveLength(2);
-    expect(screen.getByText('9 guest routes ready · 6 invite-only · 3 public shell · 1 visible event')).toBeInTheDocument();
+    expect(screen.getByText('9 guest routes ready · 6 guest-specific · 3 public shell · 1 visible event')).toBeInTheDocument();
     expect(screen.getByText('Private guest path ready')).toBeInTheDocument();
     expect(screen.getByText('1 visible event has a private guest path ready.')).toBeInTheDocument();
     expect(screen.queryByText(/Main gap:/i)).not.toBeInTheDocument();

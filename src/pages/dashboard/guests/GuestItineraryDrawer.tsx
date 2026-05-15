@@ -223,7 +223,7 @@ function GuestDrawerDetails({
   const guestRsvpUrl = guest.invite_token
     ? `${window.location.origin}/rsvp?token=${encodeURIComponent(guest.invite_token)}`
     : '';
-  const privatePreviewRouteCount = visibilityPreview.links.filter((link) => (
+  const guestSpecificPreviewRouteCount = visibilityPreview.links.filter((link) => (
     link.kind === 'rsvp'
     || link.kind === 'contact'
     || link.kind === 'photos'
@@ -265,7 +265,7 @@ function GuestDrawerDetails({
           <div className="space-y-1">
             <p className="text-xs text-text-tertiary">
               {visibilityPreview.links.length} guest route{visibilityPreview.links.length === 1 ? '' : 's'} ready
-              {privatePreviewRouteCount > 0 ? ` · ${privatePreviewRouteCount} invite-only` : ''}
+              {guestSpecificPreviewRouteCount > 0 ? ` · ${guestSpecificPreviewRouteCount} guest-specific` : ''}
               {publicPreviewRouteCount > 0 ? ` · ${publicPreviewRouteCount} public shell` : ''}
               {visibleEventCount > 0 ? ` · ${visibleEventCount} visible event${visibleEventCount === 1 ? '' : 's'}` : ''}
               {hiddenEventCount > 0 ? ` · ${hiddenEventCount} hidden event${hiddenEventCount === 1 ? '' : 's'}` : ''}
