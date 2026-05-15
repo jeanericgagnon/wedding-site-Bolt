@@ -347,6 +347,11 @@ export function GuestRsvpSettingsView({
                 ? 'All RSVP access paths are supported today.'
                 : `${supportedRsvpAccessModeCount} of ${safeRsvpAccessModePlan.length} RSVP access path${safeRsvpAccessModePlan.length === 1 ? '' : 's'} supported today · ${plannedRsvpAccessModeCount} still planned.`}
             </p>
+            <p className="text-xs text-text-tertiary">
+              {supportedRsvpAccessModeCount === 0
+                ? 'No RSVP access paths are ready today yet.'
+                : `${supportedRsvpAccessModeCount} RSVP access path${supportedRsvpAccessModeCount === 1 ? ' is' : 's are'} ready today.`}
+            </p>
 
             {verificationInputsChecklistItem ? (
               <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
