@@ -187,6 +187,9 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 {deliveredRecipients > 0 ? `${deliveredRecipients} recipients delivered` : '0 recipients delivered'}
               </p>
               <p className="text-[11px] text-text-tertiary mt-1">{targetedRecipients} targeted recipients</p>
+              <p className="text-[11px] text-text-tertiary mt-1">
+                {deliveredRecipients} of {targetedRecipients} targeted recipients have been delivered
+              </p>
               {deliveredCoverageRate != null && reviewCoverageRate != null && contactCoverageRate != null && unreachedCoverageRate != null && (
                 <p className="text-[11px] text-text-tertiary mt-1">
                   {deliveredCoverageRate}% delivered coverage · {reviewCoverageRate}% review coverage · {contactCoverageRate}% needs contact · {unreachedCoverageRate}% unreached
@@ -196,7 +199,13 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 <p className="text-[11px] text-text-tertiary mt-1">{cleanupReadyCoverageRate}% follow-through ready</p>
               )}
               <p className="text-[11px] text-text-tertiary mt-1">
+                {followThroughReadyRecipientCount} of {targetedRecipients} targeted recipients are already closed out
+              </p>
+              <p className="text-[11px] text-text-tertiary mt-1">
                 {followThroughReadyRecipientCount > 0 ? `${followThroughReadyRecipientCount} recipients already closed out` : 'No recipients are already closed out'}
+              </p>
+              <p className="text-[11px] text-text-tertiary mt-1">
+                {cleanupRecipientCount} of {targetedRecipients} targeted recipients still need cleanup
               </p>
               <p className="text-[11px] text-text-tertiary mt-1">
                 {cleanupRecipientCount > 0 ? `${cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}
