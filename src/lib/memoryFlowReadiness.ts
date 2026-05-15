@@ -260,7 +260,7 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
   return {
     readyCount: readyStepCount,
     summaryBadges,
-    mainGapLabel: highestPriorityGap ? `Main gap: ${highestPriorityGap.label}` : null,
+    mainGapLabel: highestPriorityGap ? `Main gap: ${highestPriorityGap.label}` : 'Main gap: none right now',
     lanes,
     steps,
     blockers,

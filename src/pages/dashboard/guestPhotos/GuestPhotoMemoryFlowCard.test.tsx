@@ -9,7 +9,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
         memoryFlowReadiness={{
           readyCount: 5,
           summaryBadges: ['4 of 4 memory lanes ready', '89% step coverage', '8 of 9 memory steps ready', '12 uploads live across 1 active album', 'Private recap link', '33% story coverage', 'Handoff ready', '1 opt-in captured', '1 memory step still planned'],
-          mainGapLabel: null,
+          mainGapLabel: 'Main gap: none right now',
           lanes: [
             { id: 'collection', label: 'Collection', detail: '12 uploads across 1 active album, including 1 video.', status: 'ready' },
             { id: 'curation', label: 'Curation', detail: '3 curated picks and 6 slideshow frames are ready for recap review.', status: 'ready' },
@@ -43,6 +43,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
     expect(screen.getByText('Handoff ready')).toBeInTheDocument();
     expect(screen.getByText('1 opt-in captured')).toBeInTheDocument();
     expect(screen.getByText('1 memory step still planned')).toBeInTheDocument();
+    expect(screen.getByText('Main gap: none right now')).toBeInTheDocument();
     expect(screen.getByText('No active blockers before sharing broadly.')).toBeInTheDocument();
     expect(screen.getByText('12 uploads across 1 active album, including 1 video.')).toBeInTheDocument();
     expect(screen.getByText('Recap is private-link ready with 3 curated picks, including 1 story pick (33% story coverage).')).toBeInTheDocument();
