@@ -223,7 +223,7 @@ export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): 
     coverageBadges,
     summary: missingLabels.length > 0
       ? `${readyCount} ready · ${needsInfoCount} need info · ${emptyCount} empty${plannedCount > 0 ? ` · ${plannedCount} planned` : ''}.${highestPriorityGap ? ` First blocker: ${highestPriorityGap.label}.` : ''} Still missing: ${missingLabels.join(', ')}.`
-      : `${readyCount} ready${plannedCount > 0 ? ` · ${plannedCount} planned` : ''}. No travel gaps right now. No active blockers.`,
+      : `${readyCount} ready${plannedCount > 0 ? ` · ${plannedCount} planned` : ''}. No travel gaps right now. No guest sections incomplete. No active blockers.`,
     mainGapLabel: highestPriorityGap ? `Main gap: ${highestPriorityGap.label}` : 'Main gap: none right now',
     steps,
     blockers,
@@ -566,7 +566,7 @@ export function buildTravelHubSpotlight(input: {
     arrivalGuidanceReady ? 'arrival guidance' : null,
   ].filter(Boolean);
   const readinessSummary = readinessLabels.length > 0
-    ? ` Core travel coverage is ${coreTravelCoverageRate}%. It covers ${readinessLabels.join(', ')}.${missingCoreTravelCount > 0 ? ` ${missingCoreTravelCount} of 3 core travel layers still need setup.` : ''}`
+    ? ` Core travel coverage is ${coreTravelCoverageRate}%. It covers ${readinessLabels.join(', ')}.${missingCoreTravelCount > 0 ? ` ${missingCoreTravelCount} of 3 core travel layers still need setup.` : ' All 3 core travel layers are ready.'}`
     : ` Core travel coverage is ${coreTravelCoverageRate}%.`;
   const coverageSummaryParts = [
     ...(guestScoped && visibleEventCount > 0 ? [`${visibleEventCount} visible event window${visibleEventCount === 1 ? '' : 's'} for this invitation`] : []),

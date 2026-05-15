@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 08:47 AM PDT`
-- Latest shipped batch: `79e76e63` `Clarify RSVP and travel all-clear follow-through`
+- Last updated: `2026-05-15 09:00 AM PDT`
+- Latest shipped batch: `pending local batch` `Clarify travel all-clear summaries`
 - Latest backlog-cleanup state: current session local-only cleanup is ahead of the last pushed cleanup batch
 - Open backlog lanes: `7`
 - Current session blocker: repeated source-file `Operation timed out` reads are intermittently blocking direct product-code edits in this saturated session
@@ -39,6 +39,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `pending local batch` `Clarify travel all-clear summaries`
   - `79e76e63` `Clarify RSVP and travel all-clear follow-through`
   - `c59192e0` `Record backlog session blocker` `local only`
   - `28c413f6` `Add backlog next-step scan`
@@ -55,7 +56,7 @@
 - `premium no-app guest photo and memory flow`
   - latest shipped: the top-level photo/memory badge row now stays explicit with `No memory gaps right now`, `No memory lanes need action`, and `No memory steps need action` in the all-clear state
 - `destination/travel guest portal`
-  - latest shipped: the guest-hub `Travel quick plan` badge row now stays explicit with `No core travel gaps`, and the owner travel-portal readiness badge row now also stays explicit with `No travel gaps` and `No guest sections incomplete`
+  - latest shipped: the owner travel-portal readiness summary now also says `No guest sections incomplete`, and the guest-hub `Travel quick plan` summary now also says `All 3 core travel layers are ready`, so those all-clear truths no longer live only in the smaller badge rows
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 
@@ -125,7 +126,7 @@ These are the active product-completion lanes still open after the current launc
    - this lane remains active and unfinished
 7. `destination/travel guest portal`
    - latest shipped: the guest-hub `Travel quick plan` badge row now stays explicit with `No core travel gaps` in the all-clear state instead of leaving that truth only in the prose summary
-   - latest shipped: the owner travel-portal readiness badge row now also stays explicit with `No travel gaps` and `No guest sections incomplete` in the all-clear state instead of leaving that truth only in the summary sentence
+   - latest shipped: the owner travel-portal readiness summary now also says `No guest sections incomplete`, and the guest-hub `Travel quick plan` summary now also says `All 3 core travel layers are ready`, so the all-clear truth is explicit in the lead readback instead of living only in badge rows
    - this lane remains active and unfinished
 
 Archive for deferred/history detail:
@@ -143,7 +144,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 08:47 AM PDT` |
+| Current date/time | `2026-05-15 09:00 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |
