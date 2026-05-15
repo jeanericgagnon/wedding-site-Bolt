@@ -43,6 +43,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
     expect(screen.getByText('Handoff ready')).toBeInTheDocument();
     expect(screen.getByText('1 opt-in captured')).toBeInTheDocument();
     expect(screen.getByText('1 memory step still planned')).toBeInTheDocument();
+    expect(screen.getByText('No active blockers before sharing broadly.')).toBeInTheDocument();
     expect(screen.getByText('12 uploads across 1 active album, including 1 video.')).toBeInTheDocument();
     expect(screen.getByText('Recap is private-link ready with 3 curated picks, including 1 story pick (33% story coverage).')).toBeInTheDocument();
     expect(screen.getByText('Owner handoff export and full-resolution download are ready from 12 reviewed uploads.')).toBeInTheDocument();
@@ -86,6 +87,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
     expect(screen.getByText('4 memory lanes still empty')).toBeInTheDocument();
     expect(screen.getByText('6 memory steps still empty')).toBeInTheDocument();
     expect(screen.getByText('2 memory steps still planned')).toBeInTheDocument();
+    expect(screen.getByText('Turn on at least one guest action before printing the hub QR.')).toBeInTheDocument();
   });
 
   it('shows the first blocker in the top badge row when the lane needs action', () => {
@@ -128,6 +130,7 @@ describe('GuestPhotoMemoryFlowCard', () => {
     expect(screen.getByText('2 memory steps still empty')).toBeInTheDocument();
     expect(screen.getByText('2 memory steps still planned')).toBeInTheDocument();
     expect(screen.getByText('First blocker: No-app guest hub')).toBeInTheDocument();
+    expect(screen.getByText('Albums exist, but none are active for guest uploads.')).toBeInTheDocument();
     expect(screen.queryByText('memory lanes still empty')).not.toBeInTheDocument();
   });
 });

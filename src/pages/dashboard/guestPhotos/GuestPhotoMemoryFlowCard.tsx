@@ -72,16 +72,22 @@ export function GuestPhotoMemoryFlowCard({ memoryFlowReadiness }: GuestPhotoMemo
           </div>
         ))}
       </div>
-      {memoryFlowReadiness.blockers.length > 0 && (
-        <div className="mt-4 rounded-lg border border-warning/20 bg-warning/5 p-4">
-          <p className="text-sm font-semibold text-text-primary">Before sharing broadly</p>
+      <div className={`mt-4 rounded-lg p-4 ${
+        memoryFlowReadiness.blockers.length > 0
+          ? 'border border-warning/20 bg-warning/5'
+          : 'border border-success/20 bg-success/5'
+      }`}>
+        <p className="text-sm font-semibold text-text-primary">Before sharing broadly</p>
+        {memoryFlowReadiness.blockers.length > 0 ? (
           <ul className="mt-2 space-y-1 text-xs text-text-secondary">
             {memoryFlowReadiness.blockers.map((blocker) => (
               <li key={blocker}>{blocker}</li>
             ))}
           </ul>
-        </div>
-      )}
+        ) : (
+          <p className="mt-2 text-xs text-text-secondary">No active blockers before sharing broadly.</p>
+        )}
+      </div>
     </Card>
   );
 }
