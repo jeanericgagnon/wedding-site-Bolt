@@ -244,6 +244,10 @@ function GuestDrawerDetails({
     : null;
   const visibleEventCount = visibilityPreview.visibleEvents.length;
   const hiddenEventCount = visibilityPreview.hiddenEvents.length;
+  const totalEventVisibilityCount = visibleEventCount + hiddenEventCount;
+  const visibleEventCoverageRate = totalEventVisibilityCount > 0
+    ? Math.round((visibleEventCount / totalEventVisibilityCount) * 100)
+    : null;
   const guestContactUrl = visibilityPreview.links.find((link) => link.kind === 'contact')
     ? `${window.location.origin}${visibilityPreview.links.find((link) => link.kind === 'contact')?.href ?? ''}`
     : '';
@@ -290,6 +294,11 @@ function GuestDrawerDetails({
                 {guestSpecificCoverageRate != null ? `${guestSpecificCoverageRate}% guest-specific coverage` : ''}
                 {guestSpecificCoverageRate != null && publicShellCoverageRate != null ? ' · ' : ''}
                 {publicShellCoverageRate != null ? `${publicShellCoverageRate}% public-shell coverage` : ''}
+              </p>
+            )}
+            {visibleEventCoverageRate != null && (
+              <p className="text-xs text-text-tertiary">
+                {visibleEventCoverageRate}% event visibility coverage
               </p>
             )}
             {totalPotentialPreviewRouteCount > 0 && (
