@@ -3,7 +3,7 @@
 ## Quick Read
 
 - Last updated: `2026-05-15 09:14 AM PDT`
-- Latest shipped batch: `pending local batch` `Clarify registry quiet summary cards`
+- Latest shipped batch: `3aa83255` `Clarify registry quiet summary cards`
 - Latest backlog-cleanup state: current session local-only cleanup is ahead of the last pushed cleanup batch
 - Open backlog lanes: `7`
 - Current session blocker: repeated source-file `Operation timed out` reads are intermittently blocking direct product-code edits in this saturated session
@@ -39,7 +39,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
-  - `pending local batch` `Clarify registry quiet summary cards`
+  - `3aa83255` `Clarify registry quiet summary cards`
   - `838be5c8` `Clarify registry zero-state summaries`
   - `b2ed7c14` `Clarify registry clean-state readback`
   - `pending local batch` `Clarify memory flow lead summaries`
