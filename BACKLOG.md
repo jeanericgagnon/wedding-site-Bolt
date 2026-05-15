@@ -3,7 +3,7 @@
 ## Quick Read
 
 - Last updated: `2026-05-15 10:24 AM PDT`
-- Latest shipped batch: `TBD` `Clarify registry cleanup-queue summaries`
+- Latest shipped batch: `4be3b652` `Clarify registry cleanup-queue summaries`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,7 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
-  - `TBD` `Clarify registry cleanup-queue summaries`
+  - `4be3b652` `Clarify registry cleanup-queue summaries`
   - `68ffcdc6` `Clarify registry share-readiness card`
   - `58c399a5` `Clarify registry launch-readiness wording`
   - `fb108199` `Clarify registry cleanup all-clear`
