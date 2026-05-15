@@ -3,7 +3,7 @@
 ## Quick Read
 
 - Last updated: `2026-05-15 08:47 AM PDT`
-- Latest shipped batch: `pending local batch` `Clarify RSVP and travel all-clear follow-through`
+- Latest shipped batch: `79e76e63` `Clarify RSVP and travel all-clear follow-through`
 - Latest backlog-cleanup state: current session local-only cleanup is ahead of the last pushed cleanup batch
 - Open backlog lanes: `7`
 - Current session blocker: repeated source-file `Operation timed out` reads are intermittently blocking direct product-code edits in this saturated session
@@ -39,7 +39,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
-  - `pending local batch` `Clarify RSVP and travel all-clear follow-through`
+  - `79e76e63` `Clarify RSVP and travel all-clear follow-through`
   - `c59192e0` `Record backlog session blocker` `local only`
   - `28c413f6` `Add backlog next-step scan`
   - `fe751e70` `Tighten backlog latest batch scan`
