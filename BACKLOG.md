@@ -592,6 +592,7 @@ Paused next-priority bucket when backlog work resumes:
    - prove owner moderation readback after real live uploads
 
 7. `ACTIVE`: destination/travel guest portal
+   - the owner travel-portal readiness badges now also say how many active blockers remain, so couples can size the live setup burden from the first scan instead of only from the longer summary sentence
    - the owner travel-portal readiness summary now keeps the all-clear explicit when travel is fully ready, so couples get a plain “no travel gaps right now” readback instead of a bare ready count
    - the owner travel-portal readiness card now keeps the `Main gap` line explicit even in the all-clear state, so couples get a plain “none right now” readback instead of inferring it from a missing label
    - the guest-hub `Travel quick plan` summary now also says how many of the three core travel layers still need setup when coverage is partial, so guests can tell whether the lane is missing one core layer or most of the travel flow without relying only on the badge row
@@ -616,6 +617,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the guest-hub travel journey card now reads back both ready and still-needs-setup steps, with per-step state labels, so the mobile guest path no longer looks complete when RSVP or photo follow-through is still missing
    - this batch shipped: the guest-hub `Travel quick plan` now also calls out the main missing travel layer in plain language, so guests can see whether stay details, weekend timing, or arrival guidance are the next fix instead of translating the badges by hand
    - this batch shipped: the guest-hub `Travel quick plan` summary now also says how many of the three core travel layers still need setup when coverage is partial, so guests can tell whether the lane is missing one core layer or most of the travel flow without relying only on the badge row
+   - this batch shipped: the owner travel-portal readiness badges now also say how many active blockers remain, so couples can size the live setup burden from the first scan instead of only from the longer summary sentence
    - this batch shipped: the owner travel-portal readiness summary now keeps the all-clear explicit when travel is fully ready, so couples get a plain “no travel gaps right now” readback instead of a bare ready count
    - this batch shipped: the owner travel-portal readiness card now keeps the `Main gap` line explicit even in the all-clear state, so couples get a plain “none right now” readback instead of inferring it from a missing label
    - this batch shipped: the owner travel-portal readiness badges and the guest-hub `Travel quick plan` now also normalize travel completeness as percentages, so couples and guests can judge travel-lane coverage at a glance instead of translating raw `5 of 6` or layer-by-layer readiness by hand

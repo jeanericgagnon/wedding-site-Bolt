@@ -186,6 +186,7 @@ export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): 
   const blockers = steps
     .filter((step) => step.status === 'needs-info')
     .map((step) => step.detail);
+  const blockerCount = blockers.length;
   const readyCount = steps.filter((step) => step.status === 'ready').length;
   const needsInfoCount = steps.filter((step) => step.status === 'needs-info').length;
   const emptyCount = steps.filter((step) => step.status === 'empty').length;
@@ -203,6 +204,9 @@ export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): 
     `${readyCount} of ${steps.length} travel sections ready`,
     `${guestFacingReadyCount} of ${guestFacingSections.length} guest sections ready`,
     `${guestFacingCoverageRate}% guest-section coverage`,
+    blockerCount > 0
+      ? `${blockerCount} active blocker${blockerCount === 1 ? '' : 's'}`
+      : 'No active blockers',
     ...(missingLabels.length > 0 ? [`${missingLabels.length} guest section${missingLabels.length === 1 ? '' : 's'} still incomplete`] : []),
     hasLodging ? 'Stay guidance ready' : 'Stay guidance missing',
     venuesAddressed && hasSchedule ? 'Weekend routing ready' : 'Weekend routing missing',
