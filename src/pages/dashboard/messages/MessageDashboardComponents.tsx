@@ -2279,7 +2279,7 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
                       {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
                         <span>{rowSummary.openRate}% open · {rowSummary.clickRate}% click · {rowSummary.replyRate}% reply</span>
                       )}
-                      <span>{describeRecipientReview(rowSummary.skippedRecipients)}</span>
+                      <span>{rowSummary.skippedRecipients} need contact details</span>
                       <span>{rowSummary.unreachedRecipients} not reached yet</span>
                       {getCampaignTypeLabel(message) && (
                         <span className="px-2 py-0.5 bg-surface-subtle text-text-secondary rounded border border-border-subtle">
