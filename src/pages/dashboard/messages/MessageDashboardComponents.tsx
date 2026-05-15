@@ -300,21 +300,17 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
       </div>
       <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3">
         <p className="text-xs font-semibold text-text-tertiary">Engagement signals</p>
-        {engagementSummary.trackedMessages > 0 ? (
-          <>
-            <p className="mt-2 text-sm text-text-primary">
-              {engagementSummary.opened} opened · {engagementSummary.clicked} clicked · {engagementSummary.replied} replied
-            </p>
-            <p className="mt-1 text-xs text-text-tertiary">
-              {engagementSummary.viewed} viewed across guest pages · {engagementSummary.bounced} bounced
-            </p>
-            <p className="mt-1 text-xs text-text-tertiary">
-              {engagementSummary.openRate}% open rate · {engagementSummary.clickRate}% click rate · {engagementSummary.replyRate}% reply rate
-            </p>
-          </>
-        ) : (
-          <p className="mt-2 text-sm text-text-secondary">Shows once completed campaigns start collecting opens, clicks, replies, or bounces.</p>
-        )}
+        <>
+          <p className="mt-2 text-sm text-text-primary">
+            {engagementSummary.opened} opened · {engagementSummary.clicked} clicked · {engagementSummary.replied} replied
+          </p>
+          <p className="mt-1 text-xs text-text-tertiary">
+            {engagementSummary.viewed} viewed across guest pages · {engagementSummary.bounced} bounced
+          </p>
+          <p className="mt-1 text-xs text-text-tertiary">
+            {engagementSummary.openRate}% open rate · {engagementSummary.clickRate}% click rate · {engagementSummary.replyRate}% reply rate
+          </p>
+        </>
       </div>
       <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3">
         <p className="text-xs font-semibold text-text-tertiary">Delivery follow-through</p>
@@ -1294,7 +1290,7 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
               )}
             </>
           )}
-          {channelEngagementBreakdown[channel].trackedMessages > 0 && (
+          {channelBreakdown[channel].targeted > 0 && (
             <>
               <p className="mt-1 text-xs text-text-primary">
                 {channelEngagementBreakdown[channel].opened} opened · {channelEngagementBreakdown[channel].clicked} clicked · {channelEngagementBreakdown[channel].replied} replied

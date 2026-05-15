@@ -553,6 +553,29 @@ describe('MessageReachSnapshotCard', () => {
     expect(screen.getByText('No recipients are already closed out')).toBeInTheDocument();
     expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
   });
+
+  it('keeps the top reach engagement summary explicit before any tracked campaigns land', () => {
+    render(
+      <MessageReachSnapshotCard
+        canCompose
+        guests={[{ id: 'guest-1', email: 'alex@example.com' }] as any}
+        knownPhotoLinksCount={0}
+        messages={[
+          { id: 'message-queued', status: 'queued' },
+          { id: 'message-failed', status: 'failed', recipient_count: 2, delivered_count: 0, failed_count: 2 },
+        ] as any}
+        onApplyComposerTemplate={vi.fn()}
+        onApplyDayOfAlertPreset={vi.fn()}
+        onApplySaveTheDatePreset={vi.fn()}
+        onNavigatePhotos={vi.fn()}
+        onQuickCreateSaveTheDateCampaign={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('0 opened · 0 clicked · 0 replied')).toBeInTheDocument();
+    expect(screen.getByText('0 viewed across guest pages · 0 bounced')).toBeInTheDocument();
+    expect(screen.getByText('0% open rate · 0% click rate · 0% reply rate')).toBeInTheDocument();
+  });
 });
 
 describe('MessageReviewQueuePanels', () => {
@@ -743,5 +766,66 @@ describe('MessageHistoryCard', () => {
     expect(screen.getByText('0 bounced')).toBeInTheDocument();
     expect(screen.getByText('0 need contact details')).toBeInTheDocument();
     expect(screen.getByText('0 not reached yet')).toBeInTheDocument();
+  });
+
+  it('keeps channel engagement summaries explicit before a channel has tracked campaigns', () => {
+    render(
+      <MessageHistoryCard
+        activeCampaignLatestMessage={null}
+        activeCampaignThread={null}
+        audienceBreakdown={[]}
+        campaignStatusSummary={{ draft: 0, scheduled: 0, sent: 0, partial: 1, failed: 1 }}
+        campaignThreads={[]}
+        canCompose
+        channelBreakdown={{
+          email: { sent: 0, active: 0, scheduled: 0, failed: 0, partial: 1, targeted: 3 },
+          sms: { sent: 0, active: 0, scheduled: 0, failed: 1, partial: 0, targeted: 2 },
+        }}
+        channelDeliveryBreakdown={{
+          email: { delivered: 1, failed: 0, skipped: 1, unreached: 1, targeted: 3, deliveredRate: 33 },
+          sms: { delivered: 0, failed: 1, skipped: 0, unreached: 1, targeted: 2, deliveredRate: 0 },
+        }}
+        channelEngagementBreakdown={{
+          email: { trackedMessages: 1, deliveredRecipients: 1, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0, openRate: 0, clickRate: 0, replyRate: 0 },
+          sms: { trackedMessages: 0, deliveredRecipients: 0, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0, openRate: 0, clickRate: 0, replyRate: 0 },
+        }}
+        deliveries={[]}
+        deliveryHealth={{ successRate: 50, failRate: 50, skipped: 1, skippedRate: 20, overdueScheduled: 0 }}
+        filteredHistory={[]}
+        historyAudienceFilter="all"
+        historyCampaignFilter=""
+        historyChannelFilter="all"
+        historyDeliveryFilter="all"
+        historySearch=""
+        historyStatusCounts={{ sent: 0, active: 0, scheduled: 0, partial: 1, failed: 1 }}
+        historyStatusFilter="all"
+        messages={[] as any}
+        providerTelemetry={{ attempted: 1, errorTop: [], sent: 0, sentRate: 0, skipped: 0 }}
+        retryCandidates={[]}
+        retryingMessageId={null}
+        reviewCandidates={[]}
+        onCancelSchedule={vi.fn()}
+        onClearThreadFilter={vi.fn()}
+        onDuplicateLatest={vi.fn()}
+        onEditLatest={vi.fn()}
+        onRescheduleMessage={vi.fn()}
+        onRetry={vi.fn()}
+        onScheduleFollowUp={vi.fn()}
+        onSelectThread={vi.fn()}
+        onSendScheduledNow={vi.fn()}
+        onSetHistoryAudienceFilter={vi.fn()}
+        onSetHistoryCampaignFilter={vi.fn()}
+        onSetHistoryChannelFilter={vi.fn()}
+        onSetHistoryDeliveryFilter={vi.fn()}
+        onSetHistorySearch={vi.fn()}
+        onSetHistoryStatusFilter={vi.fn()}
+        onStartFollowUp={vi.fn()}
+        onViewMessage={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByText('0 opened · 0 clicked · 0 replied')).not.toHaveLength(0);
+    expect(screen.getByText('0 viewed · 0 bounced across 0 completed campaigns')).toBeInTheDocument();
+    expect(screen.getAllByText('0% open rate · 0% click rate · 0% reply rate')).not.toHaveLength(0);
   });
 });
