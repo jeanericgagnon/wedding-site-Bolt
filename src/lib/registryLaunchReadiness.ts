@@ -123,7 +123,7 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
       detail: productItems.length === 0
         ? 'No product gifts are listed yet, so there are no gift links to share right now.'
         : productLinksMissing + unsafeProductLinks > 0
-          ? `${plural(productLinksReady, 'product gift')} ${conjugateBe(productLinksReady)} ready to share (${productLinkCoverageRate}% coverage). ${plural(productLinksMissing + unsafeProductLinks, 'product gift')} still need a guest-safe link.`
+          ? `${plural(productLinksReady, 'product gift')} ${conjugateBe(productLinksReady)} ready to share (${productLinkCoverageRate}% coverage). ${plural(productLinksMissing + unsafeProductLinks, 'product gift')} still need a share-safe link.`
           : `${plural(productLinksReady, 'product gift')} ${conjugateBe(productLinksReady)} ready to share (${productLinkCoverageRate}% coverage).`,
       tone: productLinksMissing + unsafeProductLinks > 0 ? 'review' : 'ready',
     },
@@ -134,8 +134,8 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
       detail: cashFunds.length === 0
         ? 'No cash funds are listed right now, which is fine for a gift-only registry.'
         : cashFundsNeedingPayment + unsafePaymentLinks > 0
-          ? `${plural(cashFundsReady, 'cash fund')} ${conjugateBe(cashFundsReady)} ready to share (${fundShareReadyRate}% coverage). ${plural(cashFundsNeedingPayment + unsafePaymentLinks, 'cash fund')} still need a share-ready payment path or handle.`
-          : `${plural(cashFundsReady, 'cash fund')} ${conjugateBe(cashFundsReady)} ready to share with a share-ready payment path or handle (${fundShareReadyRate}% coverage).`,
+          ? `${plural(cashFundsReady, 'cash fund')} ${conjugateBe(cashFundsReady)} ready to share (${fundShareReadyRate}% coverage). ${plural(cashFundsNeedingPayment + unsafePaymentLinks, 'cash fund')} still need a share path or handle.`
+          : `${plural(cashFundsReady, 'cash fund')} ${conjugateBe(cashFundsReady)} ready to share with a share path or handle (${fundShareReadyRate}% coverage).`,
       tone: cashFundsNeedingPayment + unsafePaymentLinks > 0 ? 'review' : 'ready',
     },
     {
@@ -177,12 +177,12 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
       ? 'Registry share setup is still empty.'
       : status === 'needs-review'
         ? 'A few registry share details still need review.'
-        : 'Registry share setup looks guest-ready.',
+        : 'Registry share setup looks ready to share.',
     summary: status === 'empty'
-      ? 'Add product gifts or funds when you want guests to have registry options.'
+      ? 'Add product gifts or funds when you want registry links ready to share.'
       : reviewCount > 0
         ? `${plural(reviewCount, 'link or fund setup item')} still need a quick share-readiness check.`
-        : 'Guest-facing links, funds, and purchase-state basics look ready right now.',
+        : 'Gift links, fund links, and purchase-state basics look ready to share right now.',
     reviewCount,
     readyCount,
     items: itemsOut,

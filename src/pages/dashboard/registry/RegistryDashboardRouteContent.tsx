@@ -258,7 +258,7 @@ export function RegistryDashboardRouteContent(props: {
       ? `Main gap: ${props.registryThankYouStats.pendingCount} still need a send`
       : 'Main gap: no thank-you blockers right now';
   const fundSetupGapLabel = props.fundStats.needsSetup > 0
-    ? `Main gap: ${props.fundStats.needsSetup} still need a payment path`
+    ? `Main gap: ${props.fundStats.needsSetup} still need a share path`
     : props.fundStats.missingGoal > 0
       ? `Main gap: ${props.fundStats.missingGoal} still missing a goal`
       : props.fundStats.readyAwaitingFirstGift > 0
@@ -269,7 +269,7 @@ export function RegistryDashboardRouteContent(props: {
     : props.fundStats.readyAwaitingFirstGift > 0
       ? `Next gift gap: ${props.fundStats.readyAwaitingFirstGift} waiting on a first gift`
       : props.fundStats.needsSetup > 0
-        ? `Next gift gap: ${props.fundStats.needsSetup} still need a payment path`
+        ? `Next gift gap: ${props.fundStats.needsSetup} still need a share path`
         : 'Next gift gap: no fund momentum blockers right now';
   const claimAllClearLabel = props.claimStats.claimedItems > 0
     && props.claimStats.missingPurchaserItems === 0
@@ -558,10 +558,10 @@ export function RegistryDashboardRouteContent(props: {
               <p className="mt-1 text-xs text-text-secondary">
                 {props.fundStats.count === 0
                   ? 'No cash funds added yet'
-                  : `${props.fundStats.readyToShare} ready to share${props.fundStats.needsSetup > 0 ? ` · ${props.fundStats.needsSetup} need a payment path` : ''}`}
+                  : `${props.fundStats.readyToShare} ready to share${props.fundStats.needsSetup > 0 ? ` · ${props.fundStats.needsSetup} need a share path` : ''}`}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
-                {fundShareReadyRate}% share-ready · {props.fundStats.readyWithProgress} already moving{props.fundStats.readyAwaitingFirstGift > 0 ? ` · ${props.fundStats.readyAwaitingFirstGift} waiting on a first gift` : ''}{props.fundStats.missingGoal > 0 ? ` · ${props.fundStats.missingGoal} missing a goal` : ''}
+                {fundShareReadyRate}% ready to share · {props.fundStats.readyWithProgress} already moving{props.fundStats.readyAwaitingFirstGift > 0 ? ` · ${props.fundStats.readyAwaitingFirstGift} waiting on a first gift` : ''}{props.fundStats.missingGoal > 0 ? ` · ${props.fundStats.missingGoal} missing a goal` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">{fundSetupGapLabel}</p>
               {fundSetupAllClearLabel ? <p className="mt-1 text-xs text-text-tertiary">{fundSetupAllClearLabel}</p> : null}
@@ -704,10 +704,10 @@ export function RegistryDashboardRouteContent(props: {
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   {props.fundStats.readyToShare === 0 && props.fundStats.needsSetup === 0 ? (
-                    <>No cash funds are waiting on share setup right now</>
+                    <>No fund links are waiting on a share path right now</>
                   ) : (
                     <>
-                      Ready to share: <span className="font-semibold text-text-primary">{props.fundStats.readyToShare}</span> · Need payment setup: <span className="font-semibold text-text-primary">{props.fundStats.needsSetup}</span>
+                      Ready to share: <span className="font-semibold text-text-primary">{props.fundStats.readyToShare}</span> · Need share path: <span className="font-semibold text-text-primary">{props.fundStats.needsSetup}</span>
                     </>
                   )}
                 </div>

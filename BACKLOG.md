@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 11:54 AM PDT`
-- Latest shipped batch: `b5112407` `Clarify registry share-readiness labels`
+- Last updated: `2026-05-15 12:04 PM PDT`
+- Latest shipped batch: `pending local batch` `Clarify registry share-readiness wording`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `pending local batch` `Clarify registry share-readiness wording`
   - `b5112407` `Clarify registry share-readiness labels`
   - `f96ce0b9` `Clarify guest-hub no-app readiness wording`
   - `615ec375` `Clarify guest-hub readiness-board labels`
@@ -89,6 +90,7 @@
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 - `registry polish beyond barcode`
+  - latest shipped: the registry share-readiness lane now stays in one `ready to share` wording family, with all-clear copy like `Registry share setup looks ready to share`, `Gift links, fund links, and purchase-state basics look ready to share right now`, `100% ready to share`, and deeper fund follow-through copy like `No fund links are waiting on a share path right now` and `Need share path`, so the share-readiness card and fund note rows no longer mix older `guest-facing`, `guest-ready`, and `payment path` phrasing into the same owner summary surface
   - latest shipped: registry share-readiness items now use clearer owner-facing labels like `Gift links ready to share`, `Fund links ready to share`, `Thank-you list`, and `Hide after purchase`, with matching copy like `No product gifts are listed yet, so there are no gift links to share right now`, `No purchased gifts need thank-you follow-up right now`, and `No registry links or funds are ready to share yet`, so the share-readiness panel now reads like owner product truth instead of older setup-audit terminology
   - latest shipped: the top registry status strip now uses clearer owner labels like `Weekly refresh running`, `Refresh budget 12/100 this month`, `Worth checking`, `Cleanup queue`, and `Duplicate review groups`, so the first scan reads like product truth instead of older internal utility labels
 
@@ -175,6 +177,7 @@ These are the active product-completion lanes still open after the current launc
    - add authenticated live browser proof for composing and saving each operational segment on the shipped runtime
    - keep SMS/Telnyx live-send behavior deferred until provider/compliance setup is ready
 5. `registry polish beyond barcode`
+  - latest shipped: the registry share-readiness lane now stays in one `ready to share` wording family, with all-clear copy like `Registry share setup looks ready to share`, `Gift links, fund links, and purchase-state basics look ready to share right now`, `100% ready to share`, and deeper fund follow-through copy like `No fund links are waiting on a share path right now` and `Need share path`, so the share-readiness card and fund note rows no longer mix older `guest-facing`, `guest-ready`, and `payment path` phrasing into the same owner summary surface
   - latest shipped: registry share-readiness items now use clearer owner-facing labels like `Gift links ready to share`, `Fund links ready to share`, `Thank-you list`, and `Hide after purchase`, with matching copy like `No product gifts are listed yet, so there are no gift links to share right now`, `No purchased gifts need thank-you follow-up right now`, and `No registry links or funds are ready to share yet`, so the share-readiness panel now reads like owner product truth instead of older setup-audit terminology
   - latest shipped: `Registry quick check` now stays explicit in both mixed and all-clear states with lead readback like `1 next-step fix · 1 polish cleanup worth a quick pass.` or `No quick registry fixes worth flagging right now.`, so that last big registry card now scans like a summary first instead of a raw prompt list
    - live owner add/import/edit persistence proof is still open
@@ -203,7 +206,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 11:54 AM PDT` |
+| Current date/time | `2026-05-15 12:04 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |
