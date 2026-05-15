@@ -1217,6 +1217,9 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
                 {channelDeliveryBreakdown[channel].delivered} delivered · {channelDeliveryBreakdown[channel].failed} need review
               </p>
               <p className="mt-1 text-[11px] text-text-tertiary">
+                {channelDeliveryBreakdown[channel].targeted} targeted recipients
+              </p>
+              <p className="mt-1 text-[11px] text-text-tertiary">
                 {(() => {
                   const targeted = channelDeliveryBreakdown[channel].targeted;
                   const reviewRate = targeted > 0 ? Math.round((channelDeliveryBreakdown[channel].failed / targeted) * 100) : 0;
