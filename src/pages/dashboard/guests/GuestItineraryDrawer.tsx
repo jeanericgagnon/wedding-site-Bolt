@@ -333,18 +333,24 @@ function GuestDrawerDetails({
           <p className="text-xs text-text-tertiary">{visibilityPreview.mainGapLabel}</p>
         )}
         {visibilityPreview.visibleEvents.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {visibilityPreview.visibleEvents.slice(0, 4).map((event) => (
-              <span key={event.id} className="rounded-lg border border-primary/20 bg-white px-2 py-1 text-[11px] text-primary">
-                {event.eventName}
-              </span>
-            ))}
-            {visibilityPreview.visibleEvents.length > 4 && (
-              <span className="rounded-lg border border-border bg-white px-2 py-1 text-[11px] text-text-tertiary">
-                +{visibilityPreview.visibleEvents.length - 4} more
-              </span>
-            )}
-          </div>
+          <>
+            <div className="flex flex-wrap gap-1.5">
+              {visibilityPreview.visibleEvents.slice(0, 4).map((event) => (
+                <span key={event.id} className="rounded-lg border border-primary/20 bg-white px-2 py-1 text-[11px] text-primary">
+                  {event.eventName}
+                </span>
+              ))}
+              {visibilityPreview.visibleEvents.length > 4 && (
+                <span className="rounded-lg border border-border bg-white px-2 py-1 text-[11px] text-text-tertiary">
+                  +{visibilityPreview.visibleEvents.length - 4} more
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-text-tertiary">
+              Visible to this guest: {visibilityPreview.visibleEvents.slice(0, 3).map((event) => event.eventName).join(', ')}
+              {visibilityPreview.visibleEvents.length > 3 ? `, and ${visibilityPreview.visibleEvents.length - 3} more` : ''}
+            </p>
+          </>
         )}
         {visibilityPreview.hiddenEvents.length > 0 && (
           <p className="text-xs text-text-tertiary">

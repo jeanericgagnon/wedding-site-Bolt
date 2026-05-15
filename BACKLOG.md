@@ -1,5 +1,34 @@
 # Production Hardening Backlog
 
+## What's Left Now
+
+These are the active product-completion lanes still open after the current launch-hardening scope:
+
+1. `guest-specific preview and visibility confidence`
+   - production reruns are still open for the newer guest preview strip and drawer on the shipped runtime
+   - deeper route-level personalization proof is still open
+   - wrong-guest/right-guest live visibility proof is still open
+   - authenticated mobile live proof is still open
+2. `unified QR guest hub`
+   - live production mobile proof is still open for public versus guest-specific QR landing behavior
+3. `RSVP access modes and question templates`
+   - production rerun is still open for the owner RSVP settings proof on the shipped runtime
+   - any future move of code/password/open RSVP beyond `planned` still needs real guest-facing runtime proof
+4. `status-based messaging and invitation tracking`
+   - keep extending normalized delivery and engagement truth across real/live rows
+   - prove customer-safe failure grouping against live rows
+   - add authenticated live browser proof for composing and saving each operational segment on the shipped runtime
+   - keep SMS/Telnyx live-send behavior deferred until provider/compliance setup is ready
+5. `registry polish beyond barcode`
+   - live owner add/import/edit persistence proof is still open
+   - stronger owner repair/cleanup runtime proof on production is still open
+   - guest-visible purchase-state assertions on production are still open
+   - broader claim-state depth and richer public fund-card polish are still open
+6. `premium no-app guest photo and memory flow`
+   - this lane remains active and unfinished
+7. `destination/travel guest portal`
+   - this lane remains active and unfinished
+
 Archive for deferred/history detail:
 - [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md)
 
@@ -343,6 +372,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the guest visibility drawer now also normalizes preview-route coverage as a percentage, so owners can judge overall preview completeness at a glance instead of translating only raw ready and missing route counts
    - this batch shipped: the guest visibility drawer now also reads back the concrete ready preview-route count beside preview-route coverage and missing-route totals, so owners can tell how much of the guest-facing path set is already live without backing into it from percentages alone
    - this batch shipped: the guest visibility drawer now also names the events that are visible to the guest, so owners can read both sides of itinerary visibility directly in the preview drawer instead of inferring the visible set from counts alone
+   - this batch shipped: the guest visibility drawer now repeats the visible-event readback beside the event chips lower in the panel, so the detailed preview section stays explicit about what this guest can actually see without making owners jump back up to the coverage copy
    - this batch shipped: demo/local guest preview proof now includes structured visible-versus-hidden itinerary variation, routes the drawer through the real guest-specific event set, carries demo site context into guest preview links, and proves in a real browser that owners can open the public-site preview plus the exact guest RSVP route for a hidden-event guest without raw-token UI leakage
    - this batch shipped: coordinator door-check and seating-lookup surfaces now expose direct guest-view preview actions, so owners/planners can jump from live ops tools into the real guest-facing RSVP/site path without losing event context or exposing raw token copy in the UI
    - this batch shipped: a dedicated `proof:v1:guest-preview-confidence` lane now reruns preview-route generation, guest drawer token-safe QR surfaces, the real desktop drawer flow, and a new mobile drawer flow that opens photo upload, travel, registry, and public-site guest views from the owner drawer without raw-token leakage

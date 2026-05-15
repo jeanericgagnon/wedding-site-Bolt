@@ -92,6 +92,7 @@ describe('GuestItineraryDrawer', () => {
     expect(screen.getByText('67% guest-specific coverage · 33% public-shell coverage')).toBeInTheDocument();
     expect(screen.getByText('100% event visibility coverage · 0% still hidden')).toBeInTheDocument();
     expect(screen.getByText('Visible to this guest: Ceremony.')).toBeInTheDocument();
+    expect(screen.getAllByText('Visible to this guest: Ceremony.').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('100% preview-route coverage · 9 routes ready · No preview routes missing')).toBeInTheDocument();
     expect(screen.getByText('Private guest path ready')).toBeInTheDocument();
     expect(screen.getByText('1 visible event has a private guest path ready.')).toBeInTheDocument();
@@ -291,7 +292,7 @@ describe('GuestItineraryDrawer', () => {
     expect(screen.getByText('9 guest routes ready · 6 guest-specific · 3 public shell · 1 visible event · 1 hidden event')).toBeInTheDocument();
     expect(screen.getByText('1 of 2 events visible · 1 hidden')).toBeInTheDocument();
     expect(screen.getByText('50% event visibility coverage · 50% still hidden')).toBeInTheDocument();
-    expect(screen.getByText('Visible to this guest: Ceremony.')).toBeInTheDocument();
+    expect(screen.getAllByText('Visible to this guest: Ceremony.').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Hidden from this guest: Reception.')).toBeInTheDocument();
   });
 });
