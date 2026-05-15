@@ -361,6 +361,70 @@ describe('RegistryDashboardRouteContent', () => {
     });
   });
 
+  it('derives cleaner registry launch-readiness all-clear wording', () => {
+    const derived = buildRegistryDashboardDerivedState({
+      autoRefreshEnabled: true,
+      items: [
+        makeItem({
+          id: 'gift-ready',
+          item_name: 'Dinner plates',
+          item_url: 'https://example.com/gift',
+          canonical_url: 'https://example.com/gift',
+          purchase_status: 'available',
+          quantity_needed: 1,
+          quantity_purchased: 0,
+          hide_when_purchased: false,
+        }),
+        makeItem({
+          id: 'fund-ready',
+          item_name: 'Honeymoon fund',
+          item_type: 'cash_fund',
+          fund_custom_url: 'https://example.com/fund',
+          fund_goal_amount: 500,
+          fund_received_amount: 0,
+          purchase_status: 'available',
+          quantity_needed: 1,
+          quantity_purchased: 0,
+        }),
+      ],
+      monthlyRefreshCap: 50,
+      monthlyRefreshCount: 0,
+      registryThankYouLedger: {},
+      refreshEnabledUntil: null,
+      refreshIncludePurchased: false,
+      search: '',
+      filter: 'all',
+      showAlertsOnly: false,
+      showImageIssuesOnly: false,
+    });
+
+    expect(derived.registryLaunchReadiness.headline).toBe('Registry share setup looks guest-ready.');
+    expect(derived.registryLaunchReadiness.summary).toBe('Guest-facing links, funds, and purchase-state basics look ready right now.');
+    expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'purchase-state')?.detail).toBe('No gifts are marked purchased yet.');
+    expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'hide-purchased')?.detail).toBe('No gifts are set to hide after purchase right now.');
+  });
+
+  it('derives cleaner registry launch-readiness empty wording', () => {
+    const derived = buildRegistryDashboardDerivedState({
+      autoRefreshEnabled: true,
+      items: [],
+      monthlyRefreshCap: 50,
+      monthlyRefreshCount: 0,
+      registryThankYouLedger: {},
+      refreshEnabledUntil: null,
+      refreshIncludePurchased: false,
+      search: '',
+      filter: 'all',
+      showAlertsOnly: false,
+      showImageIssuesOnly: false,
+    });
+
+    expect(derived.registryLaunchReadiness.headline).toBe('Registry share setup is still empty.');
+    expect(derived.registryLaunchReadiness.summary).toBe('Add product gifts or funds when you want guests to have registry options.');
+    expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'external-links')?.detail).toBe('No product gifts are listed yet, so there are no guest-facing product links to check.');
+    expect(derived.registryLaunchReadiness.items.find((item) => item.id === 'cash-funds')?.detail).toBe('No cash funds are listed right now, which is fine for a gift-only registry.');
+  });
+
   it('derives thank-you follow-through analytics from purchased gifts and saved ledger state', () => {
     const derived = buildRegistryDashboardDerivedState({
       autoRefreshEnabled: true,

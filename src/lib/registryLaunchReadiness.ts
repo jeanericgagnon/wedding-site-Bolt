@@ -117,7 +117,7 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
       label: 'External gift links',
       count: productLinksMissing + unsafeProductLinks,
       detail: productItems.length === 0
-        ? 'No product gifts are listed yet.'
+        ? 'No product gifts are listed yet, so there are no guest-facing product links to check.'
         : productLinksMissing + unsafeProductLinks > 0
           ? `${plural(productLinksReady, 'product gift')} have safe public links (${productLinkCoverageRate}% coverage). ${plural(productLinksMissing + unsafeProductLinks, 'product gift')} still need a guest-safe link.`
           : `${plural(productLinksReady, 'product gift')} have safe public links (${productLinkCoverageRate}% coverage).`,
@@ -128,7 +128,7 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
       label: 'Cash and fund links',
       count: cashFundsNeedingPayment + unsafePaymentLinks,
       detail: cashFunds.length === 0
-        ? 'No cash funds are listed, which is fine for a gift-only registry.'
+        ? 'No cash funds are listed right now, which is fine for a gift-only registry.'
         : cashFundsNeedingPayment + unsafePaymentLinks > 0
           ? `${plural(cashFundsReady, 'cash fund')} are share-ready (${fundShareReadyRate}% coverage). ${plural(cashFundsNeedingPayment + unsafePaymentLinks, 'cash fund')} still need a safe payment path or handle.`
           : `${plural(cashFundsReady, 'cash fund')} have a guest-facing payment path or handle (${fundShareReadyRate}% coverage).`,
@@ -140,7 +140,7 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
       count: availableOrPartial.length,
       detail: purchasedItems.length > 0
         ? `${plural(purchasedItems.length, 'gift')} already marked purchased or partially purchased.`
-        : 'No purchased gifts yet. Guest purchase state will appear once gifts are marked.',
+        : 'No gifts are marked purchased yet.',
       tone: 'ready',
     },
     {
@@ -158,7 +158,7 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
       count: hiddenPurchased,
       detail: hiddenPurchased > 0
         ? `${plural(hiddenPurchased, 'gift')} will hide after purchase so guests do not chase unavailable items.`
-        : 'Purchased items stay visible unless you choose to hide them.',
+        : 'No gifts are set to hide after purchase right now.',
       tone: 'ready',
     },
   ];
@@ -170,15 +170,15 @@ export function buildRegistryLaunchReadiness(items: RegistryItem[], ledger: Regi
   return {
     status,
     headline: status === 'empty'
-      ? 'Registry is empty right now.'
+      ? 'Registry share setup is still empty.'
       : status === 'needs-review'
-        ? 'Registry needs a quick link review.'
-        : 'Registry links look guest-ready.',
+        ? 'A few registry share details still need review.'
+        : 'Registry share setup looks guest-ready.',
     summary: status === 'empty'
-      ? 'Add product gifts or funds when you want the registry section to appear useful to guests.'
+      ? 'Add product gifts or funds when you want guests to have registry options.'
       : reviewCount > 0
-        ? `${plural(reviewCount, 'link or fund setup item')} should be checked before a broad guest share.`
-        : 'Guest gift links and fund paths are ready from this local check.',
+        ? `${plural(reviewCount, 'link or fund setup item')} still need a quick share-readiness check.`
+        : 'Guest-facing links, funds, and purchase-state basics look ready right now.',
     reviewCount,
     readyCount,
     items: itemsOut,
