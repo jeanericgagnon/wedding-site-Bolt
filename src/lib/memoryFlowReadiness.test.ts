@@ -69,6 +69,7 @@ describe('memoryFlowReadiness', () => {
       'No story picks yet',
       '5 review items need attention',
       'No follow-up opt-ins',
+      'First blocker: No-app guest hub',
     ]);
     expect(readiness.lanes.find((lane) => lane.id === 'collection')).toMatchObject({
       status: 'needs-action',
@@ -207,6 +208,7 @@ describe('memoryFlowReadiness', () => {
       '33% story coverage',
       '1 review item need attention',
       'No follow-up opt-ins',
+      'First blocker: Moderation queue',
     ]);
     expect(readiness.lanes.find((lane) => lane.id === 'handoff')).toMatchObject({
       status: 'needs-action',

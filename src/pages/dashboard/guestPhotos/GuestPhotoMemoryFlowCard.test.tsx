@@ -77,4 +77,39 @@ describe('GuestPhotoMemoryFlowCard', () => {
 
     expect(screen.getByText('Main gap: Collection')).toBeInTheDocument();
   });
+
+  it('shows the first blocker in the top badge row when the lane needs action', () => {
+    render(
+      <GuestPhotoMemoryFlowCard
+        memoryFlowReadiness={{
+          readyCount: 3,
+          summaryBadges: ['Upload lane needs setup', 'Recap saved, not shareable', 'No story picks yet', '5 review items need attention', 'No follow-up opt-ins', 'First blocker: No-app guest hub'],
+          mainGapLabel: 'Main gap: Collection',
+          lanes: [
+            { id: 'collection', label: 'Collection', detail: 'Albums exist, but guest uploads still need at least one active album.', status: 'needs-action' },
+            { id: 'curation', label: 'Curation', detail: '2 flagged uploads and 3 review items still need review before the story is clean.', status: 'needs-action' },
+            { id: 'sharing', label: 'Sharing', detail: '1 curated pick saved, but the recap is not shareable yet.', status: 'needs-action' },
+            { id: 'handoff', label: 'Handoff', detail: 'Review flagged uploads before relying on owner handoff exports or full-resolution jobs.', status: 'needs-action' },
+          ],
+          steps: [
+            { id: 'guest-hub', label: 'No-app guest hub', detail: 'Turn on at least one guest action before printing the hub QR.', status: 'needs-action' },
+            { id: 'album-links', label: 'Photo upload links', detail: 'Albums exist, but none are active for guest uploads.', status: 'needs-action' },
+            { id: 'guestbook', label: 'Guestbook notes', detail: 'Guestbook notes are optional and currently off in the guest hub controls.', status: 'planned' },
+            { id: 'video-capture', label: 'Video memories', detail: 'Video upload is supported, but live video capture still needs a proof pass.', status: 'planned' },
+            { id: 'moderation', label: 'Moderation queue', detail: '2 flagged uploads and 3 review items need a look.', status: 'needs-action' },
+            { id: 'slideshow', label: 'Slideshow draft', detail: 'Needs at least three visible, unflagged uploads in an active album.', status: 'needs-action' },
+            { id: 'recap', label: 'Guest recap', detail: 'Curated picks exist, but the recap is not shareable yet.', status: 'needs-action' },
+            { id: 'follow-up', label: 'Guest follow-up', detail: 'No guest follow-up opt-ins captured yet.', status: 'empty' },
+            { id: 'export', label: 'Photo handoff export', detail: 'Review flagged uploads before relying on photo handoff exports.', status: 'needs-action' },
+          ],
+          blockers: [
+            'Turn on at least one guest action before printing the hub QR.',
+            'Albums exist, but none are active for guest uploads.',
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByText('First blocker: No-app guest hub')).toBeInTheDocument();
+  });
 });
