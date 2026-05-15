@@ -136,6 +136,9 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Main gap: no claim attribution blockers right now')).toBeInTheDocument();
     expect(screen.getByText('Main gap: no guest-visibility blockers right now')).toBeInTheDocument();
     expect(screen.getByText('Main gap: no thank-you blockers right now')).toBeInTheDocument();
+    expect(screen.getByText('All claimed gifts are fully attributed and closed out right now.')).toBeInTheDocument();
+    expect(screen.getByText('All guest-ready gifts are visible right now.')).toBeInTheDocument();
+    expect(screen.getByText('All thank-you follow-up is fully closed out right now.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /save thank-you list/i }));
     fireEvent.click(screen.getByRole('button', { name: /mark sent/i }));
 
@@ -624,6 +627,83 @@ describe('RegistryDashboardRouteContent', () => {
     expect(
       screen.getByText((_, element) => element?.textContent === 'Receiving-gift coverage: 50% · Funds already moving: 1'),
     ).toBeInTheDocument();
+  });
+
+  it('renders fund all-clear readback when every cash fund lane is fully set up and already moving', () => {
+    render(
+      <RegistryDashboardRouteContent
+        actionableBadImportCount={0}
+        alertCounts={{ stale: 0, priceChanged: 0, outOfStock: 0, imageIssues: 0 }}
+        autoRefreshEnabled
+        autoRefreshing={false}
+        bulkImportBusy={false}
+        bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
+        budgetUtilization={0}
+        claimStats={{ claimedItems: 0, claimedQuantity: 0, fullyClaimedItems: 0, partiallyClaimedItems: 0, namedPurchaserItems: 0, missingPurchaserItems: 0, multiQuantityInProgress: 0, remainingQuantity: 0 }}
+        counts={{ total: 2, available: 2, partial: 0, purchased: 0, totalValue: 0 }}
+        duplicateGroups={[]}
+        editItem={null}
+        filter="all"
+        filtered={[makeItem({ id: 'fund-1' }), makeItem({ id: 'fund-2' })]}
+        fulfillmentRate={0}
+        fundStats={{ count: 2, received: 2500, goal: 4000, readyToShare: 2, needsSetup: 0, readyWithProgress: 2, readyAwaitingFirstGift: 0, withGoal: 2, missingGoal: 0, withProgress: 2, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
+        fundGoalCoverageRate={100}
+        fundShareReadyRate={100}
+        guestVisibilityStats={{ guestReadyItems: 2, guestVisibleItems: 2, visibleAvailableItems: 2, visibleClaimedItems: 0, hiddenPurchasedItems: 0, blockedGuestItems: 0, guestReadyCoverageRate: 100, guestVisibleCoverageRate: 100 }}
+        handleAddNew={vi.fn()}
+        handleAutoRefreshStale={vi.fn(async () => {})}
+        handleBulkImport={vi.fn(async () => {})}
+        handleCopyDuplicateReviewList={vi.fn(async () => {})}
+        handleDelete={vi.fn(async () => {})}
+        handleEdit={vi.fn()}
+        handleMergeDuplicateGroup={vi.fn(async () => {})}
+        handleMarkPurchased={vi.fn(async () => {})}
+        handleResetPurchaseState={vi.fn(async () => {})}
+        handleRefetchMetadata={vi.fn(async () => true)}
+        handleRefreshImageIssues={vi.fn(async () => {})}
+        handleRepairBadImports={vi.fn(async () => {})}
+        handleRunRepairQueueAction={vi.fn(async () => {})}
+        handleSyncRegistryThankYouTasks={vi.fn(async () => {})}
+        handleToggleRegistryThankYouTask={vi.fn(async () => {})}
+        imageRefreshBusy={false}
+        items={[makeItem({ id: 'fund-1' }), makeItem({ id: 'fund-2' })]}
+        loading={false}
+        monthlyRefreshCap={100}
+        monthlyRefreshCount={0}
+        mergingDuplicateGroupId={null}
+        nearBudgetCap={false}
+        normalizedItems={[makeItem({ id: 'fund-1' }), makeItem({ id: 'fund-2' })]}
+        recentActivity={[makeItem({ id: 'fund-1' })]}
+        registryActionsOpen={false}
+        registryActionsRef={{ current: null }}
+        registryInsights={[]}
+        registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}
+        registryThankYouPlan={{ headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] }}
+        registryThankYouStats={{ purchasedCount: 0, completedCount: 0, pendingCount: 0, readyToSendCount: 0, blockedByMissingPurchaserCount: 0, attributionCoverageRate: 0, completionRate: 0 }}
+        registryThankYouBusyItemId={null}
+        registryThankYouSyncing={false}
+        repairingBadImports={false}
+        repairQueue={[]}
+        refreshBudgetRemaining={100}
+        refreshWindowOpen={true}
+        search=""
+        setBulkImportOpen={vi.fn()}
+        setFilter={vi.fn()}
+        setRegistryActionsOpen={vi.fn()}
+        setSearch={vi.fn()}
+        setShowAlertsOnly={vi.fn()}
+        setShowImageIssuesOnly={vi.fn()}
+        showAlertsOnly={false}
+        showImageIssuesOnly={false}
+        topRegistryItems={[makeItem({ id: 'fund-1' })]}
+        weddingSiteId="site-1"
+      />,
+    );
+
+    expect(screen.getByText('Main gap: no fund setup blockers right now')).toBeInTheDocument();
+    expect(screen.getByText('Next gift gap: no fund momentum blockers right now')).toBeInTheDocument();
+    expect(screen.getByText('All cash funds are fully set up right now.')).toBeInTheDocument();
+    expect(screen.getByText('All fund momentum blockers are clear right now.')).toBeInTheDocument();
   });
 
   it('renders claim-state analytics for attribution and partial gifts', () => {

@@ -243,6 +243,37 @@ export function RegistryDashboardRouteContent(props: {
       : props.fundStats.needsSetup > 0
         ? `Next gift gap: ${props.fundStats.needsSetup} still need a payment path`
         : 'Next gift gap: no fund momentum blockers right now';
+  const claimAllClearLabel = props.claimStats.claimedItems > 0
+    && props.claimStats.missingPurchaserItems === 0
+    && props.claimStats.partiallyClaimedItems === 0
+    && props.claimStats.remainingQuantity === 0
+    ? 'All claimed gifts are fully attributed and closed out right now.'
+    : null;
+  const guestVisibilityAllClearLabel = props.guestVisibilityStats.guestReadyItems > 0
+    && props.guestVisibilityStats.blockedGuestItems === 0
+    && props.guestVisibilityStats.hiddenPurchasedItems === 0
+    && props.guestVisibilityStats.guestVisibleItems === props.guestVisibilityStats.guestReadyItems
+    ? 'All guest-ready gifts are visible right now.'
+    : null;
+  const thankYouAllClearLabel = props.registryThankYouStats.purchasedCount > 0
+    && props.registryThankYouStats.pendingCount === 0
+    && props.registryThankYouStats.blockedByMissingPurchaserCount === 0
+    ? 'All thank-you follow-up is fully closed out right now.'
+    : props.registryThankYouStats.purchasedCount === 0
+      ? 'No thank-you follow-up is open right now.'
+      : null;
+  const fundSetupAllClearLabel = props.fundStats.count > 0
+    && props.fundStats.needsSetup === 0
+    && props.fundStats.missingGoal === 0
+    && props.fundStats.readyAwaitingFirstGift === 0
+    ? 'All cash funds are fully set up right now.'
+    : null;
+  const fundMomentumAllClearLabel = props.fundStats.count > 0
+    && props.fundStats.needsSetup === 0
+    && props.fundStats.missingGoal === 0
+    && props.fundStats.readyAwaitingFirstGift === 0
+    ? 'All fund momentum blockers are clear right now.'
+    : null;
 
   const tabCount = (key: RegistryFilter) => {
     if (key === 'all') return props.counts.total;
@@ -348,6 +379,7 @@ export function RegistryDashboardRouteContent(props: {
                 {claimAttributionCoverageRate}% purchaser coverage · {fullyClaimedCoverageRate}% fully closed{props.claimStats.partiallyClaimedItems > 0 ? ` · ${partialClaimCoverageRate}% partial (${props.claimStats.partiallyClaimedItems})` : ''}{totalClaimQuantityScope > 0 ? ` · ${claimedQuantityCoverageRate}% quantity claimed (${props.claimStats.claimedQuantity}) · ${unclaimedQuantityCoverageRate}% still unclaimed (${props.claimStats.remainingQuantity})` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">{claimGapLabel}</p>
+              {claimAllClearLabel ? <p className="mt-1 text-xs text-text-tertiary">{claimAllClearLabel}</p> : null}
             </Card>
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Guest view</p>
@@ -359,6 +391,7 @@ export function RegistryDashboardRouteContent(props: {
                 {guestVisibleCoverageRate}% visible to guests · {guestReadyCoverageRate}% guest-ready · {props.guestVisibilityStats.hiddenPurchasedItems} hidden when bought{props.guestVisibilityStats.blockedGuestItems > 0 ? ` · ${props.guestVisibilityStats.blockedGuestItems} blocked from guests` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">{guestVisibilityGapLabel}</p>
+              {guestVisibilityAllClearLabel ? <p className="mt-1 text-xs text-text-tertiary">{guestVisibilityAllClearLabel}</p> : null}
             </Card>
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Thank-yous</p>
@@ -374,6 +407,7 @@ export function RegistryDashboardRouteContent(props: {
                 {props.registryThankYouStats.purchasedCount > 0 ? ` · ${props.registryThankYouStats.attributionCoverageRate}% purchasers named` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">{thankYouGapLabel}</p>
+              {thankYouAllClearLabel ? <p className="mt-1 text-xs text-text-tertiary">{thankYouAllClearLabel}</p> : null}
             </Card>
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Cash funds</p>
@@ -385,6 +419,7 @@ export function RegistryDashboardRouteContent(props: {
                 {fundShareReadyRate}% share-ready · {props.fundStats.readyWithProgress} already moving{props.fundStats.readyAwaitingFirstGift > 0 ? ` · ${props.fundStats.readyAwaitingFirstGift} waiting on a first gift` : ''}{props.fundStats.missingGoal > 0 ? ` · ${props.fundStats.missingGoal} missing a goal` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">{fundSetupGapLabel}</p>
+              {fundSetupAllClearLabel ? <p className="mt-1 text-xs text-text-tertiary">{fundSetupAllClearLabel}</p> : null}
             </Card>
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Fund gifts</p>
@@ -397,6 +432,7 @@ export function RegistryDashboardRouteContent(props: {
                 {fundGoalCoverageRate}% goal-tracked · {fundReceivingCoverageRate}% already receiving gifts · {props.fundStats.withProgress} showing tracked progress{props.fundStats.flexibleWithProgress > 0 ? ` · ${props.fundStats.flexibleWithProgress} flexible fund${props.fundStats.flexibleWithProgress === 1 ? '' : 's'} already receiving gifts` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">{fundMomentumGapLabel}</p>
+              {fundMomentumAllClearLabel ? <p className="mt-1 text-xs text-text-tertiary">{fundMomentumAllClearLabel}</p> : null}
             </Card>
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Worth checking</p>

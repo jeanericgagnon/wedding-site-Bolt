@@ -62,7 +62,7 @@
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 - `registry polish beyond barcode`
-  - latest shipped: the top registry cards now say `right now` in their clean blocker readback, so claim attribution, guest visibility, thank-you follow-through, and fund setup all-clear states read like deliberate present-tense truth instead of clipped blocker labels
+  - latest shipped: the top registry cards now also speak the clean state out loud, so claim attribution, guest visibility, thank-you follow-through, fund setup, and fund momentum all-clear cases read like deliberate present-tense truth instead of only softened blocker labels
 
 ## Work This Next
 
@@ -119,7 +119,7 @@ These are the active product-completion lanes still open after the current launc
    - add authenticated live browser proof for composing and saving each operational segment on the shipped runtime
    - keep SMS/Telnyx live-send behavior deferred until provider/compliance setup is ready
 5. `registry polish beyond barcode`
-   - latest shipped: the top registry cards now say `right now` in their clean blocker readback, so claim attribution, guest visibility, thank-you follow-through, and fund setup all-clear states read like deliberate present-tense truth instead of clipped blocker labels
+   - latest shipped: the top registry cards now also speak the clean state out loud, so claim attribution, guest visibility, thank-you follow-through, fund setup, and fund momentum all-clear cases read like deliberate present-tense truth instead of only softened blocker labels
    - live owner add/import/edit persistence proof is still open
    - stronger owner repair/cleanup runtime proof on production is still open
    - guest-visible purchase-state assertions on production are still open
