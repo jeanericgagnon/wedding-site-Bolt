@@ -576,6 +576,35 @@ describe('MessageReachSnapshotCard', () => {
     expect(screen.getByText('0 viewed across guest pages · 0 bounced')).toBeInTheDocument();
     expect(screen.getByText('0% open rate · 0% click rate · 0% reply rate')).toBeInTheDocument();
   });
+
+  it('keeps the top reach delivery summary explicit before any recipient delivery readback lands', () => {
+    render(
+      <MessageReachSnapshotCard
+        canCompose
+        guests={[{ id: 'guest-1', email: 'alex@example.com' }] as any}
+        knownPhotoLinksCount={0}
+        messages={[
+          { id: 'message-queued', status: 'queued' },
+        ] as any}
+        onApplyComposerTemplate={vi.fn()}
+        onApplyDayOfAlertPreset={vi.fn()}
+        onApplySaveTheDatePreset={vi.fn()}
+        onNavigatePhotos={vi.fn()}
+        onQuickCreateSaveTheDateCampaign={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('0 delivered · 0 need review')).toBeInTheDocument();
+    expect(screen.getByText('0 recipients delivered')).toBeInTheDocument();
+    expect(screen.getByText('0 targeted recipients')).toBeInTheDocument();
+    expect(screen.getByText('0 need contact details · 0 not reached yet')).toBeInTheDocument();
+    expect(screen.getByText('0% delivered coverage · 0% review coverage · 0% needs contact · 0% unreached')).toBeInTheDocument();
+    expect(screen.getByText('0% cleanup still pending')).toBeInTheDocument();
+    expect(screen.getByText('0% follow-through ready')).toBeInTheDocument();
+    expect(screen.getByText('No recipients are already closed out')).toBeInTheDocument();
+    expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.getByText('Main cleanup: all clear')).toBeInTheDocument();
+  });
 });
 
 describe('MessageReviewQueuePanels', () => {
@@ -827,5 +856,73 @@ describe('MessageHistoryCard', () => {
     expect(screen.getAllByText('0 opened · 0 clicked · 0 replied')).not.toHaveLength(0);
     expect(screen.getByText('0 viewed · 0 bounced across 0 completed campaigns')).toBeInTheDocument();
     expect(screen.getAllByText('0% open rate · 0% click rate · 0% reply rate')).not.toHaveLength(0);
+  });
+
+  it('keeps channel delivery summaries explicit before a channel has recipient delivery readback', () => {
+    render(
+      <MessageHistoryCard
+        activeCampaignLatestMessage={null}
+        activeCampaignThread={null}
+        audienceBreakdown={[]}
+        campaignStatusSummary={{ draft: 0, scheduled: 1, sent: 0, partial: 0, failed: 1 }}
+        campaignThreads={[]}
+        canCompose
+        channelBreakdown={{
+          email: { sent: 0, active: 0, scheduled: 1, failed: 0, partial: 0, targeted: 0 },
+          sms: { sent: 0, active: 0, scheduled: 0, failed: 1, partial: 0, targeted: 0 },
+        }}
+        channelDeliveryBreakdown={{
+          email: { delivered: 0, failed: 0, skipped: 0, unreached: 0, targeted: 0, deliveredRate: 0, skippedRate: 0 },
+          sms: { delivered: 0, failed: 0, skipped: 0, unreached: 0, targeted: 0, deliveredRate: 0, skippedRate: 0 },
+        }}
+        channelEngagementBreakdown={{
+          email: { trackedMessages: 0, deliveredRecipients: 0, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0, openRate: 0, clickRate: 0, replyRate: 0 },
+          sms: { trackedMessages: 0, deliveredRecipients: 0, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0, openRate: 0, clickRate: 0, replyRate: 0 },
+        }}
+        deliveries={[]}
+        deliveryHealth={{ successRate: 0, failRate: 0, skipped: 0, skippedRate: 0, overdueScheduled: 0 }}
+        filteredHistory={[]}
+        historyAudienceFilter="all"
+        historyCampaignFilter=""
+        historyChannelFilter="all"
+        historyDeliveryFilter="all"
+        historySearch=""
+        historyStatusCounts={{ sent: 0, active: 0, scheduled: 1, partial: 0, failed: 1 }}
+        historyStatusFilter="all"
+        messages={[] as any}
+        providerTelemetry={{ attempted: 0, errorTop: [], sent: 0, sentRate: 0, skipped: 0 }}
+        retryCandidates={[]}
+        retryingMessageId={null}
+        reviewCandidates={[]}
+        onCancelSchedule={vi.fn()}
+        onClearThreadFilter={vi.fn()}
+        onDuplicateLatest={vi.fn()}
+        onEditLatest={vi.fn()}
+        onRescheduleMessage={vi.fn()}
+        onRetry={vi.fn()}
+        onScheduleFollowUp={vi.fn()}
+        onSelectThread={vi.fn()}
+        onSendScheduledNow={vi.fn()}
+        onSetHistoryAudienceFilter={vi.fn()}
+        onSetHistoryCampaignFilter={vi.fn()}
+        onSetHistoryChannelFilter={vi.fn()}
+        onSetHistoryDeliveryFilter={vi.fn()}
+        onSetHistorySearch={vi.fn()}
+        onSetHistoryStatusFilter={vi.fn()}
+        onStartFollowUp={vi.fn()}
+        onViewMessage={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByText('0 delivered · 0 need review')).not.toHaveLength(0);
+    expect(screen.getAllByText('0 recipients delivered')).not.toHaveLength(0);
+    expect(screen.getAllByText('0 targeted recipients')).not.toHaveLength(0);
+    expect(screen.getAllByText('0% delivered coverage · 0% review coverage · 0% needs contact · 0% unreached')).not.toHaveLength(0);
+    expect(screen.getAllByText('0% cleanup still pending')).not.toHaveLength(0);
+    expect(screen.getAllByText('0% follow-through ready')).not.toHaveLength(0);
+    expect(screen.getAllByText('No recipients are already closed out')).not.toHaveLength(0);
+    expect(screen.getAllByText('No recipients still need cleanup')).not.toHaveLength(0);
+    expect(screen.getAllByText('0 need contact details · 0 not reached yet')).not.toHaveLength(0);
+    expect(screen.getAllByText('Main cleanup: all clear')).not.toHaveLength(0);
   });
 });

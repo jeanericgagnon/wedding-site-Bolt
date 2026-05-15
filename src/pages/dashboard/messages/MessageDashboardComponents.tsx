@@ -314,44 +314,40 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
       </div>
       <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3">
         <p className="text-xs font-semibold text-text-tertiary">Delivery follow-through</p>
-        {deliveryStats.targeted > 0 ? (
-          <>
-            <p className="mt-2 text-sm text-text-primary">
-              {deliveryStats.delivered} delivered · {deliveryStats.failed} need review
-            </p>
+        <>
+          <p className="mt-2 text-sm text-text-primary">
+            {deliveryStats.delivered} delivered · {deliveryStats.failed} need review
+          </p>
+          <p className="mt-1 text-xs text-text-tertiary">
+            {deliveryStats.delivered} recipients delivered
+          </p>
+          <p className="mt-1 text-xs text-text-tertiary">
+            {deliveryStats.targeted} targeted recipients
+          </p>
+          <p className="mt-1 text-xs text-text-tertiary">
+            {deliveryStats.skipped} need contact details · {deliveryStats.unreached} not reached yet
+          </p>
+          {deliveredCoverageRate != null && reviewCoverageRate != null && contactCoverageRate != null && unreachedCoverageRate != null && (
             <p className="mt-1 text-xs text-text-tertiary">
-              {deliveryStats.delivered} recipients delivered
+              {deliveredCoverageRate}% delivered coverage · {reviewCoverageRate}% review coverage · {contactCoverageRate}% needs contact · {unreachedCoverageRate}% unreached
             </p>
-            <p className="mt-1 text-xs text-text-tertiary">
-              {deliveryStats.targeted} targeted recipients
-            </p>
-            <p className="mt-1 text-xs text-text-tertiary">
-              {deliveryStats.skipped} need contact details · {deliveryStats.unreached} not reached yet
-            </p>
-            {deliveredCoverageRate != null && reviewCoverageRate != null && contactCoverageRate != null && unreachedCoverageRate != null && (
-              <p className="mt-1 text-xs text-text-tertiary">
-                {deliveredCoverageRate}% delivered coverage · {reviewCoverageRate}% review coverage · {contactCoverageRate}% needs contact · {unreachedCoverageRate}% unreached
-              </p>
-            )}
-            {cleanupCoverageRate != null && (
-              <p className="mt-1 text-xs text-text-tertiary">{cleanupCoverageRate}% cleanup still pending</p>
-            )}
-            {cleanupReadyCoverageRate != null && (
-              <p className="mt-1 text-xs text-text-tertiary">{cleanupReadyCoverageRate}% follow-through ready</p>
-            )}
-            <p className="mt-1 text-xs text-text-tertiary">
-              {followThroughReadyRecipientCount > 0 ? `${followThroughReadyRecipientCount} recipients already closed out` : 'No recipients are already closed out'}
-            </p>
-            <p className="mt-1 text-xs text-text-tertiary">
-              {cleanupRecipientCount > 0 ? `${cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}
-            </p>
-            {followThroughFocusLabel && (
-              <p className="mt-1 text-xs text-text-tertiary">{followThroughFocusLabel}</p>
-            )}
-          </>
-        ) : (
-          <p className="mt-2 text-sm text-text-secondary">Shows once completed campaigns have recipient delivery readback.</p>
-        )}
+          )}
+          {cleanupCoverageRate != null && (
+            <p className="mt-1 text-xs text-text-tertiary">{cleanupCoverageRate}% cleanup still pending</p>
+          )}
+          {cleanupReadyCoverageRate != null && (
+            <p className="mt-1 text-xs text-text-tertiary">{cleanupReadyCoverageRate}% follow-through ready</p>
+          )}
+          <p className="mt-1 text-xs text-text-tertiary">
+            {followThroughReadyRecipientCount > 0 ? `${followThroughReadyRecipientCount} recipients already closed out` : 'No recipients are already closed out'}
+          </p>
+          <p className="mt-1 text-xs text-text-tertiary">
+            {cleanupRecipientCount > 0 ? `${cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}
+          </p>
+          {followThroughFocusLabel && (
+            <p className="mt-1 text-xs text-text-tertiary">{followThroughFocusLabel}</p>
+          )}
+        </>
       </div>
       <div className="flex items-center gap-3">
         <div className="p-2 bg-primary-light rounded-lg">
@@ -1210,7 +1206,12 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
           <p className="text-xs text-text-secondary">
             Sent {channelBreakdown[channel].sent} · Active {channelBreakdown[channel].active} · Scheduled {channelBreakdown[channel].scheduled} · Needs follow-up {channelBreakdown[channel].partial} · Needs review {channelBreakdown[channel].failed}
           </p>
-          {channelDeliveryBreakdown[channel].targeted > 0 && (
+          {(channelDeliveryBreakdown[channel].targeted > 0
+            || channelBreakdown[channel].sent > 0
+            || channelBreakdown[channel].active > 0
+            || channelBreakdown[channel].scheduled > 0
+            || channelBreakdown[channel].partial > 0
+            || channelBreakdown[channel].failed > 0) && (
             <>
               <p className="mt-1 text-xs text-text-primary">
                 {channelDeliveryBreakdown[channel].delivered} delivered · {channelDeliveryBreakdown[channel].failed} need review
