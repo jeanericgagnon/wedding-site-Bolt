@@ -1154,12 +1154,12 @@ export function RegistryDashboardRouteContent(props: {
             </div>
             <div>
               <p className="text-text-primary font-semibold mb-1">
-                {props.items.length === 0 ? 'Your registry is empty' : 'No items match your filter'}
+                {props.items.length === 0 ? 'No registry gifts added yet.' : 'No registry gifts match this filter right now.'}
               </p>
               <p className="text-sm text-text-secondary max-w-xs mx-auto">
                 {props.items.length === 0
-                  ? 'Paste any product URL from any store to get started.'
-                  : 'Try adjusting your search or selecting a different filter.'}
+                  ? 'Add your first gift or fund when you want guests to have registry options.'
+                  : 'Try a broader search or switch filters to bring those gifts back into view.'}
               </p>
             </div>
             {props.items.length === 0 && (
