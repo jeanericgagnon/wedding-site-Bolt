@@ -40,6 +40,7 @@ These are the active product-completion lanes still open after the current launc
    - this lane remains active and unfinished
 7. `destination/travel guest portal`
    - latest shipped: the guest-hub `Travel quick plan` badge row now stays explicit with `No core travel gaps` in the all-clear state instead of leaving that truth only in the prose summary
+   - latest shipped: the owner travel-portal readiness badge row now also stays explicit with `No travel gaps` in the all-clear state instead of leaving that truth only in the summary sentence
    - this lane remains active and unfinished
 
 Archive for deferred/history detail:
