@@ -6,7 +6,7 @@ const PREVIEW_URL = 'http://127.0.0.1:4178';
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
 const isLiveBaseUrl = baseUrl !== PREVIEW_URL;
 const browserCommand = isLiveBaseUrl
-  ? `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/dayof-web-mode-live.spec.ts`
+  ? `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 --reporter=line tests/e2e/dayof-web-mode-live.spec.ts`
   : `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/dayof-web-mode-offline.spec.ts`;
 
 function sleep(ms) {

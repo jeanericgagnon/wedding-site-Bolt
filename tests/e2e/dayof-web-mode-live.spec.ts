@@ -2,6 +2,18 @@ import { expect, test } from '@playwright/test';
 import { signInAsOwner } from './liveOwnerSession';
 import { resolveLiveGuestHubProofContext } from './liveGuestHubProofContext';
 
+test('live guest hub owner auth resolves a real invite-scoped proof context', async ({ page }) => {
+  test.setTimeout(180_000);
+
+  await signInAsOwner(page);
+  const proofContext = await resolveLiveGuestHubProofContext(page);
+
+  expect(proofContext.siteId).toBeTruthy();
+  expect(proofContext.siteSlug).toBeTruthy();
+  expect(proofContext.guestInviteToken).toBeTruthy();
+  expect(proofContext.guestName).toBeTruthy();
+});
+
 test('live guest hub proves private day-of visibility, coordinator handoff, and map deep links without token leakage', async ({ page, context }) => {
   test.setTimeout(180_000);
 
