@@ -138,7 +138,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Main gap: no guest-visibility blockers right now')).toBeInTheDocument();
     expect(screen.getByText('Main gap: no thank-you blockers right now')).toBeInTheDocument();
     expect(screen.getByText('All claimed gifts are fully attributed and closed out right now.')).toBeInTheDocument();
-    expect(screen.getAllByText('All guest-ready gifts are visible right now.')).not.toHaveLength(0);
+    expect(screen.getAllByText('All gifts ready for guests are visible right now.')).not.toHaveLength(0);
     expect(screen.getByText('All thank-you follow-up is fully closed out right now.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /save thank-you list/i }));
     fireEvent.click(screen.getByRole('button', { name: /mark sent/i }));
@@ -1588,19 +1588,19 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('1 stale · 1 price change · 1 out of stock')).toBeInTheDocument();
     expect(screen.getByText('Snapshot focus: 1 gift missing a purchaser · 1 blocked from guests · 1 thank-you still pending · 3 items worth checking.')).toBeInTheDocument();
     expect(screen.getByText('Main watchouts: 1 gift missing a purchaser · 1 blocked from guests · 1 thank-you still pending · 3 items worth checking.')).toBeInTheDocument();
-    expect(screen.getByText('50% visible to guests · 75% guest-ready · 1 hidden when bought · 1 blocked from guests')).toBeInTheDocument();
+    expect(screen.getByText('50% visible to guests · 75% ready for guests · 1 hidden when bought · 1 blocked from guests')).toBeInTheDocument();
     expect(screen.getByText('Main gap: 1 still blocked from guests')).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Visible to guests: 2 · Hidden when purchased: 1'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Guest-ready coverage: 75% · Visible coverage: 50%'),
+      screen.getByText((_, element) => element?.textContent === 'Ready-for-guests coverage: 75% · Visible coverage: 50%'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Guest-ready items: 3 · Blocked from guests: 1'),
+      screen.getByText((_, element) => element?.textContent === 'Ready-for-guests items: 3 · Blocked from guests: 1'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Ready for guests now: 1 · Claimed but still visible: 1'),
+      screen.getByText((_, element) => element?.textContent === 'Visible and available now: 1 · Claimed but still visible: 1'),
     ).toBeInTheDocument();
   });
 

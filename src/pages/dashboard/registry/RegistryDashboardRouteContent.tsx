@@ -286,7 +286,7 @@ export function RegistryDashboardRouteContent(props: {
     && props.guestVisibilityStats.blockedGuestItems === 0
     && props.guestVisibilityStats.hiddenPurchasedItems === 0
     && props.guestVisibilityStats.guestVisibleItems === props.guestVisibilityStats.guestReadyItems
-    ? 'All guest-ready gifts are visible right now.'
+    ? 'All gifts ready for guests are visible right now.'
     : null;
   const guestVisibilitySummaryLabel = props.guestVisibilityStats.guestVisibleItems === 0
     ? 'No gifts visible to guests yet'
@@ -529,7 +529,7 @@ export function RegistryDashboardRouteContent(props: {
               <p className="mt-1 text-2xl font-bold text-text-primary">{props.guestVisibilityStats.guestVisibleItems}</p>
               <p className="mt-1 text-xs text-text-secondary">{guestVisibilitySummaryLabel}</p>
               <p className="mt-1 text-xs text-text-tertiary">
-                {guestVisibleCoverageRate}% visible to guests · {guestReadyCoverageRate}% guest-ready · {props.guestVisibilityStats.hiddenPurchasedItems} hidden when bought{props.guestVisibilityStats.blockedGuestItems > 0 ? ` · ${props.guestVisibilityStats.blockedGuestItems} blocked from guests` : ''}
+                {guestVisibleCoverageRate}% visible to guests · {guestReadyCoverageRate}% ready for guests · {props.guestVisibilityStats.hiddenPurchasedItems} hidden when bought{props.guestVisibilityStats.blockedGuestItems > 0 ? ` · ${props.guestVisibilityStats.blockedGuestItems} blocked from guests` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">{guestVisibilityGapLabel}</p>
               {guestVisibilityAllClearLabel ? <p className="mt-1 text-xs text-text-tertiary">{guestVisibilityAllClearLabel}</p> : null}
@@ -676,13 +676,13 @@ export function RegistryDashboardRouteContent(props: {
                   Visible to guests: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.guestVisibleItems}</span> · Hidden when purchased: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.hiddenPurchasedItems}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Guest-ready coverage: <span className="font-semibold text-text-primary">{guestReadyCoverageRate}%</span> · Visible coverage: <span className="font-semibold text-text-primary">{guestVisibleCoverageRate}%</span>
+                  Ready-for-guests coverage: <span className="font-semibold text-text-primary">{guestReadyCoverageRate}%</span> · Visible coverage: <span className="font-semibold text-text-primary">{guestVisibleCoverageRate}%</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Guest-ready items: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.guestReadyItems}</span> · Blocked from guests: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.blockedGuestItems}</span>
+                  Ready-for-guests items: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.guestReadyItems}</span> · Blocked from guests: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.blockedGuestItems}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Ready for guests now: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.visibleAvailableItems}</span> · Claimed but still visible: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.visibleClaimedItems}</span>
+                  Visible and available now: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.visibleAvailableItems}</span> · Claimed but still visible: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.visibleClaimedItems}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Thank-yous sent: <span className="font-semibold text-text-primary">{props.registryThankYouStats.completedCount}</span> · Still pending: <span className="font-semibold text-text-primary">{props.registryThankYouStats.pendingCount}</span>
