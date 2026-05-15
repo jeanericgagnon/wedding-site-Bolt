@@ -32,7 +32,7 @@ describe('travelGuestPortal', () => {
       'Weekend routing ready',
       'Arrival coverage ready',
     ]);
-    expect(readiness.summary).toBe('7 ready.');
+    expect(readiness.summary).toBe('7 ready. No travel gaps right now.');
     expect(readiness.mainGapLabel).toBe('Main gap: none right now');
     expect(readiness.steps.find((step) => step.id === 'guest-specific')?.status).toBe('ready');
   });
@@ -92,7 +92,7 @@ describe('travelGuestPortal', () => {
       'Weekend routing ready',
       'Arrival coverage ready',
     ]);
-    expect(readiness.summary).toBe('7 ready.');
+    expect(readiness.summary).toBe('7 ready. No travel gaps right now.');
     expect(readiness.mainGapLabel).toBe('Main gap: none right now');
   });
 
