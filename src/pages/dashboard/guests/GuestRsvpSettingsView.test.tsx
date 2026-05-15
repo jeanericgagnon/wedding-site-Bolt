@@ -81,6 +81,8 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText(/Phone or email recovery plan/i)).toBeInTheDocument();
     expect(screen.getAllByText(/14 guest emails and 5 phone numbers are saved/i).length).toBeGreaterThan(0);
     expect(screen.getByText('19 saved recovery inputs')).toBeInTheDocument();
+    expect(screen.getAllByText('100% ready').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('email and text')).toBeInTheDocument();
     expect(screen.getByText(/^14$/i)).toBeInTheDocument();
     expect(screen.getByText(/^5$/i)).toBeInTheDocument();
     expect(screen.getByText(/Ready for email recovery/i)).toBeInTheDocument();
@@ -179,10 +181,11 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('templates and meals')).toBeInTheDocument();
     expect(screen.getByText('1 optional improvement still open')).toBeInTheDocument();
     expect(screen.getByText('First optional gap: Question templates')).toBeInTheDocument();
+    expect(screen.getAllByText('100% ready').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText('email and text')).toBeInTheDocument();
     expect(screen.getByText('2 saved')).toBeInTheDocument();
     expect(screen.getByText('0% coverage')).toBeInTheDocument();
     expect(screen.getByText('3 total live questions')).toBeInTheDocument();
-    expect(screen.getByText('100% ready')).toBeInTheDocument();
     expect(screen.queryByText(/Main gap:/i)).not.toBeInTheDocument();
   });
 
@@ -241,5 +244,7 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('Main gap: Meal choices')).toBeInTheDocument();
     expect(screen.getByText('2 optional improvements still open')).toBeInTheDocument();
     expect(screen.getByText('First optional gap: Question templates')).toBeInTheDocument();
+    expect(screen.getByText('50% ready')).toBeInTheDocument();
+    expect(screen.getByText('email only')).toBeInTheDocument();
   });
 });

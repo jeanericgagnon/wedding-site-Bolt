@@ -122,6 +122,15 @@ export function GuestRsvpSettingsView({
   const verificationEmailCount = Math.max(verificationInputsChecklistItem?.emailCount ?? 0, 0);
   const verificationPhoneCount = Math.max(verificationInputsChecklistItem?.phoneCount ?? 0, 0);
   const verificationSupportCount = verificationEmailCount + verificationPhoneCount;
+  const verificationChannelReadyCount = [verificationEmailCount > 0, verificationPhoneCount > 0].filter(Boolean).length;
+  const verificationChannelCoverageRate = Math.round((verificationChannelReadyCount / 2) * 100);
+  const verificationChannelLabel = verificationChannelReadyCount === 2
+    ? 'email and text'
+    : verificationEmailCount > 0
+      ? 'email only'
+      : verificationPhoneCount > 0
+        ? 'text only'
+        : 'no recovery channels yet';
   const verificationReadyLabel = verificationSupportCount > 0
     ? `${verificationSupportCount} saved recovery input${verificationSupportCount === 1 ? '' : 's'}`
     : 'No saved recovery inputs yet';
@@ -334,13 +343,18 @@ export function GuestRsvpSettingsView({
                     {verificationInputsChecklistItem.status === 'ready' ? 'Ready to design' : 'Needs setup'}
                   </span>
                 </div>
-                <div className="mb-3 grid gap-2 sm:grid-cols-3">
+                <div className="mb-3 grid gap-2 sm:grid-cols-4">
                   <div className="rounded-md border border-border-subtle bg-white/80 p-3">
                     <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Recovery inputs</p>
                     <p className="mt-1 text-sm font-semibold text-text-primary">{verificationReadyLabel}</p>
                     {verificationInputsChecklistItem.supportLabel && (
                       <p className="mt-1 text-[11px] text-text-tertiary">{verificationInputsChecklistItem.supportLabel}</p>
                     )}
+                  </div>
+                  <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Recovery channels</p>
+                    <p className="mt-1 text-sm font-semibold text-text-primary">{verificationChannelCoverageRate}% ready</p>
+                    <p className="mt-1 text-[11px] text-text-tertiary">{verificationChannelLabel}</p>
                   </div>
                   <div className="rounded-md border border-border-subtle bg-white/80 p-3">
                     <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Guest emails</p>
