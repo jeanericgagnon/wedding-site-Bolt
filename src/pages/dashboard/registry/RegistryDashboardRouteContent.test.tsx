@@ -715,7 +715,7 @@ describe('RegistryDashboardRouteContent', () => {
       screen.getByText((_, element) => element?.textContent === 'Flexible funds already receiving gifts: 1 · Tracked progress funds: 1'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Share-ready coverage: 100% · Goal-tracked funds: 50%'),
+      screen.getByText((_, element) => element?.textContent === 'Ready-to-share coverage: 100% · Goal-tracked funds: 50%'),
     ).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Receiving-gift coverage: 50% · Already receiving gifts: 1'),
@@ -795,7 +795,7 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(screen.getByText('Main gap: no fund setup blockers right now')).toBeInTheDocument();
     expect(screen.getByText('Next gift gap: no fund momentum blockers right now')).toBeInTheDocument();
-    expect(screen.getByText('All cash funds are fully set up right now.')).toBeInTheDocument();
+    expect(screen.getByText('All fund links are ready to share right now.')).toBeInTheDocument();
     expect(screen.getByText('All fund momentum blockers are clear right now.')).toBeInTheDocument();
     expect(screen.getByText('No gifts purchased yet')).toBeInTheDocument();
     expect(screen.getByText('Nothing needs review right now')).toBeInTheDocument();

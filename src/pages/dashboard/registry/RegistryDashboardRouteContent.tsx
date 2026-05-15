@@ -302,7 +302,7 @@ export function RegistryDashboardRouteContent(props: {
     && props.fundStats.needsSetup === 0
     && props.fundStats.missingGoal === 0
     && props.fundStats.readyAwaitingFirstGift === 0
-    ? 'All cash funds are fully set up right now.'
+    ? 'All fund links are ready to share right now.'
     : null;
   const fundMomentumAllClearLabel = props.fundStats.count > 0
     && props.fundStats.needsSetup === 0
@@ -322,7 +322,7 @@ export function RegistryDashboardRouteContent(props: {
     props.claimStats.missingPurchaserItems > 0 ? `${props.claimStats.missingPurchaserItems} gift${props.claimStats.missingPurchaserItems === 1 ? '' : 's'} missing a purchaser` : null,
     props.guestVisibilityStats.blockedGuestItems > 0 ? `${props.guestVisibilityStats.blockedGuestItems} blocked from guests` : null,
     props.registryThankYouStats.pendingCount > 0 ? `${props.registryThankYouStats.pendingCount} thank-you${props.registryThankYouStats.pendingCount === 1 ? '' : 's'} still pending` : null,
-    props.fundStats.needsSetup > 0 ? `${props.fundStats.needsSetup} fund${props.fundStats.needsSetup === 1 ? '' : 's'} need payment setup` : null,
+    props.fundStats.needsSetup > 0 ? `${props.fundStats.needsSetup} fund${props.fundStats.needsSetup === 1 ? '' : 's'} need a share path` : null,
     reviewAlertCount > 0 ? `${reviewAlertCount} item${reviewAlertCount === 1 ? '' : 's'} worth checking` : null,
   ].filter(Boolean);
   const registryNotesSummary = registryNoteWatchouts.length === 0
@@ -712,7 +712,7 @@ export function RegistryDashboardRouteContent(props: {
                   )}
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Share-ready coverage: <span className="font-semibold text-text-primary">{fundShareReadyRate}%</span> · Goal-tracked funds: <span className="font-semibold text-text-primary">{fundGoalCoverageRate}%</span>
+                  Ready-to-share coverage: <span className="font-semibold text-text-primary">{fundShareReadyRate}%</span> · Goal-tracked funds: <span className="font-semibold text-text-primary">{fundGoalCoverageRate}%</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   {props.fundStats.withProgress === 0 ? (
