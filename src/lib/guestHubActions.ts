@@ -145,12 +145,12 @@ export function summarizeGuestHubActions(actions: Pick<GuestHubAction, 'id'>[]):
     registry: 'registry',
     photos: 'photo upload',
     guestbook: 'guestbook',
-    vault: 'anniversary vault',
-    recap: 'photo recap',
-    contact: 'guest update',
+    vault: 'vault gift',
+    recap: 'photo recap details',
+    contact: 'contact update',
   };
   const parts = actions.map((action) => labels[action.id]).filter(Boolean);
-  if (parts.length === 0) return 'No guest actions are enabled yet';
+  if (parts.length === 0) return 'No guest actions are ready from this link yet';
   if (parts.length === 1) return parts[0];
   if (parts.length === 2) return `${parts[0]} and ${parts[1]}`;
   return `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`;
