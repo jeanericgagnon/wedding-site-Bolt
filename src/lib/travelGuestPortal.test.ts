@@ -212,7 +212,7 @@ describe('travelGuestPortal', () => {
     expect(spotlight).toEqual({
       summary: '8 travel details ready from the guest hub, including 1 visible event window for this invitation. Core travel coverage is 100%. It covers stay details, weekend timing, arrival guidance.',
       travelHref: '/site/maya-and-leo?invite_token=guest-token-123&guestLang=fr#travel',
-      badges: ['Invite-scoped', '1 event window', '1 route card', '2 booking links', '100% core travel coverage', 'Stay ready', 'Weekend timing ready', 'Arrival ready'],
+      badges: ['Invite-scoped', '1 event window', '1 route card', '2 booking links', '3 of 3 core travel layers ready', '100% core travel coverage', 'Stay ready', 'Weekend timing ready', 'Arrival ready'],
       mainGapLabel: null,
       cards: [
         { id: 'hotel', label: 'Harbor Hotel', detail: 'Code MAYALEO', href: 'https://harbor.example.com/stay' },
@@ -232,7 +232,7 @@ describe('travelGuestPortal', () => {
       shareText: [
         'DayOf travel quick plan',
         'Guide reflects the events visible for this invitation.',
-        'Coverage: Invite-scoped · 1 event window · 1 route card · 2 booking links · 100% core travel coverage · Stay ready · Weekend timing ready · Arrival ready',
+        'Coverage: Invite-scoped · 1 event window · 1 route card · 2 booking links · 3 of 3 core travel layers ready · 100% core travel coverage · Stay ready · Weekend timing ready · Arrival ready',
         'Harbor Hotel: Code MAYALEO',
         'Room block: Harbor Hotel · Code MAYALEO',
         'Ceremony shuttle: Harbor Hotel to venue · Board near the lobby fireplace.',
@@ -248,7 +248,7 @@ describe('travelGuestPortal', () => {
     });
     expect(spotlight?.htmlDocument).toContain('Open the live travel page');
     expect(spotlight?.htmlDocument).toContain('This guide reflects the events visible for this invitation.');
-    expect(spotlight?.htmlDocument).toContain('Invite-scoped · 1 event window · 1 route card · 2 booking links · 100% core travel coverage · Stay ready · Weekend timing ready · Arrival ready');
+    expect(spotlight?.htmlDocument).toContain('Invite-scoped · 1 event window · 1 route card · 2 booking links · 3 of 3 core travel layers ready · 100% core travel coverage · Stay ready · Weekend timing ready · Arrival ready');
     expect(spotlight?.htmlDocument).toContain('https://harbor.example.com/stay');
     expect(spotlight?.htmlDocument).toContain('Valet opens at 3:15 PM at the garden gate.');
     expect(spotlight?.htmlDocument).not.toContain('guest-token-123</');
@@ -294,11 +294,11 @@ describe('travelGuestPortal', () => {
       'Directions · Harbor Lounge',
       'Directions · Sunset Gardens Estate',
     ]);
-    expect(spotlight?.badges).toEqual(['Invite-scoped', '2 event windows', '2 route cards', '33% core travel coverage', '2 core travel layers still missing', 'Weekend timing ready']);
+    expect(spotlight?.badges).toEqual(['Invite-scoped', '2 event windows', '2 route cards', '1 of 3 core travel layers ready', '33% core travel coverage', '2 core travel layers still missing', 'Weekend timing ready']);
     expect(spotlight?.mainGapLabel).toBe('Main gap: Stay details');
     expect(spotlight?.summary).toBe('4 travel details ready from the guest hub, including 2 visible event windows for this invitation. It covers weekend timing.');
     expect(spotlight?.cards.filter((card) => card.href).length).toBe(2);
-    expect(spotlight?.shareText).toContain('Coverage: Invite-scoped · 2 event windows · 2 route cards · 33% core travel coverage · 2 core travel layers still missing · Weekend timing ready');
+    expect(spotlight?.shareText).toContain('Coverage: Invite-scoped · 2 event windows · 2 route cards · 1 of 3 core travel layers ready · 33% core travel coverage · 2 core travel layers still missing · Weekend timing ready');
     expect(spotlight?.shareText).toContain('Welcome drinks: Sat, Jun 13, 11:00 PM · Harbor Lounge');
     expect(spotlight?.shareText).toContain('Directions · Harbor Lounge: 1 Dock Road, Sausalito, CA');
     expect(spotlight?.htmlDocument).toContain('Directions · Sunset Gardens Estate');
@@ -321,7 +321,7 @@ describe('travelGuestPortal', () => {
       { id: 'parking', label: 'Parking and arrival', detail: 'Street parking is limited after 4 PM, so rideshare is the easier option.' },
       { id: 'guest-note', label: 'Guest note', detail: 'Most guests dress for sun at ceremony and a cooler breeze by dinner.' },
     ]);
-    expect(spotlight?.badges).toEqual(['33% core travel coverage', '2 core travel layers still missing', 'Stay ready']);
+    expect(spotlight?.badges).toEqual(['1 of 3 core travel layers ready', '33% core travel coverage', '2 core travel layers still missing', 'Stay ready']);
     expect(spotlight?.mainGapLabel).toBe('Main gap: Weekend timing');
     expect(spotlight?.summary).toBe('3 travel details ready from the guest hub. It covers stay details, arrival guidance.');
     expect(spotlight?.shareText).toContain('Guest note: Most guests dress for sun at ceremony and a cooler breeze by dinner.');

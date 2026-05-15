@@ -508,6 +508,11 @@ export function buildTravelHubSpotlight(input: {
     weekendTimingReady,
     arrivalGuidanceReady,
   ].filter(Boolean).length / 3) * 100);
+  const readyCoreTravelCount = [
+    stayReady,
+    weekendTimingReady,
+    arrivalGuidanceReady,
+  ].filter(Boolean).length;
   const missingCoreTravelCount = [
     stayReady,
     weekendTimingReady,
@@ -518,6 +523,7 @@ export function buildTravelHubSpotlight(input: {
     ...(visibleEventCount > 0 ? [`${visibleEventCount} event window${visibleEventCount === 1 ? '' : 's'}`] : []),
     ...(routeCardCount > 0 ? [`${routeCardCount} route card${routeCardCount === 1 ? '' : 's'}`] : []),
     ...(bookingLinkCount > 0 ? [`${bookingLinkCount} booking link${bookingLinkCount === 1 ? '' : 's'}`] : []),
+    `${readyCoreTravelCount} of 3 core travel layers ready`,
     `${coreTravelCoverageRate}% core travel coverage`,
     ...(missingCoreTravelCount > 0 ? [`${missingCoreTravelCount} core travel layer${missingCoreTravelCount === 1 ? '' : 's'} still missing`] : []),
     ...(stayReady ? ['Stay ready'] : []),
