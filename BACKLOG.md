@@ -3,7 +3,7 @@
 ## Quick Read
 
 - Last updated: `2026-05-15 09:27 AM PDT`
-- Latest shipped batch: `pending local batch` `Clarify registry supporting cards`
+- Latest shipped batch: `522524ca` `Clarify registry supporting cards`
 - Latest backlog-cleanup state: top-of-file scan is current through the pending local registry supporting-cards batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,7 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
-  - `pending local batch` `Clarify registry supporting cards`
+  - `522524ca` `Clarify registry supporting cards`
   - `2d3bdc56` `Clarify registry guest and review summaries`
   - `3aa83255` `Clarify registry quiet summary cards`
   - `838be5c8` `Clarify registry zero-state summaries`
