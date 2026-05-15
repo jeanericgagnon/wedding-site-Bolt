@@ -484,6 +484,9 @@ export function GuestRsvpSettingsView({
                   {optionalOpenCount === 0 && (
                     <p className="mt-1 text-[11px] text-text-tertiary">0 optional improvements still open</p>
                   )}
+                  {optionalOpenCount === 0 && (
+                    <p className="mt-1 text-[11px] text-text-tertiary">No optional layers need action</p>
+                  )}
                   <p className="mt-1 text-[11px] text-text-tertiary">
                     {optionalOpenCount === 0 ? 'All optional RSVP upgrades are ready' : 'Optional upgrades can keep improving after launch'}
                   </p>

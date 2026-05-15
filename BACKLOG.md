@@ -2,11 +2,35 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 07:58 AM PDT`
-- Latest shipped batch: `ddcaa550` `Clarify RSVP optional all-clear`
-- Latest backlog-cleanup batch: `28c413f6` `Add backlog next-step scan`
+- Last updated: `2026-05-15 08:47 AM PDT`
+- Latest shipped batch: `pending local batch` `Clarify RSVP and travel all-clear follow-through`
+- Latest backlog-cleanup state: current session local-only cleanup is ahead of the last pushed cleanup batch
 - Open backlog lanes: `7`
 - Current session blocker: repeated source-file `Operation timed out` reads are intermittently blocking direct product-code edits in this saturated session
+- Current transport blocker: the newest backlog-cleanup commit is local only because `git push origin codex/v1-finish-hard-gates-3` is currently failing with `origin` resolution errors
+- Blocked this session:
+  - direct reads on `GuestRsvpSettingsView.tsx`, `travelGuestPortal.ts`, and several registry/guest-visibility files are intermittently timing out
+  - affected source files are currently marked `dataless`, so the real blocker is File Provider materialization failure rather than only repo-scale git noise
+  - direct forced-copy recovery attempts to `/private/tmp` also failed with `fcopyfile failed: Operation timed out`, so the dataless files are still not materializing locally
+  - low-level `dd if=... of=/private/tmp/... bs=4096` reads also failed with `Operation timed out`, so even raw byte-copy access is currently blocked on those source files
+  - cleanup of 203 stray numbered `.git/index*` files completed, but direct source-file reads still failed afterward, so git index clutter was real but not the only blocker
+  - `fileproviderctl check -a ... -P -v` now reports `20` broken files on `disk <-> FSSnapshot`, with `FSSnapshot <-> FPSnapshot` clean and reconciliation checks back to green
+  - local backlog cleanup can still land, but remote persistence is currently unreliable until `origin` resolves again
+- Resume source-code work here first when reads recover:
+  - `RSVP access modes and question templates`: land the optional all-clear follow-through copy so the owner summary also says `No optional layers need action`
+- First code retry after transport/reads recover:
+  - push local backlog-cleanup commit `c59192e0`
+  - then land the RSVP optional all-clear follow-through copy
+  - if reads still fail, re-attempt source-file materialization before treating the lane as a code task again
+- File Provider recovery status:
+  - `fileproviderctl check -a ... -P` found `21` broken files first
+  - `fileproviderctl repair -a ... -P` did not clear the issue
+  - `fileproviderctl check -a ... -P -v` now reports `20` broken files, so the failure set shifted slightly but the source-edit path is still blocked
+- Session recovery notes:
+  - source files proven blocked in this session include `GuestRsvpSettingsView.tsx`, `GuestRsvpSettingsView.test.tsx`, `travelGuestPortal.ts`, `memoryFlowReadiness.ts`, `MessageDetailModal.tsx`, and `RegistryDashboardRouteContent.tsx`
+  - failed read paths include `head`, `file`, direct `git` reads with `mmap failed`, direct copy to `/private/tmp`, and low-level `dd` byte-copy
+  - materialization attempts tried: `brctl download ...` plus File Provider inspection
+  - best next recovery remains: restore source readability, restore `origin` push health, then land the RSVP optional all-clear follow-through batch first
 - Best place to scan after each batch:
   - `Quick Read` for the newest timestamp and latest shipped batch
   - `Recent Shipped Work` for the most recent visible progress by lane
@@ -15,6 +39,8 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `pending local batch` `Clarify RSVP and travel all-clear follow-through`
+  - `c59192e0` `Record backlog session blocker` `local only`
   - `28c413f6` `Add backlog next-step scan`
   - `fe751e70` `Tighten backlog latest batch scan`
   - `80a1ff75` `Clean backlog top scan`
@@ -25,11 +51,11 @@
   - `8c59e667` `Clarify travel badge all-clear`
   - `132d89cd` `Clarify travel no-gap badge`
 - `RSVP access modes and question templates`
-  - latest shipped: the optional RSVP setup summary now also says `0 optional improvements still open` in the all-clear state
+  - latest shipped: the optional RSVP setup summary now also says `0 optional improvements still open` and `No optional layers need action` in the all-clear state
 - `premium no-app guest photo and memory flow`
   - latest shipped: the top-level photo/memory badge row now stays explicit with `No memory gaps right now`, `No memory lanes need action`, and `No memory steps need action` in the all-clear state
 - `destination/travel guest portal`
-  - latest shipped: the guest-hub `Travel quick plan` badge row now stays explicit with `No core travel gaps`, and the owner travel-portal readiness badge row now also stays explicit with `No travel gaps`
+  - latest shipped: the guest-hub `Travel quick plan` badge row now stays explicit with `No core travel gaps`, and the owner travel-portal readiness badge row now also stays explicit with `No travel gaps` and `No guest sections incomplete`
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 
@@ -67,7 +93,7 @@ These are the active product-completion lanes still open after the current launc
 2. `unified QR guest hub`
    - live production mobile proof is still open for public versus guest-specific QR landing behavior
 3. `RSVP access modes and question templates`
-   - latest shipped: the optional RSVP setup summary now also says `0 optional improvements still open` in the all-clear state, so the optional lane closes with the same count-based language it uses when upgrades are still pending
+   - latest shipped: the optional RSVP setup summary now also says `0 optional improvements still open` and `No optional layers need action` in the all-clear state, so the optional lane closes with both the same count-based language and the same all-clear wording family it uses when optional layers still need work
    - production rerun is still open for the owner RSVP settings proof on the shipped runtime
    - any future move of code/password/open RSVP beyond `planned` still needs real guest-facing runtime proof
 4. `status-based messaging and invitation tracking`
@@ -99,7 +125,7 @@ These are the active product-completion lanes still open after the current launc
    - this lane remains active and unfinished
 7. `destination/travel guest portal`
    - latest shipped: the guest-hub `Travel quick plan` badge row now stays explicit with `No core travel gaps` in the all-clear state instead of leaving that truth only in the prose summary
-   - latest shipped: the owner travel-portal readiness badge row now also stays explicit with `No travel gaps` in the all-clear state instead of leaving that truth only in the summary sentence
+   - latest shipped: the owner travel-portal readiness badge row now also stays explicit with `No travel gaps` and `No guest sections incomplete` in the all-clear state instead of leaving that truth only in the summary sentence
    - this lane remains active and unfinished
 
 Archive for deferred/history detail:
@@ -117,7 +143,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 07:58 AM PDT` |
+| Current date/time | `2026-05-15 08:47 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |

@@ -209,6 +209,7 @@ export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): 
       : 'No active blockers',
     ...(missingLabels.length > 0 ? [`${missingLabels.length} guest section${missingLabels.length === 1 ? '' : 's'} still incomplete`] : []),
     ...(missingLabels.length === 0 ? ['No travel gaps'] : []),
+    ...(missingLabels.length === 0 ? ['No guest sections incomplete'] : []),
     hasLodging ? 'Stay guidance ready' : 'Stay guidance missing',
     venuesAddressed && hasSchedule ? 'Weekend routing ready' : 'Weekend routing missing',
     hasArrival || hasTransport ? 'Arrival coverage ready' : 'Arrival coverage missing',
