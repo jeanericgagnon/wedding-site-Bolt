@@ -2,10 +2,10 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 02:43 PM PDT`
-- Latest shipped batch: `pending local guest-hub storage-free proof batch`
+- Last updated: `2026-05-15 02:49 PM PDT`
+- Latest shipped batch: `pending local travel defer batch`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry active-proof-lane closure batch
-- Open backlog lanes: `6`
+- Open backlog lanes: `5`
 - Current session blocker: the minimal guest-hub Vitest slice still idles in this saturated session even after clearing duplicate runners, removing fake timers from the offline snapshot proof dependency, restoring real timers, isolating the i18n-backed guest-hub child components from the large render test, removing the redundant EventHub render bundle from the QR proof lane, extracting the pure EventHub helper functions away from the heavy page module, replacing the giant EventHubLiveContent proof dependency with a lean dedicated render-smoke test, and splitting pure helper assertions away from the EventHub boundary test, so the local runner environment remains the current proof blocker after those in-repo blockers were removed
 - Current transport blocker: none active right now
 - Blocked this session:
@@ -143,7 +143,7 @@
 - `premium no-app guest photo and memory flow`
   - continue the no-app guest photo flow lane from the current owner-readback cleanup
 - `destination/travel guest portal`
-  - continue guest-hub and owner travel runtime proof after the current all-clear readback cleanup
+  - deferred for now at user request; wait on the next travel runtime-proof push
 
 ## What's Left Now
 
@@ -218,9 +218,9 @@ These are the active product-completion lanes still open after the current launc
 6. `premium no-app guest photo and memory flow`
    - latest shipped: the no-app memory-flow card now also labels every lane and step chip explicitly as `Lane ready`, `Lane needs action`, `Step ready`, `Step planned`, or `Step empty`, so the detailed checklist keeps the same owner-facing truth style as the stronger lead summary instead of falling back to generic pills
    - this lane remains active and unfinished
-7. `destination/travel guest portal`
+7. `DEFERRED`: destination/travel guest portal
    - latest shipped: the guest-hub travel path now labels each detail card explicitly as `Travel step ready` or `Travel step needs setup`, so the detailed mobile flow keeps the same owner-safe truth style as the newer travel summary readback instead of dropping back to generic pills
-   - this lane remains active and unfinished
+   - deferred for now at user request; keep the shipped travel cleanup and wait on the next runtime-proof push before reactivating
 
 Archive for deferred/history detail:
 - [BACKLOG_ARCHIVE.md](/Users/ericgagnon/Documents/DayOfLove/wedding-site-Bolt/BACKLOG_ARCHIVE.md)
