@@ -305,6 +305,9 @@ function GuestDrawerDetails({
                 {hiddenEventCoverageRate != null ? ` · ${hiddenEventCoverageRate}% still hidden` : ''}
               </p>
             )}
+            {visibilityPreview.hiddenEventSummary && (
+              <p className="text-xs text-text-tertiary">{visibilityPreview.hiddenEventSummary}</p>
+            )}
             {totalPotentialPreviewRouteCount > 0 && (
               <p className="text-xs text-text-tertiary">
                 {previewRouteCoverageRate != null ? `${previewRouteCoverageRate}% preview-route coverage` : ''}
