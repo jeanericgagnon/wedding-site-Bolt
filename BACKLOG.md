@@ -2,11 +2,11 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 03:18 PM PDT`
-- Latest shipped batch: `pending local guest-hub api-auth proof batch`
+- Last updated: `2026-05-15 03:24 PM PDT`
+- Latest shipped batch: `pending local generic-browser-startup isolation batch`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry active-proof-lane closure batch
 - Open backlog lanes: `5`
-- Current session blocker: the live guest-hub proof now gets past the local Vitest preflight and no longer depends on browser-driven owner login or browser-local auth-state scraping for proof-context resolution, but the production Playwright run still goes silent before the first named live test reports in this saturated session, so the remaining QR lane gap is now isolated to Playwright/browser startup around the guest-hub live spec itself
+- Current session blocker: even a minimal `chromium.launch()` plus `/login` navigation now goes silent in this saturated session, so the remaining QR lane gap is no longer specific to the guest-hub spec and is currently isolated to generic headless browser startup in this session
 - Current transport blocker: none active right now
 - Blocked this session:
   - `npx vitest run src/pages/dashboard/registry/RegistryDashboardRouteContent.test.tsx` still stalls without producing useful output in this session
@@ -161,6 +161,7 @@ These are the active product-completion lanes still open after the current launc
   - latest shipped: the live `dayof-web-mode` proof path now skips the wedged local preflight and goes straight to the authenticated production Playwright check when `PLAYWRIGHT_BASE_URL` points at the live site, so the remaining QR lane blocker is now isolated to the live browser/runtime leg instead of being trapped behind the local Vitest runner
   - latest shipped: the live `dayof-web-mode` proof now splits owner auth/context resolution from the deeper guest-hub navigation assertions and runs with line reporting, so the remaining QR lane blocker is narrowed from one opaque live browser run to Playwright/session startup before the first named live test reports
   - latest shipped: the live guest-hub proof now resolves owner auth and invite-scoped proof context through direct API auth instead of Playwright login plus browser-local auth-state scraping, so the remaining QR lane blocker is narrowed further to the Playwright/browser startup around the live guest-hub spec itself
+  - latest shipped: a minimal `chromium.launch()` plus `/login` navigation now reproduces the same silent hang in this saturated session, so the remaining QR lane blocker is narrowed further from the guest-hub live spec itself to generic headless browser startup in this session
   - latest shipped: the local day-of proof lane now resolves guest-hub access and identity truth through pure helper coverage instead of browser `sessionStorage` state, because `publicAccessArtifacts.test.ts` now covers the access-token and guest-invite resolution paths directly and `eventHubPageHelpers.test.ts` no longer mutates session storage, so one more concrete local proof dependency is out of the stuck Vitest slice
   - latest shipped: `proof:v1:dayof-web-mode` now runs the new `eventHubPageHelpers` test instead of the broader `EventHub` page-boundary test, so the local proof lane keeps pure guest-hub helper coverage without pulling an extra page-structure assertion into the blocker path
    - latest shipped: the guest-hub offline snapshot proof path no longer uses fake timers; it now writes an explicit saved timestamp through `writeGuestHubOfflineSnapshot`, so another concrete blocker is removed from the `dayof-web-mode` local proof slice instead of relying on timer mocking inside that lane
