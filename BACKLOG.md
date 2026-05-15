@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 05:14 PM PDT`
-- Latest shipped batch: `tighten photo memory live proof gaps`
+- Last updated: `2026-05-15 05:25 PM PDT`
+- Latest shipped batch: `add live photo memory video proof path`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry active-proof-lane closure batch
 - Open backlog lanes: `1`
 - Current session blocker: even a minimal `chromium.launch()` plus `/login` navigation now goes silent in this saturated session, and the same silent hang now blocks the remaining guest-preview live rerun too, so the remaining browser-proof gaps are currently isolated to generic headless browser startup in this session
@@ -769,8 +769,8 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the top-level photo-memory badge row now also normalizes overall step coverage, so owners can judge how much of the no-app memory flow is truly wired up without converting raw ready-step counts by hand
    - this batch shipped: the top-level photo-memory badge row now also reads back the concrete ready-step count beside step coverage, so owners can see how many memory steps are actually wired without converting the percentage by hand
    - this batch shipped: the top-level photo-memory upload badge now also reads back the active-album count beside live upload volume, so owners can tell whether upload momentum is concentrated in one album or spread across the real active capture surface
+   - latest shipped: the production `photo-upload-write-read` lane now also uploads a real video file, proves owner feature/story moderation on that live clip, verifies the guest-facing published recap renders the uploaded video plus guest attribution, and confirms the owner can still flag/hide the same clip after recap review, so the memory-flow lane no longer has a missing live guest video upload browser path
    - latest shipped: the production `photo-upload-write-read` lane already covers owner moderation readback after a real live upload and also proves the guest-facing published recap path on the shipped runtime, so those two old memory-flow bullets were overlapping with a live proof lane that is already green
-   - add live guest video upload browser proof
    - rerun the owner-side `Preview recap` handoff against the shipped production runtime after the next approved deploy
 
 7. `ACTIVE`: destination/travel guest portal

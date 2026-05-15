@@ -152,7 +152,6 @@ const output = {
     'Mobile guest photo-upload route proof for the no-app memory flow without raw-token leakage',
   ],
   stillManualProofNeeded: [
-    'Add live guest video upload browser proof.',
     'Rerun the owner-side "Preview recap" handoff against the shipped production runtime after the next approved deploy.',
   ],
   results,
