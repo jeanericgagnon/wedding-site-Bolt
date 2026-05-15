@@ -266,6 +266,7 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('2 of 2 meal choices ready')).toBeInTheDocument();
     expect(screen.getByText('Meal choices are launch-ready')).toBeInTheDocument();
     expect(screen.getByText('No optional gaps open')).toBeInTheDocument();
+    expect(screen.getByText('0 optional improvements still open')).toBeInTheDocument();
     expect(screen.getByText('All optional RSVP upgrades are ready')).toBeInTheDocument();
     expect(screen.getByText('All core templates are live')).toBeInTheDocument();
   });

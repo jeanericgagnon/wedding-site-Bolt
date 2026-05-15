@@ -12,6 +12,7 @@ These are the active product-completion lanes still open after the current launc
 2. `unified QR guest hub`
    - live production mobile proof is still open for public versus guest-specific QR landing behavior
 3. `RSVP access modes and question templates`
+   - latest shipped: the optional RSVP setup summary now also says `0 optional improvements still open` in the all-clear state, so the optional lane closes with the same count-based language it uses when upgrades are still pending
    - production rerun is still open for the owner RSVP settings proof on the shipped runtime
    - any future move of code/password/open RSVP beyond `planned` still needs real guest-facing runtime proof
 4. `status-based messaging and invitation tracking`
