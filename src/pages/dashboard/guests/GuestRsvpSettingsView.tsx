@@ -456,6 +456,9 @@ export function GuestRsvpSettingsView({
                     {optionalReadyCount} of {optionalLayerCount} optional layer{optionalLayerCount === 1 ? '' : 's'} ready
                   </p>
                   <p className="mt-1 text-[11px] text-text-tertiary">
+                    {addedTemplateCount} of {templateCoverageTotal} templates live
+                  </p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">
                     {optionalOpenCount === 0 ? 'No optional gaps open' : `${optionalOpenCount} optional improvement${optionalOpenCount === 1 ? '' : 's'} still open`}
                   </p>
                   {optionalSetupGapLabel && (
