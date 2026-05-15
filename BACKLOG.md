@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 11:37 AM PDT`
-- Latest shipped batch: `d362e422` `Clarify guest-hub ready-from-link wording`
+- Last updated: `2026-05-15 11:42 AM PDT`
+- Latest shipped batch: `pending local batch` `Clarify guest-hub live surface labels`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `pending local batch` `Clarify guest-hub live surface labels`
   - `d362e422` `Clarify guest-hub ready-from-link wording`
   - `8753852a` `Clarify guest-hub link-access summaries`
   - `87cce477` `Clarify guest-hub helper action nouns`
@@ -93,6 +94,7 @@
   - rerun the guest preview strip/drawer on the shipped runtime
   - prove wrong-guest/right-guest visibility on live auth flows
 - `unified QR guest hub`
+  - latest shipped: the live guest-hub surface now uses clearer section labels like `Access from this link`, `Guest actions from this link`, `Core readiness from this link`, `Travel path from this link`, `Readiness from this link`, `No-app guest-hub readiness`, and `Live guest-hub readiness`, so the QR guest-hub details page now reads like one consistent product surface instead of a mix of older internal section names
   - latest shipped: the no-app guest-hub readiness helper now says guest actions are `ready from this link` and that actions are `ready from it`, so the deeper day-of readiness board now matches the same guest-safe wording family as the newer link-access cards instead of slipping back to `unlocked` language
   - latest shipped: the guest-hub link-access helpers now say `This link is ready for guest-specific RSVP and check-in readback`, `This link is ready for invite-only event details without guest-specific RSVP or check-in readback`, `This link is public only and does not include private event details or guest-specific readback`, and `All 4 core day-of actions are ready from this link`, so the guest-specific, invite-only, public-only, and all-clear QR summaries now read like product truth instead of fallback ops phrasing or `0 of 4 missing` math
   - latest shipped: the shared guest-hub action summarizer now says `vault gift`, `photo recap details`, `contact update`, and `No guest actions are ready from this link yet`, so helper readback across QR guest-hub summaries no longer slips back into older internal feature nouns like `anniversary vault`, `photo recap`, or `guest update`
@@ -130,6 +132,7 @@ These are the active product-completion lanes still open after the current launc
    - wrong-guest/right-guest live visibility proof is still open
    - authenticated mobile live proof is still open
 2. `unified QR guest hub`
+   - latest shipped: the live guest-hub surface now uses clearer section labels like `Access from this link`, `Guest actions from this link`, `Core readiness from this link`, `Travel path from this link`, `Readiness from this link`, `No-app guest-hub readiness`, and `Live guest-hub readiness`, so the QR guest-hub details page now reads like one consistent product surface instead of mixing newer guest-safe copy with older internal section names
    - latest shipped: the no-app guest-hub readiness helper now says guest actions are `ready from this link` and that actions are `ready from it`, so the deeper day-of readiness board now matches the same guest-safe wording family as the newer link-access cards instead of falling back to `unlocked` language
    - latest shipped: the guest-hub link-access helpers now say `This link is ready for guest-specific RSVP and check-in readback`, `This link is ready for invite-only event details without guest-specific RSVP or check-in readback`, `This link is public only and does not include private event details or guest-specific readback`, and `All 4 core day-of actions are ready from this link`, so the guest-specific, invite-only, public-only, and all-clear QR summaries now read like product truth instead of fallback ops phrasing or `0 of 4 missing` math
    - latest shipped: the shared guest-hub action summarizer now says `vault gift`, `photo recap details`, `contact update`, and `No guest actions are ready from this link yet`, so helper readback across QR guest-hub summaries now matches the cleaner guest-safe wording instead of older internal feature nouns
@@ -191,7 +194,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 11:37 AM PDT` |
+| Current date/time | `2026-05-15 11:42 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |

@@ -328,7 +328,7 @@ export function EventHubLiveContent({
                     <div className="rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-sm font-semibold text-[#2f261d]">What this link unlocks</p>
+                          <p className="text-sm font-semibold text-[#2f261d]">Access from this link</p>
                           <p className="mt-1 text-xs font-medium text-[#8b6f53]">{linkAccessCard.badgeLabel}</p>
                         </div>
                       </div>
@@ -337,7 +337,7 @@ export function EventHubLiveContent({
                       <p className="mt-2 text-xs leading-5 text-[#8b6f53]">{linkAccessCard.summary}</p>
                       {(linkAccessCard.actionCountLabel || linkAccessCard.actionSummaryLabel) && (
                         <div className="mt-3 rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Available from this link</p>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Guest actions from this link</p>
                           {linkAccessCard.actionCountLabel && (
                             <p className="mt-1 text-sm font-semibold text-[#2f261d]">{linkAccessCard.actionCountLabel}</p>
                           )}
@@ -348,7 +348,7 @@ export function EventHubLiveContent({
                       )}
                       {(linkAccessCard.readyCoreActionCountLabel || linkAccessCard.coreActionCoverageLabel || linkAccessCard.coreActionSummaryLabel) && (
                         <div className="mt-3 rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Core day-of actions</p>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Core readiness from this link</p>
                           {linkAccessCard.readyCoreActionCountLabel && (
                             <p className="mt-1 text-sm font-semibold text-[#2f261d]">{linkAccessCard.readyCoreActionCountLabel}</p>
                           )}
@@ -371,7 +371,7 @@ export function EventHubLiveContent({
               <div className="mt-8 rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-[#2f261d]">Travel steps from this link</p>
+                    <p className="text-sm font-semibold text-[#2f261d]">Travel path from this link</p>
                     <p className="mt-1 text-sm leading-6 text-[#6f5843]">
                       Start with travel details from this link, then reply and share photos from the same mobile hub.
                     </p>
@@ -527,7 +527,7 @@ export function EventHubLiveContent({
                 <summary className="cursor-pointer list-none">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-[#2f261d]">What is ready on this link</p>
+                      <p className="text-sm font-semibold text-[#2f261d]">Readiness from this link</p>
                       <p className="mt-1 text-sm leading-6 text-[#6f5843]">Check what is ready on this link before relying on it at the venue.</p>
                     </div>
                     <span className="rounded-lg bg-[#f3eadf] px-3 py-2 text-xs font-semibold text-[#69513f]">
@@ -539,7 +539,7 @@ export function EventHubLiveContent({
                   <div>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-[#2f261d]">Day-of web readiness</p>
+                        <p className="text-sm font-semibold text-[#2f261d]">No-app guest-hub readiness</p>
                         <p className="mt-1 text-sm leading-6 text-[#6f5843]">{dayOfModeReadiness.summary}</p>
                       </div>
                       <div className="rounded-lg bg-[#f3eadf] px-3 py-2 text-xs font-semibold text-[#69513f]">
@@ -564,7 +564,7 @@ export function EventHubLiveContent({
                   <div>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-[#2f261d]">Hub readiness on this link</p>
+                        <p className="text-sm font-semibold text-[#2f261d]">Live guest-hub readiness</p>
                         <p className="mt-1 text-sm leading-6 text-[#6f5843]">{dayOfHubStatusBoard.summary}</p>
                       </div>
                     </div>

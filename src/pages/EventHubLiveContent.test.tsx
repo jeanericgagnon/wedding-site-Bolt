@@ -105,12 +105,12 @@ describe('EventHubLiveContent', () => {
             title: 'Guest-specific link',
             badgeLabel: 'Guest-specific',
             detail: 'This link includes invite-only event details plus RSVP and check-in readback for Alex Rivera.',
-            summary: 'Guest-specific access is active for this link, including RSVP and check-in readback.',
+            summary: 'This link is ready for guest-specific RSVP and check-in readback.',
             actionCountLabel: '4 guest actions are ready from this link.',
             actionSummaryLabel: 'RSVP, latest updates, travel details, and photo upload',
-            readyCoreActionCountLabel: '3 of 4 core day-of actions are already ready from this link.',
+            readyCoreActionCountLabel: '3 of 4 core day-of actions are ready from this link.',
             coreActionCoverageLabel: '75% core day-of coverage is ready from this link (3 of 4).',
-            coreActionSummaryLabel: 'Still missing from this link: schedule.',
+            coreActionSummaryLabel: '1 of 4 core day-of actions is still missing from this link: schedule.',
             mainGapLabel: 'Main gap: Add schedule to this link.',
           }}
           guestName=""
@@ -164,20 +164,20 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Assigned team')).toBeInTheDocument();
     expect(screen.getByText('Guest handoff note')).toBeInTheDocument();
     expect(screen.getByText('Morgan · Avery')).toBeInTheDocument();
-    expect(screen.getByText('What this link unlocks')).toBeInTheDocument();
-    expect(screen.getByText('Day-of web readiness')).toBeInTheDocument();
-    expect(screen.getByText('Hub readiness on this link')).toBeInTheDocument();
+    expect(screen.getByText('Access from this link')).toBeInTheDocument();
+    expect(screen.getByText('Live guest-hub readiness')).toBeInTheDocument();
     expect(screen.getByText('Guest-specific link')).toBeInTheDocument();
-    expect(screen.getByText('Guest-specific access is active for this link, including RSVP and check-in readback.')).toBeInTheDocument();
-    expect(screen.getByText('Available from this link')).toBeInTheDocument();
+    expect(screen.getByText('This link is ready for guest-specific RSVP and check-in readback.')).toBeInTheDocument();
+    expect(screen.getByText('Guest actions from this link')).toBeInTheDocument();
     expect(screen.getByText('4 guest actions are ready from this link.')).toBeInTheDocument();
     expect(screen.getByText('RSVP, latest updates, travel details, and photo upload')).toBeInTheDocument();
-    expect(screen.getByText('Core day-of actions')).toBeInTheDocument();
+    expect(screen.getByText('Core readiness from this link')).toBeInTheDocument();
     expect(screen.getByText('3 of 4 core day-of actions are ready from this link.')).toBeInTheDocument();
-    expect(screen.getByText('Still missing from this link: schedule.')).toBeInTheDocument();
+    expect(screen.getByText('1 of 4 core day-of actions is still missing from this link: schedule.')).toBeInTheDocument();
     expect(screen.getByText('Main gap: Add schedule to this link.')).toBeInTheDocument();
-    expect(screen.getByText('Travel steps from this link')).toBeInTheDocument();
-    expect(screen.getByText('What is ready on this link')).toBeInTheDocument();
+    expect(screen.getByText('Travel path from this link')).toBeInTheDocument();
+    expect(screen.getByText('Readiness from this link')).toBeInTheDocument();
+    expect(screen.getByText('No-app guest-hub readiness')).toBeInTheDocument();
     expect(document.getElementById('day-of-updates')).not.toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy travel details' }));
