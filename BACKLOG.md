@@ -4,8 +4,9 @@
 
 - Last updated: `2026-05-15 07:58 AM PDT`
 - Latest shipped batch: `ddcaa550` `Clarify RSVP optional all-clear`
-- Latest backlog-cleanup batch: `80a1ff75` `Clean backlog top scan`
+- Latest backlog-cleanup batch: `28c413f6` `Add backlog next-step scan`
 - Open backlog lanes: `7`
+- Current session blocker: repeated source-file `Operation timed out` reads are intermittently blocking direct product-code edits in this saturated session
 - Best place to scan after each batch:
   - `Quick Read` for the newest timestamp and latest shipped batch
   - `Recent Shipped Work` for the most recent visible progress by lane
@@ -14,6 +15,9 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `28c413f6` `Add backlog next-step scan`
+  - `fe751e70` `Tighten backlog latest batch scan`
+  - `80a1ff75` `Clean backlog top scan`
   - `ddcaa550` `Clarify RSVP optional all-clear`
   - `fd613b37` `Clarify memory step all-clear`
   - `7a272467` `Clarify memory lane all-clear`
