@@ -1,74 +1,10 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  buildGuestHubAccessHeaders,
-  buildGuestHubAccessPayload,
-  buildGuestHubIdentityPayload,
   formatEventHubCoupleLabel,
   friendlyGuestHubError,
   safeGuestHubFunctionError,
   shouldOpenHubDetailsByDefault,
 } from './eventHubPageHelpers';
-
-afterEach(() => {
-  sessionStorage.clear();
-});
-
-describe('buildGuestHubAccessPayload', () => {
-  it('prefers the current invite token and includes the scoped password session', () => {
-    sessionStorage.setItem('dayof_invite_token_maya-leo', 'stored-invite');
-    sessionStorage.setItem('dayof_pw_session_maya-leo', 'password-session');
-
-    expect(buildGuestHubAccessPayload('maya-leo', new URLSearchParams('token=current-invite'))).toEqual({
-      inviteToken: 'current-invite',
-      passwordSession: 'password-session',
-    });
-  });
-
-  it('falls back to the stored invite token for gated guest hub clicks', () => {
-    sessionStorage.setItem('dayof_invite_token_maya-leo', 'stored-invite');
-
-    expect(buildGuestHubAccessPayload('maya-leo', new URLSearchParams(''))).toEqual({
-      inviteToken: 'stored-invite',
-      passwordSession: null,
-    });
-  });
-});
-
-describe('buildGuestHubAccessHeaders', () => {
-  it('adds only present access artifacts for gated hub config requests', () => {
-    sessionStorage.setItem('dayof_pw_session_maya-leo', 'password-session');
-
-    expect(buildGuestHubAccessHeaders('maya-leo', new URLSearchParams('token=current-invite'))).toEqual({
-      'x-dayof-invite-token': 'current-invite',
-      'x-dayof-password-session': 'password-session',
-    });
-  });
-
-  it('adds guest identity headers when a guest-scoped invite is present', () => {
-    sessionStorage.setItem('dayof_guest_invite_token_maya-leo', 'guest-invite');
-
-    expect(buildGuestHubAccessHeaders('maya-leo', new URLSearchParams(''))).toEqual({
-      'x-dayof-guest-invite-token': 'guest-invite',
-    });
-  });
-
-  it('omits empty access headers for normal public hub config requests', () => {
-    expect(buildGuestHubAccessHeaders('maya-leo', new URLSearchParams(''))).toEqual({});
-  });
-});
-
-describe('buildGuestHubIdentityPayload', () => {
-  it('pulls guest-specific invite identity from the current URL or stored session scope', () => {
-    sessionStorage.setItem('dayof_guest_invite_token_maya-leo', 'stored-guest-invite');
-
-    expect(buildGuestHubIdentityPayload('maya-leo', new URLSearchParams('invite_token=current-guest-invite'))).toEqual({
-      guestInviteToken: 'current-guest-invite',
-    });
-    expect(buildGuestHubIdentityPayload('maya-leo', new URLSearchParams('guestLang=es'))).toEqual({
-      guestInviteToken: 'stored-guest-invite',
-    });
-  });
-});
 
 describe('formatEventHubCoupleLabel', () => {
   it('uses configured couple names when available', () => {

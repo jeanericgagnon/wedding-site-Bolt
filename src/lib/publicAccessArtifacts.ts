@@ -91,15 +91,44 @@ export function captureGuestInviteTokenFromSearch(slug: string, searchParams: UR
 }
 
 export function buildPublicAccessArtifacts(slug: string, searchParams: URLSearchParams) {
+  return resolvePublicAccessArtifacts({
+    searchParams,
+    storedInviteToken: readStoredPublicInviteToken(slug),
+    storedPasswordSession: readStoredPublicPasswordSession(slug),
+  });
+}
+
+export function resolvePublicAccessArtifacts({
+  searchParams,
+  storedInviteToken,
+  storedPasswordSession,
+}: {
+  searchParams: URLSearchParams;
+  storedInviteToken?: string | null;
+  storedPasswordSession?: string | null;
+}) {
   return {
-    inviteToken: getInviteTokenFromSearch(searchParams) ?? readStoredPublicInviteToken(slug),
-    passwordSession: readStoredPublicPasswordSession(slug),
+    inviteToken: getInviteTokenFromSearch(searchParams) ?? storedInviteToken ?? null,
+    passwordSession: storedPasswordSession ?? null,
   };
 }
 
 export function buildGuestIdentityArtifacts(slug: string, searchParams: URLSearchParams) {
+  return resolveGuestIdentityArtifacts({
+    searchParams,
+    storedGuestInviteToken: readStoredGuestInviteToken(slug),
+  });
+}
+
+export function resolveGuestIdentityArtifacts({
+  searchParams,
+  storedGuestInviteToken,
+}: {
+  searchParams: URLSearchParams;
+  storedGuestInviteToken?: string | null;
+}) {
   return {
-    guestInviteToken: getGuestInviteTokenFromSearch(searchParams) ?? readStoredGuestInviteToken(slug),
+    guestInviteToken: getGuestInviteTokenFromSearch(searchParams) ?? storedGuestInviteToken ?? null,
   };
 }
 
