@@ -387,6 +387,14 @@ export function RegistryDashboardRouteContent(props: {
         cleanupMediumCount > 0 ? `${cleanupMediumCount} review soon` : null,
         cleanupLowCount > 0 ? `${cleanupLowCount} keep fresh` : null,
       ].filter(Boolean).join(' · ')}.`;
+  const duplicateSecondaryItemCount = props.duplicateGroups.reduce((sum, group) => sum + group.secondaryItems.length, 0);
+  const duplicateSignalCount = props.duplicateGroups.reduce((sum, group) => sum + group.signals.length, 0);
+  const duplicateQueueSummary = props.duplicateGroups.length === 0
+    ? 'No duplicate cleanup groups are waiting right now.'
+    : `${props.duplicateGroups.length} merge candidate${props.duplicateGroups.length === 1 ? '' : 's'} covering ${duplicateSecondaryItemCount} repeated gift${duplicateSecondaryItemCount === 1 ? '' : 's'}.`;
+  const duplicateQueueDetail = props.duplicateGroups.length === 0
+    ? null
+    : `${duplicateSignalCount} match signal${duplicateSignalCount === 1 ? '' : 's'} are already grouped for review.`;
   const cleanupToolsAllClearLabel = props.bulkReviewCounts.repair === 0
     && props.bulkReviewCounts.duplicates === 0
     && props.bulkReviewCounts.imageIssues === 0
@@ -1062,6 +1070,11 @@ export function RegistryDashboardRouteContent(props: {
 
         {props.duplicateGroups.length > 0 && (
           <div className="mb-4 space-y-3">
+            <div>
+              <p className="text-sm font-semibold text-text-primary">Duplicate review</p>
+              <p className="mt-1 text-sm text-text-secondary">{duplicateQueueSummary}</p>
+              {duplicateQueueDetail ? <p className="mt-1 text-xs text-text-tertiary">{duplicateQueueDetail}</p> : null}
+            </div>
             {props.duplicateGroups.slice(0, 4).map((group) => (
               <div key={group.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">

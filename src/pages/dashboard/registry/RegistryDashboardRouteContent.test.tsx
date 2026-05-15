@@ -932,6 +932,102 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Refresh stale registry details')).toBeInTheDocument();
   });
 
+  it('summarizes duplicate review before listing merge groups', () => {
+    render(
+      <RegistryDashboardRouteContent
+        actionableBadImportCount={0}
+        alertCounts={{ stale: 0, priceChanged: 0, outOfStock: 0, imageIssues: 0 }}
+        autoRefreshEnabled
+        autoRefreshing={false}
+        bulkImportBusy={false}
+        bulkReviewCounts={{ repair: 0, duplicates: 2, imageIssues: 0 }}
+        budgetUtilization={0}
+        claimStats={{ claimedItems: 0, claimedQuantity: 0, fullyClaimedItems: 0, partiallyClaimedItems: 0, namedPurchaserItems: 0, missingPurchaserItems: 0, multiQuantityInProgress: 0, remainingQuantity: 0 }}
+        counts={{ total: 3, available: 3, partial: 0, purchased: 0, totalValue: 240 }}
+        duplicateGroups={[
+          {
+            id: 'dup-1',
+            primaryItem: makeItem({ id: 'gift-1', item_name: 'Dinner plates', quantity_needed: 4, quantity_purchased: 1 }),
+            secondaryItems: [
+              makeItem({ id: 'gift-2', item_name: 'Dinner plates set', quantity_needed: 2, quantity_purchased: 0 }),
+              makeItem({ id: 'gift-3', item_name: 'Dinner plates bundle', quantity_needed: 1, quantity_purchased: 0 }),
+            ],
+            items: [
+              makeItem({ id: 'gift-1', item_name: 'Dinner plates', quantity_needed: 4, quantity_purchased: 1 }),
+              makeItem({ id: 'gift-2', item_name: 'Dinner plates set', quantity_needed: 2, quantity_purchased: 0 }),
+              makeItem({ id: 'gift-3', item_name: 'Dinner plates bundle', quantity_needed: 1, quantity_purchased: 0 }),
+            ],
+            mergedQuantityNeeded: 7,
+            mergedQuantityPurchased: 1,
+            signals: [
+              { kind: 'name-match', label: 'Name match', score: 0.95 },
+              { kind: 'store-match', label: 'Store match', score: 0.81 },
+            ],
+          },
+        ]}
+        editItem={null}
+        filter="all"
+        filtered={[makeItem({ id: 'gift-1' }), makeItem({ id: 'gift-2' }), makeItem({ id: 'gift-3' })]}
+        fulfillmentRate={0}
+        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
+        guestVisibilityStats={{ guestReadyItems: 0, guestVisibleItems: 0, visibleAvailableItems: 0, visibleClaimedItems: 0, hiddenPurchasedItems: 0, blockedGuestItems: 0, guestReadyCoverageRate: 0, guestVisibleCoverageRate: 0 }}
+        handleAddNew={vi.fn()}
+        handleAutoRefreshStale={vi.fn(async () => {})}
+        handleBulkImport={vi.fn(async () => {})}
+        handleCopyDuplicateReviewList={vi.fn(async () => {})}
+        handleDelete={vi.fn(async () => {})}
+        handleEdit={vi.fn()}
+        handleMergeDuplicateGroup={vi.fn(async () => {})}
+        handleMarkPurchased={vi.fn(async () => {})}
+        handleResetPurchaseState={vi.fn(async () => {})}
+        handleRefetchMetadata={vi.fn(async () => true)}
+        handleRefreshImageIssues={vi.fn(async () => {})}
+        handleRepairBadImports={vi.fn(async () => {})}
+        handleRunRepairQueueAction={vi.fn(async () => {})}
+        handleSyncRegistryThankYouTasks={vi.fn(async () => {})}
+        handleToggleRegistryThankYouTask={vi.fn(async () => {})}
+        imageRefreshBusy={false}
+        items={[makeItem({ id: 'gift-1' }), makeItem({ id: 'gift-2' }), makeItem({ id: 'gift-3' })]}
+        loading={false}
+        monthlyRefreshCap={100}
+        monthlyRefreshCount={0}
+        mergingDuplicateGroupId={null}
+        nearBudgetCap={false}
+        normalizedItems={[makeItem({ id: 'gift-1' }), makeItem({ id: 'gift-2' }), makeItem({ id: 'gift-3' })]}
+        recentActivity={[]}
+        registryActionsOpen={false}
+        registryActionsRef={{ current: null }}
+        registryInsights={[]}
+        registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}
+        registryThankYouPlan={{ headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] }}
+        registryThankYouStats={{ purchasedCount: 0, completedCount: 0, pendingCount: 0, readyToSendCount: 0, blockedByMissingPurchaserCount: 0, attributionCoverageRate: 0, completionRate: 0 }}
+        registryThankYouBusyItemId={null}
+        registryThankYouSyncing={false}
+        repairingBadImports={false}
+        repairQueue={[]}
+        refreshBudgetRemaining={100}
+        refreshWindowOpen={true}
+        search=""
+        setBulkImportOpen={vi.fn()}
+        setFilter={vi.fn()}
+        setRegistryActionsOpen={vi.fn()}
+        setSearch={vi.fn()}
+        setShowAlertsOnly={vi.fn()}
+        setShowImageIssuesOnly={vi.fn()}
+        showAlertsOnly={false}
+        showImageIssuesOnly={false}
+        topRegistryItems={[makeItem({ id: 'gift-1' })]}
+        weddingSiteId="site-1"
+      />,
+    );
+
+    expect(screen.getByText('Duplicate review')).toBeInTheDocument();
+    expect(screen.getByText('1 merge candidate covering 2 repeated gifts.')).toBeInTheDocument();
+    expect(screen.getByText('2 match signals are already grouped for review.')).toBeInTheDocument();
+    expect(screen.getByText('Possible duplicate group')).toBeInTheDocument();
+    expect(screen.getByText('Merge result: 1/7')).toBeInTheDocument();
+  });
+
   it('renders claim-state analytics for attribution and partial gifts', () => {
     render(
       <RegistryDashboardRouteContent
