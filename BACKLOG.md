@@ -412,6 +412,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the guest-reach snapshot and message detail review plan now also surface how many recipients are already fully closed out, so owners can pair follow-through-ready percentages with a concrete completed-recipient count instead of translating it from the cleanup math
    - this batch shipped: per-channel history, campaign-thread rollups, the active campaign thread, and the latest campaign summary now also surface follow-through-ready percentages plus already-closed-out recipient counts, so the closed-out side of follow-through truth stays visible beyond the top snapshot and detail modal
    - this batch shipped: campaign-thread rollups, the active thread, the latest campaign summary, and the detail modal now also surface explicit targeted-recipient counts beside follow-through percentages, so owners can tell what base the delivery and cleanup coverage numbers are actually describing
+   - this batch shipped: the top-level `Guest reach` snapshot now also surfaces targeted-recipient count inside delivery follow-through, so the first messaging summary answers what audience base the coverage percentages and cleanup counts are actually describing
    - keep extending normalized delivery/open/view/bounce/replied truth across channels and real live rows
    - prove customer-safe delivery-failure grouping against live rows
    - add authenticated live browser proof for composing/saving each operational segment on the shipped owner runtime
