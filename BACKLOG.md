@@ -3,7 +3,7 @@
 ## Quick Read
 
 - Last updated: `2026-05-15 09:23 AM PDT`
-- Latest shipped batch: `pending local batch` `Clarify registry guest and review summaries`
+- Latest shipped batch: `2d3bdc56` `Clarify registry guest and review summaries`
 - Latest backlog-cleanup state: top-of-file scan is current through the pending local registry batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,7 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
-  - `pending local batch` `Clarify registry guest and review summaries`
+  - `2d3bdc56` `Clarify registry guest and review summaries`
   - `3aa83255` `Clarify registry quiet summary cards`
   - `838be5c8` `Clarify registry zero-state summaries`
   - `b2ed7c14` `Clarify registry clean-state readback`
