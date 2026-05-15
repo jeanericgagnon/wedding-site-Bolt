@@ -87,7 +87,7 @@ describe('GuestItineraryDrawer', () => {
       expect.stringContaining('data:image/svg+xml'),
     );
     expect(screen.getAllByRole('button', { name: 'Save private card' })).toHaveLength(2);
-    expect(screen.getByText('9 guest routes ready · 6 guest-specific · 3 public shell · 1 visible event')).toBeInTheDocument();
+    expect(screen.getByText('9 guest routes ready · 6 guest-specific · 3 public shell · 1 visible event · 0 hidden events')).toBeInTheDocument();
     expect(screen.getByText('67% guest-specific coverage · 33% public-shell coverage')).toBeInTheDocument();
     expect(screen.getByText('100% event visibility coverage')).toBeInTheDocument();
     expect(screen.getByText('100% preview-route coverage · 9 routes ready · No preview routes missing')).toBeInTheDocument();
@@ -284,6 +284,7 @@ describe('GuestItineraryDrawer', () => {
       />,
     );
 
+    expect(screen.getByText('9 guest routes ready · 6 guest-specific · 3 public shell · 1 visible event · 1 hidden event')).toBeInTheDocument();
     expect(screen.getByText('50% event visibility coverage · 50% still hidden')).toBeInTheDocument();
   });
 });

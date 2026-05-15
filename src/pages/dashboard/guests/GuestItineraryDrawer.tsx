@@ -290,7 +290,7 @@ function GuestDrawerDetails({
               {guestSpecificPreviewRouteCount > 0 ? ` · ${guestSpecificPreviewRouteCount} guest-specific` : ''}
               {publicPreviewRouteCount > 0 ? ` · ${publicPreviewRouteCount} public shell` : ''}
               {visibleEventCount > 0 ? ` · ${visibleEventCount} visible event${visibleEventCount === 1 ? '' : 's'}` : ''}
-              {hiddenEventCount > 0 ? ` · ${hiddenEventCount} hidden event${hiddenEventCount === 1 ? '' : 's'}` : ''}
+              {` · ${hiddenEventCount} hidden event${hiddenEventCount === 1 ? '' : 's'}`}
             </p>
             {(guestSpecificCoverageRate != null || publicShellCoverageRate != null) && (
               <p className="text-xs text-text-tertiary">
