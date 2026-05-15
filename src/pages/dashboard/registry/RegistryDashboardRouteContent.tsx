@@ -676,10 +676,10 @@ export function RegistryDashboardRouteContent(props: {
                   Visible to guests: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.guestVisibleItems}</span> · Hidden when purchased: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.hiddenPurchasedItems}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Ready-for-guests coverage: <span className="font-semibold text-text-primary">{guestReadyCoverageRate}%</span> · Visible coverage: <span className="font-semibold text-text-primary">{guestVisibleCoverageRate}%</span>
+                  Ready for guests: <span className="font-semibold text-text-primary">{guestReadyCoverageRate}%</span> · Visible to guests: <span className="font-semibold text-text-primary">{guestVisibleCoverageRate}%</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Ready-for-guests items: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.guestReadyItems}</span> · Blocked from guests: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.blockedGuestItems}</span>
+                  Gifts ready for guests: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.guestReadyItems}</span> · Blocked from guests: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.blockedGuestItems}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Visible and available now: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.visibleAvailableItems}</span> · Claimed but still visible: <span className="font-semibold text-text-primary">{props.guestVisibilityStats.visibleClaimedItems}</span>
@@ -707,40 +707,40 @@ export function RegistryDashboardRouteContent(props: {
                     <>No fund links are waiting on a share path right now</>
                   ) : (
                     <>
-                      Ready to share: <span className="font-semibold text-text-primary">{props.fundStats.readyToShare}</span> · Need share path: <span className="font-semibold text-text-primary">{props.fundStats.needsSetup}</span>
+                      Ready to share now: <span className="font-semibold text-text-primary">{props.fundStats.readyToShare}</span> · Missing share path: <span className="font-semibold text-text-primary">{props.fundStats.needsSetup}</span>
                     </>
                   )}
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Ready-to-share coverage: <span className="font-semibold text-text-primary">{fundShareReadyRate}%</span> · Goal-tracked funds: <span className="font-semibold text-text-primary">{fundGoalCoverageRate}%</span>
+                  Ready to share: <span className="font-semibold text-text-primary">{fundShareReadyRate}%</span> · Funds with a goal: <span className="font-semibold text-text-primary">{fundGoalCoverageRate}%</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   {props.fundStats.withProgress === 0 ? (
                     <>No funds are already receiving gifts yet</>
                   ) : (
                     <>
-                      Receiving-gift coverage: <span className="font-semibold text-text-primary">{fundReceivingCoverageRate}%</span> · Already receiving gifts: <span className="font-semibold text-text-primary">{props.fundStats.withProgress}</span>
+                      Receiving gifts: <span className="font-semibold text-text-primary">{fundReceivingCoverageRate}%</span> · Already receiving gifts: <span className="font-semibold text-text-primary">{props.fundStats.withProgress}</span>
                     </>
                   )}
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Ready funds already receiving gifts: <span className="font-semibold text-text-primary">{props.fundStats.readyWithProgress}</span> · Waiting on first gift: <span className="font-semibold text-text-primary">{props.fundStats.readyAwaitingFirstGift}</span>
+                  Ready funds receiving gifts: <span className="font-semibold text-text-primary">{props.fundStats.readyWithProgress}</span> · Waiting on a first gift: <span className="font-semibold text-text-primary">{props.fundStats.readyAwaitingFirstGift}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   {props.fundStats.withGoal === 0 && props.fundStats.missingGoal === 0 ? (
-                    <>No goal-tracked fund setup is open right now</>
+                    <>No fund goals still need setup right now</>
                   ) : (
                     <>
-                      Goal-tracked funds: <span className="font-semibold text-text-primary">{props.fundStats.withGoal}</span> · Missing goal: <span className="font-semibold text-text-primary">{props.fundStats.missingGoal}</span>
+                      Funds with a goal: <span className="font-semibold text-text-primary">{props.fundStats.withGoal}</span> · Missing a goal: <span className="font-semibold text-text-primary">{props.fundStats.missingGoal}</span>
                     </>
                   )}
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   {props.fundStats.flexibleWithProgress === 0 && props.fundStats.withProgress === 0 ? (
-                    <>No flexible or tracked funds are already receiving gifts yet</>
+                    <>No flexible or goal-based funds are already receiving gifts yet</>
                   ) : (
                     <>
-                      Flexible funds already receiving gifts: <span className="font-semibold text-text-primary">{props.fundStats.flexibleWithProgress}</span> · Tracked progress funds: <span className="font-semibold text-text-primary">{props.fundStats.withProgress}</span>
+                      Flexible funds receiving gifts: <span className="font-semibold text-text-primary">{props.fundStats.flexibleWithProgress}</span> · Goal-based funds receiving gifts: <span className="font-semibold text-text-primary">{props.fundStats.withProgress}</span>
                     </>
                   )}
                 </div>

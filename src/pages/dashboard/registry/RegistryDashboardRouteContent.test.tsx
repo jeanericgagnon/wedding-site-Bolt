@@ -709,16 +709,16 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('50% goal-tracked · 50% already receiving gifts · 1 showing tracked progress · 1 flexible fund already receiving gifts')).toBeInTheDocument();
     expect(screen.getByText('Next gift gap: 1 still missing a goal')).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Ready funds already receiving gifts: 1 · Waiting on first gift: 1'),
+      screen.getByText((_, element) => element?.textContent === 'Ready funds receiving gifts: 1 · Waiting on a first gift: 1'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Flexible funds already receiving gifts: 1 · Tracked progress funds: 1'),
+      screen.getByText((_, element) => element?.textContent === 'Flexible funds receiving gifts: 1 · Goal-based funds receiving gifts: 1'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Ready-to-share coverage: 100% · Goal-tracked funds: 50%'),
+      screen.getByText((_, element) => element?.textContent === 'Ready to share: 100% · Funds with a goal: 50%'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Receiving-gift coverage: 50% · Already receiving gifts: 1'),
+      screen.getByText((_, element) => element?.textContent === 'Receiving gifts: 50% · Already receiving gifts: 1'),
     ).toBeInTheDocument();
   });
 
@@ -809,8 +809,8 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('No gifts are waiting on send or a missing purchaser name right now')).toBeInTheDocument();
     expect(screen.getByText('No fund links are waiting on a share path right now')).toBeInTheDocument();
     expect(screen.getByText('No funds are already receiving gifts yet')).toBeInTheDocument();
-    expect(screen.getByText('No goal-tracked fund setup is open right now')).toBeInTheDocument();
-    expect(screen.getByText('No flexible or tracked funds are already receiving gifts yet')).toBeInTheDocument();
+    expect(screen.getByText('No fund goals still need setup right now')).toBeInTheDocument();
+    expect(screen.getByText('No flexible or goal-based funds are already receiving gifts yet')).toBeInTheDocument();
     expect(screen.getByText('No purchased gifts need a thank-you yet.')).toBeInTheDocument();
     expect(screen.getByText('No image issues or duplicate groups')).toBeInTheDocument();
     expect(screen.getByText('No imported-gift cleanup work is open right now.')).toBeInTheDocument();
@@ -1594,10 +1594,10 @@ describe('RegistryDashboardRouteContent', () => {
       screen.getByText((_, element) => element?.textContent === 'Visible to guests: 2 · Hidden when purchased: 1'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Ready-for-guests coverage: 75% · Visible coverage: 50%'),
+      screen.getByText((_, element) => element?.textContent === 'Ready for guests: 75% · Visible to guests: 50%'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText((_, element) => element?.textContent === 'Ready-for-guests items: 3 · Blocked from guests: 1'),
+      screen.getByText((_, element) => element?.textContent === 'Gifts ready for guests: 3 · Blocked from guests: 1'),
     ).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Visible and available now: 1 · Claimed but still visible: 1'),
