@@ -1217,6 +1217,9 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
                 {channelDeliveryBreakdown[channel].delivered} delivered · {channelDeliveryBreakdown[channel].failed} need review
               </p>
               <p className="mt-1 text-[11px] text-text-tertiary">
+                {channelDeliveryBreakdown[channel].delivered} recipients delivered
+              </p>
+              <p className="mt-1 text-[11px] text-text-tertiary">
                 {channelDeliveryBreakdown[channel].targeted} targeted recipients
               </p>
               <p className="mt-1 text-[11px] text-text-tertiary">
@@ -1442,6 +1445,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                   return (
                     <>
                 <p>{thread.delivered} delivered · {thread.failed} need review</p>
+                {thread.delivered > 0 && <p className="text-text-secondary">{thread.delivered} recipients delivered</p>}
                 {targeted > 0 && <p className="text-text-secondary">{targeted} targeted recipients</p>}
                 {thread.deliveredRecipients > 0 && <p className="text-text-secondary">{thread.deliveredRate}% delivered coverage{reviewRate != null ? ` · ${reviewRate}% review coverage` : ''}{skippedRate != null ? ` · ${skippedRate}% needs contact` : ''}{unreachedRate != null ? ` · ${unreachedRate}% unreached` : ''}</p>}
                 {cleanupRate != null && <p className="text-text-secondary">{cleanupRate}% cleanup still pending</p>}

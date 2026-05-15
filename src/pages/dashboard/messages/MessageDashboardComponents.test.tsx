@@ -215,6 +215,7 @@ describe('MessageHistorySummaryPanels', () => {
 
     expect(screen.getByText('Sent 1 · Active 2 · Scheduled 1 · Needs follow-up 0 · Needs review 0')).toBeInTheDocument();
     expect(screen.getByText('10 delivered · 1 need review')).toBeInTheDocument();
+    expect(screen.getByText('10 recipients delivered')).toBeInTheDocument();
     expect(screen.getByText('16 targeted recipients')).toBeInTheDocument();
     expect(screen.getByText('63% delivered coverage · 6% review coverage · 13% needs contact · 19% unreached')).toBeInTheDocument();
     expect(screen.getByText('38% cleanup still pending')).toBeInTheDocument();
@@ -225,6 +226,7 @@ describe('MessageHistorySummaryPanels', () => {
     expect(screen.getByText('Main cleanup: unreached guests')).toBeInTheDocument();
     expect(screen.getByText('Sent 0 · Active 0 · Scheduled 0 · Needs follow-up 1 · Needs review 1')).toBeInTheDocument();
     expect(screen.getByText('4 delivered · 2 need review')).toBeInTheDocument();
+    expect(screen.getByText('4 recipients delivered')).toBeInTheDocument();
     expect(screen.getByText('7 targeted recipients')).toBeInTheDocument();
     expect(screen.getByText('57% delivered coverage · 29% review coverage · 14% needs contact · 0% unreached')).toBeInTheDocument();
     expect(screen.getByText('43% cleanup still pending')).toBeInTheDocument();
