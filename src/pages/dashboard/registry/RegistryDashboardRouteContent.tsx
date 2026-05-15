@@ -308,6 +308,16 @@ export function RegistryDashboardRouteContent(props: {
         props.alertCounts.priceChanged > 0 ? `${props.alertCounts.priceChanged} price change${props.alertCounts.priceChanged === 1 ? '' : 's'}` : null,
         props.alertCounts.outOfStock > 0 ? `${props.alertCounts.outOfStock} out of stock` : null,
       ].filter(Boolean).join(' · ');
+  const registryNoteWatchouts = [
+    props.claimStats.missingPurchaserItems > 0 ? `${props.claimStats.missingPurchaserItems} gift${props.claimStats.missingPurchaserItems === 1 ? '' : 's'} missing a purchaser` : null,
+    props.guestVisibilityStats.blockedGuestItems > 0 ? `${props.guestVisibilityStats.blockedGuestItems} blocked from guests` : null,
+    props.registryThankYouStats.pendingCount > 0 ? `${props.registryThankYouStats.pendingCount} thank-you${props.registryThankYouStats.pendingCount === 1 ? '' : 's'} still pending` : null,
+    props.fundStats.needsSetup > 0 ? `${props.fundStats.needsSetup} fund${props.fundStats.needsSetup === 1 ? '' : 's'} need payment setup` : null,
+    reviewAlertCount > 0 ? `${reviewAlertCount} item${reviewAlertCount === 1 ? '' : 's'} worth checking` : null,
+  ].filter(Boolean);
+  const registryNotesSummary = registryNoteWatchouts.length === 0
+    ? 'No active registry follow-through gaps right now.'
+    : `Main watchouts: ${registryNoteWatchouts.join(' · ')}.`;
 
   const tabCount = (key: RegistryFilter) => {
     if (key === 'all') return props.counts.total;
@@ -561,6 +571,7 @@ export function RegistryDashboardRouteContent(props: {
 
             <Card variant="bordered" padding="lg">
               <p className="text-sm font-semibold text-text-primary">Registry notes</p>
+              <p className="mt-1 text-sm text-text-secondary">{registryNotesSummary}</p>
               <div className="mt-3 space-y-2.5 text-sm text-text-secondary">
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Purchased gifts: <span className="font-semibold text-text-primary">{props.counts.purchased}</span> · Still open: <span className="font-semibold text-text-primary">{props.counts.available + props.counts.partial}</span>

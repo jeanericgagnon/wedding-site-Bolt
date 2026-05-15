@@ -711,6 +711,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('No thank-you follow-up open yet')).toBeInTheDocument();
     expect(screen.getByText('No cash funds added yet')).toBeInTheDocument();
     expect(screen.getByText('No fund gifts moving yet')).toBeInTheDocument();
+    expect(screen.getByText('No active registry follow-through gaps right now.')).toBeInTheDocument();
     expect(screen.getByText('No image issues or duplicate groups')).toBeInTheDocument();
   });
 
@@ -880,6 +881,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('33% ready now · 33% sent · 33% blocked')).toBeInTheDocument();
     expect(screen.getByText('1 ready to send · 1 blocked by purchaser · 67% purchasers named')).toBeInTheDocument();
     expect(screen.getByText('Main gap: 1 waiting on purchaser attribution')).toBeInTheDocument();
+    expect(screen.getByText('Main watchouts: 1 gift missing a purchaser · 2 thank-yous still pending.')).toBeInTheDocument();
     expect(
       screen.getByText((_, element) => element?.textContent === 'Thank-yous sent: 1 · Still pending: 2'),
     ).toBeInTheDocument();
@@ -964,6 +966,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Guest view')).toBeInTheDocument();
     expect(screen.getByText('1 ready now · 1 already claimed')).toBeInTheDocument();
     expect(screen.getByText('1 stale · 1 price change · 1 out of stock')).toBeInTheDocument();
+    expect(screen.getByText('Main watchouts: 1 gift missing a purchaser · 1 blocked from guests · 1 thank-you still pending · 3 items worth checking.')).toBeInTheDocument();
     expect(screen.getByText('50% visible to guests · 75% guest-ready · 1 hidden when bought · 1 blocked from guests')).toBeInTheDocument();
     expect(screen.getByText('Main gap: 1 still blocked from guests')).toBeInTheDocument();
     expect(
