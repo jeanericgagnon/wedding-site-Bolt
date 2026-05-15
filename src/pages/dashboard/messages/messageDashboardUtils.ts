@@ -250,6 +250,14 @@ export function getCleanupCoverageRate(input: {
   return Math.round((pendingCleanup / targeted) * 100);
 }
 
+export function getCleanupRecipientCount(input: {
+  failed: number;
+  skipped: number;
+  unreached: number;
+}): number {
+  return Math.max(0, input.failed) + Math.max(0, input.skipped) + Math.max(0, input.unreached);
+}
+
 export type CampaignThreadSummary = {
   key: string;
   name: string;

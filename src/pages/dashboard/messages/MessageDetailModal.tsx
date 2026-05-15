@@ -11,6 +11,7 @@ import {
   getAudienceLabel,
   getCampaignName,
   getCampaignTypeLabel,
+  getCleanupRecipientCount,
   getCustomerDeliveryReason,
   getCleanupCoverageRate,
   getFollowThroughFocusLabel,
@@ -104,6 +105,11 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
     skipped: skippedCount,
     unreached: unreachedCount,
     targeted: targetedRecipients,
+  });
+  const cleanupRecipientCount = getCleanupRecipientCount({
+    failed: Math.max(0, Number(message.failed_count ?? 0)),
+    skipped: skippedCount,
+    unreached: unreachedCount,
   });
   const followThroughFocusLabel = getFollowThroughFocusLabel({
     failed: Math.max(0, Number(message.failed_count ?? 0)),
@@ -214,6 +220,9 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 )}
                 {cleanupCoverageRate != null && (
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{cleanupCoverageRate}% cleanup still pending</span>
+                )}
+                {cleanupRecipientCount > 0 && (
+                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{cleanupRecipientCount} recipients still need cleanup</span>
                 )}
                 {followThroughFocusLabel && (
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{followThroughFocusLabel}</span>

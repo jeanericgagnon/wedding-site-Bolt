@@ -46,6 +46,7 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('4 delivered · 1 need review')).toBeInTheDocument();
     expect(screen.getByText('67% delivered coverage · 17% review coverage · 17% needs contact · 0% unreached')).toBeInTheDocument();
     expect(screen.getByText('33% cleanup still pending')).toBeInTheDocument();
+    expect(screen.getByText('2 recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('6 opened · 2 viewed · 3 clicked · 1 replied · 1 bounced')).toBeInTheDocument();
     expect(screen.getByText('1 recipient needs contact details · 0 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: contact cleanup')).toBeInTheDocument();
@@ -96,6 +97,7 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('9% needs contact')).toBeInTheDocument();
     expect(screen.getByText('9% unreached')).toBeInTheDocument();
     expect(screen.getByText('27% cleanup still pending')).toBeInTheDocument();
+    expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: delivery review')).toBeInTheDocument();
     expect(screen.getByText('Needs review 1')).toBeInTheDocument();
     expect(screen.getByText('Needs contact 1')).toBeInTheDocument();
@@ -163,6 +165,7 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('9% needs contact')).toBeInTheDocument();
     expect(screen.getByText('9% unreached')).toBeInTheDocument();
     expect(screen.getByText('27% cleanup still pending')).toBeInTheDocument();
+    expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: delivery review')).toBeInTheDocument();
     expect(screen.getByText('Opened 4')).toBeInTheDocument();
     expect(screen.getByText('Viewed 2')).toBeInTheDocument();
@@ -201,12 +204,14 @@ describe('MessageHistorySummaryPanels', () => {
     expect(screen.getByText('10 delivered · 1 need review')).toBeInTheDocument();
     expect(screen.getByText('63% delivered coverage · 6% review coverage · 13% needs contact · 19% unreached')).toBeInTheDocument();
     expect(screen.getByText('38% cleanup still pending')).toBeInTheDocument();
+    expect(screen.getByText('6 recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('2 need contact details · 3 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: unreached guests')).toBeInTheDocument();
     expect(screen.getByText('Sent 0 · Active 0 · Scheduled 0 · Needs follow-up 1 · Needs review 1')).toBeInTheDocument();
     expect(screen.getByText('4 delivered · 2 need review')).toBeInTheDocument();
     expect(screen.getByText('57% delivered coverage · 29% review coverage · 14% needs contact · 0% unreached')).toBeInTheDocument();
     expect(screen.getByText('43% cleanup still pending')).toBeInTheDocument();
+    expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('1 need contact details · 0 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: delivery review')).toBeInTheDocument();
     expect(screen.getByText('7 opened · 4 clicked · 1 replied')).toBeInTheDocument();
@@ -255,6 +260,7 @@ describe('MessageReachSnapshotCard', () => {
     expect(screen.getByText('1 need contact details · 1 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('71% delivered coverage · 14% review coverage · 7% needs contact · 7% unreached')).toBeInTheDocument();
     expect(screen.getByText('29% cleanup still pending')).toBeInTheDocument();
+    expect(screen.getByText('4 recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: delivery review')).toBeInTheDocument();
     expect(screen.getByText('Photo links ready')).toBeInTheDocument();
     expect(screen.getAllByText('3')).toHaveLength(2);
