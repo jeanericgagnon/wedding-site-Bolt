@@ -4,6 +4,18 @@ import { describe, expect, it, vi } from 'vitest';
 import { Camera } from 'lucide-react';
 import { EventHubLiveContent } from './EventHubLiveContent';
 
+vi.mock('../components/site/OwnerPreviewBanner', () => ({
+  OwnerPreviewBanner: () => null,
+}));
+
+vi.mock('../components/ui/LanguageSwitcher', () => ({
+  LanguageSwitcher: () => <div>Language switcher</div>,
+}));
+
+vi.mock('./EventHubConfigStatusCard', () => ({
+  EventHubConfigStatusCard: () => null,
+}));
+
 describe('EventHubLiveContent', () => {
   it('renders the travel quick plan spotlight when structured travel details are available', () => {
     const onTrackClick = vi.fn();
