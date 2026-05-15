@@ -155,8 +155,13 @@ describe('EventHubLiveContent', () => {
     expect(screen.getAllByText('Latest update')).toHaveLength(2);
     expect(screen.getByText('Ceremony doors open')).toBeInTheDocument();
     expect(screen.getByText('Your day-of status')).toBeInTheDocument();
+    expect(screen.getByText('Guest on this link')).toBeInTheDocument();
+    expect(screen.getByText('RSVP on this link')).toBeInTheDocument();
+    expect(screen.getByText('Check-in on this link')).toBeInTheDocument();
     expect(screen.getByText('Alex Rivera')).toBeInTheDocument();
     expect(screen.getByText('Coordinator handoff')).toBeInTheDocument();
+    expect(screen.getByText('Assigned team')).toBeInTheDocument();
+    expect(screen.getByText('Guest handoff note')).toBeInTheDocument();
     expect(screen.getByText('Morgan · Avery')).toBeInTheDocument();
     expect(screen.getByText('Link access')).toBeInTheDocument();
     expect(screen.getByText('Private guest link')).toBeInTheDocument();

@@ -283,15 +283,15 @@ export function EventHubLiveContent({
                       <p className="mt-1 text-sm leading-6 text-[#6f5843]">{guestStateCard.summary}</p>
                       <div className="mt-3 grid gap-2 sm:grid-cols-2">
                         <div className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Guest</p>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Guest on this link</p>
                           <p className="mt-1 text-sm font-semibold text-[#2f261d]">{guestStateCard.guestLabel}</p>
                         </div>
                         <div className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">RSVP</p>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">RSVP on this link</p>
                           <p className="mt-1 text-sm font-semibold text-[#2f261d]">{guestStateCard.rsvpLabel}</p>
                         </div>
                         <div className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 sm:col-span-2">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Check-in</p>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Check-in on this link</p>
                           <p className="mt-1 text-sm font-semibold text-[#2f261d]">{guestStateCard.checkInLabel}</p>
                         </div>
                       </div>
@@ -314,11 +314,11 @@ export function EventHubLiveContent({
                       <p className="mt-1 text-sm leading-6 text-[#6f5843]">{coordinatorHandoffCard.summary}</p>
                       <div className="mt-3 grid gap-2">
                         <div className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Team</p>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Assigned team</p>
                           <p className="mt-1 text-sm font-semibold text-[#2f261d]">{coordinatorHandoffCard.staffLabel}</p>
                         </div>
                         <div className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Guest note</p>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b6f53]">Guest handoff note</p>
                           <p className="mt-1 text-sm leading-6 text-[#2f261d]">{coordinatorHandoffCard.noteLabel}</p>
                         </div>
                       </div>
