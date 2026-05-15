@@ -238,6 +238,18 @@ export function getFollowThroughFocusLabel(input: {
   return `Main cleanup: ${top.label}`;
 }
 
+export function getCleanupCoverageRate(input: {
+  failed: number;
+  skipped: number;
+  unreached: number;
+  targeted: number;
+}): number | null {
+  const targeted = Math.max(0, input.targeted);
+  if (targeted === 0) return null;
+  const pendingCleanup = Math.max(0, input.failed) + Math.max(0, input.skipped) + Math.max(0, input.unreached);
+  return Math.round((pendingCleanup / targeted) * 100);
+}
+
 export type CampaignThreadSummary = {
   key: string;
   name: string;

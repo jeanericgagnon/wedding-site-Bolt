@@ -19,6 +19,7 @@ import {
   getCampaignName,
   getCampaignTypeLabel,
   getCustomerDeliveryReason,
+  getCleanupCoverageRate,
   getFollowThroughFocusLabel,
   getMessageEngagementStats,
   getRecipientCount,
@@ -232,6 +233,12 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
   const reviewCoverageRate = deliveryStats.targeted > 0 ? Math.round((deliveryStats.failed / deliveryStats.targeted) * 100) : null;
   const contactCoverageRate = deliveryStats.targeted > 0 ? Math.round((deliveryStats.skipped / deliveryStats.targeted) * 100) : null;
   const unreachedCoverageRate = deliveryStats.targeted > 0 ? Math.round((deliveryStats.unreached / deliveryStats.targeted) * 100) : null;
+  const cleanupCoverageRate = getCleanupCoverageRate({
+    failed: deliveryStats.failed,
+    skipped: deliveryStats.skipped,
+    unreached: deliveryStats.unreached,
+    targeted: deliveryStats.targeted,
+  });
   const followThroughFocusLabel = getFollowThroughFocusLabel({
     failed: deliveryStats.failed,
     skipped: deliveryStats.skipped,
@@ -309,6 +316,9 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
               <p className="mt-1 text-xs text-text-tertiary">
                 {deliveredCoverageRate}% delivered coverage · {reviewCoverageRate}% review coverage · {contactCoverageRate}% needs contact · {unreachedCoverageRate}% unreached
               </p>
+            )}
+            {cleanupCoverageRate != null && (
+              <p className="mt-1 text-xs text-text-tertiary">{cleanupCoverageRate}% cleanup still pending</p>
             )}
             {followThroughFocusLabel && (
               <p className="mt-1 text-xs text-text-tertiary">{followThroughFocusLabel}</p>
@@ -1189,6 +1199,17 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
                 })()}
               </p>
               <p className="mt-1 text-[11px] text-text-tertiary">
+                {(() => {
+                  const cleanupRate = getCleanupCoverageRate({
+                    failed: channelDeliveryBreakdown[channel].failed,
+                    skipped: channelDeliveryBreakdown[channel].skipped,
+                    unreached: channelDeliveryBreakdown[channel].unreached,
+                    targeted: channelDeliveryBreakdown[channel].targeted,
+                  });
+                  return cleanupRate != null ? `${cleanupRate}% cleanup still pending` : '';
+                })()}
+              </p>
+              <p className="mt-1 text-[11px] text-text-tertiary">
                 {channelDeliveryBreakdown[channel].skipped} need contact details · {channelDeliveryBreakdown[channel].unreached} not reached yet
               </p>
               {getFollowThroughFocusLabel({
@@ -1335,6 +1356,12 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                   const skippedRate = targeted > 0 ? Math.round((thread.skipped / targeted) * 100) : null;
                   const reviewRate = targeted > 0 ? Math.round((thread.failed / targeted) * 100) : null;
                   const unreachedRate = targeted > 0 ? Math.round((thread.unreached / targeted) * 100) : null;
+                  const cleanupRate = getCleanupCoverageRate({
+                    failed: thread.failed,
+                    skipped: thread.skipped,
+                    unreached: thread.unreached,
+                    targeted,
+                  });
                   const focusLabel = getFollowThroughFocusLabel({
                     failed: thread.failed,
                     skipped: thread.skipped,
@@ -1344,6 +1371,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                     <>
                 <p>{thread.delivered} delivered · {thread.failed} need review</p>
                 {thread.deliveredRecipients > 0 && <p className="text-text-secondary">{thread.deliveredRate}% delivered coverage{reviewRate != null ? ` · ${reviewRate}% review coverage` : ''}{skippedRate != null ? ` · ${skippedRate}% needs contact` : ''}{unreachedRate != null ? ` · ${unreachedRate}% unreached` : ''}</p>}
+                {cleanupRate != null && <p className="text-text-secondary">{cleanupRate}% cleanup still pending</p>}
                 {engagementSummary && <p className="text-text-secondary">{engagementSummary}</p>}
                 {(thread.skipped > 0 || thread.unreached > 0) && (
                   <p className="text-warning">
@@ -1389,6 +1417,12 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
             const activeThreadSkippedRate = activeThreadTargeted > 0 ? Math.round((activeCampaignThread.skipped / activeThreadTargeted) * 100) : null;
             const activeThreadReviewRate = activeThreadTargeted > 0 ? Math.round((activeCampaignThread.failed / activeThreadTargeted) * 100) : null;
             const activeThreadUnreachedRate = activeThreadTargeted > 0 ? Math.round((activeCampaignThread.unreached / activeThreadTargeted) * 100) : null;
+            const activeThreadCleanupRate = getCleanupCoverageRate({
+              failed: activeCampaignThread.failed,
+              skipped: activeCampaignThread.skipped,
+              unreached: activeCampaignThread.unreached,
+              targeted: activeThreadTargeted,
+            });
             return (
               <>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Delivered {activeCampaignThread.delivered}</span>
@@ -1423,6 +1457,11 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                 skipped: activeCampaignThread.skipped,
                 unreached: activeCampaignThread.unreached,
               })}
+            </span>
+          )}
+          {activeThreadCleanupRate != null && (
+            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+              {activeThreadCleanupRate}% cleanup still pending
             </span>
           )}
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs review {activeCampaignThread.failed}</span>
@@ -1483,6 +1522,12 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                 const reviewRate = targetedRecipients > 0 ? Math.round((failedRecipients / targetedRecipients) * 100) : null;
                 const skippedRate = targetedRecipients > 0 ? Math.round((skippedRecipients / targetedRecipients) * 100) : null;
                 const unreachedRate = targetedRecipients > 0 ? Math.round((unreachedRecipients / targetedRecipients) * 100) : null;
+                const cleanupRate = getCleanupCoverageRate({
+                  failed: failedRecipients,
+                  skipped: skippedRecipients,
+                  unreached: unreachedRecipients,
+                  targeted: targetedRecipients,
+                });
                 const followThroughFocusLabel = getFollowThroughFocusLabel({
                   failed: failedRecipients,
                   skipped: skippedRecipients,
@@ -1497,6 +1542,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                     {reviewRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{reviewRate}% review coverage</span>}
                     {skippedRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{skippedRate}% needs contact</span>}
                     {unreachedRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{unreachedRate}% unreached</span>}
+                    {cleanupRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupRate}% cleanup still pending</span>}
                     {followThroughFocusLabel && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughFocusLabel}</span>}
                     {engagement.opened != null && engagement.opened > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Opened {engagement.opened}</span>}
                     {engagement.viewed != null && engagement.viewed > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Viewed {engagement.viewed}</span>}

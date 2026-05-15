@@ -12,6 +12,7 @@ import {
   getCampaignName,
   getCampaignTypeLabel,
   getCustomerDeliveryReason,
+  getCleanupCoverageRate,
   getFollowThroughFocusLabel,
   getMessageEngagementStats,
   getRecipientReviewPlanSummary,
@@ -98,6 +99,12 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
   const reviewCoverageRate = targetedRecipients > 0 ? Math.round((Math.max(0, Number(message.failed_count ?? 0)) / targetedRecipients) * 100) : null;
   const contactCoverageRate = targetedRecipients > 0 ? Math.round((skippedCount / targetedRecipients) * 100) : null;
   const unreachedCoverageRate = targetedRecipients > 0 ? Math.round((unreachedCount / targetedRecipients) * 100) : null;
+  const cleanupCoverageRate = getCleanupCoverageRate({
+    failed: Math.max(0, Number(message.failed_count ?? 0)),
+    skipped: skippedCount,
+    unreached: unreachedCount,
+    targeted: targetedRecipients,
+  });
   const followThroughFocusLabel = getFollowThroughFocusLabel({
     failed: Math.max(0, Number(message.failed_count ?? 0)),
     skipped: skippedCount,
@@ -204,6 +211,9 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
                     {deliveredCoverageRate}% delivered coverage · {reviewCoverageRate}% review coverage · {contactCoverageRate}% needs contact · {unreachedCoverageRate}% unreached
                   </span>
+                )}
+                {cleanupCoverageRate != null && (
+                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{cleanupCoverageRate}% cleanup still pending</span>
                 )}
                 {followThroughFocusLabel && (
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{followThroughFocusLabel}</span>
