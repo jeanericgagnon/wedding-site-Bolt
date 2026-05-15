@@ -224,4 +224,66 @@ describe('GuestItineraryDrawer', () => {
     expect(screen.getByText('33% preview-route coverage · 6 preview routes still missing')).toBeInTheDocument();
     expect(screen.getByText('Main gap: Rotate or create a private RSVP link')).toBeInTheDocument();
   });
+
+  it('shows how much of the event set is still hidden from this guest', () => {
+    const guest = {
+      id: 'guest-2',
+      name: 'Taylor Chen',
+      first_name: 'Taylor',
+      last_name: 'Chen',
+      email: 'taylor@example.com',
+      phone: null,
+      invite_token: 'secret-token',
+      preferred_language: null,
+      invited_to_ceremony: true,
+      invited_to_reception: true,
+      plus_one_allowed: false,
+      rsvp_status: 'pending',
+      rsvp_received_at: null,
+      household_id: null,
+      invited_event_ids: ['event-1'],
+      rsvp: {
+        attending: null,
+        meal_choice: null,
+        plus_one_name: null,
+        notes: null,
+      },
+    };
+
+    render(
+      <GuestItineraryDrawer
+        guest={guest}
+        guestAuditEntries={[]}
+        guestEventIds={new Set(['event-1'])}
+        guests={[guest]}
+        itineraryEvents={[
+          { id: 'event-1', event_name: 'Ceremony', event_date: '2026-06-20', start_time: '16:00:00', location_name: 'Garden' },
+          { id: 'event-2', event_name: 'Reception', event_date: '2026-06-20', start_time: '18:00:00', location_name: 'Hall' },
+        ]}
+        loadingDrawer={false}
+        rotatingInviteToken={false}
+        togglingEventId={null}
+        weddingSiteInfo={{
+          id: 'site-1',
+          couple_name_1: 'Maya',
+          couple_name_2: 'Rowan',
+          wedding_date: '2026-06-20',
+          venue_name: 'Garden',
+          venue_address: null,
+          site_url: 'https://dayof.love/site/maya-and-rowan',
+          site_slug: 'maya-and-rowan',
+        }}
+        onAddFollowUpTask={vi.fn()}
+        onClose={vi.fn()}
+        onCopyContactRequestLink={vi.fn()}
+        onFocusGuestSearch={vi.fn()}
+        onRevokeGuestInviteToken={vi.fn()}
+        onRotateGuestInviteToken={vi.fn()}
+        onToast={vi.fn()}
+        onToggleEventInvite={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('50% event visibility coverage · 50% still hidden')).toBeInTheDocument();
+  });
 });
