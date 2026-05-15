@@ -249,12 +249,20 @@ export function RegistryDashboardRouteContent(props: {
     && props.claimStats.remainingQuantity === 0
     ? 'All claimed gifts are fully attributed and closed out right now.'
     : null;
+  const giftProgressSummaryLabel = props.counts.purchased === 0
+    ? 'No gifts purchased yet'
+    : props.counts.purchased === props.counts.total
+      ? 'All gifts already marked purchased'
+      : `${props.counts.purchased} gift${props.counts.purchased === 1 ? '' : 's'} already marked purchased`;
   const guestVisibilityAllClearLabel = props.guestVisibilityStats.guestReadyItems > 0
     && props.guestVisibilityStats.blockedGuestItems === 0
     && props.guestVisibilityStats.hiddenPurchasedItems === 0
     && props.guestVisibilityStats.guestVisibleItems === props.guestVisibilityStats.guestReadyItems
     ? 'All guest-ready gifts are visible right now.'
     : null;
+  const guestVisibilitySummaryLabel = props.guestVisibilityStats.guestVisibleItems === 0
+    ? 'No gifts visible to guests yet'
+    : guestVisibilityAllClearLabel ?? `${props.guestVisibilityStats.visibleAvailableItems} ready now · ${props.guestVisibilityStats.visibleClaimedItems} already claimed`;
   const thankYouAllClearLabel = props.registryThankYouStats.purchasedCount > 0
     && props.registryThankYouStats.pendingCount === 0
     && props.registryThankYouStats.blockedByMissingPurchaserCount === 0
@@ -274,6 +282,14 @@ export function RegistryDashboardRouteContent(props: {
     && props.fundStats.readyAwaitingFirstGift === 0
     ? 'All fund momentum blockers are clear right now.'
     : null;
+  const reviewAlertCount = props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock;
+  const reviewSummaryLabel = reviewAlertCount === 0
+    ? 'Nothing needs review right now'
+    : [
+        props.alertCounts.stale > 0 ? `${props.alertCounts.stale} stale` : null,
+        props.alertCounts.priceChanged > 0 ? `${props.alertCounts.priceChanged} price change${props.alertCounts.priceChanged === 1 ? '' : 's'}` : null,
+        props.alertCounts.outOfStock > 0 ? `${props.alertCounts.outOfStock} out of stock` : null,
+      ].filter(Boolean).join(' · ');
 
   const tabCount = (key: RegistryFilter) => {
     if (key === 'all') return props.counts.total;
@@ -367,9 +383,7 @@ export function RegistryDashboardRouteContent(props: {
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Gift progress</p>
               <p className="mt-1 text-2xl font-bold text-text-primary">{props.fulfillmentRate}%</p>
-              <p className="mt-1 text-xs text-text-secondary">
-                {props.counts.purchased === 0 ? 'No gifts purchased yet' : 'Items already marked purchased'}
-              </p>
+              <p className="mt-1 text-xs text-text-secondary">{giftProgressSummaryLabel}</p>
             </Card>
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Claimed gifts</p>
@@ -388,9 +402,7 @@ export function RegistryDashboardRouteContent(props: {
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Guest view</p>
               <p className="mt-1 text-2xl font-bold text-text-primary">{props.guestVisibilityStats.guestVisibleItems}</p>
-              <p className="mt-1 text-xs text-text-secondary">
-                {props.guestVisibilityStats.visibleAvailableItems} ready now · {props.guestVisibilityStats.visibleClaimedItems} already claimed
-              </p>
+              <p className="mt-1 text-xs text-text-secondary">{guestVisibilitySummaryLabel}</p>
               <p className="mt-1 text-xs text-text-tertiary">
                 {guestVisibleCoverageRate}% visible to guests · {guestReadyCoverageRate}% guest-ready · {props.guestVisibilityStats.hiddenPurchasedItems} hidden when bought{props.guestVisibilityStats.blockedGuestItems > 0 ? ` · ${props.guestVisibilityStats.blockedGuestItems} blocked from guests` : ''}
               </p>
@@ -445,12 +457,8 @@ export function RegistryDashboardRouteContent(props: {
             </Card>
             <Card variant="bordered" padding="md">
               <p className="text-xs font-medium text-text-tertiary">Worth checking</p>
-              <p className="mt-1 text-2xl font-bold text-text-primary">{props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock}</p>
-              <p className="mt-1 text-xs text-text-secondary">
-                {props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock === 0
-                  ? 'Nothing needs review right now'
-                  : 'Items that may need a quick review'}
-              </p>
+              <p className="mt-1 text-2xl font-bold text-text-primary">{reviewAlertCount}</p>
+              <p className="mt-1 text-xs text-text-secondary">{reviewSummaryLabel}</p>
             </Card>
           </div>
 

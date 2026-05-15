@@ -132,12 +132,13 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Thank-you follow-up list')).toBeInTheDocument();
     expect(screen.getByText('Purchasers named: 1')).toBeInTheDocument();
     expect(screen.getByText('Missing purchaser: 0')).toBeInTheDocument();
+    expect(screen.getByText('All gifts already marked purchased')).toBeInTheDocument();
     expect(screen.getByText('100% purchaser coverage · 100% fully closed · 100% quantity claimed (1) · 0% still unclaimed (0)')).toBeInTheDocument();
     expect(screen.getByText('Main gap: no claim attribution blockers right now')).toBeInTheDocument();
     expect(screen.getByText('Main gap: no guest-visibility blockers right now')).toBeInTheDocument();
     expect(screen.getByText('Main gap: no thank-you blockers right now')).toBeInTheDocument();
     expect(screen.getByText('All claimed gifts are fully attributed and closed out right now.')).toBeInTheDocument();
-    expect(screen.getByText('All guest-ready gifts are visible right now.')).toBeInTheDocument();
+    expect(screen.getAllByText('All guest-ready gifts are visible right now.')).not.toHaveLength(0);
     expect(screen.getByText('All thank-you follow-up is fully closed out right now.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /save thank-you list/i }));
     fireEvent.click(screen.getByRole('button', { name: /mark sent/i }));
@@ -893,7 +894,7 @@ describe('RegistryDashboardRouteContent', () => {
     render(
       <RegistryDashboardRouteContent
         actionableBadImportCount={0}
-        alertCounts={{ stale: 0, priceChanged: 0, outOfStock: 0, imageIssues: 0 }}
+        alertCounts={{ stale: 1, priceChanged: 1, outOfStock: 1, imageIssues: 0 }}
         autoRefreshEnabled
         autoRefreshing={false}
         bulkImportBusy={false}
@@ -961,6 +962,7 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(screen.getByText('Guest view')).toBeInTheDocument();
     expect(screen.getByText('1 ready now · 1 already claimed')).toBeInTheDocument();
+    expect(screen.getByText('1 stale · 1 price change · 1 out of stock')).toBeInTheDocument();
     expect(screen.getByText('50% visible to guests · 75% guest-ready · 1 hidden when bought · 1 blocked from guests')).toBeInTheDocument();
     expect(screen.getByText('Main gap: 1 still blocked from guests')).toBeInTheDocument();
     expect(
@@ -975,5 +977,78 @@ describe('RegistryDashboardRouteContent', () => {
     expect(
       screen.getByText((_, element) => element?.textContent === 'Ready for guests now: 1 · Claimed but still visible: 1'),
     ).toBeInTheDocument();
+  });
+
+  it('renders guest-view zero-state readback when nothing is visible to guests yet', () => {
+    render(
+      <RegistryDashboardRouteContent
+        actionableBadImportCount={0}
+        alertCounts={{ stale: 0, priceChanged: 0, outOfStock: 0, imageIssues: 0 }}
+        autoRefreshEnabled
+        autoRefreshing={false}
+        bulkImportBusy={false}
+        bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
+        budgetUtilization={0}
+        claimStats={{ claimedItems: 0, claimedQuantity: 0, fullyClaimedItems: 0, partiallyClaimedItems: 0, namedPurchaserItems: 0, missingPurchaserItems: 0, multiQuantityInProgress: 0, remainingQuantity: 0 }}
+        counts={{ total: 2, available: 2, partial: 0, purchased: 0, totalValue: 120 }}
+        duplicateGroups={[]}
+        editItem={null}
+        filter="all"
+        filtered={[makeItem({ id: 'gift-1' })]}
+        fulfillmentRate={0}
+        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
+        guestVisibilityStats={{ guestReadyItems: 0, guestVisibleItems: 0, visibleAvailableItems: 0, visibleClaimedItems: 0, hiddenPurchasedItems: 0, blockedGuestItems: 0, guestReadyCoverageRate: 0, guestVisibleCoverageRate: 0 }}
+        handleAddNew={vi.fn()}
+        handleAutoRefreshStale={vi.fn(async () => {})}
+        handleBulkImport={vi.fn(async () => {})}
+        handleCopyDuplicateReviewList={vi.fn(async () => {})}
+        handleDelete={vi.fn(async () => {})}
+        handleEdit={vi.fn()}
+        handleMergeDuplicateGroup={vi.fn(async () => {})}
+        handleMarkPurchased={vi.fn(async () => {})}
+        handleResetPurchaseState={vi.fn(async () => {})}
+        handleRefetchMetadata={vi.fn(async () => true)}
+        handleRefreshImageIssues={vi.fn(async () => {})}
+        handleRepairBadImports={vi.fn(async () => {})}
+        handleRunRepairQueueAction={vi.fn(async () => {})}
+        handleSyncRegistryThankYouTasks={vi.fn(async () => {})}
+        handleToggleRegistryThankYouTask={vi.fn(async () => {})}
+        imageRefreshBusy={false}
+        items={[makeItem({ id: 'gift-1' })]}
+        loading={false}
+        monthlyRefreshCap={100}
+        monthlyRefreshCount={0}
+        mergingDuplicateGroupId={null}
+        nearBudgetCap={false}
+        normalizedItems={[makeItem({ id: 'gift-1' })]}
+        recentActivity={[makeItem({ id: 'gift-1' })]}
+        registryActionsOpen={false}
+        registryActionsRef={{ current: null }}
+        registryInsights={[]}
+        registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}
+        registryThankYouPlan={{ headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] }}
+        registryThankYouStats={{ purchasedCount: 0, completedCount: 0, pendingCount: 0, readyToSendCount: 0, blockedByMissingPurchaserCount: 0, attributionCoverageRate: 0, completionRate: 0 }}
+        registryThankYouBusyItemId={null}
+        registryThankYouSyncing={false}
+        repairingBadImports={false}
+        repairQueue={[]}
+        refreshBudgetRemaining={100}
+        refreshWindowOpen={true}
+        search=""
+        setBulkImportOpen={vi.fn()}
+        setFilter={vi.fn()}
+        setRegistryActionsOpen={vi.fn()}
+        setSearch={vi.fn()}
+        setShowAlertsOnly={vi.fn()}
+        setShowImageIssuesOnly={vi.fn()}
+        showAlertsOnly={false}
+        showImageIssuesOnly={false}
+        topRegistryItems={[makeItem({ id: 'gift-1' })]}
+        weddingSiteId="site-1"
+      />,
+    );
+
+    expect(screen.getByText('No gifts visible to guests yet')).toBeInTheDocument();
+    expect(screen.getByText('Main gap: no guest-visibility blockers right now')).toBeInTheDocument();
   });
 });

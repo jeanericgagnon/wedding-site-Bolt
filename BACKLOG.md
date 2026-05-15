@@ -2,35 +2,20 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 09:14 AM PDT`
-- Latest shipped batch: `3aa83255` `Clarify registry quiet summary cards`
-- Latest backlog-cleanup state: current session local-only cleanup is ahead of the last pushed cleanup batch
+- Last updated: `2026-05-15 09:23 AM PDT`
+- Latest shipped batch: `pending local batch` `Clarify registry guest and review summaries`
+- Latest backlog-cleanup state: top-of-file scan is current through the pending local registry batch
 - Open backlog lanes: `7`
-- Current session blocker: repeated source-file `Operation timed out` reads are intermittently blocking direct product-code edits in this saturated session
-- Current transport blocker: the newest backlog-cleanup commit is local only because `git push origin codex/v1-finish-hard-gates-3` is currently failing with `origin` resolution errors
+- Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
+- Current transport blocker: none active right now
 - Blocked this session:
-  - direct reads on `GuestRsvpSettingsView.tsx`, `travelGuestPortal.ts`, and several registry/guest-visibility files are intermittently timing out
-  - affected source files are currently marked `dataless`, so the real blocker is File Provider materialization failure rather than only repo-scale git noise
-  - direct forced-copy recovery attempts to `/private/tmp` also failed with `fcopyfile failed: Operation timed out`, so the dataless files are still not materializing locally
-  - low-level `dd if=... of=/private/tmp/... bs=4096` reads also failed with `Operation timed out`, so even raw byte-copy access is currently blocked on those source files
-  - cleanup of 203 stray numbered `.git/index*` files completed, but direct source-file reads still failed afterward, so git index clutter was real but not the only blocker
-  - `fileproviderctl check -a ... -P -v` now reports `20` broken files on `disk <-> FSSnapshot`, with `FSSnapshot <-> FPSnapshot` clean and reconciliation checks back to green
-  - local backlog cleanup can still land, but remote persistence is currently unreliable until `origin` resolves again
-- Resume source-code work here first when reads recover:
-  - `RSVP access modes and question templates`: land the optional all-clear follow-through copy so the owner summary also says `No optional layers need action`
-- First code retry after transport/reads recover:
-  - push local backlog-cleanup commit `c59192e0`
-  - then land the RSVP optional all-clear follow-through copy
-  - if reads still fail, re-attempt source-file materialization before treating the lane as a code task again
-- File Provider recovery status:
-  - `fileproviderctl check -a ... -P` found `21` broken files first
-  - `fileproviderctl repair -a ... -P` did not clear the issue
-  - `fileproviderctl check -a ... -P -v` now reports `20` broken files, so the failure set shifted slightly but the source-edit path is still blocked
-- Session recovery notes:
-  - source files proven blocked in this session include `GuestRsvpSettingsView.tsx`, `GuestRsvpSettingsView.test.tsx`, `travelGuestPortal.ts`, `memoryFlowReadiness.ts`, `MessageDetailModal.tsx`, and `RegistryDashboardRouteContent.tsx`
-  - failed read paths include `head`, `file`, direct `git` reads with `mmap failed`, direct copy to `/private/tmp`, and low-level `dd` byte-copy
-  - materialization attempts tried: `brctl download ...` plus File Provider inspection
-  - best next recovery remains: restore source readability, restore `origin` push health, then land the RSVP optional all-clear follow-through batch first
+  - `npx vitest run src/pages/dashboard/registry/RegistryDashboardRouteContent.test.tsx` still stalls without producing useful output in this session
+- Work source-code next:
+  - `registry polish beyond barcode`: rerun owner add/import/edit persistence proof
+  - `registry polish beyond barcode`: rerun guest-visible purchase-state assertions on production
+- First code retry after the current registry copy batch:
+  - keep moving the registry owner summary lane while files stay readable
+  - then return to live production proof on the same lane
 - Best place to scan after each batch:
   - `Quick Read` for the newest timestamp and latest shipped batch
   - `Recent Shipped Work` for the most recent visible progress by lane
@@ -39,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `pending local batch` `Clarify registry guest and review summaries`
   - `3aa83255` `Clarify registry quiet summary cards`
   - `838be5c8` `Clarify registry zero-state summaries`
   - `b2ed7c14` `Clarify registry clean-state readback`
@@ -64,7 +50,7 @@
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 - `registry polish beyond barcode`
-  - latest shipped: the top registry cards now also use quiet-state readback like `No gifts purchased yet` and `Nothing needs review right now`, so empty owner summaries stop sounding like active-state progress cards when nothing has happened yet
+  - latest shipped: the top registry cards now also use direct guest-view, purchase-progress, and review-state readback like `All gifts already marked purchased`, `No gifts visible to guests yet`, and `1 stale · 1 price change · 1 out of stock`, so those owner summaries no longer fall back to vague filler in all-clear, empty, or active review cases
 
 ## Work This Next
 
@@ -149,7 +135,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 09:14 AM PDT` |
+| Current date/time | `2026-05-15 09:23 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |
