@@ -1544,6 +1544,11 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               Targeted {activeThreadTargetedFallback}
             </span>
           )}
+          {activeThreadTargetedFallback > 0 && (
+            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+              {activeCampaignThread.delivered} of {activeThreadTargetedFallback} targeted recipients have been delivered
+            </span>
+          )}
           {activeThreadDeliveredCoverage != null && (
             <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
               {activeThreadDeliveredCoverage}% delivered coverage
@@ -1588,7 +1593,13 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
             </span>
           )}
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+            {activeThreadReadyCount} of {activeThreadTargetedFallback} targeted recipients are already closed out
+          </span>
+          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
             {activeThreadReadyCount > 0 ? `${activeThreadReadyCount} recipients already closed out` : 'No recipients are already closed out'}
+          </span>
+          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+            {activeThreadCleanupCount} of {activeThreadTargetedFallback} targeted recipients still need cleanup
           </span>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
             {activeThreadCleanupCount > 0 ? `${activeThreadCleanupCount} recipients still need cleanup` : 'No recipients still need cleanup'}
@@ -1684,13 +1695,16 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                     </span>
                     <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{targetedRecipients} targeted recipients</span>
                     <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Targeted {targetedRecipients}</span>
+                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{deliveredRecipients} of {targetedRecipients} targeted recipients have been delivered</span>
                     {deliveredRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{deliveredRate}% delivered coverage</span>}
                     {reviewRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{reviewRate}% review coverage</span>}
                     {skippedRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{skippedRate}% needs contact</span>}
                     {unreachedRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{unreachedRate}% unreached</span>}
                     {cleanupRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupRate}% cleanup still pending</span>}
                     {cleanupRate != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{Math.max(0, 100 - cleanupRate)}% follow-through ready</span>}
+                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughReadyCount} of {targetedRecipients} targeted recipients are already closed out</span>
                     <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughReadyCount > 0 ? `${followThroughReadyCount} recipients already closed out` : 'No recipients are already closed out'}</span>
+                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupCount} of {targetedRecipients} targeted recipients still need cleanup</span>
                     <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupCount > 0 ? `${cleanupCount} recipients still need cleanup` : 'No recipients still need cleanup'}</span>
                     {followThroughFocusLabel && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughFocusLabel}</span>}
                     {engagement.opened != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Opened {engagement.opened}</span>}
