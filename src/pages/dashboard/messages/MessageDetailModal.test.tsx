@@ -271,6 +271,7 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('0 need review')).toBeInTheDocument();
     expect(screen.getAllByText('0 not reached yet')).not.toHaveLength(0);
     expect(screen.getByText('0 need contact')).toBeInTheDocument();
+    expect(screen.getAllByText('0% open · 0% click · 0% reply')).not.toHaveLength(0);
 
     rerender(
       <MessageDetailModal

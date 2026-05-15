@@ -1461,7 +1461,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                   {thread.unreached} not reached yet
                 </p>
                 {focusLabel && <p className="text-text-secondary">{focusLabel}</p>}
-                {thread.deliveredRecipients > 0 && <p className="text-text-secondary">{thread.openRate}% open · {thread.clickRate}% click · {thread.replyRate}% reply</p>}
+                {targeted > 0 && <p className="text-text-secondary">{thread.openRate}% open · {thread.clickRate}% click · {thread.replyRate}% reply</p>}
                     </>
                   );
                 })()}
@@ -1697,9 +1697,9 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                     {engagement.clicked != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Clicked {engagement.clicked}</span>}
                     {engagement.replied != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Replied {engagement.replied}</span>}
                     {engagement.bounced != null && <span className="rounded-lg border border-warning/20 bg-warning-light px-3 py-1 text-warning">Bounced {engagement.bounced}</span>}
-                    {deliveredRecipients > 0 && openRate != null && clickRate != null && replyRate != null && (
+                    {targetedRecipients > 0 && (
                       <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">
-                        {openRate}% open · {clickRate}% click · {replyRate}% reply
+                        {(openRate ?? 0)}% open · {(clickRate ?? 0)}% click · {(replyRate ?? 0)}% reply
                       </span>
                     )}
                   </>

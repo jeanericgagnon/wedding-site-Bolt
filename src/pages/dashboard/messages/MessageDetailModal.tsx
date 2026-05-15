@@ -239,8 +239,8 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 {followThroughFocusLabel && (
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{followThroughFocusLabel}</span>
                 )}
-                {deliveredRecipients > 0 && openRate != null && clickRate != null && replyRate != null && (
-                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{openRate}% open · {clickRate}% click · {replyRate}% reply</span>
+                {targetedRecipients > 0 && (
+                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{openRate ?? 0}% open · {clickRate ?? 0}% click · {replyRate ?? 0}% reply</span>
                 )}
               </div>
               <p className="mt-3 text-[11px] text-text-tertiary">
@@ -462,8 +462,8 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
               {engagement.clicked != null && <span className="text-text-secondary">{engagement.clicked} clicked</span>}
               {engagement.replied != null && <span className="text-text-secondary">{engagement.replied} replied</span>}
               {engagement.bounced != null && <span className="text-warning">{engagement.bounced} bounced</span>}
-              {deliveredRecipients > 0 && openRate != null && clickRate != null && replyRate != null && (
-                <span className="text-text-secondary">{openRate}% open · {clickRate}% click · {replyRate}% reply</span>
+              {targetedRecipients > 0 && (
+                <span className="text-text-secondary">{openRate ?? 0}% open · {clickRate ?? 0}% click · {replyRate ?? 0}% reply</span>
               )}
             </div>
           </div>
