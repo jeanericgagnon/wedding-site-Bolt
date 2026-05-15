@@ -294,11 +294,11 @@ describe('travelGuestPortal', () => {
       'Directions · Harbor Lounge',
       'Directions · Sunset Gardens Estate',
     ]);
-    expect(spotlight?.badges).toEqual(['Invite-scoped', '2 event windows', '2 route cards', 'Weekend timing ready']);
+    expect(spotlight?.badges).toEqual(['Invite-scoped', '2 event windows', '2 route cards', '33% core travel coverage', '2 core travel layers still missing', 'Weekend timing ready']);
     expect(spotlight?.mainGapLabel).toBe('Main gap: Stay details');
     expect(spotlight?.summary).toBe('4 travel details ready from the guest hub, including 2 visible event windows for this invitation. It covers weekend timing.');
     expect(spotlight?.cards.filter((card) => card.href).length).toBe(2);
-    expect(spotlight?.shareText).toContain('Coverage: Invite-scoped · 2 event windows · 2 route cards · Weekend timing ready');
+    expect(spotlight?.shareText).toContain('Coverage: Invite-scoped · 2 event windows · 2 route cards · 33% core travel coverage · 2 core travel layers still missing · Weekend timing ready');
     expect(spotlight?.shareText).toContain('Welcome drinks: Sat, Jun 13, 11:00 PM · Harbor Lounge');
     expect(spotlight?.shareText).toContain('Directions · Harbor Lounge: 1 Dock Road, Sausalito, CA');
     expect(spotlight?.htmlDocument).toContain('Directions · Sunset Gardens Estate');
@@ -321,7 +321,7 @@ describe('travelGuestPortal', () => {
       { id: 'parking', label: 'Parking and arrival', detail: 'Street parking is limited after 4 PM, so rideshare is the easier option.' },
       { id: 'guest-note', label: 'Guest note', detail: 'Most guests dress for sun at ceremony and a cooler breeze by dinner.' },
     ]);
-    expect(spotlight?.badges).toEqual(['Stay ready']);
+    expect(spotlight?.badges).toEqual(['33% core travel coverage', '2 core travel layers still missing', 'Stay ready']);
     expect(spotlight?.mainGapLabel).toBe('Main gap: Weekend timing');
     expect(spotlight?.summary).toBe('3 travel details ready from the guest hub. It covers stay details, arrival guidance.');
     expect(spotlight?.shareText).toContain('Guest note: Most guests dress for sun at ceremony and a cooler breeze by dinner.');
