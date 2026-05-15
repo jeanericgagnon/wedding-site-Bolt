@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 12:37 PM PDT`
-- Latest shipped batch: `13f4903c` `Clarify registry share-readiness review wording`
+- Last updated: `2026-05-15 12:42 PM PDT`
+- Latest shipped batch: `pending local batch` `Clarify registry top-surface owner wording`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `pending local batch` `Clarify registry top-surface owner wording`
   - `13f4903c` `Clarify registry share-readiness review wording`
   - `fa2e59b9` `Clarify registry metric label wording`
   - `3037c8ff` `Clarify registry task action wording`
@@ -192,6 +193,7 @@ These are the active product-completion lanes still open after the current launc
    - add authenticated live browser proof for composing and saving each operational segment on the shipped runtime
    - keep SMS/Telnyx live-send behavior deferred until provider/compliance setup is ready
 5. `registry polish beyond barcode`
+  - latest shipped: the registry top surface now uses calmer owner-facing wording like `Ready to share`, `Nothing added yet`, `Needs a quick pass`, `Weekly refresh on`, `Focus review items`, `Review items`, `Photo issues`, and `Monthly refresh budget used`, so the hero stats, refresh strip, and cleanup toolbar no longer slip back into older utility or ops-heavy labels after the broader registry cleanup
   - latest shipped: the registry share-readiness review pocket now stays in the same owner-facing `ready to share` family with copy like `A few registry share details still need a look`, `2 registry share details still need a quick pass before sharing`, `Needs a look`, `Ready to share`, `share link`, and `share link or handle`, so the share-readiness helper, badge row, and item pills no longer drop back into older setup-audit wording after the broader registry cleanup
   - latest shipped: the deeper metric rows now use clearer owner-facing labels like `Ready for guests`, `Visible to guests`, `Ready to share`, `Funds with a goal`, `Receiving gifts`, and `Flexible or goal-based funds`, so the registry notes and fund/guest visibility rows no longer fall back to dense internal compound labels after the rest of the registry cleanup
   - latest shipped: the deeper task and action rows now use calmer owner-facing wording like `Save thank-you updates`, `Open gift`, `Fix now`, `Look soon`, `Possible repeat group`, `Merged quantity`, and `Open keep item`, so the thank-you list, cleanup queue, and duplicate-merge task surfaces no longer drop back into older operational action labels after the registry summaries were cleaned up
@@ -229,7 +231,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 12:37 PM PDT` |
+| Current date/time | `2026-05-15 12:42 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |

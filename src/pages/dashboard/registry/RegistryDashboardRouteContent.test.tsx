@@ -1176,16 +1176,16 @@ describe('RegistryDashboardRouteContent', () => {
       />,
     );
 
-    expect(screen.getByText('Weekly refresh running')).toBeInTheDocument();
-    expect(screen.getByText('Refresh budget 12/100 this month')).toBeInTheDocument();
-    expect(screen.getByText('Focus watchouts')).toBeInTheDocument();
+    expect(screen.getByText('Weekly refresh on')).toBeInTheDocument();
+    expect(screen.getByText('12 of 100 refreshes used this month')).toBeInTheDocument();
+    expect(screen.getByText('Focus review items')).toBeInTheDocument();
     expect(screen.getByText('Focus image issues')).toBeInTheDocument();
-    expect(screen.getByText('Watchouts: 2')).toBeInTheDocument();
-    expect(screen.getByText('Image issues: 2')).toBeInTheDocument();
+    expect(screen.getByText('Review items: 2')).toBeInTheDocument();
+    expect(screen.getByText('Photo issues: 2')).toBeInTheDocument();
     expect(screen.getByText('Cleanup queue: 0')).toBeInTheDocument();
-    expect(screen.getByText('Gifts needing touchup: 0')).toBeInTheDocument();
+    expect(screen.getByText('Gifts needing detail touchup: 0')).toBeInTheDocument();
     expect(screen.getByText('Duplicate groups: 0')).toBeInTheDocument();
-    expect(screen.getByText('Refresh budget used: 34%')).toBeInTheDocument();
+    expect(screen.getByText('Monthly refresh budget used: 34%')).toBeInTheDocument();
   });
 
   it('renders owner-facing empty registry copy', () => {

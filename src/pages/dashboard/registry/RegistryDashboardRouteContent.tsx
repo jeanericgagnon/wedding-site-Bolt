@@ -427,9 +427,9 @@ export function RegistryDashboardRouteContent(props: {
         title="Gifts and funds, clearly shared."
         description="Add the places guests should look first. Keep it simple with links, or add individual gifts and funds later."
         stats={[
-          { label: 'Registry', value: props.counts.total > 0 ? 'Ready for guests' : 'Ready to add', detail: `${props.counts.total} gifts or links` },
-          { label: 'Purchased', value: props.counts.purchased > 0 ? `${props.counts.purchased} purchased` : 'No purchases yet', detail: `${props.fulfillmentRate}% complete` },
-          { label: 'Watchouts', value: props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock > 0 ? 'Worth a closer look' : 'Looks steady', detail: 'photos and availability' },
+          { label: 'Registry', value: props.counts.total > 0 ? 'Ready to share' : 'Nothing added yet', detail: `${props.counts.total} gifts or links` },
+          { label: 'Purchased', value: props.counts.purchased > 0 ? `${props.counts.purchased} already purchased` : 'Nothing purchased yet', detail: `${props.fulfillmentRate}% complete` },
+          { label: 'Watchouts', value: props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock > 0 ? 'Needs a quick pass' : 'Quiet right now', detail: 'links, prices, and photos' },
         ]}
         actions={
           <>
@@ -468,9 +468,9 @@ export function RegistryDashboardRouteContent(props: {
       >
         <div className="inline-flex flex-wrap items-center gap-2 text-[11px] text-text-tertiary">
           <span className="rounded-lg border border-border-subtle bg-white px-2 py-0.5">
-            {props.autoRefreshEnabled ? (props.refreshWindowOpen ? 'Weekly refresh running' : 'Refresh window closed right now') : 'Auto-refresh paused'}
+            {props.autoRefreshEnabled ? (props.refreshWindowOpen ? 'Weekly refresh on' : 'Refresh window closed') : 'Weekly refresh paused'}
           </span>
-          <span>Refresh budget {props.monthlyRefreshCount}/{props.monthlyRefreshCap} this month</span>
+          <span>{props.monthlyRefreshCount} of {props.monthlyRefreshCap} refreshes used this month</span>
         </div>
       </DashboardPageHero>
 
@@ -927,13 +927,13 @@ export function RegistryDashboardRouteContent(props: {
             onClick={() => props.setShowAlertsOnly((value) => !value)}
             className={`rounded-lg border px-2.5 py-1 text-xs font-medium ${props.showAlertsOnly ? 'border-border-subtle bg-primary-light text-primary' : 'border-border text-text-tertiary'}`}
           >
-            {props.showAlertsOnly ? 'Watchouts on' : 'Focus watchouts'}
+            {props.showAlertsOnly ? 'Review items on' : 'Focus review items'}
           </button>
           <button
             onClick={() => props.setShowImageIssuesOnly((value) => !value)}
             className={`rounded-lg border px-2.5 py-1 text-xs font-medium ${props.showImageIssuesOnly ? 'border-border-subtle bg-primary-light text-primary' : 'border-border text-text-tertiary'}`}
           >
-            {props.showImageIssuesOnly ? 'Image issues on' : 'Focus image issues'}
+            {props.showImageIssuesOnly ? 'Photo issues on' : 'Focus image issues'}
           </button>
           {props.showImageIssuesOnly && (
             <>
@@ -953,16 +953,16 @@ export function RegistryDashboardRouteContent(props: {
             </>
           )}
           <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
-            Watchouts: {props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock}
+            Review items: {props.alertCounts.stale + props.alertCounts.priceChanged + props.alertCounts.outOfStock}
           </span>
           <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
-            Image issues: {props.alertCounts.imageIssues}
+            Photo issues: {props.alertCounts.imageIssues}
           </span>
           <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
             Cleanup queue: {props.repairQueue.length}
           </span>
           <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
-            Gifts needing touchup: {props.normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}
+            Gifts needing detail touchup: {props.normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}
           </span>
           <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
             Duplicate groups: {props.duplicateGroups.length}
@@ -977,7 +977,7 @@ export function RegistryDashboardRouteContent(props: {
             </button>
           )}
           <span className={`rounded-lg border px-2 py-1 ${props.nearBudgetCap ? 'border-border-subtle bg-primary-light text-primary' : 'border-border text-text-tertiary'}`}>
-            Refresh budget used: {Math.round(props.budgetUtilization * 100)}%
+            Monthly refresh budget used: {Math.round(props.budgetUtilization * 100)}%
           </span>
         </div>
 
