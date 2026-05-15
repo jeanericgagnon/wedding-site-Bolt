@@ -94,6 +94,10 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText(/next send targets 2 reviewed guests and excludes 1 guest still missing contact details/i)).toBeInTheDocument();
     expect(screen.getByText('1 recipient delivered')).toBeInTheDocument();
     expect(screen.getByText('4 targeted recipients')).toBeInTheDocument();
+    expect(screen.getAllByText('4 targeted recipients').length).toBeGreaterThan(1);
+    expect(screen.getByText('25% follow-through ready')).toBeInTheDocument();
+    expect(screen.getAllByText('1 recipient already closed out').length).toBeGreaterThan(1);
+    expect(screen.getByText('2 recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('Targeted 4')).toBeInTheDocument();
     expect(screen.getByText('Delivered 1')).toBeInTheDocument();
     expect(screen.getByText('Needs review 2')).toBeInTheDocument();
@@ -136,6 +140,7 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('Not reached 1')).toBeInTheDocument();
     expect(screen.getByText('1 recipient delivered')).toBeInTheDocument();
     expect(screen.getByText('5 targeted recipients')).toBeInTheDocument();
+    expect(screen.getAllByText('5 targeted recipients').length).toBeGreaterThan(1);
     expect(screen.getByText('Targeted 5')).toBeInTheDocument();
     expect(screen.getByText('20% delivered coverage · 40% review coverage · 20% needs contact · 20% unreached')).toBeInTheDocument();
     expect(screen.getByText('80% cleanup still pending')).toBeInTheDocument();
@@ -176,6 +181,7 @@ describe('MessageDetailModal', () => {
 
     expect(screen.getByText('3 recipients delivered')).toBeInTheDocument();
     expect(screen.getByText('3 targeted recipients')).toBeInTheDocument();
+    expect(screen.getAllByText('3 targeted recipients').length).toBeGreaterThan(1);
     expect(screen.getByText('Delivered 3')).toBeInTheDocument();
     expect(screen.getByText('Needs review 0')).toBeInTheDocument();
     expect(screen.getByText('Needs contact 0')).toBeInTheDocument();
@@ -225,6 +231,7 @@ describe('MessageDetailModal', () => {
 
     expect(screen.getByText('0% follow-through ready')).toBeInTheDocument();
     expect(screen.getByText('0 recipients delivered')).toBeInTheDocument();
+    expect(screen.getByText('3 targeted recipients')).toBeInTheDocument();
     expect(screen.getByText('No recipients are already closed out')).toBeInTheDocument();
     expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('0 need contact details')).toBeInTheDocument();
@@ -261,6 +268,7 @@ describe('MessageDetailModal', () => {
     expect(screen.queryByText(/^Sent /)).not.toBeInTheDocument();
     expect(screen.getByText('Next-send review plan')).toBeInTheDocument();
     expect(screen.getByText('4 targeted recipients')).toBeInTheDocument();
+    expect(screen.getAllByText('4 targeted recipients').length).toBeGreaterThan(1);
     expect(screen.getByText('Targeted 4')).toBeInTheDocument();
     expect(screen.getByText('0% delivered coverage · 0% review coverage · 0% needs contact · 0% unreached')).toBeInTheDocument();
     expect(screen.getByText('0% cleanup still pending')).toBeInTheDocument();

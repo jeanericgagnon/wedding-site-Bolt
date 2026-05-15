@@ -16,6 +16,7 @@ These are the active product-completion lanes still open after the current launc
    - any future move of code/password/open RSVP beyond `planned` still needs real guest-facing runtime proof
 4. `status-based messaging and invitation tracking`
    - recent owner-surface cleanup now keeps row-level pre-send and zero-state targeting, coverage, cleanup, and engagement truth explicit in review/history lists too
+   - message-detail header readback now mirrors the same explicit targeting and follow-through truth instead of hiding it below the fold
    - keep extending normalized delivery and engagement truth across real/live rows
    - prove customer-safe failure grouping against live rows
    - add authenticated live browser proof for composing and saving each operational segment on the shipped runtime

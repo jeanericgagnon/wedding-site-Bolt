@@ -183,8 +183,29 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
             <div>
               <p className="text-text-tertiary text-xs mb-1">Recipients</p>
               <p className="font-medium text-text-primary">{recipientCount} {recipientCount === 1 ? 'person' : 'people'}</p>
+              <p className="text-[11px] text-text-tertiary mt-1">
+                {deliveredRecipients > 0 ? `${deliveredRecipients} recipients delivered` : '0 recipients delivered'}
+              </p>
+              <p className="text-[11px] text-text-tertiary mt-1">{targetedRecipients} targeted recipients</p>
+              {deliveredCoverageRate != null && reviewCoverageRate != null && contactCoverageRate != null && unreachedCoverageRate != null && (
+                <p className="text-[11px] text-text-tertiary mt-1">
+                  {deliveredCoverageRate}% delivered coverage · {reviewCoverageRate}% review coverage · {contactCoverageRate}% needs contact · {unreachedCoverageRate}% unreached
+                </p>
+              )}
+              {cleanupReadyCoverageRate != null && (
+                <p className="text-[11px] text-text-tertiary mt-1">{cleanupReadyCoverageRate}% follow-through ready</p>
+              )}
+              <p className="text-[11px] text-text-tertiary mt-1">
+                {followThroughReadyRecipientCount > 0 ? `${followThroughReadyRecipientCount} recipients already closed out` : 'No recipients are already closed out'}
+              </p>
+              <p className="text-[11px] text-text-tertiary mt-1">
+                {cleanupRecipientCount > 0 ? `${cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}
+              </p>
               <p className="text-[11px] text-warning mt-1">{skippedCount} need contact details</p>
               <p className="text-[11px] text-warning mt-1">{unreachedCount} not reached yet</p>
+              {followThroughFocusLabel && (
+                <p className="text-[11px] text-text-tertiary mt-1">{followThroughFocusLabel}</p>
+              )}
             </div>
             <div>
               <p className="text-text-tertiary text-xs mb-1">Channel</p>
