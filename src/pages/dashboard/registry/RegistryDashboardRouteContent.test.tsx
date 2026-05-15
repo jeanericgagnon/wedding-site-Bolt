@@ -714,6 +714,11 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Registry snapshot looks clean right now.')).toBeInTheDocument();
     expect(screen.getByText('No active registry watchouts inside this snapshot.')).toBeInTheDocument();
     expect(screen.getByText('No active registry follow-through gaps right now.')).toBeInTheDocument();
+    expect(screen.getByText('No gifts are waiting on send or purchaser cleanup right now')).toBeInTheDocument();
+    expect(screen.getByText('No cash funds are waiting on share setup right now')).toBeInTheDocument();
+    expect(screen.getByText('No funds are already receiving gifts yet')).toBeInTheDocument();
+    expect(screen.getByText('No goal-tracked fund setup is open right now')).toBeInTheDocument();
+    expect(screen.getByText('No flexible or tracked funds are already receiving gifts yet')).toBeInTheDocument();
     expect(screen.getByText('No image issues or duplicate groups')).toBeInTheDocument();
   });
 

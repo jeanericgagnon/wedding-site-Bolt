@@ -662,7 +662,13 @@ export function RegistryDashboardRouteContent(props: {
                   Thank-yous sent: <span className="font-semibold text-text-primary">{props.registryThankYouStats.completedCount}</span> · Still pending: <span className="font-semibold text-text-primary">{props.registryThankYouStats.pendingCount}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Ready to send: <span className="font-semibold text-text-primary">{props.registryThankYouStats.readyToSendCount}</span> · Blocked by purchaser: <span className="font-semibold text-text-primary">{props.registryThankYouStats.blockedByMissingPurchaserCount}</span>
+                  {props.registryThankYouStats.readyToSendCount === 0 && props.registryThankYouStats.blockedByMissingPurchaserCount === 0 ? (
+                    <>No gifts are waiting on send or purchaser cleanup right now</>
+                  ) : (
+                    <>
+                      Ready to send: <span className="font-semibold text-text-primary">{props.registryThankYouStats.readyToSendCount}</span> · Blocked by purchaser: <span className="font-semibold text-text-primary">{props.registryThankYouStats.blockedByMissingPurchaserCount}</span>
+                    </>
+                  )}
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Purchaser coverage: <span className="font-semibold text-text-primary">{props.registryThankYouStats.attributionCoverageRate}%</span> · Thank-yous sent: <span className="font-semibold text-text-primary">{props.registryThankYouStats.completionRate}%</span>
@@ -671,22 +677,46 @@ export function RegistryDashboardRouteContent(props: {
                   Cash funds received: <span className="font-semibold text-text-primary">${props.fundStats.received.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Ready to share: <span className="font-semibold text-text-primary">{props.fundStats.readyToShare}</span> · Need payment setup: <span className="font-semibold text-text-primary">{props.fundStats.needsSetup}</span>
+                  {props.fundStats.readyToShare === 0 && props.fundStats.needsSetup === 0 ? (
+                    <>No cash funds are waiting on share setup right now</>
+                  ) : (
+                    <>
+                      Ready to share: <span className="font-semibold text-text-primary">{props.fundStats.readyToShare}</span> · Need payment setup: <span className="font-semibold text-text-primary">{props.fundStats.needsSetup}</span>
+                    </>
+                  )}
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Share-ready coverage: <span className="font-semibold text-text-primary">{fundShareReadyRate}%</span> · Goal-tracked funds: <span className="font-semibold text-text-primary">{fundGoalCoverageRate}%</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Receiving-gift coverage: <span className="font-semibold text-text-primary">{fundReceivingCoverageRate}%</span> · Already receiving gifts: <span className="font-semibold text-text-primary">{props.fundStats.withProgress}</span>
+                  {props.fundStats.withProgress === 0 ? (
+                    <>No funds are already receiving gifts yet</>
+                  ) : (
+                    <>
+                      Receiving-gift coverage: <span className="font-semibold text-text-primary">{fundReceivingCoverageRate}%</span> · Already receiving gifts: <span className="font-semibold text-text-primary">{props.fundStats.withProgress}</span>
+                    </>
+                  )}
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Ready funds already receiving gifts: <span className="font-semibold text-text-primary">{props.fundStats.readyWithProgress}</span> · Waiting on first gift: <span className="font-semibold text-text-primary">{props.fundStats.readyAwaitingFirstGift}</span>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Goal-tracked funds: <span className="font-semibold text-text-primary">{props.fundStats.withGoal}</span> · Missing goal: <span className="font-semibold text-text-primary">{props.fundStats.missingGoal}</span>
+                  {props.fundStats.withGoal === 0 && props.fundStats.missingGoal === 0 ? (
+                    <>No goal-tracked fund setup is open right now</>
+                  ) : (
+                    <>
+                      Goal-tracked funds: <span className="font-semibold text-text-primary">{props.fundStats.withGoal}</span> · Missing goal: <span className="font-semibold text-text-primary">{props.fundStats.missingGoal}</span>
+                    </>
+                  )}
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
-                  Flexible funds already receiving gifts: <span className="font-semibold text-text-primary">{props.fundStats.flexibleWithProgress}</span> · Tracked progress funds: <span className="font-semibold text-text-primary">{props.fundStats.withProgress}</span>
+                  {props.fundStats.flexibleWithProgress === 0 && props.fundStats.withProgress === 0 ? (
+                    <>No flexible or tracked funds are already receiving gifts yet</>
+                  ) : (
+                    <>
+                      Flexible funds already receiving gifts: <span className="font-semibold text-text-primary">{props.fundStats.flexibleWithProgress}</span> · Tracked progress funds: <span className="font-semibold text-text-primary">{props.fundStats.withProgress}</span>
+                    </>
+                  )}
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                   Multi-quantity gifts in progress: <span className="font-semibold text-text-primary">{props.claimStats.multiQuantityInProgress}</span> · Fully claimed gifts: <span className="font-semibold text-text-primary">{props.claimStats.fullyClaimedItems}</span>
