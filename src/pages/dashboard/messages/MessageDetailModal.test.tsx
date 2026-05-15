@@ -190,6 +190,7 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('0 viewed')).toBeInTheDocument();
     expect(screen.getByText('0 clicked')).toBeInTheDocument();
     expect(screen.getByText('0 replied')).toBeInTheDocument();
+    expect(screen.getByText('0 bounced')).toBeInTheDocument();
   });
 
   it('keeps zero closed-out readback explicit when no recipients are closed out yet', () => {
@@ -231,6 +232,7 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('0 viewed')).toBeInTheDocument();
     expect(screen.getByText('0 clicked')).toBeInTheDocument();
     expect(screen.getByText('0 replied')).toBeInTheDocument();
+    expect(screen.getByText('0 bounced')).toBeInTheDocument();
   });
 
   it('keeps queued and partial headers truthful instead of calling them sent', () => {

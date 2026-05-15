@@ -259,6 +259,7 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('Viewed 0')).toBeInTheDocument();
     expect(screen.getByText('Clicked 0')).toBeInTheDocument();
     expect(screen.getByText('Replied 0')).toBeInTheDocument();
+    expect(screen.getByText('Bounced 0')).toBeInTheDocument();
   });
 
   it('shows engagement rates on the latest campaign message when delivered recipients exist', () => {
@@ -402,6 +403,7 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('Viewed 0')).toBeInTheDocument();
     expect(screen.getByText('Clicked 0')).toBeInTheDocument();
     expect(screen.getByText('Replied 0')).toBeInTheDocument();
+    expect(screen.getByText('Bounced 0')).toBeInTheDocument();
   });
 });
 

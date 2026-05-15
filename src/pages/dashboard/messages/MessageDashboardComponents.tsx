@@ -1584,7 +1584,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Viewed {activeCampaignThread.viewed}</span>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Clicked {activeCampaignThread.clicked}</span>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Replied {activeCampaignThread.replied}</span>
-          {activeCampaignThread.bounced > 0 && <span className="rounded-lg border border-warning/20 bg-warning-light px-3 py-1 text-warning">Bounced {activeCampaignThread.bounced}</span>}
+          <span className="rounded-lg border border-warning/20 bg-warning-light px-3 py-1 text-warning">Bounced {activeCampaignThread.bounced}</span>
               </>
             );
           })()}
@@ -1680,7 +1680,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                     {engagement.viewed != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Viewed {engagement.viewed}</span>}
                     {engagement.clicked != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Clicked {engagement.clicked}</span>}
                     {engagement.replied != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Replied {engagement.replied}</span>}
-                    {engagement.bounced != null && engagement.bounced > 0 && <span className="rounded-lg border border-warning/20 bg-warning-light px-3 py-1 text-warning">Bounced {engagement.bounced}</span>}
+                    {engagement.bounced != null && <span className="rounded-lg border border-warning/20 bg-warning-light px-3 py-1 text-warning">Bounced {engagement.bounced}</span>}
                     {deliveredRecipients > 0 && openRate != null && clickRate != null && replyRate != null && (
                       <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">
                         {openRate}% open · {clickRate}% click · {replyRate}% reply

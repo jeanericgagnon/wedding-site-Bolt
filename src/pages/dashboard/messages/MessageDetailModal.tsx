@@ -480,7 +480,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
               {engagement.replied != null && (
                 <span className="text-text-secondary">{engagement.replied} replied</span>
               )}
-              {engagement.bounced != null && engagement.bounced > 0 && (
+              {engagement.bounced != null && (
                 <span className="text-warning">{engagement.bounced} bounced</span>
               )}
               {deliveredRecipients > 0 && openRate != null && clickRate != null && replyRate != null && (
