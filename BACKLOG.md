@@ -2,19 +2,19 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 04:22 PM PDT`
-- Latest shipped batch: `guest preview live visibility pair proof batch`
+- Last updated: `2026-05-15 04:37 PM PDT`
+- Latest shipped batch: `guest preview session defer batch`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry active-proof-lane closure batch
-- Open backlog lanes: `4`
-- Current session blocker: even a minimal `chromium.launch()` plus `/login` navigation now goes silent in this saturated session, so the remaining QR lane gap is no longer specific to the guest-hub spec and is currently isolated to generic headless browser startup in this session
+- Open backlog lanes: `3`
+- Current session blocker: even a minimal `chromium.launch()` plus `/login` navigation now goes silent in this saturated session, and the same silent hang now blocks the remaining guest-preview live rerun too, so the remaining browser-proof gaps are currently isolated to generic headless browser startup in this session
 - Current transport blocker: none active right now
 - Blocked this session:
   - `npx vitest run src/pages/dashboard/registry/RegistryDashboardRouteContent.test.tsx` still stalls without producing useful output in this session
 - Work source-code next:
-  - `guest-specific preview and visibility confidence`: continue the next active live-proof closure lane while the QR guest-hub lane waits on a fresh browser-capable session
-- First code retry after the current QR-session defer batch:
-  - keep the QR guest-hub lane deferred until a fresh session can launch headless browser proof cleanly
-  - treat the live day-of update/status/handoff/map readback proof as the remaining QR-specific gap once browser startup is usable again
+  - `RSVP access modes and question templates`: continue the next active live-proof closure lane while guest-preview and QR wait on a fresh browser-capable session
+- First code retry after the current guest-preview session defer batch:
+  - keep the guest-preview and QR lanes deferred until a fresh session can launch headless browser proof cleanly
+  - treat the guest-preview desktop/mobile rerun and the QR live day-of update/status/handoff/map readback as the remaining browser-proof gaps once browser startup is usable again
 - Best place to scan after each batch:
   - `Quick Read` for the newest timestamp and latest shipped batch
   - `Recent Shipped Work` for the most recent visible progress by lane
@@ -113,9 +113,6 @@
 
 ## Work This Next
 
-- `guest-specific preview and visibility confidence`
-  - rerun the authenticated desktop and mobile guest preview drawer on the shipped runtime
-  - prove wrong-guest/right-guest visibility on live auth flows
 - `unified QR guest hub`
   - latest shipped: the no-app guest-hub helper now says `This no-app guest hub is ready for the wedding day`, `Ready now from this link`, `travel details`, `Still missing from core day-of coverage`, and `Add a site link and guest actions before sharing this as the no-app guest hub`, so the no-app readiness summaries now match the cleaner guest-safe wording already used by the live link-access and readiness panels
   - latest shipped: the no-app and live guest-hub readiness boards now use clearer item labels like `No-app guest hub`, `One day-of link`, `Guest actions ready`, `Guest language links`, `Core day-of actions`, `Low-signal fallback`, `Offline reopen`, `Saved guest actions`, `Guest status from this link`, `Coordinator handoff from this link`, and `Link access from this page`, so the readiness panels now stay in the same guest-safe wording family as the cleaned live surface around them
@@ -149,12 +146,12 @@
 
 These are the active product-completion lanes still open after the current launch-hardening scope:
 
-- Total open lanes: `4`
+- Total open lanes: `3`
 
-1. `guest-specific preview and visibility confidence`
+1. `DEFERRED THIS SESSION`: guest-specific preview and visibility confidence
    - latest shipped: `proof:v1:guest-preview-confidence` now includes a real authenticated mobile live guest-preview spec for photo upload, travel, registry, and public-site drawer routes on the shipped runtime, while the desktop live spec now proves the real guest drawer path instead of only the lighter public-site open, so the lane no longer has a missing mobile live proof path in repo
    - latest shipped: the authenticated desktop live guest-preview spec now also resolves two real guests with contrasting `event_invitations` from production data and proves the same event is visible in the right guest drawer and hidden in the wrong guest drawer, so the lane no longer has a missing cross-surface live visibility proof path in repo
-   - production reruns are still open for the authenticated desktop and mobile guest preview drawer on the shipped runtime
+   - deferred for this session because the remaining work is now only the authenticated desktop/mobile live rerun, and that rerun hit the same silent generic headless-browser startup blocker already isolating the QR lane in this saturated session
 2. `DEFERRED THIS SESSION`: unified QR guest hub
   - latest shipped: the local day-of proof lane now resolves the guest-hub travel/readiness summary strings through pure helper coverage instead of mounting the full `EventHubLiveContent` render tree, because `eventHubLiveContentHelpers.test.ts` now covers the invite-scoped travel summary and readiness-label logic directly and `proof:v1:dayof-web-mode` no longer depends on `EventHubLiveContent.proof.test.tsx`, so one more concrete local proof dependency is out of the stuck Vitest slice
   - latest shipped: the live `dayof-web-mode` proof path now skips the wedged local preflight and goes straight to the authenticated production Playwright check when `PLAYWRIGHT_BASE_URL` points at the live site, so the remaining QR lane blocker is now isolated to the live browser/runtime leg instead of being trapped behind the local Vitest runner
