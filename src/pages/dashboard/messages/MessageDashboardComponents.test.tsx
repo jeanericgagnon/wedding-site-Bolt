@@ -54,6 +54,7 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('4 recipients already closed out')).toBeInTheDocument();
     expect(screen.getByText('2 of 6 targeted recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('2 recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.getByText('1 of 6 targeted recipients need contact details · 0 of 6 targeted recipients were not reached yet')).toBeInTheDocument();
     expect(screen.getByText('6 opened · 2 viewed · 3 clicked · 1 replied · 1 bounced')).toBeInTheDocument();
     expect(screen.getByText('1 recipient needs contact details · 0 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: contact cleanup')).toBeInTheDocument();
@@ -107,6 +108,7 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('3 recipients already closed out')).toBeInTheDocument();
     expect(screen.getByText('0 of 3 targeted recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.getByText('0 of 3 targeted recipients need contact details · 0 of 3 targeted recipients were not reached yet')).toBeInTheDocument();
     expect(screen.getByText('0 need contact details · 0 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: all clear')).toBeInTheDocument();
     expect(screen.getByText('1 viewed across guest pages · 0 bounced')).toBeInTheDocument();
@@ -161,6 +163,7 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('No recipients are already closed out')).toBeInTheDocument();
     expect(screen.getByText('3 of 3 targeted recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.getByText('1 of 3 targeted recipients need contact details · 0 of 3 targeted recipients were not reached yet')).toBeInTheDocument();
     expect(screen.getByText('0 opened · 0 viewed · 0 clicked · 0 replied')).toBeInTheDocument();
   });
 
@@ -610,6 +613,7 @@ describe('MessageHistorySummaryPanels', () => {
     expect(screen.getByText('10 recipients already closed out')).toBeInTheDocument();
     expect(screen.getByText('6 of 16 targeted recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('6 recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.getByText('2 of 16 targeted recipients need contact details · 3 of 16 targeted recipients were not reached yet')).toBeInTheDocument();
     expect(screen.getByText('2 need contact details · 3 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: unreached guests')).toBeInTheDocument();
     expect(screen.getByText('Sent 0 · Active 0 · Scheduled 0 · Needs follow-up 1 · Needs review 1')).toBeInTheDocument();
@@ -624,6 +628,7 @@ describe('MessageHistorySummaryPanels', () => {
     expect(screen.getByText('4 recipients already closed out')).toBeInTheDocument();
     expect(screen.getByText('3 of 7 targeted recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.getByText('1 of 7 targeted recipients need contact details · 0 of 7 targeted recipients were not reached yet')).toBeInTheDocument();
     expect(screen.getByText('1 need contact details · 0 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: delivery review')).toBeInTheDocument();
     expect(screen.getByText('7 opened · 4 clicked · 1 replied')).toBeInTheDocument();
@@ -811,6 +816,7 @@ describe('MessageReviewQueuePanels', () => {
     expect(screen.getByText('60% cleanup still pending · 40% follow-through ready')).toBeInTheDocument();
     expect(screen.getByText('2 of 5 targeted recipients are already closed out · 3 of 5 targeted recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('2 recipients already closed out · 3 recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.getByText('1 of 5 targeted recipients need contact details · 1 of 5 targeted recipients were not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: delivery review')).toBeInTheDocument();
   });
 });
@@ -1103,6 +1109,7 @@ describe('MessageHistoryCard', () => {
     expect(screen.getAllByText('No recipients are already closed out')).not.toHaveLength(0);
     expect(screen.getAllByText('0 of 0 targeted recipients still need cleanup')).not.toHaveLength(0);
     expect(screen.getAllByText('No recipients still need cleanup')).not.toHaveLength(0);
+    expect(screen.getAllByText('0 of 0 targeted recipients need contact details · 0 of 0 targeted recipients were not reached yet')).not.toHaveLength(0);
     expect(screen.getAllByText('0 need contact details · 0 not reached yet')).not.toHaveLength(0);
     expect(screen.getAllByText('Main cleanup: all clear')).not.toHaveLength(0);
   });
@@ -1195,6 +1202,7 @@ describe('MessageHistoryCard', () => {
     expect(screen.getByText('4 recipients already closed out')).toBeInTheDocument();
     expect(screen.getByText('0 of 4 targeted recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.getByText('0 of 4 targeted recipients need contact details · 0 of 4 targeted recipients were not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: all clear')).toBeInTheDocument();
     expect(screen.getByText('0 opened')).toBeInTheDocument();
     expect(screen.getByText('0 viewed')).toBeInTheDocument();

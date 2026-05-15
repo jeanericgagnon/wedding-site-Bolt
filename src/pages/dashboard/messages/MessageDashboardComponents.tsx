@@ -331,6 +331,9 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
           <p className="mt-1 text-xs text-text-tertiary">
             {deliveryStats.skipped} need contact details · {deliveryStats.unreached} not reached yet
           </p>
+          <p className="mt-1 text-xs text-text-tertiary">
+            {deliveryStats.skipped} of {deliveryStats.targeted} targeted recipients need contact details · {deliveryStats.unreached} of {deliveryStats.targeted} targeted recipients were not reached yet
+          </p>
           {deliveredCoverageRate != null && reviewCoverageRate != null && contactCoverageRate != null && unreachedCoverageRate != null && (
             <p className="mt-1 text-xs text-text-tertiary">
               {deliveredCoverageRate}% delivered coverage · {reviewCoverageRate}% review coverage · {contactCoverageRate}% needs contact · {unreachedCoverageRate}% unreached
@@ -1312,6 +1315,9 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
               <p className="mt-1 text-[11px] text-text-tertiary">
                 {channelDeliveryBreakdown[channel].skipped} need contact details · {channelDeliveryBreakdown[channel].unreached} not reached yet
               </p>
+              <p className="mt-1 text-[11px] text-text-tertiary">
+                {channelDeliveryBreakdown[channel].skipped} of {channelDeliveryBreakdown[channel].targeted} targeted recipients need contact details · {channelDeliveryBreakdown[channel].unreached} of {channelDeliveryBreakdown[channel].targeted} targeted recipients were not reached yet
+              </p>
               {getFollowThroughFocusLabel({
                 failed: channelDeliveryBreakdown[channel].failed,
                 skipped: channelDeliveryBreakdown[channel].skipped,
@@ -1498,6 +1504,11 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                   {thread.skipped > 0 ? describeRecipientReview(thread.skipped) : '0 need contact details'}
                   {' · '}
                   {thread.unreached} not reached yet
+                </p>
+                <p className="text-text-secondary">
+                  {thread.skipped} of {targeted} targeted recipients need contact details
+                  {' · '}
+                  {thread.unreached} of {targeted} targeted recipients were not reached yet
                 </p>
                 {focusLabel && <p className="text-text-secondary">{focusLabel}</p>}
                 {targeted > 0 && <p className="text-text-secondary">{thread.openRate}% open · {thread.clickRate}% click · {thread.replyRate}% reply</p>}
@@ -1744,6 +1755,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                     <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughReadyCount > 0 ? `${followThroughReadyCount} recipients already closed out` : 'No recipients are already closed out'}</span>
                     <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupCount} of {targetedRecipients} targeted recipients still need cleanup</span>
                     <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupCount > 0 ? `${cleanupCount} recipients still need cleanup` : 'No recipients still need cleanup'}</span>
+                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{skippedRecipients} of {targetedRecipients} targeted recipients need contact details · {unreachedRecipients} of {targetedRecipients} targeted recipients were not reached yet</span>
                     {followThroughFocusLabel && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughFocusLabel}</span>}
                     {engagement.opened != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Opened {engagement.opened}</span>}
                     {engagement.viewed != null && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Viewed {engagement.viewed}</span>}
@@ -1857,6 +1869,11 @@ export const MessageReviewQueuePanels: React.FC<MessageReviewQueuePanelsProps> =
                     {rowSummary.followThroughReadyRecipientCount > 0 ? `${rowSummary.followThroughReadyRecipientCount} recipients already closed out` : 'No recipients are already closed out'}
                     {' · '}
                     {rowSummary.cleanupRecipientCount > 0 ? `${rowSummary.cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}
+                  </p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">
+                    {rowSummary.skippedRecipients} of {rowSummary.targetedRecipients} targeted recipients need contact details
+                    {' · '}
+                    {rowSummary.unreachedRecipients} of {rowSummary.targetedRecipients} targeted recipients were not reached yet
                   </p>
                   {rowSummary.followThroughFocusLabel && (
                     <p className="mt-1 text-[11px] text-text-tertiary">{rowSummary.followThroughFocusLabel}</p>
@@ -2237,6 +2254,9 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
                       )}
                       {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
                         <span>{rowSummary.cleanupRecipientCount > 0 ? `${rowSummary.cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}</span>
+                      )}
+                      {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
+                        <span>{rowSummary.skippedRecipients} of {rowSummary.targetedRecipients} targeted recipients need contact details · {rowSummary.unreachedRecipients} of {rowSummary.targetedRecipients} targeted recipients were not reached yet</span>
                       )}
                       {rowSummary.followThroughFocusLabel && (
                         <span>{rowSummary.followThroughFocusLabel}</span>
