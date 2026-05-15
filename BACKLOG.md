@@ -38,6 +38,7 @@ These are the active product-completion lanes still open after the current launc
    - broader claim-state depth and richer public fund-card polish are still open
 6. `premium no-app guest photo and memory flow`
    - latest shipped: the top-level photo/memory badge row now stays explicit with `No memory gaps right now` in the all-clear state instead of leaving that truth only to the `Main gap: none right now` line
+   - latest shipped: the top-level photo/memory badge row now also says `No memory lanes need action` in the all-clear state, so the clean lane status is visible without reading the detailed lane cards
    - this lane remains active and unfinished
 7. `destination/travel guest portal`
    - latest shipped: the guest-hub `Travel quick plan` badge row now stays explicit with `No core travel gaps` in the all-clear state instead of leaving that truth only in the prose summary
