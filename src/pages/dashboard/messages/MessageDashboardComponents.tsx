@@ -1452,7 +1452,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                   {thread.delivered > 0 ? `${thread.delivered} recipients delivered` : '0 recipients delivered'}
                 </p>
                 {targeted > 0 && <p className="text-text-secondary">{targeted} targeted recipients</p>}
-                {thread.deliveredRecipients > 0 && <p className="text-text-secondary">{thread.deliveredRate}% delivered coverage{reviewRate != null ? ` · ${reviewRate}% review coverage` : ''}{skippedRate != null ? ` · ${skippedRate}% needs contact` : ''}{unreachedRate != null ? ` · ${unreachedRate}% unreached` : ''}</p>}
+                {targeted > 0 && <p className="text-text-secondary">{thread.deliveredRate}% delivered coverage{reviewRate != null ? ` · ${reviewRate}% review coverage` : ''}{skippedRate != null ? ` · ${skippedRate}% needs contact` : ''}{unreachedRate != null ? ` · ${unreachedRate}% unreached` : ''}</p>}
                 {cleanupRate != null && <p className="text-text-secondary">{cleanupRate}% cleanup still pending</p>}
                 {cleanupRate != null && <p className="text-text-secondary">{Math.max(0, 100 - cleanupRate)}% follow-through ready</p>}
                 <p className="text-text-secondary">{followThroughReadyCount > 0 ? `${followThroughReadyCount} recipients already closed out` : 'No recipients are already closed out'}</p>
@@ -1528,7 +1528,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               Targeted {activeThreadTargeted}
             </span>
           )}
-          {activeCampaignThread.deliveredRecipients > 0 && (
+          {activeThreadTargeted > 0 && (
             <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
               {activeCampaignThread.deliveredRate}% delivered coverage
             </span>

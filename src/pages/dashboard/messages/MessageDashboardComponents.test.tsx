@@ -148,6 +148,7 @@ describe('MessageCampaignThreadPanels', () => {
 
     expect(screen.getByText('0 recipients delivered')).toBeInTheDocument();
     expect(screen.getByText('3 targeted recipients')).toBeInTheDocument();
+    expect(screen.getByText('0% delivered coverage · 67% review coverage · 33% needs contact · 0% unreached')).toBeInTheDocument();
     expect(screen.getByText('0% follow-through ready')).toBeInTheDocument();
     expect(screen.getByText('No recipients are already closed out')).toBeInTheDocument();
     expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
@@ -249,6 +250,7 @@ describe('MessageCampaignThreadPanels', () => {
 
     expect(screen.getByText('0 recipients delivered')).toBeInTheDocument();
     expect(screen.getByText('Targeted 3')).toBeInTheDocument();
+    expect(screen.getByText('0% delivered coverage')).toBeInTheDocument();
     expect(screen.getByText('0% follow-through ready')).toBeInTheDocument();
     expect(screen.getByText('No recipients are already closed out')).toBeInTheDocument();
     expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
