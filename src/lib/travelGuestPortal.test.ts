@@ -33,7 +33,7 @@ describe('travelGuestPortal', () => {
       'Arrival coverage ready',
     ]);
     expect(readiness.summary).toBe('7 ready.');
-    expect(readiness.mainGapLabel).toBeNull();
+    expect(readiness.mainGapLabel).toBe('Main gap: none right now');
     expect(readiness.steps.find((step) => step.id === 'guest-specific')?.status).toBe('ready');
   });
 
@@ -93,7 +93,7 @@ describe('travelGuestPortal', () => {
       'Arrival coverage ready',
     ]);
     expect(readiness.summary).toBe('7 ready.');
-    expect(readiness.mainGapLabel).toBeNull();
+    expect(readiness.mainGapLabel).toBe('Main gap: none right now');
   });
 
   it('keeps venue and schedule empty states clear before a couple has built those sections', () => {
