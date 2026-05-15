@@ -89,7 +89,7 @@ describe('GuestItineraryDrawer', () => {
     expect(screen.getAllByRole('button', { name: 'Save private card' })).toHaveLength(2);
     expect(screen.getByText('9 guest routes ready · 6 guest-specific · 3 public shell · 1 visible event · 0 hidden events')).toBeInTheDocument();
     expect(screen.getByText('67% guest-specific coverage · 33% public-shell coverage')).toBeInTheDocument();
-    expect(screen.getByText('100% event visibility coverage')).toBeInTheDocument();
+    expect(screen.getByText('100% event visibility coverage · 0% still hidden')).toBeInTheDocument();
     expect(screen.getByText('100% preview-route coverage · 9 routes ready · No preview routes missing')).toBeInTheDocument();
     expect(screen.getByText('Private guest path ready')).toBeInTheDocument();
     expect(screen.getByText('1 visible event has a private guest path ready.')).toBeInTheDocument();
@@ -220,7 +220,7 @@ describe('GuestItineraryDrawer', () => {
     );
 
     expect(screen.getByText('Public shell plus visible events')).toBeInTheDocument();
-    expect(screen.getByText('100% event visibility coverage')).toBeInTheDocument();
+    expect(screen.getByText('100% event visibility coverage · 0% still hidden')).toBeInTheDocument();
     expect(screen.getByText('33% preview-route coverage · 3 routes ready · 6 preview routes still missing')).toBeInTheDocument();
     expect(screen.getByText('Main gap: Rotate or create a private RSVP link')).toBeInTheDocument();
   });

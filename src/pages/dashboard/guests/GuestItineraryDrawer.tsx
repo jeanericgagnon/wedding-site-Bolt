@@ -302,7 +302,7 @@ function GuestDrawerDetails({
             {visibleEventCoverageRate != null && (
               <p className="text-xs text-text-tertiary">
                 {visibleEventCoverageRate}% event visibility coverage
-                {hiddenEventCoverageRate != null && hiddenEventCoverageRate > 0 ? ` · ${hiddenEventCoverageRate}% still hidden` : ''}
+                {hiddenEventCoverageRate != null ? ` · ${hiddenEventCoverageRate}% still hidden` : ''}
               </p>
             )}
             {totalPotentialPreviewRouteCount > 0 && (
