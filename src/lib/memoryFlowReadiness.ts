@@ -212,6 +212,7 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
   const actionLaneCount = lanes.filter((lane) => lane.status === 'needs-action').length;
   const emptyLaneCount = lanes.filter((lane) => lane.status === 'empty').length;
   const readyStepCount = steps.filter((step) => step.status === 'ready').length;
+  const actionStepCount = steps.filter((step) => step.status === 'needs-action').length;
   const emptyStepCount = steps.filter((step) => step.status === 'empty').length;
   const stepCoverageRate = steps.length > 0
     ? Math.round((readyStepCount / steps.length) * 100)
@@ -248,6 +249,7 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
       ? `${countLabel(input.guestProspectCount, 'opt-in')} captured`
       : 'No follow-up opt-ins',
     ...(actionLaneCount > 0 ? [`${actionLaneCount} memory lane${actionLaneCount === 1 ? '' : 's'} still need action`] : []),
+    ...(actionStepCount > 0 ? [`${actionStepCount} memory step${actionStepCount === 1 ? '' : 's'} still need action`] : []),
     ...(emptyLaneCount > 0 ? [`${emptyLaneCount} memory lane${emptyLaneCount === 1 ? '' : 's'} still empty`] : []),
     ...(emptyStepCount > 0 ? [`${emptyStepCount} memory step${emptyStepCount === 1 ? '' : 's'} still empty`] : []),
     ...(firstBlockingStep ? [`First blocker: ${firstBlockingStep.label}`] : []),
