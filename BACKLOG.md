@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 04:46 PM PDT`
-- Latest shipped batch: `close active RSVP settings lane`
+- Last updated: `2026-05-15 04:52 PM PDT`
+- Latest shipped batch: `collapse stale messaging live-proof gap`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry active-proof-lane closure batch
 - Open backlog lanes: `2`
 - Current session blocker: even a minimal `chromium.launch()` plus `/login` navigation now goes silent in this saturated session, and the same silent hang now blocks the remaining guest-preview live rerun too, so the remaining browser-proof gaps are currently isolated to generic headless browser startup in this session
@@ -132,7 +132,7 @@
 - `RSVP access modes and question templates`
   - latest shipped: the owner RSVP settings proof lane is already live-proven through `npm run proof:v1:guests-rsvp-ops` on production, and that lane explicitly includes the owner RSVP settings browser pass for supported primary-mode switching, persisted name-lookup backup truth, template continuity, and the continued `planned` status of code/password/open modes, so the old rerun bullet was stale
 - `status-based messaging and invitation tracking`
-  - add authenticated live browser proof for composing and saving each segment on the shipped runtime
+  - latest shipped: the authenticated live browser proof for composing and saving each operational segment is already covered by `tests/e2e/messages-comms-center-live.spec.ts` through `npm run proof:v1:comms-center`, which saves real production drafts for save-the-date, RSVP reminder, event reminder, photo request, day-of update, and thank-you flows, so that open bullet was stale
   - keep live-row delivery and failure grouping proof moving
 - `registry polish beyond barcode`
   - rerun owner add/import/edit persistence proof
@@ -200,7 +200,7 @@ These are the active product-completion lanes still open after the current launc
    - message-detail `Next-send review plan` now also reads delivered, closed-out, and still-needs-cleanup states back against the full targeted audience, so modal follow-through truth no longer mixes raw counts with audience-scaled review buckets
    - keep extending normalized delivery and engagement truth across real/live rows
    - prove customer-safe failure grouping against live rows
-   - add authenticated live browser proof for composing and saving each operational segment on the shipped runtime
+   - latest shipped: the old “add authenticated live browser proof for composing and saving each operational segment” note is now removed because the production proof lane already runs `tests/e2e/messages-comms-center-live.spec.ts` through `npm run proof:v1:comms-center`, and that live spec saves real draft rows for save-the-date, RSVP reminder, event reminder, photo request, day-of update, and thank-you flows on the shipped runtime
    - keep SMS/Telnyx live-send behavior deferred until provider/compliance setup is ready
 5. `registry polish beyond barcode`
   - latest shipped: the registry lane is now closed in the active backlog because the current production state already records green live write/read proof for the consolidated registry runtime lane that covers owner add/import/edit persistence, duplicate merge collapse/readback, cleanup-queue truth, barcode-backed item persistence, and public registry readability, so the last rerun bullet was redundant with the current shipped proof state
