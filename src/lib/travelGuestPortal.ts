@@ -541,7 +541,7 @@ export function buildTravelHubSpotlight(input: {
       ? 'Main gap: Weekend timing'
       : !arrivalGuidanceReady
         ? 'Main gap: Arrival guidance'
-        : null;
+        : 'Main gap: none right now';
 
   const travelHref = appendGuestLanguageToInternalHref(
     appendGuestInviteTokenToInternalHref(
@@ -573,9 +573,9 @@ export function buildTravelHubSpotlight(input: {
   const summary = coverageSummaryParts.length > 0
     ? `${cards.length} travel detail${cards.length === 1 ? '' : 's'} ready from the guest hub, including ${coverageSummaryParts.join(', ')}.${readinessSummary}`
     : `${cards.length} travel detail${cards.length === 1 ? '' : 's'} ready from the guest hub.${readinessSummary}`;
-  const summaryWithGap = mainGapLabel
+  const summaryWithGap = mainGapLabel && mainGapLabel !== 'Main gap: none right now'
     ? `${summary} ${mainGapLabel.replace('Main gap: ', 'Still missing: ')}.`
-    : summary;
+    : `${summary}${mainGapLabel === 'Main gap: none right now' ? ' No core travel gaps right now.' : ''}`;
   const filename = `${siteSlug.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'dayof'}-travel-guide.html`;
 
   return {
