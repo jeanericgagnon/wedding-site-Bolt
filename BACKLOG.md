@@ -3,7 +3,7 @@
 ## Quick Read
 
 - Last updated: `2026-05-15 01:00 PM PDT`
-- Latest shipped batch: `pending local batch` `Restore guest-hub test timers`
+- Latest shipped batch: `c23c4e62` `Restore guest-hub test timers`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: the minimal guest-hub Vitest slice still idles in this saturated session even after clearing duplicate runners, so the local runner environment remains the current proof blocker after the guest-hub timer-leak fix
@@ -24,7 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
-  - `pending local batch` `Restore guest-hub test timers`
+  - `c23c4e62` `Restore guest-hub test timers`
   - `4846e785` `Clarify registry top-surface owner wording`
   - `13f4903c` `Clarify registry share-readiness review wording`
   - `fa2e59b9` `Clarify registry metric label wording`
