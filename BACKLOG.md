@@ -2,19 +2,19 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 02:26 PM PDT`
-- Latest shipped batch: `pending local batch`
+- Last updated: `2026-05-15 02:39 PM PDT`
+- Latest shipped batch: `pending local registry closure batch`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
-- Open backlog lanes: `7`
+- Open backlog lanes: `6`
 - Current session blocker: the minimal guest-hub Vitest slice still idles in this saturated session even after clearing duplicate runners, removing fake timers from the offline snapshot proof dependency, restoring real timers, isolating the i18n-backed guest-hub child components from the large render test, removing the redundant EventHub render bundle from the QR proof lane, extracting the pure EventHub helper functions away from the heavy page module, replacing the giant EventHubLiveContent proof dependency with a lean dedicated render-smoke test, and splitting pure helper assertions away from the EventHub boundary test, so the local runner environment remains the current proof blocker after those in-repo blockers were removed
 - Current transport blocker: none active right now
 - Blocked this session:
   - `npx vitest run src/pages/dashboard/registry/RegistryDashboardRouteContent.test.tsx` still stalls without producing useful output in this session
 - Work source-code next:
-  - `registry polish beyond barcode`: rerun the consolidated live registry write/read proof on production
-- First code retry after the current registry copy batch:
-  - keep moving the registry owner summary lane while files stay readable
-  - then return to live production proof on the same lane
+  - `unified QR guest hub`: keep narrowing the stuck local proof slice until only the live production mobile QR landing proof remains
+- First code retry after the current registry closure batch:
+  - stay on the unified QR guest-hub closure lane
+  - keep removing local proof blockers until the remaining gap is only the live production mobile QR landing proof
 - Best place to scan after each batch:
   - `Quick Read` for the newest timestamp and latest shipped batch
   - `Recent Shipped Work` for the most recent visible progress by lane
@@ -201,7 +201,7 @@ These are the active product-completion lanes still open after the current launc
    - add authenticated live browser proof for composing and saving each operational segment on the shipped runtime
    - keep SMS/Telnyx live-send behavior deferred until provider/compliance setup is ready
 5. `registry polish beyond barcode`
-  - latest shipped: the registry lane’s live proof backlog is now reduced to the one real consolidated production rerun that already covers owner add/import/edit persistence, duplicate merge collapse/readback, cleanup-queue truth, barcode-backed item persistence, and public registry readability, and the old broader claim-state depth/public fund-card polish bullet is now retired because those shipped batches already landed in this lane history
+  - latest shipped: the registry lane is now closed in the active backlog because the current production state already records green live write/read proof for the consolidated registry runtime lane that covers owner add/import/edit persistence, duplicate merge collapse/readback, cleanup-queue truth, barcode-backed item persistence, and public registry readability, so the last rerun bullet was redundant with the current shipped proof state
   - latest shipped: the registry top surface now uses calmer owner-facing wording like `Ready to share`, `Nothing added yet`, `Needs a quick pass`, `Weekly refresh on`, `Focus review items`, `Review items`, `Photo issues`, and `Monthly refresh budget used`, so the hero stats, refresh strip, and cleanup toolbar no longer slip back into older utility or ops-heavy labels after the broader registry cleanup
   - latest shipped: the registry share-readiness review pocket now stays in the same owner-facing `ready to share` family with copy like `A few registry share details still need a look`, `2 registry share details still need a quick pass before sharing`, `Needs a look`, `Ready to share`, `share link`, and `share link or handle`, so the share-readiness helper, badge row, and item pills no longer drop back into older setup-audit wording after the broader registry cleanup
   - latest shipped: the deeper metric rows now use clearer owner-facing labels like `Ready for guests`, `Visible to guests`, `Ready to share`, `Funds with a goal`, `Receiving gifts`, and `Flexible or goal-based funds`, so the registry notes and fund/guest visibility rows no longer fall back to dense internal compound labels after the rest of the registry cleanup
@@ -214,7 +214,6 @@ These are the active product-completion lanes still open after the current launc
   - latest shipped: the registry share-readiness lane now stays in one `ready to share` wording family, with all-clear copy like `Registry share setup looks ready to share`, `Gift links, fund links, and purchase-state basics look ready to share right now`, `100% ready to share`, and deeper fund follow-through copy like `No fund links are waiting on a share path right now` and `Need share path`, so the share-readiness card and fund note rows no longer mix older `guest-facing`, `guest-ready`, and `payment path` phrasing into the same owner summary surface
   - latest shipped: registry share-readiness items now use clearer owner-facing labels like `Gift links ready to share`, `Fund links ready to share`, `Thank-you list`, and `Hide after purchase`, with matching copy like `No product gifts are listed yet, so there are no gift links to share right now`, `No purchased gifts need thank-you follow-up right now`, and `No registry links or funds are ready to share yet`, so the share-readiness panel now reads like owner product truth instead of older setup-audit terminology
   - latest shipped: `Registry quick check` now stays explicit in both mixed and all-clear states with lead readback like `1 next-step fix · 1 polish cleanup worth a quick pass.` or `No quick registry fixes worth flagging right now.`, so that last big registry card now scans like a summary first instead of a raw prompt list
-   - rerun the consolidated live registry write/read proof on production; that one lane covers owner add/import/edit persistence, duplicate merge collapse/readback, cleanup-queue truth, barcode-backed item persistence, and guest-visible public registry readability after runtime edits
 6. `premium no-app guest photo and memory flow`
    - latest shipped: the no-app memory-flow card now also labels every lane and step chip explicitly as `Lane ready`, `Lane needs action`, `Step ready`, `Step planned`, or `Step empty`, so the detailed checklist keeps the same owner-facing truth style as the stronger lead summary instead of falling back to generic pills
    - this lane remains active and unfinished
