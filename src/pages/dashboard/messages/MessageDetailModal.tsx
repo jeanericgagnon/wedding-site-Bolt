@@ -218,18 +218,10 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 {targetedRecipients > 0 && (
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Targeted {targetedRecipients}</span>
                 )}
-                {(message.delivered_count ?? 0) > 0 && (
-                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Delivered {message.delivered_count ?? 0}</span>
-                )}
-                {(message.failed_count ?? 0) > 0 && (
-                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs review {message.failed_count ?? 0}</span>
-                )}
-                {skippedCount > 0 && (
-                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs contact {skippedCount}</span>
-                )}
-                {unreachedCount > 0 && (
-                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Not reached {unreachedCount}</span>
-                )}
+                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Delivered {message.delivered_count ?? 0}</span>
+                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs review {message.failed_count ?? 0}</span>
+                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs contact {skippedCount}</span>
+                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Not reached {unreachedCount}</span>
                 {deliveredCoverageRate != null && reviewCoverageRate != null && contactCoverageRate != null && unreachedCoverageRate != null && (
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
                     {deliveredCoverageRate}% delivered coverage · {reviewCoverageRate}% review coverage · {contactCoverageRate}% needs contact · {unreachedCoverageRate}% unreached

@@ -1456,13 +1456,11 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                 <p className="text-text-secondary">{followThroughReadyCount > 0 ? `${followThroughReadyCount} recipients already closed out` : 'No recipients are already closed out'}</p>
                 <p className="text-text-secondary">{cleanupCount > 0 ? `${cleanupCount} recipients still need cleanup` : 'No recipients still need cleanup'}</p>
                 {engagementSummary && <p className="text-text-secondary">{engagementSummary}</p>}
-                {(thread.skipped > 0 || thread.unreached > 0) && (
-                  <p className="text-warning">
-                    {thread.skipped > 0 ? describeRecipientReview(thread.skipped) : '0 need contact details'}
-                    {' · '}
-                    {thread.unreached} not reached yet
-                  </p>
-                )}
+                <p className="text-warning">
+                  {thread.skipped > 0 ? describeRecipientReview(thread.skipped) : '0 need contact details'}
+                  {' · '}
+                  {thread.unreached} not reached yet
+                </p>
                 {focusLabel && <p className="text-text-secondary">{focusLabel}</p>}
                 {thread.deliveredRecipients > 0 && <p className="text-text-secondary">{thread.openRate}% open · {thread.clickRate}% click · {thread.replyRate}% reply</p>}
                     </>
