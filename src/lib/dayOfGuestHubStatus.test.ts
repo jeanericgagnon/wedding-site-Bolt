@@ -93,6 +93,25 @@ describe('dayOfGuestHubStatus', () => {
     expect(card?.detail).toContain('invite-only wedding details');
   });
 
+  it('keeps the all-clear core day-of readback explicit when every core action is ready', () => {
+    const card = buildGuestHubLinkAccessCard({
+      hasGuestInviteToken: true,
+      guestName: 'Alex Rivera',
+      enabledActionIds: ['rsvp', 'schedule', 'travel', 'photos'],
+    });
+
+    expect(card).toMatchObject({
+      title: 'Private guest link',
+      badgeLabel: 'Guest-specific',
+      actionCountLabel: '4 guest actions are ready from this link.',
+      actionSummaryLabel: 'RSVP, schedule, travel, and photo upload',
+      readyCoreActionCountLabel: '4 of 4 core day-of actions are already ready from this link.',
+      coreActionCoverageLabel: '100% of core day-of actions are ready from this link: RSVP, schedule, travel, and photo upload.',
+      coreActionSummaryLabel: '0 of 4 core day-of actions are still missing from this link. This link covers RSVP, timing, travel, and photo follow-through.',
+      mainGapLabel: null,
+    });
+  });
+
   it('builds a public-only link access card when no invite artifacts are present', () => {
     const card = buildGuestHubLinkAccessCard({
       hasGuestInviteToken: false,

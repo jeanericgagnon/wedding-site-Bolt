@@ -193,7 +193,7 @@ export function buildGuestHubLinkAccessCard(input?: GuestHubLinkAccessInput | nu
       : 'Core day-of actions are not ready from this link yet.';
   const coreActionSummaryLabel = missingCoreActionIds.length > 0
     ? `${missingCoreActionIds.length} of ${coreGuestHubActionIds.length} core day-of action${missingCoreActionIds.length === 1 ? ' is' : 's are'} still missing from this link: ${summarizeGuestHubActions(missingCoreActionIds.map((id) => ({ id })))}.`
-    : 'This link covers RSVP, timing, travel, and photo follow-through.';
+    : `0 of ${coreGuestHubActionIds.length} core day-of actions are still missing from this link. This link covers RSVP, timing, travel, and photo follow-through.`;
   const mainGapLabel = missingCoreActionIds.length > 0
     ? `Main gap: ${actionCount === 0 ? 'Turn on RSVP, schedule, travel, and photo upload' : `Add ${summarizeGuestHubActions(missingCoreActionIds.map((id) => ({ id })))} to this link`}.`
     : null;
