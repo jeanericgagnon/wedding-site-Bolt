@@ -334,12 +334,12 @@ export function RegistryDashboardRouteContent(props: {
     return acc;
   }, { open: 0, partial: 0, claimed: 0 });
   const topRegistryProgressSummary = props.topRegistryItems.length === 0
-    ? 'No registry gifts added yet.'
+    ? 'No top registry gifts to track yet.'
     : topRegistryProgressCounts.open === 0 && topRegistryProgressCounts.partial === 0
-      ? 'Top gifts are already fully claimed.'
+      ? 'Top gifts are already fully claimed right now.'
       : `Top gifts: ${topRegistryProgressCounts.claimed} fully claimed · ${topRegistryProgressCounts.partial} partially claimed · ${topRegistryProgressCounts.open} still fully open.`;
   const recentActivitySummary = props.recentActivity.length === 0
-    ? 'No registry activity yet.'
+    ? 'No recent registry changes yet.'
     : [
         `${props.recentActivity.filter((item) => item.purchase_status === 'purchased').length} purchased`,
         `${props.recentActivity.filter((item) => item.purchase_status === 'partial').length} partially claimed`,
