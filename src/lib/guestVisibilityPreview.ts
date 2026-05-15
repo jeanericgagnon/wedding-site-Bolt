@@ -237,7 +237,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
     guestLabel,
     bannerLabel: `Previewing as ${guestLabel}`,
     accessSummary: visibleEvents.length > 0
-      ? `${visibleEvents.length} of ${totalEventCount} event${totalEventCount === 1 ? '' : 's'} visible`
+      ? `${visibleEvents.length} of ${totalEventCount} event${totalEventCount === 1 ? '' : 's'} visible · ${hiddenEvents.length} hidden`
       : 'No invited events yet',
     accessDetail: visibleEvents.length > 0
       ? `${eventState.summary}: ${guestLabel} should see ${formatEventList(visibleEvents)}.`

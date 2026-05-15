@@ -20,7 +20,7 @@ describe('guestVisibilityPreview', () => {
       invitedEventIds: new Set(['ceremony', 'brunch']),
     });
 
-    expect(preview.accessSummary).toBe('2 of 3 events visible');
+    expect(preview.accessSummary).toBe('2 of 3 events visible · 1 hidden');
     expect(preview.routeReadinessLabel).toBe('Visible events without private link');
     expect(preview.pathCoverageSummary).toBe('2 visible events exist, but private guest-link coverage still needs setup.');
     expect(preview.mainGapLabel).toBe('Main gap: Rotate or create a private RSVP link');
@@ -107,7 +107,7 @@ describe('guestVisibilityPreview', () => {
       events: [],
     });
 
-    expect(preview.accessSummary).toBe('1 of 2 events visible');
+    expect(preview.accessSummary).toBe('1 of 2 events visible · 1 hidden');
     expect(preview.routeReadinessLabel).toBe('Visible events without private link');
     expect(preview.pathCoverageSummary).toBe('1 visible event exists, but private guest-link coverage still needs setup.');
     expect(preview.mainGapLabel).toBe('Main gap: Rotate or create a private RSVP link');
