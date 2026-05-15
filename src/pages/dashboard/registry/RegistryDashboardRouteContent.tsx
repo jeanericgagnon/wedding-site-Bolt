@@ -196,6 +196,10 @@ export function RegistryDashboardRouteContent(props: {
   const partialClaimCoverageRate = props.claimStats.claimedItems > 0
     ? Math.round((props.claimStats.partiallyClaimedItems / props.claimStats.claimedItems) * 100)
     : 0;
+  const totalClaimQuantityScope = props.claimStats.claimedQuantity + props.claimStats.remainingQuantity;
+  const claimedQuantityCoverageRate = totalClaimQuantityScope > 0
+    ? Math.round((props.claimStats.claimedQuantity / totalClaimQuantityScope) * 100)
+    : 0;
   const thankYouReadyCoverageRate = props.registryThankYouStats.purchasedCount > 0
     ? Math.round((props.registryThankYouStats.readyToSendCount / props.registryThankYouStats.purchasedCount) * 100)
     : 0;
@@ -338,7 +342,7 @@ export function RegistryDashboardRouteContent(props: {
                 {props.claimStats.namedPurchaserItems} attributed{props.claimStats.missingPurchaserItems > 0 ? ` · ${props.claimStats.missingPurchaserItems} need purchaser` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">
-                {claimAttributionCoverageRate}% purchaser coverage · {fullyClaimedCoverageRate}% fully closed{props.claimStats.partiallyClaimedItems > 0 ? ` · ${partialClaimCoverageRate}% partial (${props.claimStats.partiallyClaimedItems})` : ''}
+                {claimAttributionCoverageRate}% purchaser coverage · {fullyClaimedCoverageRate}% fully closed{props.claimStats.partiallyClaimedItems > 0 ? ` · ${partialClaimCoverageRate}% partial (${props.claimStats.partiallyClaimedItems})` : ''}{totalClaimQuantityScope > 0 ? ` · ${claimedQuantityCoverageRate}% quantity claimed` : ''}
               </p>
               <p className="mt-1 text-xs text-text-tertiary">{claimGapLabel}</p>
             </Card>
