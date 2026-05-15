@@ -250,6 +250,12 @@ function GuestDrawerDetails({
   const guestPublicSiteUrl = visibilityPreview.links.find((link) => link.kind === 'site')
     ? `${window.location.origin}${visibilityPreview.links.find((link) => link.kind === 'site')?.href ?? ''}`
     : '';
+  const totalPotentialPreviewRouteCount = (
+    (guest.invite_token ? 1 : 0)
+    + (guest.invite_token && weddingSiteInfo?.site_slug ? 5 : 0)
+    + (weddingSiteInfo?.site_slug ? 3 : 0)
+  );
+  const missingPreviewRouteCount = Math.max(totalPotentialPreviewRouteCount - visibilityPreview.links.length, 0);
 
   return (
     <>
@@ -281,6 +287,13 @@ function GuestDrawerDetails({
                 {guestSpecificCoverageRate != null ? `${guestSpecificCoverageRate}% guest-specific coverage` : ''}
                 {guestSpecificCoverageRate != null && publicShellCoverageRate != null ? ' · ' : ''}
                 {publicShellCoverageRate != null ? `${publicShellCoverageRate}% public-shell coverage` : ''}
+              </p>
+            )}
+            {totalPotentialPreviewRouteCount > 0 && (
+              <p className="text-xs text-text-tertiary">
+                {missingPreviewRouteCount === 0
+                  ? 'No preview routes missing'
+                  : `${missingPreviewRouteCount} preview route${missingPreviewRouteCount === 1 ? '' : 's'} still missing`}
               </p>
             )}
             <p className="text-xs font-medium text-text-secondary">{visibilityPreview.routeReadinessLabel}</p>
