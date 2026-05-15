@@ -346,9 +346,9 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
             {followThroughReadyRecipientCount > 0 && (
               <p className="mt-1 text-xs text-text-tertiary">{followThroughReadyRecipientCount} recipients already closed out</p>
             )}
-            {cleanupRecipientCount > 0 && (
-              <p className="mt-1 text-xs text-text-tertiary">{cleanupRecipientCount} recipients still need cleanup</p>
-            )}
+            <p className="mt-1 text-xs text-text-tertiary">
+              {cleanupRecipientCount > 0 ? `${cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}
+            </p>
             {followThroughFocusLabel && (
               <p className="mt-1 text-xs text-text-tertiary">{followThroughFocusLabel}</p>
             )}
@@ -1273,7 +1273,7 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
                     skipped: channelDeliveryBreakdown[channel].skipped,
                     unreached: channelDeliveryBreakdown[channel].unreached,
                   });
-                  return cleanupCount > 0 ? `${cleanupCount} recipients still need cleanup` : '';
+                  return cleanupCount > 0 ? `${cleanupCount} recipients still need cleanup` : 'No recipients still need cleanup';
                 })()}
               </p>
               <p className="mt-1 text-[11px] text-text-tertiary">
@@ -1454,7 +1454,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                 {cleanupRate != null && <p className="text-text-secondary">{cleanupRate}% cleanup still pending</p>}
                 {cleanupRate != null && <p className="text-text-secondary">{Math.max(0, 100 - cleanupRate)}% follow-through ready</p>}
                 {followThroughReadyCount > 0 && <p className="text-text-secondary">{followThroughReadyCount} recipients already closed out</p>}
-                {cleanupCount > 0 && <p className="text-text-secondary">{cleanupCount} recipients still need cleanup</p>}
+                <p className="text-text-secondary">{cleanupCount > 0 ? `${cleanupCount} recipients still need cleanup` : 'No recipients still need cleanup'}</p>
                 {engagementSummary && <p className="text-text-secondary">{engagementSummary}</p>}
                 {(thread.skipped > 0 || thread.unreached > 0) && (
                   <p className="text-warning">
@@ -1578,11 +1578,9 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               {activeThreadReadyCount} recipients already closed out
             </span>
           )}
-          {activeThreadCleanupCount > 0 && (
-            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
-              {activeThreadCleanupCount} recipients still need cleanup
-            </span>
-          )}
+          <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
+            {activeThreadCleanupCount > 0 ? `${activeThreadCleanupCount} recipients still need cleanup` : 'No recipients still need cleanup'}
+          </span>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs review {activeCampaignThread.failed}</span>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs contact {activeCampaignThread.skipped}</span>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Not reached {activeCampaignThread.unreached}</span>
@@ -1678,7 +1676,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                     {cleanupRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupRate}% cleanup still pending</span>}
                     {cleanupRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{Math.max(0, 100 - cleanupRate)}% follow-through ready</span>}
                     {followThroughReadyCount > 0 && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughReadyCount} recipients already closed out</span>}
-                    {cleanupCount > 0 && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupCount} recipients still need cleanup</span>}
+                    {targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{cleanupCount > 0 ? `${cleanupCount} recipients still need cleanup` : 'No recipients still need cleanup'}</span>}
                     {followThroughFocusLabel && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{followThroughFocusLabel}</span>}
                     {engagement.opened != null && engagement.opened > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Opened {engagement.opened}</span>}
                     {engagement.viewed != null && engagement.viewed > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Viewed {engagement.viewed}</span>}

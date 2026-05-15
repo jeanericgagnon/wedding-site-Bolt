@@ -57,6 +57,53 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('150% open · 75% click · 25% reply')).toBeInTheDocument();
   });
 
+  it('keeps the cleanup lane explicit when a campaign rollup is fully closed out', () => {
+    render(
+      <MessageCampaignThreadPanels
+        activeCampaignLatestMessage={null}
+        activeCampaignThread={null}
+        campaignThreads={[
+          {
+            key: 'thread-clean',
+            name: 'Thank-you note',
+            count: 1,
+            delivered: 3,
+            failed: 0,
+            skipped: 0,
+            unreached: 0,
+            opened: 2,
+            viewed: 1,
+            clicked: 1,
+            replied: 0,
+            bounced: 0,
+            deliveredRecipients: 3,
+            deliveredRate: 100,
+            openRate: 67,
+            clickRate: 33,
+            replyRate: 0,
+            latestStatus: 'sent',
+            latestAt: 120,
+          },
+        ]}
+        canCompose
+        deliveries={[]}
+        onClearThreadFilter={vi.fn()}
+        onDuplicateLatest={vi.fn()}
+        onEditLatest={vi.fn()}
+        onScheduleFollowUp={vi.fn()}
+        onSelectThread={vi.fn()}
+        onStartFollowUp={vi.fn()}
+        onViewLatest={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('3 recipients delivered')).toBeInTheDocument();
+    expect(screen.getByText('3 targeted recipients')).toBeInTheDocument();
+    expect(screen.getByText('100% follow-through ready')).toBeInTheDocument();
+    expect(screen.getByText('3 recipients already closed out')).toBeInTheDocument();
+    expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
+  });
+
   it('shows delivered coverage inside the active campaign thread chip row', () => {
     render(
       <MessageCampaignThreadPanels
@@ -288,6 +335,30 @@ describe('MessageReachSnapshotCard', () => {
     expect(screen.getByText('Main cleanup: delivery review')).toBeInTheDocument();
     expect(screen.getByText('Photo links ready')).toBeInTheDocument();
     expect(screen.getAllByText('3')).toHaveLength(2);
+  });
+
+  it('keeps the top reach snapshot explicit when cleanup is fully closed out', () => {
+    render(
+      <MessageReachSnapshotCard
+        canCompose
+        guests={[{ id: 'guest-1', email: 'alex@example.com' }] as any}
+        knownPhotoLinksCount={0}
+        messages={[
+          { id: 'message-sent', status: 'sent', recipient_count: 3, delivered_count: 3, failed_count: 0, recipient_filter: { opened_count: 2, clicked_count: 1, replied_count: 0, viewed_count: 1, skipped_count: 0 } },
+        ] as any}
+        onApplyComposerTemplate={vi.fn()}
+        onApplyDayOfAlertPreset={vi.fn()}
+        onApplySaveTheDatePreset={vi.fn()}
+        onNavigatePhotos={vi.fn()}
+        onQuickCreateSaveTheDateCampaign={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('3 recipients delivered')).toBeInTheDocument();
+    expect(screen.getByText('3 targeted recipients')).toBeInTheDocument();
+    expect(screen.getByText('100% follow-through ready')).toBeInTheDocument();
+    expect(screen.getByText('3 recipients already closed out')).toBeInTheDocument();
+    expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
   });
 });
 
