@@ -106,6 +106,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
     unreached: unreachedCount,
     targeted: targetedRecipients,
   });
+  const cleanupReadyCoverageRate = cleanupCoverageRate != null ? Math.max(0, 100 - cleanupCoverageRate) : null;
   const cleanupRecipientCount = getCleanupRecipientCount({
     failed: Math.max(0, Number(message.failed_count ?? 0)),
     skipped: skippedCount,
@@ -220,6 +221,9 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 )}
                 {cleanupCoverageRate != null && (
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{cleanupCoverageRate}% cleanup still pending</span>
+                )}
+                {cleanupReadyCoverageRate != null && (
+                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{cleanupReadyCoverageRate}% follow-through ready</span>
                 )}
                 {cleanupRecipientCount > 0 && (
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{cleanupRecipientCount} recipients still need cleanup</span>

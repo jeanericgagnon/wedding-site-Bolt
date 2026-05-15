@@ -240,6 +240,7 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
     unreached: deliveryStats.unreached,
     targeted: deliveryStats.targeted,
   });
+  const cleanupReadyCoverageRate = cleanupCoverageRate != null ? Math.max(0, 100 - cleanupCoverageRate) : null;
   const cleanupRecipientCount = getCleanupRecipientCount({
     failed: deliveryStats.failed,
     skipped: deliveryStats.skipped,
@@ -325,6 +326,9 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
             )}
             {cleanupCoverageRate != null && (
               <p className="mt-1 text-xs text-text-tertiary">{cleanupCoverageRate}% cleanup still pending</p>
+            )}
+            {cleanupReadyCoverageRate != null && (
+              <p className="mt-1 text-xs text-text-tertiary">{cleanupReadyCoverageRate}% follow-through ready</p>
             )}
             {cleanupRecipientCount > 0 && (
               <p className="mt-1 text-xs text-text-tertiary">{cleanupRecipientCount} recipients still need cleanup</p>
