@@ -204,6 +204,7 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
   const blockers = steps
     .filter((step) => step.status === 'needs-action')
     .map((step) => step.detail);
+  const blockerCount = blockers.length;
   const firstBlockingStep = steps.find((step) => step.status === 'needs-action') ?? null;
   const highestPriorityGap = lanes.find((lane) => lane.status === 'needs-action')
     ?? lanes.find((lane) => lane.status === 'empty')
@@ -249,6 +250,9 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
     input.guestProspectCount > 0
       ? `${countLabel(input.guestProspectCount, 'opt-in')} captured`
       : 'No follow-up opt-ins',
+    blockerCount > 0
+      ? `${countLabel(blockerCount, 'active blocker')} before sharing`
+      : 'No blockers before sharing',
     ...(actionLaneCount > 0 ? [`${actionLaneCount} memory lane${actionLaneCount === 1 ? '' : 's'} still need action`] : []),
     ...(actionStepCount > 0 ? [`${actionStepCount} memory step${actionStepCount === 1 ? '' : 's'} still need action`] : []),
     ...(emptyLaneCount > 0 ? [`${emptyLaneCount} memory lane${emptyLaneCount === 1 ? '' : 's'} still empty`] : []),

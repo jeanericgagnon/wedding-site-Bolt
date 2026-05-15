@@ -546,6 +546,7 @@ Paused next-priority bucket when backlog work resumes:
 ### Strong-Differentiator Lanes Still Open
 
 6. `ACTIVE`: premium no-app guest photo and memory flow
+   - the top-level photo-memory badge row now also says how many active blockers remain before sharing, so owners can catch sharing risk from the first scan instead of only down in the blocker panel
    - the no-app memory-flow card now keeps the `Main gap` line explicit even in the all-clear state, so owners get a plain “none right now” readback instead of inferring it from a missing label
    - the no-app memory-flow blocker panel now also says how many active blockers remain before sharing broadly, so owners can size the remaining setup burden without counting the bullet list by hand
    - the no-app memory-flow card now keeps the `Before sharing broadly` panel visible in the all-clear state, so owners get an explicit “no active blockers” readback instead of having to infer it from a missing warning box
@@ -575,6 +576,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the top-level photo-memory badge row now also surfaces the first real blocker, so owners can tell whether the first operational fix is the guest hub, moderation, album activation, or another blocked step without scanning the full memory checklist
    - this batch shipped: the top-level photo-memory badge row now also reads back how many of the four memory lanes are ready versus still needing action, so owners can judge overall lane closure without scanning every collection/curation/sharing/handoff panel
    - this batch shipped: the top-level photo-memory badge row now also calls out how many memory lanes are still completely empty, so owners can distinguish “needs cleanup” from “not built yet” without opening the deeper tiles
+   - this batch shipped: the top-level photo-memory badge row now also says how many active blockers remain before sharing, so owners can catch sharing risk from the first scan instead of only down in the blocker panel
    - this batch shipped: the no-app memory-flow card now keeps the `Main gap` line explicit even in the all-clear state, so owners get a plain “none right now” readback instead of inferring it from a missing label
    - this batch shipped: the no-app memory-flow blocker panel now also says how many active blockers remain before sharing broadly, so owners can size the remaining setup burden without counting the bullet list by hand
    - this batch shipped: the no-app memory-flow card now keeps the `Before sharing broadly` panel visible in the all-clear state, so owners get an explicit “no active blockers” readback instead of inferring it from a missing warning box
