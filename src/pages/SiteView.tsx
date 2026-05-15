@@ -19,6 +19,7 @@ import {
   capturePublicInviteTokenFromSearch,
   clearStoredPublicInviteToken,
   clearStoredPublicPasswordSession,
+  getInviteTokenFromSearch,
   writeStoredPublicPasswordSession,
 } from '../lib/publicAccessArtifacts';
 import { hasStoredGuestLanguagePreference } from '../lib/guestLanguagePreference';
@@ -568,7 +569,7 @@ export const SiteView: React.FC = () => {
       }
 
       try {
-        const urlToken = searchParams.get('token');
+        const urlToken = getInviteTokenFromSearch(searchParams);
         const { inviteToken, passwordSession } = buildPublicAccessArtifacts(resolvedSlug, searchParams);
         const subresourceAccess = { inviteToken, passwordSession };
         const access = await fetchPublicSiteAccess({

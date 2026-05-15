@@ -7,6 +7,7 @@ export function getUrlWithoutPublicAccessToken(href: string, origin = window.loc
   try {
     const url = new URL(href, origin);
     url.searchParams.delete('token');
+    url.searchParams.delete('invite_token');
     return `${url.pathname}${url.search}${url.hash}`;
   } catch {
     return href;
@@ -14,7 +15,7 @@ export function getUrlWithoutPublicAccessToken(href: string, origin = window.loc
 }
 
 export function getInviteTokenFromSearch(searchParams: URLSearchParams): string | null {
-  return getCaseInsensitiveSearchParam(searchParams, ['token', 'access_token', 'auth', 'session', 'passcode', 'jwt', 'signed', 'signature', 'bearer', 'key', 'secret']);
+  return getCaseInsensitiveSearchParam(searchParams, ['token', 'invite_token', 'access_token', 'auth', 'session', 'passcode', 'jwt', 'signed', 'signature', 'bearer', 'key', 'secret']);
 }
 
 export function getGuestInviteTokenFromSearch(searchParams: URLSearchParams): string | null {

@@ -173,7 +173,7 @@ const output = {
   ],
   stillManualProofNeeded: [
     isLiveBaseUrl
-      ? 'Rerun the final live browser/mobile guest-hub continuity leg in a fresh browser-capable session once headless startup is usable again.'
+      ? 'Deploy the guest-hub invite handoff fix, then rerun the final live browser/mobile guest-hub continuity leg in a fresh browser-capable session once browser startup is usable again.'
       : 'Rerun the same invite-scoped travel hub flow against the shipped production runtime for live/mobile proof after the next approved travel-portal deploy.',
   ],
   results,

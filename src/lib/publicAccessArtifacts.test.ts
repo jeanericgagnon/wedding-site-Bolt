@@ -18,6 +18,18 @@ describe('resolvePublicAccessArtifacts', () => {
     });
   });
 
+  it('treats invite_token links as valid public access tokens for guest-hub handoff routes', () => {
+    expect(
+      resolvePublicAccessArtifacts({
+        searchParams: new URLSearchParams('invite_token=current-guest-link'),
+        storedInviteToken: 'stored-invite',
+      }),
+    ).toEqual({
+      inviteToken: 'current-guest-link',
+      passwordSession: null,
+    });
+  });
+
   it('falls back to the stored invite token for gated guest-hub clicks', () => {
     expect(
       resolvePublicAccessArtifacts({

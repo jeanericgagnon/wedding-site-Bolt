@@ -99,6 +99,11 @@ describe('getUrlWithoutPublicAccessToken', () => {
       .toBe('/site/maya-leo?lang=es#schedule');
   });
 
+  it('also strips invite_token guest-hub handoff links from the visible URL once stored', () => {
+    expect(getUrlWithoutPublicAccessToken('/site/maya-leo?invite_token=secret&lang=es#travel', 'https://dayof.love'))
+      .toBe('/site/maya-leo?lang=es#travel');
+  });
+
   it('preserves token-free URLs unchanged', () => {
     expect(getUrlWithoutPublicAccessToken('/site/maya-leo?lang=es#schedule', 'https://dayof.love'))
       .toBe('/site/maya-leo?lang=es#schedule');
