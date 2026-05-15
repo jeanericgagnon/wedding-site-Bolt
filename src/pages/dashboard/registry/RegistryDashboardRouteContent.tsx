@@ -16,6 +16,24 @@ const FILTER_TABS: { key: RegistryFilter; label: string }[] = [
   { key: 'purchased', label: 'Purchased' },
 ];
 
+function formatRegistryPurchaseStatusLabel(status: RegistryItem['purchase_status']) {
+  if (status === 'partial') return 'Partially claimed';
+  if (status === 'purchased') return 'Purchased';
+  return 'Available';
+}
+
+function formatRegistryActivityDetail(item: RegistryItem) {
+  if (item.purchase_status === 'purchased') {
+    return item.purchaser_name ? `Purchased by ${item.purchaser_name}` : 'Purchased';
+  }
+
+  if (item.purchase_status === 'partial') {
+    return item.purchaser_name ? `Partially claimed by ${item.purchaser_name}` : 'Partially claimed';
+  }
+
+  return 'Still available';
+}
+
 type Counts = {
   total: number;
   available: number;
@@ -496,18 +514,28 @@ export function RegistryDashboardRouteContent(props: {
               <p className="text-sm font-semibold text-text-primary">Top registry progress</p>
               <div className="mt-3 space-y-2.5">
                 {props.topRegistryItems.length === 0 ? (
-                  <p className="text-sm text-text-secondary">No registry items yet.</p>
+                  <p className="text-sm text-text-secondary">No registry gifts added yet.</p>
                 ) : props.topRegistryItems.map((item) => {
-                  const progress = Math.min(100, Math.round(((item.quantity_purchased ?? 0) / Math.max(item.quantity_needed ?? 1, 1)) * 100));
+                  const quantityNeeded = Math.max(item.quantity_needed ?? 1, 1);
+                  const quantityPurchased = item.quantity_purchased ?? 0;
+                  const progress = Math.min(100, Math.round((quantityPurchased / quantityNeeded) * 100));
+                  const remainingQuantity = Math.max(quantityNeeded - quantityPurchased, 0);
                   return (
                     <div key={item.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm font-medium text-text-primary">{item.item_name}</p>
-                        <span className="text-xs text-text-tertiary">{item.quantity_purchased ?? 0}/{item.quantity_needed ?? 1}</span>
+                        <span className="text-xs text-text-tertiary">{quantityPurchased}/{quantityNeeded}</span>
                       </div>
                       <div className="mt-2 h-2 overflow-hidden rounded-lg bg-surface-subtle">
                         <div className="h-full rounded-lg bg-primary" style={{ width: `${progress}%` }} />
                       </div>
+                      <p className="mt-2 text-xs text-text-secondary">
+                        {quantityPurchased === 0
+                          ? 'Still fully open'
+                          : remainingQuantity === 0
+                            ? 'Fully claimed'
+                            : `${remainingQuantity} still open`}
+                      </p>
                     </div>
                   );
                 })}
@@ -523,9 +551,9 @@ export function RegistryDashboardRouteContent(props: {
                   <div key={item.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-medium text-text-primary">{item.item_name}</p>
-                      <span className="text-xs text-text-tertiary">{item.purchase_status}</span>
+                      <span className="text-xs text-text-tertiary">{formatRegistryPurchaseStatusLabel(item.purchase_status)}</span>
                     </div>
-                    <p className="mt-1 text-xs text-text-secondary">Updated {formatRegistryItemDate(item.updated_at ?? item.created_at)}</p>
+                    <p className="mt-1 text-xs text-text-secondary">{formatRegistryActivityDetail(item)} · Updated {formatRegistryItemDate(item.updated_at ?? item.created_at)}</p>
                   </div>
                 ))}
               </div>

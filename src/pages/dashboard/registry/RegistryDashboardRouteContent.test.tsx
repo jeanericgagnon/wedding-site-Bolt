@@ -1051,4 +1051,78 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('No gifts visible to guests yet')).toBeInTheDocument();
     expect(screen.getByText('Main gap: no guest-visibility blockers right now')).toBeInTheDocument();
   });
+
+  it('renders friendly progress and recent-activity wording in supporting registry cards', () => {
+    render(
+      <RegistryDashboardRouteContent
+        actionableBadImportCount={0}
+        alertCounts={{ stale: 0, priceChanged: 0, outOfStock: 0, imageIssues: 0 }}
+        autoRefreshEnabled
+        autoRefreshing={false}
+        bulkImportBusy={false}
+        bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
+        budgetUtilization={0}
+        claimStats={{ claimedItems: 1, claimedQuantity: 2, fullyClaimedItems: 0, partiallyClaimedItems: 1, namedPurchaserItems: 1, missingPurchaserItems: 0, multiQuantityInProgress: 1, remainingQuantity: 1 }}
+        counts={{ total: 3, available: 2, partial: 1, purchased: 0, totalValue: 240 }}
+        duplicateGroups={[]}
+        editItem={null}
+        filter="all"
+        filtered={[makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'partial', quantity_needed: 3, quantity_purchased: 2, purchaser_name: 'Alex' })]}
+        fulfillmentRate={0}
+        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
+        guestVisibilityStats={{ guestReadyItems: 1, guestVisibleItems: 1, visibleAvailableItems: 0, visibleClaimedItems: 1, hiddenPurchasedItems: 0, blockedGuestItems: 0, guestReadyCoverageRate: 33, guestVisibleCoverageRate: 33 }}
+        handleAddNew={vi.fn()}
+        handleAutoRefreshStale={vi.fn(async () => {})}
+        handleBulkImport={vi.fn(async () => {})}
+        handleCopyDuplicateReviewList={vi.fn(async () => {})}
+        handleDelete={vi.fn(async () => {})}
+        handleEdit={vi.fn()}
+        handleMergeDuplicateGroup={vi.fn(async () => {})}
+        handleMarkPurchased={vi.fn(async () => {})}
+        handleResetPurchaseState={vi.fn(async () => {})}
+        handleRefetchMetadata={vi.fn(async () => true)}
+        handleRefreshImageIssues={vi.fn(async () => {})}
+        handleRepairBadImports={vi.fn(async () => {})}
+        handleRunRepairQueueAction={vi.fn(async () => {})}
+        handleSyncRegistryThankYouTasks={vi.fn(async () => {})}
+        handleToggleRegistryThankYouTask={vi.fn(async () => {})}
+        imageRefreshBusy={false}
+        items={[makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'partial', quantity_needed: 3, quantity_purchased: 2, purchaser_name: 'Alex' })]}
+        loading={false}
+        monthlyRefreshCap={100}
+        monthlyRefreshCount={0}
+        mergingDuplicateGroupId={null}
+        nearBudgetCap={false}
+        normalizedItems={[makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'partial', quantity_needed: 3, quantity_purchased: 2, purchaser_name: 'Alex' })]}
+        recentActivity={[makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'partial', quantity_needed: 3, quantity_purchased: 2, purchaser_name: 'Alex' })]}
+        registryActionsOpen={false}
+        registryActionsRef={{ current: null }}
+        registryInsights={[]}
+        registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}
+        registryThankYouPlan={{ headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] }}
+        registryThankYouStats={{ purchasedCount: 0, completedCount: 0, pendingCount: 0, readyToSendCount: 0, blockedByMissingPurchaserCount: 0, attributionCoverageRate: 0, completionRate: 0 }}
+        registryThankYouBusyItemId={null}
+        registryThankYouSyncing={false}
+        repairingBadImports={false}
+        repairQueue={[]}
+        refreshBudgetRemaining={100}
+        refreshWindowOpen={true}
+        search=""
+        setBulkImportOpen={vi.fn()}
+        setFilter={vi.fn()}
+        setRegistryActionsOpen={vi.fn()}
+        setSearch={vi.fn()}
+        setShowAlertsOnly={vi.fn()}
+        setShowImageIssuesOnly={vi.fn()}
+        showAlertsOnly={false}
+        showImageIssuesOnly={false}
+        topRegistryItems={[makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'partial', quantity_needed: 3, quantity_purchased: 2, purchaser_name: 'Alex' })]}
+        weddingSiteId="site-1"
+      />,
+    );
+
+    expect(screen.getByText('1 still open')).toBeInTheDocument();
+    expect(screen.getByText('Partially claimed')).toBeInTheDocument();
+    expect(screen.getByText((_, element) => element?.textContent?.includes('Partially claimed by Alex · Updated') ?? false)).toBeInTheDocument();
+  });
 });
