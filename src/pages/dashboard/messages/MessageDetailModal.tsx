@@ -210,7 +210,13 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
               <p className="text-[11px] text-text-tertiary mt-1">
                 {cleanupRecipientCount > 0 ? `${cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}
               </p>
+              <p className="text-[11px] text-warning mt-1">
+                {skippedCount} of {targetedRecipients} targeted recipients need contact details
+              </p>
               <p className="text-[11px] text-warning mt-1">{skippedCount} need contact details</p>
+              <p className="text-[11px] text-warning mt-1">
+                {unreachedCount} of {targetedRecipients} targeted recipients were not reached yet
+              </p>
               <p className="text-[11px] text-warning mt-1">{unreachedCount} not reached yet</p>
               {followThroughFocusLabel && (
                 <p className="text-[11px] text-text-tertiary mt-1">{followThroughFocusLabel}</p>
@@ -250,7 +256,9 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Targeted {targetedRecipients}</span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Delivered {message.delivered_count ?? 0}</span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs review {message.failed_count ?? 0}</span>
+                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{skippedCount} of {targetedRecipients} targeted recipients need contact details</span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs contact {skippedCount}</span>
+                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{unreachedCount} of {targetedRecipients} targeted recipients were not reached yet</span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Not reached {unreachedCount}</span>
                 {deliveredCoverageRate != null && reviewCoverageRate != null && contactCoverageRate != null && unreachedCoverageRate != null && (
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
@@ -495,7 +503,15 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
               </span>
               <span className="flex items-center gap-1.5 text-warning">
                 <AlertCircle size={13} />
+                {unreachedCount} of {targetedRecipients} targeted recipients were not reached yet
+              </span>
+              <span className="flex items-center gap-1.5 text-warning">
+                <AlertCircle size={13} />
                 {unreachedCount} not reached yet
+              </span>
+              <span className="flex items-center gap-1.5 text-warning">
+                <AlertCircle size={13} />
+                {skippedDeliveries.length} of {targetedRecipients} targeted recipients need contact details
               </span>
               <span className="flex items-center gap-1.5 text-warning">
                 <AlertCircle size={13} />

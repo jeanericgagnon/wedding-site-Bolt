@@ -109,7 +109,9 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('Targeted 4')).toBeInTheDocument();
     expect(screen.getByText('Delivered 1')).toBeInTheDocument();
     expect(screen.getByText('Needs review 2')).toBeInTheDocument();
+    expect(screen.getByText('0 of 4 targeted recipients need contact details')).toBeInTheDocument();
     expect(screen.getByText('Needs contact 0')).toBeInTheDocument();
+    expect(screen.getByText('1 of 4 targeted recipients were not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Not reached 1')).toBeInTheDocument();
     expect(screen.getByText('25% delivered coverage · 50% review coverage · 0% needs contact · 25% unreached')).toBeInTheDocument();
     expect(screen.getByText('75% cleanup still pending')).toBeInTheDocument();
@@ -204,7 +206,9 @@ describe('MessageDetailModal', () => {
     expect(screen.getAllByText('0 of 3 targeted recipients still need cleanup').length).toBeGreaterThan(1);
     expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: all clear')).toBeInTheDocument();
+    expect(screen.getByText('0 of 3 targeted recipients need contact details')).toBeInTheDocument();
     expect(screen.getByText('0 need contact details')).toBeInTheDocument();
+    expect(screen.getByText('0 of 3 targeted recipients were not reached yet')).toBeInTheDocument();
     expect(screen.getByText('0 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('0 opened')).toBeInTheDocument();
     expect(screen.getByText('0 viewed')).toBeInTheDocument();
@@ -254,7 +258,9 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('3 of 3 targeted recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getAllByText('3 of 3 targeted recipients still need cleanup').length).toBeGreaterThan(1);
     expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.getByText('0 of 3 targeted recipients need contact details')).toBeInTheDocument();
     expect(screen.getByText('0 need contact details')).toBeInTheDocument();
+    expect(screen.getByText('0 of 3 targeted recipients were not reached yet')).toBeInTheDocument();
     expect(screen.getByText('0 not reached yet')).toBeInTheDocument();
     expect(screen.getByText('0 opened')).toBeInTheDocument();
     expect(screen.getByText('0 viewed')).toBeInTheDocument();
