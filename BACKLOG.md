@@ -2,9 +2,9 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 10:00 AM PDT`
-- Latest shipped batch: `ff15d92e` `Clarify registry snapshot summaries`
-- Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry snapshot batch
+- Last updated: `2026-05-15 10:03 AM PDT`
+- Latest shipped batch: `4a819edd` `Clarify registry zero-state analytics rows`
+- Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry zero-state analytics batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
 - Current transport blocker: none active right now
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `4a819edd` `Clarify registry zero-state analytics rows`
   - `ff15d92e` `Clarify registry snapshot summaries`
   - `dcc3d69c` `Clarify registry quick-check summaries`
   - `913b7124` `Clarify registry supporting-card clean states`
@@ -58,7 +59,7 @@
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 - `registry polish beyond barcode`
-  - latest shipped: the expanded `Gift snapshot and review details` panel now opens with summary-first readback like `Registry snapshot looks clean right now.` or `Snapshot focus: 1 gift missing a purchaser · 1 blocked from guests · 1 thank-you still pending · 3 items worth checking.`, so the owner detail panel no longer drops straight into metric cards without first saying what matters
+  - latest shipped: the snapshot-panel analytics rows now also use explicit clean-state readback like `No gifts are waiting on send or purchaser cleanup right now`, `No cash funds are waiting on share setup right now`, and `No funds are already receiving gifts yet`, so that deeper owner detail view no longer falls back to raw `0 · 0` metrics in quiet states
 
 ## Work This Next
 
@@ -143,7 +144,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 10:00 AM PDT` |
+| Current date/time | `2026-05-15 10:03 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |
