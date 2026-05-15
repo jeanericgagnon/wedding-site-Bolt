@@ -211,8 +211,13 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
   const readyLaneCount = lanes.filter((lane) => lane.status === 'ready').length;
   const actionLaneCount = lanes.filter((lane) => lane.status === 'needs-action').length;
   const emptyLaneCount = lanes.filter((lane) => lane.status === 'empty').length;
+  const readyStepCount = steps.filter((step) => step.status === 'ready').length;
+  const stepCoverageRate = steps.length > 0
+    ? Math.round((readyStepCount / steps.length) * 100)
+    : 0;
   const summaryBadges = [
     `${readyLaneCount} of ${lanes.length} memory lanes ready`,
+    `${stepCoverageRate}% step coverage`,
     hasActiveAlbum && input.photoUploadEnabled
       ? `${countLabel(input.uploadCount, 'upload')} live`
       : hasAlbums
@@ -246,7 +251,7 @@ export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): Memor
   ];
 
   return {
-    readyCount: steps.filter((step) => step.status === 'ready').length,
+    readyCount: readyStepCount,
     summaryBadges,
     mainGapLabel: highestPriorityGap ? `Main gap: ${highestPriorityGap.label}` : null,
     lanes,
