@@ -171,6 +171,11 @@ export function GuestRsvpSettingsView({
       : safeRsvpQuestions.length <= 6
         ? 'Balanced RSVP form'
         : 'Detailed RSVP form';
+  const rsvpSetupReadyCount = safeRsvpSetupChecklist.filter((item) => item.status === 'ready').length;
+  const rsvpSetupBlockingCount = safeRsvpSetupChecklist.filter((item) => item.status === 'needs-setup').length;
+  const rsvpSetupCoverageRate = safeRsvpSetupChecklist.length > 0
+    ? Math.round((rsvpSetupReadyCount / safeRsvpSetupChecklist.length) * 100)
+    : 0;
   const rsvpSetupMainGapLabel = safeRsvpSetupChecklist.find((item) => item.status === 'needs-setup')?.label ?? null;
   const markRsvpConfigDirty = () => onSetRsvpConfigDirty(true);
   const rsvpAccessSummary = safeRsvpAccessSelection.primaryMode === 'private_link'
@@ -387,6 +392,24 @@ export function GuestRsvpSettingsView({
                   <p className="text-sm text-text-secondary">Use this before publishing RSVP changes so launch modes stay clear.</p>
                 </div>
                 <Badge variant="neutral">Owner readback</Badge>
+              </div>
+              <div className="mb-3 grid gap-2 sm:grid-cols-2">
+                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Setup coverage</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">{rsvpSetupCoverageRate}% ready</p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">
+                    {rsvpSetupReadyCount} of {safeRsvpSetupChecklist.length} checklist item{safeRsvpSetupChecklist.length === 1 ? '' : 's'} ready
+                  </p>
+                </div>
+                <div className="rounded-md border border-border-subtle bg-white/80 p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">Real blockers</p>
+                  <p className="mt-1 text-sm font-semibold text-text-primary">
+                    {rsvpSetupBlockingCount === 0 ? 'No blockers open' : `${rsvpSetupBlockingCount} blocker${rsvpSetupBlockingCount === 1 ? '' : 's'} open`}
+                  </p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">
+                    {rsvpSetupBlockingCount === 0 ? 'Optional and planned items stay calm here' : 'Only needs-setup items count here'}
+                  </p>
+                </div>
               </div>
               <div className="grid gap-2 md:grid-cols-2">
                 {safeRsvpSetupChecklist.map((item) => (

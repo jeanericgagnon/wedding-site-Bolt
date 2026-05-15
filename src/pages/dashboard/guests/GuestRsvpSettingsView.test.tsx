@@ -97,6 +97,10 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText(/Event-specific/i)).toBeInTheDocument();
     expect(screen.getByText(/Choice questions/i)).toBeInTheDocument();
     expect(screen.getByText(/Meal choices/i)).toBeInTheDocument();
+    expect(screen.getByText(/Setup coverage/i)).toBeInTheDocument();
+    expect(screen.getByText('100% ready')).toBeInTheDocument();
+    expect(screen.getByText('4 of 4 checklist items ready')).toBeInTheDocument();
+    expect(screen.getByText('No blockers open')).toBeInTheDocument();
     expect(screen.getByText(/Optional setup/i)).toBeInTheDocument();
     expect(screen.getByText('0% covered')).toBeInTheDocument();
     expect(screen.getByText('templates only · meals off')).toBeInTheDocument();
@@ -181,7 +185,9 @@ describe('GuestRsvpSettingsView', () => {
     expect(screen.getByText('templates and meals')).toBeInTheDocument();
     expect(screen.getByText('1 optional improvement still open')).toBeInTheDocument();
     expect(screen.getByText('First optional gap: Question templates')).toBeInTheDocument();
-    expect(screen.getAllByText('100% ready').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('100% ready').length).toBeGreaterThanOrEqual(3);
+    expect(screen.getByText('4 of 4 checklist items ready')).toBeInTheDocument();
+    expect(screen.getByText('No blockers open')).toBeInTheDocument();
     expect(screen.getByText('email and text')).toBeInTheDocument();
     expect(screen.getByText('2 saved')).toBeInTheDocument();
     expect(screen.getByText('0% coverage')).toBeInTheDocument();
@@ -242,6 +248,9 @@ describe('GuestRsvpSettingsView', () => {
     );
 
     expect(screen.getByText('Main gap: Meal choices')).toBeInTheDocument();
+    expect(screen.getByText('75% ready')).toBeInTheDocument();
+    expect(screen.getByText('3 of 4 checklist items ready')).toBeInTheDocument();
+    expect(screen.getByText('1 blocker open')).toBeInTheDocument();
     expect(screen.getByText('2 optional improvements still open')).toBeInTheDocument();
     expect(screen.getByText('First optional gap: Question templates')).toBeInTheDocument();
     expect(screen.getByText('50% ready')).toBeInTheDocument();
