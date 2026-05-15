@@ -246,15 +246,15 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{openRate}% open · {clickRate}% click · {replyRate}% reply</span>
                 )}
               </div>
-              {(skippedCount > 0 || unreachedCount > 0) && (
-                <p className="mt-3 text-[11px] text-text-tertiary">
-                  {skippedCount > 0 && unreachedCount > 0
-                    ? 'Clean up contact details first, then decide whether unreached guests need another send.'
-                    : skippedCount > 0
-                    ? 'Clean up contact details before the next send so these guests are not skipped again.'
-                    : 'Some guests still were not reached after a valid send attempt.'}
-                </p>
-              )}
+              <p className="mt-3 text-[11px] text-text-tertiary">
+                {skippedCount > 0 && unreachedCount > 0
+                  ? 'Clean up contact details first, then decide whether unreached guests need another send.'
+                  : skippedCount > 0
+                  ? 'Clean up contact details before the next send so these guests are not skipped again.'
+                  : unreachedCount > 0
+                  ? 'Some guests still were not reached after a valid send attempt.'
+                  : 'No extra follow-up cleanup is needed for this send.'}
+              </p>
             </div>
           )}
 

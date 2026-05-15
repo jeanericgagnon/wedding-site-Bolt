@@ -191,6 +191,7 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('0 clicked')).toBeInTheDocument();
     expect(screen.getByText('0 replied')).toBeInTheDocument();
     expect(screen.getByText('0 bounced')).toBeInTheDocument();
+    expect(screen.getByText('No extra follow-up cleanup is needed for this send.')).toBeInTheDocument();
   });
 
   it('keeps zero closed-out readback explicit when no recipients are closed out yet', () => {
