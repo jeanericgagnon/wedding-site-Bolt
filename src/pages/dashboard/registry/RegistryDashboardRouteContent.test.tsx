@@ -1091,14 +1091,26 @@ describe('RegistryDashboardRouteContent', () => {
         handleSyncRegistryThankYouTasks={vi.fn(async () => {})}
         handleToggleRegistryThankYouTask={vi.fn(async () => {})}
         imageRefreshBusy={false}
-        items={[makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'partial', quantity_needed: 3, quantity_purchased: 2, purchaser_name: 'Alex' })]}
+        items={[
+          makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'partial', quantity_needed: 3, quantity_purchased: 2, purchaser_name: 'Alex' }),
+          makeItem({ id: 'gift-2', item_name: 'Cake stand', purchase_status: 'purchased', quantity_needed: 1, quantity_purchased: 1, purchaser_name: 'Jordan' }),
+          makeItem({ id: 'gift-3', item_name: 'Serving bowls', purchase_status: 'available', quantity_needed: 1, quantity_purchased: 0, purchaser_name: null }),
+        ]}
         loading={false}
         monthlyRefreshCap={100}
         monthlyRefreshCount={0}
         mergingDuplicateGroupId={null}
         nearBudgetCap={false}
-        normalizedItems={[makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'partial', quantity_needed: 3, quantity_purchased: 2, purchaser_name: 'Alex' })]}
-        recentActivity={[makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'partial', quantity_needed: 3, quantity_purchased: 2, purchaser_name: 'Alex' })]}
+        normalizedItems={[
+          makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'partial', quantity_needed: 3, quantity_purchased: 2, purchaser_name: 'Alex' }),
+          makeItem({ id: 'gift-2', item_name: 'Cake stand', purchase_status: 'purchased', quantity_needed: 1, quantity_purchased: 1, purchaser_name: 'Jordan' }),
+          makeItem({ id: 'gift-3', item_name: 'Serving bowls', purchase_status: 'available', quantity_needed: 1, quantity_purchased: 0, purchaser_name: null }),
+        ]}
+        recentActivity={[
+          makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'partial', quantity_needed: 3, quantity_purchased: 2, purchaser_name: 'Alex' }),
+          makeItem({ id: 'gift-2', item_name: 'Cake stand', purchase_status: 'purchased', quantity_needed: 1, quantity_purchased: 1, purchaser_name: 'Jordan' }),
+          makeItem({ id: 'gift-3', item_name: 'Serving bowls', purchase_status: 'available', quantity_needed: 1, quantity_purchased: 0, purchaser_name: null }),
+        ]}
         registryActionsOpen={false}
         registryActionsRef={{ current: null }}
         registryInsights={[]}
@@ -1120,11 +1132,17 @@ describe('RegistryDashboardRouteContent', () => {
         setShowImageIssuesOnly={vi.fn()}
         showAlertsOnly={false}
         showImageIssuesOnly={false}
-        topRegistryItems={[makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'partial', quantity_needed: 3, quantity_purchased: 2, purchaser_name: 'Alex' })]}
+        topRegistryItems={[
+          makeItem({ id: 'gift-1', item_name: 'Dinner plates', purchase_status: 'partial', quantity_needed: 3, quantity_purchased: 2, purchaser_name: 'Alex' }),
+          makeItem({ id: 'gift-2', item_name: 'Cake stand', purchase_status: 'purchased', quantity_needed: 1, quantity_purchased: 1, purchaser_name: 'Jordan' }),
+          makeItem({ id: 'gift-3', item_name: 'Serving bowls', purchase_status: 'available', quantity_needed: 1, quantity_purchased: 0, purchaser_name: null }),
+        ]}
         weddingSiteId="site-1"
       />,
     );
 
+    expect(screen.getByText('Top gifts: 1 fully claimed · 1 partially claimed · 1 still fully open.')).toBeInTheDocument();
+    expect(screen.getByText('1 purchased · 1 partially claimed · 1 still available')).toBeInTheDocument();
     expect(screen.getByText('1 still open')).toBeInTheDocument();
     expect(screen.getByText('Partially claimed')).toBeInTheDocument();
     expect(screen.getByText((_, element) => element?.textContent?.includes('Partially claimed by Alex · Updated') ?? false)).toBeInTheDocument();

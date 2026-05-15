@@ -34,6 +34,16 @@ function formatRegistryActivityDetail(item: RegistryItem) {
   return 'Still available';
 }
 
+function getRegistryProgressState(item: TopRegistryItem) {
+  const quantityNeeded = Math.max(item.quantity_needed ?? 1, 1);
+  const quantityPurchased = item.quantity_purchased ?? 0;
+  const remainingQuantity = Math.max(quantityNeeded - quantityPurchased, 0);
+
+  if (quantityPurchased === 0) return 'open' as const;
+  if (remainingQuantity === 0) return 'claimed' as const;
+  return 'partial' as const;
+}
+
 type Counts = {
   total: number;
   available: number;
@@ -318,6 +328,23 @@ export function RegistryDashboardRouteContent(props: {
   const registryNotesSummary = registryNoteWatchouts.length === 0
     ? 'No active registry follow-through gaps right now.'
     : `Main watchouts: ${registryNoteWatchouts.join(' · ')}.`;
+  const topRegistryProgressCounts = props.topRegistryItems.reduce((acc, item) => {
+    const state = getRegistryProgressState(item);
+    acc[state] += 1;
+    return acc;
+  }, { open: 0, partial: 0, claimed: 0 });
+  const topRegistryProgressSummary = props.topRegistryItems.length === 0
+    ? 'No registry gifts added yet.'
+    : topRegistryProgressCounts.open === 0 && topRegistryProgressCounts.partial === 0
+      ? 'Top gifts are already fully claimed.'
+      : `Top gifts: ${topRegistryProgressCounts.claimed} fully claimed · ${topRegistryProgressCounts.partial} partially claimed · ${topRegistryProgressCounts.open} still fully open.`;
+  const recentActivitySummary = props.recentActivity.length === 0
+    ? 'No registry activity yet.'
+    : [
+        `${props.recentActivity.filter((item) => item.purchase_status === 'purchased').length} purchased`,
+        `${props.recentActivity.filter((item) => item.purchase_status === 'partial').length} partially claimed`,
+        `${props.recentActivity.filter((item) => item.purchase_status === 'available').length} still available`,
+      ].join(' · ');
 
   const tabCount = (key: RegistryFilter) => {
     if (key === 'all') return props.counts.total;
@@ -522,6 +549,7 @@ export function RegistryDashboardRouteContent(props: {
           <div className="grid gap-4 lg:grid-cols-3">
             <Card variant="bordered" padding="lg">
               <p className="text-sm font-semibold text-text-primary">Top registry progress</p>
+              <p className="mt-1 text-sm text-text-secondary">{topRegistryProgressSummary}</p>
               <div className="mt-3 space-y-2.5">
                 {props.topRegistryItems.length === 0 ? (
                   <p className="text-sm text-text-secondary">No registry gifts added yet.</p>
@@ -554,6 +582,7 @@ export function RegistryDashboardRouteContent(props: {
 
             <Card variant="bordered" padding="lg">
               <p className="text-sm font-semibold text-text-primary">Recent registry activity</p>
+              <p className="mt-1 text-sm text-text-secondary">{recentActivitySummary}</p>
               <div className="mt-3 space-y-2.5">
                 {props.recentActivity.length === 0 ? (
                   <p className="text-sm text-text-secondary">No registry activity yet.</p>
