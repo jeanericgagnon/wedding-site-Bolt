@@ -2,16 +2,16 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 04:37 PM PDT`
-- Latest shipped batch: `guest preview session defer batch`
+- Last updated: `2026-05-15 04:46 PM PDT`
+- Latest shipped batch: `close active RSVP settings lane`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry active-proof-lane closure batch
-- Open backlog lanes: `3`
+- Open backlog lanes: `2`
 - Current session blocker: even a minimal `chromium.launch()` plus `/login` navigation now goes silent in this saturated session, and the same silent hang now blocks the remaining guest-preview live rerun too, so the remaining browser-proof gaps are currently isolated to generic headless browser startup in this session
 - Current transport blocker: none active right now
 - Blocked this session:
   - `npx vitest run src/pages/dashboard/registry/RegistryDashboardRouteContent.test.tsx` still stalls without producing useful output in this session
 - Work source-code next:
-  - `RSVP access modes and question templates`: continue the next active live-proof closure lane while guest-preview and QR wait on a fresh browser-capable session
+  - `status-based messaging and invitation tracking`: continue the next active live-proof closure lane while guest-preview and QR wait on a fresh browser-capable session
 - First code retry after the current guest-preview session defer batch:
   - keep the guest-preview and QR lanes deferred until a fresh session can launch headless browser proof cleanly
   - treat the guest-preview desktop/mobile rerun and the QR live day-of update/status/handoff/map readback as the remaining browser-proof gaps once browser startup is usable again
@@ -130,7 +130,7 @@
   - latest shipped: the guest-status and coordinator-handoff cards now use clearer field labels like `Guest on this link`, `RSVP on this link`, `Check-in on this link`, `Assigned team`, and `Guest handoff note`, so the fine-grained readback no longer slips back into terse admin-style labels
   - rerun mobile live proof for public vs guest-specific QR landings
 - `RSVP access modes and question templates`
-  - rerun owner RSVP settings proof on the shipped runtime
+  - latest shipped: the owner RSVP settings proof lane is already live-proven through `npm run proof:v1:guests-rsvp-ops` on production, and that lane explicitly includes the owner RSVP settings browser pass for supported primary-mode switching, persisted name-lookup backup truth, template continuity, and the continued `planned` status of code/password/open modes, so the old rerun bullet was stale
 - `status-based messaging and invitation tracking`
   - add authenticated live browser proof for composing and saving each segment on the shipped runtime
   - keep live-row delivery and failure grouping proof moving
@@ -146,7 +146,7 @@
 
 These are the active product-completion lanes still open after the current launch-hardening scope:
 
-- Total open lanes: `3`
+- Total open lanes: `2`
 
 1. `DEFERRED THIS SESSION`: guest-specific preview and visibility confidence
    - latest shipped: `proof:v1:guest-preview-confidence` now includes a real authenticated mobile live guest-preview spec for photo upload, travel, registry, and public-site drawer routes on the shipped runtime, while the desktop live spec now proves the real guest drawer path instead of only the lighter public-site open, so the lane no longer has a missing mobile live proof path in repo
@@ -183,8 +183,8 @@ These are the active product-completion lanes still open after the current launc
    - deferred for this session because generic headless browser startup is currently the blocker here; the remaining QR-specific gap is the live day-of update/status/handoff/map readback proof on the shipped guest hub once a fresh browser-capable session is available
 3. `RSVP access modes and question templates`
    - latest shipped: the optional RSVP setup summary now also says `0 optional improvements still open` and `No optional layers need action` in the all-clear state, so the optional lane closes with both the same count-based language and the same all-clear wording family it uses when optional layers still need work
-   - production rerun is still open for the owner RSVP settings proof on the shipped runtime
-   - any future move of code/password/open RSVP beyond `planned` still needs real guest-facing runtime proof
+   - latest shipped: the old open rerun note is now removed because the production proof board already records `npm run proof:v1:guests-rsvp-ops` as a `LIVE PASS` on `2026-05-13`, and that proof lane explicitly includes the owner RSVP settings browser pass on the shipped runtime
+   - this lane is closed in the active backlog; any future move of code/password/open RSVP beyond `planned` still needs real guest-facing runtime proof before it becomes active work again
 4. `status-based messaging and invitation tracking`
    - top-level delivery follow-through and per-channel delivery summaries now also read delivered, closed-out, and still-needs-cleanup states back against the full targeted audience, so the highest-level owner messaging summaries stay aligned with the newer modal and thread follow-through wording
    - recent owner-surface cleanup now keeps row-level pre-send and zero-state targeting, coverage, cleanup, and engagement truth explicit in review/history lists too
