@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 12:18 PM PDT`
-- Latest shipped batch: `8f8b57d4` `Clarify registry cleanup media wording`
+- Last updated: `2026-05-15 12:19 PM PDT`
+- Latest shipped batch: `ec2d6459` `Clarify registry claim and thank-you wording`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `ec2d6459` `Clarify registry claim and thank-you wording`
   - `8f8b57d4` `Clarify registry cleanup media wording`
   - `ef41ca4e` `Clarify registry guest visibility wording`
   - `ce9c2fcc` `Clarify registry fund share wording`
@@ -93,6 +94,7 @@
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 - `registry polish beyond barcode`
+  - latest shipped: the claim and thank-you family now uses clearer owner-facing wording like `purchaser name`, `Purchasers named`, `Ready for a thank-you`, and `Missing purchaser names`, so the claimed-gift card, thank-you summary card, thank-you list, and registry notes no longer slip back into older attribution and workflow-tool phrasing after the rest of the registry owner summaries were cleaned up
   - latest shipped: the cleanup/media family now uses clearer owner-facing wording like `product photos` and `Upgrade the product photo`, so the cleanup queue summary, queue item summary, and cleanup-tools helper no longer fall back to older `guest-facing image` and `guest-facing media` utility phrasing after the rest of the registry owner summaries were cleaned up
   - latest shipped: the guest-view summary family now uses clearer owner-facing labels like `All gifts ready for guests are visible right now`, `Ready-for-guests coverage`, `Ready-for-guests items`, and `Visible and available now`, so the guest visibility card and note-strip details no longer fall back to older `guest-ready` shorthand after the rest of the registry wording cleanup
   - latest shipped: the deeper fund follow-through rows now match the main registry share-readiness card with copy like `All fund links are ready to share right now`, `Ready-to-share coverage`, and `need a share path`, so the fund watchouts, all-clear line, and note-strip coverage no longer slip back into older `payment setup` language after the top card was cleaned up
@@ -183,6 +185,7 @@ These are the active product-completion lanes still open after the current launc
    - add authenticated live browser proof for composing and saving each operational segment on the shipped runtime
    - keep SMS/Telnyx live-send behavior deferred until provider/compliance setup is ready
 5. `registry polish beyond barcode`
+  - latest shipped: the claim and thank-you family now uses clearer owner-facing wording like `purchaser name`, `Purchasers named`, `Ready for a thank-you`, and `Missing purchaser names`, so the claimed-gift card, thank-you summary card, thank-you list, and registry notes no longer slip back into older attribution and workflow-tool phrasing after the rest of the registry owner summaries were cleaned up
   - latest shipped: the cleanup/media family now uses clearer owner-facing wording like `product photos` and `Upgrade the product photo`, so the cleanup queue summary, queue item summary, and cleanup-tools helper no longer fall back to older `guest-facing image` and `guest-facing media` utility phrasing after the rest of the registry owner summaries were cleaned up
   - latest shipped: the guest-view summary family now uses clearer owner-facing labels like `All gifts ready for guests are visible right now`, `Ready-for-guests coverage`, `Ready-for-guests items`, and `Visible and available now`, so the guest visibility card and note-strip details no longer fall back to older `guest-ready` shorthand after the rest of the registry wording cleanup
   - latest shipped: the deeper fund follow-through rows now match the main registry share-readiness card with copy like `All fund links are ready to share right now`, `Ready-to-share coverage`, and `need a share path`, so the fund watchouts, all-clear line, and note-strip coverage no longer slip back into older `payment setup` language after the top card was cleaned up
@@ -215,7 +218,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 12:18 PM PDT` |
+| Current date/time | `2026-05-15 12:19 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |
