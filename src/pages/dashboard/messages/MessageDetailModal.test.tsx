@@ -186,6 +186,10 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('Main cleanup: all clear')).toBeInTheDocument();
     expect(screen.getByText('0 need contact details')).toBeInTheDocument();
     expect(screen.getByText('0 not reached yet')).toBeInTheDocument();
+    expect(screen.getByText('0 opened')).toBeInTheDocument();
+    expect(screen.getByText('0 viewed')).toBeInTheDocument();
+    expect(screen.getByText('0 clicked')).toBeInTheDocument();
+    expect(screen.getByText('0 replied')).toBeInTheDocument();
   });
 
   it('keeps zero closed-out readback explicit when no recipients are closed out yet', () => {
@@ -223,6 +227,10 @@ describe('MessageDetailModal', () => {
     expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('0 need contact details')).toBeInTheDocument();
     expect(screen.getByText('0 not reached yet')).toBeInTheDocument();
+    expect(screen.getByText('0 opened')).toBeInTheDocument();
+    expect(screen.getByText('0 viewed')).toBeInTheDocument();
+    expect(screen.getByText('0 clicked')).toBeInTheDocument();
+    expect(screen.getByText('0 replied')).toBeInTheDocument();
   });
 
   it('keeps queued and partial headers truthful instead of calling them sent', () => {

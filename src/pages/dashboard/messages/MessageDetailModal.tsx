@@ -468,16 +468,16 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                   {skippedDeliveries.length} need contact
                 </span>
               )}
-              {engagement.opened != null && engagement.opened > 0 && (
+              {engagement.opened != null && (
                 <span className="text-text-secondary">{engagement.opened} opened</span>
               )}
-              {engagement.viewed != null && engagement.viewed > 0 && (
+              {engagement.viewed != null && (
                 <span className="text-text-secondary">{engagement.viewed} viewed</span>
               )}
-              {engagement.clicked != null && engagement.clicked > 0 && (
+              {engagement.clicked != null && (
                 <span className="text-text-secondary">{engagement.clicked} clicked</span>
               )}
-              {engagement.replied != null && engagement.replied > 0 && (
+              {engagement.replied != null && (
                 <span className="text-text-secondary">{engagement.replied} replied</span>
               )}
               {engagement.bounced != null && engagement.bounced > 0 && (
