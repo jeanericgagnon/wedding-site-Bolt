@@ -182,8 +182,8 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
             <div>
               <p className="text-text-tertiary text-xs mb-1">Recipients</p>
               <p className="font-medium text-text-primary">{recipientCount} {recipientCount === 1 ? 'person' : 'people'}</p>
-              {skippedCount > 0 && <p className="text-[11px] text-warning mt-1">{skippedCount} need contact details</p>}
-              {unreachedCount > 0 && <p className="text-[11px] text-warning mt-1">{unreachedCount} not reached yet</p>}
+              <p className="text-[11px] text-warning mt-1">{skippedCount} need contact details</p>
+              <p className="text-[11px] text-warning mt-1">{unreachedCount} not reached yet</p>
             </div>
             <div>
               <p className="text-text-tertiary text-xs mb-1">Channel</p>
