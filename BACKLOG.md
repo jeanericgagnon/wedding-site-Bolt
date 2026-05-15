@@ -11,10 +11,10 @@
 - Blocked this session:
   - `npx vitest run src/pages/dashboard/registry/RegistryDashboardRouteContent.test.tsx` still stalls without producing useful output in this session
 - Work source-code next:
-  - `unified QR guest hub`: rerun the live production mobile proof for public versus guest-specific QR landing behavior when the runner/session path is usable
-- First code retry after the current guest-hub lane-collapse batch:
+  - `unified QR guest hub`: rerun the live day-of update/status/handoff/map readback proof on the shipped guest hub when the Playwright/session startup path is usable
+- First code retry after the current guest-hub live-proof split batch:
   - stay on the unified QR guest-hub closure lane
-  - treat the live production mobile QR landing proof as the remaining real product gap
+  - treat the live day-of update/status/handoff/map readback proof as the remaining real product gap
 - Best place to scan after each batch:
   - `Quick Read` for the newest timestamp and latest shipped batch
   - `Recent Shipped Work` for the most recent visible progress by lane
@@ -182,7 +182,7 @@ These are the active product-completion lanes still open after the current launc
    - latest shipped: the remaining guest-hub support headings now read more plainly as `Travel steps from this link`, `Travel plan from this link`, and `What is ready on this link`, so the travel and readiness sections now match the newer guest-safe wording instead of falling back to older utility-style headings
    - latest shipped: the guest-hub section headings now read more plainly as `Latest update for this link`, `Your status on this link`, `Coordinator handoff status`, `What this link unlocks`, `Day-of web readiness`, and `Hub readiness on this link`, so the detailed summary block now reads like product truth instead of older internal section names
    - latest shipped: the guest-status and coordinator-handoff cards now use clearer field labels like `Guest on this link`, `RSVP on this link`, `Check-in on this link`, `Assigned team`, and `Guest handoff note`, so the detailed readback keeps the same guest-safe truth style as the newer panel and counter cleanup instead of slipping back into terse admin-style labels
-   - live production mobile proof is still open for public versus guest-specific QR landing behavior
+   - live day-of update/status/handoff/map readback proof is still open for the shipped guest hub; invite-scoped travel, RSVP, and photo continuity already have their own dedicated live mobile proof lane
 3. `RSVP access modes and question templates`
    - latest shipped: the optional RSVP setup summary now also says `0 optional improvements still open` and `No optional layers need action` in the all-clear state, so the optional lane closes with both the same count-based language and the same all-clear wording family it uses when optional layers still need work
    - production rerun is still open for the owner RSVP settings proof on the shipped runtime
