@@ -749,6 +749,8 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('No flexible or tracked funds are already receiving gifts yet')).toBeInTheDocument();
     expect(screen.getByText('No purchased gifts are in the thank-you list yet.')).toBeInTheDocument();
     expect(screen.getByText('No image issues or duplicate groups')).toBeInTheDocument();
+    expect(screen.getByText('No imported-gift cleanup work is open right now.')).toBeInTheDocument();
+    expect(screen.getByText('No gifts are waiting in the cleanup queue right now.')).toBeInTheDocument();
   });
 
   it('renders claim-state analytics for attribution and partial gifts', () => {

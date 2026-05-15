@@ -369,6 +369,15 @@ export function RegistryDashboardRouteContent(props: {
     && props.registryInsights.length === 0
     ? 'No active registry watchouts inside this snapshot.'
     : null;
+  const cleanupQueueSummary = props.repairQueue.length === 0
+    ? 'No gifts are waiting in the cleanup queue right now.'
+    : `${props.repairQueue.length} gift${props.repairQueue.length === 1 ? '' : 's'} still need stronger detail truth, store repair, or fresher guest-facing media.`;
+  const cleanupToolsAllClearLabel = props.bulkReviewCounts.repair === 0
+    && props.bulkReviewCounts.duplicates === 0
+    && props.bulkReviewCounts.imageIssues === 0
+    && props.actionableBadImportCount === 0
+    ? 'No imported-gift cleanup work is open right now.'
+    : null;
 
   const tabCount = (key: RegistryFilter) => {
     if (key === 'all') return props.counts.total;
@@ -917,7 +926,8 @@ export function RegistryDashboardRouteContent(props: {
         </div>
 
         <div className="mb-3 rounded-lg border border-border-subtle bg-surface-subtle/20 p-4 text-xs text-text-secondary">
-          These tools help tidy imported links and spot repeated gifts. Nothing is merged or deleted unless you choose it.
+          <p>These tools help tidy imported links and spot repeated gifts. Nothing is merged or deleted unless you choose it.</p>
+          {cleanupToolsAllClearLabel ? <p className="mt-2">{cleanupToolsAllClearLabel}</p> : null}
         </div>
 
         <div className="mb-4 flex flex-wrap gap-2">
@@ -987,6 +997,12 @@ export function RegistryDashboardRouteContent(props: {
                 {props.repairQueue.length - 6} more cleanup item{props.repairQueue.length - 6 === 1 ? '' : 's'} are still waiting below the fold.
               </p>
             )}
+          </div>
+        )}
+        {props.repairQueue.length === 0 && (
+          <div className="mb-4 rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
+            <p className="text-sm font-semibold text-text-primary">Cleanup queue</p>
+            <p className="mt-1 text-sm text-text-secondary">{cleanupQueueSummary}</p>
           </div>
         )}
 
