@@ -263,6 +263,75 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('Bounced 0')).toBeInTheDocument();
   });
 
+  it('keeps the active campaign thread explicit before delivery counters land when the latest message already has an audience', () => {
+    render(
+      <MessageCampaignThreadPanels
+        activeCampaignLatestMessage={{
+          id: 'message-queued',
+          subject: 'Save the date nudge',
+          body: 'Heads up.',
+          channel: 'email',
+          status: 'queued',
+          recipient_count: 4,
+          delivered_count: 0,
+          failed_count: 0,
+          audience_filter: 'all',
+          recipient_filter: {
+            opened_count: 0,
+            viewed_count: 0,
+            clicked_count: 0,
+            replied_count: 0,
+            bounced_count: 0,
+            skipped_count: 0,
+          },
+        } as any}
+        activeCampaignThread={{
+          key: 'thread-queued',
+          name: 'Save the date push',
+          count: 1,
+          delivered: 0,
+          failed: 0,
+          skipped: 0,
+          unreached: 0,
+          opened: 0,
+          viewed: 0,
+          clicked: 0,
+          replied: 0,
+          bounced: 0,
+          deliveredRecipients: 0,
+          deliveredRate: 0,
+          openRate: 0,
+          clickRate: 0,
+          replyRate: 0,
+          latestStatus: 'queued',
+          latestAt: 100,
+        }}
+        campaignThreads={[]}
+        canCompose
+        deliveries={[]}
+        onClearThreadFilter={vi.fn()}
+        onDuplicateLatest={vi.fn()}
+        onEditLatest={vi.fn()}
+        onScheduleFollowUp={vi.fn()}
+        onSelectThread={vi.fn()}
+        onStartFollowUp={vi.fn()}
+        onViewLatest={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('0 recipients delivered')).toBeInTheDocument();
+    expect(screen.getByText('Targeted 4')).toBeInTheDocument();
+    expect(screen.getByText('0% delivered coverage')).toBeInTheDocument();
+    expect(screen.getByText('0% review coverage')).toBeInTheDocument();
+    expect(screen.getByText('0% needs contact')).toBeInTheDocument();
+    expect(screen.getByText('0% unreached')).toBeInTheDocument();
+    expect(screen.getByText('0% cleanup still pending')).toBeInTheDocument();
+    expect(screen.getByText('100% follow-through ready')).toBeInTheDocument();
+    expect(screen.getByText('4 recipients already closed out')).toBeInTheDocument();
+    expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.getByText('Main cleanup: all clear')).toBeInTheDocument();
+  });
+
   it('shows engagement rates on the latest campaign message when delivered recipients exist', () => {
     render(
       <MessageCampaignThreadPanels

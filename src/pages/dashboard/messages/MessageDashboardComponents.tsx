@@ -1493,7 +1493,13 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
         </div>
         <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
           {(() => {
-            const activeThreadTargeted = activeCampaignThread.delivered + activeCampaignThread.failed + activeCampaignThread.skipped + activeCampaignThread.unreached;
+            const activeThreadTargeted = activeCampaignThread.delivered
+              + activeCampaignThread.failed
+              + activeCampaignThread.skipped
+              + activeCampaignThread.unreached;
+            const activeThreadTargetedFallback = activeThreadTargeted > 0
+              ? activeThreadTargeted
+              : (activeCampaignLatestMessage ? getRecipientCount(activeCampaignLatestMessage) : 0);
             const activeThreadSkippedRate = activeThreadTargeted > 0 ? Math.round((activeCampaignThread.skipped / activeThreadTargeted) * 100) : null;
             const activeThreadReviewRate = activeThreadTargeted > 0 ? Math.round((activeCampaignThread.failed / activeThreadTargeted) * 100) : null;
             const activeThreadUnreachedRate = activeThreadTargeted > 0 ? Math.round((activeCampaignThread.unreached / activeThreadTargeted) * 100) : null;
@@ -1501,7 +1507,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               failed: activeCampaignThread.failed,
               skipped: activeCampaignThread.skipped,
               unreached: activeCampaignThread.unreached,
-              targeted: activeThreadTargeted,
+              targeted: activeThreadTargetedFallback,
             });
             const activeThreadCleanupCount = getCleanupRecipientCount({
               failed: activeCampaignThread.failed,
@@ -1512,37 +1518,49 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               failed: activeCampaignThread.failed,
               skipped: activeCampaignThread.skipped,
               unreached: activeCampaignThread.unreached,
-              targeted: activeThreadTargeted,
+              targeted: activeThreadTargetedFallback,
             });
+            const activeThreadDeliveredCoverage = activeThreadTargetedFallback > 0
+              ? Math.round((activeCampaignThread.delivered / activeThreadTargetedFallback) * 100)
+              : null;
+            const activeThreadReviewCoverage = activeThreadTargetedFallback > 0
+              ? Math.round((activeCampaignThread.failed / activeThreadTargetedFallback) * 100)
+              : null;
+            const activeThreadContactCoverage = activeThreadTargetedFallback > 0
+              ? Math.round((activeCampaignThread.skipped / activeThreadTargetedFallback) * 100)
+              : null;
+            const activeThreadUnreachedCoverage = activeThreadTargetedFallback > 0
+              ? Math.round((activeCampaignThread.unreached / activeThreadTargetedFallback) * 100)
+              : null;
             return (
               <>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
             {activeCampaignThread.delivered > 0 ? `${activeCampaignThread.delivered} recipients delivered` : '0 recipients delivered'}
           </span>
           <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Delivered {activeCampaignThread.delivered}</span>
-          {activeThreadTargeted > 0 && (
+          {activeThreadTargetedFallback > 0 && (
             <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
-              Targeted {activeThreadTargeted}
+              Targeted {activeThreadTargetedFallback}
             </span>
           )}
-          {activeThreadTargeted > 0 && (
+          {activeThreadDeliveredCoverage != null && (
             <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
-              {activeCampaignThread.deliveredRate}% delivered coverage
+              {activeThreadDeliveredCoverage}% delivered coverage
             </span>
           )}
-          {activeThreadReviewRate != null && (
+          {activeThreadReviewCoverage != null && (
             <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
-              {activeThreadReviewRate}% review coverage
+              {activeThreadReviewCoverage}% review coverage
             </span>
           )}
-          {activeThreadSkippedRate != null && (
+          {activeThreadContactCoverage != null && (
             <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
-              {activeThreadSkippedRate}% needs contact
+              {activeThreadContactCoverage}% needs contact
             </span>
           )}
-          {activeThreadUnreachedRate != null && (
+          {activeThreadUnreachedCoverage != null && (
             <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
-              {activeThreadUnreachedRate}% unreached
+              {activeThreadUnreachedCoverage}% unreached
             </span>
           )}
           {getFollowThroughFocusLabel({
