@@ -1485,10 +1485,13 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                   {thread.delivered > 0 ? `${thread.delivered} recipients delivered` : '0 recipients delivered'}
                 </p>
                 {targeted > 0 && <p className="text-text-secondary">{targeted} targeted recipients</p>}
+                {targeted > 0 && <p className="text-text-secondary">{thread.delivered} of {targeted} targeted recipients have been delivered</p>}
                 {targeted > 0 && <p className="text-text-secondary">{thread.deliveredRate}% delivered coverage{reviewRate != null ? ` · ${reviewRate}% review coverage` : ''}{skippedRate != null ? ` · ${skippedRate}% needs contact` : ''}{unreachedRate != null ? ` · ${unreachedRate}% unreached` : ''}</p>}
                 {cleanupRate != null && <p className="text-text-secondary">{cleanupRate}% cleanup still pending</p>}
                 {cleanupRate != null && <p className="text-text-secondary">{Math.max(0, 100 - cleanupRate)}% follow-through ready</p>}
+                <p className="text-text-secondary">{followThroughReadyCount} of {targeted} targeted recipients are already closed out</p>
                 <p className="text-text-secondary">{followThroughReadyCount > 0 ? `${followThroughReadyCount} recipients already closed out` : 'No recipients are already closed out'}</p>
+                <p className="text-text-secondary">{cleanupCount} of {targeted} targeted recipients still need cleanup</p>
                 <p className="text-text-secondary">{cleanupCount > 0 ? `${cleanupCount} recipients still need cleanup` : 'No recipients still need cleanup'}</p>
                 {engagementSummary && <p className="text-text-secondary">{engagementSummary}</p>}
                 <p className="text-warning">
@@ -1844,6 +1847,11 @@ export const MessageReviewQueuePanels: React.FC<MessageReviewQueuePanelsProps> =
                   </p>
                   <p className="mt-1 text-[11px] text-text-tertiary">
                     {rowSummary.cleanupCoverageRate}% cleanup still pending · {Math.max(0, 100 - rowSummary.cleanupCoverageRate)}% follow-through ready
+                  </p>
+                  <p className="mt-1 text-[11px] text-text-tertiary">
+                    {rowSummary.followThroughReadyRecipientCount} of {rowSummary.targetedRecipients} targeted recipients are already closed out
+                    {' · '}
+                    {rowSummary.cleanupRecipientCount} of {rowSummary.targetedRecipients} targeted recipients still need cleanup
                   </p>
                   <p className="mt-1 text-[11px] text-text-tertiary">
                     {rowSummary.followThroughReadyRecipientCount > 0 ? `${rowSummary.followThroughReadyRecipientCount} recipients already closed out` : 'No recipients are already closed out'}
@@ -2207,6 +2215,9 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
                         <span>{rowSummary.targetedRecipients} targeted recipients</span>
                       )}
                       {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
+                        <span>{rowSummary.deliveredRecipients} of {rowSummary.targetedRecipients} targeted recipients have been delivered</span>
+                      )}
+                      {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
                         <span>{rowSummary.deliveredCoverageRate}% delivered coverage · {rowSummary.reviewCoverageRate}% review coverage · {rowSummary.contactCoverageRate}% needs contact · {rowSummary.unreachedCoverageRate}% unreached</span>
                       )}
                       {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
@@ -2216,7 +2227,13 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
                         <span>{Math.max(0, 100 - rowSummary.cleanupCoverageRate)}% follow-through ready</span>
                       )}
                       {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
+                        <span>{rowSummary.followThroughReadyRecipientCount} of {rowSummary.targetedRecipients} targeted recipients are already closed out</span>
+                      )}
+                      {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
                         <span>{rowSummary.followThroughReadyRecipientCount > 0 ? `${rowSummary.followThroughReadyRecipientCount} recipients already closed out` : 'No recipients are already closed out'}</span>
+                      )}
+                      {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
+                        <span>{rowSummary.cleanupRecipientCount} of {rowSummary.targetedRecipients} targeted recipients still need cleanup</span>
                       )}
                       {(recipientCount > 0 || typeof message.delivered_count === 'number' || typeof message.failed_count === 'number') && (
                         <span>{rowSummary.cleanupRecipientCount > 0 ? `${rowSummary.cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}</span>
