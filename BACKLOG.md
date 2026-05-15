@@ -3,7 +3,7 @@
 ## Quick Read
 
 - Last updated: `2026-05-15 12:42 PM PDT`
-- Latest shipped batch: `pending local batch` `Clarify registry top-surface owner wording`
+- Latest shipped batch: `4846e785` `Clarify registry top-surface owner wording`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,7 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
-  - `pending local batch` `Clarify registry top-surface owner wording`
+  - `4846e785` `Clarify registry top-surface owner wording`
   - `13f4903c` `Clarify registry share-readiness review wording`
   - `fa2e59b9` `Clarify registry metric label wording`
   - `3037c8ff` `Clarify registry task action wording`
