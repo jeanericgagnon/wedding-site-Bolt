@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 10:28 AM PDT`
-- Latest shipped batch: `9c7f3dba` `Clarify registry duplicate-review summaries`
+- Last updated: `2026-05-15 10:30 AM PDT`
+- Latest shipped batch: `TBD` `Clarify registry cleanup-tools summaries`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `TBD` `Clarify registry cleanup-tools summaries`
   - `9c7f3dba` `Clarify registry duplicate-review summaries`
   - `4be3b652` `Clarify registry cleanup-queue summaries`
   - `68ffcdc6` `Clarify registry share-readiness card`
@@ -65,7 +66,7 @@
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 - `registry polish beyond barcode`
-  - latest shipped: the duplicate-review lane now opens with a merge summary like `1 merge candidate covering 2 repeated gifts.` plus grouped signal readback, so duplicate cleanup scans like owner truth first instead of a raw merge checklist
+  - latest shipped: the cleanup-tools strip now uses owner-facing readback like `2 detail cleanups · 1 duplicate review · 2 image refreshes still worth a pass.`, so that toolbar area now scans like the newer queue and duplicate summaries instead of older ops labels
 
 ## Work This Next
 
@@ -150,7 +151,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 10:28 AM PDT` |
+| Current date/time | `2026-05-15 10:30 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |

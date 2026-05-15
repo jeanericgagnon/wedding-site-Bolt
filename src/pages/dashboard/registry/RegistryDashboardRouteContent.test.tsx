@@ -1028,6 +1028,85 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Merge result: 1/7')).toBeInTheDocument();
   });
 
+  it('summarizes cleanup tools before the repair actions', () => {
+    render(
+      <RegistryDashboardRouteContent
+        actionableBadImportCount={1}
+        alertCounts={{ stale: 0, priceChanged: 0, outOfStock: 0, imageIssues: 2 }}
+        autoRefreshEnabled
+        autoRefreshing={false}
+        bulkImportBusy={false}
+        bulkReviewCounts={{ repair: 2, duplicates: 1, imageIssues: 2 }}
+        budgetUtilization={0.34}
+        claimStats={{ claimedItems: 0, claimedQuantity: 0, fullyClaimedItems: 0, partiallyClaimedItems: 0, namedPurchaserItems: 0, missingPurchaserItems: 0, multiQuantityInProgress: 0, remainingQuantity: 0 }}
+        counts={{ total: 3, available: 3, partial: 0, purchased: 0, totalValue: 240 }}
+        duplicateGroups={[]}
+        editItem={null}
+        filter="all"
+        filtered={[makeItem({ id: 'gift-1' }), makeItem({ id: 'gift-2' }), makeItem({ id: 'gift-3' })]}
+        fulfillmentRate={0}
+        fundStats={{ count: 0, received: 0, goal: 0, readyToShare: 0, needsSetup: 0, readyWithProgress: 0, readyAwaitingFirstGift: 0, withGoal: 0, missingGoal: 0, withProgress: 0, awaitingFirstGift: 0, flexibleWithProgress: 0 }}
+        guestVisibilityStats={{ guestReadyItems: 0, guestVisibleItems: 0, visibleAvailableItems: 0, visibleClaimedItems: 0, hiddenPurchasedItems: 0, blockedGuestItems: 0, guestReadyCoverageRate: 0, guestVisibleCoverageRate: 0 }}
+        handleAddNew={vi.fn()}
+        handleAutoRefreshStale={vi.fn(async () => {})}
+        handleBulkImport={vi.fn(async () => {})}
+        handleCopyDuplicateReviewList={vi.fn(async () => {})}
+        handleDelete={vi.fn(async () => {})}
+        handleEdit={vi.fn()}
+        handleMergeDuplicateGroup={vi.fn(async () => {})}
+        handleMarkPurchased={vi.fn(async () => {})}
+        handleResetPurchaseState={vi.fn(async () => {})}
+        handleRefetchMetadata={vi.fn(async () => true)}
+        handleRefreshImageIssues={vi.fn(async () => {})}
+        handleRepairBadImports={vi.fn(async () => {})}
+        handleRunRepairQueueAction={vi.fn(async () => {})}
+        handleSyncRegistryThankYouTasks={vi.fn(async () => {})}
+        handleToggleRegistryThankYouTask={vi.fn(async () => {})}
+        imageRefreshBusy={false}
+        items={[makeItem({ id: 'gift-1' }), makeItem({ id: 'gift-2' }), makeItem({ id: 'gift-3' })]}
+        loading={false}
+        monthlyRefreshCap={100}
+        monthlyRefreshCount={0}
+        mergingDuplicateGroupId={null}
+        nearBudgetCap={false}
+        normalizedItems={[makeItem({ id: 'gift-1' }), makeItem({ id: 'gift-2' }), makeItem({ id: 'gift-3' })]}
+        recentActivity={[]}
+        registryActionsOpen={false}
+        registryActionsRef={{ current: null }}
+        registryInsights={[]}
+        registryLaunchReadiness={{ headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] }}
+        registryThankYouPlan={{ headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] }}
+        registryThankYouStats={{ purchasedCount: 0, completedCount: 0, pendingCount: 0, readyToSendCount: 0, blockedByMissingPurchaserCount: 0, attributionCoverageRate: 0, completionRate: 0 }}
+        registryThankYouBusyItemId={null}
+        registryThankYouSyncing={false}
+        repairingBadImports={false}
+        repairQueue={[]}
+        refreshBudgetRemaining={66}
+        refreshWindowOpen={true}
+        search=""
+        setBulkImportOpen={vi.fn()}
+        setFilter={vi.fn()}
+        setRegistryActionsOpen={vi.fn()}
+        setSearch={vi.fn()}
+        setShowAlertsOnly={vi.fn()}
+        setShowImageIssuesOnly={vi.fn()}
+        showAlertsOnly={false}
+        showImageIssuesOnly={false}
+        topRegistryItems={[makeItem({ id: 'gift-1' })]}
+        weddingSiteId="site-1"
+      />,
+    );
+
+    expect(screen.getByText('Detail cleanup')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate review')).toBeInTheDocument();
+    expect(screen.getByText('Image refresh')).toBeInTheDocument();
+    expect(screen.getByText('2 detail cleanups · 1 duplicate review · 2 image refreshes still worth a pass.')).toBeInTheDocument();
+    expect(screen.getByText('These tools help tidy imported links, repeated gifts, and guest-facing media without merging or deleting anything unless you choose it.')).toBeInTheDocument();
+    expect(screen.getByText('Review details')).toBeInTheDocument();
+    expect(screen.getByText('Refresh image issues')).toBeInTheDocument();
+    expect(screen.getByText('Clean up imported gifts')).toBeInTheDocument();
+  });
+
   it('renders claim-state analytics for attribution and partial gifts', () => {
     render(
       <RegistryDashboardRouteContent

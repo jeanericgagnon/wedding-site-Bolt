@@ -395,6 +395,16 @@ export function RegistryDashboardRouteContent(props: {
   const duplicateQueueDetail = props.duplicateGroups.length === 0
     ? null
     : `${duplicateSignalCount} match signal${duplicateSignalCount === 1 ? '' : 's'} are already grouped for review.`;
+  const cleanupToolsSummary = [
+    props.bulkReviewCounts.repair > 0 ? `${props.bulkReviewCounts.repair} detail cleanup${props.bulkReviewCounts.repair === 1 ? '' : 's'}` : null,
+    props.bulkReviewCounts.duplicates > 0 ? `${props.bulkReviewCounts.duplicates} duplicate review${props.bulkReviewCounts.duplicates === 1 ? '' : 's'}` : null,
+    props.bulkReviewCounts.imageIssues > 0 ? `${props.bulkReviewCounts.imageIssues} image refresh${props.bulkReviewCounts.imageIssues === 1 ? '' : 'es'}` : null,
+  ].filter(Boolean).join(' · ');
+  const cleanupToolsLeadSummary = props.bulkReviewCounts.repair === 0
+    && props.bulkReviewCounts.duplicates === 0
+    && props.bulkReviewCounts.imageIssues === 0
+    ? 'No quick cleanup tools need attention right now.'
+    : `${cleanupToolsSummary} still worth a pass.`;
   const cleanupToolsAllClearLabel = props.bulkReviewCounts.repair === 0
     && props.bulkReviewCounts.duplicates === 0
     && props.bulkReviewCounts.imageIssues === 0
@@ -973,21 +983,22 @@ export function RegistryDashboardRouteContent(props: {
 
         <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
-            <p className="text-xs text-text-tertiary">Could use details</p>
+            <p className="text-xs text-text-tertiary">Detail cleanup</p>
             <p className="mt-1 text-lg font-semibold text-text-primary">{props.bulkReviewCounts.repair}</p>
           </div>
           <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
-            <p className="text-xs text-text-tertiary">Possible repeats</p>
+            <p className="text-xs text-text-tertiary">Duplicate review</p>
             <p className="mt-1 text-lg font-semibold text-text-primary">{props.bulkReviewCounts.duplicates}</p>
           </div>
           <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
-            <p className="text-xs text-text-tertiary">Needs better image</p>
+            <p className="text-xs text-text-tertiary">Image refresh</p>
             <p className="mt-1 text-lg font-semibold text-text-primary">{props.bulkReviewCounts.imageIssues}</p>
           </div>
         </div>
 
         <div className="mb-3 rounded-lg border border-border-subtle bg-surface-subtle/20 p-4 text-xs text-text-secondary">
-          <p>These tools help tidy imported links and spot repeated gifts. Nothing is merged or deleted unless you choose it.</p>
+          <p>{cleanupToolsLeadSummary}</p>
+          <p className="mt-2">These tools help tidy imported links, repeated gifts, and guest-facing media without merging or deleting anything unless you choose it.</p>
           {cleanupToolsAllClearLabel ? <p className="mt-2">{cleanupToolsAllClearLabel}</p> : null}
         </div>
 
