@@ -3,7 +3,7 @@
 ## Quick Read
 
 - Last updated: `2026-05-15 11:05 AM PDT`
-- Latest shipped batch: `pending local batch` `Clarify guest-hub travel and readiness headings`
+- Latest shipped batch: `2a76cf32` `Clarify guest-hub travel and readiness headings`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,7 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
-  - `pending local batch` `Clarify guest-hub travel and readiness headings`
+  - `2a76cf32` `Clarify guest-hub travel and readiness headings`
   - `165fbbbe` `Clarify guest-hub section headings`
   - `5eb86d5c` `Clarify guest-hub guest-status labels`
   - `167c6970` `Clarify guest-hub panel labels`
