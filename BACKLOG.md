@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 04:07 PM PDT`
-- Latest shipped batch: `guest preview live-mobile proof lane batch`
+- Last updated: `2026-05-15 04:22 PM PDT`
+- Latest shipped batch: `guest preview live visibility pair proof batch`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry active-proof-lane closure batch
 - Open backlog lanes: `4`
 - Current session blocker: even a minimal `chromium.launch()` plus `/login` navigation now goes silent in this saturated session, so the remaining QR lane gap is no longer specific to the guest-hub spec and is currently isolated to generic headless browser startup in this session
@@ -153,8 +153,8 @@ These are the active product-completion lanes still open after the current launc
 
 1. `guest-specific preview and visibility confidence`
    - latest shipped: `proof:v1:guest-preview-confidence` now includes a real authenticated mobile live guest-preview spec for photo upload, travel, registry, and public-site drawer routes on the shipped runtime, while the desktop live spec now proves the real guest drawer path instead of only the lighter public-site open, so the lane no longer has a missing mobile live proof path in repo
+   - latest shipped: the authenticated desktop live guest-preview spec now also resolves two real guests with contrasting `event_invitations` from production data and proves the same event is visible in the right guest drawer and hidden in the wrong guest drawer, so the lane no longer has a missing cross-surface live visibility proof path in repo
    - production reruns are still open for the authenticated desktop and mobile guest preview drawer on the shipped runtime
-   - wrong-guest/right-guest live visibility proof is still open
 2. `DEFERRED THIS SESSION`: unified QR guest hub
   - latest shipped: the local day-of proof lane now resolves the guest-hub travel/readiness summary strings through pure helper coverage instead of mounting the full `EventHubLiveContent` render tree, because `eventHubLiveContentHelpers.test.ts` now covers the invite-scoped travel summary and readiness-label logic directly and `proof:v1:dayof-web-mode` no longer depends on `EventHubLiveContent.proof.test.tsx`, so one more concrete local proof dependency is out of the stuck Vitest slice
   - latest shipped: the live `dayof-web-mode` proof path now skips the wedged local preflight and goes straight to the authenticated production Playwright check when `PLAYWRIGHT_BASE_URL` points at the live site, so the remaining QR lane blocker is now isolated to the live browser/runtime leg instead of being trapped behind the local Vitest runner
