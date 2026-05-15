@@ -357,6 +357,18 @@ export function RegistryDashboardRouteContent(props: {
           ? `${registryQuickCheckPolishCount} polish ${registryQuickCheckPolishCount === 1 ? 'cleanup' : 'cleanups'}`
           : null,
       ].filter(Boolean).join(' · ')} worth a quick pass.`;
+  const giftSnapshotLeadSummary = props.counts.total === 0
+    ? 'No registry gifts added yet.'
+    : registryNoteWatchouts.length > 0
+      ? `Snapshot focus: ${registryNoteWatchouts.join(' · ')}.`
+      : props.registryInsights.length > 0
+        ? `Snapshot focus: ${registryQuickCheckSummary}`
+        : 'Registry snapshot looks clean right now.';
+  const giftSnapshotAllClearLabel = props.counts.total > 0
+    && registryNoteWatchouts.length === 0
+    && props.registryInsights.length === 0
+    ? 'No active registry watchouts inside this snapshot.'
+    : null;
 
   const tabCount = (key: RegistryFilter) => {
     if (key === 'all') return props.counts.total;
@@ -425,6 +437,10 @@ export function RegistryDashboardRouteContent(props: {
           Gift snapshot and review details
         </summary>
         <div className="mt-4 space-y-4">
+          <div className="space-y-1">
+            <p className="text-sm text-text-secondary">{giftSnapshotLeadSummary}</p>
+            {giftSnapshotAllClearLabel ? <p className="text-xs text-text-tertiary">{giftSnapshotAllClearLabel}</p> : null}
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { icon: Gift, bg: 'bg-primary-light', color: 'text-primary', val: props.counts.total, label: 'Gifts' },
@@ -565,7 +581,7 @@ export function RegistryDashboardRouteContent(props: {
               <p className="mt-1 text-sm text-text-secondary">{topRegistryProgressSummary}</p>
               <div className="mt-3 space-y-2.5">
                 {props.topRegistryItems.length === 0 ? (
-                  <p className="text-sm text-text-secondary">No registry gifts added yet.</p>
+                  <p className="text-sm text-text-secondary">No top registry gifts to track yet.</p>
                 ) : props.topRegistryItems.map((item) => {
                   const quantityNeeded = Math.max(item.quantity_needed ?? 1, 1);
                   const quantityPurchased = item.quantity_purchased ?? 0;
@@ -598,7 +614,7 @@ export function RegistryDashboardRouteContent(props: {
               <p className="mt-1 text-sm text-text-secondary">{recentActivitySummary}</p>
               <div className="mt-3 space-y-2.5">
                 {props.recentActivity.length === 0 ? (
-                  <p className="text-sm text-text-secondary">No registry activity yet.</p>
+                  <p className="text-sm text-text-secondary">No recent registry changes yet.</p>
                 ) : props.recentActivity.map((item) => (
                   <div key={item.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                     <div className="flex items-center justify-between gap-3">
