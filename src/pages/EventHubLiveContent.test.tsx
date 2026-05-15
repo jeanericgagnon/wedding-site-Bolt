@@ -126,7 +126,7 @@ describe('EventHubLiveContent', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText('Travel quick plan')).toBeInTheDocument();
+    expect(screen.getByText('Travel plan from this link')).toBeInTheDocument();
     expect(screen.getByText('1 ready · 1 needs setup')).toBeInTheDocument();
     expect(screen.getByText('1 step still need setup before this path feels complete.')).toBeInTheDocument();
     expect(screen.getByText('Ready now: Travel details.')).toBeInTheDocument();
@@ -175,7 +175,8 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('3 of 4 core day-of actions are ready from this link.')).toBeInTheDocument();
     expect(screen.getByText('Still missing from this link: schedule.')).toBeInTheDocument();
     expect(screen.getByText('Main gap: Add schedule to this link.')).toBeInTheDocument();
-    expect(screen.getByText('Hub readiness details')).toBeInTheDocument();
+    expect(screen.getByText('Travel steps from this link')).toBeInTheDocument();
+    expect(screen.getByText('What is ready on this link')).toBeInTheDocument();
     expect(document.getElementById('day-of-updates')).not.toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy travel plan' }));

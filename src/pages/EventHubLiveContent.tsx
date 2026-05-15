@@ -371,7 +371,7 @@ export function EventHubLiveContent({
               <div className="mt-8 rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-[#2f261d]">Travel guest path</p>
+                    <p className="text-sm font-semibold text-[#2f261d]">Travel steps from this link</p>
                     <p className="mt-1 text-sm leading-6 text-[#6f5843]">
                       Start with travel details, then reply and share photos from the same mobile hub.
                     </p>
@@ -432,7 +432,7 @@ export function EventHubLiveContent({
                 <div className="mt-5 rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-[#2f261d]">Travel quick plan</p>
+                      <p className="text-sm font-semibold text-[#2f261d]">Travel plan from this link</p>
                       <p className="mt-1 text-sm leading-6 text-[#6f5843]">{travelHubSpotlight.summary}</p>
                       {travelHubSpotlight.mainGapLabel && (
                         <p className="mt-2 text-xs text-[#8b6f53]">{travelHubSpotlight.mainGapLabel}</p>
@@ -527,7 +527,7 @@ export function EventHubLiveContent({
                 <summary className="cursor-pointer list-none">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-[#2f261d]">Hub readiness details</p>
+                      <p className="text-sm font-semibold text-[#2f261d]">What is ready on this link</p>
                       <p className="mt-1 text-sm leading-6 text-[#6f5843]">Check what is ready before relying on the hub at the venue.</p>
                     </div>
                     <span className="rounded-lg bg-[#f3eadf] px-3 py-2 text-xs font-semibold text-[#69513f]">

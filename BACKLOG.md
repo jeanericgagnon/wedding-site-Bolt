@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 11:02 AM PDT`
-- Latest shipped batch: `165fbbbe` `Clarify guest-hub section headings`
+- Last updated: `2026-05-15 11:05 AM PDT`
+- Latest shipped batch: `pending local batch` `Clarify guest-hub travel and readiness headings`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `pending local batch` `Clarify guest-hub travel and readiness headings`
   - `165fbbbe` `Clarify guest-hub section headings`
   - `5eb86d5c` `Clarify guest-hub guest-status labels`
   - `167c6970` `Clarify guest-hub panel labels`
@@ -84,6 +85,7 @@
   - rerun the guest preview strip/drawer on the shipped runtime
   - prove wrong-guest/right-guest visibility on live auth flows
 - `unified QR guest hub`
+  - latest shipped: the remaining guest-hub support headings now read more plainly as `Travel steps from this link`, `Travel plan from this link`, and `What is ready on this link`, so the travel and readiness sections stay in the same guest-safe wording family as the newer status cards and section headers
   - latest shipped: the guest-hub section headings now read more plainly as `Latest update for this link`, `Your status on this link`, `Coordinator handoff status`, `What this link unlocks`, `Day-of web readiness`, and `Hub readiness on this link`, so the summary block now scans in the same guest-safe truth style as the newer field labels and counters
   - latest shipped: the guest-status and coordinator-handoff cards now use clearer field labels like `Guest on this link`, `RSVP on this link`, `Check-in on this link`, `Assigned team`, and `Guest handoff note`, so the fine-grained readback no longer slips back into terse admin-style labels
   - rerun mobile live proof for public vs guest-specific QR landings
@@ -112,6 +114,7 @@ These are the active product-completion lanes still open after the current launc
    - wrong-guest/right-guest live visibility proof is still open
    - authenticated mobile live proof is still open
 2. `unified QR guest hub`
+   - latest shipped: the remaining guest-hub support headings now read more plainly as `Travel steps from this link`, `Travel plan from this link`, and `What is ready on this link`, so the travel and readiness sections now match the newer guest-safe wording instead of falling back to older utility-style headings
    - latest shipped: the guest-hub section headings now read more plainly as `Latest update for this link`, `Your status on this link`, `Coordinator handoff status`, `What this link unlocks`, `Day-of web readiness`, and `Hub readiness on this link`, so the detailed summary block now reads like product truth instead of older internal section names
    - latest shipped: the guest-status and coordinator-handoff cards now use clearer field labels like `Guest on this link`, `RSVP on this link`, `Check-in on this link`, `Assigned team`, and `Guest handoff note`, so the detailed readback keeps the same guest-safe truth style as the newer panel and counter cleanup instead of slipping back into terse admin-style labels
    - live production mobile proof is still open for public versus guest-specific QR landing behavior
@@ -164,7 +167,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 11:02 AM PDT` |
+| Current date/time | `2026-05-15 11:05 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |
