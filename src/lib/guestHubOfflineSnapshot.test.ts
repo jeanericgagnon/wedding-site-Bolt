@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getGuestHubOfflineSnapshotKey, readGuestHubOfflineSnapshot, writeGuestHubOfflineSnapshot } from './guestHubOfflineSnapshot';
 
 describe('guestHubOfflineSnapshot', () => {
@@ -6,6 +6,10 @@ describe('guestHubOfflineSnapshot', () => {
     localStorage.clear();
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-05-14T11:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('writes and reads a guest-safe offline snapshot', () => {

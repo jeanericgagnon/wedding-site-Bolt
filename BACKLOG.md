@@ -2,11 +2,11 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 12:42 PM PDT`
-- Latest shipped batch: `4846e785` `Clarify registry top-surface owner wording`
+- Last updated: `2026-05-15 01:00 PM PDT`
+- Latest shipped batch: `pending local batch` `Restore guest-hub test timers`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
-- Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
+- Current session blocker: the minimal guest-hub Vitest slice still idles in this saturated session even after clearing duplicate runners, so the local runner environment remains the current proof blocker after the guest-hub timer-leak fix
 - Current transport blocker: none active right now
 - Blocked this session:
   - `npx vitest run src/pages/dashboard/registry/RegistryDashboardRouteContent.test.tsx` still stalls without producing useful output in this session
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `pending local batch` `Restore guest-hub test timers`
   - `4846e785` `Clarify registry top-surface owner wording`
   - `13f4903c` `Clarify registry share-readiness review wording`
   - `fa2e59b9` `Clarify registry metric label wording`
@@ -156,6 +157,7 @@ These are the active product-completion lanes still open after the current launc
    - wrong-guest/right-guest live visibility proof is still open
    - authenticated mobile live proof is still open
 2. `unified QR guest hub`
+   - latest shipped: the guest-hub offline snapshot test now restores real timers after each run, so one concrete in-repo proof blocker is removed and the remaining local closure blocker is narrowed to the idle Vitest runner environment instead of a known fake-timer leak inside the guest-hub slice
    - latest shipped: the no-app guest-hub helper now says `This no-app guest hub is ready for the wedding day`, `Ready now from this link`, `travel details`, `Still missing from core day-of coverage`, and `Add a site link and guest actions before sharing this as the no-app guest hub`, so the no-app readiness summaries now match the cleaner guest-safe wording already used by the live link-access and readiness panels instead of older internal phrasing like `Directions and travel` and `day-of mode`
    - latest shipped: the no-app and live guest-hub readiness boards now use clearer item labels like `No-app guest hub`, `One day-of link`, `Guest actions ready`, `Guest language links`, `Core day-of actions`, `Low-signal fallback`, `Offline reopen`, `Saved guest actions`, `Guest status from this link`, `Coordinator handoff from this link`, and `Link access from this page`, so the readiness panels now stay in the same guest-safe wording family as the cleaned live surface around them instead of falling back to older helper labels
    - latest shipped: the live guest-hub surface now uses clearer section labels like `Access from this link`, `Guest actions from this link`, `Core readiness from this link`, `Travel path from this link`, `Readiness from this link`, `No-app guest-hub readiness`, and `Live guest-hub readiness`, so the QR guest-hub details page now reads like one consistent product surface instead of mixing newer guest-safe copy with older internal section names
@@ -231,7 +233,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 12:42 PM PDT` |
+| Current date/time | `2026-05-15 01:00 PM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |
