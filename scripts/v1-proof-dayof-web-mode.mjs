@@ -31,7 +31,7 @@ const steps = [
   {
     id: 'dayof-web-mode-tests',
     label: 'Day-of web-mode unit and render truth',
-    command: 'npm test -- --run src/lib/guestHubOfflineSnapshot.test.ts src/lib/dayOfWebModeReadiness.test.ts src/lib/serviceWorkerSafety.test.ts src/pages/EventHub.test.tsx src/pages/EventHubLiveContent.proof.test.tsx',
+    command: 'npm test -- --run src/lib/guestHubOfflineSnapshot.test.ts src/lib/dayOfWebModeReadiness.test.ts src/lib/serviceWorkerSafety.test.ts src/pages/eventHubPageHelpers.test.ts src/pages/EventHubLiveContent.proof.test.tsx',
     required: true,
   },
   {
