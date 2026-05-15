@@ -210,6 +210,9 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
               )}
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
                 {targetedRecipients > 0 && (
+                  <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{targetedRecipients} targeted recipients</span>
+                )}
+                {targetedRecipients > 0 && (
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Targeted {targetedRecipients}</span>
                 )}
                 {(message.delivered_count ?? 0) > 0 && (

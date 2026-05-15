@@ -415,6 +415,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: campaign-thread rollups, the active thread, the latest campaign summary, and the detail modal now also surface explicit targeted-recipient counts beside follow-through percentages, so owners can tell what base the delivery and cleanup coverage numbers are actually describing
    - this batch shipped: the top-level `Guest reach` snapshot now also surfaces targeted-recipient count inside delivery follow-through, so the first messaging summary answers what audience base the coverage percentages and cleanup counts are actually describing
    - this batch shipped: the latest campaign summary now also surfaces plain `targeted recipients` readback alongside its existing `Targeted` chip, so the most recent-send follow-through row uses the same audience-base language as the top snapshot and channel/thread summaries
+   - this batch shipped: the message detail `Next-send review plan` now also surfaces plain `targeted recipients` readback alongside its `Targeted` chip, so the deepest follow-through drilldown uses the same audience-base language as the rest of the messaging lane
    - keep extending normalized delivery/open/view/bounce/replied truth across channels and real live rows
    - prove customer-safe delivery-failure grouping against live rows
    - add authenticated live browser proof for composing/saving each operational segment on the shipped owner runtime
