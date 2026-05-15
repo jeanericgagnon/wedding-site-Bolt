@@ -237,6 +237,69 @@ describe('MessageCampaignThreadPanels', () => {
     expect(screen.getByText('Bounced 1')).toBeInTheDocument();
     expect(screen.getByText('50% open · 13% click · 13% reply')).toBeInTheDocument();
   });
+
+  it('keeps the latest campaign message explicit when zero recipients were delivered', () => {
+    render(
+      <MessageCampaignThreadPanels
+        activeCampaignLatestMessage={{
+          id: 'message-1',
+          subject: 'RSVP nudge',
+          body: 'Please reply.',
+          channel: 'email',
+          status: 'failed',
+          recipient_count: 3,
+          delivered_count: 0,
+          failed_count: 3,
+          audience_filter: 'all',
+          recipient_filter: {
+            opened_count: 0,
+            viewed_count: 0,
+            clicked_count: 0,
+            replied_count: 0,
+            bounced_count: 0,
+            skipped_count: 0,
+          },
+        } as any}
+        activeCampaignThread={{
+          key: 'thread-1',
+          name: 'RSVP push',
+          count: 1,
+          delivered: 0,
+          failed: 3,
+          skipped: 0,
+          unreached: 0,
+          opened: 0,
+          viewed: 0,
+          clicked: 0,
+          replied: 0,
+          bounced: 0,
+          deliveredRecipients: 0,
+          deliveredRate: 0,
+          openRate: 0,
+          clickRate: 0,
+          replyRate: 0,
+          latestStatus: 'failed',
+          latestAt: 100,
+        }}
+        campaignThreads={[]}
+        canCompose
+        deliveries={[]}
+        onClearThreadFilter={vi.fn()}
+        onDuplicateLatest={vi.fn()}
+        onEditLatest={vi.fn()}
+        onScheduleFollowUp={vi.fn()}
+        onSelectThread={vi.fn()}
+        onStartFollowUp={vi.fn()}
+        onViewLatest={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('0 recipients delivered')).toBeInTheDocument();
+    expect(screen.getByText('3 targeted recipients')).toBeInTheDocument();
+    expect(screen.getByText('0% follow-through ready')).toBeInTheDocument();
+    expect(screen.getByText('No recipients are already closed out')).toBeInTheDocument();
+    expect(screen.getByText('3 recipients still need cleanup')).toBeInTheDocument();
+  });
 });
 
 describe('MessageHistorySummaryPanels', () => {

@@ -1662,7 +1662,9 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                 const replyRate = deliveredRecipients > 0 && engagement.replied != null ? Math.round((engagement.replied / deliveredRecipients) * 100) : null;
                 return (
                   <>
-                    {deliveredRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{deliveredRecipients} recipients delivered</span>}
+                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">
+                      {deliveredRecipients > 0 ? `${deliveredRecipients} recipients delivered` : '0 recipients delivered'}
+                    </span>
                     {targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{targetedRecipients} targeted recipients</span>}
                     {targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Targeted {targetedRecipients}</span>}
                     {deliveredRate != null && targetedRecipients > 0 && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{deliveredRate}% delivered coverage</span>}
