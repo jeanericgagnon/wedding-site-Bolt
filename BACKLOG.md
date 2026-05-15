@@ -2,9 +2,9 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 09:48 AM PDT`
-- Latest shipped batch: `913b7124` `Clarify registry supporting-card clean states`
-- Latest backlog-cleanup state: top-of-file scan is current through the pending local registry supporting-card clean-state batch
+- Last updated: `2026-05-15 09:56 AM PDT`
+- Latest shipped batch: `dcc3d69c` `Clarify registry quick-check summaries`
+- Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry quick-check batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
 - Current transport blocker: none active right now
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `dcc3d69c` `Clarify registry quick-check summaries`
   - `913b7124` `Clarify registry supporting-card clean states`
   - `a0eb64d4` `Clarify registry supporting-card summaries`
   - `0f0b061e` `Clarify registry notes lead summary`
@@ -34,8 +35,8 @@
   - `3aa83255` `Clarify registry quiet summary cards`
   - `838be5c8` `Clarify registry zero-state summaries`
   - `b2ed7c14` `Clarify registry clean-state readback`
-  - `pending local batch` `Clarify memory flow lead summaries`
-  - `pending local batch` `Clarify travel all-clear summaries`
+  - `86748b72` `Clarify memory flow lead summaries`
+  - `4e419d60` `Clarify travel all-clear summaries`
   - `79e76e63` `Clarify RSVP and travel all-clear follow-through`
   - `c59192e0` `Record backlog session blocker` `local only`
   - `28c413f6` `Add backlog next-step scan`
@@ -56,7 +57,7 @@
 - `status-based messaging and invitation tracking`
   - latest shipped: owner messaging summaries, thread strips, review/history rows, and detail surfaces now keep targeting, delivery, cleanup, and engagement truth explicit across pre-send, zero-state, and partial-send cases
 - `registry polish beyond barcode`
-  - latest shipped: the supporting-card summaries now also keep the clean and empty cases explicit with lines like `Top gifts are already fully claimed right now.` and `No recent registry changes yet.`, so those cards no longer read like silent blanks when nothing needs attention
+  - latest shipped: `Registry quick check` now stays explicit in both mixed and all-clear states with lead readback like `1 next-step fix · 1 polish cleanup worth a quick pass.` or `No quick registry fixes worth flagging right now.`, so that last big registry card now scans like a summary first instead of a raw prompt list
 
 ## Work This Next
 
@@ -113,7 +114,7 @@ These are the active product-completion lanes still open after the current launc
    - add authenticated live browser proof for composing and saving each operational segment on the shipped runtime
    - keep SMS/Telnyx live-send behavior deferred until provider/compliance setup is ready
 5. `registry polish beyond barcode`
-   - latest shipped: the top registry cards now also use quiet-state readback like `No gifts purchased yet` and `Nothing needs review right now`, so empty owner summaries stop sounding like active-state progress cards when nothing has happened yet
+  - latest shipped: `Registry quick check` now stays explicit in both mixed and all-clear states with lead readback like `1 next-step fix · 1 polish cleanup worth a quick pass.` or `No quick registry fixes worth flagging right now.`, so that last big registry card now scans like a summary first instead of a raw prompt list
    - live owner add/import/edit persistence proof is still open
    - stronger owner repair/cleanup runtime proof on production is still open
    - guest-visible purchase-state assertions on production are still open
@@ -141,7 +142,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 09:48 AM PDT` |
+| Current date/time | `2026-05-15 09:56 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |
