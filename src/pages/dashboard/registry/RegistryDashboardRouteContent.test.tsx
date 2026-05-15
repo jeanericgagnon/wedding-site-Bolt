@@ -887,7 +887,7 @@ describe('RegistryDashboardRouteContent', () => {
             item: makeItem({ id: 'gift-2', item_name: 'Cake stand' }),
             states: ['partial-import', 'proxy-image'],
             severity: 'medium',
-            summary: 'Upgrade the guest-facing image',
+            summary: 'Upgrade the product photo',
             detail: 'This gift is still leaning on a fallback preview image. Review it now so guests see a real product photo.',
             primaryAction: 'review-item',
             primaryActionLabel: 'Review item',
@@ -925,10 +925,10 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(screen.getByText('Cleanup queue')).toBeInTheDocument();
     expect(screen.getByText('1 needs attention · 1 review soon · 1 keep fresh.')).toBeInTheDocument();
-    expect(screen.getByText('3 gifts still need stronger detail truth, store repair, or fresher guest-facing media.')).toBeInTheDocument();
+    expect(screen.getByText('3 gifts still need stronger detail truth, store repair, or fresher product photos.')).toBeInTheDocument();
     expect(screen.getByText('3 waiting')).toBeInTheDocument();
     expect(screen.getByText('Re-import weak product details')).toBeInTheDocument();
-    expect(screen.getByText('Upgrade the guest-facing image')).toBeInTheDocument();
+    expect(screen.getByText('Upgrade the product photo')).toBeInTheDocument();
     expect(screen.getByText('Refresh stale registry details')).toBeInTheDocument();
   });
 
@@ -1101,7 +1101,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Duplicate review')).toBeInTheDocument();
     expect(screen.getByText('Image refresh')).toBeInTheDocument();
     expect(screen.getByText('2 detail cleanups · 1 duplicate review · 2 image refreshes still worth a pass.')).toBeInTheDocument();
-    expect(screen.getByText('These tools help tidy imported links, repeated gifts, and guest-facing media without merging or deleting anything unless you choose it.')).toBeInTheDocument();
+    expect(screen.getByText('These tools help tidy imported links, repeated gifts, and product photos without merging or deleting anything unless you choose it.')).toBeInTheDocument();
     expect(screen.getByText('Review details')).toBeInTheDocument();
     expect(screen.getByText('Refresh image issues')).toBeInTheDocument();
     expect(screen.getByText('Clean up imported gifts')).toBeInTheDocument();

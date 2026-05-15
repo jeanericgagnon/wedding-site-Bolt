@@ -376,7 +376,7 @@ export function RegistryDashboardRouteContent(props: {
     : null;
   const cleanupQueueSummary = props.repairQueue.length === 0
     ? 'No gifts are waiting in the cleanup queue right now.'
-    : `${props.repairQueue.length} gift${props.repairQueue.length === 1 ? '' : 's'} still need stronger detail truth, store repair, or fresher guest-facing media.`;
+    : `${props.repairQueue.length} gift${props.repairQueue.length === 1 ? '' : 's'} still need stronger detail truth, store repair, or fresher product photos.`;
   const cleanupHighCount = props.repairQueue.filter((item) => item.severity === 'high').length;
   const cleanupMediumCount = props.repairQueue.filter((item) => item.severity === 'medium').length;
   const cleanupLowCount = props.repairQueue.filter((item) => item.severity === 'low').length;
@@ -998,7 +998,7 @@ export function RegistryDashboardRouteContent(props: {
 
         <div className="mb-3 rounded-lg border border-border-subtle bg-surface-subtle/20 p-4 text-xs text-text-secondary">
           <p>{cleanupToolsLeadSummary}</p>
-          <p className="mt-2">These tools help tidy imported links, repeated gifts, and guest-facing media without merging or deleting anything unless you choose it.</p>
+          <p className="mt-2">These tools help tidy imported links, repeated gifts, and product photos without merging or deleting anything unless you choose it.</p>
           {cleanupToolsAllClearLabel ? <p className="mt-2">{cleanupToolsAllClearLabel}</p> : null}
         </div>
 
