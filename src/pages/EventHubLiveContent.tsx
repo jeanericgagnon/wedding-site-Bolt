@@ -263,7 +263,7 @@ export function EventHubLiveContent({
                     <div className="rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-sm font-semibold text-[#2f261d]">Latest update</p>
+                          <p className="text-sm font-semibold text-[#2f261d]">Latest update for this link</p>
                           <p className="mt-1 text-xs font-medium text-[#8b6f53]">{announcementCard.stateLabel}</p>
                         </div>
                         {announcementCard.timingLabel && (
@@ -279,7 +279,7 @@ export function EventHubLiveContent({
                   )}
                   {guestStateCard && (
                     <div className="rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
-                      <p className="text-sm font-semibold text-[#2f261d]">Your day-of status</p>
+                      <p className="text-sm font-semibold text-[#2f261d]">Your status on this link</p>
                       <p className="mt-1 text-sm leading-6 text-[#6f5843]">{guestStateCard.summary}</p>
                       <div className="mt-3 grid gap-2 sm:grid-cols-2">
                         <div className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2">
@@ -301,7 +301,7 @@ export function EventHubLiveContent({
                     <div className="rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-sm font-semibold text-[#2f261d]">Coordinator handoff</p>
+                          <p className="text-sm font-semibold text-[#2f261d]">Coordinator handoff status</p>
                           <p className="mt-1 text-xs font-medium text-[#8b6f53]">{coordinatorHandoffCard.statusLabel}</p>
                         </div>
                         {coordinatorHandoffCard.updatedLabel && (
@@ -328,7 +328,7 @@ export function EventHubLiveContent({
                     <div className="rounded-lg border border-[#eadfd2] bg-[#fffdf9] p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-sm font-semibold text-[#2f261d]">Link access</p>
+                          <p className="text-sm font-semibold text-[#2f261d]">What this link unlocks</p>
                           <p className="mt-1 text-xs font-medium text-[#8b6f53]">{linkAccessCard.badgeLabel}</p>
                         </div>
                       </div>
@@ -539,7 +539,7 @@ export function EventHubLiveContent({
                   <div>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-[#2f261d]">Day-of web mode</p>
+                        <p className="text-sm font-semibold text-[#2f261d]">Day-of web readiness</p>
                         <p className="mt-1 text-sm leading-6 text-[#6f5843]">{dayOfModeReadiness.summary}</p>
                       </div>
                       <div className="rounded-lg bg-[#f3eadf] px-3 py-2 text-xs font-semibold text-[#69513f]">
@@ -564,7 +564,7 @@ export function EventHubLiveContent({
                   <div>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-[#2f261d]">Guest hub status</p>
+                        <p className="text-sm font-semibold text-[#2f261d]">Hub readiness on this link</p>
                         <p className="mt-1 text-sm leading-6 text-[#6f5843]">{dayOfHubStatusBoard.summary}</p>
                       </div>
                     </div>
