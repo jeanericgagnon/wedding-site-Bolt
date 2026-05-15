@@ -17,7 +17,7 @@ export function GuestPhotoMemoryFlowCard({ memoryFlowReadiness }: GuestPhotoMemo
           </p>
         </div>
         <span className="inline-flex w-fit items-center rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1.5 text-sm font-medium text-text-primary">
-          {memoryFlowReadiness.readyCount} of {memoryFlowReadiness.steps.length} ready
+          {memoryFlowReadiness.readyCount} of {memoryFlowReadiness.steps.length} memory steps ready
         </span>
       </div>
       <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">

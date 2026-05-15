@@ -34,9 +34,9 @@ describe('GuestPhotoMemoryFlowCard', () => {
 
     expect(screen.getByText('Collection')).toBeInTheDocument();
     expect(screen.getByText('Sharing')).toBeInTheDocument();
+    expect(screen.getByText('8 of 9 memory steps ready')).toBeInTheDocument();
     expect(screen.getByText('4 of 4 memory lanes ready')).toBeInTheDocument();
     expect(screen.getByText('89% step coverage')).toBeInTheDocument();
-    expect(screen.getByText('8 of 9 memory steps ready')).toBeInTheDocument();
     expect(screen.getByText('12 uploads live across 1 active album')).toBeInTheDocument();
     expect(screen.getByText('Private recap link')).toBeInTheDocument();
     expect(screen.getByText('33% story coverage')).toBeInTheDocument();
@@ -80,8 +80,8 @@ describe('GuestPhotoMemoryFlowCard', () => {
     );
 
     expect(screen.getByText('Main gap: Collection')).toBeInTheDocument();
-    expect(screen.getByText('11% step coverage')).toBeInTheDocument();
     expect(screen.getByText('1 of 9 memory steps ready')).toBeInTheDocument();
+    expect(screen.getByText('11% step coverage')).toBeInTheDocument();
     expect(screen.getByText('1 memory step still needs action')).toBeInTheDocument();
     expect(screen.getByText('4 memory lanes still empty')).toBeInTheDocument();
     expect(screen.getByText('6 memory steps still empty')).toBeInTheDocument();
@@ -121,8 +121,8 @@ describe('GuestPhotoMemoryFlowCard', () => {
     );
 
     expect(screen.getByText('0 of 4 memory lanes ready')).toBeInTheDocument();
-    expect(screen.getByText('0% step coverage')).toBeInTheDocument();
     expect(screen.getByText('3 of 9 memory steps ready')).toBeInTheDocument();
+    expect(screen.getByText('0% step coverage')).toBeInTheDocument();
     expect(screen.getByText('4 memory lanes still need action')).toBeInTheDocument();
     expect(screen.getByText('6 memory steps still need action')).toBeInTheDocument();
     expect(screen.getByText('2 memory steps still empty')).toBeInTheDocument();

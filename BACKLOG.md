@@ -546,6 +546,7 @@ Paused next-priority bucket when backlog work resumes:
 ### Strong-Differentiator Lanes Still Open
 
 6. `ACTIVE`: premium no-app guest photo and memory flow
+   - the no-app memory-flow card’s top-right readiness chip now says `memory steps ready` explicitly, so the very first glance matches the badge-row wording instead of leaving the readiness denominator implicit
    - the top-level photo-memory badge row now also calls out how many memory steps are still planned, so owners can tell which gaps are intentionally deferred versus actively broken or still empty without opening the deeper checklist
    - the top-level photo-memory badge row now also calls out how many memory steps still need action, so owners can separate “active cleanup work” from “still empty setup gaps” without opening the deeper checklist
    - the top-level photo-memory badge row now also calls out how many memory steps are still completely empty, so owners can distinguish “lane needs action” from “specific memory-flow steps still have no real setup at all” without opening the deeper checklist
@@ -571,6 +572,7 @@ Paused next-priority bucket when backlog work resumes:
    - this batch shipped: the top-level photo-memory badge row now also surfaces the first real blocker, so owners can tell whether the first operational fix is the guest hub, moderation, album activation, or another blocked step without scanning the full memory checklist
    - this batch shipped: the top-level photo-memory badge row now also reads back how many of the four memory lanes are ready versus still needing action, so owners can judge overall lane closure without scanning every collection/curation/sharing/handoff panel
    - this batch shipped: the top-level photo-memory badge row now also calls out how many memory lanes are still completely empty, so owners can distinguish “needs cleanup” from “not built yet” without opening the deeper tiles
+   - this batch shipped: the no-app memory-flow card’s top-right readiness chip now says `memory steps ready` explicitly, so the first glance matches the badge-row wording instead of leaving the denominator implicit
    - this batch shipped: the top-level photo-memory badge row now also calls out how many memory steps are still planned, so owners can tell which gaps are intentionally deferred versus actively broken or still empty without opening the deeper checklist
    - this batch shipped: the top-level photo-memory badge row now also calls out how many memory steps still need action, so owners can separate “active cleanup work” from “still empty setup gaps” without opening the deeper checklist
    - this batch shipped: the top-level photo-memory badge row now also calls out how many memory steps are still completely empty, so owners can distinguish “lane needs action” from “specific memory-flow steps still have no real setup at all” without opening the deeper checklist
