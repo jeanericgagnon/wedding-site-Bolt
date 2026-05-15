@@ -1,15 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { getGuestHubOfflineSnapshotKey, readGuestHubOfflineSnapshot, writeGuestHubOfflineSnapshot } from './guestHubOfflineSnapshot';
 
 describe('guestHubOfflineSnapshot', () => {
   beforeEach(() => {
     localStorage.clear();
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-05-14T11:00:00.000Z'));
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it('writes and reads a guest-safe offline snapshot', () => {
@@ -54,6 +48,7 @@ describe('guestHubOfflineSnapshot', () => {
         schedule: [{ id: 'event-1', label: 'Ceremony', startTimeISO: '2026-06-15T15:30:00.000Z' }],
         venues: [{ id: 'venue-1', name: 'Harbor Hall', address: '100 Harbor Road' }],
       },
+      savedAt: '2026-05-14T11:00:00.000Z',
     });
 
     expect(snapshot?.savedAt).toBe('2026-05-14T11:00:00.000Z');

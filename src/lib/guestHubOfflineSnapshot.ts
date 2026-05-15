@@ -62,6 +62,10 @@ export interface GuestHubOfflineSnapshot {
   savedAt: string;
 }
 
+export interface GuestHubOfflineSnapshotWriteInput extends Omit<GuestHubOfflineSnapshot, 'savedAt'> {
+  savedAt?: string;
+}
+
 const SNAPSHOT_PREFIX = 'dayof.guestHub.offline.';
 const SNAPSHOT_RETENTION_MS = 1000 * 60 * 60 * 24 * 7;
 
@@ -182,11 +186,11 @@ export function sanitizeGuestHubOfflineSnapshot(value: unknown): GuestHubOffline
   };
 }
 
-export function writeGuestHubOfflineSnapshot(slug: string, snapshot: Omit<GuestHubOfflineSnapshot, 'savedAt'>): GuestHubOfflineSnapshot | null {
+export function writeGuestHubOfflineSnapshot(slug: string, snapshot: GuestHubOfflineSnapshotWriteInput): GuestHubOfflineSnapshot | null {
   if (typeof window === 'undefined') return null;
   const savedSnapshot = sanitizeGuestHubOfflineSnapshot({
     ...snapshot,
-    savedAt: new Date().toISOString(),
+    savedAt: snapshot.savedAt ?? new Date().toISOString(),
   });
   if (!savedSnapshot) return null;
   window.localStorage.setItem(getGuestHubOfflineSnapshotKey(slug), JSON.stringify(savedSnapshot));
