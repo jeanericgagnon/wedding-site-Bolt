@@ -64,11 +64,11 @@ export interface DayOfHubStatusBoard {
 const actionLabels: Record<DayOfWebActionId, string> = {
   rsvp: 'RSVP',
   schedule: 'Schedule',
-  travel: 'Directions and travel',
+  travel: 'travel details',
   registry: 'Registry',
   photos: 'Photo upload',
-  guestbook: 'Guestbook',
-  recap: 'Photo recap',
+  guestbook: 'guestbook',
+  recap: 'photo recap details',
 };
 
 const coreDayOfActionIds: DayOfWebActionId[] = ['rsvp', 'schedule', 'travel', 'photos'];
@@ -132,8 +132,8 @@ export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebMo
       id: 'guest-actions',
       label: 'Guest actions ready',
       detail: visibleActions.length > 0
-        ? `Available now: ${visibleActions.join(', ')}.`
-        : 'Turn on at least one guest action before sharing the hub.',
+        ? `Ready now from this link: ${visibleActions.join(', ')}.`
+        : 'Turn on at least one guest action before sharing this guest hub.',
       state: visibleActions.length > 0 ? 'ready' : 'needs-content',
     },
     {
@@ -148,8 +148,8 @@ export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebMo
       id: 'day-of-coverage',
       label: 'Core day-of actions',
       detail: enabled.has('schedule') && enabled.has('travel') && enabled.has('photos')
-        ? 'Schedule, directions, and photo upload are available from the hub.'
-        : 'Schedule, directions, and photo upload should all be enabled for a stronger day-of mode.',
+        ? 'Schedule, travel details, and photo upload are all ready from this guest hub.'
+        : 'Schedule, travel details, and photo upload should all be enabled before guests rely on this hub on the wedding day.',
       state: enabled.has('schedule') && enabled.has('travel') && enabled.has('photos') ? 'ready' : 'needs-content',
     },
     {
@@ -187,12 +187,12 @@ export function buildDayOfWebModeReadiness(input: DayOfWebModeInput): DayOfWebMo
       ? 'needs-content'
       : 'ready';
   const summary = status === 'ready'
-    ? `Ready as a no-app guest hub for the wedding day with ${visibleActions.length} guest action${visibleActions.length === 1 ? '' : 's'} live, including ${visibleActions.slice(0, 3).join(', ')}${visibleActions.length > 3 ? ', and more' : ''}.`
+    ? `This no-app guest hub is ready for the wedding day with ${visibleActions.length} guest action${visibleActions.length === 1 ? '' : 's'} live, including ${visibleActions.slice(0, 3).join(', ')}${visibleActions.length > 3 ? ', and more' : ''}.`
     : status === 'empty'
-      ? 'Add a site link and guest actions before sharing this as day-of mode.'
+      ? 'Add a site link and guest actions before sharing this as the no-app guest hub.'
       : missingCoreActions.length > 0
-        ? `${needsContentCount} item${needsContentCount === 1 ? '' : 's'} need content before this feels day-of ready. Still missing from day-of coverage: ${missingCoreActions.join(', ')}.`
-        : `${needsContentCount} item${needsContentCount === 1 ? '' : 's'} need content before this feels day-of ready.`;
+        ? `${needsContentCount} item${needsContentCount === 1 ? '' : 's'} need content before this no-app guest hub feels ready. Still missing from core day-of coverage: ${missingCoreActions.join(', ')}.`
+        : `${needsContentCount} item${needsContentCount === 1 ? '' : 's'} need content before this no-app guest hub feels ready.`;
 
   return {
     status,
@@ -223,8 +223,8 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
       id: 'day-of-essentials',
       label: 'Core day-of actions',
       detail: hasCoreGuestActions
-        ? 'Schedule, travel, and photo upload are present from the same mobile link.'
-        : 'Schedule, travel, and photo upload should all be enabled before sharing this as the wedding-day hub.',
+        ? 'Schedule, travel details, and photo upload are present from the same mobile link.'
+        : 'Schedule, travel details, and photo upload should all be enabled before sharing this as the wedding-day guest hub.',
       state: hasCoreGuestActions ? 'ready' : 'needs-content',
     },
     {

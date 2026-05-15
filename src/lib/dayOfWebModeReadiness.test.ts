@@ -15,10 +15,10 @@ describe('day-of web mode readiness', () => {
     });
 
     expect(model.status).toBe('ready');
-    expect(model.summary).toBe('Ready as a no-app guest hub for the wedding day with 6 guest actions live, including RSVP, Schedule, Directions and travel, and more.');
+    expect(model.summary).toBe('This no-app guest hub is ready for the wedding day with 6 guest actions live, including RSVP, Schedule, travel details, and more.');
     expect(model.readyCount).toBe(7);
     expect(model.plannedCount).toBe(1);
-    expect(model.signals.find((signal) => signal.id === 'guest-actions')?.detail).toContain('RSVP, Schedule, Directions and travel');
+    expect(model.signals.find((signal) => signal.id === 'guest-actions')?.detail).toContain('RSVP, Schedule, travel details');
     expect(model.signals.find((signal) => signal.id === 'poor-network')?.detail).toContain('last saved update');
     expect(model.signals.find((signal) => signal.id === 'offline-shell')?.state).toBe('ready');
   });
@@ -34,7 +34,7 @@ describe('day-of web mode readiness', () => {
 
     expect(model.status).toBe('needs-content');
     expect(model.needsContentCount).toBe(2);
-    expect(model.summary).toBe('2 items need content before this feels day-of ready. Still missing from day-of coverage: Schedule, Directions and travel, Photo upload.');
+    expect(model.summary).toBe('2 items need content before this no-app guest hub feels ready. Still missing from core day-of coverage: Schedule, travel details, Photo upload.');
     expect(model.signals.find((signal) => signal.id === 'announcements')?.state).toBe('planned');
     expect(model.signals.find((signal) => signal.id === 'poor-network')?.detail).toContain('not built');
     expect(model.signals.find((signal) => signal.id === 'offline-shell')?.detail).toContain('cached app shell');
@@ -50,7 +50,7 @@ describe('day-of web mode readiness', () => {
     });
 
     expect(model.status).toBe('empty');
-    expect(model.summary).toBe('Add a site link and guest actions before sharing this as day-of mode.');
+    expect(model.summary).toBe('Add a site link and guest actions before sharing this as the no-app guest hub.');
   });
 
   it('builds a guest-safe status board without claiming live announcements or guest state', () => {
@@ -86,7 +86,7 @@ describe('day-of web mode readiness', () => {
     expect(board.plannedCount).toBe(0);
     expect(board.summary).toBe('Guest hub status is connected for live day-of use. 4 guest actions are ready from this link. Core link coverage: 100% ready (4 of 4). All 4 core day-of actions are ready from this link.');
     expect(board.items.find((item) => item.id === 'link-access')?.detail).toBe(
-      'Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are ready from it: RSVP, Schedule, Directions and travel, and Photo upload. All core day-of coverage from this link is ready: RSVP, Schedule, Directions and travel, and Photo upload.'
+      'Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are ready from it: RSVP, Schedule, travel details, and Photo upload. All core day-of coverage from this link is ready: RSVP, Schedule, travel details, and Photo upload.'
     );
   });
 
@@ -99,7 +99,7 @@ describe('day-of web mode readiness', () => {
 
     expect(board.summary).toBe('1 day-of status item is usable now; 5 stay planned or need setup. 2 guest actions are ready from this link. Core link coverage: 50% ready (2 of 4; 2 still missing). 2 core day-of actions are still missing from this link. First blocker: Live updates.');
     expect(board.items.find((item) => item.id === 'link-access')?.detail).toBe(
-      'Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are ready from it: RSVP and Directions and travel. Core day-of coverage from this link is 50% ready (2 of 4). Main gap: Schedule. Still missing: Schedule, Photo upload.'
+      'Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are ready from it: RSVP and travel details. Core day-of coverage from this link is 50% ready (2 of 4). Main gap: Schedule. Still missing: Schedule, Photo upload.'
     );
   });
 
