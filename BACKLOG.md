@@ -2,8 +2,8 @@
 
 ## Quick Read
 
-- Last updated: `2026-05-15 10:35 AM PDT`
-- Latest shipped batch: `f8b9d4fd` `Clarify registry top-strip labels`
+- Last updated: `2026-05-15 10:39 AM PDT`
+- Latest shipped batch: `pending local batch` `Clarify memory flow status chips`
 - Latest backlog-cleanup state: top-of-file scan is current through the latest shipped registry launch-readiness wording batch
 - Open backlog lanes: `7`
 - Current session blocker: focused Vitest runs are still silently stalling in this saturated session, so `git diff --check` plus `npm run proof:v1:board:md` remain the reliable fast proof path
@@ -24,6 +24,7 @@
 ## Recent Shipped Work
 
 - `Latest batch list`
+  - `pending local batch` `Clarify memory flow status chips`
   - `f8b9d4fd` `Clarify registry top-strip labels`
   - `372aa01a` `Clarify registry empty-state readback`
   - `7a7fea5a` `Clarify registry cleanup-tools summaries`
@@ -62,7 +63,7 @@
 - `RSVP access modes and question templates`
   - latest shipped: the optional RSVP setup summary now also says `0 optional improvements still open` and `No optional layers need action` in the all-clear state
 - `premium no-app guest photo and memory flow`
-  - latest shipped: the no-app memory-flow card now also opens with a lead summary sentence, so owners get the all-clear or first-blocker truth before scanning badges, lanes, and the blocker panel
+  - latest shipped: the no-app memory-flow card now also labels every lane and step chip explicitly as `Lane ready`, `Lane needs action`, `Step ready`, `Step planned`, or `Step empty`, so the detailed checklist no longer falls back to abstract generic status pills after the stronger lead summary
 - `destination/travel guest portal`
   - latest shipped: the owner travel-portal readiness summary now also says `No guest sections incomplete`, and the guest-hub `Travel quick plan` summary now also says `All 3 core travel layers are ready`, so those all-clear truths no longer live only in the smaller badge rows
 - `status-based messaging and invitation tracking`
@@ -131,7 +132,7 @@ These are the active product-completion lanes still open after the current launc
    - guest-visible purchase-state assertions on production are still open
    - broader claim-state depth and richer public fund-card polish are still open
 6. `premium no-app guest photo and memory flow`
-   - latest shipped: the no-app memory-flow card now also opens with a lead summary sentence, so owners get `No memory gaps right now`, `No memory lanes need action`, `No memory steps need action`, planned-step truth, or the first blocker in one readback before scanning the badge row
+   - latest shipped: the no-app memory-flow card now also labels every lane and step chip explicitly as `Lane ready`, `Lane needs action`, `Step ready`, `Step planned`, or `Step empty`, so the detailed checklist keeps the same owner-facing truth style as the stronger lead summary instead of falling back to generic pills
    - this lane remains active and unfinished
 7. `destination/travel guest portal`
    - latest shipped: the guest-hub `Travel quick plan` badge row now stays explicit with `No core travel gaps` in the all-clear state instead of leaving that truth only in the prose summary
@@ -153,7 +154,7 @@ Yes. The launch-critical hardening lane is closed, the blocker-fix runtime is li
 
 | Field | Current State |
 | --- | --- |
-| Current date/time | `2026-05-15 10:35 AM PDT` |
+| Current date/time | `2026-05-15 10:39 AM PDT` |
 | Branch | `codex/v1-finish-hard-gates-3` |
 | Latest verified Git SHA | `branch head` |
 | Latest verified commit message | `branch head` |

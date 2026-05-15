@@ -35,6 +35,9 @@ describe('GuestPhotoMemoryFlowCard', () => {
 
     expect(screen.getByText('Collection')).toBeInTheDocument();
     expect(screen.getByText('Sharing')).toBeInTheDocument();
+    expect(screen.getAllByText('Lane ready')).toHaveLength(4);
+    expect(screen.getAllByText('Step ready')).toHaveLength(8);
+    expect(screen.getByText('Step planned')).toBeInTheDocument();
     expect(screen.getByText('8 of 9 memory steps ready')).toBeInTheDocument();
     expect(screen.getByText('4 of 4 memory lanes ready')).toBeInTheDocument();
     expect(screen.getByText('89% step coverage')).toBeInTheDocument();
@@ -89,6 +92,10 @@ describe('GuestPhotoMemoryFlowCard', () => {
     );
 
     expect(screen.getByText('Main gap: Collection')).toBeInTheDocument();
+    expect(screen.getAllByText('Lane empty')).toHaveLength(4);
+    expect(screen.getByText('Step needs action')).toBeInTheDocument();
+    expect(screen.getAllByText('Step empty')).toHaveLength(6);
+    expect(screen.getAllByText('Step planned')).toHaveLength(2);
     expect(screen.getByText('1 of 9 memory steps ready')).toBeInTheDocument();
     expect(screen.getByText('1 ready · 1 need action · 6 empty · 2 planned. First blocker: No-app guest hub.')).toBeInTheDocument();
     expect(screen.getByText('11% step coverage')).toBeInTheDocument();
@@ -135,6 +142,10 @@ describe('GuestPhotoMemoryFlowCard', () => {
     );
 
     expect(screen.getByText('0 of 4 memory lanes ready')).toBeInTheDocument();
+    expect(screen.getAllByText('Lane needs action')).toHaveLength(4);
+    expect(screen.getAllByText('Step needs action')).toHaveLength(6);
+    expect(screen.getByText('Step empty')).toBeInTheDocument();
+    expect(screen.getAllByText('Step planned')).toHaveLength(2);
     expect(screen.getByText('3 of 9 memory steps ready')).toBeInTheDocument();
     expect(screen.getByText('3 ready · 6 need action · 1 empty · 2 planned. First blocker: No-app guest hub.')).toBeInTheDocument();
     expect(screen.getByText('0% step coverage')).toBeInTheDocument();

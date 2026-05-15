@@ -6,6 +6,32 @@ type GuestPhotoMemoryFlowCardProps = {
 };
 
 export function GuestPhotoMemoryFlowCard({ memoryFlowReadiness }: GuestPhotoMemoryFlowCardProps) {
+  const getLaneStatusLabel = (status: MemoryFlowReadiness['lanes'][number]['status']) => {
+    switch (status) {
+      case 'ready':
+        return 'Lane ready';
+      case 'needs-action':
+        return 'Lane needs action';
+      case 'planned':
+        return 'Lane planned';
+      default:
+        return 'Lane empty';
+    }
+  };
+
+  const getStepStatusLabel = (status: MemoryFlowReadiness['steps'][number]['status']) => {
+    switch (status) {
+      case 'ready':
+        return 'Step ready';
+      case 'needs-action':
+        return 'Step needs action';
+      case 'planned':
+        return 'Step planned';
+      default:
+        return 'Step empty';
+    }
+  };
+
   return (
     <Card className="p-6 border border-neutral-200 bg-white">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -45,7 +71,7 @@ export function GuestPhotoMemoryFlowCard({ memoryFlowReadiness }: GuestPhotoMemo
                       ? 'bg-surface-subtle text-text-tertiary'
                       : 'bg-white text-text-tertiary'
               }`}>
-                {lane.status === 'ready' ? 'Ready' : lane.status === 'needs-action' ? 'Needs action' : lane.status === 'planned' ? 'Planned' : 'Empty'}
+                {getLaneStatusLabel(lane.status)}
               </span>
             </div>
             <p className="mt-2 text-xs leading-5 text-text-secondary">{lane.detail}</p>
@@ -66,7 +92,7 @@ export function GuestPhotoMemoryFlowCard({ memoryFlowReadiness }: GuestPhotoMemo
                       ? 'bg-surface-subtle text-text-tertiary'
                       : 'bg-white text-text-tertiary'
               }`}>
-                {step.status === 'ready' ? 'Ready' : step.status === 'needs-action' ? 'Needs action' : step.status === 'planned' ? 'Planned' : 'Empty'}
+                {getStepStatusLabel(step.status)}
               </span>
             </div>
             <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
