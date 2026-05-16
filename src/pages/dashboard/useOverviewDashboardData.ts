@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { readSetupDraft, setupDraftProgress } from '../../lib/setupDraft';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
-import { isGuestFacingSiteRowReady, isPublicRenderModelGuestReady } from '../../lib/publicSiteReadiness';
+import { isGuestFacingSiteRowReady } from '../../lib/publicSiteReadiness';
 import { normalizeNotificationPrefs } from '../../lib/notificationPrefs';
-import { fetchPublicSiteAccess } from '../../lib/publicSiteAccess';
 import { listBuilderRevisions, type BuilderRevision } from '../../builder/services/versionHistory';
 import { loadNameChangeWorkspace } from './planning/nameChangeService';
 import {
@@ -102,20 +101,7 @@ export function useOverviewDashboardData({
       const hideFromSearch = siteJson?.hide_from_search === true;
       const isPublished = site?.is_published === true;
       const siteSlug = resolvePublicSiteSlugFromRow((site as unknown as Record<string, unknown> | null) ?? null);
-      let guestFacingReady = isGuestFacingSiteRowReady(site as unknown as Record<string, unknown> | null);
-      if (isPublished && siteSlug) {
-        try {
-          const publicAccess = await fetchPublicSiteAccess({
-            slug: siteSlug,
-            language: 'en',
-          });
-          guestFacingReady = publicAccess.status === 'open'
-            && !!publicAccess.site
-            && isPublicRenderModelGuestReady(publicAccess.site.render_model);
-        } catch {
-          guestFacingReady = false;
-        }
-      }
+      const guestFacingReady = isGuestFacingSiteRowReady(site as unknown as Record<string, unknown> | null);
       const privacyMode = site?.privacy_mode === 'password_protected' || site?.privacy_mode === 'invite_only' || site?.privacy_mode === 'hidden'
         ? site.privacy_mode
         : 'public';
