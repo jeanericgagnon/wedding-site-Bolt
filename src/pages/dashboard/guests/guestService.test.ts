@@ -10,6 +10,7 @@ import {
   assignGuestsToHouseholdForSite,
   GUEST_AUDIT_SELECT,
   GUEST_CONFLICT_SELECT,
+  GUEST_DASHBOARD_GUEST_SELECT,
   GUEST_DASHBOARD_RSVP_SELECT,
   GUEST_EVENT_INVITATION_SELECT,
   GUEST_ITINERARY_EVENT_SELECT,
@@ -121,6 +122,8 @@ describe('guestService', () => {
     expect(GUEST_SITE_SETTINGS_SELECT).toContain('rsvp_custom_questions');
     expect(GUEST_SITE_SETTINGS_SELECT).toContain('is_published');
     expect(GUEST_CONFLICT_SELECT).toContain('conflict_code');
+    expect(GUEST_DASHBOARD_GUEST_SELECT).toContain('mailing_address_line1');
+    expect(GUEST_DASHBOARD_GUEST_SELECT).not.toContain('preferred_language');
     expect(MAX_GUEST_DASHBOARD_ROWS).toBe(5000);
     expect(GUEST_DASHBOARD_RSVP_SELECT).not.toContain('*');
     expect(MAX_GUEST_RSVP_LOOKUP_IDS).toBe(5000);
@@ -553,17 +556,18 @@ describe('guestService', () => {
   });
 
   it('loads guest dashboard snapshot through the service', async () => {
-    const guestsQuery = {
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          order: vi.fn(() => ({
-            limit: vi.fn().mockResolvedValue({
-              data: [{ id: 'guest-1', name: 'Alex Jordan' }],
-              error: null,
-            }),
-          })),
+    const guestsSelectMock = vi.fn(() => ({
+      eq: vi.fn(() => ({
+        order: vi.fn(() => ({
+          limit: vi.fn().mockResolvedValue({
+            data: [{ id: 'guest-1', name: 'Alex Jordan' }],
+            error: null,
+          }),
         })),
       })),
+    }));
+    const guestsQuery = {
+      select: guestsSelectMock,
     };
     const rsvpsQuery = {
       select: vi.fn(() => ({
@@ -600,10 +604,11 @@ describe('guestService', () => {
       .mockReturnValueOnce(conflictsQuery);
 
     await expect(loadGuestDashboardSnapshot('site-1')).resolves.toEqual({
-      guests: [{ id: 'guest-1', name: 'Alex Jordan', rsvp: { guest_id: 'guest-1', attending: true } }],
+      guests: [{ id: 'guest-1', name: 'Alex Jordan', preferred_language: null, rsvp: { guest_id: 'guest-1', attending: true } }],
       conflicts: [{ id: 'conflict-1', guest_id: 'guest-1', conflict_code: 'missing_meal', message: 'Meal missing', severity: 'warning', created_at: '2026-05-07T00:00:00Z', resolved: false }],
       conflictHistory: [{ id: 'conflict-2', guest_id: 'guest-1', conflict_code: 'late_rsvp', message: 'Late RSVP', severity: 'error', created_at: '2026-05-06T00:00:00Z', resolved: true, resolved_at: '2026-05-07T00:00:00Z' }],
     });
+    expect(guestsSelectMock).toHaveBeenCalledWith(GUEST_DASHBOARD_GUEST_SELECT);
   });
 
   it('refreshes the guest dashboard auth session before snapshot reads when the browser token is missing', async () => {

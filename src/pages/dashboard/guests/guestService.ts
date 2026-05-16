@@ -37,6 +37,40 @@ export const GUEST_ITINERARY_SITE_SELECT = 'wedding_data';
 export const GUEST_EVENT_INVITATION_SELECT = 'event_id, guest_id';
 export const GUEST_AUDIT_SELECT = 'id, guest_id, action, changed_at, changed_by, old_data, new_data';
 export const GUEST_SITE_SLUG_SELECT = 'site_slug';
+export const GUEST_DASHBOARD_GUEST_SELECT = [
+  'id',
+  'first_name',
+  'last_name',
+  'name',
+  'email',
+  'phone',
+  // Keep this projection aligned with the oldest production guests schema.
+  // Fields added later, like preferred_language, should be written through patch paths
+  // but default safely when a production snapshot does not provide them yet.
+  'plus_one_allowed',
+  'plus_one_name',
+  'children_allowed',
+  'max_children',
+  'max_additional_guests',
+  'invited_to_ceremony',
+  'invited_to_reception',
+  'invite_token',
+  'rsvp_status',
+  'rsvp_received_at',
+  'checked_in_at',
+  'checkin_notes',
+  'thank_you_sent_at',
+  'thank_you_notes',
+  'household_id',
+  'group_name',
+  'notes',
+  'mailing_address_line1',
+  'mailing_address_line2',
+  'mailing_city',
+  'mailing_state',
+  'mailing_postal_code',
+  'mailing_country',
+].join(', ');
 export const MAX_GUEST_DASHBOARD_ROWS = 5000;
 export const MAX_GUEST_RSVP_LOOKUP_IDS = 5000;
 export const MAX_GUEST_BULK_OPERATION_IDS = 5000;
@@ -289,7 +323,7 @@ export async function loadGuestDashboardSnapshot(weddingSiteId: string): Promise
   await ensureGuestDashboardSessionReady();
   const { data: guestsData, error: guestsError } = await supabase
     .from('guests')
-    .select('id, first_name, last_name, name, email, phone, preferred_language, plus_one_allowed, plus_one_name, children_allowed, max_children, max_additional_guests, invited_to_ceremony, invited_to_reception, invite_token, rsvp_status, rsvp_received_at, checked_in_at, checkin_notes, thank_you_sent_at, thank_you_notes, household_id, group_name, notes, mailing_address_line1, mailing_address_line2, mailing_city, mailing_state, mailing_postal_code, mailing_country')
+    .select(GUEST_DASHBOARD_GUEST_SELECT)
     .eq('wedding_site_id', weddingSiteId)
     .order('created_at', { ascending: false })
     .limit(MAX_GUEST_DASHBOARD_ROWS);
@@ -321,6 +355,7 @@ export async function loadGuestDashboardSnapshot(weddingSiteId: string): Promise
 
   const guests = ((guestsData ?? []).map((guest) => ({
     ...guest,
+    preferred_language: null,
     rsvp: (rsvpsData as Array<{ guest_id: string }>).find((r) => r.guest_id === guest.id),
   })) as unknown[]) as GuestWithRSVP[];
 
