@@ -88,4 +88,57 @@ describe('public site readiness', () => {
       theme: { preset: null, tokens: null },
     })).toBe(false);
   });
+
+  it('treats render models with no enabled home-page sections as not guest-ready even if another page has content', () => {
+    expect(isPublicRenderModelGuestReady({
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          meta: { isHome: true },
+          sections: [],
+        },
+        {
+          id: 'travel',
+          title: 'Travel',
+          slug: 'travel',
+          orderIndex: 1,
+          meta: { isHome: false },
+          sections: [
+            {
+              id: 'travel-1',
+              type: 'travel',
+              variant: 'default',
+              enabled: true,
+              orderIndex: 0,
+              settings: {},
+            },
+          ],
+        },
+      ],
+      wedding: {
+        version: '1',
+        couple: {
+          partner1Name: 'Maya',
+          partner2Name: 'Leo',
+          displayName: 'Maya and Leo',
+          story: 'We met on a rainy Wednesday, stayed for dinner, and never really stopped building a life together.',
+        },
+        event: {
+          weddingDateISO: '2026-06-15T12:00:00.000Z',
+        },
+        venues: [{ id: 'venue-1', name: 'Sunset Gardens', address: '123 Coast Highway' }],
+        schedule: [{ id: 'event-1', label: 'Ceremony' }],
+        rsvp: { enabled: true },
+        travel: {},
+        registry: { links: [] },
+        faq: [],
+        media: { gallery: [], heroImageUrl: 'https://example.com/hero.jpg' },
+        theme: {},
+      },
+      theme: { preset: null, tokens: null },
+    })).toBe(false);
+  });
 });

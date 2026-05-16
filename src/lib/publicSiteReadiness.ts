@@ -49,9 +49,11 @@ export function isPublicRenderModelGuestReady(renderModel: PublicSiteRenderModel
 
   if ((renderModel.pages ?? []).length === 0) return true;
 
-  return renderModel.pages.some((page) =>
-    Array.isArray(page.sections) && page.sections.some((section) => section.enabled !== false)
-  );
+  const homePage = renderModel.pages.find((page) => page.meta?.isHome || page.id === 'home' || page.slug === 'home')
+    ?? renderModel.pages[0];
+
+  return Array.isArray(homePage?.sections)
+    && homePage.sections.some((section) => section.enabled !== false);
 }
 
 export function isGuestFacingSiteRowReady(row: Record<string, unknown> | null | undefined): boolean {
