@@ -19,8 +19,8 @@ export const MAX_OVERVIEW_BUDGET_ITEMS = 1000;
 export const MAX_OVERVIEW_VENDORS = 500;
 export const OVERVIEW_RECENT_UPLOAD_LOOKBACK_DAYS = 7;
 export const OVERVIEW_GUEST_SELECT = 'id, rsvp_status, rsvp_received_at, first_name, last_name, name';
-export const OVERVIEW_BUDGET_ITEM_SELECT = 'id, estimated_amount, actual_amount, paid_amount, due_date, vendor_id';
-export const OVERVIEW_VENDOR_SELECT = 'id, name, email, phone, contract_total, amount_paid, balance_due, next_payment_due, document_url';
+export const OVERVIEW_BUDGET_ITEM_SELECT = 'id, estimated_amount, actual_amount, paid_amount, vendor_id';
+export const OVERVIEW_VENDOR_SELECT = 'id, name, email, contract_total, amount_paid, balance_due, next_payment_due, document_url';
 export const OVERVIEW_GUEST_HUB_EVENT_SELECT = 'event_type, target, created_at';
 export const OVERVIEW_ANALYTICS_LOOKBACK_DAYS = 30;
 
@@ -520,14 +520,14 @@ export async function loadOverviewDashboardSnapshot(userId: string): Promise<Ove
       estimated_amount: typeof row.estimated_amount === 'number' ? row.estimated_amount : null,
       actual_amount: typeof row.actual_amount === 'number' ? row.actual_amount : null,
       paid_amount: typeof row.paid_amount === 'number' ? row.paid_amount : null,
-      due_date: typeof row.due_date === 'string' ? row.due_date : null,
+      due_date: null,
       vendor_id: typeof row.vendor_id === 'string' ? row.vendor_id : null,
     })) as BudgetLedgerItem[],
     vendors: ((vendorsResult.data ?? []) as Array<Record<string, unknown>>).map((row) => ({
       id: String(row.id ?? ''),
       name: typeof row.name === 'string' ? row.name : '',
       email: typeof row.email === 'string' ? row.email : null,
-      phone: typeof row.phone === 'string' ? row.phone : null,
+      phone: null,
       contract_total: typeof row.contract_total === 'number' ? row.contract_total : null,
       amount_paid: typeof row.amount_paid === 'number' ? row.amount_paid : null,
       balance_due: typeof row.balance_due === 'number' ? row.balance_due : null,
