@@ -82,7 +82,7 @@ export function GuestContactLookupPanel({
           </div>
         </div>
         <p id="guest-contact-search-helper" className="mt-1 text-xs text-text-secondary">Use your full name exactly as it appears on the invitation.</p>
-        <p id="guest-contact-verifier-helper" className="mt-1 text-xs text-text-secondary">Add the first few characters of the email address on your invitation. If you opened this from your RSVP link, we can use that secure token too.</p>
+        <p id="guest-contact-verifier-helper" className="mt-1 text-xs text-text-secondary">Add the first few characters of the email address on your invitation. If you opened this from your invitation link, we can use that to help find your record too.</p>
         <p id="guest-contact-household-verifier-helper" className="mt-1 text-xs text-text-secondary">Add the last 4 digits of the phone number on file if you want to update your whole party.</p>
       </div>
 

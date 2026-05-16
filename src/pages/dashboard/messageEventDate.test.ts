@@ -12,7 +12,7 @@ describe('message event date guards', () => {
 
   it('keeps valid event-date labels truthful', () => {
     expect(formatMessageEventOptionLabel('Ceremony', '2026-09-12')).toBe(
-      `Ceremony — ${new Date('2026-09-12').toLocaleDateString()}`,
+      `Ceremony — ${new Date('2026-09-12T12:00:00Z').toLocaleDateString()}`,
     );
   });
 });

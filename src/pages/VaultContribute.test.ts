@@ -9,10 +9,14 @@ vi.mock('../config/env', () => ({
   DEMO_MODE: true,
 }));
 
+const { invokeMock } = vi.hoisted(() => ({
+  invokeMock: vi.fn(async () => ({ data: { configs: [], config: null }, error: null })),
+}));
+
 vi.mock('../lib/supabase', () => ({
   supabase: {
     functions: {
-      invoke: vi.fn(async () => ({ data: { configs: [], config: null }, error: null })),
+      invoke: invokeMock,
     },
   },
 }));
@@ -134,6 +138,7 @@ describe('vault contribution data boundary', () => {
     expect(page).toContain('<VaultContributeRouteView');
     expect(page).toContain('loadEnabledVaultContributionConfig(siteSlug, vaultYear, buildVaultAccessPayload(siteSlug))');
     expect(page).toContain('listEnabledVaultContributionConfigs(siteSlug, buildVaultAccessPayload(siteSlug))');
+    expect(page).toContain("setStep(options.length === 1 ? 'form' : 'hub');");
     expect(page).toContain('uploadVaultContributionToGoogleDrive({');
     expect(page).toContain('uploadVaultContributionAttachment({');
     expect(page).toContain('submitVaultContributionRows(rows, buildVaultAccessPayload(siteSlug ?? \'\'), qaOpen)');
@@ -225,5 +230,141 @@ describe('VaultContribute form accessibility', () => {
     });
 
     expect(screen.getByRole('status')).toHaveTextContent('Selected: 1 file');
+  });
+
+  it('drops the no-year guest vault route directly into the form when only one enabled vault exists', async () => {
+    invokeMock.mockImplementation(async (_fn: string, { body }: { body?: { vaultYear?: number | null } }) => {
+      if (body?.vaultYear) {
+        return {
+          data: {
+            site: { site_slug: 'alex-jordan-demo', couple_name_1: 'Alex', couple_name_2: 'Jordan', wedding_date: '2026-02-23' },
+            config: { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
+          },
+          error: null,
+        };
+      }
+
+      return {
+        data: {
+          site: { site_slug: 'alex-jordan-demo', couple_name_1: 'Alex', couple_name_2: 'Jordan', wedding_date: '2026-02-23' },
+          configs: [{ id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true }],
+        },
+        error: null,
+      };
+    });
+
+    render(
+      React.createElement(
+        MemoryRouter,
+        { initialEntries: ['/vault/alex-jordan-demo'] },
+        React.createElement(
+          Routes,
+          null,
+          React.createElement(Route, {
+            path: '/vault/:siteSlug',
+            element: React.createElement(VaultContribute),
+          }),
+        ),
+      ),
+    );
+
+    expect(await screen.findByRole('heading', { name: /anniversary vault/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/your name/i)).toBeInTheDocument();
+  });
+
+  it('shows the vault picker instead of a blank page when the no-year route has multiple enabled vaults', async () => {
+    invokeMock.mockImplementation(async (_fn: string, { body }: { body?: { vaultYear?: number | null } }) => {
+      if (body?.vaultYear) {
+        return {
+          data: {
+            site: { site_slug: 'alex-jordan-demo', couple_name_1: 'Alex', couple_name_2: 'Jordan', wedding_date: '2026-02-23' },
+            config: { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
+          },
+          error: null,
+        };
+      }
+
+      return {
+        data: {
+          site: { site_slug: 'alex-jordan-demo', couple_name_1: 'Alex', couple_name_2: 'Jordan', wedding_date: '2026-02-23' },
+          configs: [
+            { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
+            { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
+          ],
+        },
+        error: null,
+      };
+    });
+
+    render(
+      React.createElement(
+        MemoryRouter,
+        { initialEntries: ['/vault/alex-jordan-demo'] },
+        React.createElement(
+          Routes,
+          null,
+          React.createElement(Route, {
+            path: '/vault/:siteSlug',
+            element: React.createElement(VaultContribute),
+          }),
+        ),
+      ),
+    );
+
+    expect(await screen.findByRole('heading', { name: /choose an anniversary vault/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /1-Year Anniversary Vault/i })).toHaveAttribute('href', '/vault/alex-jordan-demo/1');
+    expect(screen.getByRole('link', { name: /5-Year Anniversary Vault/i })).toHaveAttribute('href', '/vault/alex-jordan-demo/5');
+    expect(screen.queryByLabelText(/your name/i)).not.toBeInTheDocument();
+  });
+
+  it('sorts the no-year vault picker by anniversary year before choosing the default route state', async () => {
+    invokeMock.mockImplementation(async (_fn: string, { body }: { body?: { vaultYear?: number | null } }) => {
+      if (body?.vaultYear) {
+        return {
+          data: {
+            site: { site_slug: 'alex-jordan-demo', couple_name_1: 'Alex', couple_name_2: 'Jordan', wedding_date: '2026-02-23' },
+            config: { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
+          },
+          error: null,
+        };
+      }
+
+      return {
+        data: {
+          site: { site_slug: 'alex-jordan-demo', couple_name_1: 'Alex', couple_name_2: 'Jordan', wedding_date: '2026-02-23' },
+          configs: [
+            { id: 'demo-vault-10', label: '10-Year Anniversary Vault', duration_years: 10, is_enabled: true },
+            { id: 'demo-vault-1', label: '1-Year Anniversary Vault', duration_years: 1, is_enabled: true },
+            { id: 'demo-vault-5', label: '5-Year Anniversary Vault', duration_years: 5, is_enabled: true },
+          ],
+        },
+        error: null,
+      };
+    });
+
+    render(
+      React.createElement(
+        MemoryRouter,
+        { initialEntries: ['/vault/alex-jordan-demo'] },
+        React.createElement(
+          Routes,
+          null,
+          React.createElement(Route, {
+            path: '/vault/:siteSlug',
+            element: React.createElement(VaultContribute),
+          }),
+        ),
+      ),
+    );
+
+    expect(await screen.findByRole('heading', { name: /choose an anniversary vault/i })).toBeInTheDocument();
+
+    const links = screen.getAllByRole('link').filter((link) => /anniversary vault/i.test(link.textContent || ''));
+    expect(links.map((link) => link.textContent)).toEqual([
+      '1-Year Anniversary Vault',
+      '5-Year Anniversary Vault',
+      '10-Year Anniversary Vault',
+    ]);
+    expect(links[0]).toHaveAttribute('href', '/vault/alex-jordan-demo/1');
   });
 });

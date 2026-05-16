@@ -64,12 +64,12 @@ export function MessageDashboardView({
       <div className="max-w-[1100px] mx-auto space-y-5">
         <DashboardPageHero
           eyebrow="Messages"
-          title="Send guest updates without making them feel automated."
-          description="Pick the moment, confirm the audience, edit the words, and choose when it should go out. Text sending stays locked until setup is ready."
+          title="Updates guests can actually use."
+          description="Send reminders, schedule changes, photo links, and thank-you notes without turning your wedding into a group chat."
           stats={[
-            { label: 'Scheduled', value: scheduledCount, detail: 'waiting to send' },
-            { label: 'Guests reached', value: guestsReached, detail: 'across sent updates' },
-            { label: 'Delivery', value: `${deliveryRate}%`, detail: 'latest delivery health' },
+            { label: 'Scheduled', value: scheduledCount > 0 ? `${scheduledCount} waiting` : 'Nothing waiting', detail: 'ready when needed' },
+            { label: 'Reach', value: guestsReached > 0 ? `${guestsReached} guests reached` : 'Ready to send', detail: 'across sent updates' },
+            { label: 'Delivery', value: `${deliveryRate}% healthy`, detail: 'latest send status' },
           ]}
           actions={
             <div className="flex flex-col gap-3 md:items-end">
@@ -81,7 +81,7 @@ export function MessageDashboardView({
               >
                 {processingScheduled
                   ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Running due sends…</>
-                  : <><Clock className="w-4 h-4 mr-2" />{overdueScheduled > 0 ? `Run ${overdueScheduled} due scheduled send${overdueScheduled !== 1 ? 's' : ''}` : 'Run due scheduled sends'}</>}
+                  : <><Clock className="w-4 h-4 mr-2" />{overdueScheduled > 0 ? `Send ${overdueScheduled} scheduled update${overdueScheduled !== 1 ? 's' : ''}` : 'Review scheduled updates'}</>}
               </Button>
               <div>
                 <label className="block text-xs text-text-tertiary mb-1">View as</label>

@@ -139,6 +139,68 @@ describe('DashboardSeatingLookup', () => {
 
     await screen.findByText('No guests found.');
     expect(loadSeatingLookupRowsForUser).not.toHaveBeenCalled();
+    expect(screen.getByRole('combobox')).toHaveDisplayValue('Choose an event');
+    expect(screen.getByText('Guests listed').nextElementSibling).toHaveTextContent('0');
+  });
+
+  it('clears the loading row when auth is missing instead of hanging indefinitely', async () => {
+    authState.user = null as unknown as { id: string };
+
+    render(
+      <MemoryRouter>
+        <DashboardSeatingLookup />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText('No guests found.');
+    expect(loadSeatingLookupRowsForUser).not.toHaveBeenCalled();
+    expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
+
+    authState.user = { id: 'user-1' };
+  });
+
+  it('clears the loading row when no wedding site is resolved instead of hanging indefinitely', async () => {
+    getWeddingSiteId.mockResolvedValue(null);
+
+    render(
+      <MemoryRouter>
+        <DashboardSeatingLookup />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText('No guests found.');
+    expect(loadItineraryEvents).not.toHaveBeenCalled();
+    expect(loadSeatingLookupRowsForUser).not.toHaveBeenCalled();
+    expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
+    expect(screen.getByText('Guests listed').nextElementSibling).toHaveTextContent('0');
+  });
+
+  it('moves cleanly from the loading row to the zero-state when site resolution finishes empty', async () => {
+    let resolveSite: (value: string | null) => void = () => {};
+    getWeddingSiteId.mockImplementation(
+      () =>
+        new Promise<string | null>((resolve) => {
+          resolveSite = resolve;
+        }),
+    );
+
+    render(
+      <MemoryRouter>
+        <DashboardSeatingLookup />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('Loading…')).toBeInTheDocument();
+    expect(screen.getByRole('combobox')).toHaveDisplayValue('Loading events…');
+    expect(screen.getByText('Guests listed').nextElementSibling).toHaveTextContent('—');
+
+    resolveSite(null);
+
+    await screen.findByText('No guests found.');
+    expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
+    expect(screen.getByRole('combobox')).toHaveDisplayValue('Choose an event');
+    expect(screen.getByText(/Data is for/i)).toHaveTextContent('the selected event');
+    expect(screen.getByText('Guests listed').nextElementSibling).toHaveTextContent('0');
   });
 
   it('reads demo lookup rows from the shared seating demo state instead of hardcoded placeholders', async () => {

@@ -30,6 +30,7 @@ export function useGuestPhotoDashboardUiState({ search }: Args) {
 
   const [siteId, setSiteId] = useState<string | null>(null);
   const [siteSlug, setSiteSlug] = useState<string | null>(null);
+  const [isPublished, setIsPublished] = useState(false);
   const [events, setEvents] = useState<ItineraryEvent[]>([]);
   const [buckets, setBuckets] = useState<PhotoBucketRow[]>([]);
   const [uploads, setUploads] = useState<PhotoUploadRow[]>([]);
@@ -73,6 +74,7 @@ export function useGuestPhotoDashboardUiState({ search }: Args) {
     guestProspects,
     guestbookEntries,
     hubSettings,
+    isPublished,
     itineraryEventId,
     latestUploadUrl,
     loading,
@@ -106,6 +108,7 @@ export function useGuestPhotoDashboardUiState({ search }: Args) {
     setGuestProspects,
     setGuestbookEntries,
     setHubSettings,
+    setIsPublished,
     setItineraryEventId,
     setLatestUploadUrl,
     setLoading,

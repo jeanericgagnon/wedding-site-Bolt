@@ -77,6 +77,7 @@ export function useSettingsDashboardUiState({ userId }: Args) {
   const [sitePassword, setSitePassword] = useState('');
   const [showSitePassword, setShowSitePassword] = useState(false);
   const [guestAccessToken, setGuestAccessToken] = useState<string | null>(null);
+  const [isPublished, setIsPublished] = useState(false);
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
   const [analyticsRetentionDays, setAnalyticsRetentionDays] = useState<AnalyticsRetentionDays>(90);
   const [analyticsGuestNotice, setAnalyticsGuestNotice] = useState('');
@@ -198,6 +199,7 @@ export function useSettingsDashboardUiState({ userId }: Args) {
     defaultLanguage,
     allowedLanguages,
     guestAccessToken,
+    isPublished,
     hideFromSearch,
     musicPlaylistUrl,
     newPassword,
@@ -286,6 +288,7 @@ export function useSettingsDashboardUiState({ userId }: Args) {
     setDefaultLanguage,
     setAllowedLanguages,
     setGuestAccessToken,
+    setIsPublished,
     setHideFromSearch,
     setMusicPlaylistUrl,
     setNewPassword,

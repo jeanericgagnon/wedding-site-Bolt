@@ -71,6 +71,7 @@ export type UseSettingsSiteAccessActionsArgs = {
   plannerInviteRole: Exclude<PlannerAccessRole, 'owner'>;
   plannerInvitePermissions: PlannerPermissionKey[];
   collaboratorInvites: SettingsCollaboratorInviteRow[];
+  isPublished: boolean;
   privacyMode: SettingsPrivacyMode;
   hideFromSearch: boolean;
   allowedLanguages: SiteLanguageCode[];
@@ -129,6 +130,7 @@ export function useSettingsSiteAccessActions({
   plannerInviteRole,
   plannerInvitePermissions,
   collaboratorInvites,
+  isPublished,
   privacyMode,
   hideFromSearch,
   allowedLanguages,
@@ -491,6 +493,11 @@ export function useSettingsSiteAccessActions({
   };
 
   const downloadIdentityPrintPack = async () => {
+    if (!isPublished) {
+      toast('Publish the site before saving the identity print pack.', 'error');
+      return;
+    }
+
     if (weddingIdentityPrintAssets.length === 0) {
       toast('Set a public site URL before saving the identity print pack.', 'error');
       return;
@@ -528,6 +535,11 @@ export function useSettingsSiteAccessActions({
   };
 
   const downloadIdentityStoryGraphic = async () => {
+    if (!isPublished) {
+      toast('Publish the site before saving the story graphic.', 'error');
+      return;
+    }
+
     if (!weddingIdentityStoryGraphic) {
       toast('Set a public site URL before saving the story graphic.', 'error');
       return;

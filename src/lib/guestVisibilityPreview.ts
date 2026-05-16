@@ -35,6 +35,7 @@ export interface GuestVisibilityPreviewInput {
   events: VisibilityPreviewEvent[];
   invitedEventIds?: Iterable<string> | null;
   householdMembers?: VisibilityPreviewHouseholdMember[];
+  isPublished?: boolean;
   publicSiteSlug?: string | null;
 }
 
@@ -125,13 +126,15 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
   if (householdStatuses.size > 1) {
     warnings.push('Household RSVP states are mixed, so preview this guest before sending reminders.');
   }
-  if (input.publicSiteSlug) {
+  if (input.publicSiteSlug && input.isPublished) {
     warnings.push('Public site preview opens the site shell with this guest context; private event gating is proven in the RSVP preview.');
+  } else if (input.publicSiteSlug) {
+    warnings.push('Publish the site before sharing public guest-preview links or QR codes.');
   }
 
   const totalEventCount = hasStructuredEvents ? input.events.length : visibleEvents.length + hiddenEvents.length;
   const hasPrivateInviteAccess = Boolean(input.guest.inviteToken);
-  const hasPublicShellPreview = Boolean(input.publicSiteSlug);
+  const hasPublicShellPreview = Boolean(input.publicSiteSlug && input.isPublished);
 
   const links: GuestVisibilityPreviewLink[] = [];
   if (hasPrivateInviteAccess) {
@@ -186,7 +189,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
       ),
     });
   }
-  if (input.publicSiteSlug) {
+  if (input.publicSiteSlug && input.isPublished) {
     links.push({
       kind: 'travel',
       label: 'Open travel section as guest',
@@ -217,7 +220,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
     ? hasPrivateInviteAccess
       ? `${visibleEvents.length} visible event${visibleEvents.length === 1 ? '' : 's'} have a private guest path ready.`
       : `${visibleEvents.length} visible event${visibleEvents.length === 1 ? '' : 's'} exist, but private guest-link coverage still needs setup.`
-    : input.publicSiteSlug
+    : hasPublicShellPreview
       ? 'Public shell preview is ready, but this guest still has no visible private event access.'
       : 'No guest-facing preview path is fully ready yet.';
   const routeReadinessLabel = visibleEvents.length > 0

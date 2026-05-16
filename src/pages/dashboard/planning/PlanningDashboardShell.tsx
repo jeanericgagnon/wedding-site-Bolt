@@ -56,8 +56,8 @@ export function PlanningDashboardShell({
       <div className="max-w-5xl mx-auto space-y-6">
         <DashboardPageHero
           eyebrow="Planner"
-          title="Keep the practical pieces moving without turning the wedding into a spreadsheet."
-          description="Tasks, money, vendors, songs, addresses, and name-change details stay together, with the deeper tools waiting only when you need them."
+          title="Plans, notes, and finishing touches."
+          description="Keep the supporting details close without turning your wedding into a task board."
           stats={[
             { label: 'Open tasks', value: openTaskCount, detail: `${tasksCount} total` },
             { label: 'Vendors', value: vendorsCount, detail: vendorsCount === 1 ? 'contact saved' : 'contacts saved' },

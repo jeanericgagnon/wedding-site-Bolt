@@ -151,6 +151,38 @@ describe('HeroSection', () => {
     expect(screen.getByText('The couple')).toBeInTheDocument();
   });
 
+  it('restores a meaningful public hero heading when the saved headline is blank whitespace', () => {
+    const data = createEmptyWeddingData();
+    data.couple.displayName = 'Alex & Jordan';
+
+    const { rerender } = render(
+      <HeroSection
+        data={data}
+        instance={makeInstance({ headline: '   ' })}
+      />
+    );
+
+    expect(screen.getByRole('heading', { name: 'Alex & Jordan' })).toBeInTheDocument();
+
+    rerender(
+      <HeroFullbleed
+        data={data}
+        instance={makeInstance({ headline: '   ' })}
+      />
+    );
+
+    expect(screen.getByRole('heading', { name: 'Alex & Jordan' })).toBeInTheDocument();
+
+    rerender(
+      <HeroCountdown
+        data={data}
+        instance={makeInstance({ headline: '   ' })}
+      />
+    );
+
+    expect(screen.getByRole('heading', { name: 'Alex & Jordan' })).toBeInTheDocument();
+  });
+
   it('keeps hero display names truthful when one persisted partner name is whitespace only', () => {
     const data = createEmptyWeddingData();
     data.couple.partner1Name = '   ';

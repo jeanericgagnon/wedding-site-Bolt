@@ -45,6 +45,10 @@ type Step = 'loading' | 'hub' | 'form' | 'success' | 'error' | 'invalid';
 const MAX_UPLOAD_MB_BY_TYPE: Record<'photo' | 'video' | 'voice', number> = { photo: 8, video: 35, voice: 12 };
 const DEMO_WEDDING_DATE = '2026-02-23';
 
+function sortVaultConfigsByYear<T extends Pick<VaultConfigInfo, 'duration_years'>>(configs: T[]): T[] {
+  return [...configs].sort((a, b) => a.duration_years - b.duration_years);
+}
+
 export const buildVaultAccessPayload = (slug: string) => {
   const searchParams = new URLSearchParams(window.location.search);
   return buildPublicAccessArtifacts(slug, searchParams);
@@ -330,7 +334,7 @@ export const VaultContribute: React.FC = () => {
         const enabled = readDemoVaultState({ vaultConfigs: seeded.map((config, index) => ({ ...config, vault_index: index + 1 })), entries: [] })
           .vaultConfigs
           .filter((config) => config.is_enabled);
-        const fallback = (enabled.length > 0 ? enabled : seeded).sort((a, b) => a.duration_years - b.duration_years);
+        const fallback = sortVaultConfigsByYear(enabled.length > 0 ? enabled : seeded);
         setVaultOptions(fallback);
         setVaultConfig(fallback[0]);
         setStep(hasYearParam ? 'form' : 'hub');
@@ -364,9 +368,11 @@ export const VaultContribute: React.FC = () => {
       return;
     }
 
-    setVaultOptions(options);
-    setVaultConfig(options[0]);
-    setStep('hub');
+    const sortedOptions = sortVaultConfigsByYear(options);
+
+    setVaultOptions(sortedOptions);
+    setVaultConfig(sortedOptions[0]);
+    setStep(sortedOptions.length === 1 ? 'form' : 'hub');
   }
 
 

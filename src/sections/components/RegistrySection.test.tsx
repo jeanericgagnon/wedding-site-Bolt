@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -427,6 +427,234 @@ describe('RegistrySection', () => {
     expect(screen.queryByRole('link', { name: 'PayPal' })).not.toBeInTheDocument();
     expect(screen.getAllByText('Honeymoon fund')).toHaveLength(1);
     expect(screen.getAllByText('Dinner plates').length).toBeGreaterThan(0);
+  });
+
+  it('keeps broken imported live item titles out of the rendered public registry surfaces', async () => {
+    mockUseSiteView.mockReturnValue({ weddingSiteId: 'site-1', inviteToken: null, passwordSession: null });
+    mockPublicFetchRegistryItems.mockResolvedValue([
+      {
+        id: 'broken-live',
+        wedding_site_id: 'site-1',
+        item_type: 'product',
+        item_name: 'Page Not Found',
+        price_label: '$90.00',
+        price_amount: 90,
+        store_name: 'Broken Store',
+        merchant: 'Broken Store',
+        item_url: 'https://example.com/broken-gift',
+        canonical_url: 'https://example.com/broken-gift',
+        image_url: 'https://image.thum.io/get/width/900/crop/700/https%3A%2F%2Fexample.com%2Fbroken',
+        description: null,
+        notes: null,
+        quantity_needed: 1,
+        quantity_purchased: 0,
+        purchaser_name: null,
+        purchase_status: 'available',
+        hide_when_purchased: false,
+        sort_order: 0,
+        priority: 'medium',
+        created_at: new Date(0).toISOString(),
+        updated_at: new Date(0).toISOString(),
+      },
+      {
+        id: 'clean-live',
+        wedding_site_id: 'site-1',
+        item_type: 'product',
+        item_name: 'Amazon.com: Still a real gift &amp; keepsake',
+        price_label: '$120.00',
+        price_amount: 120,
+        store_name: 'A Co',
+        merchant: 'A Co',
+        item_url: 'https://example.com/keepsake',
+        canonical_url: 'https://example.com/keepsake',
+        image_url: 'https://image.thum.io/get/width/900/crop/700/https%3A%2F%2Fexample.com%2Fkeepsake',
+        description: null,
+        notes: null,
+        quantity_needed: 1,
+        quantity_purchased: 0,
+        purchaser_name: null,
+        purchase_status: 'available',
+        hide_when_purchased: false,
+        sort_order: 1,
+        priority: 'medium',
+        created_at: new Date(0).toISOString(),
+        updated_at: new Date(0).toISOString(),
+      },
+    ] satisfies RegistryItem[]);
+
+    const data = createEmptyWeddingData();
+    const { container, rerender } = render(
+      <RegistrySection
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(await screen.findByText('Still a real gift & keepsake')).toBeInTheDocument();
+    expect(screen.queryByText('Page Not Found')).not.toBeInTheDocument();
+    expect(container.innerHTML).not.toContain('image.thum.io');
+
+    rerender(
+      <RegistryGrid
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(await screen.findByText('Still a real gift & keepsake')).toBeInTheDocument();
+    expect(screen.queryByText('Page Not Found')).not.toBeInTheDocument();
+    expect(container.innerHTML).not.toContain('image.thum.io');
+  });
+
+  it('shows a filter-specific empty state without pretending the whole registry is finished', async () => {
+    mockUseSiteView.mockReturnValue({ weddingSiteId: 'site-1', inviteToken: null, passwordSession: null });
+    mockPublicFetchRegistryItems.mockResolvedValue([
+      {
+        id: 'gift-live',
+        wedding_site_id: 'site-1',
+        item_type: 'product',
+        item_name: 'Dinner plates',
+        price_label: '$80.00',
+        price_amount: 80,
+        store_name: 'Home Store',
+        merchant: 'Home Store',
+        item_url: 'https://example.com/dinner-plates',
+        canonical_url: 'https://example.com/dinner-plates',
+        image_url: null,
+        description: null,
+        notes: null,
+        quantity_needed: 1,
+        quantity_purchased: 0,
+        purchaser_name: null,
+        purchase_status: 'available',
+        hide_when_purchased: false,
+        sort_order: 0,
+        priority: 'medium',
+        created_at: new Date(0).toISOString(),
+        updated_at: new Date(0).toISOString(),
+      },
+    ] satisfies RegistryItem[]);
+
+    render(
+      <RegistrySection
+        data={createEmptyWeddingData()}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(await screen.findByText('Dinner plates')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Funds' }));
+
+    expect(screen.getByText('No items match this filter right now.')).toBeInTheDocument();
+    expect(screen.queryByText('All items have been purchased. Thank you!')).not.toBeInTheDocument();
+  });
+
+  it('shows the thank-you empty state once every guest-visible registry item is already purchased and hidden', async () => {
+    mockUseSiteView.mockReturnValue({ weddingSiteId: 'site-1', inviteToken: null, passwordSession: null });
+    mockPublicFetchRegistryItems.mockResolvedValue([
+      {
+        id: 'gift-hidden',
+        wedding_site_id: 'site-1',
+        item_type: 'product',
+        item_name: 'Dinner plates',
+        price_label: '$80.00',
+        price_amount: 80,
+        store_name: 'Home Store',
+        merchant: 'Home Store',
+        item_url: 'https://example.com/dinner-plates',
+        canonical_url: 'https://example.com/dinner-plates',
+        image_url: null,
+        description: null,
+        notes: null,
+        quantity_needed: 1,
+        quantity_purchased: 1,
+        purchaser_name: 'Maya',
+        purchase_status: 'purchased',
+        hide_when_purchased: true,
+        sort_order: 0,
+        priority: 'medium',
+        created_at: new Date(0).toISOString(),
+        updated_at: new Date(0).toISOString(),
+      },
+    ] satisfies RegistryItem[]);
+
+    render(
+      <RegistryGrid
+        data={createEmptyWeddingData()}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(await screen.findByText('All items have been purchased. Thank you!')).toBeInTheDocument();
+    expect(screen.queryByText('Dinner plates')).not.toBeInTheDocument();
+  });
+
+  it('keeps the guest purchase memory note tied only to the item marked from this browser', async () => {
+    rememberRegistryPurchase('gift-live');
+    mockUseSiteView.mockReturnValue({ weddingSiteId: 'site-1', inviteToken: null, passwordSession: null });
+    mockPublicFetchRegistryItems.mockResolvedValue([
+      {
+        id: 'gift-live',
+        wedding_site_id: 'site-1',
+        item_type: 'product',
+        item_name: 'Dinner plates',
+        price_label: '$80.00',
+        price_amount: 80,
+        store_name: 'Home Store',
+        merchant: 'Home Store',
+        item_url: 'https://example.com/dinner-plates',
+        canonical_url: 'https://example.com/dinner-plates',
+        image_url: null,
+        description: null,
+        notes: null,
+        quantity_needed: 1,
+        quantity_purchased: 0,
+        purchaser_name: null,
+        purchase_status: 'available',
+        hide_when_purchased: false,
+        sort_order: 0,
+        priority: 'medium',
+        created_at: new Date(0).toISOString(),
+        updated_at: new Date(0).toISOString(),
+      },
+      {
+        id: 'gift-other',
+        wedding_site_id: 'site-1',
+        item_type: 'product',
+        item_name: 'Serving set',
+        price_label: '$45.00',
+        price_amount: 45,
+        store_name: 'Home Store',
+        merchant: 'Home Store',
+        item_url: 'https://example.com/serving-set',
+        canonical_url: 'https://example.com/serving-set',
+        image_url: null,
+        description: null,
+        notes: null,
+        quantity_needed: 1,
+        quantity_purchased: 0,
+        purchaser_name: null,
+        purchase_status: 'available',
+        hide_when_purchased: false,
+        sort_order: 1,
+        priority: 'medium',
+        created_at: new Date(0).toISOString(),
+        updated_at: new Date(0).toISOString(),
+      },
+    ] satisfies RegistryItem[]);
+
+    render(
+      <RegistrySection
+        data={createEmptyWeddingData()}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(await screen.findByText('Dinner plates')).toBeInTheDocument();
+    expect(screen.getByText('You marked this from this browser.')).toBeInTheDocument();
+    expect(screen.getByText('Serving set')).toBeInTheDocument();
+    expect(screen.getAllByText('You marked this from this browser.')).toHaveLength(1);
   });
 
   it('describes first-gift and flexible-fund states without overstating progress', () => {

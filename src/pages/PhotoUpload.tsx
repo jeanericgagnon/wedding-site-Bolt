@@ -127,6 +127,11 @@ export const PhotoUpload: React.FC = () => {
       return;
     }
 
+    if (!siteSlug && !token.trim() && files.length === 0) {
+      setError(t('photo_upload.token_and_file_required'));
+      return;
+    }
+
     if (!token.trim() && !siteSlug) {
       setError(t('photo_upload.token_required'));
       return;
@@ -244,15 +249,15 @@ export const PhotoUpload: React.FC = () => {
           <div className="grid gap-3 p-5 text-sm text-stone-600 sm:p-6">
             <div className="flex gap-3">
               <Check className="mt-0.5 h-4 w-4 flex-none text-stone-600" aria-hidden="true" />
-              <span>No app or account needed.</span>
+              <span>{t('photo_upload.helper_no_app')}</span>
             </div>
             <div className="flex gap-3">
               <Check className="mt-0.5 h-4 w-4 flex-none text-stone-600" aria-hidden="true" />
-              <span>Photos and videos go straight to the couple.</span>
+              <span>{t('photo_upload.helper_direct')}</span>
             </div>
             <div className="flex gap-3">
               <Check className="mt-0.5 h-4 w-4 flex-none text-stone-600" aria-hidden="true" />
-              <span>You can add a short note so they know the story.</span>
+              <span>{t('photo_upload.helper_note')}</span>
             </div>
           </div>
         </section>
@@ -277,8 +282,12 @@ export const PhotoUpload: React.FC = () => {
                 onChange={(e) => setToken(e.target.value)}
                 className={inputClassName}
                 placeholder={t('photo_upload.token_placeholder')}
-                required
+                aria-invalid={error === t('photo_upload.token_required') || error === t('photo_upload.token_and_file_required') ? 'true' : 'false'}
+                aria-describedby="photo-upload-token-hint photo-upload-status-panel"
               />
+              <p id="photo-upload-token-hint" className="mt-2 text-xs text-stone-500">
+                {t('photo_upload.token_hint')}
+              </p>
             </div>
           )}
 
@@ -381,6 +390,7 @@ export const PhotoUpload: React.FC = () => {
           </div>
 
           <PhotoUploadStatusPanel
+            panelId="photo-upload-status-panel"
             error={error}
             message={message}
             siteSlug={siteSlug}

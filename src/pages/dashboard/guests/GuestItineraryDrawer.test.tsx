@@ -43,6 +43,7 @@ describe('GuestItineraryDrawer', () => {
       id: 'site-1',
       couple_name_1: 'Maya',
       couple_name_2: 'Rowan',
+      is_published: true,
       wedding_date: '2026-06-20',
       venue_name: 'Garden',
       venue_address: null,
@@ -206,6 +207,7 @@ describe('GuestItineraryDrawer', () => {
           id: 'site-1',
           couple_name_1: 'Maya',
           couple_name_2: 'Rowan',
+          is_published: true,
           wedding_date: '2026-06-20',
           venue_name: 'Garden',
           venue_address: null,
@@ -273,6 +275,7 @@ describe('GuestItineraryDrawer', () => {
           id: 'site-1',
           couple_name_1: 'Maya',
           couple_name_2: 'Rowan',
+          is_published: true,
           wedding_date: '2026-06-20',
           venue_name: 'Garden',
           venue_address: null,
@@ -295,5 +298,266 @@ describe('GuestItineraryDrawer', () => {
     expect(screen.getByText('50% event visibility coverage · 50% still hidden')).toBeInTheDocument();
     expect(screen.getAllByText('Visible to this guest: Ceremony.').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Hidden from this guest: Reception.')).toBeInTheDocument();
+  });
+
+  it('holds back public guest-preview links until the site is published', () => {
+    const guest: GuestWithRSVP = {
+      id: 'guest-1',
+      first_name: 'Maya',
+      last_name: 'Lee',
+      name: 'Maya Lee',
+      email: 'maya@example.com',
+      phone: null,
+      plus_one_allowed: false,
+      plus_one_name: null,
+      invited_to_ceremony: true,
+      invited_to_reception: true,
+      invite_token: 'secret-token',
+      rsvp_status: 'pending',
+      rsvp_received_at: null,
+      household_id: null,
+      invited_event_ids: ['event-1'],
+      rsvp: {
+        attending: true,
+        meal_choice: null,
+        plus_one_name: null,
+        notes: null,
+      },
+    };
+
+    render(
+      <GuestItineraryDrawer
+        guest={guest}
+        guestAuditEntries={[]}
+        guestEventIds={new Set(['event-1'])}
+        guests={[guest]}
+        itineraryEvents={[{ id: 'event-1', event_name: 'Ceremony', event_date: '2026-06-20', start_time: '16:00:00', location_name: 'Garden' }]}
+        loadingDrawer={false}
+        rotatingInviteToken={false}
+        togglingEventId={null}
+        weddingSiteInfo={{
+          id: 'site-1',
+          couple_name_1: 'Maya',
+          couple_name_2: 'Rowan',
+          is_published: false,
+          wedding_date: '2026-06-20',
+          venue_name: 'Garden',
+          venue_address: null,
+          site_url: 'https://dayof.love/site/maya-and-rowan',
+          site_slug: 'maya-and-rowan',
+        }}
+        onAddFollowUpTask={vi.fn()}
+        onClose={vi.fn()}
+        onCopyContactRequestLink={vi.fn()}
+        onFocusGuestSearch={vi.fn()}
+        onRevokeGuestInviteToken={vi.fn()}
+        onRotateGuestInviteToken={vi.fn()}
+        onToast={vi.fn()}
+        onToggleEventInvite={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Publish the site before sharing public guest-preview links or QR codes.')).toBeInTheDocument();
+    expect(screen.queryByText('Public site preview QR')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Open travel section as guest/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Open registry section as guest/i })).not.toBeInTheDocument();
+  });
+
+  it('keeps private guest-preview links available while a draft site still withholds public-shell previews', () => {
+    const guest: GuestWithRSVP = {
+      id: 'guest-1',
+      first_name: 'Maya',
+      last_name: 'Lee',
+      name: 'Maya Lee',
+      email: 'maya@example.com',
+      phone: null,
+      plus_one_allowed: false,
+      plus_one_name: null,
+      invited_to_ceremony: true,
+      invited_to_reception: true,
+      invite_token: 'secret-token',
+      rsvp_status: 'pending',
+      rsvp_received_at: null,
+      household_id: null,
+      invited_event_ids: ['event-1'],
+      rsvp: {
+        attending: true,
+        meal_choice: null,
+        plus_one_name: null,
+        notes: null,
+      },
+    };
+
+    render(
+      <GuestItineraryDrawer
+        guest={guest}
+        guestAuditEntries={[]}
+        guestEventIds={new Set(['event-1'])}
+        guests={[guest]}
+        itineraryEvents={[{ id: 'event-1', event_name: 'Ceremony', event_date: '2026-06-20', start_time: '16:00:00', location_name: 'Garden' }]}
+        loadingDrawer={false}
+        rotatingInviteToken={false}
+        togglingEventId={null}
+        weddingSiteInfo={{
+          id: 'site-1',
+          couple_name_1: 'Maya',
+          couple_name_2: 'Rowan',
+          is_published: false,
+          wedding_date: '2026-06-20',
+          venue_name: 'Garden',
+          venue_address: null,
+          site_url: 'https://dayof.love/site/maya-and-rowan',
+          site_slug: 'maya-and-rowan',
+        }}
+        onAddFollowUpTask={vi.fn()}
+        onClose={vi.fn()}
+        onCopyContactRequestLink={vi.fn()}
+        onFocusGuestSearch={vi.fn()}
+        onRevokeGuestInviteToken={vi.fn()}
+        onRotateGuestInviteToken={vi.fn()}
+        onToast={vi.fn()}
+        onToggleEventInvite={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /Open RSVP as guest/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Open guest update view/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Open photo upload as guest/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Open guestbook as guest/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Open anniversary vault as guest/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Open recap as guest/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Open travel section as guest/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Open registry section as guest/i })).not.toBeInTheDocument();
+    expect(screen.getByText('6 guest routes ready · 6 guest-specific · 0 public shell · 1 visible event · 0 hidden events')).toBeInTheDocument();
+    expect(screen.getByText('67% guest-specific coverage · 0% public-shell coverage')).toBeInTheDocument();
+  });
+
+  it('withholds public-shell previews when the public site slug is missing even if the site is otherwise marked published', () => {
+    const guest: GuestWithRSVP = {
+      id: 'guest-1',
+      first_name: 'Maya',
+      last_name: 'Lee',
+      name: 'Maya Lee',
+      email: 'maya@example.com',
+      phone: null,
+      plus_one_allowed: false,
+      plus_one_name: null,
+      invited_to_ceremony: true,
+      invited_to_reception: true,
+      invite_token: 'secret-token',
+      rsvp_status: 'pending',
+      rsvp_received_at: null,
+      household_id: null,
+      invited_event_ids: ['event-1'],
+      rsvp: {
+        attending: true,
+        meal_choice: null,
+        plus_one_name: null,
+        notes: null,
+      },
+    };
+
+    render(
+      <GuestItineraryDrawer
+        guest={guest}
+        guestAuditEntries={[]}
+        guestEventIds={new Set(['event-1'])}
+        guests={[guest]}
+        itineraryEvents={[{ id: 'event-1', event_name: 'Ceremony', event_date: '2026-06-20', start_time: '16:00:00', location_name: 'Garden' }]}
+        loadingDrawer={false}
+        rotatingInviteToken={false}
+        togglingEventId={null}
+        weddingSiteInfo={{
+          id: 'site-1',
+          couple_name_1: 'Maya',
+          couple_name_2: 'Rowan',
+          is_published: true,
+          wedding_date: '2026-06-20',
+          venue_name: 'Garden',
+          venue_address: null,
+          site_url: null,
+          site_slug: null,
+        }}
+        onAddFollowUpTask={vi.fn()}
+        onClose={vi.fn()}
+        onCopyContactRequestLink={vi.fn()}
+        onFocusGuestSearch={vi.fn()}
+        onRevokeGuestInviteToken={vi.fn()}
+        onRotateGuestInviteToken={vi.fn()}
+        onToast={vi.fn()}
+        onToggleEventInvite={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText('Public site preview QR')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Open travel section as guest/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Open registry section as guest/i })).not.toBeInTheDocument();
+    expect(screen.getByText('6 guest routes ready · 6 guest-specific · 0 public shell · 1 visible event · 0 hidden events')).toBeInTheDocument();
+    expect(screen.getByText('67% guest-specific coverage · 0% public-shell coverage')).toBeInTheDocument();
+  });
+
+  it('keeps public-shell preview coverage accurate when the public slug is resolved from the live site URL', () => {
+    const guest: GuestWithRSVP = {
+      id: 'guest-1',
+      first_name: 'Maya',
+      last_name: 'Lee',
+      name: 'Maya Lee',
+      email: 'maya@example.com',
+      phone: null,
+      plus_one_allowed: false,
+      plus_one_name: null,
+      invited_to_ceremony: true,
+      invited_to_reception: true,
+      invite_token: 'secret-token',
+      rsvp_status: 'pending',
+      rsvp_received_at: null,
+      household_id: null,
+      invited_event_ids: ['event-1'],
+      rsvp: {
+        attending: true,
+        meal_choice: null,
+        plus_one_name: null,
+        notes: null,
+      },
+    };
+
+    render(
+      <GuestItineraryDrawer
+        guest={guest}
+        guestAuditEntries={[]}
+        guestEventIds={new Set(['event-1'])}
+        guests={[guest]}
+        itineraryEvents={[{ id: 'event-1', event_name: 'Ceremony', event_date: '2026-06-20', start_time: '16:00:00', location_name: 'Garden' }]}
+        loadingDrawer={false}
+        rotatingInviteToken={false}
+        togglingEventId={null}
+        weddingSiteInfo={{
+          id: 'site-1',
+          couple_name_1: 'Maya',
+          couple_name_2: 'Rowan',
+          is_published: true,
+          wedding_date: '2026-06-20',
+          venue_name: 'Garden',
+          venue_address: null,
+          site_url: 'https://dayof.love/site/maya-and-rowan',
+          site_slug: null,
+        }}
+        onAddFollowUpTask={vi.fn()}
+        onClose={vi.fn()}
+        onCopyContactRequestLink={vi.fn()}
+        onFocusGuestSearch={vi.fn()}
+        onRevokeGuestInviteToken={vi.fn()}
+        onRotateGuestInviteToken={vi.fn()}
+        onToast={vi.fn()}
+        onToggleEventInvite={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Public site preview QR')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Open travel section as guest/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Open registry section as guest/i })).toBeInTheDocument();
+    expect(screen.getByText('9 guest routes ready · 6 guest-specific · 3 public shell · 1 visible event · 0 hidden events')).toBeInTheDocument();
+    expect(screen.getByText('67% guest-specific coverage · 33% public-shell coverage')).toBeInTheDocument();
+    expect(screen.getByText('100% preview-route coverage · 9 routes ready · No preview routes missing')).toBeInTheDocument();
   });
 });

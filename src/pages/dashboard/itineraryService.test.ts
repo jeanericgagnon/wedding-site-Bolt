@@ -180,6 +180,31 @@ describe('buildItineraryTemplateInsertRows', () => {
     ]);
   });
 
+  it('keeps visible itinerary events in the wedding schedule mirror when time is blank', () => {
+    expect(buildWeddingSchedule([
+      {
+        id: 'evt-1',
+        event_name: 'Pickleball Tournament',
+        description: 'Morning tournament bracket.',
+        event_date: '2026-06-20',
+        start_time: '',
+        end_time: null,
+        location_name: 'Resort Courts',
+        location_address: '10 Sunset Way',
+        notes: null,
+        is_visible: true,
+      },
+    ])).toEqual([
+      {
+        id: 'evt-1',
+        label: 'Pickleball Tournament',
+        startTimeISO: undefined,
+        endTimeISO: undefined,
+        notes: 'Resort Courts · 10 Sunset Way — Morning tournament bracket.',
+      },
+    ]);
+  });
+
   it('resolves the active itinerary site id through the service helper', async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
     resolveActiveSiteForUserMock.mockResolvedValue({ id: 'site-1', role: 'owner', permissions: null });

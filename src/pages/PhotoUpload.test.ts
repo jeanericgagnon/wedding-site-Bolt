@@ -19,6 +19,7 @@ vi.mock('react-i18next', () => ({
         'photo_upload.uploading_to': `Uploading to ${params?.site}.dayof.love`,
         'photo_upload.name_label': 'Your name (optional)',
         'photo_upload.name_placeholder': 'Jane Doe',
+        'photo_upload.token_hint': "Paste the upload link code from the couple's QR or direct link.",
         'photo_upload.email_label': 'Email (optional)',
         'photo_upload.email_placeholder': 'you@example.com',
         'photo_upload.phone_label': 'Phone (optional)',
@@ -27,11 +28,17 @@ vi.mock('react-i18next', () => ({
         'photo_upload.own_event': 'I want a dayof link for my own event someday.',
         'photo_upload.note_label': 'Note (optional)',
         'photo_upload.note_placeholder': 'A few words for the couple',
+        'photo_upload.helper_no_app': 'No app or account needed.',
+        'photo_upload.helper_direct': 'Photos and videos go straight to the couple.',
+        'photo_upload.helper_note': 'You can add a short note so they know the story.',
         'photo_upload.files_label': 'Files',
         'photo_upload.files_selected': `${params?.count} file(s) selected`,
         'photo_upload.limits': 'Up to 10 files per upload, 30MB per file, 120MB total.',
         'photo_upload.upload_files': 'Upload files',
         'photo_upload.uploading': 'Uploading...',
+        'photo_upload.token_required': "Paste the upload link code from the couple's QR or direct link.",
+        'photo_upload.token_and_file_required': "Paste the upload link code from the couple's QR or direct link, then choose at least one file.",
+        'photo_upload.choose_file': 'Please choose at least one file.',
         'photo_upload.upload_success': `${params?.count} file uploaded.`,
         'photo_upload.upload_partial': `${params?.uploaded} uploaded, ${params?.failed} failed.`,
         'photo_upload.see_recap': 'See the recap',
@@ -138,6 +145,41 @@ describe('photo upload guest error copy', () => {
     });
 
     expect(screen.getByRole('status')).toHaveTextContent('1 file(s) selected');
+  });
+
+  it('renders helper bullets through translation keys instead of hardcoded English copy', () => {
+    window.history.pushState({}, '', '/photos/upload?site=ericandkaras');
+
+    render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(PhotoUpload),
+      ),
+    );
+
+    expect(screen.getByText('No app or account needed.')).toBeInTheDocument();
+    expect(screen.getByText('Photos and videos go straight to the couple.')).toBeInTheDocument();
+    expect(screen.getByText('You can add a short note so they know the story.')).toBeInTheDocument();
+    expect(screen.getByText("Paste the upload link code from the couple's QR or direct link.")).toBeInTheDocument();
+    expect(screen.queryByText(/secure token/i)).not.toBeInTheDocument();
+  });
+
+  it('shows a visible manual-code validation message instead of relying on browser required UI', () => {
+    window.history.pushState({}, '', '/photos/upload');
+
+    render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(PhotoUpload),
+      ),
+    );
+
+    fireEvent.submit(screen.getByRole('button', { name: 'Upload files' }).closest('form')!);
+
+    expect(screen.getByRole('alert')).toHaveTextContent("Paste the upload link code from the couple's QR or direct link, then choose at least one file.");
+    expect(screen.getByLabelText('Upload link code')).toHaveAttribute('aria-describedby', 'photo-upload-token-hint photo-upload-status-panel');
   });
 
   it('uses the local demo upload path for photo memory QA guest video uploads', async () => {

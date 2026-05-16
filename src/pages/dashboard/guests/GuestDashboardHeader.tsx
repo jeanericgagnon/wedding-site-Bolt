@@ -44,16 +44,16 @@ export function GuestDashboardHeader({
     <>
       <DashboardPageHero
         eyebrow="Guests & RSVP"
-        title="Know who is coming and who still needs a gentle nudge."
-        description="Households, plus-ones, event invites, meal choices, and custom answers stay together without making the guest list feel heavy."
+        title="People, replies, and details."
+        description="Keep guest names, RSVPs, meals, households, and contact details in one place."
         stats={[
-          { label: 'Invited', value: stats.total, detail: `${contactCoverage}% reachable` },
-          { label: 'Coming', value: stats.confirmed, detail: `${stats.rsvpRate}% replied` },
-          { label: 'Still pending', value: stats.pending, detail: rsvpNoResponseCount > 0 ? 'ready for a reminder' : 'no reminder needed' },
+          { label: 'Guests', value: `${stats.total} added`, detail: `${contactCoverage}% reachable` },
+          { label: 'Replies', value: stats.rsvpRate >= 70 ? 'Most have replied' : `${stats.confirmed} coming`, detail: `${stats.pending} waiting` },
+          { label: 'Follow-up', value: rsvpNoResponseCount > 0 ? 'Worth reviewing' : 'Guest-ready', detail: rsvpNoResponseCount > 0 ? 'reminders can help' : 'no reminder needed' },
         ]}
         actions={
           <>
-            <a href="/dashboard/rsvp-board" className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">RSVP view</a>
+            <a href="/dashboard/rsvp-board" className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">Review RSVPs</a>
             <button
               onClick={onAddGuest}
               disabled={!canEditGuests}

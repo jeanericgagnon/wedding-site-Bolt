@@ -187,6 +187,10 @@ function GuestDrawerDetails({
     ? guests.filter((member) => member.household_id === guest.household_id)
     : [];
   const guestName = getGuestName(guest);
+  const resolvedPublicSiteSlug = resolvePublicSiteSlugFromRow({
+    site_slug: weddingSiteInfo?.site_slug ?? null,
+    site_url: weddingSiteInfo?.site_url ?? null,
+  });
   const visibilityPreview = buildGuestVisibilityPreview({
     guest: {
       id: guest.id,
@@ -215,10 +219,8 @@ function GuestDrawerDetails({
       name: member.name,
       rsvpStatus: member.rsvp_status,
     })),
-    publicSiteSlug: resolvePublicSiteSlugFromRow({
-      site_slug: weddingSiteInfo?.site_slug ?? null,
-      site_url: weddingSiteInfo?.site_url ?? null,
-    }),
+    isPublished: weddingSiteInfo?.is_published ?? false,
+    publicSiteSlug: resolvedPublicSiteSlug,
   });
   const guestRsvpUrl = guest.invite_token
     ? `${window.location.origin}/rsvp?token=${encodeURIComponent(guest.invite_token)}`
@@ -259,8 +261,8 @@ function GuestDrawerDetails({
     : '';
   const totalPotentialPreviewRouteCount = (
     (guest.invite_token ? 1 : 0)
-    + (guest.invite_token && weddingSiteInfo?.site_slug ? 5 : 0)
-    + (weddingSiteInfo?.site_slug ? 3 : 0)
+    + (guest.invite_token && resolvedPublicSiteSlug ? 5 : 0)
+    + (resolvedPublicSiteSlug ? 3 : 0)
   );
   const missingPreviewRouteCount = Math.max(totalPotentialPreviewRouteCount - visibilityPreview.links.length, 0);
   const previewRouteCoverageRate = totalPotentialPreviewRouteCount > 0

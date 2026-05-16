@@ -27,6 +27,7 @@ export type SettingsDashboardSnapshot = {
   defaultLanguage: SiteLanguageCode;
   guestAccessToken: string | null;
   hideFromSearch: boolean;
+  isPublished: boolean;
   musicPlaylistUrl: string;
   notifDigest: boolean;
   notifDigestCadence: DigestCadence;
@@ -65,6 +66,7 @@ const DEFAULT_SNAPSHOT: Omit<SettingsDashboardSnapshot, 'accountEmail'> = {
   allowedLanguages: SITE_LANGUAGE_OPTIONS.map((option) => option.value),
   guestAccessToken: null,
   hideFromSearch: false,
+  isPublished: false,
   musicPlaylistUrl: '',
   notifDigest: false,
   notifDigestCadence: 'paused',
@@ -182,6 +184,7 @@ export async function loadSettingsDashboardSnapshot({
     allowedLanguages,
     guestAccessToken: (data.guest_access_token as string | null) ?? null,
     hideFromSearch: !!(data.hide_from_search as boolean | null | undefined),
+    isPublished: data.is_published === true,
     musicPlaylistUrl: (data.music_playlist_url as string) ?? '',
     notifDigest: prefs.digest,
     notifDigestCadence: prefs.digestCadence,

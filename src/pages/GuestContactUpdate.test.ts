@@ -57,9 +57,11 @@ describe('friendlyGuestContactError', () => {
     expect(screen.getByPlaceholderText('Search your full name')).toHaveAttribute('id', 'guest-contact-search');
     expect(screen.getByText('Use your full name exactly as it appears on the invitation.')).toHaveAttribute('id', 'guest-contact-search-helper');
     expect(screen.getByPlaceholderText('First few letters of your email')).toHaveAttribute('id', 'guest-contact-verifier');
-    expect(screen.getByText('Add the first few characters of the email address on your invitation. If you opened this from your RSVP link, we can use that secure token too.')).toHaveAttribute('id', 'guest-contact-verifier-helper');
+    expect(screen.getByText('Add the first few characters of the email address on your invitation. If you opened this from your invitation link, we can use that to help find your record too.')).toHaveAttribute('id', 'guest-contact-verifier-helper');
     expect(screen.getByPlaceholderText('Last 4 digits of your phone (for whole-party updates)')).toHaveAttribute('id', 'guest-contact-household-verifier');
     expect(screen.getByText('Add the last 4 digits of the phone number on file if you want to update your whole party.')).toHaveAttribute('id', 'guest-contact-household-verifier-helper');
+    expect(screen.queryByText(/secure token/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/invitation link/i)).toBeInTheDocument();
 
     expect(screen.getByLabelText('Email (optional)')).toHaveAttribute('id', 'guest-contact-email');
     expect(screen.getByLabelText('Phone (optional)')).toHaveAttribute('id', 'guest-contact-phone');

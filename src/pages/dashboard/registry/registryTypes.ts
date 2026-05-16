@@ -117,6 +117,14 @@ export interface RegistryItemMetadataState {
   repairStates?: string[];
 }
 
+export function hasBadRegistryImportTitle(itemName: string | null | undefined): boolean {
+  return /^(page not found|product unavailable|gift from\s.+)$/i.test((itemName || '').trim());
+}
+
+export function getOwnerRegistryDisplayTitle(itemName: string | null | undefined): string {
+  return hasBadRegistryImportTitle(itemName) ? 'Gift link needs review' : (itemName || '').trim() || 'Untitled gift';
+}
+
 export function computeConfidence(preview: RegistryPreview): MetadataConfidence {
   if (preview.fetch_status && preview.fetch_status !== 'success') return 'manual';
   const score = preview.confidence_score;
@@ -177,7 +185,7 @@ export function getRegistryItemMetadataState(item: RegistryItem): RegistryItemMe
   const missingSummary = preview.missing_fields && preview.missing_fields.length > 0
     ? `Missing: ${preview.missing_fields.join(', ')}`
     : null;
-  const hasBadImportTitle = /^(page not found|product unavailable|gift from\s.+)$/i.test((item.item_name || '').trim());
+  const hasBadImportTitle = hasBadRegistryImportTitle(item.item_name);
 
   return {
     preview,

@@ -102,6 +102,14 @@ describe('sections registry resolution', () => {
     expect(getDefinition(undefined as never, 'cards')).toBeNull();
   });
 
+  it('restores default public-facing headings when persisted section titles are saved as blank strings', () => {
+    expect(resolveAndParse('hero', 'fullBleed', { headline: '   ' })?.parsedData.headline).toBe('Kara & Eric');
+    expect(resolveAndParse('faq', 'accordion', { headline: '   ' })?.parsedData.headline).toBe('Frequently asked questions');
+    expect(resolveAndParse('travel', 'list', { headline: '   ' })?.parsedData.headline).toBe('Travel & Accommodations');
+    expect(resolveAndParse('contact', 'interactiveHub', { title: '   ' })?.parsedData.title).toBe('Questions, polls & quizzes');
+    expect(resolveAndParse('footerCta', 'rsvpPush', { headline: '   ' })?.parsedData.headline).toBe('We hope to see you there');
+  });
+
   it('clones section definitions before owner edits can mutate shared registry runtime defaults', () => {
     const firstDefinition = getDefinitionOrThrow('registry', 'cards');
     (firstDefinition.defaultData as Record<string, unknown>).title = 'Mutated registry defaults';

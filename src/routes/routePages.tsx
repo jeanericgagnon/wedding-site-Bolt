@@ -23,6 +23,7 @@ export const GuestContactUpdate = lazy(() => import('../pages/GuestContactUpdate
 export const GuestbookSubmit = lazy(() => import('../pages/GuestbookSubmit').then((m) => ({ default: m.GuestbookSubmit })));
 export const SiteView = lazy(() => import('../pages/SiteView').then((m) => ({ default: m.SiteView })));
 export const DashboardOverview = lazy(() => import('../pages/dashboard/Overview').then((m) => ({ default: m.DashboardOverview })));
+export const DashboardMoreTools = lazy(() => import('../pages/dashboard/MoreTools').then((m) => ({ default: m.DashboardMoreTools })));
 export const DashboardGuests = lazy(() => import('../pages/dashboard/Guests').then((m) => ({ default: m.DashboardGuests })));
 export const DashboardVault = lazy(() => import('../pages/dashboard/Vault').then((m) => ({ default: m.DashboardVault })));
 export const DashboardRegistry = lazy(() => import('../pages/dashboard/Registry').then((m) => ({ default: m.DashboardRegistry })));

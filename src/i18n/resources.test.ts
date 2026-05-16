@@ -30,4 +30,21 @@ describe('i18n resources', () => {
       expect(upload.token_required.toLowerCase(), language).not.toContain('token');
     });
   });
+
+  it('keeps non-English photo upload helper and error copy localized instead of falling back to English', () => {
+    const englishUpload = en.photo_upload;
+
+    Object.entries(resources)
+      .filter(([language]) => language !== 'en')
+      .forEach(([language, resource]) => {
+        const upload = resource.photo_upload;
+        expect(upload.token_hint, `${language} token_hint`).not.toBe(englishUpload.token_hint);
+        expect(upload.helper_no_app, `${language} helper_no_app`).not.toBe(englishUpload.helper_no_app);
+        expect(upload.helper_direct, `${language} helper_direct`).not.toBe(englishUpload.helper_direct);
+        expect(upload.helper_note, `${language} helper_note`).not.toBe(englishUpload.helper_note);
+        expect(upload.choose_file, `${language} choose_file`).not.toBe(englishUpload.choose_file);
+        expect(upload.token_required, `${language} token_required`).not.toBe(englishUpload.token_required);
+        expect(upload.token_and_file_required, `${language} token_and_file_required`).not.toBe(englishUpload.token_and_file_required);
+      });
+  });
 });

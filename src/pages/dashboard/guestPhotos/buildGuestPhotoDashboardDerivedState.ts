@@ -31,6 +31,7 @@ type BuildGuestPhotoDashboardDerivedStateArgs = {
   guestProspects: GuestProspectOptinRow[];
   guestbookEntries: GuestbookEntryRow[];
   hubSettings: GuestHubSettings;
+  isPublished: boolean;
   metadataByUploadId: Map<string, PhotoUploadMetadataRow>;
   photoMemoryFlowQaEnabled?: boolean;
   showFlaggedOnly: boolean;
@@ -57,6 +58,7 @@ export function buildGuestPhotoDashboardDerivedState({
   guestProspects,
   guestbookEntries,
   hubSettings,
+  isPublished,
   metadataByUploadId,
   photoMemoryFlowQaEnabled = false,
   showFlaggedOnly,
@@ -110,6 +112,7 @@ export function buildGuestPhotoDashboardDerivedState({
   });
 
   const recapPublishWarnings = [
+    !isPublished ? 'Publish the site before sharing the guest hub, recap, or QR print cards.' : null,
     !hubSettings.photos_enabled ? 'Photo upload and recap sharing are off from the guest hub controls.' : null,
     flaggedUploadCount > 0 ? `${flaggedUploadCount} flagged upload${flaggedUploadCount === 1 ? '' : 's'} still need review.` : null,
     reviewUploads.length > 0 ? `${reviewUploads.length} upload${reviewUploads.length === 1 ? '' : 's'} are in the review queue.` : null,

@@ -16,6 +16,7 @@ type SettingsSiteTabContentProps = {
   hasWeddingIdentityStoryGraphic: boolean;
   guestAccessToken: string | null;
   hideFromSearch: boolean;
+  isPublished: boolean;
   onAutoTranslateLanguage: (language: TranslationLanguageCode) => void;
   onAllowedLanguagesChange: (languages: SiteLanguageCode[]) => void;
   onCopyIdentityManifest: () => void;
@@ -72,6 +73,7 @@ export function SettingsSiteTabContent({
   hasWeddingIdentityStoryGraphic,
   guestAccessToken,
   hideFromSearch,
+  isPublished,
   onAutoTranslateLanguage,
   onAllowedLanguagesChange,
   onCopyIdentityManifest,
@@ -118,8 +120,10 @@ export function SettingsSiteTabContent({
   return (
     <>
       <SettingsSiteUrlPanel
+        isPublished={isPublished}
         onSiteSlugChange={onSiteSlugChange}
         onSubmit={onSubmitSiteSlug}
+        privacyMode={privacyMode}
         publicSiteUrl={publicSiteUrl}
         siteSlug={siteSlug}
         slugError={slugError}
@@ -128,6 +132,7 @@ export function SettingsSiteTabContent({
       />
 
       <SettingsIdentityExportsPanel
+        isPublished={isPublished}
         hasStoryGraphic={hasWeddingIdentityStoryGraphic}
         onCopyIdentityManifest={onCopyIdentityManifest}
         onCopyIdentityStyleKit={onCopyIdentityStyleKit}

@@ -4,6 +4,7 @@ import type { GuestHubSettings } from '../guestPhotoSharingUtils';
 
 type GuestPhotoRecapSharingCardProps = {
   guestRecapUrl: string;
+  isPublished: boolean;
   hubSettings: GuestHubSettings;
   savingHubSettings: boolean;
   uploadCount: number;
@@ -21,6 +22,7 @@ const recapStatusLabel = (status: GuestHubSettings['recap_status']) =>
 
 export function GuestPhotoRecapSharingCard({
   guestRecapUrl,
+  isPublished,
   hubSettings,
   savingHubSettings,
   uploadCount,
@@ -32,6 +34,9 @@ export function GuestPhotoRecapSharingCard({
   onSaveHubSettings,
   onHubSettingsChange,
 }: GuestPhotoRecapSharingCardProps) {
+  const previewDisabled =
+    !guestRecapUrl || !isPublished || hubSettings.recap_status === 'draft' || hubSettings.recap_status === 'closed';
+
   return (
     <Card className="p-6 border border-border-subtle bg-white">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -43,7 +48,7 @@ export function GuestPhotoRecapSharingCard({
           </p>
         </div>
         <div className="flex flex-wrap gap-2 lg:justify-end">
-          <Button variant="outline" onClick={() => onOpenAppUrl(guestRecapUrl)} disabled={hubSettings.recap_status === 'draft' || hubSettings.recap_status === 'closed'}>
+          <Button variant="outline" onClick={() => onOpenAppUrl(guestRecapUrl)} disabled={previewDisabled}>
             Preview recap
           </Button>
           <Button variant="accent" onClick={onSaveHubSettings} disabled={savingHubSettings}>
@@ -77,6 +82,7 @@ export function GuestPhotoRecapSharingCard({
       <div className="mt-4 rounded-lg border border-border-subtle bg-surface-subtle p-4">
         <p className="text-sm font-semibold text-text-primary">Current mode: {recapStatusLabel(hubSettings.recap_status)}</p>
         <p className="mt-1 text-sm text-text-secondary">
+          {!isPublished && 'Publish the site before opening or sharing the guest recap. '}
           {hubSettings.recap_status === 'draft' && 'Guests cannot view the recap yet. Use this while curating.'}
           {hubSettings.recap_status === 'private_link' && 'Anyone with the recap link can view it, but it is treated as quietly shared.'}
           {hubSettings.recap_status === 'published' && 'The recap is live for guests.'}

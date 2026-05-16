@@ -111,9 +111,11 @@ const ScheduleDayTabs: React.FC<SectionComponentProps<ScheduleDayTabsData>> = ({
               {currentDay.events.map((event, idx) => (
                 <div key={event.id} className="flex gap-6 group">
                   <div className="w-20 flex-shrink-0 text-right pt-1">
-                    <span className="text-xs font-medium text-stone-400 tabular-nums leading-none whitespace-nowrap">
-                      {event.time}
-                    </span>
+                    {event.time.trim() && (
+                      <span className="text-xs font-medium text-stone-400 tabular-nums leading-none whitespace-nowrap">
+                        {event.time}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex flex-col items-center flex-shrink-0">

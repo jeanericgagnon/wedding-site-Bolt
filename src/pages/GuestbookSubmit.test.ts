@@ -57,6 +57,29 @@ describe('friendlyGuestbookError', () => {
     expect(screen.getByRole('link', { name: 'Back to wedding hub' })).toHaveAttribute('href', '/event/ericandkaras');
   });
 
+  it('shows a visible validation alert when guests try to send an empty note', () => {
+    render(
+      React.createElement(
+        MemoryRouter,
+        { initialEntries: ['/guestbook/ericandkaras'] },
+        React.createElement(
+          Routes,
+          null,
+          React.createElement(Route, {
+            path: '/guestbook/:siteRef',
+            element: React.createElement(GuestbookSubmit),
+          }),
+        ),
+      ),
+    );
+
+    fireEvent.submit(screen.getByRole('button', { name: 'Send note' }).closest('form')!);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Write a note before sending.');
+    expect(screen.getByLabelText('Note')).toHaveAttribute('aria-describedby', 'guestbook-message-error guestbook-message-count');
+    expect(screen.getByLabelText('Note')).toHaveAttribute('aria-invalid', 'true');
+  });
+
   it('routes the guestbook form shell through the shared form panel', () => {
     const pageSource = readFileSync('src/pages/GuestbookSubmit.tsx', 'utf8');
     const panelSource = readFileSync('src/pages/GuestbookSubmitFormPanel.tsx', 'utf8');
@@ -65,6 +88,9 @@ describe('friendlyGuestbookError', () => {
     expect(pageSource).toContain('<GuestbookSubmitFormPanel');
     expect(pageSource).toContain('captureGuestInviteTokenFromSearch(siteSlug, searchParams);');
     expect(panelSource).toContain('id="guestbook-message"');
+    expect(panelSource).not.toContain('required');
+    expect(panelSource).toContain("guestbook-message-error guestbook-message-count");
+    expect(panelSource).toContain('aria-invalid={error ? \'true\' : undefined}');
     expect(panelSource).toContain('Back to wedding hub');
   });
 });

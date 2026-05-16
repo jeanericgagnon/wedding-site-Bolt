@@ -3,6 +3,7 @@ import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitl
 import type { WeddingIdentityExportKit, WeddingIdentityPrintAsset } from '../../../lib/weddingIdentityExports';
 
 type SettingsIdentityExportsPanelProps = {
+  isPublished: boolean;
   onCopyIdentityManifest: () => void;
   onCopyIdentityStyleKit: () => void;
   onDownloadIdentityStoryGraphic: () => void;
@@ -13,6 +14,7 @@ type SettingsIdentityExportsPanelProps = {
 };
 
 export function SettingsIdentityExportsPanel({
+  isPublished,
   onCopyIdentityManifest,
   onCopyIdentityStyleKit,
   onDownloadIdentityStoryGraphic,
@@ -78,6 +80,11 @@ export function SettingsIdentityExportsPanel({
                 ))}
               </div>
             )}
+            {!isPublished && (
+              <div className="mt-3 rounded-lg border border-border-subtle bg-surface-subtle p-3 text-xs text-text-secondary">
+                Publish the site before saving QR-based print assets or the story graphic so guests do not get draft-only links.
+              </div>
+            )}
             <div className="mt-4 flex flex-wrap gap-2">
               <Button type="button" variant="outline" size="sm" onClick={onCopyIdentityManifest}>
                 <Copy className="mr-1 h-3.5 w-3.5" />
@@ -91,7 +98,7 @@ export function SettingsIdentityExportsPanel({
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={weddingIdentityPrintAssets.length === 0}
+                disabled={!isPublished || weddingIdentityPrintAssets.length === 0}
                 onClick={onDownloadIdentityPrintPack}
               >
                 <Layout className="mr-1 h-3.5 w-3.5" />
@@ -101,7 +108,7 @@ export function SettingsIdentityExportsPanel({
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={!hasStoryGraphic}
+                disabled={!isPublished || !hasStoryGraphic}
                 onClick={onDownloadIdentityStoryGraphic}
               >
                 <Image className="mr-1 h-3.5 w-3.5" />

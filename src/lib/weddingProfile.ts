@@ -476,10 +476,17 @@ export const isProvenanceValue = <T>(value: unknown): value is ProvenanceValue<T
 };
 
 export const readBuilderValue = <T>(value: T | ProvenanceValue<T> | undefined | null, fallback: T): T => {
+  const resolveStringFallback = (candidate: T): T => {
+    if (typeof candidate === 'string' && typeof fallback === 'string' && fallback.trim().length > 0) {
+      return candidate.trim().length > 0 ? candidate : fallback;
+    }
+    return candidate;
+  };
+
   if (isProvenanceValue<T>(value)) {
-    return value.value ?? fallback;
+    return resolveStringFallback((value.value ?? fallback) as T);
   }
-  return (value ?? fallback) as T;
+  return resolveStringFallback((value ?? fallback) as T);
 };
 
 const toIsoDateOrEmpty = (value?: string | null): string => {

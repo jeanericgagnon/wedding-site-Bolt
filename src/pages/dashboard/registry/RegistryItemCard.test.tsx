@@ -57,6 +57,39 @@ describe('RegistryItemCard', () => {
     expect(screen.getByText('Needs image')).toBeInTheDocument();
   });
 
+  it('masks broken import titles instead of presenting Page Not Found as a gift name', () => {
+    render(
+      <RegistryItemCard
+        item={makeItem({ item_name: 'Page Not Found' })}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Gift link needs review')).toBeInTheDocument();
+    expect(screen.queryByText('Page Not Found')).not.toBeInTheDocument();
+  });
+
+  it('keeps owner cleanup actions available when an imported gift link needs review', () => {
+    const onEdit = vi.fn();
+    const onDelete = vi.fn();
+
+    render(
+      <RegistryItemCard
+        item={makeItem({ item_name: 'Page Not Found' })}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /edit/i }));
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+
+    expect(screen.getByText('Gift link needs review')).toBeInTheDocument();
+    expect(onEdit).toHaveBeenCalledTimes(1);
+    expect(onDelete).toHaveBeenCalledTimes(1);
+  });
+
   it('falls back to the built-in placeholder after direct image failure', () => {
     render(
       <RegistryItemCard
@@ -146,6 +179,43 @@ describe('RegistryItemCard', () => {
     );
 
     expect(screen.getByRole('link', { name: /view/i })).toHaveAttribute('href', 'https://example.com/safe');
+  });
+
+  it('removes the owner View action entirely when a broken imported gift has no safe destination left', () => {
+    render(
+      <RegistryItemCard
+        item={makeItem({
+          item_name: 'Page Not Found',
+          item_url: 'javascript:alert(1)',
+          canonical_url: 'ftp://example.com/broken',
+        })}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Gift link needs review')).toBeInTheDocument();
+    expect(screen.getByText(/This imported link resolved to a broken page title\./i)).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /view/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument();
+  });
+
+  it('keeps the safe View action when a broken imported title still has a safe canonical destination', () => {
+    render(
+      <RegistryItemCard
+        item={makeItem({
+          item_name: 'Page Not Found',
+          item_url: 'javascript:alert(1)',
+          canonical_url: 'https://example.com/recovered-gift',
+        })}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Gift link needs review')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /view/i })).toHaveAttribute('href', 'https://example.com/recovered-gift');
+    expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument();
   });
 
   it('passes normalized purchase truth into owner actions', async () => {

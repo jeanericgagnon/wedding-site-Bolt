@@ -31,6 +31,7 @@ interface UseGuestPhotoDashboardDataArgs {
     | 'setGuestProspects'
     | 'setGuestbookEntries'
     | 'setHubSettings'
+    | 'setIsPublished'
     | 'setLoading'
     | 'setSiteId'
     | 'setSiteSlug'
@@ -56,6 +57,7 @@ export function useGuestPhotoDashboardData({
     setGuestProspects,
     setGuestbookEntries,
     setHubSettings,
+    setIsPublished,
     setLoading,
     setSiteId,
     setSiteSlug,
@@ -70,6 +72,7 @@ export function useGuestPhotoDashboardData({
 
     setSiteId(demoState.siteId);
     setSiteSlug(demoState.siteSlug);
+    setIsPublished(true);
     setEvents(demoState.events as ItineraryEvent[]);
     setBuckets(demoState.buckets as PhotoBucketRow[]);
     setUploads(demoState.uploads);
@@ -103,11 +106,14 @@ export function useGuestPhotoDashboardData({
       setError(null);
 
       const userId = await resolveGuestPhotoDashboardUserId();
-      if (!userId && isDemoMode) {
-        loadDemoPhotoSpace();
-        return;
-      }
-      if (!userId) throw new Error('Your session needs a quick refresh. Please refresh and try again.');
+    if (!userId && isDemoMode) {
+      loadDemoPhotoSpace();
+      return;
+    }
+    if (!userId) {
+      setIsPublished(false);
+      throw new Error('Your session needs a quick refresh. Please refresh and try again.');
+    }
 
       const snapshot = await loadGuestPhotoDashboardSnapshot(userId).catch((err) => {
         const message = err instanceof Error ? err.message : '';
@@ -124,6 +130,7 @@ export function useGuestPhotoDashboardData({
 
       setSiteId(snapshot.siteId);
       setSiteSlug(snapshot.siteSlug);
+      setIsPublished(snapshot.isPublished);
       const weddingMeta = snapshot.weddingMeta;
       const savedBuckets = ((weddingMeta.photoBuckets as GuestPhotoBucketsState | undefined) ?? null);
       if (savedBuckets) setPhotoBuckets(savedBuckets);
@@ -165,6 +172,7 @@ export function useGuestPhotoDashboardData({
       }
       setSiteId(null);
       setSiteSlug(null);
+      setIsPublished(false);
       setEvents([]);
       setBuckets([]);
       setUploads([]);
@@ -191,6 +199,7 @@ export function useGuestPhotoDashboardData({
     setGuestProspects,
     setGuestbookEntries,
     setHubSettings,
+    setIsPublished,
     setLoading,
     setPhotoBuckets,
     setSiteId,

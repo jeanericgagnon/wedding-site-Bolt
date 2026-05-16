@@ -80,6 +80,21 @@ export function useMessageComposeActions({
     if (!weddingSite) return;
     setSending(true);
     try {
+      const trimmedSubject = formData.subject.trim();
+      const trimmedBody = formData.body.trim();
+      const needsSubject = formData.channel === 'email';
+
+      if (saveAsDraft && (!trimmedBody || (needsSubject && !trimmedSubject))) {
+        toast(
+          needsSubject
+            ? 'Add both a subject and message before saving this draft.'
+            : 'Add a message before saving this draft.',
+          'error',
+        );
+        setSending(false);
+        return;
+      }
+
       const recipients = getRecipients(formData.audience);
       const totalAudienceCount = recipients.length;
       const recipientCount = formData.channel === 'sms'
@@ -121,7 +136,7 @@ export function useMessageComposeActions({
       const scheduledFor = isScheduled ? requestedScheduledFor : null;
       const campaignName = formData.campaignName.trim();
       const normalizedSubject = formData.channel === 'sms'
-        ? (formData.subject.trim() || `Text • ${selectedAudience?.label ?? 'All guests'}`)
+        ? (trimmedSubject || `Text • ${selectedAudience?.label ?? 'All guests'}`)
         : formData.subject;
       const recipientMeta = {
         audience: formData.audience,

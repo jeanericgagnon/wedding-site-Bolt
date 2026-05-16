@@ -30,5 +30,8 @@ describe('route composition boundary', () => {
     expect(helper).toContain('<ProtectedRoute skipPaymentGate={skipPaymentGate}>');
     expect(onboardingRoutes).toContain("{ProtectedPageRoute({ path: '/onboarding', element: <Onboarding /> })}");
     expect(dashboardRoutes).toContain("{ProtectedPageRoute({ path: '/dashboard/guests', element: <DashboardGuests /> })}");
+    expect(dashboardRoutes).toContain("{ProtectedPageRoute({ path: '/dashboard/tools', element: <DashboardMoreTools /> })}");
+    expect(dashboardRoutes).toContain("{ProtectedPageRoute({ path: '/dashboard/activity', element: <DashboardAuditLogs /> })}");
+    expect(dashboardRoutes).toContain('{ProtectedPageRoute({ path: \'/builder\', element: <Navigate to="/dashboard/builder" replace /> })}');
   });
 });

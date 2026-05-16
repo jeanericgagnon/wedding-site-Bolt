@@ -89,6 +89,50 @@ describe('ContactSection', () => {
     );
   });
 
+  it('restores the default public contact heading when the saved title is blank whitespace', () => {
+    const data = createEmptyWeddingData();
+    const ContactForm = contactFormDefinition.Component;
+
+    const { rerender } = render(
+      <ContactSection
+        data={data}
+        instance={makeInstance({
+          showTitle: true,
+          title: '   ',
+        })}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Contact' })).toBeInTheDocument();
+
+    rerender(
+      <ContactMinimal
+        data={data}
+        instance={makeInstance({
+          title: '   ',
+        })}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Get in touch' })).toBeInTheDocument();
+
+    rerender(
+      <ContactForm
+        data={{
+          eyebrow: '',
+          headline: '   ',
+          subheadline: '',
+          introText: '',
+          closingNote: '',
+          emailSubject: '',
+          contacts: [],
+        }}
+      />
+    );
+
+    expect(screen.getByRole('heading', { name: 'Let us know' })).toBeInTheDocument();
+  });
+
   it('drops unsafe contact hrefs before public render', () => {
     render(
       <ContactSection

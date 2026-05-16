@@ -18,6 +18,7 @@ type BuildSettingsDashboardViewModelArgs = {
   coupleNames: string;
   currentTemplate: string;
   defaultLanguage: SiteLanguageCode;
+  isPublished: boolean;
   settingsRole: PlannerAccessRole;
   siteSlug: string;
   venueName: string | null;
@@ -28,6 +29,7 @@ export type SettingsDashboardViewModel = {
   currentTemplateName: string;
   plannerRoleOptions: typeof PLANNER_ROLE_OPTIONS;
   publicSiteUrl: string;
+  isPublished: boolean;
   tabs: SettingsTab[];
   weddingIdentityExportKit: WeddingIdentityExportKit;
   weddingIdentityPrintAssets: WeddingIdentityPrintAsset[];
@@ -39,6 +41,7 @@ export function buildSettingsDashboardViewModel({
   coupleNames,
   currentTemplate,
   defaultLanguage,
+  isPublished,
   settingsRole,
   siteSlug,
   venueName,
@@ -50,6 +53,7 @@ export function buildSettingsDashboardViewModel({
   return {
     currentTemplateName,
     plannerRoleOptions: PLANNER_ROLE_OPTIONS.filter((option) => option.value !== 'owner'),
+    isPublished,
     publicSiteUrl: derivedPublicSiteUrl,
     tabs: getSettingsTabs(settingsRole),
     weddingIdentityExportKit: buildWeddingIdentityExportKit({

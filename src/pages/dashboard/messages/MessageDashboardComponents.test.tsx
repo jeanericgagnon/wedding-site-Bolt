@@ -577,6 +577,59 @@ describe('MessageCampaignThreadPanels', () => {
   });
 });
 
+describe('MessageReachSnapshotCard', () => {
+  it('keeps zero-targeted delivery math readable instead of implying progress that is not there yet', () => {
+    render(
+      <MessageReachSnapshotCard
+        canCompose
+        guests={[]}
+        knownPhotoLinksCount={0}
+        messages={[]}
+        onApplyComposerTemplate={vi.fn()}
+        onApplyDayOfAlertPreset={vi.fn()}
+        onApplySaveTheDatePreset={vi.fn()}
+        onNavigatePhotos={vi.fn()}
+        onQuickCreateSaveTheDateCampaign={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('0 delivered · 0 need review')).toBeInTheDocument();
+    expect(screen.getByText('0 recipients delivered')).toBeInTheDocument();
+    expect(screen.getByText('0 targeted recipients')).toBeInTheDocument();
+    expect(screen.getByText('0 of 0 targeted recipients have been delivered')).toBeInTheDocument();
+    expect(screen.getByText('0 need contact details · 0 not reached yet')).toBeInTheDocument();
+    expect(screen.getByText('0 of 0 targeted recipients need contact details · 0 of 0 targeted recipients were not reached yet')).toBeInTheDocument();
+    expect(screen.getByText('0 of 0 targeted recipients are already closed out')).toBeInTheDocument();
+    expect(screen.getByText('No recipients are already closed out')).toBeInTheDocument();
+    expect(screen.getByText('0 of 0 targeted recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
+    expect(screen.queryByText(/% delivered coverage/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/% cleanup still pending/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/% follow-through ready/)).not.toBeInTheDocument();
+  });
+});
+
+describe('MessageReachSnapshotCard', () => {
+  it('keeps large audience counts visible instead of collapsing to zero', () => {
+    render(
+      <MessageReachSnapshotCard
+        audienceLabel="All guests"
+        audienceStats={{
+          guestCount: 176,
+          deliverableCount: 172,
+          missingContactCount: 4,
+          unreachableCount: 0,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('176 guests')).toBeInTheDocument();
+    expect(screen.getByText('172 ready to reach')).toBeInTheDocument();
+    expect(screen.getByText('4 need contact details')).toBeInTheDocument();
+    expect(screen.queryByText('0 guests')).not.toBeInTheDocument();
+  });
+});
+
 describe('MessageHistorySummaryPanels', () => {
   it('keeps queued and sending activity visible in the channel breakdown', () => {
     render(
@@ -641,6 +694,33 @@ describe('MessageHistorySummaryPanels', () => {
 });
 
 describe('MessageReachSnapshotCard', () => {
+  it('keeps guest audience totals truthful even before message activity loads', () => {
+    const guests = Array.from({ length: 176 }, (_, index) => ({
+      id: `guest-${index + 1}`,
+      email: index < 174 ? `guest${index + 1}@example.com` : null,
+    }));
+
+    render(
+      <MessageReachSnapshotCard
+        canCompose
+        guests={guests as any}
+        knownPhotoLinksCount={0}
+        messages={[]}
+        onApplyComposerTemplate={vi.fn()}
+        onApplyDayOfAlertPreset={vi.fn()}
+        onApplySaveTheDatePreset={vi.fn()}
+        onNavigatePhotos={vi.fn()}
+        onQuickCreateSaveTheDateCampaign={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Total Guests')).toBeInTheDocument();
+    expect(screen.getByText('With email')).toBeInTheDocument();
+    expect(screen.getByText('176')).toBeInTheDocument();
+    expect(screen.getByText('174')).toBeInTheDocument();
+    expect(screen.getByText('0 delivered · 0 need review')).toBeInTheDocument();
+  });
+
   it('separates sent, active, follow-up, and review campaign counts in the top reach snapshot', () => {
     render(
       <MessageReachSnapshotCard
@@ -708,6 +788,34 @@ describe('MessageReachSnapshotCard', () => {
     expect(screen.getByText('3 recipients already closed out')).toBeInTheDocument();
     expect(screen.getByText('No recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: all clear')).toBeInTheDocument();
+  });
+
+  it('keeps large reach counts visible while viewer mode locks the helpful-start actions', () => {
+    render(
+      <MessageReachSnapshotCard
+        canCompose={false}
+        guests={Array.from({ length: 176 }, (_, index) => ({
+          id: `guest-${index + 1}`,
+          email: index < 172 ? `guest${index + 1}@example.com` : null,
+        })) as any}
+        knownPhotoLinksCount={2}
+        messages={[]}
+        onApplyComposerTemplate={vi.fn()}
+        onApplyDayOfAlertPreset={vi.fn()}
+        onApplySaveTheDatePreset={vi.fn()}
+        onNavigatePhotos={vi.fn()}
+        onQuickCreateSaveTheDateCampaign={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('176')).toBeInTheDocument();
+    expect(screen.getByText('172')).toBeInTheDocument();
+    expect(screen.getByText('4 need contact details')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save-the-date draft/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /schedule save-the-date/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /day-of update draft/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /use photo request/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /open photos/i })).toBeEnabled();
   });
 
   it('keeps the top reach snapshot explicit when no recipients are closed out yet', () => {
@@ -818,6 +926,51 @@ describe('MessageReviewQueuePanels', () => {
     expect(screen.getByText('2 recipients already closed out · 3 recipients still need cleanup')).toBeInTheDocument();
     expect(screen.getByText('1 of 5 targeted recipients need contact details · 1 of 5 targeted recipients were not reached yet')).toBeInTheDocument();
     expect(screen.getByText('Main cleanup: delivery review')).toBeInTheDocument();
+  });
+
+  it('keeps viewer mode from sending retries while still allowing message review', () => {
+    const onRetry = vi.fn();
+    const onViewMessage = vi.fn();
+
+    render(
+      <MessageReviewQueuePanels
+        canCompose={false}
+        deliveries={[]}
+        onRetry={onRetry}
+        onShowNeedsFollowUp={vi.fn()}
+        onShowNeedsReview={vi.fn()}
+        onViewMessage={onViewMessage}
+        retryCandidates={[
+          {
+            id: 'retry-1',
+            subject: 'Weekend reminder',
+            status: 'failed',
+            channel: 'email',
+            recipient_count: 5,
+          },
+        ] as any}
+        retryingMessageId={null}
+        reviewCandidates={[
+          {
+            id: 'review-2',
+            subject: 'Travel follow-up',
+            channel: 'email',
+            delivered_count: 2,
+            failed_count: 1,
+            recipient_count: 4,
+            recipient_filter: { skipped_count: 1 },
+            status: 'partial',
+          },
+        ] as any}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /send again/i })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: /review/i }));
+
+    expect(onRetry).not.toHaveBeenCalled();
+    expect(onViewMessage).toHaveBeenCalledWith(expect.objectContaining({ id: 'review-2' }));
   });
 });
 

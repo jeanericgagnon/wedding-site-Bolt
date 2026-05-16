@@ -9,6 +9,8 @@ import { fetchRegistryItems, loadRegistryDashboardSite } from './registryService
 import type { RegistryItem } from './registryTypes';
 import { demoWeddingSite } from '../../../lib/demoData';
 
+const REGISTRY_DASHBOARD_LOAD_TIMEOUT_MS = 12000;
+
 function sanitizeRegistryQuantityState(quantityPurchased = 0, quantityNeeded = 1) {
   const safeNeeded = Math.max(1, Number.isFinite(quantityNeeded) ? quantityNeeded : 1);
   const safePurchased = Math.max(0, Number.isFinite(quantityPurchased) ? quantityPurchased : 0);
@@ -41,6 +43,7 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
   const { isDemoMode, userId, toast } = args;
   const [itemsState, setItemsState] = useState<RegistryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
   const [weddingDate, setWeddingDate] = useState<string | null>(null);
   const [refreshEnabledUntil, setRefreshEnabledUntil] = useState<string | null>(null);
@@ -88,12 +91,14 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
       setItems(data.map(normalizeOwnerDashboardRegistryItem));
     } catch {
       toast('Couldn’t load registry items right now. Please try again.', 'error');
+      throw new Error('Registry items failed to load.');
     }
   }, [toast]);
 
   useEffect(() => {
     async function init() {
       setLoading(true);
+      setLoadError(null);
       try {
         if (isDemoMode) {
           const demoState = readDemoRegistryState();
@@ -104,7 +109,12 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
         }
 
         if (!userId) return;
-        const site = await loadRegistryDashboardSite(userId);
+        const site = await Promise.race([
+          loadRegistryDashboardSite(userId),
+          new Promise<never>((_, reject) => {
+            window.setTimeout(() => reject(new Error('Registry dashboard load timed out.')), REGISTRY_DASHBOARD_LOAD_TIMEOUT_MS);
+          }),
+        ]);
         if (!site?.id) return;
 
         setWeddingSiteId(site.id);
@@ -126,12 +136,21 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
         setRefreshCapDraft(loadedCap);
         setRefreshPreset(loadedCap <= 60 ? 'lean' : loadedCap <= 160 ? 'balanced' : 'aggressive');
         setMonthlyRefreshCount(budgetState.count);
-        const [_, ledger] = await Promise.all([
-          loadItems(site.id),
-          loadRegistryThankYouLedger(site.id),
+        const [_, ledger] = await Promise.race([
+          Promise.all([
+            loadItems(site.id),
+            loadRegistryThankYouLedger(site.id),
+          ]),
+          new Promise<never>((_, reject) => {
+            window.setTimeout(() => reject(new Error('Registry dashboard load timed out.')), REGISTRY_DASHBOARD_LOAD_TIMEOUT_MS);
+          }),
         ]);
         setRegistryThankYouLedger(ledger);
       } catch {
+        setWeddingSiteId(null);
+        setItemsState([]);
+        setRegistryThankYouLedgerState({});
+        setLoadError('Couldn’t load registry right now. Try again in a moment.');
         toast('Couldn’t finish setup right now. Please try again.', 'error');
       } finally {
         setLoading(false);
@@ -144,6 +163,7 @@ export function useRegistryDashboardData(args: UseRegistryDashboardDataArgs) {
   return {
     autoRefreshEnabled,
     items: itemsState,
+    loadError,
     loading,
     monthlyRefreshCap,
     monthlyRefreshCount,

@@ -2,6 +2,7 @@ import React from 'react';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { Users } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Button } from '../../components/ui/Button';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { useToast } from '../../components/ui/Toast';
@@ -108,6 +109,7 @@ export const DashboardSeating: React.FC = () => {
     selectedEventId,
     tables,
   });
+  const selectedEvent = itineraryEvents.find((event) => event.id === selectedEventId) ?? null;
 
   const {
     assignGuestToSeatDirect,
@@ -244,6 +246,19 @@ export const DashboardSeating: React.FC = () => {
               Go to Itinerary
             </Button>
           </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!selectedEventId || !selectedEvent) {
+    return (
+      <DashboardLayout currentPage="seating">
+        <div className="max-w-4xl mx-auto">
+          <DashboardStateBlock
+            title="Choose an event to open seating"
+            description="This route needs a wedding event before the seating tools can load. Add or pick an itinerary event, then come back here."
+          />
         </div>
       </DashboardLayout>
     );

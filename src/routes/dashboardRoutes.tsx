@@ -1,3 +1,4 @@
+import { Navigate } from 'react-router-dom';
 import {
   BuilderVariantGallery,
   DashboardAuditLogs,
@@ -6,6 +7,7 @@ import {
   DashboardGuests,
   DashboardItinerary,
   DashboardMessages,
+  DashboardMoreTools,
   DashboardOverview,
   DashboardPhotos,
   DashboardPlanning,
@@ -24,6 +26,7 @@ export function DashboardRoutes() {
     <>
       {ProtectedPageRoute({ path: '/dashboard', element: <DashboardOverview /> })}
       {ProtectedPageRoute({ path: '/dashboard/overview', element: <DashboardOverview /> })}
+      {ProtectedPageRoute({ path: '/dashboard/tools', element: <DashboardMoreTools /> })}
       {ProtectedPageRoute({ path: '/dashboard/builder', element: <SiteBuilder /> })}
       {ProtectedPageRoute({ path: '/dashboard/builder/variants', element: <BuilderVariantGallery /> })}
       {ProtectedPageRoute({ path: '/dashboard/guests', element: <DashboardGuests /> })}
@@ -38,9 +41,10 @@ export function DashboardRoutes() {
       {ProtectedPageRoute({ path: '/dashboard/messages', element: <DashboardMessages /> })}
       {ProtectedPageRoute({ path: '/dashboard/rsvp-board', element: <DashboardRsvpBoard /> })}
       {ProtectedPageRoute({ path: '/dashboard/coordinator', element: <DashboardCoordinatorMode /> })}
+      {ProtectedPageRoute({ path: '/dashboard/activity', element: <DashboardAuditLogs /> })}
       {ProtectedPageRoute({ path: '/dashboard/audit-logs', element: <DashboardAuditLogs /> })}
       {ProtectedPageRoute({ path: '/admin/errors', element: <DashboardErrorLogs /> })}
-      {ProtectedPageRoute({ path: '/builder', element: <SiteBuilder /> })}
+      {ProtectedPageRoute({ path: '/builder', element: <Navigate to="/dashboard/builder" replace /> })}
     </>
   );
 }

@@ -21,7 +21,7 @@ import {
 import { readDemoGuestPhotoState, writeDemoGuestPhotoState } from './guestPhotos/guestPhotoDemoState';
 
 const GUEST_PHOTO_BUCKET_SITE_SELECT = 'wedding_data, site_json';
-const GUEST_PHOTO_DASHBOARD_SITE_SELECT = 'id, site_slug, wedding_data';
+const GUEST_PHOTO_DASHBOARD_SITE_SELECT = 'id, site_slug, is_published, wedding_data';
 const GUEST_PHOTO_EVENT_SELECT = 'id,event_name,event_date,start_time,end_time' as const;
 const GUEST_PHOTO_ALBUM_SELECT = 'id,name,slug,parent_album_id,hierarchy_label,drive_folder_url,is_active,created_at,itinerary_event_id,opens_at,closes_at' as const;
 const GUEST_PHOTO_UPLOAD_SELECT = 'id,photo_album_id,original_filename,guest_name,guest_email,note,mime_type,size_bytes,drive_web_view_link,is_hidden,is_flagged,recap_hidden,recap_featured,recap_story,uploaded_at' as const;
@@ -48,6 +48,7 @@ export const safeGuestPhotoOwnerServiceError = (err: unknown, fallback = GUEST_P
 export interface GuestPhotoDashboardSnapshot {
   siteId: string;
   siteSlug: string | null;
+  isPublished: boolean;
   weddingMeta: Record<string, unknown>;
   events: ItineraryEvent[];
   buckets: PhotoBucketRow[];
@@ -406,6 +407,7 @@ export async function loadGuestPhotoDashboardSnapshot(userId: string): Promise<G
   return {
     siteId: site.id as string,
     siteSlug: (site.site_slug as string) ?? null,
+    isPublished: (site as { is_published?: boolean | null }).is_published === true,
     weddingMeta: (((site.wedding_data as Record<string, unknown> | null)?.meta as Record<string, unknown> | undefined) ?? {}),
     events: (eventsData as ItineraryEvent[] | null) ?? [],
     buckets: (bucketData as PhotoBucketRow[] | null) ?? [],

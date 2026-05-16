@@ -180,12 +180,12 @@ export function buildWeddingSchedule(events: ItineraryScheduleMirrorEvent[]): We
       return {
         id: event.id || `itinerary-${index + 1}`,
         label: event.event_name || 'Event',
-        startTimeISO: combineDateAndTimeISO(event.event_date, event.start_time) || '',
+        startTimeISO: combineDateAndTimeISO(event.event_date, event.start_time),
         endTimeISO: combineDateAndTimeISO(event.event_date, event.end_time) || undefined,
         notes: notes || undefined,
       };
     })
-    .filter((item) => !!item.startTimeISO && !!item.label);
+    .filter((item) => !!item.label);
 }
 
 export async function createItineraryTemplateEvents(

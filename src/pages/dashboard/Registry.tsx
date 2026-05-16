@@ -70,6 +70,7 @@ export const DashboardRegistry: React.FC = () => {
   const {
     autoRefreshEnabled,
     items,
+    loadError,
     loading,
     monthlyRefreshCap,
     monthlyRefreshCount,
@@ -391,6 +392,7 @@ export const DashboardRegistry: React.FC = () => {
         handleRepairBadImports={handleRepairBadImports}
         handleSyncRegistryThankYouTasks={handleSyncRegistryThankYouTasks}
         handleToggleRegistryThankYouTask={handleToggleRegistryThankYouTask}
+        error={loadError}
         imageRefreshBusy={imageRefreshBusy}
         items={items}
         loading={loading}

@@ -80,6 +80,7 @@ export interface WeddingSiteInfo {
   id: string;
   couple_name_1: string;
   couple_name_2: string;
+  is_published: boolean;
   wedding_date: string | null;
   venue_name: string | null;
   venue_address: string | null;

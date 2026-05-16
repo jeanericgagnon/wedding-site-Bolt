@@ -59,9 +59,11 @@ const ScheduleTimeline: React.FC<SectionComponentProps<ScheduleTimelineData>> = 
             {data.events.map((event, idx) => (
               <div key={event.id} className="flex gap-8 md:gap-10 group rounded-2xl px-1 md:px-2 hover:bg-stone-50/80 transition-colors duration-200">
                 <div className="flex flex-col items-end w-24 flex-shrink-0 pt-1">
-                  <span className="text-sm font-medium text-stone-500 tabular-nums leading-none whitespace-nowrap">
-                    {event.time}
-                  </span>
+                  {event.time.trim() && (
+                    <span className="text-sm font-medium text-stone-500 tabular-nums leading-none whitespace-nowrap">
+                      {event.time}
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex flex-col items-center flex-shrink-0">

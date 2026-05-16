@@ -7,7 +7,7 @@ import { RegistryItemCard } from './RegistryItemCard';
 import type { RegistryDuplicateGroup } from './duplicateRegistryItems';
 import { getRegistryRepairStates } from './repairState';
 import type { RegistryRepairActionKind, RegistryRepairQueueItem } from './repairState';
-import type { RegistryFilter, RegistryItem } from './registryTypes';
+import { getOwnerRegistryDisplayTitle, type RegistryFilter, type RegistryItem } from './registryTypes';
 import { formatRegistryItemDate } from '../registryItemTime';
 
 const FILTER_TABS: { key: RegistryFilter; label: string }[] = [
@@ -182,6 +182,7 @@ export function RegistryDashboardRouteContent(props: {
   handleSyncRegistryThankYouTasks: () => Promise<void>;
   handleToggleRegistryThankYouTask: (itemId: string) => Promise<void>;
   handleRunRepairQueueAction: (queueItem: RegistryRepairQueueItem, action: RegistryRepairActionKind) => Promise<void>;
+  error?: string | null;
   imageRefreshBusy: boolean;
   items: RegistryItem[];
   loading: boolean;
@@ -778,7 +779,7 @@ export function RegistryDashboardRouteContent(props: {
                   return (
                     <div key={item.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                       <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-medium text-text-primary">{item.item_name}</p>
+                        <p className="text-sm font-medium text-text-primary">{getOwnerRegistryDisplayTitle(item.item_name)}</p>
                         <span className="text-xs text-text-tertiary">{quantityPurchased}/{quantityNeeded}</span>
                       </div>
                       <div className="mt-2 h-2 overflow-hidden rounded-lg bg-surface-subtle">
@@ -806,7 +807,7 @@ export function RegistryDashboardRouteContent(props: {
                 ) : props.recentActivity.map((item) => (
                   <div key={item.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-medium text-text-primary">{item.item_name}</p>
+                      <p className="text-sm font-medium text-text-primary">{getOwnerRegistryDisplayTitle(item.item_name)}</p>
                       <span className="text-xs text-text-tertiary">{formatRegistryPurchaseStatusLabel(item.purchase_status)}</span>
                     </div>
                     <p className="mt-1 text-xs text-text-secondary">{formatRegistryActivityDetail(item)} · Updated {formatRegistryItemDate(item.updated_at ?? item.created_at)}</p>
@@ -1025,7 +1026,7 @@ export function RegistryDashboardRouteContent(props: {
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-medium text-text-primary">{queueItem.item.item_name}</p>
+                      <p className="text-sm font-medium text-text-primary">{getOwnerRegistryDisplayTitle(queueItem.item.item_name)}</p>
                       <span className={`rounded-lg border px-2 py-1 text-[11px] ${
                         queueItem.severity === 'high'
                           ? 'border-border-subtle bg-primary-light text-primary'
@@ -1143,8 +1144,10 @@ export function RegistryDashboardRouteContent(props: {
           </div>
         )}
 
-        {props.loading ? (
+        {props.loading && props.items.length === 0 ? (
           <DashboardStateBlock title="Loading registry…" description="Pulling your latest items and settings." />
+        ) : props.error && props.items.length === 0 ? (
+          <DashboardStateBlock title="Couldn’t open registry right now" description={props.error} tone="error" />
         ) : !props.weddingSiteId ? (
           <DashboardStateBlock title="No wedding site found" description="Complete onboarding first to set up your registry." />
         ) : props.filtered.length === 0 ? (

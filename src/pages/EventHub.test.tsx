@@ -17,6 +17,7 @@ describe('event hub page boundary', () => {
     expect(page).toContain('captureGuestInviteTokenFromSearch(slug, searchParams)');
     expect(page).toContain('const guestIdentity = useMemo(() => buildGuestHubIdentityPayload(slug, searchParams)');
     expect(page).toContain("'x-dayof-guest-invite-token'");
+    expect(page).toContain("setHubConfigStatus((current) => (current === 'offline' ? current : 'ready'));");
     expect(page).not.toContain('if (!slug) {');
     expect(routeView).toContain('if (!hasSlug) return <>{missingSlugView}</>;');
     expect(liveContent).toContain("from './EventHubConfigStatusCard'");

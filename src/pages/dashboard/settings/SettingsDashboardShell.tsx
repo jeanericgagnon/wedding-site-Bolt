@@ -30,8 +30,8 @@ export function SettingsDashboardShell({
       <div className="max-w-5xl mx-auto space-y-8">
         <DashboardPageHero
           eyebrow="Settings"
-          title="The quiet controls behind your wedding site."
-          description="Update access, language, RSVP behavior, notifications, and billing when you need to. The everyday planning tools stay out front."
+          title="Settings."
+          description="Manage access, privacy, billing, notifications, and account details."
           stats={[
             { label: 'Language', value: getSiteLanguageLabel(defaultLanguage), detail: 'public site default' },
             { label: 'Access', value: tabs.some((tab) => tab.id === 'team') ? 'Team ready' : 'Owner only', detail: settingsRole === 'owner' ? 'invite links available' : 'limited by role' },

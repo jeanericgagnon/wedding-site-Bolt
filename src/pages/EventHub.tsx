@@ -391,6 +391,7 @@ export const EventHub: React.FC = () => {
             travelContext: nextTravelContext,
           });
           setHasOfflineSnapshot(true);
+          setHubConfigStatus((current) => (current === 'offline' ? current : 'ready'));
         }
       })
       .catch(() => {

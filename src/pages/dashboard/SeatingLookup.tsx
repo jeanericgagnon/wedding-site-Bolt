@@ -10,23 +10,34 @@ import { loadDemoItineraryEventsFromStorage } from './seating/seatingDemoStorage
 
 export const DashboardSeatingLookup: React.FC = () => {
   const { user, isDemoMode } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [rowsLoading, setRowsLoading] = useState(false);
   const [rows, setRows] = useState<SeatingLookupRow[]>([]);
   const [itineraryEvents, setItineraryEvents] = useState<ItineraryEvent[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const loading = eventsLoading || rowsLoading;
 
   useEffect(() => {
     let mounted = true;
     const run = async () => {
-      if (!user) return;
+      if (!user) {
+        if (mounted) {
+          setRows([]);
+          setItineraryEvents([]);
+          setSelectedEventId(null);
+          setEventsLoading(false);
+        }
+        return;
+      }
       try {
-        setLoading(true);
+        setEventsLoading(true);
         if (isDemoMode) {
-          if (!mounted) return;
           const demoEvents = loadDemoItineraryEventsFromStorage();
-          setItineraryEvents(demoEvents);
-          setSelectedEventId(resolveOperationalEventId({ events: demoEvents }));
+          if (mounted) {
+            setItineraryEvents(demoEvents);
+            setSelectedEventId(resolveOperationalEventId({ events: demoEvents }));
+          }
           return;
         }
 
@@ -47,7 +58,7 @@ export const DashboardSeatingLookup: React.FC = () => {
       } catch {
         if (mounted) setRows([]);
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) setEventsLoading(false);
       }
     };
     void run();
@@ -57,9 +68,15 @@ export const DashboardSeatingLookup: React.FC = () => {
   useEffect(() => {
     let mounted = true;
     const run = async () => {
-      if (!user || !selectedEventId) return;
+      if (!user || !selectedEventId) {
+        if (mounted) {
+          setRows([]);
+          setRowsLoading(false);
+        }
+        return;
+      }
       try {
-        setLoading(true);
+        setRowsLoading(true);
         const mapped = isDemoMode
           ? loadDemoSeatingLookupRows(selectedEventId)
           : await loadSeatingLookupRowsForUser(user.id, selectedEventId);
@@ -67,7 +84,7 @@ export const DashboardSeatingLookup: React.FC = () => {
       } catch {
         if (mounted) setRows([]);
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) setRowsLoading(false);
       }
     };
     void run();
@@ -134,6 +151,9 @@ export const DashboardSeatingLookup: React.FC = () => {
               onChange={(event) => setSelectedEventId(event.target.value || null)}
               className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-text-primary"
             >
+              <option value="" disabled>
+                {eventsLoading ? 'Loading events…' : 'Choose an event'}
+              </option>
               {itineraryEvents.map((event) => (
                 <option key={event.id} value={event.id}>{event.event_name}</option>
               ))}

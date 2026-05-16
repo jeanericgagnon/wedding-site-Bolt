@@ -40,6 +40,7 @@ describe('guestVisibilityPreview', () => {
       },
       events: [],
       invitedEventIds: null,
+      isPublished: true,
       publicSiteSlug: 'maya-and-rowan',
     });
 
@@ -98,6 +99,31 @@ describe('guestVisibilityPreview', () => {
     expect(preview.mainGapLabel).toBeNull();
     expect(preview.links.map((link) => link.label)).toContain('Open travel section as guest');
     expect(preview.links.map((link) => link.label)).toContain('Open registry section as guest');
+  });
+
+  it('holds back public-shell preview links until the site is actually published', () => {
+    const preview = buildGuestVisibilityPreview({
+      guest: {
+        id: 'guest-1',
+        name: 'Maya Lee',
+        inviteToken: 'private-token',
+      },
+      events: [],
+      invitedEventIds: null,
+      isPublished: false,
+      publicSiteSlug: 'maya-and-rowan',
+    });
+
+    expect(preview.links.map((link) => link.kind)).toEqual([
+      'rsvp',
+      'contact',
+      'photos',
+      'guestbook',
+      'vault',
+      'recap',
+    ]);
+    expect(preview.warnings).toContain('Publish the site before sharing public guest-preview links or QR codes.');
+    expect(preview.routeReadinessLabel).toBe('Private guest path ready');
   });
 
   it('falls back to legacy ceremony and reception visibility when no itinerary events exist', () => {

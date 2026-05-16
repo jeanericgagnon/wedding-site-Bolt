@@ -135,9 +135,9 @@ export function ItineraryDashboardRouteContent({
   return (
     <div className="space-y-6">
       <DashboardPageHero
-        eyebrow="Schedule"
-        title="Shape the rhythm of the wedding weekend."
-        description="Add the moments guests need, keep private notes close, and adjust timing without losing the flow of the day."
+        eyebrow="Wedding Day"
+        title="Weekend schedule and timing."
+        description="Add the moments guests need, keep private notes close, and connect the schedule to the wedding-day view."
         stats={[
           { label: 'Events', value: events.length, detail: `${events.filter((event) => event.is_visible !== false).length} visible to guests` },
           { label: 'Timing notes', value: timelineInsights.length, detail: timelineInsights.length > 0 ? 'worth checking' : 'no timing issues found' },
@@ -146,7 +146,7 @@ export function ItineraryDashboardRouteContent({
         actions={
           <Button onClick={() => openEventForm()}>
             <Plus className="w-5 h-5 mr-2" />
-            Add to schedule
+            Edit weekend schedule
           </Button>
         }
       />

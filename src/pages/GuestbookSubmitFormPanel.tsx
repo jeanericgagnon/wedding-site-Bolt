@@ -54,9 +54,9 @@ export function GuestbookSubmitFormPanel({
             <PenLine className="pointer-events-none absolute right-4 top-4 h-4 w-4 text-stone-400" aria-hidden="true" />
             <textarea
               id="guestbook-message"
-              required
               maxLength={2000}
-              aria-describedby="guestbook-message-count"
+              aria-describedby={error ? 'guestbook-message-error guestbook-message-count' : 'guestbook-message-count'}
+              aria-invalid={error ? 'true' : undefined}
               value={message}
               onChange={(e) => onMessageChange(e.target.value)}
               className={`${inputClassName} min-h-40 pr-11`}
@@ -65,7 +65,7 @@ export function GuestbookSubmitFormPanel({
           </div>
           <p id="guestbook-message-count" className="mt-1 text-xs text-stone-500" aria-live="polite">{message.length}/2000 characters</p>
         </div>
-        {error && <p role="alert" className="rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700">{error}</p>}
+        {error && <p id="guestbook-message-error" role="alert" className="rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700">{error}</p>}
         {status && <p role="status" className="rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700">{status}</p>}
         <button type="submit" disabled={submitting} className="inline-flex min-h-[54px] w-full items-center justify-center gap-2 rounded-lg bg-stone-950 px-4 py-3 text-base font-semibold text-white hover:bg-stone-800 disabled:opacity-60">
           <Send className="h-4 w-4" aria-hidden="true" />

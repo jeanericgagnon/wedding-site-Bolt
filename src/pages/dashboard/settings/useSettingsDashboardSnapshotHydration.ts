@@ -25,6 +25,7 @@ interface UseSettingsDashboardSnapshotHydrationArgs {
   setDefaultLanguage: React.Dispatch<React.SetStateAction<SiteLanguageCode>>;
   setGuestAccessToken: React.Dispatch<React.SetStateAction<string | null>>;
   setHideFromSearch: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsPublished: React.Dispatch<React.SetStateAction<boolean>>;
   setMusicPlaylistUrl: React.Dispatch<React.SetStateAction<string>>;
   setNotifDigest: React.Dispatch<React.SetStateAction<boolean>>;
   setNotifDigestCadence: React.Dispatch<React.SetStateAction<'daily' | 'weekly' | 'paused'>>;
@@ -68,6 +69,7 @@ export function useSettingsDashboardSnapshotHydration({
   setDefaultLanguage,
   setGuestAccessToken,
   setHideFromSearch,
+  setIsPublished,
   setMusicPlaylistUrl,
   setNotifDigest,
   setNotifDigestCadence,
@@ -121,6 +123,7 @@ export function useSettingsDashboardSnapshotHydration({
         );
         setPrivacyMode(snapshot.privacyMode);
         setHideFromSearch(snapshot.hideFromSearch);
+        setIsPublished(snapshot.isPublished);
         setGuestAccessToken(snapshot.guestAccessToken);
         setDefaultLanguage(snapshot.defaultLanguage);
         setAllowedLanguages(snapshot.allowedLanguages);
@@ -166,6 +169,7 @@ export function useSettingsDashboardSnapshotHydration({
     setDefaultLanguage,
     setGuestAccessToken,
     setHideFromSearch,
+    setIsPublished,
     setMusicPlaylistUrl,
     setNotifDigest,
     setNotifDigestCadence,

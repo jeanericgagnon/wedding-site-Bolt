@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getMessageAccessToken,
+  loadMessageGuests,
   MAX_DASHBOARD_MESSAGES,
   MAX_MESSAGE_DELIVERY_MESSAGE_IDS,
   MAX_MESSAGE_DELIVERY_ROWS,
@@ -14,7 +15,8 @@ import {
   triggerScheduledMessageDispatch,
 } from './messageService';
 
-const { getSessionMock, rpcMock } = vi.hoisted(() => ({
+const { fromMock, getSessionMock, rpcMock } = vi.hoisted(() => ({
+  fromMock: vi.fn(),
   getSessionMock: vi.fn(),
   rpcMock: vi.fn(),
 }));
@@ -24,13 +26,14 @@ vi.mock('../../../lib/supabase', () => ({
     auth: {
       getSession: getSessionMock,
     },
-    from: vi.fn(),
+    from: fromMock,
     rpc: rpcMock,
   },
 }));
 
 describe('message service query bounds', () => {
   beforeEach(() => {
+    fromMock.mockReset();
     getSessionMock.mockReset();
     rpcMock.mockReset();
     vi.unstubAllGlobals();
@@ -87,6 +90,93 @@ describe('message service query bounds', () => {
     expect(source).toContain(".from('rsvps')");
     expect(source).toContain(".select('guest_id, meal_choice')");
     expect(source).toContain('mergeGuestsWithCanonicalMealChoices');
+    expect(source).toContain('if (rsvpError) return guests;');
+  });
+
+  it('keeps guest audience counts usable when RSVP enrichment fails', async () => {
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'guests') {
+        return {
+          select: () => ({
+            eq: () => ({
+              order: () => ({
+                order: () => ({
+                  limit: async () => ({
+                    data: [
+                      { id: 'guest-1', first_name: 'Maya', last_name: 'Lee', email: 'maya@example.com', meal_choice: null },
+                      { id: 'guest-2', first_name: 'Leo', last_name: 'Lee', email: 'leo@example.com', meal_choice: null },
+                    ],
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'rsvps') {
+        return {
+          select: () => ({
+            in: () => ({
+              limit: async () => ({
+                data: null,
+                error: new Error('rsvp load failed'),
+              }),
+            }),
+          }),
+        };
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    await expect(loadMessageGuests('site-1')).resolves.toEqual([
+      expect.objectContaining({ id: 'guest-1', email: 'maya@example.com' }),
+      expect.objectContaining({ id: 'guest-2', email: 'leo@example.com' }),
+    ]);
+  });
+
+  it('merges canonical meal choices when RSVP enrichment succeeds', async () => {
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'guests') {
+        return {
+          select: () => ({
+            eq: () => ({
+              order: () => ({
+                order: () => ({
+                  limit: async () => ({
+                    data: [
+                      { id: 'guest-1', first_name: 'Maya', last_name: 'Lee', email: 'maya@example.com', meal_choice: null },
+                    ],
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'rsvps') {
+        return {
+          select: () => ({
+            in: () => ({
+              limit: async () => ({
+                data: [{ guest_id: 'guest-1', meal_choice: 'Vegetarian' }],
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    await expect(loadMessageGuests('site-1')).resolves.toEqual([
+      expect.objectContaining({ id: 'guest-1', meal_choice: 'Vegetarian' }),
+    ]);
   });
 
   it('routes dashboard message writes through RPCs', () => {

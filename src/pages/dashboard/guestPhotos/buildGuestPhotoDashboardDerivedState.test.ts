@@ -15,6 +15,7 @@ const baseArgs = {
   guestProspects: [],
   guestbookEntries: [],
   hubSettings: DEFAULT_HUB_SETTINGS,
+  isPublished: true,
   metadataByUploadId: new Map(),
   showFlaggedOnly: false,
   showHidden: false,
@@ -47,5 +48,14 @@ describe('buildGuestPhotoDashboardDerivedState', () => {
     expect(url.origin).toBe(window.location.origin);
     expect(url.pathname).toBe('/event/alex-jordan-demo/recap');
     expect(url.searchParams.get('photoMemoryFlowQa')).toBe('1');
+  });
+
+  it('warns owners to publish before sharing guest hub and recap assets', () => {
+    const state = buildGuestPhotoDashboardDerivedState({
+      ...baseArgs,
+      isPublished: false,
+    });
+
+    expect(state.recapPublishWarnings).toContain('Publish the site before sharing the guest hub, recap, or QR print cards.');
   });
 });

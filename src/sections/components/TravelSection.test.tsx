@@ -108,6 +108,37 @@ describe('TravelSection', () => {
     expect(screen.getByText('Local weekend guide')).toBeInTheDocument();
   });
 
+  it('restores the default public travel heading when the saved title is blank whitespace', () => {
+    const data = createWeddingData();
+
+    const { rerender } = render(
+      <TravelSection
+        data={data}
+        instance={makeInstance({ showTitle: true, title: '   ' })}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Travel & Accommodations' })).toBeInTheDocument();
+
+    rerender(
+      <TravelCards
+        data={data}
+        instance={makeInstance({ showTitle: true, title: '   ' })}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Travel & Accommodations' })).toBeInTheDocument();
+
+    rerender(
+      <TravelLocalGuide
+        data={data}
+        instance={makeInstance({ showTitle: true, title: '   ' })}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Travel & Local Guide' })).toBeInTheDocument();
+  });
+
   it('renders structured hotel, room-block, shuttle, and local-tip travel data on public travel variants', () => {
     const data = createWeddingData();
     data.travel = {

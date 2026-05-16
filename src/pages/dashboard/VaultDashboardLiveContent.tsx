@@ -47,8 +47,8 @@ export function VaultDashboardLiveContent({
     <div className="max-w-4xl mx-auto space-y-8">
       <DashboardPageHero
         eyebrow="Private keepsakes"
-        title="Anniversary vaults"
-        description={`Seal notes, photos, and messages until future anniversaries. You can keep up to ${MAX_VAULTS} vaults and invite loved ones to contribute without making the page feel public.`}
+        title="Memory Vaults"
+        description={`Seal notes, photos, and messages until future anniversaries. You can keep up to ${MAX_VAULTS} vaults and invite loved ones to contribute privately.`}
         stats={[
           { label: 'Vaults', value: vaultConfigsLength, detail: vaultConfigsLength === 1 ? 'One anniversary set up' : 'Anniversary moments set up' },
           { label: 'Entries', value: totalEntries, detail: totalEntries === 1 ? 'One saved note or file' : 'Saved notes and files' },
@@ -63,7 +63,7 @@ export function VaultDashboardLiveContent({
             className="w-full sm:w-auto shrink-0"
           >
             {addingVault ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Plus className="w-4 h-4 mr-1.5" />}
-            Add vault
+            Manage vaults
           </Button>
         ) : null}
       />

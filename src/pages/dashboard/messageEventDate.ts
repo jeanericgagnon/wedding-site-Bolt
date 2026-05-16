@@ -5,7 +5,7 @@ function normalizeMessageEventDateInput(value: string | null | undefined): strin
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
     const date = new Date(`${trimmed}T12:00:00Z`);
     if (Number.isNaN(date.getTime())) return null;
-    return date.toISOString().slice(0, 10) === trimmed ? `${trimmed}T00:00:00.000Z` : null;
+    return date.toISOString().slice(0, 10) === trimmed ? trimmed : null;
   }
 
   const date = new Date(trimmed);
@@ -16,7 +16,9 @@ export function formatMessageEventDate(value: string | null | undefined): string
   const normalized = normalizeMessageEventDateInput(value);
   if (!normalized) return '';
 
-  const date = new Date(normalized);
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(normalized)
+    ? new Date(`${normalized}T12:00:00Z`)
+    : new Date(normalized);
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString();
 }
 

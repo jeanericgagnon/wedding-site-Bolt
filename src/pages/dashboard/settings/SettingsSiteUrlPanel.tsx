@@ -2,10 +2,13 @@ import { ExternalLink, Loader2 } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '../../../components/ui';
 import { ShareQrPanel } from '../../../components/ui/ShareQrPanel';
+import { getSiteVisibilityState, type SitePrivacyMode } from '../../../lib/siteVisibilityState';
 
 type SettingsSiteUrlPanelProps = {
+  isPublished: boolean;
   onSiteSlugChange: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
+  privacyMode: SitePrivacyMode;
   publicSiteUrl: string;
   siteSlug: string;
   slugError: string | null;
@@ -14,14 +17,18 @@ type SettingsSiteUrlPanelProps = {
 };
 
 export function SettingsSiteUrlPanel({
+  isPublished,
   onSiteSlugChange,
   onSubmit,
+  privacyMode,
   publicSiteUrl,
   siteSlug,
   slugError,
   slugSaving,
   slugSuccess,
 }: SettingsSiteUrlPanelProps) {
+  const visibility = getSiteVisibilityState({ isPublished, privacyMode });
+
   return (
     <Card variant="bordered" padding="lg">
       <CardHeader>
@@ -51,25 +58,36 @@ export function SettingsSiteUrlPanel({
             </div>
             {siteSlug && (
               <div className="mt-2 space-y-2">
-                <p className="text-sm text-text-secondary">
-                  Your site is accessible at{' '}
-                  <a
-                    href={publicSiteUrl}
-                    className="text-primary hover:text-primary-hover"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {siteSlug}.dayof.love
-                    <ExternalLink className="ml-1 inline h-3 w-3" aria-hidden="true" />
-                  </a>
-                </p>
-                <ShareQrPanel
-                  title="Public site QR"
-                  description="Print this or add it to signage so guests can open the wedding site quickly."
-                  url={publicSiteUrl}
-                  copyLabel="Copy site link"
-                  className="mt-3"
-                />
+                {visibility.isLive ? (
+                  <>
+                    <p className="text-sm text-text-secondary">
+                      Your site is accessible at{' '}
+                      <a
+                        href={publicSiteUrl}
+                        className="text-primary hover:text-primary-hover"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {siteSlug}.dayof.love
+                        <ExternalLink className="ml-1 inline h-3 w-3" aria-hidden="true" />
+                      </a>
+                    </p>
+                    <ShareQrPanel
+                      title="Public site QR"
+                      description="Print this or add it to signage so guests can open the wedding site quickly."
+                      url={publicSiteUrl}
+                      copyLabel="Copy site link"
+                      className="mt-3"
+                    />
+                  </>
+                ) : (
+                  <div className="rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">
+                    <p className="font-medium text-text-primary">This URL is reserved for your site, but guests cannot open it yet.</p>
+                    <p className="mt-1">
+                      {visibility.explainer} Publish the site before sharing the public link or printing a QR code.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>

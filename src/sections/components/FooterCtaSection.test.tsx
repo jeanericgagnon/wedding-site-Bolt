@@ -57,6 +57,29 @@ describe('FooterCtaSection', () => {
     expect(screen.getByText('Alex & Jordan')).toBeInTheDocument();
   });
 
+  it('restores the default footer headline when the saved call-to-action heading is blank whitespace', () => {
+    const data = createEmptyWeddingData();
+
+    const { rerender } = render(
+      <FooterCtaSection
+        data={data}
+        instance={makeInstance({ headline: '   ' })}
+      />,
+    );
+
+    expect(screen.getByText('We hope to see you there')).toBeInTheDocument();
+
+    rerender(
+      <FooterCtaMinimal
+        data={data}
+        instance={makeInstance({ headline: '   ' })}
+      />,
+    );
+
+    expect(screen.getByText("We can't wait to celebrate with you")).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: '' })).not.toBeInTheDocument();
+  });
+
   it('keeps footer couple names truthful when one persisted partner name is whitespace only', () => {
     const data = createEmptyWeddingData();
     data.couple.partner1Name = '   ';

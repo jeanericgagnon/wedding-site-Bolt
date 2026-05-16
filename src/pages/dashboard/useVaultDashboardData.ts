@@ -15,6 +15,7 @@ import {
 
 const VAULT_RELEASE_NOTICE_KEY = 'dayof_vault_release_notified_v1';
 const DEMO_WEDDING_DATE = '2026-02-23';
+const VAULT_DASHBOARD_LOAD_TIMEOUT_MS = 12000;
 
 interface VaultDashboardDataArgs {
   isDemoMode: boolean;
@@ -29,6 +30,7 @@ export function useVaultDashboardData({ isDemoMode, toast, user }: VaultDashboar
   const [vaultConfigs, setVaultConfigs] = useState<VaultConfig[]>([]);
   const [entries, setEntries] = useState<VaultEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [vaultStorageProvider, setVaultStorageProvider] = useState<'supabase' | 'google_drive'>('supabase');
   const [googleDriveConnected, setGoogleDriveConnected] = useState(false);
   const [connectingDrive, setConnectingDrive] = useState(false);
@@ -142,6 +144,7 @@ export function useVaultDashboardData({ isDemoMode, toast, user }: VaultDashboar
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       if (isDemoMode) {
         setSiteSlug('alex-jordan-demo');
@@ -173,6 +176,7 @@ export function useVaultDashboardData({ isDemoMode, toast, user }: VaultDashboar
       }
 
       if (!user) {
+        setSiteSlug(null);
         setWeddingSiteId(null);
         setVaultConfigs([]);
         setEntries([]);
@@ -181,9 +185,15 @@ export function useVaultDashboardData({ isDemoMode, toast, user }: VaultDashboar
         return;
       }
 
-      const { site, configs, entries: loadedEntries } = await loadVaultDashboardData(user.id);
+      const { site, configs, entries: loadedEntries } = await Promise.race([
+        loadVaultDashboardData(user.id),
+        new Promise<never>((_, reject) => {
+          window.setTimeout(() => reject(new Error('Vault dashboard load timed out.')), VAULT_DASHBOARD_LOAD_TIMEOUT_MS);
+        }),
+      ]);
 
       if (!site) {
+        setSiteSlug(null);
         setWeddingSiteId(null);
         setVaultConfigs([]);
         setEntries([]);
@@ -199,18 +209,20 @@ export function useVaultDashboardData({ isDemoMode, toast, user }: VaultDashboar
         toast('Couldn’t sync dayof as the active vault home right now.', 'error');
       });
       if (site.wedding_date) setWeddingDate(toValidDateOrNull(site.wedding_date));
-      if (site.site_slug) setSiteSlug(site.site_slug);
+      setSiteSlug(site.site_slug ?? null);
       setCoupleName1(site.couple_name_1 || 'Partner');
       setCoupleName2(site.couple_name_2 || 'Partner');
       setCoupleEmail(user.email ?? null);
       setVaultConfigs(configs);
       setEntries(loadedEntries);
     } catch {
+      setSiteSlug(null);
       setWeddingSiteId(null);
       setVaultConfigs([]);
       setEntries([]);
       setGoogleDriveConnected(false);
       setDriveNeedsReconnect(false);
+      setLoadError('Couldn’t load vaults right now. Try again in a moment.');
       toast('Couldn’t load vault data right now. Please try again.', 'error');
     } finally {
       setLoading(false);
@@ -345,6 +357,7 @@ export function useVaultDashboardData({ isDemoMode, toast, user }: VaultDashboar
     driveHealthMessage,
     driveNeedsReconnect,
     entries,
+    loadError,
     googleDriveConnected,
     handleConnectGoogleDrive,
     loadData,

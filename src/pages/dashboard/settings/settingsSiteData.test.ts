@@ -67,6 +67,7 @@ describe('settings site data boundary', () => {
     expect(SETTINGS_SITE_SELECT).toContain('privacy_mode');
     expect(SETTINGS_SITE_SELECT).toContain('hide_from_search');
     expect(SETTINGS_SITE_SELECT).toContain('guest_access_token');
+    expect(SETTINGS_SITE_SELECT).toContain('is_published');
     expect(SETTINGS_SITE_SELECT).toContain('wedding_data');
     expect(SETTINGS_SITE_SELECT).not.toContain('*');
     expect(SETTINGS_COLLABORATOR_INVITE_SELECT).toBe('id, invite_email, invite_name, role, status, invited_at, expires_at, invite_token, permissions');
@@ -222,10 +223,12 @@ describe('settings site data boundary', () => {
     expect(routeSupportHook).toContain('export function useSettingsDashboardRouteSupport({');
     expect(routeSupportHook).toContain('const safeMusicPlaylistUrl = getSafePublicWebUrl(musicPlaylistUrl);');
     expect(routeSupportHook).toContain('buildSettingsDashboardViewModel({');
+    expect(routeSupportHook).toContain('isPublished,');
     expect(routeSupportHook).toContain('const handleLogout = async () => {');
     expect(routeContentPropsHelper).toContain('type Props = ComponentProps<typeof SettingsDashboardRouteContent>;');
     expect(routeContentPropsHelper).toContain('export function buildSettingsDashboardRouteContentProps(props: Props): Props {');
     expect(routeContent).toContain('export function SettingsDashboardRouteContent(props: Props)');
+    expect(routeContent).toContain('isPublished: props.isPublished,');
     expect(routeContent).toContain('<SettingsDashboardShell');
     expect(routeContent).toContain('<SettingsTabContent');
     expect(routeContent).toContain('<SettingsSiteTabContent');
@@ -254,11 +257,13 @@ describe('settings site data boundary', () => {
     expect(rsvpTabContent).toContain('onToggleAdvancedVisibility');
 
     expect(snapshotLoader).toContain('loadSettingsSite(activeSite.id)');
+    expect(snapshotLoader).toContain('isPublished: data.is_published === true');
     expect(snapshotLoader).toContain('loadSettingsCollaboratorInvites(siteId)');
     expect(snapshotLoader).toContain('loadSettingsTranslationStatuses(');
     expect(snapshotLoader).toContain('resolveActiveSiteForUser(userId)');
     expect(snapshotLoader).not.toContain("from('wedding_sites')");
     expect(viewModel).toContain('getSettingsTabs(settingsRole)');
+    expect(viewModel).toContain('isPublished,');
     expect(viewModel).toContain('buildWeddingIdentityExportKit({');
     expect(viewModel).toContain('buildWeddingIdentityPrintAssets({');
     expect(viewModel).toContain("PLANNER_ROLE_OPTIONS.filter((option) => option.value !== 'owner')");
@@ -279,6 +284,7 @@ describe('settings site data boundary', () => {
     expect(uiStateHook).toContain('export function useSettingsDashboardUiState({ userId }: Args)');
     expect(uiStateHook).toContain("const [activeTab, setActiveTab] = useState<SettingsTabId>('account');");
     expect(uiStateHook).toContain("const [siteSlug, setSiteSlug] = useState('');");
+    expect(uiStateHook).toContain('const [isPublished, setIsPublished] = useState(false);');
     expect(uiStateHook).toContain('const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);');
     expect(uiStateHook).toContain('fetchBillingInfo(userId)');
     expect(uiStateHook).toContain("setBillingError(safeSettingsError(err, 'Couldn’t load billing right now.'))");
@@ -287,6 +293,7 @@ describe('settings site data boundary', () => {
     expect(hydrationHook).toContain('export function useSettingsDashboardSnapshotHydration({');
     expect(hydrationHook).toContain('loadSettingsDashboardSnapshot({');
     expect(hydrationHook).toContain('setSettingsRole(snapshot.settingsRole);');
+    expect(hydrationHook).toContain('setIsPublished(snapshot.isPublished);');
     expect(hydrationHook).toContain('if (visibilityDraftGuard.shouldHydrate())');
     expect(hydrationHook).toContain('if (notifDraftGuard.shouldHydrate())');
     expect(hydrationHook).toContain('if (rsvpDraftGuard.shouldHydrate())');

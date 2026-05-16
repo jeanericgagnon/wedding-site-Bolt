@@ -1,4 +1,5 @@
 type PhotoUploadStatusPanelProps = {
+  panelId?: string;
   error: string | null;
   message: string | null;
   siteSlug: string;
@@ -9,6 +10,7 @@ type PhotoUploadStatusPanelProps = {
 };
 
 export function PhotoUploadStatusPanel({
+  panelId,
   error,
   message,
   siteSlug,
@@ -19,7 +21,7 @@ export function PhotoUploadStatusPanel({
 }: PhotoUploadStatusPanelProps) {
   return (
     <>
-      {error && <p role="alert" className="rounded-lg border border-stone-300 bg-stone-50 px-4 py-3 text-base text-stone-800">{error}</p>}
+      {error && <p id={panelId} role="alert" className="rounded-lg border border-stone-300 bg-stone-50 px-4 py-3 text-base text-stone-800">{error}</p>}
       {message && <p role="status" className="rounded-lg border border-stone-200 bg-stone-50 px-4 py-3 text-base text-stone-800">{message}</p>}
       {message && siteSlug && fromHub && (
         <div className="grid gap-2 sm:grid-cols-2">

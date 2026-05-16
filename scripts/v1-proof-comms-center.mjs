@@ -4,6 +4,10 @@ import { execSync, spawn } from 'node:child_process';
 
 const PREVIEW_URL = 'http://127.0.0.1:4173';
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
+const isLiveBaseUrl = baseUrl !== PREVIEW_URL;
+const browserSpec = isLiveBaseUrl
+  ? 'tests/e2e/messages-comms-center-live.spec.ts'
+  : 'tests/e2e/messages-comms-center.spec.ts';
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -108,8 +112,8 @@ try {
 
   results.push(runStep({
     id: 'messages-browser-proof',
-    label: 'Messages local browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/messages-comms-center.spec.ts`,
+    label: isLiveBaseUrl ? 'Messages authenticated live owner browser proof' : 'Messages local browser proof',
+    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${browserSpec}`,
     required: true,
   }));
 
@@ -129,8 +133,8 @@ try {
 } catch (error) {
   results.push({
     id: 'messages-browser-proof',
-    label: 'Messages local browser proof',
-    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/messages-comms-center.spec.ts`,
+    label: isLiveBaseUrl ? 'Messages authenticated live owner browser proof' : 'Messages local browser proof',
+    command: `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 ${browserSpec}`,
     required: true,
     ok: false,
     startedAt: new Date().toISOString(),
@@ -160,12 +164,18 @@ const output = {
     'Draft/queued/sent/failed message-state truth',
     'Focused retry, next-send exclusion, and customer-safe delivery review grouping coverage',
     'Compose/send/retry/reschedule permission guard coverage',
-    'Local browser proof for composing and saving message starting points plus scheduled campaign wording',
+    isLiveBaseUrl
+      ? 'Authenticated live owner browser proof for composing and saving each operational message starting point with cleanup'
+      : 'Local browser proof for composing and saving message starting points plus scheduled campaign wording',
     'Build integrity after comms-center proof assertions',
   ],
   stillManualProofNeeded: [
-    'Rerun compose/save/send flows against an authenticated live owner runtime after the next approved messaging deploy.',
-    'Verify history state reads credibly after runtime delivery attempt',
+    isLiveBaseUrl
+      ? 'Verify history state reads credibly after a real runtime delivery attempt once a safe provider-backed live-send lane is explicitly reopened.'
+      : 'Rerun compose/save/send flows against an authenticated live owner runtime after the next approved messaging deploy.',
+    isLiveBaseUrl
+      ? 'Keep live delivery-state grouping green against real message history rows on future deploys.'
+      : 'Verify history state reads credibly after runtime delivery attempt',
   ],
   results,
 };

@@ -223,7 +223,7 @@ export async function loadMessageGuests(weddingSiteId: string): Promise<Guest[]>
     .in('guest_id', guestIds)
     .limit(MAX_MESSAGE_GUESTS);
 
-  if (rsvpError) throw rsvpError;
+  if (rsvpError) return guests;
   return mergeGuestsWithCanonicalMealChoices(guests, (rsvps ?? []) as Array<{ guest_id?: unknown; meal_choice?: unknown }>);
 }
 

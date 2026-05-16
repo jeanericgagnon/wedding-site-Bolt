@@ -80,6 +80,7 @@ const ScheduleAgendaCards: React.FC<SectionComponentProps<ScheduleAgendaCardsDat
           {data.events.map(event => {
             const categoryLabel = CATEGORY_LABELS[event.category];
             const safeEventImage = getSafePublicImageUrl(event.image);
+            const timeLabel = [event.time.trim(), event.endTime.trim()].filter(Boolean).join(' — ');
             return (
               <div
                 key={event.id}
@@ -96,12 +97,12 @@ const ScheduleAgendaCards: React.FC<SectionComponentProps<ScheduleAgendaCardsDat
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex items-center gap-2">
                       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${event.category !== 'other' ? accent.dot : 'bg-stone-300'}`} />
-                      <div className="flex items-center gap-1.5 text-stone-400">
-                        <Clock size={12} />
-                        <span className="text-xs font-medium tabular-nums">
-                          {event.time}{event.endTime ? ` — ${event.endTime}` : ''}
-                        </span>
-                      </div>
+                      {timeLabel && (
+                        <div className="flex items-center gap-1.5 text-stone-400">
+                          <Clock size={12} />
+                          <span className="text-xs font-medium tabular-nums">{timeLabel}</span>
+                        </div>
+                      )}
                     </div>
                     {categoryLabel && (
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${accent.bg} ${accent.text}`}>

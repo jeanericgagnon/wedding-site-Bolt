@@ -47,6 +47,7 @@ type BuildGuestPhotoDashboardLiveContentPropsParams = {
   guestHubActions: LiveContentProps['hubQrCardProps']['guestHubActions'];
   guestHubQrAssetCount: number;
   guestHubUrl: string | null;
+  isPublished: boolean;
   guestRecapUrl: string | null;
   guestProspects: LiveContentProps['followupCardProps']['guestProspects'];
   guestbookEntries: LiveContentProps['guestbookCardProps']['guestbookEntries'];
@@ -224,6 +225,7 @@ export function buildGuestPhotoDashboardLiveContentProps({
   guestHubActions,
   guestHubQrAssetCount,
   guestHubUrl,
+  isPublished,
   guestProspects,
   guestRecapUrl,
   guestbookEntries,
@@ -483,6 +485,7 @@ export function buildGuestPhotoDashboardLiveContentProps({
     hubQrCardProps: {
       guestHubUrl: guestHubUrl || '',
       guestRecapUrl: guestRecapUrl || '',
+      isPublished,
       guestHubActionSummary,
       guestHubActions,
       copied,
@@ -534,6 +537,7 @@ export function buildGuestPhotoDashboardLiveContentProps({
     },
     recapSharingCardProps: {
       guestRecapUrl: guestRecapUrl || '',
+      isPublished,
       hubSettings,
       savingHubSettings,
       uploadCount: uploads.length,

@@ -26,6 +26,7 @@ describe('SettingsIdentityExportsPanel', () => {
 
     render(
       <SettingsIdentityExportsPanel
+        isPublished
         onCopyIdentityManifest={onCopyIdentityManifest}
         onCopyIdentityStyleKit={onCopyIdentityStyleKit}
         onDownloadIdentityStoryGraphic={onDownloadIdentityStoryGraphic}
@@ -61,6 +62,7 @@ describe('SettingsIdentityExportsPanel', () => {
 
     render(
       <SettingsIdentityExportsPanel
+        isPublished={false}
         onCopyIdentityManifest={vi.fn()}
         onCopyIdentityStyleKit={vi.fn()}
         onDownloadIdentityStoryGraphic={vi.fn()}
@@ -72,8 +74,101 @@ describe('SettingsIdentityExportsPanel', () => {
     );
 
     expect(screen.getByText('1 of 7 ready')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /copy manifest/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /copy style kit/i })).toBeEnabled();
     expect(screen.getByRole('button', { name: /save print pack/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /save story graphic/i })).toBeDisabled();
     expect(screen.getByText('Set a public site URL before printing QR-based assets.')).toBeInTheDocument();
+    expect(screen.getByText('Publish the site before saving QR-based print assets or the story graphic so guests do not get draft-only links.')).toBeInTheDocument();
+  });
+
+  it('keeps internal prep actions available while draft-only guest share assets stay locked', () => {
+    const onCopyIdentityManifest = vi.fn();
+    const onCopyIdentityStyleKit = vi.fn();
+
+    render(
+      <SettingsIdentityExportsPanel
+        isPublished={false}
+        onCopyIdentityManifest={onCopyIdentityManifest}
+        onCopyIdentityStyleKit={onCopyIdentityStyleKit}
+        onDownloadIdentityStoryGraphic={vi.fn()}
+        onDownloadIdentityPrintPack={vi.fn()}
+        weddingIdentityExportKit={buildWeddingIdentityExportKit({
+          coupleNames: 'Maya & Leo',
+          publicSiteUrl: '',
+          weddingDate: '2026-09-12',
+          venueName: 'Garden House',
+          templateName: 'Editorial Garden',
+        })}
+        weddingIdentityPrintAssets={[]}
+        hasStoryGraphic={false}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /copy manifest/i }));
+    fireEvent.click(screen.getByRole('button', { name: /copy style kit/i }));
+
+    expect(onCopyIdentityManifest).toHaveBeenCalledTimes(1);
+    expect(onCopyIdentityStyleKit).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: /save print pack/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /save story graphic/i })).toBeDisabled();
+  });
+
+  it('keeps published sites honest about missing share assets without falling back to draft-only warnings', () => {
+    render(
+      <SettingsIdentityExportsPanel
+        isPublished
+        onCopyIdentityManifest={vi.fn()}
+        onCopyIdentityStyleKit={vi.fn()}
+        onDownloadIdentityStoryGraphic={vi.fn()}
+        onDownloadIdentityPrintPack={vi.fn()}
+        weddingIdentityExportKit={buildWeddingIdentityExportKit({
+          coupleNames: 'Maya & Leo',
+          publicSiteUrl: 'https://maya-leo.dayof.love',
+          weddingDate: '2026-09-12',
+          venueName: '',
+          templateName: 'Editorial Garden',
+        })}
+        weddingIdentityPrintAssets={[]}
+        hasStoryGraphic={false}
+      />,
+    );
+
+    expect(screen.queryByText(/Publish the site before saving QR-based print assets/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Set the venue name before finalizing print signage copy\./i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save print pack/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /save story graphic/i })).toBeDisabled();
+  });
+
+  it('keeps published export surfaces fully share-ready once every guest-facing asset exists', () => {
+    render(
+      <SettingsIdentityExportsPanel
+        isPublished
+        onCopyIdentityManifest={vi.fn()}
+        onCopyIdentityStyleKit={vi.fn()}
+        onDownloadIdentityStoryGraphic={vi.fn()}
+        onDownloadIdentityPrintPack={vi.fn()}
+        weddingIdentityExportKit={buildWeddingIdentityExportKit({
+          coupleNames: 'Maya & Leo',
+          publicSiteUrl: 'https://maya-leo.dayof.love',
+          weddingDate: '2026-09-12',
+          venueName: 'Garden House',
+          templateName: 'Editorial Garden',
+        })}
+        weddingIdentityPrintAssets={buildWeddingIdentityPrintAssets({
+          coupleNames: 'Maya & Leo',
+          publicSiteUrl: 'https://maya-leo.dayof.love',
+          weddingDate: '2026-09-12',
+          venueName: 'Garden House',
+        })}
+        hasStoryGraphic
+      />,
+    );
+
+    expect(screen.queryByText(/Publish the site before saving QR-based print assets/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /copy manifest/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /copy style kit/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /save print pack/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /save story graphic/i })).toBeEnabled();
   });
 });

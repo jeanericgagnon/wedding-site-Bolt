@@ -82,9 +82,9 @@ export function CoordinatorDashboardRouteContent({
   return (
     <div className="max-w-6xl mx-auto space-y-5">
       <DashboardPageHero
-        eyebrow="Day-of view"
-        title="Give helpers the next useful thing, not every planning detail."
-        description="Check-in, schedule updates, guest questions, and day-of messages stay focused so a planner or coordinator can act quickly."
+        eyebrow="Wedding Day"
+        title="Everything your helpers need on the wedding day."
+        description="Keep the schedule, QR codes, seating lookup, and coordinator view close when the day gets busy."
         stats={[
           { label: 'Guests', value: statsCardProps.stats.total, detail: `${statsCardProps.stats.confirmed} attending` },
           { label: 'Checked in', value: statsCardProps.stats.checkedIn, detail: 'arrivals marked' },

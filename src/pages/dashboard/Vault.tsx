@@ -63,6 +63,7 @@ export const DashboardVault: React.FC = () => {
     driveHealthMessage,
     driveNeedsReconnect,
     entries,
+    loadError,
     googleDriveConnected,
     handleConnectGoogleDrive,
     loadData,
@@ -118,7 +119,7 @@ export const DashboardVault: React.FC = () => {
   const showReconnectButton = !googleDriveConnected || driveNeedsReconnect;
 
   return (
-    <VaultDashboardRouteView loading={loading}>
+    <VaultDashboardRouteView error={loadError} loading={loading}>
       <VaultDashboardLiveContent
         addingVault={addingVault}
         archiveModeIsArchiveLike={archiveMode.isArchiveLike}

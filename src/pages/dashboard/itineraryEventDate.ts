@@ -5,7 +5,7 @@ function normalizeItineraryEventDateInput(value: string | null | undefined): str
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
     const date = new Date(`${trimmed}T12:00:00Z`);
     if (Number.isNaN(date.getTime())) return null;
-    return date.toISOString().slice(0, 10) === trimmed ? `${trimmed}T00:00:00.000Z` : null;
+    return date.toISOString().slice(0, 10) === trimmed ? trimmed : null;
   }
 
   const date = new Date(trimmed);
@@ -16,7 +16,9 @@ export function toValidItineraryEventDateOrNull(value: string | null | undefined
   const normalized = normalizeItineraryEventDateInput(value);
   if (!normalized) return null;
 
-  const date = new Date(normalized);
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(normalized)
+    ? new Date(`${normalized}T12:00:00Z`)
+    : new Date(normalized);
   return Number.isNaN(date.getTime()) ? null : date;
 }
 

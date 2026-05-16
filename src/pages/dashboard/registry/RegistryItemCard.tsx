@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { ExternalLink, Pencil, Trash2, GripVertical, Package, CheckCircle2, ShoppingBag, RefreshCw } from 'lucide-react';
 import { Badge } from '../../../components/ui';
 import { ageExceedsMs, formatRegistryItemDate } from '../registryItemTime';
-import { getRegistryItemMetadataState, sanitizeRegistryQuantityState, type RegistryItem, type PurchaseStatus } from './registryTypes';
+import { getOwnerRegistryDisplayTitle, getRegistryItemMetadataState, sanitizeRegistryQuantityState, type RegistryItem, type PurchaseStatus } from './registryTypes';
 import { copyTextOrDownload } from '../../../lib/copyText';
 import { getSafePublicImageUrl, getSafePublicWebUrl } from '../../../sections/publicLinks';
 
@@ -187,6 +187,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const venmoUrl = normalizedItem.fund_venmo_url;
   const paypalUrl = normalizedItem.fund_paypal_url;
   const customFundUrl = normalizedItem.fund_custom_url;
+  const displayTitle = getOwnerRegistryDisplayTitle(normalizedItem.item_name);
 
   function handleDeleteClick() {
     if (confirmDelete) {
@@ -341,7 +342,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
 
       <div className="p-4 flex flex-col gap-2 flex-1">
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-text-primary leading-snug line-clamp-2">{normalizedItem.item_name}</h3>
+          <h3 className="font-semibold text-text-primary leading-snug line-clamp-2">{displayTitle}</h3>
           {merchant && (
             <p className="text-xs text-text-tertiary mt-0.5">{merchant}</p>
           )}
@@ -392,7 +393,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
           <div className="space-y-1">
             {missingSummary && <p className="text-[11px] text-text-tertiary">{missingSummary}</p>}
             {blockedMessage && <p className="text-[11px] text-text-secondary">{blockedMessage}</p>}
-            {hasBadImportTitle && <p className="text-[11px] text-text-secondary">This gift needs a better title. Use Refresh, Re-import, or Edit to update the details.</p>}
+            {hasBadImportTitle && <p className="text-[11px] text-text-secondary">This imported link resolved to a broken page title. Use Refresh, Re-import, or Edit to replace it before sharing.</p>}
             {repairGuidance && <p className="text-[11px] text-text-tertiary">{repairGuidance}</p>}
           </div>
         )}

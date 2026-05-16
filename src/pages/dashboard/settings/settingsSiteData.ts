@@ -21,6 +21,7 @@ export const SETTINGS_SITE_SELECT = [
   'default_language',
   'wedding_data',
   'notification_prefs',
+  'is_published',
 ].join(', ');
 
 export type SettingsSiteRow = Record<string, unknown>;

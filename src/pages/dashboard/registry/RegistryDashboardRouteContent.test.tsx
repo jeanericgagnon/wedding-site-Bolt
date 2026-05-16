@@ -1,3 +1,4 @@
+import type React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -32,7 +33,197 @@ function makeItem(overrides: Partial<RegistryItem> = {}): RegistryItem {
   };
 }
 
+type RegistryDashboardRouteContentProps = React.ComponentProps<typeof RegistryDashboardRouteContent>;
+
+function makeBaseProps(overrides: Partial<RegistryDashboardRouteContentProps> = {}): RegistryDashboardRouteContentProps {
+  const item = makeItem();
+  return {
+    actionableBadImportCount: 0,
+    alertCounts: { stale: 0, priceChanged: 0, outOfStock: 0, imageIssues: 0 },
+    autoRefreshEnabled: true,
+    autoRefreshing: false,
+    bulkImportBusy: false,
+    bulkReviewCounts: { repair: 0, duplicates: 0, imageIssues: 0 },
+    budgetUtilization: 0,
+    claimStats: {
+      claimedItems: 1,
+      claimedQuantity: 1,
+      fullyClaimedItems: 1,
+      partiallyClaimedItems: 0,
+      namedPurchaserItems: 1,
+      missingPurchaserItems: 0,
+      multiQuantityInProgress: 0,
+      remainingQuantity: 0,
+    },
+    counts: { total: 1, available: 0, partial: 0, purchased: 1, totalValue: 80 },
+    duplicateGroups: [],
+    editItem: null,
+    error: null,
+    filter: 'all',
+    filtered: [item],
+    fulfillmentRate: 100,
+    fundStats: {
+      count: 0,
+      received: 0,
+      goal: 0,
+      readyToShare: 0,
+      needsSetup: 0,
+      readyWithProgress: 0,
+      readyAwaitingFirstGift: 0,
+      withGoal: 0,
+      missingGoal: 0,
+      withProgress: 0,
+      awaitingFirstGift: 0,
+      flexibleWithProgress: 0,
+    },
+    guestVisibilityStats: {
+      guestReadyItems: 1,
+      guestVisibleItems: 1,
+      visibleAvailableItems: 0,
+      visibleClaimedItems: 1,
+      hiddenPurchasedItems: 0,
+      blockedGuestItems: 0,
+    },
+    handleAddNew: vi.fn(),
+    handleAutoRefreshStale: vi.fn(async () => {}),
+    handleBulkImport: vi.fn(async () => {}),
+    handleCopyDuplicateReviewList: vi.fn(async () => {}),
+    handleDelete: vi.fn(async () => {}),
+    handleEdit: vi.fn(),
+    handleMergeDuplicateGroup: vi.fn(async () => {}),
+    handleMarkPurchased: vi.fn(async () => {}),
+    handleResetPurchaseState: vi.fn(async () => {}),
+    handleRefetchMetadata: vi.fn(async () => true),
+    handleRefreshImageIssues: vi.fn(async () => {}),
+    handleRepairBadImports: vi.fn(async () => {}),
+    handleRunRepairQueueAction: vi.fn(async () => {}),
+    handleSyncRegistryThankYouTasks: vi.fn(async () => {}),
+    handleToggleRegistryThankYouTask: vi.fn(async () => {}),
+    imageRefreshBusy: false,
+    items: [item],
+    loading: false,
+    monthlyRefreshCap: 100,
+    monthlyRefreshCount: 0,
+    mergingDuplicateGroupId: null,
+    nearBudgetCap: false,
+    normalizedItems: [item],
+    recentActivity: [item],
+    registryActionsOpen: false,
+    registryActionsRef: { current: null },
+    registryInsights: [],
+    registryLaunchReadiness: { headline: 'Ready', summary: 'Ready', status: 'ready', reviewCount: 0, items: [] },
+    registryThankYouPlan: {
+      headline: 'Thank-you follow-up list',
+      summary: '1 purchased gift is in the thank-you list.',
+      purchasedCount: 1,
+      namedPurchaserCount: 1,
+      missingPurchaserCount: 0,
+      completedCount: 0,
+      items: [{
+        id: item.id,
+        giftName: item.item_name,
+        purchaserLabel: 'Purchaser: Alex',
+        detail: 'Ready for a thank-you.',
+        status: 'ready',
+        taskStatus: 'todo',
+        completedAt: null,
+      }],
+    },
+    registryThankYouStats: {
+      purchasedCount: 1,
+      completedCount: 0,
+      pendingCount: 1,
+      readyToSendCount: 1,
+      blockedByMissingPurchaserCount: 0,
+      attributionCoverageRate: 100,
+      completionRate: 0,
+    },
+    registryThankYouBusyItemId: null,
+    registryThankYouSyncing: false,
+    repairingBadImports: false,
+    repairQueue: [],
+    refreshBudgetRemaining: 100,
+    refreshWindowOpen: true,
+    search: '',
+    setBulkImportOpen: vi.fn(),
+    setFilter: vi.fn(),
+    setRegistryActionsOpen: vi.fn(),
+    setSearch: vi.fn(),
+    setShowAlertsOnly: vi.fn(),
+    setShowImageIssuesOnly: vi.fn(),
+    showAlertsOnly: false,
+    showImageIssuesOnly: false,
+    topRegistryItems: [item],
+    weddingSiteId: 'site-1',
+    ...overrides,
+  };
+}
+
 describe('RegistryDashboardRouteContent', () => {
+  it('shows the loading block only when the registry is still empty', () => {
+    const { rerender } = render(<RegistryDashboardRouteContent {...makeBaseProps({ loading: true, items: [], filtered: [], normalizedItems: [], recentActivity: [], topRegistryItems: [], registryThankYouPlan: { headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] }, registryThankYouStats: { purchasedCount: 0, completedCount: 0, pendingCount: 0, readyToSendCount: 0, blockedByMissingPurchaserCount: 0, attributionCoverageRate: 0, completionRate: 0 }, counts: { total: 0, available: 0, partial: 0, purchased: 0, totalValue: 0 }, claimStats: { claimedItems: 0, claimedQuantity: 0, fullyClaimedItems: 0, partiallyClaimedItems: 0, namedPurchaserItems: 0, missingPurchaserItems: 0, multiQuantityInProgress: 0, remainingQuantity: 0 }, guestVisibilityStats: { guestReadyItems: 0, guestVisibleItems: 0, visibleAvailableItems: 0, visibleClaimedItems: 0, hiddenPurchasedItems: 0, blockedGuestItems: 0 } })} />);
+
+    expect(screen.getByText('Loading registry…')).toBeInTheDocument();
+
+    rerender(<RegistryDashboardRouteContent {...makeBaseProps({ loading: true })} />);
+
+    expect(screen.queryByText('Loading registry…')).not.toBeInTheDocument();
+    expect(screen.getByText('Dinner plates')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add gift/i })).toBeInTheDocument();
+  });
+
+  it('shows a recoverable registry error instead of leaving owners in limbo', () => {
+    render(
+      <RegistryDashboardRouteContent
+        {...makeBaseProps({
+          error: 'Couldn’t load registry right now. Try again in a moment.',
+          items: [],
+          filtered: [],
+          normalizedItems: [],
+          recentActivity: [],
+          topRegistryItems: [],
+          registryThankYouPlan: { headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] },
+          registryThankYouStats: { purchasedCount: 0, completedCount: 0, pendingCount: 0, readyToSendCount: 0, blockedByMissingPurchaserCount: 0, attributionCoverageRate: 0, completionRate: 0 },
+          counts: { total: 0, available: 0, partial: 0, purchased: 0, totalValue: 0 },
+          claimStats: { claimedItems: 0, claimedQuantity: 0, fullyClaimedItems: 0, partiallyClaimedItems: 0, namedPurchaserItems: 0, missingPurchaserItems: 0, multiQuantityInProgress: 0, remainingQuantity: 0 },
+          guestVisibilityStats: { guestReadyItems: 0, guestVisibleItems: 0, visibleAvailableItems: 0, visibleClaimedItems: 0, hiddenPurchasedItems: 0, blockedGuestItems: 0 },
+        })}
+      />,
+    );
+
+    expect(screen.getByText('Couldn’t open registry right now')).toBeInTheDocument();
+    expect(screen.getByText('Couldn’t load registry right now. Try again in a moment.')).toBeInTheDocument();
+  });
+
+  it('clears recoverable registry route states once usable content is available again', () => {
+    const { rerender } = render(
+      <RegistryDashboardRouteContent
+        {...makeBaseProps({
+          error: 'Couldn’t load registry right now. Try again in a moment.',
+          items: [],
+          filtered: [],
+          normalizedItems: [],
+          recentActivity: [],
+          topRegistryItems: [],
+          registryThankYouPlan: { headline: 'Quiet', summary: 'Quiet', purchasedCount: 0, namedPurchaserCount: 0, missingPurchaserCount: 0, completedCount: 0, items: [] },
+          registryThankYouStats: { purchasedCount: 0, completedCount: 0, pendingCount: 0, readyToSendCount: 0, blockedByMissingPurchaserCount: 0, attributionCoverageRate: 0, completionRate: 0 },
+          counts: { total: 0, available: 0, partial: 0, purchased: 0, totalValue: 0 },
+          claimStats: { claimedItems: 0, claimedQuantity: 0, fullyClaimedItems: 0, partiallyClaimedItems: 0, namedPurchaserItems: 0, missingPurchaserItems: 0, multiQuantityInProgress: 0, remainingQuantity: 0 },
+          guestVisibilityStats: { guestReadyItems: 0, guestVisibleItems: 0, visibleAvailableItems: 0, visibleClaimedItems: 0, hiddenPurchasedItems: 0, blockedGuestItems: 0 },
+        })}
+      />,
+    );
+
+    expect(screen.getByText('Couldn’t open registry right now')).toBeInTheDocument();
+    expect(screen.queryByText('Dinner plates')).not.toBeInTheDocument();
+
+    rerender(<RegistryDashboardRouteContent {...makeBaseProps()} />);
+
+    expect(screen.queryByText('Couldn’t open registry right now')).not.toBeInTheDocument();
+    expect(screen.getByText('Dinner plates')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add gift/i })).toBeInTheDocument();
+  });
+
   it('renders persisted thank-you tasks and routes owner actions', () => {
     const handleToggleRegistryThankYouTask = vi.fn(async () => {});
     const handleSyncRegistryThankYouTasks = vi.fn(async () => {});

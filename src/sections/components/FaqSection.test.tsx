@@ -106,6 +106,37 @@ describe('FaqSection', () => {
     expect(screen.getByText('FAQ')).toBeInTheDocument();
   });
 
+  it('restores a meaningful FAQ heading when the saved title is blank whitespace', () => {
+    const data = createWeddingData();
+
+    const { rerender } = render(
+      <FaqSection
+        data={data}
+        instance={makeInstance({ showTitle: true, title: '   ' })}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'FAQ' })).toBeInTheDocument();
+
+    rerender(
+      <FaqAccordion
+        data={data}
+        instance={makeInstance({ showTitle: true, title: '   ' })}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'FAQ' })).toBeInTheDocument();
+
+    rerender(
+      <FaqIconGrid
+        data={data}
+        instance={makeInstance({ showTitle: true, title: '   ' })}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'FAQ' })).toBeInTheDocument();
+  });
+
   it('renders distinct registry FAQ layouts for tabs, icon cards, and numbered rows', () => {
     const faqData = {
       eyebrow: 'Guest guide',

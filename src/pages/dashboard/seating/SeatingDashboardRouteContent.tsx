@@ -140,8 +140,8 @@ export function SeatingDashboardRouteContent(props: {
     <div className="max-w-[1100px] mx-auto space-y-5" onClick={() => props.setSelectedTableId(null)}>
       <DashboardPageHero
         eyebrow="Seating"
-        title="Place guests at tables without losing the room."
-        description={props.layoutMode === 'visual' ? 'Use the canvas when the venue layout matters, or switch to the list when you just need to move people quickly.' : 'Move guests between tables quickly, then switch back to the canvas when you want the room view.'}
+        title="Tables, assignments, and lookup."
+        description="Build seating arrangements and make it easy for guests or helpers to find the right table."
         stats={[
           { label: 'Tables', value: props.tables.length, detail: props.selectedItineraryEvent?.event_name ?? 'current event' },
           { label: 'Seated', value: props.counters?.seated ?? props.assignments.length, detail: `${props.unassignedGuests.length} still unassigned` },
@@ -149,8 +149,8 @@ export function SeatingDashboardRouteContent(props: {
         ]}
         actions={
           <>
-            <a href="/dashboard/seating-lookup" className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">Lookup</a>
-            <a href="/dashboard/coordinator" className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">Day-of view</a>
+            <a href="/dashboard/seating-lookup" className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">Open seating lookup</a>
+            <a href="/dashboard/coordinator" className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">Wedding Day</a>
           </>
         }
       >

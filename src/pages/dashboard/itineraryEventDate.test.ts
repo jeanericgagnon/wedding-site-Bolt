@@ -12,9 +12,9 @@ describe('itineraryEventDate', () => {
 
   it('keeps valid persisted itinerary dates truthful', () => {
     const value = '2026-06-21';
-    expect(toValidItineraryEventDateOrNull(value)?.getTime()).toBe(new Date(value).getTime());
+    expect(toValidItineraryEventDateOrNull(value)?.toISOString()).toBe(new Date(`${value}T12:00:00Z`).toISOString());
     expect(formatItineraryEventDate(value)).toBe(
-      new Date(value).toLocaleDateString('en-US', {
+      new Date(`${value}T12:00:00Z`).toLocaleDateString('en-US', {
         weekday: 'long',
         month: 'long',
         day: 'numeric',

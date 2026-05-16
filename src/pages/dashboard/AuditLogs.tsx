@@ -21,6 +21,29 @@ const appActionTitle = (row: AppActionAuditRow) => {
   return `${area.charAt(0).toUpperCase()}${area.slice(1)} update`;
 };
 
+function humanizeAuditArea(value: string | null | undefined): string {
+  const trimmed = value?.trim();
+  if (!trimmed) return 'app';
+  return trimmed.replace(/[-_]+/g, ' ');
+}
+
+const UUID_LIKE = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
+
+function sanitizeAuditText(value: string | null | undefined, fallback: string): string {
+  const trimmed = value?.trim();
+  if (!trimmed) return fallback;
+  return UUID_LIKE.test(trimmed) ? fallback : trimmed;
+}
+
+function humanizeAuditActor(actor: string | null | undefined, currentUserId: string | null | undefined): string {
+  const trimmed = actor?.trim();
+  if (!trimmed) return 'System';
+  if (currentUserId && trimmed === currentUserId) return 'You';
+  if (UUID_LIKE.test(trimmed)) return 'Wedding team';
+  if (/^someone$/i.test(trimmed)) return 'Wedding team';
+  return trimmed;
+}
+
 export const DashboardAuditLogs: React.FC = () => {
   const { user, loading, isDemoMode } = useAuth();
   const [rows, setRows] = useState<GuestAuditRow[]>([]);
@@ -69,8 +92,8 @@ export const DashboardAuditLogs: React.FC = () => {
       kind: 'guest',
       createdAt: row.changed_at,
       title: actionLabelMap[row.action],
-      detail: row.guest_name || `Guest ${row.guest_id}`,
-      actor: row.changed_by,
+      detail: sanitizeAuditText(row.guest_name, 'Guest record'),
+      actor: humanizeAuditActor(row.changed_by, user?.id),
       area: 'guests',
     })),
     ...actionRows.map((row): UnifiedAuditRow => ({
@@ -78,9 +101,14 @@ export const DashboardAuditLogs: React.FC = () => {
       kind: 'action',
       createdAt: row.created_at,
       title: appActionTitle(row),
-      detail: row.target_label ? `${row.summary} · ${row.target_label}` : row.summary,
-      actor: row.actor_user_id,
-      area: row.action_area,
+      detail: sanitizeAuditText(
+        row.target_label
+          ? `${sanitizeAuditText(row.summary, 'Wedding tool change')} · ${sanitizeAuditText(row.target_label, 'Record')}`
+          : row.summary,
+        'Wedding tool change',
+      ),
+      actor: humanizeAuditActor(row.actor_user_id, user?.id),
+      area: humanizeAuditArea(row.action_area),
     })),
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -93,10 +121,10 @@ export const DashboardAuditLogs: React.FC = () => {
     const q = searchText.trim().toLowerCase();
     const searchOk = q.length === 0 ? true : [row.title, row.detail, row.actor, row.area].filter(Boolean).join(' ').toLowerCase().includes(q);
     return actionOk && searchOk;
-  });
+  }, [actionFilter, actionRows, rows, searchText]);
 
   return (
-    <DashboardLayout currentPage="settings">
+    <DashboardLayout currentPage="activity">
       <div className="max-w-6xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-text-primary">Activity history</h1>

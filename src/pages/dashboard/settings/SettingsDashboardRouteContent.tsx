@@ -93,6 +93,7 @@ type Props = {
   plannerRoleOptions: PlannerRoleOption[];
   privacyCopied: boolean;
   privacyMode: 'public' | 'password_protected' | 'invite_only';
+  isPublished: boolean;
   publicSiteUrl: string;
   revokingCollaboratorInviteId: string | null;
   rsvpDraftMarkDirty: () => void;
@@ -184,7 +185,7 @@ export function SettingsDashboardRouteContent(props: Props) {
       newRsvpCount: 2,
       upcomingTaskCount: 1,
       newPhotoUploadCount: 1,
-      isPublished: Boolean(props.publicSiteUrl),
+      isPublished: props.isPublished,
     }),
     cadence: props.notifDigest ? props.notifDigestCadence : 'paused',
     includePlanner: props.notifDigestIncludePlanner,
@@ -278,6 +279,7 @@ export function SettingsDashboardRouteContent(props: Props) {
             hasWeddingIdentityStoryGraphic={props.hasWeddingIdentityStoryGraphic}
             guestAccessToken={props.guestAccessToken}
             hideFromSearch={props.hideFromSearch}
+            isPublished={props.isPublished}
             onAutoTranslateLanguage={(language) => { void props.onAutoTranslateLanguage(language); }}
             onAllowedLanguagesChange={(languages) => {
               props.visibilityDraftMarkDirty();

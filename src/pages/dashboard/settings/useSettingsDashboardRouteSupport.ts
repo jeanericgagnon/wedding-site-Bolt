@@ -8,6 +8,7 @@ type Args = {
   coupleNames: string;
   currentTemplate: string;
   defaultLanguage: SiteLanguageCode;
+  isPublished: boolean;
   musicPlaylistUrl: string;
   navigate: (href: string, options?: { replace?: boolean }) => void;
   settingsRole: PlannerAccessRole;
@@ -21,6 +22,7 @@ export function useSettingsDashboardRouteSupport({
   coupleNames,
   currentTemplate,
   defaultLanguage,
+  isPublished,
   musicPlaylistUrl,
   navigate,
   settingsRole,
@@ -45,12 +47,13 @@ export function useSettingsDashboardRouteSupport({
         coupleNames,
         currentTemplate,
         defaultLanguage,
+        isPublished,
         settingsRole,
         siteSlug,
         venueName,
         weddingDate,
       }),
-    [coupleNames, currentTemplate, defaultLanguage, settingsRole, siteSlug, venueName, weddingDate],
+    [coupleNames, currentTemplate, defaultLanguage, isPublished, settingsRole, siteSlug, venueName, weddingDate],
   );
 
   const handleLogout = async () => {
