@@ -35,10 +35,24 @@ function formatGuestName(guest: GuestRow): string {
   return guest.name?.trim() || [guest.first_name, guest.last_name].filter(Boolean).join(' ').trim() || 'Guest';
 }
 
+async function resolveVisibleSiteSlug(page?: Page): Promise<string> {
+  if (!page) return '';
+
+  const siteHref = await page.locator('a[href^="/site/"]').first().getAttribute('href').catch(() => null);
+  if (siteHref) {
+    const match = siteHref.match(/\/site\/([^/?#]+)/i);
+    if (match?.[1]) return decodeURIComponent(match[1]).trim().toLowerCase();
+  }
+
+  const sidebarText = await page.locator('text=/\\.dayof\\.love$/i').first().textContent().catch(() => null);
+  if (!sidebarText) return '';
+  return sidebarText.replace(/\.dayof\.love$/i, '').trim().toLowerCase();
+}
+
 export async function resolveLiveGuestHubProofContext(page?: Page): Promise<LiveGuestHubProofContext> {
   const supabaseUrl = envValue('VITE_SUPABASE_URL', 'https://atuzuobpprjstfmdnwso.supabase.co');
   const supabaseAnonKey = envValue('VITE_SUPABASE_ANON_KEY');
-  const proofSiteSlug = envValue('V1_PROOF_SITE_SLUG', '').trim().toLowerCase();
+  const proofSiteSlug = envValue('V1_PROOF_SITE_SLUG', '').trim().toLowerCase() || await resolveVisibleSiteSlug(page);
   const apiSession = await signInOwnerViaApi();
   const authState = page
     ? await readOwnerAuthState(page)
@@ -50,11 +64,11 @@ export async function resolveLiveGuestHubProofContext(page?: Page): Promise<Live
 
   let siteRow: SiteRow | null = null;
 
-  if (proofSiteSlug) {
+  if (authState.activeSiteId) {
     const response = await restFetch(
       restUrl(supabaseUrl, 'wedding_sites', {
         select: 'id,site_slug,user_id',
-        site_slug: `eq.${proofSiteSlug}`,
+        id: `eq.${authState.activeSiteId}`,
         limit: '1',
       }),
       authHeaders(accessToken, supabaseAnonKey),
@@ -65,11 +79,11 @@ export async function resolveLiveGuestHubProofContext(page?: Page): Promise<Live
     siteRow = row ?? null;
   }
 
-  if (!siteRow && authState.activeSiteId) {
+  if (!siteRow && proofSiteSlug) {
     const response = await restFetch(
       restUrl(supabaseUrl, 'wedding_sites', {
         select: 'id,site_slug,user_id',
-        id: `eq.${authState.activeSiteId}`,
+        site_slug: `eq.${proofSiteSlug}`,
         limit: '1',
       }),
       authHeaders(accessToken, supabaseAnonKey),

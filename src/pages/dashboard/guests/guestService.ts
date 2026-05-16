@@ -30,7 +30,7 @@ export const GUEST_DASHBOARD_RSVP_SELECT = [
   'notes',
   'custom_answers',
 ].join(', ');
-export const GUEST_SITE_SETTINGS_SELECT = 'id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_address, site_url, site_slug, rsvp_custom_questions, rsvp_meal_config, reminder_cadence_days, auto_reminders_enabled, wedding_data';
+export const GUEST_SITE_SETTINGS_SELECT = 'id, couple_name_1, couple_name_2, is_published, wedding_date, venue_name, venue_address, site_url, site_slug, rsvp_custom_questions, rsvp_meal_config, reminder_cadence_days, auto_reminders_enabled, wedding_data';
 export const GUEST_CONFLICT_SELECT = 'id, guest_id, conflict_code, message, severity, created_at, resolved, resolved_at';
 export const GUEST_ITINERARY_EVENT_SELECT = 'id, event_name, event_date, start_time, location_name';
 export const GUEST_ITINERARY_SITE_SELECT = 'wedding_data';
@@ -54,6 +54,12 @@ const EVENT_INVITATION_ROLLBACK_SELECT = 'id, event_id';
 const GUEST_ID_SELECT = 'id';
 const IMPORTED_GUEST_SELECT = 'id, first_name, last_name, name, email';
 const DEFAULT_RSVP_MEAL_OPTIONS = ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'];
+
+async function ensureGuestDashboardSessionReady(): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.access_token) return;
+  await supabase.auth.refreshSession();
+}
 
 function requireRpcGuestId(data: unknown, functionName: string): string {
   if (!data || typeof data !== 'object' || typeof (data as { id?: unknown }).id !== 'string') {
@@ -144,6 +150,7 @@ export interface PersistGuestDashboardRsvpConfigInput {
 }
 
 export async function loadGuestDashboardSiteSettings(userId: string): Promise<GuestDashboardSiteSettingsSnapshot> {
+  await ensureGuestDashboardSessionReady();
   const activeSite = await resolveActiveSiteForUser(userId);
   const activeSiteId = activeSite?.id ?? null;
   const role = activeSite?.role ?? 'owner';
@@ -225,6 +232,7 @@ export async function loadGuestDashboardSiteSettings(userId: string): Promise<Gu
       id: data.id,
       couple_name_1: data.couple_name_1 ?? '',
       couple_name_2: data.couple_name_2 ?? '',
+      is_published: (data as { is_published?: boolean | null }).is_published === true,
       wedding_date: data.wedding_date ?? null,
       venue_name: data.venue_name ?? null,
       venue_address: data.venue_address ?? null,
@@ -278,6 +286,7 @@ export async function persistGuestDashboardRsvpConfig(input: PersistGuestDashboa
 }
 
 export async function loadGuestDashboardSnapshot(weddingSiteId: string): Promise<GuestDashboardRecordsSnapshot> {
+  await ensureGuestDashboardSessionReady();
   const { data: guestsData, error: guestsError } = await supabase
     .from('guests')
     .select('id, first_name, last_name, name, email, phone, preferred_language, plus_one_allowed, plus_one_name, children_allowed, max_children, max_additional_guests, invited_to_ceremony, invited_to_reception, invite_token, rsvp_status, rsvp_received_at, checked_in_at, checkin_notes, thank_you_sent_at, thank_you_notes, household_id, group_name, notes, mailing_address_line1, mailing_address_line2, mailing_city, mailing_state, mailing_postal_code, mailing_country')
@@ -341,6 +350,7 @@ export async function resolveGuestDashboardConflicts(conflictIds: string[], reso
 }
 
 export async function loadGuestDashboardItineraryFilters(weddingSiteId: string): Promise<GuestDashboardItineraryFiltersSnapshot> {
+  await ensureGuestDashboardSessionReady();
   const [eventsRes, siteRes] = await Promise.all([
     supabase
       .from('itinerary_events')
@@ -387,6 +397,7 @@ export async function loadGuestDashboardItineraryFilters(weddingSiteId: string):
 }
 
 export async function loadGuestDashboardRsvpAuditFeed(weddingSiteId: string): Promise<GuestAuditEntry[]> {
+  await ensureGuestDashboardSessionReady();
   const { data, error } = await supabase
     .from('guest_audit_logs')
     .select(GUEST_AUDIT_SELECT)
@@ -399,6 +410,7 @@ export async function loadGuestDashboardRsvpAuditFeed(weddingSiteId: string): Pr
 }
 
 export async function loadGuestDashboardSiteSlug(weddingSiteId: string): Promise<string | null> {
+  await ensureGuestDashboardSessionReady();
   const { data, error } = await supabase
     .from('wedding_sites')
     .select(GUEST_SITE_SLUG_SELECT)
@@ -410,6 +422,7 @@ export async function loadGuestDashboardSiteSlug(weddingSiteId: string): Promise
 }
 
 export async function loadGuestDashboardPublicSlug(weddingSiteId: string): Promise<string | null> {
+  await ensureGuestDashboardSessionReady();
   const { data, error } = await supabase
     .from('wedding_sites')
     .select('id, site_slug, site_url')
@@ -421,6 +434,7 @@ export async function loadGuestDashboardPublicSlug(weddingSiteId: string): Promi
 }
 
 export async function loadGuestItineraryDrawerSnapshot(weddingSiteId: string, guestId: string): Promise<GuestItineraryDrawerSnapshot> {
+  await ensureGuestDashboardSessionReady();
   const [eventsResult, invitesResult, auditResult] = await Promise.all([
     supabase
       .from('itinerary_events')

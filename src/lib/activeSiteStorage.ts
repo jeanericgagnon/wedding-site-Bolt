@@ -1,5 +1,6 @@
 const ACTIVE_SITE_STORAGE_KEY = 'dayof_active_site_id_v1';
 export const ACTIVE_SITE_STORAGE_RETENTION_MS = 1000 * 60 * 60 * 24 * 30;
+export const ACTIVE_SITE_STORAGE_CHANGED_EVENT = 'dayof:active-site-changed';
 const MAX_ACTIVE_SITE_ID_LENGTH = 120;
 
 type StoredActiveSiteEnvelope = {
@@ -24,6 +25,13 @@ function buildEnvelope(siteId: string): StoredActiveSiteEnvelope {
     savedAtISO: new Date().toISOString(),
     siteId,
   };
+}
+
+function dispatchActiveSiteChanged(siteId: string | null): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(ACTIVE_SITE_STORAGE_CHANGED_EVENT, {
+    detail: { siteId },
+  }));
 }
 
 export function getStoredActiveSiteId(): string | null {
@@ -70,12 +78,15 @@ export function setStoredActiveSiteId(siteId: string): void {
   const normalized = normalizeSiteId(siteId);
   if (!normalized) {
     window.localStorage.removeItem(ACTIVE_SITE_STORAGE_KEY);
+    dispatchActiveSiteChanged(null);
     return;
   }
   window.localStorage.setItem(ACTIVE_SITE_STORAGE_KEY, JSON.stringify(buildEnvelope(normalized)));
+  dispatchActiveSiteChanged(normalized);
 }
 
 export function clearStoredActiveSiteId(): void {
   if (typeof window === 'undefined') return;
   window.localStorage.removeItem(ACTIVE_SITE_STORAGE_KEY);
+  dispatchActiveSiteChanged(null);
 }

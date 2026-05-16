@@ -9,7 +9,7 @@ test('live owner guest preview opens real guest-facing routes without token leak
   await signInAsOwner(page);
   const proofContext = await resolveLiveGuestHubProofContext(page);
   await page.goto('/dashboard/guests?bypassPayment=1&guestPreviewQa=1', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { name: /know who is coming|guests & rsvp/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /guests|people, replies, and details/i }).first()).toBeVisible();
 
   await expect(page.locator('body')).not.toContainText(/invite_token=|token-[a-z0-9]/i);
 
@@ -59,7 +59,7 @@ test('live guest preview drawer proves an event is visible to the right guest an
   await signInAsOwner(page);
   const proofPair = await resolveLiveGuestPreviewVisibilityPair(page);
   await page.goto('/dashboard/guests?bypassPayment=1&guestPreviewQa=1', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { name: /know who is coming|guests & rsvp/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /guests|people, replies, and details/i }).first()).toBeVisible();
 
   const searchInput = page.getByPlaceholder('Search guests...');
 

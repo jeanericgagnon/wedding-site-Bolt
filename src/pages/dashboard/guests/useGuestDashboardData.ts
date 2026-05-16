@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type Dispatch, type MutableRefObject,
 
 import { demoGuests, demoRSVPs, demoWeddingSite } from '../../../lib/demoData';
 import { deriveDefaultRsvpAccessSelection } from '../../../lib/rsvpAccessPlanner';
+import { ACTIVE_SITE_STORAGE_CHANGED_EVENT } from '../../../lib/activeSiteStorage';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../../lib/plannerAccess';
 import { hasRespondedRsvpStatus } from '../../../lib/rsvpStatus';
 import type { ToastType } from '../../../components/ui/Toast';
@@ -61,6 +62,7 @@ export function useGuestDashboardData({
   const [itineraryEvents, setItineraryEvents] = useState<ItineraryEvent[]>([]);
   const [rsvpAuditFeed, setRsvpAuditFeed] = useState<GuestAuditEntry[]>([]);
   const [rsvpAuditLoading, setRsvpAuditLoading] = useState(false);
+  const [activeSiteSyncVersion, setActiveSiteSyncVersion] = useState(0);
   const demoItinerarySnapshot = buildDemoGuestItinerarySnapshot();
 
   const fetchWeddingSite = useCallback(async () => {
@@ -77,6 +79,7 @@ export function useGuestDashboardData({
         id: demoWeddingSite.id,
         couple_name_1: demoWeddingSite.couple_name_1,
         couple_name_2: demoWeddingSite.couple_name_2,
+        is_published: true,
         wedding_date: demoWeddingSite.wedding_date,
         venue_name: demoWeddingSite.venue_name,
         venue_address: demoWeddingSite.venue_location,
@@ -118,7 +121,7 @@ export function useGuestDashboardData({
       setGuests([]);
       toast("Couldn’t load guest site settings right now. Please try again.", 'error');
     }
-  }, [isDemoMode, rsvpConfigLoadedRef, setAutoRemindersEnabled, setReminderCadenceDays, toast, userId]);
+  }, [activeSiteSyncVersion, isDemoMode, rsvpConfigLoadedRef, setAutoRemindersEnabled, setReminderCadenceDays, toast, userId]);
 
   const fetchGuests = useCallback(async () => {
     if (!weddingSiteId) return;
@@ -159,6 +162,19 @@ export function useGuestDashboardData({
   useEffect(() => {
     void fetchWeddingSite();
   }, [fetchWeddingSite]);
+
+  useEffect(() => {
+    const handleActiveSiteChanged = () => {
+      setActiveSiteSyncVersion((version) => version + 1);
+    };
+
+    window.addEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, handleActiveSiteChanged);
+    window.addEventListener('storage', handleActiveSiteChanged);
+    return () => {
+      window.removeEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, handleActiveSiteChanged);
+      window.removeEventListener('storage', handleActiveSiteChanged);
+    };
+  }, []);
 
   useEffect(() => {
     if (weddingSiteId) {

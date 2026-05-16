@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  ACTIVE_SITE_STORAGE_CHANGED_EVENT,
   ACTIVE_SITE_STORAGE_RETENTION_MS,
   clearStoredActiveSiteId,
   getStoredActiveSiteId,
@@ -25,6 +26,20 @@ describe('activeSiteStorage', () => {
       savedAtISO: '2026-05-06T21:20:00.000Z',
       siteId: 'site-1',
     });
+  });
+
+  it('broadcasts active-site change events when the stored site changes', () => {
+    const handler = vi.fn();
+    window.addEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, handler);
+
+    setStoredActiveSiteId('site-1');
+    clearStoredActiveSiteId();
+
+    expect(handler).toHaveBeenCalledTimes(2);
+    expect((handler.mock.calls[0]?.[0] as CustomEvent).detail).toEqual({ siteId: 'site-1' });
+    expect((handler.mock.calls[1]?.[0] as CustomEvent).detail).toEqual({ siteId: null });
+
+    window.removeEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, handler);
   });
 
   it('migrates active legacy active-site ids on read', () => {

@@ -58,6 +58,7 @@ import {
 } from './guestService';
 
 const {
+  getSessionMock,
   refreshSessionMock,
   fromMock,
   rpcMock,
@@ -67,6 +68,7 @@ const {
   deleteEventRsvpByInvitationIdMock,
   restoreEventRsvpSnapshotsMock,
 } = vi.hoisted(() => ({
+  getSessionMock: vi.fn(),
   refreshSessionMock: vi.fn(),
   fromMock: vi.fn(),
   rpcMock: vi.fn(),
@@ -80,6 +82,7 @@ const {
 vi.mock('../../../lib/supabase', () => ({
   supabase: {
     auth: {
+      getSession: getSessionMock,
       refreshSession: refreshSessionMock,
     },
     from: fromMock,
@@ -100,6 +103,7 @@ vi.mock('../../../lib/eventRsvpCleanup', () => ({
 
 describe('guestService', () => {
   beforeEach(() => {
+    getSessionMock.mockReset();
     refreshSessionMock.mockReset();
     fromMock.mockReset();
     rpcMock.mockReset();
@@ -108,12 +112,14 @@ describe('guestService', () => {
     deleteEventRsvpsByInvitationIdsMock.mockReset();
     deleteEventRsvpByInvitationIdMock.mockReset();
     restoreEventRsvpSnapshotsMock.mockReset();
+    getSessionMock.mockResolvedValue({ data: { session: { access_token: 'token' } } });
   });
 
   it('keeps guest RSVP reads explicitly projected', () => {
     expect(GUEST_DASHBOARD_RSVP_SELECT).toContain('guest_id');
     expect(GUEST_DASHBOARD_RSVP_SELECT).toContain('custom_answers');
     expect(GUEST_SITE_SETTINGS_SELECT).toContain('rsvp_custom_questions');
+    expect(GUEST_SITE_SETTINGS_SELECT).toContain('is_published');
     expect(GUEST_CONFLICT_SELECT).toContain('conflict_code');
     expect(MAX_GUEST_DASHBOARD_ROWS).toBe(5000);
     expect(GUEST_DASHBOARD_RSVP_SELECT).not.toContain('*');
@@ -291,6 +297,8 @@ describe('guestService', () => {
     expect(viewPropsHelper).toContain('const guestRsvpConfigViewProps = {');
     expect(viewPropsHelper).toContain('return {');
     expect(viewPropsHelper).not.toContain("from '../../../lib/supabase'");
+    expect(dataHook).toContain("window.addEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, handleActiveSiteChanged);");
+    expect(dataHook).toContain("window.addEventListener('storage', handleActiveSiteChanged);");
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardSiteSettings(userId);');
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardSnapshot(weddingSiteId);');
     expect(dataHook).toContain('const snapshot = await loadGuestDashboardItineraryFilters(weddingSiteId);');
@@ -596,6 +604,56 @@ describe('guestService', () => {
       conflicts: [{ id: 'conflict-1', guest_id: 'guest-1', conflict_code: 'missing_meal', message: 'Meal missing', severity: 'warning', created_at: '2026-05-07T00:00:00Z', resolved: false }],
       conflictHistory: [{ id: 'conflict-2', guest_id: 'guest-1', conflict_code: 'late_rsvp', message: 'Late RSVP', severity: 'error', created_at: '2026-05-06T00:00:00Z', resolved: true, resolved_at: '2026-05-07T00:00:00Z' }],
     });
+  });
+
+  it('refreshes the guest dashboard auth session before snapshot reads when the browser token is missing', async () => {
+    getSessionMock.mockResolvedValueOnce({ data: { session: null } });
+    refreshSessionMock.mockResolvedValueOnce({ data: { session: { access_token: 'token' } } });
+
+    const guestsQuery = {
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          order: vi.fn(() => ({
+            limit: vi.fn().mockResolvedValue({
+              data: [],
+              error: null,
+            }),
+          })),
+        })),
+      })),
+    };
+    const rsvpsQuery = {
+      select: vi.fn(() => ({
+        in: vi.fn().mockResolvedValue({
+          data: [],
+          error: null,
+        }),
+      })),
+    };
+    const conflictsQuery = {
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            order: vi.fn(() => ({ limit: vi.fn().mockResolvedValue({ data: [], error: null }) })),
+          })),
+          gte: vi.fn(() => ({
+            order: vi.fn(() => ({ limit: vi.fn().mockResolvedValue({ data: [], error: null }) })),
+          })),
+        })),
+      })),
+    };
+    fromMock
+      .mockReturnValueOnce(guestsQuery)
+      .mockReturnValueOnce(rsvpsQuery)
+      .mockReturnValueOnce(conflictsQuery)
+      .mockReturnValueOnce(conflictsQuery);
+
+    await expect(loadGuestDashboardSnapshot('site-1')).resolves.toEqual({
+      guests: [],
+      conflicts: [],
+      conflictHistory: [],
+    });
+    expect(refreshSessionMock).toHaveBeenCalledTimes(1);
   });
 
   it('loads guest dashboard itinerary filters through the service', async () => {
