@@ -97,13 +97,11 @@ export function useOverviewDashboardData({
       setNameChangeInsights(nameChangeSnapshot.nameChangeInsights);
 
       const siteJson = (site?.site_json as Record<string, unknown> | null) ?? null;
-      const privacyMode = 'public';
       const hideFromSearch = siteJson?.hide_from_search === true;
-      const isPublished = Boolean(
-        site?.is_published === true ||
-          siteJson?.publishStatus === 'published' ||
-          (typeof siteJson?.publishedVersion === 'number' && (siteJson.publishedVersion as number) > 0)
-      );
+      const isPublished = site?.is_published === true;
+      const privacyMode = site?.privacy_mode === 'password_protected' || site?.privacy_mode === 'invite_only' || site?.privacy_mode === 'hidden'
+        ? site.privacy_mode
+        : 'public';
       setStats(buildOverviewStatsFromSnapshot({
         activeSitePermissions: activeSite?.permissions ?? null,
         activeSiteRole: activeSite?.role ?? 'owner',
@@ -114,6 +112,7 @@ export function useOverviewDashboardData({
         enabledVaultCount: overviewSnapshot.enabledVaultCount,
         hideFromSearch,
         isPublished,
+        privacyMode,
         lastPublishedAt: typeof siteJson?.lastPublishedAt === 'string' ? (siteJson.lastPublishedAt as string) : null,
         messageReviewCount: overviewSnapshot.messageReviewCount,
         notificationPrefs: normalizeNotificationPrefs((site?.notification_prefs as Record<string, unknown> | null) ?? null),

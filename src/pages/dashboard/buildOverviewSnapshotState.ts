@@ -39,7 +39,7 @@ export interface OverviewStatsState {
   weddingDate: string | null;
   siteSlug: string | null;
   isPublished: boolean;
-  privacyMode: 'public' | 'password_protected' | 'invite_only';
+  privacyMode: 'public' | 'password_protected' | 'invite_only' | 'hidden';
   hideFromSearch: boolean;
   siteUpdatedAt: string | null;
   templateName: string | null;
@@ -346,6 +346,7 @@ export function buildOverviewStatsFromSnapshot({
   enabledVaultCount,
   hideFromSearch,
   isPublished,
+  privacyMode,
   lastPublishedAt,
   messageReviewCount,
   notificationPrefs,
@@ -377,6 +378,7 @@ export function buildOverviewStatsFromSnapshot({
   enabledVaultCount: number;
   hideFromSearch: boolean;
   isPublished: boolean;
+  privacyMode: 'public' | 'password_protected' | 'invite_only' | 'hidden';
   lastPublishedAt: string | null;
   messageReviewCount: number;
   notificationPrefs: NotificationPrefs;
@@ -416,7 +418,7 @@ export function buildOverviewStatsFromSnapshot({
     weddingDate,
     siteSlug,
     isPublished,
-    privacyMode: 'public',
+    privacyMode,
     hideFromSearch,
     siteUpdatedAt,
     templateName,

@@ -29,6 +29,14 @@ describe('getSiteVisibilityState', () => {
     expect(result.shortLabel).toBe('Live');
     expect(result.searchLabel).toBe('Search visibility on');
   });
+
+  it('treats hidden published sites as owner-only preview state', () => {
+    const result = getSiteVisibilityState({ isPublished: true, privacyMode: 'hidden', hideFromSearch: true });
+    expect(result.state).toBe('draft');
+    expect(result.shortLabel).toBe('Hidden');
+    expect(result.isLive).toBe(false);
+    expect(result.searchLabel).toBe('Hidden from guests');
+  });
 });
 
 describe('getVisibilityModeOptions', () => {

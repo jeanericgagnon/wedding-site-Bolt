@@ -1,4 +1,4 @@
-export type SitePrivacyMode = 'public' | 'password_protected' | 'invite_only';
+export type SitePrivacyMode = 'public' | 'password_protected' | 'invite_only' | 'hidden';
 export type SiteVisibilityState = 'draft' | 'private_preview_password' | 'private_preview_link' | 'live';
 
 export interface SiteVisibilityInput {
@@ -25,7 +25,7 @@ export const SITE_VISIBILITY_COPY = {
 
 export function getSiteVisibilityState(input: SiteVisibilityInput): SiteVisibilityDescriptor {
   const isPublished = input.isPublished === true;
-  const privacyMode = input.privacyMode === 'password_protected' || input.privacyMode === 'invite_only'
+  const privacyMode = input.privacyMode === 'password_protected' || input.privacyMode === 'invite_only' || input.privacyMode === 'hidden'
     ? input.privacyMode
     : 'public';
   const hideFromSearch = input.hideFromSearch === true;
@@ -63,6 +63,18 @@ export function getSiteVisibilityState(input: SiteVisibilityInput): SiteVisibili
       searchLabel: hideFromSearch ? 'Hidden from search' : 'Search visibility on',
       isLive: true,
       isPrivatePreview: true,
+    };
+  }
+
+  if (privacyMode === 'hidden') {
+    return {
+      state: 'draft',
+      label: 'Hidden from guests — visible only to you',
+      shortLabel: 'Hidden',
+      explainer: 'This site stays hidden from guests until you change visibility and publish again.',
+      searchLabel: 'Hidden from guests',
+      isLive: false,
+      isPrivatePreview: false,
     };
   }
 
