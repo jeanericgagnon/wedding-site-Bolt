@@ -5,6 +5,7 @@ export interface SiteVisibilityInput {
   isPublished?: boolean | null;
   privacyMode?: string | null;
   hideFromSearch?: boolean | null;
+  isGuestFacingReady?: boolean | null;
 }
 
 export interface SiteVisibilityDescriptor {
@@ -29,6 +30,7 @@ export function getSiteVisibilityState(input: SiteVisibilityInput): SiteVisibili
     ? input.privacyMode
     : 'public';
   const hideFromSearch = input.hideFromSearch === true;
+  const isGuestFacingReady = input.isGuestFacingReady !== false;
 
   if (!isPublished) {
     return {
@@ -73,6 +75,18 @@ export function getSiteVisibilityState(input: SiteVisibilityInput): SiteVisibili
       shortLabel: 'Hidden',
       explainer: 'This site stays hidden from guests until you change visibility and publish again.',
       searchLabel: 'Hidden from guests',
+      isLive: false,
+      isPrivatePreview: false,
+    };
+  }
+
+  if (!isGuestFacingReady) {
+    return {
+      state: 'draft',
+      label: 'Published, but not ready for guests yet',
+      shortLabel: 'Needs content',
+      explainer: 'Guests would still land on the coming-soon screen until more site content is published.',
+      searchLabel: hideFromSearch ? 'Hidden from search' : 'Not guest-ready',
       isLive: false,
       isPrivatePreview: false,
     };

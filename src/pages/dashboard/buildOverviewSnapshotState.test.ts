@@ -21,6 +21,8 @@ describe('buildOverviewSnapshotState', () => {
       enabledVaultCount: 1,
       hideFromSearch: false,
       isPublished: true,
+      guestFacingReady: true,
+      privacyMode: 'invite_only',
       lastPublishedAt: '2026-05-12T08:00:00.000Z',
       messageReviewCount: 3,
       notificationPrefs: {
@@ -86,6 +88,7 @@ describe('buildOverviewSnapshotState', () => {
     });
 
     expect(stats.messageReviewCount).toBe(3);
+    expect(stats.privacyMode).toBe('invite_only');
     expect(stats.upcomingTaskCount).toBe(4);
     expect(stats.upcomingPaymentCount).toBe(5);
     expect(stats.newPhotoUploadCount).toBe(4);

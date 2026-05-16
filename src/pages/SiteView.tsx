@@ -28,6 +28,7 @@ import { combineDateAndTime, createAlexJordanDemoWeddingData, toIsoDateOrUndefin
 import { SiteViewRouteView } from './SiteViewRouteView';
 import type { PublicSectionDTO } from '../lib/publicRenderContract';
 import { trackGuestHubEvent } from './guestHubPublicService';
+import { isPublicWeddingDataSparse } from '../lib/publicSiteReadiness';
 
 type GuestRenderableSection = Pick<BuilderSectionInstance, 'id' | 'type' | 'variant' | 'enabled' | 'orderIndex' | 'settings' | 'bindings' | 'styleOverrides'> | PublicSectionDTO;
 
@@ -276,16 +277,6 @@ function toBuilderSectionState(sections: GuestRenderableSection[]): BuilderSecti
       updatedAtISO: '',
     },
   }));
-}
-
-function isPublicWeddingDataSparse(data: WeddingDataV1): boolean {
-  const hasCoupleNames = hasMeaningfulText(data.couple.partner1Name) || hasMeaningfulText(data.couple.partner2Name) || hasMeaningfulText(data.couple.displayName);
-  const hasDate = !!toIsoDateOrUndefined(data.event.weddingDateISO ?? data.event.date);
-  const hasImage = hasMeaningfulText(data.media.heroImageUrl, 10) || data.media.gallery.length > 0;
-  const hasStory = hasMeaningfulText(data.couple.story, 24);
-  const hasSchedule = data.schedule.length > 0;
-  const score = [hasCoupleNames, hasDate, hasGuestReadyVenue(data), hasImage, hasStory, hasSchedule].filter(Boolean).length;
-  return score <= 2;
 }
 
 function titleCaseSlugPart(value: string): string {

@@ -30,6 +30,19 @@ describe('getSiteVisibilityState', () => {
     expect(result.searchLabel).toBe('Search visibility on');
   });
 
+  it('treats published-but-sparse public sites as not guest-ready', () => {
+    const result = getSiteVisibilityState({
+      isPublished: true,
+      isGuestFacingReady: false,
+      privacyMode: 'public',
+      hideFromSearch: false,
+    });
+    expect(result.state).toBe('draft');
+    expect(result.shortLabel).toBe('Needs content');
+    expect(result.isLive).toBe(false);
+    expect(result.searchLabel).toBe('Not guest-ready');
+  });
+
   it('treats hidden published sites as owner-only preview state', () => {
     const result = getSiteVisibilityState({ isPublished: true, privacyMode: 'hidden', hideFromSearch: true });
     expect(result.state).toBe('draft');

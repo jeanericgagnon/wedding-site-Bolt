@@ -30,6 +30,7 @@ type OverviewStatsLike = {
   declinedGuests: number;
   hideFromSearch: boolean;
   isPublished: boolean;
+  guestFacingReady: boolean;
   pendingGuests: number;
   photoAlbumCount: number;
   recentRsvps: RecentRsvp[];
@@ -135,7 +136,8 @@ export function buildOverviewDashboardModel({
 
   const siteVisibility = getSiteVisibilityState({
     isPublished: stats?.isPublished,
-    privacyMode: 'public',
+    isGuestFacingReady: stats?.guestFacingReady,
+    privacyMode: stats?.privacyMode,
     hideFromSearch: stats?.hideFromSearch,
   });
 

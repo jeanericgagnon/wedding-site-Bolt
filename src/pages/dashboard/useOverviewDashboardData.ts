@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { readSetupDraft, setupDraftProgress } from '../../lib/setupDraft';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
+import { isGuestFacingSiteRowReady } from '../../lib/publicSiteReadiness';
 import { normalizeNotificationPrefs } from '../../lib/notificationPrefs';
 import { listBuilderRevisions, type BuilderRevision } from '../../builder/services/versionHistory';
 import { loadNameChangeWorkspace } from './planning/nameChangeService';
@@ -99,6 +100,7 @@ export function useOverviewDashboardData({
       const siteJson = (site?.site_json as Record<string, unknown> | null) ?? null;
       const hideFromSearch = siteJson?.hide_from_search === true;
       const isPublished = site?.is_published === true;
+      const guestFacingReady = isGuestFacingSiteRowReady(site as unknown as Record<string, unknown> | null);
       const privacyMode = site?.privacy_mode === 'password_protected' || site?.privacy_mode === 'invite_only' || site?.privacy_mode === 'hidden'
         ? site.privacy_mode
         : 'public';
@@ -112,6 +114,7 @@ export function useOverviewDashboardData({
         enabledVaultCount: overviewSnapshot.enabledVaultCount,
         hideFromSearch,
         isPublished,
+        guestFacingReady,
         privacyMode,
         lastPublishedAt: typeof siteJson?.lastPublishedAt === 'string' ? (siteJson.lastPublishedAt as string) : null,
         messageReviewCount: overviewSnapshot.messageReviewCount,

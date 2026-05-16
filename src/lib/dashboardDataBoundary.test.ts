@@ -1256,7 +1256,7 @@ describe('dashboard data boundary guards', () => {
     expect(liveContent).toContain('A calmer place to plan {coupleLabel}.');
     expect(liveContent).toContain('<CardTitle>Your wedding site</CardTitle>');
     expect(service).toContain("const OVERVIEW_DISMISSALS_SITE_SELECT = 'wedding_data'");
-    expect(service).toContain("const OVERVIEW_SITE_SELECT = 'id, site_slug, site_url, is_published, site_json, notification_prefs, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location'");
+    expect(service).toContain("const OVERVIEW_SITE_SELECT = 'id, site_slug, site_url, is_published, privacy_mode, site_json, published_json, notification_prefs, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location'");
     expect(service).toContain('.select(OVERVIEW_DISMISSALS_SITE_SELECT)');
     expect(service).toContain('.select(OVERVIEW_SITE_SELECT)');
     expect(service).toContain('.select(OVERVIEW_GUEST_SELECT)');

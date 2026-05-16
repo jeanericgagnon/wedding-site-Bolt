@@ -13,6 +13,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { BillingModal } from '../billing/BillingModal';
 import { supabase } from '../../lib/supabase';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
+import { isGuestFacingSiteRowReady } from '../../lib/publicSiteReadiness';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { resolveActiveSiteForUser, resolveActiveSiteRoleForUser } from '../../lib/activeSite';
 import { getStoredActiveSiteId, setStoredActiveSiteId } from '../../lib/activeSiteStorage';
@@ -55,6 +56,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   const [siteId, setSiteId] = useState<string | null>(null);
   const [siteJsonState, setSiteJsonState] = useState<Record<string, unknown> | null>(null);
   const [siteIsPublished, setSiteIsPublished] = useState(false);
+  const [siteGuestFacingReady, setSiteGuestFacingReady] = useState(false);
   const [sitePrivacyMode, setSitePrivacyMode] = useState<'public' | 'password_protected' | 'invite_only' | 'hidden'>('public');
   const [showMoreFeatures, setShowMoreFeatures] = useState(true);
   const [moreToolsOpen, setMoreToolsOpen] = useState(false);
@@ -73,6 +75,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
       setSiteId(null);
       setSiteJsonState(null);
       setSiteIsPublished(false);
+      setSiteGuestFacingReady(true);
       setSitePrivacyMode('public');
       setActiveSiteRole('owner');
       setActiveSitePermissions(null);
@@ -137,13 +140,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
         setSiteId(null);
         setSiteJsonState(null);
         setSiteIsPublished(false);
+        setSiteGuestFacingReady(false);
         setSitePrivacyMode('public');
         return;
       }
 
       const { data } = await supabase
         .from('wedding_sites')
-        .select('id, site_slug, site_url, site_json, is_published, privacy_mode')
+        .select('id, site_slug, site_url, site_json, published_json, wedding_data, is_published, privacy_mode')
         .eq('id', targetSiteId)
         .maybeSingle();
 
@@ -152,6 +156,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
       setSiteSlug(resolved ?? null);
       setSiteId(row?.id && typeof row.id === 'string' ? row.id : null);
       setSiteIsPublished(row?.is_published === true);
+      setSiteGuestFacingReady(isGuestFacingSiteRowReady(row));
       setSitePrivacyMode(
         row?.privacy_mode === 'password_protected' || row?.privacy_mode === 'invite_only' || row?.privacy_mode === 'hidden'
           ? row.privacy_mode
@@ -265,7 +270,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     window.location.reload();
   };
 
-  const siteVisibility = useMemo(() => getSiteVisibilityState({ isPublished: siteIsPublished, privacyMode: sitePrivacyMode, hideFromSearch: siteJsonState?.hide_from_search === true }), [siteIsPublished, sitePrivacyMode, siteJsonState]);
+  const siteVisibility = useMemo(() => getSiteVisibilityState({
+    isPublished: siteIsPublished,
+    privacyMode: sitePrivacyMode,
+    hideFromSearch: siteJsonState?.hide_from_search === true,
+    isGuestFacingReady: siteGuestFacingReady,
+  }), [siteGuestFacingReady, siteIsPublished, sitePrivacyMode, siteJsonState]);
   const currentNavLabel = visibleNavSections.flatMap((section) => section.items).find((item) => item.id === currentPage)?.label
     || getAllDashboardTools().find((tool) => tool.id === currentPage)?.name
     || (currentPage === 'itinerary' ? 'Wedding Day'

@@ -39,6 +39,7 @@ export interface OverviewStatsState {
   weddingDate: string | null;
   siteSlug: string | null;
   isPublished: boolean;
+  guestFacingReady: boolean;
   privacyMode: 'public' | 'password_protected' | 'invite_only' | 'hidden';
   hideFromSearch: boolean;
   siteUpdatedAt: string | null;
@@ -163,6 +164,7 @@ export function buildDemoOverviewSnapshotState(): {
       weddingDate,
       siteSlug: resolvePublicSiteSlugFromRow(demoWeddingSite as unknown as Record<string, unknown>),
       isPublished: true,
+      guestFacingReady: true,
       privacyMode: 'public',
       hideFromSearch: false,
       siteUpdatedAt: new Date().toISOString(),
@@ -368,6 +370,7 @@ export function buildOverviewStatsFromSnapshot({
   upcomingTaskCount,
   vaultCount,
   weddingDate,
+  guestFacingReady,
 }: {
   activeSitePermissions: PlannerPermissionKey[] | null;
   activeSiteRole: PlannerAccessRole;
@@ -378,6 +381,7 @@ export function buildOverviewStatsFromSnapshot({
   enabledVaultCount: number;
   hideFromSearch: boolean;
   isPublished: boolean;
+  guestFacingReady: boolean;
   privacyMode: 'public' | 'password_protected' | 'invite_only' | 'hidden';
   lastPublishedAt: string | null;
   messageReviewCount: number;
@@ -418,6 +422,7 @@ export function buildOverviewStatsFromSnapshot({
     weddingDate,
     siteSlug,
     isPublished,
+    guestFacingReady,
     privacyMode,
     hideFromSearch,
     siteUpdatedAt,

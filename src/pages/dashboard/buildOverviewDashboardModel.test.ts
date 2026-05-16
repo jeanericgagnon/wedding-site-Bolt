@@ -10,8 +10,10 @@ const baseStats = {
   coupleName1: 'Avery',
   coupleName2: 'Jordan',
   declinedGuests: 1,
+  guestFacingReady: true,
   hideFromSearch: false,
   isPublished: true,
+  privacyMode: 'public' as const,
   lastPublishedAt: '2026-05-12T08:00:00.000Z',
   messageReviewCount: 2,
   newPhotoUploadCount: 3,
@@ -161,5 +163,56 @@ describe('buildOverviewDashboardModel', () => {
 
     expect(model.calmDigestPreview?.statusLabel).toContain('after delivery is connected');
     expect(model.calmDigestPreview?.lastReviewedLabel).toContain('Last review saved');
+  });
+
+  it('respects protected visibility modes in the overview site badge', () => {
+    const model = buildOverviewDashboardModel({
+      dismissedIntelligenceIds: [],
+      interactiveSuggestions: [],
+      interactiveVoteSummaries: [],
+      stats: {
+        ...baseStats,
+        privacyMode: 'invite_only',
+      },
+    });
+
+    expect(model.siteVisibility.label).toBe('Live with invite-only access');
+  });
+
+  it('keeps draft truth authoritative even when a site slug and public privacy mode exist', () => {
+    const model = buildOverviewDashboardModel({
+      dismissedIntelligenceIds: [],
+      interactiveSuggestions: [],
+      interactiveVoteSummaries: [],
+      stats: {
+        ...baseStats,
+        isPublished: false,
+        privacyMode: 'public',
+        siteSlug: 'avery-and-jordan',
+      },
+    });
+
+    expect(model.siteVisibility.label).toBe('Draft only — visible only to you');
+    expect(model.siteVisibility.shortLabel).toBe('Draft only');
+    expect(model.siteVisibility.isLive).toBe(false);
+  });
+
+  it('withholds live truth when the public render would still show coming soon', () => {
+    const model = buildOverviewDashboardModel({
+      dismissedIntelligenceIds: [],
+      interactiveSuggestions: [],
+      interactiveVoteSummaries: [],
+      stats: {
+        ...baseStats,
+        isPublished: true,
+        guestFacingReady: false,
+        privacyMode: 'public',
+        siteSlug: 'maya-and-leo',
+      },
+    });
+
+    expect(model.siteVisibility.label).toBe('Published, but not ready for guests yet');
+    expect(model.siteVisibility.shortLabel).toBe('Needs content');
+    expect(model.siteVisibility.isLive).toBe(false);
   });
 });
