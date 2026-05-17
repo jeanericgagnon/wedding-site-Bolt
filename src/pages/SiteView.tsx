@@ -163,7 +163,7 @@ export function resolveSiteViewAnalyticsTarget(searchParams: URLSearchParams) {
 function filterGuestReadyBuilderSections(sections: GuestRenderableSection[], data: WeddingDataV1): GuestRenderableSection[] {
   return filterGuestReadySections(sections.map((section) => ({
     ...section,
-    settings: (section.settings as Record<string, unknown> | null | undefined) ?? null,
+    settings: (section.settings as Record<string, unknown> | null | undefined) ?? {},
   })), data);
 }
 

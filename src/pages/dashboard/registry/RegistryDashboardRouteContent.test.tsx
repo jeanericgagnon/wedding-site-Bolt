@@ -1167,8 +1167,8 @@ describe('RegistryDashboardRouteContent', () => {
             mergedQuantityNeeded: 7,
             mergedQuantityPurchased: 1,
             signals: [
-              { kind: 'name-match', label: 'Name match', score: 0.95 },
-              { kind: 'store-match', label: 'Store match', score: 0.81 },
+              { kind: 'title', label: 'Same title', value: 'dinner plates' },
+              { kind: 'title-store', label: 'Same title and store', value: 'dinner plates:crate-and-barrel' },
             ],
           },
         ]}
@@ -1255,7 +1255,7 @@ describe('RegistryDashboardRouteContent', () => {
               mergedQuantityNeeded: 2,
               mergedQuantityPurchased: 0,
               signals: [
-                { kind: 'name-match', label: 'Name match', score: 0.95 },
+                { kind: 'title', label: 'Same title', value: 'gift-link-needs-review' },
               ],
             },
           ],

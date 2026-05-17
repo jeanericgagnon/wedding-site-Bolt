@@ -13,7 +13,7 @@ const seatingState = {
   loading: false,
   loadingSeating: false,
   loadSeatingData: vi.fn(),
-  seatingEvent: null,
+  seatingEvent: null as { id: string; event_name: string } | null,
   selectedEventId: null as string | null,
   setAssignments: vi.fn(),
   setSelectedEventId: vi.fn(),

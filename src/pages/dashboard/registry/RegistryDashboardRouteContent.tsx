@@ -83,6 +83,10 @@ type RegistryInsight = {
   title: string;
   detail: string;
   actionLabel: string;
+  priority?: string;
+  source?: string;
+  confidence?: number;
+  area?: string;
 };
 
 type TopRegistryItem = RegistryItem & { quantity_needed?: number | null; quantity_purchased?: number | null };

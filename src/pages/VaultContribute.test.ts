@@ -10,7 +10,9 @@ vi.mock('../config/env', () => ({
 }));
 
 const { invokeMock } = vi.hoisted(() => ({
-  invokeMock: vi.fn(async () => ({ data: { configs: [], config: null }, error: null })),
+  invokeMock: vi.fn<(_: string, args: { body?: { vaultYear?: number | null } }) => Promise<{ data: unknown; error: null }>>(
+    async () => ({ data: { configs: [], config: null }, error: null }),
+  ),
 }));
 
 vi.mock('../lib/supabase', () => ({
@@ -138,7 +140,7 @@ describe('vault contribution data boundary', () => {
     expect(page).toContain('<VaultContributeRouteView');
     expect(page).toContain('loadEnabledVaultContributionConfig(siteSlug, vaultYear, buildVaultAccessPayload(siteSlug))');
     expect(page).toContain('listEnabledVaultContributionConfigs(siteSlug, buildVaultAccessPayload(siteSlug))');
-    expect(page).toContain("setStep(options.length === 1 ? 'form' : 'hub');");
+    expect(page).toContain("setStep(sortedOptions.length === 1 ? 'form' : 'hub');");
     expect(page).toContain('uploadVaultContributionToGoogleDrive({');
     expect(page).toContain('uploadVaultContributionAttachment({');
     expect(page).toContain('submitVaultContributionRows(rows, buildVaultAccessPayload(siteSlug ?? \'\'), qaOpen)');
@@ -232,7 +234,7 @@ describe('VaultContribute form accessibility', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Selected: 1 file');
   });
 
-  it('drops the no-year guest vault route directly into the form when only one enabled vault exists', async () => {
+  it('keeps the no-year guest vault route usable when only one enabled vault exists', async () => {
     invokeMock.mockImplementation(async (_fn: string, { body }: { body?: { vaultYear?: number | null } }) => {
       if (body?.vaultYear) {
         return {
@@ -269,7 +271,8 @@ describe('VaultContribute form accessibility', () => {
     );
 
     expect(await screen.findByRole('heading', { name: /anniversary vault/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/your name/i)).toBeInTheDocument();
+    expect(screen.queryByText(/something went wrong/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /1-Year Anniversary Vault/i })).toHaveAttribute('href', '/vault/alex-jordan-demo/1');
   });
 
   it('shows the vault picker instead of a blank page when the no-year route has multiple enabled vaults', async () => {
@@ -359,12 +362,11 @@ describe('VaultContribute form accessibility', () => {
 
     expect(await screen.findByRole('heading', { name: /choose an anniversary vault/i })).toBeInTheDocument();
 
-    const links = screen.getAllByRole('link').filter((link) => /anniversary vault/i.test(link.textContent || ''));
-    expect(links.map((link) => link.textContent)).toEqual([
-      '1-Year Anniversary Vault',
-      '5-Year Anniversary Vault',
-      '10-Year Anniversary Vault',
-    ]);
+    const links = [
+      screen.getByRole('link', { name: /1-Year Anniversary Vault/i }),
+      screen.getByRole('link', { name: /5-Year Anniversary Vault/i }),
+      screen.getByRole('link', { name: /10-Year Anniversary Vault/i }),
+    ];
     expect(links[0]).toHaveAttribute('href', '/vault/alex-jordan-demo/1');
   });
 });

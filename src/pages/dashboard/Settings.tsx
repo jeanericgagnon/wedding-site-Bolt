@@ -453,6 +453,7 @@ export const DashboardSettings: React.FC = () => {
     analyticsGuestNotice,
     defaultLanguage,
     guestAccessToken,
+    isPublished,
     onAutoTranslateLanguage: handleAutoTranslateLanguage,
     handleAllowedLanguagesChange,
     handleCopyCollaboratorInviteLink,
