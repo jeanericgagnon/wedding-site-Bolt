@@ -98,44 +98,50 @@ function isLanguageAudience(audience: string): audience is `language:${GuestLang
   return audience.startsWith('language:') && normalizeGuestLanguageCode(audience.slice('language:'.length)) !== null;
 }
 
+function normalizeMessageAudienceGuests<T extends MessageAudienceGuest>(guests: T[]): T[] {
+  return guests.filter((guest): guest is T => Boolean(guest && typeof guest === 'object' && typeof guest.id === 'string' && guest.id.trim()));
+}
+
 export function filterMessageAudienceGuests<T extends MessageAudienceGuest>(
   guests: T[],
   audience: string,
   eventGuestIds?: Record<string, Set<string>>
 ): T[] {
+  const normalizedGuests = normalizeMessageAudienceGuests(guests);
+
   if (audience.startsWith('event:')) {
     const eventId = audience.replace('event:', '');
     const ids = eventGuestIds?.[eventId];
     if (!ids) return [];
-    return guests.filter((guest) => ids.has(guest.id));
+    return normalizedGuests.filter((guest) => ids.has(guest.id));
   }
 
   if (isLanguageAudience(audience)) {
     const language = normalizeGuestLanguageCode(audience.slice('language:'.length));
     if (!language) return [];
-    return guests.filter((guest) => normalizeGuestLanguageCode(guest.preferred_language) === language);
+    return normalizedGuests.filter((guest) => normalizeGuestLanguageCode(guest.preferred_language) === language);
   }
 
   switch (audience as MessageAudienceSegmentId) {
     case 'attending':
-      return guests.filter((guest) => isAttendingRsvpStatus(guest.rsvp_status));
+      return normalizedGuests.filter((guest) => isAttendingRsvpStatus(guest.rsvp_status));
     case 'not_responded':
-      return guests.filter((guest) => isPendingRsvpStatus(guest.rsvp_status));
+      return normalizedGuests.filter((guest) => isPendingRsvpStatus(guest.rsvp_status));
     case 'declined':
-      return guests.filter((guest) => isDeclinedRsvpStatus(guest.rsvp_status));
+      return normalizedGuests.filter((guest) => isDeclinedRsvpStatus(guest.rsvp_status));
     case 'invite_not_sent':
-      return guests.filter((guest) => isPendingRsvpStatus(guest.rsvp_status) && !guest.invitation_sent_at && !guest.reminder_last_sent_at);
+      return normalizedGuests.filter((guest) => isPendingRsvpStatus(guest.rsvp_status) && !guest.invitation_sent_at && !guest.reminder_last_sent_at);
     case 'invited_pending':
-      return guests.filter((guest) => isPendingRsvpStatus(guest.rsvp_status) && Boolean(guest.invitation_sent_at) && !guest.reminder_last_sent_at);
+      return normalizedGuests.filter((guest) => isPendingRsvpStatus(guest.rsvp_status) && Boolean(guest.invitation_sent_at) && !guest.reminder_last_sent_at);
     case 'reminder_sent_pending':
-      return guests.filter((guest) => isPendingRsvpStatus(guest.rsvp_status) && Boolean(guest.reminder_last_sent_at));
+      return normalizedGuests.filter((guest) => isPendingRsvpStatus(guest.rsvp_status) && Boolean(guest.reminder_last_sent_at));
     case 'missing_address':
-      return guests.filter((guest) => !hasMailingAddress(guest));
+      return normalizedGuests.filter((guest) => !hasMailingAddress(guest));
     case 'missing_meal':
-      return guests.filter((guest) => isAttendingRsvpStatus(guest.rsvp_status) && !hasMealChoice(guest));
+      return normalizedGuests.filter((guest) => isAttendingRsvpStatus(guest.rsvp_status) && !hasMealChoice(guest));
     case 'all':
     default:
-      return guests;
+      return normalizedGuests;
   }
 }
 

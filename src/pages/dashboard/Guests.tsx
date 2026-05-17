@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PLANNER_ROLE_OPTIONS, canManageGuests, derivePlannerRoleFromPermissions } from '../../lib/plannerAccess';
 import { formatGuestOpsDate, formatGuestOpsDateTime, formatGuestOpsRelativeTime } from './guestOpsTime';
@@ -77,6 +77,7 @@ export const DashboardGuests: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { fromQuickStart, nextStep } = readQuickStartDashboardContinuation(searchParams);
+  const guestPreviewQa = searchParams.get('guestPreviewQa') === '1';
   const { user, isDemoMode } = useAuth();
   const { toast } = useToast();
   const rsvpConfigLoadedRef = useRef(false);
@@ -144,6 +145,14 @@ export const DashboardGuests: React.FC = () => {
     sortByPriority,
     viewMode,
   } = useGuestDashboardUiState();
+
+  useEffect(() => {
+    if (!guestPreviewQa) return;
+    setCheckInMode(false);
+    setShowInsights(false);
+    setViewMode('list');
+  }, [guestPreviewQa, setCheckInMode, setShowInsights, setViewMode]);
+
   const {
     eventInviteGuestMap,
     fetchGuests,

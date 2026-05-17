@@ -58,7 +58,8 @@ test('mobile guest drawer preview opens photo, travel, registry, and site routes
     openPhotoButton.click(),
   ]);
   await photoPage.waitForLoadState('domcontentloaded');
-  await expect(photoPage).toHaveURL(/\/photos\/upload\?site=alex-jordan-demo&hub=1&invite_token=token-c-2&previewGuest=confirmed-guest-1&previewSurface=photos/);
+  await expect(photoPage).toHaveURL(/\/photos\/upload\?site=alex-jordan-demo&hub=1&previewGuest=confirmed-guest-1&previewSurface=photos/);
+  await expect(photoPage).not.toHaveURL(/invite_token=/);
   await expect(photoPage.getByRole('heading', { name: /share your photos/i })).toBeVisible();
   await expect(photoPage.locator('body')).not.toContainText('token-c-2');
   await expectNoMeaningfulHorizontalOverflow(photoPage);

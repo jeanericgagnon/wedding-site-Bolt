@@ -215,17 +215,41 @@ export interface MessageReachSnapshotCardProps {
   onQuickCreateSaveTheDateCampaign: () => void;
 }
 
+const EMPTY_CHANNEL_BREAKDOWN = {
+  email: { sent: 0, active: 0, scheduled: 0, failed: 0, partial: 0, targeted: 0 },
+  sms: { sent: 0, active: 0, scheduled: 0, failed: 0, partial: 0, targeted: 0 },
+} as const;
+
+const EMPTY_CHANNEL_DELIVERY_BREAKDOWN = {
+  email: { delivered: 0, failed: 0, skipped: 0, unreached: 0, targeted: 0, deliveredRate: 0 },
+  sms: { delivered: 0, failed: 0, skipped: 0, unreached: 0, targeted: 0, deliveredRate: 0 },
+} as const;
+
+const EMPTY_CHANNEL_ENGAGEMENT_BREAKDOWN = {
+  email: { trackedMessages: 0, deliveredRecipients: 0, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0, openRate: 0, clickRate: 0, replyRate: 0 },
+  sms: { trackedMessages: 0, deliveredRecipients: 0, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0, openRate: 0, clickRate: 0, replyRate: 0 },
+} as const;
+
 export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> = ({
   canCompose,
-  guests,
+  guests = [],
   knownPhotoLinksCount,
-  messages,
+  messages = [],
   onApplyComposerTemplate,
   onApplyDayOfAlertPreset,
   onApplySaveTheDatePreset,
   onNavigatePhotos,
   onQuickCreateSaveTheDateCampaign,
 }) => {
+  const isValidGuest = (guest: Guest | null | undefined): guest is Guest => (
+    Boolean(
+      guest
+      && typeof guest === 'object'
+      && typeof guest.id === 'string'
+      && guest.id.trim().length > 0,
+    )
+  );
+  const safeGuests = guests.filter(isValidGuest);
   const engagementSummary = buildMessageEngagementSummary(messages);
   const deliveryStats = buildDeliveryStats(messages);
   const activeCampaignCount = messages.filter((message) => message.status === 'queued' || message.status === 'sending').length;
@@ -272,7 +296,7 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
           <Users className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <p className="text-2xl font-bold text-text-primary">{guests.length}</p>
+          <p className="text-2xl font-bold text-text-primary">{safeGuests.length}</p>
           <p className="text-sm text-text-secondary">Total Guests</p>
         </div>
       </div>
@@ -281,7 +305,7 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
           <CheckCircle className="w-5 h-5 text-success" />
         </div>
         <div>
-          <p className="text-2xl font-bold text-text-primary">{guests.filter((guest) => hasReachableEmail(guest.email)).length}</p>
+          <p className="text-2xl font-bold text-text-primary">{safeGuests.filter((guest) => hasReachableEmail(guest.email)).length}</p>
           <p className="text-sm text-text-secondary">With email</p>
         </div>
       </div>
@@ -575,39 +599,50 @@ export const MessageComposerRecipientPreviewPanel: React.FC<MessageComposerRecip
   onTogglePreview,
   previewRecipients,
   showRecipientPreview,
-}) => (
-  <div className="overflow-hidden rounded-lg border border-border-subtle bg-white">
-    <button
-      type="button"
-      onClick={onTogglePreview}
-      className="w-full flex items-center justify-between px-4 py-3 bg-surface-subtle/30 hover:bg-surface transition-colors text-sm"
-    >
-      <div className="flex items-center gap-2">
-        <Eye className="w-4 h-4 text-text-secondary" />
-        <span className="font-medium text-text-primary">
-          Preview recipients ({activeRecipients} with {formData.channel === 'sms' ? 'phone numbers' : 'email addresses'})
-        </span>
-      </div>
-      {showRecipientPreview ? <ChevronUp className="w-4 h-4 text-text-tertiary" /> : <ChevronDown className="w-4 h-4 text-text-tertiary" />}
-    </button>
-    {showRecipientPreview && (
-      <div className="border-t border-border max-h-48 overflow-y-auto">
-        {previewRecipients.length === 0 ? (
-          <div className="p-4 text-sm text-text-secondary text-center">No guests in this group have {formData.channel === 'sms' ? 'phone numbers with text consent' : 'email addresses'} yet.</div>
-        ) : (
-          <ul className="divide-y divide-border">
-            {previewRecipients.map((guest) => (
-              <li key={guest.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
-                <span className="text-text-primary font-medium">{guest.first_name ?? ''} {guest.last_name ?? ''}</span>
-                <span className="text-text-tertiary text-xs">{formData.channel === 'sms' ? guest.phone : guest.email}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    )}
-  </div>
-);
+}) => {
+  const safePreviewRecipients = previewRecipients.filter((guest): guest is Guest => (
+    Boolean(
+      guest
+      && typeof guest === 'object'
+      && typeof guest.id === 'string'
+      && guest.id.trim().length > 0,
+    )
+  ));
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-border-subtle bg-white">
+      <button
+        type="button"
+        onClick={onTogglePreview}
+        className="w-full flex items-center justify-between px-4 py-3 bg-surface-subtle/30 hover:bg-surface transition-colors text-sm"
+      >
+        <div className="flex items-center gap-2">
+          <Eye className="w-4 h-4 text-text-secondary" />
+          <span className="font-medium text-text-primary">
+            Preview recipients ({activeRecipients} with {formData.channel === 'sms' ? 'phone numbers' : 'email addresses'})
+          </span>
+        </div>
+        {showRecipientPreview ? <ChevronUp className="w-4 h-4 text-text-tertiary" /> : <ChevronDown className="w-4 h-4 text-text-tertiary" />}
+      </button>
+      {showRecipientPreview && (
+        <div className="border-t border-border max-h-48 overflow-y-auto">
+          {safePreviewRecipients.length === 0 ? (
+            <div className="p-4 text-sm text-text-secondary text-center">No guests in this group have {formData.channel === 'sms' ? 'phone numbers with text consent' : 'email addresses'} yet.</div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {safePreviewRecipients.map((guest) => (
+                <li key={guest.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                  <span className="text-text-primary font-medium">{guest.first_name ?? ''} {guest.last_name ?? ''}</span>
+                  <span className="text-text-tertiary text-xs">{formData.channel === 'sms' ? guest.phone : guest.email}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export interface MessageComposerPreflightPanelProps {
   activeRecipients: number;
@@ -1097,6 +1132,7 @@ export interface MessageHistorySummaryPanelsProps {
   }>;
   channelDeliveryBreakdown: Record<'email' | 'sms', {
     delivered: number;
+    deliveredRate?: number;
     failed: number;
     skipped: number;
     targeted: number;
@@ -1140,9 +1176,9 @@ export interface MessageHistorySummaryPanelsProps {
 export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsProps> = ({
   audienceBreakdown,
   campaignStatusSummary,
-  channelBreakdown,
-  channelDeliveryBreakdown,
-  channelEngagementBreakdown,
+  channelBreakdown = EMPTY_CHANNEL_BREAKDOWN,
+  channelDeliveryBreakdown = EMPTY_CHANNEL_DELIVERY_BREAKDOWN,
+  channelEngagementBreakdown = EMPTY_CHANNEL_ENGAGEMENT_BREAKDOWN,
   deliveryHealth,
   historyStatusCounts,
   providerTelemetry,
@@ -1241,9 +1277,12 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
               <p className="mt-1 text-[11px] text-text-tertiary">
                 {(() => {
                   const targeted = channelDeliveryBreakdown[channel].targeted;
+                  const deliveredRate = channelDeliveryBreakdown[channel].deliveredRate
+                    ?? (targeted > 0 ? Math.round((channelDeliveryBreakdown[channel].delivered / targeted) * 100) : 0);
                   const reviewRate = targeted > 0 ? Math.round((channelDeliveryBreakdown[channel].failed / targeted) * 100) : 0;
+                  const contactRate = targeted > 0 ? Math.round((channelDeliveryBreakdown[channel].skipped / targeted) * 100) : 0;
                   const unreachedRate = targeted > 0 ? Math.round((channelDeliveryBreakdown[channel].unreached / targeted) * 100) : 0;
-                  return `${channelDeliveryBreakdown[channel].deliveredRate}% delivered coverage · ${reviewRate}% review coverage · ${channelDeliveryBreakdown[channel].skippedRate}% needs contact · ${unreachedRate}% unreached`;
+                  return `${deliveredRate}% delivered coverage · ${reviewRate}% review coverage · ${contactRate}% needs contact · ${unreachedRate}% unreached`;
                 })()}
               </p>
               <p className="mt-1 text-[11px] text-text-tertiary">
@@ -1701,11 +1740,8 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                 const skippedRecipients = getSkippedCount(activeCampaignLatestMessage, deliveries);
                 const unreachedRecipients = getUnreachedCount(activeCampaignLatestMessage, deliveries);
                 const targetedRecipients = Math.max(
-                  deliveredRecipients
-                  + failedRecipients
-                  + skippedRecipients
-                  + unreachedRecipients
-                  + getRecipientCount(activeCampaignLatestMessage),
+                  getRecipientCount(activeCampaignLatestMessage),
+                  deliveredRecipients + failedRecipients + skippedRecipients + unreachedRecipients,
                   0,
                 );
                 const deliveredRate = targetedRecipients > 0 ? Math.round((deliveredRecipients / targetedRecipients) * 100) : null;
@@ -1992,6 +2028,7 @@ export interface MessageHistoryCardProps {
   campaignThreads: CampaignThreadSummary[];
   canCompose: boolean;
   channelBreakdown: MessageHistorySummaryPanelsProps['channelBreakdown'];
+  channelDeliveryBreakdown: MessageHistorySummaryPanelsProps['channelDeliveryBreakdown'];
   channelEngagementBreakdown: MessageHistorySummaryPanelsProps['channelEngagementBreakdown'];
   deliveries: DeliveryRow[];
   deliveryHealth: MessageHistorySummaryPanelsProps['deliveryHealth'];
@@ -2035,6 +2072,7 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
   campaignThreads,
   canCompose,
   channelBreakdown,
+  channelDeliveryBreakdown,
   channelEngagementBreakdown,
   deliveries,
   deliveryHealth,
@@ -2141,6 +2179,7 @@ export const MessageHistoryCard: React.FC<MessageHistoryCardProps> = ({
         audienceBreakdown={audienceBreakdown}
         campaignStatusSummary={campaignStatusSummary}
         channelBreakdown={channelBreakdown}
+        channelDeliveryBreakdown={channelDeliveryBreakdown}
         channelEngagementBreakdown={channelEngagementBreakdown}
         deliveryHealth={deliveryHealth}
         historyStatusCounts={historyStatusCounts}

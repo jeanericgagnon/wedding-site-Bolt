@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams, createSearchParams } from 'react-router-dom';
 import { Heart, Chrome, ArrowLeft, Mail, AlertCircle } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
@@ -35,6 +35,7 @@ export const Login: React.FC = () => {
   const [notice, setNotice] = useState('');
   const [resetEmail, setResetEmail] = useState('');
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const postLoginRedirectHandledRef = useRef(false);
 
   const explicitReturnPath = (location.state as { returnTo?: string } | null)?.returnTo || null;
   const quickStartDraft = (location.state as { quickStartDraft?: unknown } | null)?.quickStartDraft;
@@ -58,6 +59,15 @@ export const Login: React.FC = () => {
 
     return `?${params.toString()}`;
   }, [inviteToken, inviteEmail]);
+
+  const completePostLoginRedirect = (to: string, options?: { replace?: boolean; notice?: string }) => {
+    if (postLoginRedirectHandledRef.current) return;
+    postLoginRedirectHandledRef.current = true;
+    if (options?.notice) {
+      setNotice(options.notice);
+    }
+    navigate(to, options?.replace ? { replace: true } : undefined);
+  };
 
   useEffect(() => {
     if (!explicitReturnPath && !normalizedQuickStartDraft && !hasInviteContext) {
@@ -86,8 +96,7 @@ export const Login: React.FC = () => {
       if (!mounted) return;
       if (session && oauthSource === 'google') {
         const to = consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(session.user.email));
-        setNotice('Google sign-in successful. Redirecting…');
-        navigate(to, { replace: true });
+        completePostLoginRedirect(to, { replace: true, notice: 'Google sign-in successful. Redirecting…' });
       }
     };
 
@@ -97,10 +106,10 @@ export const Login: React.FC = () => {
       if (!mounted) return;
       if (event === 'SIGNED_IN') {
         const to = consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(session?.user?.email));
-        if (oauthSource === 'google') {
-          setNotice('Google sign-in successful. Redirecting…');
-        }
-        navigate(to, { replace: true });
+        completePostLoginRedirect(to, {
+          replace: true,
+          notice: oauthSource === 'google' ? 'Google sign-in successful. Redirecting…' : undefined,
+        });
       }
     });
 
@@ -122,10 +131,12 @@ export const Login: React.FC = () => {
     try {
       const signInData = await loginWithPassword(formData.email, formData.password);
       if (hasInviteContext) {
-        navigate(`/accept-collaborator-invite${inviteReturnSearch}`, { replace: true });
+        completePostLoginRedirect(`/accept-collaborator-invite${inviteReturnSearch}`, { replace: true });
         return;
       }
-      navigate(consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(signInData.user?.email)));
+      completePostLoginRedirect(
+        consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(signInData.user?.email)),
+      );
     } catch (err: unknown) {
       setError(safeAuthError(err, 'Couldn’t sign you in right now. Please try again.'));
     } finally {
@@ -138,7 +149,7 @@ export const Login: React.FC = () => {
     setError('');
     try {
       await signIn();
-      navigate(getPostLoginRoute('demo@dayof.love'));
+      completePostLoginRedirect(getPostLoginRoute('demo@dayof.love'));
     } catch (err: unknown) {
       setError(safeAuthError(err, 'Couldn’t open demo mode right now. Please try again.'));
     } finally {

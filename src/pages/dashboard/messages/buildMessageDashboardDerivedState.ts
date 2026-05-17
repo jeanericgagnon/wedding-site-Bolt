@@ -69,14 +69,25 @@ export function buildMessageDashboardDerivedState({
   messages,
   weddingSiteSmsCredits,
 }: BuildMessageDashboardDerivedStateArgs) {
-  const getRecipients = (audience: string) => filterMessageAudienceGuests(guests, audience, eventGuestIds);
+  const isValidGuest = (guest: Guest | null | undefined): guest is Guest => (
+    Boolean(
+      guest
+      && typeof guest === 'object'
+      && typeof guest.id === 'string'
+      && guest.id.trim().length > 0,
+    )
+  );
+
+  const safeGuests = guests.filter(isValidGuest);
+  const getRecipients = (audience: string) => filterMessageAudienceGuests(safeGuests, audience, eventGuestIds);
   const selectedAudience = audienceOptions.find((option) => option.value === formData.audience);
-  const recipients = getRecipients(formData.audience);
+  const recipients = getRecipients(formData.audience).filter(isValidGuest);
   const recipientsWithEmail = recipients.filter((guest) => hasReachableEmail(guest.email)).length;
   const recipientsWithSmsConsent = recipients.filter((guest) => hasReachableSms(guest)).length;
   const activeRecipients = formData.channel === 'sms' ? recipientsWithSmsConsent : recipientsWithEmail;
-  const previewRecipients = recipients.filter((guest) => (
-    formData.channel === 'sms' ? hasReachableSms(guest) : hasReachableEmail(guest.email)
+  const previewRecipients = recipients.filter((guest): guest is Guest => (
+    isValidGuest(guest)
+    && (formData.channel === 'sms' ? hasReachableSms(guest) : hasReachableEmail(guest.email))
   ));
   const unreachableRecipients = (selectedAudience?.count ?? 0) - activeRecipients;
   const selectedScheduleIsPast = !!(formData.scheduleDate && formData.scheduleTime)

@@ -1,13 +1,19 @@
 import { normalizeWeddingData, type WeddingDataV1 } from '../types/weddingData';
 import { buildPublicSiteRenderSite, type PublicSiteRenderModel } from './publicSiteRenderModel';
+import { hasGuestReadySection, hasGuestReadyVenue, hasMeaningfulText } from './publicGuestSectionReadiness';
 import { resolvePublicSiteSlugFromRow } from './publicSiteSlug';
 
-function hasMeaningfulText(value: unknown, minLength = 2): boolean {
-  if (typeof value !== 'string') return false;
-  const normalized = value.trim().toLowerCase();
-  if (normalized.length < minLength) return false;
-  return !['tbd', 'date tbd', 'venue tbd', 'the couple', 'our wedding'].includes(normalized);
-}
+const GUEST_FACING_READINESS_KEYS = [
+  'id',
+  'site_slug',
+  'site_url',
+  'is_published',
+  'privacy_mode',
+  'site_json',
+  'published_json',
+  'wedding_data',
+  'hide_from_search',
+] as const;
 
 function toIsoDateOrUndefined(value: string | undefined): string | undefined {
   if (!value || typeof value !== 'string') return undefined;
@@ -23,10 +29,6 @@ function toIsoDateOrUndefined(value: string | undefined): string | undefined {
   const parsed = new Date(normalized);
   if (Number.isNaN(parsed.getTime())) return undefined;
   return parsed.toISOString();
-}
-
-function hasGuestReadyVenue(data: WeddingDataV1): boolean {
-  return data.venues.some((venue) => hasMeaningfulText(venue.name) || hasMeaningfulText(venue.address, 6));
 }
 
 export function isPublicWeddingDataSparse(data: WeddingDataV1): boolean {
@@ -53,11 +55,30 @@ export function isPublicRenderModelGuestReady(renderModel: PublicSiteRenderModel
     ?? renderModel.pages[0];
 
   return Array.isArray(homePage?.sections)
-    && homePage.sections.some((section) => section.enabled !== false);
+    && homePage.sections.some((section) => hasGuestReadySection({
+      enabled: section.enabled,
+      settings: section.settings as Record<string, unknown> | null | undefined,
+      type: section.type,
+      variant: section.variant,
+    }, weddingData));
 }
 
 export function isGuestFacingSiteRowReady(row: Record<string, unknown> | null | undefined): boolean {
-  if (!row) return false;
-  if (!resolvePublicSiteSlugFromRow(row)) return false;
-  return isPublicRenderModelGuestReady(buildPublicSiteRenderSite(row).render_model);
+  const readinessRow = pickGuestFacingReadinessRow(row);
+  if (!readinessRow) return false;
+  if (!resolvePublicSiteSlugFromRow(readinessRow)) return false;
+  return isPublicRenderModelGuestReady(buildPublicSiteRenderSite(readinessRow).render_model);
+}
+
+export function pickGuestFacingReadinessRow(
+  row: Record<string, unknown> | null | undefined,
+): Record<string, unknown> | null {
+  if (!row) return null;
+
+  const projected = GUEST_FACING_READINESS_KEYS.reduce<Record<string, unknown>>((acc, key) => {
+    if (key in row) acc[key] = row[key];
+    return acc;
+  }, {});
+
+  return Object.keys(projected).length > 0 ? projected : null;
 }

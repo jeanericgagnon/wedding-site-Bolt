@@ -98,6 +98,8 @@ function hiddenLegacyEventsForGuest(guest: VisibilityPreviewGuest): VisibilityPr
 
 export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput): GuestVisibilityPreview {
   const guestLabel = guestDisplayName(input.guest);
+  const inviteToken = input.guest.inviteToken ?? '';
+  const publicSiteSlug = input.publicSiteSlug ?? '';
   const invitedEventIds = new Set(input.invitedEventIds ?? []);
   const hasStructuredEvents = input.events.length > 0;
   const visibleEvents = hasStructuredEvents
@@ -142,7 +144,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
       kind: 'rsvp',
       label: 'Open RSVP as guest',
       href: appendGuestLanguageToInternalHref(
-        `/rsvp?token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=rsvp`,
+        `/rsvp?token=${encodeURIComponent(inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=rsvp`,
         input.guest.preferredLanguage,
       ),
     });
@@ -152,7 +154,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
       kind: 'contact',
       label: 'Open guest update view',
       href: appendGuestLanguageToInternalHref(
-        `/guest-contact/${encodeURIComponent(input.publicSiteSlug)}?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=contact`,
+        `/guest-contact/${encodeURIComponent(publicSiteSlug)}?invite_token=${encodeURIComponent(inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=contact`,
         input.guest.preferredLanguage,
       ),
     });
@@ -160,7 +162,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
       kind: 'photos',
       label: 'Open photo upload as guest',
       href: appendGuestLanguageToInternalHref(
-        `/photos/upload?site=${encodeURIComponent(input.publicSiteSlug)}&hub=1&invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=photos`,
+        `/photos/upload?site=${encodeURIComponent(publicSiteSlug)}&hub=1&invite_token=${encodeURIComponent(inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=photos`,
         input.guest.preferredLanguage,
       ),
     });
@@ -168,7 +170,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
       kind: 'guestbook',
       label: 'Open guestbook as guest',
       href: appendGuestLanguageToInternalHref(
-        `/guestbook/${encodeURIComponent(input.publicSiteSlug)}?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=guestbook`,
+        `/guestbook/${encodeURIComponent(publicSiteSlug)}?invite_token=${encodeURIComponent(inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=guestbook`,
         input.guest.preferredLanguage,
       ),
     });
@@ -176,7 +178,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
       kind: 'vault',
       label: 'Open anniversary vault as guest',
       href: appendGuestLanguageToInternalHref(
-        `/vault/${encodeURIComponent(input.publicSiteSlug)}?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=vault`,
+        `/vault/${encodeURIComponent(publicSiteSlug)}?invite_token=${encodeURIComponent(inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=vault`,
         input.guest.preferredLanguage,
       ),
     });
@@ -184,7 +186,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
       kind: 'recap',
       label: 'Open recap as guest',
       href: appendGuestLanguageToInternalHref(
-        `/event/${encodeURIComponent(input.publicSiteSlug)}/recap?invite_token=${encodeURIComponent(input.guest.inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=recap`,
+        `/event/${encodeURIComponent(publicSiteSlug)}/recap?invite_token=${encodeURIComponent(inviteToken)}&previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=recap`,
         input.guest.preferredLanguage,
       ),
     });
@@ -194,7 +196,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
       kind: 'travel',
       label: 'Open travel section as guest',
       href: appendGuestLanguageToInternalHref(
-        `/site/${encodeURIComponent(input.publicSiteSlug)}?previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=travel#travel`,
+        `/site/${encodeURIComponent(publicSiteSlug)}?previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=travel#travel`,
         input.guest.preferredLanguage,
       ),
     });
@@ -202,7 +204,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
       kind: 'registry',
       label: 'Open registry section as guest',
       href: appendGuestLanguageToInternalHref(
-        `/site/${encodeURIComponent(input.publicSiteSlug)}?previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=registry#registry`,
+        `/site/${encodeURIComponent(publicSiteSlug)}?previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=registry#registry`,
         input.guest.preferredLanguage,
       ),
     });
@@ -210,7 +212,7 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
       kind: 'site',
       label: 'Open public site view',
       href: appendGuestLanguageToInternalHref(
-        `/site/${encodeURIComponent(input.publicSiteSlug)}?previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=public`,
+        `/site/${encodeURIComponent(publicSiteSlug)}?previewGuest=${encodeURIComponent(input.guest.id)}&previewSurface=public`,
         input.guest.preferredLanguage,
       ),
     });

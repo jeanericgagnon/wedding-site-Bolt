@@ -1094,7 +1094,7 @@ export function RegistryDashboardRouteContent(props: {
                     <div>
                       <p className="text-sm font-medium text-text-primary">Possible repeat group</p>
                       <p className="mt-1 text-xs text-text-secondary">
-                        Keep <span className="font-medium text-text-primary">{group.primaryItem.item_name}</span> and merge {group.secondaryItems.length} repeat{group.secondaryItems.length === 1 ? '' : 's'} into it.
+                        Keep <span className="font-medium text-text-primary">{getOwnerRegistryDisplayTitle(group.primaryItem.item_name)}</span> and merge {group.secondaryItems.length} repeat{group.secondaryItems.length === 1 ? '' : 's'} into it.
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2 text-[11px]">
@@ -1110,7 +1110,7 @@ export function RegistryDashboardRouteContent(props: {
                     <div className="space-y-1 text-xs text-text-secondary">
                       {group.items.map((item) => (
                         <p key={item.id}>
-                          • {item.item_name}
+                          • {getOwnerRegistryDisplayTitle(item.item_name)}
                           {item.id === group.primaryItem.id ? ' (keep)' : ''}
                           {item.merchant || item.store_name ? ` — ${item.merchant || item.store_name}` : ''}
                           {item.quantity_purchased > 0 || item.quantity_needed > 1 ? ` — ${item.quantity_purchased}/${item.quantity_needed}` : ''}

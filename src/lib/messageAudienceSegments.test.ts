@@ -56,6 +56,18 @@ describe('messageAudienceSegments', () => {
     expect(filterMessageAudienceGuests(guests, 'language:es').map((guest) => guest.id)).toEqual(['guest-6']);
   });
 
+  it('ignores malformed guest entries instead of crashing audience filters', () => {
+    const malformedGuests = [
+      undefined,
+      null,
+      { id: '', rsvp_status: 'pending' },
+      { id: 'guest-7', rsvp_status: 'pending', preferred_language: 'es' },
+    ] as any;
+
+    expect(filterMessageAudienceGuests(malformedGuests, 'all').map((guest) => guest.id)).toEqual(['guest-7']);
+    expect(filterMessageAudienceGuests(malformedGuests, 'language:es').map((guest) => guest.id)).toEqual(['guest-7']);
+  });
+
   it('describes selected audiences for recipient confidence copy', () => {
     const options = buildMessageAudienceOptions(guests);
 

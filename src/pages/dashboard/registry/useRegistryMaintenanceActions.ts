@@ -6,7 +6,7 @@ import { createRegistryItem, fetchUrlPreview, mergeDuplicateRegistryItems, updat
 import { buildRegistryDuplicateMergePatch } from './duplicateRegistryItems';
 import type { RegistryDuplicateGroup } from './duplicateRegistryItems';
 import type { RegistryItem } from './registryTypes';
-import { getRegistryItemMetadataState } from './registryTypes';
+import { getOwnerRegistryDisplayTitle, getRegistryItemMetadataState } from './registryTypes';
 import { buildRegistryRefreshFields, getRegistryRefreshSourceUrl } from './registryRefreshFields';
 import { buildDemoRegistryRepairPatch } from './registryDemoRepair';
 
@@ -148,9 +148,9 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
 
   async function handleCopyDuplicateReviewList() {
     const lines = duplicateGroups.flatMap((group, index) => [
-      `Group ${index + 1}: ${group.items.map((item) => item.item_name).join(' / ')}`,
+      `Group ${index + 1}: ${group.items.map((item) => getOwnerRegistryDisplayTitle(item.item_name)).join(' / ')}`,
       `Why it matches: ${group.signals.map((signal) => signal.label).join(', ')}`,
-      `Suggested keep: ${group.primaryItem.item_name}`,
+      `Suggested keep: ${getOwnerRegistryDisplayTitle(group.primaryItem.item_name)}`,
     ]);
     if (lines.length === 0) {
       toast('No duplicate groups to review.', 'error');
@@ -208,9 +208,9 @@ export function useRegistryMaintenanceActions(args: UseRegistryMaintenanceAction
           duplicateSignalKinds: group.signals.map((signal) => signal.kind),
         },
         group.primaryItem.id,
-        group.primaryItem.item_name,
+        getOwnerRegistryDisplayTitle(group.primaryItem.item_name),
       );
-      toast(`Merged ${group.secondaryItems.length + 1} duplicate gifts into "${group.primaryItem.item_name}".`);
+      toast(`Merged ${group.secondaryItems.length + 1} duplicate gifts into "${getOwnerRegistryDisplayTitle(group.primaryItem.item_name)}".`);
     } catch {
       toast('Couldn’t merge those duplicate gifts right now. Please try again.', 'error');
     } finally {

@@ -122,7 +122,16 @@
     "choose_file": "Please choose at least one file.",
     "not_configured": "Uploads are not ready yet. Please try again later.",
     "upload_success": "Uploaded {{count}} file(s). Thank you!",
-    "upload_partial": "Uploaded {{uploaded}} file(s). {{failed}} need another try."
+    "upload_partial": "Uploaded {{uploaded}} file(s). {{failed}} need another try.",
+    "error_invalid_token": "This upload link is invalid. Ask the couple for a fresh link.",
+    "error_album_inactive": "This album is currently paused.",
+    "error_album_not_open": "This album is not open for uploads yet.",
+    "error_album_closed": "This album is closed for uploads.",
+    "error_drive_reconnect": "Uploads are available here. Please refresh and try again.",
+    "error_photo_sharing_disabled": "Photo sharing is currently turned off for this event.",
+    "error_size_limit": "Your upload exceeds the allowed limits.",
+    "error_unsupported_type": "Please upload photos or videos only.",
+    "error_default": "Couldn’t upload that file. Please try again."
   },
   "event_recap": {
     "eyebrow": "Wedding recap",

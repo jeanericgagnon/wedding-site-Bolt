@@ -118,7 +118,7 @@ export function OverviewDashboardLiveContent({
         ? 'Waiting on replies'
         : 'Replies are gathered';
   const statusItems = [
-    { label: 'Site', value: publishBlockers.length > 0 ? 'Worth reviewing' : 'Guest-ready' },
+    { label: 'Site', value: siteVisibility.isLive ? 'Guest-ready' : siteVisibility.shortLabel },
     { label: 'Guests', value: guestTotal > 0 ? `${guestTotal.toLocaleString()} added` : 'Ready to add' },
     { label: 'RSVPs', value: rsvpOutcome },
     { label: 'Registry', value: (stats?.registryItemCount ?? 0) > 0 ? 'Ready for guests' : 'Ready to add' },

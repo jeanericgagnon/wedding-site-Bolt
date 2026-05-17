@@ -536,7 +536,7 @@ export function GuestRsvpSettingsView({
                   {rsvpMealEnabled && (
                     <>
                       <p className="mt-1 text-[11px] text-text-tertiary">
-                        {readyMealChoiceCount} of {mealChoiceTargetCount} meal choice{mealChoiceTargetCount === 1 ? '' : 's'} ready
+                        {readyMealChoiceCount} of {mealChoiceTargetCount} meal choices ready
                       </p>
                       <p className="mt-1 text-[11px] text-text-tertiary">
                         {missingMealChoiceCount === 0

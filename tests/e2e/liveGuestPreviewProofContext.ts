@@ -57,13 +57,21 @@ function formatGuestName(guest: GuestRow): string {
 async function resolveVisibleSiteSlug(page?: Page): Promise<string> {
   if (!page) return '';
 
-  const siteHref = await page.locator('a[href^="/site/"]').first().getAttribute('href').catch(() => null);
+  const siteHref = await page
+    .locator('a[href^="/site/"]')
+    .first()
+    .getAttribute('href', { timeout: 1_500 })
+    .catch(() => null);
   if (siteHref) {
     const match = siteHref.match(/\/site\/([^/?#]+)/i);
     if (match?.[1]) return decodeURIComponent(match[1]).trim().toLowerCase();
   }
 
-  const sidebarText = await page.locator('text=/\\.dayof\\.love$/i').first().textContent().catch(() => null);
+  const sidebarText = await page
+    .locator('text=/\\.dayof\\.love$/i')
+    .first()
+    .textContent({ timeout: 1_500 })
+    .catch(() => null);
   if (!sidebarText) return '';
   return sidebarText.replace(/\.dayof\.love$/i, '').trim().toLowerCase();
 }

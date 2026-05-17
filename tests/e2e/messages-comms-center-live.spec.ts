@@ -46,13 +46,12 @@ async function resolveOwnerSiteContext(page: Page) {
 
 async function cleanupProofMessages(
   context: { siteId: string; token: string; supabaseUrl: string; supabaseAnonKey: string },
-  subjects: string[],
+  messageIds: string[],
 ) {
-  for (const subject of subjects) {
+  for (const messageId of messageIds) {
     await restFetch(
       restUrl(context.supabaseUrl, 'messages', {
-        wedding_site_id: `eq.${context.siteId}`,
-        subject: `eq.${subject}`,
+        id: `eq.${messageId}`,
       }),
       authHeaders(context.token, context.supabaseAnonKey),
       { method: 'DELETE' },
@@ -66,11 +65,11 @@ test('live owner messages dashboard composes and saves each operational template
   await signInAsOwner(page);
   const ownerContext = await resolveOwnerSiteContext(page);
   const runId = `${Date.now()}`;
-  const createdSubjects: string[] = [];
+  const createdMessageIds: string[] = [];
 
   try {
     await page.goto('/dashboard/messages?bypassPayment=1&liveCommsProof=1', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: /send guest updates without making them feel automated/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /updates guests can actually use/i })).toBeVisible();
 
     const campaignNameInput = page.getByPlaceholder('Spring RSVP reminder');
     const bodyInput = page.getByPlaceholder('Write your message here');
@@ -84,22 +83,26 @@ test('live owner messages dashboard composes and saves each operational template
       const uniqueSubject = `Live comms proof ${runId} ${index + 1} ${label}`;
       const uniqueCampaign = `Live comms proof ${label} ${index + 1}`;
       const seededBody = await bodyInput.inputValue();
+      const uniqueBody = `${seededBody}\n\nLive proof ${runId} ${label}.`;
+      const subjectFieldVisible = await subjectInput.isVisible();
+      let createdMessageId = '';
 
       await campaignNameInput.fill(uniqueCampaign);
-      await subjectInput.fill(uniqueSubject);
-      await bodyInput.fill(`${seededBody}\n\nLive proof ${runId} ${label}.`);
+      if (subjectFieldVisible) {
+        await subjectInput.fill(uniqueSubject);
+      }
+      await bodyInput.fill(uniqueBody);
       await page.getByRole('button', { name: 'Save Draft' }).click();
 
       await expect(page.getByText('Saved as draft').first()).toBeVisible();
-      createdSubjects.push(uniqueSubject);
 
       await expect
         .poll(async () => {
           const response = await restFetch(
             restUrl(ownerContext.supabaseUrl, 'messages', {
-              select: 'id,subject,status,wedding_site_id',
+              select: 'id,subject,status,wedding_site_id,body',
               wedding_site_id: `eq.${ownerContext.siteId}`,
-              subject: `eq.${uniqueSubject}`,
+              body: `ilike.*Live proof ${runId} ${label}.*`,
               order: 'created_at.desc',
               limit: '1',
             }),
@@ -107,19 +110,29 @@ test('live owner messages dashboard composes and saves each operational template
           );
           const text = await response.text();
           if (!response.ok) return { ok: false, text };
-          const [row] = JSON.parse(text) as Array<{ id: string; subject: string; status: string; wedding_site_id: string }>;
-          return row ? { ok: true, row } : { ok: false, text };
+          const [row] = JSON.parse(text) as Array<{ id: string; subject: string; status: string; wedding_site_id: string; body: string }>;
+          if (!row) return { ok: false, text };
+          createdMessageId = row.id;
+          return {
+            ok: true,
+            row,
+            subjectOk: subjectFieldVisible ? row.subject === uniqueSubject : row.subject.startsWith('Text • '),
+            bodyOk: row.body.includes(`Live proof ${runId} ${label}.`),
+          };
         })
         .toMatchObject({
           ok: true,
+          subjectOk: true,
+          bodyOk: true,
           row: {
-            subject: uniqueSubject,
             status: 'draft',
             wedding_site_id: ownerContext.siteId,
           },
         });
+
+      createdMessageIds.push(createdMessageId);
     }
   } finally {
-    await cleanupProofMessages(ownerContext, createdSubjects);
+    await cleanupProofMessages(ownerContext, createdMessageIds);
   }
 });

@@ -66,7 +66,9 @@ const GUEST_SELECT = [
   'email',
   'phone',
   'sms_consent',
-  'preferred_language',
+  // Keep this projection aligned with the oldest production guests schema.
+  // Fields added later, like preferred_language, should default safely when
+  // they are absent from older snapshots.
   'rsvp_status',
   'invitation_sent_at',
   'reminder_last_sent_at',
@@ -74,7 +76,6 @@ const GUEST_SELECT = [
   'mailing_city',
   'mailing_state',
   'mailing_postal_code',
-  'meal_choice',
   'first_name',
   'last_name',
   'name',
@@ -91,6 +92,50 @@ const WEDDING_SITE_SELECT = [
   'wedding_date',
   'sms_credits_balance',
 ].join(', ');
+
+function normalizeNullableString(value: unknown): string | null {
+  return typeof value === 'string' ? value : null;
+}
+
+function normalizeOptionalBoolean(value: unknown): boolean | null {
+  if (value === true) return true;
+  if (value === false) return false;
+  return null;
+}
+
+function normalizeMessageGuestRow(row: unknown): Guest | null {
+  if (!row || typeof row !== 'object' || Array.isArray(row)) return null;
+
+  const candidate = row as Record<string, unknown>;
+  const id = typeof candidate.id === 'string' ? candidate.id.trim() : '';
+  if (!id) return null;
+
+  const firstName = normalizeNullableString(candidate.first_name);
+  const lastName = normalizeNullableString(candidate.last_name);
+  const explicitName = typeof candidate.name === 'string' ? candidate.name.trim() : '';
+  const fallbackName = [firstName, lastName].filter(Boolean).join(' ').trim();
+
+  return {
+    id,
+    email: normalizeNullableString(candidate.email),
+    phone: normalizeNullableString(candidate.phone),
+    sms_consent: normalizeOptionalBoolean(candidate.sms_consent),
+    preferred_language: normalizeNullableString(candidate.preferred_language),
+    rsvp_status: typeof candidate.rsvp_status === 'string' && candidate.rsvp_status.trim()
+      ? candidate.rsvp_status
+      : 'pending',
+    invitation_sent_at: normalizeNullableString(candidate.invitation_sent_at),
+    reminder_last_sent_at: normalizeNullableString(candidate.reminder_last_sent_at),
+    mailing_address_line1: normalizeNullableString(candidate.mailing_address_line1),
+    mailing_city: normalizeNullableString(candidate.mailing_city),
+    mailing_state: normalizeNullableString(candidate.mailing_state),
+    mailing_postal_code: normalizeNullableString(candidate.mailing_postal_code),
+    meal_choice: normalizeNullableString(candidate.meal_choice),
+    first_name: firstName,
+    last_name: lastName,
+    name: explicitName || fallbackName || 'Guest',
+  };
+}
 
 export const MAX_MESSAGE_DELIVERY_MESSAGE_IDS = 50;
 export const MAX_MESSAGE_DELIVERY_ROWS = 1000;
@@ -213,7 +258,9 @@ export async function loadMessageGuests(weddingSiteId: string): Promise<Guest[]>
     .limit(MAX_MESSAGE_GUESTS);
 
   if (error) throw error;
-  const guests = (data ?? []) as unknown as Guest[];
+  const guests = (data ?? [])
+    .map((row) => normalizeMessageGuestRow(row))
+    .filter((guest): guest is Guest => guest !== null);
   if (guests.length === 0) return guests;
 
   const guestIds = guests.map((guest) => guest.id).filter(Boolean).slice(0, MAX_MESSAGE_GUESTS);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isGuestFacingSiteRowReady, isPublicRenderModelGuestReady } from './publicSiteReadiness';
+import { isGuestFacingSiteRowReady, isPublicRenderModelGuestReady, pickGuestFacingReadinessRow } from './publicSiteReadiness';
 
 describe('public site readiness', () => {
   it('treats sparse published public rows as not guest-ready', () => {
@@ -15,6 +15,52 @@ describe('public site readiness', () => {
         couple: { partner1Name: 'Maya', partner2Name: 'Leo' },
       },
     })).toBe(false);
+  });
+
+  it('ignores top-level couple and venue fallback fields when checking dashboard guest readiness', () => {
+    expect(isGuestFacingSiteRowReady({
+      id: 'site-1',
+      site_slug: 'maya-and-leo',
+      is_published: true,
+      privacy_mode: 'public',
+      published_json: null,
+      site_json: null,
+      wedding_data: null,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-06-15',
+      venue_name: 'Sunset Gardens',
+      wedding_location: '123 Coast Highway',
+    })).toBe(false);
+  });
+
+  it('projects only the shared guest-facing readiness fields from dashboard rows', () => {
+    expect(pickGuestFacingReadinessRow({
+      id: 'site-1',
+      site_slug: 'maya-and-leo',
+      site_url: 'maya-and-leo.dayof.love',
+      is_published: true,
+      privacy_mode: 'public',
+      site_json: { pages: [] },
+      published_json: { pages: [] },
+      wedding_data: { event: { weddingDateISO: '2026-06-15T12:00:00.000Z' } },
+      hide_from_search: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2026-06-15',
+      venue_name: 'Sunset Gardens',
+      wedding_location: '123 Coast Highway',
+    })).toEqual({
+      id: 'site-1',
+      site_slug: 'maya-and-leo',
+      site_url: 'maya-and-leo.dayof.love',
+      is_published: true,
+      privacy_mode: 'public',
+      site_json: { pages: [] },
+      published_json: { pages: [] },
+      wedding_data: { event: { weddingDateISO: '2026-06-15T12:00:00.000Z' } },
+      hide_from_search: true,
+    });
   });
 
   it('treats no-page but content-rich render models as guest-ready', () => {
@@ -77,6 +123,51 @@ describe('public site readiness', () => {
           weddingDateISO: '2026-06-15T12:00:00.000Z',
         },
         venues: [{ id: 'venue-1', name: 'Sunset Gardens', address: '123 Coast Highway' }],
+        schedule: [{ id: 'event-1', label: 'Ceremony' }],
+        rsvp: { enabled: true },
+        travel: {},
+        registry: { links: [] },
+        faq: [],
+        media: { gallery: [], heroImageUrl: 'https://example.com/hero.jpg' },
+        theme: {},
+      },
+      theme: { preset: null, tokens: null },
+    })).toBe(false);
+  });
+
+  it('treats home pages with only content-empty guest sections as not guest-ready', () => {
+    expect(isPublicRenderModelGuestReady({
+      pages: [
+        {
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          meta: { isHome: true },
+          sections: [
+            {
+              id: 'venue-1',
+              type: 'venue',
+              variant: 'card',
+              enabled: true,
+              orderIndex: 0,
+              settings: {},
+            },
+          ],
+        },
+      ],
+      wedding: {
+        version: '1',
+        couple: {
+          partner1Name: 'Maya',
+          partner2Name: 'Leo',
+          displayName: 'Maya and Leo',
+          story: 'We met on a rainy Wednesday, stayed for dinner, and never really stopped building a life together.',
+        },
+        event: {
+          weddingDateISO: '2026-06-15T12:00:00.000Z',
+        },
+        venues: [],
         schedule: [{ id: 'event-1', label: 'Ceremony' }],
         rsvp: { enabled: true },
         travel: {},

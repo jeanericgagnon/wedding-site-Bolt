@@ -70,6 +70,8 @@ describe('dashboard data boundary guards', () => {
     expect(dataHookSource).toContain('const data = await loadMessageDeliveries(messageIds);');
     expect(dataHookSource).toContain('const { options, guestIdsByEvent } = await loadMessageItineraryAudience(weddingSite.id);');
     expect(dataHookSource).toContain('const { expiringSoon, transactions } = await loadSmsCreditPreview(weddingSite.id, cutoff);');
+    expect(dataHookSource).toContain("window.addEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, handleActiveSiteChanged);");
+    expect(dataHookSource).toContain("window.removeEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, handleActiveSiteChanged);");
     expect(dataHookSource).not.toContain("from '../../lib/supabase'");
     expect(viewPropsSource).toContain('const detailModalProps = args.viewingMessage');
     expect(viewPropsSource).toContain('composerProps: {');

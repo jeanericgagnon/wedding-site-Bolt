@@ -142,6 +142,21 @@ describe('registryLaunchReadiness', () => {
     expect(Object.keys(synced)).toEqual(['plates', 'bowls']);
   });
 
+  it('masks broken import titles before they reach thank-you follow-up surfaces', () => {
+    const synced = syncRegistryThankYouLedger([
+      item({ id: 'broken', item_name: 'Page Not Found', purchase_status: 'purchased', quantity_purchased: 1, purchaser_name: 'Alex' }),
+    ], {}, '2026-05-03T00:00:00.000Z');
+
+    const plan = buildRegistryThankYouPlanWithLedger([
+      item({ id: 'broken', item_name: 'Page Not Found', purchase_status: 'purchased', quantity_purchased: 1, purchaser_name: 'Alex' }),
+    ], synced);
+
+    expect(synced.broken.giftName).toBe('Gift link needs review');
+    expect(plan.items.find((entry) => entry.id === 'broken')).toMatchObject({
+      giftName: 'Gift link needs review',
+    });
+  });
+
   it('toggles persisted thank-you sent state without losing purchaser truth', () => {
     const toggledDone = toggleRegistryThankYouLedgerStatus({
       plates: {

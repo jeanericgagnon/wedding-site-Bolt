@@ -122,7 +122,16 @@
     "choose_file": "Bitte wähle mindestens eine Datei.",
     "not_configured": "Uploads sind noch nicht bereit. Bitte versuche es später erneut.",
     "upload_success": "{{count}} Datei(en) hochgeladen. Danke.",
-    "upload_partial": "{{uploaded}} Datei(en) hochgeladen. {{failed}} brauchen einen neuen Versuch."
+    "upload_partial": "{{uploaded}} Datei(en) hochgeladen. {{failed}} brauchen einen neuen Versuch.",
+    "error_invalid_token": "Dieser Upload-Link ist ungültig. Bitte frag das Paar nach einem neuen Link.",
+    "error_album_inactive": "Dieses Album ist momentan pausiert.",
+    "error_album_not_open": "Dieses Album ist noch nicht für Uploads geöffnet.",
+    "error_album_closed": "Dieses Album ist für Uploads geschlossen.",
+    "error_drive_reconnect": "Uploads sind hier verfügbar. Bitte aktualisiere die Seite und versuche es erneut.",
+    "error_photo_sharing_disabled": "Das Teilen von Fotos ist für dieses Event derzeit ausgeschaltet.",
+    "error_size_limit": "Dein Upload überschreitet die erlaubten Grenzen.",
+    "error_unsupported_type": "Bitte lade nur Fotos oder Videos hoch.",
+    "error_default": "Diese Datei konnte nicht hochgeladen werden. Bitte versuche es erneut."
   },
   "event_recap": {
     "eyebrow": "Hochzeitsrückblick",

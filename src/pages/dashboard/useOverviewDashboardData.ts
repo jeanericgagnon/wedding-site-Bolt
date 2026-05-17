@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
+import { ACTIVE_SITE_STORAGE_CHANGED_EVENT } from '../../lib/activeSiteStorage';
 import { readSetupDraft, setupDraftProgress } from '../../lib/setupDraft';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
-import { isGuestFacingSiteRowReady } from '../../lib/publicSiteReadiness';
+import { isGuestFacingSiteRowReady, pickGuestFacingReadinessRow } from '../../lib/publicSiteReadiness';
 import { normalizeNotificationPrefs } from '../../lib/notificationPrefs';
 import { listBuilderRevisions, type BuilderRevision } from '../../builder/services/versionHistory';
 import { loadNameChangeWorkspace } from './planning/nameChangeService';
@@ -49,6 +50,7 @@ export function useOverviewDashboardData({
   const [refreshingBrief, setRefreshingBrief] = useState(false);
   const [draftRefineTargets, setDraftRefineTargets] = useState<Array<{ id: string; label: string; questionIndex: number; value: string }>>([]);
   const [draftBriefDebug, setDraftBriefDebug] = useState<string>('init');
+  const [activeSiteSyncVersion, setActiveSiteSyncVersion] = useState(0);
   const [nameChangeOverviewState, setNameChangeOverviewState] = useState<{ hasWorkspace: boolean; workflowStatus: 'draft' | 'ready' | 'in_progress' | 'complete' | null; hasExecutionActivity: boolean; }>({ hasWorkspace: false, workflowStatus: null, hasExecutionActivity: false });
   const [nameChangeInsights, setNameChangeInsights] = useState<NameChangeOverviewInsights>(DEFAULT_NAME_CHANGE_INSIGHTS);
   const [showMoreDetail, setShowMoreDetail] = useState(() => {
@@ -100,8 +102,9 @@ export function useOverviewDashboardData({
       const siteJson = (site?.site_json as Record<string, unknown> | null) ?? null;
       const hideFromSearch = siteJson?.hide_from_search === true;
       const isPublished = site?.is_published === true;
-      const siteSlug = resolvePublicSiteSlugFromRow((site as unknown as Record<string, unknown> | null) ?? null);
-      const guestFacingReady = isGuestFacingSiteRowReady(site as unknown as Record<string, unknown> | null);
+      const guestFacingSiteRow = pickGuestFacingReadinessRow(site as unknown as Record<string, unknown> | null);
+      const siteSlug = resolvePublicSiteSlugFromRow(guestFacingSiteRow);
+      const guestFacingReady = isGuestFacingSiteRowReady(guestFacingSiteRow);
       const privacyMode = site?.privacy_mode === 'password_protected' || site?.privacy_mode === 'invite_only' || site?.privacy_mode === 'hidden'
         ? site.privacy_mode
         : 'public';
@@ -144,12 +147,25 @@ export function useOverviewDashboardData({
     } finally {
       setLoading(false);
     }
-  }, [isDemoMode, setDismissedIntelligenceIds, storageKey, userId]);
+  }, [activeSiteSyncVersion, isDemoMode, setDismissedIntelligenceIds, storageKey, userId]);
 
   useEffect(() => {
     if (!userId) return;
     void loadStats();
   }, [loadStats, userId]);
+
+  useEffect(() => {
+    const handleActiveSiteChanged = () => {
+      setActiveSiteSyncVersion((version) => version + 1);
+    };
+
+    window.addEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, handleActiveSiteChanged);
+    window.addEventListener('storage', handleActiveSiteChanged);
+    return () => {
+      window.removeEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, handleActiveSiteChanged);
+      window.removeEventListener('storage', handleActiveSiteChanged);
+    };
+  }, []);
 
   useEffect(() => {
     const refreshProgress = () => setSetupDraftProgressPercent(setupDraftProgress(readSetupDraft()));

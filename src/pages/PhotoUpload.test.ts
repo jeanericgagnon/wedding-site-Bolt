@@ -19,6 +19,8 @@ vi.mock('react-i18next', () => ({
         'photo_upload.uploading_to': `Uploading to ${params?.site}.dayof.love`,
         'photo_upload.name_label': 'Your name (optional)',
         'photo_upload.name_placeholder': 'Jane Doe',
+        'photo_upload.token_label': 'Upload link code',
+        'photo_upload.token_placeholder': 'ABCD-1234',
         'photo_upload.token_hint': "Paste the upload link code from the couple's QR or direct link.",
         'photo_upload.email_label': 'Email (optional)',
         'photo_upload.email_placeholder': 'you@example.com',
@@ -44,6 +46,15 @@ vi.mock('react-i18next', () => ({
         'photo_upload.see_recap': 'See the recap',
         'photo_upload.back_hub': 'Back to the hub',
         'photo_upload.create_own': 'Create your own',
+        'photo_upload.error_invalid_token': 'This upload link is invalid. Ask the couple for a fresh link.',
+        'photo_upload.error_album_inactive': 'This album is currently paused.',
+        'photo_upload.error_album_not_open': 'This album is not open for uploads yet.',
+        'photo_upload.error_album_closed': 'This album is closed for uploads.',
+        'photo_upload.error_drive_reconnect': 'Uploads are available here. Please refresh and try again.',
+        'photo_upload.error_photo_sharing_disabled': 'Photo sharing is currently turned off for this event.',
+        'photo_upload.error_size_limit': 'Your upload exceeds the allowed limits.',
+        'photo_upload.error_unsupported_type': 'Please upload photos or videos only.',
+        'photo_upload.error_default': 'Couldn’t upload that file. Please try again.',
       };
       return translations[key] ?? key;
     },
@@ -85,6 +96,18 @@ describe('photo upload guest error copy', () => {
 
   it('keeps known guest-safe upload messages', () => {
     expect(safePhotoUploadMessage('This album is closed for uploads.')).toBe('This album is closed for uploads.');
+  });
+
+  it('routes upload error copy through translation keys when a guest language is active', () => {
+    const translate = (key: string) => ({
+      'photo_upload.error_invalid_token': 'Este enlace de carga no es válido. Pídele a la pareja un enlace nuevo.',
+      'photo_upload.error_album_closed': 'Este álbum ya está cerrado para cargas.',
+      'photo_upload.error_default': 'No se pudo subir ese archivo. Inténtalo otra vez.',
+    }[key] ?? key);
+
+    expect(mapUploadError('INVALID_TOKEN', translate)).toBe('Este enlace de carga no es válido. Pídele a la pareja un enlace nuevo.');
+    expect(safePhotoUploadMessage('Este álbum ya está cerrado para cargas.', translate)).toBe('Este álbum ya está cerrado para cargas.');
+    expect(safePhotoUploadMessage('storage bucket policy denied token', translate)).toBe('No se pudo subir ese archivo. Inténtalo otra vez.');
   });
 
   it('forwards gated access artifacts to the guest prospect opt-in follow-up', () => {
@@ -148,7 +171,7 @@ describe('photo upload guest error copy', () => {
   });
 
   it('renders helper bullets through translation keys instead of hardcoded English copy', () => {
-    window.history.pushState({}, '', '/photos/upload?site=ericandkaras');
+    window.history.pushState({}, '', '/photos/upload');
 
     render(
       React.createElement(

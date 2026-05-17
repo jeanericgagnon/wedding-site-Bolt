@@ -122,7 +122,16 @@
     "choose_file": "Elige al menos un archivo.",
     "not_configured": "Las subidas aún no están listas. Inténtalo de nuevo más tarde.",
     "upload_success": "Se subieron {{count}} archivo(s). ¡Gracias!",
-    "upload_partial": "Se subieron {{uploaded}} archivo(s). {{failed}} necesitan otro intento."
+    "upload_partial": "Se subieron {{uploaded}} archivo(s). {{failed}} necesitan otro intento.",
+    "error_invalid_token": "Este enlace de carga no es válido. Pídele a la pareja un enlace nuevo.",
+    "error_album_inactive": "Este álbum está en pausa ahora mismo.",
+    "error_album_not_open": "Este álbum todavía no está abierto para cargas.",
+    "error_album_closed": "Este álbum ya está cerrado para cargas.",
+    "error_drive_reconnect": "Las cargas están disponibles aquí. Actualiza la página e inténtalo otra vez.",
+    "error_photo_sharing_disabled": "El intercambio de fotos está desactivado para este evento.",
+    "error_size_limit": "Tu carga supera los límites permitidos.",
+    "error_unsupported_type": "Sube solo fotos o videos.",
+    "error_default": "No se pudo subir ese archivo. Inténtalo otra vez."
   },
   "event_recap": {
     "eyebrow": "Resumen de la boda",

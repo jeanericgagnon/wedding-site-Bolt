@@ -3,13 +3,18 @@ import { signInAsOwner } from './liveOwnerSession';
 import { resolveLiveGuestHubProofContext } from './liveGuestHubProofContext';
 import { resolveLiveGuestPreviewVisibilityPair } from './liveGuestPreviewProofContext';
 
+async function expectGuestsDashboard(page: import('@playwright/test').Page) {
+  await expect(page).toHaveURL(/\/dashboard\/guests(?:\?|$)/);
+  await expect(page.getByRole('heading', { name: /^People, replies, and details\.$/i })).toBeVisible();
+}
+
 test('live owner guest preview opens real guest-facing routes without token leakage in UI chrome', async ({ page, context }) => {
   test.setTimeout(180_000);
 
   await signInAsOwner(page);
   const proofContext = await resolveLiveGuestHubProofContext(page);
   await page.goto('/dashboard/guests?bypassPayment=1&guestPreviewQa=1', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { name: /guests|people, replies, and details/i }).first()).toBeVisible();
+  await expectGuestsDashboard(page);
 
   await expect(page.locator('body')).not.toContainText(/invite_token=|token-[a-z0-9]/i);
 
@@ -59,7 +64,7 @@ test('live guest preview drawer proves an event is visible to the right guest an
   await signInAsOwner(page);
   const proofPair = await resolveLiveGuestPreviewVisibilityPair(page);
   await page.goto('/dashboard/guests?bypassPayment=1&guestPreviewQa=1', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { name: /guests|people, replies, and details/i }).first()).toBeVisible();
+  await expectGuestsDashboard(page);
 
   const searchInput = page.getByPlaceholder('Search guests...');
 
@@ -70,7 +75,7 @@ test('live guest preview drawer proves an event is visible to the right guest an
 
   const rightDrawer = page.getByRole('dialog', { name: new RegExp(`${proofPair.rightGuest.guestName} guest drawer`, 'i') });
   await expect(rightDrawer).toBeVisible();
-  await expect(rightDrawer.getByText(new RegExp(`Visible to this guest:.*${proofPair.visibleEventName}`, 'i'))).toBeVisible();
+  await expect(rightDrawer.getByText(new RegExp(`Visible to this guest:.*${proofPair.visibleEventName}`, 'i')).first()).toBeVisible();
   await expect(rightDrawer.getByText(new RegExp(`Hidden from this guest:.*${proofPair.visibleEventName}`, 'i'))).toHaveCount(0);
   await rightDrawer.getByRole('button', { name: 'Close guest drawer' }).click();
   await expect(rightDrawer).toHaveCount(0);
@@ -82,6 +87,6 @@ test('live guest preview drawer proves an event is visible to the right guest an
 
   const wrongDrawer = page.getByRole('dialog', { name: new RegExp(`${proofPair.wrongGuest.guestName} guest drawer`, 'i') });
   await expect(wrongDrawer).toBeVisible();
-  await expect(wrongDrawer.getByText(new RegExp(`Hidden from this guest:.*${proofPair.visibleEventName}`, 'i'))).toBeVisible();
+  await expect(wrongDrawer.getByText(new RegExp(`Hidden from this guest:.*${proofPair.visibleEventName}`, 'i')).first()).toBeVisible();
   await expect(wrongDrawer.getByText(new RegExp(`Visible to this guest:.*${proofPair.visibleEventName}`, 'i'))).toHaveCount(0);
 });

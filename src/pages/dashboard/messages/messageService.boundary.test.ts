@@ -90,6 +90,8 @@ describe('message service query bounds', () => {
     expect(source).toContain(".from('rsvps')");
     expect(source).toContain(".select('guest_id, meal_choice')");
     expect(source).toContain('mergeGuestsWithCanonicalMealChoices');
+    expect(source).not.toContain("'preferred_language',");
+    expect(source).not.toContain("'meal_choice',");
     expect(source).toContain('if (rsvpError) return guests;');
   });
 
@@ -176,6 +178,54 @@ describe('message service query bounds', () => {
 
     await expect(loadMessageGuests('site-1')).resolves.toEqual([
       expect.objectContaining({ id: 'guest-1', meal_choice: 'Vegetarian' }),
+    ]);
+  });
+
+  it('drops malformed guest rows before audience math reaches the dashboard', async () => {
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'guests') {
+        return {
+          select: () => ({
+            eq: () => ({
+              order: () => ({
+                order: () => ({
+                  limit: async () => ({
+                    data: [
+                      null,
+                      { id: '', first_name: 'Broken', email: 'broken@example.com' },
+                      { id: 'guest-1', first_name: 'Maya', last_name: 'Lee', email: 'maya@example.com', name: '' },
+                    ],
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (table === 'rsvps') {
+        return {
+          select: () => ({
+            in: () => ({
+              limit: async () => ({
+                data: [],
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    await expect(loadMessageGuests('site-1')).resolves.toEqual([
+      expect.objectContaining({
+        id: 'guest-1',
+        email: 'maya@example.com',
+        name: 'Maya Lee',
+      }),
     ]);
   });
 

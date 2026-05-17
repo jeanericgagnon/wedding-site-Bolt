@@ -9,6 +9,14 @@ describe('dashboard route access guards', () => {
     expect(layout).toContain("if (itemId === 'activity') return true;");
   });
 
+  it('waits for site context before redirecting guarded dashboard pages back to home', () => {
+    const layout = readFileSync(join(process.cwd(), 'src/components/dashboard/DashboardLayout.tsx'), 'utf8');
+
+    expect(layout).toContain("const [siteContextReady, setSiteContextReady] = useState(false);");
+    expect(layout).toContain("if (!siteContextReady || !activeSiteRole) return;");
+    expect(layout).toContain('setSiteContextReady(true);');
+  });
+
   it('keeps more tools exportable through the route lazy loader', () => {
     const moreTools = readFileSync(join(process.cwd(), 'src/pages/dashboard/MoreTools.tsx'), 'utf8');
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Camera, Check, ImagePlus, UploadCloud } from 'lucide-react';
 import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
@@ -15,45 +15,72 @@ import { hasGuestPublicSubmissionRuntime, uploadGuestPhotos } from './guestPubli
 import { PhotoUploadStatusPanel } from './PhotoUploadStatusPanel';
 import { appendDemoGuestPhotoUploads } from './dashboard/guestPhotos/guestPhotoDemoState';
 
-export const mapUploadError = (code?: string): string => {
+type PhotoUploadTranslate = (key: string) => string;
+
+const PHOTO_UPLOAD_ERROR_COPY = {
+  'photo_upload.error_invalid_token': 'This upload link is invalid. Ask the couple for a fresh link.',
+  'photo_upload.error_album_inactive': 'This album is currently paused.',
+  'photo_upload.error_album_not_open': 'This album is not open for uploads yet.',
+  'photo_upload.error_album_closed': 'This album is closed for uploads.',
+  'photo_upload.error_drive_reconnect': 'Uploads are available here. Please refresh and try again.',
+  'photo_upload.error_photo_sharing_disabled': 'Photo sharing is currently turned off for this event.',
+  'photo_upload.error_size_limit': 'Your upload exceeds the allowed limits.',
+  'photo_upload.error_unsupported_type': 'Please upload photos or videos only.',
+  'photo_upload.error_default': 'Couldn’t upload that file. Please try again.',
+} as const;
+
+type PhotoUploadErrorKey = keyof typeof PHOTO_UPLOAD_ERROR_COPY;
+
+const SAFE_PHOTO_UPLOAD_ERROR_KEYS: readonly PhotoUploadErrorKey[] = [
+  'photo_upload.error_invalid_token',
+  'photo_upload.error_album_inactive',
+  'photo_upload.error_album_not_open',
+  'photo_upload.error_album_closed',
+  'photo_upload.error_drive_reconnect',
+  'photo_upload.error_photo_sharing_disabled',
+  'photo_upload.error_size_limit',
+  'photo_upload.error_unsupported_type',
+  'photo_upload.error_default',
+];
+
+function translatePhotoUploadMessage(key: PhotoUploadErrorKey, translate?: PhotoUploadTranslate): string {
+  return translate ? translate(key) : PHOTO_UPLOAD_ERROR_COPY[key];
+}
+
+function resolvePhotoUploadErrorKey(code?: string): PhotoUploadErrorKey {
   switch (code) {
     case 'INVALID_TOKEN':
-      return 'This upload link is invalid. Ask the couple for a fresh link.';
+      return 'photo_upload.error_invalid_token';
     case 'ALBUM_INACTIVE':
-      return 'This album is currently paused.';
+      return 'photo_upload.error_album_inactive';
     case 'ALBUM_NOT_OPEN':
-      return 'This album is not open for uploads yet.';
+      return 'photo_upload.error_album_not_open';
     case 'ALBUM_CLOSED':
-      return 'This album is closed for uploads.';
+      return 'photo_upload.error_album_closed';
     case 'DRIVE_NOT_CONNECTED':
     case 'DRIVE_RECONNECT_REQUIRED':
-      return 'Uploads are available here. Please refresh and try again.';
+      return 'photo_upload.error_drive_reconnect';
     case 'PHOTO_SHARING_DISABLED':
-      return 'Photo sharing is currently turned off for this event.';
+      return 'photo_upload.error_photo_sharing_disabled';
     case 'FILE_TOO_LARGE':
     case 'TOTAL_TOO_LARGE':
     case 'TOO_MANY_FILES':
-      return 'Your upload exceeds the allowed limits.';
+      return 'photo_upload.error_size_limit';
     case 'UNSUPPORTED_FILE_TYPE':
-      return 'Please upload photos or videos only.';
+      return 'photo_upload.error_unsupported_type';
     default:
-      return 'Couldn’t upload that file. Please try again.';
+      return 'photo_upload.error_default';
   }
-};
+}
 
-export const safePhotoUploadMessage = (message?: string): string => {
-  const safeMessages = [
-    'This upload link is invalid. Ask the couple for a fresh link.',
-    'This album is currently paused.',
-    'This album is not open for uploads yet.',
-    'This album is closed for uploads.',
-    'Uploads are available here. Please refresh and try again.',
-    'Photo sharing is currently turned off for this event.',
-    'Your upload exceeds the allowed limits.',
-    'Please upload photos or videos only.',
-    'Couldn’t upload that file. Please try again.',
-  ];
-  return message && safeMessages.includes(message) ? message : 'Couldn’t upload that file. Please try again.';
+export const mapUploadError = (code?: string, translate?: PhotoUploadTranslate): string =>
+  translatePhotoUploadMessage(resolvePhotoUploadErrorKey(code), translate);
+
+export const safePhotoUploadMessage = (message?: string, translate?: PhotoUploadTranslate): string => {
+  const normalizedMessage = message?.trim();
+  const safeMessages = SAFE_PHOTO_UPLOAD_ERROR_KEYS.map((key) => translatePhotoUploadMessage(key, translate));
+  const fallback = translatePhotoUploadMessage('photo_upload.error_default', translate);
+  return normalizedMessage && safeMessages.includes(normalizedMessage) ? normalizedMessage : fallback;
 };
 
 export const buildPhotoUploadAccessPayload = (slug: string) => buildPublicAccessArtifacts(slug, new URLSearchParams(window.location.search));
@@ -86,7 +113,7 @@ export const PhotoUpload: React.FC = () => {
   const inputClassName = 'w-full rounded-lg border border-stone-200 bg-white px-4 py-3 text-base text-stone-900 outline-none transition focus:border-stone-400 focus:ring-4 focus:ring-stone-200/70';
   const labelClassName = 'mb-2 block text-sm font-medium text-stone-800';
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (siteSlug) {
       capturePublicInviteTokenFromSearch(siteSlug, params);
       captureGuestInviteTokenFromSearch(siteSlug, params);
@@ -178,8 +205,8 @@ export const PhotoUpload: React.FC = () => {
               failed: [],
             };
           })()
-        : await uploadGuestPhotos(form).catch((err) => {
-            throw new Error(mapUploadError(err instanceof Error ? err.message : undefined));
+          : await uploadGuestPhotos(form).catch((err) => {
+            throw new Error(mapUploadError(err instanceof Error ? err.message : undefined, t));
           });
 
       const uploaded = Array.isArray(data.uploaded) ? data.uploaded : [];
@@ -212,7 +239,7 @@ export const PhotoUpload: React.FC = () => {
       setGuestEmail('');
       setGuestPhone('');
     } catch (err) {
-      setError(err instanceof Error ? safePhotoUploadMessage(err.message) : 'Couldn’t upload that file. Please try again.');
+      setError(err instanceof Error ? safePhotoUploadMessage(err.message, t) : t('photo_upload.error_default'));
     } finally {
       setIsUploading(false);
     }

@@ -1,20 +1,24 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { GuestPhotoRecapSharingCard } from './GuestPhotoRecapSharingCard';
+import { DEFAULT_HUB_SETTINGS } from '../guestPhotoSharingUtils';
 
 describe('GuestPhotoRecapSharingCard', () => {
+  const hubSettings = (overrides: Partial<typeof DEFAULT_HUB_SETTINGS> = {}) => ({
+    ...DEFAULT_HUB_SETTINGS,
+    ...overrides,
+  });
+
   it('keeps recap preview disabled for draft-only sites and draft recap mode', () => {
     render(
       <GuestPhotoRecapSharingCard
         guestRecapUrl="https://dayof.love/event/maya-and-leo/recap"
         isPublished={false}
-        hubSettings={{
-          guestbook_enabled: true,
-          photo_upload_enabled: true,
+        hubSettings={hubSettings({
           recap_status: 'draft',
           recap_published_at: null,
           recap_closed_at: null,
-        }}
+        })}
         savingHubSettings={false}
         uploadCount={14}
         recapFeaturedCount={4}
@@ -38,13 +42,11 @@ describe('GuestPhotoRecapSharingCard', () => {
       <GuestPhotoRecapSharingCard
         guestRecapUrl="https://dayof.love/event/maya-and-leo/recap"
         isPublished
-        hubSettings={{
-          guestbook_enabled: true,
-          photo_upload_enabled: true,
+        hubSettings={hubSettings({
           recap_status: 'closed',
           recap_published_at: '2026-05-15T12:00:00.000Z',
           recap_closed_at: '2026-05-16T12:00:00.000Z',
-        }}
+        })}
         savingHubSettings={false}
         uploadCount={14}
         recapFeaturedCount={4}
@@ -71,13 +73,11 @@ describe('GuestPhotoRecapSharingCard', () => {
       <GuestPhotoRecapSharingCard
         guestRecapUrl="https://dayof.love/event/maya-and-leo/recap"
         isPublished
-        hubSettings={{
-          guestbook_enabled: true,
-          photo_upload_enabled: true,
+        hubSettings={hubSettings({
           recap_status: 'private_link',
           recap_published_at: null,
           recap_closed_at: null,
-        }}
+        })}
         savingHubSettings={false}
         uploadCount={14}
         recapFeaturedCount={4}
@@ -100,13 +100,11 @@ describe('GuestPhotoRecapSharingCard', () => {
       <GuestPhotoRecapSharingCard
         guestRecapUrl="https://dayof.love/event/maya-and-leo/recap"
         isPublished
-        hubSettings={{
-          guestbook_enabled: true,
-          photo_upload_enabled: true,
+        hubSettings={hubSettings({
           recap_status: 'published',
           recap_published_at: '2026-05-15T12:00:00.000Z',
           recap_closed_at: null,
-        }}
+        })}
         savingHubSettings={false}
         uploadCount={14}
         recapFeaturedCount={4}
@@ -130,13 +128,11 @@ describe('GuestPhotoRecapSharingCard', () => {
       <GuestPhotoRecapSharingCard
         guestRecapUrl="https://dayof.love/event/maya-and-leo/recap"
         isPublished
-        hubSettings={{
-          guestbook_enabled: true,
-          photo_upload_enabled: true,
+        hubSettings={hubSettings({
           recap_status: 'draft',
           recap_published_at: null,
           recap_closed_at: null,
-        }}
+        })}
         savingHubSettings={false}
         uploadCount={14}
         recapFeaturedCount={4}
@@ -162,13 +158,11 @@ describe('GuestPhotoRecapSharingCard', () => {
       <GuestPhotoRecapSharingCard
         guestRecapUrl="https://dayof.love/event/maya-and-leo/recap"
         isPublished
-        hubSettings={{
-          guestbook_enabled: true,
-          photo_upload_enabled: true,
+        hubSettings={hubSettings({
           recap_status: 'draft',
           recap_published_at: null,
           recap_closed_at: null,
-        }}
+        })}
         savingHubSettings={false}
         uploadCount={14}
         recapFeaturedCount={4}
@@ -181,8 +175,9 @@ describe('GuestPhotoRecapSharingCard', () => {
       />,
     );
 
-    fireEvent.change(screen.getByDisplayValue('Draft'), { target: { value: 'published' } });
-    fireEvent.change(screen.getByDisplayValue('Published'), { target: { value: 'closed' } });
+    const recapStatusSelect = screen.getByDisplayValue('Draft');
+    fireEvent.change(recapStatusSelect, { target: { value: 'published' } });
+    fireEvent.change(recapStatusSelect, { target: { value: 'closed' } });
 
     expect(onHubSettingsChange).toHaveBeenNthCalledWith(
       1,
@@ -207,13 +202,11 @@ describe('GuestPhotoRecapSharingCard', () => {
       <GuestPhotoRecapSharingCard
         guestRecapUrl=""
         isPublished
-        hubSettings={{
-          guestbook_enabled: true,
-          photo_upload_enabled: true,
+        hubSettings={hubSettings({
           recap_status: 'private_link',
           recap_published_at: null,
           recap_closed_at: null,
-        }}
+        })}
         savingHubSettings={false}
         uploadCount={14}
         recapFeaturedCount={4}
@@ -235,13 +228,11 @@ describe('GuestPhotoRecapSharingCard', () => {
       <GuestPhotoRecapSharingCard
         guestRecapUrl="https://dayof.love/event/maya-and-leo/recap"
         isPublished
-        hubSettings={{
-          guestbook_enabled: true,
-          photo_upload_enabled: true,
+        hubSettings={hubSettings({
           recap_status: 'published',
           recap_published_at: '2026-05-15T12:00:00.000Z',
           recap_closed_at: null,
-        }}
+        })}
         savingHubSettings
         uploadCount={14}
         recapFeaturedCount={4}

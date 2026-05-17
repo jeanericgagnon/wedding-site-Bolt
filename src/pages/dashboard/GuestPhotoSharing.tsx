@@ -498,6 +498,7 @@ export const GuestPhotoSharing: React.FC = () => {
     hiddenUploadCount,
     highlightUploads,
     hubSettings,
+    isPublished,
     itineraryEventId,
     latestUploadUrl,
     loading,

@@ -186,7 +186,7 @@ describe('GuestItineraryDrawer', () => {
       household_id: null,
       invited_event_ids: ['event-1'],
       rsvp: {
-        attending: null,
+        attending: false,
         meal_choice: null,
         plus_one_name: null,
         notes: null,
@@ -246,12 +246,13 @@ describe('GuestItineraryDrawer', () => {
       invited_to_ceremony: true,
       invited_to_reception: true,
       plus_one_allowed: false,
+      plus_one_name: null,
       rsvp_status: 'pending',
       rsvp_received_at: null,
       household_id: null,
       invited_event_ids: ['event-1'],
       rsvp: {
-        attending: null,
+        attending: false,
         meal_choice: null,
         plus_one_name: null,
         notes: null,

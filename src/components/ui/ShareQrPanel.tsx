@@ -12,6 +12,7 @@ interface ShareQrPanelProps {
   copyLabel?: string;
   className?: string;
   allowPrivate?: boolean;
+  disabled?: boolean;
 }
 
 function escapeHtml(value: string): string {
@@ -30,6 +31,7 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
   copyLabel = 'Copy link',
   className = '',
   allowPrivate = false,
+  disabled = false,
 }) => {
   const [copied, setCopied] = useState(false);
   const [copyFallback, setCopyFallback] = useState(false);
@@ -134,25 +136,27 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
             />
           )}
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={copyUrl}>
+            <Button type="button" size="sm" variant="outline" onClick={copyUrl} disabled={disabled}>
               <Copy className="mr-1 h-3.5 w-3.5" />
               {copied ? 'Copied' : copyLabel}
             </Button>
-            <Button type="button" size="sm" variant="outline" onClick={() => window.open(qrUrl, '_blank', 'noopener,noreferrer')}>
+            <Button type="button" size="sm" variant="outline" onClick={() => window.open(qrUrl, '_blank', 'noopener,noreferrer')} disabled={disabled}>
               <ExternalLink className="mr-1 h-3.5 w-3.5" />
               Open QR
             </Button>
             <a
-              href={qrUrl}
+              href={disabled ? undefined : qrUrl}
               download
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-lg border border-border bg-white px-3 py-1.5 text-sm font-medium text-text-primary transition-colors hover:bg-surface-subtle"
+              aria-disabled={disabled}
+              onClick={disabled ? (event) => event.preventDefault() : undefined}
+              className={`inline-flex items-center justify-center rounded-lg border border-border bg-white px-3 py-1.5 text-sm font-medium text-text-primary transition-colors hover:bg-surface-subtle ${disabled ? 'pointer-events-none opacity-60' : ''}`}
             >
               Download
             </a>
             {usesPrivateQr && (
-              <Button type="button" size="sm" variant="outline" onClick={downloadPrivateCard}>
+              <Button type="button" size="sm" variant="outline" onClick={downloadPrivateCard} disabled={disabled}>
                 Save private card
               </Button>
             )}

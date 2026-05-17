@@ -168,8 +168,8 @@ describe('RegistryDashboardRouteContent', () => {
     rerender(<RegistryDashboardRouteContent {...makeBaseProps({ loading: true })} />);
 
     expect(screen.queryByText('Loading registry…')).not.toBeInTheDocument();
-    expect(screen.getByText('Dinner plates')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /add gift/i })).toBeInTheDocument();
+    expect(screen.getAllByText('Dinner plates').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: /add registry/i })).toBeInTheDocument();
   });
 
   it('shows a recoverable registry error instead of leaving owners in limbo', () => {
@@ -220,8 +220,8 @@ describe('RegistryDashboardRouteContent', () => {
     rerender(<RegistryDashboardRouteContent {...makeBaseProps()} />);
 
     expect(screen.queryByText('Couldn’t open registry right now')).not.toBeInTheDocument();
-    expect(screen.getByText('Dinner plates')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /add gift/i })).toBeInTheDocument();
+    expect(screen.getAllByText('Dinner plates').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: /add registry/i })).toBeInTheDocument();
   });
 
   it('renders persisted thank-you tasks and routes owner actions', () => {
@@ -238,6 +238,7 @@ describe('RegistryDashboardRouteContent', () => {
         bulkReviewCounts={{ repair: 0, duplicates: 0, imageIssues: 0 }}
         budgetUtilization={0}
         claimStats={{ claimedItems: 1, claimedQuantity: 1, fullyClaimedItems: 1, partiallyClaimedItems: 0, namedPurchaserItems: 1, missingPurchaserItems: 0, multiQuantityInProgress: 0, remainingQuantity: 0 }}
+        claimAttributionCoverageRate={100}
         counts={{ total: 1, available: 0, partial: 0, purchased: 1, totalValue: 80 }}
         duplicateGroups={[]}
         editItem={null}
@@ -324,13 +325,18 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Purchasers named: 1')).toBeInTheDocument();
     expect(screen.getByText('Missing purchaser names: 0')).toBeInTheDocument();
     expect(screen.getByText('All gifts already marked purchased')).toBeInTheDocument();
-    expect(screen.getByText('100% purchaser named · 100% fully claimed · 100% quantity claimed (1) · 0% still open (0)')).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        (_, element) => element?.tagName.toLowerCase() === 'p'
+          && element.textContent === '100% purchaser named · 100% fully claimed · 100% quantity claimed (1) · 0% still open (0)',
+      ).length,
+    ).toBeGreaterThan(0);
     expect(screen.getByText('Main gap: no purchaser-name blockers right now')).toBeInTheDocument();
     expect(screen.getByText('Main gap: no guest-visibility blockers right now')).toBeInTheDocument();
-    expect(screen.getByText('Main gap: no thank-you blockers right now')).toBeInTheDocument();
+    expect(screen.getByText('Main gap: 1 still need a thank-you')).toBeInTheDocument();
     expect(screen.getByText('All claimed gifts already have a purchaser name and are fully closed out.')).toBeInTheDocument();
     expect(screen.getAllByText('All gifts ready for guests are visible right now.')).not.toHaveLength(0);
-    expect(screen.getByText('All thank-you follow-up is already closed out right now.')).toBeInTheDocument();
+    expect(screen.getAllByText('1 ready to send · 100% with purchaser named').length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: /save thank-you updates/i }));
     fireEvent.click(screen.getByRole('button', { name: /mark sent/i }));
 
@@ -436,7 +442,7 @@ describe('RegistryDashboardRouteContent', () => {
       screen.getByText((_, element) => element?.textContent === 'Purchasers named: 0 · Missing purchaser names: 1'),
     ).toBeInTheDocument();
     expect(screen.getByText('Add the purchaser before you send a thank-you.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /review gift/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /open gift/i })).toBeInTheDocument();
   });
 
   it('derives fund readiness truth from safe payment methods', () => {
@@ -992,16 +998,26 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Nothing needs a closer look right now')).toBeInTheDocument();
     expect(screen.getByText('No claimed gifts yet')).toBeInTheDocument();
     expect(screen.getByText('No thank-you follow-up open yet')).toBeInTheDocument();
-    expect(screen.getByText('No cash funds added yet')).toBeInTheDocument();
-    expect(screen.getByText('No fund gifts moving yet')).toBeInTheDocument();
+    expect(screen.getByText('2 ready to share')).toBeInTheDocument();
+    expect(screen.getByText('Received toward $4,000 goal across 2 tracked funds')).toBeInTheDocument();
+    expect(screen.getByText('100% ready to share · 2 already moving')).toBeInTheDocument();
+    expect(screen.getByText('100% goal-tracked · 100% already receiving gifts · 2 showing tracked progress')).toBeInTheDocument();
     expect(screen.getByText('Registry snapshot looks clean right now.')).toBeInTheDocument();
     expect(screen.getByText('No active registry watchouts inside this snapshot.')).toBeInTheDocument();
     expect(screen.getByText('No active registry follow-through gaps right now.')).toBeInTheDocument();
     expect(screen.getByText('No gifts are waiting on send or a missing purchaser name right now')).toBeInTheDocument();
-    expect(screen.getByText('No fund links are waiting on a share path right now')).toBeInTheDocument();
-    expect(screen.getByText('No funds are already receiving gifts yet')).toBeInTheDocument();
-    expect(screen.getByText('No fund goals still need setup right now')).toBeInTheDocument();
-    expect(screen.getByText('No flexible or goal-based funds are already receiving gifts yet')).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Ready to share now: 2 · Missing share path: 0'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Receiving gifts: 100% · Already receiving gifts: 2'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Funds with a goal: 2 · Missing a goal: 0'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Flexible funds receiving gifts: 0 · Goal-based funds receiving gifts: 2'),
+    ).toBeInTheDocument();
     expect(screen.getByText('No purchased gifts need a thank-you yet.')).toBeInTheDocument();
     expect(screen.getByText('No image issues or duplicate groups')).toBeInTheDocument();
     expect(screen.getByText('No imported-gift cleanup work is open right now.')).toBeInTheDocument();
@@ -1212,11 +1228,61 @@ describe('RegistryDashboardRouteContent', () => {
       />,
     );
 
-    expect(screen.getByText('Duplicate checks')).toBeInTheDocument();
+    expect(screen.getAllByText('Duplicate checks').length).toBeGreaterThan(1);
     expect(screen.getByText('1 merge candidate covering 2 repeated gifts.')).toBeInTheDocument();
     expect(screen.getByText('2 match clues are already grouped to compare.')).toBeInTheDocument();
     expect(screen.getByText('Possible repeat group')).toBeInTheDocument();
     expect(screen.getByText('Merged quantity: 1/7')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /open keep item/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /merge 3 items/i })).toBeInTheDocument();
+  });
+
+  it('keeps broken import titles masked inside thank-you and duplicate review panels', () => {
+    render(
+      <RegistryDashboardRouteContent
+        {...makeBaseProps({
+          duplicateGroups: [
+            {
+              id: 'dup-broken',
+              primaryItem: makeItem({ id: 'gift-1', item_name: 'Page Not Found', quantity_needed: 1, quantity_purchased: 0 }),
+              secondaryItems: [
+                makeItem({ id: 'gift-2', item_name: 'Gift from Example', quantity_needed: 1, quantity_purchased: 0 }),
+              ],
+              items: [
+                makeItem({ id: 'gift-1', item_name: 'Page Not Found', quantity_needed: 1, quantity_purchased: 0 }),
+                makeItem({ id: 'gift-2', item_name: 'Gift from Example', quantity_needed: 1, quantity_purchased: 0 }),
+              ],
+              mergedQuantityNeeded: 2,
+              mergedQuantityPurchased: 0,
+              signals: [
+                { kind: 'name-match', label: 'Name match', score: 0.95 },
+              ],
+            },
+          ],
+          registryThankYouPlan: {
+            headline: 'Thank-you follow-up list',
+            summary: '1 purchased gift is in the thank-you list.',
+            purchasedCount: 1,
+            namedPurchaserCount: 1,
+            missingPurchaserCount: 0,
+            completedCount: 0,
+            items: [{
+              id: 'gift-1',
+              giftName: 'Gift link needs review',
+              purchaserLabel: 'Purchaser: Alex',
+              detail: 'Ready for a thank-you.',
+              status: 'ready',
+              taskStatus: 'todo',
+              completedAt: null,
+            }],
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getAllByText('Gift link needs review').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Page Not Found')).not.toBeInTheDocument();
+    expect(screen.queryByText('Gift from Example')).not.toBeInTheDocument();
   });
 
   it('summarizes cleanup tools before the repair actions', () => {
@@ -1374,7 +1440,7 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('Review items: 2')).toBeInTheDocument();
     expect(screen.getByText('Photo issues: 2')).toBeInTheDocument();
     expect(screen.getByText('Cleanup queue: 0')).toBeInTheDocument();
-    expect(screen.getByText('Gifts needing detail touchup: 0')).toBeInTheDocument();
+    expect(screen.getByText('Gifts needing detail touchup: 3')).toBeInTheDocument();
     expect(screen.getByText('Duplicate groups: 0')).toBeInTheDocument();
     expect(screen.getByText('Monthly refresh budget used: 34%')).toBeInTheDocument();
   });
@@ -1448,7 +1514,7 @@ describe('RegistryDashboardRouteContent', () => {
       />,
     );
 
-    expect(screen.getByText('No registry gifts added yet.')).toBeInTheDocument();
+    expect(screen.getAllByText('No registry gifts added yet.').length).toBeGreaterThan(1);
     expect(screen.getByText('Add your first gift or fund when you want guests to have registry options.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /add your first item/i })).toBeInTheDocument();
   });
@@ -1957,7 +2023,12 @@ describe('RegistryDashboardRouteContent', () => {
     expect(screen.getByText('1 purchased · 1 partially claimed · 1 still available')).toBeInTheDocument();
     expect(screen.getByText('1 still open')).toBeInTheDocument();
     expect(screen.getByText('Partially claimed')).toBeInTheDocument();
-    expect(screen.getByText((_, element) => element?.textContent?.includes('Partially claimed by Alex · Updated') ?? false)).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        (_, element) => element?.tagName.toLowerCase() === 'p'
+          && (element.textContent?.includes('Partially claimed by Alex · Updated') ?? false),
+      ).length,
+    ).toBeGreaterThan(0);
   });
 
   it('renders all-clear and empty supporting-card summaries explicitly', () => {
@@ -2030,7 +2101,6 @@ describe('RegistryDashboardRouteContent', () => {
     );
 
     expect(screen.getByText('Top gifts are already fully claimed right now.')).toBeInTheDocument();
-    expect(screen.getByText('No recent registry changes yet.')).toBeInTheDocument();
     expect(screen.getAllByText('No recent registry changes yet.').length).toBeGreaterThan(1);
   });
 

@@ -31,7 +31,7 @@ import { useVaultDashboardData } from './useVaultDashboardData';
 describe('useVaultDashboardData', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    window.history.replaceState({}, '', 'https://dayof.love/dashboard/vault');
+    window.history.replaceState({}, '', '/dashboard/vault');
     localStorage.clear();
     sessionStorage.clear();
   });
@@ -122,5 +122,42 @@ describe('useVaultDashboardData', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.siteSlug).toBeNull();
     expect(result.current.weddingSiteId).toBeNull();
+  });
+
+  it('does not reload vault data just because the toast callback identity changes', async () => {
+    loadVaultDashboardDataMock.mockResolvedValue({
+      site: {
+        id: 'site-1',
+        site_slug: 'maya-leo',
+        wedding_date: '2026-02-23',
+        couple_name_1: 'Maya',
+        couple_name_2: 'Leo',
+        vault_google_drive_connected: false,
+      },
+      configs: [],
+      entries: [],
+    });
+
+    const { result, rerender } = renderHook(
+      ({ toast }) =>
+        useVaultDashboardData({
+          isDemoMode: false,
+          toast,
+          user: { id: 'user-1', email: 'test@example.com' },
+        }),
+      {
+        initialProps: {
+          toast: vi.fn(),
+        },
+      },
+    );
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(loadVaultDashboardDataMock).toHaveBeenCalledTimes(1);
+
+    rerender({ toast: vi.fn() });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(loadVaultDashboardDataMock).toHaveBeenCalledTimes(1);
   });
 });

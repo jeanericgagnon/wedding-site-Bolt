@@ -35,7 +35,12 @@ describe('overview query bounds', () => {
     expect(source).toContain(".eq('user_id', userId)\n      .limit(MAX_OVERVIEW_COLLABORATOR_LINK_ROWS)\n      .maybeSingle();");
     expect(source).not.toContain(".select('id, rsvp_status, rsvp_received_at, first_name, last_name, name, email, phone')");
     expect(dataHook).toContain('const overviewSnapshot = await loadOverviewDashboardSnapshot(userId);');
+    expect(dataHook).toContain('const guestFacingSiteRow = pickGuestFacingReadinessRow(site as unknown as Record<string, unknown> | null);');
+    expect(dataHook).toContain('const siteSlug = resolvePublicSiteSlugFromRow(guestFacingSiteRow);');
+    expect(dataHook).toContain('const guestFacingReady = isGuestFacingSiteRowReady(guestFacingSiteRow);');
     expect(dataHook).toContain('const { suggestions, voteSummaries } = await loadOverviewInteractiveData(slug);');
+    expect(dataHook).toContain("window.addEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, handleActiveSiteChanged);");
+    expect(dataHook).toContain("window.removeEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, handleActiveSiteChanged);");
     expect(page).toContain('useOverviewDashboardData({');
     expect(page).not.toContain("supabase.from('interactive_suggestions')");
     expect(page).not.toContain("supabase.from('interactive_votes')");

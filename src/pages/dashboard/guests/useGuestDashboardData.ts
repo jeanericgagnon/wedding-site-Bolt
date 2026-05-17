@@ -70,6 +70,7 @@ export function useGuestDashboardData({
       setWeddingSiteId(null);
       setWeddingSiteInfo(null);
       setGuests([]);
+      setLoading(false);
       return;
     }
 
@@ -92,6 +93,7 @@ export function useGuestDashboardData({
       setRsvpMealOptions(demoRsvpConfig.mealOptions);
       setRsvpAccessSelection(demoRsvpConfig.accessSelection);
       rsvpConfigLoadedRef.current = true;
+      setLoading(false);
       return;
     }
 
@@ -114,11 +116,13 @@ export function useGuestDashboardData({
         setWeddingSiteId(null);
         setWeddingSiteInfo(null);
         setGuests([]);
+        setLoading(false);
       }
     } catch {
       setWeddingSiteId(null);
       setWeddingSiteInfo(null);
       setGuests([]);
+      setLoading(false);
       toast("Couldn’t load guest site settings right now. Please try again.", 'error');
     }
   }, [activeSiteSyncVersion, isDemoMode, rsvpConfigLoadedRef, setAutoRemindersEnabled, setReminderCadenceDays, toast, userId]);

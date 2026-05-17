@@ -122,7 +122,16 @@
     "choose_file": "Scegli almeno un file.",
     "not_configured": "I caricamenti non sono ancora pronti. Riprova più tardi.",
     "upload_success": "{{count}} file caricati. Grazie.",
-    "upload_partial": "{{uploaded}} file caricati. {{failed}} richiedono un altro tentativo."
+    "upload_partial": "{{uploaded}} file caricati. {{failed}} richiedono un altro tentativo.",
+    "error_invalid_token": "Questo link di caricamento non è valido. Chiedi alla coppia un link nuovo.",
+    "error_album_inactive": "Questo album è attualmente in pausa.",
+    "error_album_not_open": "Questo album non è ancora aperto ai caricamenti.",
+    "error_album_closed": "Questo album è chiuso ai caricamenti.",
+    "error_drive_reconnect": "I caricamenti sono disponibili qui. Aggiorna la pagina e riprova.",
+    "error_photo_sharing_disabled": "La condivisione foto è disattivata per questo evento.",
+    "error_size_limit": "Il tuo caricamento supera i limiti consentiti.",
+    "error_unsupported_type": "Carica solo foto o video.",
+    "error_default": "Non è stato possibile caricare questo file. Riprova."
   },
   "event_recap": {
     "eyebrow": "Riepilogo matrimonio",

@@ -13,7 +13,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { BillingModal } from '../billing/BillingModal';
 import { supabase } from '../../lib/supabase';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
-import { isGuestFacingSiteRowReady } from '../../lib/publicSiteReadiness';
+import { isGuestFacingSiteRowReady, pickGuestFacingReadinessRow } from '../../lib/publicSiteReadiness';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { resolveActiveSiteForUser, resolveActiveSiteRoleForUser } from '../../lib/activeSite';
 import { getStoredActiveSiteId, setStoredActiveSiteId } from '../../lib/activeSiteStorage';
@@ -52,6 +52,7 @@ function togglePin(ids: DashboardToolId[], id: DashboardToolId) {
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, currentPage }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [siteContextReady, setSiteContextReady] = useState(false);
   const [siteSlug, setSiteSlug] = useState<string | null>(null);
   const [siteId, setSiteId] = useState<string | null>(null);
   const [siteJsonState, setSiteJsonState] = useState<Record<string, unknown> | null>(null);
@@ -71,6 +72,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     if (!user) return;
 
     if (isDemoMode) {
+      setSiteContextReady(true);
       setSiteSlug('alex-jordan-demo');
       setSiteId(null);
       setSiteJsonState(null);
@@ -83,96 +85,112 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     }
 
     const loadSiteContext = async () => {
-      const persistedSiteId = getStoredActiveSiteId();
-      const resolvedActiveSite = await resolveActiveSiteForUser(user.id);
-      const resolvedRole = await resolveActiveSiteRoleForUser(user.id);
-      setActiveSiteRole(resolvedRole);
-      setActiveSitePermissions(resolvedActiveSite?.permissions ?? null);
-      const preferredSiteId = persistedSiteId || resolvedActiveSite?.id || null;
+      setSiteContextReady(false);
 
-      const { data: ownedSites } = await supabase
-        .from('wedding_sites')
-        .select('id, site_slug, couple_name_1, couple_name_2')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true });
+      try {
+        const persistedSiteId = getStoredActiveSiteId();
+        const resolvedActiveSite = await resolveActiveSiteForUser(user.id);
+        const resolvedRole = await resolveActiveSiteRoleForUser(user.id);
+        setActiveSiteRole(resolvedRole);
+        setActiveSitePermissions(resolvedActiveSite?.permissions ?? null);
+        const preferredSiteId = persistedSiteId || resolvedActiveSite?.id || null;
 
-      const ownerMemberships: SiteMembershipOption[] = (ownedSites || []).map((site) => ({
-        id: site.id,
-        label: buildSiteMembershipLabel(site.couple_name_1, site.couple_name_2, site.site_slug),
-        slug: site.site_slug,
-        role: 'owner',
-      }));
+        const { data: ownedSites } = await supabase
+          .from('wedding_sites')
+          .select('id, site_slug, couple_name_1, couple_name_2')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: true });
 
-      const { data: collaboratorMembershipsRaw } = await supabase
-        .from('wedding_site_collaborators')
-        .select('wedding_site_id, role, permissions, wedding_sites!inner(id, site_slug, couple_name_1, couple_name_2)')
-        .eq('user_id', user.id);
+        const ownerMemberships: SiteMembershipOption[] = (ownedSites || []).map((site) => ({
+          id: site.id,
+          label: buildSiteMembershipLabel(site.couple_name_1, site.couple_name_2, site.site_slug),
+          slug: site.site_slug,
+          role: 'owner',
+        }));
 
-      const collaboratorMemberships: SiteMembershipOption[] = ((collaboratorMembershipsRaw as Array<{
-        wedding_site_id: string;
-        role: string;
-        permissions?: unknown;
-        wedding_sites: { id: string; site_slug: string | null; couple_name_1: string | null; couple_name_2: string | null };
-      }> | null) || []).map((row) => ({
-        id: row.wedding_site_id,
-        label: buildSiteMembershipLabel(
-          row.wedding_sites?.couple_name_1,
-          row.wedding_sites?.couple_name_2,
-          row.wedding_sites?.site_slug,
-        ),
-        slug: row.wedding_sites?.site_slug || null,
-        role: row.role,
-      }));
+        const { data: collaboratorMembershipsRaw } = await supabase
+          .from('wedding_site_collaborators')
+          .select('wedding_site_id, role, permissions, wedding_sites!inner(id, site_slug, couple_name_1, couple_name_2)')
+          .eq('user_id', user.id);
 
-      const mergedMemberships = [...ownerMemberships, ...collaboratorMemberships.filter((candidate) => !ownerMemberships.some((ownerSite) => ownerSite.id === candidate.id))];
-      setSiteMemberships(mergedMemberships);
+        const collaboratorMemberships: SiteMembershipOption[] = ((collaboratorMembershipsRaw as Array<{
+          wedding_site_id: string;
+          role: string;
+          permissions?: unknown;
+          wedding_sites: { id: string; site_slug: string | null; couple_name_1: string | null; couple_name_2: string | null };
+        }> | null) || []).map((row) => ({
+          id: row.wedding_site_id,
+          label: buildSiteMembershipLabel(
+            row.wedding_sites?.couple_name_1,
+            row.wedding_sites?.couple_name_2,
+            row.wedding_sites?.site_slug,
+          ),
+          slug: row.wedding_sites?.site_slug || null,
+          role: row.role,
+        }));
 
-      const targetSiteId = preferredSiteId && mergedMemberships.some((site) => site.id === preferredSiteId)
-        ? preferredSiteId
-        : mergedMemberships[0]?.id || null;
+        const mergedMemberships = [...ownerMemberships, ...collaboratorMemberships.filter((candidate) => !ownerMemberships.some((ownerSite) => ownerSite.id === candidate.id))];
+        setSiteMemberships(mergedMemberships);
 
-      if (targetSiteId) {
-        setStoredActiveSiteId(targetSiteId);
-      }
+        const targetSiteId = preferredSiteId && mergedMemberships.some((site) => site.id === preferredSiteId)
+          ? preferredSiteId
+          : mergedMemberships[0]?.id || null;
 
-      if (!targetSiteId) {
+        if (targetSiteId) {
+          setStoredActiveSiteId(targetSiteId);
+        }
+
+        if (!targetSiteId) {
+          setSiteSlug(null);
+          setSiteId(null);
+          setSiteJsonState(null);
+          setSiteIsPublished(false);
+          setSiteGuestFacingReady(false);
+          setSitePrivacyMode('public');
+          setSiteContextReady(true);
+          return;
+        }
+
+        const { data } = await supabase
+          .from('wedding_sites')
+          .select('id, site_slug, site_url, site_json, published_json, wedding_data, is_published, privacy_mode')
+          .eq('id', targetSiteId)
+          .maybeSingle();
+
+        const row = (data as Record<string, unknown> | null) ?? null;
+        const guestFacingSiteRow = pickGuestFacingReadinessRow(row);
+        const resolved = resolvePublicSiteSlugFromRow(guestFacingSiteRow);
+        setSiteSlug(resolved ?? null);
+        setSiteId(row?.id && typeof row.id === 'string' ? row.id : null);
+        setSiteIsPublished(row?.is_published === true);
+        setSiteGuestFacingReady(isGuestFacingSiteRowReady(guestFacingSiteRow));
+        setSitePrivacyMode(
+          row?.privacy_mode === 'password_protected' || row?.privacy_mode === 'invite_only' || row?.privacy_mode === 'hidden'
+            ? row.privacy_mode
+            : 'public',
+        );
+
+        const siteJson = row?.site_json;
+        if (siteJson && typeof siteJson === 'object' && !Array.isArray(siteJson)) {
+          const parsedSiteJson = siteJson as Record<string, unknown>;
+          setSiteJsonState(parsedSiteJson);
+          const dashboard = parsedSiteJson.dashboard;
+          if (dashboard && typeof dashboard === 'object' && !Array.isArray(dashboard)) {
+            // legacy sidebar feature state ignored after nav rollup
+          }
+        } else {
+          setSiteJsonState(null);
+        }
+        setSiteContextReady(true);
+      } catch {
+        setSiteMemberships([]);
         setSiteSlug(null);
         setSiteId(null);
         setSiteJsonState(null);
         setSiteIsPublished(false);
         setSiteGuestFacingReady(false);
         setSitePrivacyMode('public');
-        return;
-      }
-
-      const { data } = await supabase
-        .from('wedding_sites')
-        .select('id, site_slug, site_url, site_json, published_json, wedding_data, is_published, privacy_mode')
-        .eq('id', targetSiteId)
-        .maybeSingle();
-
-      const row = (data as Record<string, unknown> | null) ?? null;
-      const resolved = resolvePublicSiteSlugFromRow(row);
-      setSiteSlug(resolved ?? null);
-      setSiteId(row?.id && typeof row.id === 'string' ? row.id : null);
-      setSiteIsPublished(row?.is_published === true);
-      setSiteGuestFacingReady(isGuestFacingSiteRowReady(row));
-      setSitePrivacyMode(
-        row?.privacy_mode === 'password_protected' || row?.privacy_mode === 'invite_only' || row?.privacy_mode === 'hidden'
-          ? row.privacy_mode
-          : 'public',
-      );
-
-      const siteJson = row?.site_json;
-      if (siteJson && typeof siteJson === 'object' && !Array.isArray(siteJson)) {
-        const parsedSiteJson = siteJson as Record<string, unknown>;
-        setSiteJsonState(parsedSiteJson);
-        const dashboard = parsedSiteJson.dashboard;
-        if (dashboard && typeof dashboard === 'object' && !Array.isArray(dashboard)) {
-          // legacy sidebar feature state ignored after nav rollup
-        }
-      } else {
-        setSiteJsonState(null);
+        setSiteContextReady(true);
       }
     };
 
@@ -251,7 +269,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   };
 
   useEffect(() => {
-    if (!activeSiteRole) return;
+    if (!siteContextReady || !activeSiteRole) return;
     const knownHiddenTool = getAllDashboardTools().some((tool) => tool.id === currentPage);
     const knownLegacyTool = ['itinerary', 'vault', 'coordinator', 'audit-logs', 'seating-lookup'].includes(currentPage);
     const canAccessCurrentPage = visibleNavSections.some((section) => section.items.some((item) => item.id === currentPage))
@@ -259,7 +277,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     if (!canAccessCurrentPage) {
       navigate('/dashboard/overview', { replace: true });
     }
-  }, [activeSiteRole, activeSitePermissions, currentPage, navigate, visibleNavSections]);
+  }, [activeSitePermissions, activeSiteRole, currentPage, navigate, siteContextReady, visibleNavSections]);
 
   useEffect(() => {
     setSidebarOpen(false);

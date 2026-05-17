@@ -1,5 +1,5 @@
 import { getSafePublicWebUrl } from '../sections/publicLinks';
-import type { RegistryItem } from '../pages/dashboard/registry/registryTypes';
+import { getOwnerRegistryDisplayTitle, type RegistryItem } from '../pages/dashboard/registry/registryTypes';
 
 export type RegistryLaunchReadinessStatus = 'ready' | 'needs-review' | 'empty';
 export type RegistryLaunchReadinessTone = 'ready' | 'review' | 'planned';
@@ -219,7 +219,7 @@ export function normalizeRegistryThankYouLedger(value: unknown): RegistryThankYo
         : 'needs-purchaser';
     next[itemId] = {
       itemId,
-      giftName: typeof entry.giftName === 'string' && entry.giftName.trim() ? entry.giftName.trim() : 'Registry gift',
+      giftName: getOwnerRegistryDisplayTitle(typeof entry.giftName === 'string' ? entry.giftName : null),
       purchaserName,
       quantityPurchased,
       quantityNeeded,
@@ -242,7 +242,7 @@ export function syncRegistryThankYouLedger(items: RegistryItem[], ledger: Regist
     const done = previous?.status === 'done';
     next[item.id] = {
       itemId: item.id,
-      giftName: item.item_name || previous?.giftName || 'Registry gift',
+      giftName: getOwnerRegistryDisplayTitle(item.item_name || previous?.giftName || 'Registry gift'),
       purchaserName: purchaser,
       quantityPurchased: purchased,
       quantityNeeded: needed,

@@ -12,6 +12,11 @@ async function expectNoMeaningfulHorizontalOverflow(page: Page) {
   expect(overflow).toBeLessThanOrEqual(8);
 }
 
+async function expectGuestsDashboard(page: Page) {
+  await expect(page).toHaveURL(/\/dashboard\/guests(?:\?|$)/);
+  await expect(page.getByRole('heading', { name: /^People, replies, and details\.$/i })).toBeVisible();
+}
+
 test('live mobile guest drawer preview opens guest-facing routes without leaking raw tokens', async ({ page, context }) => {
   test.setTimeout(180_000);
 
@@ -20,7 +25,7 @@ test('live mobile guest drawer preview opens guest-facing routes without leaking
   const proofContext = await resolveLiveGuestHubProofContext(page);
 
   await page.goto('/dashboard/guests?bypassPayment=1&guestPreviewQa=1', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { name: /know who is coming|guests & rsvp/i })).toBeVisible();
+  await expectGuestsDashboard(page);
   await expect(page.locator('body')).not.toContainText(proofContext.guestInviteToken);
 
   const searchInput = page.getByPlaceholder('Search guests...');

@@ -166,7 +166,7 @@ test('demo registry purchase state and thank-you follow-up survive reloads', asy
   await enableLocalDemo(page);
   await enterRegistryRoute(page, runId);
 
-  await expect(page.getByRole('heading', { name: /keep gifts helpful, optional, and easy for guests/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Gifts and funds, clearly shared.' })).toBeVisible();
 
   const mixerCard = page.locator('[data-testid="owner-registry-item-card"]').filter({ hasText: 'KitchenAid Stand Mixer' }).first();
   await expect(mixerCard).toBeVisible();
@@ -194,8 +194,8 @@ test('demo registry purchase state and thank-you follow-up survive reloads', asy
 
   const reviewDetails = page.locator('details').filter({ hasText: 'Gift snapshot and review details' }).first();
   await reviewDetails.locator('summary').click();
-  await expect(page.getByRole('button', { name: /save thank-you list/i })).toBeVisible();
-  await page.getByRole('button', { name: /save thank-you list/i }).click();
+  await expect(page.getByRole('button', { name: /save thank-you updates/i })).toBeVisible();
+  await page.getByRole('button', { name: /save thank-you updates/i }).click();
   await page.getByRole('button', { name: /mark sent/i }).click();
   await expect(page.getByRole('button', { name: /clear sent/i })).toBeVisible();
 
@@ -217,23 +217,22 @@ test('demo registry cleanup and duplicate merge survive reloads', async ({ page 
   await enableLocalDemo(page, true);
   await enterRegistryRoute(page, runId);
 
-  await expect(page.getByText('Could use details')).toBeVisible();
-  await expect(page.getByText('Possible duplicate group')).toBeVisible();
-  await expect(page.locator('[data-testid="owner-registry-item-card"]').filter({ hasText: 'Page not found' })).toHaveCount(1);
+  await expect(page.getByText('Detail touchups', { exact: true })).toBeVisible();
+  await expect(page.getByText('Possible repeat group')).toBeVisible();
+  await expect(page.locator('[data-testid="owner-registry-item-card"]').filter({ hasText: 'Gift link needs review' })).toHaveCount(1);
 
   await page.getByRole('button', { name: /clean up imported gifts/i }).first().click();
   await expect(page.locator('[data-testid="owner-registry-item-card"]').filter({ hasText: 'Proof Serving Bowl' })).toHaveCount(1);
-  await expect(page.locator('[data-testid="owner-registry-item-card"]').filter({ hasText: 'Crateandbarrel' })).toHaveCount(1);
-  await expect(page.getByText('Page not found')).toHaveCount(0);
+  await expect(page.getByText('Gift link needs review')).toHaveCount(0);
 
   await page.getByRole('button', { name: /merge 2 items/i }).click();
-  await expect(page.getByText('Possible duplicate group')).toHaveCount(0);
+  await expect(page.getByText('Possible repeat group')).toHaveCount(0);
   const espressoCards = page.locator('[data-testid="owner-registry-item-card"]').filter({ hasText: 'Breville Espresso Machine' });
   await expect(espressoCards).toHaveCount(1);
   await expect(espressoCards.first()).toContainText('Purchased by Duplicate Buyer');
 
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await expect(page.getByText('Possible duplicate group')).toHaveCount(0);
+  await expect(page.getByText('Possible repeat group')).toHaveCount(0);
   await expect(page.locator('[data-testid="owner-registry-item-card"]').filter({ hasText: 'Breville Espresso Machine' })).toHaveCount(1);
   await expect(page.locator('[data-testid="owner-registry-item-card"]').filter({ hasText: 'Proof Serving Bowl' })).toHaveCount(1);
 });

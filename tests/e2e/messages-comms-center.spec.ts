@@ -85,7 +85,7 @@ test('messages comms center composes and saves each operational template path in
   await enableLocalDemo(page);
   await page.goto('/dashboard/messages?bypassPayment=1&commsCenterProof=1', { waitUntil: 'domcontentloaded' });
 
-  await expect(page.getByRole('heading', { name: /send guest updates without making them feel automated/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /updates guests can actually use/i })).toBeVisible();
 
   const campaignNameInput = page.getByPlaceholder('Spring RSVP reminder');
   const bodyInput = page.getByPlaceholder('Write your message here');
@@ -98,7 +98,11 @@ test('messages comms center composes and saves each operational template path in
     await expect(bodyInput).not.toHaveValue('');
 
     const uniqueName = `${label} proof ${index + 1}`;
+    const subjectFieldVisible = await subjectInput.isVisible();
     await campaignNameInput.fill(uniqueName);
+    if (subjectFieldVisible) {
+      await subjectInput.fill(`Local comms proof ${label} ${index + 1}`);
+    }
     await page.getByRole('button', { name: 'Save Draft' }).click();
 
     await expect(page.getByText('Saved as draft').first()).toBeVisible();
@@ -156,4 +160,27 @@ test('messages comms center supports local scheduled saves and keeps review word
       subject,
       status: 'scheduled',
     });
+});
+
+test('messages dashboard clears the refresh blocker and keeps audience counts usable after reload', async ({ page }) => {
+  await enableLocalDemo(page);
+  await page.goto('/dashboard/messages?bypassPayment=1&commsCenterProof=continuity', { waitUntil: 'domcontentloaded' });
+
+  await expect(page.getByRole('heading', { name: /updates guests can actually use/i })).toBeVisible();
+  await expect(page.getByText('Please refresh to continue.')).toHaveCount(0);
+
+  const reachBadge = page.getByText(/Reaches \d+ guests?/).first();
+  await expect(reachBadge).toBeVisible();
+  expect((await reachBadge.textContent()) ?? '').not.toContain('Reaches 0 guests');
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+
+  await expect(page.getByRole('heading', { name: /updates guests can actually use/i })).toBeVisible();
+  await expect(page.getByText('Please refresh to continue.')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Needs review' }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Needs contact details' }).first()).toBeVisible();
+
+  const reloadedReachBadge = page.getByText(/Reaches \d+ guests?/).first();
+  await expect(reloadedReachBadge).toBeVisible();
+  expect((await reloadedReachBadge.textContent()) ?? '').not.toContain('Reaches 0 guests');
 });

@@ -330,7 +330,9 @@ export async function loadGuestDashboardSnapshot(weddingSiteId: string): Promise
 
   if (guestsError) throw guestsError;
 
-  const guestIds = (guestsData ?? []).map((g) => g.id);
+  const guestRows = ((guestsData ?? []) as unknown as Array<Record<string, unknown>>)
+    .filter((guest): guest is Record<string, unknown> & { id: string } => typeof guest?.id === 'string');
+  const guestIds = guestRows.map((guest) => guest.id);
   const windowStartIso = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString();
   const [rsvpsData, { data: conflictsData, error: conflictsError }, { data: conflictHistoryData, error: conflictHistoryError }] = await Promise.all([
     fetchGuestRsvps(guestIds),
@@ -353,7 +355,7 @@ export async function loadGuestDashboardSnapshot(weddingSiteId: string): Promise
   if (conflictsError) throw conflictsError;
   if (conflictHistoryError) throw conflictHistoryError;
 
-  const guests = ((guestsData ?? []).map((guest) => ({
+  const guests = (guestRows.map((guest) => ({
     ...guest,
     preferred_language: null,
     rsvp: (rsvpsData as Array<{ guest_id: string }>).find((r) => r.guest_id === guest.id),

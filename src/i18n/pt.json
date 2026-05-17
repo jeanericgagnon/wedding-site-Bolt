@@ -122,7 +122,16 @@
     "choose_file": "Escolha pelo menos um arquivo.",
     "not_configured": "Os envios ainda não estão prontos. Tente novamente mais tarde.",
     "upload_success": "{{count}} arquivo(s) enviado(s). Obrigado.",
-    "upload_partial": "{{uploaded}} arquivo(s) enviado(s). {{failed}} precisam de outra tentativa."
+    "upload_partial": "{{uploaded}} arquivo(s) enviado(s). {{failed}} precisam de outra tentativa.",
+    "error_invalid_token": "Este link de envio não é válido. Peça ao casal um link novo.",
+    "error_album_inactive": "Este álbum está em pausa no momento.",
+    "error_album_not_open": "Este álbum ainda não está aberto para envios.",
+    "error_album_closed": "Este álbum está fechado para envios.",
+    "error_drive_reconnect": "Os envios estão disponíveis aqui. Atualize a página e tente novamente.",
+    "error_photo_sharing_disabled": "O compartilhamento de fotos está desativado para este evento.",
+    "error_size_limit": "Seu envio excede os limites permitidos.",
+    "error_unsupported_type": "Envie apenas fotos ou vídeos.",
+    "error_default": "Não foi possível enviar esse arquivo. Tente novamente."
   },
   "event_recap": {
     "eyebrow": "Resumo do casamento",

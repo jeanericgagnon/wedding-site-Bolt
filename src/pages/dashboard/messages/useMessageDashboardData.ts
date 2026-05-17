@@ -1,4 +1,5 @@
-import { useCallback, useEffect, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { ACTIVE_SITE_STORAGE_CHANGED_EVENT } from '../../../lib/activeSiteStorage';
 import { demoEvents, demoGuests, demoWeddingSite } from '../../../lib/demoData';
 import type { PlannerAccessRole, PlannerPermissionKey } from '../../../lib/plannerAccess';
 import { formatMessageEventOptionLabel } from '../messageEventDate';
@@ -62,6 +63,8 @@ export function useMessageDashboardData({
   setActiveSiteRole,
   setMessagesPermissions,
 }: UseMessageDashboardDataArgs) {
+  const [activeSiteSyncVersion, setActiveSiteSyncVersion] = useState(0);
+
   const fetchWeddingSite = useCallback(async () => {
     if (isDemoMode) {
       setWeddingSite({
@@ -104,6 +107,7 @@ export function useMessageDashboardData({
         setSmsExpiringSoon(0);
         setItineraryAudienceOptions([]);
         setEventGuestIds({});
+        setLoading(false);
       }
     } catch {
       toast('Couldn’t load your messages right now. Please try again.', 'error');
@@ -118,6 +122,7 @@ export function useMessageDashboardData({
       setLoading(false);
     }
   }, [
+    activeSiteSyncVersion,
     isDemoMode,
     setActiveSiteRole,
     setDeliveries,
@@ -134,6 +139,19 @@ export function useMessageDashboardData({
     toast,
     userId,
   ]);
+
+  useEffect(() => {
+    const handleActiveSiteChanged = () => {
+      setActiveSiteSyncVersion((version) => version + 1);
+    };
+
+    window.addEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, handleActiveSiteChanged);
+    window.addEventListener('storage', handleActiveSiteChanged);
+    return () => {
+      window.removeEventListener(ACTIVE_SITE_STORAGE_CHANGED_EVENT, handleActiveSiteChanged);
+      window.removeEventListener('storage', handleActiveSiteChanged);
+    };
+  }, []);
 
   const fetchMessages = useCallback(async () => {
     if (!weddingSite) return;

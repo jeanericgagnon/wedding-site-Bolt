@@ -33,6 +33,7 @@ type OverviewStatsLike = {
   guestFacingReady: boolean;
   pendingGuests: number;
   photoAlbumCount: number;
+  privacyMode?: 'public' | 'password_protected' | 'invite_only' | 'hidden';
   recentRsvps: RecentRsvp[];
   analyticsEventSummary: AnalyticsEventSummary;
   registryItemCount: number;

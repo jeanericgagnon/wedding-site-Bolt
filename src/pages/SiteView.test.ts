@@ -54,6 +54,10 @@ vi.mock('../lib/themePresets', () => ({
   applyThemeTokens: vi.fn(),
 }));
 
+vi.mock('../config/env', () => ({
+  DEMO_MODE: true,
+}));
+
 vi.mock('../lib/mediaUrl', () => ({
   rewriteSignedMediaUrlsToPublicDeep: vi.fn((value) => value),
 }));
@@ -225,5 +229,20 @@ describe('SiteView invite handoff continuity', () => {
     expect(window.location.pathname).toBe('/site/maya-and-leo');
     expect(window.location.search).toBe('?guestLang=fr');
     expect(window.location.hash).toBe('#travel');
+  });
+});
+
+describe('SiteView demo continuity', () => {
+  it('falls back to the alex-jordan demo surface when public access returns coming soon in demo mode', async () => {
+    mockRouteParams.slug = 'alex-jordan-demo';
+
+    fetchPublicSiteAccessMock.mockResolvedValue({
+      status: 'coming_soon',
+      site: null,
+    });
+
+    render(React.createElement(SiteView));
+
+    await screen.findByText('site view ready');
   });
 });
