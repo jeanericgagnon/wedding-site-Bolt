@@ -7,10 +7,16 @@ dist
 dist-ssr
 .tmp
 .tmp/**
+tmp
+tmp/**
 backups
 backups/**
 supabase/.temp
 supabase/.temp/**
+brand-photo-collections
+brand-photo-collections/**
+test-results
+test-results/**
 assets/photos/raw-*/
 assets/photos/raw-engagement-*/
 *.zip
