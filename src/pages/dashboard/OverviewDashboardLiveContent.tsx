@@ -81,6 +81,8 @@ export function OverviewDashboardLiveContent({
   heroVenueLine,
   navigate,
   recentSiteActivity,
+  setShowMoreDetail,
+  showMoreDetail,
   stats,
 }: OverviewLiveContentProps) {
   const {
@@ -88,6 +90,8 @@ export function OverviewDashboardLiveContent({
     publishBlockers,
     responseRate,
     siteVisibility,
+    websiteInviteAnalytics,
+    websiteInviteAnalyticsFunnel,
   } = dashboardModel;
 
   const [homePins, setHomePins] = React.useState<DashboardToolId[]>([]);
@@ -241,7 +245,19 @@ export function OverviewDashboardLiveContent({
       </section>
 
       <section className="rounded-3xl bg-white/80 p-5 shadow-sm ring-1 ring-border-subtle md:p-6">
-        <h2 className="font-serif text-2xl font-normal text-text-primary">A few ways to make things smoother.</h2>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="font-serif text-2xl font-normal text-text-primary">A few ways to make things smoother.</h2>
+            <p className="mt-1 text-sm text-text-secondary">Keep the helpful next steps close, and open the deeper owner analytics only when you want them.</p>
+          </div>
+          <Button
+            variant="outline"
+            size="md"
+            onClick={() => setShowMoreDetail((current) => !current)}
+          >
+            {showMoreDetail ? 'Hide detail' : 'Show more detail'}
+          </Button>
+        </div>
         <div className="mt-5 grid gap-3 lg:grid-cols-3">
           {suggestions.map((suggestion) => (
             <button key={suggestion.title} type="button" onClick={suggestion.action} className="rounded-2xl border border-border-subtle bg-white p-5 text-left transition hover:border-primary/30 hover:shadow-sm">
@@ -252,6 +268,52 @@ export function OverviewDashboardLiveContent({
           ))}
         </div>
       </section>
+
+      {showMoreDetail && (
+        <section className="rounded-3xl border border-border-subtle bg-white p-5 md:p-6">
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div>
+              <h2 className="font-serif text-2xl font-normal text-text-primary">Website and invite analytics</h2>
+              <p className="mt-2 text-sm leading-6 text-text-secondary">{websiteInviteAnalytics.summary}</p>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                {websiteInviteAnalytics.signals.map((signal) => (
+                  <div key={signal.id} className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
+                    <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-tertiary">{signal.label}</p>
+                    <p className="mt-2 text-xl font-semibold text-text-primary">{signal.value}</p>
+                    <p className="mt-2 text-sm leading-6 text-text-secondary">{signal.detail}</p>
+                    <p className="mt-3 text-xs text-text-tertiary">{signal.privacy}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
+                <h3 className="font-serif text-xl font-normal text-text-primary">Guest journey funnel</h3>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">{websiteInviteAnalyticsFunnel.summary}</p>
+                <div className="mt-4 space-y-3">
+                  {websiteInviteAnalyticsFunnel.steps.map((step) => (
+                    <div key={step.id} className="rounded-xl bg-white p-3 ring-1 ring-border-subtle">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <p className="text-sm font-semibold text-text-primary">{step.label}</p>
+                        <p className="text-sm font-semibold text-primary">{step.value}</p>
+                      </div>
+                      <p className="mt-1 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
+                <h3 className="font-serif text-xl font-normal text-text-primary">Privacy guardrails</h3>
+                <ul className="mt-3 space-y-2 text-sm leading-6 text-text-secondary">
+                  {websiteInviteAnalyticsFunnel.guardrails.map((rule) => (
+                    <li key={rule}>{rule}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="rounded-3xl border border-border-subtle bg-white p-5 md:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

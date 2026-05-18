@@ -32,11 +32,13 @@ describe('OverviewDashboardLiveContent', () => {
   function renderOverview({
     isLive,
     siteSlug = 'maya-leo',
+    showMoreDetail = false,
     shortLabel = isLive ? 'Public' : 'Needs content',
     label = isLive ? 'Public' : 'Draft only — visible only to you',
   }: {
     isLive: boolean;
     siteSlug?: string | null;
+    showMoreDetail?: boolean;
     shortLabel?: string;
     label?: string;
   }) {
@@ -53,6 +55,30 @@ describe('OverviewDashboardLiveContent', () => {
               isLive,
               label,
               shortLabel,
+            },
+            websiteInviteAnalytics: {
+              summary: 'Analytics are tied to real product actions.',
+              signals: [
+                {
+                  id: 'site-visit-tracking',
+                  label: 'Website visits',
+                  value: '12',
+                  detail: '12 aggregate website visits were recorded in the last 30 days.',
+                  privacy: 'Aggregated guest counts only.',
+                },
+              ],
+            },
+            websiteInviteAnalyticsFunnel: {
+              summary: 'The guest journey funnel is backed by measured product events.',
+              steps: [
+                {
+                  id: 'visit',
+                  label: 'Visit',
+                  value: '12',
+                  detail: 'Visits are being measured.',
+                },
+              ],
+              guardrails: ['Show owner/planner summaries only; public and guest routes should not reveal analytics detail.'],
             },
           } as never}
           draftBrief={[]}
@@ -77,7 +103,7 @@ describe('OverviewDashboardLiveContent', () => {
           setupDraftProgressPercent={0}
           setupProgressRatio={0}
           showInternalProof={false}
-          showMoreDetail={false}
+          showMoreDetail={showMoreDetail}
           stats={{
             siteSlug,
             weddingDate: '2026-06-15',
@@ -173,5 +199,14 @@ describe('OverviewDashboardLiveContent', () => {
 
     expect(assignSpy).toHaveBeenCalledWith('/dashboard/builder');
     expect(openSpy).not.toHaveBeenCalled();
+  });
+
+  it('renders the owner analytics panel when more detail is enabled', () => {
+    renderOverview({ isLive: true, showMoreDetail: true });
+
+    expect(screen.getByText('Website and invite analytics')).toBeInTheDocument();
+    expect(screen.getByText('Guest journey funnel')).toBeInTheDocument();
+    expect(screen.getByText('Show owner/planner summaries only; public and guest routes should not reveal analytics detail.')).toBeInTheDocument();
+    expect(screen.getByText('Website visits')).toBeInTheDocument();
   });
 });
