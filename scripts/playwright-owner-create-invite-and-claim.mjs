@@ -125,28 +125,43 @@ try {
     });
 
     await step('collaborator create account or sign in', async () => {
-      const createAccountTab = collaboratorPage.getByRole('button', { name: /create account/i });
-      if (await createAccountTab.count()) {
-        await createAccountTab.first().click().catch(async () => {
-          await collaboratorPage.getByText(/create account/i).first().click();
-        });
-        await collaboratorPage.waitForTimeout(500);
-      } else {
-        await collaboratorPage.getByText(/create account/i).first().click().catch(() => {});
-        await collaboratorPage.waitForTimeout(500);
-      }
-      await collaboratorPage.waitForTimeout(750);
       const fullName = collaboratorPage.getByLabel(/full name/i);
-      if (await fullName.count()) {
+      const createPassword = collaboratorPage.getByLabel(/create password/i);
+      await Promise.race([
+        fullName.waitFor({ state: 'visible', timeout: 2_500 }).catch(() => {}),
+        createPassword.waitFor({ state: 'visible', timeout: 2_500 }).catch(() => {}),
+      ]);
+
+      let hasCreateAccountFields = await fullName.isVisible().catch(() => false)
+        && await createPassword.isVisible().catch(() => false);
+      if (!hasCreateAccountFields) {
+        const createAccountTab = collaboratorPage
+          .locator('button, [role="button"], [role="tab"]')
+          .filter({ hasText: /^create account$/i });
+        if (await createAccountTab.count()) {
+          await createAccountTab.first().click();
+          await Promise.race([
+            fullName.waitFor({ state: 'visible', timeout: 5_000 }).catch(() => {}),
+            createPassword.waitFor({ state: 'visible', timeout: 5_000 }).catch(() => {}),
+          ]);
+        }
+      }
+
+      hasCreateAccountFields = await fullName.isVisible().catch(() => false)
+        && await createPassword.isVisible().catch(() => false);
+      if (hasCreateAccountFields) {
         await fullName.fill('Test One');
         await collaboratorPage.getByLabel(/invited email/i).fill(collaboratorEmail);
-        await collaboratorPage.getByLabel(/create password/i).fill(collaboratorPassword);
-        await collaboratorPage.getByLabel(/confirm password/i).fill(collaboratorPassword);
-        await collaboratorPage.getByRole('button', { name: /create account and join team/i }).click();
+        await createPassword.fill(collaboratorPassword);
+        const confirmPassword = collaboratorPage.getByLabel(/confirm password/i);
+        await confirmPassword.fill(collaboratorPassword);
+        await confirmPassword.press('Enter');
       } else {
         await collaboratorPage.getByLabel(/invited email|email/i).fill(collaboratorEmail);
         await collaboratorPage.getByLabel(/password/i).fill(collaboratorPassword);
-        await collaboratorPage.getByRole('button', { name: /sign in and join team/i }).click();
+        const signInJoinButton = collaboratorPage.getByRole('button', { name: /sign in and join team/i });
+        await signInJoinButton.scrollIntoViewIfNeeded();
+        await signInJoinButton.click({ noWaitAfter: true });
       }
       await collaboratorPage.waitForTimeout(8000);
       return {

@@ -146,6 +146,7 @@ function runRuntimeInviteFlow() {
 
 function runCollaboratorRoleProof() {
   const command = 'LIVE_COLLABORATOR_PERMISSION_RLS=1 npx playwright test --workers=1 tests/e2e/collaborator-permission-rls.spec.ts';
+  const timeoutMs = 180_000;
 
   try {
     const stdout = execFileSync('npx', [
@@ -164,6 +165,7 @@ function runCollaboratorRoleProof() {
         V1_OWNER_PASSWORD: ownerPassword,
       },
       maxBuffer: 20 * 1024 * 1024,
+      timeout: timeoutMs,
     });
 
     return {
@@ -176,6 +178,7 @@ function runCollaboratorRoleProof() {
       blockerType: null,
       stdout: stdout.trim(),
       failures: [],
+      timeoutMs,
     };
   } catch (error) {
     const stdout = typeof error?.stdout === 'string' ? error.stdout : Buffer.isBuffer(error?.stdout) ? error.stdout.toString('utf8') : '';
@@ -188,11 +191,17 @@ function runCollaboratorRoleProof() {
       required: true,
       ok: false,
       blocked: false,
-      blockerType: null,
+      blockerType: error?.signal === 'SIGTERM' ? 'timeout' : null,
       exitCode: typeof error?.status === 'number' ? error.status : 1,
       stdout: stdout.trim() || undefined,
       stderr: stderr.trim() || undefined,
-      failures: [{ name: 'forbidden action RLS proof', error: 'collaborator permission RLS proof failed' }],
+      failures: [{
+        name: 'forbidden action RLS proof',
+        error: error?.signal === 'SIGTERM'
+          ? `collaborator permission RLS proof timed out after ${timeoutMs}ms`
+          : 'collaborator permission RLS proof failed',
+      }],
+      timeoutMs,
     };
   }
 }

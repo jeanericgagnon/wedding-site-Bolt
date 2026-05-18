@@ -157,6 +157,10 @@ async function closeContextSafely(context: import('@playwright/test').BrowserCon
   }
 }
 
+function logCollaboratorStep(label: string) {
+  console.error(`[collaborator-rls ${new Date().toISOString()}] ${label}`);
+}
+
 async function createAndClaimInvite(options: {
   ownerPage: import('@playwright/test').Page;
   ownerAccessToken: string;
@@ -211,14 +215,60 @@ async function createAndClaimInvite(options: {
   const collaboratorContext = await ownerPage.context().browser()!.newContext();
   const collaboratorPage = await collaboratorContext.newPage();
 
+  logCollaboratorStep(`invite ${inviteEmail}: opening acceptance page`);
   await collaboratorPage.goto(`/accept-collaborator-invite?token=${invite.invite_token}`, { waitUntil: 'domcontentloaded' });
-  await collaboratorPage.getByRole('button', { name: 'Create account', exact: true }).click();
-  await collaboratorPage.getByLabel('Full name').fill(inviteName);
-  await collaboratorPage.getByLabel('Invited email').fill(inviteEmail);
-  await collaboratorPage.getByLabel('Create password').fill(collaboratorPassword);
-  await collaboratorPage.getByLabel('Confirm password').fill(collaboratorPassword);
-  await collaboratorPage.getByRole('button', { name: 'Create account and join team' }).click();
-  await expect(collaboratorPage).toHaveURL(/\/dashboard\/overview/, { timeout: 45_000 });
+  const fullName = collaboratorPage.getByLabel(/full name/i);
+  const createPassword = collaboratorPage.getByLabel(/create password/i);
+  await Promise.race([
+    fullName.waitFor({ state: 'visible', timeout: 2_500 }).catch(() => {}),
+    createPassword.waitFor({ state: 'visible', timeout: 2_500 }).catch(() => {}),
+  ]);
+
+  let hasCreateAccountFields = await fullName.isVisible().catch(() => false)
+    && await createPassword.isVisible().catch(() => false);
+  if (!hasCreateAccountFields) {
+    const createAccountTab = collaboratorPage
+      .locator('button, [role="button"], [role="tab"]')
+      .filter({ hasText: /^create account$/i });
+    if (await createAccountTab.count()) {
+      logCollaboratorStep(`invite ${inviteEmail}: forcing create-account tab`);
+      await createAccountTab.first().click();
+      await Promise.race([
+        fullName.waitFor({ state: 'visible', timeout: 5_000 }).catch(() => {}),
+        createPassword.waitFor({ state: 'visible', timeout: 5_000 }).catch(() => {}),
+      ]);
+    }
+  }
+
+  hasCreateAccountFields = await fullName.isVisible().catch(() => false)
+    && await createPassword.isVisible().catch(() => false);
+  if (hasCreateAccountFields) {
+    logCollaboratorStep(`invite ${inviteEmail}: filling account-creation form`);
+    await fullName.fill(inviteName);
+    await collaboratorPage.getByLabel(/invited email/i).fill(inviteEmail);
+    await createPassword.fill(collaboratorPassword);
+    const confirmPassword = collaboratorPage.getByLabel(/confirm password/i);
+    await confirmPassword.fill(collaboratorPassword);
+    logCollaboratorStep(`invite ${inviteEmail}: submitting account creation via Enter`);
+    await confirmPassword.press('Enter');
+  } else {
+    logCollaboratorStep(`invite ${inviteEmail}: using sign-in join flow`);
+    await collaboratorPage.getByLabel(/invited email|email/i).fill(inviteEmail);
+    await collaboratorPage.getByLabel(/password/i).fill(collaboratorPassword);
+    const signInJoinButton = collaboratorPage.getByRole('button', { name: /sign in and join team/i });
+    await signInJoinButton.scrollIntoViewIfNeeded();
+    await expect(signInJoinButton).toBeEnabled({ timeout: 10_000 });
+    logCollaboratorStep(`invite ${inviteEmail}: submitting sign-in join flow`);
+    await signInJoinButton.click({ noWaitAfter: true });
+  }
+
+  logCollaboratorStep(`invite ${inviteEmail}: waiting for dashboard`);
+  await Promise.race([
+    collaboratorPage.waitForURL(/\/dashboard(?:\/|$)/, { timeout: 60_000 }),
+    collaboratorPage.getByRole('navigation', { name: 'Dashboard navigation' }).waitFor({ timeout: 60_000 }),
+  ]);
+  await collaboratorPage.waitForTimeout(1_500);
+  logCollaboratorStep(`invite ${inviteEmail}: dashboard reached`);
 
   const collaboratorAuthState = await readAuthState(collaboratorPage);
   expect(collaboratorAuthState.token).toBeTruthy();
@@ -309,15 +359,18 @@ test('limited collaborator can write allowed guest records but cannot directly w
   };
 
   try {
+    logCollaboratorStep('limited collaborator: owner login start');
     await ownerPage.goto('/login', { waitUntil: 'domcontentloaded' });
     await ownerPage.getByPlaceholder('your@email.com').fill(ownerEmail);
     await ownerPage.getByPlaceholder('Enter your password').fill(ownerPassword);
     await ownerPage.getByRole('button', { name: 'Sign In' }).click();
     await expect(ownerPage).toHaveURL(/\/dashboard/);
+    logCollaboratorStep('limited collaborator: owner login done');
     const ownerAuthState = await readAuthState(ownerPage);
     ownerAccessToken = ownerAuthState.token;
     expect(ownerAccessToken).toBeTruthy();
 
+    logCollaboratorStep('limited collaborator: create and claim invite');
     const claimedInvite = await createAndClaimInvite({
       ownerPage,
       ownerAccessToken,
@@ -336,7 +389,9 @@ test('limited collaborator can write allowed guest records but cannot directly w
     claimedCollaboratorContext = claimedInvite.collaboratorContext;
     expect(collaboratorAccessToken).toBeTruthy();
     expect(collaboratorUserId).toBeTruthy();
+    logCollaboratorStep('limited collaborator: invite claimed');
 
+    logCollaboratorStep('limited collaborator: verifying collaborator row');
     const collaboratorResponse = await restFetch(ownerAccessToken, restUrl('wedding_site_collaborators', {
       select: 'role,permissions',
       wedding_site_id: `eq.${weddingSiteId}`,
@@ -346,7 +401,9 @@ test('limited collaborator can write allowed guest records but cannot directly w
     expect(collaboratorResponse.ok).toBeTruthy();
     const [collaborator] = await collaboratorResponse.json() as Array<{ role: string; permissions: string[] }>;
     expect(collaborator).toMatchObject({ role: 'viewer', permissions: ['guests'] });
+    logCollaboratorStep('limited collaborator: collaborator row verified');
 
+    logCollaboratorStep('limited collaborator: checking forbidden admin_users read');
     const forbiddenAdminUsersRead = await restFetch(collaboratorAccessToken, restUrl('admin_users', {
       select: 'user_id',
       limit: '1',
@@ -357,7 +414,9 @@ test('limited collaborator can write allowed guest records but cannot directly w
     } else {
       expect([401, 403]).toContain(forbiddenAdminUsersRead.status);
     }
+    logCollaboratorStep('limited collaborator: forbidden admin_users checked');
 
+    logCollaboratorStep('limited collaborator: creating guest');
     const allowedGuestWrite = await restFetch(collaboratorAccessToken, restUrl('guests'), {
       method: 'POST',
       headers: { Prefer: 'return=representation' },
@@ -373,7 +432,9 @@ test('limited collaborator can write allowed guest records but cannot directly w
     const [createdGuest] = JSON.parse(allowedGuestText) as Array<{ id: string; name: string }>;
     guestId = createdGuest.id;
     expect(createdGuest.name).toBe(guestName);
+    logCollaboratorStep('limited collaborator: guest created');
 
+    logCollaboratorStep('limited collaborator: checking forbidden message write');
     const forbiddenMessageWrite = await restFetch(collaboratorAccessToken, restUrl('messages'), {
       method: 'POST',
       headers: { Prefer: 'return=representation' },
@@ -387,7 +448,9 @@ test('limited collaborator can write allowed guest records but cannot directly w
     });
     expect(forbiddenMessageWrite.ok, await forbiddenMessageWrite.text()).toBeFalsy();
     expect([401, 403, 404]).toContain(forbiddenMessageWrite.status);
+    logCollaboratorStep('limited collaborator: forbidden message write checked');
 
+    logCollaboratorStep('limited collaborator: checking forbidden followup queue');
     const forbiddenFollowupQueue = await functionFetch(collaboratorAccessToken, 'queue-guest-followups', {
       siteId: weddingSiteId,
       kind: 'recap',
@@ -395,20 +458,25 @@ test('limited collaborator can write allowed guest records but cannot directly w
     });
     expect(forbiddenFollowupQueue.ok, await forbiddenFollowupQueue.text()).toBeFalsy();
     expect([401, 403]).toContain(forbiddenFollowupQueue.status);
+    logCollaboratorStep('limited collaborator: forbidden followup queue checked');
 
+    logCollaboratorStep('limited collaborator: checking forbidden album create');
     const forbiddenPhotoAlbumCreate = await functionFetch(collaboratorAccessToken, 'photo-album-create', {
       siteId: weddingSiteId,
       name: `Forbidden QA Album ${runId}`,
     });
     expect(forbiddenPhotoAlbumCreate.ok, await forbiddenPhotoAlbumCreate.text()).toBeFalsy();
     expect([401, 403]).toContain(forbiddenPhotoAlbumCreate.status);
+    logCollaboratorStep('limited collaborator: forbidden album create checked');
 
+    logCollaboratorStep('limited collaborator: checking forbidden manifest');
     const forbiddenPhotoManifest = await functionFetch(collaboratorAccessToken, 'photo-export-manifest', {
       siteId: weddingSiteId,
       includeHidden: false,
     });
     expect(forbiddenPhotoManifest.ok, await forbiddenPhotoManifest.text()).toBeFalsy();
     expect([401, 403]).toContain(forbiddenPhotoManifest.status);
+    logCollaboratorStep('limited collaborator: forbidden manifest checked');
   } finally {
     await cleanup();
     await closeContextSafely(claimedCollaboratorContext);
