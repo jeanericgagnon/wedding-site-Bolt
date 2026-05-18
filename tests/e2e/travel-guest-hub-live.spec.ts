@@ -21,25 +21,25 @@ test('live invite-scoped guest hub keeps travel, RSVP, and photos continuity mob
   await page.goto(hubPath, { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByRole('heading', { name: /Everything guests need in one place\./i })).toBeVisible();
-  await expect(page.getByText('Travel quick plan')).toBeVisible();
+  await expect(page.getByText('Travel plan from this link')).toBeVisible();
   await expect(page.locator('body')).not.toContainText(proofContext.guestInviteToken);
   await expectNoMeaningfulHorizontalOverflow(page);
 
-  await page.getByRole('link', { name: 'Open travel page' }).click();
+  await page.getByRole('link', { name: 'Open travel details' }).click();
   await expect(page).toHaveURL(new RegExp(`/site/${proofContext.siteSlug}\\?invite_token=.*&guestLang=fr#travel`));
   await expect(page.locator('body')).not.toContainText(proofContext.guestInviteToken);
   await expectNoMeaningfulHorizontalOverflow(page);
 
   await page.goto(hubPath, { waitUntil: 'domcontentloaded' });
-  await page.getByRole('link', { name: /Reply Confirm attendance and any event-specific details from the same hub\./i }).click();
+  await page.getByRole('link', { name: /Reply.*Confirm attendance and any event-specific details from the same hub\./i }).click();
   await expect(page).toHaveURL(new RegExp(`/site/${proofContext.siteSlug}\\?invite_token=.*&guestLang=fr#rsvp`));
   await expect(page.locator('body')).not.toContainText(proofContext.guestInviteToken);
   await expectNoMeaningfulHorizontalOverflow(page);
 
   await page.goto(hubPath, { waitUntil: 'domcontentloaded' });
-  await page.getByRole('link', { name: /Upload photos Share photos or videos without installing an app\./i }).click();
+  await page.getByRole('link', { name: /Upload photos.*Share photos or videos without installing an app\./i }).click();
   await expect(page).toHaveURL(new RegExp(`/photos/upload\\?site=${proofContext.siteSlug}&hub=1&invite_token=.*&guestLang=fr`));
-  await expect(page.getByLabel(/Your name|Tu nombre/i)).toBeVisible();
+  await expect(page.getByLabel(/Your name|Tu nombre|Votre nom/i)).toBeVisible();
   await expect(page.locator('body')).not.toContainText(proofContext.guestInviteToken);
   await expectNoMeaningfulHorizontalOverflow(page);
 });

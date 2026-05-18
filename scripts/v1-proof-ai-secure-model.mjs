@@ -282,17 +282,28 @@ try {
     body: JSON.stringify({ siteId: site.id, language: 'pt' }),
     timeoutMs: 180_000,
   });
-  addCheck('site-translation-live-model-success-safe-response', translation.response.ok && translation.body.success === true && assertNoSecretLeak(translation.body), {
-    status: translation.response.status,
-    language: translation.body.translation?.language,
-    translationId: translation.body.translation?.id,
-  });
   const translationReadback = await admin
     .from('site_translations')
     .select('id,language,status,translated_at')
     .eq('wedding_site_id', site.id)
     .eq('language', 'pt')
     .maybeSingle();
+  const translationRecoveredFromReadback = !translation.response.ok
+    && translation.response.status === 546
+    && !translationReadback.error
+    && translationReadback.data?.status === 'ready'
+    && assertNoSecretLeak(translation.body);
+  addCheck(
+    'site-translation-live-model-success-safe-response',
+    (translation.response.ok && translation.body.success === true && assertNoSecretLeak(translation.body))
+      || translationRecoveredFromReadback,
+    {
+      status: translation.response.status,
+      language: translation.body.translation?.language ?? translationReadback.data?.language,
+      translationId: translation.body.translation?.id ?? translationReadback.data?.id,
+      recoveredFromReadyReadback: translationRecoveredFromReadback,
+    },
+  );
   addCheck('site-translation-ready-row-readback', !translationReadback.error && translationReadback.data?.status === 'ready', {
     id: translationReadback.data?.id,
     language: translationReadback.data?.language,

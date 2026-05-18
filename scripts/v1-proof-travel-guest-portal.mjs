@@ -1,31 +1,15 @@
 #!/usr/bin/env node
 
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
+import { resolvePreviewRuntime, stopPreviewRuntime } from './proofPreviewRuntime.mjs';
 
-const PREVIEW_URL = 'http://127.0.0.1:4173';
-const baseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
-const isLiveBaseUrl = baseUrl !== PREVIEW_URL;
+const PREVIEW_PORT = 4173;
+const PREVIEW_URL = `http://127.0.0.1:${PREVIEW_PORT}`;
+const requestedBaseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
+const isLiveBaseUrl = requestedBaseUrl !== PREVIEW_URL;
 const browserSpec = isLiveBaseUrl
   ? 'tests/e2e/travel-guest-hub-live.spec.ts'
   : 'tests/e2e/travel-guest-hub-mobile.spec.ts';
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function waitForPreview(url, timeoutMs = 20_000) {
-  const startedAt = Date.now();
-  while (Date.now() - startedAt < timeoutMs) {
-    try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
-      if (response.ok) return;
-    } catch {
-      // keep waiting
-    }
-    await sleep(500);
-  }
-  throw new Error(`Preview server did not become ready at ${url} within ${timeoutMs}ms`);
-}
 
 function runStep(step) {
   const startedAt = new Date().toISOString();
@@ -78,9 +62,19 @@ const results = [
     command: 'node scripts/proof-travel-live-data.mjs',
   })] : []),
   runStep({
-    id: 'travel-portal-unit-tests',
-    label: 'Travel portal unit and render tests',
-    command: 'npm test -- --run src/lib/travelGuestPortal.test.ts src/pages/SiteView.test.ts src/pages/EventHubLiveContent.test.tsx src/pages/EventHub.test.tsx src/lib/publicSiteAccess.test.ts src/lib/publicSiteRenderModel.test.ts',
+    id: 'travel-portal-ui-tests',
+    label: 'Travel portal UI and event-hub render tests',
+    command: 'NODE_OPTIONS=--max-old-space-size=8192 npm test -- --run src/lib/travelGuestPortal.test.ts src/pages/EventHubLiveContent.test.tsx src/pages/EventHub.test.tsx',
+  }),
+  runStep({
+    id: 'travel-portal-public-contract-tests',
+    label: 'Travel portal public-contract tests',
+    command: 'NODE_OPTIONS=--max-old-space-size=8192 npm test -- --run src/lib/publicSiteAccess.test.ts src/lib/publicSiteRenderModel.test.ts',
+  }),
+  runStep({
+    id: 'travel-portal-siteview-tests',
+    label: 'Travel portal SiteView continuity tests',
+    command: 'NODE_OPTIONS=--max-old-space-size=4096 npm test -- --run src/pages/SiteView.travelHandoff.test.ts src/pages/SiteView.previewFallback.test.ts',
   }),
   runStep({
     id: 'build',
@@ -92,22 +86,18 @@ const results = [
 let previewProcess = null;
 let previewStdout = '';
 let previewStderr = '';
+let activeBaseUrl = requestedBaseUrl;
 try {
-  if (baseUrl === PREVIEW_URL) {
-    previewProcess = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', '4173'], {
+  if (requestedBaseUrl === PREVIEW_URL) {
+    const previewRuntime = await resolvePreviewRuntime({
+      preferredPort: PREVIEW_PORT,
+      requestedBaseUrl,
       cwd: process.cwd(),
-      env: process.env,
-      stdio: ['ignore', 'pipe', 'pipe'],
     });
-
-    previewProcess.stdout.on('data', (chunk) => {
-      previewStdout += chunk.toString('utf8');
-    });
-    previewProcess.stderr.on('data', (chunk) => {
-      previewStderr += chunk.toString('utf8');
-    });
-
-    await waitForPreview(PREVIEW_URL);
+    previewProcess = previewRuntime.previewProcess;
+    previewStdout = previewRuntime.previewStdout;
+    previewStderr = previewRuntime.previewStderr;
+    activeBaseUrl = previewRuntime.baseUrl;
   }
 
   results.push(runStep({
@@ -115,7 +105,7 @@ try {
     label: isLiveBaseUrl
       ? 'Live invite-scoped guest travel hub continuity browser proof'
       : 'Mobile guest travel hub continuity browser proof',
-    command: browserProofCommand(baseUrl, browserSpec, isLiveBaseUrl),
+    command: browserProofCommand(activeBaseUrl, browserSpec, isLiveBaseUrl),
   }));
 
   if (previewStdout.trim()) {
@@ -137,7 +127,7 @@ try {
     label: isLiveBaseUrl
       ? 'Live invite-scoped guest travel hub continuity browser proof'
       : 'Mobile guest travel hub continuity browser proof',
-    command: browserProofCommand(baseUrl, browserSpec, isLiveBaseUrl),
+    command: browserProofCommand(activeBaseUrl, browserSpec, isLiveBaseUrl),
     required: true,
     ok: false,
     startedAt: new Date().toISOString(),
@@ -145,11 +135,7 @@ try {
     stderr: [previewStderr.trim(), error instanceof Error ? error.message : 'Travel guest portal preview server failed to start.'].filter(Boolean).join('\n'),
   });
 } finally {
-  if (previewProcess) {
-    previewProcess.kill('SIGTERM');
-    await sleep(300);
-    if (!previewProcess.killed) previewProcess.kill('SIGKILL');
-  }
+  await stopPreviewRuntime(previewProcess);
 }
 
 const failedRequired = results.filter((result) => result.required && !result.ok);

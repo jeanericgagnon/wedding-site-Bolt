@@ -63,6 +63,15 @@ export const safeSettingsFunctionError = (value: unknown, fallback: string) => (
   customerSafeErrorMessage(typeof value === 'string' ? value : '', fallback)
 );
 
+const SETTINGS_TRANSLATION_POLL_INTERVAL_MS = 2_000;
+const SETTINGS_TRANSLATION_POLL_TIMEOUT_MS = 20_000;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
 export async function loadSettingsSite(siteId: string): Promise<SettingsSiteRow | null> {
   const { data, error } = await supabase
     .from('wedding_sites')
@@ -144,6 +153,23 @@ export async function loadSettingsTranslationStatuses(
   return (data as SettingsTranslationStatusRow[] | null) ?? [];
 }
 
+async function waitForReadySettingsTranslation(
+  siteId: string,
+  language: TranslationLanguage,
+): Promise<SettingsTranslationStatusRow | null> {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < SETTINGS_TRANSLATION_POLL_TIMEOUT_MS) {
+    const rows = await loadSettingsTranslationStatuses(siteId, [language]);
+    const row = rows.find((entry) => entry.language === language) ?? null;
+    if (row?.status === 'ready') return row;
+    if (row?.status === 'failed') return row;
+    await sleep(SETTINGS_TRANSLATION_POLL_INTERVAL_MS);
+  }
+
+  return null;
+}
+
 export async function findSettingsSiteBySlug(slug: string): Promise<{ id: string } | null> {
   const { data, error } = await supabase
     .from('wedding_sites')
@@ -187,9 +213,17 @@ export async function translateSettingsSiteContent(siteId: string, language: Tra
     body: { siteId, language },
   });
 
-  if (error) throw error;
+  if (error) {
+    const recovered = await waitForReadySettingsTranslation(siteId, language);
+    if (recovered?.status === 'ready') return;
+    throw error;
+  }
   const payload = data as { error?: string } | null;
-  if (payload?.error) throw new Error(safeSettingsFunctionError(payload.error, 'Couldn’t prepare translation.'));
+  if (payload?.error) {
+    const recovered = await waitForReadySettingsTranslation(siteId, language);
+    if (recovered?.status === 'ready') return;
+    throw new Error(safeSettingsFunctionError(payload.error, 'Couldn’t prepare translation.'));
+  }
 }
 
 export async function requireSettingsAuthenticatedUser(): Promise<SettingsAuthenticatedUser> {

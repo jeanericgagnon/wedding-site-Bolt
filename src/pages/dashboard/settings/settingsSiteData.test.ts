@@ -9,16 +9,21 @@ import {
   SETTINGS_TEMPLATE_CHANGE_SELECT,
   SETTINGS_TRANSLATION_STATUS_SELECT,
   safeSettingsFunctionError,
+  translateSettingsSiteContent,
   updateSettingsAccountPassword,
   verifySettingsCurrentPassword,
 } from './settingsSiteData';
 
 const {
+  fromMock,
   getUserMock,
+  invokeMock,
   signInWithPasswordMock,
   updateUserMock,
 } = vi.hoisted(() => ({
+  fromMock: vi.fn(),
   getUserMock: vi.fn(),
+  invokeMock: vi.fn(),
   signInWithPasswordMock: vi.fn(),
   updateUserMock: vi.fn(),
 }));
@@ -30,7 +35,22 @@ vi.mock('../../../lib/supabase', () => ({
       signInWithPassword: signInWithPasswordMock,
       updateUser: updateUserMock,
     },
-    from: vi.fn(() => ({
+    from: fromMock,
+    rpc: vi.fn(),
+    functions: {
+      invoke: invokeMock,
+    },
+  },
+}));
+
+describe('settings site data boundary', () => {
+  beforeEach(() => {
+    fromMock.mockReset();
+    getUserMock.mockReset();
+    invokeMock.mockReset();
+    signInWithPasswordMock.mockReset();
+    updateUserMock.mockReset();
+    fromMock.mockImplementation(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
           maybeSingle: vi.fn(async () => ({ data: null })),
@@ -48,19 +68,7 @@ vi.mock('../../../lib/supabase', () => ({
           single: vi.fn(async () => ({ data: null, error: null })),
         })),
       })),
-    })),
-    rpc: vi.fn(),
-    functions: {
-      invoke: vi.fn(),
-    },
-  },
-}));
-
-describe('settings site data boundary', () => {
-  beforeEach(() => {
-    getUserMock.mockReset();
-    signInWithPasswordMock.mockReset();
-    updateUserMock.mockReset();
+    }));
   });
 
   it('keeps privacy-sensitive site settings on explicit projections', () => {
@@ -337,6 +345,61 @@ describe('settings site data boundary', () => {
     expect(safeSettingsFunctionError({ error: 'database policy denied' }, 'Couldn’t prepare translation.')).toBe(
       'Couldn’t prepare translation.',
     );
+  });
+
+  it('treats a ready translation row as success when the translation invoke returns an error', async () => {
+    invokeMock.mockResolvedValue({ data: null, error: new Error('edge timeout') });
+
+    fromMock.mockImplementation((table: string) => {
+      if (table === 'site_translations') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              in: vi.fn(async () => ({
+                data: [{ language: 'pt', status: 'ready', translated_at: '2026-05-18T03:00:00.000Z' }],
+                error: null,
+              })),
+            })),
+          })),
+        };
+      }
+
+      return {
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn(async () => ({ data: null })),
+            order: vi.fn(() => ({
+              limit: vi.fn(async () => ({ data: [] })),
+            })),
+          })),
+          in: vi.fn(async () => ({ data: [] })),
+        })),
+      };
+    });
+
+    await expect(translateSettingsSiteContent('site-1', 'pt')).resolves.toBeUndefined();
+    expect(invokeMock).toHaveBeenCalledWith('translate-site-content', {
+      body: { siteId: 'site-1', language: 'pt' },
+    });
+  });
+
+  it('surfaces the safe translation error when the translation row never recovers to ready', async () => {
+    invokeMock.mockResolvedValue({ data: { error: 'provider timeout' }, error: null });
+    fromMock.mockImplementation((table: string) => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          in: vi.fn(async () => table === 'site_translations'
+            ? { data: [{ language: 'pt', status: 'failed', translated_at: null }], error: null }
+            : { data: [], error: null }),
+          maybeSingle: vi.fn(async () => ({ data: null })),
+          order: vi.fn(() => ({
+            limit: vi.fn(async () => ({ data: [] })),
+          })),
+        })),
+      })),
+    }));
+
+    await expect(translateSettingsSiteContent('site-1', 'pt')).rejects.toThrow('Couldn’t prepare translation.');
   });
 
   it('loads the authenticated settings user through the service helper', async () => {
