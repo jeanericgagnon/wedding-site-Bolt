@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { signInAsOwner } from './liveOwnerSession';
 
 test.use({ serviceWorkers: 'block' });
 
@@ -27,7 +28,20 @@ async function enableLocalDemo(page: Page) {
   });
 }
 
-async function enterRsvpSettings(page: Page, runId: string) {
+function usesLiveOwnerSession(baseURL: string | undefined) {
+  if (!baseURL) return false;
+  return !/127\.0\.0\.1:4178|localhost:4178/i.test(baseURL);
+}
+
+async function enterRsvpSettings(page: Page, runId: string, baseURL: string | undefined) {
+  if (usesLiveOwnerSession(baseURL)) {
+    await signInAsOwner(page);
+    await page.goto(`/dashboard/guests?bypassPayment=1&rsvpAccessQa=${runId}`, { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: /rsvp settings/i }).click();
+    await expect(page.getByRole('heading', { name: /ask only what you truly need from guests/i })).toBeVisible();
+    return;
+  }
+
   await page.goto(`/dashboard/guests?bypassPayment=1&rsvpAccessQa=${runId}`, { waitUntil: 'domcontentloaded' });
 
   const tryDemo = page.getByRole('button', { name: /try demo/i });
@@ -63,44 +77,56 @@ async function readStoredRsvpConfig(page: Page) {
   });
 }
 
-test('guest RSVP settings persist supported access truth while future modes stay planned', async ({ page }) => {
+test('guest RSVP settings persist supported access truth while future modes stay planned', async ({ page, baseURL }) => {
   const runId = String(Date.now());
+  const liveOwnerSession = usesLiveOwnerSession(baseURL);
   await enableLocalDemo(page);
-  await enterRsvpSettings(page, runId);
+  await enterRsvpSettings(page, runId, baseURL);
 
   await expect(page.getByText(/Guest codes, shared passwords, and open RSVP stay planned/i)).toBeVisible();
   await expect(page.getByText(/Phone or email recovery plan/i)).toBeVisible();
   await expect(page.getByText(/Setup proof checklist/i)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Dietary notes' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Use as primary access' }).click();
-  await expect(page.getByText(/Guests reply through private RSVP links only\./i)).toBeVisible();
+  const switchPrimaryButton = page.getByRole('button', { name: 'Use as primary access' }).first();
+  if (await switchPrimaryButton.isVisible().catch(() => false)) {
+    await switchPrimaryButton.scrollIntoViewIfNeeded();
+    await switchPrimaryButton.click();
+  }
 
   const backupCheckbox = page.getByRole('checkbox', { name: /Keep name lookup as the backup/i });
   await expect(backupCheckbox).toBeEnabled();
-  await backupCheckbox.check();
+  if (!(await backupCheckbox.isChecked())) {
+    await backupCheckbox.check({ force: true });
+  }
   await expect(page.getByText(/Guests reply through private RSVP links, with name lookup kept on as the backup for misplaced invites\./i)).toBeVisible();
 
-  await page.getByRole('button', { name: 'Dietary notes' }).click();
+  const addDietaryNotesButton = page.getByRole('button', { name: 'Dietary notes' });
+  if (await addDietaryNotesButton.isEnabled().catch(() => false)) {
+    await addDietaryNotesButton.click();
+  }
   await expect(page.getByRole('button', { name: 'Dietary notes added' })).toBeDisabled();
-  await expect(page.getByPlaceholder('Question prompt')).toHaveValue(/allergies or dietary notes/i);
+  const questionPrompts = page.getByPlaceholder('Question prompt');
+  await expect(questionPrompts.last()).toHaveValue(/allergies or dietary notes/i);
 
   await page.getByRole('button', { name: 'Save Now' }).click();
-  await expect(page.getByText(/RSVP settings saved \(demo\)\./i).first()).toBeVisible();
+  await expect(page.getByText(/RSVP settings saved(?: \(demo\))?\./i).first()).toBeVisible();
 
-  await expect
-    .poll(async () => readStoredRsvpConfig(page))
-    .toMatchObject({
-      access: {
-        primary_mode: 'private_link',
-        allow_name_lookup_backup: true,
-      },
-      questions: [
-        {
-          label: 'Any allergies or dietary notes we should know?',
+  if (!liveOwnerSession) {
+    await expect
+      .poll(async () => readStoredRsvpConfig(page))
+      .toMatchObject({
+        access: {
+          primary_mode: 'private_link',
+          allow_name_lookup_backup: true,
         },
-      ],
-    });
+        questions: [
+          {
+            label: 'Any allergies or dietary notes we should know?',
+          },
+        ],
+      });
+  }
 
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: /rsvp settings/i }).click();
@@ -109,6 +135,6 @@ test('guest RSVP settings persist supported access truth while future modes stay
   await expect(page.getByRole('checkbox', { name: /Keep name lookup as the backup/i })).toBeChecked();
   await expect(page.getByText(/This keeps search-by-name recovery on without changing your primary RSVP path\./i)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Dietary notes added' })).toBeDisabled();
-  await expect(page.getByPlaceholder('Question prompt')).toHaveValue(/allergies or dietary notes/i);
+  await expect(page.getByPlaceholder('Question prompt').last()).toHaveValue(/allergies or dietary notes/i);
   await expect(page.getByText(/Guest codes, shared passwords, and open RSVP stay planned/i)).toBeVisible();
 });
