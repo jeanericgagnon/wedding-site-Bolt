@@ -25,11 +25,18 @@ describe('memoryFlowReadiness', () => {
     expect(readiness.readyCount).toBe(9);
     expect(readiness.blockers).toEqual([]);
     expect(readiness.summaryBadges).toEqual([
-      '24 uploads live',
+      '4 of 4 memory lanes ready',
+      '100% step coverage',
+      '9 of 9 memory steps ready',
+      '24 uploads live across 2 active albums',
       'Published recap',
       '43% story coverage',
       'Handoff ready',
       '8 opt-ins captured',
+      'No blockers before sharing',
+      'No memory gaps right now',
+      'No memory lanes need action',
+      'No memory steps need action',
     ]);
     expect(readiness.lanes).toEqual([
       { id: 'collection', label: 'Collection', detail: '24 uploads across 2 active albums, including 2 videos.', status: 'ready' },
@@ -64,11 +71,19 @@ describe('memoryFlowReadiness', () => {
 
     expect(readiness.steps.find((step) => step.id === 'guest-hub')?.status).toBe('needs-action');
     expect(readiness.summaryBadges).toEqual([
+      '0 of 4 memory lanes ready',
+      '0% step coverage',
+      '0 of 9 memory steps ready',
       'Upload lane needs setup',
       'Recap saved, not shareable',
       'No story picks yet',
       '5 review items need attention',
       'No follow-up opt-ins',
+      '6 active blockers before sharing',
+      '4 memory lanes still need action',
+      '6 memory steps still need action',
+      '1 memory step still empty',
+      '2 memory steps still planned',
       'First blocker: No-app guest hub',
     ]);
     expect(readiness.lanes.find((lane) => lane.id === 'collection')).toMatchObject({
@@ -121,11 +136,19 @@ describe('memoryFlowReadiness', () => {
       detail: 'Guestbook notes are optional and currently off in the guest hub controls.',
     });
     expect(readiness.summaryBadges).toEqual([
-      '6 uploads live',
+      '4 of 4 memory lanes ready',
+      '89% step coverage',
+      '8 of 9 memory steps ready',
+      '6 uploads live across 1 active album',
       'Private recap link',
       '33% story coverage',
       'Handoff ready',
       '1 opt-in captured',
+      'No blockers before sharing',
+      'No memory gaps right now',
+      'No memory lanes need action',
+      'No memory steps need action',
+      '1 memory step still planned',
     ]);
     expect(readiness.lanes.find((lane) => lane.id === 'sharing')).toMatchObject({
       status: 'ready',
@@ -156,11 +179,18 @@ describe('memoryFlowReadiness', () => {
 
     expect(readiness.steps.find((step) => step.id === 'album-links')?.status).toBe('empty');
     expect(readiness.summaryBadges).toEqual([
+      '0 of 4 memory lanes ready',
+      '22% step coverage',
+      '2 of 9 memory steps ready',
       'No live upload lane',
       'Recap not shareable',
       'No story curation yet',
       'No handoff yet',
       'No follow-up opt-ins',
+      'No blockers before sharing',
+      '4 memory lanes still empty',
+      '6 memory steps still empty',
+      '1 memory step still planned',
     ]);
     expect(readiness.lanes.find((lane) => lane.id === 'collection')).toMatchObject({
       status: 'empty',
@@ -203,11 +233,18 @@ describe('memoryFlowReadiness', () => {
       detail: 'Review flagged uploads before relying on photo handoff exports.',
     });
     expect(readiness.summaryBadges).toEqual([
-      '5 uploads live',
+      '2 of 4 memory lanes ready',
+      '67% step coverage',
+      '6 of 9 memory steps ready',
+      '5 uploads live across 1 active album',
       'Private recap link',
       '33% story coverage',
       '1 review item need attention',
       'No follow-up opt-ins',
+      '2 active blockers before sharing',
+      '2 memory lanes still need action',
+      '2 memory steps still need action',
+      '1 memory step still empty',
       'First blocker: Moderation queue',
     ]);
     expect(readiness.lanes.find((lane) => lane.id === 'handoff')).toMatchObject({

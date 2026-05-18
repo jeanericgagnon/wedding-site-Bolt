@@ -175,7 +175,7 @@ test('quick-start AI onboarding creates an editable starter site and guest impor
     const handoffUrlPattern = /\/dashboard\/guests\?bypassPayment=1&fromQuickStart=1&next=photos/;
     await page.waitForURL(handoffUrlPattern, { timeout: 10_000 }).catch(async () => {
       if (handoffUrlPattern.test(page.url())) return;
-      const guestsHeading = page.getByRole('heading', { name: /Guests & RSVP/i }).first();
+      const guestsHeading = page.getByText('Guests & RSVP').first();
       if (await guestsHeading.isVisible().catch(() => false)) return;
       const followUpHeading = page.getByRole('heading', { name: /A few (smart|useful) follow-ups/i });
       if (await followUpHeading.isVisible({ timeout: 30_000 }).catch(() => false)) {
@@ -193,8 +193,8 @@ test('quick-start AI onboarding creates an editable starter site and guest impor
       await expect(guestsHeading).toBeVisible({ timeout: 30_000 });
     });
 
-    await expect(page.getByRole('heading', { name: /Guests & RSVP/i }).first()).toBeVisible({ timeout: 90_000 });
-    await expect(page.getByRole('heading', { name: /Guests & RSVP/i }).first()).toBeVisible();
+    await expect(page.getByText('Guests & RSVP').first()).toBeVisible({ timeout: 90_000 });
+    await expect(page.getByText('Guests & RSVP').first()).toBeVisible();
     await expect(page.getByRole('button', { name: /Import Guests/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Add Guest$/i }).first()).toBeVisible();
 

@@ -11,7 +11,7 @@ type Facet = 'all' | string;
 
 export const Templates: React.FC = () => {
   const navigate = useNavigate();
-  const { internalToolingRoutesEnabled } = useInternalToolingRouteAccess();
+  const { internalToolingCaptureRoutesEnabled } = useInternalToolingRouteAccess();
 
   const [style, setStyle] = useState<Facet>('all');
   const [season, setSeason] = useState<Facet>('all');
@@ -281,7 +281,7 @@ Start with this
                     {tpl.styleTags.slice(0, 3).map((tag) => <span key={`${tpl.id}-${tag}`} className="rounded bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-700">{tag}</span>)}
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-1.5">
-                    {internalToolingRoutesEnabled ? (
+                  {internalToolingCaptureRoutesEnabled ? (
                       <Link to={`/template-scroll-capture?templateId=${tpl.id}`} className="rounded border border-neutral-300 px-2 py-1 text-center text-[11px] font-medium text-neutral-700 hover:bg-neutral-100">Open preview</Link>
                     ) : (
                       <span className="rounded border border-neutral-200 px-2 py-1 text-center text-[11px] font-medium text-neutral-400">Internal preview</span>

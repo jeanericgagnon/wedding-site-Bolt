@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import ts from 'typescript';
 
 const trackedFiles = execFileSync('git', ['ls-files', 'src', 'supabase/functions'], {
@@ -160,8 +160,9 @@ function scanSourceFile(sourceFile) {
       const path = routePathValue(node);
       if (path && internalToolingPaths.has(path)) {
         const nodeText = textOf(node, sourceFile);
-        if (!nodeText.includes('internalToolingRoutesEnabled ?')) {
-          pushIssue(issues, sourceFile, node, 'internal-tooling-route', `Internal tooling route ${path} is not guarded by internalToolingRoutesEnabled.`);
+        const hasGuard = nodeText.includes('internalToolingRoutesEnabled ?') || nodeText.includes('internalToolingCaptureRoutesEnabled ?');
+        if (!hasGuard) {
+          pushIssue(issues, sourceFile, node, 'internal-tooling-route', `Internal tooling route ${path} is not guarded by an internal tooling route access flag.`);
         }
       }
     }
@@ -173,7 +174,9 @@ function scanSourceFile(sourceFile) {
   return issues;
 }
 
-const issues = trackedFiles.flatMap((file) => {
+const existingTrackedFiles = trackedFiles.filter((file) => existsSync(file));
+
+const issues = existingTrackedFiles.flatMap((file) => {
   const source = readFileSync(file, 'utf8');
   const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, scriptKindForFile(file));
   return scanSourceFile(sourceFile);
@@ -184,7 +187,7 @@ const output = {
   blocked: false,
   slice: 'ast-security',
   generatedAt: new Date().toISOString(),
-  trackedFilesScanned: trackedFiles.length,
+  trackedFilesScanned: existingTrackedFiles.length,
   summary: issues.length === 0
     ? 'AST-backed security guard found no launch-critical runtime auth, storage, or direct-write regressions.'
     : 'AST-backed security guard found launch-critical runtime auth, storage, or direct-write regressions.',
@@ -192,7 +195,7 @@ const output = {
     'AST-scans shipped runtime code for direct client Supabase .insert/.update/.upsert/.delete calls instead of relying only on regex matching.',
     'Fails if SUPABASE_SERVICE_ROLE_KEY appears in client runtime code or if critical auth/payment files touch browser storage for authorization.',
     'Fails on dangerouslySetInnerHTML in shipped runtime code and on raw public blob keys leaking into public DTO boundaries.',
-    'Checks that internal tooling routes in src/routes/internalToolingRoutes.tsx stay guarded by internalToolingRoutesEnabled.',
+    'Checks that internal tooling routes in src/routes/internalToolingRoutes.tsx stay guarded by an internal tooling route access flag.',
   ],
   stillManualProofNeeded: [
     'Expand this AST guard when new runtime auth or public-boundary surfaces are added.',

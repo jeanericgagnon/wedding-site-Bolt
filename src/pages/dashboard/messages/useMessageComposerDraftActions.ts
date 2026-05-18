@@ -84,8 +84,8 @@ export function useMessageComposerDraftActions({
       ...overrides,
       templateKey: template.key,
       channel: overrides?.channel ?? template.defaultChannel,
-      subject: draft.subject,
-      body: draft.body,
+      subject: overrides?.subject ?? draft.subject,
+      body: overrides?.body ?? draft.body,
       campaignName: overrides?.campaignName ?? (template.key === 'blank' ? prev.campaignName : template.label),
     }));
   }

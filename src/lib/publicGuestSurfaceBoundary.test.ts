@@ -128,8 +128,9 @@ describe('public guest surface boundary', () => {
     expect(vaultContribute).toContain("from './VaultContributeRouteView'");
     expect(vaultContribute).toContain("from './vaultContributionService'");
     expect(vaultContribute).toContain('<VaultContributeRouteView');
-    expect(vaultContribute).toContain('loadEnabledVaultContributionConfig(siteSlug, vaultYear, buildVaultAccessPayload(siteSlug))');
-    expect(vaultContribute).toContain('listEnabledVaultContributionConfigs(siteSlug, buildVaultAccessPayload(siteSlug))');
+    expect(vaultContribute).toContain('loadEnabledVaultContributionConfig(siteSlug, vaultYear, buildVaultAccessPayload(siteSlug), qaOpen)');
+    expect(vaultContribute).toContain('listEnabledVaultContributionConfigs(siteSlug, buildVaultAccessPayload(siteSlug), qaOpen)');
+    expect(vaultContribute).toContain('const contributionWindow = serverContributionWindow ?? getContributionWindow(site?.wedding_date ?? null, qaOpen);');
     expect(vaultContribute).toContain('captureGuestInviteTokenFromSearch(siteSlug, searchParams);');
     expect(vaultContribute).toContain('uploadVaultContributionToGoogleDrive({');
     expect(vaultContribute).toContain('uploadVaultContributionAttachment({');

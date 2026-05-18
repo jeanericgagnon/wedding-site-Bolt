@@ -87,11 +87,16 @@ test('live owner messages dashboard composes and saves each operational template
       const subjectFieldVisible = await subjectInput.isVisible();
       let createdMessageId = '';
 
+      if (subjectFieldVisible) {
+        await expect(subjectInput).not.toHaveValue('');
+      }
       await campaignNameInput.fill(uniqueCampaign);
       if (subjectFieldVisible) {
         await subjectInput.fill(uniqueSubject);
+        await expect(subjectInput).toHaveValue(uniqueSubject);
       }
       await bodyInput.fill(uniqueBody);
+      await expect(bodyInput).toHaveValue(uniqueBody);
       await page.getByRole('button', { name: 'Save Draft' }).click();
 
       await expect(page.getByText('Saved as draft').first()).toBeVisible();
@@ -116,7 +121,7 @@ test('live owner messages dashboard composes and saves each operational template
           return {
             ok: true,
             row,
-            subjectOk: subjectFieldVisible ? row.subject === uniqueSubject : row.subject.startsWith('Text • '),
+            subjectOk: subjectFieldVisible ? row.subject === uniqueSubject : row.subject.trim().length > 0,
             bodyOk: row.body.includes(`Live proof ${runId} ${label}.`),
           };
         })

@@ -8,7 +8,7 @@ import { useInternalToolingRouteAccess } from '../../lib/internalToolingRoutes';
 type VariantFilter = 'all' | 'needs-work' | 'review' | 'shared-preview' | 'missing-preview' | 'mobile-risk' | 'missing-guidance';
 
 export const BuilderVariantGallery: React.FC = () => {
-  const { internalToolingRoutesEnabled } = useInternalToolingRouteAccess();
+  const { internalToolingCaptureRoutesEnabled } = useInternalToolingRouteAccess();
   const manifests = React.useMemo(() => getAllSectionManifests(), []);
   const [query, setQuery] = React.useState('');
   const [sectionFilter, setSectionFilter] = React.useState('all');
@@ -193,7 +193,7 @@ export const BuilderVariantGallery: React.FC = () => {
                           <code className="truncate rounded bg-surface-subtle px-2 py-1 text-[11px] text-text-tertiary">
                             {manifest.type}::{variant.id}
                           </code>
-                          {internalToolingRoutesEnabled ? (
+                          {internalToolingCaptureRoutesEnabled ? (
                             <Link
                               to={captureUrl}
                               target="_blank"

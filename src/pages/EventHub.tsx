@@ -494,12 +494,6 @@ export const EventHub: React.FC = () => {
     coordinatorHandoffConnected: Boolean(coordinatorHandoffCard),
     privateEventVisibilityConnected: Boolean(linkAccessCard),
   });
-  const travelGuestJourney = buildTravelGuestJourney({
-    siteSlug: slug,
-    enabledActionIds: actions.map((action) => action.id),
-    guestInviteToken: guestIdentity.guestInviteToken,
-    guestLanguage: languagePreference.language,
-  });
   const travelHubSpotlight = buildTravelHubSpotlight({
     siteSlug: slug,
     travel: travelSource,
@@ -510,6 +504,14 @@ export const EventHub: React.FC = () => {
     guestLanguage: languagePreference.language,
     coupleLabel,
     weddingDateLabel,
+  });
+  const travelGuestJourney = buildTravelGuestJourney({
+    siteSlug: slug,
+    enabledActionIds: actions.map((action) => action.id),
+    guestInviteToken: guestIdentity.guestInviteToken,
+    guestLanguage: languagePreference.language,
+    travelCoreCoverageRate: travelHubSpotlight?.coreTravelCoverageRate ?? null,
+    travelMainGapLabel: travelHubSpotlight?.mainGapLabel ?? null,
   });
 
   const handleCopyTravelPlan = async () => {

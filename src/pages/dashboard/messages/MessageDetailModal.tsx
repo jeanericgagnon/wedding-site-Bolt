@@ -23,7 +23,7 @@ import {
   getUnreachedCount,
   isPastScheduledTime,
 } from './messageDashboardUtils';
-import { getStatusBadge } from './MessageDashboardComponents';
+import { getStatusBadge } from '../../../components/dashboard/messages/MessageDashboardComponents';
 
 interface MessageDetailModalProps {
   message: Message;
@@ -58,7 +58,6 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
   const [cancellingSchedule, setCancellingSchedule] = React.useState(false);
   const recipientCount = getRecipientCount(message);
   const skippedCount = getSkippedCount(message, deliveries);
-  const unreachedCount = getUnreachedCount(message, deliveries);
   const audienceLabel = getAudienceLabel(message);
   const campaignName = getCampaignName(message);
   const campaignType = getCampaignTypeLabel(message);
@@ -89,42 +88,49 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
   const topFailureReasons = buildDeliveryBucketSummary(messageDeliveries, 'failed');
   const topSkipReasons = buildDeliveryBucketSummary(messageDeliveries, 'skipped');
   const engagement = getMessageEngagementStats(message);
+  const hasDeliveryOutcome = message.status === 'sent' || message.status === 'partial' || message.status === 'failed';
   const deliveredRecipients = Math.max(0, Number(message.delivered_count ?? 0));
+  const failedRecipients = Math.max(0, Number(message.failed_count ?? 0));
+  const unreachedCount = hasDeliveryOutcome ? getUnreachedCount(message, deliveries) : 0;
   const targetedRecipients = Math.max(
-    deliveredRecipients
-    + Math.max(0, Number(message.failed_count ?? 0))
-    + skippedCount
-    + unreachedCount
-    + recipientCount,
+    recipientCount,
+    deliveredRecipients + failedRecipients + skippedCount + unreachedCount,
     0,
   );
   const deliveredCoverageRate = targetedRecipients > 0 ? Math.round((deliveredRecipients / targetedRecipients) * 100) : null;
-  const reviewCoverageRate = targetedRecipients > 0 ? Math.round((Math.max(0, Number(message.failed_count ?? 0)) / targetedRecipients) * 100) : null;
+  const reviewCoverageRate = targetedRecipients > 0 ? Math.round((failedRecipients / targetedRecipients) * 100) : null;
   const contactCoverageRate = targetedRecipients > 0 ? Math.round((skippedCount / targetedRecipients) * 100) : null;
   const unreachedCoverageRate = targetedRecipients > 0 ? Math.round((unreachedCount / targetedRecipients) * 100) : null;
   const cleanupCoverageRate = getCleanupCoverageRate({
-    failed: Math.max(0, Number(message.failed_count ?? 0)),
+    failed: failedRecipients,
     skipped: skippedCount,
     unreached: unreachedCount,
     targeted: targetedRecipients,
   });
   const cleanupReadyCoverageRate = cleanupCoverageRate != null ? Math.max(0, 100 - cleanupCoverageRate) : null;
   const cleanupRecipientCount = getCleanupRecipientCount({
-    failed: Math.max(0, Number(message.failed_count ?? 0)),
+    failed: failedRecipients,
     skipped: skippedCount,
     unreached: unreachedCount,
   });
   const followThroughReadyRecipientCount = getFollowThroughReadyRecipientCount({
-    failed: Math.max(0, Number(message.failed_count ?? 0)),
+    failed: failedRecipients,
     skipped: skippedCount,
     unreached: unreachedCount,
     targeted: targetedRecipients,
   });
   const followThroughFocusLabel = getFollowThroughFocusLabel({
-    failed: Math.max(0, Number(message.failed_count ?? 0)),
+    failed: failedRecipients,
     skipped: skippedCount,
     unreached: unreachedCount,
-  });
+  }) ?? (targetedRecipients > 0 && cleanupRecipientCount === 0 ? 'Main cleanup: all clear' : null);
+  const deliveredRecipientsLabel = `${deliveredRecipients} ${deliveredRecipients === 1 ? 'recipient' : 'recipients'} delivered`;
+  const closedOutRecipientsLabel = followThroughReadyRecipientCount > 0
+    ? `${followThroughReadyRecipientCount} ${followThroughReadyRecipientCount === 1 ? 'recipient' : 'recipients'} already closed out`
+    : 'No recipients are already closed out';
+  const cleanupRecipientsLabel = cleanupRecipientCount > 0
+    ? `${cleanupRecipientCount} ${cleanupRecipientCount === 1 ? 'recipient' : 'recipients'} still need cleanup`
+    : 'No recipients still need cleanup';
   const openRate = deliveredRecipients > 0 && engagement.opened != null ? Math.round((engagement.opened / deliveredRecipients) * 100) : null;
   const clickRate = deliveredRecipients > 0 && engagement.clicked != null ? Math.round((engagement.clicked / deliveredRecipients) * 100) : null;
   const replyRate = deliveredRecipients > 0 && engagement.replied != null ? Math.round((engagement.replied / deliveredRecipients) * 100) : null;
@@ -184,7 +190,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
               <p className="text-text-tertiary text-xs mb-1">Recipients</p>
               <p className="font-medium text-text-primary">{recipientCount} {recipientCount === 1 ? 'person' : 'people'}</p>
               <p className="text-[11px] text-text-tertiary mt-1">
-                {deliveredRecipients > 0 ? `${deliveredRecipients} recipients delivered` : '0 recipients delivered'}
+                {deliveredRecipientsLabel}
               </p>
               <p className="text-[11px] text-text-tertiary mt-1">{targetedRecipients} targeted recipients</p>
               <p className="text-[11px] text-text-tertiary mt-1">
@@ -202,13 +208,13 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 {followThroughReadyRecipientCount} of {targetedRecipients} targeted recipients are already closed out
               </p>
               <p className="text-[11px] text-text-tertiary mt-1">
-                {followThroughReadyRecipientCount > 0 ? `${followThroughReadyRecipientCount} recipients already closed out` : 'No recipients are already closed out'}
+                {closedOutRecipientsLabel}
               </p>
               <p className="text-[11px] text-text-tertiary mt-1">
                 {cleanupRecipientCount} of {targetedRecipients} targeted recipients still need cleanup
               </p>
               <p className="text-[11px] text-text-tertiary mt-1">
-                {cleanupRecipientCount > 0 ? `${cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}
+                {cleanupRecipientsLabel}
               </p>
               <p className="text-[11px] text-warning mt-1">
                 {skippedCount} of {targetedRecipients} targeted recipients need contact details
@@ -247,7 +253,7 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
               )}
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
-                  {deliveredRecipients > 0 ? `${deliveredRecipients} recipients delivered` : '0 recipients delivered'}
+                  {deliveredRecipientsLabel}
                 </span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{targetedRecipients} targeted recipients</span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
@@ -275,13 +281,13 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                   {followThroughReadyRecipientCount} of {targetedRecipients} targeted recipients are already closed out
                 </span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
-                  {followThroughReadyRecipientCount > 0 ? `${followThroughReadyRecipientCount} recipients already closed out` : 'No recipients are already closed out'}
+                  {closedOutRecipientsLabel}
                 </span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
                   {cleanupRecipientCount} of {targetedRecipients} targeted recipients still need cleanup
                 </span>
                 <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
-                  {cleanupRecipientCount > 0 ? `${cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}
+                  {cleanupRecipientsLabel}
                 </span>
                 {followThroughFocusLabel && (
                   <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{followThroughFocusLabel}</span>
@@ -524,10 +530,10 @@ export const MessageDetailModal: React.FC<MessageDetailModalProps> = ({
                 <span className="text-text-secondary">{cleanupReadyCoverageRate}% follow-through ready</span>
               )}
               <span className="text-text-secondary">
-                {followThroughReadyRecipientCount > 0 ? `${followThroughReadyRecipientCount} recipients already closed out` : 'No recipients are already closed out'}
+                {closedOutRecipientsLabel}
               </span>
               <span className="text-text-secondary">
-                {cleanupRecipientCount > 0 ? `${cleanupRecipientCount} recipients still need cleanup` : 'No recipients still need cleanup'}
+                {cleanupRecipientsLabel}
               </span>
               {engagement.opened != null && <span className="text-text-secondary">{engagement.opened} opened</span>}
               {engagement.viewed != null && <span className="text-text-secondary">{engagement.viewed} viewed</span>}

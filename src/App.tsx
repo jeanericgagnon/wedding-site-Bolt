@@ -19,6 +19,7 @@ const AppContent = () => {
   })();
   const {
     internalToolingRoutesEnabled,
+    internalToolingCaptureRoutesEnabled,
     internalToolingRoutesLoading,
   } = useInternalToolingRouteAccess();
 
@@ -29,6 +30,7 @@ const AppContent = () => {
         {PublicRoutes({ isWeddingSubdomainHost })}
         {InternalToolingRoutes({
           internalToolingRoutesEnabled,
+          internalToolingCaptureRoutesEnabled,
           internalToolingRoutesLoading,
         })}
         {GuestRoutes()}

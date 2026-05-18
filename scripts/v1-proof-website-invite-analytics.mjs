@@ -83,9 +83,21 @@ function runStep(step) {
 const results = [];
 
 results.push(runStep({
-  id: 'analytics-unit-tests',
-  label: 'Website and invite analytics unit tests',
-  command: 'npm test -- --run src/pages/dashboard/analyticsEventSummary.test.ts src/pages/dashboard/analyticsCoverageAudit.test.ts src/lib/websiteInviteAnalyticsReadiness.test.ts src/pages/dashboard/buildOverviewDashboardModel.test.ts src/pages/SiteView.test.ts src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx src/pages/RSVP.test.tsx src/pages/PhotoUpload.test.ts',
+  id: 'analytics-core-unit-tests',
+  label: 'Website and invite analytics core unit tests',
+  command: 'npm test -- --run src/pages/dashboard/analyticsEventSummary.test.ts src/pages/dashboard/analyticsCoverageAudit.test.ts src/lib/websiteInviteAnalyticsReadiness.test.ts src/pages/dashboard/buildOverviewDashboardModel.test.ts',
+}));
+
+results.push(runStep({
+  id: 'analytics-siteview-tests',
+  label: 'Website analytics SiteView target tests',
+  command: 'npm test -- --run src/pages/siteViewAnalyticsTarget.test.ts',
+}));
+
+results.push(runStep({
+  id: 'analytics-public-route-tests',
+  label: 'Website analytics public and guest route tests',
+  command: 'npm test -- --run src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx src/pages/RSVP.test.tsx src/pages/PhotoUpload.test.ts',
 }));
 
 results.push(runStep({

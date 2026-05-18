@@ -99,7 +99,7 @@ describe('VendorProfilePage public links', () => {
     const weddingDate = screen.getByLabelText('Wedding date');
     const venueName = screen.getByLabelText('Venue name');
     const venueLocation = screen.getByLabelText('Wedding location');
-    const message = screen.getByLabelText('What do you want them to see?');
+    const message = screen.getByLabelText('What do you need from this vendor?');
     expect(name).toHaveAttribute('id', 'vendor-inquiry-name');
     expect(email).toHaveAttribute('id', 'vendor-inquiry-email');
     expect(weddingDate).toHaveAttribute('id', 'vendor-inquiry-date');
@@ -169,7 +169,7 @@ describe('VendorProfilePage public links', () => {
     expect(screen.getByText('Maya & Lee')).toBeInTheDocument();
     expect(screen.getByText('/maya-lee')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('What do you want them to see?'), { target: { value: 'Can you share photo packages?' } });
+    fireEvent.change(screen.getByLabelText('What do you need from this vendor?'), { target: { value: 'Can you share photo packages?' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }));
 
     await waitFor(() => {

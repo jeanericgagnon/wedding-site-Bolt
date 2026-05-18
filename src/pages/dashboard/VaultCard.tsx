@@ -415,18 +415,38 @@ export function VaultCard({
         <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap self-start sm:self-auto">
           <span className="text-xs text-text-tertiary px-2 py-1 rounded-md bg-surface-subtle border border-border">{displayEntries.length} {displayEntries.length === 1 ? 'entry' : 'entries'}</span>
           {siteSlug && config.is_enabled && (
-            <button onClick={handleCopyLink} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${copied ? 'border-border-subtle bg-surface-subtle text-text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5'}`} title="Copy shareable hub link (all enabled vaults)">
+            <button
+              onClick={handleCopyLink}
+              aria-label={`Share ${config.label || `Vault ${config.vault_index}`}`}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${copied ? 'border-border-subtle bg-surface-subtle text-text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5'}`}
+              title={`Copy share link for ${config.label || `Vault ${config.vault_index}`}`}
+            >
               {copied ? <Check className="w-3 h-3" /> : <Link2 className="w-3 h-3" />}
               {copied ? 'Copied!' : 'Share'}
             </button>
           )}
-          <button onClick={() => onEdit(config)} className="p-1.5 rounded-lg hover:bg-surface-subtle text-text-tertiary hover:text-text-primary transition-colors" title="Edit vault settings">
+          <button
+            onClick={() => onEdit(config)}
+            aria-label={`Edit ${config.label || `Vault ${config.vault_index}`}`}
+            className="p-1.5 rounded-lg hover:bg-surface-subtle text-text-tertiary hover:text-text-primary transition-colors"
+            title={`Edit ${config.label || `Vault ${config.vault_index}`}`}
+          >
             <Settings2 className="w-4 h-4" />
           </button>
-          <button onClick={handleToggle} disabled={toggling} className="p-1.5 rounded-lg hover:bg-surface-subtle transition-colors" title={config.is_enabled ? 'Disable vault' : 'Enable vault'}>
+          <button
+            onClick={handleToggle}
+            disabled={toggling}
+            aria-label={`${config.is_enabled ? 'Disable' : 'Enable'} ${config.label || `Vault ${config.vault_index}`}`}
+            className="p-1.5 rounded-lg hover:bg-surface-subtle transition-colors"
+            title={config.is_enabled ? 'Disable vault' : 'Enable vault'}
+          >
             {toggling ? <Loader2 className="w-4 h-4 animate-spin text-text-tertiary" /> : config.is_enabled ? <ToggleRight className="w-5 h-5 text-primary" /> : <ToggleLeft className="w-5 h-5 text-text-tertiary" />}
           </button>
-          <button onClick={() => setExpanded(!expanded)} className="p-1.5 rounded-lg hover:bg-surface-subtle text-text-tertiary transition-colors">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            aria-label={`${expanded ? 'Collapse' : 'Expand'} ${config.label || `Vault ${config.vault_index}`}`}
+            className="p-1.5 rounded-lg hover:bg-surface-subtle text-text-tertiary transition-colors"
+          >
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
         </div>

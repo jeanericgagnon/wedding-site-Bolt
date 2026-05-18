@@ -2,7 +2,7 @@ import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const PUBLIC_ROOT = 'public';
-const MAX_PUBLIC_KIB = 210_000;
+const MAX_PUBLIC_KIB = 217_000;
 const MAX_PUBLIC_FILE_KIB = 5_000;
 const MAX_UNBUDGETED_DIRECTORY_KIB = 500;
 
@@ -11,6 +11,7 @@ const directoryBudgetsKiB = {
   'preview-photos': 42_000,
   'variant-previews': 12_000,
   photos: 11_000,
+  landing: 6_500,
   'template-previews': 4_500,
 };
 

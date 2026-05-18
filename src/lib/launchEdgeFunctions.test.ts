@@ -80,7 +80,7 @@ describe('launch edge function guards', () => {
     expect(source).toContain('parsed.username = ""');
     expect(source).toContain('createSignedUrl(driveFileId, 60 * 60 * 24)');
     expect(source).toContain('expiresInSeconds: 60 * 60 * 24');
-    expect(source).toContain('PHOTO_EXPORT_SIGNIN_REQUIRED_COPY = "Please sign in to export this photo manifest."');
+    expect(source).toContain('PHOTO_EXPORT_SIGNIN_REQUIRED_COPY = "Please sign in to export these photos."');
     expect(source).toContain('PHOTO_EXPORT_SITE_REQUIRED_COPY = "Choose a site before exporting this photo manifest."');
     expect(source).toContain('PHOTO_EXPORT_SITE_UNAVAILABLE_COPY = "This photo manifest is not available."');
     expect(source).toContain('PHOTO_EXPORT_ACCESS_UNAVAILABLE_COPY = "You do not have access to this photo manifest."');
@@ -390,7 +390,7 @@ describe('launch edge function guards', () => {
     expect(source).toContain('safePhotoAlbumManageError("PARENT_FAILED")');
     expect(source).toContain('safePhotoAlbumManageError("UPDATE_FAILED")');
     expect(source).toContain('safePhotoAlbumManageError("INTERNAL_ERROR")');
-    expect(source).toContain('PHOTO_ALBUM_MANAGE_SIGNIN_REQUIRED_COPY = "Please sign in to manage photo albums for this site."');
+    expect(source).toContain('PHOTO_ALBUM_MANAGE_SIGNIN_REQUIRED_COPY = "Please sign in to manage photo albums."');
     expect(source).toContain('PHOTO_ALBUM_MANAGE_ALBUM_REQUIRED_COPY = "Choose a photo album before updating it."');
     expect(source).toContain('PHOTO_ALBUM_MANAGE_ALBUM_UNAVAILABLE_COPY = "This photo album is not available."');
     expect(source).toContain('PHOTO_ALBUM_MANAGE_ACCESS_UNAVAILABLE_COPY = "You do not have access to manage this photo album."');
@@ -429,7 +429,7 @@ describe('launch edge function guards', () => {
     expect(create).toContain('safePhotoAlbumCreateError("PARENT")');
     expect(create).toContain('safePhotoAlbumCreateError("SAVE")');
     expect(create).toContain('safePhotoAlbumCreateError("INTERNAL")');
-    expect(create).toContain('if (code === "AUTH") return "Please sign in to manage photo albums for this site."');
+    expect(create).toContain('if (code === "AUTH") return "Please sign in to manage photo albums."');
     expect(create).toContain('PHOTO_ALBUM_CREATE_SITE_REQUIRED_COPY = "Choose a site before creating a photo album."');
     expect(create).toContain('PHOTO_ALBUM_CREATE_NAME_REQUIRED_COPY = "Add a photo album name before saving."');
     expect(create).toContain('PHOTO_ALBUM_CREATE_SITE_UNAVAILABLE_COPY = "This site is not available for photo albums."');
@@ -457,7 +457,7 @@ describe('launch edge function guards', () => {
     expect(moderate).toContain('safePhotoModerationError("PERMISSION")');
     expect(moderate).toContain('safePhotoModerationError("SAVE")');
     expect(moderate).toContain('safePhotoModerationError("INTERNAL")');
-    expect(moderate).toContain('PHOTO_MODERATION_SIGNIN_REQUIRED_COPY = "Please sign in to update selected photos."');
+    expect(moderate).toContain('PHOTO_MODERATION_SIGNIN_REQUIRED_COPY = "Please sign in to update these photos."');
     expect(moderate).toContain('PHOTO_MODERATION_SELECTION_REQUIRED_COPY = "Choose at least one photo to update."');
     expect(moderate).toContain('PHOTO_MODERATION_SELECTION_LIMIT_COPY = "Choose 500 photos or fewer at a time."');
     expect(moderate).toContain('PHOTO_MODERATION_SELECTION_UNAVAILABLE_COPY = "One or more selected photos are not available."');
@@ -745,7 +745,7 @@ describe('launch edge function guards', () => {
     expect(guestHubTrack).toContain('GUEST_LINK_UNAVAILABLE_COPY = "This wedding link is not available."');
     expect(guestHubTrack).toContain('return json({ ok: true, tracked: false })');
     expect(guestHubTrack).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
-    expect(guestHubTrack).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
+    expect(guestHubTrack).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token,wedding_data")');
     expect(guestHubTrack).toContain('canReadPublicSubresource');
     expect(guestHubTrack).toContain('storedInviteToken: site.guest_access_token');
     expect(guestHubTrack).toContain('import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts"');
@@ -821,7 +821,7 @@ describe('launch edge function guards', () => {
     expect(queueFollowups).toContain('../_shared/collaboratorPermissions.ts');
     expect(queueFollowups).toContain('allowed = canMutateMessages(collaborator?.role, collaborator?.permissions)');
     expect(queueFollowups).not.toContain('allowed = hasPermissionKey(collaborator?.permissions, "messages")');
-    expect(queueFollowups).toContain('FOLLOWUP_SIGNIN_REQUIRED_COPY = "Please sign in to queue guest follow-ups."');
+    expect(queueFollowups).toContain('FOLLOWUP_SIGNIN_REQUIRED_COPY = "Please sign in to schedule guest follow-ups."');
     expect(queueFollowups).toContain('FOLLOWUP_SITE_REQUIRED_COPY = "Choose a site before queueing guest follow-ups."');
     expect(queueFollowups).toContain('FOLLOWUP_KIND_INVALID_COPY = "Choose a valid follow-up type."');
     expect(queueFollowups).toContain('FOLLOWUP_SITE_UNAVAILABLE_COPY = "This site is not available for guest follow-ups."');
@@ -839,7 +839,7 @@ describe('launch edge function guards', () => {
     const vaultResolve = readFunction('vault-resolve-entry-link');
     expect(vaultResolve).toContain('function safeVaultAttachmentUrl');
     expect(vaultResolve).toContain('parsed.protocol === "https:" || parsed.protocol === "http:"');
-    expect(vaultResolve).toContain('VAULT_RESOLVE_SIGNIN_REQUIRED_COPY = "Please sign in to open this vault attachment."');
+    expect(vaultResolve).toContain('VAULT_RESOLVE_SIGNIN_REQUIRED_COPY = "Please sign in to open this Vault file."');
     expect(vaultResolve).toContain('VAULT_RESOLVE_ENTRY_REQUIRED_COPY = "Choose a vault attachment to open."');
     expect(vaultResolve).toContain('VAULT_RESOLVE_ENTRY_UNAVAILABLE_COPY = "This vault attachment is not available."');
     expect(vaultResolve).toContain('VAULT_RESOLVE_ACCESS_UNAVAILABLE_COPY = "This vault attachment is not available from this account."');

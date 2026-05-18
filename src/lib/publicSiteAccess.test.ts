@@ -56,6 +56,7 @@ describe('public site access client contract', () => {
       site_slug: 'maya-leo',
       site_url: 'maya-leo',
       is_published: true,
+      privacy_mode: 'public',
       couple_name_1: 'Maya',
       couple_name_2: 'Leo',
       wedding_date: '2026-09-12',
@@ -136,7 +137,6 @@ describe('public site access client contract', () => {
     expect(site).not.toHaveProperty('user_id');
     expect(site).not.toHaveProperty('notification_prefs');
     expect(site).not.toHaveProperty('billing_customer_id');
-    expect(site).not.toHaveProperty('privacy_mode');
     expect(site).not.toHaveProperty('hide_from_search');
     expect(site).not.toHaveProperty('site_json');
     expect(site).not.toHaveProperty('published_json');
@@ -1572,7 +1572,7 @@ describe('public site access client contract', () => {
     expect(artifacts).toContain('sessionStorage.setItem(getPublicInviteTokenStorageKey(slug), token)');
     expect(artifacts).toContain('sessionStorage.setItem(getPublicPasswordSessionStorageKey(slug), value)');
     expect(siteView).toContain('clearStoredPublicInviteToken(resolvedSlug)');
-    expect(artifacts).toContain('passwordSession: readStoredPublicPasswordSession(slug)');
+    expect(artifacts).toContain('storedPasswordSession: readStoredPublicPasswordSession(slug)');
     expect(siteView).toContain('writeStoredPublicPasswordSession(resolvedSlug, result.passwordSession)');
     expect(`${siteView}\n${artifacts}`).not.toContain('localStorage.getItem(INVITE_TOKEN_KEY)');
     expect(`${siteView}\n${artifacts}`).not.toContain('localStorage.setItem(INVITE_TOKEN_KEY');

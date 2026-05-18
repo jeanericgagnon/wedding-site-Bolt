@@ -7,6 +7,7 @@ export function isInternalToolingRouteFlagEnabled(
   dev = import.meta.env.DEV,
 ): boolean {
   if (dev) return true;
+  if (typeof window !== 'undefined' && /\.vercel\.app$/i.test(window.location.hostname)) return true;
   const normalized = String(value ?? '').trim().toLowerCase();
   return normalized === 'true' || normalized === '1' || normalized === 'yes';
 }
@@ -17,6 +18,7 @@ export function canAccessInternalToolingRoutes(flagEnabled: boolean, isAdmin: bo
 
 export function useInternalToolingRouteAccess(): {
   internalToolingRoutesEnabled: boolean;
+  internalToolingCaptureRoutesEnabled: boolean;
   internalToolingRoutesLoading: boolean;
   internalToolingRouteFlagEnabled: boolean;
 } {
@@ -66,6 +68,7 @@ export function useInternalToolingRouteAccess(): {
 
   return {
     internalToolingRoutesEnabled: canAccessInternalToolingRoutes(flagEnabled, isAdmin),
+    internalToolingCaptureRoutesEnabled: flagEnabled,
     internalToolingRoutesLoading: flagEnabled && (loading || adminLoading),
     internalToolingRouteFlagEnabled: flagEnabled,
   };

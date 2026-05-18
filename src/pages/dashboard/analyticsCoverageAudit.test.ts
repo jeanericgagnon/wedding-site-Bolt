@@ -21,7 +21,7 @@ describe('website invite analytics coverage audit', () => {
 
     const auditedRouteSources = [
       ['src/pages/EventHub.tsx', "/event/invite"],
-      ['src/pages/SiteView.tsx', "/site/invite"],
+      ['src/pages/siteViewAnalyticsTarget.ts', "/site/invite"],
       ['src/pages/EventRecap.tsx', "/event/recap/invite"],
       ['src/pages/RSVP.tsx', "/rsvp/invite"],
       ['src/pages/EventRSVP.tsx', "/rsvp-event/invite"],
@@ -45,7 +45,7 @@ describe('website invite analytics coverage audit', () => {
     ]);
 
     const eventHubSource = readFileSync(join(process.cwd(), 'src/pages/EventHub.tsx'), 'utf8');
-    const siteViewSource = readFileSync(join(process.cwd(), 'src/pages/SiteView.tsx'), 'utf8');
+    const siteViewSource = readFileSync(join(process.cwd(), 'src/pages/siteViewAnalyticsTarget.ts'), 'utf8');
 
     expect(eventHubSource).toContain("/event/qr");
     expect(siteViewSource).toContain("/site/qr");

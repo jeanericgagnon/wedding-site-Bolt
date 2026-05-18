@@ -220,8 +220,8 @@ export function buildGuestVisibilityPreview(input: GuestVisibilityPreviewInput):
 
   const pathCoverageSummary = visibleEvents.length > 0
     ? hasPrivateInviteAccess
-      ? `${visibleEvents.length} visible event${visibleEvents.length === 1 ? '' : 's'} have a private guest path ready.`
-      : `${visibleEvents.length} visible event${visibleEvents.length === 1 ? '' : 's'} exist, but private guest-link coverage still needs setup.`
+      ? `${visibleEvents.length} visible event${visibleEvents.length === 1 ? ' has' : 's have'} a private guest path ready.`
+      : `${visibleEvents.length} visible event${visibleEvents.length === 1 ? ' exists' : 's exist'}, but private guest-link coverage still needs setup.`
     : hasPublicShellPreview
       ? 'Public shell preview is ready, but this guest still has no visible private event access.'
       : 'No guest-facing preview path is fully ready yet.';

@@ -4,11 +4,13 @@ import { describe, expect, it } from 'vitest';
 
 describe('site view travel handoff continuity', () => {
   it('keeps guest-hub invite token handoff support in the public site route', () => {
-    const source = readFileSync(join(process.cwd(), 'src/pages/SiteView.tsx'), 'utf8');
+    const siteViewSource = readFileSync(join(process.cwd(), 'src/pages/SiteView.tsx'), 'utf8');
+    const analyticsTargetSource = readFileSync(join(process.cwd(), 'src/pages/siteViewAnalyticsTarget.ts'), 'utf8');
 
-    expect(source).toContain('capturePublicInviteTokenFromSearch');
-    expect(source).toContain('getInviteTokenFromSearch');
-    expect(source).toContain("if (searchParams.has('token') || searchParams.has('invite_token') || searchParams.has('passwordSession')) return '/site/invite';");
+    expect(siteViewSource).toContain('capturePublicInviteTokenFromSearch');
+    expect(siteViewSource).toContain('getInviteTokenFromSearch');
+    expect(siteViewSource).toContain('resolveSiteViewAnalyticsTarget(searchParams)');
+    expect(analyticsTargetSource).toContain("if (searchParams.has('token') || searchParams.has('invite_token') || searchParams.has('passwordSession')) return '/site/invite';");
   });
 
   it('keeps blocked invite-only views marked noindex for public crawlers', () => {

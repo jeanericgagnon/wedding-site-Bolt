@@ -9,6 +9,11 @@ export interface VaultContributionConfigInfo {
   is_enabled: boolean;
 }
 
+export interface VaultContributionWindow {
+  canSubmit: boolean;
+  message: string | null;
+}
+
 interface VaultContributionAccessPayload {
   inviteToken: string | null;
   passwordSession: string | null;
@@ -44,6 +49,16 @@ export interface VaultContributionDriveUploadResult {
   fileId?: string;
   webViewLink?: string | null;
   webContentLink?: string | null;
+}
+
+export interface VaultContributionConfigResponse {
+  config: VaultContributionConfigInfo | null;
+  submissionWindow: VaultContributionWindow;
+}
+
+export interface VaultContributionConfigsResponse {
+  configs: VaultContributionConfigInfo[];
+  submissionWindow: VaultContributionWindow;
 }
 
 export async function uploadVaultContributionAttachment(
@@ -109,31 +124,42 @@ export async function loadEnabledVaultContributionConfig(
   siteSlug: string,
   durationYears: number,
   access: VaultContributionAccessPayload,
-): Promise<VaultContributionConfigInfo | null> {
+  qaOpen = false,
+): Promise<VaultContributionConfigResponse> {
   const { data, error } = await supabase.functions.invoke('vault-contribution-public', {
     body: {
       siteSlug,
       vaultYear: durationYears,
+      qaOpen,
       ...access,
     },
   });
 
   if (error) throw error;
-  return ((data as { config?: VaultContributionConfigInfo | null } | null)?.config ?? null);
+  const payload = (data as { config?: VaultContributionConfigInfo | null; submissionWindow?: VaultContributionWindow | null } | null);
+  return {
+    config: payload?.config ?? null,
+    submissionWindow: payload?.submissionWindow ?? { canSubmit: true, message: null },
+  };
 }
 
 export async function listEnabledVaultContributionConfigs(
   siteSlug: string,
   access: VaultContributionAccessPayload,
-): Promise<VaultContributionConfigInfo[]> {
+  qaOpen = false,
+): Promise<VaultContributionConfigsResponse> {
   const { data, error } = await supabase.functions.invoke('vault-contribution-public', {
     body: {
       siteSlug,
+      qaOpen,
       ...access,
     },
   });
 
   if (error) throw error;
-  return ((((data as { configs?: VaultContributionConfigInfo[] | null } | null)?.configs) ?? []) as VaultContributionConfigInfo[])
-    .sort((a, b) => a.duration_years - b.duration_years);
+  const payload = (data as { configs?: VaultContributionConfigInfo[] | null; submissionWindow?: VaultContributionWindow | null } | null);
+  return {
+    configs: (((payload?.configs) ?? []) as VaultContributionConfigInfo[]).sort((a, b) => a.duration_years - b.duration_years),
+    submissionWindow: payload?.submissionWindow ?? { canSubmit: true, message: null },
+  };
 }

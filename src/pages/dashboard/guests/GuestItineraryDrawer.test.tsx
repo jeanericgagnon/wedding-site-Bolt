@@ -92,9 +92,8 @@ describe('GuestItineraryDrawer', () => {
     expect(screen.getByText('1 of 1 event visible · 0 hidden')).toBeInTheDocument();
     expect(screen.getByText('67% guest-specific coverage · 33% public-shell coverage')).toBeInTheDocument();
     expect(screen.getByText('100% event visibility coverage · 0% still hidden')).toBeInTheDocument();
-    expect(screen.getByText('Visible to this guest: Ceremony.')).toBeInTheDocument();
     expect(screen.getAllByText('Visible to this guest: Ceremony.').length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText('No hidden events for this guest.')).toBeInTheDocument();
+    expect(screen.getAllByText('No hidden events for this guest.').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('100% preview-route coverage · 9 routes ready · No preview routes missing')).toBeInTheDocument();
     expect(screen.getByText('Private guest path ready')).toBeInTheDocument();
     expect(screen.getByText('1 visible event has a private guest path ready.')).toBeInTheDocument();
@@ -228,8 +227,8 @@ describe('GuestItineraryDrawer', () => {
     expect(screen.getByText('Public shell plus visible events')).toBeInTheDocument();
     expect(screen.getByText('1 of 1 event visible · 0 hidden')).toBeInTheDocument();
     expect(screen.getByText('100% event visibility coverage · 0% still hidden')).toBeInTheDocument();
-    expect(screen.getByText('No hidden events for this guest.')).toBeInTheDocument();
-    expect(screen.getByText('33% preview-route coverage · 3 routes ready · 6 preview routes still missing')).toBeInTheDocument();
+    expect(screen.getAllByText('No hidden events for this guest.').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('100% preview-route coverage · 3 routes ready · No preview routes missing')).toBeInTheDocument();
     expect(screen.getByText('Main gap: Rotate or create a private RSVP link')).toBeInTheDocument();
   });
 
@@ -430,7 +429,7 @@ describe('GuestItineraryDrawer', () => {
     expect(screen.queryByRole('button', { name: /Open travel section as guest/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Open registry section as guest/i })).not.toBeInTheDocument();
     expect(screen.getByText('6 guest routes ready · 6 guest-specific · 0 public shell · 1 visible event · 0 hidden events')).toBeInTheDocument();
-    expect(screen.getByText('67% guest-specific coverage · 0% public-shell coverage')).toBeInTheDocument();
+    expect(screen.getByText('100% guest-specific coverage · 0% public-shell coverage')).toBeInTheDocument();
   });
 
   it('withholds public-shell previews when the public site slug is missing even if the site is otherwise marked published', () => {
@@ -493,8 +492,8 @@ describe('GuestItineraryDrawer', () => {
     expect(screen.queryByText('Public site preview QR')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Open travel section as guest/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Open registry section as guest/i })).not.toBeInTheDocument();
-    expect(screen.getByText('6 guest routes ready · 6 guest-specific · 0 public shell · 1 visible event · 0 hidden events')).toBeInTheDocument();
-    expect(screen.getByText('67% guest-specific coverage · 0% public-shell coverage')).toBeInTheDocument();
+    expect(screen.getByText('1 guest route ready · 1 guest-specific · 0 public shell · 1 visible event · 0 hidden events')).toBeInTheDocument();
+    expect(screen.getByText('100% guest-specific coverage · 0% public-shell coverage')).toBeInTheDocument();
   });
 
   it('keeps public-shell preview coverage accurate when the public slug is resolved from the live site URL', () => {

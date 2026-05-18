@@ -327,7 +327,7 @@ test('guest photo upload stores hosted media and owner reads it back', async ({ 
     await expect(page.getByText(`Shared by ${guestName}`)).toBeVisible();
     await expect(page.getByText(videoNote)).toBeVisible();
     await expect(page.getByText(`Shared by ${videoGuestName}`)).toBeVisible();
-    await expect(page.getByText('Featured')).toBeVisible();
+    await expect(page.getByText('Featured').first()).toBeVisible();
     await expect(page.getByText('Story pick')).toBeVisible();
     const recapImage = page.locator('img[src*="/storage/v1/object/sign/photo-uploads/"]').first();
     await expect(recapImage).toBeVisible();
@@ -353,7 +353,7 @@ test('guest photo upload stores hosted media and owner reads it back', async ({ 
     await expect(recapPreviewPage.getByText(`Shared by ${guestName}`)).toBeVisible();
     await expect(recapPreviewPage.getByText(videoNote)).toBeVisible();
     await expect(recapPreviewPage.getByText(`Shared by ${videoGuestName}`)).toBeVisible();
-    await expect(recapPreviewPage.getByText('Featured')).toBeVisible();
+    await expect(recapPreviewPage.getByText('Featured').first()).toBeVisible();
     await expect(recapPreviewPage.getByText('Story pick')).toBeVisible();
     await expect(recapPreviewPage.locator('img[src*="/storage/v1/object/sign/photo-uploads/"]').first()).toBeVisible();
     await expect(recapPreviewPage.locator('video[src*="/storage/v1/object/sign/photo-uploads/"]').first()).toBeVisible();

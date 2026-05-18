@@ -5,7 +5,7 @@ import { extractDietaryNote } from '../../../lib/dietaryNotes';
 import { buildGuestVisibilityPreview } from '../../../lib/guestVisibilityPreview';
 import { getPerEventRsvpState } from '../../../lib/perEventRsvpState';
 import { getPlusOneState } from '../../../lib/plusOneState';
-import { resolvePublicSiteSlugFromRow } from '../../../lib/publicSiteSlug';
+import { buildPublicSiteUrl, resolvePublicSiteSlugFromRow } from '../../../lib/publicSiteSlug';
 import { getRsvpExceptionStates } from '../../../lib/rsvpExceptionState';
 import { formatGuestEventDate } from '../guestEventDate';
 import { formatGuestOpsDateTime, formatGuestOpsRelativeTime } from '../guestOpsTime';
@@ -257,7 +257,7 @@ function GuestDrawerDetails({
     ? `${window.location.origin}${visibilityPreview.links.find((link) => link.kind === 'contact')?.href ?? ''}`
     : '';
   const guestPublicSiteUrl = visibilityPreview.links.find((link) => link.kind === 'site')
-    ? `${window.location.origin}${visibilityPreview.links.find((link) => link.kind === 'site')?.href ?? ''}`
+    ? `${buildPublicSiteUrl(resolvedPublicSiteSlug)}?previewGuest=${encodeURIComponent(guest.id)}&previewSurface=public`
     : '';
   const totalPotentialPreviewRouteCount = (
     (guest.invite_token ? 1 : 0)
@@ -290,7 +290,7 @@ function GuestDrawerDetails({
             <p className="text-xs text-text-tertiary">
               {visibilityPreview.links.length} guest route{visibilityPreview.links.length === 1 ? '' : 's'} ready
               {guestSpecificPreviewRouteCount > 0 ? ` · ${guestSpecificPreviewRouteCount} guest-specific` : ''}
-              {publicPreviewRouteCount > 0 ? ` · ${publicPreviewRouteCount} public shell` : ''}
+              {` · ${publicPreviewRouteCount} public shell`}
               {visibleEventCount > 0 ? ` · ${visibleEventCount} visible event${visibleEventCount === 1 ? '' : 's'}` : ''}
               {` · ${hiddenEventCount} hidden event${hiddenEventCount === 1 ? '' : 's'}`}
             </p>
@@ -351,6 +351,7 @@ function GuestDrawerDetails({
             <p className="text-xs text-text-tertiary">
               Visible to this guest: {visibilityPreview.visibleEvents.slice(0, 3).map((event) => event.eventName).join(', ')}
               {visibilityPreview.visibleEvents.length > 3 ? `, and ${visibilityPreview.visibleEvents.length - 3} more` : ''}
+              .
             </p>
           </>
         )}
@@ -449,7 +450,10 @@ function GuestDrawerDetails({
         {visibilityPreview.warnings.length > 0 && (
           <div className="space-y-1">
             {visibilityPreview.warnings.map((warning) => (
-              <p key={warning} className="text-xs text-text-tertiary">• {warning}</p>
+              <p key={warning} className="text-xs text-text-tertiary">
+                <span aria-hidden="true">• </span>
+                <span>{warning}</span>
+              </p>
             ))}
           </div>
         )}

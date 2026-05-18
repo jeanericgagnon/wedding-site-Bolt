@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { MessageCampaignThreadPanels, MessageHistoryCard, MessageHistorySummaryPanels, MessageReachSnapshotCard, MessageReviewQueuePanels } from './MessageDashboardComponents';
+import { MessageCampaignThreadPanels, MessageComposerCard, MessageHistoryCard, MessageHistorySummaryPanels, MessageReachSnapshotCard, MessageReviewQueuePanels, type ComposerFormState } from '../../../components/dashboard/messages/MessageDashboardComponents';
 
 describe('MessageCampaignThreadPanels', () => {
   it('shows engagement readback on recent campaign rollups when it exists', () => {
@@ -1014,6 +1015,72 @@ describe('MessageReviewQueuePanels', () => {
 
     expect(onRetry).not.toHaveBeenCalled();
     expect(onViewMessage).toHaveBeenCalledWith(expect.objectContaining({ id: 'review-2' }));
+  });
+});
+
+describe('MessageComposerCard', () => {
+  it('preserves a freshly typed subject when the body is updated immediately after it', () => {
+    function Harness() {
+      const [formData, setFormData] = React.useState<ComposerFormState>({
+        audience: 'all',
+        body: 'Initial body',
+        campaignName: '',
+        channel: 'email' as const,
+        scheduleDate: '',
+        scheduleTime: '',
+        scheduleType: 'now',
+        subject: 'Initial subject',
+        templateKey: 'event-reminder' as const,
+      });
+
+      return (
+        <MessageComposerCard
+          activeRecipients={12}
+          applyComposerTemplate={vi.fn()}
+          audienceOptions={[{ value: 'all', label: 'All guests', count: 12 }]}
+          audienceReachability={{ missingEmail: 0, missingPhone: 0, total: 12 }}
+          buyingPack={null}
+          canCompose
+          emailCapacityAfterSend={100}
+          emailCapacityEnough
+          formData={formData}
+          languagePreviews={[]}
+          onBuySmsPack={vi.fn()}
+          onSaveCurrentComposerAsTemplate={vi.fn()}
+          onSetFormData={setFormData}
+          onSubmit={vi.fn()}
+          onSubmitDraft={vi.fn()}
+          onToggleRecipientPreview={vi.fn()}
+          previewRecipients={[]}
+          recipientsWithEmail={12}
+          recipientsWithSmsConsent={0}
+          remainingEmailRecipients={112}
+          selectedAudienceCount={12}
+          selectedAudienceDetail="All guests"
+          selectedScheduleIsPast={false}
+          selectedTemplateDetail="Useful reminder for a specific event or group."
+          sending={false}
+          showRecipientPreview={false}
+          smsCredits={0}
+          smsCreditsNeeded={0}
+          smsCreditsSufficient
+          smsProviderEnabled={false}
+          smsSegmentCount={0}
+          unreachableRecipients={0}
+        />
+      );
+    }
+
+    render(<Harness />);
+
+    const subjectInput = screen.getByPlaceholderText('For example: Wedding day reminder');
+    const bodyInput = screen.getByPlaceholderText('Write your message here');
+
+    fireEvent.change(subjectInput, { target: { value: 'Fresh live subject' } });
+    fireEvent.change(bodyInput, { target: { value: 'Fresh live body' } });
+
+    expect(subjectInput).toHaveValue('Fresh live subject');
+    expect(bodyInput).toHaveValue('Fresh live body');
   });
 });
 

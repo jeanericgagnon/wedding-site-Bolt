@@ -259,7 +259,9 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
           ? `Guests can tell whether this hub link is public, invite-only, or guest-specific, plus which actions are ready from it: ${summarizeDayOfActions(input.enabledActionIds)}. ${readyCoreActionIds.length === coreDayOfActionIds.length ? `All core day-of coverage from this link is ready: ${summarizeDayOfActions(readyCoreActionIds)}.` : readyCoreActionIds.length > 0 ? `Core day-of coverage from this link is ${coreCoverageRate}% ready (${readyCoreActionIds.length} of ${coreDayOfActionIds.length}). Main gap: ${missingCoreActionLabels[0]}. Still missing: ${missingCoreActionLabels.join(', ')}.` : 'Core day-of coverage is still missing from this link. Main gap: RSVP.'}`
           : 'Guests can tell whether this hub link is public, invite-only, or guest-specific before they rely on it.'
         : 'Guests still need to infer whether this hub link is public or private.',
-      state: input.privateEventVisibilityConnected ? 'ready' : 'planned',
+      state: input.privateEventVisibilityConnected && readyCoreActionIds.length === coreDayOfActionIds.length
+        ? 'ready'
+        : 'planned',
     },
   ];
 
@@ -267,8 +269,8 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
   const plannedCount = items.filter((item) => item.state === 'planned').length;
   const needsContentCount = items.filter((item) => item.state === 'needs-content').length;
   const status = plannedCount === 0 && needsContentCount === 0 ? 'ready' : 'planned';
-  const firstBlockingItem = items.find((item) => item.state === 'needs-content')
-    ?? items.find((item) => item.state === 'planned')
+  const firstBlockingItem = items.find((item) => item.state === 'planned')
+    ?? items.find((item) => item.state === 'needs-content')
     ?? null;
   const unlockedActionSummary = input.privateEventVisibilityConnected
     ? buildUnlockedActionSummary(input.enabledActionIds.length)
@@ -283,8 +285,8 @@ export function buildDayOfHubStatusBoard(input: DayOfHubStatusInput): DayOfHubSt
   return {
     status,
     summary: status === 'ready'
-      ? `Guest hub status is connected for live day-of use.${unlockedActionSummary ? ` ${unlockedActionSummary}` : ''}${coreCoverageSummary ? ` ${coreCoverageSummary}` : ''}`
-      : `${readyCount} day-of status item${readyCount === 1 ? '' : 's'} are usable now; ${plannedCount + needsContentCount} stay planned or need setup.${unlockedActionSummary ? ` ${unlockedActionSummary}` : ''}${coreCoverageSummary ? ` ${coreCoverageSummary}` : ''}${missingCoreActionSummary ? ` ${missingCoreActionSummary}` : ''}${firstBlockingItem ? ` First blocker: ${firstBlockingItem.label}.` : ''}`,
+      ? `Guest hub status is connected for live day-of use.${unlockedActionSummary ? ` ${unlockedActionSummary}` : ''}${coreCoverageSummary ? ` ${coreCoverageSummary}` : ''}${missingCoreActionSummary ? ` ${missingCoreActionSummary}` : ''}`
+      : `${readyCount} day-of status item${readyCount === 1 ? ' is' : 's are'} usable now; ${plannedCount + needsContentCount} stay planned or need setup.${unlockedActionSummary ? ` ${unlockedActionSummary}` : ''}${coreCoverageSummary ? ` ${coreCoverageSummary}` : ''}${missingCoreActionSummary ? ` ${missingCoreActionSummary}` : ''}${firstBlockingItem ? ` First blocker: ${firstBlockingItem.label}.` : ''}`,
     readyCount,
     plannedCount: plannedCount + needsContentCount,
     items,

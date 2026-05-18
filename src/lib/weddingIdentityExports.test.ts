@@ -138,7 +138,7 @@ describe('weddingIdentityExports', () => {
     expect(graphic?.svg).toContain('<svg');
     expect(graphic?.svg).toContain('M · L');
     expect(graphic?.svg).toContain('https://maya-leo.dayof.love');
-    expect(graphic?.svg).toContain('data:image/svg+xml');
+    expect(graphic?.svg).toContain('aria-label="QR code"');
     expect(graphic?.svg).not.toMatch(/token|invite_token|guest_access/i);
   });
 

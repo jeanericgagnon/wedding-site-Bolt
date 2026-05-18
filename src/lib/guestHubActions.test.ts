@@ -88,10 +88,10 @@ describe('guestHubActions', () => {
   });
 
   it('summarizes enabled actions for owner QR confidence copy', () => {
-    expect(summarizeGuestHubActions(buildGuestHubActions('maya-and-leo', { photos_enabled: false }).slice(0, 3))).toBe('RSVP, schedule, and travel');
-    expect(summarizeGuestHubActions([{ id: 'updates' }])).toBe('day-of updates');
-    expect(summarizeGuestHubActions(buildGuestHubActions('maya-and-leo', {}, { guestContactHref: '/guest-contact/maya-and-leo' }).slice(0, 2))).toBe('RSVP and guest update');
-    expect(summarizeGuestHubActions([{ id: 'vault' }])).toBe('anniversary vault');
-    expect(summarizeGuestHubActions([])).toBe('No guest actions are enabled yet');
+    expect(summarizeGuestHubActions(buildGuestHubActions('maya-and-leo', { photos_enabled: false }).slice(0, 3))).toBe('RSVP, schedule, and travel details');
+    expect(summarizeGuestHubActions([{ id: 'updates' }])).toBe('latest updates');
+    expect(summarizeGuestHubActions(buildGuestHubActions('maya-and-leo', {}, { guestContactHref: '/guest-contact/maya-and-leo' }).slice(0, 2))).toBe('RSVP and contact update');
+    expect(summarizeGuestHubActions([{ id: 'vault' }])).toBe('vault gift');
+    expect(summarizeGuestHubActions([])).toBe('No guest actions are ready from this link yet');
   });
 });

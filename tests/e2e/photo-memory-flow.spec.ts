@@ -141,10 +141,10 @@ test('demo photo memory flow proves slideshow, export, and recap readback contin
   await expect(slideshowDialog.getByText('aisle-smile.jpg', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Close' }).click();
 
-  await expect(page.getByText('3 story picks')).toBeVisible();
+  await expect(page.getByText('3 story picks', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Add to story' }).first().click();
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await expect(page.getByText('4 story picks')).toBeVisible();
+  await expect(page.getByText('4 story picks', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Remove from story' }).first()).toBeVisible();
 
   const moderatedUploadedClipRow = page.getByRole('listitem').filter({ hasText: 'welcome-toast.mp4' }).filter({ hasText: 'Taylor Guest' }).first();

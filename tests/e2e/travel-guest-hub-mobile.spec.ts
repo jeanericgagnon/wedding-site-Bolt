@@ -18,7 +18,7 @@ test('mobile guest travel hub keeps invite-scoped travel guidance and follow-on 
   await page.goto(hubPath, { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByRole('heading', { name: /Everything guests need in one place\./i })).toBeVisible();
-  await expect(page.getByText('Travel quick plan')).toBeVisible();
+  await expect(page.getByText(/Travel (plan|path) from this link/i)).toBeVisible();
   await expect(page.locator('body')).not.toContainText('token-c-2');
   await expectNoMeaningfulHorizontalOverflow(page);
 

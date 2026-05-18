@@ -140,8 +140,9 @@ test('public vault contribution saves a hosted photo attachment and owner-scoped
 
     await page.goto('/dashboard/vault?bypassPayment=1&vaultOwnerQa=' + runId, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Vaults' })).toBeVisible();
-    await expect(page.getByText('Private notes and memories for later.')).toBeVisible();
-    await expect(page.getByText(/maya-and-leo\.dayof\.love/i)).toBeVisible();
+    await expect(page.getByText(/Private keepsakes/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Memory Vaults/i })).toBeVisible();
+    await expect(page.getByText(/Seal notes, photos, and messages until future anniversaries\./i)).toBeVisible();
 
     await restFetch(restUrl('vault_entries', { title: `eq.${title}` }), { method: 'DELETE' });
     const afterDeleteResponse = await restFetch(restUrl('vault_entries', {

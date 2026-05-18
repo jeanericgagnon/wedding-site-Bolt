@@ -1,27 +1,11 @@
 #!/usr/bin/env node
 
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
+import { resolvePreviewRuntime, stopPreviewRuntime } from './proofPreviewRuntime.mjs';
 
-const PREVIEW_URL = 'http://127.0.0.1:4175';
-const baseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function waitForPreview(url, timeoutMs = 20_000) {
-  const startedAt = Date.now();
-  while (Date.now() - startedAt < timeoutMs) {
-    try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
-      if (response.ok) return;
-    } catch {
-      // keep waiting
-    }
-    await sleep(500);
-  }
-  throw new Error(`Preview server did not become ready at ${url} within ${timeoutMs}ms`);
-}
+const PREVIEW_PORT = 4175;
+const PREVIEW_URL = `http://127.0.0.1:${PREVIEW_PORT}`;
+let baseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
 
 function runStep(step) {
   const startedAt = new Date().toISOString();
@@ -80,20 +64,15 @@ let previewStdout = '';
 let previewStderr = '';
 try {
   if (baseUrl === PREVIEW_URL) {
-    previewProcess = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', '4175'], {
+    const previewRuntime = await resolvePreviewRuntime({
+      preferredPort: PREVIEW_PORT,
+      requestedBaseUrl: baseUrl,
       cwd: process.cwd(),
-      env: process.env,
-      stdio: ['ignore', 'pipe', 'pipe'],
     });
-
-    previewProcess.stdout.on('data', (chunk) => {
-      previewStdout += chunk.toString('utf8');
-    });
-    previewProcess.stderr.on('data', (chunk) => {
-      previewStderr += chunk.toString('utf8');
-    });
-
-    await waitForPreview(PREVIEW_URL);
+    baseUrl = previewRuntime.baseUrl;
+    previewProcess = previewRuntime.previewProcess;
+    previewStdout = previewRuntime.previewStdout;
+    previewStderr = previewRuntime.previewStderr;
   }
 
   results.push(runStep({
@@ -127,11 +106,7 @@ try {
     stderr: [previewStderr.trim(), error instanceof Error ? error.message : 'Wedding identity preview server failed to start.'].filter(Boolean).join('\n'),
   });
 } finally {
-  if (previewProcess) {
-    previewProcess.kill('SIGTERM');
-    await sleep(300);
-    if (!previewProcess.killed) previewProcess.kill('SIGKILL');
-  }
+  await stopPreviewRuntime(previewProcess);
 }
 
 const failedRequired = results.filter((result) => result.required && !result.ok);

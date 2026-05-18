@@ -1,5 +1,5 @@
 import { buildQrImageUrl, buildTrackedPublicQrPayloadUrl, isSafePublicQrAssetUrl } from './guestHubQrAssets';
-import { buildLocalQrSvgDataUrl } from './qr/localQrImage';
+import { buildLocalQrSvgShape } from './qr/localQrImage';
 
 export type WeddingIdentityExportId =
   | 'public-qr-card'
@@ -388,8 +388,9 @@ export function buildWeddingIdentityStoryGraphic(input: WeddingIdentityExportKit
   const monogramFontSize = fitSvgFontSize(monogram, { max: 128, min: 96, threshold: 5, step: 2 });
   const coupleFontSize = fitSvgFontSize(coupleNames, { max: 56, min: 38, threshold: 18, step: 4 });
   const venueFontSize = fitSvgFontSize(venueName, { max: 34, min: 24, threshold: 26, step: 6 });
-  const qrUrl = buildLocalQrSvgDataUrl(buildTrackedPublicQrPayloadUrl(publicSiteUrl) || publicSiteUrl, 420);
-  if (!qrUrl) return null;
+  const qrShape = buildLocalQrSvgShape(buildTrackedPublicQrPayloadUrl(publicSiteUrl) || publicSiteUrl, 192);
+  if (!qrShape) return null;
+  const storyQrScale = 420 / qrShape.width;
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="1080" height="1920" viewBox="0 0 1080 1920" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -402,7 +403,10 @@ export function buildWeddingIdentityStoryGraphic(input: WeddingIdentityExportKit
   <text x="540" y="748" text-anchor="middle" fill="${palette.foreground}" font-family="Georgia, 'Times New Roman', serif" font-size="54">${escapeXml(dateLabel)}</text>
   <text x="540" y="812" text-anchor="middle" fill="${palette.foreground}" font-family="Arial, sans-serif" font-size="${venueFontSize}">${escapeXml(venueName)}</text>
   <rect x="300" y="892" width="480" height="480" rx="24" fill="#ffffff"/>
-  <image x="330" y="922" width="420" height="420" href="${escapeXml(qrUrl)}"/>
+  <g transform="translate(330 922) scale(${storyQrScale})" aria-label="QR code">
+    <rect width="${qrShape.width}" height="${qrShape.height}" fill="#fff"/>
+    <path d="${qrShape.path}" fill="#111"/>
+  </g>
   <text x="540" y="1470" text-anchor="middle" fill="${palette.foreground}" font-family="Arial, sans-serif" font-size="36">Scan for RSVP, schedule, registry, travel, and photo sharing.</text>
   <text x="540" y="1562" text-anchor="middle" fill="${palette.accent}" font-family="Arial, sans-serif" font-size="26">${escapeXml(publicSiteUrl)}</text>
 </svg>`;
@@ -501,13 +505,16 @@ export function renderWeddingIdentityPrintSvg(assets: WeddingIdentityPrintAsset[
   const height = padding * 2 + rows * cardHeight + (rows - 1) * gap;
 
   const cards = safeAssets.map((asset, index) => {
-    const qrUrl = buildLocalQrSvgDataUrl(asset.url, 420);
+    const qrShape = buildLocalQrSvgShape(asset.url, 192);
+    if (!qrShape) return '';
     const instructionLines = wrapSvgTextLines(asset.instruction, 34);
     const urlLines = wrapSvgTextLines(asset.url, 58);
     const column = index % columns;
     const row = Math.floor(index / columns);
     const x = padding + column * (cardWidth + gap);
     const y = padding + row * (cardHeight + gap);
+
+    const printQrScale = 216 / qrShape.width;
 
     return `
   <g transform="translate(${x} ${y})">
@@ -516,7 +523,10 @@ export function renderWeddingIdentityPrintSvg(assets: WeddingIdentityPrintAsset[
     <text x="64" y="160" fill="#2d241d" font-family="Georgia, 'Times New Roman', serif" font-size="64">${escapeXml(asset.title)}</text>
     <text x="64" y="220" fill="#695540" font-family="Arial, sans-serif" font-size="28">${escapeXml(asset.subtitle)}</text>
     <rect x="648" y="108" width="300" height="300" rx="20" fill="#ffffff" stroke="#eadfd2" stroke-width="4"/>
-    <image x="690" y="150" width="216" height="216" href="${escapeXml(qrUrl)}"/>
+    <g transform="translate(690 150) scale(${printQrScale})" aria-label="QR code">
+      <rect width="${qrShape.width}" height="${qrShape.height}" fill="#fff"/>
+      <path d="${qrShape.path}" fill="#111"/>
+    </g>
     <text x="64" y="340" fill="#403328" font-family="Arial, sans-serif" font-size="28" font-weight="700">
       ${instructionLines.map((line, lineIndex) => `<tspan x="64" dy="${lineIndex === 0 ? 0 : 38}">${escapeXml(line)}</tspan>`).join('')}
     </text>

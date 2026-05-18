@@ -46,7 +46,7 @@ test('public vendor inquiry form is labeled, submittable, and announced', async 
 
   const name = page.getByLabel('Your name');
   const email = page.getByLabel('Email');
-  const message = page.getByLabel('What are you looking for?');
+  const message = page.getByLabel('What do you need from this vendor?');
   await expect(name).toHaveAttribute('id', 'vendor-inquiry-name');
   await expect(email).toHaveAttribute('id', 'vendor-inquiry-email');
   await expect(message).toHaveAttribute('id', 'vendor-inquiry-message');
@@ -62,6 +62,9 @@ test('public vendor inquiry form is labeled, submittable, and announced', async 
       vendor_profile_id: 'vendor-profile-ui-proof',
       name: 'Jordan QA',
       email: 'jordan.qa@example.com',
+      wedding_date: '',
+      venue_name: '',
+      venue_location: '',
       message: 'We would love to ask about June availability.',
     },
   ]);

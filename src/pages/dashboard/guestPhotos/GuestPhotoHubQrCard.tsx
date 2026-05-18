@@ -61,7 +61,7 @@ export function GuestPhotoHubQrCard({
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => onCopyText(guestHubUrl, 'guest-hub')} disabled={publicShareDisabled}>
-              <Copy className="w-4 h-4 mr-2" /> {copied === 'guest-hub' ? 'Copied' : 'Copy hub link'}
+              <Copy className="w-4 h-4 mr-2" /> {copied === 'guest-hub' ? 'Copied guest hub link' : 'Copy guest hub link'}
             </Button>
             <Button variant="outline" onClick={() => onOpenAppUrl(guestHubUrl)} disabled={publicShareDisabled}>
               <ExternalLink className="w-4 h-4 mr-2" /> Open hub
@@ -75,7 +75,7 @@ export function GuestPhotoHubQrCard({
             {guestRecapUrl && (
               <>
                 <Button variant="outline" onClick={() => onCopyText(guestRecapUrl, 'guest-recap')} disabled={publicShareDisabled}>
-                  <Sparkles className="w-4 h-4 mr-2" /> {copied === 'guest-recap' ? 'Copied' : 'Copy recap'}
+                  <Sparkles className="w-4 h-4 mr-2" /> {copied === 'guest-recap' ? 'Copied guest recap link' : 'Copy guest recap link'}
                 </Button>
                 <Button variant="outline" onClick={() => onOpenAppUrl(guestRecapUrl)} disabled={publicShareDisabled}>
                   <ExternalLink className="w-4 h-4 mr-2" /> Open recap
@@ -89,7 +89,10 @@ export function GuestPhotoHubQrCard({
             title="Guest hub QR"
             description={publicShareDisabled ? 'Publish the site before sharing this guest hub QR.' : `One QR for ${guestHubActionSummary}.`}
             url={guestHubUrl}
-            copyLabel="Copy hub link"
+            copyLabel="Copy guest hub QR link"
+            copiedLabel="Copied guest hub QR link"
+            openLabel="Open guest hub QR"
+            downloadLabel="Download guest hub QR"
             disabled={publicShareDisabled}
           />
           {guestRecapUrl && (
@@ -97,7 +100,10 @@ export function GuestPhotoHubQrCard({
               title="Photo recap QR"
               description={publicShareDisabled ? 'Publish the site before sharing this recap QR.' : 'Share highlight moments, memory chapters, and opt-in capture after the event.'}
               url={guestRecapUrl}
-              copyLabel="Copy recap link"
+              copyLabel="Copy guest recap QR link"
+              copiedLabel="Copied guest recap QR link"
+              openLabel="Open guest recap QR"
+              downloadLabel="Download guest recap QR"
               disabled={publicShareDisabled}
             />
           )}

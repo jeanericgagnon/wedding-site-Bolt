@@ -142,7 +142,7 @@ test('invited signed-in teammate can claim a collaborator invite', async ({ page
     hadExistingCollaboratorRow = ((await preExistingResponse.json()) as unknown[]).length > 0;
 
     await page.goto(`/accept-collaborator-invite?token=${invite.invite_token}`, { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: /Join this wedding team|Overview/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Join this wedding|Overview/ })).toBeVisible();
     await expect(page).toHaveURL(/\/dashboard\/overview/, { timeout: 30_000 });
 
     const acceptedResponse = await restFetch(restUrl('wedding_site_collaborator_invites', {

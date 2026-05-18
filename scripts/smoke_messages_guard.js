@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 const routeSource = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/Messages.tsx'), 'utf8');
 const deliveryActionsSource = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/messages/useMessageDeliveryActions.ts'), 'utf8');
 const historyActionsSource = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/messages/useMessageComposerHistoryActions.ts'), 'utf8');
-const viewComponentsSource = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/messages/MessageDashboardComponents.tsx'), 'utf8');
+const viewComponentsSource = readFileSync(resolve(process.cwd(), 'src/components/dashboard/messages/MessageDashboardComponents.tsx'), 'utf8');
 
 const checks = [
   { name: 'compose permission helper imported', ok: routeSource.includes('canComposeDashboardMessages') },

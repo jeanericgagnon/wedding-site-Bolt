@@ -135,7 +135,7 @@ describe('SettingsIdentityExportsPanel', () => {
     );
 
     expect(screen.queryByText(/Publish the site before saving QR-based print assets/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/Set the venue name before finalizing print signage copy\./i)).toBeInTheDocument();
+    expect(screen.getByText(/Add a venue name\./i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /save print pack/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /save story graphic/i })).toBeDisabled();
   });

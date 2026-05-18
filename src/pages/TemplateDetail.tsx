@@ -9,7 +9,7 @@ import { selectSetupDraftTemplate } from '../lib/setupDraft';
 export const TemplateDetail: React.FC = () => {
   const { templateId } = useParams();
   const navigate = useNavigate();
-  const { internalToolingRoutesEnabled } = useInternalToolingRouteAccess();
+  const { internalToolingCaptureRoutesEnabled } = useInternalToolingRouteAccess();
 
   const tpl = templateCatalog.find((t) => t.id === templateId);
 
@@ -65,7 +65,7 @@ export const TemplateDetail: React.FC = () => {
             <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 md:col-span-2">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <p className="text-xs font-semibold text-neutral-500">Populated website preview</p>
-                {internalToolingRoutesEnabled ? (
+                {internalToolingCaptureRoutesEnabled ? (
                   <Link
                     to={`/template-scroll-capture?templateId=${tpl.id}`}
                     className="rounded border border-neutral-300 bg-white px-2 py-1 text-[11px] text-neutral-700 hover:bg-neutral-100"
@@ -75,7 +75,7 @@ export const TemplateDetail: React.FC = () => {
                 ) : null}
               </div>
               <div className="rounded border border-neutral-200 bg-white overflow-hidden">
-                {internalToolingRoutesEnabled ? (
+                {internalToolingCaptureRoutesEnabled ? (
                   <iframe
                     title={`${tpl.name} live preview`}
                     src={`/template-scroll-capture?templateId=${tpl.id}`}

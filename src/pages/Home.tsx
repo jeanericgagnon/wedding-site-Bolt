@@ -2,13 +2,13 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
-  Archive,
-  Camera,
   Calendar,
+  Camera,
   CheckCircle2,
   Heart,
   Mail,
   Radio,
+  Shield,
   Users,
 } from 'lucide-react';
 import { Footer, Header } from '../components/layout';
@@ -19,104 +19,107 @@ import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 
 const asset = (name: string) => `${import.meta.env.BASE_URL}landing/${name}`;
 
-const featureCards = [
-  {
-    id: 'site',
-    eyebrow: 'Details',
-    title: 'Website, travel details, itinerary, and registry links stay connected.',
-    body: 'The wedding site is the front door, but it should stay useful after publish instead of becoming a dead page with a pretty URL.',
-    image: asset('product-prototype.png'),
-    imageAlt: 'dayof product preview',
-    bullets: ['Wedding site', 'Travel details', 'Multi-event itinerary', 'Registry links that stay on brand'],
-    hrefs: {
-      signedOut: '/product',
-      signedIn: '/dashboard/builder',
-    },
-  },
-  {
-    id: 'guests',
-    eyebrow: 'People',
-    title: 'Guest management, RSVP, messaging, seating, and coordinator tools work as one system.',
-    body: 'Guest records should not splinter into spreadsheets, inbox threads, and day-of panic. dayof keeps the same people connected all the way through the event.',
-    image: asset('wedding-detail-1.png'),
-    imageAlt: 'Guest flow detail preview',
-    bullets: ['Households and plus-ones', 'RSVP status and meal choices', 'Messaging and reminders', 'Seating and day-of check-in'],
-    hrefs: {
-      signedOut: '/features/guests',
-      signedIn: '/dashboard/guests',
-    },
-  },
-  {
-    id: 'memories',
-    eyebrow: 'After',
-    title: 'Photo sharing, the vault, and name-change planning make the platform useful after the wedding too.',
-    body: 'The wedding weekend is not the only moment that matters. Guests can upload photos simply, and couples keep a calmer post-wedding place to wrap things up.',
-    image: asset('wedding-detail-2.png'),
-    imageAlt: 'Post-wedding memories preview',
-    bullets: ['Guest photo uploads', 'Wedding Vault keepsakes', 'Name-change planning support', 'Archive-friendly post-wedding flow'],
-    hrefs: {
-      signedOut: '/product',
-      signedIn: '/dashboard/planning',
-    },
-  },
+const heroStats = [
+  ['Site', 'Templates, travel, registry, and RSVP in one public home.'],
+  ['Guests', 'Households, messages, meals, seating, and check-in stay connected.'],
+  ['After', 'Photos, guestbook, vault, recap, and name-change follow-through.'],
 ] as const;
 
-const templateCards = [
-  { name: 'Garden', image: asset('template-site-1.png') },
-  { name: 'Modern', image: asset('template-site-2.png') },
-  { name: 'Classic', image: asset('template-site-3.png') },
-  { name: 'Elegant', image: asset('template-site-4.png') },
+const operatingSystemRows = [
+  {
+    title: 'The wedding site is the front door',
+    body: 'Guests get a beautiful place for the details, not a dead page that stops helping after publish.',
+    image: asset('template-site-2.png'),
+    imageAlt: 'Modern wedding website template preview',
+    hrefs: { signedOut: '/templates', signedIn: '/dashboard/builder' },
+  },
+  {
+    title: 'The guest list becomes the source of truth',
+    body: 'RSVPs, households, meal notes, reminders, and seating all stay attached to the same people.',
+    image: asset('product-prototype.png'),
+    imageAlt: 'dayof product dashboard preview',
+    hrefs: { signedOut: '/features/guests', signedIn: '/dashboard/guests' },
+  },
+  {
+    title: 'The day-of handoff is part of the product',
+    body: 'Coordinator context, photo collection, updates, and after-wedding tasks do not fall into a separate pile.',
+    image: asset('wedding-detail-2.png'),
+    imageAlt: 'Wedding memory and planning detail',
+    hrefs: { signedOut: '/product', signedIn: '/dashboard/coordinator' },
+  },
 ] as const;
 
 const featureLinks = [
   {
-    title: 'Guests + Households',
+    title: 'Guests + households',
     icon: Users,
-    bullets: ['Household grouping', 'Plus-one rules', 'Guest imports', 'Role-safe exports'],
+    bullets: ['Imports', 'Households', 'Plus-one rules', 'Planner-safe exports'],
     hrefs: { signedOut: '/features/guests', signedIn: '/dashboard/guests' },
   },
   {
-    title: 'RSVP Engine',
+    title: 'RSVP engine',
     icon: CheckCircle2,
-    bullets: ['Multi-event RSVP', 'Meal choices', 'Deadline handling', 'Response tracking'],
+    bullets: ['Private links', 'Event-level replies', 'Meal choices', 'Deadline clarity'],
     hrefs: { signedOut: '/features/rsvp', signedIn: '/dashboard/rsvp-board' },
   },
   {
     title: 'Messaging',
     icon: Mail,
-    bullets: ['Email updates', 'Schedule sends', 'Segment guests', SITE_TRUST_COPY.reviewBeforeSendMessaging],
+    bullets: ['Guest segments', 'Drafts', 'Scheduled updates', SITE_TRUST_COPY.reviewBeforeSendMessaging],
     hrefs: { signedOut: '/features/messaging', signedIn: '/dashboard/messages' },
   },
   {
-    title: 'Planner Collaboration',
+    title: 'Travel + itinerary',
     icon: Calendar,
-    bullets: ['Couple-led planner access', 'Shared planning context', 'Role-aware tools', 'Clean handoff'],
-    hrefs: { signedOut: '/product', signedIn: '/dashboard/planning' },
-  },
-  {
-    title: 'Day-of Coordination',
-    icon: Radio,
-    bullets: ['Guest lookup', 'Door check-in', 'Timeline context', 'Issue routing'],
-    hrefs: { signedOut: '/product', signedIn: '/dashboard/coordinator' },
-  },
-  {
-    title: 'Travel + Itinerary',
-    icon: Calendar,
-    bullets: ['Hotel blocks', 'Venue details', 'Weekend schedule', 'Guest-friendly directions'],
+    bullets: ['Weekend schedule', 'Travel notes', 'Venue details', 'Guest-safe directions'],
     hrefs: { signedOut: '/features/travel', signedIn: '/dashboard/itinerary' },
   },
   {
     title: 'Registry',
     icon: Heart,
-    bullets: ['Registry links', 'Cash funds', 'Clean gift surfaces', 'No marketplace clutter'],
+    bullets: ['Gift links', 'Funds', 'Thank-you notes', 'Clean public view'],
     hrefs: { signedOut: '/features/registry', signedIn: '/dashboard/registry' },
   },
   {
     title: 'Seating',
     icon: Users,
-    bullets: ['Drag-and-drop seating', 'Per-event layouts', 'Exports', 'Day-of lookup'],
+    bullets: ['Per-event layouts', 'Seat lookup', 'Catering exports', 'Check-in context'],
     hrefs: { signedOut: '/features/seating', signedIn: '/dashboard/seating' },
   },
+  {
+    title: 'Photo flow',
+    icon: Camera,
+    bullets: ['No-app uploads', 'Guestbook', 'Recap path', 'Album organization'],
+    hrefs: { signedOut: '/product', signedIn: '/dashboard/photos' },
+  },
+  {
+    title: 'Day-of view',
+    icon: Radio,
+    bullets: ['Coordinator mode', 'Guest lookup', 'Timeline focus', 'Issue follow-up'],
+    hrefs: { signedOut: '/product', signedIn: '/dashboard/coordinator' },
+  },
+] as const;
+
+const guestSteps = [
+  ['Open one wedding link', 'No app or account required for the public guest path.'],
+  ['Reply and update details', 'RSVP, meal notes, contact changes, and event visibility stay grounded in the same guest record.'],
+  ['Use it during the weekend', 'Travel, schedule, photo upload, and latest updates remain easy to find from a phone.'],
+  ['Come back after', 'Guestbook notes, photo recap, and vault moments keep the wedding from disappearing into old texts.'],
+] as const;
+
+const templateCards = [
+  { name: 'Garden weekend', image: asset('template-site-1.png') },
+  { name: 'Modern celebration', image: asset('template-site-2.png') },
+  { name: 'Classic estate', image: asset('template-site-3.png') },
+  { name: 'Evening reception', image: asset('template-site-4.png') },
+] as const;
+
+const trustPoints = [
+  'Private editing before sharing.',
+  'Guest access truth stays visible.',
+  'Texts stay locked until sender setup is connected.',
+  'Messages stay editable before send.',
+  'Auto-renew stays off by default.',
 ] as const;
 
 export const Home: React.FC = () => {
@@ -136,14 +139,14 @@ export const Home: React.FC = () => {
   const handleDemoLogin = async () => {
     if (demoLoading) return;
     if (user) {
-      navigate('/dashboard');
+      navigate('/dashboard/overview');
       return;
     }
 
     setDemoLoading(true);
     try {
       await signIn();
-      navigate('/dashboard');
+      navigate('/dashboard/overview');
     } catch {
       toast('Couldn’t open the demo right now. Please try again.', 'error');
       setDemoLoading(false);
@@ -157,30 +160,26 @@ export const Home: React.FC = () => {
       <Header />
 
       <main id="top">
-        <section className="relative overflow-hidden border-b border-border-subtle bg-paper">
-          <div className="absolute inset-0">
-            <img
-              src={asset('wedding-hero.png')}
-              alt=""
-              className="h-full w-full object-cover opacity-20"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-paper/95 via-paper/80 to-paper" />
-          </div>
-          <div className="container-custom relative grid min-h-[calc(78vh-64px)] items-end gap-10 py-16 md:min-h-[calc(82vh-64px)] md:py-24">
-            <div className="max-w-5xl">
+        <section className="relative min-h-[calc(74vh-64px)] overflow-hidden bg-ink text-white">
+          <img
+            src={asset('proposal.jpeg')}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black opacity-60" />
+          <div className="container-custom relative flex min-h-[calc(74vh-64px)] flex-col justify-center pb-8 pt-20 md:pb-10 md:pt-24">
+            <div className="max-w-4xl">
               <HeroReveal>
-                <p className="mb-4 text-sm font-medium uppercase tracking-[0.16em] text-brand/80">
-                  Wedding websites, guest tools, and post-wedding follow-through
-                </p>
+                <p className="text-sm font-medium text-white opacity-80">dayof</p>
               </HeroReveal>
               <HeroReveal delay={0.08}>
-                <h1 className="max-w-6xl text-[2.75rem] font-light leading-[0.95] text-ink md:text-[5.5rem]">
-                  Your wedding is one of the biggest moments of your life. The experience around it should feel intentional too.
+                <h1 className="mt-4 max-w-4xl text-[2.75rem] font-semibold leading-[1] text-white md:text-[5rem]">
+                  A calmer wedding operating system.
                 </h1>
               </HeroReveal>
               <HeroReveal delay={0.16}>
-                <p className="mt-6 max-w-3xl text-[1.08rem] leading-relaxed text-ink/72 md:text-[1.35rem]">
-                  dayof gives couples a beautiful wedding site, calmer guest operations, and thoughtful post-wedding tools without turning the whole experience into another platform to babysit.
+                <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white opacity-90 md:text-xl">
+                  Build the wedding site, manage the guest list, run RSVP and messages, collect photos, and hand the day-of details to the right people from one place.
                 </p>
               </HeroReveal>
               <HeroReveal delay={0.24}>
@@ -188,13 +187,13 @@ export const Home: React.FC = () => {
                   <button
                     onClick={handleSignUp}
                     aria-label={user ? 'Continue your wedding site' : 'Start your wedding site draft'}
-                    className="inline-flex min-h-[54px] items-center justify-center rounded-md bg-brand px-7 py-3.5 text-base font-semibold text-paper transition hover:bg-brand/90"
+                    className="inline-flex min-h-[54px] items-center justify-center rounded-md bg-white px-7 py-3.5 text-base font-semibold text-ink transition hover:bg-paper"
                   >
                     {user ? 'Continue your site' : 'Start your draft'}
                   </button>
                   <Link
                     to="/templates"
-                    className="inline-flex min-h-[54px] items-center justify-center gap-2 rounded-md border border-brand/25 bg-white/75 px-7 py-3.5 text-base font-semibold text-brand transition hover:bg-white"
+                    className="inline-flex min-h-[54px] items-center justify-center gap-2 rounded-md border border-white/35 bg-white/10 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-white/18"
                   >
                     View templates
                     <ArrowRight className="h-4 w-4" />
@@ -202,60 +201,73 @@ export const Home: React.FC = () => {
                   <button
                     onClick={handleDemoLogin}
                     disabled={demoLoading}
-                    className="inline-flex min-h-[54px] items-center justify-center rounded-md border border-border bg-paper/80 px-7 py-3.5 text-base font-semibold text-ink transition hover:bg-white disabled:cursor-wait disabled:opacity-60"
+                    className="inline-flex min-h-[54px] items-center justify-center rounded-md border border-white/25 bg-[#2d2d2d]/35 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-[#2d2d2d]/55 disabled:cursor-wait disabled:opacity-70"
                   >
                     {demoLoading ? 'Opening demo...' : 'View demo'}
                   </button>
                 </div>
               </HeroReveal>
-              <HeroReveal delay={0.32}>
-                <div className="mt-6 flex flex-wrap gap-3 text-sm text-ink/68">
-                  <span className="rounded-full border border-border bg-white/80 px-3 py-1.5">Beautiful for guests</span>
-                  <span className="rounded-full border border-border bg-white/80 px-3 py-1.5">Calm for couples</span>
-                  <span className="rounded-full border border-border bg-white/80 px-3 py-1.5">Planner and coordinator support when you need it</span>
-                </div>
-              </HeroReveal>
             </div>
+
+            <HeroReveal delay={0.32}>
+              <div className="mt-9 grid border-y border-white/24 md:grid-cols-3">
+                {heroStats.map(([label, body]) => (
+                  <div key={label} className="border-white/20 py-4 md:border-r md:px-5 md:last:border-r-0">
+                    <p className="text-sm font-semibold text-white">{label}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-white opacity-75">{body}</p>
+                  </div>
+                ))}
+              </div>
+            </HeroReveal>
           </div>
         </section>
 
-        <section className="section-shell bg-white">
-          <div className="container-custom">
-            <div className="section-intro">
+        <section id="why" className="border-b border-border-subtle bg-white py-12 md:py-16">
+          <div className="container-custom grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
+            <div>
               <Reveal>
-                <h2 className="section-title max-w-4xl mx-auto">
+                <p className="text-sm font-medium text-brand">Why this exists</p>
+                <h2 className="mt-3 max-w-3xl text-3xl font-semibold leading-tight text-ink md:text-5xl">
                   Most wedding websites stop at publish. dayof stays useful through the rest.
                 </h2>
               </Reveal>
-              <Reveal delay={0.08}>
-                <p className="section-subtitle">
-                  The website is usually the easy part. Then guests start replying, plans change, people lose links, and the post-wedding loose ends begin. The product should hold together across all of that.
-                </p>
-              </Reveal>
             </div>
-            <div className="grid gap-6 lg:grid-cols-3">
-              {featureCards.map((card, index) => (
-                <Reveal key={card.id} delay={0.08 * (index + 1)}>
-                  <article className="card-clean overflow-hidden">
-                    <div className="aspect-[4/3] overflow-hidden border-b border-border-subtle bg-paper">
-                      <img src={card.image} alt={card.imageAlt} className="h-full w-full object-cover" />
-                    </div>
-                    <div className="p-6">
-                      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-brand/80">{card.eyebrow}</p>
-                      <h3 className="text-xl font-serif font-bold text-ink">{card.title}</h3>
-                      <p className="mt-3 text-sm leading-relaxed text-ink/70">{card.body}</p>
-                      <ul className="mt-5 space-y-2 text-sm text-ink/75">
-                        {card.bullets.map((bullet) => (
-                          <li key={bullet} className="flex gap-2">
-                            <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
-                            <span>{bullet}</span>
-                          </li>
-                        ))}
-                      </ul>
+            <Reveal delay={0.08}>
+              <div className="max-w-2xl space-y-4 text-base leading-relaxed text-ink/72">
+                <p>
+                  Couples do not just need a beautiful page. They need guest answers, private links, message drafts, seating context, travel clarity, photo collection, and a way to keep helpers aligned without turning the wedding into a spreadsheet job.
+                </p>
+                <p>
+                  dayof keeps the public experience polished while the operational pieces stay close enough to actually help.
+                </p>
+              </div>
+            </Reveal>
+          </div>
+        </section>
+
+        <section className="bg-paper py-12 md:py-20">
+          <div className="container-custom">
+            <Reveal>
+              <div className="max-w-3xl">
+                <p className="text-sm font-medium text-brand">Product shape</p>
+                <h2 className="mt-3 text-3xl font-semibold leading-tight text-ink md:text-5xl">
+                  Site, guests, and day-of work in the same rhythm.
+                </h2>
+              </div>
+            </Reveal>
+
+            <div className="mt-9 grid gap-5 lg:grid-cols-3">
+              {operatingSystemRows.map((item, index) => (
+                <Reveal key={item.title} delay={0.08 * index}>
+                  <article className="overflow-hidden rounded-lg border border-border-subtle bg-white shadow-sm">
+                    <img src={item.image} alt={item.imageAlt} className="aspect-[4/3] w-full object-cover" />
+                    <div className="p-5">
+                      <h3 className="text-xl font-semibold text-ink">{item.title}</h3>
+                      <p className="mt-3 text-sm leading-relaxed text-ink/70">{item.body}</p>
                       <Link
-                        to={signedInFeatureHref(card.hrefs.signedOut, card.hrefs.signedIn)}
+                        to={signedInFeatureHref(item.hrefs.signedOut, item.hrefs.signedIn)}
                         aria-label="Explore this feature"
-                        className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand"
+                        className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-brand"
                       >
                         Explore this feature
                         <ArrowRight className="h-4 w-4" />
@@ -268,113 +280,121 @@ export const Home: React.FC = () => {
           </div>
         </section>
 
-        <section id="features" className="section-shell border-y border-border-subtle bg-paper">
+        <section id="features" className="border-y border-border-subtle bg-white py-12 md:py-20">
           <div className="container-custom">
-            <div className="section-intro">
+            <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
               <Reveal>
-                <h2 className="section-title">One place for the details, people, and memories that matter.</h2>
+                <div>
+                  <p className="text-sm font-medium text-brand">What it replaces</p>
+                  <h2 className="mt-3 text-3xl font-semibold leading-tight text-ink md:text-5xl">
+                    One place for the details, people, and memories that matter.
+                  </h2>
+                  <p className="mt-4 text-base leading-relaxed text-ink/72">
+                    Keep the couple-facing tools dense and useful while keeping the guest-facing path simple.
+                  </p>
+                </div>
               </Reveal>
-              <Reveal delay={0.08}>
-                <p className="section-subtitle">
-                  dayof brings together the tools couples actually need without burying the wedding in feature noise.
-                </p>
-              </Reveal>
-            </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {featureLinks.map((feature, index) => {
-                const Icon = feature.icon;
-                return (
-                  <Reveal key={feature.title} delay={0.04 * index}>
-                    <article className="card-elevated h-full p-5">
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-full bg-brand/10 p-2 text-brand">
-                          <Icon className="h-4 w-4" />
+              <div className="grid gap-4 sm:grid-cols-2">
+                {featureLinks.map((feature, index) => {
+                  const Icon = feature.icon;
+                  return (
+                    <Reveal key={feature.title} delay={0.03 * index}>
+                      <article className="rounded-lg border border-border-subtle bg-paper p-5">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white text-brand">
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <h3 className="text-base font-semibold text-ink">{feature.title}</h3>
                         </div>
-                        <h3 className="text-base font-semibold text-ink">{feature.title}</h3>
-                      </div>
-                      <ul className="mt-4 space-y-2 text-sm text-ink/72">
-                        {feature.bullets.map((bullet) => (
-                          <li key={bullet}>{bullet}</li>
-                        ))}
-                      </ul>
-                      <Link
-                        to={signedInFeatureHref(feature.hrefs.signedOut, feature.hrefs.signedIn)}
-                        aria-label="Explore this feature"
-                        className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-brand"
-                      >
-                        Explore this feature
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </article>
-                  </Reveal>
-                );
-              })}
+                        <ul className="mt-4 grid gap-2 text-sm text-ink/70">
+                          {feature.bullets.map((bullet) => (
+                            <li key={bullet} className="flex gap-2">
+                              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+                              <span>{bullet}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <Link
+                          to={signedInFeatureHref(feature.hrefs.signedOut, feature.hrefs.signedIn)}
+                          aria-label="Explore this feature"
+                          className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-brand"
+                        >
+                          Explore this feature
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </article>
+                    </Reveal>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="section-shell bg-white">
-          <div className="container-custom grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+        <section className="bg-[#f6f8f3] py-12 md:py-20">
+          <div className="container-custom grid gap-9 lg:grid-cols-[1fr_0.9fr] lg:items-center">
             <div>
               <Reveal>
-                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-brand/80">Guest experience</p>
-                <h2 className="section-title max-w-2xl">Designed to feel smoother for everyone involved.</h2>
+                <p className="text-sm font-medium text-brand">Guest experience</p>
+                <h2 className="mt-3 max-w-3xl text-3xl font-semibold leading-tight text-ink md:text-5xl">
+                  Guests should never feel like they are using planning software.
+                </h2>
               </Reveal>
               <Reveal delay={0.08}>
                 <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink/72">
-                  Guests should not need another app, another account, or another scavenger hunt through old emails. One clean flow should cover the website, RSVP, updates, and photo sharing.
+                  They should open one link, understand what matters, reply when needed, and share memories from their phone. The complexity can stay behind the scenes.
                 </p>
               </Reveal>
-              <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                {[
-                  ['Open your wedding site', 'Guests start from one clear place with the details they need.'],
-                  ['RSVP', 'They respond without wrestling with a separate tool.'],
-                  ['Receive updates', 'Messages stay connected to the wedding itself.'],
-                  ['Share photos', 'They can send moments back without downloading anything.'],
-                ].map(([title, copy], index) => (
-                  <Reveal key={title} delay={0.08 * (index + 1)}>
-                    <div className="rounded-xl border border-border-subtle bg-paper p-5">
-                      <div className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand text-sm font-semibold text-paper">
+              <div className="mt-7 grid gap-3">
+                {guestSteps.map(([title, body], index) => (
+                  <Reveal key={title} delay={0.05 * index}>
+                    <div className="grid gap-3 rounded-lg border border-border-subtle bg-white p-4 sm:grid-cols-[44px_1fr]">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-md bg-[#e8f0e4] text-sm font-semibold text-brand">
                         {index + 1}
                       </div>
-                      <h3 className="text-base font-semibold text-ink">{title}</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-ink/70">{copy}</p>
+                      <div>
+                        <h3 className="text-base font-semibold text-ink">{title}</h3>
+                        <p className="mt-1 text-sm leading-relaxed text-ink/68">{body}</p>
+                      </div>
                     </div>
                   </Reveal>
                 ))}
               </div>
             </div>
-
-            <Reveal delay={0.16}>
-              <div className="overflow-hidden rounded-2xl border border-border-subtle bg-paper">
-                <img
-                  src={asset('wedding-detail-3.png')}
-                  alt="Wedding site experience preview"
-                  className="aspect-[4/5] w-full object-cover"
-                />
-              </div>
+            <Reveal delay={0.14}>
+              <img
+                src={asset('wedding-detail-3.png')}
+                alt="Guest-facing wedding detail preview"
+                className="aspect-[4/5] w-full rounded-lg border border-border-subtle object-cover shadow-sm"
+              />
             </Reveal>
           </div>
         </section>
 
-        <section id="templates" className="section-shell border-y border-border-subtle bg-paper">
+        <section id="templates" className="border-y border-border-subtle bg-white py-12 md:py-20">
           <div className="container-custom">
-            <div className="section-intro">
+            <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
               <Reveal>
-                <h2 className="section-title">A wedding website that already feels thoughtfully designed.</h2>
+                <div className="max-w-3xl">
+                  <p className="text-sm font-medium text-brand">Templates</p>
+                  <h2 className="mt-3 text-3xl font-semibold leading-tight text-ink md:text-5xl">
+                    Start with a site that already feels designed.
+                  </h2>
+                </div>
               </Reveal>
               <Reveal delay={0.08}>
-                <p className="section-subtitle">
-                  Most couples are not trying to become designers during wedding planning. Start with a polished template, customize what matters, and keep moving.
-                </p>
+                <Link to="/templates" className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-md border border-brand/25 px-5 py-3 text-sm font-semibold text-brand transition hover:bg-brand/5">
+                  View templates
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </Reveal>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {templateCards.map((card, index) => (
                 <Reveal key={card.name} delay={0.05 * index}>
-                  <Link to="/templates" className="group overflow-hidden rounded-xl border border-border-subtle bg-white">
+                  <Link to="/templates" className="group block overflow-hidden rounded-lg border border-border-subtle bg-paper">
                     <img src={card.image} alt={`${card.name} wedding website preview`} className="aspect-[4/5] w-full object-cover transition duration-300 group-hover:scale-[1.02]" />
                     <div className="flex items-center justify-between p-4">
                       <span className="text-sm font-semibold text-ink">{card.name}</span>
@@ -384,141 +404,92 @@ export const Home: React.FC = () => {
                 </Reveal>
               ))}
             </div>
-
-            <Reveal delay={0.2}>
-              <div className="mt-8 text-center">
-                <Link to="/templates" className="inline-flex items-center gap-2 text-sm font-semibold text-brand">
-                  View templates
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </Reveal>
           </div>
         </section>
 
-        <section className="section-shell bg-white">
-          <div className="container-custom grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+        <section className="bg-paper py-12 md:py-20">
+          <div className="container-custom grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
             <Reveal>
-              <div className="rounded-2xl border border-border-subtle bg-paper p-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand/80">Guest details</p>
-                <h2 className="mt-3 text-2xl font-serif font-bold text-ink">One link for the details that usually turn into follow-up work.</h2>
-                <p className="mt-3 text-sm leading-relaxed text-ink/72">
-                  Guests update addresses, household details, meal choices, and contact info from a simple page. The same guest record stays connected to RSVP, messaging, seating, and exports.
-                </p>
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  {[
-                    'Address collection',
-                    'Household updates',
-                    'Meal selections',
-                    'RSVP continuity',
-                  ].map((item) => (
-                    <div key={item} className="rounded-lg border border-border-subtle bg-white px-4 py-3 text-sm text-ink/75">
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Reveal>
-
-            <Reveal delay={0.1}>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {[
-                  { icon: Mail, title: 'Messaging stays tied to the wedding', copy: 'Updates, reminders, and guest communication stay grounded in the actual event context.' },
-                  { icon: Camera, title: 'Photo uploads stay easy', copy: 'Guests can send moments back from their phones without app friction.' },
-                  { icon: Radio, title: 'Day-of check-in has a calmer home', copy: 'Lookup, arrivals, and coordinator tools are built into the same system.' },
-                  { icon: Archive, title: 'Post-wedding follow-through stays organized', copy: 'The vault and name-change planner keep the after-wedding work from feeling scattered.' },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <div key={item.title} className="rounded-xl border border-border-subtle bg-paper p-5">
-                      <div className="inline-flex rounded-full bg-brand/10 p-2 text-brand">
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <h3 className="mt-4 text-base font-semibold text-ink">{item.title}</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-ink/70">{item.copy}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        <section id="why" className="section-shell border-y border-border-subtle bg-paper">
-          <div className="container-custom grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-start">
-            <div>
-              <Reveal>
-                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-brand/80">Why dayof</p>
-                <h2 className="section-title max-w-3xl">This was built for couples who want the wedding to feel cared for, not commoditized.</h2>
-              </Reveal>
-              <Reveal delay={0.08}>
-                <div className="mt-5 space-y-4 text-base leading-relaxed text-ink/72">
-                  <p>
-                    Too many wedding tools are optimized for lead funnels, upsells, and making couples do extra work just to keep everything stitched together.
-                  </p>
-                  <p>
-                    dayof is the opposite posture. The website should be beautiful, the guest experience should be straightforward, and the parts that get intense closer to the wedding should feel calmer instead of more chaotic.
-                  </p>
-                  <p>
-                    The goal is not to pretend weddings are simple. The goal is to build something that helps people through them with more clarity and less friction.
-                  </p>
-                </div>
-              </Reveal>
-            </div>
-
-            <Reveal delay={0.14}>
-              <div className="rounded-2xl border border-border-subtle bg-white p-6">
-                <h3 className="text-lg font-semibold text-ink">What we try to protect</h3>
-                <ul className="mt-5 space-y-3 text-sm leading-relaxed text-ink/72">
-                  <li>No surprise renewals or vague pricing promises.</li>
-                  <li>No forcing guests into another account or app just to stay informed.</li>
-                  <li>No pretending a queued message has already been sent.</li>
-                  <li>No pretending a blocked name-change step is magically ready.</li>
-                  <li>{SITE_TRUST_COPY.guestAccessTruth}</li>
-                </ul>
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        <section id="pricing" className="section-shell bg-white">
-          <div className="container-custom">
-            <div className="mx-auto max-w-3xl rounded-3xl border border-border-subtle bg-paper p-8 text-center md:p-12">
-              <Reveal>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand/80">Pricing</p>
-                <h2 className="mt-3 section-title">Simple, honest pricing.</h2>
-              </Reveal>
-              <Reveal delay={0.08}>
+              <div>
+                <p className="text-sm font-medium text-brand">Trust posture</p>
+                <h2 className="mt-3 text-3xl font-semibold leading-tight text-ink md:text-5xl">
+                  Built for launch truth, not wedding-tech theater.
+                </h2>
                 <p className="mt-4 text-base leading-relaxed text-ink/72">
-                  $49 flat fee for two years. Auto-renew stays off by default. You get the website, RSVP, guests, messaging, seating, registry, itinerary, and day-of coordination in one place.
+                  The product should be honest about what is ready, what needs setup, and what guests can actually access.
                 </p>
-              </Reveal>
-              <Reveal delay={0.12}>
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              </div>
+            </Reveal>
+            <Reveal delay={0.1}>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {trustPoints.map((point) => (
+                  <div key={point} className="flex gap-3 rounded-lg border border-border-subtle bg-white p-4">
+                    <Shield className="mt-0.5 h-4 w-4 shrink-0 text-[#4D7FA3]" />
+                    <p className="text-sm leading-relaxed text-ink/72">{point}</p>
+                  </div>
+                ))}
+                <div className="rounded-lg border border-[#C89F56]/35 bg-[#fff8ea] p-4 sm:col-span-2">
+                  <p className="text-sm leading-relaxed text-ink/76">
+                    {SITE_TRUST_COPY.guestAccessTruth}
+                  </p>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </section>
+
+        <section id="pricing" className="bg-white py-12 md:py-20">
+          <div className="container-custom grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <Reveal>
+              <div>
+                <p className="text-sm font-medium text-brand">Pricing</p>
+                <h2 className="mt-3 text-3xl font-semibold leading-tight text-ink md:text-5xl">
+                  Simple, honest pricing.
+                </h2>
+                <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink/72">
+                  $49 flat fee for two years. Auto-renew stays off by default. You get the website, RSVP, guests, messaging, seating, registry, itinerary, photos, and day-of coordination in one place.
+                </p>
+              </div>
+            </Reveal>
+            <Reveal delay={0.1}>
+              <div className="rounded-lg border border-border-subtle bg-paper p-6">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-semibold text-ink">$49</span>
+                  <span className="text-sm text-ink/64">for two years</span>
+                </div>
+                <ul className="mt-6 grid gap-3 text-sm text-ink/72">
+                  {['Wedding website and templates', 'Guest list, RSVP, messages, and seating', 'Photos, guestbook, registry, itinerary, and coordinator tools', 'No surprise auto-renewal'].map((item) => (
+                    <li key={item} className="flex gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                   <button
                     onClick={handleSignUp}
                     aria-label={user ? 'Continue your wedding site' : 'Start your wedding site draft'}
-                    className="inline-flex min-h-[54px] items-center justify-center rounded-md bg-brand px-7 py-3.5 text-base font-semibold text-paper transition hover:bg-brand/90"
+                    className="inline-flex min-h-[52px] items-center justify-center rounded-md bg-brand px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand/90"
                   >
                     {user ? 'Continue your site' : 'Start your draft'}
                   </button>
                   <Link
-                    to="/templates"
-                    className="inline-flex min-h-[54px] items-center justify-center rounded-md border border-brand/25 bg-white px-7 py-3.5 text-base font-semibold text-brand transition hover:bg-brand/5"
+                    to="/product"
+                    className="inline-flex min-h-[52px] items-center justify-center rounded-md border border-border bg-white px-6 py-3 text-sm font-semibold text-ink transition hover:bg-paper"
                   >
-                    View templates
+                    Product tour
                   </Link>
                 </div>
-              </Reveal>
-            </div>
+              </div>
+            </Reveal>
           </div>
         </section>
 
         {user && (
-          <section className="section-shell-compact border-t border-border-subtle bg-paper">
+          <section className="border-t border-border-subtle bg-paper py-9 md:py-12">
             <div className="container-custom">
               <Reveal>
-                <div className="rounded-2xl border border-brand/15 bg-white p-6">
+                <div className="rounded-lg border border-brand/15 bg-white p-6">
                   <p className="text-sm font-medium text-brand">Already started?</p>
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                     <Link

@@ -49,7 +49,7 @@ async function requireVaultPublicAccess(input: {
 }) {
   const { data: site, error: siteError } = await input.admin
     .from("wedding_sites")
-    .select("id,site_slug,is_published,privacy_mode,guest_access_token,wedding_date")
+    .select("id,site_slug,is_published,privacy_mode,guest_access_token,wedding_date,user_id")
     .eq("id", input.siteId)
     .maybeSingle();
 
@@ -104,6 +104,19 @@ function decodeBase64File(base64: string): Uint8Array {
   return bytes;
 }
 
+async function allowOwnerQaOpen(req: Request, admin: ReturnType<typeof createClient>, siteOwnerUserId: string | null, requested: boolean) {
+  if (!requested || !siteOwnerUserId) return false;
+  if (Deno.env.get("ALLOW_VAULT_QA_OPEN") === "true") return true;
+
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (!token) return false;
+
+  const { data, error } = await admin.auth.getUser(token);
+  if (error) return false;
+  return data.user?.id === siteOwnerUserId;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
   const url = new URL(req.url);
@@ -114,7 +127,6 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const qaOpen = body.qaOpen === true && Deno.env.get("ALLOW_VAULT_QA_OPEN") === "true";
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     if (body.action === "upload_attachment") {
@@ -144,6 +156,7 @@ Deno.serve(async (req: Request) => {
         errorMessage: "Could not save this vault memory. Please try again.",
       });
       if (!access.ok) return access.response;
+      const qaOpen = await allowOwnerQaOpen(req, admin, typeof access.site.user_id === "string" ? access.site.user_id : null, body.qaOpen === true);
       const windowStatus = vaultWindowStatus(access.site.wedding_date, qaOpen);
       if (!windowStatus.canSubmit) return json({ error: windowStatus.message ?? "Vault uploads are closed" }, 403);
 
@@ -218,6 +231,7 @@ Deno.serve(async (req: Request) => {
       errorMessage: "Could not save this vault memory. Please try again.",
     });
     if (!access.ok) return access.response;
+    const qaOpen = await allowOwnerQaOpen(req, admin, typeof access.site.user_id === "string" ? access.site.user_id : null, body.qaOpen === true);
     const windowStatus = vaultWindowStatus(access.site.wedding_date, qaOpen);
     if (!windowStatus.canSubmit) return json({ error: windowStatus.message ?? "Vault uploads are closed" }, 403);
 

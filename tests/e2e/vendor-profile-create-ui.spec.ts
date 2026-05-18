@@ -49,10 +49,10 @@ test('owner vendor page studio labels draft controls and announces publish resul
       });
       return;
     }
-    if (url.includes('/rest/v1/vendor_profiles') && request.method() === 'POST') {
+    if (url.includes('/rest/v1/rpc/vendor_profile_write') && request.method() === 'POST') {
       publishRequests.push(request.postDataJSON());
       await route.fulfill({
-        status: 201,
+        status: 200,
         contentType: 'application/json',
         body: JSON.stringify(createdProfile),
       });
@@ -77,19 +77,22 @@ test('owner vendor page studio labels draft controls and announces publish resul
   await expect(page.getByLabel('Public vendor name')).toHaveAttribute('id', 'vendor-draft-name');
   await expect(page.getByLabel('Short descriptor')).toHaveAttribute('id', 'vendor-draft-descriptor');
   await expect(page.getByLabel('Public URL slug')).toHaveAttribute('id', 'vendor-draft-slug');
-  await expect(page.getByLabel('About')).toHaveAttribute('id', 'vendor-draft-about');
+  await expect(page.getByRole('textbox', { name: 'About' })).toHaveAttribute('id', 'vendor-draft-about');
   await expect(page.getByLabel('Images')).toHaveAttribute('aria-describedby', 'vendor-draft-images-help');
 
   await page.getByRole('button', { name: 'Publish vendor page' }).click();
-  await expect(page.getByRole('status')).toContainText('/vendor/everlight-studio');
+  await expect(page.getByText('/vendor/everlight-studio')).toBeVisible();
+  await expect(page.getByText('Published')).toBeVisible();
 
   expect(previewRequests).toEqual([
     expect.objectContaining({ vendorName: 'Everlight Studio' }),
   ]);
   expect(publishRequests).toEqual([
     expect.objectContaining({
-      slug: 'everlight-studio',
-      vendor_name: 'Everlight Studio',
+      p_payload: expect.objectContaining({
+        slug: 'everlight-studio',
+        vendor_name: 'Everlight Studio',
+      }),
     }),
   ]);
 });

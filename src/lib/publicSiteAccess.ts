@@ -16,6 +16,7 @@ export interface PublicSiteSafeRow {
   site_slug: string | null;
   site_url: string | null;
   is_published: boolean;
+  privacy_mode: 'public' | 'password_protected' | 'invite_only' | 'hidden';
   couple_name_1: string | null;
   couple_name_2: string | null;
   wedding_date: string | null;
@@ -242,6 +243,12 @@ export function sanitizePublicSiteSafeRow(site: unknown): PublicSiteSafeRow | nu
     site_slug: nullableString(row.site_slug),
     site_url: nullableString(row.site_url),
     is_published: row.is_published === true,
+    privacy_mode:
+      row.privacy_mode === 'password_protected'
+      || row.privacy_mode === 'invite_only'
+      || row.privacy_mode === 'hidden'
+        ? row.privacy_mode
+        : 'public',
     couple_name_1: nullableString(row.couple_name_1),
     couple_name_2: nullableString(row.couple_name_2),
     wedding_date: nullableString(row.wedding_date),

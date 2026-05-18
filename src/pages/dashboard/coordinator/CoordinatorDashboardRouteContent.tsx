@@ -83,7 +83,7 @@ export function CoordinatorDashboardRouteContent({
     <div className="max-w-6xl mx-auto space-y-5">
       <DashboardPageHero
         eyebrow="Wedding Day"
-        title="Everything your helpers need on the wedding day."
+        title="Day-of view"
         description="Keep the schedule, QR codes, seating lookup, and coordinator view close when the day gets busy."
         stats={[
           { label: 'Guests', value: statsCardProps.stats.total, detail: `${statsCardProps.stats.confirmed} attending` },

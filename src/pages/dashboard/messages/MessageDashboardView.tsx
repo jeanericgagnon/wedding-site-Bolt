@@ -12,7 +12,7 @@ import {
   MessageSendingDetailsPanel,
   MessageStartingPointsCard,
   ToastList,
-} from './MessageDashboardComponents';
+} from '../../../components/dashboard/messages/MessageDashboardComponents';
 import { MessageDetailModal } from './MessageDetailModal';
 import type { PlannerAccessRole } from '../../../lib/plannerAccess';
 

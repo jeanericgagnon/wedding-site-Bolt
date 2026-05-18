@@ -163,7 +163,7 @@ test('seating packet exports stay event-scoped and reflect RSVP-backed source ro
   await enableLocalDemo(page);
   await enterDemoSeatingBoard(page);
 
-  await expect(page.getByRole('heading', { name: /place guests at tables without losing the room/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /tables, assignments, and lookup\./i })).toBeVisible();
   await expect(page.getByText(/Current Event:/)).toContainText('Welcome Dinner');
 
   await page.getByRole('button', { name: /^CSV$/ }).click();
@@ -196,8 +196,8 @@ test('seating packet exports stay event-scoped and reflect RSVP-backed source ro
   });
 
   const seatingCsv = captured.downloads.find((item) => item.filename === 'seating-Welcome Dinner.csv');
-  expect(seatingCsv?.text).toContain('"Event","Guest Name","Email","Household / Group","RSVP Status","Table","Seat","Checked In","Checked In At","Exception Flags"');
-  expect(seatingCsv?.text).toContain('"Welcome Dinner","Emma Waters","emma.waters+0@dayof.demo","","confirmed","Head Table","1","Yes","2026-06-14T18:05:00.000Z","Already checked in"');
+  expect(seatingCsv?.text).toContain('"Event","Guest Name","Email","Household / Group","RSVP Status","Meal Choice","Dietary Restrictions","Allergies","Dietary Notes","Table","Seat","Checked In","Checked In At","Exception Flags"');
+  expect(seatingCsv?.text).toContain('"Welcome Dinner","Emma Waters","emma.waters+0@dayof.demo","","confirmed","No meal recorded","","","","Head Table","1","Yes","2026-06-14T18:05:00.000Z","Already checked in"');
 
   const kitchenSummary = captured.downloads.find((item) => item.filename === 'kitchen-summary-welcome-dinner.csv');
   expect(kitchenSummary?.text).toContain('"Event","Meal Choice","Guest Count","Guests With Dietary Notes","Guests With Allergies","Tables","Dietary Highlights"');
@@ -218,7 +218,7 @@ test('seating lookup reads back demo assignment edits after a browser seat chang
   await enableLocalDemo(page);
   await enterDemoSeatingBoard(page, '/dashboard/seating?bypassPayment=1&lookupContinuityQa=1');
 
-  await expect(page.getByRole('heading', { name: /place guests at tables without losing the room/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /tables, assignments, and lookup\./i })).toBeVisible();
   await page.getByRole('button', { name: 'Seat 3' }).first().click();
   await expect(page.getByRole('heading', { name: /Map a guest to seat 3/i })).toBeVisible();
   await page.getByRole('button', { name: 'Liam Nguyen Guest' }).click();

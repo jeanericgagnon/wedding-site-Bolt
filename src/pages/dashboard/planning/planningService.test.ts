@@ -169,12 +169,8 @@ describe('planning song request helpers', () => {
     });
   });
 
-  it('falls back when the live planning_vendors schema is missing phone', async () => {
-    const initialQuery = makePlanningVendorQuery({
-      data: null,
-      error: { message: 'column planning_vendors.phone does not exist' },
-    });
-    const fallbackQuery = makePlanningVendorQuery({
+  it('loads vendors from wildcard rows without depending on optional live columns', async () => {
+    const query = makePlanningVendorQuery({
       data: [{
         id: 'vendor-1',
         wedding_site_id: 'site-1',
@@ -190,38 +186,28 @@ describe('planning song request helpers', () => {
         document_url: null,
         document_label: null,
         notes: 'Bring extra stems',
-        internal_rating: 5,
-        rating_status: 'booked',
-        rating_notes: 'Strong fit',
         created_at: '2026-05-13T00:00:00.000Z',
         updated_at: '2026-05-13T00:00:00.000Z',
       }],
       error: null,
     });
-    fromMock
-      .mockReturnValueOnce(initialQuery)
-      .mockReturnValueOnce(fallbackQuery);
+    fromMock.mockReturnValueOnce(query);
 
     await expect(loadVendors('site-1')).resolves.toEqual([
       expect.objectContaining({
         id: 'vendor-1',
         phone: '',
-        internal_rating: 5,
-        rating_status: 'booked',
-        rating_notes: 'Strong fit',
+        internal_rating: null,
+        rating_status: null,
+        rating_notes: null,
       }),
     ]);
 
-    expect(initialQuery.select).toHaveBeenCalledWith(expect.stringContaining('phone'));
-    expect(fallbackQuery.select).toHaveBeenCalledWith(expect.not.stringContaining('phone'));
+    expect(query.select).toHaveBeenCalledWith('*');
   });
 
-  it('falls back when the live planning_budget_items schema is missing due_date', async () => {
-    const initialQuery = makePlanningBudgetQuery({
-      data: null,
-      error: { message: 'column planning_budget_items.due_date does not exist' },
-    });
-    const fallbackQuery = makePlanningBudgetQuery({
+  it('loads budget items from wildcard rows without depending on due_date being present', async () => {
+    const query = makePlanningBudgetQuery({
       data: [{
         id: 'budget-1',
         wedding_site_id: 'site-1',
@@ -237,9 +223,7 @@ describe('planning song request helpers', () => {
       }],
       error: null,
     });
-    fromMock
-      .mockReturnValueOnce(initialQuery)
-      .mockReturnValueOnce(fallbackQuery);
+    fromMock.mockReturnValueOnce(query);
 
     await expect(loadBudgetItems('site-1')).resolves.toEqual([
       expect.objectContaining({
@@ -250,8 +234,7 @@ describe('planning song request helpers', () => {
       }),
     ]);
 
-    expect(initialQuery.select).toHaveBeenCalledWith(expect.stringContaining('due_date'));
-    expect(fallbackQuery.select).toHaveBeenCalledWith(expect.not.stringContaining('due_date'));
+    expect(query.select).toHaveBeenCalledWith('*');
   });
 
   it('loads vendor reminder metadata from planning wedding data safely', async () => {

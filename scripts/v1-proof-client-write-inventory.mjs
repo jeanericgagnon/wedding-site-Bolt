@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 const targetRoot = 'src';
 const forbiddenOperations = ['insert', 'update', 'upsert', 'delete'];
@@ -13,7 +13,8 @@ const trackedFiles = execFileSync('git', ['ls-files', targetRoot], {
   .filter(Boolean)
   .filter((file) => !/\.test\./.test(file))
   .filter((file) => !/\.d\.ts$/.test(file))
-  .filter((file) => /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(file));
+  .filter((file) => /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(file))
+  .filter((file) => existsSync(file));
 
 const directWritePattern = /\.from\(\s*(['"`]).*?\1\s*\)[\s\S]{0,400}?\.(insert|update|upsert|delete)\s*\(/g;
 

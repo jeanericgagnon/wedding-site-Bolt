@@ -88,20 +88,41 @@ test('settings identity exports copy and download safe wedding assets', async ({
   });
   await expect(page.getByRole('heading', { name: 'Wedding identity exports' })).toBeVisible();
 
-  for (const label of ['Copy manifest', 'Copy style kit', 'Save print pack', 'Save story graphic']) {
-    await page.getByRole('button', { name: label }).evaluate((button) => {
-      (button as HTMLButtonElement).click();
-    });
-  }
+  await page.getByRole('button', { name: 'Copy manifest' }).evaluate((button) => {
+    (button as HTMLButtonElement).click();
+  });
+  await page.waitForFunction(() => {
+    const runtime = window as typeof window & { __dayofCopiedTexts?: string[] };
+    return (runtime.__dayofCopiedTexts?.length ?? 0) >= 1;
+  }, { timeout: 10_000 });
 
+  await page.getByRole('button', { name: 'Copy style kit' }).evaluate((button) => {
+    (button as HTMLButtonElement).click();
+  });
+  await page.waitForFunction(() => {
+    const runtime = window as typeof window & { __dayofCopiedTexts?: string[] };
+    return (runtime.__dayofCopiedTexts?.length ?? 0) >= 2;
+  }, { timeout: 10_000 });
+
+  await page.getByRole('button', { name: 'Save print pack' }).evaluate((button) => {
+    (button as HTMLButtonElement).click();
+  });
   await page.waitForFunction(() => {
     const runtime = window as typeof window & {
-      __dayofCopiedTexts?: string[];
       __dayofCapturedDownloads?: Array<{ filename: string; href: string }>;
     };
-    return (runtime.__dayofCopiedTexts?.length ?? 0) >= 2 && (runtime.__dayofCapturedDownloads?.length ?? 0) >= 4;
+    return (runtime.__dayofCapturedDownloads?.length ?? 0) >= 4;
+  }, { timeout: 10_000 });
+
+  await page.getByRole('button', { name: 'Save story graphic' }).evaluate((button) => {
+    (button as HTMLButtonElement).click();
   });
-  await page.waitForTimeout(1500);
+  await page.waitForFunction(() => {
+    const runtime = window as typeof window & {
+      __dayofCapturedDownloads?: Array<{ filename: string; href: string }>;
+    };
+    return (runtime.__dayofCapturedDownloads?.length ?? 0) >= 6;
+  }, { timeout: 10_000 });
 
   const capture = await page.evaluate(async () => {
     const runtime = window as typeof window & {
@@ -110,12 +131,18 @@ test('settings identity exports copy and download safe wedding assets', async ({
       __dayofCapturedBlobStore?: Map<string, Blob>;
     };
     const files = await Promise.all(
-      (runtime.__dayofCapturedDownloads ?? []).map(async (entry) => ({
-        filename: entry.filename,
-        type: runtime.__dayofCapturedBlobStore?.get(entry.href)?.type ?? null,
-        size: runtime.__dayofCapturedBlobStore?.get(entry.href)?.size ?? 0,
-        text: await runtime.__dayofCapturedBlobStore?.get(entry.href)?.text(),
-      })),
+      (runtime.__dayofCapturedDownloads ?? []).map(async (entry) => {
+        const blob = runtime.__dayofCapturedBlobStore?.get(entry.href);
+        const type = blob?.type ?? null;
+        const isInspectableText = type?.startsWith('text/') || type === 'image/svg+xml;charset=utf-8';
+
+        return {
+          filename: entry.filename,
+          type,
+          size: blob?.size ?? 0,
+          text: isInspectableText ? await blob?.text() : null,
+        };
+      }),
     );
     return {
       copiedTexts: runtime.__dayofCopiedTexts ?? [],

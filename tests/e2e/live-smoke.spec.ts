@@ -9,7 +9,7 @@ test.describe('public v1 trust smoke', () => {
     await page.goto(baseURL || 'https://dayof.love', { waitUntil: 'domcontentloaded' });
 
     await expect(page).toHaveTitle(/WeddingSite|Dayof|DayOf/i);
-    await expect(page.getByRole('heading', { name: /your wedding is one of the biggest moments of your life\./i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /a calmer wedding operating system/i })).toBeVisible();
     await expect(page.getByText(/Most wedding websites stop at publish\./i)).toBeVisible();
     await expect(page.getByText(/One place for the details, people, and memories that matter\./i)).toBeVisible();
     await expect(page.getByText(/Simple, honest pricing\./i)).toBeVisible();

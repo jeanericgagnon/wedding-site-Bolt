@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { buildMessageDashboardDerivedState } from './buildMessageDashboardDerivedState';
-import { MessageComposerRecipientPreviewPanel } from './MessageDashboardComponents';
+import { MessageComposerRecipientPreviewPanel } from '../../../components/dashboard/messages/MessageDashboardComponents';
 import type { Guest } from './messageDashboardTypes';
 
 describe('message recipient safety', () => {

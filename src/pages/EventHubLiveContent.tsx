@@ -416,6 +416,7 @@ export function EventHubLiveContent({
                       <Link
                         key={step.id}
                         to={step.href}
+                        aria-label={`${step.label} ${step.detail}`}
                         onClick={() => onTrackClick(step.href!)}
                         className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 transition-colors hover:border-[#d8c8b6]"
                       >
@@ -446,7 +447,7 @@ export function EventHubLiveContent({
                         onClick={() => onTrackClick(travelHubSpotlight.travelHref)}
                         className="rounded-lg border border-[#eadfd2] bg-[#fbf7f1] px-3 py-2 text-xs font-semibold text-[#2f261d] transition-colors hover:border-[#d8c8b6]"
                       >
-                        Open travel details
+                        Open travel page
                       </Link>
                       <button
                         type="button"

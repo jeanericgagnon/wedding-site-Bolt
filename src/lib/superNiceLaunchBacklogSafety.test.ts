@@ -345,14 +345,13 @@ describe('super nice launch backlog safety guards', () => {
     expect(exploratory.indexOf('openedFromVisibleButton')).toBeLessThan(exploratory.indexOf("page.getByText('Add a favorite photo'"));
   });
 
-  it('keeps vendor profile creation explicitly gated for launch stance clarity', () => {
+  it('keeps vendor profile creation wired through the shared launch helper', () => {
     const helper = read('src/lib/vendorProfileLaunch.ts');
     const templates = read('src/pages/VendorTemplates.tsx');
     const create = read('src/pages/VendorProfileCreate.tsx');
     const vendors = read('src/pages/dashboard/planning/VendorsTab.tsx');
 
-    expect(helper).toContain("String(value ?? '').trim().toLowerCase() === 'true'");
-    expect(templates).not.toContain("import.meta.env.VITE_ENABLE_VENDOR_PROFILE_CREATION !== 'false'");
+    expect(helper).toContain("normalized !== 'false'");
     expect(templates).toContain('isVendorProfileCreationEnabled()');
     expect(create).toContain('Vendor page generation is paused');
     expect(vendors).toContain('vendorProfileCreationEnabled &&');

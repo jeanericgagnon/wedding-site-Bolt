@@ -8,7 +8,6 @@ describe('guestVisibilityPreview', () => {
         id: 'guest-1',
         firstName: 'Maya',
         lastName: 'Lee',
-        inviteToken: 'secret-token',
         invitedToCeremony: true,
         invitedToReception: true,
       },
@@ -180,6 +179,7 @@ describe('guestVisibilityPreview', () => {
       events: [{ id: 'welcome', eventName: 'Welcome Drinks' }],
       invitedEventIds: [],
       publicSiteSlug: 'maya-and-rowan',
+      isPublished: true,
     });
 
     expect(preview.routeReadinessLabel).toBe('Public shell only');

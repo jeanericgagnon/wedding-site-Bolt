@@ -65,6 +65,8 @@ export interface TravelGuestJourneyInput {
   enabledActionIds: GuestHubActionId[];
   guestInviteToken?: string | null;
   guestLanguage?: string | null;
+  travelCoreCoverageRate?: number | null;
+  travelMainGapLabel?: string | null;
 }
 
 export interface TravelVenueMapInput {
@@ -92,6 +94,8 @@ export interface TravelHubSpotlight {
   travelHref: string;
   badges: string[];
   mainGapLabel: string | null;
+  coreTravelCoverageRate: number;
+  readyCoreTravelCount: number;
   cards: TravelHubSpotlightCard[];
   shareText: string;
   htmlDocument: string;
@@ -267,9 +271,19 @@ export function buildTravelGuestJourney(input: TravelGuestJourneyInput): TravelG
   ];
 
   return candidates.map(({ actionId, ...step }) => {
-    const ready = hasAction(input.enabledActionIds, actionId);
+    const actionReady = hasAction(input.enabledActionIds, actionId);
+    const travelCoverageReady = actionId !== 'travel'
+      || input.travelCoreCoverageRate == null
+      || input.travelCoreCoverageRate > 0;
+    const ready = actionReady && travelCoverageReady;
+    const missingTravelCopy = input.travelMainGapLabel && input.travelMainGapLabel !== 'Main gap: none right now'
+      ? input.travelMainGapLabel.replace('Main gap: ', 'Still missing: ')
+      : 'Still missing: travel setup';
     return {
       ...step,
+      detail: actionId === 'travel' && actionReady && !travelCoverageReady
+        ? `Travel details need setup before guests can rely on them. ${missingTravelCopy}.`
+        : step.detail,
       href: ready ? getSafePublicActionHref(step.href, '') : '',
       status: ready ? 'ready' : 'needs-info',
     };
@@ -586,6 +600,8 @@ export function buildTravelHubSpotlight(input: {
     travelHref,
     badges,
     mainGapLabel,
+    coreTravelCoverageRate,
+    readyCoreTravelCount,
     cards,
     shareText,
     htmlDocument: buildTravelHubSpotlightHtml({

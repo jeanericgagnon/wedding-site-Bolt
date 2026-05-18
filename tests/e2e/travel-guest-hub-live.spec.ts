@@ -21,11 +21,11 @@ test('live invite-scoped guest hub keeps travel, RSVP, and photos continuity mob
   await page.goto(hubPath, { waitUntil: 'domcontentloaded' });
 
   await expect(page.getByRole('heading', { name: /Everything guests need in one place\./i })).toBeVisible();
-  await expect(page.getByText('Travel plan from this link')).toBeVisible();
+  await expect(page.getByText(/Travel (plan|path) from this link/i)).toBeVisible();
   await expect(page.locator('body')).not.toContainText(proofContext.guestInviteToken);
   await expectNoMeaningfulHorizontalOverflow(page);
 
-  await page.getByRole('link', { name: 'Open travel details' }).click();
+  await page.getByRole('link', { name: /Open travel (details|page)/i }).click();
   await expect(page).toHaveURL(new RegExp(`/site/${proofContext.siteSlug}\\?invite_token=.*&guestLang=fr#travel`));
   await expect(page.locator('body')).not.toContainText(proofContext.guestInviteToken);
   await expectNoMeaningfulHorizontalOverflow(page);

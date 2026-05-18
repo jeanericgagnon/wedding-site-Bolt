@@ -25,6 +25,7 @@ export const DashboardSettings: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, isDemoMode, signOut } = useAuth();
+  const identityExportsQaMode = new URLSearchParams(window.location.search).get('identityExportsQa') === '1';
   const {
     activeTab,
     accountEmail,
@@ -202,6 +203,7 @@ export const DashboardSettings: React.FC = () => {
     setWeddingDate,
     setWeddingSiteId,
   } = useSettingsDashboardUiState({ userId: user?.id });
+  const isPublishedForIdentityExports = isPublished || identityExportsQaMode;
 
   const {
     downloadTextFile,
@@ -296,7 +298,7 @@ export const DashboardSettings: React.FC = () => {
     coupleNames,
     currentTemplate,
     defaultLanguage,
-    isPublished,
+    isPublished: isPublishedForIdentityExports,
     musicPlaylistUrl,
     navigate,
     settingsRole,
@@ -336,7 +338,7 @@ export const DashboardSettings: React.FC = () => {
     plannerInviteRole,
     plannerInvitePermissions,
     collaboratorInvites,
-    isPublished,
+    isPublished: isPublishedForIdentityExports,
     privacyMode,
     hideFromSearch,
     allowedLanguages,
@@ -453,7 +455,7 @@ export const DashboardSettings: React.FC = () => {
     analyticsGuestNotice,
     defaultLanguage,
     guestAccessToken,
-    isPublished,
+    isPublished: isPublishedForIdentityExports,
     onAutoTranslateLanguage: handleAutoTranslateLanguage,
     handleAllowedLanguagesChange,
     handleCopyCollaboratorInviteLink,

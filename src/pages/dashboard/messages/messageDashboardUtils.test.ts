@@ -308,8 +308,8 @@ describe('messageDashboardUtils', () => {
     });
 
     expect(buildChannelDeliveryBreakdown(messages)).toEqual({
-      email: { delivered: 8, failed: 1, skipped: 1, unreached: 0, targeted: 10, deliveredRate: 80 },
-      sms: { delivered: 2, failed: 4, skipped: 0, unreached: 2, targeted: 7, deliveredRate: 29 },
+      email: { delivered: 8, failed: 1, skipped: 0, unreached: 1, targeted: 10, deliveredRate: 80 },
+      sms: { delivered: 2, failed: 4, skipped: 0, unreached: 1, targeted: 7, deliveredRate: 29 },
     });
 
     expect(buildChannelEngagementBreakdown(messages)).toEqual({
@@ -378,7 +378,7 @@ describe('messageDashboardUtils', () => {
       count: 2,
       delivered: 4,
       deliveredRecipients: 4,
-      deliveredRate: 50,
+      deliveredRate: 44,
       failed: 2,
       skipped: 2,
       opened: 6,

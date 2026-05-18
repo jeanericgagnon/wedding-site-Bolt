@@ -138,8 +138,9 @@ describe('vault contribution data boundary', () => {
 
     expect(page).toContain("from './VaultContributeRouteView'");
     expect(page).toContain('<VaultContributeRouteView');
-    expect(page).toContain('loadEnabledVaultContributionConfig(siteSlug, vaultYear, buildVaultAccessPayload(siteSlug))');
-    expect(page).toContain('listEnabledVaultContributionConfigs(siteSlug, buildVaultAccessPayload(siteSlug))');
+    expect(page).toContain('loadEnabledVaultContributionConfig(siteSlug, vaultYear, buildVaultAccessPayload(siteSlug), qaOpen)');
+    expect(page).toContain('listEnabledVaultContributionConfigs(siteSlug, buildVaultAccessPayload(siteSlug), qaOpen)');
+    expect(page).toContain('const contributionWindow = serverContributionWindow ?? getContributionWindow(site?.wedding_date ?? null, qaOpen);');
     expect(page).toContain("setStep(sortedOptions.length === 1 ? 'form' : 'hub');");
     expect(page).toContain('uploadVaultContributionToGoogleDrive({');
     expect(page).toContain('uploadVaultContributionAttachment({');
@@ -162,7 +163,8 @@ describe('vault contribution data boundary', () => {
     expect(service).toContain("supabase.functions.invoke('vault-entry-submit'");
     expect(service).not.toContain(".from('vault_configs')");
     expect(fn).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
-    expect(fn).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
+    expect(fn).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token,wedding_date")');
+    expect(fn).toContain('const submissionWindow = vaultWindowStatus(site.wedding_date, qaOpen);');
     expect(fn).toContain('.from("vault_configs")');
   });
 });

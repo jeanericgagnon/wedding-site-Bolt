@@ -10,12 +10,6 @@ function requireRpcRecord<T>(data: unknown, functionName: string): T {
 }
 
 const PLANNING_TASK_SELECT = 'id, wedding_site_id, title, description, category, due_date, status, priority, owner_name, linked_event_id, linked_vendor_id, sort_order, created_at, updated_at' as const;
-const PLANNING_VENDOR_SELECT = 'id, wedding_site_id, vendor_type, name, contact_name, email, phone, website, contract_total, amount_paid, balance_due, next_payment_due, document_url, document_label, notes, internal_rating, rating_status, rating_notes, created_at, updated_at' as const;
-const PLANNING_VENDOR_LEGACY_SELECT = 'id, wedding_site_id, vendor_type, name, contact_name, email, phone, website, contract_total, amount_paid, balance_due, next_payment_due, document_url, document_label, notes, created_at, updated_at' as const;
-const PLANNING_VENDOR_PHONELESS_SELECT = 'id, wedding_site_id, vendor_type, name, contact_name, email, website, contract_total, amount_paid, balance_due, next_payment_due, document_url, document_label, notes, internal_rating, rating_status, rating_notes, created_at, updated_at' as const;
-const PLANNING_VENDOR_PHONELESS_LEGACY_SELECT = 'id, wedding_site_id, vendor_type, name, contact_name, email, website, contract_total, amount_paid, balance_due, next_payment_due, document_url, document_label, notes, created_at, updated_at' as const;
-const PLANNING_BUDGET_ITEM_SELECT = 'id, wedding_site_id, category, item_name, estimated_amount, actual_amount, paid_amount, due_date, vendor_id, notes, created_at, updated_at' as const;
-const PLANNING_BUDGET_ITEM_LEGACY_SELECT = 'id, wedding_site_id, category, item_name, estimated_amount, actual_amount, paid_amount, vendor_id, notes, created_at, updated_at' as const;
 const PLANNING_SITE_META_SELECT = 'wedding_data, venue_name, is_destination_wedding' as const;
 const PLANNING_TOTAL_BUDGET_SELECT = 'wedding_data' as const;
 const SEATING_READINESS_EVENT_SELECT = 'id' as const;
@@ -461,29 +455,14 @@ export async function deleteTask(id: string): Promise<void> {
 }
 
 export async function loadVendors(weddingSiteId: string): Promise<PlanningVendor[]> {
-  const query = (select: string) => supabase
+  const { data, error } = await supabase
     .from('planning_vendors')
-    .select(select)
+    .select('*')
     .eq('wedding_site_id', weddingSiteId)
     .order('name', { ascending: true })
     .limit(MAX_PLANNING_VENDOR_ROWS);
-
-  const { data, error } = await query(PLANNING_VENDOR_SELECT);
-  if (!error) return ((data ?? []) as unknown) as PlanningVendor[];
-
-  const missingRatingFields = ['internal_rating', 'rating_status', 'rating_notes'].some((field) => error.message?.includes(field));
-  const missingPhone = error.message?.includes('planning_vendors.phone') || error.message?.includes('column phone does not exist');
-  if (!missingRatingFields && !missingPhone) throw error;
-
-  const fallbackSelect = missingPhone
-    ? (missingRatingFields ? PLANNING_VENDOR_PHONELESS_LEGACY_SELECT : PLANNING_VENDOR_PHONELESS_SELECT)
-    : PLANNING_VENDOR_LEGACY_SELECT;
-  const fallback = await query(fallbackSelect);
-  if (fallback.error) throw fallback.error;
-  return (((fallback.data ?? []) as unknown) as Array<Record<string, unknown>>).map((vendor) => normalizeVendorCompatibilityRecord(vendor, {
-    missingPhone,
-    missingRatingFields,
-  }));
+  if (error) throw error;
+  return (((data ?? []) as unknown) as Array<Record<string, unknown>>).map((vendor) => normalizeVendorCompatibilityRecord(vendor));
 }
 
 export async function createVendor(weddingSiteId: string, vendor: Partial<PlanningVendor>): Promise<PlanningVendor> {
@@ -513,25 +492,15 @@ export async function deleteVendor(id: string): Promise<void> {
 }
 
 export async function loadBudgetItems(weddingSiteId: string): Promise<PlanningBudgetItem[]> {
-  const query = (select: string) => supabase
+  const { data, error } = await supabase
     .from('planning_budget_items')
-    .select(select)
+    .select('*')
     .eq('wedding_site_id', weddingSiteId)
     .order('category', { ascending: true })
     .order('item_name', { ascending: true })
     .limit(MAX_PLANNING_BUDGET_ITEM_ROWS);
-
-  const { data, error } = await query(PLANNING_BUDGET_ITEM_SELECT);
-  if (!error) return ((data ?? []) as unknown) as PlanningBudgetItem[];
-
-  const missingDueDate = error.message?.includes('planning_budget_items.due_date') || error.message?.includes('column due_date does not exist');
-  if (!missingDueDate) throw error;
-
-  const fallback = await query(PLANNING_BUDGET_ITEM_LEGACY_SELECT);
-  if (fallback.error) throw fallback.error;
-  return (((fallback.data ?? []) as unknown) as Array<Record<string, unknown>>).map((item) => normalizeBudgetItemCompatibilityRecord(item, {
-    missingDueDate,
-  }));
+  if (error) throw error;
+  return (((data ?? []) as unknown) as Array<Record<string, unknown>>).map((item) => normalizeBudgetItemCompatibilityRecord(item));
 }
 
 export async function createBudgetItem(weddingSiteId: string, item: Partial<PlanningBudgetItem>): Promise<PlanningBudgetItem> {

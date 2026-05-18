@@ -4,6 +4,7 @@ import { BuilderV2Lab, TemplateScrollCapture, VariantPreviewCapture } from './ro
 
 type InternalToolingRoutesProps = {
   internalToolingRoutesEnabled: boolean;
+  internalToolingCaptureRoutesEnabled: boolean;
   internalToolingRoutesLoading: boolean;
 };
 
@@ -15,6 +16,7 @@ function internalToolingFallback(internalToolingRoutesLoading: boolean): ReactNo
 
 export function InternalToolingRoutes({
   internalToolingRoutesEnabled,
+  internalToolingCaptureRoutesEnabled,
   internalToolingRoutesLoading,
 }: InternalToolingRoutesProps) {
   const fallback = internalToolingFallback(internalToolingRoutesLoading);
@@ -22,8 +24,8 @@ export function InternalToolingRoutes({
   return (
     <>
       <Route path="/builder-v2-lab" element={internalToolingRoutesEnabled ? <BuilderV2Lab /> : fallback} />
-      <Route path="/variant-preview-capture" element={internalToolingRoutesEnabled ? <VariantPreviewCapture /> : fallback} />
-      <Route path="/template-scroll-capture" element={internalToolingRoutesEnabled ? <TemplateScrollCapture /> : fallback} />
+      <Route path="/variant-preview-capture" element={internalToolingCaptureRoutesEnabled ? <VariantPreviewCapture /> : fallback} />
+      <Route path="/template-scroll-capture" element={internalToolingCaptureRoutesEnabled ? <TemplateScrollCapture /> : fallback} />
     </>
   );
 }

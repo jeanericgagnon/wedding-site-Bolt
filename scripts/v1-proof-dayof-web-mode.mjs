@@ -1,30 +1,21 @@
 #!/usr/bin/env node
 
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
+import { resolvePreviewRuntime, stopPreviewRuntime } from './proofPreviewRuntime.mjs';
 
-const PREVIEW_URL = 'http://127.0.0.1:4178';
-const baseUrl = process.env.PLAYWRIGHT_BASE_URL || PREVIEW_URL;
-const isLiveBaseUrl = baseUrl !== PREVIEW_URL;
-const browserCommand = isLiveBaseUrl
-  ? `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 --reporter=line tests/e2e/dayof-web-mode-live.spec.ts`
-  : `PLAYWRIGHT_BASE_URL=${baseUrl} npx playwright test --workers=1 tests/e2e/dayof-web-mode-offline.spec.ts`;
+const PREVIEW_PORT = 4178;
+const DEFAULT_PREVIEW_URL = `http://127.0.0.1:${PREVIEW_PORT}`;
+let baseUrl = process.env.PLAYWRIGHT_BASE_URL || DEFAULT_PREVIEW_URL;
+let isLiveBaseUrl = baseUrl !== DEFAULT_PREVIEW_URL;
+
+function getBrowserCommand(targetBaseUrl, liveBaseUrl) {
+  return liveBaseUrl
+    ? `PLAYWRIGHT_BASE_URL=${targetBaseUrl} npx playwright test --workers=1 --reporter=line tests/e2e/dayof-web-mode-live.spec.ts`
+    : `PLAYWRIGHT_BASE_URL=${targetBaseUrl} npx playwright test --workers=1 tests/e2e/dayof-web-mode-offline.spec.ts`;
+}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function waitForPreview(url, timeoutMs = 20_000) {
-  const startedAt = Date.now();
-  while (Date.now() - startedAt < timeoutMs) {
-    try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(1_500) });
-      if (response.ok) return;
-    } catch {
-      // keep waiting
-    }
-    await sleep(500);
-  }
-  throw new Error(`Preview server did not become ready at ${url} within ${timeoutMs}ms`);
 }
 
 const localOnlySteps = [
@@ -89,29 +80,23 @@ let previewProcess = null;
 let previewStdout = '';
 let previewStderr = '';
 try {
-  if (baseUrl === PREVIEW_URL) {
-    previewProcess = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', '4178'], {
-      cwd: process.cwd(),
-      env: process.env,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-
-    previewProcess.stdout.on('data', (chunk) => {
-      previewStdout += chunk.toString('utf8');
-    });
-    previewProcess.stderr.on('data', (chunk) => {
-      previewStderr += chunk.toString('utf8');
-    });
-
-    await waitForPreview(PREVIEW_URL);
-  }
+  const previewRuntime = await resolvePreviewRuntime({
+    preferredPort: PREVIEW_PORT,
+    requestedBaseUrl: process.env.PLAYWRIGHT_BASE_URL,
+    cwd: process.cwd(),
+  });
+  baseUrl = previewRuntime.baseUrl;
+  isLiveBaseUrl = baseUrl !== DEFAULT_PREVIEW_URL;
+  previewProcess = previewRuntime.previewProcess;
+  previewStdout = previewRuntime.previewStdout ?? '';
+  previewStderr = previewRuntime.previewStderr ?? '';
 
   results.push(runStep({
     id: 'dayof-web-mode-browser-proof',
     label: isLiveBaseUrl
       ? 'Live guest-hub day-of browser proof'
       : 'Day-of web-mode offline browser proof',
-    command: browserCommand,
+    command: getBrowserCommand(baseUrl, isLiveBaseUrl),
     required: true,
   }));
 
@@ -134,7 +119,7 @@ try {
     label: isLiveBaseUrl
       ? 'Live guest-hub day-of browser proof'
       : 'Day-of web-mode offline browser proof',
-    command: browserCommand,
+    command: getBrowserCommand(baseUrl, isLiveBaseUrl),
     required: true,
     ok: false,
     startedAt: new Date().toISOString(),
@@ -142,11 +127,7 @@ try {
     stderr: [previewStderr.trim(), error instanceof Error ? error.message : 'Day-of web-mode preview server failed to start.'].filter(Boolean).join('\n'),
   });
 } finally {
-  if (previewProcess) {
-    previewProcess.kill('SIGTERM');
-    await sleep(300);
-    if (!previewProcess.killed) previewProcess.kill('SIGKILL');
-  }
+  await stopPreviewRuntime(previewProcess);
 }
 
 const failedRequired = results.filter((result) => result.required && !result.ok);

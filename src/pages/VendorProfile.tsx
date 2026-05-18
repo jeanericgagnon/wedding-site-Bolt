@@ -644,7 +644,7 @@ export const VendorProfilePage: React.FC = () => {
                     </>
                   )}
                   <div className="sm:col-span-2">
-                    <label htmlFor="vendor-inquiry-message" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">What do you want them to see?</label>
+                    <label htmlFor="vendor-inquiry-message" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">What do you need from this vendor?</label>
                     <textarea id="vendor-inquiry-message" value={form.message} onChange={(e) => setForm((prev) => ({ ...prev, message: e.target.value }))} placeholder="Share the look, feeling, guest experience, logistics, must-have moments, or questions you want this vendor to respond to." className="min-h-[170px] w-full rounded-lg border border-[#d8c8b6] bg-white px-4 py-3 text-[#2f261d] placeholder:text-[#9a7a59] outline-none focus:ring-2 focus:ring-[#2f261d]/20" required />
                     <p className="mt-2 text-xs leading-5 text-[#6f5843]">Good details: setting, guest count, style references, weather or travel concerns, timing, budget comfort, and anything you want protected on the day.</p>
                   </div>

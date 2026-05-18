@@ -90,8 +90,8 @@ describe('travelGuestPortal', () => {
     expect(readiness.steps.find((step) => step.id === 'guest-specific')?.status).toBe('ready');
     expect(readiness.coverageBadges).toEqual([
       '7 of 7 travel sections ready',
-      '5 of 6 guest sections ready',
-      '83% guest-section coverage',
+      '6 of 6 guest sections ready',
+      '100% guest-section coverage',
       'No active blockers',
       'No travel gaps',
       'No guest sections incomplete',
@@ -155,6 +155,23 @@ describe('travelGuestPortal', () => {
     expect(journey.find((step) => step.id === 'photos')?.status).toBe('needs-info');
     expect(journey.find((step) => step.id === 'rsvp')?.href).toBe('');
     expect(journey.find((step) => step.id === 'photos')?.href).toBe('');
+  });
+
+  it('does not overclaim travel readiness when core travel coverage is still zero', () => {
+    const journey = buildTravelGuestJourney({
+      siteSlug: 'maya-and-leo',
+      enabledActionIds: ['travel', 'rsvp', 'photos'],
+      travelCoreCoverageRate: 0,
+      travelMainGapLabel: 'Main gap: Stay details',
+    });
+
+    expect(journey.find((step) => step.id === 'travel')).toEqual(expect.objectContaining({
+      status: 'needs-info',
+      href: '',
+      detail: 'Travel details need setup before guests can rely on them. Still missing: Stay details.',
+    }));
+    expect(journey.find((step) => step.id === 'rsvp')?.status).toBe('ready');
+    expect(journey.find((step) => step.id === 'photos')?.status).toBe('ready');
   });
 
   it('normalizes venue map links and falls back when an unsafe map URL is present', () => {
@@ -226,6 +243,8 @@ describe('travelGuestPortal', () => {
       travelHref: '/site/maya-and-leo?invite_token=guest-token-123&guestLang=fr#travel',
       badges: ['Invite-scoped', '1 event window', '1 route card', '2 booking links', '3 of 3 core travel layers ready', '100% core travel coverage', 'No core travel gaps', 'Stay ready', 'Weekend timing ready', 'Arrival ready'],
       mainGapLabel: 'Main gap: none right now',
+      coreTravelCoverageRate: 100,
+      readyCoreTravelCount: 3,
       cards: [
         { id: 'hotel', label: 'Harbor Hotel', detail: 'Code MAYALEO', href: 'https://harbor.example.com/stay' },
         { id: 'room-block', label: 'Room block', detail: 'Harbor Hotel · Code MAYALEO', href: 'https://harbor.example.com/block' },
@@ -310,7 +329,7 @@ describe('travelGuestPortal', () => {
     ]);
     expect(spotlight?.badges).toEqual(['Invite-scoped', '2 event windows', '2 route cards', '1 of 3 core travel layers ready', '33% core travel coverage', '2 core travel layers still missing', 'Weekend timing ready']);
     expect(spotlight?.mainGapLabel).toBe('Main gap: Stay details');
-    expect(spotlight?.summary).toBe('4 travel details ready from the guest hub, including 2 visible event windows for this invitation, 2 route cards. It covers weekend timing. 2 of 3 core travel layers still need setup. Still missing: Stay details.');
+    expect(spotlight?.summary).toBe('4 travel details ready from the guest hub, including 2 visible event windows for this invitation, 2 route cards. Core travel coverage is 33%. It covers weekend timing. 2 of 3 core travel layers still need setup. Still missing: Stay details.');
     expect(spotlight?.cards.filter((card) => card.href).length).toBe(2);
     expect(spotlight?.shareText).toContain('Coverage: Invite-scoped · 2 event windows · 2 route cards · 1 of 3 core travel layers ready · 33% core travel coverage · 2 core travel layers still missing · Weekend timing ready');
     expect(spotlight?.shareText).toContain('Welcome drinks: Sat, Jun 13, 11:00 PM · Harbor Lounge');
@@ -335,9 +354,9 @@ describe('travelGuestPortal', () => {
       { id: 'parking', label: 'Parking and arrival', detail: 'Street parking is limited after 4 PM, so rideshare is the easier option.' },
       { id: 'guest-note', label: 'Guest note', detail: 'Most guests dress for sun at ceremony and a cooler breeze by dinner.' },
     ]);
-    expect(spotlight?.badges).toEqual(['1 of 3 core travel layers ready', '33% core travel coverage', '2 core travel layers still missing', 'Stay ready']);
+    expect(spotlight?.badges).toEqual(['Invite-scoped', '2 of 3 core travel layers ready', '67% core travel coverage', '1 core travel layer still missing', 'Stay ready', 'Arrival ready']);
     expect(spotlight?.mainGapLabel).toBe('Main gap: Weekend timing');
-    expect(spotlight?.summary).toBe('3 travel details ready from the guest hub. It covers stay details, arrival guidance. 2 of 3 core travel layers still need setup. Still missing: Weekend timing.');
+    expect(spotlight?.summary).toBe('3 travel details ready from the guest hub. Core travel coverage is 67%. It covers stay details, arrival guidance. 1 of 3 core travel layers still need setup. Still missing: Weekend timing.');
     expect(spotlight?.shareText).toContain('Guest note: Most guests dress for sun at ceremony and a cooler breeze by dinner.');
   });
 });

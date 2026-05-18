@@ -10,6 +10,10 @@ interface ShareQrPanelProps {
   description?: string;
   url: string;
   copyLabel?: string;
+  copiedLabel?: string;
+  openLabel?: string;
+  downloadLabel?: string;
+  privateCardLabel?: string;
   className?: string;
   allowPrivate?: boolean;
   disabled?: boolean;
@@ -29,6 +33,10 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
   description,
   url,
   copyLabel = 'Copy link',
+  copiedLabel = 'Copied',
+  openLabel = 'Open QR',
+  downloadLabel = 'Download',
+  privateCardLabel = 'Save private card',
   className = '',
   allowPrivate = false,
   disabled = false,
@@ -138,11 +146,11 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
           <div className="mt-3 flex flex-wrap gap-2">
             <Button type="button" size="sm" variant="outline" onClick={copyUrl} disabled={disabled}>
               <Copy className="mr-1 h-3.5 w-3.5" />
-              {copied ? 'Copied' : copyLabel}
+              {copied ? copiedLabel : copyLabel}
             </Button>
             <Button type="button" size="sm" variant="outline" onClick={() => window.open(qrUrl, '_blank', 'noopener,noreferrer')} disabled={disabled}>
               <ExternalLink className="mr-1 h-3.5 w-3.5" />
-              Open QR
+              {openLabel}
             </Button>
             <a
               href={disabled ? undefined : qrUrl}
@@ -153,11 +161,11 @@ export const ShareQrPanel: React.FC<ShareQrPanelProps> = ({
               onClick={disabled ? (event) => event.preventDefault() : undefined}
               className={`inline-flex items-center justify-center rounded-lg border border-border bg-white px-3 py-1.5 text-sm font-medium text-text-primary transition-colors hover:bg-surface-subtle ${disabled ? 'pointer-events-none opacity-60' : ''}`}
             >
-              Download
+              {downloadLabel}
             </a>
             {usesPrivateQr && (
               <Button type="button" size="sm" variant="outline" onClick={downloadPrivateCard} disabled={disabled}>
-                Save private card
+                {privateCardLabel}
               </Button>
             )}
           </div>

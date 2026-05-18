@@ -165,7 +165,7 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Arrival guidance')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Directions · Sunset Gardens Estate/i })).toHaveAttribute('href', 'https://maps.google.com/?q=Sunset%20Gardens%20Estate%20100%20Harbor%20Road%2C%20Sausalito%2C%20CA');
     expect(screen.getByText('Travel plan copied.')).toBeInTheDocument();
-    expect(screen.getAllByText('Latest update for this link')).toHaveLength(2);
+    expect(screen.getAllByText('Latest update for this link')).toHaveLength(1);
     expect(screen.getByText('Ceremony doors open')).toBeInTheDocument();
     expect(screen.getByText('Your status on this link')).toBeInTheDocument();
     expect(screen.getByText('Guest on this link')).toBeInTheDocument();
@@ -190,16 +190,13 @@ describe('EventHubLiveContent', () => {
     expect(screen.getByText('Travel path from this link')).toBeInTheDocument();
     expect(screen.getByText('Readiness from this link')).toBeInTheDocument();
     expect(screen.getByText('No-app guest-hub readiness')).toBeInTheDocument();
-    expect(screen.getByText('No-app guest hub')).toBeInTheDocument();
-    expect(screen.getByText('One day-of link')).toBeInTheDocument();
-    expect(screen.getByText('Guest actions ready')).toBeInTheDocument();
-    expect(screen.getByText('Guest language links')).toBeInTheDocument();
-    expect(screen.getByText('Saved guest actions')).toBeInTheDocument();
-    expect(screen.getByText('Core day-of actions')).toBeInTheDocument();
-    expect(screen.getByText('Live updates')).toBeInTheDocument();
-    expect(screen.getByText('Guest status from this link')).toBeInTheDocument();
-    expect(screen.getByText('Coordinator handoff from this link')).toBeInTheDocument();
-    expect(screen.getByText('Link access from this page')).toBeInTheDocument();
+    expect(screen.getByText('Guest hub')).toBeInTheDocument();
+    expect(screen.getByText('Guest-safe copy')).toBeInTheDocument();
+    expect(screen.getByText('Printed fallback')).toBeInTheDocument();
+    expect(screen.getByText('Latest update for this link')).toBeInTheDocument();
+    expect(screen.getByText('Your status on this link')).toBeInTheDocument();
+    expect(screen.getByText('Coordinator handoff status')).toBeInTheDocument();
+    expect(screen.getByText('Access from this link')).toBeInTheDocument();
     expect(document.getElementById('day-of-updates')).not.toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy travel details' }));
@@ -208,7 +205,7 @@ describe('EventHubLiveContent', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save travel details' }));
     expect(onDownloadTravelGuide).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole('link', { name: 'Open travel details' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Open travel page' }));
     expect(onTrackClick).toHaveBeenCalledWith('/site/alex-jordan-demo#travel');
 
     fireEvent.click(screen.getByRole('link', { name: /Latest update/i }));

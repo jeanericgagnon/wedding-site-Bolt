@@ -77,10 +77,10 @@ describe('GuestPhotoHubQrCard', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /copy hub link/i }));
+    fireEvent.click(screen.getByRole('button', { name: /copy guest hub link/i }));
     fireEvent.click(screen.getByRole('button', { name: /open hub/i }));
     fireEvent.click(screen.getByRole('button', { name: /open qr/i }));
-    fireEvent.click(screen.getByRole('button', { name: /copy recap/i }));
+    fireEvent.click(screen.getByRole('button', { name: /copy guest recap link/i }));
     fireEvent.click(screen.getByRole('button', { name: /open recap/i }));
 
     expect(onCopyText).toHaveBeenNthCalledWith(1, 'https://dayof.love/event/maya-and-leo', 'guest-hub');
@@ -111,7 +111,7 @@ describe('GuestPhotoHubQrCard', () => {
     expect(screen.getByText('Publish the site before sharing the guest hub, recap, or QR print cards.')).toBeInTheDocument();
     expect(screen.getByText('Publish the site before sharing this guest hub QR.')).toBeInTheDocument();
     expect(screen.getByText('Publish the site before sharing this recap QR.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /copy hub link/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /copy guest hub link/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /open qr/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /save print cards/i })).toBeDisabled();
   });
@@ -166,10 +166,10 @@ describe('GuestPhotoHubQrCard', () => {
       />,
     );
 
-    expect(screen.queryByRole('button', { name: /copy recap/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /copy guest recap link/i })).not.toBeInTheDocument();
     expect(screen.queryByText('Photo recap QR')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /copy hub link/i }));
+    fireEvent.click(screen.getByRole('button', { name: /copy guest hub link/i }));
     fireEvent.click(screen.getByRole('button', { name: /open hub/i }));
 
     expect(onCopyText).toHaveBeenCalledWith('https://dayof.love/event/maya-and-leo', 'guest-hub');
@@ -197,8 +197,8 @@ describe('GuestPhotoHubQrCard', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /copy recap/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copied guest hub link' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /copy guest recap link/i })).toBeInTheDocument();
 
     rerender(
       <GuestPhotoHubQrCard
@@ -220,8 +220,8 @@ describe('GuestPhotoHubQrCard', () => {
       />,
     );
 
-    expect(screen.getAllByRole('button', { name: 'Copied' })).toHaveLength(1);
-    expect(screen.getByRole('button', { name: 'Copied' })).toHaveTextContent('Copied');
-    expect(screen.getByRole('button', { name: /copy hub link/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Copied guest recap link' })).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'Copied guest recap link' })).toHaveTextContent('Copied guest recap link');
+    expect(screen.getByRole('button', { name: /copy guest hub link/i })).toBeInTheDocument();
   });
 });

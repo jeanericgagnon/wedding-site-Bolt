@@ -20,6 +20,7 @@ import {
   uploadVaultContributionAttachment,
   uploadVaultContributionToGoogleDrive,
   type VaultContributionConfigInfo,
+  type VaultContributionWindow,
 } from './vaultContributionService';
 import { VaultContributeRouteView } from './VaultContributeRouteView';
 import {
@@ -146,6 +147,7 @@ export const VaultContribute: React.FC = () => {
   const [site, setSite] = useState<SiteInfo | null>(null);
   const [vaultConfig, setVaultConfig] = useState<VaultConfigInfo | null>(null);
   const [vaultOptions, setVaultOptions] = useState<VaultConfigInfo[]>([]);
+  const [serverContributionWindow, setServerContributionWindow] = useState<VaultContributionWindow | null>(null);
   const [step, setStep] = useState<Step>('loading');
   const [submitting, setSubmitting] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -320,10 +322,11 @@ export const VaultContribute: React.FC = () => {
 
         if (hasYearParam && vaultYear) {
           const cfg = { id: `demo-vault-${vaultYear}`, label: `${vaultYear}-Year Anniversary Vault`, duration_years: vaultYear, is_enabled: true } as VaultConfigInfo;
-          setVaultOptions([cfg]);
-          setVaultConfig(cfg);
-          setStep('form');
-          return;
+        setVaultOptions([cfg]);
+        setVaultConfig(cfg);
+        setServerContributionWindow({ canSubmit: true, message: null });
+        setStep('form');
+        return;
         }
 
         const seeded = [
@@ -337,6 +340,7 @@ export const VaultContribute: React.FC = () => {
         const fallback = sortVaultConfigsByYear(enabled.length > 0 ? enabled : seeded);
         setVaultOptions(fallback);
         setVaultConfig(fallback[0]);
+        setServerContributionWindow({ canSubmit: true, message: 'QA mode: vault uploads are open for testing.' });
         setStep(hasYearParam ? 'form' : 'hub');
         return;
       }
@@ -348,7 +352,8 @@ export const VaultContribute: React.FC = () => {
     setSite(siteData);
 
     if (hasYearParam && vaultYear) {
-      const cfg = await loadEnabledVaultContributionConfig(siteSlug, vaultYear, buildVaultAccessPayload(siteSlug)).catch(() => null);
+      const result = await loadEnabledVaultContributionConfig(siteSlug, vaultYear, buildVaultAccessPayload(siteSlug), qaOpen).catch(() => null);
+      const cfg = result?.config ?? null;
 
       if (!cfg) {
         setStep('invalid');
@@ -357,11 +362,13 @@ export const VaultContribute: React.FC = () => {
 
       setVaultOptions([cfg]);
       setVaultConfig(cfg);
+      setServerContributionWindow(result?.submissionWindow ?? null);
       setStep('form');
       return;
     }
 
-    const options = await listEnabledVaultContributionConfigs(siteSlug, buildVaultAccessPayload(siteSlug)).catch(() => []);
+    const result = await listEnabledVaultContributionConfigs(siteSlug, buildVaultAccessPayload(siteSlug), qaOpen).catch(() => null);
+    const options = result?.configs ?? [];
 
     if (options.length === 0) {
       setStep('invalid');
@@ -372,6 +379,7 @@ export const VaultContribute: React.FC = () => {
 
     setVaultOptions(sortedOptions);
     setVaultConfig(sortedOptions[0]);
+    setServerContributionWindow(result?.submissionWindow ?? null);
     setStep(sortedOptions.length === 1 ? 'form' : 'hub');
   }
 
@@ -456,7 +464,7 @@ export const VaultContribute: React.FC = () => {
     e.preventDefault();
     if (!validate() || !site || !vaultConfig) return;
 
-    const liveWindow = getContributionWindow(site.wedding_date, qaOpen);
+    const liveWindow = serverContributionWindow ?? getContributionWindow(site.wedding_date, qaOpen);
     if (!liveWindow.canSubmit) {
       setSubmitError(liveWindow.message || 'Uploads are currently closed for this vault.');
       return;
@@ -655,7 +663,7 @@ export const VaultContribute: React.FC = () => {
   const description = vaultConfig
     ? `Leave a message to be opened on the couple's ${ordinal} anniversary.`
     : 'Choose a vault and leave a message for a future anniversary.';
-  const contributionWindow = getContributionWindow(site?.wedding_date ?? null, qaOpen);
+  const contributionWindow = serverContributionWindow ?? getContributionWindow(site?.wedding_date ?? null, qaOpen);
 
   const loadingView = (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.08),transparent_38%),linear-gradient(135deg,#f8fafc,#ffffff)] flex items-center justify-center">

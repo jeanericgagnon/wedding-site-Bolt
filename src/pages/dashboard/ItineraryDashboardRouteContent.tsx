@@ -494,6 +494,8 @@ export function ItineraryDashboardRouteContent({
                       variant="outline"
                       size="sm"
                       onClick={() => openEventForm(event)}
+                      aria-label={`Edit ${event.event_name}`}
+                      title={`Edit ${event.event_name}`}
                     >
                       <Edit2 className="w-4 h-4" />
                     </Button>
@@ -501,6 +503,8 @@ export function ItineraryDashboardRouteContent({
                       variant="outline"
                       size="sm"
                       onClick={() => handleDeleteEvent(event.id)}
+                      aria-label={`Delete ${event.event_name}`}
+                      title={`Delete ${event.event_name}`}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
