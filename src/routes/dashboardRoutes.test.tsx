@@ -4,6 +4,14 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { DashboardRoutes } from './dashboardRoutes';
 
+function renderWithPath(path: string) {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>{DashboardRoutes()}</Routes>
+    </MemoryRouter>,
+  );
+}
+
 vi.mock('./ProtectedPageRoute', async () => {
   const { Route } = await import('react-router-dom');
   return {
@@ -56,87 +64,64 @@ describe('DashboardRoutes', () => {
   });
 
   it('renders the registry, settings, and messages routes inside the protected dashboard route group', () => {
-    const { rerender } = render(
-      <MemoryRouter initialEntries={['/dashboard/registry']}>
-        <Routes>{DashboardRoutes()}</Routes>
-      </MemoryRouter>,
-    );
+    const first = renderWithPath('/dashboard/registry');
 
     expect(screen.getByText('Dashboard Registry')).toBeInTheDocument();
+    first.unmount();
 
-    rerender(
-      <MemoryRouter initialEntries={['/dashboard/settings']}>
-        <Routes>{DashboardRoutes()}</Routes>
-      </MemoryRouter>,
-    );
+    const second = renderWithPath('/dashboard/settings');
 
     expect(screen.getByText('Dashboard Settings')).toBeInTheDocument();
+    second.unmount();
 
-    rerender(
-      <MemoryRouter initialEntries={['/dashboard/messages']}>
-        <Routes>{DashboardRoutes()}</Routes>
-      </MemoryRouter>,
-    );
+    renderWithPath('/dashboard/messages');
 
     expect(screen.getByText('Dashboard Messages')).toBeInTheDocument();
   });
 
   it('renders the overview, guests, and photos routes inside the protected dashboard route group', () => {
-    const { rerender } = render(
-      <MemoryRouter initialEntries={['/dashboard/overview']}>
+    const first = renderWithPath('/dashboard/overview');
+
+    expect(screen.getByText('Dashboard Overview')).toBeInTheDocument();
+    first.unmount();
+
+    const second = renderWithPath('/dashboard/guests');
+
+    expect(screen.getByText('Dashboard Guests')).toBeInTheDocument();
+    second.unmount();
+
+    renderWithPath('/dashboard/photos');
+
+    expect(screen.getByText('Dashboard Photos')).toBeInTheDocument();
+  });
+
+  it('renders the full overview surface at /dashboard', () => {
+    render(
+      <MemoryRouter initialEntries={['/dashboard?bypassPayment=1&analyticsLive=1']}>
         <Routes>{DashboardRoutes()}</Routes>
       </MemoryRouter>,
     );
 
     expect(screen.getByText('Dashboard Overview')).toBeInTheDocument();
-
-    rerender(
-      <MemoryRouter initialEntries={['/dashboard/guests']}>
-        <Routes>{DashboardRoutes()}</Routes>
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText('Dashboard Guests')).toBeInTheDocument();
-
-    rerender(
-      <MemoryRouter initialEntries={['/dashboard/photos']}>
-        <Routes>{DashboardRoutes()}</Routes>
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText('Dashboard Photos')).toBeInTheDocument();
   });
 
   it('renders the itinerary, planning, coordinator, and rsvp board routes inside the protected dashboard route group', () => {
-    const { rerender } = render(
-      <MemoryRouter initialEntries={['/dashboard/itinerary']}>
-        <Routes>{DashboardRoutes()}</Routes>
-      </MemoryRouter>,
-    );
+    const first = renderWithPath('/dashboard/itinerary');
 
     expect(screen.getByText('Dashboard Itinerary')).toBeInTheDocument();
+    first.unmount();
 
-    rerender(
-      <MemoryRouter initialEntries={['/dashboard/planning']}>
-        <Routes>{DashboardRoutes()}</Routes>
-      </MemoryRouter>,
-    );
+    const second = renderWithPath('/dashboard/planning');
 
     expect(screen.getByText('Dashboard Planning')).toBeInTheDocument();
+    second.unmount();
 
-    rerender(
-      <MemoryRouter initialEntries={['/dashboard/coordinator']}>
-        <Routes>{DashboardRoutes()}</Routes>
-      </MemoryRouter>,
-    );
+    const third = renderWithPath('/dashboard/coordinator');
 
     expect(screen.getByText('Dashboard Coordinator')).toBeInTheDocument();
+    third.unmount();
 
-    rerender(
-      <MemoryRouter initialEntries={['/dashboard/rsvp-board']}>
-        <Routes>{DashboardRoutes()}</Routes>
-      </MemoryRouter>,
-    );
+    renderWithPath('/dashboard/rsvp-board');
 
     expect(screen.getByText('Dashboard RSVP Board')).toBeInTheDocument();
   });

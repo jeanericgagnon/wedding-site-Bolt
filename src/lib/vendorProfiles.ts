@@ -2,6 +2,7 @@ import { supabase } from './supabase';
 import { DEMO_MODE } from '../config/env';
 import { resolveActiveSiteForUser } from './activeSite';
 import { demoWeddingSite } from './demoData';
+import { isVendorProfileCreationEnabled } from './vendorProfileLaunch';
 import {
   getSafePublicEmailHref,
   getSafePublicImageUrl,
@@ -386,6 +387,33 @@ export function normalizeVendorProfileCustomization(sourcePayload: Record<string
 }
 
 const SAMPLE_VENDOR_PROFILES: Record<string, VendorProfile> = {
+  everlight: {
+    id: 'sample-everlight',
+    slug: 'everlight',
+    vendor_name: 'Everlight Studio',
+    descriptor: 'Documentary wedding photography with an editorial finish',
+    about: 'Everlight Studio photographs weddings with a calm, observant style built around real emotion, clean composition, and the small in-between moments couples actually remember.',
+    hero_image_url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1400&q=80',
+    image_urls: [
+      'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=900&q=80',
+    ],
+    instagram_url: 'https://instagram.com/everlight',
+    website_url: 'https://example.com/everlight',
+    contact_email: 'hello@everlight.example',
+    source_payload: {
+      template_id: 'photography',
+      sampleProfile: true,
+      vendor_customization: {
+        accent_id: 'ink',
+        cta_label: 'Check date availability',
+        service_area: 'New York, Hudson Valley, and destination weekends',
+        pricing_note: 'Full-weekend collections begin with planning and timeline support.',
+        proof_points: ['Film-toned edits', 'Calm timeline presence', 'Fast preview gallery'],
+      },
+    },
+  },
   'dayof-sample-photography': {
     id: 'sample-photography',
     slug: 'dayof-sample-photography',
@@ -528,10 +556,37 @@ const SAMPLE_VENDOR_PROFILES: Record<string, VendorProfile> = {
       },
     },
   },
+  'modern-events': {
+    id: 'sample-modern-events',
+    slug: 'modern-events',
+    vendor_name: 'Modern Events',
+    descriptor: 'Wedding planning, production calm, and polished event design',
+    about: 'Modern Events pairs planning structure with a warm guest experience, covering logistics, vendor coordination, design direction, and wedding-weekend flow from kickoff through sendoff.',
+    hero_image_url: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1400&q=80',
+    image_urls: [
+      'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=900&q=80',
+    ],
+    instagram_url: 'https://instagram.com/modernevents',
+    website_url: 'https://example.com/modern-events',
+    contact_email: 'hello@modernevents.example',
+    source_payload: {
+      template_id: 'planner',
+      sampleProfile: true,
+      vendor_customization: {
+        accent_id: 'sage',
+        cta_label: 'Ask about your date',
+        service_area: 'Weekend planning, production, and day-of support for modern celebrations',
+        pricing_note: 'Planning scopes are tailored to guest count, event count, and logistics complexity.',
+        proof_points: ['Weekend flow', 'Vendor coordination', 'Guest calm'],
+      },
+    },
+  },
 };
 
 function canShowSampleVendorProfiles(): boolean {
-  return import.meta.env.DEV || import.meta.env.VITE_ENABLE_VENDOR_PROFILE_CREATION === 'true';
+  return import.meta.env.DEV || isVendorProfileCreationEnabled();
 }
 
 export function getSampleVendorProfileBySlug(slug: string): VendorProfile | null {

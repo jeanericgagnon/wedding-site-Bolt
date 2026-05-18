@@ -107,4 +107,42 @@ describe('vendor profile draft fallback safety', () => {
       }),
     });
   });
+
+  it('keeps the expected modern-events sample slug reachable before any database read', async () => {
+    const { getSampleVendorProfileBySlug, getVendorProfileBySlug } = await import('./vendorProfiles');
+
+    const sample = getSampleVendorProfileBySlug('modern-events');
+    expect(sample).toMatchObject({
+      id: 'sample-modern-events',
+      slug: 'modern-events',
+      vendor_name: 'Modern Events',
+    });
+
+    const resolved = await getVendorProfileBySlug('modern-events');
+    expect(resolved).toMatchObject({
+      id: 'sample-modern-events',
+      slug: 'modern-events',
+      vendor_name: 'Modern Events',
+    });
+    expect(from).not.toHaveBeenCalled();
+  });
+
+  it('keeps the expected everlight public sample slug reachable before any database read', async () => {
+    const { getSampleVendorProfileBySlug, getVendorProfileBySlug } = await import('./vendorProfiles');
+
+    const sample = getSampleVendorProfileBySlug('everlight');
+    expect(sample).toMatchObject({
+      id: 'sample-everlight',
+      slug: 'everlight',
+      vendor_name: 'Everlight Studio',
+    });
+
+    const resolved = await getVendorProfileBySlug('everlight');
+    expect(resolved).toMatchObject({
+      id: 'sample-everlight',
+      slug: 'everlight',
+      vendor_name: 'Everlight Studio',
+    });
+    expect(from).not.toHaveBeenCalled();
+  });
 });
