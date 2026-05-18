@@ -68,6 +68,7 @@ function classifyBlocker() {
 
 function runRuntimeInviteFlow() {
   const command = 'node scripts/playwright-owner-create-invite-and-claim.mjs [baseUrl] [ownerEmail] [ownerPassword] [collaboratorEmail] [collaboratorPassword]';
+  const timeoutMs = 120_000;
 
   try {
     const stdout = execFileSync('node', [
@@ -82,6 +83,7 @@ function runRuntimeInviteFlow() {
       encoding: 'utf8',
       env: process.env,
       maxBuffer: 20 * 1024 * 1024,
+      timeout: timeoutMs,
     });
 
     let parsed = null;
@@ -104,6 +106,7 @@ function runRuntimeInviteFlow() {
       parsed,
       stdout: parsed ? undefined : stdout.trim(),
       failures: failedSteps.map((step) => ({ name: step.name, error: step.error ?? 'unknown runtime flow error' })),
+      timeoutMs,
     };
   } catch (error) {
     const stdout = typeof error?.stdout === 'string' ? error.stdout : Buffer.isBuffer(error?.stdout) ? error.stdout.toString('utf8') : '';
@@ -123,14 +126,20 @@ function runRuntimeInviteFlow() {
       required: true,
       ok: false,
       blocked: false,
-      blockerType: null,
+      blockerType: error?.signal === 'SIGTERM' ? 'timeout' : null,
       exitCode: typeof error?.status === 'number' ? error.status : 1,
       parsed,
       stdout: parsed ? undefined : stdout.trim(),
       stderr: stderr.trim() || undefined,
       failures: Array.isArray(parsed?.steps)
         ? parsed.steps.filter((step) => !step.ok).map((step) => ({ name: step.name, error: step.error ?? 'unknown runtime flow error' }))
-        : [],
+        : [{
+            name: 'invite accept runtime flow',
+            error: error?.signal === 'SIGTERM'
+              ? `runtime invite flow timed out after ${timeoutMs}ms`
+              : 'unknown runtime flow error',
+          }],
+      timeoutMs,
     };
   }
 }

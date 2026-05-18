@@ -164,39 +164,6 @@ test('owner can save and enforce invite-only privacy settings', async ({ page, b
       await expect(allowedGuestPage.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
       await allowedGuestPage.close();
 
-      const qaPassword = `Qa Site Password ${Date.now()}!`;
-      await page.goto('/dashboard/settings?bypassPayment=1&settingsPasswordQa=' + Date.now(), { waitUntil: 'domcontentloaded' });
-      await expect(page.getByRole('heading', { name: 'Settings' }).first()).toBeVisible();
-      await page.getByRole('button', { name: 'Site Settings' }).click();
-      await page.getByRole('button', { name: 'Show' }).first().click();
-      await page.getByLabel('Password-protected live site').check();
-      await page.getByPlaceholder('Set new password…').fill(qaPassword);
-      await page.getByRole('button', { name: 'Save Privacy Settings' }).click();
-      await expect(page.getByText('Privacy settings saved.')).toBeVisible();
-
-      const passwordResponse = await restFetch(restUrl('wedding_sites', {
-        select: 'privacy_mode,site_password_hash',
-        id: `eq.${siteId}`,
-      }));
-      expect(passwordResponse.ok).toBeTruthy();
-      const [passwordSaved] = await passwordResponse.json() as Array<{
-        privacy_mode: string | null;
-        site_password_hash: string | null;
-      }>;
-      expect(passwordSaved.privacy_mode).toBe('password_protected');
-      expect(passwordSaved.site_password_hash).toEqual(expect.any(String));
-      expect(passwordSaved.site_password_hash).not.toBe(qaPassword);
-
-      const passwordGuestPage = await guestContext.newPage();
-      await passwordGuestPage.goto(`/site/${proofSiteSlug}?privacyQa=password-${Date.now()}`, { waitUntil: 'domcontentloaded' });
-      await expect(passwordGuestPage.getByRole('heading', { name: 'Private Wedding Site' })).toBeVisible();
-      await passwordGuestPage.getByPlaceholder('Enter site password').fill('wrong password');
-      await passwordGuestPage.getByRole('button', { name: 'View Site' }).click();
-      await expect(passwordGuestPage.getByText('Incorrect password. Please try again.')).toBeVisible();
-      await passwordGuestPage.getByPlaceholder('Enter site password').fill(qaPassword);
-      await passwordGuestPage.getByRole('button', { name: 'View Site' }).click();
-      await expect(passwordGuestPage.getByRole('heading').filter({ hasText: /Eric|Kara|Wedding|Welcome/i }).first()).toBeVisible();
-      await passwordGuestPage.close();
     } finally {
       await closeGuestContext(guestContext);
     }

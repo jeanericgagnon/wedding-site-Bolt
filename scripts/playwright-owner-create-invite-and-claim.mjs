@@ -44,14 +44,33 @@ const ownerPage = await ownerContext.newPage();
 const collaboratorContext = await browser.newContext();
 const collaboratorPage = await collaboratorContext.newPage();
 const out = { steps: [] };
+const STEP_TIMEOUT_MS = 45_000;
+const startedAt = new Date().toISOString();
+
+function logProgress(message, detail = {}) {
+  const payload = { scope: 'collaborator-runtime', at: new Date().toISOString(), message, ...detail };
+  console.error(JSON.stringify(payload));
+}
+
+async function withStepTimeout(name, fn, timeoutMs = STEP_TIMEOUT_MS) {
+  return await Promise.race([
+    fn(),
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(`${name} timed out after ${timeoutMs}ms`)), timeoutMs);
+    }),
+  ]);
+}
 
 async function step(name, fn) {
   try {
-    const result = await fn();
+    logProgress('step:start', { step: name });
+    const result = await withStepTimeout(name, fn);
     out.steps.push({ name, ok: true, result });
+    logProgress('step:ok', { step: name });
     return result;
   } catch (error) {
     out.steps.push({ name, ok: false, error: String(error) });
+    logProgress('step:failed', { step: name, error: String(error) });
     throw error;
   }
 }
@@ -137,7 +156,7 @@ try {
     });
   });
 } finally {
-  console.log(JSON.stringify(out, null, 2));
+  console.log(JSON.stringify({ startedAt, finishedAt: new Date().toISOString(), ...out }, null, 2));
   await ownerContext.close();
   await collaboratorContext.close();
   await browser.close();

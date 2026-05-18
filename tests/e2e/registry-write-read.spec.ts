@@ -265,7 +265,7 @@ test('registry owner add persists and public registry endpoint stays readable', 
       quantity_purchased: 0,
       purchase_status: 'available',
     });
-    await expect(page.getByText('Cleanup queue')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Cleanup queue', { exact: true })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole('button', { name: /review item/i }).first()).toBeVisible();
 
     await page.getByRole('button', { name: 'Add gift' }).click();
