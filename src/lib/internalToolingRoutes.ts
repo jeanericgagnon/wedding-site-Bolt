@@ -12,6 +12,17 @@ export function isInternalToolingRouteFlagEnabled(
   return normalized === 'true' || normalized === '1' || normalized === 'yes';
 }
 
+export function isInternalToolingCaptureRouteFlagEnabled(
+  value = import.meta.env.VITE_ENABLE_INTERNAL_TOOLING_ROUTES,
+  dev = import.meta.env.DEV,
+): boolean {
+  if (isInternalToolingRouteFlagEnabled(value, dev)) return true;
+  if (typeof window === 'undefined') return false;
+
+  const { pathname } = window.location;
+  return pathname === '/variant-preview-capture' || pathname === '/template-scroll-capture';
+}
+
 export function canAccessInternalToolingRoutes(flagEnabled: boolean, isAdmin: boolean): boolean {
   return flagEnabled && isAdmin;
 }
@@ -24,6 +35,7 @@ export function useInternalToolingRouteAccess(): {
 } {
   const { user, loading, isDemoMode } = useAuth();
   const flagEnabled = isInternalToolingRouteFlagEnabled();
+  const captureFlagEnabled = isInternalToolingCaptureRouteFlagEnabled();
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
 
@@ -68,7 +80,7 @@ export function useInternalToolingRouteAccess(): {
 
   return {
     internalToolingRoutesEnabled: canAccessInternalToolingRoutes(flagEnabled, isAdmin),
-    internalToolingCaptureRoutesEnabled: flagEnabled,
+    internalToolingCaptureRoutesEnabled: captureFlagEnabled,
     internalToolingRoutesLoading: flagEnabled && (loading || adminLoading),
     internalToolingRouteFlagEnabled: flagEnabled,
   };

@@ -24,9 +24,25 @@ async function revealRsvpForm(page: import('@playwright/test').Page) {
   await expect(page.getByText('Loading wedding site...')).toBeHidden({ timeout: 20_000 }).catch(() => undefined);
   if (await nameField.isVisible().catch(() => false)) return;
 
-  const sendRsvpButton = page.getByRole('button', { name: 'Send RSVP' });
-  if (await sendRsvpButton.isVisible().catch(() => false)) {
-    await sendRsvpButton.click();
+  const sendRsvpButtons = page.getByRole('button', { name: 'Send RSVP' });
+  if (await sendRsvpButtons.first().isVisible().catch(() => false)) {
+    await sendRsvpButtons.first().click();
+    await page.waitForTimeout(500);
+    if (await nameField.isVisible().catch(() => false)) return;
+  }
+
+  const rsvpChip = page.getByRole('button', { name: /^RSVP$/ }).last();
+  if (await rsvpChip.isVisible().catch(() => false)) {
+    await rsvpChip.click().catch(() => undefined);
+    await page.waitForTimeout(500);
+    if (await nameField.isVisible().catch(() => false)) return;
+  }
+
+  const rsvpLink = page.getByRole('link', { name: /^RSVP$/ }).last();
+  if (await rsvpLink.isVisible().catch(() => false)) {
+    await rsvpLink.click().catch(() => undefined);
+    await page.waitForTimeout(500);
+    if (await nameField.isVisible().catch(() => false)) return;
   }
 
   const rsvpHeading = page.getByRole('heading', { name: 'RSVP' }).last();
@@ -34,9 +50,9 @@ async function revealRsvpForm(page: import('@playwright/test').Page) {
     await rsvpHeading.scrollIntoViewIfNeeded().catch(() => undefined);
   }
 
-  for (let attempt = 0; attempt < 8; attempt += 1) {
+  for (let attempt = 0; attempt < 12; attempt += 1) {
     if (await nameField.isVisible().catch(() => false)) return;
-    await page.mouse.wheel(0, 900);
+    await page.mouse.wheel(0, 700);
     await page.waitForTimeout(250);
   }
 }

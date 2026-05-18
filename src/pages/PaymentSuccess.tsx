@@ -10,13 +10,18 @@ const POLL_INTERVAL_MS = 2000;
 const MAX_ATTEMPTS = 15;
 
 export const PaymentSuccess: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [status, setStatus] = useState<'polling' | 'confirmed' | 'timeout'>('polling');
   const attemptsRef = useRef(0);
 
   useEffect(() => {
-    if (!user) return;
+    if (loading) return;
+
+    if (!user) {
+      navigate('/payment-required', { replace: true });
+      return;
+    }
 
     const run = async () => {
       const params = new URLSearchParams(window.location.search);
@@ -34,6 +39,28 @@ export const PaymentSuccess: React.FC = () => {
           }
         } catch {
           // fall back to polling payment_status
+        }
+      }
+
+      const redirectToNextStep = (paymentStatus: string | null) => {
+        clearAllOnboardingContinuationState();
+        if (paymentStatus === 'active') {
+          setStatus('confirmed');
+          setTimeout(() => navigate('/onboarding/celebration?from=checkout', { replace: true }), 1200);
+          return;
+        }
+
+        setTimeout(() => navigate('/dashboard/overview?from=payment-success', { replace: true }), 900);
+      };
+
+      if (!sessionId) {
+        try {
+          const paymentStatus = await fetchPaymentStatus(user.id);
+          redirectToNextStep(paymentStatus);
+          return;
+        } catch {
+          setTimeout(() => navigate('/dashboard/overview?from=payment-success', { replace: true }), 900);
+          return;
         }
       }
 
@@ -63,7 +90,7 @@ export const PaymentSuccess: React.FC = () => {
     };
 
     run();
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(139,157,126,0.18),transparent_32%),linear-gradient(135deg,#faf7f1,#f6f1e8_42%,#fbfaf7)] flex items-center justify-center p-4">

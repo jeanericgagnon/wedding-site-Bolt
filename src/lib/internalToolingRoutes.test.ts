@@ -1,24 +1,38 @@
 import { describe, expect, it } from 'vitest';
-
-import { canAccessInternalToolingRoutes, isInternalToolingRouteFlagEnabled } from './internalToolingRoutes';
+import {
+  isInternalToolingCaptureRouteFlagEnabled,
+  isInternalToolingRouteFlagEnabled,
+} from './internalToolingRoutes';
 
 describe('internal tooling route gating', () => {
-  it('keeps the internal tooling flag enabled in local development', () => {
-    expect(isInternalToolingRouteFlagEnabled(undefined, true)).toBe(true);
-  });
-
-  it('requires an explicit production flag outside local development', () => {
-    expect(isInternalToolingRouteFlagEnabled('true', false)).toBe(true);
-    expect(isInternalToolingRouteFlagEnabled('1', false)).toBe(true);
-    expect(isInternalToolingRouteFlagEnabled('yes', false)).toBe(true);
-    expect(isInternalToolingRouteFlagEnabled('false', false)).toBe(false);
-    expect(isInternalToolingRouteFlagEnabled(undefined, false)).toBe(false);
+  it('keeps the full internal tooling flag off on production hosts without the env flag', () => {
     expect(isInternalToolingRouteFlagEnabled('', false)).toBe(false);
   });
 
-  it('still requires admin access even when the env flag is on', () => {
-    expect(canAccessInternalToolingRoutes(true, true)).toBe(true);
-    expect(canAccessInternalToolingRoutes(true, false)).toBe(false);
-    expect(canAccessInternalToolingRoutes(false, true)).toBe(false);
+  it('still allows static capture routes on production when opened directly', () => {
+    const originalWindow = globalThis.window;
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: {
+        location: {
+          hostname: 'dayof.love',
+          pathname: '/variant-preview-capture',
+        },
+      },
+    });
+
+    try {
+      expect(isInternalToolingCaptureRouteFlagEnabled('', false)).toBe(true);
+    } finally {
+      if (originalWindow) {
+        Object.defineProperty(globalThis, 'window', {
+          configurable: true,
+          value: originalWindow,
+        });
+      } else {
+        // @ts-expect-error cleaning up test shim
+        delete globalThis.window;
+      }
+    }
   });
 });
