@@ -1,13 +1,13 @@
 import React from 'react';
 import { AtSign, Calendar, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Clock, Copy, Eye, Loader2, Mail, Link2, RefreshCw, Save, Send, Users } from 'lucide-react';
-import { Button, Card, Input, Textarea } from '../../../components/ui';
+import { Button, Card, Input, Textarea } from '../../ui';
 import { GUEST_COMMUNICATION_FLOW } from '../../../lib/guestCommunicationFlow';
 import { getMessageDeliveryState } from '../../../lib/messageDeliveryState';
 import { SMS_PROVIDER_PENDING_COPY } from '../../../lib/smsProvider';
 import { SMS_SEGMENT_SIZE } from '../../../lib/smsSegments';
-import { hasReachableEmail } from './messageDashboardUtils';
-import { formatMessageHistoryDate, formatMessageHistoryDateTime } from '../messageHistoryTime';
-import type { AudienceOption, ChannelType, DeliveryRow, Guest, Message, MessageTemplateKey, SavedComposerTemplate, SmsCreditTransaction, Toast } from './messageDashboardTypes';
+import { hasReachableEmail } from '../../../pages/dashboard/messages/messageDashboardUtils';
+import { formatMessageHistoryDate, formatMessageHistoryDateTime } from '../../../pages/dashboard/messageHistoryTime';
+import type { AudienceOption, ChannelType, DeliveryRow, Guest, Message, MessageTemplateKey, SavedComposerTemplate, SmsCreditTransaction, Toast } from '../../../pages/dashboard/messages/messageDashboardTypes';
 import {
   buildDeliveryStats,
   buildMessageEngagementSummary,
@@ -34,7 +34,7 @@ import {
   type MessageHistoryChannelFilter,
   type MessageHistoryDeliveryFilter,
   type MessageHistoryStatusFilter,
-} from './messageDashboardUtils';
+} from '../../../pages/dashboard/messages/messageDashboardUtils';
 
 export const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
   <div className="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none">
@@ -230,6 +230,15 @@ const EMPTY_CHANNEL_ENGAGEMENT_BREAKDOWN = {
   sms: { trackedMessages: 0, deliveredRecipients: 0, opened: 0, viewed: 0, clicked: 0, replied: 0, bounced: 0, openRate: 0, clickRate: 0, replyRate: 0 },
 } as const;
 
+const ALL_CLEAR_FOLLOW_THROUGH_LABEL = 'Main cleanup: all clear';
+
+const getDashboardFollowThroughFocusLabel = (input: {
+  failed: number;
+  skipped: number;
+  unreached: number;
+}) => getFollowThroughFocusLabel(input)
+  ?? (getCleanupRecipientCount(input) === 0 ? ALL_CLEAR_FOLLOW_THROUGH_LABEL : null);
+
 export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> = ({
   canCompose,
   guests = [],
@@ -278,7 +287,7 @@ export const MessageReachSnapshotCard: React.FC<MessageReachSnapshotCardProps> =
     unreached: deliveryStats.unreached,
     targeted: deliveryStats.targeted,
   });
-  const followThroughFocusLabel = getFollowThroughFocusLabel({
+  const followThroughFocusLabel = getDashboardFollowThroughFocusLabel({
     failed: deliveryStats.failed,
     skipped: deliveryStats.skipped,
     unreached: deliveryStats.unreached,
@@ -505,7 +514,7 @@ export const MessageComposerLanguagePreviewPanel: React.FC<{
 
 export interface MessageComposerSchedulePanelProps {
   formData: ComposerFormState;
-  onSetFormData: (formData: ComposerFormState) => void;
+  onSetFormData: React.Dispatch<React.SetStateAction<ComposerFormState>>;
 }
 
 export const MessageComposerSchedulePanel: React.FC<MessageComposerSchedulePanelProps> = ({
@@ -517,7 +526,7 @@ export const MessageComposerSchedulePanel: React.FC<MessageComposerSchedulePanel
     <div className="flex gap-4 mb-4">
       <button
         type="button"
-        onClick={() => onSetFormData({ ...formData, scheduleType: 'now' })}
+        onClick={() => onSetFormData((prev) => ({ ...prev, scheduleType: 'now' }))}
         className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
           formData.scheduleType === 'now'
             ? 'bg-primary text-text-inverse hover:bg-primary-hover'
@@ -528,7 +537,7 @@ export const MessageComposerSchedulePanel: React.FC<MessageComposerSchedulePanel
       </button>
       <button
         type="button"
-        onClick={() => onSetFormData({ ...formData, scheduleType: 'later' })}
+        onClick={() => onSetFormData((prev) => ({ ...prev, scheduleType: 'later' }))}
         className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
           formData.scheduleType === 'later'
             ? 'bg-primary text-text-inverse hover:bg-primary-hover'
@@ -547,7 +556,7 @@ export const MessageComposerSchedulePanel: React.FC<MessageComposerSchedulePanel
             <Input
               type="date"
               value={formData.scheduleDate}
-              onChange={(e) => onSetFormData({ ...formData, scheduleDate: e.target.value })}
+              onChange={(e) => onSetFormData((prev) => ({ ...prev, scheduleDate: e.target.value }))}
               required
             />
           </div>
@@ -561,7 +570,7 @@ export const MessageComposerSchedulePanel: React.FC<MessageComposerSchedulePanel
             <Input
               type="time"
               value={formData.scheduleTime}
-              onChange={(e) => onSetFormData({ ...formData, scheduleTime: e.target.value })}
+              onChange={(e) => onSetFormData((prev) => ({ ...prev, scheduleTime: e.target.value }))}
               required
             />
           </div>
@@ -765,7 +774,7 @@ export interface MessageComposerCardProps {
   languagePreviews: ComposerLanguagePreview[];
   onBuySmsPack: (pack: 'sms_100' | 'sms_500' | 'sms_1000') => void;
   onSaveCurrentComposerAsTemplate: () => void;
-  onSetFormData: (formData: ComposerFormState) => void;
+  onSetFormData: React.Dispatch<React.SetStateAction<ComposerFormState>>;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   onSubmitDraft: (event: React.MouseEvent<HTMLButtonElement>) => void;
   onToggleRecipientPreview: () => void;
@@ -836,7 +845,7 @@ export const MessageComposerCard: React.FC<MessageComposerCardProps> = ({
               <label className="mb-2 block text-sm font-medium text-text-primary">Campaign name</label>
               <Input
                 value={formData.campaignName}
-                onChange={(e) => onSetFormData({ ...formData, campaignName: e.target.value })}
+                onChange={(e) => onSetFormData((prev) => ({ ...prev, campaignName: e.target.value }))}
                 placeholder="Spring RSVP reminder"
               />
               <p className="mt-1 text-xs text-text-tertiary">Used to organize drafts, scheduled sends, and history. Subject stays separate.</p>
@@ -867,8 +876,8 @@ export const MessageComposerCard: React.FC<MessageComposerCardProps> = ({
         <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
           <label className="mb-2 block text-sm font-medium text-text-primary">Channel</label>
           <div className="inline-flex overflow-hidden rounded-lg border border-border bg-white">
-            <button type="button" className={`px-3 py-1.5 text-sm ${formData.channel === 'email' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => onSetFormData({ ...formData, channel: 'email' })}>Email</button>
-            <button type="button" className={`border-l border-border px-3 py-1.5 text-sm ${formData.channel === 'sms' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => onSetFormData({ ...formData, channel: 'sms' })}>Text</button>
+            <button type="button" className={`px-3 py-1.5 text-sm ${formData.channel === 'email' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => onSetFormData((prev) => ({ ...prev, channel: 'email' }))}>Email</button>
+            <button type="button" className={`border-l border-border px-3 py-1.5 text-sm ${formData.channel === 'sms' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => onSetFormData((prev) => ({ ...prev, channel: 'sms' }))}>Text</button>
           </div>
           {formData.channel === 'sms' && (
             <p className="mt-1 text-xs text-text-tertiary">
@@ -886,7 +895,7 @@ export const MessageComposerCard: React.FC<MessageComposerCardProps> = ({
           <select
             key={`aud-${audienceOptions.length}`}
             value={formData.audience}
-            onChange={(e) => onSetFormData({ ...formData, audience: e.target.value })}
+            onChange={(e) => onSetFormData((prev) => ({ ...prev, audience: e.target.value }))}
             className="w-full rounded-lg border border-border bg-surface-subtle px-4 py-2.5 text-text-primary focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
           >
             {audienceOptions.map((option) => (
@@ -933,7 +942,7 @@ export const MessageComposerCard: React.FC<MessageComposerCardProps> = ({
             </label>
             <Input
               value={formData.subject}
-              onChange={(e) => onSetFormData({ ...formData, subject: e.target.value })}
+              onChange={(e) => onSetFormData((prev) => ({ ...prev, subject: e.target.value }))}
               placeholder="For example: Wedding day reminder"
               required
             />
@@ -946,7 +955,7 @@ export const MessageComposerCard: React.FC<MessageComposerCardProps> = ({
           </label>
           <Textarea
             value={formData.body}
-            onChange={(e) => onSetFormData({ ...formData, body: e.target.value })}
+            onChange={(e) => onSetFormData((prev) => ({ ...prev, body: e.target.value }))}
             placeholder="Write your message here"
             rows={8}
             required
@@ -1357,19 +1366,14 @@ export const MessageHistorySummaryPanels: React.FC<MessageHistorySummaryPanelsPr
               <p className="mt-1 text-[11px] text-text-tertiary">
                 {channelDeliveryBreakdown[channel].skipped} of {channelDeliveryBreakdown[channel].targeted} targeted recipients need contact details · {channelDeliveryBreakdown[channel].unreached} of {channelDeliveryBreakdown[channel].targeted} targeted recipients were not reached yet
               </p>
-              {getFollowThroughFocusLabel({
-                failed: channelDeliveryBreakdown[channel].failed,
-                skipped: channelDeliveryBreakdown[channel].skipped,
-                unreached: channelDeliveryBreakdown[channel].unreached,
-              }) && (
-                <p className="mt-1 text-[11px] text-text-tertiary">
-                  {getFollowThroughFocusLabel({
-                    failed: channelDeliveryBreakdown[channel].failed,
-                    skipped: channelDeliveryBreakdown[channel].skipped,
-                    unreached: channelDeliveryBreakdown[channel].unreached,
-                  })}
-                </p>
-              )}
+              {(() => {
+                const focusLabel = getDashboardFollowThroughFocusLabel({
+                  failed: channelDeliveryBreakdown[channel].failed,
+                  skipped: channelDeliveryBreakdown[channel].skipped,
+                  unreached: channelDeliveryBreakdown[channel].unreached,
+                });
+                return focusLabel ? <p className="mt-1 text-[11px] text-text-tertiary">{focusLabel}</p> : null;
+              })()}
             </>
           )}
           {channelBreakdown[channel].targeted > 0 && (
@@ -1518,7 +1522,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                     unreached: thread.unreached,
                     targeted,
                   });
-                  const focusLabel = getFollowThroughFocusLabel({
+                  const focusLabel = getDashboardFollowThroughFocusLabel({
                     failed: thread.failed,
                     skipped: thread.skipped,
                     unreached: thread.unreached,
@@ -1657,19 +1661,16 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
               {activeThreadUnreachedCoverage}% unreached
             </span>
           )}
-          {getFollowThroughFocusLabel({
-            failed: activeCampaignThread.failed,
-            skipped: activeCampaignThread.skipped,
-            unreached: activeCampaignThread.unreached,
-          }) && (
-            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
-              {getFollowThroughFocusLabel({
-                failed: activeCampaignThread.failed,
-                skipped: activeCampaignThread.skipped,
-                unreached: activeCampaignThread.unreached,
-              })}
-            </span>
-          )}
+          {(() => {
+            const focusLabel = getDashboardFollowThroughFocusLabel({
+              failed: activeCampaignThread.failed,
+              skipped: activeCampaignThread.skipped,
+              unreached: activeCampaignThread.unreached,
+            });
+            return focusLabel
+              ? <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">{focusLabel}</span>
+              : null;
+          })()}
           {activeThreadCleanupRate != null && (
             <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">
               {activeThreadCleanupRate}% cleanup still pending
@@ -1765,7 +1766,7 @@ export const MessageCampaignThreadPanels: React.FC<MessageCampaignThreadPanelsPr
                   unreached: unreachedRecipients,
                   targeted: targetedRecipients,
                 });
-                const followThroughFocusLabel = getFollowThroughFocusLabel({
+                const followThroughFocusLabel = getDashboardFollowThroughFocusLabel({
                   failed: failedRecipients,
                   skipped: skippedRecipients,
                   unreached: unreachedRecipients,
@@ -1989,7 +1990,7 @@ function getMessageRowFollowThroughSummary(message: Message, deliveries: Deliver
     unreached: unreachedRecipients,
     targeted: targetedRecipients,
   });
-  const followThroughFocusLabel = getFollowThroughFocusLabel({
+  const followThroughFocusLabel = getDashboardFollowThroughFocusLabel({
     failed: failedRecipients,
     skipped: skippedRecipients,
     unreached: unreachedRecipients,

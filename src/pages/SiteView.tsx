@@ -32,8 +32,6 @@ import { isPublicWeddingDataSparse } from '../lib/publicSiteReadiness';
 import { filterGuestReadySections, hasMeaningfulText } from '../lib/publicGuestSectionReadiness';
 import { resolveSiteViewAnalyticsTarget } from './siteViewAnalyticsTarget';
 
-export { resolveSiteViewAnalyticsTarget } from './siteViewAnalyticsTarget';
-
 type GuestRenderableSection = Pick<BuilderSectionInstance, 'id' | 'type' | 'variant' | 'enabled' | 'orderIndex' | 'settings' | 'bindings' | 'styleOverrides'> | PublicSectionDTO;
 
 function syncPublicNoIndexMeta(shouldNoIndex: boolean) {
@@ -158,6 +156,28 @@ function normalizeSectionVariants(sections: GuestRenderableSection[]): GuestRend
 
 function hasRegistryBuilderSection(sections: GuestRenderableSection[]): boolean {
   return sections.some((section) => section.type.trim().toLowerCase().replace(/[^a-z0-9-]/g, '') === 'registry');
+}
+
+function hasRsvpBuilderSection(sections: GuestRenderableSection[]): boolean {
+  return sections.some((section) => (
+    section.enabled !== false
+    && section.type.trim().toLowerCase().replace(/[^a-z0-9-]/g, '') === 'rsvp'
+  ));
+}
+
+function appendRsvpSectionWhenNeeded(sections: GuestRenderableSection[], shouldAppend: boolean): GuestRenderableSection[] {
+  if (!shouldAppend || hasRsvpBuilderSection(sections)) return sections;
+  return [
+    ...sections,
+    {
+      ...createDefaultSectionInstance('rsvp', 'default', sections.length),
+      enabled: true,
+      settings: {
+        title: 'RSVP',
+        showTitle: true,
+      },
+    },
+  ];
 }
 
 function appendRegistrySectionWhenNeeded(sections: GuestRenderableSection[], shouldAppend: boolean): GuestRenderableSection[] {
@@ -573,12 +593,15 @@ export const SiteView: React.FC = () => {
         if (renderPages.length > 0) {
           const homePage = renderPages.find((page) => page.meta?.isHome || page.id === 'home' || page.slug === 'home') ?? renderPages[0];
           const sections = normalizeSectionVariants(homePage.sections.filter(s => s.enabled));
-          const shouldAppendRegistry = await hasLiveRegistryItems(data.id as string, subresourceAccess);
-          const publicSections = appendRegistrySectionWhenNeeded(sections, shouldAppendRegistry);
           const rawWData = normalizeWeddingData(
             (renderModel.wedding as PublicWeddingRenderModel | WeddingDataV1 | null) ?? createEmptyWeddingData(),
           );
           const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(resolvedSlug, rawWData, subresourceAccess), resolvedSlug);
+          const shouldAppendRegistry = await hasLiveRegistryItems(data.id as string, subresourceAccess);
+          const publicSections = appendRegistrySectionWhenNeeded(
+            appendRsvpSectionWhenNeeded(sections, wData.rsvp.enabled !== false),
+            shouldAppendRegistry,
+          );
           const sparsePublicData = isPublicWeddingDataSparse(wData);
 
           if (publicSections.length === 0 || (isDemoSite && sparsePublicData)) {
@@ -702,7 +725,7 @@ export const SiteView: React.FC = () => {
         <div className="builder-themed-canvas min-h-screen bg-background" onErrorCapture={handleImageErrorCapture}>
           <OwnerPreviewBanner />
           {builderSections.map(section => (
-            <SectionRenderer key={section.id} section={section} weddingData={weddingData} surface="public" />
+            <SectionRenderer key={section.id} section={section} weddingData={weddingData} surface="public" siteSlug={resolvedSlug} />
           ))}
         </div>
       </SiteViewContext.Provider>

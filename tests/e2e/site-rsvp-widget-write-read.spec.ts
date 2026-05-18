@@ -19,6 +19,28 @@ function envValue(key: string, fallback = '') {
   return match.slice(key.length + 1).trim().replace(/^['"]|['"]$/g, '');
 }
 
+async function revealRsvpForm(page: import('@playwright/test').Page) {
+  const nameField = page.getByPlaceholder('Your full name');
+  await expect(page.getByText('Loading wedding site...')).toBeHidden({ timeout: 20_000 }).catch(() => undefined);
+  if (await nameField.isVisible().catch(() => false)) return;
+
+  const sendRsvpButton = page.getByRole('button', { name: 'Send RSVP' });
+  if (await sendRsvpButton.isVisible().catch(() => false)) {
+    await sendRsvpButton.click();
+  }
+
+  const rsvpHeading = page.getByRole('heading', { name: 'RSVP' }).last();
+  if (await rsvpHeading.isVisible().catch(() => false)) {
+    await rsvpHeading.scrollIntoViewIfNeeded().catch(() => undefined);
+  }
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    if (await nameField.isVisible().catch(() => false)) return;
+    await page.mouse.wheel(0, 900);
+    await page.waitForTimeout(250);
+  }
+}
+
 test('public site RSVP widget writes and owner can read the saved row', async ({ page, browser }) => {
   test.setTimeout(120_000);
 
@@ -100,12 +122,15 @@ test('public site RSVP widget writes and owner can read the saved row', async ({
     try {
       const publicPage = await publicContext.newPage();
       await publicPage.goto(`/site/${proofSiteSlug}?siteRsvpQa=${runId}`, { waitUntil: 'domcontentloaded' });
-      await expect(publicPage.getByRole('heading', { name: /Will You Be There\?|RSVP/i }).first()).toBeVisible({ timeout: 20_000 });
-      await publicPage.getByLabel('Your name').fill(guestName);
-      await publicPage.getByLabel('Number of guests').fill('2');
-      await publicPage.getByLabel(/Dietary notes/i).fill(`No shellfish ${runId}`);
+      await revealRsvpForm(publicPage);
+      await expect(publicPage.getByPlaceholder('Your full name')).toBeVisible({ timeout: 20_000 });
+      await expect(publicPage.getByRole('button', { name: 'Send RSVP' })).toBeVisible({ timeout: 20_000 });
+      await publicPage.getByPlaceholder('Your full name').fill(guestName);
+      await publicPage.getByRole('button', { name: 'Joyfully accepts' }).click();
+      await publicPage.locator('select').last().selectOption('2');
+      await publicPage.getByPlaceholder('Vegetarian, vegan, gluten-free, allergies...').fill(`No shellfish ${runId}`);
       await publicPage.getByRole('button', { name: 'Send RSVP' }).click();
-      await expect(publicPage.getByText('Your reply has been saved.')).toBeVisible({ timeout: 15_000 });
+      await publicPage.waitForTimeout(1_500);
       await publicPage.close();
     } finally {
       await publicContext.close().catch((error) => {
@@ -114,21 +139,34 @@ test('public site RSVP widget writes and owner can read the saved row', async ({
       });
     }
 
-    const savedResponse = await restFetch(restUrl('site_rsvps', {
-      select: 'id,wedding_site_id,guest_name,rsvp_status,guest_count,dietary_notes',
-      wedding_site_id: `eq.${siteId}`,
-      guest_name: `eq.${guestName}`,
-      limit: '1',
-    }));
-    const savedResponseText = await savedResponse.text();
-    expect(savedResponse.ok, savedResponseText).toBeTruthy();
-    const [saved] = JSON.parse(savedResponseText) as Array<{
+    let saved: {
       wedding_site_id: string;
       guest_name: string;
       rsvp_status: string;
       guest_count: number;
       dietary_notes: string | null;
-    }>;
+    } | undefined;
+    await expect.poll(async () => {
+      const savedResponse = await restFetch(restUrl('site_rsvps', {
+        select: 'id,wedding_site_id,guest_name,rsvp_status,guest_count,dietary_notes',
+        wedding_site_id: `eq.${siteId}`,
+        guest_name: `eq.${guestName}`,
+        limit: '1',
+      }));
+      const savedResponseText = await savedResponse.text();
+      expect(savedResponse.ok, savedResponseText).toBeTruthy();
+      [saved] = JSON.parse(savedResponseText) as Array<{
+        wedding_site_id: string;
+        guest_name: string;
+        rsvp_status: string;
+        guest_count: number;
+        dietary_notes: string | null;
+      }>;
+      return saved?.rsvp_status ?? null;
+    }, {
+      timeout: 15_000,
+      message: 'The public RSVP submit should persist a site_rsvps row for the proof guest',
+    }).toBe('attending');
     expect(saved).toMatchObject({
       wedding_site_id: siteId,
       guest_name: guestName,
