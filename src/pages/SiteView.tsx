@@ -31,6 +31,7 @@ import { trackGuestHubEvent } from './guestHubPublicService';
 import { isPublicWeddingDataSparse } from '../lib/publicSiteReadiness';
 import { filterGuestReadySections, hasMeaningfulText } from '../lib/publicGuestSectionReadiness';
 import { resolveSiteViewAnalyticsTarget } from './siteViewAnalyticsTarget';
+import { shouldAppendPublicRsvpSection } from './siteViewSectionGuards';
 
 type GuestRenderableSection = Pick<BuilderSectionInstance, 'id' | 'type' | 'variant' | 'enabled' | 'orderIndex' | 'settings' | 'bindings' | 'styleOverrides'> | PublicSectionDTO;
 
@@ -599,7 +600,7 @@ export const SiteView: React.FC = () => {
           const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(resolvedSlug, rawWData, subresourceAccess), resolvedSlug);
           const shouldAppendRegistry = await hasLiveRegistryItems(data.id as string, subresourceAccess);
           const publicSections = appendRegistrySectionWhenNeeded(
-            appendRsvpSectionWhenNeeded(sections, wData.rsvp.enabled !== false),
+            appendRsvpSectionWhenNeeded(sections, shouldAppendPublicRsvpSection(wData)),
             shouldAppendRegistry,
           );
           const sparsePublicData = isPublicWeddingDataSparse(wData);
