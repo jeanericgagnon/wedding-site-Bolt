@@ -22,6 +22,7 @@ import { resolveCoordinatorQnaFocusAfterItemsChange, resolveCoordinatorTimelineF
 import { getCoordinatorStablePromptTarget } from '../../lib/coordinatorStablePromptTarget';
 import { getCoordinatorStandingPromptReason } from '../../lib/coordinatorStandingPromptReason';
 import { getCoordinatorStandingPromptReasonTightened } from '../../lib/coordinatorStandingPromptReasonTighten';
+import { normalizeCoordinatorIssueDraftForTypeChange } from '../../lib/coordinatorIssueDraft';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
 import { copyTextOrDownload } from '../../lib/copyText';
 import type {
@@ -548,7 +549,16 @@ export const DashboardCoordinatorMode: React.FC = () => {
   });
 
   const updateIssueDraft = (patch: Partial<CoordinatorIssueDraft>) => {
-    setIssueDraft((prev) => ({ ...prev, ...patch }));
+    setIssueDraft((prev) => {
+      if (!patch.issueType || patch.issueType === prev.issueType) {
+        return { ...prev, ...patch };
+      }
+      return {
+        ...prev,
+        ...normalizeCoordinatorIssueDraftForTypeChange(prev, patch.issueType),
+        ...patch,
+      };
+    });
   };
 
   const clearIssueDraft = () => {

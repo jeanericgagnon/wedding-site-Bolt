@@ -60,4 +60,10 @@ describe('Celebration', () => {
 
     expect(screen.getByText(/days until the big day!/i)).toBeInTheDocument();
   });
+
+  it('exposes a main landmark for the celebration choices', () => {
+    render(<Celebration />);
+
+    expect(screen.getByRole('main')).toBeInTheDocument();
+  });
 });

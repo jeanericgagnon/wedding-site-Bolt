@@ -67,7 +67,7 @@ export const Celebration: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 relative overflow-hidden">
+    <main className="min-h-screen flex flex-col items-center justify-center bg-background p-4 relative overflow-hidden" role="main">
       {showConfetti && <ConfettiEffect />}
 
       <div className="w-full max-w-5xl relative z-10">
@@ -232,7 +232,7 @@ export const Celebration: React.FC = () => {
           </Card>
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 
