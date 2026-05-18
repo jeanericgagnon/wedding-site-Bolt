@@ -9,6 +9,10 @@ const fetchPublicSiteAccessMock = vi.fn();
 const fetchPublicItineraryRowsMock = vi.fn();
 const hasLiveRegistryItemsMock = vi.fn();
 const trackGuestHubEventMock = vi.fn();
+const mockI18n = vi.hoisted(() => ({
+  language: 'en',
+  changeLanguage: vi.fn(),
+}));
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -20,7 +24,7 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (value: string) => value, i18n: { language: 'en' } }),
+  useTranslation: () => ({ t: (value: string) => value, i18n: mockI18n }),
 }));
 
 vi.mock('../lib/supabase', () => ({
@@ -106,15 +110,19 @@ beforeEach(() => {
   fetchPublicItineraryRowsMock.mockReset();
   hasLiveRegistryItemsMock.mockReset();
   trackGuestHubEventMock.mockReset();
+  mockI18n.language = 'en';
+  mockI18n.changeLanguage.mockReset();
   fetchPublicItineraryRowsMock.mockResolvedValue([]);
   hasLiveRegistryItemsMock.mockResolvedValue(false);
   trackGuestHubEventMock.mockResolvedValue(undefined);
   sessionStorage.clear();
+  document.head.querySelectorAll('meta#dayof-noindex, meta[name="robots"][data-dayof-noindex="1"]').forEach((node) => node.remove());
   window.history.replaceState({}, '', '/');
 });
 
 afterEach(() => {
   sessionStorage.clear();
+  document.head.querySelectorAll('meta#dayof-noindex, meta[name="robots"][data-dayof-noindex="1"]').forEach((node) => node.remove());
   window.history.replaceState({}, '', '/');
 });
 
@@ -185,6 +193,7 @@ describe('SiteView invite handoff continuity', () => {
         site_slug: 'maya-and-leo',
         site_url: 'https://dayof.love/site/maya-and-leo',
         is_published: true,
+        privacy_mode: 'public',
         couple_name_1: 'Maya',
         couple_name_2: 'Leo',
         wedding_date: null,
@@ -229,6 +238,24 @@ describe('SiteView invite handoff continuity', () => {
     expect(window.location.pathname).toBe('/site/maya-and-leo');
     expect(window.location.search).toBe('?guestLang=fr');
     expect(window.location.hash).toBe('#travel');
+  });
+
+  it('adds noindex metadata for blocked invite-only public views', async () => {
+    mockRouteParams.slug = 'maya-and-leo';
+
+    fetchPublicSiteAccessMock.mockResolvedValue({
+      status: 'invite_required',
+      site: null,
+    });
+
+    render(React.createElement(SiteView));
+
+    await screen.findByText('site view ready');
+
+    await waitFor(() => {
+      const robots = document.head.querySelector('meta[name="robots"]');
+      expect(robots?.getAttribute('content')).toContain('noindex');
+    });
   });
 });
 

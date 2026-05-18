@@ -466,7 +466,7 @@ export function RegistryDashboardRouteContent(props: {
             </ActionsMenu>
             <Button variant="primary" size="md" onClick={props.handleAddNew} disabled={!props.weddingSiteId}>
               <Plus className="w-4 h-4" />
-              Add registry
+              Add gift
             </Button>
           </>
         }

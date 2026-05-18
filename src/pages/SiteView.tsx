@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, Lock, Eye, EyeOff } from 'lucide-react';
@@ -30,8 +30,29 @@ import type { PublicSectionDTO } from '../lib/publicRenderContract';
 import { trackGuestHubEvent } from './guestHubPublicService';
 import { isPublicWeddingDataSparse } from '../lib/publicSiteReadiness';
 import { filterGuestReadySections, hasMeaningfulText } from '../lib/publicGuestSectionReadiness';
+import { resolveSiteViewAnalyticsTarget } from './siteViewAnalyticsTarget';
+
+export { resolveSiteViewAnalyticsTarget } from './siteViewAnalyticsTarget';
 
 type GuestRenderableSection = Pick<BuilderSectionInstance, 'id' | 'type' | 'variant' | 'enabled' | 'orderIndex' | 'settings' | 'bindings' | 'styleOverrides'> | PublicSectionDTO;
+
+function syncPublicNoIndexMeta(shouldNoIndex: boolean) {
+  if (typeof document === 'undefined') return null;
+
+  const existing = document.head.querySelector<HTMLMetaElement>('meta#dayof-noindex, meta[name="robots"][data-dayof-noindex="1"]');
+  if (!shouldNoIndex) {
+    existing?.remove();
+    return null;
+  }
+
+  const meta = existing ?? document.createElement('meta');
+  meta.name = 'robots';
+  meta.content = 'noindex, nofollow';
+  meta.id = 'dayof-noindex';
+  meta.dataset.dayofNoindex = '1';
+  if (!existing) document.head.appendChild(meta);
+  return meta;
+}
 
 async function hydrateWeddingDataFromItinerary(
   siteSlug: string,
@@ -152,12 +173,6 @@ function appendRegistrySectionWhenNeeded(sections: GuestRenderableSection[], sho
       },
     },
   ];
-}
-
-export function resolveSiteViewAnalyticsTarget(searchParams: URLSearchParams) {
-  if (searchParams.get('entry') === 'qr') return '/site/qr';
-  if (searchParams.has('token') || searchParams.has('invite_token') || searchParams.has('passwordSession')) return '/site/invite';
-  return '/site';
 }
 
 function filterGuestReadyBuilderSections(sections: GuestRenderableSection[], data: WeddingDataV1): GuestRenderableSection[] {
@@ -396,6 +411,7 @@ export const SiteView: React.FC = () => {
 
   const [privacyGate, setPrivacyGate] = useState<PrivacyGateState>('loading');
   const [hideFromSearch, setHideFromSearch] = useState(false);
+  const [sitePrivacyMode, setSitePrivacyMode] = useState<'public' | 'password_protected' | 'invite_only' | 'hidden'>('public');
   const [publicSubresourceAccess, setPublicSubresourceAccess] = useState<{ inviteToken?: string | null; passwordSession?: string | null }>({});
   const [passwordGateError, setPasswordGateError] = useState<string | null>(null);
   const [passwordGateChecking, setPasswordGateChecking] = useState(false);
@@ -450,6 +466,7 @@ export const SiteView: React.FC = () => {
         setWeddingData(null);
         setBuilderSections(null);
         setHideFromSearch(false);
+        setSitePrivacyMode('public');
         setPublicSubresourceAccess({});
       };
       const isDemoSite = resolvedSlug === 'alex-jordan-demo';
@@ -536,8 +553,10 @@ export const SiteView: React.FC = () => {
         }
 
         const hideSearch = data.allow_search_indexing === false;
+        const privacyMode = data.privacy_mode ?? 'public';
 
         setHideFromSearch(hideSearch);
+        setSitePrivacyMode(privacyMode);
 
         setPrivacyGate('open');
 
@@ -643,15 +662,17 @@ export const SiteView: React.FC = () => {
     };
   }, [i18n, i18n.language, resolvedSlug, searchParams, privacyUnlockNonce]);
 
-  useEffect(() => {
-    if (!hideFromSearch) return;
-    const meta = document.createElement('meta');
-    meta.name = 'robots';
-    meta.content = 'noindex, nofollow';
-    meta.id = 'dayof-noindex';
-    document.head.appendChild(meta);
-    return () => { document.getElementById('dayof-noindex')?.remove(); };
-  }, [hideFromSearch]);
+  const shouldNoIndex = hideFromSearch || sitePrivacyMode !== 'public' || privacyGate === 'invite_only' || privacyGate === 'password_required';
+  syncPublicNoIndexMeta(shouldNoIndex);
+
+  useLayoutEffect(() => {
+    const meta = syncPublicNoIndexMeta(shouldNoIndex);
+    if (!meta) return;
+
+    return () => {
+      if (document.head.contains(meta)) meta.remove();
+    };
+  }, [shouldNoIndex]);
 
   const passwordGate = (
     <PasswordGate

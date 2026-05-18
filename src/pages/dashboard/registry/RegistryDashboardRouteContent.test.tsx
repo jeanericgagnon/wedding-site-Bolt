@@ -169,7 +169,7 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(screen.queryByText('Loading registry…')).not.toBeInTheDocument();
     expect(screen.getAllByText('Dinner plates').length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: /add registry/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add gift/i })).toBeInTheDocument();
   });
 
   it('shows a recoverable registry error instead of leaving owners in limbo', () => {
@@ -221,7 +221,7 @@ describe('RegistryDashboardRouteContent', () => {
 
     expect(screen.queryByText('Couldn’t open registry right now')).not.toBeInTheDocument();
     expect(screen.getAllByText('Dinner plates').length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: /add registry/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add gift/i })).toBeInTheDocument();
   });
 
   it('renders persisted thank-you tasks and routes owner actions', () => {
