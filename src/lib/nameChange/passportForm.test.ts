@@ -211,7 +211,7 @@ describe('name change passport form snapshot', () => {
     expect(companion.sections.map((section) => section.label)).toContain('Name requested on passport');
     expect(companion.fields.find((field) => field.fieldKey === 'identity.passportIssueDate')).toMatchObject({
       officialFieldLabel: 'Most recent passport issue date',
-      status: 'ready',
+      status: 'review',
       value: '2024-06-01',
       formattedValue: '06/01/2024',
       copyValue: '06/01/2024',

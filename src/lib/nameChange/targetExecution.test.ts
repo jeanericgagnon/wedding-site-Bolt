@@ -182,7 +182,7 @@ describe('name change target execution snapshot', () => {
       blocksReady: true,
     });
     expect(snapshot.ready).toBe(false);
-    expect(snapshot.blockers).toContain('Identity documents exist in intake, but saved details are still too thin for confident downstream use.');
+    expect(snapshot.blockers).toContain('Identity documents exist in intake, but metadata is still too thin for confident downstream use.');
     expect(snapshot.nextAction).toMatchObject({
       category: 'document',
       label: expect.stringContaining('Unblock'),
@@ -945,7 +945,7 @@ describe('name change target execution snapshot', () => {
     const snapshot = buildNameChangeTargetExecutionSnapshot('medical', makeCase(), documents, [], plan);
     expect(snapshot.checklist.find((item) => item.key === 'medical-support-doc')).toMatchObject({
       status: 'ready',
-      label: 'Medical-office-supporting document intake',
+      label: 'Medical-provider-supporting document intake',
     });
   });
 
@@ -1507,7 +1507,7 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.nextAction).toMatchObject({
       category: 'document',
       label: 'Capture marriage-certificate county + certificate number + issuing authority',
-      detail: 'Marriage certificate is present, but the county, certificate number, or issuing authority is not ready yet for out-of-state follow-through.',
+      detail: 'Marriage certificate is present, but no grounded county, certificate-number extraction, or issuing-authority metadata is represented yet for out-of-state follow-through.',
     });
   });
 
@@ -1998,7 +1998,7 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.nextAction).toMatchObject({
       category: 'document',
       label: 'Capture marriage-certificate county + issuing authority',
-      detail: 'Marriage certificate is present, but the verified county, certificate number, and issuing authority are still incomplete for out-of-state follow-through.',
+      detail: 'Marriage certificate is present, but verified county, certificate-number extraction, and issuing-authority metadata are still incomplete for out-of-state follow-through.',
     });
   });
 
