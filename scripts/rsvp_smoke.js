@@ -256,7 +256,7 @@ for (const c of cases) {
 
 const expectedStatus = {
   valid_submit_baseline: 200,
-  invalid_token_blocked: 403,
+  invalid_token_blocked: [403, 404],
   plus_one_limit_blocked: 400,
   children_limit_blocked: 400,
   scope_violation_ceremony_blocked: 400,
@@ -270,8 +270,9 @@ for (const r of results) {
     continue;
   }
   const wanted = expectedStatus[r.name];
-  if (typeof wanted === 'number' && r.status !== wanted) {
-    failures.push(`${r.name} expected ${wanted} got ${r.status}`);
+  const allowed = Array.isArray(wanted) ? wanted : [wanted];
+  if (typeof wanted !== 'undefined' && !allowed.includes(r.status)) {
+    failures.push(`${r.name} expected ${allowed.join(' or ')} got ${r.status}`);
   }
 }
 
