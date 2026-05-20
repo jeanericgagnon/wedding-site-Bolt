@@ -3,6 +3,8 @@ import { buildCoordinatorAlertActivityBoard } from './coordinatorAlertActivityBo
 
 describe('coordinatorAlertActivityBoard', () => {
   it('shows latest live send and next scheduled follow-up', () => {
+    const scheduledSendTime = new Date('2026-04-22T16:00:00.000Z').toLocaleString();
+
     expect(buildCoordinatorAlertActivityBoard([
       {
         id: 'a1',
@@ -24,7 +26,7 @@ describe('coordinatorAlertActivityBoard', () => {
       statusLabel: 'Scheduled follow-up is armed',
       tone: 'warning',
       latestLiveLabel: 'Ceremony is starting · SMS',
-      nextScheduledLabel: 'Reception reminder · 4/22/2026, 9:00:00 AM',
+      nextScheduledLabel: `Reception reminder · ${scheduledSendTime}`,
       channelLabel: '1 SMS · 1 email',
       pacingLabel: 'Live send pace is leading',
     });
@@ -42,6 +44,8 @@ describe('coordinatorAlertActivityBoard', () => {
   });
 
   it('keeps invalid persisted scheduled send times from outranking real follow-ups', () => {
+    const scheduledSendTime = new Date('2026-04-22T16:00:00.000Z').toLocaleString();
+
     expect(buildCoordinatorAlertActivityBoard([
       {
         id: 'bad',
@@ -59,6 +63,6 @@ describe('coordinatorAlertActivityBoard', () => {
         queuedAt: '2026-04-22T14:05:00.000Z',
         sendAt: '2026-04-22T16:00:00.000Z',
       },
-    ]).nextScheduledLabel).toBe('Reception reminder · 4/22/2026, 9:00:00 AM');
+    ]).nextScheduledLabel).toBe(`Reception reminder · ${scheduledSendTime}`);
   });
 });

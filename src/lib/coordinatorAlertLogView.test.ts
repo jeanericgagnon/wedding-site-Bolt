@@ -3,6 +3,8 @@ import { buildCoordinatorAlertLogView } from './coordinatorAlertLogView';
 
 describe('coordinatorAlertLogView', () => {
   it('formats live and scheduled alert rows for day-of ops reading', () => {
+    const scheduledSendTime = new Date('2026-04-22T16:00:00.000Z').toLocaleString();
+
     expect(buildCoordinatorAlertLogView([
       {
         id: 'a1',
@@ -32,7 +34,7 @@ describe('coordinatorAlertLogView', () => {
         id: 'a2',
         tone: 'warning',
         title: 'Scheduled send',
-        meta: '4/22/2026, 9:00:00 AM · EMAIL',
+        meta: `${scheduledSendTime} · EMAIL`,
         detail: 'Reception reminder · checked-in',
       },
     ]);

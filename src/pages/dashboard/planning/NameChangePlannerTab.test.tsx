@@ -7,6 +7,10 @@ import { buildNameChangePlan } from '../../../lib/nameChange/engine';
 import { getExecutionNextActionDetail } from '../../../lib/nameChange/actionFeed';
 import type { NameChangeCaseInput, NameChangePlan } from '../../../lib/nameChange/types';
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function makeDraft(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
   return {
     ...defaultNameChangeCaseInput,
@@ -44,10 +48,6 @@ function makePlanWithExecutionActivity(draft: NameChangeCaseInput): NameChangePl
       },
     },
   };
-}
-
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function makeCompletedPlan(draft: NameChangeCaseInput): NameChangePlan {
@@ -1093,7 +1093,8 @@ describe('NameChangePlannerTab', () => {
       />,
     );
 
-    expect(screen.getAllByText(/Reminder updated 4\/24\/2026, 3:20:00 PM/).length).toBeGreaterThan(0);
+    const latestReminderTime = escapeRegExp(new Date('2026-04-24T22:20:00.000Z').toLocaleString());
+    expect(screen.getAllByText(new RegExp(`Reminder updated ${latestReminderTime}`)).length).toBeGreaterThan(0);
   });
 
   it('keeps proof debt visible when reminder follow-up becomes the latest touch', () => {
